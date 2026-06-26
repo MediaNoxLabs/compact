@@ -58,9 +58,20 @@
        ;; tstruct/tenum types referenced in non-exported user-pure
        ;; circuit sigs, then synthesise additional Ltypescript
        ;; export-typedef pelts and pass them to emit-type-decls.
+       ;;
+       ;; Bug-9: same scan also walks non-exported impure circuits whose
+       ;; bodies are emitted as methods (per A18+A19), so user types in
+       ;; their sigs (tiny.compact's `in_state(s: STATE)`) get a top-level
+       ;; decl. The walkable check needs the id htables, so we build them
+       ;; once up front and reuse them at the impure-emit site below.
        (let* ([all-tdefns (program-export-tdefns pelt*)]
-              [extra-tdefns (collect-pure-circuit-tdefns pelt* all-tdefns)])
-         (emit-type-decls (append all-tdefns extra-tdefns)))
+              [native-id-ht (build-native-id-ht pelt*)]
+              [witness-id-ht (build-witness-id-ht pelt*)]
+              [circuit-id-ht (build-circuit-id-ht pelt*)]
+              [extra-tdefns (collect-pure-circuit-tdefns
+                              pelt* all-tdefns
+                              native-id-ht witness-id-ht circuit-id-ht)])
+         (emit-type-decls (append all-tdefns extra-tdefns))
        (emit-witnesses (program-witnesses pelt*))
        (emit-contract-struct)
        ;; Iter 7: seed current-ledger-field-types from the program's
@@ -90,10 +101,7 @@
                      [(null? c*) (reverse acc)]
                      [(id-pure? (circuit-function-name (car c*)))
                       (loop (cdr c*) (cons (car c*) acc))]
-                     [else (loop (cdr c*) acc)]))]
-                [native-id-ht (build-native-id-ht pelt*)]
-                [witness-id-ht (build-witness-id-ht pelt*)]
-                [circuit-id-ht (build-circuit-id-ht pelt*)])
+                     [else (loop (cdr c*) acc)]))])
            ;; Emit impure circuits as methods on the contract impl.
            ;;
            ;; EXPORTED impure circuits are part of the contract's public
@@ -123,7 +131,7 @@
              circuit*)
            (close-contract-struct)
            (emit-ledger-view (program-ledger-fields pelt*))
-           (emit-pure-circuits pure-circuit* native-id-ht)))
+           (emit-pure-circuits pure-circuit* native-id-ht))))
        (emit-cargo-toml)
        ir]))
 

@@ -14,12 +14,15 @@
 ;;; limitations under the License.
 
       ;; collect-pure-circuit-tdefns: scan non-exported user pure circuit
-      ;; sigs and synthesise Ltypescript export-typedef pelts for any
+      ;; sigs AND non-exported impure circuit sigs whose bodies will be
+      ;; emitted as inherent methods (per impure-circuit-body-walkable?),
+      ;; and synthesise Ltypescript export-typedef pelts for any
       ;; tstruct/tenum types referenced there but not already in
       ;; `existing-tdefns`. Used by the Rust path to close the E2 walker
       ;; gap for circuits whose sigs introduce user types that no
       ;; publicly-reachable surface mentions (e.g. zerocash's
-      ;; `derive_nullifier(...): nullifier`).
+      ;; `derive_nullifier(...): nullifier`, or tiny's `in_state(s: STATE)`
+      ;; once A18+A19 made it emit as a method on the Contract impl).
       ;;
       ;; We run this in rust-passes (not analysis-passes) because
       ;; purity-inference runs AFTER the analysis-passes Program pass,
@@ -27,7 +30,13 @@
       ;; Stdlib pure circuits (`some`, `none`, merkle-tree helpers) are
       ;; excluded via `stdlib-src?` — their referenced types are
       ;; runtime-provided and must not be per-contract re-emitted.
-      (define (collect-pure-circuit-tdefns pelt* existing-tdefns)
+      ;;
+      ;; Bug-9: the impure-circuit branch needs the native/witness/circuit
+      ;; id htables to evaluate impure-circuit-body-walkable? — we accept
+      ;; them as args (#f-ok in the pure-only legacy path is not used:
+      ;; rust-passes.ss always supplies them).
+      (define (collect-pure-circuit-tdefns pelt* existing-tdefns
+                                           native-id-ht witness-id-ht circuit-id-ht)
         (let ([seen-names (make-hashtable symbol-hash eq?)]
               [out-tdefns '()])
           (define (push-type! src^ name type)
@@ -71,15 +80,34 @@
                  (hashtable-set! seen-names type-name #t)]
                 [else (void)]))
             existing-tdefns)
-          ;; Walk every circuit pelt. Gate on (id-pure? AND not stdlib).
-          ;; Exported pure circuits already feed E2's walker; this is a
-          ;; safety net so the same logic catches non-exported ones too.
+          ;; Walk every circuit pelt. Gate on (not stdlib) AND one of:
+          ;;   - id-pure?    → existing pure-circuit decl-promotion path
+          ;;                   (zerocash's `derive_nullifier`-style sigs).
+          ;;   - non-exported impure circuit whose body is walkable by
+          ;;     impure-circuit-body-walkable? (Bug-9). A18+A19 (commit
+          ;;     f9b509f) extended the impure body-shape dispatcher so
+          ;;     non-exported impure helpers like tiny.compact's
+          ;;     `in_state(s: STATE): Boolean` emit as inherent methods
+          ;;     on Contract<PS, W>. Their sigs reference user types
+          ;;     (STATE) that the analysis-passes E2 walker never
+          ;;     promoted to export-typedef — we have to do it here so
+          ;;     the generated `pub enum STATE { … }` ends up in lib.rs.
+          ;; Exported circuits (both pure and impure) already feed E2's
+          ;; walker via the export list.
           (for-each
             (lambda (pelt)
               (nanopass-case (Ltypescript Program-Element) pelt
                 [(circuit ,src^ ,function-name (,arg* ...) ,type ,stmt)
-                 (when (and (id-pure? function-name)
-                            (not (stdlib-src? src^)))
+                 (when (and (not (stdlib-src? src^))
+                            (or (id-pure? function-name)
+                                ;; Bug-9: non-exported impure circuit
+                                ;; that will emit as a method (mirrors
+                                ;; the emit-gate in rust-passes.ss).
+                                (and (not (id-pure? function-name))
+                                     (not (id-exported? function-name))
+                                     (impure-circuit-body-walkable?
+                                       pelt native-id-ht witness-id-ht
+                                       circuit-id-ht))))
                    (for-each scan-arg arg*)
                    (scan-type type))]
                 [else (void)]))

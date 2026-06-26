@@ -787,6 +787,17 @@
                      (format
                        "leaf_hash(&ValueReprAlignedValue(AlignedValue::from(~a)))"
                        inner)))]
+             ;; A21: `(rt-null T)` lowers to `VMnull T` carrying the type
+             ;; whose default value we need to materialise. Used by HMT
+             ;; (and MerkleTree) `insertIndexDefault` to push a hash of the
+             ;; default leaf — `(rt-leaf-hash (rt-null value_type))` — and
+             ;; later by any vm-code that needs a typed zero. We route the
+             ;; type through `default-value-rust` (the same renderer
+             ;; `emit-initial-state` uses for the ledger field zero) so the
+             ;; Rust literal matches the TS reference's
+             ;; `default(value_type)` expression bit-for-bit.
+             [(VMnull type)
+              (default-value-rust type)]
              [else #f])]
           [else #f]))
 
@@ -980,6 +991,52 @@
              (cond
                [(null? args) "            .root()\n"]
                [else #f])]
+            ;; A21: branching / stack-shuffling ops emitted by the
+            ;; bounded-index MerkleTree / HistoricMerkleTree
+            ;; `insert*Index*` vm-code. The sequence is a compile-time
+            ;; `max(old_first_free, index + 1)` realised on the VM stack:
+            ;;
+            ;;     (dup 1) (dup 1) (lt) (branch 2) (pop) (jmp 2)
+            ;;     (swap 0) (pop)
+            ;;
+            ;; — push two copies of the candidates, compare, then either
+            ;; drop the old counter (taken branch) or swap-then-drop the
+            ;; new one (fallthrough). The Rust builder mirrors the ops 1:1;
+            ;; `query_for_verify` walks them with the same VM semantics as
+            ;; the TS reference, so byte-parity is preserved without
+            ;; recovering structured control flow.
+            [(string=? op "lt")
+             (cond
+               [(null? args) "            .lt()\n"]
+               [else #f])]
+            [(string=? op "pop")
+             (cond
+               [(null? args) "            .pop()\n"]
+               [else #f])]
+            [(string=? op "branch")
+             (let ([skip-pair (assoc "skip" args)])
+               (cond
+                 [(not skip-pair) #f]
+                 [else
+                  (let ([skip (cdr skip-pair)])
+                    (and (integer? skip) (exact? skip)
+                         (format "            .branch(~a)\n" skip)))]))]
+            [(string=? op "jmp")
+             (let ([skip-pair (assoc "skip" args)])
+               (cond
+                 [(not skip-pair) #f]
+                 [else
+                  (let ([skip (cdr skip-pair)])
+                    (and (integer? skip) (exact? skip)
+                         (format "            .jmp(~a)\n" skip)))]))]
+            [(string=? op "swap")
+             (let ([n-pair (assoc "n" args)])
+               (cond
+                 [(not n-pair) #f]
+                 [else
+                  (let ([n (cdr n-pair)])
+                    (and (integer? n) (exact? n)
+                         (format "            .swap(~a)\n" n)))]))]
             [else #f])))
 
       ;; vminstr->gather-builder-call: like vminstr->builder-call but for

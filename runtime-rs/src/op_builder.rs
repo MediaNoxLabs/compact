@@ -110,6 +110,55 @@ impl<D: DB> OpProgramVerify<D> {
         self
     }
 
+    /// `lt` — pop the top two stack values and push the boolean result of
+    /// `top-1 < top`. Emitted by the bounded-index variants of MerkleTree /
+    /// HistoricMerkleTree `insert*Index*` vm-code (`insertIndex`,
+    /// `insertHashIndex`, `insertIndexDefault`) where the post-insert
+    /// first-free index is `max(old_first_free, index + 1)` — implemented
+    /// as a compare-then-branch on the VM stack.
+    pub fn lt(mut self) -> Self {
+        self.ops.push(Op::Lt);
+        self
+    }
+
+    /// `branch` — skip the next `skip` instructions if the top-of-stack
+    /// boolean is `true`. Emitted by the bounded-index MerkleTree /
+    /// HistoricMerkleTree `insert*Index*` vm-code (alongside `jmp`) to
+    /// pick between the new and old first-free index after the `lt`.
+    pub fn branch(mut self, skip: u32) -> Self {
+        self.ops.push(Op::Branch { skip });
+        self
+    }
+
+    /// `jmp` — unconditionally skip the next `skip` instructions. Pairs
+    /// with `branch` in the bounded-index `insert*Index*` vm-code; on the
+    /// taken-branch side, `jmp` over the `swap`/`pop` cleanup that the
+    /// fallthrough side runs.
+    pub fn jmp(mut self, skip: u32) -> Self {
+        self.ops.push(Op::Jmp { skip });
+        self
+    }
+
+    /// `swap` — swap the top of stack with the value at depth `n+1`.
+    /// Emitted by the bounded-index `insert*Index*` vm-code's cleanup
+    /// arm when the supplied index is *not* greater than the current
+    /// first-free counter, so the old counter has to be moved back to
+    /// the top before the matching `pop` discards the speculative
+    /// `index + 1` value.
+    pub fn swap(mut self, n: u8) -> Self {
+        self.ops.push(Op::Swap { n });
+        self
+    }
+
+    /// `pop` — discard the top of stack. Emitted by both arms of the
+    /// bounded-index `insert*Index*` vm-code to drop the loser of the
+    /// `max(old_first_free, index + 1)` comparison once the winner has
+    /// been positioned for the `ins` that follows.
+    pub fn pop(mut self) -> Self {
+        self.ops.push(Op::Pop);
+        self
+    }
+
     /// Consume the builder and return the assembled op vector ready to
     /// pass to [`crate::query_for_verify`].
     pub fn build(self) -> Vec<Op<ResultModeVerify, D>> {

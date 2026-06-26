@@ -767,9 +767,19 @@
           [(VMop? elem)
            (VMop-case elem
              [(VMalign value bytes)
+              ;; A20: extend beyond bytes=1 (Counter / Cell.read literals)
+              ;; to support the wider literals that read-no-arg vm-code
+              ;; pushes — e.g. `Set.isEmpty` emits `(push align-0-8)` for a
+              ;; u64 zero compared against `(size)`. The 1/2/4/8 widths
+              ;; match the on-state alignment widths of Compact's
+              ;; Uint8 / Uint16 / Uint32 / Uint64 cells and map 1:1 onto
+              ;; Rust's primitive `From<…> for AlignedValue` impls.
               (cond
-                [(and (= bytes 1) (integer? value) (exact? value))
-                 (format "~au8" value)]
+                [(not (and (integer? value) (exact? value))) #f]
+                [(= bytes 1) (format "~au8" value)]
+                [(= bytes 2) (format "~au16" value)]
+                [(= bytes 4) (format "~au32" value)]
+                [(= bytes 8) (format "~au64" value)]
                 [else #f])]
              [(VMleaf-hash x)
               (let ([inner (vm-cell-elem->rust x)])
@@ -1061,6 +1071,20 @@
             [(string=? op "root")
              (cond
                [(null? args) "                .root()\n"]
+               [else #f])]
+            [(string=? op "size")
+             ;; A20: `size` replaces the top-of-stack container with a
+             ;; Cell holding its element count. Emitted by Set.size /
+             ;; Set.isEmpty / Map.size / Map.isEmpty.
+             (cond
+               [(null? args) "                .size()\n"]
+               [else #f])]
+            [(string=? op "type")
+             ;; A20: `type` replaces the top-of-stack StateValue with a
+             ;; Cell holding its shape tag. Emitted by List.isEmpty to
+             ;; detect the Null sentinel at the head of an empty list.
+             (cond
+               [(null? args) "                .type_()\n"]
                [else #f])]
             [(string=? op "popeq")
              (let ([cached-pair (assoc "cached" args)])
@@ -1634,10 +1658,18 @@
       ;; When present, we route through expand-vm-code + the gather
       ;; vminstr renderer so the resulting OpProgramGather chain mirrors
       ;; the adt-op's vm-code (including the additional push and
-      ;; member / eq / root steps). When absent — the no-arg
-      ;; Counter.read / cell.read case — we keep the original hardcoded
-      ;; dup / idx / popeq template intact (no behaviour change for the
-      ;; counter / tiny snapshots).
+      ;; member / eq / root steps).
+      ;;
+      ;; A20: the no-arg branch (expr* empty) also routes through
+      ;; expand-vm-code first so reads whose vm-code does more than
+      ;; `(dup) (idx ...) (popeq)` — Set.size, Set.isEmpty, Map.size,
+      ;; Map.isEmpty, List.isEmpty, List.length — render the correct
+      ;; OpProgramGather chain rather than silently miscompiling to
+      ;; the hardcoded template. Cell.read and Counter.read also flow
+      ;; through expand-vm-code and produce the same shape as before.
+      ;; The hardcoded template survives as a last-resort fallback for
+      ;; any read whose vm-code instructions vminstr->gather-builder-call
+      ;; doesn't yet recognise.
       ;; emit-struct-field-zero-read: F2.2 — emit a gather block for
       ;; reading a ledger cell whose value is a tstruct, decoding only
       ;; the leading (field-0) atom with the provided decoder. The
@@ -1721,35 +1753,52 @@
                        (rust-feature-error #f 'adt-read-with-arg-lowering
                          "ADT read-with-arg lowering failed for ledger op"))]
                     [else
-                     (let ([idx-lines
-                            (let join ([xs path-idx*] [acc ""])
-                              (cond
-                                [(null? xs) acc]
-                                [else
-                                 (join (cdr xs)
-                                       (string-append
-                                         acc
-                                         (format "                .idx_at_index(~au8, false)\n" (car xs))))]))])
-                       (string-append
-                         "{\n"
-                         "            let _gather_ops = OpProgramGather::<DefaultDB>::new()\n"
-                         "                .dup(0)\n"
-                         idx-lines
-                         "                .popeq(true)\n"
-                         "                .build();\n"
-                         "            let _gather_results = query_for_read(\n"
-                         "                " (current-qctx-ref) ",\n"
-                         "                &_gather_ops,\n"
-                         "                None,\n"
-                         "                &initial_cost_model(),\n"
-                         "            )\n"
-                         "            .map_err(|e| CompactError::AssertionFailed(format!(\"ledger query failed: {:?}\", e)))?;\n"
-                         "            let _av = match _gather_results.events.last() {\n"
-                         "                Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,\n"
-                         "                _ => return Err(CompactError::AssertionFailed(\"ledger: expected Read event\".into())),\n"
-                         "            };\n"
-                         "            " decoder "(_av)?\n"
-                         "        }"))]))])])))
+                     ;; A20: route no-arg adt-op reads through the same
+                     ;; expand-vm-code machinery as the with-arg path so
+                     ;; the gather chain mirrors the actual vm-code
+                     ;; (e.g. Set.size's `(size)`, Set.isEmpty's
+                     ;; `(push align-0-8) (eq)`, List.isEmpty's `(type)`).
+                     ;; The previous hardcoded `dup → idx → popeq`
+                     ;; template happened to match Cell.read and
+                     ;; Counter.read but silently miscompiled any read
+                     ;; whose vm-code contained additional instructions.
+                     ;; Fall back to that template only when expansion
+                     ;; itself fails (so existing Cell/Counter coverage
+                     ;; is preserved even for adt-ops whose vm-code
+                     ;; touches instructions vminstr->gather-builder-call
+                     ;; doesn't yet recognise).
+                     (or
+                       (emit-ledger-read-expr-with-args
+                         path-elt* adt-op '() native-ht decoder)
+                       (let ([idx-lines
+                              (let join ([xs path-idx*] [acc ""])
+                                (cond
+                                  [(null? xs) acc]
+                                  [else
+                                   (join (cdr xs)
+                                         (string-append
+                                           acc
+                                           (format "                .idx_at_index(~au8, false)\n" (car xs))))]))])
+                         (string-append
+                           "{\n"
+                           "            let _gather_ops = OpProgramGather::<DefaultDB>::new()\n"
+                           "                .dup(0)\n"
+                           idx-lines
+                           "                .popeq(true)\n"
+                           "                .build();\n"
+                           "            let _gather_results = query_for_read(\n"
+                           "                " (current-qctx-ref) ",\n"
+                           "                &_gather_ops,\n"
+                           "                None,\n"
+                           "                &initial_cost_model(),\n"
+                           "            )\n"
+                           "            .map_err(|e| CompactError::AssertionFailed(format!(\"ledger query failed: {:?}\", e)))?;\n"
+                           "            let _av = match _gather_results.events.last() {\n"
+                           "                Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,\n"
+                           "                _ => return Err(CompactError::AssertionFailed(\"ledger: expected Read event\".into())),\n"
+                           "            };\n"
+                           "            " decoder "(_av)?\n"
+                           "        }")))]))])])))
 
       ;; emit-ledger-read-expr-with-args: F1.2/2 — render the ADT read
       ;; via expand-vm-code, producing a Rust block expression. Returns

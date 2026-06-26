@@ -187,6 +187,24 @@ impl<D: DB> OpProgramGather<D> {
         self
     }
 
+    /// `size` — replace the top-of-stack container (Map / Set / List /
+    /// Array) with a `Cell(u64)` holding its element count. Emitted by the
+    /// read-no-arg ADT ops `Set.size`, `Set.isEmpty`, `Map.size`,
+    /// `Map.isEmpty` (A20 — read-no-arg adt-op vm-code lowering).
+    pub fn size(mut self) -> Self {
+        self.ops.push(Op::Size);
+        self
+    }
+
+    /// `type` — replace the top-of-stack `StateValue` with a `Cell` whose
+    /// 1-byte payload tags the value's shape (Null=0, Cell=1, Map=2, …).
+    /// Emitted by `List.isEmpty` to detect the `Null` sentinel at the head
+    /// of an empty cons list (A20 — read-no-arg adt-op vm-code lowering).
+    pub fn type_(mut self) -> Self {
+        self.ops.push(Op::Type);
+        self
+    }
+
     /// `popeq` for read paths. In `ResultModeGather`, `ReadResult` is `()`.
     pub fn popeq(mut self, cached: bool) -> Self {
         self.ops.push(Op::Popeq { cached, result: () });

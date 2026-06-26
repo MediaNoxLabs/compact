@@ -223,9 +223,9 @@ you'd get from upstream `compactc`.
 | `Counter` | Supported | |
 | `Cell<T>` | Supported | |
 | `Map<K, V>` (including nested `Map<K, Map<…>>`) | Supported | `.insert(k, v)`, `.lookup(k)`, `.member(k)` all emit. |
-| `Set<T>` | Supported | `.insert(x)`, `.member(x)` emit. `.size()` / `.isEmpty()` not exercised. |
+| `Set<T>` | Supported | `.insert(x)`, `.member(x)`, `.size()`, `.isEmpty()` all emit. (Read-no-arg ops added via A20.) |
 | `MerkleTree<H, T>` | Supported | |
-| `HistoricMerkleTree<H, T>` | Supported | `.checkRoot(r)` works. `.insertIndexDefault` not yet. |
+| `HistoricMerkleTree<H, T>` | Supported | `.checkRoot(r)` and `.insertIndexDefault(idx)` both work. (`.insertIndexDefault` body shape added via A21.) |
 | `List<T>` | Supported | `pushFront` / `popFront` / `head` / `length` / `isEmpty`. |
 
 ### User-defined types
@@ -291,7 +291,8 @@ The Compact frontend pass `expand-modules-and-types` (at [`compiler/analysis-pas
 | `hashToCurve` | Supported | Routed through `compact_runtime::hash_to_curve`. |
 | Jubjub / EC primitives (`ec_add`, `ec_mul`, …) | Supported | |
 | Zswap witnesses | Supported | |
-| `keccak256` / `sha256` | Mapped (untested) | The runtime exposes the symbols but the byte-parity tests do not exercise them. |
+| `keccak256` | ⚠ Mapped but stub | The symbol resolves but its runtime binding is `unimplemented!()` (see `compiler/midnight-natives.ss:57-61` — no upstream host-side keccak binding yet). A `.compact` source that calls `keccak256` will compile to malformed Rust. Tracked as an external blocker (needs `midnight_transient_crypto::hash::keccak256`). |
+| `sha256` | Not a stdlib symbol | `sha256` is not declared in Compact's standard library. Use `persistentHash` instead (already supported). |
 | `pad(N, "str")` | Supported | |
 | `disclose(x)` | Supported | |
 

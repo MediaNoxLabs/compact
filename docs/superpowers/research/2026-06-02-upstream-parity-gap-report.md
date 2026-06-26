@@ -33,9 +33,9 @@ Effort estimates and priority below.
 | Primitive | **Uint<L..U>** (bounded range) | 13 | ❌ | Medium |
 | ADT | Counter / Cell | 19 | ✅ | — |
 | ADT | Map<K,V> incl. nested Map<K, Map<…>> | 34 | ✅ basic; nested chained lookup not exercised | Medium |
-| ADT | Set<T> (member/insert/size/isEmpty) | 15 | ✅ insert+member; `.size()`/`.isEmpty()` untested | Medium |
+| ADT | Set<T> (member/insert/size/isEmpty) | 15 | ✅ insert+member+size+isEmpty (A20 closed read-no-arg adt-op vm-code lowering) | — |
 | ADT | MerkleTree<H,T> | 16 | ✅ | — |
-| ADT | HistoricMerkleTree<H,T> (`.checkRoot`, `.insertIndexDefault`) | 9 | ✅ checkRoot; **insertIndexDefault not** | Medium |
+| ADT | HistoricMerkleTree<H,T> (`.checkRoot`, `.insertIndexDefault`) | 9 | ✅ checkRoot+insertIndexDefault (A21 closed circuit-body shape) | — |
 | ADT | **List<T>** (pushFront/popFront/head/length/isEmpty) | 16 | ❌ no fixture | **High** |
 | User type | struct (exported/non-exported/nested/parameterised `S<a,#n>`) | 35 | ✅ exported+non-exported; **generic structs** not | Medium |
 | User type | enum (return/compare/`default<E>`) | 29 | ✅ | — |
@@ -57,8 +57,8 @@ Effort estimates and priority below.
 | Modules | nested modules, sealed ledger | 1 / 3 | ✅ partial (same desugaring path) | Low |
 | Modules | `export { … }` block | 30+ | ✅ partial | Low |
 | Natives | persistentHash/Commit/transientHash/Commit | rare | ✅ | — |
-| Natives | hashToCurve / Jubjub / Zswap | 1+ | ✅ mapped (R2); no byte-parity test | Low |
-| Natives | keccak256 / sha256 | 0 in test corpus | ✅ mapped | — |
+| Natives | hashToCurve / Jubjub / Zswap | 1+ | ✅ mapped + byte-parity (`hash-to-curve-fixture`) | — |
+| Natives | keccak256 / sha256 | 0 in test corpus | ⚠ `keccak256` mapped but its runtime binding is `unimplemented!()` (`compiler/midnight-natives.ss:57-61` — needs upstream host-side hash binding); **`sha256` is not a Compact stdlib symbol** — `persistentHash` is the equivalent and is already supported. | External (keccak256) / N/A (sha256) |
 | Natives | `pad(N, "str")` | 50+ | ✅ | — |
 | Misc | Bytes-literal `Bytes[1,2,3,…]` | 73 | ✅ | — |
 | Misc | array-literal `[a,b,c]` (incl. mixed-type) | 87 | ✅ tuple-return; **mixed-type literal** untested | Medium |

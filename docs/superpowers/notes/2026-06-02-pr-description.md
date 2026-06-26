@@ -1,5 +1,8 @@
 # compactc --rust: Rust backend for the Compact compiler
 
+> **Status (2026-06-26): Superseded — not an active plan.**
+> Both upstream PR submissions ([LFDT-Minokawa/compact#472](https://github.com/LFDT-Minokawa/compact/pull/472), [#542](https://github.com/LFDT-Minokawa/compact/pull/542)) were closed. Per user direction on 2026-06-26 all compact codegen-rust + midnight-did-rs work stays in the **yshyn-iohk private forks**. This document is preserved as a historical PR-shaped summary of the cycle's deliverables; it is not the current roadmap. The local clone has `remote.upstream.pushurl` set to `DISABLED` to prevent accidental upstream pushes.
+
 Branch: `codegen-rust`
 Base: `main` (`LFDT-Minokawa/compact`)
 

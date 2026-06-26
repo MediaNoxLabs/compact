@@ -55,6 +55,7 @@ const FIXTURES: &[(&str, &str)] = &[
     ("for_iter_fixture.compact", "for-iter-fixture"),
     ("for_range_fixture.compact", "for-range-fixture"),
     ("hash_to_curve_fixture.compact", "hash-to-curve-fixture"),
+    ("hmt_default_fixture.compact", "hmt-default-fixture"),
     ("if_stmt_fixture.compact", "if-stmt-fixture"),
     ("list_fixture.compact", "list-fixture"),
     ("map_fixture.compact", "map-fixture"),

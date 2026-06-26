@@ -63,3 +63,4 @@ compact-contract-sealed-ledger-fixture = { path = "contracts/sealed-ledger-fixtu
 compact-contract-pure-circuit-fixture = { path = "contracts/pure-circuit-fixture" }
 compact-contract-nested-map-fixture = { path = "contracts/nested-map-fixture" }
 compact-contract-hash-to-curve-fixture = { path = "contracts/hash-to-curve-fixture" }
+compact-contract-hmt-default-fixture = { path = "contracts/hmt-default-fixture" }

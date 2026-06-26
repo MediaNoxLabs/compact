@@ -761,6 +761,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-contract-hmt-default-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-runtime",
+]
+
+[[package]]
 name = "compact-contract-if-stmt-fixture"
 version = "0.1.0"
 dependencies = [
@@ -4736,6 +4743,7 @@ dependencies = [
  "compact-contract-for-iter-fixture",
  "compact-contract-for-range-fixture",
  "compact-contract-hash-to-curve-fixture",
+ "compact-contract-hmt-default-fixture",
  "compact-contract-if-stmt-fixture",
  "compact-contract-list-fixture",
  "compact-contract-map-fixture",

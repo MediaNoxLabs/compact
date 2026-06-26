@@ -128,6 +128,22 @@
                         (and t (tenum-name-of-type t) #t))]
                      [else #f])))))
 
+      ;; is-ledger-read-expr?: returns #t when `expr` is a ledger read
+      ;; (`public-ledger` IR node), possibly wrapped in cast/talias. The
+      ;; Rust decoder for a tenum-typed ledger cell is `decode_u8`
+      ;; (rust-passes-emit.ss `state.read()` path), so the operand
+      ;; renders as a raw u8 even when the IR's `==`/`!=` `type` field
+      ;; reports the declared tenum. Bug-8: short-circuit typed-enum
+      ;; rendering on the other operand so we don't emit
+      ;; `<u8> == EnumName::variant` (which doesn't compile). Strips
+      ;; casts the same way the surrounding ctor-expr-rust does.
+      (define (is-ledger-read-expr? expr)
+        (let ([e (expr-strip-cast expr)])
+          (nanopass-case (Ltypescript Expression) e
+            [(public-ledger ,src ,ledger-field-name ,sugar? (,path-elt* ...) ,src^ ,adt-op ,expr* ...)
+             #t]
+            [else #f])))
+
       ;; ctor-expr-rust: render a constructor-body Expression as a Rust
       ;; expression string. Tracks a local binding alist (var-name id ->
       ;; snake-cased Rust name) so var-refs resolve to the let-bound name
@@ -198,10 +214,24 @@
              ;; heuristic fires (the var-ref isn't a formal arg and
              ;; `disclose` isn't a witness/circuit), but the IR's type
              ;; field is conclusive. Prefer it.
+             ;; Bug-8 (2026-06-26): if either operand is a ledger-read,
+             ;; the Rust decoder produces a raw u8 (see rust-passes-emit
+             ;; `state.read()` -> `decode_u8`) regardless of the
+             ;; declared Compact tenum type. Election's
+             ;; `state.read() == PublicState.commit` regressed when
+             ;; Bug-4 added the `tenum-name-of-type type` check: the
+             ;; IR's `==` type is `PublicState`, so typed rendering
+             ;; fired on both sides → `u8 == PublicState::commit`,
+             ;; which doesn't compile. Short-circuit to integer
+             ;; rendering so the enum-ref drops to its u8 discriminant.
+             ;; The walker comment above (~line 188) already documented
+             ;; this intent; Bug-4 contradicted it.
              (let ([typed?
-                    (or (tenum-name-of-type type)
-                        (operand-typed-enum? expr1 witness-id-ht)
-                        (operand-typed-enum? expr2 witness-id-ht))])
+                    (and (not (is-ledger-read-expr? expr1))
+                         (not (is-ledger-read-expr? expr2))
+                         (or (tenum-name-of-type type)
+                             (operand-typed-enum? expr1 witness-id-ht)
+                             (operand-typed-enum? expr2 witness-id-ht)))])
                (parameterize ([current-enum-ref-typed? typed?])
                  (format "(~a == ~a)"
                          (ctor-expr-rust expr1 local-binds
@@ -210,11 +240,14 @@
                                          native-id-ht witness-id-ht circuit-id-ht))))]
             [(!= ,src ,type ,expr1 ,expr2)
              ;; A9: inequality — same typed-enum threading as `==`. Bug-4:
-             ;; also prefer the IR type when it's a tenum.
+             ;; also prefer the IR type when it's a tenum. Bug-8: same
+             ;; ledger-read short-circuit as `==` (see the long note above).
              (let ([typed?
-                    (or (tenum-name-of-type type)
-                        (operand-typed-enum? expr1 witness-id-ht)
-                        (operand-typed-enum? expr2 witness-id-ht))])
+                    (and (not (is-ledger-read-expr? expr1))
+                         (not (is-ledger-read-expr? expr2))
+                         (or (tenum-name-of-type type)
+                             (operand-typed-enum? expr1 witness-id-ht)
+                             (operand-typed-enum? expr2 witness-id-ht)))])
                (parameterize ([current-enum-ref-typed? typed?])
                  (format "(~a != ~a)"
                          (ctor-expr-rust expr1 local-binds

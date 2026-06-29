@@ -130,19 +130,40 @@
 
       ;; is-ledger-read-expr?: returns #t when `expr` is a ledger read
       ;; (`public-ledger` IR node), possibly wrapped in cast/talias. The
-      ;; Rust decoder for a tenum-typed ledger cell is `decode_u8`
-      ;; (rust-passes-emit.ss `state.read()` path), so the operand
-      ;; renders as a raw u8 even when the IR's `==`/`!=` `type` field
-      ;; reports the declared tenum. Bug-8: short-circuit typed-enum
-      ;; rendering on the other operand so we don't emit
+      ;; Rust decoder for an integer-typed ledger cell is decode_bool /
+      ;; decode_u8 / decode_uN (rust-passes-emit.ss `decoder-for-type`),
+      ;; so the operand renders as a raw integer regardless of how the
+      ;; IR's `==`/`!=` `type` field tags it. Bug-8: short-circuit
+      ;; typed-enum rendering on the other operand so we don't emit
       ;; `<u8> == EnumName::variant` (which doesn't compile). Strips
       ;; casts the same way the surrounding ctor-expr-rust does.
+      ;;
+      ;; Bug-10 (2026-06-29): tenum-typed ledger reads now decode via
+      ;; `decode_via_field_repr::<EnumName>` (typed) — they no longer
+      ;; produce a raw u8, so they must not trigger the short-circuit.
+      ;; Use `ledger-read-tenum?` below to peek at the adt-op's result
+      ;; type and exclude that case.
       (define (is-ledger-read-expr? expr)
         (let ([e (expr-strip-cast expr)])
           (nanopass-case (Ltypescript Expression) e
             [(public-ledger ,src ,ledger-field-name ,sugar? (,path-elt* ...) ,src^ ,adt-op ,expr* ...)
-             #t]
+             (not (adt-op-tenum-result? adt-op))]
             [else #f])))
+
+      ;; adt-op-tenum-result?: returns #t when the read ADT-Op's
+      ;; declared result type is a tenum (possibly through talias).
+      ;; Used by `is-ledger-read-expr?` so Bug-10's typed decoder
+      ;; integrates cleanly with Bug-8's integer-coercion short-circuit:
+      ;; integer ledger reads still suppress typed enum-ref rendering on
+      ;; the opposite operand, but tenum ledger reads (now typed)
+      ;; explicitly do not.
+      (define (adt-op-tenum-result? adt-op)
+        (nanopass-case (Ltypescript ADT-Op) adt-op
+          [(,ledger-op ,op-class (,adt-name (,adt-formal* ,adt-arg*) ...) ((,var-name* ,type*) ...) ,type ,vm-code)
+           (and (eq? op-class 'read)
+                (tenum-name-of-type type)
+                #t)]
+          [else #f]))
 
       ;; ctor-expr-rust: render a constructor-body Expression as a Rust
       ;; expression string. Tracks a local binding alist (var-name id ->
@@ -1739,11 +1760,27 @@
                      [else
                       (let* ([formal-binds
                               (map (lambda (formal actual)
-                                     (let ([rendered
-                                            (ctor-expr-rust actual outer-local-binds
-                                                            native-id-ht witness-id-ht circuit-id-ht)])
-                                       (nanopass-case (Ltypescript Argument) formal
-                                         [(,var-name ,type) (cons var-name rendered)])))
+                                     (nanopass-case (Ltypescript Argument) formal
+                                       [(,var-name ,type)
+                                        ;; Bug-10: when the formal's declared type
+                                        ;; is a tenum, render the actual with
+                                        ;; current-enum-ref-typed? set so any
+                                        ;; bare `EnumName.variant` actual emits
+                                        ;; `EnumName::variant` rather than the
+                                        ;; raw u8 discriminant. The body then sees
+                                        ;; a typed enum on the substituted side,
+                                        ;; matching Bug-10's typed decoder on the
+                                        ;; ledger-read side (state == STATE.unset
+                                        ;; inlined into in_state's body becomes
+                                        ;; `decode_via_field_repr::<STATE>(_av)?
+                                        ;; == STATE::unset`). Non-tenum formals
+                                        ;; retain the existing untyped rendering.
+                                        (let* ([formal-tenum? (tenum-name-of-type type)]
+                                               [rendered
+                                                (parameterize ([current-enum-ref-typed? (if formal-tenum? #t (current-enum-ref-typed?))])
+                                                  (ctor-expr-rust actual outer-local-binds
+                                                                  native-id-ht witness-id-ht circuit-id-ht))])
+                                          (cons var-name rendered))]))
                                    arg* actual-expr*)]
                              [extended-binds (append formal-binds outer-local-binds)])
                         (ctor-expr-rust expr extended-binds

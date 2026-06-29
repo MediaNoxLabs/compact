@@ -2309,12 +2309,24 @@
           [(tfield ,src) "compact_runtime::std_lib::decode_fr"]
           [(tboolean ,src) "compact_runtime::std_lib::decode_bool"]
           [(tenum ,src ,enum-name ,elt-name ,elt-name* ...)
-           ;; Enums are FieldRepr'd as a u8 discriminant on chain. The
-           ;; in_state inlining (and any other tenum ledger read in
-           ;; expression position) decodes to u8 — the discriminant
-           ;; comparison stays a u8-vs-u8 check, matching the way
-           ;; enum-ref->u8 emits literals.
-           "compact_runtime::std_lib::decode_u8"]
+           ;; Bug-10 (2026-06-29): decode tenum-typed ledger reads as the
+           ;; typed enum rather than as the raw u8 discriminant. Going
+           ;; through `decode_via_field_repr::<EnumName>` (the user enum
+           ;; derives FromFieldRepr via the H4 emission in
+           ;; rust-passes-decls.ss) keeps both sides of an `==`/`!=`
+           ;; comparison in the same Rust type. tiny's
+           ;; `in_state(s: STATE)` body is `return state == s;` — the
+           ;; LHS is this ledger read, the RHS is a STATE-typed formal,
+           ;; and `decode_u8(_av)? == s` fails to compile (E0308). By
+           ;; making the LHS a typed STATE, the walker's existing
+           ;; tenum-name-of-type check on the `==` IR drives the RHS
+           ;; enum-ref to render as `EnumName::variant`, eliminating
+           ;; Bug-8's integer-coercion special case for tenum reads.
+           ;; Boolean and Uint ledger reads still flow through their
+           ;; integer decoders (decode_bool, decode_u8/u16/u32/u64/u128),
+           ;; so Bug-8's short-circuit remains in force for those.
+           (format "compact_runtime::std_lib::decode_via_field_repr::<~a>"
+                   (symbol->string enum-name))]
           [(tbytes ,src ,len)
            (format "compact_runtime::std_lib::decode_bytes::<~a>" len)]
           [(tvector ,src ,len ,type)

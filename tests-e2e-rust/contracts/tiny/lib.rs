@@ -31,6 +31,51 @@ use std::marker::PhantomData;
 
 compact_runtime::check_runtime_version!("0.16.100");
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
+#[repr(u8)]
+pub enum STATE {
+    #[default]
+    unset = 0,
+    set = 1,
+}
+impl Aligned for STATE {
+    fn alignment() -> Alignment {
+        u8::alignment()
+    }
+}
+impl FieldRepr for STATE {
+    fn field_repr<W: MemWrite<Fr>>(&self, writer: &mut W) {
+        (*self as u8).field_repr(writer);
+    }
+    fn field_size(&self) -> usize {
+        1
+    }
+}
+impl FromFieldRepr for STATE {
+    const FIELD_SIZE: usize = 1;
+    fn from_field_repr(r: &[Fr]) -> Option<Self> {
+        let n = u8::from_field_repr(r)?;
+        match n {
+            0 => Some(Self::unset),
+            1 => Some(Self::set),
+            _ => None,
+        }
+    }
+}
+impl From<STATE> for compact_runtime::Value {
+    fn from(v: STATE) -> compact_runtime::Value {
+        compact_runtime::Value::from(v as u8)
+    }
+}
+impl compact_runtime::BinaryHashRepr for STATE {
+    fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
+        (*self as u8).binary_repr(writer);
+    }
+    fn binary_len(&self) -> usize {
+        1
+    }
+}
+
 pub trait Witnesses<PS> {
     fn private_secret_key<'a>(&self, ctx: &WitnessContext<Ledger<'a>, PS>) -> (PS, [u8; 32]);
 }
@@ -45,6 +90,7 @@ where
 
 impl<PS, W> Contract<PS, W>
 where
+    PS: Clone,
     W: Witnesses<PS>,
 {
     pub fn new(witnesses: W) -> Self {
@@ -90,6 +136,41 @@ where
         })
     }
 
+    pub(crate) fn in_state(
+        &self,
+        ctx: CircuitContext<PS>,
+        s: STATE,
+    ) -> Result<CircuitResults<PS, bool>, CompactError> {
+        let result = ({
+            let _gather_ops = OpProgramGather::<DefaultDB>::new()
+                .dup(0)
+                .idx_at_index(2u8, false)
+                .popeq(false)
+                .build();
+            let _gather_results = query_for_read(
+                &ctx.current_query_context,
+                &_gather_ops,
+                None,
+                &initial_cost_model(),
+            )
+            .map_err(|e| CompactError::AssertionFailed(format!("ledger query failed: {:?}", e)))?;
+            let _av = match _gather_results.events.last() {
+                Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+                _ => {
+                    return Err(CompactError::AssertionFailed(
+                        "ledger: expected Read event".into(),
+                    ))
+                }
+            };
+            compact_runtime::std_lib::decode_via_field_repr::<STATE>(_av)?
+        } == s);
+        Ok(CircuitResults {
+            result,
+            context: ctx,
+            gas_cost: compact_runtime::RunningCost::default(),
+        })
+    }
+
     pub fn set(
         &self,
         ctx: CircuitContext<PS>,
@@ -100,7 +181,7 @@ where
                 let _gather_ops = OpProgramGather::<DefaultDB>::new()
                     .dup(0)
                     .idx_at_index(2u8, false)
-                    .popeq(true)
+                    .popeq(false)
                     .build();
                 let _gather_results = query_for_read(
                     &ctx.current_query_context,
@@ -119,8 +200,8 @@ where
                         ))
                     }
                 };
-                compact_runtime::std_lib::decode_u8(_av)?
-            } == 0u8),
+                compact_runtime::std_lib::decode_via_field_repr::<STATE>(_av)?
+            } == STATE::unset),
             "set: attempted to overwrite recorded value"
         );
         let _witness_ctx_1 = WitnessContext::new(
@@ -168,7 +249,7 @@ where
             let _gather_ops = OpProgramGather::<DefaultDB>::new()
                 .dup(0)
                 .idx_at_index(2u8, false)
-                .popeq(true)
+                .popeq(false)
                 .build();
             let _gather_results = query_for_read(
                 &ctx.current_query_context,
@@ -185,14 +266,14 @@ where
                     ))
                 }
             };
-            compact_runtime::std_lib::decode_u8(_av)?
-        } == 1u8)
+            compact_runtime::std_lib::decode_via_field_repr::<STATE>(_av)?
+        } == STATE::set)
         {
             compact_runtime::std_lib::some::<Fr>({
                 let _gather_ops = OpProgramGather::<DefaultDB>::new()
                     .dup(0)
                     .idx_at_index(1u8, false)
-                    .popeq(true)
+                    .popeq(false)
                     .build();
                 let _gather_results = query_for_read(
                     &ctx.current_query_context,
@@ -229,7 +310,7 @@ where
                 let _gather_ops = OpProgramGather::<DefaultDB>::new()
                     .dup(0)
                     .idx_at_index(2u8, false)
-                    .popeq(true)
+                    .popeq(false)
                     .build();
                 let _gather_results = query_for_read(
                     &ctx.current_query_context,
@@ -248,8 +329,8 @@ where
                         ))
                     }
                 };
-                compact_runtime::std_lib::decode_u8(_av)?
-            } == 1u8),
+                compact_runtime::std_lib::decode_via_field_repr::<STATE>(_av)?
+            } == STATE::set),
             "clear: no value is currently recorded"
         );
         let _witness_ctx_1 = WitnessContext::new(
@@ -264,7 +345,7 @@ where
                 let _gather_ops = OpProgramGather::<DefaultDB>::new()
                     .dup(0)
                     .idx_at_index(0u8, false)
-                    .popeq(true)
+                    .popeq(false)
                     .build();
                 let _gather_results = query_for_read(
                     &ctx.current_query_context,

@@ -46,6 +46,7 @@ where
 
 impl<PS, W> Contract<PS, W>
 where
+    PS: Clone,
     W: Witnesses<PS>,
 {
     pub fn new(witnesses: W) -> Self {

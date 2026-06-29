@@ -310,6 +310,7 @@ where
 
 impl<PS, W> Contract<PS, W>
 where
+    PS: Clone,
     W: Witnesses<PS>,
 {
     pub fn new(witnesses: W) -> Self {
@@ -369,7 +370,7 @@ where
                 let _gather_ops = OpProgramGather::<DefaultDB>::new()
                     .dup(0)
                     .idx_at_index(1u8, false)
-                    .popeq(true)
+                    .popeq(false)
                     .build();
                 let _gather_results = query_for_read(
                     &ctx.current_query_context,
@@ -388,8 +389,8 @@ where
                         ))
                     }
                 };
-                compact_runtime::std_lib::decode_u8(_av)?
-            } == 1u8)
+                compact_runtime::std_lib::decode_via_field_repr::<PublicState>(_av)?
+            } == PublicState::commit)
                 && (_w_private_state_0 == PrivateState::initial)),
             "In illegal state for committing"
         );
@@ -554,7 +555,7 @@ where
                 let _gather_ops = OpProgramGather::<DefaultDB>::new()
                     .dup(0)
                     .idx_at_index(1u8, false)
-                    .popeq(true)
+                    .popeq(false)
                     .build();
                 let _gather_results = query_for_read(
                     &ctx.current_query_context,
@@ -573,8 +574,8 @@ where
                         ))
                     }
                 };
-                compact_runtime::std_lib::decode_u8(_av)?
-            } == 2u8)
+                compact_runtime::std_lib::decode_via_field_repr::<PublicState>(_av)?
+            } == PublicState::reveal)
                 && (_w_private_state_0 == PrivateState::committed)),
             "In illegal state for revealing"
         );
@@ -736,7 +737,7 @@ where
                 let _gather_ops = OpProgramGather::<DefaultDB>::new()
                     .dup(0)
                     .idx_at_index(0u8, false)
-                    .popeq(true)
+                    .popeq(false)
                     .build();
                 let _gather_results = query_for_read(
                     &ctx.current_query_context,
@@ -851,7 +852,7 @@ where
                 let _gather_ops = OpProgramGather::<DefaultDB>::new()
                     .dup(0)
                     .idx_at_index(0u8, false)
-                    .popeq(true)
+                    .popeq(false)
                     .build();
                 let _gather_results = query_for_read(
                     &ctx.current_query_context,
@@ -879,7 +880,7 @@ where
                 let _gather_ops = OpProgramGather::<DefaultDB>::new()
                     .dup(0)
                     .idx_at_index(1u8, false)
-                    .popeq(true)
+                    .popeq(false)
                     .build();
                 let _gather_results = query_for_read(
                     &ctx.current_query_context,
@@ -898,8 +899,8 @@ where
                         ))
                     }
                 };
-                compact_runtime::std_lib::decode_u8(_av)?
-            } == 0u8),
+                compact_runtime::std_lib::decode_via_field_repr::<PublicState>(_av)?
+            } == PublicState::setup),
             "Attempted to set topic after setup phase"
         );
         let tmp = Maybe {
@@ -959,7 +960,7 @@ where
                 let _gather_ops = OpProgramGather::<DefaultDB>::new()
                     .dup(0)
                     .idx_at_index(0u8, false)
-                    .popeq(true)
+                    .popeq(false)
                     .build();
                 let _gather_results = query_for_read(
                     &ctx.current_query_context,
@@ -987,7 +988,7 @@ where
                 let _gather_ops = OpProgramGather::<DefaultDB>::new()
                     .dup(0)
                     .idx_at_index(1u8, false)
-                    .popeq(true)
+                    .popeq(false)
                     .build();
                 let _gather_results = query_for_read(
                     &ctx.current_query_context,
@@ -1006,8 +1007,8 @@ where
                         ))
                     }
                 };
-                compact_runtime::std_lib::decode_u8(_av)?
-            } == 0u8),
+                compact_runtime::std_lib::decode_via_field_repr::<PublicState>(_av)?
+            } == PublicState::setup),
             "Attempted to add a voter after setup phase"
         );
         let ops = OpProgramVerify::<DefaultDB>::new()

@@ -17,6 +17,32 @@
 // Witness execution context + a trivial `NoWitnesses` marker for contracts
 // that declare zero witnesses.
 
+//! Witness execution context for `compactc --rust`-generated contracts.
+//!
+//! # Witness privacy model
+//!
+//! Every generated `Witnesses<PS>::<method>` returns `(PS, T)`. `PS`
+//! (private state) is a free generic parameter on `WitnessContext`,
+//! `CircuitContext`, `ConstructorContext`, `CircuitResults`, and
+//! `ConstructorResult`, with **no** `Aligned` / `FieldRepr` /
+//! `BinaryHashRepr` / `From<…> for AlignedValue` bounds. The type
+//! system therefore forbids pushing a `PS` value into a `StateValue`
+//! or any other serialised on-chain representation — `PS` is
+//! structurally confined to the four well-known fields that thread it
+//! between constructor / circuit invocations, none of which feed the
+//! `ChargedState` that becomes `ContractState.data`.
+//!
+//! The witness *value* `T` is a normal Rust type. Whether it is safe
+//! to write to a public ledger field is the contract author's
+//! responsibility — the codegen has no way to tell which `T` values
+//! are private by intent. See the user-guide subsection
+//! [Witness privacy model][1] and the structural audit at
+//! `docs/superpowers/research/2026-06-02-witness-threading-audit.md`.
+//! The operational guard is the regression test at
+//! `tests-e2e-rust/tests/witness_leak_check.rs` (Prod-11).
+//!
+//! [1]: ../../doc/rust-codegen-user-guide.md#witness-privacy-model
+
 use crate::{ContractAddress, DefaultDB, QueryContext, DB};
 
 /// Read-only context handed to a witness implementation.

@@ -150,6 +150,41 @@ If the contract declares zero witnesses, the codegen uses
 `compact_runtime::NoWitnesses` as the default bound and you can
 write `Contract::<_, NoWitnesses>::new(NoWitnesses)`.
 
+#### Witness privacy model
+
+Compact's two-world invariant — *private state never enters the
+ledger* — is upheld by a combination of type-system guarantee and
+authoring discipline. It is important to understand which is which.
+
+- **Type-system guarantee (codegen-enforced).** Every
+  `Witnesses<PS>::<method>` returns `(PS, T)`. `PS` (private state)
+  is a free generic parameter throughout `runtime-rs`
+  (`WitnessContext<L, PS, D>`, `CircuitContext<PS, D>`,
+  `ConstructorContext<PS, D>`, `CircuitResults<PS, R, D>`,
+  `ConstructorResult<PS, D>`) with **no** `Aligned` / `FieldRepr` /
+  `BinaryHashRepr` / `From<…> for AlignedValue` bounds. The compiler
+  therefore *forbids* generated code (or your own) from pushing a
+  `PS` value into a `StateValue`, an `AlignedValue`, or any other
+  serialised on-chain representation. `Contract<PS, W>` carries
+  `_ps: PhantomData<PS>` — `PS` never appears as a concrete field on
+  the contract.
+- **Procedural responsibility (author-enforced).** The witness
+  *value* `T` is a normal Rust type that the contract author chose.
+  If `T` is a public hash (e.g. `persistent_hash(sk)`), it is safe to
+  push to the ledger. If `T` is intended to be secret (a key, a
+  nonce, raw entropy), it must not flow into a public ledger field.
+  The codegen cannot tell which `T` values are private by intent —
+  this is the same discipline a Compact author already exercises in
+  the TypeScript backend.
+
+The operational guard is the witness-leak regression test at
+[`tests-e2e-rust/tests/witness_leak_check.rs`](../tests-e2e-rust/tests/witness_leak_check.rs)
+(Prod-11), which scans the serialised `ContractState` for sentinel
+bytes corresponding to a witness's raw `PS` value and asserts they
+are absent. The full structural argument lives in the witness
+threading audit at
+[`docs/superpowers/research/2026-06-02-witness-threading-audit.md`](../docs/superpowers/research/2026-06-02-witness-threading-audit.md).
+
 ### 5. Run the constructor and circuits
 
 ```rust

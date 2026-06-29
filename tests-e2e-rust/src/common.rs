@@ -31,7 +31,7 @@ use serde::Deserialize;
 use std::path::Path;
 
 /// Original M2-era reference shape. One serialised `ContractState` plus
-/// a stringified BigInt for the counter contract's single Counter
+/// a stringified `BigInt` for the counter contract's single Counter
 /// field. Kept here because `tests/counter.rs` still uses it.
 #[derive(Deserialize, Debug)]
 pub struct TsReferenceState {
@@ -86,7 +86,7 @@ impl SmallFixtureTsReference {
 // CapturedMerklePath — TS-side MerklePath replay for Rust witnesses.
 // ---------------------------------------------------------------------------
 
-/// One MerklePath captured from a TS driver. Mirrors the in-circuit
+/// One `MerklePath` captured from a TS driver. Mirrors the in-circuit
 /// `MerkleTreePath<n, T>` shape: a leaf (the user's struct as 32-byte
 /// hex) and a Vec of entries — each `(sibling.field, goes_left)`,
 /// totalling `n` entries.

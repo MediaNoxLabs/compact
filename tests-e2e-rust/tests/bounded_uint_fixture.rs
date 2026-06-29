@@ -51,7 +51,7 @@ fn ctor_ctx() -> ConstructorContext<()> {
     }
 }
 
-/// bounded_uint_fixture exports a single circuit `set_small`.
+/// `bounded_uint_fixture` exports a single circuit `set_small`.
 fn make_envelope(
     data: ChargedState<midnight_storage::DefaultDB>,
 ) -> ContractState<midnight_storage::DefaultDB> {

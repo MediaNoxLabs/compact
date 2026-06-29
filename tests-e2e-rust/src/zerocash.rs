@@ -32,7 +32,7 @@ pub struct ZerocashTsReferenceState {
     pub after_mint: Option<ZerocashStepSnapshot>,
     #[serde(rename = "afterSpend", default)]
     pub after_spend: Option<ZerocashStepSnapshot>,
-    /// Captured MerklePath for the spend's `old_commitment` lookup,
+    /// Captured `MerklePath` for the spend's `old_commitment` lookup,
     /// emitted by capture-zerocash.mjs so the Rust witness can replay
     /// the same bytes. `None` when the TS driver did not reach spend.
     #[serde(rename = "spendPath", default)]

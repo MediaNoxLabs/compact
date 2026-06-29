@@ -29,7 +29,7 @@
 
 use crate::{Fr, FromFieldRepr};
 
-/// FIELD_SIZE for a `[u8; N]` field-repr — 31-byte chunks plus a stray
+/// `FIELD_SIZE` for a `[u8; N]` field-repr — 31-byte chunks plus a stray
 /// Fr for the remainder, matching `bytes_from_field_repr`'s packing.
 pub const fn bytes_field_size(n: usize) -> usize {
     let stray = n % 31;

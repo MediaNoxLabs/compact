@@ -73,7 +73,7 @@ pub fn new_cell_bounded_uint<D: DB>(value: u128, byte_len: usize) -> StateValue<
 
 /// Builds a `StateValue::Cell(...)` from a fixed-size array `[T; N]` of
 /// values each convertible to `AlignedValue`. Concatenates each element's
-/// AlignedValue into one. Used by codegen for Vector<N, T> ledger fields
+/// `AlignedValue` into one. Used by codegen for Vector<N, T> ledger fields
 /// where `[T; N]: Into<AlignedValue>` isn't impl'd upstream — orphan rules
 /// block us from adding that impl directly, so we provide this helper.
 pub fn new_cell_array<T, D, const N: usize>(v: [T; N]) -> StateValue<D>
@@ -137,7 +137,7 @@ pub fn new_map<D: DB>() -> StateValue<D> {
 /// holds the tail-list (or Null), and the third holds the u64 length.
 ///
 /// See compiler/midnight-ledger.ss:
-///   (declare-ledger-adt List ([Type value_type])
+///   (declare-ledger-adt List ([Type `value_type`])
 ///     (initial-value (state-value 'array ((state-value 'null)
 ///                                         (state-value 'null)
 ///                                         (state-value 'cell (align 0 8))))) ...)

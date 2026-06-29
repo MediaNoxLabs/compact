@@ -78,7 +78,7 @@ fn fixed_coin_info() -> coin_info {
 
 /// Deterministic Witnesses impl matching the TS driver in
 /// capture-zerocash.mjs. For the `path_of` stub we still hand back a
-/// default (empty) path — spend() asserts the path's root matches the
+/// default (empty) path — `spend()` asserts the path's root matches the
 /// historic merkle tree, which won't hold with a stub path, so the
 /// spend step in the fixture records an `error` rather than a stateHex.
 struct ZerocashWitnesses;
@@ -165,8 +165,8 @@ fn ctor_ctx() -> ConstructorContext<()> {
     }
 }
 
-/// Build a ContractState envelope around a freshly minted ChargedState,
-/// matching the operations / authority / balance that the TS initialState()
+/// Build a `ContractState` envelope around a freshly minted `ChargedState`,
+/// matching the operations / authority / balance that the TS `initialState()`
 /// path produces. zerocash exports two circuits: `spend` and `zerocash_mint`.
 fn make_envelope(
     data: ChargedState<midnight_storage::DefaultDB>,
@@ -239,15 +239,15 @@ fn zerocash_init_then_mint_byte_parity() {
     assert_step_bytes_eq("mint", &envelope, after_mint);
 }
 
-/// spend() asserts that the supplied MerklePath's root matches a root
-/// recorded in the HistoricMerkleTree. We replay the same path the TS
+/// `spend()` asserts that the supplied `MerklePath`'s root matches a root
+/// recorded in the `HistoricMerkleTree`. We replay the same path the TS
 /// driver computed (capture-zerocash.mjs extracts it from the
-/// post-mint BoundedMerkleTree via `pathForLeaf`) by stashing it into
-/// the thread-local SPEND_PATH before calling `spend()` — the
+/// post-mint `BoundedMerkleTree` via `pathForLeaf`) by stashing it into
+/// the thread-local `SPEND_PATH` before calling `spend()` — the
 /// `context_path_of` witness then returns it instead of the default
 /// empty placeholder.
 ///
-/// FIXED_PK is also tweaked from the original `[2u8; 32]` placeholder
+/// `FIXED_PK` is also tweaked from the original `[2u8; 32]` placeholder
 /// to `persistentHash<Bytes<32>>(FIXED_SK)`. That way mint inserts a
 /// commitment under the same pk that `derive_zk_public_key(source_sk)`
 /// produces during spend — so the lookup hits the inserted leaf.
@@ -291,17 +291,17 @@ fn zerocash_init_mint_spend_byte_parity() {
     assert_step_bytes_eq("spend", &envelope, after_spend);
 }
 
-/// Drift detector for the hardcoded FIXED_PK constant.
+/// Drift detector for the hardcoded `FIXED_PK` constant.
 ///
-/// FIXED_PK is the byte image of `persistentHash<Bytes<32>>(FIXED_SK)`
+/// `FIXED_PK` is the byte image of `persistentHash<Bytes<32>>(FIXED_SK)`
 /// computed by the TS capture driver and pasted into this file. The
 /// byte-parity tests rely on it matching what the Rust contract folds
 /// into the commitment tree via `pure_circuits::derive_zk_public_key`.
 ///
-/// If anyone tweaks `FIXED_SK` (or the underlying persistent_hash
+/// If anyone tweaks `FIXED_SK` (or the underlying `persistent_hash`
 /// semantics shift), the hardcoded constant becomes stale and the
 /// byte-parity tests would fail with an opaque hex mismatch deep
-/// inside a ContractState dump. This test re-derives the value via
+/// inside a `ContractState` dump. This test re-derives the value via
 /// the same Rust hash primitive the contract uses
 /// (`persistent_hash_aligned` with a single `AlignedValue::from(sk)`
 /// argument — see `pure_circuits::derive_zk_public_key` in

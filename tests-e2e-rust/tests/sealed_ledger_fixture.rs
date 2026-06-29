@@ -83,7 +83,7 @@ fn ctor_ctx() -> ConstructorContext<()> {
     }
 }
 
-/// sealed_ledger_fixture exports one circuit `ping`.
+/// `sealed_ledger_fixture` exports one circuit `ping`.
 fn make_envelope(
     data: ChargedState<midnight_storage::DefaultDB>,
 ) -> ContractState<midnight_storage::DefaultDB> {

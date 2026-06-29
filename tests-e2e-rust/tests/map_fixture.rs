@@ -48,9 +48,9 @@ fn ctor_ctx() -> ConstructorContext<()> {
     }
 }
 
-/// Build a ContractState envelope around a freshly minted ChargedState,
-/// matching the operations / authority / balance that the TS initialState()
-/// path produces. map_fixture exports a single circuit `put`.
+/// Build a `ContractState` envelope around a freshly minted `ChargedState`,
+/// matching the operations / authority / balance that the TS `initialState()`
+/// path produces. `map_fixture` exports a single circuit `put`.
 fn make_envelope(
     data: ChargedState<midnight_storage::DefaultDB>,
 ) -> ContractState<midnight_storage::DefaultDB> {

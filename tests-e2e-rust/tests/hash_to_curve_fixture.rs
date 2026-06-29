@@ -52,8 +52,8 @@ fn ctor_ctx() -> ConstructorContext<()> {
     }
 }
 
-/// Build a ContractState envelope around a freshly minted ChargedState.
-/// hash_to_curve_fixture exports a single circuit `ping`.
+/// Build a `ContractState` envelope around a freshly minted `ChargedState`.
+/// `hash_to_curve_fixture` exports a single circuit `ping`.
 fn make_envelope(
     data: ChargedState<midnight_storage::DefaultDB>,
 ) -> ContractState<midnight_storage::DefaultDB> {

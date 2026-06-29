@@ -140,7 +140,7 @@ pub fn decode_vector_fr<const N: usize>(av: &AlignedValue) -> Result<[Fr; N], Co
 ///
 /// Mirrors `decode_vector_fr` for the integer case — Iter 7 adds this
 /// so `Vector<N, Uint<64>>` ledger views can decode the gathered
-/// AlignedValue produced by a `new_cell_array` write.
+/// `AlignedValue` produced by a `new_cell_array` write.
 pub fn decode_vector_u64<const N: usize>(av: &AlignedValue) -> Result<[u64; N], CompactError> {
     if av.value.0.len() < N {
         return Err(CompactError::AssertionFailed(format!(

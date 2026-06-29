@@ -103,8 +103,8 @@ fn ctor_ctx() -> ConstructorContext<()> {
     }
 }
 
-/// Build a ContractState envelope around a (possibly mutated) ChargedState.
-/// hmt_default_fixture exports a single circuit — `add_default` — so the
+/// Build a `ContractState` envelope around a (possibly mutated) `ChargedState`.
+/// `hmt_default_fixture` exports a single circuit — `add_default` — so the
 /// operations map registers just that entry to match the TS reference
 /// (which derives the operations map from the same `@circuit`
 /// annotations).

@@ -64,7 +64,7 @@ impl<D: DB> OpProgramVerify<D> {
     }
 
     /// `ins` — pop the top `n` stack values and insert them into the
-    /// container at depth `n` (a Map / Set / Array / MerkleTree write).
+    /// container at depth `n` (a Map / Set / Array / `MerkleTree` write).
     /// `cached` controls whether the write should be marked cached for
     /// witness-side reads.
     pub fn ins(mut self, cached: bool, n: u8) -> Self {
@@ -93,7 +93,7 @@ impl<D: DB> OpProgramVerify<D> {
     }
 
     /// `dup` — duplicate the value at depth `n` (0 = top of stack). Emitted by
-    /// MerkleTree / HistoricMerkleTree `insert` vm-code when the same
+    /// `MerkleTree` / `HistoricMerkleTree` `insert` vm-code when the same
     /// container needs to appear in two stack positions before successive
     /// `ins` ops update the tree and its first-free index / history map.
     pub fn dup(mut self, n: u8) -> Self {
@@ -102,7 +102,7 @@ impl<D: DB> OpProgramVerify<D> {
     }
 
     /// `root` — replace the top-of-stack `BoundedMerkleTree` with its
-    /// digest (root hash). Used by HistoricMerkleTree `insert` to derive the
+    /// digest (root hash). Used by `HistoricMerkleTree` `insert` to derive the
     /// key for the history map entry that records the just-updated tree's
     /// root.
     pub fn root(mut self) -> Self {
@@ -111,8 +111,8 @@ impl<D: DB> OpProgramVerify<D> {
     }
 
     /// `lt` — pop the top two stack values and push the boolean result of
-    /// `top-1 < top`. Emitted by the bounded-index variants of MerkleTree /
-    /// HistoricMerkleTree `insert*Index*` vm-code (`insertIndex`,
+    /// `top-1 < top`. Emitted by the bounded-index variants of `MerkleTree` /
+    /// `HistoricMerkleTree` `insert*Index*` vm-code (`insertIndex`,
     /// `insertHashIndex`, `insertIndexDefault`) where the post-insert
     /// first-free index is `max(old_first_free, index + 1)` — implemented
     /// as a compare-then-branch on the VM stack.
@@ -122,8 +122,8 @@ impl<D: DB> OpProgramVerify<D> {
     }
 
     /// `branch` — skip the next `skip` instructions if the top-of-stack
-    /// boolean is `true`. Emitted by the bounded-index MerkleTree /
-    /// HistoricMerkleTree `insert*Index*` vm-code (alongside `jmp`) to
+    /// boolean is `true`. Emitted by the bounded-index `MerkleTree` /
+    /// `HistoricMerkleTree` `insert*Index*` vm-code (alongside `jmp`) to
     /// pick between the new and old first-free index after the `lt`.
     pub fn branch(mut self, skip: u32) -> Self {
         self.ops.push(Op::Branch { skip });

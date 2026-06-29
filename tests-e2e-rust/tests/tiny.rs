@@ -69,8 +69,8 @@ fn ctor_ctx() -> ConstructorContext<()> {
     }
 }
 
-/// Build a ContractState envelope around a freshly mutated
-/// ChargedState, matching what tiny.compact's TS path produces:
+/// Build a `ContractState` envelope around a freshly mutated
+/// `ChargedState`, matching what tiny.compact's TS path produces:
 /// data plus the canonical `(get, set, clear)` operations plus the
 /// default maintenance authority plus an empty balance.
 /// `tagged_serialize` then produces a byte-identical encoding to the

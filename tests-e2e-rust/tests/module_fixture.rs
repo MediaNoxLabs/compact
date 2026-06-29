@@ -84,7 +84,7 @@ fn ctor_ctx() -> ConstructorContext<()> {
     }
 }
 
-/// module_fixture exports one circuit `bump_inner` (re-exported from
+/// `module_fixture` exports one circuit `bump_inner` (re-exported from
 /// `module M`).
 fn make_envelope(
     data: ChargedState<midnight_storage::DefaultDB>,

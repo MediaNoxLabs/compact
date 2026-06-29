@@ -56,10 +56,10 @@ fn ctor_ctx() -> ConstructorContext<()> {
     }
 }
 
-/// Build a ContractState envelope around a freshly minted ChargedState.
-/// fold_fixture exports a single circuit `ping`, so the operations map
+/// Build a `ContractState` envelope around a freshly minted `ChargedState`.
+/// `fold_fixture` exports a single circuit `ping`, so the operations map
 /// must register one entry under that name to match the TS-side
-/// initialState() output.
+/// `initialState()` output.
 fn make_envelope(
     data: ChargedState<midnight_storage::DefaultDB>,
 ) -> ContractState<midnight_storage::DefaultDB> {

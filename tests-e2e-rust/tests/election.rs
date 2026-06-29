@@ -55,7 +55,7 @@ use tests_e2e_rust::{CapturedMerklePath, ElectionStepSnapshot, ElectionTsReferen
 /// Fixed deterministic witness payloads — must match capture-election.mjs.
 const FIXED_SK: [u8; 32] = [7u8; 32];
 
-/// Hardcoded `public_key(FIXED_SK)` — i.e. persistent_hash with the
+/// Hardcoded `public_key(FIXED_SK)` — i.e. `persistent_hash` with the
 /// "lares:election:pk:" domain separator of the all-7s secret key.
 /// Must match the AUTHORITY computed by capture-election.mjs via
 /// `contract._public_key_0(FIXED_SK)`. The constructor seeds this
@@ -69,7 +69,7 @@ const AUTHORITY: [u8; 32] = [
 /// `vote$commit` derives `pk = public_key(FIXED_SK)`, which equals
 /// AUTHORITY. So the only voter that can both be `add_voter`'d *and*
 /// later have `vote$commit` succeed is AUTHORITY itself. The TS capture
-/// does the same (registers AUTHORITY as VOTER_PK).
+/// does the same (registers AUTHORITY as `VOTER_PK`).
 const VOTER_PK: [u8; 32] = AUTHORITY;
 
 thread_local! {
@@ -94,7 +94,7 @@ fn reset_election_thread_local() {
 }
 
 /// Trivial Witnesses impl for election. None of these are invoked during
-/// initial_state() (the implicit constructor has no body), so we just need
+/// `initial_state()` (the implicit constructor has no body), so we just need
 /// type-correct stubs to satisfy the Contract<PS, W> bound.
 struct ElectionWitnesses;
 
@@ -197,10 +197,10 @@ fn ctor_ctx() -> ConstructorContext<()> {
     }
 }
 
-/// Build a ContractState envelope around a freshly minted ChargedState,
-/// matching the operations / authority / balance that the TS initialState()
+/// Build a `ContractState` envelope around a freshly minted `ChargedState`,
+/// matching the operations / authority / balance that the TS `initialState()`
 /// path produces. election exports five circuits:
-///   advance, vote$reveal, add_voter, vote$commit, set_topic
+///   advance, vote$reveal, `add_voter`, vote$commit, `set_topic`
 /// (insertion order matches the TS-side fixture).
 fn make_envelope(
     data: ChargedState<midnight_storage::DefaultDB>,
@@ -358,10 +358,10 @@ fn election_init_then_add_voter_byte_parity() {
 }
 
 /// Drives the same chain capture-election.mjs uses for vote$commit:
-///   init → set_topic → add_voter(AUTHORITY) → advance → vote$commit(yes)
-/// Then byte-compares the post-step ContractState against the TS
-/// fixture. The eligibleness MerklePath returned by the witness is the
-/// one captured in `votePathEligible` (replayed via ELIGIBLE_PATH).
+///   init → `set_topic` → `add_voter(AUTHORITY)` → advance → vote$commit(yes)
+/// Then byte-compares the post-step `ContractState` against the TS
+/// fixture. The eligibleness `MerklePath` returned by the witness is the
+/// one captured in `votePathEligible` (replayed via `ELIGIBLE_PATH`).
 #[test]
 fn election_vote_commit_byte_parity() {
     reset_election_thread_local();
@@ -394,9 +394,9 @@ fn election_vote_commit_byte_parity() {
 }
 
 /// Drives the full chain that ends in vote$reveal:
-///   init → set_topic → add_voter → advance → vote$commit
+///   init → `set_topic` → `add_voter` → advance → vote$commit
 ///        → advance → vote$reveal
-/// Both eligibleness and committed_votes paths are needed: the former
+/// Both eligibleness and `committed_votes` paths are needed: the former
 /// for vote$commit, the latter for vote$reveal. Each is stashed
 /// immediately before the relevant circuit call.
 #[test]
@@ -446,13 +446,13 @@ fn election_vote_reveal_byte_parity() {
 /// the TS capture driver. Owner-driven circuits (`set_topic`, `advance`,
 /// `add_voter`) assert `public_key(sk) == authority.read()`, so the
 /// constructor must seed `authority` with exactly this value or every
-/// owner-action e2e test fails with an opaque ContractState hex mismatch.
+/// owner-action e2e test fails with an opaque `ContractState` hex mismatch.
 ///
 /// Re-derive via the same Rust hash primitive
 /// (`persistent_hash_aligned` with the `"lares:election:pk:"` domain
 /// separator padded to 32 bytes — see `pure_circuits::public_key` in
 /// `tests-e2e-rust/contracts/election/lib.rs`) and assert equality.
-/// If `FIXED_SK` changes (or the persistent_hash semantics shift), this
+/// If `FIXED_SK` changes (or the `persistent_hash` semantics shift), this
 /// test fails with a clear "constant drift" message before the
 /// byte-parity tests fail.
 #[test]

@@ -89,8 +89,8 @@ fn ctor_ctx() -> ConstructorContext<()> {
     }
 }
 
-/// Build a ContractState envelope around a (possibly mutated) ChargedState.
-/// set_size_fixture exports two circuits — `check_set_empty` and
+/// Build a `ContractState` envelope around a (possibly mutated) `ChargedState`.
+/// `set_size_fixture` exports two circuits — `check_set_empty` and
 /// `check_map_empty` — so the operations map must register both for the
 /// envelope to serialize to the same bytes as the TS reference (which
 /// derives the operations map from the same `@circuit` annotations).

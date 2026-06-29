@@ -75,7 +75,7 @@
 //!   [`ResultMode`].
 //! - [`std_lib`] — the Compact standard library: `Counter`, `Maybe<T>`,
 //!   `Bytes<N>`, `pad`, `disclose`, `persistentHash`, Jubjub primitives,
-//!   Merkle path helpers, OpaqueString, the width-typed decoders.
+//!   Merkle path helpers, `OpaqueString`, the width-typed decoders.
 //!
 //! # Versioning
 //!

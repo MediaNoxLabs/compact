@@ -35,7 +35,7 @@ use midnight_serialize::tagged_serialize;
 use midnight_storage::storage::HashMap;
 use tests_e2e_rust::SmallFixtureTsReference;
 
-/// Deterministic Witnesses impl. fetch_field is the only witness in the
+/// Deterministic Witnesses impl. `fetch_field` is the only witness in the
 /// emitted trait (Maybe-return and arg-taking declarations were
 /// dead-code-eliminated by the frontend since they're never called).
 struct FixtureWitnesses;
@@ -62,7 +62,7 @@ fn ctor_ctx() -> ConstructorContext<()> {
     }
 }
 
-/// witnesses_fixture exports a single circuit `pull`.
+/// `witnesses_fixture` exports a single circuit `pull`.
 fn make_envelope(
     data: ChargedState<midnight_storage::DefaultDB>,
 ) -> ContractState<midnight_storage::DefaultDB> {

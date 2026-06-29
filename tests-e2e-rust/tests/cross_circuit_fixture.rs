@@ -49,7 +49,7 @@ fn ctor_ctx() -> ConstructorContext<()> {
     }
 }
 
-/// cross_circuit_fixture exports two impure circuits: `reset_and_set`
+/// `cross_circuit_fixture` exports two impure circuits: `reset_and_set`
 /// then `reset` (insertion order matches the TS-side fixture).
 fn make_envelope(
     data: ChargedState<midnight_storage::DefaultDB>,

@@ -9,7 +9,7 @@ Research artefact produced 2026-06-02 after M3.5 emitter-validation closure (com
 Our Rust codegen covers the structural backbone of Compact: scalars, ADTs as ledger fields (Counter / Cell / Map / Set / MerkleTree / HistoricMerkleTree), user structs and enums, transparent + nominal type aliases, witnesses, native hashes, `if`-statement bodies, ADT method calls (`insert` / `lookup` / `member` / `checkRoot`), cross-circuit calls. 25 e2e byte-parity tests cover this surface.
 
 What's NOT covered is roughly orthogonal:
-1. **Higher-order control flow** — `fold` / `map` / lambda-as-expression / `for`-range / `for`-iterable loops
+1. ~~**Higher-order control flow**~~ — `fold` (Iter 6, `f030189`), `map` + lambda-as-expression (Iter 7, `e135eb8` + `d3fb0b6`), `for`-range (Iter 4, `d3f403b`), `for`-iterable (Iter 5, `2893279`) all closed. Compile-time unroll is the lowering strategy throughout. Remaining gaps in this category are MVP edges (e.g. closed-over mutable state inside `fold` accumulators).
 2. ~~**Module system**~~ — closed by Iter 10. The same `expand-modules-and-types` pass at `analysis-passes.ss:43` that monomorphises generics also inlines a module's exported declarations into the importing program's namespace; `Lexpanded` (langs.ss:529-535) strips the `(module ...)` and `(import ...)` nonterminals entirely. The Rust codegen never sees a module boundary — fields, circuits, witnesses declared inside `module M { ... }` and re-exported via `import M; export { ... }` are emitted as flat top-level declarations. The flat-import shape is exercised by `module_fixture.compact` + byte-parity test. Prefix imports (`import M prefix P_`) and nested modules survive the same flattening at the IR level but were not added as separate fixtures — the codegen path is identical.
 3. ~~**Generic circuits**~~ — already covered (Iter 11: `expand-modules-and-types` monomorphises pre-Rust-IR; zerocash + election exercise `merkleTreePathRoot<N, T>` callsites in their multi-step byte-parity suites). Remaining sub-gap: user-defined non-stdlib generic circuits called in body position are blocked by the **non-generic-specific** user-circuit-call-in-body limitation (same gap blocks non-generic user circuit calls — tracked under Iter 6/7).
 4. **`List<T>` ADT** — the only core ADT we haven't fixtured
@@ -38,7 +38,7 @@ Effort estimates and priority below.
 | ADT | HistoricMerkleTree<H,T> (`.checkRoot`, `.insertIndexDefault`) | 9 | ✅ checkRoot+insertIndexDefault (A21 closed circuit-body shape) | — |
 | ADT | **List<T>** (pushFront/popFront/head/length/isEmpty) | 16 | ❌ no fixture | **High** |
 | User type | struct (exported/non-exported/nested/parameterised `S<a,#n>`) | 35 | ✅ exported+non-exported; **generic structs** not | Medium |
-| User type | enum (return/compare/`default<E>`) | 29 | ✅ | — |
+| User type | enum (return/compare/`default<E>`) | 29 | ✅ Bug-10 (62c81be) — `tenum`-typed ledger reads now decode through `decode_via_field_repr::<EnumName>` rather than as raw `u8`, so `state.read() == E::variantA` type-checks without a discriminant cast | — |
 | User type | type alias (transparent/nominal/chained) | 13 | ✅ direct; chained alias untested | Low |
 | Circuit | export circuit / impure / pure modifier | 446 / many / 4 | ✅ basic; `pure circuit` modifier not explicitly fixtured | Low |
 | Circuit | generic circuit `circuit f<#N>()` | 2+ | ✅ Iter 11 — `expand-modules-and-types` monomorphises pre-Rust-IR; generic stdlib calls (`merkleTreePathRoot<N,T>`) exercised by zerocash + election multi-step tests | — |
@@ -46,11 +46,11 @@ Effort estimates and priority below.
 | Witness | various args/returns | 17 | ✅ | — |
 | Witness | module-local witness | 1 | ❌ | Low |
 | Control flow | if/else, ternary | 26 / 46 | ✅ | — |
-| Control flow | **for (const i of L..U)** range loop | 9 | ❌ | **High** |
-| Control flow | **for (const x of iterable)** element loop | 3+ | ❌ | **High** |
-| Control flow | **fold(λ, init, vec)** | 36 | ❌ | **High** |
-| Control flow | **map(λ, arr)** | 47 | ❌ | **High** |
-| Control flow | **lambda-as-expression** `(x) => …` / IIFE | 88 (`=>` count) | ❌ | **High** |
+| Control flow | **for (const i of L..U)** range loop | 9 | ✅ Iter 4 (d3f403b) — constructor + circuit MVP | — |
+| Control flow | **for (const x of iterable)** element loop | 3+ | ✅ Iter 5 (2893279) — static-length MVP, literal iterables with unused loop variable cover the common case | — |
+| Control flow | **fold(λ, init, vec)** | 36 | ✅ Iter 6 (f030189) + Iter 9 dispatch fix (405be1c) — closed-over variables and side-effect-free accumulators | — |
+| Control flow | **map(λ, arr)** | 47 | ✅ Iter 7 (e135eb8) literal-vector MVP + Iter 7 follow-up (d3fb0b6) non-identity arithmetic lambdas; compile-time unroll | — |
+| Control flow | **lambda-as-expression** `(x) => …` / IIFE | 88 (`=>` count) | ✅ Iter 7 — lambda body rendered inline at each unroll site, never as a runtime closure | — |
 | Control flow | comma-sequenced exprs | 4+ | ✅ basic | Medium |
 | Casts | `as Uint` / `as Bytes` / `as Field` | 21 / 15 / 16 | ✅ trivial; explicit-cast-as-expr generally untested | Medium |
 | Modules | **module / import / prefix imports** | 35 / 169 / 10 | ✅ Iter 10 — `expand-modules-and-types` inlines module contents into the importing scope pre-Rust-IR (langs.ss:529-535 strips `(module ...)` / `(import ...)` from `Lexpanded`); module-declared circuits and ledger fields are emitted flat. Covered by `module_fixture.compact` byte-parity test | — |
@@ -68,14 +68,16 @@ Effort estimates and priority below.
 
 ## Top 5 gaps (priority order)
 
-### Gap 1 — `for`-loops (range + iterable) [HIGH, Medium effort]
-- `for (const i of 0..N) { ... }` and `for (const x of disclose(bv)) { ... }`
-- Used in ~12 tests including test682 (Set seeded with 256 items), test780 (Counter accumulator), test895 (Bytes folding), test900, test1020.
-- Without this, any contract with a non-trivial constructor seed loop can't be ported.
+### Gap 1 — `for`-loops (range + iterable) [CLOSED by Iter 4 + Iter 5]
+- ~~`for (const i of 0..N) { ... }` and `for (const x of disclose(bv)) { ... }`~~
+- ~~Used in ~12 tests including test682 (Set seeded with 256 items), test780 (Counter accumulator), test895 (Bytes folding), test900, test1020.~~
+- ~~Without this, any contract with a non-trivial constructor seed loop can't be ported.~~
+- **Resolved**: for-range loop (Iter 4, `d3f403b`) constructor + circuit MVP; for-iterable loop (Iter 5, `2893279`) static-length MVP. Lowering is compile-time unroll — the loop body is rendered once per iteration with the loop variable substituted by the literal index/element.
 
-### Gap 2 — Higher-order stdlib: fold / map / lambda [HIGH, Medium-Large effort]
-- `fold((acc, x) => acc + x, 0, vec)` (36 tests), `map(fn, arr)` (47 tests), bare lambdas in expression position (88 `=>` occurrences).
-- `fold` is the canonical bounded-loop-with-accumulator in Compact.
+### Gap 2 — Higher-order stdlib: fold / map / lambda [CLOSED by Iter 6 + Iter 7]
+- ~~`fold((acc, x) => acc + x, 0, vec)` (36 tests), `map(fn, arr)` (47 tests), bare lambdas in expression position (88 `=>` occurrences).~~
+- ~~`fold` is the canonical bounded-loop-with-accumulator in Compact.~~
+- **Resolved**: `fold` closed by Iter 6 (`f030189`) + Iter 9 dispatch fix (`405be1c`); `map` + lambda-as-expression closed by Iter 7 (`e135eb8`) with the non-identity-arithmetic-lambda follow-up (`d3fb0b6`). Same compile-time unroll lowering as for-loops.
 
 ### Gap 3 — Module system [CLOSED by Iter 10]
 - ~~`module M { ... }`, `import M`, `import M prefix P_`, nested modules, module-local witness, sealed ledgers.~~
@@ -94,7 +96,7 @@ Effort estimates and priority below.
 
 ## Honourable mentions (lower priority but real)
 
-- HistoricMerkleTree.`insertIndexDefault` (test937)
+- ~~HistoricMerkleTree.`insertIndexDefault` (test937)~~ — closed by A21 (`6aa3cdc` + `776d83e` byte-parity).
 - Nested Map chained lookup (test1010)
 - Sealed ledger (3 tests)
 - `pure circuit` modifier (4 tests)

@@ -1644,12 +1644,23 @@
            ;; methods on `uN`, so the receiver must be a concrete `uN`
            ;; type (an unsuffixed `1.wrapping_mul(2)` would be rejected
            ;; with "can't call method on ambiguous numeric type").
+           ;; Bug-11 (2026-06-29): pick the smallest Rust unsigned width
+           ;; that can hold `nat`, mirroring uint-rust-width and the
+           ;; generalised tunsigned-rust-suffix-for-bound. Pre-Bug-11
+           ;; this rejected anything off the power-of-2-minus-1 ladder
+           ;; (255/65535/u32::MAX/u64::MAX/u128::MAX), which surfaced as
+           ;; `downcast-unsigned: unsupported target width` for any
+           ;; `Uint<L..U>` arithmetic with a non-power-of-2 upper bound.
+           ;; The on-state byte-width still tracks `uint-byte-length`,
+           ;; so the cell-builder path (new_cell vs new_cell_bounded_uint)
+           ;; routes the value through the right alignment descriptor.
            (let ([w (cond
-                      [(= nat 255) "u8"]
-                      [(= nat 65535) "u16"]
-                      [(= nat 4294967295) "u32"]
-                      [(= nat 18446744073709551615) "u64"]
-                      [(= nat 340282366920938463463374607431768211455) "u128"]
+                      [(or (not (integer? nat)) (not (exact? nat)) (negative? nat)) #f]
+                      [(<= nat 255) "u8"]
+                      [(<= nat 65535) "u16"]
+                      [(<= nat 4294967295) "u32"]
+                      [(<= nat 18446744073709551615) "u64"]
+                      [(<= nat 340282366920938463463374607431768211455) "u128"]
                       [else #f])])
              (cond
                [(not w)

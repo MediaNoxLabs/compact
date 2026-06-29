@@ -456,18 +456,32 @@
           [else #f]))
 
       ;; tunsigned-rust-suffix-for-bound: given a raw unsigned upper bound
-      ;; (e.g. 18446744073709551615 = u64::MAX), return the matching Rust
-      ;; integer suffix string ("u8" / "u16" / "u32" / "u64" / "u128").
-      ;; Returns #f for any width outside the standard ladder — Iter 7
-      ;; follow-up's `downcast-unsigned` clause uses this to translate the
-      ;; downcast's target nat into the corresponding `as uN` cast.
+      ;; (e.g. 100 for `Uint<0..100>`, or 18446744073709551615 = u64::MAX
+      ;; for `Uint<64>`), return the smallest Rust integer suffix string
+      ;; whose width can hold `nat` ("u8" / "u16" / "u32" / "u64" /
+      ;; "u128"). Returns #f only when `nat` exceeds u128::MAX or is
+      ;; negative.
+      ;;
+      ;; Bug-11 (2026-06-29): generalised from the
+      ;; {255,65535,4294967295,u64::MAX,u128::MAX} power-of-2-minus-1
+      ;; ladder to accept any nat ≤ u128::MAX. The Compact language
+      ;; spec sanctions arbitrary `Uint<L..U>` upper bounds, and the
+      ;; TS backend handles them via `CompactTypeUnsignedInteger`'s
+      ;; arbitrary `length` parameter. Pre-Bug-11 we rejected
+      ;; non-power-of-2 nats here, which propagated up as a walker
+      ;; "no walker shape matched" error for any non-literal write to
+      ;; a bounded-range field (e.g. `n.write(s.size() as Uint<0..100>)`).
+      ;; The narrower-than-Rust-width byte-length is handled by routing
+      ;; the cell builder through `new_cell_bounded_uint` (see
+      ;; emit-body-mutations / emit-body-writes).
       (define (tunsigned-rust-suffix-for-bound nat)
         (cond
-          [(= nat 255) "u8"]
-          [(= nat 65535) "u16"]
-          [(= nat 4294967295) "u32"]
-          [(= nat 18446744073709551615) "u64"]
-          [(= nat 340282366920938463463374607431768211455) "u128"]
+          [(or (not (integer? nat)) (not (exact? nat)) (negative? nat)) #f]
+          [(<= nat 255) "u8"]
+          [(<= nat 65535) "u16"]
+          [(<= nat 4294967295) "u32"]
+          [(<= nat 18446744073709551615) "u64"]
+          [(<= nat 340282366920938463463374607431768211455) "u128"]
           [else #f]))
 
       ;; arg-rust-clone-if-var: render a call argument expression and
@@ -2977,7 +2991,28 @@
                          (guard (c [#t #f]) (tadt-read-op-type dest-type)))]
                    [use-cell-array?
                     (and dest-read-type (type-is-tvector? dest-read-type))]
-                   [cell-builder (if use-cell-array? "new_cell_array" "new_cell")])
+                   ;; Bug-11 (2026-06-29): Uint<L..U> destinations whose
+                   ;; on-state byte-length doesn't match the Rust integer
+                   ;; width (e.g. `Uint<0..70000>` is u32 in Rust but
+                   ;; 3 bytes on state) need `new_cell_bounded_uint(value
+                   ;; as u128, byte_len)` so the emitted alignment atom
+                   ;; matches TS's `CompactTypeUnsignedInteger(maxValue,
+                   ;; byte_len)` output. Power-of-2 byte-lengths (1/2/4/8/
+                   ;; 16) stay on the `new_cell(value)` path — the
+                   ;; `Aligned for uN` blanket impls produce the right
+                   ;; descriptor automatically.
+                   [use-bounded-uint?
+                    (and dest-read-type
+                         (not use-cell-array?)
+                         (guard (c [#t #f]) (tunsigned-bounded? dest-read-type)))]
+                   [bounded-uint-bytes
+                    (and use-bounded-uint?
+                         (guard (c [#t #f]) (tunsigned-byte-length dest-read-type)))]
+                   [cell-builder
+                    (cond
+                      [use-cell-array? "new_cell_array"]
+                      [use-bounded-uint? "new_cell_bounded_uint"]
+                      [else "new_cell"])])
               ;; Cell.write vm-code for a single-element path is exactly:
               ;;   push false (state-value 'cell (align idx 1))
               ;;   push true  (state-value 'cell <value>)
@@ -2985,7 +3020,12 @@
               ;; (The leading idx and trailing ins are suppressed when the
               ;; path before the last element is empty, which it is here.)
               (out (format "            .push(false, new_cell(~au8))\n" idx))
-              (out (format "            .push(true, ~a(~a))\n" cell-builder rust-val))
+              (cond
+                [use-bounded-uint?
+                 (out (format "            .push(true, ~a(~a as u128, ~a))\n"
+                              cell-builder rust-val bounded-uint-bytes))]
+                [else
+                 (out (format "            .push(true, ~a(~a))\n" cell-builder rust-val))])
               (out "            .ins(false, 1)\n")))
           writes)
         (out "            .build();\n")
@@ -3082,13 +3122,38 @@
                                 [use-cell-array?
                                  (and dest-read-type
                                       (type-is-tvector? dest-read-type))]
+                                ;; Bug-11 (2026-06-29): see the parallel
+                                ;; comment in emit-body-writes — Uint<L..U>
+                                ;; destinations with non-power-of-2 byte
+                                ;; lengths route through
+                                ;; `new_cell_bounded_uint(value as u128,
+                                ;; byte_len)`.
+                                [use-bounded-uint?
+                                 (and dest-read-type
+                                      (not use-cell-array?)
+                                      (guard (c [#t #f])
+                                        (tunsigned-bounded? dest-read-type)))]
+                                [bounded-uint-bytes
+                                 (and use-bounded-uint?
+                                      (guard (c [#t #f])
+                                        (tunsigned-byte-length dest-read-type)))]
                                 [cell-builder
-                                 (if use-cell-array? "new_cell_array" "new_cell")]
+                                 (cond
+                                   [use-cell-array? "new_cell_array"]
+                                   [use-bounded-uint? "new_cell_bounded_uint"]
+                                   [else "new_cell"])]
+                                [value-line
+                                 (cond
+                                   [use-bounded-uint?
+                                    (format "            .push(true, ~a(~a as u128, ~a))\n"
+                                            cell-builder rust-val bounded-uint-bytes)]
+                                   [else
+                                    (format "            .push(true, ~a(~a))\n"
+                                            cell-builder rust-val)])]
                                 [lines
                                  (list
                                    (format "            .push(false, new_cell(~au8))\n" idx)
-                                   (format "            .push(true, ~a(~a))\n"
-                                           cell-builder rust-val)
+                                   value-line
                                    "            .ins(false, 1)\n")])
                            (loop (cdr ms) (cons lines acc)))]
                         [(pl-call)

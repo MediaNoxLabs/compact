@@ -234,7 +234,7 @@ you'd get from upstream `compactc`.
 |---|---|---|
 | `struct S { … }` (exported and non-exported) | Supported | `Aligned` / `FieldRepr` / `FromFieldRepr` impls are emitted automatically. |
 | Generic structs `struct S<a, #n> { … }` | Not yet | Compiler errors out. |
-| `enum E { variantA, variantB }` | Supported | `default<E>` lowers to `E::variantA`. |
+| `enum E { variantA, variantB }` | Supported | `default<E>` lowers to `E::variantA`. As of v0.4.x (Bug-10, commit `62c81be`), `tenum`-typed ledger fields decode through `compact_runtime::std_lib::decode_via_field_repr::<EnumName>` rather than as a raw `u8`, so `state.read() == E::variantA` type-checks without a discriminant cast. The user enum already derives `FromFieldRepr` via the H4 path in `rust-passes-decls.ss`; this is a behaviour-preserving change visible only in the shape of the emitted Rust. |
 | `type Alias = …` (transparent) | Supported | |
 | `type Alias = …` (nominal / newtype) | Supported | |
 | Chained aliases | Untested but expected to work | |
@@ -266,9 +266,9 @@ you'd get from upstream `compactc`.
 | Ternary `cond ? a : b` | Supported | |
 | `for (const i of L..U) { … }` (range loop) | Supported | |
 | `for (const x of iterable) { … }` (element loop) | Supported | Literal iterables with unused loop variable cover the common case. |
-| `fold((acc, x) => …, init, vec)` | Supported (basic) | Closed-over variables and side-effect-free accumulators work. |
-| `map(fn, arr)` | Not yet | |
-| Bare lambdas in expression position `(x) => …` | Not yet | |
+| `fold((acc, x) => …, init, vec)` | Supported (basic) | Closed-over variables and side-effect-free accumulators work. (Iter 6 — `f030189`; Iter 9 dispatch fix — `405be1c`.) |
+| `map(fn, arr)` | Supported | Literal-vector MVP (Iter 7 — `e135eb8`); non-identity arithmetic lambdas (`+ - *`, `downcast-unsigned`) handled by the Iter 7 follow-up (`d3fb0b6`). Lowers by compile-time unrolling: each element renders via per-iteration substitution of the lambda parameter, producing a fixed-length `[T; N]` array literal. |
+| Bare lambdas in expression position `(x) => …` | Supported | Closed by Iter 7 as part of `map()` — the lambda's body is rendered inline at each unroll site, never as a runtime closure value. |
 | Comma-sequenced expressions | Supported | |
 | `assert(cond, "msg")` | Supported | Lowers to `compact_assert!`. |
 

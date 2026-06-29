@@ -49,6 +49,7 @@ use std::process::Command;
 const FIXTURES: &[(&str, &str)] = &[
     ("aliases_fixture.compact", "aliases-fixture"),
     ("bounded_uint_fixture.compact", "bounded-uint-fixture"),
+    ("bug11_fixture.compact", "bug11-fixture"),
     ("cross_circuit_fixture.compact", "cross-circuit-fixture"),
     ("election.compact", "election"),
     ("fold_fixture.compact", "fold-fixture"),

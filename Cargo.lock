@@ -719,6 +719,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-contract-bug11-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-runtime",
+]
+
+[[package]]
 name = "compact-contract-cross-circuit-fixture"
 version = "0.1.0"
 dependencies = [
@@ -4737,6 +4744,7 @@ version = "0.1.0"
 dependencies = [
  "compact-contract-aliases-fixture",
  "compact-contract-bounded-uint-fixture",
+ "compact-contract-bug11-fixture",
  "compact-contract-cross-circuit-fixture",
  "compact-contract-election",
  "compact-contract-fold-fixture",

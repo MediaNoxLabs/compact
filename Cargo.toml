@@ -46,6 +46,7 @@ members = [
     "tests-e2e-rust/contracts/hash-to-curve-fixture",
     "tests-e2e-rust/contracts/multi-pl-call-fixture",
     "tests-e2e-rust/contracts/hmt-default-fixture",
+    "tests-e2e-rust/contracts/bug11-fixture",
 ]
 
 [workspace.dependencies]

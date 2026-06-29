@@ -5,6 +5,75 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — `compactc --rust` codegen correctness sweep (2026-06-26)
+
+### Fixed
+
+- **A20** — read-no-arg adt-op vm-code lowering. `emit-ledger-read-expr`
+  no-arg branch in `compiler/rust-passes-emit.ss` was hardcoded to emit
+  `dup → idx → popeq` and silently discarded the adt-op's vm-code, so
+  any contract calling `Set.size`, `Set.isEmpty`, `Map.size`, `Map.isEmpty`,
+  `List.isEmpty`, `List.length`, or `HistoricMerkleTree.isFull` compiled
+  to misencoded gather chains that decoded the container as a raw `Cell`.
+  Fix routes these ops through `expand-vm-code` (same machinery as A8's
+  read-with-arg path). New `set_size_fixture` byte-parity gate.
+  Commits: [`0916b28`](../../commit/0916b28), [`c15af41`](../../commit/c15af41).
+
+- **A21** — `HistoricMerkleTree.insertIndexDefault` circuit-body shape.
+  Walker rejected the IR with `circuit-body-emission: no walker shape
+  matched`. Added the body-shape and op-builder support
+  (`lt`/`branch`/`jmp`/`swap`/`pop`). New `hmt_default_fixture`
+  byte-parity gate. Commits: [`6aa3cdc`](../../commit/6aa3cdc), [`776d83e`](../../commit/776d83e).
+
+- **Bug-8** — `==`/`!=` walker forced typed enum rendering when the
+  comparison's IR `type` was a tenum (Bug-4's optimisation), but the IR
+  type is the tenum even when one operand is a ledger-read decoded as
+  `u8`. Election's `state.read() == PublicState.commit` generated
+  invalid Rust `u8 == PublicState::commit`. Added `is-ledger-read-expr?`
+  predicate; in `==`/`!=` clauses, short-circuit `typed?` to `#f` when
+  either operand is a ledger-read. Commit: [`0fffe67`](../../commit/0fffe67).
+
+- **Bug-9** — non-exported tenum decls referenced by emitted impure
+  circuits. A18+A19 (`f9b509f`) taught the emitter to render
+  non-exported impure circuits as inherent methods on `Contract<PS, W>`,
+  but the type-declarations pass didn't follow the new type-reference
+  graph. Tiny's `circuit in_state(s: STATE): Boolean` was emitted as a
+  method, but the `STATE` enum was never declared. Extended
+  `collect-pure-circuit-tdefns` in `compiler/rust-passes-decls.ss` to
+  walk non-exported impure circuit signatures too. Commit:
+  [`a45d68d`](../../commit/a45d68d).
+
+- **Bug-10** — typed decoder for `tenum` ledger reads (Option A).
+  Previously `decoder-for-type` lowered tenum-typed ledger fields via
+  `decode_u8`, which broke `state == s` (where `s: STATE` is a
+  tenum-typed formal arg) because `u8 == STATE` doesn't compile.
+  Bug-8's `is-ledger-read-expr?` short-circuit fixed the case where the
+  RHS is an `enum-ref` literal (drops to u8 via `enum-ref->u8`), but had
+  no fallback for typed var-ref RHS. Option A's fix flips the LHS to
+  decode as the typed enum (`decode_via_field_repr::<EnumName>`),
+  eliminating the u8/tenum mismatch entirely. Bug-8's special-case
+  becomes redundant for tenum-typed reads. Commit: [`62c81be`](../../commit/62c81be).
+
+### Changed
+
+- **24 fixture `lib.rs` files regenerated** against the post-Bug-10
+  compactc (commit [`4e322bc`](../../commit/4e322bc)). Drift categories:
+  `PS: Clone` widening (Bug-3, all 24); `.popeq(true)` → `.popeq(false)`
+  honouring the vm-code's `cached` flag (election, tiny); `tiny.in_state`
+  inherent method emission (Bug-9); typed tenum ledger decoders
+  (Bug-10). All 47 byte-parity tests + `codegen_regression` green.
+
+### Process notes
+
+The 5-bug cascade was surfaced by manually running `codegen_regression`
+against a fresh `compactc --rust` regen. The standing byte-parity test
+corpus is structurally blind to source-level codegen drift — bugs that
+change generated Rust without changing `ContractState::serialize()`
+output (Bug-8's `u8 == EnumName::variant` compile error; Bug-9's missing
+enum decl; Bug-10's wrong decoder) don't surface without an explicit
+regen-and-diff step. Treating `codegen_regression` as a CI gate, not
+just a test result, is now the standing policy.
+
 ## [Toolchain 0.31.104, language 0.23.103, runtime 0.16.100]
 
 ### Added

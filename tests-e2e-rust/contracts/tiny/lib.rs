@@ -97,7 +97,7 @@ where
         let qctx = QueryContext::new(state, compact_runtime::ContractAddress::default());
         let _witness_ctx_0 = WitnessContext::new(ledger(&qctx.state), ctx.initial_private_state, &qctx);
         let (current_private_state, sk) = self.witnesses.private_secret_key(&_witness_ctx_0);
-        let tmp = pure_circuits::public_key(sk);
+        let tmp = pure_circuits::public_key(sk)?;
         let ops = OpProgramVerify::<DefaultDB>::new()
             .push(false, new_cell(0u8))
             .push(true, new_cell(tmp))
@@ -176,7 +176,7 @@ where
         } == STATE::unset), "set: attempted to overwrite recorded value");
         let _witness_ctx_1 = WitnessContext::new(ledger(&ctx.current_query_context.state), ctx.current_private_state, &ctx.current_query_context);
         let (current_private_state, sk) = self.witnesses.private_secret_key(&_witness_ctx_1);
-        let apk = pure_circuits::public_key(sk);
+        let apk = pure_circuits::public_key(sk)?;
         let ops = OpProgramVerify::<DefaultDB>::new()
             .push(false, new_cell(0u8))
             .push(true, new_cell(apk))
@@ -284,7 +284,7 @@ where
         } == STATE::set), "clear: no value is currently recorded");
         let _witness_ctx_1 = WitnessContext::new(ledger(&ctx.current_query_context.state), ctx.current_private_state, &ctx.current_query_context);
         let (current_private_state, sk) = self.witnesses.private_secret_key(&_witness_ctx_1);
-        let apk = pure_circuits::public_key(sk);
+        let apk = pure_circuits::public_key(sk)?;
         compact_assert!((apk == {
             let _gather_ops = OpProgramGather::<DefaultDB>::new()
                 .dup(0)
@@ -364,8 +364,10 @@ impl<'a, D: DB> Ledger<'a, D> {
 }
 
 pub mod pure_circuits {
-    pub fn public_key(sk: [u8; 32]) -> [u8; 32] {
-        compact_runtime::std_lib::persistent_hash_aligned(&[compact_runtime::AlignedValue::from([108u8, 97, 114, 101, 115, 58, 116, 105, 110, 121, 58, 112, 107, 58, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]), compact_runtime::AlignedValue::from(sk)])
+    use super::*;
+
+    pub fn public_key(sk: [u8; 32]) -> Result<[u8; 32], CompactError> {
+        Ok(compact_runtime::std_lib::persistent_hash_aligned(&[compact_runtime::AlignedValue::from([108u8, 97, 114, 101, 115, 58, 116, 105, 110, 121, 58, 112, 107, 58, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]), compact_runtime::AlignedValue::from(sk)]))
     }
 
 }

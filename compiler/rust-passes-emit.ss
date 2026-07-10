@@ -1562,7 +1562,7 @@
                [(or (not cstr) (rendered-has-todo? cstr))
                 (rust-feature-error src 'pure-circuit-body-emission
                   "seq guard assert unrenderable")]
-               [else (format "assert!(~a, ~s);" cstr
+               [else (format "compact_assert!(~a, ~s);" cstr
                              (if (string? mesg) mesg ""))]))]
           [else
            (string-append (expr-rust e native-id-ht) ";")]))
@@ -2283,6 +2283,14 @@
                  [(and c (id-pure? function-name))
                   (let ([rust-name (id->rust-name function-name)]
                         [args (map (lambda (e) (pure-call-arg-rust e native-id-ht)) expr*)])
+                    ;; Append `?` so the `Result<T, CompactError>` a pure
+                    ;; circuit returns is unwrapped at the call site. Every
+                    ;; generated position that calls a pure circuit (pure-
+                    ;; circuit bodies, impure circuit bodies, constructors,
+                    ;; conditions) lives inside a function returning
+                    ;; `Result<_, CompactError>`, so `?` is valid. The
+                    ;; `Ok(...)` tail-wrap (Phase 5) wraps the already-`?`-ed
+                    ;; call as `Ok(pure_circuits::foo(...)?)` — a single `?`.
                     (string-append
                       "pure_circuits::"
                       (symbol->string rust-name)
@@ -2292,7 +2300,7 @@
                           [(null? xs) acc]
                           [(null? (cdr xs)) (string-append acc (car xs))]
                           [else (join (cdr xs) (string-append acc (car xs) ", "))]))
-                      ")"))]
+                      ")?"))]
                  [else
                   (rust-feature-error src 'non-native-call
                     "call to non-native circuit ~a not supported in this position"
@@ -2335,10 +2343,10 @@
                                         circuit-id-ht))]
                  [then-str (stmt-pure-body-rust stmt1 native-id-ht
                                                 witness-id-ht circuit-id-ht
-                                                local-binds)]
+                                                local-binds #f)]
                  [else-str (stmt-pure-body-rust stmt2 native-id-ht
                                                 witness-id-ht circuit-id-ht
-                                                local-binds)])
+                                                local-binds #f)])
              (cond
                [(or (not cond-str) (not then-str) (not else-str)) #f]
                [(or (rendered-has-todo? cond-str)
@@ -2355,7 +2363,7 @@
                                         circuit-id-ht))]
                  [then-str (stmt-pure-body-rust stmt1 native-id-ht
                                                 witness-id-ht circuit-id-ht
-                                                local-binds)])
+                                                local-binds #f)])
              (cond
                [(or (not cond-str) (not then-str)) #f]
                [(or (rendered-has-todo? cond-str)
@@ -2375,7 +2383,7 @@
                 (cond
                   [(or (not cond-str) (rendered-has-todo? cond-str)) #f]
                   [else
-                   (format "assert!(~a, ~s);" cond-str
+                   (format "compact_assert!(~a, ~s);" cond-str
                            (if (string? mesg) mesg ""))]))]
              [else
               (let ([s (guard (c [#t #f]) (expr-rust expr native-id-ht))])
@@ -2385,9 +2393,16 @@
                   [else (string-append s ";")]))])]
           [else #f])))
 
+      ;; wrap-ok?: when #t (the default, used by emit-pure-circuit) the
+      ;; rendered body's tail is wrapped as `Ok(...)` so the block is a
+      ;; `Result<_, CompactError>`; assert-only / unit bodies end with
+      ;; `Ok(())`. Recursion into if-branches (pure-stmt-rust's if arms)
+      ;; passes #f so the branches are bare expressions — the enclosing
+      ;; `if` expression is then wrapped by the top-level call.
       (define (stmt-pure-body-rust stmt native-id-ht witness-id-ht circuit-id-ht
-                                   local-binds)
-        (let ([stmts (stmt-flatten stmt)])
+                                   local-binds . maybe-wrap-ok?)
+        (let ([wrap-ok? (or (null? maybe-wrap-ok?) (car maybe-wrap-ok?))])
+          (let ([stmts (stmt-flatten stmt)])
           (let loop ([xs stmts] [binds local-binds] [acc '()])
             (cond
               [(null? xs)
@@ -2404,9 +2419,10 @@
                           [(null? rs) out]
                           [(null? (cdr rs)) (string-append out (car rs))]
                           [else (join (cdr rs) (string-append out (car rs) "\n        "))]))])
-                 (cond
-                   [(string=? joined "") "()"]
-                   [else (string-append joined "\n        ()")]))]
+                 (let ([unit-tail (if wrap-ok? "Ok(())" "()")])
+                   (cond
+                     [(string=? joined "") unit-tail]
+                     [else (string-append joined "\n        " unit-tail)])))]
               [(const-binding (car xs))
                =>
                (lambda (b)
@@ -2454,14 +2470,29 @@
                    (cond
                      [(not s) #f]
                      [last?
-                      ;; tail expression — append after any leading lets
-                      (let ([acc (cons s acc)])
-                        (let join ([rs (reverse acc)] [out ""])
-                          (cond
-                            [(null? rs) out]
-                            [(null? (cdr rs)) (string-append out (car rs))]
-                            [else (join (cdr rs) (string-append out (car rs) "\n        "))])))]
-                     [else (loop (cdr xs) binds (cons s acc))])))]))))
+                      ;; tail element. `s` is either a value expression
+                      ;; (rendered without `;`) or an assert statement
+                      ;; (`compact_assert!(...);`, ends with `;`). When
+                      ;; wrap-ok?: wrap a value tail in `Ok(...)`, and
+                      ;; follow an assert tail with `Ok(())` so the block
+                      ;; yields `Result<_, CompactError>`.
+                      (let* ([n (string-length s)]
+                             [value-tail?
+                              (or (= n 0)
+                                  (not (char=? (string-ref s (- n 1)) #\;)))])
+                        (let ([acc
+                               (cond
+                                 [(and wrap-ok? value-tail?)
+                                  (cons (format "Ok(~a)" s) acc)]
+                                 [(and wrap-ok? (not value-tail?))
+                                  (cons "Ok(())" (cons s acc))]
+                                 [else (cons s acc)])])
+                          (let join ([rs (reverse acc)] [out ""])
+                            (cond
+                              [(null? rs) out]
+                              [(null? (cdr rs)) (string-append out (car rs))]
+                              [else (join (cdr rs) (string-append out (car rs) "\n        "))]))))]
+                     [else (loop (cdr xs) binds (cons s acc))])))])))))
 
       ;; emit-pure-circuit: emit a pure circuit as a free function inside
       ;; `mod pure_circuits`. No ctx — just the declared args and a direct
@@ -2501,12 +2532,13 @@
                                 (camel->snake (id-sym var-name))
                                 (type-rust type)))])
                 (loop (cdr arg*) #f)]))
-           (out (format ") -> ~a {\n" (type-rust type)))
+           (out (format ") -> Result<~a, CompactError> {\n" (type-rust type)))
            (parameterize ([current-formal-arg-types (build-formal-arg-type-ht arg*)]
                           [current-circuit-id-ht circuit-id-ht]
                           [current-witness-id-ht witness-id-ht])
              (let ([body (stmt-pure-body-rust stmt native-id-ht
-                                              witness-id-ht circuit-id-ht '())])
+                                              witness-id-ht circuit-id-ht '()
+                                              #t)])
                (cond
                  [body (out (format "        ~a\n" body))]
                  [else
@@ -2834,23 +2866,20 @@
       ;; free function per pure circuit declaration. Contracts with no pure
       ;; circuits (e.g. counter.compact) get an empty module.
       ;;
-      ;; When any non-exported user pure circuit is present (e.g. zerocash's
-      ;; `commitment_from_coin_info`), inject `use super::*;` at the top
-      ;; so the function body can refer to crate-level types (user structs
-      ;; emitted by H5-H7, Maybe<T> re-exports, etc.) without qualification.
-      ;; For contracts whose pure_circuits module contains only exported
-      ;; circuits or is empty (counter, tiny), no `use` is emitted — keeping
-      ;; their snapshots byte-identical.
+      ;; When any pure circuit is present, inject `use super::*;` at the
+      ;; top so the function bodies (and the `Result<T, CompactError>`
+      ;; signatures, which reference `CompactError`) see crate-level
+      ;; types — `CompactError`, `Maybe<T>`, user structs emitted by H5-H7,
+      ;; the `compact_assert!` macro, etc. — without qualification.
+      ;; `use super::*;` reaches the parent's `use compact_runtime::*;`
+      ;; glob, so `CompactError` / `compact_assert!` resolve. Contracts
+      ;; with no pure circuits (e.g. counter.compact) get an empty
+      ;; module with no `use`.
       (define (emit-pure-circuits pure-circuit* native-id-ht
                                    witness-id-ht circuit-id-ht)
         (out "pub mod pure_circuits {\n")
-        (let ([has-non-exported?
-               (let loop ([c* pure-circuit*])
-                 (cond
-                   [(null? c*) #f]
-                   [(not (id-exported? (circuit-function-name (car c*)))) #t]
-                   [else (loop (cdr c*))]))])
-          (when has-non-exported?
+        (let ([has-any? (not (null? pure-circuit*))])
+          (when has-any?
             (out "    use super::*;\n\n")))
         (for-each (lambda (c) (emit-pure-circuit c native-id-ht
                                                        witness-id-ht circuit-id-ht))

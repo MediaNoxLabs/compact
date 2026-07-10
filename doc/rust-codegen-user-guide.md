@@ -27,6 +27,20 @@ produce. This is enforced by the byte-parity tests under
 with TS clients (and vice versa) on the same ledger without any
 representation drift.
 
+### Error handling: asserts are errors, not panics
+
+Like the TypeScript backend, which throws a catchable `CompactError`
+when an `assert(cond, "msg")` fails, the Rust codegen lowers every
+`assert(cond, "msg")` to the `compact_assert!` macro. Pure circuits are
+emitted with a `Result<T, CompactError>` signature and every pure-circuit
+call site is appended a `?`, so a failing assert yields
+`Err(CompactError::AssertionFailed(msg))` that the host can match and
+handle — it never aborts the process with a panicking `assert!`. This
+brings host-side error semantics to parity with the TS `CompactError`
+throw. The dedicated `assert_parity` fixture and test under
+[`tests-e2e-rust`](../tests-e2e-rust) prove a failing pure-circuit assert
+returns `Err(AssertionFailed)` rather than panicking.
+
 ## Quick start
 
 The walked-through example is the canonical `tiny.compact` contract:
@@ -305,7 +319,7 @@ you'd get from upstream `compactc`.
 | `map(fn, arr)` | Supported | Literal-vector MVP (Iter 7 — `e135eb8`); non-identity arithmetic lambdas (`+ - *`, `downcast-unsigned`) handled by the Iter 7 follow-up (`d3fb0b6`). Lowers by compile-time unrolling: each element renders via per-iteration substitution of the lambda parameter, producing a fixed-length `[T; N]` array literal. |
 | Bare lambdas in expression position `(x) => …` | Supported | Closed by Iter 7 as part of `map()` — the lambda's body is rendered inline at each unroll site, never as a runtime closure value. |
 | Comma-sequenced expressions | Supported | |
-| `assert(cond, "msg")` | Supported | Lowers to `compact_assert!`. |
+| `assert(cond, "msg")` | Supported | Lowers to `compact_assert!`, returning `Err(CompactError::AssertionFailed)` on failure (handleable, no panic). |
 
 ### Modules
 

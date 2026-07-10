@@ -348,7 +348,7 @@
                                    (loop2 (cdr as)
                                           (if (pair? fs) (cdr fs) '())
                                           (cons s acc)))]))])
-                      (out (format "        let ~a = pure_circuits::~a(~a);\n"
+                      (out (format "        let ~a = pure_circuits::~a(~a)?;\n"
                                    rust-name pname
                                    (let join ([xs arg-strs] [acc ""])
                                      (cond
@@ -464,7 +464,7 @@
                                      e local-binds
                                      native-id-ht witness-id-ht circuit-id-ht))
                                  pargs)])
-                      (out (format "        let _ = pure_circuits::~a(~a);\n"
+                      (out (format "        let _ = pure_circuits::~a(~a)?;\n"
                                    pname
                                    (let join ([xs arg-strs] [acc ""])
                                      (cond

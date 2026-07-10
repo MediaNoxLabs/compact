@@ -74,6 +74,7 @@ const FIXTURES: &[(&str, &str)] = &[
     ("vector_fixture.compact", "vector-fixture"),
     ("witnesses_fixture.compact", "witnesses-fixture"),
     ("zerocash.compact", "zerocash"),
+    ("assert_parity_fixture.compact", "assert-parity-fixture"),
 ];
 
 /// Walks up from `start` looking for `./result/bin/compactc` (the nix

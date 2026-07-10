@@ -533,7 +533,7 @@ where
         let mut __gas_acc = compact_runtime::RunningCost::default();
         let _witness_ctx_0 = WitnessContext::new(ledger(&ctx.current_query_context.state), ctx.current_private_state, &ctx.current_query_context);
         let (current_private_state, source_secret_key) = self.witnesses.private_zk_secret_key(&_witness_ctx_0);
-        let old_nullifier = pure_circuits::derive_nullifier(input_coin.clone(), source_secret_key.clone());
+        let old_nullifier = pure_circuits::derive_nullifier(input_coin.clone(), source_secret_key.clone())?;
         compact_assert!((!({
             let _gather_ops = OpProgramGather::<DefaultDB>::new()
                 .dup(0)
@@ -565,8 +565,8 @@ where
             .build();
         let _results_3 = query_for_verify(&ctx.current_query_context, &_ops_3, ctx.gas_limit.clone(), &ctx.cost_model)?;
         __gas_acc += _results_3.gas_cost.clone();
-        let source_public_key = pure_circuits::derive_zk_public_key(source_secret_key.clone());
-        let old_commitment = pure_circuits::commitment_from_coin_info(input_coin.clone(), source_public_key.clone());
+        let source_public_key = pure_circuits::derive_zk_public_key(source_secret_key.clone())?;
+        let old_commitment = pure_circuits::commitment_from_coin_info(input_coin.clone(), source_public_key.clone())?;
         let _witness_ctx_6 = WitnessContext::new(ledger(&_results_3.context.state), current_private_state, &_results_3.context);
         let (current_private_state, commitment_path) = self.witnesses.context_path_of(&_witness_ctx_6, old_commitment.clone());
         let tmp = compact_runtime::std_lib::merkle_tree_path_root(commitment_path.clone());
@@ -594,7 +594,7 @@ where
         } && (old_commitment == commitment_path.leaf)), "spend: Illegal state: merkle path not recognized by public state");
         let _witness_ctx_9 = WitnessContext::new(ledger(&_results_3.context.state), current_private_state, &_results_3.context);
         let (current_private_state, fresh_coin_info) = self.witnesses.context_new_coin_info(&_witness_ctx_9);
-        let fresh_commitment = pure_circuits::commitment_from_coin_info(fresh_coin_info.clone(), dest_public_key.zk.clone());
+        let fresh_commitment = pure_circuits::commitment_from_coin_info(fresh_coin_info.clone(), dest_public_key.zk.clone())?;
 
         let _ops_12 = OpProgramVerify::<DefaultDB>::new()
             .idx_at_index(1u8, true)
@@ -651,7 +651,7 @@ where
         let (current_private_state, pk) = self.witnesses.private_zk_public_key(&_witness_ctx_2);
         let _witness_ctx_4 = WitnessContext::new(ledger(&ctx.current_query_context.state), current_private_state, &ctx.current_query_context);
         let (current_private_state, _) = self.witnesses.private_add_coin(&_witness_ctx_4, coin.clone());
-        let cm = pure_circuits::commitment_from_coin_info(coin.clone(), pk.clone());
+        let cm = pure_circuits::commitment_from_coin_info(coin.clone(), pk.clone())?;
         let ops = OpProgramVerify::<DefaultDB>::new()
             .idx_at_index(1u8, true)
             .idx_at_index(0u8, true)
@@ -706,16 +706,16 @@ impl<'a, D: DB> Ledger<'a, D> {
 pub mod pure_circuits {
     use super::*;
 
-    pub(crate) fn derive_nullifier(coin: coin_info, sk: zk_secret_key) -> nullifier {
-        nullifier { bytes: compact_runtime::std_lib::persistent_hash_aligned(&[compact_runtime::AlignedValue::from([108u8, 97, 114, 101, 115, 58, 122, 101, 114, 111, 99, 97, 115, 104, 58, 99, 111, 109, 109, 105, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]), compact_runtime::AlignedValue::from(coin.nonce.bytes), compact_runtime::AlignedValue::from(coin.opening.bytes), compact_runtime::AlignedValue::from(sk.bytes)]) }
+    pub(crate) fn derive_nullifier(coin: coin_info, sk: zk_secret_key) -> Result<nullifier, CompactError> {
+        Ok(nullifier { bytes: compact_runtime::std_lib::persistent_hash_aligned(&[compact_runtime::AlignedValue::from([108u8, 97, 114, 101, 115, 58, 122, 101, 114, 111, 99, 97, 115, 104, 58, 99, 111, 109, 109, 105, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]), compact_runtime::AlignedValue::from(coin.nonce.bytes), compact_runtime::AlignedValue::from(coin.opening.bytes), compact_runtime::AlignedValue::from(sk.bytes)]) })
     }
 
-    pub(crate) fn derive_zk_public_key(sk: zk_secret_key) -> zk_public_key {
-        zk_public_key { bytes: compact_runtime::std_lib::persistent_hash_aligned(&[compact_runtime::AlignedValue::from(sk.bytes)]) }
+    pub(crate) fn derive_zk_public_key(sk: zk_secret_key) -> Result<zk_public_key, CompactError> {
+        Ok(zk_public_key { bytes: compact_runtime::std_lib::persistent_hash_aligned(&[compact_runtime::AlignedValue::from(sk.bytes)]) })
     }
 
-    pub(crate) fn commitment_from_coin_info(coin: coin_info, pk: zk_public_key) -> commitment {
-        commitment { bytes: compact_runtime::std_lib::persistent_hash_aligned(&[compact_runtime::AlignedValue::from([108u8, 97, 114, 101, 115, 58, 122, 101, 114, 111, 99, 97, 115, 104, 58, 99, 111, 109, 109, 105, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]), compact_runtime::AlignedValue::from(coin.nonce.bytes), compact_runtime::AlignedValue::from(coin.opening.bytes), compact_runtime::AlignedValue::from(pk.bytes)]) }
+    pub(crate) fn commitment_from_coin_info(coin: coin_info, pk: zk_public_key) -> Result<commitment, CompactError> {
+        Ok(commitment { bytes: compact_runtime::std_lib::persistent_hash_aligned(&[compact_runtime::AlignedValue::from([108u8, 97, 114, 101, 115, 58, 122, 101, 114, 111, 99, 97, 115, 104, 58, 99, 111, 109, 109, 105, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]), compact_runtime::AlignedValue::from(coin.nonce.bytes), compact_runtime::AlignedValue::from(coin.opening.bytes), compact_runtime::AlignedValue::from(pk.bytes)]) })
     }
 
 }

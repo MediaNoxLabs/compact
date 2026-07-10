@@ -58,6 +58,62 @@ where
         })
     }
 
+    pub fn trigger_ok(
+        &self,
+        ctx: CircuitContext<PS>,
+    ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let ok = pure_circuits::require_true(true)?;
+        let ops = OpProgramVerify::<DefaultDB>::new()
+            .push(false, new_cell(0u8))
+            .push(true, new_cell(ok))
+            .ins(false, 1)
+            .build();
+
+        let results = query_for_verify(
+            &ctx.current_query_context,
+            &ops,
+            ctx.gas_limit.clone(),
+            &ctx.cost_model,
+        )?;
+
+        Ok(CircuitResults {
+            result: (),
+            context: CircuitContext {
+                current_query_context: results.context,
+                ..ctx
+            },
+            gas_cost: results.gas_cost,
+        })
+    }
+
+    pub fn trigger_fail(
+        &self,
+        ctx: CircuitContext<PS>,
+    ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let ok = pure_circuits::require_true(false)?;
+        let ops = OpProgramVerify::<DefaultDB>::new()
+            .push(false, new_cell(0u8))
+            .push(true, new_cell(ok))
+            .ins(false, 1)
+            .build();
+
+        let results = query_for_verify(
+            &ctx.current_query_context,
+            &ops,
+            ctx.gas_limit.clone(),
+            &ctx.cost_model,
+        )?;
+
+        Ok(CircuitResults {
+            result: (),
+            context: CircuitContext {
+                current_query_context: results.context,
+                ..ctx
+            },
+            gas_cost: results.gas_cost,
+        })
+    }
+
     pub fn ping(
         &self,
         ctx: CircuitContext<PS>,
@@ -116,20 +172,9 @@ impl<'a, D: DB> Ledger<'a, D> {
 pub mod pure_circuits {
     use super::*;
 
-    pub fn and_b(a: bool, b: bool) -> Result<bool, CompactError> {
-        Ok(if a {
-            b
-        } else {
-            false
-        })
-    }
-
-    pub fn which_u32(b: bool) -> Result<u32, CompactError> {
-        Ok(if b {
-            1
-        } else {
-            0
-        })
+    pub fn require_true(b: bool) -> Result<bool, CompactError> {
+        compact_assert!(b, "must be true");
+        Ok(b)
     }
 
 }

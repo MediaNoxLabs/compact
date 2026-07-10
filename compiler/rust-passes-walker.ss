@@ -651,7 +651,13 @@
                            (arg-rust-clone-if-var e local-binds
                                                   native-id-ht witness-id-ht circuit-id-ht))
                          expr*)])
-               (format "pure_circuits::~a(~a)"
+               ;; Append `?` to unwrap the `Result<T, CompactError>` a
+               ;; pure circuit returns. Every position reaching here
+               ;; (cond-rust/assert-cond-rust conditions, if-branch
+               ;; expressions, inlined bodies) lives inside a function
+               ;; returning `Result<_, CompactError>`, so `?` is valid.
+               ;; Matches call-rust's pure-circuit arm in rust-passes-emit.
+               (format "pure_circuits::~a(~a)?"
                        rust-name
                        (let join ([xs args] [acc ""])
                          (cond
@@ -2137,7 +2143,7 @@
                                              (if (pair? fs) (cdr fs) '())
                                              (cons s acc)))])))]
                              [bind-line
-                              (format "        let ~a = pure_circuits::~a(~a);\n"
+                              (format "        let ~a = pure_circuits::~a(~a)?;\n"
                                       rust-name pname
                                       (let join ([xs arg-strs] [acc ""])
                                         (cond
@@ -2283,7 +2289,7 @@
                                        native-id-ht witness-id-ht circuit-id-ht))
                                    pargs)]
                              [bind-line
-                              (format "        let _ = pure_circuits::~a(~a);\n"
+                              (format "        let _ = pure_circuits::~a(~a)?;\n"
                                       pname
                                       (let join ([xs arg-strs] [acc ""])
                                         (cond

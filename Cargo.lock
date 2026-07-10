@@ -712,6 +712,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-contract-assert-parity-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-runtime",
+]
+
+[[package]]
 name = "compact-contract-bounded-uint-fixture"
 version = "0.1.0"
 dependencies = [
@@ -4750,6 +4757,7 @@ name = "tests-e2e-rust"
 version = "0.1.0"
 dependencies = [
  "compact-contract-aliases-fixture",
+ "compact-contract-assert-parity-fixture",
  "compact-contract-bounded-uint-fixture",
  "compact-contract-bug11-fixture",
  "compact-contract-cross-circuit-fixture",

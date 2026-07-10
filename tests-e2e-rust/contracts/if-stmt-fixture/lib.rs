@@ -87,12 +87,14 @@ impl<'a, D: DB> Ledger<'a, D> {
 }
 
 pub mod pure_circuits {
-    pub fn classify(b: bool) -> bool {
-        if b {
+    use super::*;
+
+    pub fn classify(b: bool) -> Result<bool, CompactError> {
+        Ok(if b {
             false
         } else {
             true
-        }
+        })
     }
 
 }

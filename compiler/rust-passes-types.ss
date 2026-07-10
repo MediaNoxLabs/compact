@@ -66,11 +66,15 @@
            ;; MerkleTreePathEntry) resolve to runtime-provided Rust types
            ;; via stdlib-struct-mappings. Other named structs lower to
            ;; their bare name; their definitions are emitted by
-           ;; emit-type-decls (H5 / future tasks).
+           ;; emit-type-decls (H5 / future tasks). For structs whose
+           ;; struct-name collides across `import M<...>` instantiations,
+           ;; struct-rust-name returns the disambiguated name from
+           ;; current-struct-rust-name-ht (keyed by eq? on this type
+           ;; node); otherwise it falls back to the bare struct-name.
            (let ([entry (lookup-stdlib-struct struct-name)])
              (if entry
                  ((car entry) elt-name* type*)
-                 (symbol->string struct-name)))]
+                 (symbol->string (struct-rust-name type))))]
           [(tenum ,src ,enum-name ,elt-name ,elt-name* ...)
            ;; Enum references in type position emit the bare name. The
            ;; definition (with #[repr(u8)] + variant discriminants) is
@@ -89,6 +93,24 @@
            "ContractAddress"]
           [(tunknown) "/* TODO M3-F4: tunknown */"]
           [else "/* TODO M3-F4: unhandled type variant */"]))
+
+      ;; tstruct-fingerprint: a structural fingerprint of a tstruct/tenum
+      ;; Type node, used to distinguish two `import M<...>` instantiations
+      ;; that share a struct-name but have field-distinct bodies. Returns
+      ;; `(struct-name . field-type-renderings)` for tstruct, `(enum-name .
+      ;; variants)` for tenum, or #f for other types. Field types render
+      ;; via type-rust; while the struct disambiguation table is empty
+      ;; (during collection) type-rust renders bare struct-names, so two
+      ;; variants whose body fields reference different-named structs
+      ;; (digital-passport's Issuance vs Verification bodies) fingerprint
+      ;; distinctly.
+      (define (tstruct-fingerprint type)
+        (nanopass-case (Ltypescript Type) type
+          [(tstruct ,src ,struct-name (,elt-name* ,type*) ...)
+           (cons struct-name (map type-rust type*))]
+          [(tenum ,src ,enum-name ,elt-name ,elt-name* ...)
+           (cons enum-name (cons elt-name elt-name*))]
+          [else #f]))
 
       ;; -----------------------------------------------------------------
       ;; M3.5 helpers: per-field codegen for Aligned / FieldRepr /
@@ -109,6 +131,26 @@
       (define (problematic-bytes? type)
         (nanopass-case (Ltypescript Type) type
           [(tbytes ,src ,len) (not (= len 32))]
+          [else #f]))
+
+      ;; tbytes-len-over-32?: #t when `type` is a `(tbytes src len)` (peeling
+      ;; talias) with `len > 32`. Rust's std impls `Default` for `[T; N]`
+      ;; only up to N=32 (the const-generic blanket was never stabilised),
+      ;; so a struct with a `Bytes<64>` field cannot `#[derive(Default)]`.
+      ;; Used by emit-type-decls to switch to a manual `impl Default`.
+      (define (tbytes-len-over-32? type)
+        (nanopass-case (Ltypescript Type) type
+          [(tbytes ,src ,len) (> len 32)]
+          [(talias ,src ,nominal? ,type-name ,type) (tbytes-len-over-32? type)]
+          [else #f]))
+
+      ;; tvector-len-over-32?: same as tbytes-len-over-32? but for
+      ;; `(tvector src len elt)` — `Vector<50,T>` lowers to `[T; 50]` which
+      ;; likewise lacks `Default`.
+      (define (tvector-len-over-32? type)
+        (nanopass-case (Ltypescript Type) type
+          [(tvector ,src ,len ,type) (> len 32)]
+          [(talias ,src ,nominal? ,type-name ,type) (tvector-len-over-32? type)]
           [else #f]))
 
       ;; R5a: Recognise the `JubjubPoint` opaque type. Lowered through
@@ -183,26 +225,26 @@
             [(problematic-bytes? type)
              (nanopass-case (Ltypescript Type) type
                [(tbytes ,src ,len)
-                (out (format "        let ~a = compact_runtime::bytes_from_field_repr::<~a>(&r[_offset.._offset + ~a])?;\n"
+                (out (format "        let ~a = compact_runtime::bytes_from_field_repr::<~a>(&_repr[_offset.._offset + ~a])?;\n"
                              name len size-expr))
                 (out (format "        _offset += ~a;\n" size-expr))])]
             [(problematic-vec-u8? type)
-             (out (format "        let ~a = compact_runtime::vec_u8_from_field_repr(&r[_offset.._offset])?;\n"
+             (out (format "        let ~a = compact_runtime::vec_u8_from_field_repr(&_repr[_offset.._offset])?;\n"
                           name))]
             [(problematic-jubjub-point? type)
              ;; R5a: orphan-safe parse via compact_runtime helper.
-             (out (format "        let ~a = compact_runtime::jubjub_point_from_field_repr(&r[_offset.._offset + ~a])?;\n"
+             (out (format "        let ~a = compact_runtime::jubjub_point_from_field_repr(&_repr[_offset.._offset + ~a])?;\n"
                           name size-expr))
              (out (format "        _offset += ~a;\n" size-expr))]
             [(problematic-vector? type)
              (nanopass-case (Ltypescript Type) type
                [(tvector ,src ,len ,type)
-                (out (format "        let ~a = compact_runtime::array_from_field_repr::<~a, ~a>(&r[_offset.._offset + ~a], <~a as FromFieldRepr>::FIELD_SIZE)?;\n"
+                (out (format "        let ~a = compact_runtime::array_from_field_repr::<~a, ~a>(&_repr[_offset.._offset + ~a], <~a as FromFieldRepr>::FIELD_SIZE)?;\n"
                              name (type-rust type) len size-expr (type-rust type)))
                 (out (format "        _offset += ~a;\n" size-expr))])]
             [else
              (let ([rust-ty (type-rust type)])
-               (out (format "        let ~a = <~a as FromFieldRepr>::from_field_repr(&r[_offset.._offset + <~a as FromFieldRepr>::FIELD_SIZE])?;\n"
+               (out (format "        let ~a = <~a as FromFieldRepr>::from_field_repr(&_repr[_offset.._offset + <~a as FromFieldRepr>::FIELD_SIZE])?;\n"
                             name rust-ty rust-ty))
                (out (format "        _offset += <~a as FromFieldRepr>::FIELD_SIZE;\n" rust-ty)))])))
 

@@ -1,0 +1,13 @@
+[package]
+name = "compact-contract-digital-passport"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "Generated Rust crate for the midnight-verifiable-credentials digital-passport contract."
+
+[lib]
+name = "compact_contract_digital_passport"
+path = "lib.rs"
+
+[dependencies]
+compact-runtime = { path = "../../../runtime-rs" }

@@ -37,21 +37,22 @@
       ;; rust-passes.ss always supplies them).
       (define (collect-pure-circuit-tdefns pelt* existing-tdefns
                                            native-id-ht witness-id-ht circuit-id-ht)
-        (let ([seen-names (make-hashtable symbol-hash eq?)]
+        (let ([seen-fp (make-hashtable equal-hash equal?)]
               [out-tdefns '()])
           (define (push-type! src^ name type)
-            (unless (hashtable-ref seen-names name #f)
-              (hashtable-set! seen-names name #t)
-              (set! out-tdefns
-                (cons
-                  (with-output-language (Ltypescript Program-Element)
-                    `(export-typedef ,src^ ,name () ,type))
-                  out-tdefns))
-              ;; Recurse into the new type's fields (for tstruct).
-              (nanopass-case (Ltypescript Type) type
-                [(tstruct ,src^^ ,struct-name^ (,elt-name^* ,type^*) ...)
-                 (for-each scan-type type^*)]
-                [else (void)])))
+            (let ([fp (tstruct-fingerprint type)])
+              (unless (and fp (hashtable-ref seen-fp fp #f))
+                (when fp (hashtable-set! seen-fp fp #t))
+                (set! out-tdefns
+                  (cons
+                    (with-output-language (Ltypescript Program-Element)
+                      `(export-typedef ,src^ ,name () ,type))
+                    out-tdefns))
+                ;; Recurse into the new type's fields (for tstruct).
+                (nanopass-case (Ltypescript Type) type
+                  [(tstruct ,src^^ ,struct-name^ (,elt-name^* ,type^*) ...)
+                   (for-each scan-type type^*)]
+                  [else (void)]))))
           (define (scan-type type)
             (nanopass-case (Ltypescript Type) type
               [(tstruct ,src^ ,struct-name (,elt-name* ,type*) ...)
@@ -65,19 +66,12 @@
           (define (scan-arg arg)
             (nanopass-case (Ltypescript Argument) arg
               [(,var-name ,type) (scan-type type)]))
-          ;; Seed the seen set with names already in existing-tdefns so
-          ;; we don't synthesise duplicates.
           (for-each
             (lambda (etd)
               (nanopass-case (Ltypescript Program-Element) etd
                 [(export-typedef ,src ,type-name (,tvar-name* ...) ,type)
-                 (nanopass-case (Ltypescript Type) type
-                   [(tstruct ,src^ ,struct-name (,elt-name* ,type*) ...)
-                    (hashtable-set! seen-names struct-name #t)]
-                   [(tenum ,src^ ,enum-name ,elt-name ,elt-name* ...)
-                    (hashtable-set! seen-names enum-name #t)]
-                   [else (void)])
-                 (hashtable-set! seen-names type-name #t)]
+                 (let ([fp (tstruct-fingerprint type)])
+                   (when fp (hashtable-set! seen-fp fp #t)))]
                 [else (void)]))
             existing-tdefns)
           ;; Walk every circuit pelt. Gate on (not stdlib) AND one of:
@@ -124,6 +118,7 @@
       ;; variants stay visible.
       (define (emit-type-decls export-tdefn*)
         (unless (null? export-tdefn*)
+          (let ([seen (make-hashtable symbol-hash eq?)])
           (for-each
             (lambda (pelt)
               (nanopass-case (Ltypescript Program-Element) pelt
@@ -211,16 +206,53 @@
                        (out (format "// TODO M3-H5: generic struct ~a<~{~a~^, ~}>\n"
                                     struct-name tvar-name*))]
                       [else
+                       (let ([struct-name (struct-rust-name type)])
+                         (unless (hashtable-ref seen struct-name #f)
+                           (hashtable-set! seen struct-name #t)
                        ;; H5: derive + struct decl. Conservative: skip Copy
                        ;; (user may add manually); always derive Default so
-                       ;; ledger init can `Pair::default()` if needed.
-                       (out "#[derive(Clone, Debug, PartialEq, Eq, Default)]\n")
+                       ;; ledger init can `Pair::default()` if needed —
+                       ;; UNLESS the struct has an array field longer than
+                       ;; 32 elements (`Bytes<64>`, `Vector<50,T>`). Rust's
+                       ;; std impls `Default` for `[T; N]` only up to N=32
+                       ;; (the const-generic blanket was never stabilised),
+                       ;; so `#[derive(Default)]` fails on `[u8; 64]` etc.
+                       ;; For those structs we drop `Default` from the derive
+                       ;; and emit a manual `impl Default` using
+                       ;; default-value-rust per field (`[0u8; 64]` etc.).
+                       (let ([needs-manual-default?
+                              (exists (lambda (t)
+                                        (or (tbytes-len-over-32? t)
+                                            (tvector-len-over-32? t)))
+                                      type*)])
+                         (cond
+                           [needs-manual-default?
+                            (out "#[derive(Clone, Debug, PartialEq, Eq)]\n")]
+                           [else
+                            (out "#[derive(Clone, Debug, PartialEq, Eq, Default)]\n")]))
                        (out (format "pub struct ~a {\n" struct-name))
                        (for-each
                          (lambda (name type)
                            (out (format "    pub ~a: ~a,\n" name (type-rust type))))
                          elt-name* type*)
                        (out "}\n")
+                       (when (exists (lambda (t) (or (tbytes-len-over-32? t)
+                                                      (tvector-len-over-32? t))) type*)
+                         (out (format "impl Default for ~a {\n" struct-name))
+                         (out "    fn default() -> Self {\n")
+                         (out (format "        Self {\n"))
+                         (let loop ([names elt-name*] [types type*] [first? #t])
+                           (cond
+                             [(null? names) (void)]
+                             [else
+                              (out (format "            ~a~a: ~a,\n"
+                                           (if first? "" " ")
+                                           (car names)
+                                           (default-value-rust (car types))))
+                              (loop (cdr names) (cdr types) #f)]))
+                         (out "        }\n")
+                         (out "    }\n")
+                         (out "}\n"))
                        ;; H6: Aligned impl — concat of field alignments.
                        (out (format "impl Aligned for ~a {\n" struct-name))
                        (out "    fn alignment() -> Alignment {\n")
@@ -273,8 +305,8 @@
                                             (field-size-const-expr (car types))))
                                (loop (cdr types) #f)]))])
                        (out ";\n")
-                       (out "    fn from_field_repr(r: &[Fr]) -> Option<Self> {\n")
-                       (out "        if r.len() < Self::FIELD_SIZE { return None; }\n")
+                       (out "    fn from_field_repr(_repr: &[Fr]) -> Option<Self> {\n")
+                       (out "        if _repr.len() < Self::FIELD_SIZE { return None; }\n")
                        (out "        let mut _offset = 0usize;\n")
                        (for-each
                          (lambda (name type)
@@ -395,7 +427,7 @@
                                (loop (cdr names) (cdr types) #f)]))])
                        (out "\n    }\n")
                        (out "}\n")
-                       (out "\n")])]
+                       (out "\n")))])]
                    [(talias ,src ,nominal? ,type-name ,type)
                     ;; F6 follow-up: emit `pub type X = Y;` for nominal
                     ;; aliases (`new type X = Y;`). Transparent aliases
@@ -407,5 +439,5 @@
                    [else
                     (out "// TODO M3: unhandled export-typedef variant\n")])]
                 [else (void)]))
-            export-tdefn*)
+            export-tdefn*))
           (out "\n")))

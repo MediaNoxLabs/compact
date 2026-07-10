@@ -65,3 +65,4 @@ compact-contract-nested-map-fixture = { path = "contracts/nested-map-fixture" }
 compact-contract-hash-to-curve-fixture = { path = "contracts/hash-to-curve-fixture" }
 compact-contract-hmt-default-fixture = { path = "contracts/hmt-default-fixture" }
 compact-contract-bug11-fixture = { path = "contracts/bug11-fixture" }
+compact-contract-digital-passport = { path = "contracts/digital-passport" }

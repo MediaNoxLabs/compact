@@ -18,9 +18,10 @@
 // the standard-library "universal helpers" that don't fit a more
 // specific bucket.
 
-use crate::{AlignedValue, ValueReprAlignedValue};
+use crate::{AlignedValue, Fr, ValueReprAlignedValue, transient_hash};
 use midnight_base_crypto::hash::PersistentHashWriter;
 use midnight_base_crypto::repr::BinaryHashRepr;
+use midnight_transient_crypto::repr::FieldRepr;
 
 /// Compact's `Bytes<N>` primitive maps directly to a fixed-width byte
 /// array. Generated code uses this alias rather than spelling
@@ -81,6 +82,24 @@ pub fn persistent_hash_aligned(values: &[AlignedValue]) -> [u8; 32] {
     let mut writer = PersistentHashWriter::new();
     ValueReprAlignedValue(av).binary_repr(&mut writer);
     writer.finalize().0
+}
+
+/// Compact's `transientHash<A>(value): Field` — the field-element
+/// (Poseidon) hash of `value`'s alignment-framed field representation.
+/// Mirrors `persistent_hash_aligned` but feeds `ValueReprAlignedValue`'s
+/// `field_repr` (a `Vec<Fr>` preimage) into `transient_hash` instead of
+/// the binary repr into SHA-256. This is the Rust-side equivalent of the
+/// TS runtime's `transientHash(rtType.alignment(), rtType.toValue(value))`
+/// — `AlignedValue::from(value)` carries the type's alignment, and
+/// `ValueReprAlignedValue`'s `FieldRepr` impl emits the same per-atom
+/// `Fr` sequence the wasm `transientHash` produces. Used by generated
+/// code for `transientHash<Uint<64>>(x)` / `transientHash<JubjubPoint>(p)`
+/// (midnight-verifiable-credentials proof-hash circuits).
+pub fn transient_hash_aligned(values: &[AlignedValue]) -> Fr {
+    let av = AlignedValue::concat(values.iter());
+    let mut preimage: Vec<Fr> = Vec::new();
+    ValueReprAlignedValue(av).field_repr(&mut preimage);
+    transient_hash(&preimage)
 }
 
 #[cfg(test)]

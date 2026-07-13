@@ -290,12 +290,19 @@ jobs:
           nix develop .#compiler --command compactc ./test-center/compact/test.compact ./compact-output/
           nix develop .#compiler --command compactc ./examples/tiny.compact ./tiny-output/
 
+      # The coverage/ directory is produced only by the "Run compiler tests"
+      # step (./compiler/go), which is skipped on the yshyn-iohk fork (see the
+      # comment on that step). With no coverage/ to package, these two steps
+      # would fail (`mv coverage …`) / upload nothing, so they are gated on the
+      # same condition. They run unchanged upstream and on every other fork.
       - name: Merge report as ZIP
+        if: github.repository != 'yshyn-iohk/compact'
         run: |
           mv coverage coverage_$(date +"%Y%m%d%H%M%S")
           zip -r compiler-coverage.zip coverage*
 
       - name: Upload Artifact - coverage report
+        if: github.repository != 'yshyn-iohk/compact'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: Coverage Report

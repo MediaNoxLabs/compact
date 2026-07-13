@@ -43,6 +43,12 @@
 // The whole point: none of these `#[should_panic]`. They assert on the
 // `Err` variant of a returned `Result`.
 
+// The test contract is `Contract<(), NoWitnesses>` — the private-state
+// type is `()`. Passing that unit into `CircuitContext::new(state,
+// private_state)` is the correct semantic use even though clippy's
+// `unit_arg` lint views unit args as suspicious.
+#![allow(clippy::unit_arg)]
+
 use compact_contract_assert_parity::{pure_circuits, Contract};
 use compact_runtime::{CompactError, ConstructorContext, NoWitnesses};
 
@@ -60,8 +66,7 @@ fn ctor_ctx() -> ConstructorContext<()> {
 #[test]
 fn failing_pure_circuit_assert_is_err_not_panic() {
     let err = pure_circuits::require_true(false)
-        .err()
-        .expect("require_true(false) must return Err(AssertionFailed), not Ok or panic");
+        .expect_err("require_true(false) must return Err(AssertionFailed), not Ok or panic");
     assert!(
         matches!(err, CompactError::AssertionFailed(ref msg) if msg == "must be true"),
         "expected AssertionFailed(\"must be true\"), got {err:?}"
@@ -89,6 +94,12 @@ fn failing_impure_caller_of_pure_circuit_assert_is_err_not_panic() {
         init.current_contract_state,
         init.current_private_state,
     );
+    // Cannot use `.expect_err(...)` here — `CircuitResults<(), ()>`
+    // (the Ok variant returned by an impure circuit on the test
+    // contract) does not implement `Debug`, which `expect_err`'s
+    // `T: Debug` bound requires. Fall back to `.err().expect(...)`
+    // and suppress clippy's suggestion locally.
+    #[allow(clippy::err_expect)]
     let err = contract
         .trigger_fail(ctx)
         .err()

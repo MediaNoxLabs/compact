@@ -43,7 +43,7 @@
 // The whole point: none of these `#[should_panic]`. They assert on the
 // `Err` variant of a returned `Result`.
 
-use compact_contract_assert_parity::{Contract, pure_circuits};
+use compact_contract_assert_parity::{pure_circuits, Contract};
 use compact_runtime::{CompactError, ConstructorContext, NoWitnesses};
 
 fn ctor_ctx() -> ConstructorContext<()> {
@@ -84,9 +84,7 @@ fn passing_pure_circuit_assert_is_ok() {
 #[test]
 fn failing_impure_caller_of_pure_circuit_assert_is_err_not_panic() {
     let contract: Contract<(), NoWitnesses> = Contract::new(NoWitnesses);
-    let init = contract
-        .initial_state(ctor_ctx())
-        .expect("initial_state");
+    let init = contract.initial_state(ctor_ctx()).expect("initial_state");
     let ctx = compact_runtime::CircuitContext::new(
         init.current_contract_state,
         init.current_private_state,
@@ -108,9 +106,7 @@ fn failing_impure_caller_of_pure_circuit_assert_is_err_not_panic() {
 #[test]
 fn succeeding_impure_caller_of_pure_circuit_assert_is_ok() {
     let contract: Contract<(), NoWitnesses> = Contract::new(NoWitnesses);
-    let init = contract
-        .initial_state(ctor_ctx())
-        .expect("initial_state");
+    let init = contract.initial_state(ctor_ctx()).expect("initial_state");
     let ctx = compact_runtime::CircuitContext::new(
         init.current_contract_state,
         init.current_private_state,

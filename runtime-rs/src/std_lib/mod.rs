@@ -37,7 +37,9 @@ pub use adts::{
     decode_u8, decode_vector_fr, decode_vector_u64, decode_via_field_repr,
     serialize_contract_state, Counter,
 };
-pub use bytes_pad_disclose::{disclose, pad, persistent_hash_aligned, transient_hash_aligned, Bytes};
+pub use bytes_pad_disclose::{
+    disclose, pad, persistent_hash_aligned, transient_hash_aligned, Bytes,
+};
 pub use field_repr::{
     array_from_field_repr, bytes_field_size, bytes_from_field_repr, vec_u8_from_field_repr,
 };

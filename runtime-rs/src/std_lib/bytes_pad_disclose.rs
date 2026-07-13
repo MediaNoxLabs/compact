@@ -18,7 +18,7 @@
 // the standard-library "universal helpers" that don't fit a more
 // specific bucket.
 
-use crate::{AlignedValue, Fr, ValueReprAlignedValue, transient_hash};
+use crate::{transient_hash, AlignedValue, Fr, ValueReprAlignedValue};
 use midnight_base_crypto::hash::PersistentHashWriter;
 use midnight_base_crypto::repr::BinaryHashRepr;
 use midnight_transient_crypto::repr::FieldRepr;

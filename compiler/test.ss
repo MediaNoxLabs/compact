@@ -70243,7 +70243,7 @@ groups than for single tests.
         "                  context$committed_votes$path_of(x: any): any { return; }"
         "                 };"
         "test('check 1', () => {"
-        "  const [C, Ctxt] = startContract(contractCode, witnesses, 0);"
+        "  const [C, Ctxt] = startContract(contractCode, witnesses, 0, new Uint8Array(32));"
         "  expect(typeof(C.circuits)).toEqual('object');"
         "});"
         ))

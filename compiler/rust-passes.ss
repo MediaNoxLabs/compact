@@ -92,12 +92,17 @@
               [ledger* (program-ledger-fields pelt*)]
               [export-alist (map cons export-name* name*)]
               [id-rust-name-ht (build-id-rust-name-ht export-alist circuit*)]
-              [struct-rust-name-ht
+              ;; build-struct-rust-name-ht returns `(node-ht . fp-ht)`: the
+              ;; eq?-node table for collected sig nodes and the fingerprint
+              ;; table for body-site nodes. Both are installed so
+              ;; struct-rust-name resolves either.
+              [struct-rust-name-hts
                 (build-struct-rust-name-ht
                   (append all-tdefns extra-tdefns)
                   circuit* witness* native* ledger*)])
          (parameterize ([current-id-rust-name-ht id-rust-name-ht]
-                        [current-struct-rust-name-ht struct-rust-name-ht])
+                        [current-struct-rust-name-ht (car struct-rust-name-hts)]
+                        [current-struct-rust-name-fp-ht (cdr struct-rust-name-hts)])
            (emit-type-decls (append all-tdefns extra-tdefns))
          (emit-witnesses (program-witnesses pelt*))
          (emit-contract-struct)

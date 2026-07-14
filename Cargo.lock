@@ -873,6 +873,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-contract-struct-collision-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-runtime",
+]
+
+[[package]]
 name = "compact-contract-tiny"
 version = "0.1.0"
 dependencies = [

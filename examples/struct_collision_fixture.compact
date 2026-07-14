@@ -1,0 +1,77 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//  	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+//
+// Struct-name collision fixture (rust-passes struct disambiguation).
+//
+// Two modules each export a struct named `Rec`. The fields have the SAME
+// type (Field) but DIFFERENT names (`alpha` vs `beta`). After the frontend
+// `expand-modules-and-types` pass inlines both modules, the Rust emitter
+// sees two distinct top-level `Rec` tstruct nodes sharing one name — the
+// same shape produced by a generic message-protocol module instantiated
+// twice (digital-passport's `RequestMessage` / `ResultMessage`).
+//
+// This locks in two invariants of the Rust codegen:
+//
+//   1. The struct fingerprint keys on field NAMES as well as field types,
+//      so the two `Rec`s are NOT merged into one `pub struct Rec`. A
+//      types-only fingerprint would collapse them, and the field accesses
+//      below would fail to compile (E0609 no field `beta`).
+//
+//   2. The disambiguated name (`Rec` / `Rec_1`) is applied at value sites
+//      — the struct literal in each circuit body and the `.alpha` / `.beta`
+//      field reads — not only in type/signature positions. Emitting the
+//      bare `Rec` at the literal while the signature says `Rec_1` would be
+//      a type mismatch.
+//
+// Both circuits CONSTRUCT their struct in the body and READ a field back,
+// so the fixture fails to compile if either invariant regresses.
+
+import CompactStandardLibrary;
+
+module Alpha {
+  export struct Rec { alpha: Field }
+  export circuit makeAlpha(x: Field): Rec {
+    return Rec { alpha: disclose(x) };
+  }
+}
+
+module Beta {
+  export struct Rec { beta: Field }
+  export circuit makeBeta(y: Field): Rec {
+    return Rec { beta: disclose(y) };
+  }
+}
+
+import Alpha prefix a$;
+import Beta prefix b$;
+
+export ledger lastAlpha: Field;
+export ledger lastBeta: Field;
+
+constructor() {
+  lastAlpha = 0;
+  lastBeta = 0;
+}
+
+export circuit runAlpha(x: Field): [] {
+  const r = a$makeAlpha(x);
+  lastAlpha = r.alpha;
+}
+
+export circuit runBeta(y: Field): [] {
+  const r = b$makeBeta(y);
+  lastBeta = r.beta;
+}

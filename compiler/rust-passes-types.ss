@@ -107,7 +107,15 @@
       (define (tstruct-fingerprint type)
         (nanopass-case (Ltypescript Type) type
           [(tstruct ,src ,struct-name (,elt-name* ,type*) ...)
-           (cons struct-name (map type-rust type*))]
+           ;; Pair each rendered field type with its field NAME. Two
+           ;; `import M<...>` instantiations can produce same-named structs
+           ;; whose field types coincide but whose field names differ (or
+           ;; two distinct modules each exporting `struct Rec`); keying the
+           ;; fingerprint on types alone would collapse them into one Rust
+           ;; struct and then mis-name every field access. Including
+           ;; elt-name* keeps such variants distinct.
+           (cons struct-name
+                 (map (lambda (n t) (cons n (type-rust t))) elt-name* type*))]
           [(tenum ,src ,enum-name ,elt-name ,elt-name* ...)
            (cons enum-name (cons elt-name elt-name*))]
           [else #f]))

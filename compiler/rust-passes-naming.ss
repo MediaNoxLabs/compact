@@ -85,15 +85,19 @@
             circuit*)
           ht))
 
-      ;; build-struct-rust-name-ht: eq?-hashtable tstruct Type NODE ->
-      ;; disambiguated Rust name symbol. Walks every tstruct type node
-      ;; reachable from the export-typedefs and circuit/witness/native/
-      ;; ledger sigs, fingerprints each (struct-name + rendered field
-      ;; types, computed while the table is still empty so type-rust
-      ;; renders bare struct-names), and — for struct-names shared by >1
-      ;; distinct fingerprint — assigns `Name`, `Name_1`, ... in first-
-      ;; fingerprint-encounter order (export-typedef nodes are walked
-      ;; first so the surviving upstream decl keeps the bare name).
+      ;; build-struct-rust-name-ht: returns `(node-ht . fp-ht)`, where
+      ;; node-ht is an eq?-hashtable tstruct Type NODE -> disambiguated Rust
+      ;; name symbol and fp-ht is an equal?-hashtable struct FINGERPRINT ->
+      ;; the same name. Walks every tstruct type node reachable from the
+      ;; export-typedefs and circuit/witness/native/ledger sigs,
+      ;; fingerprints each (struct-name + per-field name/type, computed
+      ;; while the table is still empty so type-rust renders bare
+      ;; struct-names), and — for struct-names shared by >1 distinct
+      ;; fingerprint — assigns `Name`, `Name_1`, ... in first-fingerprint-
+      ;; encounter order (export-typedef nodes are walked first so the
+      ;; surviving upstream decl keeps the bare name). The fp-ht lets
+      ;; body-site nodes (struct literals / decoders / defaults), which the
+      ;; sig scan never reaches, resolve to the same name by structure.
       (define (build-struct-rust-name-ht tdefn* circuit* witness* native*
                                           ledger*)
         (let ([node->fp (make-eq-hashtable)]
@@ -102,7 +106,14 @@
           ;; (a node shared across sigs is recorded once). Returns the
           ;; node so callers can recurse into its field types once.
           (define (record-tstruct! type struct-name)
-            (unless (eq-hashtable-ref node->fp type #f)
+            ;; Stdlib structs (Maybe, MerkleTreePath*, ContractAddress, ...)
+            ;; are never disambiguated — they resolve through
+            ;; stdlib-struct-mappings / their bare runtime name, and the same
+            ;; name legitimately recurs with different type args (Maybe<Fr>
+            ;; vs Maybe<bool>). Recording them would fabricate bogus
+            ;; `Maybe_1` splits once body sites resolve via struct-rust-name.
+            (unless (or (lookup-stdlib-struct struct-name)
+                        (eq-hashtable-ref node->fp type #f))
               (let ([fp (tstruct-fingerprint type)])
                 (eq-hashtable-set! node->fp type fp)
                 (hashtable-update! name->entries struct-name
@@ -175,7 +186,14 @@
           ;; Assign names: for each struct-name, group its entries by
           ;; fingerprint (equal?), preserving first-encounter order. A
           ;; single fingerprint group → bare name; >1 → Name, Name_1, ...
-          (let ([ht (make-eq-hashtable)])
+          ;; Two parallel tables: `ht` keyed by tstruct NODE (eq?) for the
+          ;; sig / typedef / ledger nodes walked above, and `fp-ht` keyed by
+          ;; structural FINGERPRINT (equal?) so body-site nodes the scan
+          ;; never sees (struct literals, decoders, defaults) resolve to the
+          ;; same name. Both are populated from the same per-group name
+          ;; assignment, so they never disagree.
+          (let ([ht (make-eq-hashtable)]
+                [fp-ht (make-hashtable equal-hash equal?)])
             (let-values ([(names entries-vec) (hashtable-entries name->entries)])
             (vector-for-each
               (lambda (name entries)
@@ -195,6 +213,7 @@
                   (cond
                     [(null? (cdr groups))
                      ;; single fingerprint: bare name for every node
+                     (hashtable-set! fp-ht (car (car groups)) name)
                      (for-each
                        (lambda (node) (eq-hashtable-set! ht node name))
                        (cdr (car groups)))]
@@ -206,10 +225,11 @@
                          (let ([rname (if (= idx 0)
                                           name
                                           (string->symbol (format "~a_~a" name idx)))])
+                           (hashtable-set! fp-ht (car (car gs)) rname)
                            (for-each
                              (lambda (node) (eq-hashtable-set! ht node rname))
                              (cdr (car gs)))
                            (loop (cdr gs) (+ idx 1)))))])))
               names
               entries-vec))
-            ht)))
+            (cons ht fp-ht))))

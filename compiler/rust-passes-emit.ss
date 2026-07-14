@@ -176,6 +176,28 @@
           [(talias ,src ,nominal? ,type-name ,type) (struct-of-type type)]
           [else #f]))
 
+      ;; tstruct-node-of-type: peel talias chains and return the underlying
+      ;; tstruct Type NODE (not its parts), or #f. Callers pass the result to
+      ;; struct-rust-name so a colliding struct resolves to its disambiguated
+      ;; name (Name / Name_1) at value / decode / default sites, not just in
+      ;; type positions. Returning the node (rather than the bare name) lets
+      ;; struct-rust-name key on eq? identity or structural fingerprint.
+      (define (tstruct-node-of-type type)
+        (nanopass-case (Ltypescript Type) type
+          [(tstruct ,src ,struct-name (,elt-name* ,type*) ...) type]
+          [(talias ,src ,nominal? ,type-name ,type) (tstruct-node-of-type type)]
+          [else #f]))
+
+      ;; struct-rust-name-of: the disambiguated Rust struct name string for a
+      ;; (possibly alias-wrapped) struct type. Falls back to the bare
+      ;; struct-name symbol when the type isn't a tstruct (defensive; callers
+      ;; already know it is a struct).
+      (define (struct-rust-name-of type fallback-name)
+        (let ([node (tstruct-node-of-type type)])
+          (if node
+              (symbol->string (struct-rust-name node))
+              (symbol->string fallback-name))))
+
       ;; render-struct-literal: F2.2 — emit a Rust struct construction
       ;; expression for an Ltypescript `(new src type expr*)`. The struct
       ;; name comes off the type (via struct-of-type); for Maybe<T> we emit
@@ -200,7 +222,7 @@
                "struct-literal field-count mismatch for ~a (expected ~a, got ~a)"
                struct-name (length elt-name*) (length expr*))]
             [else
-             (let* ([rust-struct-name (symbol->string struct-name)]
+             (let* ([rust-struct-name (struct-rust-name-of type struct-name)]
                     [field-strs
                      (map (lambda (name e)
                             (format "~a: ~a"
@@ -1750,7 +1772,7 @@
                                        (expr-rust e native-id-ht)))
                              elt-name* expr*)])
                   (string-append
-                    (symbol->string struct-name)
+                    (struct-rust-name-of type struct-name)
                     " { "
                     (let join ([xs field-strs] [acc ""])
                       (cond
@@ -2732,7 +2754,8 @@
           ;; compact_runtime::*` import covers re-exported stdlib
           ;; types; user structs are emitted at module scope).
           [(tstruct ,src ,struct-name (,elt-name* ,type*) ...)
-           (format "compact_runtime::std_lib::decode_via_field_repr::<~a>" struct-name)]
+           (format "compact_runtime::std_lib::decode_via_field_repr::<~a>"
+                   (struct-rust-name-of type struct-name))]
           [else #f]))
 
       ;; adt-is-collection?: ADTs whose `read` op-class is a per-element
@@ -2793,7 +2816,7 @@
                   [(eq? (car names) 'value)
                    (format "Maybe::<~a>::default()" (type-rust (car types)))]
                   [else (loop (cdr names) (cdr types))]))]
-             [else (format "~a::default()" struct-name)])]
+             [else (format "~a::default()" (struct-rust-name-of type struct-name))])]
           [else "Default::default()"]))
 
       ;; emit-ledger-view: emits the module-level `ledger()` factory and the

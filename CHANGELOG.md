@@ -13,6 +13,19 @@ _No changes yet._
 
 ### Fixed
 
+- **Struct-name disambiguation** — same-named structs from distinct module
+  imports (e.g. a generic protocol module instantiated twice, or two modules
+  each exporting `struct Rec`) are now resolved by structural fingerprint,
+  keyed on field **names** as well as types, and the disambiguated name
+  (`Name` / `Name_1`) is applied at **all** emission sites — struct
+  literals, decoder turbofish, and default expressions — not only in type
+  positions. Previously the fingerprint ignored field names (merging
+  distinct structs → `E0609`) and value sites emitted the raw name
+  (mismatch vs the disambiguated signature → `E0308`/`E0422`). Stdlib
+  structs (`Maybe`, `MerkleTreePath*`, `ContractAddress`) are excluded from
+  disambiguation. New `struct_collision_fixture` byte-parity gate; see
+  [ADR 0001](docs/adr/0001-rust-struct-name-disambiguation.md).
+
 - **A20** — read-no-arg adt-op vm-code lowering. `emit-ledger-read-expr`
   no-arg branch in `compiler/rust-passes-emit.ss` was hardcoded to emit
   `dup → idx → popeq` and silently discarded the adt-op's vm-code, so

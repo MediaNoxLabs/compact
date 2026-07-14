@@ -69,6 +69,10 @@ const FIXTURES: &[(&str, &str)] = &[
     ("sealed_ledger_fixture.compact", "sealed-ledger-fixture"),
     ("set_fixture.compact", "set-fixture"),
     ("set_size_fixture.compact", "set-size-fixture"),
+    (
+        "struct_collision_fixture.compact",
+        "struct-collision-fixture",
+    ),
     ("tiny.compact", "tiny"),
     ("uints_fixture.compact", "uints-fixture"),
     ("vector_fixture.compact", "vector-fixture"),

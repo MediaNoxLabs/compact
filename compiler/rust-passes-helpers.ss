@@ -169,6 +169,20 @@
       (define current-struct-rust-name-ht
         (make-parameter (make-eq-hashtable)))
 
+      ;; current-struct-rust-name-fp-ht: equal?-hashtable mapping a struct
+      ;; FINGERPRINT (see tstruct-fingerprint) to its disambiguated Rust
+      ;; name. This is the resolution path for tstruct nodes that the
+      ;; eq?-node table above never saw: struct literals, decoder turbofish,
+      ;; and default expressions all appear in *statement bodies*, which
+      ;; build-struct-rust-name-ht does not walk (it scans signatures /
+      ;; typedefs / ledger only). A body-site node is a distinct IR object
+      ;; from the sig node, so it misses the eq? table; keying on the
+      ;; structural fingerprint instead lets it resolve to the same
+      ;; disambiguated name. Defaults to empty so non-colliding structs fall
+      ;; back to their bare name (byte-identical output for the common case).
+      (define current-struct-rust-name-fp-ht
+        (make-parameter (make-hashtable equal-hash equal?)))
+
       ;; id->rust-name: return the disambiguated Rust name symbol for a
       ;; circuit/witness/native function-name id. Consults
       ;; current-id-rust-name-ht; on a miss falls back to
@@ -187,7 +201,22 @@
         (nanopass-case (Ltypescript Type) type
           [(tstruct ,src ,struct-name (,elt-name* ,type*) ...)
            (let ([n (eq-hashtable-ref (current-struct-rust-name-ht) type #f)])
-             (if n n struct-name))]
+             (cond
+               [n n]
+               [else
+                ;; eq? miss: a body-site node (struct literal / decoder /
+                ;; default) that the sig scan never registered. Resolve by
+                ;; structural fingerprint. Compute the fingerprint with the
+                ;; disambiguation tables forced empty so nested user-struct
+                ;; fields render as bare names — matching how the fp table
+                ;; was built (build-struct-rust-name-ht runs before the
+                ;; tables are installed), keeping the key stable regardless
+                ;; of which table state is live at the call site.
+                (let ([fp (parameterize ([current-struct-rust-name-ht (make-eq-hashtable)]
+                                         [current-struct-rust-name-fp-ht (make-hashtable equal-hash equal?)])
+                            (tstruct-fingerprint type))])
+                  (or (hashtable-ref (current-struct-rust-name-fp-ht) fp #f)
+                      struct-name))]))]
           [else
            (rust-feature-error #f 'struct-rust-name-non-tstruct
              "struct-rust-name called on non-tstruct type")]))

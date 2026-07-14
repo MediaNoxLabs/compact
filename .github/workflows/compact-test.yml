@@ -2,9 +2,15 @@ name: Compact Tool Test
 
 on:
   pull_request:
+    # This workflow exercises the `tools/compact` toolchain-manager CLI, so
+    # it triggers on changes to that tool. It deliberately does NOT trigger
+    # on every `.github/workflows/**` change: its integration tests query the
+    # live compact release channel and assert the current latest version
+    # (tests/common/mod.rs `LATEST_COMPACTC_VERSION`), so running them on
+    # unrelated PRs (e.g. compiler / Rust-codegen work) just couples those
+    # PRs to an external, release-cadence-driven value they don't touch.
     paths:
       - "tools/compact/**"
-      - ".github/workflows/**"
   workflow_dispatch:
 
 permissions: {}
@@ -56,22 +62,8 @@ jobs:
         run: cargo clippy --all-targets --all-features -- -D warnings
 
   # Main test matrix
-  #
-  # Skipped on the yshyn-iohk/compact fork. These are integration tests for
-  # the `tools/compact` toolchain-*manager* CLI (install/update/list/check
-  # subcommands), unrelated to the Rust codegen work this fork carries. They
-  # are non-hermetic: they query the live compact release channel and assert
-  # against a hardcoded "Latest version available" string, so they fail
-  # whenever upstream publishes a new release (currently the channel returns
-  # 0.31.1 while the goldens expect 0.31.0 — 42/42 failures are this single
-  # drift). The fork cannot pin the remote, and the tooling is not ours to
-  # maintain. The `pre-check` job above (host-stable `cargo fmt --all` +
-  # `cargo clippy --all` over the whole workspace) still runs on the fork and
-  # gates every crate including our fixtures. Runs unchanged upstream
-  # (LFDT-Minokawa) and on any other fork.
   test:
     name: Test
-    if: github.repository != 'yshyn-iohk/compact'
     permissions:
       contents: read
     needs: pre-check

@@ -13,6 +13,17 @@ _No changes yet._
 
 ### Fixed
 
+- **export-typedef promotion gated to `--rust`** — the M3.5-E2 pass that
+  synthesises `export-typedef` entries for user structs/enums (so the Rust
+  H5-H7 emitter can declare them) ran unconditionally and mutated the shared
+  `Lexpanded` IR, drifting ~64 `compiler/test.ss` goldens across
+  expand-modules-and-types / infer-types / reject-recursive-circuits /
+  track-witness-data / combine-ledger-declarations. It is now
+  `(when (emit-rust) …)`, so the TS-backend IR is unchanged and the Rust
+  fixtures still get their typedefs. This let the CI drop all fork-scoped
+  `if: github.repository != …` skips. See
+  [ADR 0002](docs/adr/0002-gate-export-typedef-promotion-to-rust.md).
+
 - **Struct-name disambiguation** — same-named structs from distinct module
   imports (e.g. a generic protocol module instantiated twice, or two modules
   each exporting `struct Rec`) are now resolved by structural fingerprint,

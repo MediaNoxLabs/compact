@@ -206,28 +206,7 @@ jobs:
           cp doc/compact-reference.mdx /tmp/compact-reference.before.mdx
           cp compiler/compact-reference-proto.mdx /tmp/compact-reference-proto.before.mdx
 
-      # Skipped on the yshyn-iohk/compact fork. `./compiler/go` runs the full
-      # upstream TS + IR-pass test corpus, which carries pre-existing failures
-      # on this Rust-codegen fork that are unrelated to the Rust codegen work
-      # and to any given PR:
-      #   - track-witness-data IR-pass expectation drift (compiler/test.ss
-      #     ~30227, ~30325) — golden expectations not regenerated after
-      #     branch/ledger-8 divergence.
-      # These had been masked for the branch's entire life because the
-      # vscode-extension build (fixed in the ".snap" rename commit) failed
-      # first and skipped this step. The Rust codegen is fully gated by the
-      # separate "Rust runtime + e2e tests" workflow (fmt + clippy + byte-parity
-      # + codegen_regression). The `nix build` in the "Build compiler" step
-      # above still validates that the whole compact-all (compiler + runtime +
-      # vscode-extension) BUILDS on every fork PR; only the upstream
-      # test-corpus RUN is skipped here.
-      #
-      # Runs unchanged on upstream (LFDT-Minokawa) and any other fork. To
-      # re-enable on this fork, regenerate the drifted IR-pass expectations
-      # (`nix develop --command ./compiler/go` locally, commit the result)
-      # and delete this `if:` guard.
       - name: Run compiler tests
-        if: github.repository != 'yshyn-iohk/compact'
         run: |
           if ! nix develop --command ./compiler/go; then
             echo "::error::./compiler/go failed. Fix any warnings or errors produced by running './compiler/go' inside a nix shell ('nix develop .#compiler'), then commit the result."
@@ -290,19 +269,12 @@ jobs:
           nix develop .#compiler --command compactc ./test-center/compact/test.compact ./compact-output/
           nix develop .#compiler --command compactc ./examples/tiny.compact ./tiny-output/
 
-      # The coverage/ directory is produced only by the "Run compiler tests"
-      # step (./compiler/go), which is skipped on the yshyn-iohk fork (see the
-      # comment on that step). With no coverage/ to package, these two steps
-      # would fail (`mv coverage …`) / upload nothing, so they are gated on the
-      # same condition. They run unchanged upstream and on every other fork.
       - name: Merge report as ZIP
-        if: github.repository != 'yshyn-iohk/compact'
         run: |
           mv coverage coverage_$(date +"%Y%m%d%H%M%S")
           zip -r compiler-coverage.zip coverage*
 
       - name: Upload Artifact - coverage report
-        if: github.repository != 'yshyn-iohk/compact'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: Coverage Report

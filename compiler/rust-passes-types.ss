@@ -94,28 +94,48 @@
           [(tunknown) "/* TODO M3-F4: tunknown */"]
           [else "/* TODO M3-F4: unhandled type variant */"]))
 
+      ;; type-fingerprint: a disambiguation-INDEPENDENT structural key for a
+      ;; Type node. Unlike type-rust it never consults the struct rename
+      ;; tables, so it renders the same whether computed while the tables are
+      ;; empty (during build-struct-rust-name-ht) or full (at a resolution
+      ;; site) — the stability struct-rust-name's fp fallback relies on. It
+      ;; recurses through nested struct / enum / vector / tuple / transparent-
+      ;; alias structure so a nested collision is reflected in the outer key:
+      ;; two module-collided `Outer { inner: Inner }` whose `Inner` bodies
+      ;; differ must produce different `Outer` fingerprints, which a shallow
+      ;; `(type-rust field)` (bare name "Inner" for both) would not. Leaf /
+      ;; nominal forms delegate to type-rust (stable — it touches no table for
+      ;; primitives, and a nominal alias is an opaque name by design).
+      (define (type-fingerprint type)
+        (nanopass-case (Ltypescript Type) type
+          [(tstruct ,src ,struct-name (,elt-name* ,type*) ...)
+           (cons 'struct
+                 (cons struct-name
+                       (map (lambda (n t) (cons n (type-fingerprint t))) elt-name* type*)))]
+          [(tenum ,src ,enum-name ,elt-name ,elt-name* ...)
+           (cons 'enum (cons enum-name (cons elt-name elt-name*)))]
+          [(tvector ,src ,len ,type) (list 'vec len (type-fingerprint type))]
+          [(ttuple ,src ,type* ...) (cons 'tuple (map type-fingerprint type*))]
+          [(talias ,src ,nominal? ,type-name ,type)
+           ;; Match type-rust: a nominal alias is its own opaque name; a
+           ;; transparent alias expands (recurse so a struct underneath is
+           ;; seen structurally).
+           (if nominal? (list 'alias type-name) (type-fingerprint type))]
+          [else (type-rust type)]))
+
       ;; tstruct-fingerprint: a structural fingerprint of a tstruct/tenum
       ;; Type node, used to distinguish two `import M<...>` instantiations
       ;; that share a struct-name but have field-distinct bodies. Returns
-      ;; `(struct-name . field-type-renderings)` for tstruct, `(enum-name .
-      ;; variants)` for tenum, or #f for other types. Field types render
-      ;; via type-rust; while the struct disambiguation table is empty
-      ;; (during collection) type-rust renders bare struct-names, so two
-      ;; variants whose body fields reference different-named structs
-      ;; (digital-passport's Issuance vs Verification bodies) fingerprint
-      ;; distinctly.
+      ;; `(struct-name . (field-name . field-fingerprint) ...)` for tstruct,
+      ;; `(enum-name . variants)` for tenum, or #f for other types. Field
+      ;; types use type-fingerprint (recursive, table-independent) so two
+      ;; variants differing only in a nested colliding struct still
+      ;; fingerprint distinctly.
       (define (tstruct-fingerprint type)
         (nanopass-case (Ltypescript Type) type
           [(tstruct ,src ,struct-name (,elt-name* ,type*) ...)
-           ;; Pair each rendered field type with its field NAME. Two
-           ;; `import M<...>` instantiations can produce same-named structs
-           ;; whose field types coincide but whose field names differ (or
-           ;; two distinct modules each exporting `struct Rec`); keying the
-           ;; fingerprint on types alone would collapse them into one Rust
-           ;; struct and then mis-name every field access. Including
-           ;; elt-name* keeps such variants distinct.
            (cons struct-name
-                 (map (lambda (n t) (cons n (type-rust t))) elt-name* type*))]
+                 (map (lambda (n t) (cons n (type-fingerprint t))) elt-name* type*))]
           [(tenum ,src ,enum-name ,elt-name ,elt-name* ...)
            (cons enum-name (cons elt-name elt-name*))]
           [else #f]))

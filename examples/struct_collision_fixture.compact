@@ -38,20 +38,38 @@
 //
 // Both circuits CONSTRUCT their struct in the body and READ a field back,
 // so the fixture fails to compile if either invariant regresses.
+//
+// The `Wrap { inner: Inner }` pair adds a NESTED collision: both modules
+// also export `struct Inner` and `struct Wrap { inner: Inner }`, with the
+// two `Inner`s differing in body. Their `Wrap`s are byte-identical at the
+// outer level (`inner: Inner`), so a fingerprint that recorded only the
+// bare field-type name would merge them and mis-type one instantiation's
+// nested field. Distinguishing them requires the fingerprint to recurse
+// into the nested struct's structure.
 
 import CompactStandardLibrary;
 
 module Alpha {
   export struct Rec { alpha: Field }
+  export struct Inner { a: Field }
+  export struct Wrap { inner: Inner }
   export circuit makeAlpha(x: Field): Rec {
     return Rec { alpha: disclose(x) };
+  }
+  export circuit wrapAlpha(x: Field): Wrap {
+    return Wrap { inner: Inner { a: disclose(x) } };
   }
 }
 
 module Beta {
   export struct Rec { beta: Field }
+  export struct Inner { b: Boolean }
+  export struct Wrap { inner: Inner }
   export circuit makeBeta(y: Field): Rec {
     return Rec { beta: disclose(y) };
+  }
+  export circuit wrapBeta(y: Boolean): Wrap {
+    return Wrap { inner: Inner { b: disclose(y) } };
   }
 }
 
@@ -74,4 +92,14 @@ export circuit runAlpha(x: Field): [] {
 export circuit runBeta(y: Field): [] {
   const r = b$makeBeta(y);
   lastBeta = r.beta;
+}
+
+export circuit runWrapAlpha(x: Field): Field {
+  const w = a$wrapAlpha(x);
+  return w.inner.a;
+}
+
+export circuit runWrapBeta(y: Boolean): Boolean {
+  const w = b$wrapBeta(y);
+  return w.inner.b;
 }

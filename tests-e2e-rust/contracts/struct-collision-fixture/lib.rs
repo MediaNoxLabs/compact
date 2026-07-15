@@ -80,6 +80,102 @@ impl compact_runtime::BinaryHashRepr for Rec_1 {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
+pub struct Wrap_1 {
+    pub inner: Inner_1,
+}
+impl Aligned for Wrap_1 {
+    fn alignment() -> Alignment {
+        Alignment::concat([&<Inner_1 as Aligned>::alignment()])
+    }
+}
+impl FieldRepr for Wrap_1 {
+    fn field_repr<W: MemWrite<Fr>>(&self, writer: &mut W) {
+        self.inner.field_repr(writer);
+    }
+    fn field_size(&self) -> usize {
+        self.inner.field_size()
+    }
+}
+impl FromFieldRepr for Wrap_1 {
+    const FIELD_SIZE: usize = <Inner_1 as FromFieldRepr>::FIELD_SIZE;
+    fn from_field_repr(_repr: &[Fr]) -> Option<Self> {
+        if _repr.len() < Self::FIELD_SIZE {
+            return None;
+        }
+        let mut _offset = 0usize;
+        let inner = <Inner_1 as FromFieldRepr>::from_field_repr(
+            &_repr[_offset.._offset + <Inner_1 as FromFieldRepr>::FIELD_SIZE],
+        )?;
+        _offset += <Inner_1 as FromFieldRepr>::FIELD_SIZE;
+        let _ = _offset;
+        Some(Wrap_1 { inner })
+    }
+}
+impl From<Wrap_1> for compact_runtime::Value {
+    fn from(s: Wrap_1) -> compact_runtime::Value {
+        let mut _v: Vec<compact_runtime::Value> = Vec::new();
+        _v.push(compact_runtime::Value::from(s.inner));
+        compact_runtime::Value::concat(_v.iter())
+    }
+}
+impl compact_runtime::BinaryHashRepr for Wrap_1 {
+    fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
+        self.inner.binary_repr(writer);
+    }
+    fn binary_len(&self) -> usize {
+        self.inner.binary_len()
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Default)]
+pub struct Inner_1 {
+    pub a: Fr,
+}
+impl Aligned for Inner_1 {
+    fn alignment() -> Alignment {
+        Alignment::concat([&<Fr as Aligned>::alignment()])
+    }
+}
+impl FieldRepr for Inner_1 {
+    fn field_repr<W: MemWrite<Fr>>(&self, writer: &mut W) {
+        self.a.field_repr(writer);
+    }
+    fn field_size(&self) -> usize {
+        self.a.field_size()
+    }
+}
+impl FromFieldRepr for Inner_1 {
+    const FIELD_SIZE: usize = <Fr as FromFieldRepr>::FIELD_SIZE;
+    fn from_field_repr(_repr: &[Fr]) -> Option<Self> {
+        if _repr.len() < Self::FIELD_SIZE {
+            return None;
+        }
+        let mut _offset = 0usize;
+        let a = <Fr as FromFieldRepr>::from_field_repr(
+            &_repr[_offset.._offset + <Fr as FromFieldRepr>::FIELD_SIZE],
+        )?;
+        _offset += <Fr as FromFieldRepr>::FIELD_SIZE;
+        let _ = _offset;
+        Some(Inner_1 { a })
+    }
+}
+impl From<Inner_1> for compact_runtime::Value {
+    fn from(s: Inner_1) -> compact_runtime::Value {
+        let mut _v: Vec<compact_runtime::Value> = Vec::new();
+        _v.push(compact_runtime::Value::from(s.a));
+        compact_runtime::Value::concat(_v.iter())
+    }
+}
+impl compact_runtime::BinaryHashRepr for Inner_1 {
+    fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
+        self.a.binary_repr(writer);
+    }
+    fn binary_len(&self) -> usize {
+        self.a.binary_len()
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct Rec {
     pub beta: Fr,
 }
@@ -124,6 +220,102 @@ impl compact_runtime::BinaryHashRepr for Rec {
     }
     fn binary_len(&self) -> usize {
         self.beta.binary_len()
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Default)]
+pub struct Wrap {
+    pub inner: Inner,
+}
+impl Aligned for Wrap {
+    fn alignment() -> Alignment {
+        Alignment::concat([&<Inner as Aligned>::alignment()])
+    }
+}
+impl FieldRepr for Wrap {
+    fn field_repr<W: MemWrite<Fr>>(&self, writer: &mut W) {
+        self.inner.field_repr(writer);
+    }
+    fn field_size(&self) -> usize {
+        self.inner.field_size()
+    }
+}
+impl FromFieldRepr for Wrap {
+    const FIELD_SIZE: usize = <Inner as FromFieldRepr>::FIELD_SIZE;
+    fn from_field_repr(_repr: &[Fr]) -> Option<Self> {
+        if _repr.len() < Self::FIELD_SIZE {
+            return None;
+        }
+        let mut _offset = 0usize;
+        let inner = <Inner as FromFieldRepr>::from_field_repr(
+            &_repr[_offset.._offset + <Inner as FromFieldRepr>::FIELD_SIZE],
+        )?;
+        _offset += <Inner as FromFieldRepr>::FIELD_SIZE;
+        let _ = _offset;
+        Some(Wrap { inner })
+    }
+}
+impl From<Wrap> for compact_runtime::Value {
+    fn from(s: Wrap) -> compact_runtime::Value {
+        let mut _v: Vec<compact_runtime::Value> = Vec::new();
+        _v.push(compact_runtime::Value::from(s.inner));
+        compact_runtime::Value::concat(_v.iter())
+    }
+}
+impl compact_runtime::BinaryHashRepr for Wrap {
+    fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
+        self.inner.binary_repr(writer);
+    }
+    fn binary_len(&self) -> usize {
+        self.inner.binary_len()
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Default)]
+pub struct Inner {
+    pub b: bool,
+}
+impl Aligned for Inner {
+    fn alignment() -> Alignment {
+        Alignment::concat([&<bool as Aligned>::alignment()])
+    }
+}
+impl FieldRepr for Inner {
+    fn field_repr<W: MemWrite<Fr>>(&self, writer: &mut W) {
+        self.b.field_repr(writer);
+    }
+    fn field_size(&self) -> usize {
+        self.b.field_size()
+    }
+}
+impl FromFieldRepr for Inner {
+    const FIELD_SIZE: usize = <bool as FromFieldRepr>::FIELD_SIZE;
+    fn from_field_repr(_repr: &[Fr]) -> Option<Self> {
+        if _repr.len() < Self::FIELD_SIZE {
+            return None;
+        }
+        let mut _offset = 0usize;
+        let b = <bool as FromFieldRepr>::from_field_repr(
+            &_repr[_offset.._offset + <bool as FromFieldRepr>::FIELD_SIZE],
+        )?;
+        _offset += <bool as FromFieldRepr>::FIELD_SIZE;
+        let _ = _offset;
+        Some(Inner { b })
+    }
+}
+impl From<Inner> for compact_runtime::Value {
+    fn from(s: Inner) -> compact_runtime::Value {
+        let mut _v: Vec<compact_runtime::Value> = Vec::new();
+        _v.push(compact_runtime::Value::from(s.b));
+        compact_runtime::Value::concat(_v.iter())
+    }
+}
+impl compact_runtime::BinaryHashRepr for Inner {
+    fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
+        self.b.binary_repr(writer);
+    }
+    fn binary_len(&self) -> usize {
+        self.b.binary_len()
     }
 }
 
@@ -299,7 +491,29 @@ pub mod pure_circuits {
         Ok(Rec_1 { alpha: x })
     }
 
+    pub(crate) fn wrap_alpha(x: Fr) -> Result<Wrap_1, CompactError> {
+        Ok(Wrap_1 {
+            inner: Inner_1 { a: x },
+        })
+    }
+
     pub(crate) fn make_beta(y: Fr) -> Result<Rec, CompactError> {
         Ok(Rec { beta: y })
+    }
+
+    pub(crate) fn wrap_beta(y: bool) -> Result<Wrap, CompactError> {
+        Ok(Wrap {
+            inner: Inner { b: y },
+        })
+    }
+
+    pub fn run_wrap_alpha(x: Fr) -> Result<Fr, CompactError> {
+        let w = pure_circuits::wrap_alpha(x)?;
+        Ok(w.inner.a)
+    }
+
+    pub fn run_wrap_beta(y: bool) -> Result<bool, CompactError> {
+        let w = pure_circuits::wrap_beta(y)?;
+        Ok(w.inner.b)
     }
 }

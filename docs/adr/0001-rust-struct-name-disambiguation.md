@@ -68,9 +68,17 @@ the signature scan never saw.
 Resolve disambiguated struct names by **structural fingerprint**, and make
 the fingerprint complete.
 
-1. **Fingerprint includes field names.** `tstruct-fingerprint` now keys on
-   `(struct-name, [(field-name, field-type) …])`. Same-name structs that
-   differ in either field types *or* field names are kept distinct.
+1. **Recursive structural fingerprint.** `tstruct-fingerprint` keys on
+   `(struct-name, [(field-name, field-fingerprint) …])`, where each field's
+   fingerprint comes from `type-fingerprint` — a disambiguation-independent
+   key that recurses through nested struct / enum / vector / tuple /
+   transparent-alias structure (leaf and nominal-alias forms delegate to the
+   stable `type-rust`). Same-name structs that differ in field *names*, field
+   *types*, **or the body of a nested colliding struct** are kept distinct. A
+   shallow key (bare field-type name) would merge two `Outer { inner: Inner }`
+   whose `Inner`s differ, since both would record the bare string `Inner`.
+   `type-fingerprint` never consults the rename tables, so it is identical
+   whether computed while the tables are empty (build) or full (resolution).
 
 2. **Fingerprint-keyed fallback for body sites.**
    `build-struct-rust-name-ht` returns two tables: the existing `eq?`-node
@@ -132,11 +140,18 @@ the fingerprint complete.
 - New fixture `examples/struct_collision_fixture.compact` +
   `tests-e2e-rust/contracts/struct-collision-fixture/`, registered in
   `codegen_regression`. Two modules export `struct Rec` with the same field
-  type but different field names, and each circuit constructs its `Rec` in
-  the body and reads a field back. Against the pre-fix compiler this fixture
-  **fails to compile** (one merged `Rec`, wrong-named construction);
-  against the fixed compiler it splits into `Rec` / `Rec_1`, constructs each
-  correctly, and compiles.
+  type but different field names (the flat case), plus
+  `struct Wrap { inner: Inner }` where each module's `Inner` differs (the
+  nested case). Each circuit constructs its struct in the body and reads a
+  field back. Against the pre-fix compiler this **fails to compile** (merged
+  structs, wrong-named construction); against the fixed compiler it splits
+  into `Rec`/`Rec_1`, `Wrap`/`Wrap_1`, `Inner`/`Inner_1`, constructs each
+  correctly (`wrap_alpha → Wrap_1 { inner: Inner_1 {…} }`), and compiles.
+- The fixture crate is a `tests-e2e-rust` dev-dependency, so
+  `cargo build -p tests-e2e-rust --tests` (the CI build gate) actually
+  compiles it — `codegen_regression` only byte-compares generated output, so
+  without the dev-dep a compile regression in the disambiguated code would go
+  unnoticed.
 
 ## Alternatives considered
 

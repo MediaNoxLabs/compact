@@ -50,13 +50,13 @@ impl FieldRepr for MerkleTreeDigest {
 }
 impl FromFieldRepr for MerkleTreeDigest {
     const FIELD_SIZE: usize = <Fr as FromFieldRepr>::FIELD_SIZE;
-    fn from_field_repr(r: &[Fr]) -> Option<Self> {
-        if r.len() < Self::FIELD_SIZE {
+    fn from_field_repr(_repr: &[Fr]) -> Option<Self> {
+        if _repr.len() < Self::FIELD_SIZE {
             return None;
         }
         let mut _offset = 0usize;
         let field = <Fr as FromFieldRepr>::from_field_repr(
-            &r[_offset.._offset + <Fr as FromFieldRepr>::FIELD_SIZE],
+            &_repr[_offset.._offset + <Fr as FromFieldRepr>::FIELD_SIZE],
         )?;
         _offset += <Fr as FromFieldRepr>::FIELD_SIZE;
         let _ = _offset;
@@ -148,17 +148,17 @@ impl FieldRepr for LeafPreimage {
 impl FromFieldRepr for LeafPreimage {
     const FIELD_SIZE: usize =
         compact_runtime::bytes_field_size(6) + <[u8; 32] as FromFieldRepr>::FIELD_SIZE;
-    fn from_field_repr(r: &[Fr]) -> Option<Self> {
-        if r.len() < Self::FIELD_SIZE {
+    fn from_field_repr(_repr: &[Fr]) -> Option<Self> {
+        if _repr.len() < Self::FIELD_SIZE {
             return None;
         }
         let mut _offset = 0usize;
         let domain_sep = compact_runtime::bytes_from_field_repr::<6>(
-            &r[_offset.._offset + compact_runtime::bytes_field_size(6)],
+            &_repr[_offset.._offset + compact_runtime::bytes_field_size(6)],
         )?;
         _offset += compact_runtime::bytes_field_size(6);
         let data = <[u8; 32] as FromFieldRepr>::from_field_repr(
-            &r[_offset.._offset + <[u8; 32] as FromFieldRepr>::FIELD_SIZE],
+            &_repr[_offset.._offset + <[u8; 32] as FromFieldRepr>::FIELD_SIZE],
         )?;
         _offset += <[u8; 32] as FromFieldRepr>::FIELD_SIZE;
         let _ = _offset;
@@ -408,7 +408,7 @@ where
             &ctx.current_query_context,
         );
         let (current_private_state, sk) = self.witnesses.private_secret_key(&_witness_ctx_4);
-        let com_nul = pure_circuits::commitment_nullifier(sk);
+        let com_nul = pure_circuits::commitment_nullifier(sk)?;
         compact_assert!(
             (!({
                 let _gather_ops = OpProgramGather::<DefaultDB>::new()
@@ -439,7 +439,7 @@ where
             })),
             "Unexpected attempt to double use of nullifier"
         );
-        let pk = pure_circuits::public_key(sk);
+        let pk = pure_circuits::public_key(sk)?;
         let _witness_ctx_8 = WitnessContext::new(
             ledger(&ctx.current_query_context.state),
             current_private_state,
@@ -481,7 +481,7 @@ where
             }) && (pk == path.value.leaf)),
             "Attempted to vote without authorization - need to add-voter"
         );
-        let cm = pure_circuits::commit_with_sk(pure_circuits::ballot_repr(ballot.clone()), sk);
+        let cm = pure_circuits::commit_with_sk(pure_circuits::ballot_repr(ballot.clone())?, sk)?;
 
         let _ops_12 = OpProgramVerify::<DefaultDB>::new()
             .idx_at_index(5u8, true)
@@ -585,7 +585,7 @@ where
             &ctx.current_query_context,
         );
         let (current_private_state, sk) = self.witnesses.private_secret_key(&_witness_ctx_2);
-        let rev_nul = pure_circuits::reveal_nullifier(sk);
+        let rev_nul = pure_circuits::reveal_nullifier(sk)?;
         compact_assert!(
             (!({
                 let _gather_ops = OpProgramGather::<DefaultDB>::new()
@@ -622,7 +622,7 @@ where
             &ctx.current_query_context,
         );
         let (current_private_state, vote) = self.witnesses.private_vote(&_witness_ctx_5);
-        let cm = pure_circuits::commit_with_sk(pure_circuits::ballot_repr(vote.clone()), sk);
+        let cm = pure_circuits::commit_with_sk(pure_circuits::ballot_repr(vote.clone())?, sk)?;
         let _witness_ctx_8 = WitnessContext::new(
             ledger(&ctx.current_query_context.state),
             current_private_state,
@@ -731,7 +731,7 @@ where
             &ctx.current_query_context,
         );
         let (current_private_state, sk) = self.witnesses.private_secret_key(&_witness_ctx_0);
-        let apk = pure_circuits::public_key(sk);
+        let apk = pure_circuits::public_key(sk)?;
         compact_assert!(
             (apk == {
                 let _gather_ops = OpProgramGather::<DefaultDB>::new()
@@ -810,7 +810,7 @@ where
                 }
             };
             compact_runtime::std_lib::decode_via_field_repr::<PublicState>(_av)?
-        });
+        })?;
         let ops = OpProgramVerify::<DefaultDB>::new()
             .push(false, new_cell(1u8))
             .push(true, new_cell(tmp.clone()))
@@ -846,7 +846,7 @@ where
             &ctx.current_query_context,
         );
         let (current_private_state, sk) = self.witnesses.private_secret_key(&_witness_ctx_0);
-        let apk = pure_circuits::public_key(sk);
+        let apk = pure_circuits::public_key(sk)?;
         compact_assert!(
             (apk == {
                 let _gather_ops = OpProgramGather::<DefaultDB>::new()
@@ -954,7 +954,7 @@ where
             &ctx.current_query_context,
         );
         let (current_private_state, sk) = self.witnesses.private_secret_key(&_witness_ctx_3);
-        let apk = pure_circuits::public_key(sk);
+        let apk = pure_circuits::public_key(sk)?;
         compact_assert!(
             (apk == {
                 let _gather_ops = OpProgramGather::<DefaultDB>::new()
@@ -1059,8 +1059,8 @@ impl<'a, D: DB> Ledger<'a, D> {}
 pub mod pure_circuits {
     use super::*;
 
-    pub(crate) fn ballot_repr(ballot: PermissibleVotes) -> [u8; 32] {
-        if (ballot == PermissibleVotes::yes) {
+    pub(crate) fn ballot_repr(ballot: PermissibleVotes) -> Result<[u8; 32], CompactError> {
+        Ok(if (ballot == PermissibleVotes::yes) {
             [
                 121u8, 101, 115, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 0, 0, 0, 0, 0, 0, 0,
@@ -1070,11 +1070,11 @@ pub mod pure_circuits {
                 110u8, 111, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 0, 0, 0, 0, 0, 0,
             ]
-        }
+        })
     }
 
-    pub(crate) fn successor(state: PublicState) -> PublicState {
-        if (state == PublicState::setup) {
+    pub(crate) fn successor(state: PublicState) -> Result<PublicState, CompactError> {
+        Ok(if (state == PublicState::setup) {
             PublicState::commit
         } else {
             if (state == PublicState::commit) {
@@ -1082,43 +1082,43 @@ pub mod pure_circuits {
             } else {
                 PublicState::r#final
             }
-        }
+        })
     }
 
-    pub(crate) fn commitment_nullifier(sk: [u8; 32]) -> [u8; 32] {
-        compact_runtime::std_lib::persistent_hash_aligned(&[
+    pub(crate) fn commitment_nullifier(sk: [u8; 32]) -> Result<[u8; 32], CompactError> {
+        Ok(compact_runtime::std_lib::persistent_hash_aligned(&[
             compact_runtime::AlignedValue::from([
                 108u8, 97, 114, 101, 115, 58, 101, 108, 101, 99, 116, 105, 111, 110, 58, 99, 109,
                 45, 110, 117, 108, 58, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             ]),
             compact_runtime::AlignedValue::from(sk),
-        ])
+        ]))
     }
 
-    pub(crate) fn reveal_nullifier(sk: [u8; 32]) -> [u8; 32] {
-        compact_runtime::std_lib::persistent_hash_aligned(&[
+    pub(crate) fn reveal_nullifier(sk: [u8; 32]) -> Result<[u8; 32], CompactError> {
+        Ok(compact_runtime::std_lib::persistent_hash_aligned(&[
             compact_runtime::AlignedValue::from([
                 108u8, 97, 114, 101, 115, 58, 101, 108, 101, 99, 116, 105, 111, 110, 58, 114, 118,
                 45, 110, 117, 108, 58, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             ]),
             compact_runtime::AlignedValue::from(sk),
-        ])
+        ]))
     }
 
-    pub(crate) fn public_key(sk: [u8; 32]) -> [u8; 32] {
-        compact_runtime::std_lib::persistent_hash_aligned(&[
+    pub(crate) fn public_key(sk: [u8; 32]) -> Result<[u8; 32], CompactError> {
+        Ok(compact_runtime::std_lib::persistent_hash_aligned(&[
             compact_runtime::AlignedValue::from([
                 108u8, 97, 114, 101, 115, 58, 101, 108, 101, 99, 116, 105, 111, 110, 58, 112, 107,
                 58, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             ]),
             compact_runtime::AlignedValue::from(sk),
-        ])
+        ]))
     }
 
-    pub(crate) fn commit_with_sk(ballot: [u8; 32], sk: [u8; 32]) -> [u8; 32] {
-        compact_runtime::std_lib::persistent_hash_aligned(&[
+    pub(crate) fn commit_with_sk(ballot: [u8; 32], sk: [u8; 32]) -> Result<[u8; 32], CompactError> {
+        Ok(compact_runtime::std_lib::persistent_hash_aligned(&[
             compact_runtime::AlignedValue::from(ballot),
             compact_runtime::AlignedValue::from(sk),
-        ])
+        ]))
     }
 }

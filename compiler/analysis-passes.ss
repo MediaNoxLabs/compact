@@ -23,6 +23,7 @@
           (nanopass)
           (langs)
           (ledger)
+          (config-params)
           (natives)
           (json)
           (pass-helpers)
@@ -1037,8 +1038,20 @@
              ;; through struct field types via a worklist (e.g. coin_info
              ;; pulls in Nonce / opening because they appear as field types).
              ;; TS codegen ignores extra export-tdefns it doesn't recognise,
-             ;; and downstream Lexpanded → Ltypes passes treat them uniformly,
-             ;; so this is a no-op for non-affected examples (counter / tiny).
+             ;; and downstream Lexpanded → Ltypes passes treat them uniformly.
+             ;;
+             ;; Gate to the Rust target. This synthesis exists solely to feed
+             ;; the Rust H5-H7 struct/enum emitter, but it mutates the shared
+             ;; Lexpanded IR — adding export-typedefs the TS-backend test
+             ;; corpus (compiler/test.ss) asserts against. Running it
+             ;; unconditionally drifted 64 goldens across
+             ;; expand-modules-and-types / infer-types /
+             ;; reject-recursive-circuits / track-witness-data /
+             ;; combine-ledger-declarations. `emit-rust` is #t exactly when
+             ;; `--rust` was passed (and inside the print-rust test blocks),
+             ;; so the Rust fixtures still get their promoted typedefs while
+             ;; the TS-only IR — and every non-Rust test — is unchanged.
+             (when (emit-rust)
              (let ([already-exported-name-ht (make-hashtable symbol-hash eq?)])
                (for-each
                  (lambda (etd)
@@ -1142,7 +1155,7 @@
                                `(export-typedef ,src^ ,name () ,type))
                              exported-type*))))
                      names
-                     types))))
+                     types)))))
              ; process uninstantiated modules to catch any errors therein, skipping those
              ; with generic parameters since we have no generic values to supply
              (let loop ()

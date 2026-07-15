@@ -126,19 +126,13 @@ impl<'a, D: DB> Ledger<'a, D> {
 }
 
 pub mod pure_circuits {
-    pub fn and_b(a: bool, b: bool) -> bool {
-        if a {
-            b
-        } else {
-            false
-        }
+    use super::*;
+
+    pub fn and_b(a: bool, b: bool) -> Result<bool, CompactError> {
+        Ok(if a { b } else { false })
     }
 
-    pub fn which_u32(b: bool) -> u32 {
-        if b {
-            1
-        } else {
-            0
-        }
+    pub fn which_u32(b: bool) -> Result<u32, CompactError> {
+        Ok(if b { 1 } else { 0 })
     }
 }

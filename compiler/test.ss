@@ -70243,7 +70243,7 @@ groups than for single tests.
         "                  context$committed_votes$path_of(x: any): any { return; }"
         "                 };"
         "test('check 1', () => {"
-        "  const [C, Ctxt] = startContract(contractCode, witnesses, 0);"
+        "  const [C, Ctxt] = startContract(contractCode, witnesses, 0, new Uint8Array(32));"
         "  expect(typeof(C.circuits)).toEqual('object');"
         "});"
         ))
@@ -82863,7 +82863,7 @@ groups than for single tests.
     (test
       "examples/counter.compact"
       (output-file "compiler/testdir/contract/lib.rs"
-        "compiler/snapshots/counter-rust-expected.rs.snap"))))
+        "compiler/snapshots/counter-rust-expected.rs.txt"))))
 
 ; snapshot test: tiny.compact --rust emission
 ; tiny.compact exercises the generalised surface (witnesses, multiple
@@ -82876,4 +82876,4 @@ groups than for single tests.
     (test
       "examples/tiny.compact"
       (output-file "compiler/testdir/contract/lib.rs"
-        "compiler/snapshots/tiny-rust-expected.rs.snap"))))
+        "compiler/snapshots/tiny-rust-expected.rs.txt"))))

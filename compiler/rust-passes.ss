@@ -44,7 +44,9 @@
 
       (include "rust-passes-streaming.ss")
 
-      (include "rust-passes-emit.ss"))
+      (include "rust-passes-emit.ss")
+
+      (include "rust-passes-naming.ss"))
 
     (Program : Program (ir) -> Program ()
       [(program ,src ((,export-name* ,name*) ...) ,tdescs ,pelt* ...)
@@ -70,69 +72,100 @@
               [circuit-id-ht (build-circuit-id-ht pelt*)]
               [extra-tdefns (collect-pure-circuit-tdefns
                               pelt* all-tdefns
-                              native-id-ht witness-id-ht circuit-id-ht)])
-         (emit-type-decls (append all-tdefns extra-tdefns))
-       (emit-witnesses (program-witnesses pelt*))
-       (emit-contract-struct)
-       ;; Iter 7: seed current-ledger-field-types from the program's
-       ;; ledger fields once at the pass top so the constructor body and
-       ;; every impure circuit body see the same path-idx → binding-type
-       ;; map. emit-body-writes consults this to choose `new_cell_array`
-       ;; vs `new_cell` for Vector<N,T> destinations.
-       (parameterize ([current-ledger-field-types
-                        (build-ledger-field-type-ht
-                          (apply append
-                            (map (lambda (lf)
-                                   (nanopass-case (Ltypescript Program-Element) lf
-                                     [(public-ledger-declaration ,pl-array ,lconstructor)
-                                      (pl-array->public-bindings pl-array)]
-                                     [else '()]))
-                                 (program-ledger-fields pelt*))))])
-         (emit-initial-state (program-ledger-fields pelt*)
-                             (program-constructor-args pelt*)
-                             pelt*)
-         ;; Walk circuit declarations and split on purity. Impure circuits
-         ;; become methods on the open Contract impl block; pure circuits are
-         ;; collected for the pure_circuits module below.
-         (let* ([circuit* (program-circuits pelt*)]
-                [pure-circuit*
-                 (let loop ([c* circuit*] [acc '()])
-                   (cond
-                     [(null? c*) (reverse acc)]
-                     [(id-pure? (circuit-function-name (car c*)))
-                      (loop (cdr c*) (cons (car c*) acc))]
-                     [else (loop (cdr c*) acc)]))])
-           ;; Emit impure circuits as methods on the contract impl.
-           ;;
-           ;; EXPORTED impure circuits are part of the contract's public
-           ;; surface and always emit (the emitter's per-circuit body
-           ;; dispatch may still throw "no walker shape matched" if its
-           ;; body shape isn't supported — that's the failure surface
-           ;; users see as the codegen-rust frontier).
-           ;;
-           ;; NON-EXPORTED impure circuits are private helpers, e.g.
-           ;; did.compact's `recordUpdate`, `assertController`,
-           ;; `assertControllerCanUpdate`. They emit ONLY if their body
-           ;; is walkable in the current dispatcher — otherwise we skip
-           ;; them silently (their callers inline them via the
-           ;; assert-cond-rust inline-circuit-call path, or the caller's
-           ;; body itself isn't walkable and the failure surfaces there).
-           ;; This keeps non-exported helpers like tiny.compact's
-           ;; `in_state` (non-unit single return-expression — not yet a
-           ;; supported body shape) from forcing a hard error before
-           ;; their callers ever invoke them.
-           (for-each
-             (lambda (c)
-               (when (and (not (id-pure? (circuit-function-name c)))
-                          (or (id-exported? (circuit-function-name c))
-                              (impure-circuit-body-walkable?
-                                c native-id-ht witness-id-ht circuit-id-ht)))
-                 (emit-impure-circuit c native-id-ht witness-id-ht circuit-id-ht)))
-             circuit*)
-           (close-contract-struct)
-           (emit-ledger-view (program-ledger-fields pelt*))
-           (emit-pure-circuits pure-circuit* native-id-ht))))
-       (emit-cargo-toml)
+                              native-id-ht witness-id-ht circuit-id-ht)]
+              ;; Prefix-instantiation disambiguation tables (see
+              ;; rust-passes-naming.ss). Built once from the export-name
+              ;; alist + a full tstruct-node scan, then threaded via
+              ;; current-id-rust-name-ht / current-struct-rust-name-ht so
+              ;; every bare `(camel->snake (id-sym ...))` / struct-name
+              ;; rendering site consults them. Non-colliding ids/structs
+              ;; map to their bare names, so contracts without `import
+              ;; M<...> prefix P_` collisions generate byte-identical
+              ;; output.
+              [circuit* (program-circuits pelt*)]
+              [witness* (program-witnesses pelt*)]
+              [native* (let loop ([ps pelt*] [acc '()])
+                         (cond
+                           [(null? ps) (reverse acc)]
+                           [(native-pelt? (car ps)) (loop (cdr ps) (cons (car ps) acc))]
+                           [else (loop (cdr ps) acc)]))]
+              [ledger* (program-ledger-fields pelt*)]
+              [export-alist (map cons export-name* name*)]
+              [id-rust-name-ht (build-id-rust-name-ht export-alist circuit*)]
+              ;; build-struct-rust-name-ht returns `(node-ht . fp-ht)`: the
+              ;; eq?-node table for collected sig nodes and the fingerprint
+              ;; table for body-site nodes. Both are installed so
+              ;; struct-rust-name resolves either.
+              [struct-rust-name-hts
+                (build-struct-rust-name-ht
+                  (append all-tdefns extra-tdefns)
+                  circuit* witness* native* ledger*)])
+         (parameterize ([current-id-rust-name-ht id-rust-name-ht]
+                        [current-struct-rust-name-ht (car struct-rust-name-hts)]
+                        [current-struct-rust-name-fp-ht (cdr struct-rust-name-hts)])
+           (emit-type-decls (append all-tdefns extra-tdefns))
+         (emit-witnesses (program-witnesses pelt*))
+         (emit-contract-struct)
+         ;; Iter 7: seed current-ledger-field-types from the program's
+         ;; ledger fields once at the pass top so the constructor body and
+         ;; every impure circuit body see the same path-idx → binding-type
+         ;; map. emit-body-writes consults this to choose `new_cell_array`
+         ;; vs `new_cell` for Vector<N,T> destinations.
+         (parameterize ([current-ledger-field-types
+                          (build-ledger-field-type-ht
+                            (apply append
+                              (map (lambda (lf)
+                                     (nanopass-case (Ltypescript Program-Element) lf
+                                       [(public-ledger-declaration ,pl-array ,lconstructor)
+                                        (pl-array->public-bindings pl-array)]
+                                       [else '()]))
+                                   (program-ledger-fields pelt*))))])
+           (emit-initial-state (program-ledger-fields pelt*)
+                               (program-constructor-args pelt*)
+                               pelt*)
+           ;; Walk circuit declarations and split on purity. Impure circuits
+           ;; become methods on the open Contract impl block; pure circuits are
+           ;; collected for the pure_circuits module below.
+           (let* ([circuit* (program-circuits pelt*)]
+                  [pure-circuit*
+                   (let loop ([c* circuit*] [acc '()])
+                     (cond
+                       [(null? c*) (reverse acc)]
+                       [(id-pure? (circuit-function-name (car c*)))
+                        (loop (cdr c*) (cons (car c*) acc))]
+                       [else (loop (cdr c*) acc)]))])
+             ;; Emit impure circuits as methods on the contract impl.
+             ;;
+             ;; EXPORTED impure circuits are part of the contract's public
+             ;; surface and always emit (the emitter's per-circuit body
+             ;; dispatch may still throw "no walker shape matched" if its
+             ;; body shape isn't supported — that's the failure surface
+             ;; users see as the codegen-rust frontier).
+             ;;
+             ;; NON-EXPORTED impure circuits are private helpers, e.g.
+             ;; did.compact's `recordUpdate`, `assertController`,
+             ;; `assertControllerCanUpdate`. They emit ONLY if their body
+             ;; is walkable in the current dispatcher — otherwise we skip
+             ;; them silently (their callers inline them via the
+             ;; assert-cond-rust inline-circuit-call path, or the caller's
+             ;; body itself isn't walkable and the failure surfaces there).
+             ;; This keeps non-exported helpers like tiny.compact's
+             ;; `in_state` (non-unit single return-expression — not yet a
+             ;; supported body shape) from forcing a hard error before
+             ;; their callers ever invoke them.
+             (for-each
+               (lambda (c)
+                 (when (and (not (id-pure? (circuit-function-name c)))
+                            (or (id-exported? (circuit-function-name c))
+                                (impure-circuit-body-walkable?
+                                  c native-id-ht witness-id-ht circuit-id-ht)))
+                   (emit-impure-circuit c native-id-ht witness-id-ht circuit-id-ht)))
+               circuit*)
+             (close-contract-struct)
+             (emit-ledger-view (program-ledger-fields pelt*))
+             (emit-pure-circuits pure-circuit* native-id-ht
+                                  witness-id-ht circuit-id-ht))))
+         (emit-cargo-toml))
        ir]))
 
   (define-passes rust-passes

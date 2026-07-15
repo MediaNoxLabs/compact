@@ -712,6 +712,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-contract-assert-parity-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-runtime",
+]
+
+[[package]]
 name = "compact-contract-bounded-uint-fixture"
 version = "0.1.0"
 dependencies = [
@@ -727,6 +734,13 @@ dependencies = [
 
 [[package]]
 name = "compact-contract-cross-circuit-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-runtime",
+]
+
+[[package]]
+name = "compact-contract-digital-passport"
 version = "0.1.0"
 dependencies = [
  "compact-runtime",
@@ -853,6 +867,13 @@ dependencies = [
 
 [[package]]
 name = "compact-contract-set-size-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-runtime",
+]
+
+[[package]]
+name = "compact-contract-struct-collision-fixture"
 version = "0.1.0"
 dependencies = [
  "compact-runtime",
@@ -4743,9 +4764,11 @@ name = "tests-e2e-rust"
 version = "0.1.0"
 dependencies = [
  "compact-contract-aliases-fixture",
+ "compact-contract-assert-parity-fixture",
  "compact-contract-bounded-uint-fixture",
  "compact-contract-bug11-fixture",
  "compact-contract-cross-circuit-fixture",
+ "compact-contract-digital-passport",
  "compact-contract-election",
  "compact-contract-fold-fixture",
  "compact-contract-for-iter-fixture",
@@ -4763,6 +4786,7 @@ dependencies = [
  "compact-contract-sealed-ledger-fixture",
  "compact-contract-set-fixture",
  "compact-contract-set-size-fixture",
+ "compact-contract-struct-collision-fixture",
  "compact-contract-tiny",
  "compact-contract-uints-fixture",
  "compact-contract-vector-fixture",

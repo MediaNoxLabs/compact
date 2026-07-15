@@ -103,10 +103,10 @@ fn pure_circuit_fixture_and_b_truth_table() {
     use compact_contract_pure_circuit_fixture::pure_circuits::and_b;
     #[allow(clippy::bool_assert_comparison)]
     {
-        assert_eq!(and_b(true, true), true);
-        assert_eq!(and_b(true, false), false);
-        assert_eq!(and_b(false, true), false);
-        assert_eq!(and_b(false, false), false);
+        assert_eq!(and_b(true, true).unwrap(), true);
+        assert_eq!(and_b(true, false).unwrap(), false);
+        assert_eq!(and_b(false, true).unwrap(), false);
+        assert_eq!(and_b(false, false).unwrap(), false);
     }
 }
 
@@ -117,6 +117,6 @@ fn pure_circuit_fixture_which_u32_branches() {
     // pure-circuit return path round-trips through compactc --rust
     // for both branches.
     use compact_contract_pure_circuit_fixture::pure_circuits::which_u32;
-    assert_eq!(which_u32(true), 1u32);
-    assert_eq!(which_u32(false), 0u32);
+    assert_eq!(which_u32(true).unwrap(), 1u32);
+    assert_eq!(which_u32(false).unwrap(), 0u32);
 }

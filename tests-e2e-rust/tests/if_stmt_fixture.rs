@@ -99,7 +99,7 @@ fn if_stmt_fixture_classify_body_compiles() {
     // the symmetry. Suppress clippy's nudge to switch.
     #[allow(clippy::bool_assert_comparison)]
     {
-        assert_eq!(classify(true), false);
-        assert_eq!(classify(false), true);
+        assert_eq!(classify(true).unwrap(), false);
+        assert_eq!(classify(false).unwrap(), true);
     }
 }

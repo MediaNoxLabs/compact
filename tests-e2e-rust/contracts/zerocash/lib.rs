@@ -50,13 +50,13 @@ impl FieldRepr for commitment {
 }
 impl FromFieldRepr for commitment {
     const FIELD_SIZE: usize = <[u8; 32] as FromFieldRepr>::FIELD_SIZE;
-    fn from_field_repr(r: &[Fr]) -> Option<Self> {
-        if r.len() < Self::FIELD_SIZE {
+    fn from_field_repr(_repr: &[Fr]) -> Option<Self> {
+        if _repr.len() < Self::FIELD_SIZE {
             return None;
         }
         let mut _offset = 0usize;
         let bytes = <[u8; 32] as FromFieldRepr>::from_field_repr(
-            &r[_offset.._offset + <[u8; 32] as FromFieldRepr>::FIELD_SIZE],
+            &_repr[_offset.._offset + <[u8; 32] as FromFieldRepr>::FIELD_SIZE],
         )?;
         _offset += <[u8; 32] as FromFieldRepr>::FIELD_SIZE;
         let _ = _offset;
@@ -104,17 +104,17 @@ impl FieldRepr for coin_info {
 impl FromFieldRepr for coin_info {
     const FIELD_SIZE: usize =
         <Nonce as FromFieldRepr>::FIELD_SIZE + <opening as FromFieldRepr>::FIELD_SIZE;
-    fn from_field_repr(r: &[Fr]) -> Option<Self> {
-        if r.len() < Self::FIELD_SIZE {
+    fn from_field_repr(_repr: &[Fr]) -> Option<Self> {
+        if _repr.len() < Self::FIELD_SIZE {
             return None;
         }
         let mut _offset = 0usize;
         let nonce = <Nonce as FromFieldRepr>::from_field_repr(
-            &r[_offset.._offset + <Nonce as FromFieldRepr>::FIELD_SIZE],
+            &_repr[_offset.._offset + <Nonce as FromFieldRepr>::FIELD_SIZE],
         )?;
         _offset += <Nonce as FromFieldRepr>::FIELD_SIZE;
         let opening = <opening as FromFieldRepr>::from_field_repr(
-            &r[_offset.._offset + <opening as FromFieldRepr>::FIELD_SIZE],
+            &_repr[_offset.._offset + <opening as FromFieldRepr>::FIELD_SIZE],
         )?;
         _offset += <opening as FromFieldRepr>::FIELD_SIZE;
         let _ = _offset;
@@ -164,17 +164,17 @@ impl FieldRepr for LeafPreimage {
 impl FromFieldRepr for LeafPreimage {
     const FIELD_SIZE: usize =
         compact_runtime::bytes_field_size(6) + <commitment as FromFieldRepr>::FIELD_SIZE;
-    fn from_field_repr(r: &[Fr]) -> Option<Self> {
-        if r.len() < Self::FIELD_SIZE {
+    fn from_field_repr(_repr: &[Fr]) -> Option<Self> {
+        if _repr.len() < Self::FIELD_SIZE {
             return None;
         }
         let mut _offset = 0usize;
         let domain_sep = compact_runtime::bytes_from_field_repr::<6>(
-            &r[_offset.._offset + compact_runtime::bytes_field_size(6)],
+            &_repr[_offset.._offset + compact_runtime::bytes_field_size(6)],
         )?;
         _offset += compact_runtime::bytes_field_size(6);
         let data = <commitment as FromFieldRepr>::from_field_repr(
-            &r[_offset.._offset + <commitment as FromFieldRepr>::FIELD_SIZE],
+            &_repr[_offset.._offset + <commitment as FromFieldRepr>::FIELD_SIZE],
         )?;
         _offset += <commitment as FromFieldRepr>::FIELD_SIZE;
         let _ = _offset;
@@ -223,16 +223,16 @@ impl FieldRepr for public_key {
 }
 impl FromFieldRepr for public_key {
     const FIELD_SIZE: usize = <zk_public_key as FromFieldRepr>::FIELD_SIZE + 0;
-    fn from_field_repr(r: &[Fr]) -> Option<Self> {
-        if r.len() < Self::FIELD_SIZE {
+    fn from_field_repr(_repr: &[Fr]) -> Option<Self> {
+        if _repr.len() < Self::FIELD_SIZE {
             return None;
         }
         let mut _offset = 0usize;
         let zk = <zk_public_key as FromFieldRepr>::from_field_repr(
-            &r[_offset.._offset + <zk_public_key as FromFieldRepr>::FIELD_SIZE],
+            &_repr[_offset.._offset + <zk_public_key as FromFieldRepr>::FIELD_SIZE],
         )?;
         _offset += <zk_public_key as FromFieldRepr>::FIELD_SIZE;
-        let encryption = compact_runtime::vec_u8_from_field_repr(&r[_offset.._offset])?;
+        let encryption = compact_runtime::vec_u8_from_field_repr(&_repr[_offset.._offset])?;
         let _ = _offset;
         Some(public_key { zk, encryption })
     }
@@ -274,13 +274,13 @@ impl FieldRepr for Nonce {
 }
 impl FromFieldRepr for Nonce {
     const FIELD_SIZE: usize = <[u8; 32] as FromFieldRepr>::FIELD_SIZE;
-    fn from_field_repr(r: &[Fr]) -> Option<Self> {
-        if r.len() < Self::FIELD_SIZE {
+    fn from_field_repr(_repr: &[Fr]) -> Option<Self> {
+        if _repr.len() < Self::FIELD_SIZE {
             return None;
         }
         let mut _offset = 0usize;
         let bytes = <[u8; 32] as FromFieldRepr>::from_field_repr(
-            &r[_offset.._offset + <[u8; 32] as FromFieldRepr>::FIELD_SIZE],
+            &_repr[_offset.._offset + <[u8; 32] as FromFieldRepr>::FIELD_SIZE],
         )?;
         _offset += <[u8; 32] as FromFieldRepr>::FIELD_SIZE;
         let _ = _offset;
@@ -322,13 +322,13 @@ impl FieldRepr for MerkleTreeDigest {
 }
 impl FromFieldRepr for MerkleTreeDigest {
     const FIELD_SIZE: usize = <Fr as FromFieldRepr>::FIELD_SIZE;
-    fn from_field_repr(r: &[Fr]) -> Option<Self> {
-        if r.len() < Self::FIELD_SIZE {
+    fn from_field_repr(_repr: &[Fr]) -> Option<Self> {
+        if _repr.len() < Self::FIELD_SIZE {
             return None;
         }
         let mut _offset = 0usize;
         let field = <Fr as FromFieldRepr>::from_field_repr(
-            &r[_offset.._offset + <Fr as FromFieldRepr>::FIELD_SIZE],
+            &_repr[_offset.._offset + <Fr as FromFieldRepr>::FIELD_SIZE],
         )?;
         _offset += <Fr as FromFieldRepr>::FIELD_SIZE;
         let _ = _offset;
@@ -370,13 +370,13 @@ impl FieldRepr for zk_secret_key {
 }
 impl FromFieldRepr for zk_secret_key {
     const FIELD_SIZE: usize = <[u8; 32] as FromFieldRepr>::FIELD_SIZE;
-    fn from_field_repr(r: &[Fr]) -> Option<Self> {
-        if r.len() < Self::FIELD_SIZE {
+    fn from_field_repr(_repr: &[Fr]) -> Option<Self> {
+        if _repr.len() < Self::FIELD_SIZE {
             return None;
         }
         let mut _offset = 0usize;
         let bytes = <[u8; 32] as FromFieldRepr>::from_field_repr(
-            &r[_offset.._offset + <[u8; 32] as FromFieldRepr>::FIELD_SIZE],
+            &_repr[_offset.._offset + <[u8; 32] as FromFieldRepr>::FIELD_SIZE],
         )?;
         _offset += <[u8; 32] as FromFieldRepr>::FIELD_SIZE;
         let _ = _offset;
@@ -418,13 +418,13 @@ impl FieldRepr for zk_public_key {
 }
 impl FromFieldRepr for zk_public_key {
     const FIELD_SIZE: usize = <[u8; 32] as FromFieldRepr>::FIELD_SIZE;
-    fn from_field_repr(r: &[Fr]) -> Option<Self> {
-        if r.len() < Self::FIELD_SIZE {
+    fn from_field_repr(_repr: &[Fr]) -> Option<Self> {
+        if _repr.len() < Self::FIELD_SIZE {
             return None;
         }
         let mut _offset = 0usize;
         let bytes = <[u8; 32] as FromFieldRepr>::from_field_repr(
-            &r[_offset.._offset + <[u8; 32] as FromFieldRepr>::FIELD_SIZE],
+            &_repr[_offset.._offset + <[u8; 32] as FromFieldRepr>::FIELD_SIZE],
         )?;
         _offset += <[u8; 32] as FromFieldRepr>::FIELD_SIZE;
         let _ = _offset;
@@ -466,13 +466,13 @@ impl FieldRepr for opening {
 }
 impl FromFieldRepr for opening {
     const FIELD_SIZE: usize = <[u8; 32] as FromFieldRepr>::FIELD_SIZE;
-    fn from_field_repr(r: &[Fr]) -> Option<Self> {
-        if r.len() < Self::FIELD_SIZE {
+    fn from_field_repr(_repr: &[Fr]) -> Option<Self> {
+        if _repr.len() < Self::FIELD_SIZE {
             return None;
         }
         let mut _offset = 0usize;
         let bytes = <[u8; 32] as FromFieldRepr>::from_field_repr(
-            &r[_offset.._offset + <[u8; 32] as FromFieldRepr>::FIELD_SIZE],
+            &_repr[_offset.._offset + <[u8; 32] as FromFieldRepr>::FIELD_SIZE],
         )?;
         _offset += <[u8; 32] as FromFieldRepr>::FIELD_SIZE;
         let _ = _offset;
@@ -514,13 +514,13 @@ impl FieldRepr for nullifier {
 }
 impl FromFieldRepr for nullifier {
     const FIELD_SIZE: usize = <[u8; 32] as FromFieldRepr>::FIELD_SIZE;
-    fn from_field_repr(r: &[Fr]) -> Option<Self> {
-        if r.len() < Self::FIELD_SIZE {
+    fn from_field_repr(_repr: &[Fr]) -> Option<Self> {
+        if _repr.len() < Self::FIELD_SIZE {
             return None;
         }
         let mut _offset = 0usize;
         let bytes = <[u8; 32] as FromFieldRepr>::from_field_repr(
-            &r[_offset.._offset + <[u8; 32] as FromFieldRepr>::FIELD_SIZE],
+            &_repr[_offset.._offset + <[u8; 32] as FromFieldRepr>::FIELD_SIZE],
         )?;
         _offset += <[u8; 32] as FromFieldRepr>::FIELD_SIZE;
         let _ = _offset;
@@ -628,7 +628,7 @@ where
         let (current_private_state, source_secret_key) =
             self.witnesses.private_zk_secret_key(&_witness_ctx_0);
         let old_nullifier =
-            pure_circuits::derive_nullifier(input_coin.clone(), source_secret_key.clone());
+            pure_circuits::derive_nullifier(input_coin.clone(), source_secret_key.clone())?;
         compact_assert!(
             (!({
                 let _gather_ops = OpProgramGather::<DefaultDB>::new()
@@ -674,9 +674,11 @@ where
             &ctx.cost_model,
         )?;
         __gas_acc += _results_3.gas_cost.clone();
-        let source_public_key = pure_circuits::derive_zk_public_key(source_secret_key.clone());
-        let old_commitment =
-            pure_circuits::commitment_from_coin_info(input_coin.clone(), source_public_key.clone());
+        let source_public_key = pure_circuits::derive_zk_public_key(source_secret_key.clone())?;
+        let old_commitment = pure_circuits::commitment_from_coin_info(
+            input_coin.clone(),
+            source_public_key.clone(),
+        )?;
         let _witness_ctx_6 = WitnessContext::new(
             ledger(&_results_3.context.state),
             current_private_state,
@@ -727,7 +729,7 @@ where
         let fresh_commitment = pure_circuits::commitment_from_coin_info(
             fresh_coin_info.clone(),
             dest_public_key.zk.clone(),
-        );
+        )?;
 
         let _ops_12 = OpProgramVerify::<DefaultDB>::new()
             .idx_at_index(1u8, true)
@@ -827,7 +829,7 @@ where
         let (current_private_state, _) = self
             .witnesses
             .private_add_coin(&_witness_ctx_4, coin.clone());
-        let cm = pure_circuits::commitment_from_coin_info(coin.clone(), pk.clone());
+        let cm = pure_circuits::commitment_from_coin_info(coin.clone(), pk.clone())?;
         let ops = OpProgramVerify::<DefaultDB>::new()
             .idx_at_index(1u8, true)
             .idx_at_index(0u8, true)
@@ -885,8 +887,11 @@ impl<'a, D: DB> Ledger<'a, D> {}
 pub mod pure_circuits {
     use super::*;
 
-    pub(crate) fn derive_nullifier(coin: coin_info, sk: zk_secret_key) -> nullifier {
-        nullifier {
+    pub(crate) fn derive_nullifier(
+        coin: coin_info,
+        sk: zk_secret_key,
+    ) -> Result<nullifier, CompactError> {
+        Ok(nullifier {
             bytes: compact_runtime::std_lib::persistent_hash_aligned(&[
                 compact_runtime::AlignedValue::from([
                     108u8, 97, 114, 101, 115, 58, 122, 101, 114, 111, 99, 97, 115, 104, 58, 99,
@@ -896,19 +901,22 @@ pub mod pure_circuits {
                 compact_runtime::AlignedValue::from(coin.opening.bytes),
                 compact_runtime::AlignedValue::from(sk.bytes),
             ]),
-        }
+        })
     }
 
-    pub(crate) fn derive_zk_public_key(sk: zk_secret_key) -> zk_public_key {
-        zk_public_key {
+    pub(crate) fn derive_zk_public_key(sk: zk_secret_key) -> Result<zk_public_key, CompactError> {
+        Ok(zk_public_key {
             bytes: compact_runtime::std_lib::persistent_hash_aligned(&[
                 compact_runtime::AlignedValue::from(sk.bytes),
             ]),
-        }
+        })
     }
 
-    pub(crate) fn commitment_from_coin_info(coin: coin_info, pk: zk_public_key) -> commitment {
-        commitment {
+    pub(crate) fn commitment_from_coin_info(
+        coin: coin_info,
+        pk: zk_public_key,
+    ) -> Result<commitment, CompactError> {
+        Ok(commitment {
             bytes: compact_runtime::std_lib::persistent_hash_aligned(&[
                 compact_runtime::AlignedValue::from([
                     108u8, 97, 114, 101, 115, 58, 122, 101, 114, 111, 99, 97, 115, 104, 58, 99,
@@ -918,6 +926,6 @@ pub mod pure_circuits {
                 compact_runtime::AlignedValue::from(coin.opening.bytes),
                 compact_runtime::AlignedValue::from(pk.bytes),
             ]),
-        }
+        })
     }
 }

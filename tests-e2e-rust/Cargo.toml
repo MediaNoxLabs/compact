@@ -65,3 +65,10 @@ compact-contract-nested-map-fixture = { path = "contracts/nested-map-fixture" }
 compact-contract-hash-to-curve-fixture = { path = "contracts/hash-to-curve-fixture" }
 compact-contract-hmt-default-fixture = { path = "contracts/hmt-default-fixture" }
 compact-contract-bug11-fixture = { path = "contracts/bug11-fixture" }
+compact-contract-digital-passport = { path = "contracts/digital-passport" }
+compact-contract-assert-parity-fixture = { path = "contracts/assert-parity-fixture" }
+# Listed so `cargo build -p tests-e2e-rust --tests` (the CI build gate)
+# actually compiles this crate: its purpose is to prove the disambiguated
+# codegen produces *compilable* Rust, which codegen_regression (byte-compare
+# only) does not check. Workspace membership alone would not pull it in.
+compact-contract-struct-collision-fixture = { path = "contracts/struct-collision-fixture" }

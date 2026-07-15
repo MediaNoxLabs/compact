@@ -176,6 +176,28 @@
           [(talias ,src ,nominal? ,type-name ,type) (struct-of-type type)]
           [else #f]))
 
+      ;; tstruct-node-of-type: peel talias chains and return the underlying
+      ;; tstruct Type NODE (not its parts), or #f. Callers pass the result to
+      ;; struct-rust-name so a colliding struct resolves to its disambiguated
+      ;; name (Name / Name_1) at value / decode / default sites, not just in
+      ;; type positions. Returning the node (rather than the bare name) lets
+      ;; struct-rust-name key on eq? identity or structural fingerprint.
+      (define (tstruct-node-of-type type)
+        (nanopass-case (Ltypescript Type) type
+          [(tstruct ,src ,struct-name (,elt-name* ,type*) ...) type]
+          [(talias ,src ,nominal? ,type-name ,type) (tstruct-node-of-type type)]
+          [else #f]))
+
+      ;; struct-rust-name-of: the disambiguated Rust struct name string for a
+      ;; (possibly alias-wrapped) struct type. Falls back to the bare
+      ;; struct-name symbol when the type isn't a tstruct (defensive; callers
+      ;; already know it is a struct).
+      (define (struct-rust-name-of type fallback-name)
+        (let ([node (tstruct-node-of-type type)])
+          (if node
+              (symbol->string (struct-rust-name node))
+              (symbol->string fallback-name))))
+
       ;; render-struct-literal: F2.2 — emit a Rust struct construction
       ;; expression for an Ltypescript `(new src type expr*)`. The struct
       ;; name comes off the type (via struct-of-type); for Maybe<T> we emit
@@ -200,7 +222,7 @@
                "struct-literal field-count mismatch for ~a (expected ~a, got ~a)"
                struct-name (length elt-name*) (length expr*))]
             [else
-             (let* ([rust-struct-name (symbol->string struct-name)]
+             (let* ([rust-struct-name (struct-rust-name-of type struct-name)]
                     [field-strs
                      (map (lambda (name e)
                             (format "~a: ~a"
@@ -1382,7 +1404,7 @@
            ;; pure-circuit visibility convention in emit-pure-circuit.
            (out (format "    ~a fn ~a(\n"
                         (if (id-exported? function-name) "pub" "pub(crate)")
-                        (camel->snake (id-sym function-name))))
+                        (id->rust-name function-name)))
            (out "        &self,\n")
            (out "        ctx: CircuitContext<PS>")
            (emit-circuit-args arg*)
@@ -1498,6 +1520,42 @@
              (string-append rendered s)]
             [else rendered])))
 
+      ;; mbits->rust-width: map a `(+/−/* ,src ,mbits ...)` result bit-width
+      ;; (the typer's `(integer-length result-nat)`, analysis-passes.ss:2113)
+      ;; to the smallest Rust unsigned int type that holds it. Returns #f for
+      ;; #f (maybe-bits) or out-of-ladder widths so the caller falls back to
+      ;; the operand-native width. Used to cast both operands to the result
+      ;; width so e.g. `ageThresholdYears: Uint<8> * 365` (mbits=17) renders
+      ;; as `((...) as u32).wrapping_mul((...) as u32)` — without the cast
+      ;; `wrapping_mul` runs at the u8 receiver width and the u32 comparison
+      ;; side mismatches (digital-passport age-predicate).
+      (define (mbits->rust-width mbits)
+        (cond
+          [(not (and (integer? mbits) (exact? mbits) (positive? mbits))) #f]
+          [(<= mbits 8) "u8"]
+          [(<= mbits 16) "u16"]
+          [(<= mbits 32) "u32"]
+          [(<= mbits 64) "u64"]
+          [(<= mbits 128) "u128"]
+          [else #f]))
+
+      ;; arith-binop-rust: render a `(+/−/* ,src ,mbits ,e1 ,e2)` node,
+      ;; casting both operands to the result width (from mbits) when it
+      ;; maps to a Rust unsigned type. The cast is a no-op when the
+      ;; operands are already that width (e.g. Uint<32> - Uint<32>,
+      ;; mbits=32) and a widening cast when an operand is narrower
+      ;; (Uint<8> * literal). No existing pure-circuit fixture uses
+      ;; wrapping arithmetic, so this only affects the digital-passport.
+      (define (arith-binop-rust op mbits expr1 expr2 native-id-ht)
+        (let ([e1 (arith-operand-rust expr1 native-id-ht)]
+              [e2 (arith-operand-rust expr2 native-id-ht)]
+              [w (mbits->rust-width mbits)])
+          (cond
+            [w
+             (format "((~a) as ~a).wrapping_~a((~a) as ~a)" e1 w op e2 w)]
+            [else
+             (format "(~a).wrapping_~a(~a)" e1 op e2)])))
+
       ;; expr-rust: emit a Rust expression string for an Ltypescript
       ;; Expression. I3b/1 covers the variants needed by tiny.compact's
       ;; public_key body — bytevector literal, var-ref, tuple (array
@@ -1507,6 +1565,30 @@
       ;; `native-id-ht` is the eq-hashtable built by build-native-id-ht;
       ;; consulted at every `call` site to resolve the function-name id
       ;; back to its native-entry (and thus its Rust binding name).
+      ;; seq-stmt-rust: render one effect statement of a `(seq ...)`
+      ;; expression block (the guard asserts the typer wraps around
+      ;; trapping unsigned arithmetic). Used by expr-rust's `seq` case.
+      ;; Asserts render via cond-rust (with current-var-substitution +
+      ;; current-witness/circuit-id-ht) so user pure-circuit calls and
+      ;; field accesses in the guard lower correctly; other expressions
+      ;; render via expr-rust as `<expr>;`.
+      (define (seq-stmt-rust e native-id-ht)
+        (nanopass-case (Ltypescript Expression) e
+          [(assert ,src ,expr0 ,mesg)
+           (let ([cstr (guard (c [#t #f])
+                         (cond-rust expr0 (current-var-substitution)
+                                    native-id-ht
+                                    (current-witness-id-ht)
+                                    (current-circuit-id-ht)))])
+             (cond
+               [(or (not cstr) (rendered-has-todo? cstr))
+                (rust-feature-error src 'pure-circuit-body-emission
+                  "seq guard assert unrenderable")]
+               [else (format "compact_assert!(~a, ~s);" cstr
+                             (if (string? mesg) mesg ""))]))]
+          [else
+           (string-append (expr-rust e native-id-ht) ";")]))
+
       (define (expr-rust expr native-id-ht)
         (nanopass-case (Ltypescript Expression) expr
           [(safe-cast ,src ,type ,type^ ,expr^)
@@ -1616,20 +1698,15 @@
            ;; Compact's typer requires an explicit `downcast-unsigned`
            ;; or wider target type around any expression that could
            ;; produce a value outside the source-side type's range, so
-           ;; the wrap matches the post-downcast semantics.
-           (format "(~a).wrapping_add(~a)"
-                   (arith-operand-rust expr1 native-id-ht)
-                   (arith-operand-rust expr2 native-id-ht))]
+           ;; the wrap matches the post-downcast semantics. Both operands
+           ;; are cast to the result width (mbits) via arith-binop-rust.
+           (arith-binop-rust "add" mbits expr1 expr2 native-id-ht)]
           [(- ,src ,mbits ,expr1 ,expr2)
            ;; Iter 7 follow-up: unsigned subtraction. See `+` clause.
-           (format "(~a).wrapping_sub(~a)"
-                   (arith-operand-rust expr1 native-id-ht)
-                   (arith-operand-rust expr2 native-id-ht))]
+           (arith-binop-rust "sub" mbits expr1 expr2 native-id-ht)]
           [(* ,src ,mbits ,expr1 ,expr2)
            ;; Iter 7 follow-up: unsigned multiplication. See `+` clause.
-           (format "(~a).wrapping_mul(~a)"
-                   (arith-operand-rust expr1 native-id-ht)
-                   (arith-operand-rust expr2 native-id-ht))]
+           (arith-binop-rust "mul" mbits expr1 expr2 native-id-ht)]
           [(downcast-unsigned ,src ,nat? ,nat ,expr)
            ;; Iter 7 follow-up: cast the inner expression to the Rust
            ;; unsigned type whose upper bound is `nat`. The downcast
@@ -1695,7 +1772,7 @@
                                        (expr-rust e native-id-ht)))
                              elt-name* expr*)])
                   (string-append
-                    (symbol->string struct-name)
+                    (struct-rust-name-of type struct-name)
                     " { "
                     (let join ([xs field-strs] [acc ""])
                       (cond
@@ -1704,6 +1781,64 @@
                         [else (join (cdr xs)
                                     (string-append acc (car xs) ", "))]))
                     " }"))]))]
+          [(!= ,src ,type ,expr1 ,expr2)
+           ;; F1.3: inequality. Parenthesised so it composes safely inside
+           ;; larger expressions (assert macro args, && operands). Mirrors
+           ;; the `==` rendering; structs derive PartialEq/Eq so `!=` is
+           ;; structural for user types just as `==` is.
+           (format "(~a != ~a)"
+                   (expr-rust expr1 native-id-ht)
+                   (expr-rust expr2 native-id-ht))]
+          [(< ,src ,bits ,expr1 ,expr2)
+           ;; F1.3: ordering comparisons on Uint<N> (Rust unsigned ints).
+           ;; Operands render through expr-rust so downcast-unsigned /
+           ;; arithmetic / field-access lower correctly; the typer inserts
+           ;; downcast-unsigned around literals so both sides share the
+           ;; same Rust unsigned width (no i32/u32 mismatch).
+           (format "(~a < ~a)"
+                   (expr-rust expr1 native-id-ht)
+                   (expr-rust expr2 native-id-ht))]
+          [(<= ,src ,bits ,expr1 ,expr2)
+           (format "(~a <= ~a)"
+                   (expr-rust expr1 native-id-ht)
+                   (expr-rust expr2 native-id-ht))]
+          [(> ,src ,bits ,expr1 ,expr2)
+           (format "(~a > ~a)"
+                   (expr-rust expr1 native-id-ht)
+                   (expr-rust expr2 native-id-ht))]
+          [(>= ,src ,bits ,expr1 ,expr2)
+           (format "(~a >= ~a)"
+                   (expr-rust expr1 native-id-ht)
+                   (expr-rust expr2 native-id-ht))]
+          [(seq ,src ,expr* ... ,expr)
+           ;; F1.4: a guarded expression block. The Compact typer wraps
+           ;; trapping unsigned arithmetic (e.g. `currentDay - dateOfBirthDays`
+           ;; whose result must be non-negative) in
+           ;; `(seq (assert <underflow-guard> ...) <expr>)` and let*-lifts
+           ;; it into a const temp. Render as a Rust block
+           ;; `{ <guards>; <expr> }` so the assert fires before the value
+           ;; is produced, matching Compact's trap-on-underflow semantics
+           ;; (Rust's `wrapping_sub` would otherwise silently wrap). The
+           ;; guard assert's condition renders via cond-rust using the
+           ;; current var-substitution + circuit/witness id hashtables so
+           ;; calls to user pure circuits / field accesses lower correctly.
+           (let ([pre (map (lambda (e) (seq-stmt-rust e native-id-ht)) expr*)]
+                 [tail (guard (c [#t #f]) (expr-rust expr native-id-ht))])
+             (cond
+               [(or (not tail) (rendered-has-todo? tail))
+                (rust-feature-error src 'pure-circuit-body-emission
+                  "seq tail expression unrenderable")]
+               [else
+                (string-append
+                  "{ "
+                  (let join ([xs pre] [acc ""])
+                    (cond
+                      [(null? xs) acc]
+                      [(null? (cdr xs)) (string-append acc (car xs))]
+                      [else (join (cdr xs) (string-append acc (car xs) " "))]))
+                  (if (pair? pre) " " "")
+                  tail
+                  " }")]))]
           [else
            (rust-feature-error #f 'expr-variant
              "unhandled Expression variant in expr-rust")]))
@@ -1944,6 +2079,35 @@
       ;; non-native (user-defined) circuit calls, fall back to the
       ;; snake-cased local name — a follow-up wedge will resolve these
       ;; properly.
+      ;; pure-call-arg-rust: render a call argument via expr-rust, then
+      ;; suffix `.clone()` when the argument is a var-ref or a
+      ;; var-rooted field access whose type is not Rust `Copy`. Pure
+      ;; circuits are free functions taking args by value, so a non-Copy
+      ;; struct passed as `foo(x)` would move `x` and break later reads
+      ;; of `x` in the same body (midnight-verifiable-credentials:
+      ;; `assertValidDigitalPassportCredential` passes `credential` to
+      ;; several helpers in sequence). `.clone()` borrows, so the owner
+      ;; stays usable. Mirrors arg-rust-clone-if-var's decision logic but
+      ;; renders via expr-rust (the pure walker's renderer) and consults
+      ;; current-formal-arg-types (seeded by emit-pure-circuit) for the
+      ;; Copy check. Also used for by-value native args (jubjub_point_x
+      ;; takes `JubjubPoint` by value and is invoked twice on the same
+      ;; field in a && expression).
+      (define (pure-call-arg-rust e native-id-ht)
+        (let ([rendered (expr-rust e native-id-ht)]
+              [stripped (expr-strip-cast e)])
+          (nanopass-case (Ltypescript Expression) stripped
+            [(var-ref ,src ,var-name)
+             (if (var-ref-known-copy? var-name)
+                 rendered
+                 (string-append rendered ".clone()"))]
+            [(elt-ref ,src ,expr ,elt-name ,nat)
+             (cond
+               [(not (elt-ref-rooted-in-var? stripped)) rendered]
+               [(elt-ref-known-copy? stripped) rendered]
+               [else (string-append rendered ".clone()")])]
+            [else rendered])))
+
       (define (call-rust src function-name expr* native-id-ht)
         (let ([ne (eq-hashtable-ref native-id-ht function-name #f)]
               [sym (id-sym function-name)])
@@ -2022,11 +2186,98 @@
                 (rust-feature-error src 'persistent-hash-arity
                   "persistentHash arity ~a not yet supported (expected 1)"
                   (length expr*))])]
+            [(and ne (equal? (native-entry-rust-function ne)
+                             "compact_runtime::transient_hash"))
+             ;; R5: alignment-aware lowering of Compact's
+             ;; `transientHash<A>(value): Field`. The upstream
+             ;; `transient_hash(elems: &[Fr]) -> Fr` takes a field-element
+             ;; slice, but Compact surfaces a single typed value. Mirror
+             ;; persistent_hash's R3 path: convert each constituent to an
+             ;; `AlignedValue` and call `transient_hash_aligned`, which
+             ;; field-reprs the concatenated alignment into a `Vec<Fr>`
+             ;; preimage (via `ValueReprAlignedValue: FieldRepr`) and
+             ;; Poseidon-hashes it — matching the TS runtime's
+             ;; `transientHash(alignment, toValue(value))`. A `Vector<N,T>`
+             ;; arg lowers to a `(tuple ...)` and is broken apart so each
+             ;; element gets its own alignment atom; any other shape wraps
+             ;; the single argument in a one-element slice.
+             (cond
+               [(fx= (length expr*) 1)
+                (let ([arg (car expr*)])
+                  (let ([elt-strs
+                         (nanopass-case (Ltypescript Expression) arg
+                           [(tuple ,src ,tuple-arg* ...)
+                            (map (lambda (ta)
+                                   (format "compact_runtime::AlignedValue::from(~a)"
+                                           (tuple-arg-rust ta native-id-ht)))
+                                 tuple-arg*)]
+                           [else
+                            (list (format "compact_runtime::AlignedValue::from(~a)"
+                                          (expr-rust arg native-id-ht)))])])
+                    (string-append
+                      "compact_runtime::std_lib::transient_hash_aligned(&["
+                      (let join ([xs elt-strs] [acc ""])
+                        (cond
+                          [(null? xs) acc]
+                          [(null? (cdr xs)) (string-append acc (car xs))]
+                          [else (join (cdr xs) (string-append acc (car xs) ", "))]))
+                      "])")))]
+               [else
+                (rust-feature-error src 'transient-hash-arity
+                  "transientHash arity ~a not yet supported (expected 1)"
+                  (length expr*))])]
+            [(and ne (equal? (native-entry-rust-function ne)
+                             "compact_runtime::persistent_commit"))
+             ;; R4: lowering of Compact's
+             ;; `persistentCommit<T>(value, opening)`. The upstream
+             ;; `persistent_commit<T: BinaryHashRepr + ?Sized>(value: &T,
+             ;; opening: HashOutput)` takes `value` by reference and
+             ;; `opening` (`Bytes<32>` = `[u8;32]`, Copy) by value. We
+             ;; render `persistent_commit(&<value>, <opening>)`. The
+             ;; borrow is non-moving so `value` remains usable in the
+             ;; surrounding body. `BinaryHashRepr` is impl'd for `[u8;N]`,
+             ;; all unsigned/signed ints, bool, tuples, and user structs
+             ;; (via the H6 `Aligned` + `From<S> for Value` blanket that
+             ;; gives `AlignedValue: From<S>`, whose `BinaryHashRepr`
+             ;; delegates through `ValueReprAlignedValue`) — so
+             ;; `Bytes<N>`, `Uint<N>`, and struct-typed values all
+             ;; type-check. Mirrors the TS runtime's `persistentCommit`
+             ;; (alignment-framed SHA-256 commit).
+             (cond
+               [(fx= (length expr*) 2)
+                ;; `persistent_commit<T: BinaryHashRepr>(&T, HashOutput) ->
+                ;; HashOutput`. The Compact `persistentCommit<A>(v, o):
+                ;; Bytes<32>` surfaces `[u8; 32]`, so wrap the opening in
+                ;; `HashOutput(...)` and extract `.0` from the result.
+                ;; `HashOutput` isn't in compact_runtime's curated prelude
+                ;; but is reachable as
+                ;; `compact_runtime::base_crypto::hash::HashOutput`
+                ;; (midnight-base-crypto re-exports the crate as
+                ;; `base_crypto` and `hash` is a pub module).
+                (string-append
+                  "compact_runtime::persistent_commit(&"
+                  (expr-rust (car expr*) native-id-ht)
+                  ", compact_runtime::base_crypto::hash::HashOutput("
+                  (expr-rust (cadr expr*) native-id-ht)
+                  ")).0")]
+               [else
+                (rust-feature-error src 'persistent-commit-arity
+                  "persistentCommit arity ~a not yet supported (expected 2)"
+                  (length expr*))])]
             [ne
              ;; A native with a 1:1 binding. Emit `<rust-name>(<arg>, ...)`.
+             ;; Args render via pure-call-arg-rust so by-value natives
+             ;; that take a non-Copy struct / JubjubPoint (jubjub_point_x,
+             ;; jubjub_point_y) get a defensive `.clone()` when the same
+             ;; value is read again later in the body — the
+             ;; digital-passport's
+             ;; `assertDigitalPassportIssuanceResultMatchesRequest` calls
+             ;; jubjubPointX then jubjubPointY on the same holderPublicKey
+             ;; inside a `&&` expression; without the clone the first
+             ;; call moves the field and the second fails to borrow.
              (let ([rust-name (native-call-site-rust ne)]
                    [args
-                    (map (lambda (e) (expr-rust e native-id-ht)) expr*)])
+                    (map (lambda (e) (pure-call-arg-rust e native-id-ht)) expr*)])
                (string-append
                  rust-name
                  "("
@@ -2037,36 +2288,87 @@
                      [else (join (cdr xs) (string-append acc (car xs) ", "))]))
                  ")"))]
             [else
-             ;; A user-defined circuit call. We don't yet resolve these
-             ;; to their Rust paths in this pure-expression path.
-             (rust-feature-error src 'non-native-call
-               "call to non-native circuit ~a not supported in this position"
-               (id-sym function-name))])))
+             ;; A user-defined circuit call. Resolve via
+             ;; current-circuit-id-ht (threaded by emit-pure-circuit): if
+             ;; the callee is a user pure circuit, route to
+             ;; `pure_circuits::<snake>(...)` — both exported (`pub fn`)
+             ;; and non-exported (`pub(crate) fn`) pure circuits land in
+             ;; the `pure_circuits` module. Args use pure-call-arg-rust so
+             ;; non-Copy struct args are cloned (the callee takes them by
+             ;; value). Impure circuits and unknown callees keep the
+             ;; existing non-native-call error — the impure walker
+             ;; resolves pure-circuit calls earlier via ctor-call-rust, so
+             ;; this else is only reached during pure-circuit emission
+             ;; where current-circuit-id-ht is populated.
+             (let ([c (eq-hashtable-ref (current-circuit-id-ht) function-name #f)])
+               (cond
+                 [(and c (id-pure? function-name))
+                  (let ([rust-name (id->rust-name function-name)]
+                        [args (map (lambda (e) (pure-call-arg-rust e native-id-ht)) expr*)])
+                    ;; Append `?` so the `Result<T, CompactError>` a pure
+                    ;; circuit returns is unwrapped at the call site. Every
+                    ;; generated position that calls a pure circuit (pure-
+                    ;; circuit bodies, impure circuit bodies, constructors,
+                    ;; conditions) lives inside a function returning
+                    ;; `Result<_, CompactError>`, so `?` is valid. The
+                    ;; `Ok(...)` tail-wrap (Phase 5) wraps the already-`?`-ed
+                    ;; call as `Ok(pure_circuits::foo(...)?)` — a single `?`.
+                    (string-append
+                      "pure_circuits::"
+                      (symbol->string rust-name)
+                      "("
+                      (let join ([xs args] [acc ""])
+                        (cond
+                          [(null? xs) acc]
+                          [(null? (cdr xs)) (string-append acc (car xs))]
+                          [else (join (cdr xs) (string-append acc (car xs) ", "))]))
+                      ")?"))]
+                 [else
+                  (rust-feature-error src 'non-native-call
+                    "call to non-native circuit ~a not supported in this position"
+                    (id-sym function-name))]))])))
 
-      ;; stmt-pure-body-rust: try to render the body of a pure circuit as a
-      ;; single Rust expression (no trailing semicolon — used in tail
-      ;; position). Accepts:
-      ;;   - a `statement-expression` whose expression is a `call`
-      ;;     (tiny.compact's `public_key` shape)
-      ;;   - a statement-level `(if cond then-stmt else-stmt)` (election's
-      ;;     `successor` / `ballot_repr` shape — branches recurse so an
-      ;;     if/else-if/else chain emits nested Rust `if … else { if … }`)
-      ;; Returns the Rust expression string on success, #f to signal the
-      ;; caller should fall back to `unimplemented!()`.
-      ;; pure-stmt-rust: render one statement of a pure circuit body. Used by
-      ;; stmt-pure-body-rust to walk multi-statement bodies. Returns a Rust
-      ;; source string (terminated by `;` for statements, no terminator for
-      ;; an expression-as-final), or #f on shapes we don't support.
-      (define (pure-stmt-rust stmt native-id-ht last?)
+      ;; stmt-pure-body-rust: render the body of a pure circuit as a Rust
+      ;; block (a sequence of `let`-bindings / statements terminated by a
+      ;; tail expression, or a single expression in tail position).
+      ;;   - `(const src local expr)` and lifted `(statement-expression
+      ;;     (= src var expr))` bindings become `let <name> = <rhs>;` and
+      ;;     thread into `local-binds` so later references resolve.
+      ;;   - `(const src (local* ...))` forward declarations are no-ops
+      ;;     (the assignment lands later as a `(=)`).
+      ;;   - `if/else`, `assert`, and tail `statement-expression` forms
+      ;;     render via pure-stmt-rust.
+      ;; `local-binds` is an alist `(var-name . rust-name)` threaded
+      ;; through the statement walk and bound to `current-var-substitution`
+      ;; around expression rendering so expr-rust resolves locals.
+      ;; `witness-id-ht` / `circuit-id-ht` are passed to cond-rust so
+      ;; if/assert conditions that call user pure circuits route to
+      ;; `pure_circuits::...` (and witness calls, if any, resolve).
+      ;; Returns the Rust source string, or #f to signal the caller
+      ;; should fall back to `unimplemented!()`.
+      ;;
+      ;; pure-stmt-rust: render one VALUE-producing statement of a pure
+      ;; circuit body (if / assert / tail expression). Const-bindings and
+      ;; lifted assignments are intercepted by stmt-pure-body-rust's loop
+      ;; before reaching here. Returns a Rust source string (terminated by
+      ;; `;` for non-tail statements, no terminator for a tail
+      ;; expression), or #f on unsupported shapes.
+      (define (pure-stmt-rust stmt native-id-ht witness-id-ht circuit-id-ht
+                               local-binds last?)
+        (parameterize ([current-var-substitution local-binds])
         (nanopass-case (Ltypescript Statement) stmt
           [(if ,src ,expr0 ,stmt1 ,stmt2)
            (let ([cond-str (guard (c [#t #f])
-                             (cond-rust expr0 '()
+                             (cond-rust expr0 local-binds
                                         native-id-ht
-                                        (make-eq-hashtable)
-                                        (make-eq-hashtable)))]
-                 [then-str (stmt-pure-body-rust stmt1 native-id-ht)]
-                 [else-str (stmt-pure-body-rust stmt2 native-id-ht)])
+                                        witness-id-ht
+                                        circuit-id-ht))]
+                 [then-str (stmt-pure-body-rust stmt1 native-id-ht
+                                                witness-id-ht circuit-id-ht
+                                                local-binds #f)]
+                 [else-str (stmt-pure-body-rust stmt2 native-id-ht
+                                                witness-id-ht circuit-id-ht
+                                                local-binds #f)])
              (cond
                [(or (not cond-str) (not then-str) (not else-str)) #f]
                [(or (rendered-has-todo? cond-str)
@@ -2077,11 +2379,13 @@
                         cond-str then-str else-str)]))]
           [(if ,src ,expr0 ,stmt1)
            (let ([cond-str (guard (c [#t #f])
-                             (cond-rust expr0 '()
+                             (cond-rust expr0 local-binds
                                         native-id-ht
-                                        (make-eq-hashtable)
-                                        (make-eq-hashtable)))]
-                 [then-str (stmt-pure-body-rust stmt1 native-id-ht)])
+                                        witness-id-ht
+                                        circuit-id-ht))]
+                 [then-str (stmt-pure-body-rust stmt1 native-id-ht
+                                                witness-id-ht circuit-id-ht
+                                                local-binds #f)])
              (cond
                [(or (not cond-str) (not then-str)) #f]
                [(or (rendered-has-todo? cond-str)
@@ -2094,14 +2398,14 @@
              [(assert ,src ,expr0 ,mesg)
               (let ([cond-str
                      (guard (c [#t #f])
-                       (cond-rust expr0 '()
+                       (cond-rust expr0 local-binds
                                   native-id-ht
-                                  (make-eq-hashtable)
-                                  (make-eq-hashtable)))])
+                                  witness-id-ht
+                                  circuit-id-ht))])
                 (cond
                   [(or (not cond-str) (rendered-has-todo? cond-str)) #f]
                   [else
-                   (format "assert!(~a, ~s);" cond-str
+                   (format "compact_assert!(~a, ~s);" cond-str
                            (if (string? mesg) mesg ""))]))]
              [else
               (let ([s (guard (c [#t #f]) (expr-rust expr native-id-ht))])
@@ -2109,45 +2413,117 @@
                   [(or (not s) (rendered-has-todo? s)) #f]
                   [last? s]
                   [else (string-append s ";")]))])]
-          [else #f]))
+          [else #f])))
 
-      (define (stmt-pure-body-rust stmt native-id-ht)
-        (let ([stmts (stmt-flatten stmt)])
-          (cond
-            [(null? stmts) #f]
-            [(null? (cdr stmts))
-             (pure-stmt-rust (car stmts) native-id-ht #t)]
-            [else
-             ;; A18: multi-statement pure body (assertSupportedVerificationMethod,
-             ;; verificationMethodRelationMember). Render leading stmts as
-             ;; `<rendered>;` (or block) and the final stmt as an
-             ;; expression-or-statement.
-             (let loop ([xs stmts] [acc '()])
-               (cond
-                 [(null? (cdr xs))
-                  (let ([s (pure-stmt-rust (car xs) native-id-ht #t)])
-                    (cond
-                      [(not s) #f]
-                      [else
-                       (let join ([rs (reverse (cons s acc))] [out ""])
-                         (cond
-                           [(null? rs) out]
-                           [(null? (cdr rs)) (string-append out (car rs))]
-                           [else
-                            (join (cdr rs)
-                                  (string-append out (car rs)
-                                                 "\n        "))]))]))]
-                 [else
-                  (let ([s (pure-stmt-rust (car xs) native-id-ht #f)])
-                    (cond
-                      [(not s) #f]
-                      [else (loop (cdr xs) (cons s acc))]))]))])))
+      ;; wrap-ok?: when #t (the default, used by emit-pure-circuit) the
+      ;; rendered body's tail is wrapped as `Ok(...)` so the block is a
+      ;; `Result<_, CompactError>`; assert-only / unit bodies end with
+      ;; `Ok(())`. Recursion into if-branches (pure-stmt-rust's if arms)
+      ;; passes #f so the branches are bare expressions — the enclosing
+      ;; `if` expression is then wrapped by the top-level call.
+      (define (stmt-pure-body-rust stmt native-id-ht witness-id-ht circuit-id-ht
+                                   local-binds . maybe-wrap-ok?)
+        (let ([wrap-ok? (or (null? maybe-wrap-ok?) (car maybe-wrap-ok?))])
+          (let ([stmts (stmt-flatten stmt)])
+          (let loop ([xs stmts] [binds local-binds] [acc '()])
+            (cond
+              [(null? xs)
+               ;; A body of only declarations (no value-statement) — either
+               ;; a truly empty body (assertValidSchemaCapabilities: a
+               ;; placeholder pure circuit with only comments) or a
+               ;; unit-returning circuit whose every stmt is a const /
+               ;; assignment / decl-only. Emit the accumulated `let;` lines
+               ;; and a trailing `()` so the block type-checks as `()`; a
+               ;; truly empty body emits just `()`.
+               (let ([joined
+                      (let join ([rs (reverse acc)] [out ""])
+                        (cond
+                          [(null? rs) out]
+                          [(null? (cdr rs)) (string-append out (car rs))]
+                          [else (join (cdr rs) (string-append out (car rs) "\n        "))]))])
+                 (let ([unit-tail (if wrap-ok? "Ok(())" "()")])
+                   (cond
+                     [(string=? joined "") unit-tail]
+                     [else (string-append joined "\n        " unit-tail)])))]
+              [(const-binding (car xs))
+               =>
+               (lambda (b)
+                 (let* ([var-name (car b)]
+                        [rhs (cdr b)]
+                        [proposed (symbol->string (camel->snake (id-sym var-name)))]
+                        [rust-name (uniquify-rust-name proposed binds)])
+                   (let ([s (guard (c [#t #f])
+                              (parameterize ([current-var-substitution binds])
+                                (expr-rust rhs native-id-ht)))])
+                     (cond
+                       [(or (not s) (rendered-has-todo? s)) #f]
+                       [else
+                        (loop (cdr xs)
+                              (cons (cons var-name rust-name) binds)
+                              (cons (format "let ~a = ~a;" rust-name s) acc))]))))]
+              [(const-decl-only? (car xs))
+               ;; Forward declaration `(const src (local* ...))` — no-op;
+               ;; the assignment lands later as a `(statement-expression
+               ;; (= ...))` which the next clause renders as `let`.
+               (loop (cdr xs) binds acc)]
+              [(stmt->assignment (car xs))
+               =>
+               (lambda (a)
+                 (let* ([var-name (car a)]
+                        [rhs (cdr a)]
+                        [proposed (symbol->string (camel->snake (id-sym var-name)))]
+                        [rust-name (uniquify-rust-name proposed binds)])
+                   (let ([s (guard (c [#t #f])
+                              (parameterize ([current-var-substitution binds])
+                                (expr-rust rhs native-id-ht)))])
+                     (cond
+                       [(or (not s) (rendered-has-todo? s)) #f]
+                       [else
+                        (loop (cdr xs)
+                              (cons (cons var-name rust-name) binds)
+                              (cons (format "let ~a = ~a;" rust-name s) acc))]))))]
+              [else
+               ;; A value-producing statement. The last one renders as a
+               ;; tail expression (no `;`); earlier ones as `<expr>;`.
+               (let ([last? (null? (cdr xs))])
+                 (let ([s (pure-stmt-rust (car xs) native-id-ht
+                                           witness-id-ht circuit-id-ht
+                                           binds last?)])
+                   (cond
+                     [(not s) #f]
+                     [last?
+                      ;; tail element. `s` is either a value expression
+                      ;; (rendered without `;`) or an assert statement
+                      ;; (`compact_assert!(...);`, ends with `;`). When
+                      ;; wrap-ok?: wrap a value tail in `Ok(...)`, and
+                      ;; follow an assert tail with `Ok(())` so the block
+                      ;; yields `Result<_, CompactError>`.
+                      (let* ([n (string-length s)]
+                             [value-tail?
+                              (or (= n 0)
+                                  (not (char=? (string-ref s (- n 1)) #\;)))])
+                        (let ([acc
+                               (cond
+                                 [(and wrap-ok? value-tail?)
+                                  (cons (format "Ok(~a)" s) acc)]
+                                 [(and wrap-ok? (not value-tail?))
+                                  (cons "Ok(())" (cons s acc))]
+                                 [else (cons s acc)])])
+                          (let join ([rs (reverse acc)] [out ""])
+                            (cond
+                              [(null? rs) out]
+                              [(null? (cdr rs)) (string-append out (car rs))]
+                              [else (join (cdr rs) (string-append out (car rs) "\n        "))]))))]
+                     [else (loop (cdr xs) binds (cons s acc))])))])))))
 
       ;; emit-pure-circuit: emit a pure circuit as a free function inside
       ;; `mod pure_circuits`. No ctx — just the declared args and a direct
       ;; return type. For the narrow tiny.compact-style shape (a single
       ;; expression in statement position) we render the expression
-      ;; directly; everything else keeps an `unimplemented!()` placeholder.
+      ;; directly; richer bodies (sequenced asserts / tail calls to other
+      ;; user pure circuits / if-guarded asserts / const bindings) are
+      ;; walked by stmt-pure-body-rust. Anything the walker can't handle
+      ;; keeps an `unimplemented!()` placeholder via rust-feature-error.
       ;;
       ;; Exported circuits become `pub fn` (part of the crate's public
       ;; surface). Non-exported user pure circuits (e.g. zerocash's
@@ -2156,12 +2532,17 @@
       ;; contract crate (notably impure-circuit bodies via
       ;; `pure_circuits::foo(...)`) but not part of the contract's
       ;; downstream API.
-      (define (emit-pure-circuit cdefn native-id-ht)
+      ;;
+      ;; current-circuit-id-ht / current-witness-id-ht are parameterised
+      ;; around the body so expr-rust/call-rust (which don't take the id
+      ;; hashtables explicitly) can route calls to user pure circuits as
+      ;; `pure_circuits::<snake>(...)`.
+      (define (emit-pure-circuit cdefn native-id-ht witness-id-ht circuit-id-ht)
         (nanopass-case (Ltypescript Program-Element) cdefn
           [(circuit ,src ,function-name (,arg* ...) ,type ,stmt)
            (out (format "    ~a fn ~a("
                         (if (id-exported? function-name) "pub" "pub(crate)")
-                        (camel->snake (id-sym function-name))))
+                        (id->rust-name function-name)))
            (let loop ([arg* arg*] [first? #t])
              (cond
                [(null? arg*) (void)]
@@ -2173,9 +2554,13 @@
                                 (camel->snake (id-sym var-name))
                                 (type-rust type)))])
                 (loop (cdr arg*) #f)]))
-           (out (format ") -> ~a {\n" (type-rust type)))
-           (parameterize ([current-formal-arg-types (build-formal-arg-type-ht arg*)])
-             (let ([body (stmt-pure-body-rust stmt native-id-ht)])
+           (out (format ") -> Result<~a, CompactError> {\n" (type-rust type)))
+           (parameterize ([current-formal-arg-types (build-formal-arg-type-ht arg*)]
+                          [current-circuit-id-ht circuit-id-ht]
+                          [current-witness-id-ht witness-id-ht])
+             (let ([body (stmt-pure-body-rust stmt native-id-ht
+                                              witness-id-ht circuit-id-ht '()
+                                              #t)])
                (cond
                  [body (out (format "        ~a\n" body))]
                  [else
@@ -2369,7 +2754,8 @@
           ;; compact_runtime::*` import covers re-exported stdlib
           ;; types; user structs are emitted at module scope).
           [(tstruct ,src ,struct-name (,elt-name* ,type*) ...)
-           (format "compact_runtime::std_lib::decode_via_field_repr::<~a>" struct-name)]
+           (format "compact_runtime::std_lib::decode_via_field_repr::<~a>"
+                   (struct-rust-name-of type struct-name))]
           [else #f]))
 
       ;; adt-is-collection?: ADTs whose `read` op-class is a per-element
@@ -2430,7 +2816,7 @@
                   [(eq? (car names) 'value)
                    (format "Maybe::<~a>::default()" (type-rust (car types)))]
                   [else (loop (cdr names) (cdr types))]))]
-             [else (format "~a::default()" struct-name)])]
+             [else (format "~a::default()" (struct-rust-name-of type struct-name))])]
           [else "Default::default()"]))
 
       ;; emit-ledger-view: emits the module-level `ledger()` factory and the
@@ -2503,24 +2889,24 @@
       ;; free function per pure circuit declaration. Contracts with no pure
       ;; circuits (e.g. counter.compact) get an empty module.
       ;;
-      ;; When any non-exported user pure circuit is present (e.g. zerocash's
-      ;; `commitment_from_coin_info`), inject `use super::*;` at the top
-      ;; so the function body can refer to crate-level types (user structs
-      ;; emitted by H5-H7, Maybe<T> re-exports, etc.) without qualification.
-      ;; For contracts whose pure_circuits module contains only exported
-      ;; circuits or is empty (counter, tiny), no `use` is emitted — keeping
-      ;; their snapshots byte-identical.
-      (define (emit-pure-circuits pure-circuit* native-id-ht)
+      ;; When any pure circuit is present, inject `use super::*;` at the
+      ;; top so the function bodies (and the `Result<T, CompactError>`
+      ;; signatures, which reference `CompactError`) see crate-level
+      ;; types — `CompactError`, `Maybe<T>`, user structs emitted by H5-H7,
+      ;; the `compact_assert!` macro, etc. — without qualification.
+      ;; `use super::*;` reaches the parent's `use compact_runtime::*;`
+      ;; glob, so `CompactError` / `compact_assert!` resolve. Contracts
+      ;; with no pure circuits (e.g. counter.compact) get an empty
+      ;; module with no `use`.
+      (define (emit-pure-circuits pure-circuit* native-id-ht
+                                   witness-id-ht circuit-id-ht)
         (out "pub mod pure_circuits {\n")
-        (let ([has-non-exported?
-               (let loop ([c* pure-circuit*])
-                 (cond
-                   [(null? c*) #f]
-                   [(not (id-exported? (circuit-function-name (car c*)))) #t]
-                   [else (loop (cdr c*))]))])
-          (when has-non-exported?
+        (let ([has-any? (not (null? pure-circuit*))])
+          (when has-any?
             (out "    use super::*;\n\n")))
-        (for-each (lambda (c) (emit-pure-circuit c native-id-ht)) pure-circuit*)
+        (for-each (lambda (c) (emit-pure-circuit c native-id-ht
+                                                       witness-id-ht circuit-id-ht))
+                  pure-circuit*)
         (out "}\n"))
 
       ;; emit-cargo-toml: emits a Cargo.toml alongside lib.rs so users can

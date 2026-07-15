@@ -173,6 +173,24 @@
       ;;
       ;; native-id-ht / witness-id-ht / circuit-id-ht let call-site
       ;; classification distinguish pure-circuit / witness / native calls.
+      ;; coerce-cmp-operand-rust: render a comparison (`==`/`!=`) operand,
+      ;; coercing a bare integer literal to `Fr::from(<n>u64)` when the
+      ;; comparison `type` is `Field` (tfield). The typer types integer
+      ;; literals in a Field-typed comparison as `Field`, but expr-rust
+      ;; renders `(quote 0)` as the bare Rust integer `0` — which then
+      ;; fails to type-check against the `Fr` produced by the other
+      ;; operand (e.g. `jubjub_point_x(...) != 0` in the digital-passport
+      ;; holder-binding check). Non-Field types and non-literal operands
+      ;; render via ctor-expr-rust unchanged.
+      (define (coerce-cmp-operand-rust expr type local-binds
+                                        native-id-ht witness-id-ht circuit-id-ht)
+        (cond
+          [(and (type-is-tfield? type) (literal-int-expr? expr))
+           (format "Fr::from(~au64)" (literal-int-expr? expr))]
+          [else
+           (ctor-expr-rust expr local-binds
+                           native-id-ht witness-id-ht circuit-id-ht)]))
+
       (define (ctor-expr-rust expr local-binds
                               native-id-ht witness-id-ht circuit-id-ht)
         ;; Bug-1: thread local-binds through current-var-substitution so
@@ -255,10 +273,10 @@
                              (operand-typed-enum? expr2 witness-id-ht)))])
                (parameterize ([current-enum-ref-typed? typed?])
                  (format "(~a == ~a)"
-                         (ctor-expr-rust expr1 local-binds
-                                         native-id-ht witness-id-ht circuit-id-ht)
-                         (ctor-expr-rust expr2 local-binds
-                                         native-id-ht witness-id-ht circuit-id-ht))))]
+                         (coerce-cmp-operand-rust expr1 type local-binds
+                                                   native-id-ht witness-id-ht circuit-id-ht)
+                         (coerce-cmp-operand-rust expr2 type local-binds
+                                                   native-id-ht witness-id-ht circuit-id-ht))))]
             [(!= ,src ,type ,expr1 ,expr2)
              ;; A9: inequality — same typed-enum threading as `==`. Bug-4:
              ;; also prefer the IR type when it's a tenum. Bug-8: same
@@ -271,10 +289,10 @@
                              (operand-typed-enum? expr2 witness-id-ht)))])
                (parameterize ([current-enum-ref-typed? typed?])
                  (format "(~a != ~a)"
-                         (ctor-expr-rust expr1 local-binds
-                                         native-id-ht witness-id-ht circuit-id-ht)
-                         (ctor-expr-rust expr2 local-binds
-                                         native-id-ht witness-id-ht circuit-id-ht))))]
+                         (coerce-cmp-operand-rust expr1 type local-binds
+                                                   native-id-ht witness-id-ht circuit-id-ht)
+                         (coerce-cmp-operand-rust expr2 type local-binds
+                                                   native-id-ht witness-id-ht circuit-id-ht))))]
             [(not ,src ,expr)
              ;; F1.2: Boolean negation. Recurse through ctor-expr-rust to
              ;; keep local-binds threading. Parenthesise the operand so
@@ -627,13 +645,19 @@
                            [else (join (cdr xs)
                                        (string-append acc (car xs) ", "))]))))]
             [(and c (id-pure? function-name))
-             (let ([rust-name (camel->snake (id-sym function-name))]
+             (let ([rust-name (id->rust-name function-name)]
                    [args
                     (map (lambda (e)
                            (arg-rust-clone-if-var e local-binds
                                                   native-id-ht witness-id-ht circuit-id-ht))
                          expr*)])
-               (format "pure_circuits::~a(~a)"
+               ;; Append `?` to unwrap the `Result<T, CompactError>` a
+               ;; pure circuit returns. Every position reaching here
+               ;; (cond-rust/assert-cond-rust conditions, if-branch
+               ;; expressions, inlined bodies) lives inside a function
+               ;; returning `Result<_, CompactError>`, so `?` is valid.
+               ;; Matches call-rust's pure-circuit arm in rust-passes-emit.
+               (format "pure_circuits::~a(~a)?"
                        rust-name
                        (let join ([xs args] [acc ""])
                          (cond
@@ -1248,7 +1272,7 @@
                     [arg-exprs
                      (nanopass-case (Ltypescript Expression) call-expr
                        [(call ,src ,function-name ,expr* ...) expr*])]
-                    [cname (camel->snake (id-sym function-name))]
+                    [cname (id->rust-name function-name)]
                     [rust-name (format "_cr_h~a" counter)]
                     [arg-strs
                      (map (lambda (e)
@@ -1361,7 +1385,7 @@
                     [arg-exprs
                      (nanopass-case (Ltypescript Expression) call-expr
                        [(call ,src ,function-name ,expr* ...) expr*])]
-                    [wname (camel->snake (id-sym function-name))]
+                    [wname (id->rust-name function-name)]
                     [rust-name (format "_w_~a_~a" wname counter)]
                     [ctx-name (format "_witness_ctx_h~a" counter)]
                     [state-expr (if (eq? mode 'ctor)
@@ -2119,7 +2143,7 @@
                                              (if (pair? fs) (cdr fs) '())
                                              (cons s acc)))])))]
                              [bind-line
-                              (format "        let ~a = pure_circuits::~a(~a);\n"
+                              (format "        let ~a = pure_circuits::~a(~a)?;\n"
                                       rust-name pname
                                       (let join ([xs arg-strs] [acc ""])
                                         (cond
@@ -2265,7 +2289,7 @@
                                        native-id-ht witness-id-ht circuit-id-ht))
                                    pargs)]
                              [bind-line
-                              (format "        let _ = pure_circuits::~a(~a);\n"
+                              (format "        let _ = pure_circuits::~a(~a)?;\n"
                                       pname
                                       (let join ([xs arg-strs] [acc ""])
                                         (cond
@@ -2377,12 +2401,12 @@
              (cond
                [(eq-hashtable-ref witness-id-ht function-name #f)
                 (list 'witness
-                      (camel->snake (id-sym function-name))
+                      (id->rust-name function-name)
                       expr*)]
                [(and (eq-hashtable-ref circuit-id-ht function-name #f)
                      (id-pure? function-name))
                 (list 'pure-circuit
-                      (camel->snake (id-sym function-name))
+                      (id->rust-name function-name)
                       expr*)]
                ;; E5 / A17: impure circuit (exported or internal). The
                ;; callee is emitted as a method on the Contract impl
@@ -2393,7 +2417,7 @@
                [(and (eq-hashtable-ref circuit-id-ht function-name #f)
                      (not (id-pure? function-name)))
                 (list 'impure-exported
-                      (camel->snake (id-sym function-name))
+                      (id->rust-name function-name)
                       expr*)]
                [else (list 'unknown)])]
             [else (list 'unknown)])))
@@ -2462,10 +2486,10 @@
       (define (classify-call fn-id arg* witness-id-ht circuit-id-ht)
         (cond
           [(eq-hashtable-ref witness-id-ht fn-id #f)
-           (list 'witness (camel->snake (id-sym fn-id)) arg*)]
+           (list 'witness (id->rust-name fn-id) arg*)]
           [(and (eq-hashtable-ref circuit-id-ht fn-id #f)
                 (id-pure? fn-id))
-           (list 'pure-circuit (camel->snake (id-sym fn-id)) arg*)]
+           (list 'pure-circuit (id->rust-name fn-id) arg*)]
           ;; E5 / DID-walker-A: bare-call to an impure circuit (exported
           ;; or not — both are emitted as methods on the contract impl,
           ;; with `pub` vs `pub(crate)` visibility per emit-impure-circuit).
@@ -2474,7 +2498,7 @@
           ;; to keep the downstream emit clauses unchanged.
           [(and (eq-hashtable-ref circuit-id-ht fn-id #f)
                 (not (id-pure? fn-id)))
-           (list 'impure-exported (camel->snake (id-sym fn-id)) arg*)]
+           (list 'impure-exported (id->rust-name fn-id) arg*)]
           [else (list 'unknown)]))
 
       ;; stmt->if-then-else: detect a `(if cond then-stmt else-stmt)`

@@ -1,0 +1,61 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//  	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+//
+// Assert-parity fixture: a dedicated, minimal contract that proves the
+// Rust codegen lowers Compact `assert(cond, "msg")` to a handleable
+// `Err(CompactError::AssertionFailed)` rather than a panicking
+// `assert!`, mirroring the catchable `CompactError` throw the
+// TypeScript backend emits.
+//
+//   - `require_true(b)`: a PURE circuit whose body is just
+//     `assert(b, "..."); return b;`. Driving it with `false` must
+//     yield `Err(AssertionFailed)`, not a panic.
+//   - `fail_if_false(b)`: an IMPURE circuit that calls the pure
+//     circuit, so the `?`-propagation of a failing pure assert out of
+//     an impure circuit is also exercised (returns `Err`, not panic).
+//   - `ping()`: a trivial impure circuit so the operations map is
+//     non-empty and `initial_state()` has structural state.
+
+import CompactStandardLibrary;
+
+export ledger flag: Boolean;
+
+// Pure circuit with an assert that fails when driven with `false`.
+export pure circuit require_true(b: Boolean): Boolean {
+  assert(b, "must be true");
+  return b;
+}
+
+// Impure circuit that calls the pure circuit with a constant that
+// satisfies the assert — succeeds, writing `true` to the ledger.
+export circuit trigger_ok(): [] {
+  const ok = require_true(true);
+  flag.write(ok);
+}
+
+// Impure circuit that calls the pure circuit with a constant that
+// FAILS the assert. The `?` appended at the call site propagates the
+// pure circuit's `Err(AssertionFailed)` out of the impure circuit
+// instead of panicking.
+export circuit trigger_fail(): [] {
+  const ok = require_true(false);
+  flag.write(ok);
+}
+
+// Trivial impure circuit so the operations map is non-empty.
+export circuit ping(): [] {
+  flag.write(true);
+}

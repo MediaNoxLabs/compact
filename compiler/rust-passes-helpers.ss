@@ -109,6 +109,118 @@
       (define current-var-substitution
         (make-parameter '()))
 
+      ;; current-circuit-id-ht: eq-hashtable mapping a circuit function-name
+      ;; id to its circuit Program-Element, threaded dynamically by
+      ;; emit-pure-circuit so that expr-rust/call-rust (which do NOT take
+      ;; circuit-id-ht as an explicit argument) can still recognise a
+      ;; call to a user-defined *pure* circuit and route it to
+      ;; `pure_circuits::<snake>(...)`. Defaults to an empty hashtable so
+      ;; the impure-walker path (which resolves pure-circuit calls via
+      ;; ctor-call-rust's explicit circuit-id-ht argument before ever
+      ;; reaching call-rust) is unaffected. Bug-1 companion to
+      ;; current-var-substitution — closes the pure-circuit-body-emission
+      ;; gap for contracts whose pure circuits call other user pure
+      ;; circuits in tail/statement position (midnight-verifiable-
+      ;; credentials digital-passport: assertValidDigitalPassportSchemaRef,
+      ;; credentialBodyRoot, etc.).
+      (define current-circuit-id-ht
+        (make-parameter (make-eq-hashtable)))
+
+      ;; current-witness-id-ht: companion to current-circuit-id-ht — the
+      ;; witness-id-ht threaded by emit-pure-circuit so call-rust's
+      ;; native/stdlib dispatch (and any future witness-aware path in the
+      ;; pure walker) sees the real witness table. Defaults to an empty
+      ;; hashtable.
+      (define current-witness-id-ht
+        (make-parameter (make-eq-hashtable)))
+
+      ;; current-id-rust-name-ht: eq-hashtable mapping a circuit
+      ;; function-name id to its disambiguated Rust name (a symbol).
+      ;; Populated once in the Program pass from the export-name alist
+      ;; plus an id-sym collision scan, then threaded dynamically so
+      ;; every bare `(camel->snake (id-sym ...))` site (emit-pure-circuit
+      ;; `pub fn`, emit-impure-circuit method name, call-rust / walker
+      ;; `pure_circuits::<name>(...)` routing, hoisted-call `self.<name>`)
+      ;; consults it via `id->rust-name`. Exported ids use the prefixed
+      ;; export-name; non-exported ids whose id-sym collides with another
+      ;; circuit id get a `_` + id-uniq suffix (mirroring the TS backend's
+      ;; uniq-suffix disambiguation for `import M<...> prefix P_`
+      ;; instantiations). Defaults to an empty hashtable so lookups miss
+      ;; and `id->rust-name` falls back to `(camel->snake (id-sym id))` —
+      ;; preserving pre-fix behaviour for code paths not under the
+      ;; Program pass's parameterize.
+      (define current-id-rust-name-ht
+        (make-parameter (make-eq-hashtable)))
+
+      ;; current-struct-rust-name-ht: eq-hashtable mapping a tstruct Type
+      ;; NODE (eq? identity) to its disambiguated Rust struct name (a
+      ;; symbol). Populated once in the Program pass by scanning every
+      ;; tstruct type node in the program, fingerprinting it
+      ;; (struct-name + rendered field types), and — for struct-names
+      ;; shared by more than one distinct fingerprint — assigning
+      ;; `Name`, `Name_1`, `Name_2`, ... so two `import M<...>`
+      ;; instantiations that produce same-named but field-distinct
+      ;; structs (digital-passport's `RequestMessage` / `ResultMessage`)
+      ;; emit as distinct `pub struct`s and resolve consistently at every
+      ;; type-rust rendering site. Defaults to an empty hashtable so
+      ;; `struct-rust-name` falls back to the bare struct-name —
+      ;; preserving byte-identical output for contracts with no struct-name
+      ;; collisions (tiny / election / zerocash / pure_circuit_fixture).
+      (define current-struct-rust-name-ht
+        (make-parameter (make-eq-hashtable)))
+
+      ;; current-struct-rust-name-fp-ht: equal?-hashtable mapping a struct
+      ;; FINGERPRINT (see tstruct-fingerprint) to its disambiguated Rust
+      ;; name. This is the resolution path for tstruct nodes that the
+      ;; eq?-node table above never saw: struct literals, decoder turbofish,
+      ;; and default expressions all appear in *statement bodies*, which
+      ;; build-struct-rust-name-ht does not walk (it scans signatures /
+      ;; typedefs / ledger only). A body-site node is a distinct IR object
+      ;; from the sig node, so it misses the eq? table; keying on the
+      ;; structural fingerprint instead lets it resolve to the same
+      ;; disambiguated name. Defaults to empty so non-colliding structs fall
+      ;; back to their bare name (byte-identical output for the common case).
+      (define current-struct-rust-name-fp-ht
+        (make-parameter (make-hashtable equal-hash equal?)))
+
+      ;; id->rust-name: return the disambiguated Rust name symbol for a
+      ;; circuit/witness/native function-name id. Consults
+      ;; current-id-rust-name-ht; on a miss falls back to
+      ;; `(camel->snake (id-sym id))` so non-parameterised call sites and
+      ;; witness/native ids (which are never inserted into the table)
+      ;; render exactly as before.
+      (define (id->rust-name id)
+        (let ([n (eq-hashtable-ref (current-id-rust-name-ht) id #f)])
+          (if n n (camel->snake (id-sym id)))))
+
+      ;; struct-rust-name: return the disambiguated Rust name symbol for a
+      ;; tstruct Type node. Consults current-struct-rust-name-ht by eq?
+      ;; on the node; on a miss falls back to the bare struct-name so
+      ;; non-colliding structs (the common case) render unchanged.
+      (define (struct-rust-name type)
+        (nanopass-case (Ltypescript Type) type
+          [(tstruct ,src ,struct-name (,elt-name* ,type*) ...)
+           (let ([n (eq-hashtable-ref (current-struct-rust-name-ht) type #f)])
+             (cond
+               [n n]
+               [else
+                ;; eq? miss: a body-site node (struct literal / decoder /
+                ;; default) that the sig scan never registered. Resolve by
+                ;; structural fingerprint. Compute the fingerprint with the
+                ;; disambiguation tables forced empty so nested user-struct
+                ;; fields render as bare names — matching how the fp table
+                ;; was built (build-struct-rust-name-ht runs before the
+                ;; tables are installed), keeping the key stable regardless
+                ;; of which table state is live at the call site.
+                (let ([fp (parameterize ([current-struct-rust-name-ht (make-eq-hashtable)]
+                                         [current-struct-rust-name-fp-ht (make-hashtable equal-hash equal?)])
+                            (tstruct-fingerprint type))])
+                  (or (hashtable-ref (current-struct-rust-name-fp-ht) fp #f)
+                      struct-name))]))]
+          [else
+           (rust-feature-error #f 'struct-rust-name-non-tstruct
+             "struct-rust-name called on non-tstruct type")]))
+
       ;; current-enum-ref-typed?: when #t, ctor-expr-rust renders an
       ;; `enum-ref` as `EnumName::r#variant` instead of the integer
       ;; discriminant. Used inside an `==` comparison whose other operand

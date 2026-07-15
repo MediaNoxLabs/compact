@@ -83,14 +83,18 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-
 
-      # The workspace includes both tools/compact (covered by
-      # compact-test.yml) and our new crates. `cargo fmt --all` formats
-      # every member; if one is dirty the gate fails.
-      - name: Check formatting (compact-runtime + tests-e2e-rust)
-        run: |
-          cargo fmt -p compact-runtime --check
-          cargo fmt -p compact-runtime-macros --check
-          cargo fmt -p tests-e2e-rust --check
+      # `cargo fmt --all --check` formats every workspace member — our
+      # crates AND each generated `tests-e2e-rust/contracts/*` fixture crate.
+      # The fixture coverage matters: registered fixtures are already fmt-
+      # gated by codegen_regression (it regenerates with the nix rustfmt and
+      # asserts byte-identity), but an UNregistered fixture crate (e.g.
+      # digital-passport, which has no committed .compact source) is only
+      # caught here. Formatting is hermetic (no network), and this is the
+      # nix-nightly rustfmt the emitter's post-pass hook uses, so it is the
+      # authoritative fmt gate for the repo. `--all` includes tools/compact
+      # too — harmless, that tree is fmt-clean.
+      - name: Check formatting (whole workspace)
+        run: cargo fmt --all --check
 
       # Clippy with -D warnings turns lints into errors. We scope it to
       # our crates explicitly so changes to tools/compact don't

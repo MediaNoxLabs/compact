@@ -61,9 +61,9 @@ where
         let state = ChargedState::new(sv);
         let qctx = QueryContext::new(state, compact_runtime::ContractAddress::default());
         let tmp = [
-            ((1u64).wrapping_mul(2u64)) as u64,
-            ((2u64).wrapping_mul(2u64)) as u64,
-            ((3u64).wrapping_mul(2u64)) as u64,
+            (((1u64) as u128).wrapping_mul((2u64) as u128)) as u64,
+            (((2u64) as u128).wrapping_mul((2u64) as u128)) as u64,
+            (((3u64) as u128).wrapping_mul((2u64) as u128)) as u64,
         ];
         let ops = OpProgramVerify::<DefaultDB>::new()
             .push(false, new_cell(0u8))

@@ -2744,6 +2744,16 @@
                 [else #f])]
              [else #f])]
           [(talias ,src ,nominal? ,type-name ,type) (decoder-for-type type)]
+          [(topaque ,src ,opaque-type)
+           ;; JubjubPoint (EmbeddedGroupAffine) has no FromFieldRepr impl —
+           ;; orphan rules forbid one downstream — so a JubjubPoint-typed
+           ;; ledger read (did.compact 0.5.0's controllerPublicKey /
+           ;; recoveryAuthorityPublicKey) cannot go through
+           ;; decode_via_field_repr. Route it to the orphan-safe
+           ;; decode_jubjub_point helper. Other opaque tags stay flagged.
+           (if (equal? opaque-type "JubjubPoint")
+               "compact_runtime::std_lib::decode_jubjub_point"
+               #f)]
           ;; A5: struct types (user-defined or stdlib like
           ;; `ContractAddress`) decode via the FromFieldRepr trait —
           ;; the H6/H7 emitter derives it for user structs, and

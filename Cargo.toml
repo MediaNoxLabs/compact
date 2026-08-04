@@ -49,6 +49,7 @@ members = [
     "tests-e2e-rust/contracts/bug11-fixture",
     "tests-e2e-rust/contracts/assert-parity-fixture",
     "tests-e2e-rust/contracts/struct-collision-fixture",
+    "tests-e2e-rust/contracts/did-05",
 ]
 
 [workspace.dependencies]

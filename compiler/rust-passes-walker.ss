@@ -2179,22 +2179,20 @@
                         ;; the call moves `ctx` — see hoist-ctx-args.
                         (let-values ([(hoist-lines arg-tail)
                                       (hoist-ctx-args arg-strs counter)])
-                          (let ([call-line
-                                 (format "        let ~a = ~a(ctx~a)?;\n"
-                                         cr-name (impure-call-target cname) arg-tail)]
-                                [ctx-line
-                                 (format "        let ctx = ~a.context;\n" cr-name)]
+                          (let ([thread-lines
+                                 (impure-call-thread-lines
+                                   cr-name (impure-call-target cname) arg-tail
+                                   counter mode witness-emitted?)]
                                 [bind-line
                                  (format "        let ~a = ~a.result;\n"
                                          rust-name cr-name)])
                             (loop (cdr stmts)
                                   (cons (cons var-name rust-name) local-binds)
-                                  witness-emitted?
+                                  (if (eq? mode 'ctor) #t witness-emitted?)
                                   (cons bind-line
-                                        (cons ctx-line
-                                              (cons call-line
-                                                    (append (reverse hoist-lines)
-                                                            pre-lines))))
+                                        (append (reverse thread-lines)
+                                                (append (reverse hoist-lines)
+                                                        pre-lines)))
                                   writes))))]
                      [else
                       ;; Unknown rhs shape — try a generic ctor-expr-rust
@@ -2320,18 +2318,16 @@
                         ;; A-05: hoist ctx-reading args before the moving call.
                         (let-values ([(hoist-lines arg-tail)
                                       (hoist-ctx-args arg-strs counter)])
-                          (let ([call-line
-                                 (format "        let ~a = ~a(ctx~a)?;\n"
-                                         cr-name (impure-call-target cname) arg-tail)]
-                                [ctx-line
-                                 (format "        let ctx = ~a.context;\n" cr-name)])
+                          (let ([thread-lines
+                                 (impure-call-thread-lines
+                                   cr-name (impure-call-target cname) arg-tail
+                                   counter mode witness-emitted?)])
                             (loop (cdr stmts)
                                   local-binds
-                                  witness-emitted?
-                                  (cons ctx-line
-                                        (cons call-line
-                                              (append (reverse hoist-lines)
-                                                      pre-lines)))
+                                  (if (eq? mode 'ctor) #t witness-emitted?)
+                                  (append (reverse thread-lines)
+                                          (append (reverse hoist-lines)
+                                                  pre-lines))
                                   writes))))]
                      [else #f])))]
               ;; A4: non-write `public-ledger` call (ADT update op like

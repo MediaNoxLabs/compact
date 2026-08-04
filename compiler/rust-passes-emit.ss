@@ -1386,6 +1386,46 @@
             [else
              (hloop (cdr xs) (fx+ i 1) lines (cons (car xs) names))])))
 
+      ;; A22: emit an impure-circuit call plus context threading.
+      ;;
+      ;; In 'circuit mode the inbound `ctx` is already a CircuitContext, so
+      ;; we hand it straight to the callee and rebind `ctx` from the result:
+      ;;     let _cr_N = <target>(ctx, args)?;
+      ;;     let ctx = _cr_N.context;
+      ;;
+      ;; In 'ctor mode the inbound `ctx` is a ConstructorContext (fields
+      ;; initial_private_state / empty_zswap_local_state / cost_model /
+      ;; gas_limit) and the working query context lives in the local `qctx`.
+      ;; A circuit callee needs a CircuitContext, so we build one from qctx +
+      ;; the current private state, call, then re-extract qctx and the private
+      ;; state. Crucially we do NOT shadow `ctx`: the constructor's final
+      ;; ConstructorResult still reads ctx.empty_zswap_local_state /
+      ;; ctx.initial_private_state, so those fields must survive. cost_model /
+      ;; gas_limit / empty_zswap are cloned because ctx is used again later.
+      ;; Returns lines in FORWARD (source) order.
+      (define (impure-call-thread-lines cr-name target arg-tail step mode
+                                        witness-emitted?)
+        (if (eq? mode 'ctor)
+            (let ([cctx (format "_cctx_~a" step)]
+                  [priv (if witness-emitted?
+                            "current_private_state"
+                            "ctx.initial_private_state")])
+              (list
+                (format "        let ~a = CircuitContext {\n" cctx)
+                (format "            current_private_state: ~a,\n" priv)
+                "            current_query_context: qctx,\n"
+                "            current_zswap_local_state: ctx.empty_zswap_local_state.clone(),\n"
+                "            cost_model: ctx.cost_model.clone(),\n"
+                "            gas_limit: ctx.gas_limit.clone(),\n"
+                "        };\n"
+                (format "        let ~a = ~a(~a~a)?;\n" cr-name target cctx arg-tail)
+                (format "        let qctx = ~a.context.current_query_context;\n" cr-name)
+                (format "        let current_private_state = ~a.context.current_private_state;\n"
+                        cr-name)))
+            (list
+              (format "        let ~a = ~a(ctx~a)?;\n" cr-name target arg-tail)
+              (format "        let ctx = ~a.context;\n" cr-name))))
+
       ;; cond-rust: render a boolean condition expression. Like
       ;; ctor-expr-rust but for `(call ...)` of an impure circuit
       ;; (e.g. tiny.compact's `in_state`) we try inline-circuit-call
@@ -2843,6 +2883,10 @@
            (cond
              [(equal? opaque-type "string") "compact_runtime::std_lib::OpaqueString::default()"]
              [(equal? opaque-type "Uint8Array") "Vec::<u8>::new()"]
+             ;; A23: JubjubPoint (EmbeddedGroupAffine) derives Default but the
+             ;; generic `new_cell(Default::default())` can't infer the element
+             ;; type, so seed the initial cell with a concrete typed default.
+             [(equal? opaque-type "JubjubPoint") "compact_runtime::JubjubPoint::default()"]
              [else "Default::default()"])]
           [(tstruct ,src ,struct-name (,elt-name* ,type*) ...)
            ;; Maybe<T> needs an explicit type parameter so `Default::default()`

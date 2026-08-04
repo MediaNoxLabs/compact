@@ -2822,33 +2822,43 @@
       ;;                     msg))
       ;;        (seq (const %tmp.264 (elt-ref ...))  ; const-binding
       ;;             (pl-call remove %tmp.264)))
+      ;; Returns an 8-element list on success:
+      ;;   (assert-pair pre-stmts src adt-op path-elt* resolved-expr*
+      ;;    terminal-bare-call mid-calls)
+      ;; where `mid-calls` is a list of NON-terminal bare impure-circuit
+      ;; calls (each `(fn-id . resolved-args)`) captured between the guard
+      ;; assert and the terminal op — did.compact 0.5.0's
+      ;; setVerificationMethod / setVerificationMethodRelation interleave a
+      ;; compatibility-assert circuit call there.
       (define (branch->assert-and-pl-call stmt)
         (let loop ([stmts (stmt-flatten stmt)]
                    [pre-stmts '()]
                    [binds '()]
-                   [assert-pair #f])
+                   [assert-pair #f]
+                   [mid-calls '()])
           (cond
             [(null? stmts)
              ;; A14: assert-only branch is valid if we captured one.
              (and assert-pair
-                  (list assert-pair (reverse pre-stmts) #f #f '() '() #f))]
+                  (list assert-pair (reverse pre-stmts) #f #f '() '() #f
+                        (reverse mid-calls)))]
             [(const-decl-only? (car stmts))
-             (loop (cdr stmts) pre-stmts binds assert-pair)]
+             (loop (cdr stmts) pre-stmts binds assert-pair mid-calls)]
             [(stmt->assignment (car stmts)) =>
              (lambda (a)
                (loop (cdr stmts)
                      (cons a pre-stmts)
                      (cons a binds)
-                     assert-pair))]
+                     assert-pair mid-calls))]
             [(const-binding (car stmts)) =>
              (lambda (b)
                (loop (cdr stmts)
                      (cons b pre-stmts)
                      (cons b binds)
-                     assert-pair))]
+                     assert-pair mid-calls))]
             [(and (not assert-pair)
                   (stmt->assert (car stmts))) =>
-             (lambda (a) (loop (cdr stmts) pre-stmts binds a))]
+             (lambda (a) (loop (cdr stmts) pre-stmts binds a mid-calls))]
             [(and (null? (cdr stmts))
                   (stmt->public-ledger-call (car stmts))) =>
              (lambda (parts)
@@ -2860,7 +2870,7 @@
                                            expr*)])
                  (and (not (memv #f resolved-expr*))
                       (list assert-pair (reverse pre-stmts) src adt-op
-                            path-elt* resolved-expr* #f))))]
+                            path-elt* resolved-expr* #f (reverse mid-calls)))))]
             [(and (null? (cdr stmts))
                   (stmt->bare-call (car stmts))) =>
              ;; A17: terminal bare-call to a non-pure user circuit
@@ -2877,7 +2887,28 @@
                        (map (lambda (e) (expr-resolve e binds)) arg-exprs)])
                  (and (not (memv #f resolved-args))
                       (list assert-pair (reverse pre-stmts) #f #f '() '()
-                            (cons fn-id resolved-args)))))]
+                            (cons fn-id resolved-args) (reverse mid-calls)))))]
+            [(stmt->bare-call (car stmts)) =>
+             ;; A-05 (did.compact 0.5.0): a NON-terminal bare-call inside a
+             ;; branch — a compatibility-assert circuit interleaved between
+             ;; the guard assert and the terminal mutating op
+             ;; (setVerificationMethod's
+             ;; `assertExistingVerificationMethodRelationsCompatible(...)`,
+             ;; setVerificationMethodRelation's
+             ;; `assertVerificationMethodRelationCompatible(...)`). These
+             ;; are ledger-reading asserts (no mutation), so emission renders
+             ;; each as `self.<helper>(ctx.clone(), ...)?` before the op.
+             ;; Terminal bare-calls are already caught above (the
+             ;; `(null? (cdr stmts))` clause), so this reaches only
+             ;; non-terminal ones.
+             (lambda (c)
+               (let* ([fn-id (car c)]
+                      [arg-exprs (cdr c)]
+                      [resolved-args
+                       (map (lambda (e) (expr-resolve e binds)) arg-exprs)])
+                 (and (not (memv #f resolved-args))
+                      (loop (cdr stmts) pre-stmts binds assert-pair
+                            (cons (cons fn-id resolved-args) mid-calls)))))]
             [else #f])))
 
       ;; compute-pl-builder-lines: given a public-ledger ADT-op + path +

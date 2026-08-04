@@ -604,6 +604,10 @@
                                                  [path-elt* (car (cddddr b))]
                                                  [expr* (cadr (cddddr b))]
                                                  [bare-call-info (caddr (cddddr b))]
+                                                 ;; A-05: non-terminal bare
+                                                 ;; calls interleaved before
+                                                 ;; the terminal op.
+                                                 [mid-calls (cadddr (cddddr b))]
                                                  ;; A14: src=#f, bare-call=#f
                                                  ;; marks an assert-only branch
                                                  ;; — emit empty OpProgramVerify.
@@ -637,7 +641,8 @@
                                                         cond-str))
                                                  (list cond-str assert-pair
                                                        lines pre-stmts
-                                                       bare-call-info))))))
+                                                       bare-call-info
+                                                       mid-calls))))))
                                  source-arms)]
                            [else-info
                             (and final-else
@@ -650,6 +655,7 @@
                                         [path-elt* (car (cddddr b))]
                                         [expr* (cadr (cddddr b))]
                                         [bare-call-info (caddr (cddddr b))]
+                                        [mid-calls (cadddr (cddddr b))]
                                         [lines
                                          (cond
                                            [bare-call-info '()]
@@ -661,7 +667,7 @@
                                               native-id-ht witness-id-ht
                                               circuit-id-ht)])])
                                    (and lines (list assert-pair lines pre-stmts
-                                                    bare-call-info))))])
+                                                    bare-call-info mid-calls))))])
                       (cond
                         [(memv #f arm-info) #f]
                         [(and final-else (not else-info)) #f]
@@ -677,7 +683,8 @@
                                        [assert-pair (cadr a)]
                                        [lines (caddr a)]
                                        [pre-stmts (cadddr a)]
-                                       [bare-call-info (car (cddddr a))])
+                                       [bare-call-info (car (cddddr a))]
+                                       [mid-calls (cadr (cddddr a))])
                                   (out (format "        ~a~a ~a {\n"
                                                (if first? "let " "} else ")
                                                (if first?
@@ -758,6 +765,37 @@
                                       (for-each out (reverse hoist-lines))
                                       (out (format "            compact_assert!(~a, ~s);\n"
                                                    cond-str msg))))
+                                  ;; A-05: interleaved compatibility-assert
+                                  ;; circuit calls (ledger reads, no mutation)
+                                  ;; between the guard assert and the terminal
+                                  ;; op — emit each as `self.<helper>(ctx.clone(),
+                                  ;; ...)?` before the op borrows the branch ctx.
+                                  (let mloop ([mcs mid-calls] [mi 0])
+                                    (unless (null? mcs)
+                                      (let* ([mc (car mcs)]
+                                             [fn-id (car mc)]
+                                             [arg-exprs (cdr mc)]
+                                             [cname (symbol->string
+                                                      (camel->snake (id-sym fn-id)))]
+                                             [arg-strs
+                                              (map (lambda (e)
+                                                     (arg-rust-clone-if-var
+                                                       e local-binds
+                                                       native-id-ht witness-id-ht
+                                                       circuit-id-ht))
+                                                   arg-exprs)]
+                                             [arg-tail
+                                              (let join ([ys arg-strs] [acc ""])
+                                                (cond
+                                                  [(null? ys) acc]
+                                                  [else (join (cdr ys)
+                                                              (string-append acc ", " (car ys)))]))]
+                                             [cr-name (format "_cr_mid~a_~a" step mi)])
+                                        (out (format "            let ~a = ~a(ctx.clone()~a)?;\n"
+                                                     cr-name (impure-call-target cname) arg-tail))
+                                        (out (format "            __gas_acc += ~a.gas_cost.clone();\n"
+                                                     cr-name))
+                                        (mloop (cdr mcs) (+ mi 1)))))
                                   (cond
                                     [bare-call-info
                                      ;; A17: emit `self.<helper>(ctx.clone(), ...)?`
@@ -805,7 +843,8 @@
                               (let ([assert-pair (car else-info)]
                                     [lines (cadr else-info)]
                                     [pre-stmts (caddr else-info)]
-                                    [bare-call-info (cadddr else-info)])
+                                    [bare-call-info (cadddr else-info)]
+                                    [mid-calls (car (cddddr else-info))])
                                 (for-each
                                   (lambda (b)
                                     (let* ([var-name (car b)]
@@ -851,6 +890,34 @@
                                     (for-each out (reverse hoist-lines))
                                     (out (format "            compact_assert!(~a, ~s);\n"
                                                  cond-str msg))))
+                                ;; A-05: interleaved compatibility-assert calls
+                                ;; in the final else, same as the arm path.
+                                (let mloop ([mcs mid-calls] [mi 0])
+                                  (unless (null? mcs)
+                                    (let* ([mc (car mcs)]
+                                           [fn-id (car mc)]
+                                           [arg-exprs (cdr mc)]
+                                           [cname (symbol->string
+                                                    (camel->snake (id-sym fn-id)))]
+                                           [arg-strs
+                                            (map (lambda (e)
+                                                   (arg-rust-clone-if-var
+                                                     e local-binds
+                                                     native-id-ht witness-id-ht
+                                                     circuit-id-ht))
+                                                 arg-exprs)]
+                                           [arg-tail
+                                            (let join ([ys arg-strs] [acc ""])
+                                              (cond
+                                                [(null? ys) acc]
+                                                [else (join (cdr ys)
+                                                            (string-append acc ", " (car ys)))]))]
+                                           [cr-name (format "_cr_mid~a_else_~a" step mi)])
+                                      (out (format "            let ~a = ~a(ctx.clone()~a)?;\n"
+                                                   cr-name (impure-call-target cname) arg-tail))
+                                      (out (format "            __gas_acc += ~a.gas_cost.clone();\n"
+                                                   cr-name))
+                                      (mloop (cdr mcs) (+ mi 1)))))
                                 (cond
                                   [bare-call-info
                                    ;; A17: final else with a bare-call.

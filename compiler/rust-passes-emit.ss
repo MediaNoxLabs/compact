@@ -1356,6 +1356,36 @@
                    [(string=? (substring haystack i (fx+ i nl)) needle) #t]
                    [else (loop (fx+ i 1))])))))
 
+      ;; hoist-ctx-args: for an impure-circuit call `self.<m>(ctx, <args>)`,
+      ;; any argument whose rendered text references `ctx` — a ledger read
+      ;; emits `&ctx.current_query_context` — must be bound to a temp BEFORE
+      ;; the call moves `ctx`, or Rust rejects the borrow-after-move
+      ;; (did.compact 0.5.0's assertController ->
+      ;; Schnorr_schnorrVerifyDigest(digest, sig, controllerPublicKey), where
+      ;; controllerPublicKey is a JubjubPoint ledger read). Returns
+      ;; (values hoist-lines arg-tail): `hoist-lines` are the `let _carg… = …;`
+      ;; strings (the caller emits or prepends them), and `arg-tail` is the
+      ;; ", "-prefixed argument list with hoisted args replaced by their temp
+      ;; names. Non-ctx args stay inline, so contracts without ctx-reading
+      ;; call arguments are byte-unchanged.
+      (define (hoist-ctx-args arg-strs step)
+        (let hloop ([xs arg-strs] [i 0] [lines '()] [names '()])
+          (cond
+            [(null? xs)
+             (values (reverse lines)
+                     (let join ([ys (reverse names)] [s ""])
+                       (cond
+                         [(null? ys) s]
+                         [else (join (cdr ys)
+                                     (string-append s ", " (car ys)))])))]
+            [(substring? (car xs) "ctx")
+             (let ([n (format "_carg_~a_~a" step i)])
+               (hloop (cdr xs) (fx+ i 1)
+                      (cons (format "        let ~a = ~a;\n" n (car xs)) lines)
+                      (cons n names)))]
+            [else
+             (hloop (cdr xs) (fx+ i 1) lines (cons (car xs) names))])))
+
       ;; cond-rust: render a boolean condition expression. Like
       ;; ctor-expr-rust but for `(call ...)` of an impure circuit
       ;; (e.g. tiny.compact's `in_state`) we try inline-circuit-call

@@ -375,12 +375,6 @@
                                      e local-binds
                                      native-id-ht witness-id-ht circuit-id-ht))
                                  cargs)]
-                           [arg-tail
-                            (let join ([xs arg-strs] [acc ""])
-                              (cond
-                                [(null? xs) acc]
-                                [else (join (cdr xs)
-                                            (string-append acc ", " (car xs)))]))]
                            [direct? (string=? ctx-expr "&ctx.current_query_context")]
                            [qc-src
                             (if (and (> (string-length ctx-expr) 0)
@@ -388,21 +382,26 @@
                                 (substring ctx-expr 1 (string-length ctx-expr))
                                 ctx-expr)]
                            [ctx-for-call-name (format "_ctx_for_~a" step)])
-                      (cond
-                        [direct?
-                         (out (format "        let ~a = ~a(ctx~a)?;\n"
-                                      cr-name (impure-call-target cname) arg-tail))]
-                        [else
-                         (out (format "        let ~a = CircuitContext { current_query_context: ~a.clone(), ..ctx.clone() };\n"
-                                      ctx-for-call-name qc-src))
-                         (out (format "        let ~a = ~a(~a~a)?;\n"
-                                      cr-name (impure-call-target cname) ctx-for-call-name arg-tail))])
-                      (out (format "        let ctx = ~a.context;\n" cr-name))
-                      (out (format "        let ~a = ~a.result;\n" rust-name cr-name))
-                      (loop (cdr stmts)
-                            (cons (cons var-name rust-name) local-binds)
-                            witness-emitted? (+ step 3)
-                            "&ctx.current_query_context"))]
+                      ;; A-05: hoist any ctx-reading arg before the (moving)
+                      ;; direct call — see hoist-ctx-args.
+                      (let-values ([(hoist-lines arg-tail)
+                                    (hoist-ctx-args arg-strs step)])
+                        (for-each out hoist-lines)
+                        (cond
+                          [direct?
+                           (out (format "        let ~a = ~a(ctx~a)?;\n"
+                                        cr-name (impure-call-target cname) arg-tail))]
+                          [else
+                           (out (format "        let ~a = CircuitContext { current_query_context: ~a.clone(), ..ctx.clone() };\n"
+                                        ctx-for-call-name qc-src))
+                           (out (format "        let ~a = ~a(~a~a)?;\n"
+                                        cr-name (impure-call-target cname) ctx-for-call-name arg-tail))])
+                        (out (format "        let ctx = ~a.context;\n" cr-name))
+                        (out (format "        let ~a = ~a.result;\n" rust-name cr-name))
+                        (loop (cdr stmts)
+                              (cons (cons var-name rust-name) local-binds)
+                              witness-emitted? (+ step 3)
+                              "&ctx.current_query_context")))]
                    [else
                     (let* ([raw
                             (guard (c [#t #f])
@@ -482,13 +481,7 @@
                                    (arg-rust-clone-if-var
                                      e local-binds
                                      native-id-ht witness-id-ht circuit-id-ht))
-                                 cargs)]
-                           [arg-tail
-                            (let join ([xs arg-strs] [acc ""])
-                              (cond
-                                [(null? xs) acc]
-                                [else (join (cdr xs)
-                                            (string-append acc ", " (car xs)))]))])
+                                 cargs)])
                       ;; A15: when ctx-expr is `&_results_N.context` (after
                       ;; a pl-call) or any non-default form, rebind ctx
                       ;; first so the inner `self.<name>(ctx, ...)` sees
@@ -505,11 +498,17 @@
                                (substring ctx-expr 1 (string-length ctx-expr))])
                           (out (format "        let ctx = CircuitContext { current_query_context: ~a.clone(), ..ctx };\n"
                                        referent))))
-                      (out (format "        let ~a = ~a(ctx~a)?;\n"
-                                   cr-name (impure-call-target cname) arg-tail))
-                      (out (format "        let ctx = ~a.context;\n" cr-name))
-                      (loop (cdr stmts) local-binds witness-emitted?
-                            (+ step 2) "&ctx.current_query_context"))]
+                      ;; A-05 (did.compact 0.5.0): hoist any arg that reads the
+                      ;; context into a temp before the call moves `ctx`
+                      ;; (borrow-after-move otherwise). See hoist-ctx-args.
+                      (let-values ([(hoist-lines arg-tail)
+                                    (hoist-ctx-args arg-strs step)])
+                        (for-each out hoist-lines)
+                        (out (format "        let ~a = ~a(ctx~a)?;\n"
+                                     cr-name (impure-call-target cname) arg-tail))
+                        (out (format "        let ctx = ~a.context;\n" cr-name))
+                        (loop (cdr stmts) local-binds witness-emitted?
+                              (+ step 2) "&ctx.current_query_context")))]
                    [else #f])))]
             [(stmt->public-ledger-call (car stmts)) =>
              (lambda (parts)

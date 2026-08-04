@@ -182,6 +182,71 @@
               (format "            .push(true, new_cell(~a))\n" rust-val)
               "            .ins(false, 1)\n"))
 
+      ;; A24: does a branch's ordered body-items contain more than one
+      ;; assert? Multi-assert branches need in-source-order emission (the
+      ;; legacy pre-stmts-then-single-assert split would misorder a
+      ;; member-guard assert relative to a Map.lookup const-binding).
+      (define (branch-multi-assert? body-items)
+        (fx> (let loop ([xs body-items] [n 0])
+               (cond
+                 [(null? xs) n]
+                 [(eq? (car (car xs)) 'assert) (loop (cdr xs) (fx+ n 1))]
+                 [else (loop (cdr xs) n)]))
+             1))
+
+      ;; A24: emit a branch's body-items (asserts + const-bindings /
+      ;; assignments) in source order. Binds render as `let <name> = <expr>;`
+      ;; (deduped by name, matching the legacy pre-stmts loop's Bug-5 guard);
+      ;; asserts render as `compact_assert!(<cond>, <msg>)` with the same
+      ;; impure-subcall hoisting the single-assert path uses. Only invoked
+      ;; for multi-assert branches, so single-assert / write branches keep
+      ;; byte-parity via their existing emit path.
+      (define (emit-branch-body-items body-items indent local-binds
+                                      native-id-ht witness-id-ht circuit-id-ht)
+        (let loop ([xs body-items] [seen '()])
+          (cond
+            [(null? xs) (void)]
+            [(eq? (car (car xs)) 'bind)
+             (let* ([b (cdr (car xs))]
+                    [var-name (car b)]
+                    [expr (cdr b)]
+                    [rust-name (symbol->string
+                                 (camel->snake (id-sym var-name)))])
+               (cond
+                 [(member rust-name seen) (loop (cdr xs) seen)]
+                 [else
+                  (let* ([raw (guard (c [#t "/* TODO A24 */"])
+                                (ctor-expr-rust expr local-binds
+                                                native-id-ht witness-id-ht
+                                                circuit-id-ht))]
+                         [rendered (expr-rust-arg-cloned expr raw)])
+                    (out (format "~alet ~a = ~a;\n" indent rust-name rendered))
+                    (loop (cdr xs) (cons rust-name seen)))]))]
+            [(eq? (car (car xs)) 'assert)
+             (let* ([ap (cdr (car xs))]
+                    [ae (car ap)]
+                    [msg (cdr ap)]
+                    [impure-subs
+                     (collect-impure-call-subcalls
+                       ae witness-id-ht circuit-id-ht native-id-ht)]
+                    [hoist
+                     (emit-hoisted-impure-calls
+                       impure-subs 0 local-binds
+                       native-id-ht witness-id-ht circuit-id-ht indent)]
+                    [hoist-lines (car hoist)]
+                    [hoist-binds (cadr hoist)]
+                    [cond-str
+                     (parameterize
+                         ([current-impure-call-binds
+                           (append hoist-binds (current-impure-call-binds))])
+                       (assert-cond-rust ae local-binds
+                                         native-id-ht witness-id-ht
+                                         circuit-id-ht))])
+               (for-each out (reverse hoist-lines))
+               (out (format "~acompact_assert!(~a, ~s);\n" indent cond-str msg))
+               (loop (cdr xs) seen))]
+            [else (loop (cdr xs) seen)])))
+
       ;; emit-streaming-body: walk the flat statement sequence and emit
       ;; per-statement Rust. ctx-expr is a string holding the current Rust
       ;; expression that yields the active &QueryContext; it starts as
@@ -607,6 +672,10 @@
                                                  ;; calls interleaved before
                                                  ;; the terminal op.
                                                  [mid-calls (cadddr (cddddr b))]
+                                                 ;; A24: ordered assert/bind
+                                                 ;; items for multi-assert
+                                                 ;; branches.
+                                                 [body-items (car (cddddr (cddddr b)))]
                                                  ;; A14: src=#f, bare-call=#f
                                                  ;; marks an assert-only branch
                                                  ;; — emit empty OpProgramVerify.
@@ -641,7 +710,7 @@
                                                  (list cond-str assert-pair
                                                        lines pre-stmts
                                                        bare-call-info
-                                                       mid-calls))))))
+                                                       mid-calls body-items))))))
                                  source-arms)]
                            [else-info
                             (and final-else
@@ -655,6 +724,7 @@
                                         [expr* (cadr (cddddr b))]
                                         [bare-call-info (caddr (cddddr b))]
                                         [mid-calls (cadddr (cddddr b))]
+                                        [body-items (car (cddddr (cddddr b)))]
                                         [lines
                                          (cond
                                            [bare-call-info '()]
@@ -666,7 +736,8 @@
                                               native-id-ht witness-id-ht
                                               circuit-id-ht)])])
                                    (and lines (list assert-pair lines pre-stmts
-                                                    bare-call-info mid-calls))))])
+                                                    bare-call-info mid-calls
+                                                    body-items))))])
                       (cond
                         [(memv #f arm-info) #f]
                         [(and final-else (not else-info)) #f]
@@ -683,7 +754,8 @@
                                        [lines (caddr a)]
                                        [pre-stmts (cadddr a)]
                                        [bare-call-info (car (cddddr a))]
-                                       [mid-calls (cadr (cddddr a))])
+                                       [mid-calls (cadr (cddddr a))]
+                                       [body-items (caddr (cddddr a))])
                                   (out (format "        ~a~a ~a {\n"
                                                (if first? "let " "} else ")
                                                (if first?
@@ -708,62 +780,72 @@
                                   ;; second occurrence is structurally
                                   ;; identical (same lift, same expr) so
                                   ;; skipping it preserves semantics.
-                                  (let loop ([xs pre-stmts] [seen '()])
-                                    (cond
-                                      [(null? xs) (void)]
-                                      [else
-                                       (let* ([var-name (car (car xs))]
-                                              [expr (cdr (car xs))]
-                                              [rust-name (symbol->string
-                                                           (camel->snake
-                                                             (id-sym var-name)))])
-                                         (cond
-                                           [(member rust-name seen)
-                                            (loop (cdr xs) seen)]
-                                           [else
-                                            (let* ([raw
-                                                    (guard (c [#t "/* TODO A14 */"])
-                                                      (ctor-expr-rust expr local-binds
-                                                                      native-id-ht
-                                                                      witness-id-ht
-                                                                      circuit-id-ht))]
-                                                   ;; Bug-6: clone non-Copy
-                                                   ;; var-ref / elt-ref RHS so
-                                                   ;; the source struct stays
-                                                   ;; usable after the lift.
-                                                   [rendered
-                                                    (expr-rust-arg-cloned expr raw)])
-                                              (out (format "            let ~a = ~a;\n"
-                                                           rust-name rendered))
-                                              (loop (cdr xs) (cons rust-name seen)))]))]))
-                                  (when assert-pair
-                                    (let* ([ae (car assert-pair)]
-                                           [msg (cdr assert-pair)]
-                                           [impure-subs
-                                            (collect-impure-call-subcalls
-                                              ae witness-id-ht circuit-id-ht
-                                              native-id-ht)]
-                                           [hoist
-                                            (emit-hoisted-impure-calls
-                                              impure-subs 0
-                                              local-binds
-                                              native-id-ht witness-id-ht
-                                              circuit-id-ht
-                                              "            ")]
-                                           [hoist-lines (car hoist)]
-                                           [hoist-binds (cadr hoist)]
-                                           [cond-str
-                                            (parameterize
-                                                ([current-impure-call-binds
-                                                  (append hoist-binds
-                                                          (current-impure-call-binds))])
-                                              (assert-cond-rust
-                                                ae local-binds
-                                                native-id-ht witness-id-ht
-                                                circuit-id-ht))])
-                                      (for-each out (reverse hoist-lines))
-                                      (out (format "            compact_assert!(~a, ~s);\n"
-                                                   cond-str msg))))
+                                  ;;
+                                  ;; A24: multi-assert branches emit their
+                                  ;; asserts + binds in source order instead,
+                                  ;; so a member-guard assert stays before the
+                                  ;; Map.lookup it protects.
+                                  (if (branch-multi-assert? body-items)
+                                      (emit-branch-body-items
+                                        body-items "            " local-binds
+                                        native-id-ht witness-id-ht circuit-id-ht)
+                                      (begin
+                                        (let loop ([xs pre-stmts] [seen '()])
+                                          (cond
+                                            [(null? xs) (void)]
+                                            [else
+                                             (let* ([var-name (car (car xs))]
+                                                    [expr (cdr (car xs))]
+                                                    [rust-name (symbol->string
+                                                                 (camel->snake
+                                                                   (id-sym var-name)))])
+                                               (cond
+                                                 [(member rust-name seen)
+                                                  (loop (cdr xs) seen)]
+                                                 [else
+                                                  (let* ([raw
+                                                          (guard (c [#t "/* TODO A14 */"])
+                                                            (ctor-expr-rust expr local-binds
+                                                                            native-id-ht
+                                                                            witness-id-ht
+                                                                            circuit-id-ht))]
+                                                         ;; Bug-6: clone non-Copy
+                                                         ;; var-ref / elt-ref RHS so
+                                                         ;; the source struct stays
+                                                         ;; usable after the lift.
+                                                         [rendered
+                                                          (expr-rust-arg-cloned expr raw)])
+                                                    (out (format "            let ~a = ~a;\n"
+                                                                 rust-name rendered))
+                                                    (loop (cdr xs) (cons rust-name seen)))]))]))
+                                        (when assert-pair
+                                          (let* ([ae (car assert-pair)]
+                                                 [msg (cdr assert-pair)]
+                                                 [impure-subs
+                                                  (collect-impure-call-subcalls
+                                                    ae witness-id-ht circuit-id-ht
+                                                    native-id-ht)]
+                                                 [hoist
+                                                  (emit-hoisted-impure-calls
+                                                    impure-subs 0
+                                                    local-binds
+                                                    native-id-ht witness-id-ht
+                                                    circuit-id-ht
+                                                    "            ")]
+                                                 [hoist-lines (car hoist)]
+                                                 [hoist-binds (cadr hoist)]
+                                                 [cond-str
+                                                  (parameterize
+                                                      ([current-impure-call-binds
+                                                        (append hoist-binds
+                                                                (current-impure-call-binds))])
+                                                    (assert-cond-rust
+                                                      ae local-binds
+                                                      native-id-ht witness-id-ht
+                                                      circuit-id-ht))])
+                                            (for-each out (reverse hoist-lines))
+                                            (out (format "            compact_assert!(~a, ~s);\n"
+                                                         cond-str msg))))))
                                   ;; A-05: interleaved compatibility-assert
                                   ;; circuit calls (ledger reads, no mutation)
                                   ;; between the guard assert and the terminal
@@ -843,52 +925,60 @@
                                     [lines (cadr else-info)]
                                     [pre-stmts (caddr else-info)]
                                     [bare-call-info (cadddr else-info)]
-                                    [mid-calls (car (cddddr else-info))])
-                                (for-each
-                                  (lambda (b)
-                                    (let* ([var-name (car b)]
-                                           [expr (cdr b)]
-                                           [rust-name (symbol->string
-                                                        (camel->snake
-                                                          (id-sym var-name)))]
-                                           [rendered
-                                            (guard (c [#t "/* TODO A14 */"])
-                                              (ctor-expr-rust expr local-binds
-                                                              native-id-ht
-                                                              witness-id-ht
-                                                              circuit-id-ht))])
-                                      (out (format "            let ~a = ~a;\n"
-                                                   rust-name rendered))))
-                                  pre-stmts)
-                                (when assert-pair
-                                  (let* ([ae (car assert-pair)]
-                                         [msg (cdr assert-pair)]
-                                         ;; A15: same hoist as the arm path.
-                                         [impure-subs
-                                          (collect-impure-call-subcalls
-                                            ae witness-id-ht circuit-id-ht
-                                            native-id-ht)]
-                                         [hoist
-                                          (emit-hoisted-impure-calls
-                                            impure-subs 0
-                                            local-binds
-                                            native-id-ht witness-id-ht
-                                            circuit-id-ht
-                                            "            ")]
-                                         [hoist-lines (car hoist)]
-                                         [hoist-binds (cadr hoist)]
-                                         [cond-str
-                                          (parameterize
-                                              ([current-impure-call-binds
-                                                (append hoist-binds
-                                                        (current-impure-call-binds))])
-                                            (assert-cond-rust
-                                              ae local-binds
-                                              native-id-ht witness-id-ht
-                                              circuit-id-ht))])
-                                    (for-each out (reverse hoist-lines))
-                                    (out (format "            compact_assert!(~a, ~s);\n"
-                                                 cond-str msg))))
+                                    [mid-calls (car (cddddr else-info))]
+                                    [body-items (cadr (cddddr else-info))])
+                                ;; A24: multi-assert final else emits its
+                                ;; body-items in source order (see arm path).
+                                (if (branch-multi-assert? body-items)
+                                    (emit-branch-body-items
+                                      body-items "            " local-binds
+                                      native-id-ht witness-id-ht circuit-id-ht)
+                                    (begin
+                                      (for-each
+                                        (lambda (b)
+                                          (let* ([var-name (car b)]
+                                                 [expr (cdr b)]
+                                                 [rust-name (symbol->string
+                                                              (camel->snake
+                                                                (id-sym var-name)))]
+                                                 [rendered
+                                                  (guard (c [#t "/* TODO A14 */"])
+                                                    (ctor-expr-rust expr local-binds
+                                                                    native-id-ht
+                                                                    witness-id-ht
+                                                                    circuit-id-ht))])
+                                            (out (format "            let ~a = ~a;\n"
+                                                         rust-name rendered))))
+                                        pre-stmts)
+                                      (when assert-pair
+                                        (let* ([ae (car assert-pair)]
+                                               [msg (cdr assert-pair)]
+                                               ;; A15: same hoist as the arm path.
+                                               [impure-subs
+                                                (collect-impure-call-subcalls
+                                                  ae witness-id-ht circuit-id-ht
+                                                  native-id-ht)]
+                                               [hoist
+                                                (emit-hoisted-impure-calls
+                                                  impure-subs 0
+                                                  local-binds
+                                                  native-id-ht witness-id-ht
+                                                  circuit-id-ht
+                                                  "            ")]
+                                               [hoist-lines (car hoist)]
+                                               [hoist-binds (cadr hoist)]
+                                               [cond-str
+                                                (parameterize
+                                                    ([current-impure-call-binds
+                                                      (append hoist-binds
+                                                              (current-impure-call-binds))])
+                                                  (assert-cond-rust
+                                                    ae local-binds
+                                                    native-id-ht witness-id-ht
+                                                    circuit-id-ht))])
+                                          (for-each out (reverse hoist-lines))
+                                          (out (format "            compact_assert!(~a, ~s);\n"
+                                                       cond-str msg))))))
                                 ;; A-05: interleaved compatibility-assert calls
                                 ;; in the final else, same as the arm path.
                                 (let mloop ([mcs mid-calls] [mi 0])

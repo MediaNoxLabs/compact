@@ -2831,30 +2831,43 @@
                    [pre-stmts '()]
                    [binds '()]
                    [assert-pair #f]
-                   [mid-calls '()])
+                   [mid-calls '()]
+                   [body-items '()])
           (cond
             [(null? stmts)
              ;; A14: assert-only branch is valid if we captured one.
              (and assert-pair
                   (list assert-pair (reverse pre-stmts) #f #f '() '() #f
-                        (reverse mid-calls)))]
+                        (reverse mid-calls) (reverse body-items)))]
             [(const-decl-only? (car stmts))
-             (loop (cdr stmts) pre-stmts binds assert-pair mid-calls)]
+             (loop (cdr stmts) pre-stmts binds assert-pair mid-calls body-items)]
             [(stmt->assignment (car stmts)) =>
              (lambda (a)
                (loop (cdr stmts)
                      (cons a pre-stmts)
                      (cons a binds)
-                     assert-pair mid-calls))]
+                     assert-pair mid-calls
+                     (cons (cons 'bind a) body-items)))]
             [(const-binding (car stmts)) =>
              (lambda (b)
                (loop (cdr stmts)
                      (cons b pre-stmts)
                      (cons b binds)
-                     assert-pair mid-calls))]
-            [(and (not assert-pair)
-                  (stmt->assert (car stmts))) =>
-             (lambda (a) (loop (cdr stmts) pre-stmts binds a mid-calls))]
+                     assert-pair mid-calls
+                     (cons (cons 'bind b) body-items)))]
+            [(stmt->assert (car stmts)) =>
+             ;; A24: accept MULTIPLE asserts per branch. `assert-pair` keeps
+             ;; the FIRST assert (back-compat for single-assert consumers);
+             ;; `body-items` records every assert + bind in source order so
+             ;; the emitter can render an ordered multi-assert branch (e.g.
+             ;; did.compact 0.5.0's assertVerificationMethodRelationCompatible:
+             ;; assert(member) / const lookup / assert(crv)). Single-assert
+             ;; branches keep `body-items` with one assert, so the emitter's
+             ;; legacy path still fires and byte-parity is preserved.
+             (lambda (a)
+               (loop (cdr stmts) pre-stmts binds
+                     (or assert-pair a) mid-calls
+                     (cons (cons 'assert a) body-items)))]
             [(and (null? (cdr stmts))
                   (stmt->public-ledger-call (car stmts))) =>
              (lambda (parts)
@@ -2866,7 +2879,8 @@
                                            expr*)])
                  (and (not (memv #f resolved-expr*))
                       (list assert-pair (reverse pre-stmts) src adt-op
-                            path-elt* resolved-expr* #f (reverse mid-calls)))))]
+                            path-elt* resolved-expr* #f (reverse mid-calls)
+                            (reverse body-items)))))]
             [(and (null? (cdr stmts))
                   (stmt->bare-call (car stmts))) =>
              ;; A17: terminal bare-call to a non-pure user circuit
@@ -2883,7 +2897,8 @@
                        (map (lambda (e) (expr-resolve e binds)) arg-exprs)])
                  (and (not (memv #f resolved-args))
                       (list assert-pair (reverse pre-stmts) #f #f '() '()
-                            (cons fn-id resolved-args) (reverse mid-calls)))))]
+                            (cons fn-id resolved-args) (reverse mid-calls)
+                            (reverse body-items)))))]
             [(stmt->bare-call (car stmts)) =>
              ;; A-05 (did.compact 0.5.0): a NON-terminal bare-call inside a
              ;; branch — a compatibility-assert circuit interleaved between
@@ -2904,7 +2919,8 @@
                        (map (lambda (e) (expr-resolve e binds)) arg-exprs)])
                  (and (not (memv #f resolved-args))
                       (loop (cdr stmts) pre-stmts binds assert-pair
-                            (cons (cons fn-id resolved-args) mid-calls)))))]
+                            (cons (cons fn-id resolved-args) mid-calls)
+                            body-items))))]
             [else #f])))
 
       ;; compute-pl-builder-lines: given a public-ledger ADT-op + path +

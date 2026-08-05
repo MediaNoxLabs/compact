@@ -2922,9 +2922,15 @@
                       [resolved-args
                        (map (lambda (e) (expr-resolve e binds)) arg-exprs)])
                  (and (not (memv #f resolved-args))
+                      ;; A26: record the call BOTH in `mid-calls` (legacy) and
+                      ;; as an ordered `'call` item in `body-items`, so the
+                      ;; ordered emitter can place it at its source position and
+                      ;; thread its returned context into later reads / the
+                      ;; terminal op (rather than discarding it).
                       (loop (cdr stmts) pre-stmts binds assert-pair
                             (cons (cons fn-id resolved-args) mid-calls)
-                            body-items))))]
+                            (cons (cons 'call (cons fn-id resolved-args))
+                                  body-items)))))]
             [else #f])))
 
       ;; compute-pl-builder-lines: given a public-ledger ADT-op + path +

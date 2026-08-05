@@ -3699,7 +3699,7 @@ where
                 .ins(true, 2)
                 .build();
             query_for_verify(
-                &ctx.current_query_context,
+                &_cr_mid6_0.context.current_query_context,
                 &ops,
                 ctx.gas_limit.clone(),
                 &ctx.cost_model,
@@ -4402,7 +4402,7 @@ where
             )?;
             __gas_acc += _cr_mid9_0.gas_cost.clone();
             let _cr_arm9 = self.insert_verification_method_relation(
-                ctx.clone(),
+                _cr_mid9_0.context,
                 disclosed_relation.clone(),
                 disclosed_method_id.clone(),
             )?;

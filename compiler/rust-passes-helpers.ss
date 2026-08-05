@@ -274,6 +274,25 @@
       (define current-arith-suffix
         (make-parameter #f))
 
+      ;; A25: ctor-zswap-threaded? — set #t (within emit-ctor-body-or-fallback's
+      ;; dynamic extent) once a constructor has threaded an impure-circuit call
+      ;; through a local `_zswap` binding. impure-call-thread-lines flips it on
+      ;; the first ctor impure call and seeds subsequent calls from `_zswap`;
+      ;; the ConstructorResult emitters read it via `ctor-zswap-result-field` to
+      ;; return the threaded `_zswap` instead of `ctx.empty_zswap_local_state`,
+      ;; so zswap-local changes made by a constructor's impure calls survive.
+      ;; Defaults #f, so every constructor without an impure call emits exactly
+      ;; the pre-A25 `ctx.empty_zswap_local_state` (byte-parity preserved).
+      (define ctor-zswap-threaded?
+        (make-parameter #f))
+
+      ;; ConstructorResult `current_zswap_local_state:` field line. Returns the
+      ;; threaded `_zswap` local when a ctor impure call fed it (A25), else the
+      ;; inbound `ctx.empty_zswap_local_state`.
+      (define (ctor-zswap-result-field)
+        (format "            current_zswap_local_state: ~a,\n"
+                (if (ctor-zswap-threaded?) "_zswap" "ctx.empty_zswap_local_state")))
+
       ;; integer-literal-rendering?: returns #t when `s` is a string of
       ;; one or more decimal digits (with no suffix, no operator chars,
       ;; no parens). Used by arith-operand-rust to decide whether

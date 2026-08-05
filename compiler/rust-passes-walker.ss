@@ -2379,7 +2379,11 @@
         ;; ConstructorContext<PS>). Parameterize so any
         ;; emit-ledger-read-expr triggered downstream by an in-expr
         ;; ledger read picks up the right source.
-        (parameterize ([current-qctx-ref "&qctx"])
+        ;; A25: reset the zswap-threading flag per constructor so
+        ;; impure-call-thread-lines / the ConstructorResult emitters agree on
+        ;; whether a `_zswap` local was introduced.
+        (parameterize ([current-qctx-ref "&qctx"]
+                       [ctor-zswap-threaded? #f])
           (emit-body-or-fallback stmt 'ctor
                                  native-id-ht witness-id-ht circuit-id-ht)))
 
@@ -3106,7 +3110,7 @@
            (out (if witness-emitted?
                     "            current_private_state,\n"
                     "            current_private_state: ctx.initial_private_state,\n"))
-           (out "            current_zswap_local_state: ctx.empty_zswap_local_state,\n")
+           (out (ctor-zswap-result-field))
            (out "        })\n")]
           [else
            ;; 'circuit mode: results live on the inbound ctx and we wrap
@@ -3251,7 +3255,7 @@
                 (out (if witness-emitted?
                          "            current_private_state,\n"
                          "            current_private_state: ctx.initial_private_state,\n"))
-                (out "            current_zswap_local_state: ctx.empty_zswap_local_state,\n")
+                (out (ctor-zswap-result-field))
                 (out "        })\n")]
                [else
                 (out "        let results = query_for_verify(\n")
@@ -3393,7 +3397,7 @@
                            (out (if witness-emitted?
                                     "            current_private_state,\n"
                                     "            current_private_state: ctx.initial_private_state,\n"))
-                           (out "            current_zswap_local_state: ctx.empty_zswap_local_state,\n")
+                           (out (ctor-zswap-result-field))
                            (out "        })\n")]
                           [else
                            (out "        let results = query_for_verify(\n")
@@ -3480,7 +3484,7 @@
                 (out (if witness-emitted?
                          "            current_private_state,\n"
                          "            current_private_state: ctx.initial_private_state,\n"))
-                (out "            current_zswap_local_state: ctx.empty_zswap_local_state,\n")
+                (out (ctor-zswap-result-field))
                 (out "        })\n")]
                [else
                 (out "        Ok(CircuitResults {\n")
@@ -3556,7 +3560,7 @@
                 (out (if witness-emitted?
                          "            current_private_state,\n"
                          "            current_private_state: ctx.initial_private_state,\n"))
-                (out "            current_zswap_local_state: ctx.empty_zswap_local_state,\n")
+                (out (ctor-zswap-result-field))
                 (out "        })\n")]
                [else
                 (out "        let results = query_for_verify(\n")
@@ -3614,7 +3618,7 @@
                 (out (if witness-emitted?
                          "            current_private_state,\n"
                          "            current_private_state: ctx.initial_private_state,\n"))
-                (out "            current_zswap_local_state: ctx.empty_zswap_local_state,\n")
+                (out (ctor-zswap-result-field))
                 (out "        })\n")]
                [else
                 (out "        let results = query_for_verify(\n")

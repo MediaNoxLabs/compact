@@ -1406,21 +1406,35 @@
       (define (impure-call-thread-lines cr-name target arg-tail step mode
                                         witness-emitted?)
         (if (eq? mode 'ctor)
-            (let ([cctx (format "_cctx_~a" step)]
-                  [priv (if witness-emitted?
-                            "current_private_state"
-                            "ctx.initial_private_state")])
+            (let* ([cctx (format "_cctx_~a" step)]
+                   [priv (if witness-emitted?
+                             "current_private_state"
+                             "ctx.initial_private_state")]
+                   ;; A25: the first ctor impure call seeds the callee's
+                   ;; zswap-local state from `ctx.empty_zswap_local_state`;
+                   ;; subsequent calls chain off the `_zswap` the previous
+                   ;; call extracted. Either way we re-extract the callee's
+                   ;; returned zswap-local state so a zswap-affecting
+                   ;; constructor circuit's changes survive into the
+                   ;; ConstructorResult (see ctor-zswap-result-field).
+                   [first? (not (ctor-zswap-threaded?))]
+                   [zswap-in (if first?
+                                 "ctx.empty_zswap_local_state.clone()"
+                                 "_zswap")])
+              (ctor-zswap-threaded? #t)
               (list
                 (format "        let ~a = CircuitContext {\n" cctx)
                 (format "            current_private_state: ~a,\n" priv)
                 "            current_query_context: qctx,\n"
-                "            current_zswap_local_state: ctx.empty_zswap_local_state.clone(),\n"
+                (format "            current_zswap_local_state: ~a,\n" zswap-in)
                 "            cost_model: ctx.cost_model.clone(),\n"
                 "            gas_limit: ctx.gas_limit.clone(),\n"
                 "        };\n"
                 (format "        let ~a = ~a(~a~a)?;\n" cr-name target cctx arg-tail)
                 (format "        let qctx = ~a.context.current_query_context;\n" cr-name)
                 (format "        let current_private_state = ~a.context.current_private_state;\n"
+                        cr-name)
+                (format "        let _zswap = ~a.context.current_zswap_local_state;\n"
                         cr-name)))
             (list
               (format "        let ~a = ~a(ctx~a)?;\n" cr-name target arg-tail)

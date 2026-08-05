@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+_No changes yet._
+
+## [Toolchain 0.31.106, language 0.23.103, runtime 0.16.100] — did.compact 0.5.0 codegen support (2026-08-05)
+
 ### Added
 
 - **did.compact 0.5.0 codegen support** — the `compactc --rust` backend now

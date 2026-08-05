@@ -2208,21 +2208,34 @@
                         ;; the call moves `ctx` — see hoist-ctx-args.
                         (let-values ([(hoist-lines arg-tail)
                                       (hoist-ctx-args arg-strs counter)])
-                          (let ([thread-lines
-                                 (impure-call-thread-lines
-                                   cr-name (impure-call-target cname) arg-tail
-                                   counter mode witness-emitted?)]
-                                [bind-line
-                                 (format "        let ~a = ~a.result;\n"
-                                         rust-name cr-name)])
+                          ;; A28: in a constructor, flush pending cell-writes to
+                          ;; qctx BEFORE this impure call so its arg-reads and
+                          ;; the callee's own ledger reads see the written
+                          ;; fields (read-your-writes), then keep accumulating.
+                          (let* ([flush? (and (eq? mode 'ctor) (pair? writes))]
+                                 [flush-lines
+                                  (if flush?
+                                      (ctor-write-flush-lines writes local-binds
+                                                              native-id-ht witness-id-ht
+                                                              circuit-id-ht counter)
+                                      '())]
+                                 [writes-after (if flush? '() writes)]
+                                 [thread-lines
+                                  (impure-call-thread-lines
+                                    cr-name (impure-call-target cname) arg-tail
+                                    counter mode witness-emitted?)]
+                                 [bind-line
+                                  (format "        let ~a = ~a.result;\n"
+                                          rust-name cr-name)])
                             (loop (cdr stmts)
                                   (cons (cons var-name rust-name) local-binds)
                                   (if (eq? mode 'ctor) #t witness-emitted?)
                                   (cons bind-line
                                         (append (reverse thread-lines)
                                                 (append (reverse hoist-lines)
-                                                        pre-lines)))
-                                  writes))))]
+                                                        (append (reverse flush-lines)
+                                                                pre-lines))))
+                                  writes-after))))]
                      [else
                       ;; Unknown rhs shape — try a generic ctor-expr-rust
                       ;; render and emit a plain `let`.
@@ -2347,17 +2360,31 @@
                         ;; A-05: hoist ctx-reading args before the moving call.
                         (let-values ([(hoist-lines arg-tail)
                                       (hoist-ctx-args arg-strs counter)])
-                          (let ([thread-lines
-                                 (impure-call-thread-lines
-                                   cr-name (impure-call-target cname) arg-tail
-                                   counter mode witness-emitted?)])
+                          ;; A28: flush pending ctor writes before the call so it
+                          ;; (and its args) read the written fields — the
+                          ;; did.compact constructor's
+                          ;; assertControllerPublicKeyDistinctFromRecoveryAuthority
+                          ;; reads both keys, which must be the witnessed values.
+                          (let* ([flush? (and (eq? mode 'ctor) (pair? writes))]
+                                 [flush-lines
+                                  (if flush?
+                                      (ctor-write-flush-lines writes local-binds
+                                                              native-id-ht witness-id-ht
+                                                              circuit-id-ht counter)
+                                      '())]
+                                 [writes-after (if flush? '() writes)]
+                                 [thread-lines
+                                  (impure-call-thread-lines
+                                    cr-name (impure-call-target cname) arg-tail
+                                    counter mode witness-emitted?)])
                             (loop (cdr stmts)
                                   local-binds
                                   (if (eq? mode 'ctor) #t witness-emitted?)
                                   (append (reverse thread-lines)
                                           (append (reverse hoist-lines)
-                                                  pre-lines))
-                                  writes))))]
+                                                  (append (reverse flush-lines)
+                                                          pre-lines)))
+                                  writes-after))))]
                      [else #f])))]
               ;; A4: non-write `public-ledger` call (ADT update op like
               ;; Counter.increment) at ANY position. Accumulated into the
@@ -3067,72 +3094,86 @@
       ;; `witness-emitted?` controls whether we use `current_private_state`
       ;; (threaded through witness calls) or `ctx.initial_private_state`
       ;; (ctor mode) / falls back to the inline `..ctx` spread (circuit mode).
+      ;; A28: build the `.push/.push/.ins` builder lines for ONE cell-write
+      ;; (path-idx . value-expr). Extracted from emit-body-writes so the
+      ;; constructor read-your-writes flush (ctor-write-flush-lines) can reuse
+      ;; the exact same value-builder selection (new_cell / new_cell_array /
+      ;; new_cell_bounded_uint). Returns a list of Rust line strings.
+      (define (cell-write-op-lines w local-binds
+                                   native-id-ht witness-id-ht circuit-id-ht)
+        (let* ([idx (car w)]
+               [val-expr (cdr w)]
+               [rust-val (arg-rust-clone-if-var val-expr local-binds
+                                                native-id-ht witness-id-ht circuit-id-ht)]
+               [dest-type
+                (let ([ht (current-ledger-field-types)])
+                  (and ht (hashtable-ref ht idx #f)))]
+               [dest-read-type
+                (and dest-type
+                     (guard (c [#t #f]) (tadt-read-op-type dest-type)))]
+               [use-cell-array?
+                (and dest-read-type (type-is-tvector? dest-read-type))]
+               [use-bounded-uint?
+                (and dest-read-type
+                     (not use-cell-array?)
+                     (guard (c [#t #f]) (tunsigned-bounded? dest-read-type)))]
+               [bounded-uint-bytes
+                (and use-bounded-uint?
+                     (guard (c [#t #f]) (tunsigned-byte-length dest-read-type)))]
+               [cell-builder
+                (cond
+                  [use-cell-array? "new_cell_array"]
+                  [use-bounded-uint? "new_cell_bounded_uint"]
+                  [else "new_cell"])])
+          (list
+            (format "            .push(false, new_cell(~au8))\n" idx)
+            (if use-bounded-uint?
+                (format "            .push(true, ~a(~a as u128, ~a))\n"
+                        cell-builder rust-val bounded-uint-bytes)
+                (format "            .push(true, ~a(~a))\n" cell-builder rust-val))
+            "            .ins(false, 1)\n")))
+
+      ;; A28: emit a mid-constructor flush of the pending cell-writes. Applies
+      ;; them to the local `qctx` via query_for_verify and rebinds `qctx` to the
+      ;; result, giving read-your-writes: a subsequent impure-circuit call (and
+      ;; its ledger-read args) then sees the just-written fields instead of the
+      ;; unmodified initial ledger. Returns FORWARD-order line strings; the
+      ;; caller prepends them before the impure call. `n` disambiguates the
+      ;; temp binding across multiple flushes.
+      (define (ctor-write-flush-lines writes local-binds
+                                      native-id-ht witness-id-ht circuit-id-ht n)
+        ;; `writes` are TAGGED mutations (as accumulated by emit-body-or-fallback
+        ;; and consumed by emit-body-mutations): ('cell-write idx . expr) and
+        ;; ('pl-call src adt-op path-elt* expr*). Dispatch per tag, reusing the
+        ;; same builder helpers so the flushed ops match the final chain.
+        (append
+          (list "        let ops = OpProgramVerify::<DefaultDB>::new()\n")
+          (apply append
+            (map (lambda (m)
+                   (case (car m)
+                     [(cell-write)
+                      (cell-write-op-lines (cdr m) local-binds
+                                           native-id-ht witness-id-ht circuit-id-ht)]
+                     [(pl-call)
+                      (or (pl-call-builder-lines
+                            (cadr m) (caddr m) (cadddr m) (car (cddddr m))
+                            local-binds native-id-ht witness-id-ht circuit-id-ht)
+                          '())]
+                     [else '()]))
+                 writes))
+          (list
+            "            .build();\n"
+            (format "        let _ctor_flush_~a = query_for_verify(&qctx, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?;\n" n)
+            (format "        let qctx = _ctor_flush_~a.context;\n" n))))
+
       (define (emit-body-writes writes mode local-binds
                                 native-id-ht witness-id-ht circuit-id-ht
                                 witness-emitted?)
         (out "        let ops = OpProgramVerify::<DefaultDB>::new()\n")
         (for-each
           (lambda (w)
-            (let* ([idx (car w)]
-                   [val-expr (cdr w)]
-                   [rust-val (arg-rust-clone-if-var val-expr local-binds
-                                                    native-id-ht witness-id-ht circuit-id-ht)]
-                   ;; Iter 7: Vector<N,T> ledger fields require
-                   ;; `new_cell_array([T; N])` since `[T; N]: Into<AlignedValue>`
-                   ;; isn't impl'd upstream (orphan rules). Look up the
-                   ;; destination field's binding-type via the path-idx
-                   ;; → Type map populated by `emit-initial-state`; if the
-                   ;; field's read-op type is a tvector, switch the value
-                   ;; builder from `new_cell` to `new_cell_array`.
-                   ;; current-ledger-field-types defaults to #f (e.g. when
-                   ;; this code runs in a circuit-body that hasn't been
-                   ;; seeded yet — circuit bodies don't currently write
-                   ;; Vector fields, but if they do, the fallback to
-                   ;; `new_cell` matches the pre-Iter 7 shape).
-                   [dest-type
-                    (let ([ht (current-ledger-field-types)])
-                      (and ht (hashtable-ref ht idx #f)))]
-                   [dest-read-type
-                    (and dest-type
-                         (guard (c [#t #f]) (tadt-read-op-type dest-type)))]
-                   [use-cell-array?
-                    (and dest-read-type (type-is-tvector? dest-read-type))]
-                   ;; Bug-11 (2026-06-29): Uint<L..U> destinations whose
-                   ;; on-state byte-length doesn't match the Rust integer
-                   ;; width (e.g. `Uint<0..70000>` is u32 in Rust but
-                   ;; 3 bytes on state) need `new_cell_bounded_uint(value
-                   ;; as u128, byte_len)` so the emitted alignment atom
-                   ;; matches TS's `CompactTypeUnsignedInteger(maxValue,
-                   ;; byte_len)` output. Power-of-2 byte-lengths (1/2/4/8/
-                   ;; 16) stay on the `new_cell(value)` path — the
-                   ;; `Aligned for uN` blanket impls produce the right
-                   ;; descriptor automatically.
-                   [use-bounded-uint?
-                    (and dest-read-type
-                         (not use-cell-array?)
-                         (guard (c [#t #f]) (tunsigned-bounded? dest-read-type)))]
-                   [bounded-uint-bytes
-                    (and use-bounded-uint?
-                         (guard (c [#t #f]) (tunsigned-byte-length dest-read-type)))]
-                   [cell-builder
-                    (cond
-                      [use-cell-array? "new_cell_array"]
-                      [use-bounded-uint? "new_cell_bounded_uint"]
-                      [else "new_cell"])])
-              ;; Cell.write vm-code for a single-element path is exactly:
-              ;;   push false (state-value 'cell (align idx 1))
-              ;;   push true  (state-value 'cell <value>)
-              ;;   ins false 1
-              ;; (The leading idx and trailing ins are suppressed when the
-              ;; path before the last element is empty, which it is here.)
-              (out (format "            .push(false, new_cell(~au8))\n" idx))
-              (cond
-                [use-bounded-uint?
-                 (out (format "            .push(true, ~a(~a as u128, ~a))\n"
-                              cell-builder rust-val bounded-uint-bytes))]
-                [else
-                 (out (format "            .push(true, ~a(~a))\n" cell-builder rust-val))])
-              (out "            .ins(false, 1)\n")))
+            (for-each out (cell-write-op-lines w local-binds
+                                               native-id-ht witness-id-ht circuit-id-ht)))
           writes)
         (out "            .build();\n")
         (out "\n")

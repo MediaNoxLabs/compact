@@ -93,3 +93,39 @@ fn cross_circuit_fixture_init_byte_parity() {
         hex::encode(&ts_bytes),
     );
 }
+
+/// A27 gas-accounting regression: `reset_and_set(v)` calls `reset()` then
+/// writes `n`, so its reported gas must include the callee `reset()`'s cost —
+/// not just its own write. Before the fix, the non-streamed impure-call
+/// lowering rebound `ctx` but dropped `_cr.gas_cost`, so the circuit returned
+/// only the final write's gas and under-reported successful transactions.
+///
+/// `reset_and_set` performs everything `reset` does (via the `reset()` call)
+/// PLUS an extra `n.write`, so its gas must strictly exceed `reset`'s. With the
+/// bug the two were ~equal (the callee's query gas was discarded).
+#[test]
+fn reset_and_set_accumulates_callee_gas() {
+    let contract: Contract<(), NoWitnesses> = Contract::new(NoWitnesses);
+    let deployed = contract.initial_state(ctor_ctx()).expect("initial_state");
+    let state = deployed.current_contract_state.clone();
+
+    let make_cctx = || CircuitContext {
+        current_query_context: QueryContext::new(state.clone(), ContractAddress::default()),
+        current_private_state: (),
+        current_zswap_local_state: ZswapLocalState::default(),
+        cost_model: INITIAL_COST_MODEL.clone(),
+        gas_limit: None,
+    };
+
+    let reset_gas = contract.reset(make_cctx()).expect("reset").gas_cost;
+    let ras_gas = contract
+        .reset_and_set(make_cctx(), 7u64)
+        .expect("reset_and_set")
+        .gas_cost;
+
+    assert!(
+        ras_gas > reset_gas,
+        "reset_and_set gas ({ras_gas:?}) must strictly exceed reset gas ({reset_gas:?}); \
+         the callee reset()'s gas was dropped (A27 regression)"
+    );
+}

@@ -1436,9 +1436,18 @@
                         cr-name)
                 (format "        let _zswap = ~a.context.current_zswap_local_state;\n"
                         cr-name)))
-            (list
-              (format "        let ~a = ~a(ctx~a)?;\n" cr-name target arg-tail)
-              (format "        let ctx = ~a.context;\n" cr-name))))
+            ;; 'circuit mode: ctx is a CircuitContext; hand it straight to the
+            ;; callee and rebind. A27: when the body accumulates gas, add the
+            ;; callee's cost so a pre-terminal helper (assert / recordUpdate)
+            ;; does not drop its gas from the final CircuitResults.
+            (if (circuit-gas-acc?)
+                (list
+                  (format "        let ~a = ~a(ctx~a)?;\n" cr-name target arg-tail)
+                  (format "        let ctx = ~a.context;\n" cr-name)
+                  (format "        __gas_acc += ~a.gas_cost.clone();\n" cr-name))
+                (list
+                  (format "        let ~a = ~a(ctx~a)?;\n" cr-name target arg-tail)
+                  (format "        let ctx = ~a.context;\n" cr-name)))))
 
       ;; cond-rust: render a boolean condition expression. Like
       ;; ctor-expr-rust but for `(call ...)` of an impure circuit

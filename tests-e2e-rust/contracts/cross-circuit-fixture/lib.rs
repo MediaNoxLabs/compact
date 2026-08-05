@@ -96,8 +96,10 @@ where
         ctx: CircuitContext<PS>,
         v: u64,
     ) -> Result<CircuitResults<PS, ()>, CompactError> {
-        let _cr_0 = self.reset(ctx)?;
-        let ctx = _cr_0.context;
+        let mut __gas_acc = compact_runtime::RunningCost::default();
+        let _cr_1 = self.reset(ctx)?;
+        let ctx = _cr_1.context;
+        __gas_acc += _cr_1.gas_cost.clone();
         let ops = OpProgramVerify::<DefaultDB>::new()
             .push(false, new_cell(0u8))
             .push(true, new_cell(v))
@@ -117,7 +119,7 @@ where
                 current_query_context: results.context,
                 ..ctx
             },
-            gas_cost: results.gas_cost,
+            gas_cost: __gas_acc + results.gas_cost,
         })
     }
 }

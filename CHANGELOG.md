@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _No changes yet._
 
+## [Toolchain 0.31.107, language 0.23.103, runtime 0.16.100] — impure-call gas accounting (2026-08-05)
+
+### Fixed
+
+- **Circuit gas under-reporting for impure-helper calls (A27)** — a circuit
+  that calls an impure circuit (e.g. `recordUpdate()` after a mutation, or a
+  cross-circuit helper) rebound `ctx` from the callee's result but discarded
+  the callee's `gas_cost`, so the generated function returned only the terminal
+  write's gas and under-reported successful transactions. Both walkers now
+  accumulate callee gas: the streaming walker adds `__gas_acc += _cr.gas_cost`
+  for bare/const impure calls, and non-streamed circuit bodies with impure
+  calls seed a `__gas_acc` and return `__gas_acc + results.gas_cost`. Surfaced
+  by Codex review of the did.compact 0.5.0 circuits (setVerificationMethod /
+  rotateControllerKey / …); also corrected the latent same-shape gap in
+  `cross-circuit-fixture`. Covered by a new semantic gas test
+  (`reset_and_set` gas strictly exceeds `reset` gas) plus byte-parity locks.
+
 ## [Toolchain 0.31.106, language 0.23.103, runtime 0.16.100] — did.compact 0.5.0 codegen support (2026-08-05)
 
 ### Added

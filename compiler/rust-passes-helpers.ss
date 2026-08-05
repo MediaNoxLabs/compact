@@ -286,6 +286,26 @@
       (define ctor-zswap-threaded?
         (make-parameter #f))
 
+      ;; A27: set #t within a non-streamed 'circuit body that contains an
+      ;; impure-circuit call. When #t, impure-call-thread-lines accumulates each
+      ;; callee's `gas_cost` into a `__gas_acc` local (declared at body start)
+      ;; and the CircuitResults emitter returns `__gas_acc + results.gas_cost`
+      ;; instead of only the terminal write's cost — so circuits like
+      ;; rotateControllerKey / recoverControllerKey (which call assert helpers +
+      ;; recordUpdate before the final write) do not under-report gas. Defaults
+      ;; #f, so bodies without impure calls emit exactly the pre-A27 result
+      ;; (byte-parity preserved). The streaming walker has its own `__gas_acc`.
+      (define circuit-gas-acc?
+        (make-parameter #f))
+
+      ;; CircuitResults `gas_cost:` field for a non-streamed circuit. When the
+      ;; body accumulated impure-helper gas (A27), return `__gas_acc +
+      ;; results.gas_cost`; otherwise just the terminal write's cost.
+      (define (circuit-gas-result-field)
+        (if (circuit-gas-acc?)
+            "            gas_cost: __gas_acc + results.gas_cost,\n"
+            "            gas_cost: results.gas_cost,\n"))
+
       ;; ConstructorResult `current_zswap_local_state:` field line. Returns the
       ;; threaded `_zswap` local when a ctor impure call fed it (A25), else the
       ;; inbound `ctx.empty_zswap_local_state`.

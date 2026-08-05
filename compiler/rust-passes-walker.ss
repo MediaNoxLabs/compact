@@ -1839,13 +1839,42 @@
       ;;
       ;; `mode` is 'ctor or 'circuit and controls the witness-context shape
       ;; and final return wrapping (see emit-body-writes).
+      ;;
+      ;; A27: does a flat body sequence contain a top-level impure-circuit call
+      ;; (const-binding RHS or bare statement)? Non-streamed circuit bodies with
+      ;; such calls must accumulate the callees' gas (see circuit-gas-acc?).
+      (define (body-has-impure-circuit-call? stmt witness-id-ht circuit-id-ht)
+        (let loop ([stmts (stmt-flatten stmt)])
+          (cond
+            [(null? stmts) #f]
+            [(const-binding (car stmts)) =>
+             (lambda (b)
+               (or (eq? (car (classify-const-rhs (cdr b) witness-id-ht circuit-id-ht))
+                        'impure-exported)
+                   (loop (cdr stmts))))]
+            [(stmt->bare-call (car stmts)) =>
+             (lambda (c)
+               (or (eq? (car (classify-call (car c) (cdr c) witness-id-ht circuit-id-ht))
+                        'impure-exported)
+                   (loop (cdr stmts))))]
+            [else (loop (cdr stmts))])))
+
       (define (emit-body-or-fallback stmt mode
                                      native-id-ht witness-id-ht circuit-id-ht)
-        (let ([stmts (stmt-flatten stmt)])
+        (let* ([stmts (stmt-flatten stmt)]
+               ;; A27: seed a gas accumulator for non-streamed circuit bodies
+               ;; that call impure helpers, so their gas is summed into the
+               ;; result rather than dropped.
+               [gas-acc?
+                (and (eq? mode 'circuit)
+                     (body-has-impure-circuit-call? stmt witness-id-ht circuit-id-ht))])
+          (parameterize ([circuit-gas-acc? gas-acc?])
           (let loop ([stmts stmts]
                      [local-binds '()]     ; (var-name . rust-name)
                      [witness-emitted? #f] ; have we emitted any witness call?
-                     [pre-lines '()]       ; reverse-accumulated Rust lines
+                     [pre-lines (if gas-acc?
+                                    (list "        let mut __gas_acc = compact_runtime::RunningCost::default();\n")
+                                    '())] ; reverse-accumulated Rust lines
                      [writes '()])         ; reverse-accumulated tagged
                                            ; mutations: each entry is
                                            ; ('cell-write idx . expr) for
@@ -2366,7 +2395,7 @@
                    [w (loop (cdr stmts) local-binds witness-emitted?
                             pre-lines
                             (cons (cons 'cell-write w) writes))]
-                   [else #f]))]))))
+                   [else #f]))])))))
 
       ;; emit-ctor-body-or-fallback: backwards-compatible wrapper that calls
       ;; emit-body-or-fallback in 'ctor mode. Kept for emit-initial-state's
@@ -3136,7 +3165,7 @@
              (out "                current_private_state,\n"))
            (out "                ..ctx\n")
            (out "            },\n")
-           (out "            gas_cost: results.gas_cost,\n")
+           (out (circuit-gas-result-field))
            (out "        })\n")]))
 
       ;; emit-ctor-writes: backwards-compatible alias used by the ctor path.
@@ -3279,7 +3308,7 @@
                   (out "                current_private_state,\n"))
                 (out "                ..ctx\n")
                 (out "            },\n")
-                (out "            gas_cost: results.gas_cost,\n")
+                (out (circuit-gas-result-field))
                 (out "        })\n")])
              #t])))
 
@@ -3421,7 +3450,7 @@
                              (out "                current_private_state,\n"))
                            (out "                ..ctx\n")
                            (out "            },\n")
-                           (out "            gas_cost: results.gas_cost,\n")
+                           (out (circuit-gas-result-field))
                            (out "        })\n")])
                         #t]))]))])]))
 
@@ -3584,7 +3613,7 @@
                   (out "                current_private_state,\n"))
                 (out "                ..ctx\n")
                 (out "            },\n")
-                (out "            gas_cost: results.gas_cost,\n")
+                (out (circuit-gas-result-field))
                 (out "        })\n")])
              #t])))
 
@@ -3642,6 +3671,6 @@
                   (out "                current_private_state,\n"))
                 (out "                ..ctx\n")
                 (out "            },\n")
-                (out "            gas_cost: results.gas_cost,\n")
+                (out (circuit-gas-result-field))
                 (out "        })\n")])
              #t])))

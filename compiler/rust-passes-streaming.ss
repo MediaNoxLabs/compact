@@ -513,6 +513,10 @@
                            (out (format "        let ~a = ~a(~a~a)?;\n"
                                         cr-name (impure-call-target cname) ctx-for-call-name arg-tail))])
                         (out (format "        let ctx = ~a.context;\n" cr-name))
+                        ;; A27: an impure cross-circuit call consumes gas; carry
+                        ;; the callee's cost into the streaming accumulator so the
+                        ;; circuit does not under-report gas for successful txs.
+                        (out (format "        __gas_acc += ~a.gas_cost.clone();\n" cr-name))
                         (out (format "        let ~a = ~a.result;\n" rust-name cr-name))
                         (loop (cdr stmts)
                               (cons (cons var-name rust-name) local-binds)
@@ -623,6 +627,10 @@
                         (out (format "        let ~a = ~a(ctx~a)?;\n"
                                      cr-name (impure-call-target cname) arg-tail))
                         (out (format "        let ctx = ~a.context;\n" cr-name))
+                        ;; A27: accumulate the bare impure call's gas (e.g.
+                        ;; recordUpdate() after a mutation) — otherwise the
+                        ;; trailing helper's cost is dropped from the total.
+                        (out (format "        __gas_acc += ~a.gas_cost.clone();\n" cr-name))
                         (loop (cdr stmts) local-binds witness-emitted?
                               (+ step 2) "&ctx.current_query_context")))]
                    [else #f])))]

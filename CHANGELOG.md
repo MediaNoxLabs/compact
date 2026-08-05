@@ -7,7 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_No changes yet._
+### Added
+
+- **did.compact 0.5.0 codegen support** — the `compactc --rust` backend now
+  generates and compiles the midnight-did 0.5.0 contract (controller-
+  authorization + recovery). New closures: a JubjubPoint ledger-read decoder
+  and typed initial-cell default; constructor-mode impure-circuit context
+  threading (query, private, and zswap-local state); multi-assert if/else
+  branches emitted in source order; and non-terminal branch calls threaded in
+  source order with their returned context carried into the terminal op
+  (A22–A26). Added the `did-05` regression fixture (vendored contract + its
+  jubjub-schnorr dependency under `examples/did-05/`) to the
+  `codegen_regression` byte-parity table and as a workspace compile gate. All
+  pre-existing fixtures regenerate byte-identically.
 
 ## [Toolchain 0.31.105, language 0.23.103, runtime 0.16.100] — codegen correctness sweep + digital-passport (2026-07-10)
 

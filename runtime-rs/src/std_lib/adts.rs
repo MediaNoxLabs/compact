@@ -27,7 +27,8 @@
 // `Ledger::field()` accessors.
 
 use crate::{
-    aligned_bytes, AlignedValue, CompactError, ContractState, Fr, FromFieldRepr, StateValue, DB,
+    aligned_bytes, jubjub_point_from_field_repr, AlignedValue, CompactError, ContractState, Fr,
+    FromFieldRepr, JubjubPoint, StateValue, DB,
 };
 
 /// Compact's `Counter` ledger ADT. Represented at runtime as
@@ -221,6 +222,30 @@ pub fn decode_via_field_repr<T: FromFieldRepr>(av: &AlignedValue) -> Result<T, C
     }
     T::from_field_repr(&frs).ok_or_else(|| {
         CompactError::AssertionFailed("decode_via_field_repr: from_field_repr returned None".into())
+    })
+}
+
+/// Decode a `JubjubPoint` from a ledger `AlignedValue`.
+///
+/// `JubjubPoint` (`EmbeddedGroupAffine`) has no `FromFieldRepr` impl —
+/// orphan rules forbid one downstream — so it cannot go through
+/// `decode_via_field_repr`. This mirrors that decoder (AlignedValue atoms
+/// → `Fr` slice) but reconstructs the point via the orphan-safe
+/// `jubjub_point_from_field_repr` helper. Used by the codegen for
+/// JubjubPoint-typed ledger reads (e.g. did.compact 0.5.0's
+/// `controllerPublicKey` / `recoveryAuthorityPublicKey`).
+pub fn decode_jubjub_point(av: &AlignedValue) -> Result<JubjubPoint, CompactError> {
+    let mut frs: Vec<Fr> = Vec::with_capacity(av.value.0.len());
+    for (i, atom) in av.value.0.iter().enumerate() {
+        let fr = Fr::try_from(atom).map_err(|e| {
+            CompactError::AssertionFailed(format!("decode_jubjub_point[{i}]: {e:?}"))
+        })?;
+        frs.push(fr);
+    }
+    jubjub_point_from_field_repr(&frs).ok_or_else(|| {
+        CompactError::AssertionFailed(
+            "decode_jubjub_point: jubjub_point_from_field_repr returned None".into(),
+        )
     })
 }
 

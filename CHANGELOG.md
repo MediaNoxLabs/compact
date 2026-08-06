@@ -9,6 +9,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _No changes yet._
 
+## [Toolchain 0.31.108, language 0.23.103, runtime 0.16.100] — constructor read-your-writes (2026-08-05)
+
+### Fixed
+
+- **Constructor read-before-write for impure-call reads (A28)** — a constructor
+  that writes a ledger field and then calls an impure circuit reading that
+  field (did.compact 0.5.0's `controllerPublicKey` / `recoveryAuthorityPublicKey`
+  writes followed by `assertControllerPublicKeyDistinctFromRecoveryAuthority`,
+  which reads both) generated the read against the *unmodified initial ledger*,
+  because all writes were batched into a single `OpProgramVerify` applied at the
+  end. Both the argument read and the callee's own ledger reads saw
+  `JubjubPoint::default()`, silently defeating the distinctness invariant. The
+  codegen now flushes the pending cell-writes/pl-calls to `qctx`
+  (`ctor-write-flush-lines`) before an impure call in a constructor, giving
+  read-your-writes; the impure call and its args then observe the witnessed
+  values. Surfaced by Codex review (P1). Covered by a structural regression
+  test (the write-flush must precede the distinctness assert) plus the did-05
+  byte-parity lock; other constructors (no impure call) are byte-identical.
+
+## [Toolchain 0.31.107, language 0.23.103, runtime 0.16.100] — impure-call gas accounting (2026-08-05)
+
+### Fixed
+
+- **Circuit gas under-reporting for impure-helper calls (A27)** — a circuit
+  that calls an impure circuit (e.g. `recordUpdate()` after a mutation, or a
+  cross-circuit helper) rebound `ctx` from the callee's result but discarded
+  the callee's `gas_cost`, so the generated function returned only the terminal
+  write's gas and under-reported successful transactions. Both walkers now
+  accumulate callee gas: the streaming walker adds `__gas_acc += _cr.gas_cost`
+  for bare/const impure calls, and non-streamed circuit bodies with impure
+  calls seed a `__gas_acc` and return `__gas_acc + results.gas_cost`. Surfaced
+  by Codex review of the did.compact 0.5.0 circuits (setVerificationMethod /
+  rotateControllerKey / …); also corrected the latent same-shape gap in
+  `cross-circuit-fixture`. Covered by a new semantic gas test
+  (`reset_and_set` gas strictly exceeds `reset` gas) plus byte-parity locks.
+
+## [Toolchain 0.31.106, language 0.23.103, runtime 0.16.100] — did.compact 0.5.0 codegen support (2026-08-05)
+
+### Added
+
+- **did.compact 0.5.0 codegen support** — the `compactc --rust` backend now
+  generates and compiles the midnight-did 0.5.0 contract (controller-
+  authorization + recovery). New closures: a JubjubPoint ledger-read decoder
+  and typed initial-cell default; constructor-mode impure-circuit context
+  threading (query, private, and zswap-local state); multi-assert if/else
+  branches emitted in source order; and non-terminal branch calls threaded in
+  source order with their returned context carried into the terminal op
+  (A22–A26). Added the `did-05` regression fixture (vendored contract + its
+  jubjub-schnorr dependency under `examples/did-05/`) to the
+  `codegen_regression` byte-parity table and as a workspace compile gate. All
+  pre-existing fixtures regenerate byte-identically.
+
 ## [Toolchain 0.31.105, language 0.23.103, runtime 0.16.100] — codegen correctness sweep + digital-passport (2026-07-10)
 
 ### Fixed

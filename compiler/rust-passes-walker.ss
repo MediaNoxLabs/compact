@@ -1839,13 +1839,42 @@
       ;;
       ;; `mode` is 'ctor or 'circuit and controls the witness-context shape
       ;; and final return wrapping (see emit-body-writes).
+      ;;
+      ;; A27: does a flat body sequence contain a top-level impure-circuit call
+      ;; (const-binding RHS or bare statement)? Non-streamed circuit bodies with
+      ;; such calls must accumulate the callees' gas (see circuit-gas-acc?).
+      (define (body-has-impure-circuit-call? stmt witness-id-ht circuit-id-ht)
+        (let loop ([stmts (stmt-flatten stmt)])
+          (cond
+            [(null? stmts) #f]
+            [(const-binding (car stmts)) =>
+             (lambda (b)
+               (or (eq? (car (classify-const-rhs (cdr b) witness-id-ht circuit-id-ht))
+                        'impure-exported)
+                   (loop (cdr stmts))))]
+            [(stmt->bare-call (car stmts)) =>
+             (lambda (c)
+               (or (eq? (car (classify-call (car c) (cdr c) witness-id-ht circuit-id-ht))
+                        'impure-exported)
+                   (loop (cdr stmts))))]
+            [else (loop (cdr stmts))])))
+
       (define (emit-body-or-fallback stmt mode
                                      native-id-ht witness-id-ht circuit-id-ht)
-        (let ([stmts (stmt-flatten stmt)])
+        (let* ([stmts (stmt-flatten stmt)]
+               ;; A27: seed a gas accumulator for non-streamed circuit bodies
+               ;; that call impure helpers, so their gas is summed into the
+               ;; result rather than dropped.
+               [gas-acc?
+                (and (eq? mode 'circuit)
+                     (body-has-impure-circuit-call? stmt witness-id-ht circuit-id-ht))])
+          (parameterize ([circuit-gas-acc? gas-acc?])
           (let loop ([stmts stmts]
                      [local-binds '()]     ; (var-name . rust-name)
                      [witness-emitted? #f] ; have we emitted any witness call?
-                     [pre-lines '()]       ; reverse-accumulated Rust lines
+                     [pre-lines (if gas-acc?
+                                    (list "        let mut __gas_acc = compact_runtime::RunningCost::default();\n")
+                                    '())] ; reverse-accumulated Rust lines
                      [writes '()])         ; reverse-accumulated tagged
                                            ; mutations: each entry is
                                            ; ('cell-write idx . expr) for
@@ -2174,28 +2203,39 @@
                                      (arg-rust-clone-if-var
                                        e local-binds
                                        native-id-ht witness-id-ht circuit-id-ht))
-                                   cargs)]
-                             [arg-tail
-                              (let join ([xs arg-strs] [acc ""])
-                                (cond
-                                  [(null? xs) acc]
-                                  [else (join (cdr xs)
-                                              (string-append acc ", " (car xs)))]))]
-                             [call-line
-                              (format "        let ~a = ~a(ctx~a)?;\n"
-                                      cr-name (impure-call-target cname) arg-tail)]
-                             [ctx-line
-                              (format "        let ctx = ~a.context;\n" cr-name)]
-                             [bind-line
-                              (format "        let ~a = ~a.result;\n"
-                                      rust-name cr-name)])
-                        (loop (cdr stmts)
-                              (cons (cons var-name rust-name) local-binds)
-                              witness-emitted?
-                              (cons bind-line
-                                    (cons ctx-line
-                                          (cons call-line pre-lines)))
-                              writes))]
+                                   cargs)])
+                        ;; A-05: hoist ctx-reading args (ledger reads) before
+                        ;; the call moves `ctx` — see hoist-ctx-args.
+                        (let-values ([(hoist-lines arg-tail)
+                                      (hoist-ctx-args arg-strs counter)])
+                          ;; A28: in a constructor, flush pending cell-writes to
+                          ;; qctx BEFORE this impure call so its arg-reads and
+                          ;; the callee's own ledger reads see the written
+                          ;; fields (read-your-writes), then keep accumulating.
+                          (let* ([flush? (and (eq? mode 'ctor) (pair? writes))]
+                                 [flush-lines
+                                  (if flush?
+                                      (ctor-write-flush-lines writes local-binds
+                                                              native-id-ht witness-id-ht
+                                                              circuit-id-ht counter)
+                                      '())]
+                                 [writes-after (if flush? '() writes)]
+                                 [thread-lines
+                                  (impure-call-thread-lines
+                                    cr-name (impure-call-target cname) arg-tail
+                                    counter mode witness-emitted?)]
+                                 [bind-line
+                                  (format "        let ~a = ~a.result;\n"
+                                          rust-name cr-name)])
+                            (loop (cdr stmts)
+                                  (cons (cons var-name rust-name) local-binds)
+                                  (if (eq? mode 'ctor) #t witness-emitted?)
+                                  (cons bind-line
+                                        (append (reverse thread-lines)
+                                                (append (reverse hoist-lines)
+                                                        (append (reverse flush-lines)
+                                                                pre-lines))))
+                                  writes-after))))]
                      [else
                       ;; Unknown rhs shape — try a generic ctor-expr-rust
                       ;; render and emit a plain `let`.
@@ -2316,23 +2356,35 @@
                                      (arg-rust-clone-if-var
                                        e local-binds
                                        native-id-ht witness-id-ht circuit-id-ht))
-                                   cargs)]
-                             [arg-tail
-                              (let join ([xs arg-strs] [acc ""])
-                                (cond
-                                  [(null? xs) acc]
-                                  [else (join (cdr xs)
-                                              (string-append acc ", " (car xs)))]))]
-                             [call-line
-                              (format "        let ~a = ~a(ctx~a)?;\n"
-                                      cr-name (impure-call-target cname) arg-tail)]
-                             [ctx-line
-                              (format "        let ctx = ~a.context;\n" cr-name)])
-                        (loop (cdr stmts)
-                              local-binds
-                              witness-emitted?
-                              (cons ctx-line (cons call-line pre-lines))
-                              writes))]
+                                   cargs)])
+                        ;; A-05: hoist ctx-reading args before the moving call.
+                        (let-values ([(hoist-lines arg-tail)
+                                      (hoist-ctx-args arg-strs counter)])
+                          ;; A28: flush pending ctor writes before the call so it
+                          ;; (and its args) read the written fields — the
+                          ;; did.compact constructor's
+                          ;; assertControllerPublicKeyDistinctFromRecoveryAuthority
+                          ;; reads both keys, which must be the witnessed values.
+                          (let* ([flush? (and (eq? mode 'ctor) (pair? writes))]
+                                 [flush-lines
+                                  (if flush?
+                                      (ctor-write-flush-lines writes local-binds
+                                                              native-id-ht witness-id-ht
+                                                              circuit-id-ht counter)
+                                      '())]
+                                 [writes-after (if flush? '() writes)]
+                                 [thread-lines
+                                  (impure-call-thread-lines
+                                    cr-name (impure-call-target cname) arg-tail
+                                    counter mode witness-emitted?)])
+                            (loop (cdr stmts)
+                                  local-binds
+                                  (if (eq? mode 'ctor) #t witness-emitted?)
+                                  (append (reverse thread-lines)
+                                          (append (reverse hoist-lines)
+                                                  (append (reverse flush-lines)
+                                                          pre-lines)))
+                                  writes-after))))]
                      [else #f])))]
               ;; A4: non-write `public-ledger` call (ADT update op like
               ;; Counter.increment) at ANY position. Accumulated into the
@@ -2370,7 +2422,7 @@
                    [w (loop (cdr stmts) local-binds witness-emitted?
                             pre-lines
                             (cons (cons 'cell-write w) writes))]
-                   [else #f]))]))))
+                   [else #f]))])))))
 
       ;; emit-ctor-body-or-fallback: backwards-compatible wrapper that calls
       ;; emit-body-or-fallback in 'ctor mode. Kept for emit-initial-state's
@@ -2383,7 +2435,11 @@
         ;; ConstructorContext<PS>). Parameterize so any
         ;; emit-ledger-read-expr triggered downstream by an in-expr
         ;; ledger read picks up the right source.
-        (parameterize ([current-qctx-ref "&qctx"])
+        ;; A25: reset the zswap-threading flag per constructor so
+        ;; impure-call-thread-lines / the ConstructorResult emitters agree on
+        ;; whether a `_zswap` local was introduced.
+        (parameterize ([current-qctx-ref "&qctx"]
+                       [ctor-zswap-threaded? #f])
           (emit-body-or-fallback stmt 'ctor
                                  native-id-ht witness-id-ht circuit-id-ht)))
 
@@ -2822,33 +2878,56 @@
       ;;                     msg))
       ;;        (seq (const %tmp.264 (elt-ref ...))  ; const-binding
       ;;             (pl-call remove %tmp.264)))
+      ;; Returns an 8-element list on success:
+      ;;   (assert-pair pre-stmts src adt-op path-elt* resolved-expr*
+      ;;    terminal-bare-call mid-calls)
+      ;; where `mid-calls` is a list of NON-terminal bare impure-circuit
+      ;; calls (each `(fn-id . resolved-args)`) captured between the guard
+      ;; assert and the terminal op — did.compact 0.5.0's
+      ;; setVerificationMethod / setVerificationMethodRelation interleave a
+      ;; compatibility-assert circuit call there.
       (define (branch->assert-and-pl-call stmt)
         (let loop ([stmts (stmt-flatten stmt)]
                    [pre-stmts '()]
                    [binds '()]
-                   [assert-pair #f])
+                   [assert-pair #f]
+                   [mid-calls '()]
+                   [body-items '()])
           (cond
             [(null? stmts)
              ;; A14: assert-only branch is valid if we captured one.
              (and assert-pair
-                  (list assert-pair (reverse pre-stmts) #f #f '() '() #f))]
+                  (list assert-pair (reverse pre-stmts) #f #f '() '() #f
+                        (reverse mid-calls) (reverse body-items)))]
             [(const-decl-only? (car stmts))
-             (loop (cdr stmts) pre-stmts binds assert-pair)]
+             (loop (cdr stmts) pre-stmts binds assert-pair mid-calls body-items)]
             [(stmt->assignment (car stmts)) =>
              (lambda (a)
                (loop (cdr stmts)
                      (cons a pre-stmts)
                      (cons a binds)
-                     assert-pair))]
+                     assert-pair mid-calls
+                     (cons (cons 'bind a) body-items)))]
             [(const-binding (car stmts)) =>
              (lambda (b)
                (loop (cdr stmts)
                      (cons b pre-stmts)
                      (cons b binds)
-                     assert-pair))]
-            [(and (not assert-pair)
-                  (stmt->assert (car stmts))) =>
-             (lambda (a) (loop (cdr stmts) pre-stmts binds a))]
+                     assert-pair mid-calls
+                     (cons (cons 'bind b) body-items)))]
+            [(stmt->assert (car stmts)) =>
+             ;; A24: accept MULTIPLE asserts per branch. `assert-pair` keeps
+             ;; the FIRST assert (back-compat for single-assert consumers);
+             ;; `body-items` records every assert + bind in source order so
+             ;; the emitter can render an ordered multi-assert branch (e.g.
+             ;; did.compact 0.5.0's assertVerificationMethodRelationCompatible:
+             ;; assert(member) / const lookup / assert(crv)). Single-assert
+             ;; branches keep `body-items` with one assert, so the emitter's
+             ;; legacy path still fires and byte-parity is preserved.
+             (lambda (a)
+               (loop (cdr stmts) pre-stmts binds
+                     (or assert-pair a) mid-calls
+                     (cons (cons 'assert a) body-items)))]
             [(and (null? (cdr stmts))
                   (stmt->public-ledger-call (car stmts))) =>
              (lambda (parts)
@@ -2860,7 +2939,8 @@
                                            expr*)])
                  (and (not (memv #f resolved-expr*))
                       (list assert-pair (reverse pre-stmts) src adt-op
-                            path-elt* resolved-expr* #f))))]
+                            path-elt* resolved-expr* #f (reverse mid-calls)
+                            (reverse body-items)))))]
             [(and (null? (cdr stmts))
                   (stmt->bare-call (car stmts))) =>
              ;; A17: terminal bare-call to a non-pure user circuit
@@ -2877,7 +2957,36 @@
                        (map (lambda (e) (expr-resolve e binds)) arg-exprs)])
                  (and (not (memv #f resolved-args))
                       (list assert-pair (reverse pre-stmts) #f #f '() '()
-                            (cons fn-id resolved-args)))))]
+                            (cons fn-id resolved-args) (reverse mid-calls)
+                            (reverse body-items)))))]
+            [(stmt->bare-call (car stmts)) =>
+             ;; A-05 (did.compact 0.5.0): a NON-terminal bare-call inside a
+             ;; branch — a compatibility-assert circuit interleaved between
+             ;; the guard assert and the terminal mutating op
+             ;; (setVerificationMethod's
+             ;; `assertExistingVerificationMethodRelationsCompatible(...)`,
+             ;; setVerificationMethodRelation's
+             ;; `assertVerificationMethodRelationCompatible(...)`). These
+             ;; are ledger-reading asserts (no mutation), so emission renders
+             ;; each as `self.<helper>(ctx.clone(), ...)?` before the op.
+             ;; Terminal bare-calls are already caught above (the
+             ;; `(null? (cdr stmts))` clause), so this reaches only
+             ;; non-terminal ones.
+             (lambda (c)
+               (let* ([fn-id (car c)]
+                      [arg-exprs (cdr c)]
+                      [resolved-args
+                       (map (lambda (e) (expr-resolve e binds)) arg-exprs)])
+                 (and (not (memv #f resolved-args))
+                      ;; A26: record the call BOTH in `mid-calls` (legacy) and
+                      ;; as an ordered `'call` item in `body-items`, so the
+                      ;; ordered emitter can place it at its source position and
+                      ;; thread its returned context into later reads / the
+                      ;; terminal op (rather than discarding it).
+                      (loop (cdr stmts) pre-stmts binds assert-pair
+                            (cons (cons fn-id resolved-args) mid-calls)
+                            (cons (cons 'call (cons fn-id resolved-args))
+                                  body-items)))))]
             [else #f])))
 
       ;; compute-pl-builder-lines: given a public-ledger ADT-op + path +
@@ -2985,72 +3094,86 @@
       ;; `witness-emitted?` controls whether we use `current_private_state`
       ;; (threaded through witness calls) or `ctx.initial_private_state`
       ;; (ctor mode) / falls back to the inline `..ctx` spread (circuit mode).
+      ;; A28: build the `.push/.push/.ins` builder lines for ONE cell-write
+      ;; (path-idx . value-expr). Extracted from emit-body-writes so the
+      ;; constructor read-your-writes flush (ctor-write-flush-lines) can reuse
+      ;; the exact same value-builder selection (new_cell / new_cell_array /
+      ;; new_cell_bounded_uint). Returns a list of Rust line strings.
+      (define (cell-write-op-lines w local-binds
+                                   native-id-ht witness-id-ht circuit-id-ht)
+        (let* ([idx (car w)]
+               [val-expr (cdr w)]
+               [rust-val (arg-rust-clone-if-var val-expr local-binds
+                                                native-id-ht witness-id-ht circuit-id-ht)]
+               [dest-type
+                (let ([ht (current-ledger-field-types)])
+                  (and ht (hashtable-ref ht idx #f)))]
+               [dest-read-type
+                (and dest-type
+                     (guard (c [#t #f]) (tadt-read-op-type dest-type)))]
+               [use-cell-array?
+                (and dest-read-type (type-is-tvector? dest-read-type))]
+               [use-bounded-uint?
+                (and dest-read-type
+                     (not use-cell-array?)
+                     (guard (c [#t #f]) (tunsigned-bounded? dest-read-type)))]
+               [bounded-uint-bytes
+                (and use-bounded-uint?
+                     (guard (c [#t #f]) (tunsigned-byte-length dest-read-type)))]
+               [cell-builder
+                (cond
+                  [use-cell-array? "new_cell_array"]
+                  [use-bounded-uint? "new_cell_bounded_uint"]
+                  [else "new_cell"])])
+          (list
+            (format "            .push(false, new_cell(~au8))\n" idx)
+            (if use-bounded-uint?
+                (format "            .push(true, ~a(~a as u128, ~a))\n"
+                        cell-builder rust-val bounded-uint-bytes)
+                (format "            .push(true, ~a(~a))\n" cell-builder rust-val))
+            "            .ins(false, 1)\n")))
+
+      ;; A28: emit a mid-constructor flush of the pending cell-writes. Applies
+      ;; them to the local `qctx` via query_for_verify and rebinds `qctx` to the
+      ;; result, giving read-your-writes: a subsequent impure-circuit call (and
+      ;; its ledger-read args) then sees the just-written fields instead of the
+      ;; unmodified initial ledger. Returns FORWARD-order line strings; the
+      ;; caller prepends them before the impure call. `n` disambiguates the
+      ;; temp binding across multiple flushes.
+      (define (ctor-write-flush-lines writes local-binds
+                                      native-id-ht witness-id-ht circuit-id-ht n)
+        ;; `writes` are TAGGED mutations (as accumulated by emit-body-or-fallback
+        ;; and consumed by emit-body-mutations): ('cell-write idx . expr) and
+        ;; ('pl-call src adt-op path-elt* expr*). Dispatch per tag, reusing the
+        ;; same builder helpers so the flushed ops match the final chain.
+        (append
+          (list "        let ops = OpProgramVerify::<DefaultDB>::new()\n")
+          (apply append
+            (map (lambda (m)
+                   (case (car m)
+                     [(cell-write)
+                      (cell-write-op-lines (cdr m) local-binds
+                                           native-id-ht witness-id-ht circuit-id-ht)]
+                     [(pl-call)
+                      (or (pl-call-builder-lines
+                            (cadr m) (caddr m) (cadddr m) (car (cddddr m))
+                            local-binds native-id-ht witness-id-ht circuit-id-ht)
+                          '())]
+                     [else '()]))
+                 writes))
+          (list
+            "            .build();\n"
+            (format "        let _ctor_flush_~a = query_for_verify(&qctx, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?;\n" n)
+            (format "        let qctx = _ctor_flush_~a.context;\n" n))))
+
       (define (emit-body-writes writes mode local-binds
                                 native-id-ht witness-id-ht circuit-id-ht
                                 witness-emitted?)
         (out "        let ops = OpProgramVerify::<DefaultDB>::new()\n")
         (for-each
           (lambda (w)
-            (let* ([idx (car w)]
-                   [val-expr (cdr w)]
-                   [rust-val (arg-rust-clone-if-var val-expr local-binds
-                                                    native-id-ht witness-id-ht circuit-id-ht)]
-                   ;; Iter 7: Vector<N,T> ledger fields require
-                   ;; `new_cell_array([T; N])` since `[T; N]: Into<AlignedValue>`
-                   ;; isn't impl'd upstream (orphan rules). Look up the
-                   ;; destination field's binding-type via the path-idx
-                   ;; → Type map populated by `emit-initial-state`; if the
-                   ;; field's read-op type is a tvector, switch the value
-                   ;; builder from `new_cell` to `new_cell_array`.
-                   ;; current-ledger-field-types defaults to #f (e.g. when
-                   ;; this code runs in a circuit-body that hasn't been
-                   ;; seeded yet — circuit bodies don't currently write
-                   ;; Vector fields, but if they do, the fallback to
-                   ;; `new_cell` matches the pre-Iter 7 shape).
-                   [dest-type
-                    (let ([ht (current-ledger-field-types)])
-                      (and ht (hashtable-ref ht idx #f)))]
-                   [dest-read-type
-                    (and dest-type
-                         (guard (c [#t #f]) (tadt-read-op-type dest-type)))]
-                   [use-cell-array?
-                    (and dest-read-type (type-is-tvector? dest-read-type))]
-                   ;; Bug-11 (2026-06-29): Uint<L..U> destinations whose
-                   ;; on-state byte-length doesn't match the Rust integer
-                   ;; width (e.g. `Uint<0..70000>` is u32 in Rust but
-                   ;; 3 bytes on state) need `new_cell_bounded_uint(value
-                   ;; as u128, byte_len)` so the emitted alignment atom
-                   ;; matches TS's `CompactTypeUnsignedInteger(maxValue,
-                   ;; byte_len)` output. Power-of-2 byte-lengths (1/2/4/8/
-                   ;; 16) stay on the `new_cell(value)` path — the
-                   ;; `Aligned for uN` blanket impls produce the right
-                   ;; descriptor automatically.
-                   [use-bounded-uint?
-                    (and dest-read-type
-                         (not use-cell-array?)
-                         (guard (c [#t #f]) (tunsigned-bounded? dest-read-type)))]
-                   [bounded-uint-bytes
-                    (and use-bounded-uint?
-                         (guard (c [#t #f]) (tunsigned-byte-length dest-read-type)))]
-                   [cell-builder
-                    (cond
-                      [use-cell-array? "new_cell_array"]
-                      [use-bounded-uint? "new_cell_bounded_uint"]
-                      [else "new_cell"])])
-              ;; Cell.write vm-code for a single-element path is exactly:
-              ;;   push false (state-value 'cell (align idx 1))
-              ;;   push true  (state-value 'cell <value>)
-              ;;   ins false 1
-              ;; (The leading idx and trailing ins are suppressed when the
-              ;; path before the last element is empty, which it is here.)
-              (out (format "            .push(false, new_cell(~au8))\n" idx))
-              (cond
-                [use-bounded-uint?
-                 (out (format "            .push(true, ~a(~a as u128, ~a))\n"
-                              cell-builder rust-val bounded-uint-bytes))]
-                [else
-                 (out (format "            .push(true, ~a(~a))\n" cell-builder rust-val))])
-              (out "            .ins(false, 1)\n")))
+            (for-each out (cell-write-op-lines w local-binds
+                                               native-id-ht witness-id-ht circuit-id-ht)))
           writes)
         (out "            .build();\n")
         (out "\n")
@@ -3063,7 +3186,7 @@
            (out (if witness-emitted?
                     "            current_private_state,\n"
                     "            current_private_state: ctx.initial_private_state,\n"))
-           (out "            current_zswap_local_state: ctx.empty_zswap_local_state,\n")
+           (out (ctor-zswap-result-field))
            (out "        })\n")]
           [else
            ;; 'circuit mode: results live on the inbound ctx and we wrap
@@ -3083,7 +3206,7 @@
              (out "                current_private_state,\n"))
            (out "                ..ctx\n")
            (out "            },\n")
-           (out "            gas_cost: results.gas_cost,\n")
+           (out (circuit-gas-result-field))
            (out "        })\n")]))
 
       ;; emit-ctor-writes: backwards-compatible alias used by the ctor path.
@@ -3208,7 +3331,7 @@
                 (out (if witness-emitted?
                          "            current_private_state,\n"
                          "            current_private_state: ctx.initial_private_state,\n"))
-                (out "            current_zswap_local_state: ctx.empty_zswap_local_state,\n")
+                (out (ctor-zswap-result-field))
                 (out "        })\n")]
                [else
                 (out "        let results = query_for_verify(\n")
@@ -3226,7 +3349,7 @@
                   (out "                current_private_state,\n"))
                 (out "                ..ctx\n")
                 (out "            },\n")
-                (out "            gas_cost: results.gas_cost,\n")
+                (out (circuit-gas-result-field))
                 (out "        })\n")])
              #t])))
 
@@ -3350,7 +3473,7 @@
                            (out (if witness-emitted?
                                     "            current_private_state,\n"
                                     "            current_private_state: ctx.initial_private_state,\n"))
-                           (out "            current_zswap_local_state: ctx.empty_zswap_local_state,\n")
+                           (out (ctor-zswap-result-field))
                            (out "        })\n")]
                           [else
                            (out "        let results = query_for_verify(\n")
@@ -3368,7 +3491,7 @@
                              (out "                current_private_state,\n"))
                            (out "                ..ctx\n")
                            (out "            },\n")
-                           (out "            gas_cost: results.gas_cost,\n")
+                           (out (circuit-gas-result-field))
                            (out "        })\n")])
                         #t]))]))])]))
 
@@ -3437,7 +3560,7 @@
                 (out (if witness-emitted?
                          "            current_private_state,\n"
                          "            current_private_state: ctx.initial_private_state,\n"))
-                (out "            current_zswap_local_state: ctx.empty_zswap_local_state,\n")
+                (out (ctor-zswap-result-field))
                 (out "        })\n")]
                [else
                 (out "        Ok(CircuitResults {\n")
@@ -3513,7 +3636,7 @@
                 (out (if witness-emitted?
                          "            current_private_state,\n"
                          "            current_private_state: ctx.initial_private_state,\n"))
-                (out "            current_zswap_local_state: ctx.empty_zswap_local_state,\n")
+                (out (ctor-zswap-result-field))
                 (out "        })\n")]
                [else
                 (out "        let results = query_for_verify(\n")
@@ -3531,7 +3654,7 @@
                   (out "                current_private_state,\n"))
                 (out "                ..ctx\n")
                 (out "            },\n")
-                (out "            gas_cost: results.gas_cost,\n")
+                (out (circuit-gas-result-field))
                 (out "        })\n")])
              #t])))
 
@@ -3571,7 +3694,7 @@
                 (out (if witness-emitted?
                          "            current_private_state,\n"
                          "            current_private_state: ctx.initial_private_state,\n"))
-                (out "            current_zswap_local_state: ctx.empty_zswap_local_state,\n")
+                (out (ctor-zswap-result-field))
                 (out "        })\n")]
                [else
                 (out "        let results = query_for_verify(\n")
@@ -3589,6 +3712,6 @@
                   (out "                current_private_state,\n"))
                 (out "                ..ctx\n")
                 (out "            },\n")
-                (out "            gas_cost: results.gas_cost,\n")
+                (out (circuit-gas-result-field))
                 (out "        })\n")])
              #t])))

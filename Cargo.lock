@@ -740,6 +740,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-contract-did-05"
+version = "0.1.0"
+dependencies = [
+ "compact-runtime",
+]
+
+[[package]]
 name = "compact-contract-digital-passport"
 version = "0.1.0"
 dependencies = [

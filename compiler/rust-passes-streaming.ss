@@ -182,6 +182,122 @@
               (format "            .push(true, new_cell(~a))\n" rust-val)
               "            .ins(false, 1)\n"))
 
+      ;; A24: does a branch's ordered body-items contain more than one
+      ;; assert? Multi-assert branches need in-source-order emission (the
+      ;; legacy pre-stmts-then-single-assert split would misorder a
+      ;; member-guard assert relative to a Map.lookup const-binding).
+      (define (branch-multi-assert? body-items)
+        (fx> (let loop ([xs body-items] [n 0])
+               (cond
+                 [(null? xs) n]
+                 [(eq? (car (car xs)) 'assert) (loop (cdr xs) (fx+ n 1))]
+                 [else (loop (cdr xs) n)]))
+             1))
+
+      ;; A26: does a branch contain a non-terminal circuit call (`'call`
+      ;; body-item)? Such branches take the ordered emit path so the call is
+      ;; placed at its source position and its returned context threaded.
+      (define (branch-has-call? body-items)
+        (let loop ([xs body-items])
+          (cond
+            [(null? xs) #f]
+            [(eq? (car (car xs)) 'call) #t]
+            [else (loop (cdr xs))])))
+
+      ;; A24/A26: emit a branch's body-items (asserts + const-bindings /
+      ;; assignments + non-terminal calls) in source order. Binds render as
+      ;; `let <name> = <expr>;` (deduped, matching the legacy pre-stmts loop's
+      ;; Bug-5 guard); asserts as `compact_assert!(<cond>, <msg>)` with the
+      ;; same impure-subcall hoisting; `'call` items as
+      ;; `let _cr_mid<step>_<i> = self.<helper>(<owned-ctx>, args)?` whose
+      ;; returned context is threaded into subsequent reads and the terminal
+      ;; op. `base-qctx` is the query-context ref reads start from (the ambient
+      ;; `current-qctx-ref`); the function returns the FINAL query-context ref
+      ;; (advanced past each call), which the caller feeds to the terminal op.
+      ;; Only invoked for multi-assert or has-call branches, so single-assert /
+      ;; write branches keep byte-parity via their existing emit path, and a
+      ;; call-free branch returns `base-qctx` unchanged.
+      ;; Returns `(final-qctx . final-owned)`: the query-context ref for a
+      ;; pl-call terminal, and the OWNED CircuitContext expr for a bare-call
+      ;; terminal to consume (both advanced past interleaved calls; the
+      ;; call-free case yields the base refs so byte-parity holds).
+      (define (emit-branch-body-items body-items indent step base-qctx local-binds
+                                      native-id-ht witness-id-ht circuit-id-ht)
+        (let loop ([xs body-items] [seen '()] [cur-qctx base-qctx]
+                   [owned-in "ctx.clone()"] [ci 0])
+          (cond
+            [(null? xs) (cons cur-qctx owned-in)]
+            [(eq? (car (car xs)) 'bind)
+             (let* ([b (cdr (car xs))]
+                    [var-name (car b)]
+                    [expr (cdr b)]
+                    [rust-name (symbol->string
+                                 (camel->snake (id-sym var-name)))])
+               (cond
+                 [(member rust-name seen) (loop (cdr xs) seen cur-qctx owned-in ci)]
+                 [else
+                  (let* ([raw (guard (c [#t "/* TODO A24 */"])
+                                (parameterize ([current-qctx-ref cur-qctx])
+                                  (ctor-expr-rust expr local-binds
+                                                  native-id-ht witness-id-ht
+                                                  circuit-id-ht)))]
+                         [rendered (expr-rust-arg-cloned expr raw)])
+                    (out (format "~alet ~a = ~a;\n" indent rust-name rendered))
+                    (loop (cdr xs) (cons rust-name seen) cur-qctx owned-in ci))]))]
+            [(eq? (car (car xs)) 'assert)
+             (let* ([ap (cdr (car xs))]
+                    [ae (car ap)]
+                    [msg (cdr ap)]
+                    [impure-subs
+                     (collect-impure-call-subcalls
+                       ae witness-id-ht circuit-id-ht native-id-ht)]
+                    [hoist
+                     (emit-hoisted-impure-calls
+                       impure-subs 0 local-binds
+                       native-id-ht witness-id-ht circuit-id-ht indent)]
+                    [hoist-lines (car hoist)]
+                    [hoist-binds (cadr hoist)]
+                    [cond-str
+                     (parameterize
+                         ([current-impure-call-binds
+                           (append hoist-binds (current-impure-call-binds))]
+                          [current-qctx-ref cur-qctx])
+                       (assert-cond-rust ae local-binds
+                                         native-id-ht witness-id-ht
+                                         circuit-id-ht))])
+               (for-each out (reverse hoist-lines))
+               (out (format "~acompact_assert!(~a, ~s);\n" indent cond-str msg))
+               (loop (cdr xs) seen cur-qctx owned-in ci))]
+            [(eq? (car (car xs)) 'call)
+             ;; A26: emit the non-terminal call at its source position and
+             ;; thread its returned context forward. The first call clones the
+             ;; branch's live `ctx` (other arms still need it); later calls
+             ;; move the previous call's returned context. Gas is accumulated.
+             (let* ([mc (cdr (car xs))]
+                    [fn-id (car mc)]
+                    [arg-exprs (cdr mc)]
+                    [cname (symbol->string (camel->snake (id-sym fn-id)))]
+                    [arg-strs
+                     (map (lambda (e)
+                            (arg-rust-clone-if-var
+                              e local-binds native-id-ht witness-id-ht circuit-id-ht))
+                          arg-exprs)]
+                    [arg-tail
+                     (let join ([ys arg-strs] [acc ""])
+                       (cond
+                         [(null? ys) acc]
+                         [else (join (cdr ys)
+                                     (string-append acc ", " (car ys)))]))]
+                    [cr-name (format "_cr_mid~a_~a" step ci)])
+               (out (format "~alet ~a = ~a(~a~a)?;\n"
+                            indent cr-name (impure-call-target cname) owned-in arg-tail))
+               (out (format "~a__gas_acc += ~a.gas_cost.clone();\n" indent cr-name))
+               (loop (cdr xs) seen
+                     (format "&~a.context.current_query_context" cr-name)
+                     (format "~a.context" cr-name)
+                     (fx+ ci 1)))]
+            [else (loop (cdr xs) seen cur-qctx owned-in ci)])))
+
       ;; emit-streaming-body: walk the flat statement sequence and emit
       ;; per-statement Rust. ctx-expr is a string holding the current Rust
       ;; expression that yields the active &QueryContext; it starts as
@@ -375,12 +491,6 @@
                                      e local-binds
                                      native-id-ht witness-id-ht circuit-id-ht))
                                  cargs)]
-                           [arg-tail
-                            (let join ([xs arg-strs] [acc ""])
-                              (cond
-                                [(null? xs) acc]
-                                [else (join (cdr xs)
-                                            (string-append acc ", " (car xs)))]))]
                            [direct? (string=? ctx-expr "&ctx.current_query_context")]
                            [qc-src
                             (if (and (> (string-length ctx-expr) 0)
@@ -388,21 +498,30 @@
                                 (substring ctx-expr 1 (string-length ctx-expr))
                                 ctx-expr)]
                            [ctx-for-call-name (format "_ctx_for_~a" step)])
-                      (cond
-                        [direct?
-                         (out (format "        let ~a = ~a(ctx~a)?;\n"
-                                      cr-name (impure-call-target cname) arg-tail))]
-                        [else
-                         (out (format "        let ~a = CircuitContext { current_query_context: ~a.clone(), ..ctx.clone() };\n"
-                                      ctx-for-call-name qc-src))
-                         (out (format "        let ~a = ~a(~a~a)?;\n"
-                                      cr-name (impure-call-target cname) ctx-for-call-name arg-tail))])
-                      (out (format "        let ctx = ~a.context;\n" cr-name))
-                      (out (format "        let ~a = ~a.result;\n" rust-name cr-name))
-                      (loop (cdr stmts)
-                            (cons (cons var-name rust-name) local-binds)
-                            witness-emitted? (+ step 3)
-                            "&ctx.current_query_context"))]
+                      ;; A-05: hoist any ctx-reading arg before the (moving)
+                      ;; direct call — see hoist-ctx-args.
+                      (let-values ([(hoist-lines arg-tail)
+                                    (hoist-ctx-args arg-strs step)])
+                        (for-each out hoist-lines)
+                        (cond
+                          [direct?
+                           (out (format "        let ~a = ~a(ctx~a)?;\n"
+                                        cr-name (impure-call-target cname) arg-tail))]
+                          [else
+                           (out (format "        let ~a = CircuitContext { current_query_context: ~a.clone(), ..ctx.clone() };\n"
+                                        ctx-for-call-name qc-src))
+                           (out (format "        let ~a = ~a(~a~a)?;\n"
+                                        cr-name (impure-call-target cname) ctx-for-call-name arg-tail))])
+                        (out (format "        let ctx = ~a.context;\n" cr-name))
+                        ;; A27: an impure cross-circuit call consumes gas; carry
+                        ;; the callee's cost into the streaming accumulator so the
+                        ;; circuit does not under-report gas for successful txs.
+                        (out (format "        __gas_acc += ~a.gas_cost.clone();\n" cr-name))
+                        (out (format "        let ~a = ~a.result;\n" rust-name cr-name))
+                        (loop (cdr stmts)
+                              (cons (cons var-name rust-name) local-binds)
+                              witness-emitted? (+ step 3)
+                              "&ctx.current_query_context")))]
                    [else
                     (let* ([raw
                             (guard (c [#t #f])
@@ -482,13 +601,7 @@
                                    (arg-rust-clone-if-var
                                      e local-binds
                                      native-id-ht witness-id-ht circuit-id-ht))
-                                 cargs)]
-                           [arg-tail
-                            (let join ([xs arg-strs] [acc ""])
-                              (cond
-                                [(null? xs) acc]
-                                [else (join (cdr xs)
-                                            (string-append acc ", " (car xs)))]))])
+                                 cargs)])
                       ;; A15: when ctx-expr is `&_results_N.context` (after
                       ;; a pl-call) or any non-default form, rebind ctx
                       ;; first so the inner `self.<name>(ctx, ...)` sees
@@ -505,11 +618,21 @@
                                (substring ctx-expr 1 (string-length ctx-expr))])
                           (out (format "        let ctx = CircuitContext { current_query_context: ~a.clone(), ..ctx };\n"
                                        referent))))
-                      (out (format "        let ~a = ~a(ctx~a)?;\n"
-                                   cr-name (impure-call-target cname) arg-tail))
-                      (out (format "        let ctx = ~a.context;\n" cr-name))
-                      (loop (cdr stmts) local-binds witness-emitted?
-                            (+ step 2) "&ctx.current_query_context"))]
+                      ;; A-05 (did.compact 0.5.0): hoist any arg that reads the
+                      ;; context into a temp before the call moves `ctx`
+                      ;; (borrow-after-move otherwise). See hoist-ctx-args.
+                      (let-values ([(hoist-lines arg-tail)
+                                    (hoist-ctx-args arg-strs step)])
+                        (for-each out hoist-lines)
+                        (out (format "        let ~a = ~a(ctx~a)?;\n"
+                                     cr-name (impure-call-target cname) arg-tail))
+                        (out (format "        let ctx = ~a.context;\n" cr-name))
+                        ;; A27: accumulate the bare impure call's gas (e.g.
+                        ;; recordUpdate() after a mutation) — otherwise the
+                        ;; trailing helper's cost is dropped from the total.
+                        (out (format "        __gas_acc += ~a.gas_cost.clone();\n" cr-name))
+                        (loop (cdr stmts) local-binds witness-emitted?
+                              (+ step 2) "&ctx.current_query_context")))]
                    [else #f])))]
             [(stmt->public-ledger-call (car stmts)) =>
              (lambda (parts)
@@ -604,6 +727,14 @@
                                                  [path-elt* (car (cddddr b))]
                                                  [expr* (cadr (cddddr b))]
                                                  [bare-call-info (caddr (cddddr b))]
+                                                 ;; A-05: non-terminal bare
+                                                 ;; calls interleaved before
+                                                 ;; the terminal op.
+                                                 [mid-calls (cadddr (cddddr b))]
+                                                 ;; A24: ordered assert/bind
+                                                 ;; items for multi-assert
+                                                 ;; branches.
+                                                 [body-items (car (cddddr (cddddr b)))]
                                                  ;; A14: src=#f, bare-call=#f
                                                  ;; marks an assert-only branch
                                                  ;; — emit empty OpProgramVerify.
@@ -637,7 +768,8 @@
                                                         cond-str))
                                                  (list cond-str assert-pair
                                                        lines pre-stmts
-                                                       bare-call-info))))))
+                                                       bare-call-info
+                                                       mid-calls body-items))))))
                                  source-arms)]
                            [else-info
                             (and final-else
@@ -650,6 +782,8 @@
                                         [path-elt* (car (cddddr b))]
                                         [expr* (cadr (cddddr b))]
                                         [bare-call-info (caddr (cddddr b))]
+                                        [mid-calls (cadddr (cddddr b))]
+                                        [body-items (car (cddddr (cddddr b)))]
                                         [lines
                                          (cond
                                            [bare-call-info '()]
@@ -661,7 +795,8 @@
                                               native-id-ht witness-id-ht
                                               circuit-id-ht)])])
                                    (and lines (list assert-pair lines pre-stmts
-                                                    bare-call-info))))])
+                                                    bare-call-info mid-calls
+                                                    body-items))))])
                       (cond
                         [(memv #f arm-info) #f]
                         [(and final-else (not else-info)) #f]
@@ -677,7 +812,9 @@
                                        [assert-pair (cadr a)]
                                        [lines (caddr a)]
                                        [pre-stmts (cadddr a)]
-                                       [bare-call-info (car (cddddr a))])
+                                       [bare-call-info (car (cddddr a))]
+                                       [mid-calls (cadr (cddddr a))]
+                                       [body-items (caddr (cddddr a))])
                                   (out (format "        ~a~a ~a {\n"
                                                (if first? "let " "} else ")
                                                (if first?
@@ -702,70 +839,217 @@
                                   ;; second occurrence is structurally
                                   ;; identical (same lift, same expr) so
                                   ;; skipping it preserves semantics.
-                                  (let loop ([xs pre-stmts] [seen '()])
+                                  ;;
+                                  ;; A24: multi-assert branches emit their
+                                  ;; asserts + binds in source order instead,
+                                  ;; so a member-guard assert stays before the
+                                  ;; Map.lookup it protects.
+                                  ;; A26: `final-qctx` is the query-context ref
+                                  ;; the terminal op runs against — advanced past
+                                  ;; any interleaved non-terminal call so its
+                                  ;; returned context (query/private/zswap) is
+                                  ;; threaded rather than discarded. Call-free
+                                  ;; branches keep `ctx-expr` (byte-parity).
+                                  (let* ([base-qctx (current-qctx-ref)]
+                                         [final
+                                          (if (or (branch-multi-assert? body-items)
+                                                  (branch-has-call? body-items))
+                                              (emit-branch-body-items
+                                                body-items "            " step base-qctx
+                                                local-binds
+                                                native-id-ht witness-id-ht circuit-id-ht)
+                                              (begin
+                                                (let loop ([xs pre-stmts] [seen '()])
+                                                  (cond
+                                                    [(null? xs) (void)]
+                                                    [else
+                                                     (let* ([var-name (car (car xs))]
+                                                            [expr (cdr (car xs))]
+                                                            [rust-name (symbol->string
+                                                                         (camel->snake
+                                                                           (id-sym var-name)))])
+                                                       (cond
+                                                         [(member rust-name seen)
+                                                          (loop (cdr xs) seen)]
+                                                         [else
+                                                          (let* ([raw
+                                                                  (guard (c [#t "/* TODO A14 */"])
+                                                                    (ctor-expr-rust expr local-binds
+                                                                                    native-id-ht
+                                                                                    witness-id-ht
+                                                                                    circuit-id-ht))]
+                                                                 ;; Bug-6: clone non-Copy
+                                                                 ;; var-ref / elt-ref RHS so
+                                                                 ;; the source struct stays
+                                                                 ;; usable after the lift.
+                                                                 [rendered
+                                                                  (expr-rust-arg-cloned expr raw)])
+                                                            (out (format "            let ~a = ~a;\n"
+                                                                         rust-name rendered))
+                                                            (loop (cdr xs) (cons rust-name seen)))]))]))
+                                                (when assert-pair
+                                                  (let* ([ae (car assert-pair)]
+                                                         [msg (cdr assert-pair)]
+                                                         [impure-subs
+                                                          (collect-impure-call-subcalls
+                                                            ae witness-id-ht circuit-id-ht
+                                                            native-id-ht)]
+                                                         [hoist
+                                                          (emit-hoisted-impure-calls
+                                                            impure-subs 0
+                                                            local-binds
+                                                            native-id-ht witness-id-ht
+                                                            circuit-id-ht
+                                                            "            ")]
+                                                         [hoist-lines (car hoist)]
+                                                         [hoist-binds (cadr hoist)]
+                                                         [cond-str
+                                                          (parameterize
+                                                              ([current-impure-call-binds
+                                                                (append hoist-binds
+                                                                        (current-impure-call-binds))])
+                                                            (assert-cond-rust
+                                                              ae local-binds
+                                                              native-id-ht witness-id-ht
+                                                              circuit-id-ht))])
+                                                    (for-each out (reverse hoist-lines))
+                                                    (out (format "            compact_assert!(~a, ~s);\n"
+                                                                 cond-str msg))))
+                                                (cons base-qctx "ctx.clone()")))]
+                                         [final-qctx (car final)]
+                                         [final-owned (cdr final)]
+                                         [terminal-ctx
+                                          (if (branch-has-call? body-items)
+                                              final-qctx ctx-expr)]
+                                         ;; A26: the bare-call terminal consumes
+                                         ;; the OWNED threaded context (moving the
+                                         ;; last mid-call's result) so its effects
+                                         ;; are not discarded; call-free branches
+                                         ;; keep `ctx.clone()`.
+                                         [terminal-owned
+                                          (if (branch-has-call? body-items)
+                                              final-owned "ctx.clone()")])
                                     (cond
-                                      [(null? xs) (void)]
+                                      [bare-call-info
+                                       ;; A17: emit `self.<helper>(<ctx>, ...)?`
+                                       ;; + an empty no-op `query_for_verify` so the
+                                       ;; if-expr's QueryResults type unifies across
+                                       ;; arms. `<ctx>` is the threaded owned context
+                                       ;; (or `ctx.clone()` when no call preceded).
+                                       (let* ([fn-id (car bare-call-info)]
+                                              [arg-exprs (cdr bare-call-info)]
+                                              [cname (symbol->string
+                                                       (camel->snake (id-sym fn-id)))]
+                                              [arg-strs
+                                               (map (lambda (e)
+                                                      (arg-rust-clone-if-var
+                                                        e local-binds
+                                                        native-id-ht witness-id-ht
+                                                        circuit-id-ht))
+                                                    arg-exprs)]
+                                              [arg-tail
+                                               (let join ([xs arg-strs] [acc ""])
+                                                 (cond
+                                                   [(null? xs) acc]
+                                                   [else (join (cdr xs)
+                                                               (string-append acc ", " (car xs)))]))]
+                                              [cr-name (format "_cr_arm~a" step)])
+                                         (out (format "            let ~a = ~a(~a~a)?;\n"
+                                                      cr-name (impure-call-target cname)
+                                                      terminal-owned arg-tail))
+                                         (out (format "            __gas_acc += ~a.gas_cost.clone();\n"
+                                                      cr-name))
+                                         (out "            let _empty_ops = OpProgramVerify::<DefaultDB>::new().build();\n")
+                                         (out (format "            query_for_verify(&~a.context.current_query_context, &_empty_ops, ctx.gas_limit.clone(), &ctx.cost_model)?\n"
+                                                      cr-name)))]
                                       [else
-                                       (let* ([var-name (car (car xs))]
-                                              [expr (cdr (car xs))]
-                                              [rust-name (symbol->string
-                                                           (camel->snake
-                                                             (id-sym var-name)))])
-                                         (cond
-                                           [(member rust-name seen)
-                                            (loop (cdr xs) seen)]
-                                           [else
-                                            (let* ([raw
-                                                    (guard (c [#t "/* TODO A14 */"])
-                                                      (ctor-expr-rust expr local-binds
-                                                                      native-id-ht
-                                                                      witness-id-ht
-                                                                      circuit-id-ht))]
-                                                   ;; Bug-6: clone non-Copy
-                                                   ;; var-ref / elt-ref RHS so
-                                                   ;; the source struct stays
-                                                   ;; usable after the lift.
-                                                   [rendered
-                                                    (expr-rust-arg-cloned expr raw)])
-                                              (out (format "            let ~a = ~a;\n"
-                                                           rust-name rendered))
-                                              (loop (cdr xs) (cons rust-name seen)))]))]))
-                                  (when assert-pair
-                                    (let* ([ae (car assert-pair)]
-                                           [msg (cdr assert-pair)]
-                                           [impure-subs
-                                            (collect-impure-call-subcalls
-                                              ae witness-id-ht circuit-id-ht
-                                              native-id-ht)]
-                                           [hoist
-                                            (emit-hoisted-impure-calls
-                                              impure-subs 0
+                                       (out "            let ops = OpProgramVerify::<DefaultDB>::new()\n")
+                                       (for-each (lambda (l) (out (format "    ~a" l)))
+                                                 lines)
+                                       (out "                .build();\n")
+                                       (out (format "            query_for_verify(~a, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?\n"
+                                                    terminal-ctx))]))
+                                  (loop-emit (cdr xs) #f))]))
+                           (out "        } else {\n")
+                           (cond
+                             [else-info
+                              (let ([assert-pair (car else-info)]
+                                    [lines (cadr else-info)]
+                                    [pre-stmts (caddr else-info)]
+                                    [bare-call-info (cadddr else-info)]
+                                    [mid-calls (car (cddddr else-info))]
+                                    [body-items (cadr (cddddr else-info))])
+                                ;; A24/A26: final else emits body-items in
+                                ;; source order (multi-assert or interleaved
+                                ;; call), threading each call's returned context
+                                ;; into `final-qctx` for the terminal op.
+                                (let* ([base-qctx (current-qctx-ref)]
+                                       [final
+                                        (if (or (branch-multi-assert? body-items)
+                                                (branch-has-call? body-items))
+                                            (emit-branch-body-items
+                                              body-items "            " step base-qctx
                                               local-binds
-                                              native-id-ht witness-id-ht
-                                              circuit-id-ht
-                                              "            ")]
-                                           [hoist-lines (car hoist)]
-                                           [hoist-binds (cadr hoist)]
-                                           [cond-str
-                                            (parameterize
-                                                ([current-impure-call-binds
-                                                  (append hoist-binds
-                                                          (current-impure-call-binds))])
-                                              (assert-cond-rust
-                                                ae local-binds
-                                                native-id-ht witness-id-ht
-                                                circuit-id-ht))])
-                                      (for-each out (reverse hoist-lines))
-                                      (out (format "            compact_assert!(~a, ~s);\n"
-                                                   cond-str msg))))
+                                              native-id-ht witness-id-ht circuit-id-ht)
+                                            (begin
+                                              (for-each
+                                                (lambda (b)
+                                                  (let* ([var-name (car b)]
+                                                         [expr (cdr b)]
+                                                         [rust-name (symbol->string
+                                                                      (camel->snake
+                                                                        (id-sym var-name)))]
+                                                         [rendered
+                                                          (guard (c [#t "/* TODO A14 */"])
+                                                            (ctor-expr-rust expr local-binds
+                                                                            native-id-ht
+                                                                            witness-id-ht
+                                                                            circuit-id-ht))])
+                                                    (out (format "            let ~a = ~a;\n"
+                                                                 rust-name rendered))))
+                                                pre-stmts)
+                                              (when assert-pair
+                                                (let* ([ae (car assert-pair)]
+                                                       [msg (cdr assert-pair)]
+                                                       ;; A15: same hoist as the arm path.
+                                                       [impure-subs
+                                                        (collect-impure-call-subcalls
+                                                          ae witness-id-ht circuit-id-ht
+                                                          native-id-ht)]
+                                                       [hoist
+                                                        (emit-hoisted-impure-calls
+                                                          impure-subs 0
+                                                          local-binds
+                                                          native-id-ht witness-id-ht
+                                                          circuit-id-ht
+                                                          "            ")]
+                                                       [hoist-lines (car hoist)]
+                                                       [hoist-binds (cadr hoist)]
+                                                       [cond-str
+                                                        (parameterize
+                                                            ([current-impure-call-binds
+                                                              (append hoist-binds
+                                                                      (current-impure-call-binds))])
+                                                          (assert-cond-rust
+                                                            ae local-binds
+                                                            native-id-ht witness-id-ht
+                                                            circuit-id-ht))])
+                                                  (for-each out (reverse hoist-lines))
+                                                  (out (format "            compact_assert!(~a, ~s);\n"
+                                                               cond-str msg))))
+                                              (cons base-qctx "ctx.clone()")))]
+                                       [final-qctx (car final)]
+                                       [final-owned (cdr final)]
+                                       [terminal-ctx
+                                        (if (branch-has-call? body-items)
+                                            final-qctx ctx-expr)]
+                                       [terminal-owned
+                                        (if (branch-has-call? body-items)
+                                            final-owned "ctx.clone()")])
                                   (cond
                                     [bare-call-info
-                                     ;; A17: emit `self.<helper>(ctx.clone(), ...)?`
-                                     ;; + an empty no-op `query_for_verify` so the
-                                     ;; if-expr's QueryResults type unifies across
-                                     ;; arms. ctx.clone() because pl-call arms only
-                                     ;; borrow ctx via `&ctx.current_query_context`,
-                                     ;; so we can't move ctx here.
+                                     ;; A17: final else with a bare-call (owned
+                                     ;; threaded context, or ctx.clone() if none).
                                      (let* ([fn-id (car bare-call-info)]
                                             [arg-exprs (cdr bare-call-info)]
                                             [cname (symbol->string
@@ -783,9 +1067,10 @@
                                                  [(null? xs) acc]
                                                  [else (join (cdr xs)
                                                              (string-append acc ", " (car xs)))]))]
-                                            [cr-name (format "_cr_arm~a" step)])
-                                       (out (format "            let ~a = ~a(ctx.clone()~a)?;\n"
-                                                    cr-name (impure-call-target cname) arg-tail))
+                                            [cr-name (format "_cr_arm~a_else" step)])
+                                       (out (format "            let ~a = ~a(~a~a)?;\n"
+                                                    cr-name (impure-call-target cname)
+                                                    terminal-owned arg-tail))
                                        (out (format "            __gas_acc += ~a.gas_cost.clone();\n"
                                                     cr-name))
                                        (out "            let _empty_ops = OpProgramVerify::<DefaultDB>::new().build();\n")
@@ -797,95 +1082,7 @@
                                                lines)
                                      (out "                .build();\n")
                                      (out (format "            query_for_verify(~a, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?\n"
-                                                  ctx-expr))])
-                                  (loop-emit (cdr xs) #f))]))
-                           (out "        } else {\n")
-                           (cond
-                             [else-info
-                              (let ([assert-pair (car else-info)]
-                                    [lines (cadr else-info)]
-                                    [pre-stmts (caddr else-info)]
-                                    [bare-call-info (cadddr else-info)])
-                                (for-each
-                                  (lambda (b)
-                                    (let* ([var-name (car b)]
-                                           [expr (cdr b)]
-                                           [rust-name (symbol->string
-                                                        (camel->snake
-                                                          (id-sym var-name)))]
-                                           [rendered
-                                            (guard (c [#t "/* TODO A14 */"])
-                                              (ctor-expr-rust expr local-binds
-                                                              native-id-ht
-                                                              witness-id-ht
-                                                              circuit-id-ht))])
-                                      (out (format "            let ~a = ~a;\n"
-                                                   rust-name rendered))))
-                                  pre-stmts)
-                                (when assert-pair
-                                  (let* ([ae (car assert-pair)]
-                                         [msg (cdr assert-pair)]
-                                         ;; A15: same hoist as the arm path.
-                                         [impure-subs
-                                          (collect-impure-call-subcalls
-                                            ae witness-id-ht circuit-id-ht
-                                            native-id-ht)]
-                                         [hoist
-                                          (emit-hoisted-impure-calls
-                                            impure-subs 0
-                                            local-binds
-                                            native-id-ht witness-id-ht
-                                            circuit-id-ht
-                                            "            ")]
-                                         [hoist-lines (car hoist)]
-                                         [hoist-binds (cadr hoist)]
-                                         [cond-str
-                                          (parameterize
-                                              ([current-impure-call-binds
-                                                (append hoist-binds
-                                                        (current-impure-call-binds))])
-                                            (assert-cond-rust
-                                              ae local-binds
-                                              native-id-ht witness-id-ht
-                                              circuit-id-ht))])
-                                    (for-each out (reverse hoist-lines))
-                                    (out (format "            compact_assert!(~a, ~s);\n"
-                                                 cond-str msg))))
-                                (cond
-                                  [bare-call-info
-                                   ;; A17: final else with a bare-call.
-                                   (let* ([fn-id (car bare-call-info)]
-                                          [arg-exprs (cdr bare-call-info)]
-                                          [cname (symbol->string
-                                                   (camel->snake (id-sym fn-id)))]
-                                          [arg-strs
-                                           (map (lambda (e)
-                                                  (arg-rust-clone-if-var
-                                                    e local-binds
-                                                    native-id-ht witness-id-ht
-                                                    circuit-id-ht))
-                                                arg-exprs)]
-                                          [arg-tail
-                                           (let join ([xs arg-strs] [acc ""])
-                                             (cond
-                                               [(null? xs) acc]
-                                               [else (join (cdr xs)
-                                                           (string-append acc ", " (car xs)))]))]
-                                          [cr-name (format "_cr_arm~a_else" step)])
-                                     (out (format "            let ~a = ~a(ctx.clone()~a)?;\n"
-                                                  cr-name (impure-call-target cname) arg-tail))
-                                     (out (format "            __gas_acc += ~a.gas_cost.clone();\n"
-                                                  cr-name))
-                                     (out "            let _empty_ops = OpProgramVerify::<DefaultDB>::new().build();\n")
-                                     (out (format "            query_for_verify(&~a.context.current_query_context, &_empty_ops, ctx.gas_limit.clone(), &ctx.cost_model)?\n"
-                                                  cr-name)))]
-                                  [else
-                                   (out "            let ops = OpProgramVerify::<DefaultDB>::new()\n")
-                                   (for-each (lambda (l) (out (format "    ~a" l)))
-                                             lines)
-                                   (out "                .build();\n")
-                                   (out (format "            query_for_verify(~a, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?\n"
-                                                ctx-expr))]))]
+                                                  terminal-ctx))])))]
                              [else
                               (out "            let ops = OpProgramVerify::<DefaultDB>::new().build();\n")
                               (out (format "            query_for_verify(~a, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?\n"

@@ -79,6 +79,12 @@ const FIXTURES: &[(&str, &str)] = &[
     ("witnesses_fixture.compact", "witnesses-fixture"),
     ("zerocash.compact", "zerocash"),
     ("assert_parity_fixture.compact", "assert-parity-fixture"),
+    // did.compact 0.5.0 (controller-authorization + recovery). Vendored
+    // under examples/did-05/ with its jubjub-schnorr dependency so the
+    // `../../jubjub-schnorr/src/schnorr` relative import resolves; exercises
+    // the 0.5.0-specific codegen (JubjubPoint decoder/default, ctor-mode
+    // impure calls, multi-assert branches).
+    ("did-05/contract/src/did.compact", "did-05"),
 ];
 
 /// Walks up from `start` looking for `./result/bin/compactc` (the nix

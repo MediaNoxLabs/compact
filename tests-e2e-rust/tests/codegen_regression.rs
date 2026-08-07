@@ -79,6 +79,11 @@ const FIXTURES: &[(&str, &str)] = &[
     ("witnesses_fixture.compact", "witnesses-fixture"),
     ("zerocash.compact", "zerocash"),
     ("assert_parity_fixture.compact", "assert-parity-fixture"),
+    // A29: >16 ledger fields — the front end chunks the state into a nested
+    // shape (StateValue::Array caps at 16); locks the chunked initial-state
+    // scaffold alongside the executing readback gate in
+    // tests/chunked_ledger_fixture.rs.
+    ("chunked_ledger_fixture.compact", "chunked-ledger-fixture"),
     // did.compact 0.5.0 (controller-authorization + recovery). Vendored
     // under examples/did-05/ with its jubjub-schnorr dependency so the
     // `../../jubjub-schnorr/src/schnorr` relative import resolves; exercises

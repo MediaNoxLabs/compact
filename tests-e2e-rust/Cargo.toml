@@ -72,3 +72,8 @@ compact-contract-assert-parity-fixture = { path = "contracts/assert-parity-fixtu
 # codegen produces *compilable* Rust, which codegen_regression (byte-compare
 # only) does not check. Workspace membership alone would not pull it in.
 compact-contract-struct-collision-fixture = { path = "contracts/struct-collision-fixture" }
+# A29 executing constructor gate: did05_constructor_scaffold.rs runs the
+# generated did-05 initial_state and reads scalar fields back via ledger(),
+# proving the >16-field chunked scaffold matches the read/write paths.
+compact-contract-did-05 = { path = "contracts/did-05" }
+compact-contract-chunked-ledger-fixture = { path = "contracts/chunked-ledger-fixture" }

@@ -9,6 +9,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _No changes yet._
 
+## [Toolchain 0.31.109, language 0.23.103, runtime 0.16.100] — initial-state chunked scaffold (2026-08-07)
+
+### Fixed
+
+- **Flat initial-state scaffold for >16-field ledgers (A29)** — contracts with
+  more than 16 ledger fields (did.compact 0.5.0 has 19) generated an
+  `initial_state` that seeded a *flat* n-element `new_array(vec![...])`
+  scaffold, while every read/write emission site — including the constructor's
+  own writes — used the front end's chunked nested shape
+  (`StateValue::Array` caps at 16; did-05 chunks as an outer 2-slot array of
+  4 + 15 fields). Executing the Rust constructor therefore wrote nested
+  `idx_at_index` paths into a flat scaffold, producing state the generated
+  `ledger()` accessors (and the chain shape) could not read. The scaffold
+  emission (`emit-scaffold-elements` in `compiler/rust-passes-emit.ss`) now
+  walks the IR's `public-ledger-array` structure recursively — the SAME
+  nested structure `binding-path-indices` and all read/write emitters derive
+  their paths from, mirroring `typescript-passes.ss::ledger-initializers` —
+  so the shapes cannot diverge. Contracts with <=16 fields have no nested
+  pl-arrays and stay byte-identical. Found while building the
+  indexer-backed snapshot decoder in midnight-identity (tracked in
+  MediaNoxLabs/compact#3 comments). Guarded by a new EXECUTING constructor
+  readback gate: `tests-e2e-rust/tests/chunked_ledger_fixture.rs` runs the
+  new 18-field `examples/chunked_ledger_fixture.compact`'s `initial_state`
+  and reads every field back via the generated `ledger()` accessors. The
+  did-05 equivalent (`tests-e2e-rust/tests/did05_constructor_scaffold.rs`)
+  pins the current failure mode and carries the full readback `#[ignore]`d —
+  did-05's constructor does `id = kernel.self()`, whose generated
+  `decode_via_field_repr::<ContractAddress>` read hits the separate
+  field-repr-vs-alignment decode bug (also tracked in the #3 comment
+  thread); un-ignore when that follow-up lands.
+
 ## [Toolchain 0.31.108, language 0.23.103, runtime 0.16.100] — constructor read-your-writes (2026-08-05)
 
 ### Fixed

@@ -13,6 +13,72 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
+      ;; emit-scaffold-seed: emit one initial-state scaffold line for a
+      ;; leaf public-binding at the given indentation. ADT-aware seeding
+      ;; (R1 / K1.1): the Compact ADTs whose initial-value isn't a plain
+      ;; Cell — Map, Set, MerkleTree, HistoricMerkleTree — have dedicated
+      ;; builders in compact-runtime that produce the exact StateValue
+      ;; shape declared in midnight-ledger.ss. Cell / Counter / anything
+      ;; else with a read op keeps the K1 path — new_cell(<default>).
+      ;; Special case: tvector defaults to [T; N] which doesn't impl
+      ;; Into<AlignedValue> upstream — route through new_cell_array which
+      ;; concatenates per-element AVs.
+      ;; Special case: tunsigned with a byte-length that doesn't match the
+      ;; Rust integer width's byte count (e.g. `Uint<0..70000>` is u32 in
+      ;; Rust but uses 3 bytes on state) — route through
+      ;; `new_cell_bounded_uint(0u128, N)` so the on-state
+      ;; `AlignmentAtom::Bytes` width matches TS.
+      (define (emit-scaffold-seed public-binding indent)
+        (let ([t (binding-type public-binding)])
+          (cond
+            [(tadt-name=? t 'Set)
+             (out (format "~anew_map(),\n" indent))]
+            [(tadt-name=? t 'Map)
+             (out (format "~anew_map(),\n" indent))]
+            [(tadt-name=? t 'List)
+             (out (format "~anew_list(),\n" indent))]
+            [(tadt-name=? t 'MerkleTree)
+             (out (format "~anew_merkle_tree(~a),\n"
+                          indent (tadt-merkle-height t)))]
+            [(tadt-name=? t 'HistoricMerkleTree)
+             (out (format "~anew_historic_merkle_tree(~a),\n"
+                          indent (tadt-merkle-height t)))]
+            [else
+             (let ([read-type (tadt-read-op-type t)])
+               (cond
+                 [(type-is-tvector? read-type)
+                  (out (format "~anew_cell_array(~a),\n"
+                               indent (default-value-rust read-type)))]
+                 [(tunsigned-bounded? read-type)
+                  (out (format "~anew_cell_bounded_uint(0u128, ~a),\n"
+                               indent (tunsigned-byte-length read-type)))]
+                 [else
+                  (out (format "~anew_cell(~a),\n"
+                               indent (default-value-rust read-type)))]))])))
+
+      ;; emit-scaffold-elements: walk one level of a public-ledger-array,
+      ;; emitting each element at `indent`. Leaves seed their default via
+      ;; emit-scaffold-seed; nested pl-arrays — the >16-field chunking the
+      ;; front end computes (StateValue::Array caps at 16), the SAME
+      ;; structure `binding-path-indices` and every read/write emitter
+      ;; derive their idx_at_index chains from — recurse as nested
+      ;; `new_array(vec![...])` scaffolds (A29). Flat (<=16-field)
+      ;; contracts have no nested pl-arrays, so their output is unchanged.
+      ;; Mirrors typescript-passes.ss::ledger-initializers.
+      (define (emit-scaffold-elements pl-array indent)
+        (nanopass-case (Ltypescript Public-Ledger-Array) pl-array
+          [(public-ledger-array ,pl-array-elt* ...)
+           (for-each
+             (lambda (pl-array-elt)
+               (nanopass-case (Ltypescript Public-Ledger-Array-Element) pl-array-elt
+                 [,pl-array
+                  (out (format "~anew_array(vec![\n" indent))
+                  (emit-scaffold-elements pl-array (string-append indent "    "))
+                  (out (format "~a]),\n" indent))]
+                 [,public-binding
+                  (emit-scaffold-seed public-binding indent)]))
+             pl-array-elt*)]))
+
       ;; emit-initial-state: emits the `initial_state` constructor method
       ;; inside the open Contract impl block. K1 seeds each ledger field
       ;; with its type's default value; J2 then walks the constructor body
@@ -37,68 +103,25 @@
                             (type-rust type)))]))
           ctor-arg*)
         (out ",\n    ) -> Result<ConstructorResult<PS>, CompactError> {\n")
-        ;; K1: walk the pl-array bindings (all fields, not just exported)
-        ;; and emit one new_cell per binding using the read-op's result
-        ;; type as the source of truth for the default value. This produces
-        ;; one Cell per field in declaration order — the path indices in
-        ;; the IR confirm fields land at indices 0,1,2,...
+        ;; K1: walk the pl-array structure (all fields, not just exported)
+        ;; and emit one seed per leaf binding using the read-op's result
+        ;; type as the source of truth for the default value. The walk
+        ;; preserves the IR's nesting (A29): contracts with >16 ledger
+        ;; fields get the front end's chunked pl-array shape, so the
+        ;; scaffold's nested new_array structure matches the idx_at_index
+        ;; paths every read/write emitter derives from the same IR.
         ;; J2 (constructor body emission) then overrides these defaults
         ;; with whatever the source constructor assigns.
         (out "        let sv = new_array(vec![\n")
-        (let* ([all-bindings
-                (apply append
-                  (map (lambda (lf)
-                         (nanopass-case (Ltypescript Program-Element) lf
-                           [(public-ledger-declaration ,pl-array ,lconstructor)
-                            (pl-array->public-bindings pl-array)]
-                           [else '()]))
-                       ledger-field*))]
-               [_
+        (let* ([_
                 (begin
                   (for-each
-                    (lambda (pb)
-                      (let ([t (binding-type pb)])
-                        (cond
-                          ;; ADT-aware seeding (R1 / K1.1). The Compact ADTs
-                          ;; whose initial-value isn't a plain Cell — Map, Set,
-                          ;; MerkleTree, HistoricMerkleTree — have dedicated
-                          ;; builders in compact-runtime that produce the exact
-                          ;; StateValue shape declared in midnight-ledger.ss.
-                          [(tadt-name=? t 'Set)
-                           (out "            new_map(),\n")]
-                          [(tadt-name=? t 'Map)
-                           (out "            new_map(),\n")]
-                          [(tadt-name=? t 'List)
-                           (out "            new_list(),\n")]
-                          [(tadt-name=? t 'MerkleTree)
-                           (out (format "            new_merkle_tree(~a),\n"
-                                        (tadt-merkle-height t)))]
-                          [(tadt-name=? t 'HistoricMerkleTree)
-                           (out (format "            new_historic_merkle_tree(~a),\n"
-                                        (tadt-merkle-height t)))]
-                          ;; Cell / Counter / anything else with a read op:
-                          ;; keep the K1 path — emit new_cell(<default>).
-                          ;; Special case: tvector defaults to [T; N] which doesn't
-                          ;; impl Into<AlignedValue> upstream — route through
-                          ;; new_cell_array which concatenates per-element AVs.
-                          ;; Special case: tunsigned with a byte-length that doesn't
-                          ;; match the Rust integer width's byte count (e.g.
-                          ;; `Uint<0..70000>` is u32 in Rust but uses 3 bytes on
-                          ;; state) — route through `new_cell_bounded_uint(0u128, N)`
-                          ;; so the on-state `AlignmentAtom::Bytes` width matches TS.
-                          [else
-                           (let ([read-type (tadt-read-op-type t)])
-                             (cond
-                               [(type-is-tvector? read-type)
-                                (out (format "            new_cell_array(~a),\n"
-                                             (default-value-rust read-type)))]
-                               [(tunsigned-bounded? read-type)
-                                (out (format "            new_cell_bounded_uint(0u128, ~a),\n"
-                                             (tunsigned-byte-length read-type)))]
-                               [else
-                                (out (format "            new_cell(~a),\n"
-                                             (default-value-rust read-type)))]))])))
-                    all-bindings)
+                    (lambda (lf)
+                      (nanopass-case (Ltypescript Program-Element) lf
+                        [(public-ledger-declaration ,pl-array ,lconstructor)
+                         (emit-scaffold-elements pl-array "            ")]
+                        [else (void)]))
+                    ledger-field*)
                   (out "        ]);\n")
                   (out "        let state = ChargedState::new(sv);\n")
                   ;; Bucket-1: fully-qualify ContractAddress so a user struct

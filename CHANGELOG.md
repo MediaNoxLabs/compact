@@ -9,6 +9,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _No changes yet._
 
+## [Toolchain 0.31.110, language 0.23.103, runtime 0.16.100] — alignment-aware ledger-read decode (2026-08-10)
+
+### Fixed
+
+- **Field-repr-arity ledger-read decoding of alignment-encoded cells (A30)** —
+  `compact_runtime::std_lib::decode_via_field_repr<T>` converted the
+  `AlignedValue`'s atoms to `Fr`s 1:1 (one `Fr::try_from(atom)` per atom) and
+  fed that to `T::from_field_repr`. But cells are ALIGNMENT-encoded — one atom
+  per leaf value — and a single leaf may span multiple field-repr `Fr`s: a
+  32-byte address cell is ONE atom but `[u8; 32]::FIELD_SIZE == 2` `Fr`s
+  (1-byte stray chunk + 31-byte chunk, packed from the end per upstream
+  `impl FieldRepr for [u8]`). Every `ContractAddress` read —
+  did.compact 0.5.0's `ledger().id()` accessor and the constructor's
+  `id = kernel.self()` readback — could therefore NEVER decode, and
+  multi-leaf struct reads (did-05's `VerificationMethod` map lookups: 6 atoms
+  vs `FIELD_SIZE` 3) hit the same arity mismatch. Found empirically in the
+  MediaNoxLabs/midnight-identity port (the "second decode-path finding" in the
+  MediaNoxLabs/compact#3 comment thread; MediaNoxLabs/compact#4 landed the
+  did-05 readback gate `#[ignore]`d on exactly this bug). The decoder now
+  walks `av.alignment` in lockstep with the atoms and expands each leaf into
+  exactly the `Fr` chunks its field-repr occupies: `Field` atoms as one `Fr`;
+  `Bytes { length }` atoms as `ceil(length/31)` 31-byte little-endian chunks
+  in reverse chunk order, with leading zero-`Fr`s re-padding the trailing
+  zero bytes stripped by `ValueAtom::normalize`; `Compress` atoms (opaque
+  strings / `Vec<u8>`) as raw-byte chunks of the actual atom — `ceil(n/31)`
+  `Fr`s, zero `Fr`s for the empty value — matching this runtime's
+  `OpaqueString`/`Vec<u8>` `FieldRepr` convention.
+  `OpaqueString::from_field_repr` now strips the 31-byte-chunk zero padding
+  (on-chain `Compress` atoms are normal-form, so trailing NULs are
+  unrepresentable — stripping is the faithful inverse). For fixed-size
+  targets the expanded stream must match `T::FIELD_SIZE` exactly, so a
+  NON-empty variable-length leaf inside a fixed-slicing struct fails loudly
+  instead of silently mis-slicing every following field
+  (`OpaqueString::FIELD_SIZE == 0` gives the generated `from_field_repr` no
+  slot for the bytes; variable-length struct leaves round-trip only while
+  empty — tracked as a codegen follow-up). Runtime-only fix: NO generated
+  code changes and byte-parity fixtures untouched; the runtime crate version
+  stays 0.16.100 because generated contracts pin it via
+  `check_runtime_version!`, which requires exact equality — only the
+  toolchain version advances. Guarded by round-trip unit tests in
+  `runtime-rs/src/std_lib/adts.rs` (`new_cell(T)` →
+  `decode_via_field_repr::<T>` for u8/u32/u64/bool/Fr, tuples,
+  `ContractAddress` incl. the all-zero normalised-empty-atom edge,
+  `[u8; 32]`, a `[u8; 32]`-bearing struct, a JWK-shaped struct with empty
+  string leaves, plain enums, opaque strings empty/short/31-byte/multi-chunk,
+  and the loud non-empty-string-leaf rejection) and by un-ignoring the
+  did-05 executing readback gate
+  (`tests-e2e-rust/tests/did05_constructor_scaffold.rs`), which now asserts
+  the full `initial_state` → `ledger()` accessor readback INCLUDING `id`
+  (the pre-A30 failure-mode pin test is removed).
+
 ## [Toolchain 0.31.109, language 0.23.103, runtime 0.16.100] — initial-state chunked scaffold (2026-08-07)
 
 ### Fixed

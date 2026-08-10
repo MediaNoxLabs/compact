@@ -14,7 +14,7 @@
 // limitations under the License.
 
 //
-// A29 did.compact 0.5.0 constructor scaffold tests.
+// A29/A30 did.compact 0.5.0 constructor scaffold tests.
 //
 // did.compact 0.5.0 declares 19 ledger fields, so the front end chunks the
 // on-chain state (StateValue::Array caps at 16 slots) into an outer 2-slot
@@ -23,26 +23,25 @@
 // `new_array` while every read/write site used the nested chunked paths —
 // executing the constructor produced state the generated `ledger()`
 // accessors could not read. The generic executing gate for A29 lives in
-// tests/chunked_ledger_fixture.rs (a fixture whose constructor can run to
-// completion today); this file carries the did-05-specific gates:
+// tests/chunked_ledger_fixture.rs; this file carries the did-05-specific
+// gate:
 //
-// 1. `did05_initial_state_readback_via_ledger_accessors` — the full
-//    executing readback. Currently #[ignore]d: did-05's constructor does
-//    `id = kernel.self()`, whose generated read decodes the address cell via
-//    `decode_via_field_repr::<ContractAddress>` — the KNOWN-BROKEN
-//    field-repr-vs-alignment decode (`[u8; 32]::FIELD_SIZE == 2` Frs, but
-//    the cell yields one 32-byte atom -> 1 Fr), tracked as a separate
-//    follow-up in the MediaNoxLabs/compact#3 comment thread alongside A29.
-//    Un-ignore when that decode fix lands.
-//
-// 2. `did05_initial_state_blocked_only_by_kernel_self_decode` — pins the
-//    CURRENT failure mode: initial_state must fail with exactly the known
-//    kernel.self() decode error, nothing else. Before A29 this call could
-//    only die on the flat-vs-nested shape mismatch (or "succeed" into
-//    unreadable state); if the decode follow-up lands, this test starts
-//    failing on purpose — flip test 1 on and delete this one.
+// `did05_initial_state_readback_via_ledger_accessors` — the full executing
+// readback, including `id`. The constructor does `id = kernel.self()`,
+// whose generated read decodes the address cell via
+// `decode_via_field_repr::<ContractAddress>`. Until A30 that decode
+// converted AlignedValue atoms to Frs 1:1 while cells are
+// ALIGNMENT-encoded (`[u8; 32]::FIELD_SIZE == 2` Frs, but the cell yields
+// one 32-byte atom -> 1 Fr), so `initial_state` could never complete
+// (tracked in the MediaNoxLabs/compact#3 "second decode-path finding"
+// comment thread). A30 makes the decode alignment-aware; this test now
+// runs un-ignored and also asserts the `ledger().id()` readback. (The
+// pre-A30 pin test `did05_initial_state_blocked_only_by_kernel_self_decode`
+// asserted the then-current decode failure and was removed with A30.)
 
-use compact_contract_did_05::{ledger, Contract, Ledger, Witnesses};
+use compact_contract_did_05::{
+    ledger, Contract, ContractAddress as DidContractAddress, Ledger, Witnesses,
+};
 use compact_runtime::*;
 
 /// Deterministic stub witnesses. The constructor invokes
@@ -94,12 +93,10 @@ fn ctor_ctx() -> ConstructorContext<()> {
 }
 
 /// Full executing readback: run initial_state with stub witnesses, read the
-/// scalar fields back through the generated ledger() accessors. `id()` is
-/// deliberately not asserted — same decode follow-up as the ignore reason.
+/// fields back through the generated ledger() accessors — including `id`,
+/// which the constructor assigns from `kernel.self()` and whose read goes
+/// through the A30 alignment-aware `decode_via_field_repr::<ContractAddress>`.
 #[test]
-#[ignore = "blocked on kernel.self() ContractAddress decode (field-repr vs alignment, \
-            see MediaNoxLabs/compact#3 comment thread); un-ignore when the decode \
-            follow-up lands"]
 fn did05_initial_state_readback_via_ledger_accessors() {
     let contract: Contract<(), StubWitnesses> = Contract::new(StubWitnesses);
     let result = contract.initial_state(ctor_ctx()).expect("initial_state");
@@ -108,6 +105,12 @@ fn did05_initial_state_readback_via_ledger_accessors() {
 
     // Chunk [0]: constructor-assigned scalars (global field indices 0..4).
     assert_eq!(view.contract_version().expect("contract_version"), 2u32);
+    // `id = kernel.self()`: the constructor context queries against the
+    // default (all-zero) contract address, so that is what the cell must
+    // hold — decoded into the CONTRACT's `ContractAddress { bytes }`
+    // struct. The all-zero address is also the empty-normalised-atom edge
+    // case of the A30 decode (32-byte leaf whose atom normalises empty).
+    assert_eq!(view.id().expect("id"), DidContractAddress::default());
     assert_eq!(
         view.controller_public_key().expect("controller_public_key"),
         hash_to_curve(Fr::from(1u64)),
@@ -126,30 +129,4 @@ fn did05_initial_state_readback_via_ledger_accessors() {
     assert!(!view.deactivated().expect("deactivated"));
     assert!(view.active().expect("active"));
     assert_eq!(view.operation_count().expect("operation_count"), 0u64);
-}
-
-/// Pin the current, known-and-tracked failure mode of executing the did-05
-/// constructor: the `id = kernel.self()` read's field-repr decode. Anything
-/// else (e.g. a VM error from a scaffold/write shape mismatch — the A29
-/// symptom) fails this test.
-#[test]
-fn did05_initial_state_blocked_only_by_kernel_self_decode() {
-    let contract: Contract<(), StubWitnesses> = Contract::new(StubWitnesses);
-    match contract.initial_state(ctor_ctx()) {
-        Ok(_) => panic!(
-            "initial_state unexpectedly succeeded: the kernel.self() decode \
-             follow-up has landed — un-ignore \
-             did05_initial_state_readback_via_ledger_accessors and delete \
-             this pin test"
-        ),
-        Err(e) => {
-            let msg = format!("{e:?}");
-            assert!(
-                msg.contains("decode_via_field_repr"),
-                "initial_state failed, but NOT with the known kernel.self() \
-                 field-repr decode error — possible scaffold/write shape \
-                 regression (A29): {msg}"
-            );
-        }
-    }
 }

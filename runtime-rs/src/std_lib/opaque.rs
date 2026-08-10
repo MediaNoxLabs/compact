@@ -66,7 +66,16 @@ impl FieldRepr for OpaqueString {
 impl FromFieldRepr for OpaqueString {
     const FIELD_SIZE: usize = 0; // variable; surrounding ADT carries length
     fn from_field_repr(r: &[Fr]) -> Option<Self> {
-        let bytes = vec_u8_from_field_repr(r)?;
+        let mut bytes = vec_u8_from_field_repr(r)?;
+        // The Fr-repr carries the string bytes padded up to whole 31-byte
+        // chunks (`vec_u8_from_field_repr` decodes `r.len() * 31` bytes).
+        // The on-chain atom is normalised — `AlignmentAtom::Compress` only
+        // admits normal-form atoms, so trailing NUL bytes are
+        // unrepresentable in the cell encoding — which makes stripping the
+        // zero padding the faithful inverse (A30).
+        while bytes.last() == Some(&0) {
+            bytes.pop();
+        }
         // Best-effort UTF-8 conversion; non-UTF-8 bytes round-trip as
         // replacement characters. For strict round-tripping users should
         // hold OpaqueString::from_lossless when we add it.

@@ -84,6 +84,16 @@ const FIXTURES: &[(&str, &str)] = &[
     // scaffold alongside the executing readback gate in
     // tests/chunked_ledger_fixture.rs.
     ("chunked_ledger_fixture.compact", "chunked-ledger-fixture"),
+    // G1: struct-field projection as an operand of trapping unsigned
+    // arithmetic (`currentTime - attestation.proof.createdAt <= policy.maxAge`),
+    // inside and outside an `if` guard. The typer nests TWO levels of
+    // let*-lifted assignment for that shape, and the emitter rendered only
+    // the outer one; locks the nested-assignment rendering alongside the
+    // executing assert gate in tests/guarded_assert_arith_fixture.rs.
+    (
+        "guarded_assert_arith_fixture.compact",
+        "guarded-assert-arith-fixture",
+    ),
     // did.compact 0.5.0 (controller-authorization + recovery). Vendored
     // under examples/did-05/ with its jubjub-schnorr dependency so the
     // `../../jubjub-schnorr/src/schnorr` relative import resolves; exercises

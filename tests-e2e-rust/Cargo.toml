@@ -77,3 +77,8 @@ compact-contract-struct-collision-fixture = { path = "contracts/struct-collision
 # proving the >16-field chunked scaffold matches the read/write paths.
 compact-contract-did-05 = { path = "contracts/did-05" }
 compact-contract-chunked-ledger-fixture = { path = "contracts/chunked-ledger-fixture" }
+# G1 executing assert gate: guarded_assert_arith_fixture.rs calls the generated
+# pure circuits with values that satisfy and values that trip each assert,
+# proving the struct-field projection inside the trapping-subtraction guard
+# lowers to the right operand (byte-parity alone cannot see a swapped operand).
+compact-contract-guarded-assert-arith-fixture = { path = "contracts/guarded-assert-arith-fixture" }

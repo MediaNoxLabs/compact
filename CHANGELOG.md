@@ -9,6 +9,108 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _No changes yet._
 
+## [Toolchain 0.31.111, language 0.23.103, runtime 0.16.100] — struct-field projections in trapping arithmetic (2026-08-10)
+
+### Fixed
+
+- **Struct-field projection as an operand of trapping arithmetic (G1)** —
+  a pure circuit whose assert subtracted a struct-field projection failed to
+  compile with `unsupported Compact construct (pure-circuit-body-emission): no
+  walker shape matched pure circuit body`, e.g.
+  `if (policy.enforceMaxAge) { assert(currentTime -
+  attestation.proof.createdAt <= policy.maxAge, "..."); }`
+  (MediaNoxLabs/compact#5). The typer wraps trapping unsigned arithmetic in an
+  underflow guard `(seq (assert (>= a b)) (- a b))` and let\*-lifts any
+  operand that isn't already a simple local into its own temp, so a projection
+  operand nests TWO levels of lifted assignment:
+  `(= %t.0 (seq (= %t.1 (elt-ref attestation.proof createdAt)) (seq (assert
+  (>= currentTime %t.1) ...) (- currentTime %t.1))))`. `stmt-flatten`'s
+  `lift-seq-prefix-exprs` hoists the OUTER level to a statement, where
+  `stmt-pure-body-rust`'s `stmt->assignment` clause lowers it as
+  `let <temp> = <rhs>;` — but the inner level stayed inside the RHS and reached
+  `seq-stmt-rust`, which handled only `assert` and fell through to `expr-rust`,
+  which has no `(=)` clause at all. Plain scalar operands need only one level,
+  and the same projection under `==` rather than `<=` also stays single-level,
+  which is why every ingredient compiled in isolation and the `if` guard turned
+  out to be incidental (the unguarded assert failed identically).
+  `seq-stmt-rust` (`compiler/rust-passes-emit.ss`) now renders a nested
+  assignment through the same helpers the statement-level path uses —
+  `uniquify-rust-name` over `current-var-substitution`, then `expr-rust` for
+  the RHS — rather than gaining a second projection-aware renderer, and
+  `expr-rust`'s `seq` clause folds its prefix statements instead of mapping
+  them so a binding one introduces is in scope for the statements after it and
+  for the tail. The two `let`-binding clauses in `stmt-pure-body-rust` reserve
+  their own Rust name for the duration of the RHS render, so a temp lifted from
+  inside it uniquifies instead of shadowing the binder. Unblocks
+  midnight-verifiable-credentials' `status-proof-protocol.compact`
+  (`assertAuthorityAttestedStatusProofFreshEnough`, reached through
+  `revocation-registry.compact`) and `secret-birth-credential.compact`, both of
+  which previously died at `status-proof-protocol.compact:522`. Every existing
+  byte-parity fixture is UNCHANGED — bodies without a nested assignment take
+  the identical code path, and the digital-passport fixture's single-level
+  `let t = { assert!(...); ... }` block form is preserved. Guarded by the new
+  `examples/guarded_assert_arith_fixture.compact` fixture (byte parity via
+  `tests-e2e-rust/tests/codegen_regression.rs`) plus the executing assert gate
+  `tests-e2e-rust/tests/guarded_assert_arith_fixture.rs`, which calls the
+  generated pure circuits with values that satisfy and values that trip each
+  assert — pinning the inclusive boundary, the underflow trap (a dropped guard
+  would wrap on `u64` and silently pass), the skipped-guard path, and a
+  two-projection subtraction whose returned difference proves the two lifted
+  temps stayed distinct. Emitter-only fix: the runtime crate version stays
+  0.16.100 because generated contracts pin it via `check_runtime_version!`,
+  which requires exact equality — only the toolchain version advances.
+
+## [Toolchain 0.31.110, language 0.23.103, runtime 0.16.100] — alignment-aware ledger-read decode (2026-08-10)
+
+### Fixed
+
+- **Field-repr-arity ledger-read decoding of alignment-encoded cells (A30)** —
+  `compact_runtime::std_lib::decode_via_field_repr<T>` converted the
+  `AlignedValue`'s atoms to `Fr`s 1:1 (one `Fr::try_from(atom)` per atom) and
+  fed that to `T::from_field_repr`. But cells are ALIGNMENT-encoded — one atom
+  per leaf value — and a single leaf may span multiple field-repr `Fr`s: a
+  32-byte address cell is ONE atom but `[u8; 32]::FIELD_SIZE == 2` `Fr`s
+  (1-byte stray chunk + 31-byte chunk, packed from the end per upstream
+  `impl FieldRepr for [u8]`). Every `ContractAddress` read —
+  did.compact 0.5.0's `ledger().id()` accessor and the constructor's
+  `id = kernel.self()` readback — could therefore NEVER decode, and
+  multi-leaf struct reads (did-05's `VerificationMethod` map lookups: 6 atoms
+  vs `FIELD_SIZE` 3) hit the same arity mismatch. Found empirically in the
+  MediaNoxLabs/midnight-identity port (the "second decode-path finding" in the
+  MediaNoxLabs/compact#3 comment thread; MediaNoxLabs/compact#4 landed the
+  did-05 readback gate `#[ignore]`d on exactly this bug). The decoder now
+  walks `av.alignment` in lockstep with the atoms and expands each leaf into
+  exactly the `Fr` chunks its field-repr occupies: `Field` atoms as one `Fr`;
+  `Bytes { length }` atoms as `ceil(length/31)` 31-byte little-endian chunks
+  in reverse chunk order, with leading zero-`Fr`s re-padding the trailing
+  zero bytes stripped by `ValueAtom::normalize`; `Compress` atoms (opaque
+  strings / `Vec<u8>`) as raw-byte chunks of the actual atom — `ceil(n/31)`
+  `Fr`s, zero `Fr`s for the empty value — matching this runtime's
+  `OpaqueString`/`Vec<u8>` `FieldRepr` convention.
+  `OpaqueString::from_field_repr` now strips the 31-byte-chunk zero padding
+  (on-chain `Compress` atoms are normal-form, so trailing NULs are
+  unrepresentable — stripping is the faithful inverse). For fixed-size
+  targets the expanded stream must match `T::FIELD_SIZE` exactly, so a
+  NON-empty variable-length leaf inside a fixed-slicing struct fails loudly
+  instead of silently mis-slicing every following field
+  (`OpaqueString::FIELD_SIZE == 0` gives the generated `from_field_repr` no
+  slot for the bytes; variable-length struct leaves round-trip only while
+  empty — tracked as a codegen follow-up). Runtime-only fix: NO generated
+  code changes and byte-parity fixtures untouched; the runtime crate version
+  stays 0.16.100 because generated contracts pin it via
+  `check_runtime_version!`, which requires exact equality — only the
+  toolchain version advances. Guarded by round-trip unit tests in
+  `runtime-rs/src/std_lib/adts.rs` (`new_cell(T)` →
+  `decode_via_field_repr::<T>` for u8/u32/u64/bool/Fr, tuples,
+  `ContractAddress` incl. the all-zero normalised-empty-atom edge,
+  `[u8; 32]`, a `[u8; 32]`-bearing struct, a JWK-shaped struct with empty
+  string leaves, plain enums, opaque strings empty/short/31-byte/multi-chunk,
+  and the loud non-empty-string-leaf rejection) and by un-ignoring the
+  did-05 executing readback gate
+  (`tests-e2e-rust/tests/did05_constructor_scaffold.rs`), which now asserts
+  the full `initial_state` → `ledger()` accessor readback INCLUDING `id`
+  (the pre-A30 failure-mode pin test is removed).
+
 ## [Toolchain 0.31.109, language 0.23.103, runtime 0.16.100] — initial-state chunked scaffold (2026-08-07)
 
 ### Fixed

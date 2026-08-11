@@ -9,6 +9,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _No changes yet._
 
+## [Toolchain 0.31.111, language 0.23.103, runtime 0.16.100] — struct-field projections in trapping arithmetic (2026-08-10)
+
+### Fixed
+
+- **Struct-field projection as an operand of trapping arithmetic (G1)** —
+  a pure circuit whose assert subtracted a struct-field projection failed to
+  compile with `unsupported Compact construct (pure-circuit-body-emission): no
+  walker shape matched pure circuit body`, e.g.
+  `if (policy.enforceMaxAge) { assert(currentTime -
+  attestation.proof.createdAt <= policy.maxAge, "..."); }`
+  (MediaNoxLabs/compact#5). The typer wraps trapping unsigned arithmetic in an
+  underflow guard `(seq (assert (>= a b)) (- a b))` and let\*-lifts any
+  operand that isn't already a simple local into its own temp, so a projection
+  operand nests TWO levels of lifted assignment:
+  `(= %t.0 (seq (= %t.1 (elt-ref attestation.proof createdAt)) (seq (assert
+  (>= currentTime %t.1) ...) (- currentTime %t.1))))`. `stmt-flatten`'s
+  `lift-seq-prefix-exprs` hoists the OUTER level to a statement, where
+  `stmt-pure-body-rust`'s `stmt->assignment` clause lowers it as
+  `let <temp> = <rhs>;` — but the inner level stayed inside the RHS and reached
+  `seq-stmt-rust`, which handled only `assert` and fell through to `expr-rust`,
+  which has no `(=)` clause at all. Plain scalar operands need only one level,
+  and the same projection under `==` rather than `<=` also stays single-level,
+  which is why every ingredient compiled in isolation and the `if` guard turned
+  out to be incidental (the unguarded assert failed identically).
+  `seq-stmt-rust` (`compiler/rust-passes-emit.ss`) now renders a nested
+  assignment through the same helpers the statement-level path uses —
+  `uniquify-rust-name` over `current-var-substitution`, then `expr-rust` for
+  the RHS — rather than gaining a second projection-aware renderer, and
+  `expr-rust`'s `seq` clause folds its prefix statements instead of mapping
+  them so a binding one introduces is in scope for the statements after it and
+  for the tail. The two `let`-binding clauses in `stmt-pure-body-rust` reserve
+  their own Rust name for the duration of the RHS render, so a temp lifted from
+  inside it uniquifies instead of shadowing the binder. Unblocks
+  midnight-verifiable-credentials' `status-proof-protocol.compact`
+  (`assertAuthorityAttestedStatusProofFreshEnough`, reached through
+  `revocation-registry.compact`) and `secret-birth-credential.compact`, both of
+  which previously died at `status-proof-protocol.compact:522`. Every existing
+  byte-parity fixture is UNCHANGED — bodies without a nested assignment take
+  the identical code path, and the digital-passport fixture's single-level
+  `let t = { assert!(...); ... }` block form is preserved. Guarded by the new
+  `examples/guarded_assert_arith_fixture.compact` fixture (byte parity via
+  `tests-e2e-rust/tests/codegen_regression.rs`) plus the executing assert gate
+  `tests-e2e-rust/tests/guarded_assert_arith_fixture.rs`, which calls the
+  generated pure circuits with values that satisfy and values that trip each
+  assert — pinning the inclusive boundary, the underflow trap (a dropped guard
+  would wrap on `u64` and silently pass), the skipped-guard path, and a
+  two-projection subtraction whose returned difference proves the two lifted
+  temps stayed distinct. Emitter-only fix: the runtime crate version stays
+  0.16.100 because generated contracts pin it via `check_runtime_version!`,
+  which requires exact equality — only the toolchain version advances.
+
 ## [Toolchain 0.31.110, language 0.23.103, runtime 0.16.100] — alignment-aware ledger-read decode (2026-08-10)
 
 ### Fixed

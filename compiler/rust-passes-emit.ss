@@ -1688,6 +1688,11 @@
       ;; current-witness/circuit-id-ht) so user pure-circuit calls and
       ;; field accesses in the guard lower correctly; other expressions
       ;; render via expr-rust as `<expr>;`.
+      ;;
+      ;; Returns two values: the rendered statement string and either #f
+      ;; or a `(var-name . rust-name)` pair naming a binding the statement
+      ;; introduced, so expr-rust's `seq` clause can thread it into
+      ;; current-var-substitution for the statements that follow.
       (define (seq-stmt-rust e native-id-ht)
         (nanopass-case (Ltypescript Expression) e
           [(assert ,src ,expr0 ,mesg)
@@ -1700,10 +1705,41 @@
                [(or (not cstr) (rendered-has-todo? cstr))
                 (rust-feature-error src 'pure-circuit-body-emission
                   "seq guard assert unrenderable")]
-               [else (format "compact_assert!(~a, ~s);" cstr
-                             (if (string? mesg) mesg ""))]))]
+               [else (values (format "compact_assert!(~a, ~s);" cstr
+                                     (if (string? mesg) mesg ""))
+                             #f)]))]
+          [(= ,src ,var-name ,expr^)
+           ;; G1: a let*-lifted temp assignment nested inside a `seq`
+           ;; block. The statement-level renderer already lowers these —
+           ;; see stmt-pure-body-rust's stmt->assignment clause — but a
+           ;; `seq` prefix reached this renderer and fell through to
+           ;; expr-rust, which has no `(=)` clause, so the whole body
+           ;; bailed with `no walker shape matched`.
+           ;;
+           ;; The shape arises whenever a trapping arithmetic operand is
+           ;; itself let*-lifted, which the typer does for struct-field
+           ;; projections: `now - att.createdAt <= policy.maxAge`
+           ;; lowers to `(= %t.6 (seq (= %t.7 (elt-ref att createdAt))
+           ;; (seq (assert (>= now %t.7) ...) (- now %t.7))))` — two
+           ;; nested assignment levels, where a plain scalar operand
+           ;; produces only one. Plain `-`/`+`/`*` on locals, and the
+           ;; same projection under `==`, only ever hit the outer level,
+           ;; which is why every ingredient compiled in isolation.
+           ;;
+           ;; Rendering reuses the same helpers as the statement-level
+           ;; path (uniquify-rust-name over current-var-substitution, then
+           ;; expr-rust for the RHS) rather than introducing a second
+           ;; projection-aware renderer. The RHS renders under the
+           ;; pre-binding substitution — a lifted temp never references
+           ;; itself.
+           (let* ([binds (current-var-substitution)]
+                  [proposed (symbol->string (camel->snake (id-sym var-name)))]
+                  [rust-name (uniquify-rust-name proposed binds)]
+                  [rhs (expr-rust expr^ native-id-ht)])
+             (values (format "let ~a = ~a;" rust-name rhs)
+                     (cons var-name rust-name)))]
           [else
-           (string-append (expr-rust e native-id-ht) ";")]))
+           (values (string-append (expr-rust e native-id-ht) ";") #f)]))
 
       (define (expr-rust expr native-id-ht)
         (nanopass-case (Ltypescript Expression) expr
@@ -1938,23 +1974,43 @@
            ;; guard assert's condition renders via cond-rust using the
            ;; current var-substitution + circuit/witness id hashtables so
            ;; calls to user pure circuits / field accesses lower correctly.
-           (let ([pre (map (lambda (e) (seq-stmt-rust e native-id-ht)) expr*)]
-                 [tail (guard (c [#t #f]) (expr-rust expr native-id-ht))])
+           ;;
+           ;; G1: the prefix statements are folded rather than mapped so a
+           ;; binding one of them introduces (seq-stmt-rust's `(=)` clause)
+           ;; is in scope for the statements after it and for the tail —
+           ;; the same left-to-right substitution threading
+           ;; stmt-pure-body-rust does at statement level. Prefixes that
+           ;; bind nothing leave the substitution untouched, so bodies
+           ;; without a nested assignment render exactly as before.
+           (let loop ([xs expr*] [binds (current-var-substitution)] [rev-pre '()])
              (cond
-               [(or (not tail) (rendered-has-todo? tail))
-                (rust-feature-error src 'pure-circuit-body-emission
-                  "seq tail expression unrenderable")]
+               [(pair? xs)
+                (let-values ([(line bind)
+                              (parameterize ([current-var-substitution binds])
+                                (seq-stmt-rust (car xs) native-id-ht))])
+                  (loop (cdr xs)
+                        (if bind (cons bind binds) binds)
+                        (cons line rev-pre)))]
                [else
-                (string-append
-                  "{ "
-                  (let join ([xs pre] [acc ""])
-                    (cond
-                      [(null? xs) acc]
-                      [(null? (cdr xs)) (string-append acc (car xs))]
-                      [else (join (cdr xs) (string-append acc (car xs) " "))]))
-                  (if (pair? pre) " " "")
-                  tail
-                  " }")]))]
+                (let ([pre (reverse rev-pre)]
+                      [tail (guard (c [#t #f])
+                              (parameterize ([current-var-substitution binds])
+                                (expr-rust expr native-id-ht)))])
+                  (cond
+                    [(or (not tail) (rendered-has-todo? tail))
+                     (rust-feature-error src 'pure-circuit-body-emission
+                       "seq tail expression unrenderable")]
+                    [else
+                     (string-append
+                       "{ "
+                       (let join ([xs pre] [acc ""])
+                         (cond
+                           [(null? xs) acc]
+                           [(null? (cdr xs)) (string-append acc (car xs))]
+                           [else (join (cdr xs) (string-append acc (car xs) " "))]))
+                       (if (pair? pre) " " "")
+                       tail
+                       " }")]))]))]
           [else
            (rust-feature-error #f 'expr-variant
              "unhandled Expression variant in expr-rust")]))
@@ -2567,9 +2623,15 @@
                  (let* ([var-name (car b)]
                         [rhs (cdr b)]
                         [proposed (symbol->string (camel->snake (id-sym var-name)))]
-                        [rust-name (uniquify-rust-name proposed binds)])
+                        [rust-name (uniquify-rust-name proposed binds)]
+                        ;; G1: reserve rust-name while rendering the RHS so a
+                        ;; temp lifted from inside it (seq-stmt-rust's `(=)`
+                        ;; clause) uniquifies instead of shadowing this
+                        ;; binder. The RHS can't reference var-name itself, so
+                        ;; adding the entry early only affects name selection.
+                        [rhs-binds (cons (cons var-name rust-name) binds)])
                    (let ([s (guard (c [#t #f])
-                              (parameterize ([current-var-substitution binds])
+                              (parameterize ([current-var-substitution rhs-binds])
                                 (expr-rust rhs native-id-ht)))])
                      (cond
                        [(or (not s) (rendered-has-todo? s)) #f]
@@ -2588,9 +2650,12 @@
                  (let* ([var-name (car a)]
                         [rhs (cdr a)]
                         [proposed (symbol->string (camel->snake (id-sym var-name)))]
-                        [rust-name (uniquify-rust-name proposed binds)])
+                        [rust-name (uniquify-rust-name proposed binds)]
+                        ;; G1: see the const-binding clause above — reserve
+                        ;; rust-name for the duration of the RHS render.
+                        [rhs-binds (cons (cons var-name rust-name) binds)])
                    (let ([s (guard (c [#t #f])
-                              (parameterize ([current-var-substitution binds])
+                              (parameterize ([current-var-substitution rhs-binds])
                                 (expr-rust rhs native-id-ht)))])
                      (cond
                        [(or (not s) (rendered-has-todo? s)) #f]

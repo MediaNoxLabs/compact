@@ -13,6 +13,10 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
+;; ==== Non-native fields and curve points
+(declare-native-type JubjubScalar tfield (field-scalar (curve-jubjub)))
+(declare-native-type JubjubPoint tpoint (curve-jubjub))
+
 ;; ==== Transient (Poseidon) hashing
 (declare-native-entry circuit transientHash [A]
   "__compactRuntime.transientHash"
@@ -27,7 +31,7 @@
   Field
   (rust "compact_runtime::transient_commit"))
 
-;; ==== Persistent (SHA-256) hashing
+;; ==== Hashing
 (declare-native-entry circuit persistentHash [A]
   "__compactRuntime.persistentHash"
   ([value A (discloses "a hash of")])
@@ -53,23 +57,22 @@
   (Bytes 32)
   (rust "compact_runtime::upgrade_from_transient"))
 
-;; ==== Other hashing circuits
 (declare-native-entry circuit keccak256 [A]
   "__compactRuntime.keccak256"
   ([value A (discloses "a hash of")])
   (Bytes 32)
   (rust "/* TODO M3.5+: no upstream Rust binding for keccak256; midnight crypto exposes keccak only as a ZK circuit chip. */ unimplemented!()"))
 
-;; ====
+;; ==== Curves
 (declare-native-entry circuit jubjubPointX
   "__compactRuntime.jubjubPointX"
-  ([np (TypeRef JubjubPoint) (discloses "the X coordinate of")])
+  ([pt (TypeRef JubjubPoint) (discloses "the X coordinate of")])
   Field
   (rust "compact_runtime::jubjub_point_x"))
 
 (declare-native-entry circuit jubjubPointY
   "__compactRuntime.jubjubPointY"
-  ([np (TypeRef JubjubPoint) (discloses "the Y coordinate of")])
+  ([pt (TypeRef JubjubPoint) (discloses "the Y coordinate of")])
   Field
   (rust "compact_runtime::jubjub_point_y"))
 
@@ -80,16 +83,22 @@
   (TypeRef JubjubPoint)
   (rust "compact_runtime::ec_add"))
 
+(declare-native-entry circuit ecNeg
+  "__compactRuntime.ecNeg"
+  ([a (TypeRef JubjubPoint) (discloses "the elliptic curve negation of")])
+  (TypeRef JubjubPoint)
+  (rust "compact_runtime::ec_neg"))
+
 (declare-native-entry circuit ecMul
   "__compactRuntime.ecMul"
   ([a (TypeRef JubjubPoint) (discloses "an elliptic curve product including")]
-   [b Field (discloses "an elliptic curve product including")])
+   [b (TypeRef JubjubScalar) (discloses "an elliptic curve product including")])
   (TypeRef JubjubPoint)
   (rust "compact_runtime::ec_mul"))
 
 (declare-native-entry circuit ecMulGenerator
   "__compactRuntime.ecMulGenerator"
-  ([b Field (discloses "the product of the embedded group generator with")])
+  ([b (TypeRef JubjubScalar) (discloses "the product of the embedded group generator with")])
   (TypeRef JubjubPoint)
   (rust "compact_runtime::ec_mul_generator"))
 
@@ -101,8 +110,8 @@
 
 (declare-native-entry circuit constructJubjubPoint
   "__compactRuntime.constructJubjubPoint"
-  ([x Field (discloses "a JubjubPoint containing x coordinate")]
-   [y Field (discloses "a JubjubPoint containing y coordinate")])
+  ([x Field (discloses "a JubjubPoint containing X coordinate")]
+   [y Field (discloses "a JubjubPoint containing Y coordinate")])
   (TypeRef JubjubPoint)
   (rust "compact_runtime::construct_jubjub_point"))
 

@@ -209,23 +209,23 @@ fn make_envelope(
         HashMap::new();
     operations = operations.insert(
         EntryPointBuf(b"advance".to_vec()),
-        ContractOperation::new(None),
+        ContractOperation::new(None, None),
     );
     operations = operations.insert(
         EntryPointBuf(b"vote$reveal".to_vec()),
-        ContractOperation::new(None),
+        ContractOperation::new(None, None),
     );
     operations = operations.insert(
         EntryPointBuf(b"add_voter".to_vec()),
-        ContractOperation::new(None),
+        ContractOperation::new(None, None),
     );
     operations = operations.insert(
         EntryPointBuf(b"vote$commit".to_vec()),
-        ContractOperation::new(None),
+        ContractOperation::new(None, None),
     );
     operations = operations.insert(
         EntryPointBuf(b"set_topic".to_vec()),
-        ContractOperation::new(None),
+        ContractOperation::new(None, None),
     );
     ContractState {
         data,

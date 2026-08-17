@@ -68,7 +68,7 @@ fn counter_init_plus_increment_byte_parity() {
     let mut operations: HashMap<EntryPointBuf, ContractOperation, DefaultDB> = HashMap::new();
     operations = operations.insert(
         EntryPointBuf(b"increment".to_vec()),
-        ContractOperation::new(None),
+        ContractOperation::new(None, None),
     );
     let contract_state: ContractState<DefaultDB> = ContractState::new(
         post_state_value.clone(),

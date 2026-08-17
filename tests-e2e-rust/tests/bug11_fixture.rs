@@ -104,15 +104,15 @@ fn make_envelope(
         HashMap::new();
     operations = operations.insert(
         EntryPointBuf(b"set_tiny".to_vec()),
-        ContractOperation::new(None),
+        ContractOperation::new(None, None),
     );
     operations = operations.insert(
         EntryPointBuf(b"set_medium".to_vec()),
-        ContractOperation::new(None),
+        ContractOperation::new(None, None),
     );
     operations = operations.insert(
         EntryPointBuf(b"set_wide".to_vec()),
-        ContractOperation::new(None),
+        ContractOperation::new(None, None),
     );
     ContractState {
         data,

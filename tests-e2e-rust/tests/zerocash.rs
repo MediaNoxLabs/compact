@@ -175,11 +175,11 @@ fn make_envelope(
         HashMap::new();
     operations = operations.insert(
         EntryPointBuf(b"zerocash_mint".to_vec()),
-        ContractOperation::new(None),
+        ContractOperation::new(None, None),
     );
     operations = operations.insert(
         EntryPointBuf(b"spend".to_vec()),
-        ContractOperation::new(None),
+        ContractOperation::new(None, None),
     );
     ContractState {
         data,

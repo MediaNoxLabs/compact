@@ -119,7 +119,7 @@ pub fn entry_point(name: &str) -> EntryPointBuf {
 pub fn new_contract_state<D: DB>(data: StateValue<D>, operations: &[&str]) -> ContractState<D> {
     let mut ops: HashMap<EntryPointBuf, ContractOperation, D> = HashMap::new();
     for name in operations {
-        ops = ops.insert(entry_point(name), ContractOperation::new(None));
+        ops = ops.insert(entry_point(name), ContractOperation::new(None, None));
     }
     ContractState::new(data, ops, ContractMaintenanceAuthority::default())
 }

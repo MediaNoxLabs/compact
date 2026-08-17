@@ -101,11 +101,11 @@ fn make_envelope(
         HashMap::new();
     operations = operations.insert(
         EntryPointBuf(b"check_set_empty".to_vec()),
-        ContractOperation::new(None),
+        ContractOperation::new(None, None),
     );
     operations = operations.insert(
         EntryPointBuf(b"check_map_empty".to_vec()),
-        ContractOperation::new(None),
+        ContractOperation::new(None, None),
     );
     ContractState {
         data,

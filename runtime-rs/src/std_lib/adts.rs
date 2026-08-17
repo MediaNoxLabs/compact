@@ -221,6 +221,14 @@ pub fn decode_fr(av: &AlignedValue) -> Result<Fr, CompactError> {
 /// `ceil(declared_len/31) - ceil(len/31)` chunks are re-emitted here as
 /// leading zero `Fr`s (same rule as upstream
 /// `ValueAtom::field_repr_unchecked` for `Bytes`).
+///
+/// The re-padding is UNCONDITIONAL: a fully-normalised EMPTY atom (an
+/// all-zero value, `bytes.len() == 0`) re-emits all
+/// `ceil(declared_len/31)` chunks as zero `Fr`s. The Fr count is driven
+/// by the alignment's declared width, never by atom emptiness — the
+/// zero-Frs-for-empty rule belongs exclusively to `Compress` leaves,
+/// whose `declared_len` IS the atom's own length (A31,
+/// MediaNoxLabs/compact#15).
 fn push_atom_byte_chunks(
     bytes: &[u8],
     declared_len: usize,
@@ -258,6 +266,10 @@ fn push_atom_byte_chunks(
 /// - `Bytes { length }` — `ceil(length/31)` `Fr`s of 31-byte chunks
 ///   (matches upstream `[u8; N]::field_repr` / `[u8; 32]::from_field_repr`
 ///   and the integer impls: an integer atom is <= 16 bytes, one chunk).
+///   ALWAYS `ceil(length/31)` `Fr`s — the count comes from the declared
+///   alignment width, so a normalize-stripped short or EMPTY atom (an
+///   all-zero `Bytes<N>` value) re-pads with zero `Fr`s rather than
+///   shrinking the stream (A31, MediaNoxLabs/compact#15).
 /// - `Compress` — a variable-length byte leaf (`Opaque<"string">` /
 ///   `Vec<u8>`). This runtime's `OpaqueString`/`Vec<u8>` `FieldRepr`
 ///   packs the RAW bytes in 31-byte chunks (not upstream's
@@ -456,7 +468,9 @@ pub fn serialize_contract_state<D: DB>(state: &ContractState<D>) -> Result<Vec<u
 mod tests {
     use super::*;
     use crate::std_lib::OpaqueString;
-    use crate::{new_cell, Aligned, AlignedValue, Alignment, ContractAddress, DefaultDB, Value};
+    use crate::{
+        new_cell, Aligned, AlignedValue, Alignment, ContractAddress, DefaultDB, Value, ValueAtom,
+    };
     use midnight_base_crypto::hash::HashOutput;
 
     /// The A30 invariant under test: for every T the generated code
@@ -541,6 +555,32 @@ mod tests {
         bytes[31] = 0xBB;
         let got = decode_via_field_repr::<[u8; 32]>(&cell_av(bytes)).expect("bytes32 decode");
         assert_eq!(got, bytes);
+    }
+
+    /// A31 (MediaNoxLabs/compact#15): the exact shape the issue's evidence
+    /// prints — alignment `b32`, value a single ZERO-byte atom (an all-zero
+    /// `Bytes<32>` whose trailing zeros `ValueAtom::normalize` stripped
+    /// entirely). Built by hand so no encoder's normalisation choices sit
+    /// between the test and the decoder. The `Bytes{32}` alignment must
+    /// drive the expansion to exactly ceil(32/31) = 2 zero `Fr`s; deriving
+    /// the count from the atom's own byte length (0 → 0 `Fr`s, the rule
+    /// that only `Compress` leaves may use) makes `[u8; 32]`'s
+    /// `from_field_repr` reject the stream.
+    #[test]
+    fn via_field_repr_decodes_normalized_empty_bytes32_atom() {
+        let av = AlignedValue::new(
+            Value(vec![ValueAtom(vec![])]),
+            <[u8; 32] as Aligned>::alignment(),
+        )
+        .expect("an empty atom fits the Bytes{32} alignment");
+        assert_eq!(
+            decode_via_field_repr::<ContractAddress>(&av).expect("all-zero address decode"),
+            ContractAddress::default()
+        );
+        assert_eq!(
+            decode_via_field_repr::<[u8; 32]>(&av).expect("all-zero bytes32 decode"),
+            [0u8; 32]
+        );
     }
 
     /// Mimics a codegen'd tenum: `Aligned` = u8, `Value` = discriminant
@@ -638,6 +678,20 @@ mod tests {
         let mut addr = [0u8; 32];
         addr[..4].copy_from_slice(&[9, 8, 7, 6]); // trailing zeros: normalisation edge
         let v = AddrTag { addr, tag: 42 };
+        let got = decode_via_field_repr::<AddrTag>(&cell_av(v.clone())).expect("struct decode");
+        assert_eq!(got, v);
+    }
+
+    /// A31 (MediaNoxLabs/compact#15): the ALL-zero struct — EVERY leaf
+    /// atom normalises to the empty atom, so the whole 3-Fr stream
+    /// (2 for `addr`, 1 for `tag`) must be reconstructed from the
+    /// alignment segments alone.
+    #[test]
+    fn via_field_repr_roundtrips_all_zero_bytes32_bearing_struct() {
+        let v = AddrTag {
+            addr: [0u8; 32],
+            tag: 0,
+        };
         let got = decode_via_field_repr::<AddrTag>(&cell_av(v.clone())).expect("struct decode");
         assert_eq!(got, v);
     }

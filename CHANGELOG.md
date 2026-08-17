@@ -9,6 +9,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _No changes yet._
 
+## [Toolchain 0.31.112, language 0.23.103, runtime 0.16.100] — all-zero byte-cell decode regression gate (2026-08-17)
+
+### Added
+
+- **Alignment-kind-driven `Fr` expansion for normalized-empty `Bytes<N>`
+  atoms (A31)** — regression coverage for MediaNoxLabs/compact#15, which
+  reported `compact_runtime::std_lib::decode_via_field_repr` failing with
+  `from_field_repr returned None` on ALL-zero `Bytes<32>` cells (e.g. a
+  `ContractAddress` ledger field such as did.compact's `ledger().id()`):
+  upstream `ValueAtom::normalize` strips trailing zero bytes, so an
+  all-zero `Bytes<32>` value is stored as a ZERO-byte atom while
+  `[u8; 32]::from_field_repr` demands exactly ceil(32/31) = 2 `Fr`s.
+  Investigation showed the decoder already expands `Bytes{n}` leaves from
+  the alignment's DECLARED width — unconditionally, empty atoms included —
+  since A30 (0.31.110): `push_atom_byte_chunks` re-emits the
+  `ceil(n/31) - ceil(len/31)` chunks normalisation stripped as leading
+  zero `Fr`s, which for the fully-stripped atom is all `ceil(n/31)` of
+  them, and the zero-`Fr`s-for-the-empty-atom rule applies only to
+  `Compress` (variable-length) leaves, whose declared length IS the atom's
+  own byte length. Every shape the issue names decodes correctly on this
+  tree. The reported failure string is exactly what the PRE-A30 1:1
+  atom→`Fr` decode produces for this value (`Fr::try_from(empty atom)` →
+  a 1-`Fr` stream where `[u8; 32]::from_field_repr` requires length 2 →
+  `None`), and a pre-A30 `compact-runtime` build can silently outlive a
+  pin bump downstream: the crate version deliberately stays fixed
+  (`check_runtime_version!` pins by exact string, so only the toolchain
+  version advances) and nix-store-synced sources carry epoch mtimes, so
+  cargo's mtime-based fingerprinting can miss a content swap on the path
+  dependency entirely — after a pin bump, `cargo clean -p compact-runtime`
+  (or touching the synced sources) forces the rebuild that picks up the
+  new decoder. What this tree was missing is a gate pinning the all-zero
+  shapes end to end, so a future decoder change cannot regress them
+  silently: `runtime-rs/tests/a31_zero_bytes_decode.rs` decodes the
+  all-zero `ContractAddress` cell (1) straight from `new_cell` (the
+  issue's LOCAL reproduction), (2) carried through
+  `tagged_serialize`/`tagged_deserialize` of a full `ContractState` — the
+  indexer-fed byte stream (the CHAIN reproduction) — and (3) through the
+  generated accessors' VM read program (`dup`/`idx`/`popeq` under
+  `ResultModeGather`) fed from the deserialised state, each first
+  asserting the stored atom really is the normalise-stripped empty atom so
+  the gate fails loudly if upstream encoding ever stops producing the A31
+  shape. Unit tests add the hand-built `alignment=b32, atoms=[-]` shape
+  (`via_field_repr_decodes_normalized_empty_bytes32_atom`) and the
+  all-zero multi-leaf struct — every leaf atom empty, the whole 3-`Fr`
+  stream reconstructed from alignment segments alone
+  (`via_field_repr_roundtrips_all_zero_bytes32_bearing_struct`), and the
+  `expand_atom` / `push_atom_byte_chunks` docs now state the
+  alignment-segment-kind split explicitly (the issue inferred an
+  empty-atom short-circuit from the A30 PR description; the docs now
+  foreclose that reading). No emitter or decoder logic changed: every
+  byte-parity fixture is byte-identical, all A30 round-trip tests are
+  untouched, and the runtime crate version stays 0.16.100.
+
 ## [Toolchain 0.31.111, language 0.23.103, runtime 0.16.100] — struct-field projections in trapping arithmetic (2026-08-10)
 
 ### Fixed

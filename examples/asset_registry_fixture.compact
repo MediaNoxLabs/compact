@@ -1,0 +1,377 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//  	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+//
+// A generic asset-registry fixture: one contract that puts every
+// "wide state + structured collections" codegen path under an
+// EXECUTING test, so the byte-parity corpus is not the only gate.
+//
+// What each part is here to lock in:
+//
+//   - **>16 ledger fields (A29).** 20 declarations, past the 16-slot
+//     `StateValue::Array` cap, so the front end chunks the on-chain
+//     state into a nested pl-array. `initial_state`'s scaffold must
+//     build the SAME nesting the read/write emitters derive from that
+//     IR; a flat scaffold produces state the generated `ledger()`
+//     accessors cannot read. Byte-parity can never see this (a
+//     wrong-but-stable scaffold passes forever) — the executing
+//     readback in tests/asset_registry_fixture.rs is the real gate.
+//
+//   - **A struct-typed cell decoded through the alignment-aware path
+//     (A30/A31).** `registryId: ContractAddress` is a stdlib struct
+//     wrapping `Bytes<32>`, so its read goes through
+//     `decode_via_field_repr::<ContractAddress>` rather than the flat
+//     `decode_bytes::<32>` a bare `Bytes<32>` cell uses. Cells are
+//     ALIGNMENT-encoded — `[u8; 32]::FIELD_SIZE` is 2 `Fr`s but the
+//     cell yields ONE 32-byte atom — so the decode must expand atoms
+//     by alignment, not 1:1.
+//       * `registryId = kernel.self()` runs in the constructor's query
+//         context, i.e. against the DEFAULT (all-zero) address: the
+//         stored atom normalises to EMPTY, which is the zero-length
+//         edge case of that expansion.
+//       * `custodian` is written by `setCustodian` from a caller-
+//         supplied address, giving the same decode a full 32-byte
+//         atom to expand.
+//
+//   - **Bare `Bytes<32>` cells at both extremes.** `salt` is never
+//     written (default: all-zero, normalises to an empty atom) and
+//     `label` is `pad(32, ...)` (partially filled).
+//
+//   - **Constructor read-your-writes (A28).** The constructor writes
+//     `operatorKey` / `auditorKey` from witnesses and THEN calls
+//     `assertOperatorDistinctFromAuditor(operatorKey)`, an impure
+//     circuit that reads both keys back off the ledger. Pending writes
+//     must be flushed to the query context before the call, or the
+//     assert compares two `JubjubPoint::default()`s and the
+//     distinctness invariant is silently satisfied.
+//
+//   - **Maps and Sets of STRUCT values.** `records` / `custodyGrants`
+//     are `Map<Opaque<"string">, Struct>` — a variable-length
+//     (`Compress`-aligned) KEY over a composite VALUE, so `lookup`
+//     decodes a whole struct through `decode_via_field_repr::<T>`:
+//     a nested struct, an enum field, `Bytes<32>` leaves, and (in
+//     `CustodyGrant`) a `ContractAddress` nested one level down.
+//     `retiredKeys` / `watchList` are `Set<Opaque<"string">>`.
+//
+//   - **Struct-field projection in trapping arithmetic (G1).**
+//     `assertRecordFreshEnough` subtracts a TWO-level projection
+//     (`record.provenance.registeredAt`) inside an `if` guard. The
+//     typer lowers trapping `a - b` to `(seq (assert guard) (- a b))`
+//     and let*-lifts each non-trivial operand, so a projection nests
+//     two levels of lifted assignment; the emitter must render both.
+//
+//   - Plus: enums (as a struct field, a circuit parameter and a
+//     comparison chain), `Counter` increments, witnesses, and a
+//     non-pure circuit calling a pure one.
+
+pragma language_version >= 0.20;
+
+import CompactStandardLibrary;
+
+export enum AssetClass {
+  Unspecified,
+  Instrument,
+  Container,
+  Document
+}
+
+export enum RecordMutation {
+  Unspecified,
+  Insert,
+  Update
+}
+
+export enum ListMutation {
+  Unspecified,
+  Add,
+  Drop
+}
+
+export struct Provenance {
+  facility: Bytes<32>,
+  registeredAt: Uint<64>,
+}
+
+// `note` is the deliberate variable-length (`Compress`-aligned) leaf.
+// `OpaqueString::FIELD_SIZE == 0`, so a NON-empty note gives the
+// generated `from_field_repr` no slot to carry its bytes and the
+// composite decode must fail LOUDLY rather than mis-slice — a
+// documented runtime limitation (see `decode_via_field_repr` in
+// runtime-rs/src/std_lib/adts.rs). Keeping the field here puts BOTH
+// halves of that contract under an executing test: the empty leaf
+// round-trips, the non-empty one errors.
+export struct AssetRecord {
+  code: Bytes<32>,
+  note: Opaque<"string">,
+  provenance: Provenance,
+  kind: AssetClass,
+  quantity: Uint<64>,
+}
+
+export struct CustodyGrant {
+  code: Bytes<32>,
+  holder: ContractAddress,
+  grantedAt: Uint<64>,
+}
+
+export struct FreshnessPolicy {
+  enforceMaxAge: Boolean,
+  maxAge: Uint<64>,
+}
+
+// 20 ledger fields — past the 16-slot StateValue::Array cap, so the
+// state is chunked into a nested pl-array (A29).
+export ledger schemaVersion: Uint<32>;
+export ledger registryId: ContractAddress;
+export ledger custodian: ContractAddress;
+export ledger operatorKey: JubjubPoint;
+export ledger auditorKey: JubjubPoint;
+export ledger salt: Bytes<32>;
+export ledger label: Bytes<32>;
+export ledger createdAt: Uint<64>;
+export ledger updatedAt: Uint<64>;
+export ledger maxAgeSeconds: Uint<64>;
+export ledger recordCount: Counter;
+export ledger open: Boolean;
+export ledger frozen: Boolean;
+export ledger revision: Counter;
+export ledger writeCount: Counter;
+export ledger records: Map<Opaque<"string">, AssetRecord>;
+export ledger custodyGrants: Map<Opaque<"string">, CustodyGrant>;
+export ledger retiredKeys: Set<Opaque<"string">>;
+export ledger watchList: Set<Opaque<"string">>;
+export ledger tags: Set<Field>;
+
+witness localOperatorKey(): JubjubPoint;
+witness localAuditorKey(): JubjubPoint;
+witness currentTimestamp(): Uint<64>;
+
+// The G1 shape: an `if`-guarded assert whose condition subtracts a
+// two-level struct-field projection and compares with `<=`.
+export pure circuit assertRecordFreshEnough(
+  policy: FreshnessPolicy,
+  record: AssetRecord,
+  currentTime: Uint<64>
+): [] {
+  assert(
+    currentTime >= record.provenance.registeredAt,
+    "registration time cannot be in the future"
+  );
+  if (policy.enforceMaxAge) {
+    assert(
+      currentTime - record.provenance.registeredAt <= policy.maxAge,
+      "record exceeds the max-age policy"
+    );
+  }
+}
+
+// The same trapping arithmetic with no `if` guard, and with a
+// projection on BOTH operands — two lifted temps in one body, so the
+// temp-name uniquifier is exercised too.
+export pure circuit registrationGap(newer: AssetRecord, older: AssetRecord): Uint<64> {
+  assert(
+    newer.provenance.registeredAt >= older.provenance.registeredAt,
+    "newer record must not predate the older one"
+  );
+  return newer.provenance.registeredAt - older.provenance.registeredAt;
+}
+
+export pure circuit assertRecordClassKnown(record: AssetRecord): [] {
+  assert(record.kind != AssetClass.Unspecified, "asset class must be specified");
+}
+
+circuit assertOperatorDistinctFromAuditor(candidate: JubjubPoint): [] {
+  assert(
+    jubjubPointX(candidate) != jubjubPointX(auditorKey) ||
+    jubjubPointY(candidate) != jubjubPointY(auditorKey),
+    "operator key matches the auditor key"
+  );
+}
+
+circuit recordWrite(): [] {
+  writeCount.increment(1);
+  revision.increment(1);
+  updatedAt = disclose(currentTimestamp());
+}
+
+circuit assertWritable(): [] {
+  assert(open, "registry is closed");
+  assert(!frozen, "registry is frozen");
+}
+
+circuit recordExists(id: Opaque<"string">): Boolean {
+  return records.member(id) || custodyGrants.member(id);
+}
+
+constructor() {
+  schemaVersion = 3;
+  registryId = kernel.self();
+  label = pad(32, "asset-registry:v3");
+  maxAgeSeconds = 86400;
+  open = true;
+  frozen = false;
+  operatorKey = disclose(localOperatorKey());
+  auditorKey = disclose(localAuditorKey());
+  assertOperatorDistinctFromAuditor(operatorKey);
+
+  const now = disclose(currentTimestamp());
+  createdAt = now;
+  updatedAt = now;
+}
+
+export circuit setCustodian(holder: ContractAddress): [] {
+  assertWritable();
+  custodian = disclose(holder);
+
+  recordWrite();
+}
+
+export circuit setRecord(
+  recordId: Opaque<"string">,
+  record: AssetRecord,
+  mutation: RecordMutation
+): [] {
+  const disclosedId = disclose(recordId);
+  const disclosedRecord = disclose(record);
+  const disclosedMutation = disclose(mutation);
+  assertWritable();
+  assert(
+    disclosedMutation == RecordMutation.Insert || disclosedMutation == RecordMutation.Update,
+    "record mutation must be Insert or Update"
+  );
+  assertRecordClassKnown(disclosedRecord);
+  if (disclosedMutation == RecordMutation.Update) {
+    assert(records.member(disclosedId), "record does not exist");
+    records.remove(disclosedId);
+  } else if (disclosedMutation == RecordMutation.Insert) {
+    assert(!recordExists(disclosedId), "record already exists");
+    recordCount.increment(1);
+  }
+  records.insert(disclosedId, disclosedRecord);
+
+  recordWrite();
+}
+
+export circuit removeRecord(recordId: Opaque<"string">): [] {
+  const disclosedId = disclose(recordId);
+  assertWritable();
+  assert(records.member(disclosedId), "record does not exist");
+  assert(!watchList.member(disclosedId), "record is still watched");
+  records.remove(disclosedId);
+  retiredKeys.insert(disclosedId);
+
+  recordWrite();
+}
+
+export circuit setCustodyGrant(
+  grantId: Opaque<"string">,
+  grant: CustodyGrant,
+  mutation: RecordMutation
+): [] {
+  const disclosedId = disclose(grantId);
+  const disclosedGrant = disclose(grant);
+  const disclosedMutation = disclose(mutation);
+  assertWritable();
+  assert(
+    disclosedMutation == RecordMutation.Insert || disclosedMutation == RecordMutation.Update,
+    "grant mutation must be Insert or Update"
+  );
+  if (disclosedMutation == RecordMutation.Update) {
+    assert(custodyGrants.member(disclosedId), "grant does not exist");
+    custodyGrants.remove(disclosedId);
+  } else if (disclosedMutation == RecordMutation.Insert) {
+    assert(!recordExists(disclosedId), "grant already exists");
+  }
+  custodyGrants.insert(disclosedId, disclosedGrant);
+
+  recordWrite();
+}
+
+export circuit setWatch(recordId: Opaque<"string">, mutation: ListMutation): [] {
+  const disclosedId = disclose(recordId);
+  const disclosedMutation = disclose(mutation);
+  assertWritable();
+  assert(
+    disclosedMutation == ListMutation.Add || disclosedMutation == ListMutation.Drop,
+    "watch mutation must be Add or Drop"
+  );
+  assert(recordExists(disclosedId), "record does not exist");
+  if (disclosedMutation == ListMutation.Add) {
+    assert(!watchList.member(disclosedId), "record is already watched");
+    watchList.insert(disclosedId);
+  } else if (disclosedMutation == ListMutation.Drop) {
+    assert(watchList.member(disclosedId), "record is not watched");
+    watchList.remove(disclosedId);
+  }
+
+  recordWrite();
+}
+
+export circuit tag(value: Field): [] {
+  assertWritable();
+  tags.insert(disclose(value));
+
+  recordWrite();
+}
+
+// Map-of-struct READ path: `lookup` decodes a whole composite value
+// (nested struct + enum + variable-length `Compress` leaf) out of the
+// ledger through `decode_via_field_repr::<AssetRecord>`, and hands it
+// straight to the guarded pure circuit.
+export circuit assertStoredRecordFresh(
+  recordId: Opaque<"string">,
+  policy: FreshnessPolicy,
+  currentTime: Uint<64>
+): [] {
+  const disclosedId = disclose(recordId);
+  assert(records.member(disclosedId), "record does not exist");
+  const record = records.lookup(disclosedId);
+  assertRecordFreshEnough(policy, record, disclose(currentTime));
+}
+
+// Same read path for a value whose struct nests `ContractAddress`, so
+// the composite decode has to walk a `Bytes<32>` leaf inside a struct.
+export pure circuit assertGrantNotFuture(grant: CustodyGrant, asOf: Uint<64>): [] {
+  assert(grant.grantedAt <= asOf, "grant is not yet effective");
+}
+
+export circuit assertGrantEffective(
+  grantId: Opaque<"string">,
+  asOf: Uint<64>
+): [] {
+  const disclosedId = disclose(grantId);
+  assert(custodyGrants.member(disclosedId), "grant does not exist");
+  const grant = custodyGrants.lookup(disclosedId);
+  assertGrantNotFuture(grant, disclose(asOf));
+}
+
+// Impure caller of the guarded pure circuit: a tripped assert must
+// propagate out of the transaction rather than being swallowed.
+export circuit acceptIfFresh(
+  policy: FreshnessPolicy,
+  record: AssetRecord,
+  currentTime: Uint<64>
+): [] {
+  assertRecordFreshEnough(policy, record, currentTime);
+  recordWrite();
+}
+
+export circuit close(): [] {
+  assert(open, "registry is already closed");
+  open = false;
+  frozen = true;
+
+  recordWrite();
+}

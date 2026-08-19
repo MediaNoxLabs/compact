@@ -100,6 +100,21 @@ const FIXTURES: &[(&str, &str)] = &[
     // the 0.5.0-specific codegen (JubjubPoint decoder/default, ctor-mode
     // impure calls, multi-assert branches).
     ("did-05/contract/src/did.compact", "did-05"),
+    // Wide, structured state: 20 ledger fields (A29 chunked scaffold), a
+    // `ContractAddress` cell written from `kernel.self()` whose read goes
+    // through the alignment-aware `decode_via_field_repr` (A30/A31, incl.
+    // the all-zero / empty-normalised-atom case), `Map`/`Set` values that
+    // are structs, and a constructor that calls an impure circuit reading
+    // its own writes (A28). Executing gate:
+    // tests/asset_registry_fixture.rs.
+    ("asset_registry_fixture.compact", "asset-registry-fixture"),
+    // Schnorr-on-Jubjub routing: the emitter rewrites a call to the generic
+    // `schnorrVerify<#n>` into `compact_runtime::schnorr_verify_jubjub` and
+    // routes `SchnorrSignature` to the runtime's mirror type. Also the only
+    // fixture with a generic circuit, a generic struct at two widths, and a
+    // tuple-returning witness. Executing gate:
+    // tests/schnorr_attest_fixture.rs.
+    ("schnorr_attest_fixture.compact", "schnorr-attest-fixture"),
 ];
 
 /// Walks up from `start` looking for `./result/bin/compactc` (the nix

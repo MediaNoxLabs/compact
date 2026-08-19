@@ -719,6 +719,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-contract-asset-registry-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-runtime",
+]
+
+[[package]]
 name = "compact-contract-bounded-uint-fixture"
 version = "0.1.0"
 dependencies = [
@@ -867,6 +874,13 @@ dependencies = [
 
 [[package]]
 name = "compact-contract-pure-circuit-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-runtime",
+]
+
+[[package]]
+name = "compact-contract-schnorr-attest-fixture"
 version = "0.1.0"
 dependencies = [
  "compact-runtime",
@@ -4786,6 +4800,7 @@ version = "0.1.0"
 dependencies = [
  "compact-contract-aliases-fixture",
  "compact-contract-assert-parity-fixture",
+ "compact-contract-asset-registry-fixture",
  "compact-contract-bounded-uint-fixture",
  "compact-contract-bug11-fixture",
  "compact-contract-chunked-ledger-fixture",
@@ -4807,6 +4822,7 @@ dependencies = [
  "compact-contract-module-fixture",
  "compact-contract-nested-map-fixture",
  "compact-contract-pure-circuit-fixture",
+ "compact-contract-schnorr-attest-fixture",
  "compact-contract-sealed-ledger-fixture",
  "compact-contract-set-fixture",
  "compact-contract-set-size-fixture",

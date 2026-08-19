@@ -82,3 +82,13 @@ compact-contract-chunked-ledger-fixture = { path = "contracts/chunked-ledger-fix
 # proving the struct-field projection inside the trapping-subtraction guard
 # lowers to the right operand (byte-parity alone cannot see a swapped operand).
 compact-contract-guarded-assert-arith-fixture = { path = "contracts/guarded-assert-arith-fixture" }
+# Wide-state executing gate: asset_registry_fixture.rs runs the generated
+# initial_state (20 ledger fields, so the scaffold is chunked), reads every
+# scalar back through ledger(), and drives the map/set circuits so the
+# composite `decode_via_field_repr` reads actually execute.
+compact-contract-asset-registry-fixture = { path = "contracts/asset-registry-fixture" }
+# Schnorr routing gate: schnorr_attest_fixture.rs executes a circuit whose
+# generic Schnorr verifier the emitter rewrites to
+# `compact_runtime::schnorr_verify_jubjub`, proving the rewrite yields a call
+# that both type-checks and verifies a real signature.
+compact-contract-schnorr-attest-fixture = { path = "contracts/schnorr-attest-fixture" }

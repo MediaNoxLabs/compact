@@ -1,0 +1,205 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//  	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+//
+// Schnorr-on-Jubjub attestation fixture.
+//
+// This is the only fixture that reaches the emitter's Schnorr routing,
+// so it exists to keep two name-keyed special cases honest
+// (`compiler/rust-passes-helpers.ss`):
+//
+//   1. `impure-call-target` rewrites a call to a circuit whose snake-
+//      cased name is `schnorr_verify` into
+//      `compact_runtime::schnorr_verify_jubjub`. The Compact-side
+//      verifier is GENERIC (`schnorrVerify<#n>`) and the body lowering
+//      for a generic impure circuit is not supported, so the emitter
+//      never lowers the module body — it routes the call to the
+//      runtime's orphan-safe wrapper instead
+//      (`runtime-rs/src/std_lib/schnorr.rs`).
+//   2. `stdlib-struct-mappings` elides the codegen-emitted
+//      `SchnorrSignature` struct and routes the type to
+//      `compact_runtime::SchnorrSignature`, which has the matching
+//      layout, so the rewritten call site type-checks.
+//
+// Both are keyed on the NAMES `schnorr_verify` / `SchnorrSignature`,
+// which is why the module below has to use them.
+//
+// FORWARD NOTE (upstream 0.33): upstream's standard library now ships
+// Schnorr-on-Jubjub itself, as `jubjubSchnorrVerify` /
+// `JubjubSchnorrSignature`, and `ecMul` / `ecMulGenerator` changed
+// signature with the `JubjubScalar` builtin. When this corpus is
+// rebased onto 0.33 this fixture should DROP the local module and call
+// the stdlib names directly, and the two mappings above should be
+// re-keyed to the stdlib names (or dropped, if the stdlib circuits
+// lower natively). The module is kept local here only because the
+// 0.31 standard library has no Schnorr primitive to call.
+//
+// Alongside the routing, the module carries three shapes no other
+// fixture in the corpus has: a generic circuit (`<#n>`), a generic
+// struct instantiated at two different widths, and a witness whose
+// return type is a TUPLE (`[Uint<7>, Uint<248>]`).
+
+pragma language_version >= 0.20;
+
+import CompactStandardLibrary;
+
+module Schnorr {
+  import CompactStandardLibrary;
+
+  export struct SchnorrSignature {
+    announcement: JubjubPoint;
+    response: Field;
+  }
+
+  struct SchnorrHashInput<#n> {
+    ann_x: Field;
+    ann_y: Field;
+    pk_x: Field;
+    pk_y: Field;
+    msg: Vector<n, Field>;
+  }
+
+  // Tuple-returning witness: the prover supplies the quotient and the
+  // truncated remainder of the challenge reduction, and the circuit
+  // checks the reconstruction rather than doing the division in-circuit.
+  witness getSchnorrReduction(challengeHash: Field): [Uint<7>, Uint<248>];
+
+  export circuit schnorrVerify<#n>(
+    msg: Vector<n, Field>,
+    signature: SchnorrSignature,
+    pk: JubjubPoint
+  ): [] {
+    const { announcement, response } = signature;
+    const cFull: Field = transientHash<SchnorrHashInput<n>>(
+      SchnorrHashInput<n> {
+        ann_x: jubjubPointX(announcement),
+        ann_y: jubjubPointY(announcement),
+        pk_x: jubjubPointX(pk),
+        pk_y: jubjubPointY(pk),
+        msg: msg
+      }
+    );
+
+    const TWO_248: Field =
+      452312848583266388373324160190187140051835877600158453279131187530910662656 as Field;
+    const [q, cTruncated] = getSchnorrReduction(cFull);
+    assert(disclose(q) < 116, "Schnorr quotient out of range");
+    assert(
+      disclose(q) * TWO_248 + (disclose(cTruncated) as Field) == cFull,
+      "Invalid challenge reduction"
+    );
+
+    const c: Field = disclose(cTruncated) as Field;
+    const lhs: JubjubPoint = ecMulGenerator(response);
+    const rhs: JubjubPoint = ecAdd(announcement, ecMul(pk, c));
+    assert(
+      jubjubPointX(lhs) == jubjubPointX(rhs) &&
+        jubjubPointY(lhs) == jubjubPointY(rhs),
+      "Invalid Jubjub Schnorr signature"
+    );
+  }
+
+  export circuit schnorrVerifyDigest(
+    digest: Vector<4, Field>,
+    signature: SchnorrSignature,
+    pk: JubjubPoint
+  ): [] {
+    schnorrVerify<4>(digest, signature, pk);
+  }
+
+  export pure circuit schnorrChallengeDigest(
+    ann_x: Field,
+    ann_y: Field,
+    pk_x: Field,
+    pk_y: Field,
+    digest: Vector<4, Field>
+  ): Field {
+    return transientHash<SchnorrHashInput<4>>(
+      SchnorrHashInput<4> {
+        ann_x: ann_x,
+        ann_y: ann_y,
+        pk_x: pk_x,
+        pk_y: pk_y,
+        msg: digest
+      }
+    );
+  }
+}
+
+import Schnorr prefix Schnorr_;
+
+export { Schnorr_SchnorrSignature };
+
+export ledger attestorKey: JubjubPoint;
+export ledger acceptedCount: Counter;
+export ledger open: Boolean;
+
+witness localAttestorKey(): JubjubPoint;
+
+struct AttestationDomain {
+  domain: Bytes<32>,
+}
+
+struct AttestationSubject {
+  subject: Bytes<32>,
+  epoch: Uint<64>,
+}
+
+struct AttestationPayload {
+  payloadHash: Field,
+}
+
+export pure circuit attestationDigest(
+  subject: Bytes<32>,
+  epoch: Uint<64>,
+  payloadHash: Field
+): Vector<4, Field> {
+  return [
+    transientHash<AttestationDomain>(
+      AttestationDomain { domain: pad(32, "asset-attestation:v1") }
+    ),
+    transientHash<AttestationSubject>(
+      AttestationSubject { subject: subject, epoch: epoch }
+    ),
+    transientHash<AttestationPayload>(
+      AttestationPayload { payloadHash: payloadHash }
+    ),
+    payloadHash,
+  ];
+}
+
+constructor() {
+  open = true;
+  attestorKey = disclose(localAttestorKey());
+}
+
+// Non-mutating but exported as a transaction circuit: it proves a
+// private signature against the ledger-bound attestor key.
+export circuit verifyAttestation(
+  digest: Vector<4, Field>,
+  signature: Schnorr_SchnorrSignature
+): [] {
+  assert(open, "attestor is closed");
+  Schnorr_schnorrVerifyDigest(digest, signature, attestorKey);
+}
+
+export circuit acceptAttestation(
+  digest: Vector<4, Field>,
+  signature: Schnorr_SchnorrSignature
+): [] {
+  assert(open, "attestor is closed");
+  Schnorr_schnorrVerifyDigest(digest, signature, attestorKey);
+  acceptedCount.increment(1);
+}

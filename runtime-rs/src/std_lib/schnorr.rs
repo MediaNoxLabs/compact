@@ -34,7 +34,7 @@
 //! `[ann_x, ann_y, pk_x, pk_y, ...msg]` then reduce modulo the Jubjub
 //! scalar order → check `g^s == announcement + pk^c`.
 
-use midnight_transient_crypto::curve::{embedded, EmbeddedFr, Fr};
+use midnight_transient_crypto::curve::{EmbeddedFr, Fr};
 use midnight_transient_crypto::hash::transient_hash;
 
 use crate::{
@@ -73,17 +73,28 @@ fn compute_challenge(ann_x: Fr, ann_y: Fr, pk_x: Fr, pk_y: Fr, msg: &[Fr]) -> Em
     fr_to_embedded_fr(hash)
 }
 
-/// Reduce a BLS12-381 scalar `Fr` modulo the Jubjub scalar field order.
-/// `from_uniform_bytes` interprets a 64-byte buffer as a big integer
-/// and reduces — feeding the low 32 bytes mirrors what the matching
-/// circuit does via the `getSchnorrReduction` witness (the circuit
-/// must use a witness to expose the reduction as a constraint-friendly
-/// quotient/remainder pair; off-circuit we just take the modular
-/// reduction directly).
+/// Reduce a BLS12-381 scalar `Fr` modulo the Jubjub scalar field order,
+/// i.e. `x mod r_jubjub`. Single implementation lives in
+/// [`crate::std_lib::jubjub_scalar_from_field`], which is also what
+/// Compact's `as JubjubScalar` cast lowers to.
+///
+/// # Warning: this is NOT the vendored circuit's challenge reduction
+///
+/// The doc comment this replaced claimed the function "mirrors what the
+/// matching circuit does via the `getSchnorrReduction` witness". It does
+/// not. The vendored `examples/did-05/jubjub-schnorr/src/schnorr.compact`
+/// derives its challenge by **248-bit truncation** — `cFull = q·2^248 +
+/// cTruncated` with `c = cTruncated`, i.e. `cFull mod 2^248` — whereas
+/// this is `cFull mod r_jubjub`. Since `2^248 < r_jubjub` the two differ
+/// whenever `cFull >= 2^248`, which is essentially always, so
+/// [`schnorr_verify_jubjub`] and that circuit disagree. No test currently
+/// covers the gap (`did-05`'s tests are constructor-scaffold/readback
+/// only). The 0.33 standard library's `jubjubSchnorrVerify` uses the
+/// mod-`r` form, so this function matches the STDLIB semantics and a
+/// coordinated migration off the vendored module is the eventual fix.
+/// Tracked on MediaNoxLabs/compact#17.
 fn fr_to_embedded_fr(fr: Fr) -> EmbeddedFr {
-    let mut wide = [0u8; 64];
-    wide[..32].copy_from_slice(&fr.as_le_bytes());
-    EmbeddedFr(embedded::Scalar::from_bytes_wide(&wide))
+    crate::std_lib::jubjub_scalar_from_field(fr)
 }
 
 /// Off-circuit Schnorr verifier. Returns `true` iff the signature is

@@ -13,6 +13,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the MediaNoxLabs Rust-codegen fork, and adapted the `--rust` backend and the
   `compact-runtime` crates to the new compiler and ledger APIs.
 
+## [Toolchain 0.33.123, language 0.25.107, runtime 0.18.107]
+
+Fork-only release: integrates upstream 0.33.122 into the Rust-codegen fork.
+The `codegen-rust` branch is unaffected and stays on the released ledger-8
+line; this branch tracks upstream's own ledger-9 release-candidate pin
+(`ledger-9.1.0.0-rc.3`).
+
+### Fixed
+
+- Cross-contract-call compilation crashed with
+  `incorrect number of arguments 4 to #<procedure make-native-entry>`.
+  Upstream's new `circuit-passes/desugar-contract-calls.ss` synthesises a
+  `transientCommit` native, but the fork's `native-entry` record carries an
+  extra `rust-function` field. 47 tests across `save-contract-info`,
+  `print-zkir`, `print-zkir-v3` and `save-manifest` were failing.
+- `Field as Uint<N>` under `--rust` emitted `(<expr>) as uN` with an `Fr`
+  operand. `Fr` is a struct, so that is E0605 "non-primitive cast": compactc
+  exited 0 and the failure only appeared at `cargo build`. The cast is now
+  rejected with a diagnostic. (0.33 also gave it its own IR production,
+  `cast-from-field`, split out of `downcast-unsigned`.)
+
+### Changed
+
+- The Rust backend follows upstream's reshaped IR productions: arithmetic
+  `+ - *` carry a result `Type` instead of maybe-bits, `downcast-unsigned`'s
+  source bound became mandatory, and `cast-from-field` / `cast-to-field` are
+  new. All 32 `codegen_regression` fixtures regenerate with no codegen drift.
+- `Field`/`Uint<N≤64> as JubjubScalar` lowers to
+  `compact_runtime::jubjub_scalar_from_field`. `JubjubScalar as Field` has no
+  runtime helper and is rejected.
+- `ecMul` / `ecMulGenerator` take a `JubjubScalar` (upstream change); `ecNeg`
+  is bound to `compact_runtime::ec_neg`. Existing `.compact` sources passing a
+  `Field` need an explicit `as JubjubScalar`.
+- `JubjubPoint` moved from `Opaque<"JubjubPoint">` to the builtin `tpoint`
+  type, with the same decoder and default-seeding behaviour.
+- Upstream 0.33 no longer implicitly widens an integer literal to `Field` in
+  ledger-assignment position; `sealed_ledger_fixture.compact` and
+  `struct_collision_fixture.compact` gained explicit `as Field` casts.
+- The fork's F8 `nominal?` alias-export patch is now gated on `(emit-rust)`,
+  so the TypeScript pipeline sees exactly upstream's IR (ADR 0002).
+- TS byte-parity fixtures re-captured against the ledger-9 runtime:
+  `contract-state[v6]` → `[v8]`. A `capture-counter.mjs` was added — counter
+  was the one fixture in the corpus with no way to regenerate its reference.
+
+### Added
+
+- `--rust` now rejects `--feature-zkir-v3` with a clear diagnostic instead of
+  emitting a `lib.rs` that cannot compile (the v3 natives have no Rust
+  bindings and the secp256k1 type surface has no lowering). Enforced in both
+  `compactc.ss` and `generate-everything`, so programmatic drivers are covered
+  too. ZKIR v3 support in the Rust backend is tracked as follow-up work.
+- `compact_runtime::std_lib::jubjub_schnorr_verify` and
+  `JubjubSchnorrSignature`, mirroring the 0.33 standard library's Schnorr
+  verifier, with call-level routing so the generic stdlib body is never
+  lowered.
+
 ## [Toolchain 0.33.122, language 0.25.107, runtime 0.18.107]
 
 ### Fixed

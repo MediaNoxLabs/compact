@@ -100,7 +100,7 @@ under `src/contract/mod.rs` (or wherever you like), then depend on
 [dependencies]
 compact-runtime = { git = "https://github.com/LFDT-Minokawa/compact", branch = "main" }
 # Or, once published to crates.io:
-# compact-runtime = "0.16"
+# compact-runtime = "0.18"
 ```
 
 The generated `lib.rs` opens with:
@@ -238,9 +238,10 @@ assert_eq!(v, Fr::from(7u64));
 ```
 
 A complete worked example with every circuit (`set`, `get`, `clear`)
-lives in [`tests-e2e-rust/src/tiny.rs`](../tests-e2e-rust/src/tiny.rs) —
-it is the byte-parity reference for the TypeScript backend and is
-the best fully-runnable end-to-end snippet to copy from.
+lives in [`tests-e2e-rust/tests/tiny.rs`](../tests-e2e-rust/tests/tiny.rs) —
+it is the byte-parity reference against the TypeScript backend and is
+the best fully-runnable end-to-end snippet to copy from. (The runnable
+tests live under `tests-e2e-rust/tests/`, not `src/`.)
 
 ## Feature support matrix
 
@@ -257,6 +258,10 @@ you'd get from upstream `compactc`.
 | Feature | `--rust` | Notes |
 |---|---|---|
 | `Field` | Supported | Lowers to `compact_runtime::Fr`. |
+| `JubjubScalar` | Supported | Compiler 0.33 builtin (the embedded curve's scalar field). Lowers to `compact_runtime::JubjubScalar` (upstream `EmbeddedFr`). `Field as JubjubScalar` and `Uint<N<=64> as JubjubScalar` lower to `compact_runtime::jubjub_scalar_from_field`; the reverse direction (`JubjubScalar as Field`) has no runtime helper and is rejected. |
+| `JubjubPoint` | Supported | Compiler 0.33 promoted this from `Opaque<"JubjubPoint">` to the builtin curve-point type. Lowers to `compact_runtime::JubjubPoint` (upstream `EmbeddedGroupAffine`), with the same ledger decoder and `default` seeding as before. |
+| `Secp256k1Field` / `Secp256k1Scalar` / `Secp256k1Point` | Not yet | ZKIR v3 only. `--rust` rejects `--feature-zkir-v3` outright rather than emitting placeholders. |
+| `Field as Uint<N>` | Not yet | Needs a range-checking `compact_runtime` helper (`Fr` is a struct, so a plain `as uN` is not valid Rust). Rejected with a diagnostic; before v0.5.3 this silently emitted code that failed at `cargo build`. |
 | `Boolean` | Supported | Lowers to `bool`. |
 | `Bytes<N>` | Supported | Lowers to `[u8; N]`. |
 | `Vector<N, T>` | Supported | Lowers to `[T; N]`. |
@@ -338,7 +343,10 @@ The Compact frontend pass `expand-modules-and-types` (at [`compiler/analysis-pas
 |---|---|---|
 | `persistentHash` / `persistentCommit` / `transientHash` / `transientCommit` | Supported | |
 | `hashToCurve` | Supported | Routed through `compact_runtime::hash_to_curve`. |
-| Jubjub / EC primitives (`ec_add`, `ec_mul`, …) | Supported | |
+| Jubjub / EC primitives (`ecAdd`, `ecMul`, `ecMulGenerator`, `ecNeg`) | Supported | Compiler 0.33 added `ecNeg` and retyped `ecMul` / `ecMulGenerator` to take a `JubjubScalar` instead of a `Field`. Existing `.compact` sources that passed a `Field` need an explicit `as JubjubScalar`. |
+| stdlib `jubjubSchnorrVerify<#N>` / `JubjubSchnorrSignature` | Supported | New in 0.33. Routed at the call site to `compact_runtime::std_lib::jubjub_schnorr_verify`, and the struct to the runtime mirror, so the generic stdlib body is never lowered. |
+| `emit(expr)` / events | Not yet | The compiler lowers `emit` to `(emit src event-version event-tag len expr vm-code)`, and `compact-runtime` has no event-append primitive to target. Ungated by any `--feature` flag, so a contract using `emit` will be rejected. |
+| `serialize` / `deserialize` | N/A | Removed from the IR before the Rust backend sees it (`Lnoserialize`); nothing to support. |
 | Zswap witnesses | Supported | |
 | `keccak256` | ⚠ Mapped but stub | The symbol resolves but its runtime binding is `unimplemented!()` (see `compiler/midnight-natives.ss:57-61` — no upstream host-side keccak binding yet). A `.compact` source that calls `keccak256` will compile to malformed Rust. Tracked as an external blocker (needs `midnight_transient_crypto::hash::keccak256`). |
 | `sha256` | Not a stdlib symbol | `sha256` is not declared in Compact's standard library. Use `persistentHash` instead (already supported). |
@@ -355,7 +363,8 @@ The Compact frontend pass `expand-modules-and-types` (at [`compiler/analysis-pas
 | `[a, b, c]` array literal (mixed type) | Not yet | |
 | Compound assignment (`+=`) | Supported | |
 | Indexed read `v[i]` | Supported | |
-| `contract C {}` declarations | Not yet | |
+| `contract C {}` declarations / contract references / cross-contract calls | Not yet | 0.33 added a `(contract-type* …)` group to the `Ltypescript` program node. `rust-passes.ss` matches and **ignores** it: the declarations produce no Rust, and any actual cross-contract call is rejected by the walker. |
+| `--feature-zkir-v3` | Rejected | `--rust --feature-zkir-v3` exits 1 with a diagnostic. The v3 natives carry no Rust bindings and the v3 type surface (secp256k1) has no lowering, so the combination would emit code that cannot compile. Enforced both in `compactc.ss` (CLI) and in `generate-everything` (programmatic drivers). |
 
 ### What happens when you hit a gap
 

@@ -101,6 +101,25 @@ pub use midnight_onchain_state as onchain_state;
 pub use midnight_onchain_vm as onchain_vm;
 pub use midnight_storage as storage;
 pub use midnight_transient_crypto as transient_crypto;
+/// Re-export of `midnight_zswap`.
+///
+/// # Warning: proof verification is compiled out
+///
+/// The workspace builds `midnight-zswap` with `default-features = false`,
+/// which drops its `proof-verifying` feature (that feature pulls in
+/// `zkir_v2`, which needs a `midnight-transient-crypto ^2.2.0` that is not
+/// on crates.io). With the feature off, `zswap`'s
+/// `Offer::well_formed()` / `Input::well_formed()` and friends compile to
+/// the stub `{ Ok(()) }` — they accept **any** offer without checking a
+/// single proof.
+///
+/// `compact-runtime` itself only uses `zswap::local::State` (coin
+/// bookkeeping), which has no `proof-verifying` gates, so the crate's own
+/// behaviour is unaffected. But this re-export makes the stubbed verifier
+/// reachable as `compact_runtime::zswap::…`, so **do not use it to
+/// validate untrusted offers**. Note this differs from the ledger-8 line,
+/// where the fork took zswap's default features and the same calls did
+/// real verification.
 pub use midnight_zswap as zswap;
 
 pub use compact_runtime_macros::witnesses;

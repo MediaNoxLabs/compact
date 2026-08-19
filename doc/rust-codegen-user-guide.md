@@ -109,7 +109,7 @@ The generated `lib.rs` opens with:
 use compact_runtime::*;
 use std::marker::PhantomData;
 
-compact_runtime::check_runtime_version!("0.16.100");
+compact_runtime::check_runtime_version!("0.18.107");
 ```
 
 The `check_runtime_version!` macro is a compile-time assertion: if
@@ -392,7 +392,7 @@ that differs from the one `compactc` was built against. The
 generated `lib.rs` opens with:
 
 ```rust
-compact_runtime::check_runtime_version!("0.16.100");
+compact_runtime::check_runtime_version!("0.18.107");
 ```
 
 That literal is the version `compactc` expected. Compare against the
@@ -457,11 +457,11 @@ name. Two common gotchas:
 
 `compact-runtime` and `compactc` share a synchronised version string.
 The runtime crate exports `COMPACT_RUNTIME_VERSION` (currently
-`0.16.100`), and `compactc --runtime-version` prints the same string.
+`0.18.107`), and `compactc --runtime-version` prints the same string.
 
 ```bash
 compactc --runtime-version
-# → 0.16.100
+# → 0.18.107
 ```
 
 When you upgrade the compiler:
@@ -471,8 +471,8 @@ When you upgrade the compiler:
 2. Bump the `compact-runtime` dependency in your `Cargo.toml`
    accordingly.
 
-The version pin is **exact**, not semver-ranged: a `0.16.100`
-contract will refuse to link against a `0.16.101` runtime, on the
+The version pin is **exact**, not semver-ranged: a `0.18.107`
+contract will refuse to link against a `0.18.108` runtime, on the
 assumption that any prelude change might shift the ABI of generated
 code. If we move to a looser pin in future, this section will be
 updated.

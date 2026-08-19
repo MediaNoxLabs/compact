@@ -521,13 +521,20 @@
             [else #f])))
 
       ;; type-is-tfield?: is `type` a (tfield ...)? Peels nominal/transparent
-      ;; talias layers so `type Foo = Field;` also matches.
+      ;; talias layers so `type Foo = Field;` also matches. Matches every
+      ;; Field-Type qualifier (native Fr, JubjubScalar, zkir-v3 fields);
+      ;; use `type-tfield-ftype` when the qualifier matters.
       (define (type-is-tfield? type)
+        (and (type-tfield-ftype type) #t))
+
+      ;; type-tfield-ftype: the Field-Type qualifier of a (tfield ...)
+      ;; (through talias layers), or #f when `type` isn't a tfield.
+      (define (type-tfield-ftype type)
         (and type
              (nanopass-case (Ltypescript Type) type
-               [(tfield ,src) #t]
+               [(tfield ,src ,ftype) ftype]
                [(talias ,src ,nominal? ,type-name ,type^)
-                (type-is-tfield? type^)]
+                (type-tfield-ftype type^)]
                [else #f])))
 
       ;; type-peel-tunsigned: if `type` is a (tunsigned src nat) (possibly
@@ -581,9 +588,12 @@
       ;; existing rendering.
       (define (coerce-literal-rhs-rendered decl-type rhs)
         (cond
-          [(type-is-tfield? decl-type)
-           (let ([n (literal-int-expr? rhs)])
-             (and n (format "Fr::from(~au64)" n)))]
+          [(type-tfield-ftype decl-type) =>
+           (lambda (ftype)
+             (let ([n (literal-int-expr? rhs)])
+               ;; `Fr::from(<n>u64)` for native Field; the JubjubScalar
+               ;; builtin (EmbeddedFr) has the same `From<u64>` surface.
+               (and n (format "~a::from(~au64)" (field-type-rust ftype) n))))]
           [(type-peel-tunsigned decl-type) =>
            (lambda (nat)
              (let ([n (literal-int-expr? rhs)])
@@ -1636,36 +1646,106 @@
              (string-append rendered s)]
             [else rendered])))
 
-      ;; mbits->rust-width: map a `(+/−/* ,src ,mbits ...)` result bit-width
-      ;; (the typer's `(integer-length result-nat)`, analysis-passes.ss:2113)
-      ;; to the smallest Rust unsigned int type that holds it. Returns #f for
-      ;; #f (maybe-bits) or out-of-ladder widths so the caller falls back to
-      ;; the operand-native width. Used to cast both operands to the result
-      ;; width so e.g. `ageThresholdYears: Uint<8> * 365` (mbits=17) renders
-      ;; as `((...) as u32).wrapping_mul((...) as u32)` — without the cast
-      ;; `wrapping_mul` runs at the u8 receiver width and the u32 comparison
-      ;; side mismatches (digital-passport age-predicate).
-      (define (mbits->rust-width mbits)
+      ;; uint-target-rust-width: the Rust unsigned type a Uint cast
+      ;; TARGET with maximum value `nat` narrows to, or #f when `nat` is
+      ;; not a usable bound (negative, non-integer, or wider than u128).
+      ;; Shared by the `downcast-unsigned` (Uint→Uint) and
+      ;; `cast-from-field` (Field→Uint) renderers, which 0.33 split out
+      ;; of a single production. Bug-11: the width is the smallest one
+      ;; that HOLDS `nat` (mirroring `uint-rust-width` and
+      ;; `tunsigned-rust-suffix-for-bound`), not just the power-of-2-minus-1
+      ;; ladder, so `Uint<L..U>` arithmetic with a non-power-of-2 upper
+      ;; bound lowers instead of erroring.
+      (define (uint-target-rust-width nat)
+        (and (integer? nat) (exact? nat) (not (negative? nat))
+             (<= nat 340282366920938463463374607431768211455)
+             (uint-rust-width nat)))
+
+      ;; cast-to-field-rust: render 0.33's `cast-to-field` production —
+      ;; a cast whose TARGET is a `(tfield ftype)` distinct from the
+      ;; source `type`. `render-inner` is a thunk producing the already
+      ;; rendered operand (so callers can pick expr-rust vs
+      ;; ctor-expr-rust).
+      ;;
+      ;; Supported on the default (ZKIR v2) path:
+      ;;   Field       as JubjubScalar → jubjub_scalar_from_field(x)
+      ;;   Uint<N≤u64> as JubjubScalar → jubjub_scalar_from_field(Fr::from(x as u64))
+      ;; Everything else (JubjubScalar as Field, u128-width sources, the
+      ;; zkir-v3 field variants) has no runtime helper and reports the
+      ;; gap rather than guessing an encoding.
+      (define (cast-to-field-rust src ftype type render-inner)
         (cond
-          [(not (and (integer? mbits) (exact? mbits) (positive? mbits))) #f]
-          [(<= mbits 8) "u8"]
-          [(<= mbits 16) "u16"]
-          [(<= mbits 32) "u32"]
-          [(<= mbits 64) "u64"]
-          [(<= mbits 128) "u128"]
+          [(not (field-type-jubjub-scalar? ftype))
+           (rust-feature-error src 'cast-to-field-target
+             "cast-to-field: no Rust cast to ~a" (field-type-rust ftype))]
+          [(type-tfield-ftype type) =>
+           (lambda (src-ftype)
+             (cond
+               [(field-type-native? src-ftype)
+                (format "compact_runtime::jubjub_scalar_from_field(~a)"
+                        (render-inner))]
+               [else
+                (rust-feature-error src 'cast-to-field-source
+                  "cast-to-field: no Rust cast from ~a to JubjubScalar"
+                  (field-type-rust src-ftype))]))]
+          [(type-peel-tunsigned type) =>
+           (lambda (nat)
+             (cond
+               [(<= nat 18446744073709551615)
+                (format "compact_runtime::jubjub_scalar_from_field(Fr::from((~a) as u64))"
+                        (render-inner))]
+               [else
+                (rust-feature-error src 'cast-to-field-source
+                  "cast-to-field: Uint (max ~s) is wider than u64; no JubjubScalar cast"
+                  nat)]))]
+          [else
+           (rust-feature-error src 'cast-to-field-source
+             "cast-to-field: unsupported source type for JubjubScalar cast")]))
+
+      ;; arith-result-rust-width: map the RESULT type of a
+      ;; `(+/−/* ,src ,type ,e1 ,e2)` node to the smallest Rust unsigned
+      ;; int type that holds it, or #f when there is no unsigned width to
+      ;; cast to.
+      ;;
+      ;; 0.33 replaced the old `mbits` (maybe-bits) slot with the full
+      ;; result `Type` the typer computed (infer-types.ss `condense` /
+      ;; `arithmetic-binop`). The old encoding was:
+      ;;   mbits = (max 1 (integer-length result-nat))  for Uint results
+      ;;   mbits = #f                                   for Field results
+      ;; so `(tunsigned src nat)` here reproduces the old integer branch
+      ;; and `(tfield src ftype)` reproduces the old `#f` branch.
+      ;;
+      ;; `uint-rust-width` (rust-passes-helpers.ss) is the existing ladder
+      ;; from a tunsigned MAX VALUE to u8/u16/u32/u64/u128; it agrees with
+      ;; the retired `mbits->rust-width` bit-width ladder at every
+      ;; boundary. The one difference is the tail: `mbits->rust-width`
+      ;; returned #f above 128 bits while `uint-rust-width` saturates at
+      ;; u128, so the explicit u128::MAX guard below preserves the old
+      ;; "fall back to the operand-native width" behaviour rather than
+      ;; silently truncating a wider result.
+      ;;
+      ;; The width is used to cast BOTH operands to the result width so
+      ;; e.g. `ageThresholdYears: Uint<8> * 365` (result max 93075, u32)
+      ;; renders as `((...) as u32).wrapping_mul((...) as u32)` — without
+      ;; the cast `wrapping_mul` runs at the u8 receiver width and the u32
+      ;; comparison side mismatches (digital-passport age-predicate).
+      (define (arith-result-rust-width type)
+        (cond
+          [(type-peel-tunsigned type) =>
+           (lambda (nat) (uint-target-rust-width nat))]
           [else #f]))
 
-      ;; arith-binop-rust: render a `(+/−/* ,src ,mbits ,e1 ,e2)` node,
-      ;; casting both operands to the result width (from mbits) when it
+      ;; arith-binop-rust: render a `(+/−/* ,src ,type ,e1 ,e2)` node,
+      ;; casting both operands to the result width (from `type`) when it
       ;; maps to a Rust unsigned type. The cast is a no-op when the
-      ;; operands are already that width (e.g. Uint<32> - Uint<32>,
-      ;; mbits=32) and a widening cast when an operand is narrower
-      ;; (Uint<8> * literal). No existing pure-circuit fixture uses
-      ;; wrapping arithmetic, so this only affects the digital-passport.
-      (define (arith-binop-rust op mbits expr1 expr2 native-id-ht)
+      ;; operands are already that width (e.g. Uint<32> - Uint<32>) and a
+      ;; widening cast when an operand is narrower (Uint<8> * literal).
+      ;; Field-typed results take the uncast `wrapping_*` fall-through,
+      ;; exactly as the pre-0.33 `mbits = #f` case did.
+      (define (arith-binop-rust op type expr1 expr2 native-id-ht)
         (let ([e1 (arith-operand-rust expr1 native-id-ht)]
               [e2 (arith-operand-rust expr2 native-id-ht)]
-              [w (mbits->rust-width mbits)])
+              [w (arith-result-rust-width type)])
           (cond
             [w
              (format "((~a) as ~a).wrapping_~a((~a) as ~a)" e1 w op e2 w)]
@@ -1843,7 +1923,7 @@
               (rust-feature-error src 'enum-ref-non-tenum
                 "enum-ref ~a on non-tenum type"
                 elt-name)])]
-          [(+ ,src ,mbits ,expr1 ,expr2)
+          [(+ ,src ,type ,expr1 ,expr2)
            ;; Iter 7 follow-up: unsigned addition. Renders via Rust's
            ;; `wrapping_add` so the bounded-Uint contract holds even if
            ;; the operation would overflow at the inferred Rust width —
@@ -1851,17 +1931,24 @@
            ;; or wider target type around any expression that could
            ;; produce a value outside the source-side type's range, so
            ;; the wrap matches the post-downcast semantics. Both operands
-           ;; are cast to the result width (mbits) via arith-binop-rust.
-           (arith-binop-rust "add" mbits expr1 expr2 native-id-ht)]
-          [(- ,src ,mbits ,expr1 ,expr2)
+           ;; are cast to the result width (from `type`, 0.33's
+           ;; replacement for the old `mbits` slot) via arith-binop-rust.
+           (arith-binop-rust "add" type expr1 expr2 native-id-ht)]
+          [(- ,src ,type ,expr1 ,expr2)
            ;; Iter 7 follow-up: unsigned subtraction. See `+` clause.
-           (arith-binop-rust "sub" mbits expr1 expr2 native-id-ht)]
-          [(* ,src ,mbits ,expr1 ,expr2)
+           (arith-binop-rust "sub" type expr1 expr2 native-id-ht)]
+          [(* ,src ,type ,expr1 ,expr2)
            ;; Iter 7 follow-up: unsigned multiplication. See `+` clause.
-           (arith-binop-rust "mul" mbits expr1 expr2 native-id-ht)]
-          [(downcast-unsigned ,src ,nat? ,nat ,expr)
+           (arith-binop-rust "mul" type expr1 expr2 native-id-ht)]
+          [(downcast-unsigned ,src ,nat2 ,nat1 ,expr)
+           ;; 0.33 slot rename: the source-side bound went from
+           ;; `(maybe nat?)` to a mandatory `nat2`, and the TARGET bound
+           ;; is still the second slot (`nat1`). The old `nat? = #f`
+           ;; case (source was a Field) moved out into its own
+           ;; `cast-from-field` production, handled below.
+           ;;
            ;; Iter 7 follow-up: cast the inner expression to the Rust
-           ;; unsigned type whose upper bound is `nat`. The downcast
+           ;; unsigned type whose upper bound is `nat1`. The downcast
            ;; appears around arithmetic whose declared output type is
            ;; narrower than its operands' inferred type (Compact's typer
            ;; inserts it for `(x * 2) as Uint<64>` and similar). The
@@ -1883,23 +1970,55 @@
            ;; The on-state byte-width still tracks `uint-byte-length`,
            ;; so the cell-builder path (new_cell vs new_cell_bounded_uint)
            ;; routes the value through the right alignment descriptor.
-           (let ([w (cond
-                      [(or (not (integer? nat)) (not (exact? nat)) (negative? nat)) #f]
-                      [(<= nat 255) "u8"]
-                      [(<= nat 65535) "u16"]
-                      [(<= nat 4294967295) "u32"]
-                      [(<= nat 18446744073709551615) "u64"]
-                      [(<= nat 340282366920938463463374607431768211455) "u128"]
-                      [else #f])])
+           (let ([w (uint-target-rust-width nat1)])
              (cond
                [(not w)
                 (rust-feature-error src 'downcast-unsigned-width
-                  "downcast-unsigned: unsupported target width ~s" nat)]
+                  "downcast-unsigned: unsupported target width ~s" nat1)]
                [else
                 (format "(~a) as ~a"
                         (parameterize ([current-arith-suffix w])
                           (expr-rust expr native-id-ht))
                         w)]))]
+          [(cast-from-field ,src ,nat ,ftype ,expr)
+           ;; 0.33: `Field as Uint<N>` split out of `downcast-unsigned`
+           ;; (which previously spelled it `(downcast-unsigned src #f nat
+           ;; expr)`) into its own production.
+           ;;
+           ;; There is NO Rust lowering for this cast, and reporting the
+           ;; gap here fixes a latent bug in the old spelling: the shared
+           ;; `downcast-unsigned` clause rendered `(<expr>) as uN`
+           ;; regardless of whether the source was a Uint or a Field, so a
+           ;; `Field as Uint<N>` emitted `(f) as u64` with `f: Fr`. `Fr` is
+           ;; a struct, and Rust's `as` only casts between primitives, so
+           ;; that is E0605 "non-primitive cast" — compactc exited 0 and
+           ;; the breakage only surfaced at `cargo build`. No fixture
+           ;; exercises the shape (all 32 codegen_regression fixtures are
+           ;; byte-identical across this change), so failing loudly here
+           ;; costs nothing and removes a silent-bad-output path.
+           ;;
+           ;; Lowering it properly needs a `compact_runtime` helper that
+           ;; range-checks an `Fr` and narrows it to `uN` (the TS runtime
+           ;; does the equivalent with a bigint bounds check). Tracked as a
+           ;; follow-up on MediaNoxLabs/compact#17.
+           (rust-feature-error src 'cast-from-field
+             "Field-to-Uint cast (`as Uint<~s>`) has no Rust lowering; ~a"
+             nat
+             "a range-checking compact_runtime helper is needed")]
+          [(cast-to-field ,src ,ftype ,type ,expr)
+           ;; 0.33: `X as Field`-family casts where the TARGET is a
+           ;; (tfield ftype) distinct from the source type. On the
+           ;; default (ZKIR v2) path the reachable shapes are
+           ;; `Field as JubjubScalar`, `Uint<N> as JubjubScalar` and
+           ;; `JubjubScalar as Field` (`Uint<N> as Field` still lowers
+           ;; to `safe-cast`).
+           ;;
+           ;; Field/Uint → JubjubScalar reduces mod the embedded scalar
+           ;; order via the runtime helper. The reverse direction has no
+           ;; runtime helper yet (EmbeddedFr → Fr is not a reduction and
+           ;; needs a deliberate encoding decision), so report the gap.
+           (cast-to-field-rust src ftype type
+                               (lambda () (expr-rust expr native-id-ht)))]
           [(new ,src ,type ,expr* ...)
            ;; F2.2: struct-literal in pure-expression context (e.g. nested
            ;; inside a quote/tuple consumer). Renders each field via the
@@ -2883,7 +3002,15 @@
              [(<= nat 4294967295) "compact_runtime::std_lib::decode_u32"]
              [(<= nat 18446744073709551615) "compact_runtime::std_lib::decode_u64"]
              [else "compact_runtime::std_lib::decode_u128"])]
-          [(tfield ,src) "compact_runtime::std_lib::decode_fr"]
+          [(tfield ,src ,ftype)
+           ;; Native Field decodes via decode_fr. A JubjubScalar-typed
+           ;; ledger read has no decoder yet (EmbeddedFr lacks
+           ;; FromFieldRepr upstream and no fixture stores one); leave it
+           ;; flagged (#f) so the caller reports the gap instead of
+           ;; emitting wrong code.
+           (if (field-type-native? ftype)
+               "compact_runtime::std_lib::decode_fr"
+               #f)]
           [(tboolean ,src) "compact_runtime::std_lib::decode_bool"]
           [(tenum ,src ,enum-name ,elt-name ,elt-name* ...)
            ;; Bug-10 (2026-06-29): decode tenum-typed ledger reads as the
@@ -2912,8 +3039,9 @@
            ;; element types (Bytes<M>, user structs, nested vectors) need
            ;; their own helpers — leave them flagged so the gap is visible.
            (nanopass-case (Ltypescript Type) type
-             [(tfield ,src)
-              (format "compact_runtime::std_lib::decode_vector_fr::<~a>" len)]
+             [(tfield ,src ,ftype)
+              (and (field-type-native? ftype)
+                   (format "compact_runtime::std_lib::decode_vector_fr::<~a>" len))]
              [(tunsigned ,src ,nat)
               ;; Iter 7: Uint<64> element → decode_vector_u64<N>. Wider
               ;; widths (u128) and narrower (u8/u16/u32) would each need
@@ -2935,6 +3063,12 @@
            (if (equal? opaque-type "JubjubPoint")
                "compact_runtime::std_lib::decode_jubjub_point"
                #f)]
+          [(tpoint ,src ,ctype)
+           ;; 0.33: JubjubPoint is the builtin (tpoint (curve-jubjub));
+           ;; same orphan-rule routing as the old topaque spelling.
+           (nanopass-case (Ltypescript Curve-Type) ctype
+             [(curve-jubjub) "compact_runtime::std_lib::decode_jubjub_point"]
+             [else #f])]
           ;; A5: struct types (user-defined or stdlib like
           ;; `ContractAddress`) decode via the FromFieldRepr trait —
           ;; the H6/H7 emitter derives it for user structs, and
@@ -2975,7 +3109,13 @@
       (define (default-value-rust type)
         (nanopass-case (Ltypescript Type) type
           [(tunsigned ,src ,nat) (format "0~a" (uint-rust-width nat))]
-          [(tfield ,src) "Fr::default()"]
+          [(tfield ,src ,ftype) (format "~a::default()" (field-type-rust ftype))]
+          [(tpoint ,src ,ctype)
+           ;; A23 equivalent for the 0.33 builtin point type: seed initial
+           ;; cells with a concrete typed default so new_cell(...) infers.
+           (nanopass-case (Ltypescript Curve-Type) ctype
+             [(curve-jubjub) "compact_runtime::JubjubPoint::default()"]
+             [else "Default::default()"])]
           [(tboolean ,src) "false"]
           [(tbytes ,src ,len) (format "[0u8; ~a]" len)]
           [(tenum ,src ,enum-name ,elt-name ,elt-name* ...) "0u8"]

@@ -49,7 +49,11 @@
       (include "rust-passes-naming.ss"))
 
     (Program : Program (ir) -> Program ()
-      [(program ,src ((,export-name* ,name*) ...) ,tdescs ,pelt* ...)
+      ;; 0.33: Ltypescript's program node gained a (contract-type* ...)
+      ;; group (external contract declarations). The Rust backend does
+      ;; not support cross-contract calls yet, so the group is matched
+      ;; and ignored.
+      [(program ,src (,contract-type* ...) ((,export-name* ,name*) ...) ,tdescs ,pelt* ...)
        (header)
        ;; M3.5-E4.4 Blocker 2: promote user types referenced ONLY by
        ;; non-exported pure circuits (e.g. zerocash's

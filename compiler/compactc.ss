@@ -85,7 +85,9 @@ The following flags, if present, affect the compiler's behavior as follows:
 
   --rust causes the compiler to additionally emit a Rust crate (contract/lib.rs)
     alongside the TypeScript output. Generated Rust depends on the `compact-runtime`
-    crate. See docs/superpowers/specs/2026-05-25-rust-codegen-design.md for details.
+    crate. Not yet compatible with --feature-zkir-v3 (the Rust backend targets the
+    ZKIR v2 pipeline). See docs/superpowers/specs/2026-05-25-rust-codegen-design.md
+    for details.
 
   --skip-ts causes the compiler to skip emitting TypeScript output (contract/index.{js,d.ts,js.map}).
     Must be combined with --rust; otherwise the compiler has no contract-code target.
@@ -115,6 +117,16 @@ The following flags, if present, affect the compiler's behavior as follows:
       (string target-directory-pathname))
      (check-pathname source-pathname)
      (check-pathname target-directory-pathname)
+     ;; The Rust backend targets the ZKIR v2 pipeline only: ZKIR v3
+     ;; natives carry no Rust bindings and the v3-only type surface
+     ;; (secp256k1 fields/points, ZKIR-native ledger flattening) has no
+     ;; Rust lowering yet. Reject the combination with a clear
+     ;; diagnostic rather than emitting broken code. Follow-up tracked
+     ;; for ZKIR v3 support in the Rust backend.
+     (when (and ?--rust ?--feature-zkir-v3)
+       (fprintf (console-error-port)
+                "Error: --rust does not support --feature-zkir-v3 yet; use --rust with the default (ZKIR v2) backend.\n")
+       (exit 1))
      (parameterize ([trace-passes ?--trace-passes]
                     [skip-zk ?--skip-zk]
                     [no-communications-commitment ?--no-communications-commitment]

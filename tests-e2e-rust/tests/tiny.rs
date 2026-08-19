@@ -80,8 +80,14 @@ fn make_envelope(
 ) -> ContractState<midnight_storage::DefaultDB> {
     let mut operations: HashMap<EntryPointBuf, ContractOperation, midnight_storage::DefaultDB> =
         HashMap::new();
-    operations = operations.insert(EntryPointBuf(b"get".to_vec()), ContractOperation::new(None, None));
-    operations = operations.insert(EntryPointBuf(b"set".to_vec()), ContractOperation::new(None, None));
+    operations = operations.insert(
+        EntryPointBuf(b"get".to_vec()),
+        ContractOperation::new(None, None),
+    );
+    operations = operations.insert(
+        EntryPointBuf(b"set".to_vec()),
+        ContractOperation::new(None, None),
+    );
     operations = operations.insert(
         EntryPointBuf(b"clear".to_vec()),
         ContractOperation::new(None, None),

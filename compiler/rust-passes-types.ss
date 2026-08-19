@@ -20,9 +20,55 @@
       ;; tjubjub, topaque, tunknown, ...) emit a placeholder TODO string
       ;; tagged with the variant name so later tasks (F2-F4) can locate
       ;; missing cases. Never crashes on unknown variants.
+      ;; field-type-rust: map a Field-Type qualifier to the Rust scalar
+      ;; type. `(tfield (field-native))` is Compact's `Field` (BLS12-381
+      ;; scalar, upstream `Fr`); `(tfield (field-scalar (curve-jubjub)))`
+      ;; is the 0.33 `JubjubScalar` builtin (the embedded curve's scalar
+      ;; field, upstream `EmbeddedFr`, re-exported as
+      ;; `compact_runtime::JubjubScalar`). The secp256k1 field/base
+      ;; variants only arise behind --feature-zkir-v3, which --rust
+      ;; rejects (see compactc.ss), so they surface as TODO placeholders
+      ;; rather than crashing the emitter.
+      (define (field-type-rust ftype)
+        (nanopass-case (Ltypescript Field-Type) ftype
+          [(field-native) "Fr"]
+          [(field-scalar ,ctype)
+           (nanopass-case (Ltypescript Curve-Type) ctype
+             [(curve-jubjub) "JubjubScalar"]
+             [(curve-secp256k1) "/* TODO zkir-v3: Secp256k1Scalar */"])]
+          [(field-base ,ctype)
+           (nanopass-case (Ltypescript Curve-Type) ctype
+             [(curve-jubjub) "/* TODO zkir-v3: JubjubBase */"]
+             [(curve-secp256k1) "/* TODO zkir-v3: Secp256k1Base */"])]))
+
+      ;; field-type-native?: #t when the Field-Type is Compact's plain
+      ;; `Field` (the native BLS12-381 scalar, Rust `Fr`).
+      (define (field-type-native? ftype)
+        (nanopass-case (Ltypescript Field-Type) ftype
+          [(field-native) #t]
+          [else #f]))
+
+      ;; field-type-jubjub-scalar?: #t for the 0.33 `JubjubScalar`
+      ;; builtin (`(tfield (field-scalar (curve-jubjub)))`).
+      (define (field-type-jubjub-scalar? ftype)
+        (nanopass-case (Ltypescript Field-Type) ftype
+          [(field-scalar ,ctype)
+           (nanopass-case (Ltypescript Curve-Type) ctype
+             [(curve-jubjub) #t]
+             [else #f])]
+          [else #f]))
+
       (define (type-rust type)
         (nanopass-case (Ltypescript Type) type
-          [(tfield ,src) "Fr"]
+          [(tfield ,src ,ftype) (field-type-rust ftype)]
+          [(tpoint ,src ,ctype)
+           ;; 0.33: curve points are builtin types. `JubjubPoint` (the
+           ;; embedded curve, upstream `EmbeddedGroupAffine`) was
+           ;; previously spelled `topaque "JubjubPoint"`; the secp256k1
+           ;; point only arises behind --feature-zkir-v3.
+           (nanopass-case (Ltypescript Curve-Type) ctype
+             [(curve-jubjub) "JubjubPoint"]
+             [(curve-secp256k1) "/* TODO zkir-v3: Secp256k1Point */"])]
           [(tboolean ,src) "bool"]
           [(tunsigned ,src ,nat) (uint-rust-width nat)]
           [(tbytes ,src ,len) (format "[u8; ~a]" len)]
@@ -192,6 +238,11 @@
         (nanopass-case (Ltypescript Type) type
           [(topaque ,src ,opaque-type)
            (equal? opaque-type "JubjubPoint")]
+          [(tpoint ,src ,ctype)
+           ;; 0.33: JubjubPoint became the builtin `(tpoint (curve-jubjub))`.
+           (nanopass-case (Ltypescript Curve-Type) ctype
+             [(curve-jubjub) #t]
+             [else #f])]
           [(talias ,src ,nominal? ,type-name ,type)
            (problematic-jubjub-point? type)]
           [else #f]))
@@ -210,7 +261,7 @@
              [(tstruct ,src ,struct-name (,elt-name* ,type*) ...)
               (not (eq? struct-name 'Maybe))]
              [(tenum ,src ,enum-name ,elt-name ,elt-name* ...) #t]
-             [(tfield ,src) #t]
+             [(tfield ,src ,ftype) #t]
              [else #f])]
           [else #f]))
 

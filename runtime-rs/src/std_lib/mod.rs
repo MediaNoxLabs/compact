@@ -49,6 +49,7 @@ pub use jubjub::{
     ec_add,
     ec_mul,
     ec_mul_generator,
+    ec_neg,
     // R5a: orphan-safe repr helpers used by codegen for JubjubPoint-typed
     // struct fields. Re-exported into `compact_runtime::std_lib::` so
     // generated code can avoid `<JubjubPoint as FromFieldRepr>::*`
@@ -60,6 +61,7 @@ pub use jubjub::{
     jubjub_point_from_field_repr,
     jubjub_point_x,
     jubjub_point_y,
+    jubjub_scalar_from_field,
     upgrade_from_transient,
     JUBJUB_POINT_BINARY_LEN,
     JUBJUB_POINT_FIELD_SIZE,
@@ -69,4 +71,7 @@ pub use merkle_path::{
     default_merkle_path, merkle_tree_path_root, merkle_tree_path_root_no_leaf_hash,
 };
 pub use opaque::OpaqueString;
-pub use schnorr::{schnorr_verify_jubjub, verify as schnorr_verify, SchnorrSignature};
+pub use schnorr::{
+    jubjub_schnorr_verify, schnorr_verify_jubjub, verify as schnorr_verify, JubjubSchnorrSignature,
+    SchnorrSignature,
+};

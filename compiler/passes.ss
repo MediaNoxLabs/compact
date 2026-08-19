@@ -57,6 +57,19 @@
        (when test-hook (unless (procedure? test-hook) (internal-errorf 'generate-everything "invalid test-hook ~s" test-hook)))
        (when (and (skip-ts) (not (emit-rust)))
          (external-errorf "--skip-ts requires --rust (otherwise no contract code would be emitted)"))
+       ;; The Rust backend targets the ZKIR v2 pipeline only: the ZKIR v3
+       ;; natives carry no `(rust ...)` bindings and the v3-only type
+       ;; surface (secp256k1 base/scalar fields and points) has no Rust
+       ;; lowering, so the combination would emit a lib.rs that does not
+       ;; compile — either a hard `native-binding-missing` error or, worse,
+       ;; a placeholder comment where a type must go. compactc.ss rejects
+       ;; the flag pair up front for a friendlier CLI diagnostic; this
+       ;; check closes the same hole for programmatic drivers (compiler
+       ;; test.ss parameterizes emit-rust directly and never goes through
+       ;; compactc.ss). Follow-up for ZKIR v3 Rust support is tracked on
+       ;; MediaNoxLabs/compact#17.
+       (when (and (emit-rust) (feature-zkir-v3))
+         (external-errorf "--rust does not support --feature-zkir-v3 yet; use --rust with the default (ZKIR v2) backend"))
        (parameterize ([source-directory (path-parent pathname)]
                       [source-file-name (path-last (path-root pathname))]
                       [target-directory output-directory-pathname]
@@ -211,7 +224,13 @@
                                                     output-directory-pathname)])
                                 (when (and (zero? (system "command -v rustfmt > /dev/null 2>&1"))
                                            (file-exists? lib-rs))
-                                  (system (format "rustfmt --edition 2021 ~a > /dev/null 2>&1"
+                                  ;; Single-quote the path so target
+                                  ;; directories containing spaces or shell
+                                  ;; metacharacters don't break the call.
+                                  ;; (Matches the neighbouring zkir
+                                  ;; invocations; a full escape helper is
+                                  ;; still a TODO shared with those.)
+                                  (system (format "rustfmt --edition 2021 '~a' > /dev/null 2>&1"
                                                   lib-rs)))))))
                         (let ([manifest-pathname* created-file*])
                           (with-target-ports

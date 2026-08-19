@@ -95,8 +95,13 @@
         ;; The new optional `(rust "...")` trailing form lets a native
         ;; declaration carry its Rust-side binding alongside the TS one.
         ;; Used by rust-passes.ss when emitting native call sites (M3-L2).
-        ;; Entries without `(rust ...)` keep #f in the new field; the
-        ;; Rust emitter falls back to a TODO comment for those.
+        ;; Entries without `(rust ...)` keep #f in the new field; a call
+        ;; to such a native under `--rust` raises a
+        ;; `native-binding-missing` diagnostic and aborts the build
+        ;; (rust-passes-prelude.ss `native-call-site-rust`) rather than
+        ;; emitting a placeholder. All the ZKIR v3 natives are in this
+        ;; category, which is why `--rust --feature-zkir-v3` is rejected
+        ;; up front (compactc.ss and passes.ss `generate-everything`).
         (syntax-case q (rust)
           [(_ class name [type-param ...] function ([argument-name argument-type disclosure] ...) result-type (rust rust-fn))
            (f #'class #'name #'(type-param ...) #'function #'rust-fn #'(argument-name ...) #'(argument-type ...) #'(disclosure ...) #'result-type)]

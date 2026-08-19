@@ -121,6 +121,52 @@ pub fn verify(pk: JubjubPoint, msg: &[Fr], sig: &SchnorrSignature) -> bool {
     lhs == rhs
 }
 
+/// A Schnorr signature over the JubJub curve — the Rust mirror of the
+/// 0.33 standard library's `JubjubSchnorrSignature` struct
+/// (`announcement: JubjubPoint`, `response: Field`). Field layout and
+/// order match the Compact struct exactly so codegen-constructed
+/// values line up; the codegen's stdlib-struct mapping routes the
+/// Compact type here instead of emitting its own declaration.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct JubjubSchnorrSignature {
+    /// The announcement point, `R = k * G`.
+    pub announcement: JubjubPoint,
+    /// The response scalar, encoded as an outer-curve `Fr` (Compact
+    /// `Field`). Reduced modulo the JubJub scalar order before use,
+    /// matching the stdlib circuit's `response as JubjubScalar` cast.
+    pub response: Fr,
+}
+
+/// Pure-circuit-shaped verifier used by the compact codegen to replace
+/// calls to the 0.33 standard library's `jubjubSchnorrVerify<#N>`
+/// circuit. Mirrors the stdlib body exactly:
+///
+/// - challenge `c = transientHash(annX, annY, pkX, pkY, msg...)`
+///   reduced into the JubJub scalar field (the stdlib's
+///   `cNative as JubjubScalar` cast — plain mod-r reduction);
+/// - `response as JubjubScalar` — same reduction;
+/// - valid iff `s·G == R + c·pk`.
+///
+/// Identity points contribute zero coordinates to the hash (the
+/// `jubjubPointX`/`jubjubPointY` semantics), with no up-front identity
+/// rejection — exactly like the stdlib circuit.
+pub fn jubjub_schnorr_verify<const N: usize>(
+    msg: [Fr; N],
+    signature: JubjubSchnorrSignature,
+    pk: JubjubPoint,
+) -> bool {
+    let ann_x = signature.announcement.x().unwrap_or_else(|| Fr::from(0u64));
+    let ann_y = signature.announcement.y().unwrap_or_else(|| Fr::from(0u64));
+    let pk_x = pk.x().unwrap_or_else(|| Fr::from(0u64));
+    let pk_y = pk.y().unwrap_or_else(|| Fr::from(0u64));
+
+    let c = compute_challenge(ann_x, ann_y, pk_x, pk_y, &msg);
+
+    let lhs = JubjubPoint::generator() * fr_to_embedded_fr(signature.response);
+    let rhs = signature.announcement + pk * c;
+    lhs == rhs
+}
+
 /// Circuit-shaped wrapper used by the compact codegen to replace
 /// `self.schnorr_verify(ctx, msg, sig, pk)?` calls inside the
 /// generated `schnorr_verify_digest` circuit body. Verifies the

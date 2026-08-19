@@ -532,6 +532,14 @@
           ;; matching layout.
           (SchnorrSignature
             ,(lambda (elt-name* type*) "compact_runtime::SchnorrSignature")
+            #t)
+          ;; 0.33 stdlib Schnorr: `JubjubSchnorrSignature` (announcement:
+          ;; JubjubPoint, response: Field) routes to the runtime mirror the
+          ;; same way the vendored module's SchnorrSignature does, so the
+          ;; `jubjub_schnorr_verify` call site type-checks and no local
+          ;; struct declaration is emitted.
+          (JubjubSchnorrSignature
+            ,(lambda (elt-name* type*) "compact_runtime::JubjubSchnorrSignature")
             #t)))
 
       (define stdlib-circuit-mappings
@@ -548,7 +556,24 @@
           (merkleTreePathRoot
             ,(lambda (cdefn) "compact_runtime::std_lib::merkle_tree_path_root"))
           (merkleTreePathRootNoLeafHash
-            ,(lambda (cdefn) "compact_runtime::std_lib::merkle_tree_path_root_no_leaf_hash"))))
+            ,(lambda (cdefn) "compact_runtime::std_lib::merkle_tree_path_root_no_leaf_hash"))
+          ;; 0.33 stdlib Schnorr: route the pure `jubjubSchnorrVerify<#N>`
+          ;; circuit to the runtime verifier (mirrors the stdlib body
+          ;; exactly), the same pattern as the vendored jubjub-schnorr
+          ;; module's call-level routing.
+          ;;
+          ;; NOTE: `program-circuits` (rust-passes-prelude.ss) excludes
+          ;; only NON-exported stdlib circuits — its filter is
+          ;; `(or (id-exported? ...) (not (stdlib-src? ...)))` — and
+          ;; `jubjubSchnorrVerify` IS exported, so the exclusion does not
+          ;; apply to it. What keeps its body away from the walker is that
+          ;; it is generic (`<#N>`): generics materialise on use, and this
+          ;; call-level routing rewrites every use before a specialisation
+          ;; is lowered. That is what stops the `as JubjubScalar` casts and
+          ;; the tpoint equality inside the stdlib body from reaching the
+          ;; emitter.
+          (jubjubSchnorrVerify
+            ,(lambda (cdefn) "compact_runtime::std_lib::jubjub_schnorr_verify"))))
 
       ;; lookup-stdlib-struct: return (type-rust-fn skip-decl?) list for a
       ;; struct-name, or #f if not a stdlib struct.

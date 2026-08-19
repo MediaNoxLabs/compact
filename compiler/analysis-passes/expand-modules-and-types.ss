@@ -1067,7 +1067,25 @@
                       (unless (already-exported? src export-name info)
                         (set! exported-type*
                           (cons
-                            (let ([type (apply-type-alias src src^ nominal? type-name type-param* type p^
+                            ;; F8 (fork): preserve the alias's `nominal?`
+                            ;; flag through the export so the Rust emitter
+                            ;; can tell `type Foo = Field;` (transparent)
+                            ;; from a nominal alias and emit a newtype
+                            ;; instead of collapsing to the underlying
+                            ;; type. Upstream passes `#f` unconditionally.
+                            ;;
+                            ;; Gated to the Rust target: this mutates the
+                            ;; shared Lexpanded IR, and per ADR 0002 any
+                            ;; Rust-driven IR change must not perturb the
+                            ;; TS pipeline. `print-typescript` destructures
+                            ;; `nominal?` but discards it, and
+                            ;; `extract-contract-info` never walks
+                            ;; `export-typedef`, so no TS behaviour is known
+                            ;; to depend on it — but gating removes the
+                            ;; divergence rather than relying on that
+                            ;; audit staying true upstream.
+                            (let ([type (apply-type-alias src src^ (and (emit-rust) nominal?)
+                                          type-name type-param* type p^
                                           (map Info-free-tvar (map type-param->tvar-name type-param*)))]
                                   [tvar-name* (fold-right
                                                 (lambda (type-param tvar-name*)

@@ -59,7 +59,9 @@ The following flags, if present, affect the compiler's behavior as follows:
 
   --rust causes the compiler to additionally emit a Rust crate (contract/lib.rs)
     alongside the TypeScript output. Generated Rust depends on the `compact-runtime`
-    crate. See docs/superpowers/specs/2026-05-25-rust-codegen-design.md for details.
+    crate. Not yet compatible with --feature-zkir-v3 (the Rust backend targets the
+    ZKIR v2 pipeline). See docs/superpowers/specs/2026-05-25-rust-codegen-design.md
+    for details.
 
   --skip-ts causes the compiler to skip emitting TypeScript output (contract/index.{js,d.ts,js.map}).
     Must be combined with --rust; otherwise the compiler has no contract-code target.

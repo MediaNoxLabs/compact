@@ -94,12 +94,6 @@ const FIXTURES: &[(&str, &str)] = &[
         "guarded_assert_arith_fixture.compact",
         "guarded-assert-arith-fixture",
     ),
-    // did.compact 0.5.0 (controller-authorization + recovery). Vendored
-    // under examples/did-05/ with its jubjub-schnorr dependency so the
-    // `../../jubjub-schnorr/src/schnorr` relative import resolves; exercises
-    // the 0.5.0-specific codegen (JubjubPoint decoder/default, ctor-mode
-    // impure calls, multi-assert branches).
-    ("did-05/contract/src/did.compact", "did-05"),
     // Wide, structured state: 20 ledger fields (A29 chunked scaffold), a
     // `ContractAddress` cell written from `kernel.self()` whose read goes
     // through the alignment-aware `decode_via_field_repr` (A30/A31, incl.

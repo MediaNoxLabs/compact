@@ -87,9 +87,9 @@ jobs:
       # crates AND each generated `tests-e2e-rust/contracts/*` fixture crate.
       # The fixture coverage matters: registered fixtures are already fmt-
       # gated by codegen_regression (it regenerates with the nix rustfmt and
-      # asserts byte-identity), but an UNregistered fixture crate (e.g.
-      # digital-passport, which has no committed .compact source) is only
-      # caught here. Formatting is hermetic (no network), and this is the
+      # asserts byte-identity), but any fixture crate that is NOT registered
+      # in the FIXTURES table is only caught here. Formatting is hermetic
+      # (no network), and this is the
       # nix-nightly rustfmt the emitter's post-pass hook uses, so it is the
       # authoritative fmt gate for the repo. `--all` includes tools/compact
       # too — harmless, that tree is fmt-clean.

@@ -179,8 +179,8 @@
       ;; literals in a Field-typed comparison as `Field`, but expr-rust
       ;; renders `(quote 0)` as the bare Rust integer `0` — which then
       ;; fails to type-check against the `Fr` produced by the other
-      ;; operand (e.g. `jubjub_point_x(...) != 0` in the digital-passport
-      ;; holder-binding check). Non-Field types and non-literal operands
+      ;; operand (e.g. a `jubjub_point_x(...) != 0` key-binding check).
+      ;; Non-Field types and non-literal operands
       ;; render via ctor-expr-rust unchanged.
       (define (coerce-cmp-operand-rust expr type local-binds
                                         native-id-ht witness-id-ht circuit-id-ht)
@@ -247,9 +247,9 @@
              ;;
              ;; Bug-4 (2026-06-24): the `==` IR node carries the resolved
              ;; comparison `type` directly. When that type is itself a
-             ;; tenum (did.compact's `disclosed_mutation == MapMutation.Insert`
-             ;; with disclosed_mutation a `const = disclose(mutation)` whose
-             ;; declared type is MapMutation), neither operand-side
+             ;; tenum (`disclosed_mutation == Mutation.Insert` with
+             ;; disclosed_mutation a `const = disclose(mutation)` whose
+             ;; declared type is the enum), neither operand-side
              ;; heuristic fires (the var-ref isn't a formal arg and
              ;; `disclose` isn't a witness/circuit), but the IR's type
              ;; field is conclusive. Prefer it.
@@ -751,9 +751,8 @@
                                    witness-id-ht circuit-id-ht))]
             [(!= ,src ,type ,expr1 ,expr2)
              ;; A9: inequality. The IR has `!=` as its own node, not
-             ;; lowered to `(not (== ...))`. did.compact's
-             ;; `rotateControllerKey` body asserts
-             ;; `disclosedNewControllerPublicKey != controllerPublicKey`.
+             ;; lowered to `(not (== ...))` — a key-rotation circuit
+             ;; asserting `newKey != currentKey` is the canonical case.
              ;; Same recursion shape as `==`.
              (and (expr-supported? expr1 native-id-ht
                                    witness-id-ht circuit-id-ht)
@@ -1250,7 +1249,7 @@
       ;; The hoisted call's `ctx` rebind threads the post-call QueryContext
       ;; through subsequent statements in the same Rust scope (the if-arm
       ;; body, or the streaming walker step). For read-only impure helpers
-      ;; (e.g. did.compact's `verificationMethodExists`), the rebind's
+      ;; (a membership predicate, say), the rebind's
       ;; effect on the result-of-verify is semantically a no-op (no state
       ;; mutation), but the threading keeps the type uniform and the gas
       ;; accounting honest.
@@ -1511,8 +1510,8 @@
               ;; Pure-circuit callees must additionally be exported (only
               ;; exported pure circuits land in the `pure_circuits` mod).
               ;;
-              ;; DID-walker-A: terminal bare-calls are also accepted (e.g.
-              ;; rotateControllerKey ends with `recordUpdate();`). The
+              ;; Walker-A: terminal bare-calls are also accepted (a
+              ;; mutating circuit ending with `recordWrite();`, say). The
               ;; emit-body-or-fallback loop's bare-call clause already
               ;; handles terminal positions by accumulating the call's
               ;; ctx-rebind into pre-lines and then exiting at the
@@ -1531,7 +1530,7 @@
                             ;; bare-call callees, exported or not — both
                             ;; now land in pure_circuits.
                             (eq? (car classified) 'pure-circuit)
-                            ;; M3.5-E5 / DID-walker-A: accept bare calls
+                            ;; M3.5-E5 / Walker-A: accept bare calls
                             ;; to any user impure circuit (exported as
                             ;; pub fn, non-exported as pub(crate) fn).
                             ;; Both emit as `self.<name>(ctx, ...)?`.
@@ -1542,12 +1541,12 @@
                                  arg*)
                         (loop (cdr stmts)))))]
               ;; A4: non-write `public-ledger` call (ADT update op like
-              ;; Counter.increment) in NON-TERMINAL position. did.compact's
-              ;; `recordUpdate` body is the canonical example:
+              ;; Counter.increment) in NON-TERMINAL position. A bookkeeping
+              ;; circuit is the canonical example:
               ;;
-              ;;   operationCount.increment(1);   <- non-terminal PL call
-              ;;   version.increment(1);           <- non-terminal PL call
-              ;;   updated = disclose(timestamp);  <- Cell.write (terminal)
+              ;;   writeCount.increment(1);        <- non-terminal PL call
+              ;;   revision.increment(1);          <- non-terminal PL call
+              ;;   updatedAt = disclose(timestamp); <- Cell.write (terminal)
               ;;
               ;; emit-body-or-fallback accumulates these into the same
               ;; tagged `mutations` chain as Cell.writes; emit-body-mutations
@@ -1884,8 +1883,8 @@
                                            ; update call (A4).
             (cond
               [(null? stmts)
-               ;; A7: bodies with no mutations (e.g. did.compact's
-               ;; `assertController()` is a single assert with no
+               ;; A7: bodies with no mutations (an authorization check
+               ;; that is a single assert with no
                ;; state writes) still need to emit the pre-lines +
                ;; a unit-return wrapper. emit-body-mutations on an
                ;; empty mutations list emits an empty OpProgramVerify
@@ -2120,7 +2119,7 @@
                               writes))]
                      [(pure-circuit)
                       ;; A6: witness sub-calls inside pure-circuit args.
-                      ;; did.compact's `controllerKey(localSecretKey())`
+                      ;; A shape like `publicKey(localSecretKey())`
                       ;; lowers to a const-binding RHS whose pargs
                       ;; embeds a witness call. Mirror the assert
                       ;; clause's hoister: collect witness sub-calls
@@ -2361,10 +2360,10 @@
                         (let-values ([(hoist-lines arg-tail)
                                       (hoist-ctx-args arg-strs counter)])
                           ;; A28: flush pending ctor writes before the call so it
-                          ;; (and its args) read the written fields — the
-                          ;; did.compact constructor's
-                          ;; assertControllerPublicKeyDistinctFromRecoveryAuthority
-                          ;; reads both keys, which must be the witnessed values.
+                          ;; (and its args) read the written fields — a
+                          ;; constructor that writes two witnessed keys and then
+                          ;; calls a distinctness assert reading BOTH back must
+                          ;; see the witnessed values, not the defaults.
                           (let* ([flush? (and (eq? mode 'ctor) (pair? writes))]
                                  [flush-lines
                                   (if flush?
@@ -2398,7 +2397,7 @@
               ;; (above) wins for sole-statement bodies via its `(null?
               ;; writes)` guard — preserving counter.compact byte-parity —
               ;; so we reach this clause only when writes is non-empty
-              ;; (i.e. the multi-stmt did.compact recordUpdate shape).
+              ;; (i.e. the multi-statement increment-then-write shape).
               [(let ([parts (stmt->public-ledger-call (car stmts))])
                  (and parts
                       ;; A10: multi-index Cell.writes route here too;
@@ -2546,7 +2545,7 @@
           [(and (eq-hashtable-ref circuit-id-ht fn-id #f)
                 (id-pure? fn-id))
            (list 'pure-circuit (id->rust-name fn-id) arg*)]
-          ;; E5 / DID-walker-A: bare-call to an impure circuit (exported
+          ;; E5 / Walker-A: bare-call to an impure circuit (exported
           ;; or not — both are emitted as methods on the contract impl,
           ;; with `pub` vs `pub(crate)` visibility per emit-impure-circuit).
           ;; Emitted as `self.<snake>(ctx, ...)?` with the returned context
@@ -2870,8 +2869,8 @@
       ;;   - src/adt-op/path-elt*/resolved-expr*: pl-call details, or
       ;;     src=#f (and the rest empty) for an assert-only branch.
       ;;
-      ;; A14 motivating shape (did.compact setVerificationMethod's Update
-      ;; branch):
+      ;; A14 motivating shape (the Update branch of a map-upsert
+      ;; circuit):
       ;;   (seq (seq (const ((%tmp.262)))           ; const-decl-only
       ;;             (assert (seq (= %tmp.262 ...)  ; assignment, lifted from
       ;;                          (pl-read member))  ; the assert's cond seq
@@ -2883,9 +2882,8 @@
       ;;    terminal-bare-call mid-calls)
       ;; where `mid-calls` is a list of NON-terminal bare impure-circuit
       ;; calls (each `(fn-id . resolved-args)`) captured between the guard
-      ;; assert and the terminal op — did.compact 0.5.0's
-      ;; setVerificationMethod / setVerificationMethodRelation interleave a
-      ;; compatibility-assert circuit call there.
+      ;; assert and the terminal op — a map-upsert circuit that interleaves
+      ;; a compatibility-assert circuit call there is the canonical case.
       (define (branch->assert-and-pl-call stmt)
         (let loop ([stmts (stmt-flatten stmt)]
                    [pre-stmts '()]
@@ -2920,8 +2918,8 @@
              ;; the FIRST assert (back-compat for single-assert consumers);
              ;; `body-items` records every assert + bind in source order so
              ;; the emitter can render an ordered multi-assert branch (e.g.
-             ;; did.compact 0.5.0's assertVerificationMethodRelationCompatible:
-             ;; assert(member) / const lookup / assert(crv)). Single-assert
+             ;; a compatibility check shaped as
+             ;; assert(member) / const lookup / assert(field)). Single-assert
              ;; branches keep `body-items` with one assert, so the emitter's
              ;; legacy path still fires and byte-parity is preserved.
              (lambda (a)
@@ -2960,13 +2958,12 @@
                             (cons fn-id resolved-args) (reverse mid-calls)
                             (reverse body-items)))))]
             [(stmt->bare-call (car stmts)) =>
-             ;; A-05 (did.compact 0.5.0): a NON-terminal bare-call inside a
+             ;; A-05: a NON-terminal bare-call inside a
              ;; branch — a compatibility-assert circuit interleaved between
-             ;; the guard assert and the terminal mutating op
-             ;; (setVerificationMethod's
-             ;; `assertExistingVerificationMethodRelationsCompatible(...)`,
-             ;; setVerificationMethodRelation's
-             ;; `assertVerificationMethodRelationCompatible(...)`). These
+             ;; the guard assert and the terminal mutating op, as in a
+             ;; map-upsert circuit whose Update arm calls
+             ;; `assertExistingRelationsCompatible(...)` before the
+             ;; insert. These
              ;; are ledger-reading asserts (no mutation), so emission renders
              ;; each as `self.<helper>(ctx.clone(), ...)?` before the op.
              ;; Terminal bare-calls are already caught above (the

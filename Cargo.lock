@@ -754,20 +754,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "compact-contract-did-05"
-version = "0.1.0"
-dependencies = [
- "compact-runtime",
-]
-
-[[package]]
-name = "compact-contract-digital-passport"
-version = "0.1.0"
-dependencies = [
- "compact-runtime",
-]
-
-[[package]]
 name = "compact-contract-election"
 version = "0.1.0"
 dependencies = [
@@ -4805,8 +4791,6 @@ dependencies = [
  "compact-contract-bug11-fixture",
  "compact-contract-chunked-ledger-fixture",
  "compact-contract-cross-circuit-fixture",
- "compact-contract-did-05",
- "compact-contract-digital-passport",
  "compact-contract-election",
  "compact-contract-fold-fixture",
  "compact-contract-for-iter-fixture",

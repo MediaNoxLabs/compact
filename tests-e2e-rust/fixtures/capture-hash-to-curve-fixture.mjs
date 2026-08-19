@@ -28,7 +28,7 @@ const constructorCtx = {
   initialZswapLocalState: cr.emptyZswapLocalState(emptyCpk),
 };
 
-const initResult = contract.initialState(constructorCtx);
+const initResult = await contract.initialState(constructorCtx);
 const afterInitHex = Buffer.from(initResult.currentContractState.serialize()).toString('hex');
 
 process.stdout.write(JSON.stringify({ afterInit: { stateHex: afterInitHex } }, null, 2) + '\n');

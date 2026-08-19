@@ -50,12 +50,13 @@ const constructorCtx = {
 };
 
 // ---- Step 1: initialState -------------------------------------------------
-const initResult = contract.initialState(constructorCtx);
+const initResult = await contract.initialState(constructorCtx);
 const afterInitContractState = initResult.currentContractState;
 const afterInitHex = Buffer.from(afterInitContractState.serialize()).toString('hex');
 
 // Build the running CircuitContext from the post-init ContractState.
 let circuitCtx = cr.createCircuitContext(
+  'constructor',
   cr.dummyContractAddress(),
   emptyCpk,
   afterInitContractState.data,
@@ -74,11 +75,12 @@ function rewrapEnvelope(prev, newChargedState) {
 }
 
 function chargedStateFromCtx(ctx) {
-  return new cr.ChargedState(ctx.currentQueryContext.state.state);
+  return new cr.ChargedState(ctx.callContext.currentQueryContext.state.state);
 }
 
 // ---- Step 2: ping() -------------------------------------------------------
-const pingOut = contract.circuits.ping(circuitCtx);
+circuitCtx.callContext.circuitId = 'ping';
+const pingOut = await contract.circuits.ping(circuitCtx);
 circuitCtx = pingOut.context;
 const afterPingContractState = rewrapEnvelope(
   afterInitContractState,

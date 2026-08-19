@@ -51,12 +51,13 @@ const constructorCtx = {
 };
 
 // ---- Step 1: initialState -------------------------------------------------
-const initResult = contract.initialState(constructorCtx);
+const initResult = await contract.initialState(constructorCtx);
 const afterInitContractState = initResult.currentContractState;
 const afterInitHex = Buffer.from(afterInitContractState.serialize()).toString('hex');
 
 // Build the running CircuitContext from the post-init ContractState.
 let circuitCtx = cr.createCircuitContext(
+  'constructor',
   cr.dummyContractAddress(),
   emptyCpk,
   afterInitContractState.data,
@@ -75,11 +76,12 @@ function rewrapEnvelope(prev, newChargedState) {
 }
 
 function chargedStateFromCtx(ctx) {
-  return new cr.ChargedState(ctx.currentQueryContext.state.state);
+  return new cr.ChargedState(ctx.callContext.currentQueryContext.state.state);
 }
 
 // ---- Step 2: check_set_empty() --------------------------------------------
-const setEmptyOut = contract.circuits.check_set_empty(circuitCtx);
+circuitCtx.callContext.circuitId = 'check_set_empty';
+const setEmptyOut = await contract.circuits.check_set_empty(circuitCtx);
 circuitCtx = setEmptyOut.context;
 const afterSetEmptyContractState = rewrapEnvelope(
   afterInitContractState,
@@ -88,7 +90,8 @@ const afterSetEmptyContractState = rewrapEnvelope(
 const afterSetEmptyHex = Buffer.from(afterSetEmptyContractState.serialize()).toString('hex');
 
 // ---- Step 3: check_map_empty() --------------------------------------------
-const mapEmptyOut = contract.circuits.check_map_empty(circuitCtx);
+circuitCtx.callContext.circuitId = 'check_map_empty';
+const mapEmptyOut = await contract.circuits.check_map_empty(circuitCtx);
 circuitCtx = mapEmptyOut.context;
 const afterMapEmptyContractState = rewrapEnvelope(
   afterSetEmptyContractState,

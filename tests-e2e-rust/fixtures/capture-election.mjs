@@ -46,7 +46,11 @@
 
 import { Contract } from '/tmp/election-ts-driver/contract/index.js';
 import * as cr from '@midnight-ntwrk/compact-runtime';
-import { leafHash, valueToBigInt } from '@midnight-ntwrk/onchain-runtime-v3';
+// Compiler 0.33 / ledger 9: `@midnight-ntwrk/onchain-runtime-v3` no longer
+// exists — the TS runtime depends on `@midnightntwrk/onchain-runtime-v4`
+// (note: no hyphen after "midnight"). Both symbols have identical
+// signatures there.
+import { leafHash, valueToBigInt } from '@midnightntwrk/onchain-runtime-v4';
 
 // ------------ Fixed deterministic witness payloads -----------------
 const FIXED_SK = new Uint8Array(32).fill(7); // private$secret_key
@@ -187,7 +191,7 @@ const AUTHORITY = contract._public_key_0(new Uint8Array(FIXED_SK));
 const VOTER_PK = new Uint8Array(AUTHORITY);
 
 // ---- Step 1: initialState -----------------------------------------
-const initResult = contract.initialState(constructorCtx, AUTHORITY);
+const initResult = await contract.initialState(constructorCtx, AUTHORITY);
 const afterInitContractState = initResult.currentContractState;
 const afterInitHex = Buffer.from(afterInitContractState.serialize()).toString(
   'hex',
@@ -205,12 +209,13 @@ function rewrapEnvelope(prev, newChargedState) {
 }
 
 function chargedStateFromCtx(ctx) {
-  return new cr.ChargedState(ctx.currentQueryContext.state.state);
+  return new cr.ChargedState(ctx.callContext.currentQueryContext.state.state);
 }
 
 function freshCtx() {
   return {
     ctx: cr.createCircuitContext(
+      'constructor',
       cr.dummyContractAddress(),
       emptyCpk,
       afterInitContractState.data,
@@ -229,7 +234,13 @@ const fixture = {
 // `sharedState.rawStateValue` so any later witness call sees the
 // freshest ChargedState. Also resets the driver mirrors so each chain
 // is independent. Captured paths are scoped per chain too.
-function runChain(recordLabel, steps, registerInserts = () => {}) {
+// Compiler 0.33 / runtime 0.17.104: the generated circuit wrappers are
+// `async`, so `runner(ctx)` returns a Promise — `runChain` must be async
+// and `await` each step, or `out.context` is undefined. The wrappers also
+// no longer set `callContext.circuitId` themselves, so the caller has to
+// stamp it before each invocation (otherwise every step runs under
+// 'constructor'). Both fixes are applied below.
+async function runChain(recordLabel, steps, registerInserts = () => {}) {
   // Per-chain mirror reset — each chain is rebuilt from a fresh
   // post-init context so all derived state restarts from scratch.
   eligibleIndex.clear();
@@ -242,13 +253,18 @@ function runChain(recordLabel, steps, registerInserts = () => {}) {
 
   let { ctx, envelope } = freshCtx();
   // Re-export so witnesses see the per-chain freshly-reset state.
-  sharedState.rawStateValue = ctx.currentQueryContext.state.state;
+  sharedState.rawStateValue = ctx.callContext.currentQueryContext.state.state;
   try {
     for (let i = 0; i < steps.length; i++) {
       const [stepLabel, runner] = steps[i];
-      const out = runner(ctx);
+      // The generated wrappers read `callContext.circuitId` but never set
+      // it; stamp it here so each step is attributed to its own circuit.
+      // `vote_commit` / `vote_reveal` are the local labels for the
+      // `vote$commit` / `vote$reveal` circuits.
+      ctx.callContext.circuitId = stepLabel.replace('vote_', 'vote$');
+      const out = await runner(ctx);
       ctx = out.context;
-      sharedState.rawStateValue = ctx.currentQueryContext.state.state;
+      sharedState.rawStateValue = ctx.callContext.currentQueryContext.state.state;
       envelope = rewrapEnvelope(envelope, chargedStateFromCtx(ctx));
       // Post-step bookkeeping: now that this step has actually
       // performed its insertion (and the on-chain tree has the leaf),
@@ -281,14 +297,14 @@ function insertRegistrar(stepLabel) {
 }
 
 // init → set_topic("hello")
-runChain(
+await runChain(
   'afterSetTopic',
   [['set_topic', (ctx) => contract.circuits.set_topic(ctx, 'hello')]],
   insertRegistrar,
 );
 
 // init → set_topic("hello") → advance
-runChain(
+await runChain(
   'afterAdvance',
   [
     ['set_topic', (ctx) => contract.circuits.set_topic(ctx, 'hello')],
@@ -298,14 +314,14 @@ runChain(
 );
 
 // init → add_voter(AUTHORITY)
-runChain(
+await runChain(
   'afterAddVoter',
   [['add_voter', (ctx) => contract.circuits.add_voter(ctx, VOTER_PK)]],
   insertRegistrar,
 );
 
 // init → set_topic → add_voter → advance → vote$commit(yes)
-runChain(
+await runChain(
   'afterVoteCommit',
   [
     ['set_topic', (ctx) => contract.circuits.set_topic(ctx, 'hello')],
@@ -320,7 +336,7 @@ if (capturedEligiblePath) {
 }
 
 // init → set_topic → add_voter → advance → vote$commit → advance → vote$reveal
-runChain(
+await runChain(
   'afterVoteReveal',
   [
     ['set_topic', (ctx) => contract.circuits.set_topic(ctx, 'hello')],

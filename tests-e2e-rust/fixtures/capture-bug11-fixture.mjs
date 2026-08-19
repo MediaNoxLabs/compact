@@ -49,12 +49,13 @@ const constructorCtx = {
 };
 
 // ---- Step 1: initialState -------------------------------------------------
-const initResult = contract.initialState(constructorCtx);
+const initResult = await contract.initialState(constructorCtx);
 const afterInitContractState = initResult.currentContractState;
 const afterInitHex = Buffer.from(afterInitContractState.serialize()).toString('hex');
 
 // Build a CircuitContext from the post-init state so we can call set_*.
 let circuitCtx = cr.createCircuitContext(
+  'constructor',
   cr.dummyContractAddress(),
   emptyCpk,
   afterInitContractState.data,
@@ -73,11 +74,12 @@ function rewrapEnvelope(prev, newChargedState) {
 }
 
 function chargedStateFromCtx(ctx) {
-  return new cr.ChargedState(ctx.currentQueryContext.state.state);
+  return new cr.ChargedState(ctx.callContext.currentQueryContext.state.state);
 }
 
 // ---- Step 2: set_tiny(42) — 1-byte field, exercises the new_cell path ----
-const setTinyOut = contract.circuits.set_tiny(circuitCtx, 42n);
+circuitCtx.callContext.circuitId = 'set_tiny';
+const setTinyOut = await contract.circuits.set_tiny(circuitCtx, 42n);
 circuitCtx = setTinyOut.context;
 const afterSetTinyContractState = rewrapEnvelope(
   afterInitContractState,
@@ -86,7 +88,8 @@ const afterSetTinyContractState = rewrapEnvelope(
 const afterSetTinyHex = Buffer.from(afterSetTinyContractState.serialize()).toString('hex');
 
 // ---- Step 3: set_medium(65000) — 3-byte field, exercises bounded-uint path
-const setMediumOut = contract.circuits.set_medium(circuitCtx, 65000n);
+circuitCtx.callContext.circuitId = 'set_medium';
+const setMediumOut = await contract.circuits.set_medium(circuitCtx, 65000n);
 circuitCtx = setMediumOut.context;
 const afterSetMediumContractState = rewrapEnvelope(
   afterSetTinyContractState,
@@ -95,7 +98,8 @@ const afterSetMediumContractState = rewrapEnvelope(
 const afterSetMediumHex = Buffer.from(afterSetMediumContractState.serialize()).toString('hex');
 
 // ---- Step 4: set_wide(4_500_000_000) — 5-byte field, bounded-uint path ----
-const setWideOut = contract.circuits.set_wide(circuitCtx, 4500000000n);
+circuitCtx.callContext.circuitId = 'set_wide';
+const setWideOut = await contract.circuits.set_wide(circuitCtx, 4500000000n);
 circuitCtx = setWideOut.context;
 const afterSetWideContractState = rewrapEnvelope(
   afterSetMediumContractState,

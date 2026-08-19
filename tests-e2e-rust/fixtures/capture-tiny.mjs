@@ -64,7 +64,7 @@ const constructorCtx = {
 };
 
 // ---- Step 2: initialState -------------------------------------------------
-const initResult = contract.initialState(constructorCtx, 42n);
+const initResult = await contract.initialState(constructorCtx, 42n);
 const afterInitContractState = initResult.currentContractState; // ContractState
 
 const afterInitHex = Buffer.from(afterInitContractState.serialize()).toString('hex');
@@ -76,6 +76,7 @@ const afterInitValue = ledger(afterInitContractState.data).value.toString();
 // CircuitContext. We use the same deterministic witness, same private
 // state, same empty zswap.
 let circuitCtx = cr.createCircuitContext(
+  'constructor',
   cr.dummyContractAddress(),
   emptyCpk,
   afterInitContractState.data,
@@ -99,14 +100,15 @@ function rewrapEnvelope(prev, newChargedState) {
   return next;
 }
 
-// In the TS runtime, `circuitCtx.currentQueryContext.state` is a
+// In the TS runtime, `circuitCtx.callContext.currentQueryContext.state` is a
 // QueryState whose `.state` is the underlying onchain StateValue.
 function chargedStateFromCtx(ctx) {
-  return new cr.ChargedState(ctx.currentQueryContext.state.state);
+  return new cr.ChargedState(ctx.callContext.currentQueryContext.state.state);
 }
 
 // ---- Step 3: clear --------------------------------------------------------
-const clearOut = contract.circuits.clear(circuitCtx);
+circuitCtx.callContext.circuitId = 'clear';
+const clearOut = await contract.circuits.clear(circuitCtx);
 circuitCtx = clearOut.context;
 const afterClearContractState = rewrapEnvelope(
   afterInitContractState,
@@ -116,7 +118,8 @@ const afterClearHex = Buffer.from(afterClearContractState.serialize()).toString(
 const afterClearValue = ledger(afterClearContractState.data).value.toString();
 
 // ---- Step 4: set(99) ------------------------------------------------------
-const setOut = contract.circuits.set(circuitCtx, 99n);
+circuitCtx.callContext.circuitId = 'set';
+const setOut = await contract.circuits.set(circuitCtx, 99n);
 circuitCtx = setOut.context;
 const afterSetContractState = rewrapEnvelope(
   afterClearContractState,
@@ -126,7 +129,8 @@ const afterSetHex = Buffer.from(afterSetContractState.serialize()).toString('hex
 const afterSetValue = ledger(afterSetContractState.data).value.toString();
 
 // ---- Step 5: get() --------------------------------------------------------
-const getOut = contract.circuits.get(circuitCtx);
+circuitCtx.callContext.circuitId = 'get';
+const getOut = await contract.circuits.get(circuitCtx);
 circuitCtx = getOut.context;
 const getResult = getOut.result; // { is_some, value }
 

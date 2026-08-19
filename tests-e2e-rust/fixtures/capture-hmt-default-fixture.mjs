@@ -53,12 +53,13 @@ const constructorCtx = {
 };
 
 // ---- Step 1: initialState -------------------------------------------------
-const initResult = contract.initialState(constructorCtx);
+const initResult = await contract.initialState(constructorCtx);
 const afterInitContractState = initResult.currentContractState;
 const afterInitHex = Buffer.from(afterInitContractState.serialize()).toString('hex');
 
 // Build the running CircuitContext from the post-init ContractState.
 let circuitCtx = cr.createCircuitContext(
+  'constructor',
   cr.dummyContractAddress(),
   emptyCpk,
   afterInitContractState.data,
@@ -77,11 +78,12 @@ function rewrapEnvelope(prev, newChargedState) {
 }
 
 function chargedStateFromCtx(ctx) {
-  return new cr.ChargedState(ctx.currentQueryContext.state.state);
+  return new cr.ChargedState(ctx.callContext.currentQueryContext.state.state);
 }
 
 // ---- Step 2: add_default(0n) ---------------------------------------------
-const addDefault0Out = contract.circuits.add_default(circuitCtx, 0n);
+circuitCtx.callContext.circuitId = 'add_default';
+const addDefault0Out = await contract.circuits.add_default(circuitCtx, 0n);
 circuitCtx = addDefault0Out.context;
 const afterAddDefault0ContractState = rewrapEnvelope(
   afterInitContractState,
@@ -90,7 +92,8 @@ const afterAddDefault0ContractState = rewrapEnvelope(
 const afterAddDefault0Hex = Buffer.from(afterAddDefault0ContractState.serialize()).toString('hex');
 
 // ---- Step 3: add_default(2n) ---------------------------------------------
-const addDefault2Out = contract.circuits.add_default(circuitCtx, 2n);
+circuitCtx.callContext.circuitId = 'add_default';
+const addDefault2Out = await contract.circuits.add_default(circuitCtx, 2n);
 circuitCtx = addDefault2Out.context;
 const afterAddDefault2ContractState = rewrapEnvelope(
   afterAddDefault0ContractState,

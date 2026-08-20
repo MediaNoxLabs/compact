@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- **Fork**: merged upstream `LFDT-Minokawa/compact` `main` (toolchain 0.33.122,
+  language 0.25.107, runtime 0.18.107 — ledger 9, ZKIR v3 backend, per-pass
+  compiler file split, `JubjubScalar` builtin, standard-library Schnorr) into
+  the MediaNoxLabs Rust-codegen fork, and adapted the `--rust` backend and the
+  `compact-runtime` crates to the new compiler and ledger APIs.
+
+## [Toolchain 0.33.124, language 0.25.107, runtime 0.18.107] — Field arithmetic lowering fix (2026-08-20)
+
 - **Fixed** (`--rust`): `Field` arithmetic emitted `wrapping_*` on `Fr`,
   which does not compile. `arith-binop-rust`'s fallback branch was reached
   whenever the result type had no unsigned width — i.e. every `Field`
@@ -30,11 +38,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   of the constructs `--rust` refuses (27 kinds across 31 rejection sites),
   the "unsupported must fail, never emit plausible output" contract, and the
   command to enumerate the sites from the code so the page cannot drift.
-- **Fork**: merged upstream `LFDT-Minokawa/compact` `main` (toolchain 0.33.122,
-  language 0.25.107, runtime 0.18.107 — ledger 9, ZKIR v3 backend, per-pass
-  compiler file split, `JubjubScalar` builtin, standard-library Schnorr) into
-  the MediaNoxLabs Rust-codegen fork, and adapted the `--rust` backend and the
-  `compact-runtime` crates to the new compiler and ledger APIs.
 
 ## [Toolchain 0.33.123, language 0.25.107, runtime 0.18.107]
 

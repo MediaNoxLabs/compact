@@ -9,6 +9,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _No changes yet._
 
+## [Toolchain 0.31.114, language 0.23.103, runtime 0.16.100] — unsupported constructs reject instead of emitting plausible output (2026-08-21)
+
+### Fixed
+
+- **Four emitter paths produced valid, compiling, WRONG Rust instead of
+  failing the compile.** The backend's central safety property is that a
+  construct it cannot lower raises `rust-feature-error`; these violated it:
+  - a constructor `assert` whose condition was a non-inlinable circuit call
+    emitted `/* TODO */ true`, lowering to `assert!(true)` — a precondition
+    that silently never fired;
+  - a constructor `if` in the same situation emitted `/* TODO */ true`,
+    making the then-branch unconditional and the else-branch dead, so a
+    conditional ledger write became unconditional;
+  - three catch-all `(guard (c [#t "/* TODO … */"]) …)` handlers in the
+    streaming pass matched *every* condition, so a deliberate
+    `rust-feature-error` was replaced by a comment emitted where an
+    expression belongs — and a genuine emitter bug became a comment instead
+    of a stack trace;
+  - four natives with no Rust binding (`keccak256`, `ownPublicKey`,
+    `createZswapInput`, `createZswapOutput`) emitted `unimplemented!()`,
+    so contracts calling them compiled cleanly and panicked at run time.
+
+  All four now reject at compile time with located diagnostics naming the
+  offending circuit or native. New rejection kinds:
+  `ctor-assert-condition-inline`, `ctor-if-condition-inline`.
+
+  The natives fix is structural rather than a special case: the `(rust …)`
+  clause is optional and `native-call-site-rust` already rejects on a `#f`
+  field, so dropping the clause makes absence representable as absence and
+  the existing rejection fires. A future unbound native cannot emit a panic
+  by accident.
+
+  **Byte-parity neutral** — the committed corpus contained zero `TODO` and
+  zero `unimplemented` across all generated `lib.rs`, so no fixture reached
+  any of these paths. They were latent traps for the next contract shape.
+
+### Documentation
+
+- Added `docs/rust-backend-limitations.md`: what the backend refuses to
+  lower and why, with the four fixed paths as worked examples of the
+  rejection contract. 28 rejection sites, 24 distinct kinds.
+- Every one of the 9 `rust-passes*.ss` files now carries a file-level
+  header stating what it owns; eight had none.
+- `compiler/README-rust-passes.md` gained the walker/emit split and its
+  cost, the three body routes, and what each test layer can and cannot
+  catch. Corrected a convention that said walkers should "bail to
+  `unimplemented!()` rather than producing wrong code" — the same mistake
+  this release removes — and stale facts ("seven Scheme files", every LOC
+  figure, a missing table row).
+- Removed dangling `docs/superpowers/**` pointers from everything that
+  ships, including three in `runtime-rs` / `runtime-rs-macros` that would
+  have shipped as broken links in published rustdoc.
+
 ## [Toolchain 0.31.113, language 0.23.103, runtime 0.16.100] — --target replaces --rust / --skip-ts (2026-08-20)
 
 ### Changed

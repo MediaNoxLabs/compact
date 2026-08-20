@@ -708,264 +708,238 @@ dependencies = [
 name = "compact-contract-aliases-fixture"
 version = "0.1.0"
 dependencies = [
- "compact-runtime",
+ "midnight-compact-runtime",
 ]
 
 [[package]]
 name = "compact-contract-assert-parity-fixture"
 version = "0.1.0"
 dependencies = [
- "compact-runtime",
+ "midnight-compact-runtime",
 ]
 
 [[package]]
 name = "compact-contract-asset-registry-fixture"
 version = "0.1.0"
 dependencies = [
- "compact-runtime",
+ "midnight-compact-runtime",
 ]
 
 [[package]]
 name = "compact-contract-bounded-uint-fixture"
 version = "0.1.0"
 dependencies = [
- "compact-runtime",
+ "midnight-compact-runtime",
 ]
 
 [[package]]
 name = "compact-contract-bug11-fixture"
 version = "0.1.0"
 dependencies = [
- "compact-runtime",
+ "midnight-compact-runtime",
 ]
 
 [[package]]
 name = "compact-contract-chunked-ledger-fixture"
 version = "0.1.0"
 dependencies = [
- "compact-runtime",
+ "midnight-compact-runtime",
 ]
 
 [[package]]
 name = "compact-contract-cross-circuit-fixture"
 version = "0.1.0"
 dependencies = [
- "compact-runtime",
+ "midnight-compact-runtime",
 ]
 
 [[package]]
 name = "compact-contract-election"
 version = "0.1.0"
 dependencies = [
- "compact-runtime",
+ "midnight-compact-runtime",
 ]
 
 [[package]]
 name = "compact-contract-fold-fixture"
 version = "0.1.0"
 dependencies = [
- "compact-runtime",
+ "midnight-compact-runtime",
 ]
 
 [[package]]
 name = "compact-contract-for-iter-fixture"
 version = "0.1.0"
 dependencies = [
- "compact-runtime",
+ "midnight-compact-runtime",
 ]
 
 [[package]]
 name = "compact-contract-for-range-fixture"
 version = "0.1.0"
 dependencies = [
- "compact-runtime",
+ "midnight-compact-runtime",
 ]
 
 [[package]]
 name = "compact-contract-guarded-assert-arith-fixture"
 version = "0.1.0"
 dependencies = [
- "compact-runtime",
+ "midnight-compact-runtime",
 ]
 
 [[package]]
 name = "compact-contract-hash-to-curve-fixture"
 version = "0.1.0"
 dependencies = [
- "compact-runtime",
+ "midnight-compact-runtime",
 ]
 
 [[package]]
 name = "compact-contract-hmt-default-fixture"
 version = "0.1.0"
 dependencies = [
- "compact-runtime",
+ "midnight-compact-runtime",
 ]
 
 [[package]]
 name = "compact-contract-if-stmt-fixture"
 version = "0.1.0"
 dependencies = [
- "compact-runtime",
+ "midnight-compact-runtime",
 ]
 
 [[package]]
 name = "compact-contract-list-fixture"
 version = "0.1.0"
 dependencies = [
- "compact-runtime",
+ "midnight-compact-runtime",
 ]
 
 [[package]]
 name = "compact-contract-map-fixture"
 version = "0.1.0"
 dependencies = [
- "compact-runtime",
+ "midnight-compact-runtime",
 ]
 
 [[package]]
 name = "compact-contract-map-fn-fixture"
 version = "0.1.0"
 dependencies = [
- "compact-runtime",
+ "midnight-compact-runtime",
 ]
 
 [[package]]
 name = "compact-contract-map-lambda-fixture"
 version = "0.1.0"
 dependencies = [
- "compact-runtime",
+ "midnight-compact-runtime",
 ]
 
 [[package]]
 name = "compact-contract-module-fixture"
 version = "0.1.0"
 dependencies = [
- "compact-runtime",
+ "midnight-compact-runtime",
 ]
 
 [[package]]
 name = "compact-contract-multi-pl-call-fixture"
 version = "0.1.0"
 dependencies = [
- "compact-runtime",
+ "midnight-compact-runtime",
 ]
 
 [[package]]
 name = "compact-contract-nested-map-fixture"
 version = "0.1.0"
 dependencies = [
- "compact-runtime",
+ "midnight-compact-runtime",
 ]
 
 [[package]]
 name = "compact-contract-pure-circuit-fixture"
 version = "0.1.0"
 dependencies = [
- "compact-runtime",
+ "midnight-compact-runtime",
 ]
 
 [[package]]
 name = "compact-contract-schnorr-attest-fixture"
 version = "0.1.0"
 dependencies = [
- "compact-runtime",
+ "midnight-compact-runtime",
 ]
 
 [[package]]
 name = "compact-contract-sealed-ledger-fixture"
 version = "0.1.0"
 dependencies = [
- "compact-runtime",
+ "midnight-compact-runtime",
 ]
 
 [[package]]
 name = "compact-contract-set-fixture"
 version = "0.1.0"
 dependencies = [
- "compact-runtime",
+ "midnight-compact-runtime",
 ]
 
 [[package]]
 name = "compact-contract-set-size-fixture"
 version = "0.1.0"
 dependencies = [
- "compact-runtime",
+ "midnight-compact-runtime",
 ]
 
 [[package]]
 name = "compact-contract-struct-collision-fixture"
 version = "0.1.0"
 dependencies = [
- "compact-runtime",
+ "midnight-compact-runtime",
 ]
 
 [[package]]
 name = "compact-contract-tiny"
 version = "0.1.0"
 dependencies = [
- "compact-runtime",
+ "midnight-compact-runtime",
 ]
 
 [[package]]
 name = "compact-contract-uints-fixture"
 version = "0.1.0"
 dependencies = [
- "compact-runtime",
+ "midnight-compact-runtime",
 ]
 
 [[package]]
 name = "compact-contract-vector-fixture"
 version = "0.1.0"
 dependencies = [
- "compact-runtime",
+ "midnight-compact-runtime",
 ]
 
 [[package]]
 name = "compact-contract-widening-arith-fixture"
 version = "0.1.0"
 dependencies = [
- "compact-runtime",
+ "midnight-compact-runtime",
 ]
 
 [[package]]
 name = "compact-contract-witnesses-fixture"
 version = "0.1.0"
 dependencies = [
- "compact-runtime",
+ "midnight-compact-runtime",
 ]
 
 [[package]]
 name = "compact-contract-zerocash"
 version = "0.1.0"
 dependencies = [
- "compact-runtime",
-]
-
-[[package]]
-name = "compact-runtime"
-version = "0.16.100"
-dependencies = [
- "compact-runtime-macros",
- "midnight-base-crypto",
- "midnight-coin-structure",
- "midnight-onchain-runtime",
- "midnight-onchain-state",
- "midnight-onchain-vm",
- "midnight-serialize",
- "midnight-storage",
- "midnight-transient-crypto",
- "midnight-zswap",
-]
-
-[[package]]
-name = "compact-runtime-macros"
-version = "0.16.100"
-dependencies = [
- "compact-runtime",
- "proc-macro2",
- "quote 1.0.45",
- "syn 2.0.117",
+ "midnight-compact-runtime",
 ]
 
 [[package]]
@@ -2627,6 +2601,32 @@ dependencies = [
  "rand 0.8.6",
  "serde",
  "zeroize",
+]
+
+[[package]]
+name = "midnight-compact-runtime"
+version = "0.16.100"
+dependencies = [
+ "midnight-base-crypto",
+ "midnight-coin-structure",
+ "midnight-compact-runtime-macros",
+ "midnight-onchain-runtime",
+ "midnight-onchain-state",
+ "midnight-onchain-vm",
+ "midnight-serialize",
+ "midnight-storage",
+ "midnight-transient-crypto",
+ "midnight-zswap",
+]
+
+[[package]]
+name = "midnight-compact-runtime-macros"
+version = "0.16.100"
+dependencies = [
+ "midnight-compact-runtime",
+ "proc-macro2",
+ "quote 1.0.45",
+ "syn 2.0.117",
 ]
 
 [[package]]
@@ -4824,10 +4824,10 @@ dependencies = [
  "compact-contract-widening-arith-fixture",
  "compact-contract-witnesses-fixture",
  "compact-contract-zerocash",
- "compact-runtime",
  "hex",
  "midnight-base-crypto",
  "midnight-coin-structure",
+ "midnight-compact-runtime",
  "midnight-onchain-runtime",
  "midnight-onchain-state",
  "midnight-onchain-vm",

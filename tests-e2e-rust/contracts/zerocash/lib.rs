@@ -26,10 +26,10 @@
     non_upper_case_globals
 )]
 
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 use std::marker::PhantomData;
 
-compact_runtime::check_runtime_version!("0.16.100");
+midnight_compact_runtime::check_runtime_version!("0.16.100");
 
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct commitment {
@@ -63,14 +63,14 @@ impl FromFieldRepr for commitment {
         Some(commitment { bytes })
     }
 }
-impl From<commitment> for compact_runtime::Value {
-    fn from(s: commitment) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.bytes));
-        compact_runtime::Value::concat(_v.iter())
+impl From<commitment> for midnight_compact_runtime::Value {
+    fn from(s: commitment) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.bytes));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for commitment {
+impl midnight_compact_runtime::BinaryHashRepr for commitment {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.bytes.binary_repr(writer);
     }
@@ -121,15 +121,15 @@ impl FromFieldRepr for coin_info {
         Some(coin_info { nonce, opening })
     }
 }
-impl From<coin_info> for compact_runtime::Value {
-    fn from(s: coin_info) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.nonce));
-        _v.push(compact_runtime::Value::from(s.opening));
-        compact_runtime::Value::concat(_v.iter())
+impl From<coin_info> for midnight_compact_runtime::Value {
+    fn from(s: coin_info) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.nonce));
+        _v.push(midnight_compact_runtime::Value::from(s.opening));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for coin_info {
+impl midnight_compact_runtime::BinaryHashRepr for coin_info {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.nonce.binary_repr(writer);
         self.opening.binary_repr(writer);
@@ -163,16 +163,16 @@ impl FieldRepr for LeafPreimage {
 }
 impl FromFieldRepr for LeafPreimage {
     const FIELD_SIZE: usize =
-        compact_runtime::bytes_field_size(6) + <commitment as FromFieldRepr>::FIELD_SIZE;
+        midnight_compact_runtime::bytes_field_size(6) + <commitment as FromFieldRepr>::FIELD_SIZE;
     fn from_field_repr(_repr: &[Fr]) -> Option<Self> {
         if _repr.len() < Self::FIELD_SIZE {
             return None;
         }
         let mut _offset = 0usize;
-        let domain_sep = compact_runtime::bytes_from_field_repr::<6>(
-            &_repr[_offset.._offset + compact_runtime::bytes_field_size(6)],
+        let domain_sep = midnight_compact_runtime::bytes_from_field_repr::<6>(
+            &_repr[_offset.._offset + midnight_compact_runtime::bytes_field_size(6)],
         )?;
-        _offset += compact_runtime::bytes_field_size(6);
+        _offset += midnight_compact_runtime::bytes_field_size(6);
         let data = <commitment as FromFieldRepr>::from_field_repr(
             &_repr[_offset.._offset + <commitment as FromFieldRepr>::FIELD_SIZE],
         )?;
@@ -181,15 +181,15 @@ impl FromFieldRepr for LeafPreimage {
         Some(LeafPreimage { domain_sep, data })
     }
 }
-impl From<LeafPreimage> for compact_runtime::Value {
-    fn from(s: LeafPreimage) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.domain_sep));
-        _v.push(compact_runtime::Value::from(s.data));
-        compact_runtime::Value::concat(_v.iter())
+impl From<LeafPreimage> for midnight_compact_runtime::Value {
+    fn from(s: LeafPreimage) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.domain_sep));
+        _v.push(midnight_compact_runtime::Value::from(s.data));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for LeafPreimage {
+impl midnight_compact_runtime::BinaryHashRepr for LeafPreimage {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.domain_sep.binary_repr(writer);
         self.data.binary_repr(writer);
@@ -232,20 +232,21 @@ impl FromFieldRepr for public_key {
             &_repr[_offset.._offset + <zk_public_key as FromFieldRepr>::FIELD_SIZE],
         )?;
         _offset += <zk_public_key as FromFieldRepr>::FIELD_SIZE;
-        let encryption = compact_runtime::vec_u8_from_field_repr(&_repr[_offset.._offset])?;
+        let encryption =
+            midnight_compact_runtime::vec_u8_from_field_repr(&_repr[_offset.._offset])?;
         let _ = _offset;
         Some(public_key { zk, encryption })
     }
 }
-impl From<public_key> for compact_runtime::Value {
-    fn from(s: public_key) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.zk));
-        _v.push(compact_runtime::Value::from(s.encryption));
-        compact_runtime::Value::concat(_v.iter())
+impl From<public_key> for midnight_compact_runtime::Value {
+    fn from(s: public_key) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.zk));
+        _v.push(midnight_compact_runtime::Value::from(s.encryption));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for public_key {
+impl midnight_compact_runtime::BinaryHashRepr for public_key {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.zk.binary_repr(writer);
         self.encryption.binary_repr(writer);
@@ -287,14 +288,14 @@ impl FromFieldRepr for Nonce {
         Some(Nonce { bytes })
     }
 }
-impl From<Nonce> for compact_runtime::Value {
-    fn from(s: Nonce) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.bytes));
-        compact_runtime::Value::concat(_v.iter())
+impl From<Nonce> for midnight_compact_runtime::Value {
+    fn from(s: Nonce) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.bytes));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for Nonce {
+impl midnight_compact_runtime::BinaryHashRepr for Nonce {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.bytes.binary_repr(writer);
     }
@@ -335,14 +336,14 @@ impl FromFieldRepr for MerkleTreeDigest {
         Some(MerkleTreeDigest { field })
     }
 }
-impl From<MerkleTreeDigest> for compact_runtime::Value {
-    fn from(s: MerkleTreeDigest) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.field));
-        compact_runtime::Value::concat(_v.iter())
+impl From<MerkleTreeDigest> for midnight_compact_runtime::Value {
+    fn from(s: MerkleTreeDigest) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.field));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for MerkleTreeDigest {
+impl midnight_compact_runtime::BinaryHashRepr for MerkleTreeDigest {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.field.binary_repr(writer);
     }
@@ -383,14 +384,14 @@ impl FromFieldRepr for zk_secret_key {
         Some(zk_secret_key { bytes })
     }
 }
-impl From<zk_secret_key> for compact_runtime::Value {
-    fn from(s: zk_secret_key) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.bytes));
-        compact_runtime::Value::concat(_v.iter())
+impl From<zk_secret_key> for midnight_compact_runtime::Value {
+    fn from(s: zk_secret_key) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.bytes));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for zk_secret_key {
+impl midnight_compact_runtime::BinaryHashRepr for zk_secret_key {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.bytes.binary_repr(writer);
     }
@@ -431,14 +432,14 @@ impl FromFieldRepr for zk_public_key {
         Some(zk_public_key { bytes })
     }
 }
-impl From<zk_public_key> for compact_runtime::Value {
-    fn from(s: zk_public_key) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.bytes));
-        compact_runtime::Value::concat(_v.iter())
+impl From<zk_public_key> for midnight_compact_runtime::Value {
+    fn from(s: zk_public_key) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.bytes));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for zk_public_key {
+impl midnight_compact_runtime::BinaryHashRepr for zk_public_key {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.bytes.binary_repr(writer);
     }
@@ -479,14 +480,14 @@ impl FromFieldRepr for opening {
         Some(opening { bytes })
     }
 }
-impl From<opening> for compact_runtime::Value {
-    fn from(s: opening) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.bytes));
-        compact_runtime::Value::concat(_v.iter())
+impl From<opening> for midnight_compact_runtime::Value {
+    fn from(s: opening) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.bytes));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for opening {
+impl midnight_compact_runtime::BinaryHashRepr for opening {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.bytes.binary_repr(writer);
     }
@@ -527,14 +528,14 @@ impl FromFieldRepr for nullifier {
         Some(nullifier { bytes })
     }
 }
-impl From<nullifier> for compact_runtime::Value {
-    fn from(s: nullifier) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.bytes));
-        compact_runtime::Value::concat(_v.iter())
+impl From<nullifier> for midnight_compact_runtime::Value {
+    fn from(s: nullifier) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.bytes));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for nullifier {
+impl midnight_compact_runtime::BinaryHashRepr for nullifier {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.bytes.binary_repr(writer);
     }
@@ -566,7 +567,7 @@ pub trait Witnesses<PS> {
         &self,
         ctx: &WitnessContext<Ledger<'a>, PS>,
         cm: commitment,
-    ) -> (PS, compact_runtime::MerklePath<commitment>);
+    ) -> (PS, midnight_compact_runtime::MerklePath<commitment>);
     fn context_new_coin_info<'a>(&self, ctx: &WitnessContext<Ledger<'a>, PS>) -> (PS, coin_info);
     fn context_encrypt<'a>(
         &self,
@@ -605,7 +606,7 @@ where
             new_cell(Vec::<u8>::new()),
         ]);
         let state = ChargedState::new(sv);
-        let qctx = QueryContext::new(state, compact_runtime::ContractAddress::default());
+        let qctx = QueryContext::new(state, midnight_compact_runtime::ContractAddress::default());
         Ok(ConstructorResult {
             current_contract_state: qctx.state,
             current_private_state: ctx.initial_private_state,
@@ -619,7 +620,7 @@ where
         dest_public_key: public_key,
         input_coin: coin_info,
     ) -> Result<CircuitResults<PS, ()>, CompactError> {
-        let mut __gas_acc = compact_runtime::RunningCost::default();
+        let mut __gas_acc = midnight_compact_runtime::RunningCost::default();
         let _witness_ctx_0 = WitnessContext::new(
             ledger(&ctx.current_query_context.state),
             ctx.current_private_state,
@@ -648,14 +649,16 @@ where
                     CompactError::AssertionFailed(format!("ledger query failed: {:?}", e))
                 })?;
                 let _av = match _gather_results.events.last() {
-                    Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+                    Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(
+                        av,
+                    )) => av,
                     _ => {
                         return Err(CompactError::AssertionFailed(
                             "ledger: expected Read event".into(),
                         ))
                     }
                 };
-                compact_runtime::std_lib::decode_bool(_av)?
+                midnight_compact_runtime::std_lib::decode_bool(_av)?
             })),
             "spend: Coin already spent"
         );
@@ -687,7 +690,7 @@ where
         let (current_private_state, commitment_path) = self
             .witnesses
             .context_path_of(&_witness_ctx_6, old_commitment.clone());
-        let tmp = compact_runtime::std_lib::merkle_tree_path_root(commitment_path.clone());
+        let tmp = midnight_compact_runtime::std_lib::merkle_tree_path_root(commitment_path.clone());
         compact_assert!(
             ({
                 let _gather_ops = OpProgramGather::<DefaultDB>::new()
@@ -708,14 +711,16 @@ where
                     CompactError::AssertionFailed(format!("ledger query failed: {:?}", e))
                 })?;
                 let _av = match _gather_results.events.last() {
-                    Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+                    Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(
+                        av,
+                    )) => av,
                     _ => {
                         return Err(CompactError::AssertionFailed(
                             "ledger: expected Read event".into(),
                         ))
                     }
                 };
-                compact_runtime::std_lib::decode_bool(_av)?
+                midnight_compact_runtime::std_lib::decode_bool(_av)?
             } && (old_commitment == commitment_path.leaf)),
             "spend: Illegal state: merkle path not recognized by public state"
         );
@@ -892,22 +897,22 @@ pub mod pure_circuits {
         sk: zk_secret_key,
     ) -> Result<nullifier, CompactError> {
         Ok(nullifier {
-            bytes: compact_runtime::std_lib::persistent_hash_aligned(&[
-                compact_runtime::AlignedValue::from([
+            bytes: midnight_compact_runtime::std_lib::persistent_hash_aligned(&[
+                midnight_compact_runtime::AlignedValue::from([
                     108u8, 97, 114, 101, 115, 58, 122, 101, 114, 111, 99, 97, 115, 104, 58, 99,
                     111, 109, 109, 105, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 ]),
-                compact_runtime::AlignedValue::from(coin.nonce.bytes),
-                compact_runtime::AlignedValue::from(coin.opening.bytes),
-                compact_runtime::AlignedValue::from(sk.bytes),
+                midnight_compact_runtime::AlignedValue::from(coin.nonce.bytes),
+                midnight_compact_runtime::AlignedValue::from(coin.opening.bytes),
+                midnight_compact_runtime::AlignedValue::from(sk.bytes),
             ]),
         })
     }
 
     pub(crate) fn derive_zk_public_key(sk: zk_secret_key) -> Result<zk_public_key, CompactError> {
         Ok(zk_public_key {
-            bytes: compact_runtime::std_lib::persistent_hash_aligned(&[
-                compact_runtime::AlignedValue::from(sk.bytes),
+            bytes: midnight_compact_runtime::std_lib::persistent_hash_aligned(&[
+                midnight_compact_runtime::AlignedValue::from(sk.bytes),
             ]),
         })
     }
@@ -917,14 +922,14 @@ pub mod pure_circuits {
         pk: zk_public_key,
     ) -> Result<commitment, CompactError> {
         Ok(commitment {
-            bytes: compact_runtime::std_lib::persistent_hash_aligned(&[
-                compact_runtime::AlignedValue::from([
+            bytes: midnight_compact_runtime::std_lib::persistent_hash_aligned(&[
+                midnight_compact_runtime::AlignedValue::from([
                     108u8, 97, 114, 101, 115, 58, 122, 101, 114, 111, 99, 97, 115, 104, 58, 99,
                     111, 109, 109, 105, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 ]),
-                compact_runtime::AlignedValue::from(coin.nonce.bytes),
-                compact_runtime::AlignedValue::from(coin.opening.bytes),
-                compact_runtime::AlignedValue::from(pk.bytes),
+                midnight_compact_runtime::AlignedValue::from(coin.nonce.bytes),
+                midnight_compact_runtime::AlignedValue::from(coin.opening.bytes),
+                midnight_compact_runtime::AlignedValue::from(pk.bytes),
             ]),
         })
     }

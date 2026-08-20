@@ -26,10 +26,10 @@
     non_upper_case_globals
 )]
 
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 use std::marker::PhantomData;
 
-compact_runtime::check_runtime_version!("0.16.100");
+midnight_compact_runtime::check_runtime_version!("0.16.100");
 
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct SchnorrHashInput {
@@ -98,7 +98,7 @@ impl FromFieldRepr for SchnorrHashInput {
             &_repr[_offset.._offset + <Fr as FromFieldRepr>::FIELD_SIZE],
         )?;
         _offset += <Fr as FromFieldRepr>::FIELD_SIZE;
-        let msg = compact_runtime::array_from_field_repr::<Fr, 4>(
+        let msg = midnight_compact_runtime::array_from_field_repr::<Fr, 4>(
             &_repr[_offset.._offset + <Fr as FromFieldRepr>::FIELD_SIZE * 4],
             <Fr as FromFieldRepr>::FIELD_SIZE,
         )?;
@@ -113,20 +113,20 @@ impl FromFieldRepr for SchnorrHashInput {
         })
     }
 }
-impl From<SchnorrHashInput> for compact_runtime::Value {
-    fn from(s: SchnorrHashInput) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.ann_x));
-        _v.push(compact_runtime::Value::from(s.ann_y));
-        _v.push(compact_runtime::Value::from(s.pk_x));
-        _v.push(compact_runtime::Value::from(s.pk_y));
+impl From<SchnorrHashInput> for midnight_compact_runtime::Value {
+    fn from(s: SchnorrHashInput) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.ann_x));
+        _v.push(midnight_compact_runtime::Value::from(s.ann_y));
+        _v.push(midnight_compact_runtime::Value::from(s.pk_x));
+        _v.push(midnight_compact_runtime::Value::from(s.pk_y));
         for _e in s.msg.iter() {
-            _v.push(compact_runtime::Value::from(_e.clone()));
+            _v.push(midnight_compact_runtime::Value::from(_e.clone()));
         }
-        compact_runtime::Value::concat(_v.iter())
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for SchnorrHashInput {
+impl midnight_compact_runtime::BinaryHashRepr for SchnorrHashInput {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.ann_x.binary_repr(writer);
         self.ann_y.binary_repr(writer);
@@ -177,14 +177,14 @@ impl FromFieldRepr for AttestationDomain {
         Some(AttestationDomain { domain })
     }
 }
-impl From<AttestationDomain> for compact_runtime::Value {
-    fn from(s: AttestationDomain) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.domain));
-        compact_runtime::Value::concat(_v.iter())
+impl From<AttestationDomain> for midnight_compact_runtime::Value {
+    fn from(s: AttestationDomain) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.domain));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for AttestationDomain {
+impl midnight_compact_runtime::BinaryHashRepr for AttestationDomain {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.domain.binary_repr(writer);
     }
@@ -235,15 +235,15 @@ impl FromFieldRepr for AttestationSubject {
         Some(AttestationSubject { subject, epoch })
     }
 }
-impl From<AttestationSubject> for compact_runtime::Value {
-    fn from(s: AttestationSubject) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.subject));
-        _v.push(compact_runtime::Value::from(s.epoch));
-        compact_runtime::Value::concat(_v.iter())
+impl From<AttestationSubject> for midnight_compact_runtime::Value {
+    fn from(s: AttestationSubject) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.subject));
+        _v.push(midnight_compact_runtime::Value::from(s.epoch));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for AttestationSubject {
+impl midnight_compact_runtime::BinaryHashRepr for AttestationSubject {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.subject.binary_repr(writer);
         self.epoch.binary_repr(writer);
@@ -285,14 +285,14 @@ impl FromFieldRepr for AttestationPayload {
         Some(AttestationPayload { payloadHash })
     }
 }
-impl From<AttestationPayload> for compact_runtime::Value {
-    fn from(s: AttestationPayload) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.payloadHash));
-        compact_runtime::Value::concat(_v.iter())
+impl From<AttestationPayload> for midnight_compact_runtime::Value {
+    fn from(s: AttestationPayload) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.payloadHash));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for AttestationPayload {
+impl midnight_compact_runtime::BinaryHashRepr for AttestationPayload {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.payloadHash.binary_repr(writer);
     }
@@ -334,12 +334,12 @@ where
         ctx: ConstructorContext<PS>,
     ) -> Result<ConstructorResult<PS>, CompactError> {
         let sv = new_array(vec![
-            new_cell(compact_runtime::JubjubPoint::default()),
+            new_cell(midnight_compact_runtime::JubjubPoint::default()),
             new_cell(0u64),
             new_cell(false),
         ]);
         let state = ChargedState::new(sv);
-        let qctx = QueryContext::new(state, compact_runtime::ContractAddress::default());
+        let qctx = QueryContext::new(state, midnight_compact_runtime::ContractAddress::default());
         let _witness_ctx_0 =
             WitnessContext::new(ledger(&qctx.state), ctx.initial_private_state, &qctx);
         let (current_private_state, tmp) = self.witnesses.local_attestor_key(&_witness_ctx_0);
@@ -365,12 +365,16 @@ where
         &self,
         ctx: CircuitContext<PS>,
         digest: [Fr; 4],
-        signature: compact_runtime::SchnorrSignature,
+        signature: midnight_compact_runtime::SchnorrSignature,
         pk: JubjubPoint,
     ) -> Result<CircuitResults<PS, ()>, CompactError> {
-        let mut __gas_acc = compact_runtime::RunningCost::default();
-        let _cr_1 =
-            compact_runtime::schnorr_verify_jubjub(ctx, digest, signature.clone(), pk.clone())?;
+        let mut __gas_acc = midnight_compact_runtime::RunningCost::default();
+        let _cr_1 = midnight_compact_runtime::schnorr_verify_jubjub(
+            ctx,
+            digest,
+            signature.clone(),
+            pk.clone(),
+        )?;
         let ctx = _cr_1.context;
         __gas_acc += _cr_1.gas_cost.clone();
         let ops = OpProgramVerify::<DefaultDB>::new().build();
@@ -396,9 +400,9 @@ where
         &self,
         ctx: CircuitContext<PS>,
         digest: [Fr; 4],
-        signature: compact_runtime::SchnorrSignature,
+        signature: midnight_compact_runtime::SchnorrSignature,
     ) -> Result<CircuitResults<PS, ()>, CompactError> {
-        let mut __gas_acc = compact_runtime::RunningCost::default();
+        let mut __gas_acc = midnight_compact_runtime::RunningCost::default();
         compact_assert!(
             {
                 let _gather_ops = OpProgramGather::<DefaultDB>::new()
@@ -416,14 +420,16 @@ where
                     CompactError::AssertionFailed(format!("ledger query failed: {:?}", e))
                 })?;
                 let _av = match _gather_results.events.last() {
-                    Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+                    Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(
+                        av,
+                    )) => av,
                     _ => {
                         return Err(CompactError::AssertionFailed(
                             "ledger: expected Read event".into(),
                         ))
                     }
                 };
-                compact_runtime::std_lib::decode_bool(_av)?
+                midnight_compact_runtime::std_lib::decode_bool(_av)?
             },
             "attestor is closed"
         );
@@ -441,14 +447,16 @@ where
             )
             .map_err(|e| CompactError::AssertionFailed(format!("ledger query failed: {:?}", e)))?;
             let _av = match _gather_results.events.last() {
-                Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+                Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => {
+                    av
+                }
                 _ => {
                     return Err(CompactError::AssertionFailed(
                         "ledger: expected Read event".into(),
                     ))
                 }
             };
-            compact_runtime::std_lib::decode_jubjub_point(_av)?
+            midnight_compact_runtime::std_lib::decode_jubjub_point(_av)?
         };
         let _cr_2 = self.schnorr_verify_digest(ctx, digest, signature.clone(), _carg_2_2)?;
         let ctx = _cr_2.context;
@@ -476,9 +484,9 @@ where
         &self,
         ctx: CircuitContext<PS>,
         digest: [Fr; 4],
-        signature: compact_runtime::SchnorrSignature,
+        signature: midnight_compact_runtime::SchnorrSignature,
     ) -> Result<CircuitResults<PS, ()>, CompactError> {
-        let mut __gas_acc = compact_runtime::RunningCost::default();
+        let mut __gas_acc = midnight_compact_runtime::RunningCost::default();
         compact_assert!(
             {
                 let _gather_ops = OpProgramGather::<DefaultDB>::new()
@@ -496,14 +504,16 @@ where
                     CompactError::AssertionFailed(format!("ledger query failed: {:?}", e))
                 })?;
                 let _av = match _gather_results.events.last() {
-                    Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+                    Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(
+                        av,
+                    )) => av,
                     _ => {
                         return Err(CompactError::AssertionFailed(
                             "ledger: expected Read event".into(),
                         ))
                     }
                 };
-                compact_runtime::std_lib::decode_bool(_av)?
+                midnight_compact_runtime::std_lib::decode_bool(_av)?
             },
             "attestor is closed"
         );
@@ -521,14 +531,16 @@ where
             )
             .map_err(|e| CompactError::AssertionFailed(format!("ledger query failed: {:?}", e)))?;
             let _av = match _gather_results.events.last() {
-                Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+                Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => {
+                    av
+                }
                 _ => {
                     return Err(CompactError::AssertionFailed(
                         "ledger: expected Read event".into(),
                     ))
                 }
             };
-            compact_runtime::std_lib::decode_jubjub_point(_av)?
+            midnight_compact_runtime::std_lib::decode_jubjub_point(_av)?
         };
         let _cr_2 = self.schnorr_verify_digest(ctx, digest, signature.clone(), _carg_2_2)?;
         let ctx = _cr_2.context;
@@ -570,7 +582,7 @@ impl<'a, D: DB> Ledger<'a, D> {
     pub fn attestor_key(&self) -> Result<JubjubPoint, CompactError> {
         let qctx = QueryContext::new(
             self.state.clone(),
-            compact_runtime::ContractAddress::default(),
+            midnight_compact_runtime::ContractAddress::default(),
         );
         let ops = OpProgramGather::<D>::new()
             .dup(0)
@@ -580,19 +592,19 @@ impl<'a, D: DB> Ledger<'a, D> {
         let results = query_for_read(&qctx, &ops, None, &initial_cost_model())
             .map_err(|e| CompactError::AssertionFailed(format!("ledger query failed: {:?}", e)))?;
         let av = match results.events.last() {
-            Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+            Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
             _ => {
                 return Err(CompactError::AssertionFailed(
                     "ledger: expected Read event".into(),
                 ))
             }
         };
-        compact_runtime::std_lib::decode_jubjub_point(av)
+        midnight_compact_runtime::std_lib::decode_jubjub_point(av)
     }
     pub fn accepted_count(&self) -> Result<u64, CompactError> {
         let qctx = QueryContext::new(
             self.state.clone(),
-            compact_runtime::ContractAddress::default(),
+            midnight_compact_runtime::ContractAddress::default(),
         );
         let ops = OpProgramGather::<D>::new()
             .dup(0)
@@ -602,19 +614,19 @@ impl<'a, D: DB> Ledger<'a, D> {
         let results = query_for_read(&qctx, &ops, None, &initial_cost_model())
             .map_err(|e| CompactError::AssertionFailed(format!("ledger query failed: {:?}", e)))?;
         let av = match results.events.last() {
-            Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+            Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
             _ => {
                 return Err(CompactError::AssertionFailed(
                     "ledger: expected Read event".into(),
                 ))
             }
         };
-        compact_runtime::std_lib::decode_u64(av)
+        midnight_compact_runtime::std_lib::decode_u64(av)
     }
     pub fn open(&self) -> Result<bool, CompactError> {
         let qctx = QueryContext::new(
             self.state.clone(),
-            compact_runtime::ContractAddress::default(),
+            midnight_compact_runtime::ContractAddress::default(),
         );
         let ops = OpProgramGather::<D>::new()
             .dup(0)
@@ -624,14 +636,14 @@ impl<'a, D: DB> Ledger<'a, D> {
         let results = query_for_read(&qctx, &ops, None, &initial_cost_model())
             .map_err(|e| CompactError::AssertionFailed(format!("ledger query failed: {:?}", e)))?;
         let av = match results.events.last() {
-            Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+            Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
             _ => {
                 return Err(CompactError::AssertionFailed(
                     "ledger: expected Read event".into(),
                 ))
             }
         };
-        compact_runtime::std_lib::decode_bool(av)
+        midnight_compact_runtime::std_lib::decode_bool(av)
     }
 }
 
@@ -644,22 +656,22 @@ pub mod pure_circuits {
         payload_hash: Fr,
     ) -> Result<[Fr; 4], CompactError> {
         Ok([
-            compact_runtime::std_lib::transient_hash_aligned(&[
-                compact_runtime::AlignedValue::from(AttestationDomain {
+            midnight_compact_runtime::std_lib::transient_hash_aligned(&[
+                midnight_compact_runtime::AlignedValue::from(AttestationDomain {
                     domain: [
                         97u8, 115, 115, 101, 116, 45, 97, 116, 116, 101, 115, 116, 97, 116, 105,
                         111, 110, 58, 118, 49, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                     ],
                 }),
             ]),
-            compact_runtime::std_lib::transient_hash_aligned(&[
-                compact_runtime::AlignedValue::from(AttestationSubject {
+            midnight_compact_runtime::std_lib::transient_hash_aligned(&[
+                midnight_compact_runtime::AlignedValue::from(AttestationSubject {
                     subject: subject,
                     epoch: epoch,
                 }),
             ]),
-            compact_runtime::std_lib::transient_hash_aligned(&[
-                compact_runtime::AlignedValue::from(AttestationPayload {
+            midnight_compact_runtime::std_lib::transient_hash_aligned(&[
+                midnight_compact_runtime::AlignedValue::from(AttestationPayload {
                     payloadHash: payload_hash,
                 }),
             ]),

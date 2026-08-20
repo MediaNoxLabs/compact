@@ -43,7 +43,7 @@
 use compact_contract_guarded_assert_arith_fixture::{
     pure_circuits, Attestation, Contract, StatusProof, VerifierPolicy,
 };
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 
 fn ctor_ctx() -> ConstructorContext<()> {
     ConstructorContext {

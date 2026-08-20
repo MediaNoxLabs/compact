@@ -41,7 +41,7 @@
 // same frontend pass monomorphises type parameters before codegen.
 
 use compact_contract_module_fixture::Contract;
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 use midnight_serialize::tagged_serialize;
 use midnight_storage::storage::HashMap;
 use serde::Deserialize;

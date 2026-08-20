@@ -28,7 +28,7 @@
 // `reset_and_set` body is emitted (and compiled) but not invoked here.
 
 use compact_contract_cross_circuit_fixture::Contract;
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 use midnight_serialize::tagged_serialize;
 use midnight_storage::storage::HashMap;
 use tests_e2e_rust::SmallFixtureTsReference;

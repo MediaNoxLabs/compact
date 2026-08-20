@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use compact_runtime::std_lib::Counter;
-use compact_runtime::*;
+use midnight_compact_runtime::std_lib::Counter;
+use midnight_compact_runtime::*;
 
 #[test]
 fn counter_decode_reads_u64_from_state_value() {

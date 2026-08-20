@@ -40,7 +40,7 @@
 // wrong byte_len on the write path would surface on step 2 or 3.
 
 use compact_contract_bug11_fixture::Contract;
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 use midnight_serialize::tagged_serialize;
 use midnight_storage::storage::HashMap;
 use serde::Deserialize;

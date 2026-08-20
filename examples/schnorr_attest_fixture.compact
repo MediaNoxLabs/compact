@@ -22,7 +22,7 @@
 //
 //   1. `impure-call-target` rewrites a call to a circuit whose snake-
 //      cased name is `schnorr_verify` into
-//      `compact_runtime::schnorr_verify_jubjub`. The Compact-side
+//      `midnight_compact_runtime::schnorr_verify_jubjub`. The Compact-side
 //      verifier is GENERIC (`schnorrVerify<#n>`) and the body lowering
 //      for a generic impure circuit is not supported, so the emitter
 //      never lowers the module body — it routes the call to the
@@ -30,7 +30,7 @@
 //      (`runtime-rs/src/std_lib/schnorr.rs`).
 //   2. `stdlib-struct-mappings` elides the codegen-emitted
 //      `SchnorrSignature` struct and routes the type to
-//      `compact_runtime::SchnorrSignature`, which has the matching
+//      `midnight_compact_runtime::SchnorrSignature`, which has the matching
 //      layout, so the rewritten call site type-checks.
 //
 // Both are keyed on the NAMES `schnorr_verify` / `SchnorrSignature`,

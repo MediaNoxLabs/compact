@@ -36,7 +36,7 @@ use compact_contract_zerocash::{
     coin_info, commitment, opening, zk_public_key, zk_secret_key, Contract, Ledger, Nonce,
     Witnesses,
 };
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 use midnight_serialize::tagged_serialize;
 use midnight_storage::storage::HashMap;
 use std::cell::RefCell;
@@ -114,7 +114,7 @@ impl Witnesses<()> for ZerocashWitnesses {
         &self,
         _ctx: &WitnessContext<Ledger<'a>, ()>,
         cm: commitment,
-    ) -> ((), compact_runtime::MerklePath<commitment>) {
+    ) -> ((), midnight_compact_runtime::MerklePath<commitment>) {
         // If the test has stashed a captured path (spend-only), replay
         // it. Otherwise return a default empty path. The Rust spend
         // body unwraps this into the same byte-for-byte MerklePath the
@@ -123,7 +123,7 @@ impl Witnesses<()> for ZerocashWitnesses {
         match path {
             Some(p) => (
                 (),
-                compact_runtime::MerklePath {
+                midnight_compact_runtime::MerklePath {
                     leaf: commitment {
                         bytes: p.leaf_bytes(),
                     },
@@ -132,7 +132,10 @@ impl Witnesses<()> for ZerocashWitnesses {
             ),
             None => {
                 let _ = cm; // suppress unused warning
-                ((), compact_runtime::default_merkle_path::<commitment>())
+                (
+                    (),
+                    midnight_compact_runtime::default_merkle_path::<commitment>(),
+                )
             }
         }
     }
@@ -310,7 +313,7 @@ fn zerocash_init_mint_spend_byte_parity() {
 #[test]
 fn fixed_pk_matches_pure_circuit_derivation() {
     let derived =
-        compact_runtime::std_lib::persistent_hash_aligned(&[AlignedValue::from(FIXED_SK)]);
+        midnight_compact_runtime::std_lib::persistent_hash_aligned(&[AlignedValue::from(FIXED_SK)]);
     assert_eq!(
         derived,
         FIXED_PK,

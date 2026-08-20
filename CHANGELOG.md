@@ -13,6 +13,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the MediaNoxLabs Rust-codegen fork, and adapted the `--rust` backend and the
   `compact-runtime` crates to the new compiler and ledger APIs.
 
+## [Toolchain 0.33.124, language 0.25.107, runtime 0.18.107] — Field arithmetic lowering fix (2026-08-20)
+
+- **Fixed** (`--rust`): `Field` arithmetic emitted `wrapping_*` on `Fr`,
+  which does not compile. `arith-binop-rust`'s fallback branch was reached
+  whenever the result type had no unsigned width — i.e. every `Field`
+  result — so `return a + b` on two `Field`s produced
+  `Ok((a).wrapping_add(b))`. `Fr` implements `Add`/`Sub`/`Mul` but not the
+  `wrapping_*` family, so `compactc` exited 0 and the failure surfaced at
+  `cargo build`. Field arithmetic now lowers to plain `+`/`-`/`*`, which is
+  the correct semantics (field arithmetic is modular in the field
+  characteristic). An arithmetic result type that is neither a bounded
+  unsigned nor a field now raises a `rust-feature-error` rather than
+  emitting an operator the type may not have. Byte-parity neutral: no
+  fixture reached the branch.
+- **Changed** (`--rust`): the six `+`/`-`/`*` support guards in
+  `rust-passes-walker.ss` admitted only `tfield`, a literal translation of
+  the pre-0.33 `(not mbits)` condition and backwards for guards in front of
+  unsigned arithmetic. They now admit bounded unsigned *and* field results,
+  both of which have correct lowerings. Byte-parity neutral — the guards are
+  unreachable for the current corpus, which is also why the inversion went
+  unnoticed.
+- **Docs**: added `docs/rust-backend-limitations.md`, a consumer-facing list
+  of the constructs `--rust` refuses (27 kinds across 31 rejection sites),
+  the "unsupported must fail, never emit plausible output" contract, and the
+  command to enumerate the sites from the code so the page cannot drift.
+
 ## [Toolchain 0.33.123, language 0.25.107, runtime 0.18.107]
 
 Fork-only release: integrates upstream 0.33.122 into the Rust-codegen fork.

@@ -1742,15 +1742,48 @@
       ;; widening cast when an operand is narrower (Uint<8> * literal).
       ;; Field-typed results take the uncast `wrapping_*` fall-through,
       ;; exactly as the pre-0.33 `mbits = #f` case did.
-      (define (arith-binop-rust op type expr1 expr2 native-id-ht)
+      ;; field-arith-rust-operator: Rust operator for FIELD arithmetic.
+      ;; Field arithmetic is modular in the field's own characteristic, so
+      ;; the plain operators are the correct lowering — `Fr` implements
+      ;; Add/Sub/Mul (and NOT the `wrapping_*` family, which exists only
+      ;; on Rust's fixed-width integers).
+      (define (field-arith-rust-operator op)
+        (cond
+          [(string=? op "add") "+"]
+          [(string=? op "sub") "-"]
+          [(string=? op "mul") "*"]
+          [else #f]))
+
+      (define (arith-binop-rust src op type expr1 expr2 native-id-ht)
         (let ([e1 (arith-operand-rust expr1 native-id-ht)]
               [e2 (arith-operand-rust expr2 native-id-ht)]
               [w (arith-result-rust-width type)])
           (cond
             [w
              (format "((~a) as ~a).wrapping_~a((~a) as ~a)" e1 w op e2 w)]
+            ;; FIELD arithmetic. This branch previously fell through to
+            ;; `(~a).wrapping_~a(~a)`, emitting e.g. `(a).wrapping_add(b)`
+            ;; on two `Fr`s — which does not compile, because `Fr` has no
+            ;; `wrapping_add`. compactc exited 0 and the failure surfaced
+            ;; only at `cargo build`, from Compact as ordinary as
+            ;;     export pure circuit addFields(a: Field, b: Field): Field {
+            ;;       return a + b;
+            ;;     }
+            ;; No fixture exercised the shape, so nothing caught it: the
+            ;; corpus only ever reached the `w` branch above.
+            [(type-is-tfield? type)
+             (let ([rust-op (field-arith-rust-operator op)])
+               (unless rust-op
+                 (rust-feature-error src 'field-arith-operator
+                   "field arithmetic operator `~a` has no Rust lowering" op))
+               (format "(~a) ~a (~a)" e1 rust-op e2))]
+            ;; Neither a known unsigned width nor a field: refuse rather
+            ;; than emit `wrapping_*` against a type that may not have it.
+            ;; A guess here is exactly the silent-bad-output path the
+            ;; field case above spent a release demonstrating.
             [else
-             (format "(~a).wrapping_~a(~a)" e1 op e2)])))
+             (rust-feature-error src 'arith-result-type
+               "unsigned/field arithmetic on an unsupported result type has no Rust lowering")])))
 
       ;; expr-rust: emit a Rust expression string for an Ltypescript
       ;; Expression. I3b/1 covers the variants needed by tiny.compact's
@@ -1933,13 +1966,13 @@
            ;; the wrap matches the post-downcast semantics. Both operands
            ;; are cast to the result width (from `type`, 0.33's
            ;; replacement for the old `mbits` slot) via arith-binop-rust.
-           (arith-binop-rust "add" type expr1 expr2 native-id-ht)]
+           (arith-binop-rust src "add" type expr1 expr2 native-id-ht)]
           [(- ,src ,type ,expr1 ,expr2)
            ;; Iter 7 follow-up: unsigned subtraction. See `+` clause.
-           (arith-binop-rust "sub" type expr1 expr2 native-id-ht)]
+           (arith-binop-rust src "sub" type expr1 expr2 native-id-ht)]
           [(* ,src ,type ,expr1 ,expr2)
            ;; Iter 7 follow-up: unsigned multiplication. See `+` clause.
-           (arith-binop-rust "mul" type expr1 expr2 native-id-ht)]
+           (arith-binop-rust src "mul" type expr1 expr2 native-id-ht)]
           [(downcast-unsigned ,src ,nat2 ,nat1 ,expr)
            ;; 0.33 slot rename: the source-side bound went from
            ;; `(maybe nat?)` to a mandatory `nat2`, and the TARGET bound

@@ -849,17 +849,27 @@
              ;; is `(type-is-tfield? type)`. That is preserved verbatim
              ;; to keep this port byte-parity-neutral.
              ;;
-             ;; NOTE (follow-up, tracked on MediaNoxLabs/compact#17): the
-             ;; guard is inverted relative to its own intent —
-             ;; `arith-binop-rust` emits `.wrapping_*`, which `Fr` does
-             ;; not implement, so it should admit `tunsigned` and reject
-             ;; `tfield`. Every fixture that emits `wrapping_*` today has
-             ;; a Uint result type and reaches the emitter through the
-             ;; constructor / seq-stmt / cond-rust routes rather than
-             ;; here, i.e. these guards are effectively dead. Flipping
-             ;; them is expected to MOVE fixture bytes, so it is kept out
-             ;; of this integration commit.
-             (and (type-is-tfield? type)
+             ;; RESOLVED (was tracked on MediaNoxLabs/compact#17). The
+             ;; literal translation admitted only `tfield`, which is
+             ;; backwards for a guard in front of unsigned arithmetic.
+             ;; Both unsigned and field arithmetic now have correct
+             ;; lowerings, so both are admitted here.
+             ;;
+             ;; Two things measured while fixing it, since the earlier
+             ;; note guessed wrong about both:
+             ;;
+             ;; 1. These guards ARE dead for the corpus — not "expected to
+             ;;    move fixture bytes". Flipping tfield->tunsigned left all
+             ;;    32 fixtures byte-identical, because every fixture that
+             ;;    emits arithmetic reaches the emitter through the
+             ;;    constructor / seq-stmt / cond-rust routes, not here.
+             ;; 2. Flipping them did NOT fix the trap the note described.
+             ;;    Field arithmetic still reached `arith-binop-rust` by
+             ;;    another route and still emitted `(a).wrapping_add(b)` on
+             ;;    two `Fr`s — which does not compile. The real defect was
+             ;;    in `arith-binop-rust`'s fallback branch and is fixed
+             ;;    there; see the field case in that function.
+             (and (or (type-peel-tunsigned type) (type-is-tfield? type))
                   (expr-supported? expr1 native-id-ht
                                    witness-id-ht circuit-id-ht)
                   (expr-supported? expr2 native-id-ht
@@ -868,14 +878,14 @@
              ;; Iter 7 follow-up: unsigned subtraction. See the `+` clause
              ;; above for the wrapping-vs-checked rationale and the 0.33
              ;; `mbits`→`type` translation note.
-             (and (type-is-tfield? type)
+             (and (or (type-peel-tunsigned type) (type-is-tfield? type))
                   (expr-supported? expr1 native-id-ht
                                    witness-id-ht circuit-id-ht)
                   (expr-supported? expr2 native-id-ht
                                    witness-id-ht circuit-id-ht))]
             [(* ,src ,type ,expr1 ,expr2)
              ;; Iter 7 follow-up: unsigned multiplication.
-             (and (type-is-tfield? type)
+             (and (or (type-peel-tunsigned type) (type-is-tfield? type))
                   (expr-supported? expr1 native-id-ht
                                    witness-id-ht circuit-id-ht)
                   (expr-supported? expr2 native-id-ht
@@ -1012,19 +1022,19 @@
                  (boolean? datum))]
             ;; 0.33 `mbits`→`type`: the pre-0.33 guard was `(not mbits)`,
              ;; which the typer emitted only for FIELD arithmetic, so
-             ;; `(type-is-tfield? type)` is the literal translation. See
-             ;; the matching note in expr-supported? above — including the
-             ;; inversion follow-up.
+             ;; `(type-is-tfield? type)` was the literal translation.
+             ;; Now admits unsigned AND field, both of which lower
+             ;; correctly — see the resolved note in expr-supported? above.
             [(+ ,src ,type ,expr1 ,expr2)
-             (and (type-is-tfield? type)
+             (and (or (type-peel-tunsigned type) (type-is-tfield? type))
                   (walk (expr-strip-cast expr1))
                   (walk (expr-strip-cast expr2)))]
             [(- ,src ,type ,expr1 ,expr2)
-             (and (type-is-tfield? type)
+             (and (or (type-peel-tunsigned type) (type-is-tfield? type))
                   (walk (expr-strip-cast expr1))
                   (walk (expr-strip-cast expr2)))]
             [(* ,src ,type ,expr1 ,expr2)
-             (and (type-is-tfield? type)
+             (and (or (type-peel-tunsigned type) (type-is-tfield? type))
                   (walk (expr-strip-cast expr1))
                   (walk (expr-strip-cast expr2)))]
             [(downcast-unsigned ,src ,nat2 ,nat1 ,expr)

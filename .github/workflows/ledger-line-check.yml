@@ -7,7 +7,8 @@ name: Ledger Line Check
 # This fork maintains two ledger lines simultaneously:
 #
 #   codegen-rust  (stable)  → ledger 8, via PUBLISHED crates.io versions
-#                             (midnight-zswap = "8", midnight-onchain-* = "3").
+#                             (midnight-zswap = "8", midnight-onchain-* = "3")
+#                             and NO midnight-ledger git dependency at all.
 #                             This is the branch the CoIP cites as the
 #                             reference implementation, so it must build
 #                             against released crates only.
@@ -20,11 +21,16 @@ name: Ledger Line Check
 # unreleased ledger, and nothing else in CI would notice — the Rust
 # tests pass either way. This job turns that convention into an
 # enforced invariant.
+#
+# Both manifest and lockfile are checked. Cargo.toml states intent;
+# Cargo.lock is what actually gets built, and it also captures TRANSITIVE
+# git pins that no [workspace.dependencies] entry mentions.
 
 on:
   pull_request:
     paths:
       - "Cargo.toml"
+      - "Cargo.lock"
       - ".github/workflows/ledger-line-check.yml"
   workflow_dispatch:
 
@@ -43,59 +49,85 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Assert the ledger line matches the base branch
+      - name: Assert the ledger line matches the branch policy
         env:
+          # base_ref is the PR target and is EMPTY for workflow_dispatch,
+          # so fall back to the branch the run was dispatched on. Without
+          # the fallback a manual run matched no policy and reported
+          # success having checked nothing.
           BASE_REF: ${{ github.base_ref }}
+          REF_NAME: ${{ github.ref_name }}
+          EVENT: ${{ github.event_name }}
         run: |
           set -euo pipefail
 
-          # Every `tag = "ledger-N..."` pin in the workspace manifest. The
-          # [patch.crates-io] block also carries non-ledger tags (e.g.
-          # transient-crypto-2.2.0-rc.1), so match the ledger- prefix only.
-          ledger_tags=$(grep -oE 'tag = "ledger-[0-9]+' Cargo.toml | grep -oE '[0-9]+$' | sort -u || true)
+          branch="${BASE_REF:-$REF_NAME}"
+          if [ -z "$branch" ]; then
+            echo "::error::could not determine a branch to apply ledger policy to (base_ref and ref_name both empty)"
+            exit 1
+          fi
+          echo "Event '$EVENT' → applying the ledger-line policy for '$branch'"
 
-          case "$BASE_REF" in
+          # --- manifest: declared intent -------------------------------
+          # Strip comment lines first: a commented-out `# tag = "ledger-9"`
+          # must not trip the policy. Only [workspace.dependencies]-style
+          # ledger- tags count; [patch.crates-io] carries unrelated tags
+          # such as transient-crypto-2.2.0-rc.1.
+          manifest_majors=$(grep -vE '^\s*#' Cargo.toml \
+            | grep -oE 'tag = "ledger-[0-9]+' \
+            | grep -oE '[0-9]+$' | sort -u || true)
+
+          # --- lockfile: what actually builds --------------------------
+          # Ground truth, and the only place a transitive git pin shows up.
+          lock_ledger_srcs=$(grep -oE 'git\+https://github\.com/midnightntwrk/midnight-ledger[^"]*' Cargo.lock | sort -u || true)
+          lock_majors=$(printf '%s\n' "$lock_ledger_srcs" \
+            | grep -oE 'tag=ledger-[0-9]+' \
+            | grep -oE '[0-9]+$' | sort -u || true)
+
+          fail() { echo "::error::$1"; shift; printf '%s\n' "$@" >&2; exit 1; }
+
+          case "$branch" in
             codegen-rust)
-              expected="8 (published crates.io versions, no git pins)"
-              if [ -n "$ledger_tags" ]; then
-                echo "::error::codegen-rust is the ledger 8 stable branch, but Cargo.toml carries git tag pins for ledger $(echo "$ledger_tags" | tr '\n' ' ')."
-                {
-                  echo "codegen-rust must depend on PUBLISHED ledger 8 crates only."
-                  echo "Expected: $expected"
-                  echo ""
-                  echo "Offending pins:"
-                  grep -nE 'tag = "ledger-' Cargo.toml
-                  echo ""
-                  echo "A ledger 9 (or any git-pinned) dependency belongs on develop,"
-                  echo "not on the stable branch the CoIP cites as the reference"
-                  echo "implementation. Retarget this PR to develop, or drop the pins."
-                } >&2
-                exit 1
+              if [ -n "$manifest_majors" ]; then
+                fail \
+                  "codegen-rust is the ledger 8 stable branch, but Cargo.toml declares git tag pins for ledger $(echo "$manifest_majors" | tr '\n' ' ')." \
+                  "codegen-rust must depend on PUBLISHED ledger 8 crates only." \
+                  "" "Offending pins:" "$(grep -nE 'tag = "ledger-' Cargo.toml)" "" \
+                  "A ledger 9 (or any git-pinned) dependency belongs on develop, not on" \
+                  "the stable branch the CoIP cites as the reference implementation." \
+                  "Retarget this PR to develop, or drop the pins."
+              fi
+              if [ -n "$lock_ledger_srcs" ]; then
+                fail \
+                  "codegen-rust must not resolve any midnight-ledger git dependency, but Cargo.lock contains one." \
+                  "Resolved git sources:" "$lock_ledger_srcs" "" \
+                  "This can happen transitively even when Cargo.toml looks clean." \
+                  "Regenerate the lockfile against published crates."
               fi
               if ! grep -qE '^midnight-zswap\s*=\s*"8"' Cargo.toml; then
-                echo "::error::codegen-rust expects midnight-zswap = \"8\" (the ledger 8 line) in [workspace.dependencies]."
-                exit 1
+                fail "codegen-rust expects midnight-zswap = \"8\" (the ledger 8 line) in [workspace.dependencies]." \
+                     "Found: $(grep -nE '^midnight-zswap' Cargo.toml || echo '(no midnight-zswap entry)')"
               fi
-              echo "✓ codegen-rust: ledger 8 via published crates (midnight-zswap = \"8\", no ledger git pins)"
+              echo "✓ codegen-rust: ledger 8 — published crates only, no ledger git sources in Cargo.lock"
               ;;
             develop)
-              if [ -z "$ledger_tags" ]; then
+              if [ -z "$manifest_majors" ] && [ -z "$lock_majors" ]; then
                 echo "✓ develop: no ledger git pins yet — still on the published ledger 8 line (pre-ledger-9 merge)"
                 exit 0
               fi
-              if [ "$ledger_tags" != "9" ]; then
-                echo "::error::develop is the ledger 9 forward branch, but Cargo.toml pins ledger $(echo "$ledger_tags" | tr '\n' ' ')."
-                {
-                  echo "All ledger- tags on develop must be on the same major line (9)."
-                  echo ""
-                  grep -nE 'tag = "ledger-' Cargo.toml
-                } >&2
-                exit 1
-              fi
-              echo "✓ develop: ledger 9 via git tags, single consistent major"
+              for majors in "$manifest_majors" "$lock_majors"; do
+                if [ -n "$majors" ] && [ "$majors" != "9" ]; then
+                  fail \
+                    "develop is the ledger 9 forward branch, but a ledger $(echo "$majors" | tr '\n' ' ') pin is present." \
+                    "All ledger- pins on develop must be on the same major line (9)." \
+                    "" "Manifest:" "$(grep -nE 'tag = \"ledger-' Cargo.toml || true)" \
+                    "" "Lockfile:" "$lock_ledger_srcs"
+                fi
+              done
+              echo "✓ develop: ledger 9 — manifest and lockfile agree on a single major"
               ;;
             *)
-              echo "No ledger-line policy for base branch '$BASE_REF' — skipping."
+              echo "No ledger-line policy for branch '$branch' — nothing to check."
               echo "(main mirrors LFDT-Minokawa upstream and follows whatever it pins.)"
               ;;
           esac

@@ -46,10 +46,16 @@ nix develop --command cargo fmt -p compact-runtime -p compact-runtime-macros -p 
 # 2. Clippy at CI's severity (-D warnings turns every lint into an error).
 nix develop --command cargo clippy -p compact-runtime -p compact-runtime-macros -p tests-e2e-rust --all-targets --all-features -- -D warnings
 
-# 3. Full test suite INCLUDING codegen_regression (the byte-parity + fixture-drift gate).
+# 3. Build compactc FIRST — codegen_regression hard-fails without it.
+#    It regenerates every fixture with the compiler, so it needs one; it does
+#    NOT skip when absent (a skip reported a green gate that regenerated
+#    nothing). This produces the ./result/bin/compactc symlink the test looks for.
+nix build .#compactc
+
+# 4. Full test suite INCLUDING codegen_regression (the byte-parity + fixture-drift gate).
 nix develop --command cargo test -p compact-runtime -p tests-e2e-rust
 
-# 4. If you bumped compiler/compiler-version.ss, sweep for every place the
+# 5. If you bumped compiler/compiler-version.ss, sweep for every place the
 #    old version string is embedded — CI regenerates + compares these:
 grep -rn "0\.31\.<OLD>" compiler/ flake.nix doc/ledger-adt.mdx
 #    Known embed sites: compiler/compiler-version.ss, flake.nix (packages.compactc.version),
@@ -84,6 +90,10 @@ The check accepts a `skip-changelog` label as an escape hatch for typo fixes / i
 ### 3.3 Runtime + e2e tests
 
 `cargo test -p compact-runtime -p tests-e2e-rust`. Includes `codegen_regression` which regenerates every fixture's `lib.rs` under the current compactc and asserts byte-identity. **Any codegen change requires the fixtures to be regenerated in the same commit.**
+
+`codegen_regression` needs a compiler and **hard-fails without one** — run `nix build .#compactc` first (§2.1 step 3), or point `COMPACTC` at a binary. It has no skip path: it used to skip when the compiler was absent, which meant CI reported a green byte-parity gate that regenerated nothing for the entire life of the branch.
+
+Consequently **this gate is local-only today.** `rust-runtime-test.yml`'s Ubuntu/macOS runners have no `nix build`, so they exclude that one test by name (`-- --skip rust_codegen_byte_parity`); everything else in `tests-e2e-rust` still gates there. Excluding it at the call site rather than inside the test keeps the exclusion visible in the workflow and in libtest's `filtered out` count, and guarantees any run that *does* execute it had a real compiler. MediaNoxLabs/compact#23 tracks giving CI a real compactc. Until it lands, **you are the only thing enforcing byte-parity** — do not skip step 3.
 
 ## 4. CI notes: things that once looked like fork infra, and the real fixes
 

@@ -382,5 +382,27 @@ export circuit jubjubSchnorrVerify<#N>(
   const lhs = ecMulGenerator(response as JubjubScalar);
   const rhs = ecAdd(announcement, ecMul(pk, c));
 
-  return lhs == rhs;
+  // Reject the identity element as a public key or announcement.
+  //
+  // With pk = O, ecMul(pk, c) is O for every c, so the check collapses to
+  // `response*G == announcement` — the challenge, and with it the MESSAGE,
+  // drops out entirely. An attacker picks any s, sets response = s and
+  // announcement = s*G, and the signature verifies for EVERY message under
+  // that key, with no secret required. The same collapse makes an identity
+  // announcement worth rejecting for parity with the off-circuit verifier.
+  //
+  // This matters in practice and not only in theory: `default<JubjubPoint>`
+  // IS the identity, and a ledger cell holds its type's default until
+  // written, so a contract verifying against a key cell that was never set
+  // would fail OPEN. `secp256k1EthereumAddress` already rejects the default
+  // point; the verifiers did not.
+  //
+  // Folded into the returned conjunction rather than asserted: these
+  // circuits return Boolean and callers branch on the result, so an assert
+  // would turn "invalid signature" into "proof fails" — a different
+  // observable behaviour for existing callers. It also avoids a branch.
+  const keysValid = (pk != default<JubjubPoint>)
+                 && (announcement != default<JubjubPoint>);
+
+  return keysValid && (lhs == rhs);
 }

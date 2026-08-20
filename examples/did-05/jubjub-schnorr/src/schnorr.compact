@@ -63,6 +63,16 @@ module schnorr {
     // the `as JubjubScalar` reduction casts are value-preserving.
     const lhs: JubjubPoint = ecMulGenerator(response as JubjubScalar);
     const rhs: JubjubPoint = ecAdd(announcement, ecMul(pk, c as JubjubScalar));
+    // Reject the identity element as a key or announcement: with pk = O,
+    // ecMul(pk, c) is O and the check collapses to `response*G ==
+    // announcement`, dropping the message entirely — any signature the
+    // attacker constructs that way verifies for every message. Asserted
+    // rather than folded into a return value because this circuit returns
+    // []; the Boolean-returning stdlib verifier folds it instead.
+    assert(
+      pk != default<JubjubPoint> && announcement != default<JubjubPoint>,
+      "Schnorr verification requires a non-identity key and announcement"
+    );
     assert(
       jubjubPointX(lhs) == jubjubPointX(rhs) &&
         jubjubPointY(lhs) == jubjubPointY(rhs),

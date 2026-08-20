@@ -7,9 +7,9 @@ contract to a Rust crate instead.
 For codegen contributors (people changing the compiler or runtime),
 see the three contributor READMEs linked at the bottom of this page.
 
-## What is `compactc --rust`?
+## What is `compactc --target rust`?
 
-`compactc --rust` lowers a Compact contract to a Rust crate that
+`compactc --target rust` lowers a Compact contract to a Rust crate that
 depends on the [`midnight-compact-runtime`](../runtime-rs) crate. Generated
 Rust mirrors the TypeScript backend's shape one-for-one: the
 contract becomes a `Contract<PS, W>` struct, the constructor becomes
@@ -69,7 +69,7 @@ The TL;DR is `nix build .#compactc` and then `./result/bin/compactc`.
 
 ```bash
 mkdir -p /tmp/tiny-out
-compactc --rust --skip-zk --skip-ts \
+compactc --target rust --skip-zk --skip-ts \
   examples/tiny.compact /tmp/tiny-out/
 
 ls /tmp/tiny-out/contract/
@@ -247,7 +247,7 @@ the best fully-runnable end-to-end snippet to copy from.
 The list below is sourced from the upstream parity gap report
 [`docs/superpowers/research/2026-06-02-upstream-parity-gap-report.md`](../docs/superpowers/research/2026-06-02-upstream-parity-gap-report.md).
 If your contract uses a feature in the **Not yet supported** column,
-`compactc --rust` will fail with a clear `unsupported Compact
+`compactc --target rust` will fail with a clear `unsupported Compact
 construct` error pointing at the offending node. The TS backend is
 unaffected — drop the `--rust` flag and you get the same TS output
 you'd get from upstream `compactc`.
@@ -363,7 +363,7 @@ The codegen never emits broken Rust. When it encounters a construct
 it doesn't support, it produces a single error message of the form:
 
 ```
-compactc --rust: unsupported Compact construct (X): <details>
+compactc --target rust: unsupported Compact construct (X): <details>
 ```
 
 where `X` names the offending node kind (e.g. `module`, `generic-circuit`,
@@ -378,7 +378,7 @@ that's not on the list, you can:
 
 ## Troubleshooting
 
-### `compactc --rust: unsupported Compact construct (X): …`
+### `compactc --target rust: unsupported Compact construct (X): …`
 
 The compiler hit a construct that the Rust backend does not handle
 yet. Look up `X` in the [Feature support matrix](#feature-support-matrix).
@@ -407,7 +407,7 @@ Fix by either:
   or
 - Re-running `compactc` with a matching toolchain.
 
-The literal is regenerated every time you re-run `compactc --rust`,
+The literal is regenerated every time you re-run `compactc --target rust`,
 so the safest workflow is to always re-emit after a compiler bump.
 
 ### Byte-parity assertion failures
@@ -466,7 +466,7 @@ compactc --runtime-version
 
 When you upgrade the compiler:
 
-1. Re-run `compactc --rust` on every `.compact` source. The emitted
+1. Re-run `compactc --target rust` on every `.compact` source. The emitted
    `check_runtime_version!` literal moves to the new version.
 2. Bump the `midnight-compact-runtime` dependency in your `Cargo.toml`
    accordingly.

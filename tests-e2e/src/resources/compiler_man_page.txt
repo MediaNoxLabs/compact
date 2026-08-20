@@ -54,10 +54,11 @@ The following flags, if present, affect the compiler's behavior as follows:
   --trace-passes causes the compiler to print tracing information that is
     generally useful only to compiler developers.
 
-  --rust causes the compiler to additionally emit a Rust crate (contract/lib.rs)
-    alongside the TypeScript output. Generated Rust depends on the `midnight-compact-runtime`
-    crate. See docs/superpowers/specs/2026-05-25-rust-codegen-design.md for details.
-
-  --skip-ts causes the compiler to skip emitting TypeScript output (contract/index.{js,d.ts,js.map}).
-    Must be combined with --rust; otherwise the compiler has no contract-code target.
-    ZKIR and proving keys are still generated unless --skip-zk is also set.
+  --target <language> selects a contract-code backend. It is repeatable, and the
+    valid targets are ts and rust. TypeScript is emitted when --target is absent,
+    so invocations that do not pass the flag are unaffected. Passing --target
+    replaces that default with exactly the targets listed, so --target rust emits
+    only the Rust crate (contract/lib.rs), while --target rust --target ts emits
+    both. Generated Rust depends on the `midnight-compact-runtime` crate.
+    ZKIR and proving keys are independent of this flag and are still generated
+    unless --skip-zk is also set.

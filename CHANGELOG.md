@@ -9,6 +9,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _No changes yet._
 
+## [Toolchain 0.31.114, language 0.23.103, runtime 0.16.100] — --target replaces --rust / --skip-ts (2026-08-20)
+
+### Changed
+
+- **`--target <language>` replaces `--rust` and `--skip-ts`** as the way to
+  select a contract-code backend. It is repeatable; the valid targets are
+  `ts` and `rust`:
+
+  | Invocation | TS | Rust |
+  |---|---|---|
+  | `compactc c.compact out/` | yes (implied) | no |
+  | `compactc --target rust c.compact out/` | no | yes |
+  | `compactc --target rust --target ts c.compact out/` | yes | yes |
+
+  TypeScript is emitted when `--target` is absent, so invocations that do not
+  pass the flag are unaffected. Passing `--target` replaces that default with
+  exactly the targets listed, which is what lets `--target rust` subsume
+  `--rust --skip-ts` without any flag-combination validation while keeping
+  "emit both" expressible for the parity harness. `--skip-zk` stays
+  orthogonal.
+
+  Adopts review feedback on LFDT-Minokawa/compact#730. The interface matters
+  now rather than later because a boolean `--rust` assumes exactly two
+  backends: a third language would make `--skip-ts` ambiguous and force a
+  breaking rename. Neither flag exists upstream, so there are no invocations
+  to preserve — the cost of fixing this is zero today and a deprecation cycle
+  later.
+
+  `--rust` and `--skip-ts` keep working as **undocumented aliases** so this
+  fork's harness and MediaNoxLabs/midnight-identity (which invokes
+  `compactc --rust --skip-ts`) do not break in the same change. They are
+  dropped from `--help`. Mixing `--target` with either alias is an error
+  rather than a silent precedence rule, so no invocation can be read two
+  ways. The aliases are fork-transitional and must not be carried upstream.
+
+  Implementation note: `third_party/compiler/command-line-parsing.ss` keeps
+  only the *last* value of a repeated flag, so a plain value clause would
+  have turned `--target rust --target ts` into `ts`. Accumulation therefore
+  uses the grammar's per-occurrence `$ <action>` hook, and validation runs in
+  the matched clause body rather than in the action — actions can fire while
+  a clause is only being attempted, so erroring inside one could reject a
+  value on a command line that never matched.
+
 ## [Toolchain 0.31.113, language 0.23.103, runtime 0.16.100] — Rust runtime crate renamed to midnight-compact-runtime (2026-08-20)
 
 - **Changed** (breaking, `--rust`): the Rust runtime crate is renamed

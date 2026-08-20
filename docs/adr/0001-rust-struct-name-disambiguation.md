@@ -8,7 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 
 - Status: Accepted
 - Date: 2026-07-14
-- Scope: `compiler/rust-passes-*.ss` (the `compactc --rust` target)
+- Scope: `compiler/rust-passes-*.ss` (the `compactc --target rust` target)
 - Supersedes / relates to: the initial disambiguation introduced with the
   `digital-passport` fixture (commit `218d2c8`)
 

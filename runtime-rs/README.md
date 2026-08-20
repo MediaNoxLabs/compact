@@ -4,7 +4,7 @@
 [![docs.rs](https://img.shields.io/docsrs/midnight-compact-runtime)](https://docs.rs/midnight-compact-runtime)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](../LICENSE)
 
-Native Rust runtime for contracts emitted by `compactc --rust`. This
+Native Rust runtime for contracts emitted by `compactc --target rust`. This
 crate is the Rust counterpart to the TypeScript package
 `@midnight-ntwrk/compact-runtime`. **Generated contract code depends on
 it; users typically do not consume it directly.**

@@ -1,0 +1,101 @@
+name: Ledger Line Check
+
+# Fork-local gate. Upstream (LFDT-Minokawa/compact) tracks a single ledger
+# line, so this workflow must NOT be carried into the curated upstream PR
+# — see MediaNoxLabs/compact#22.
+#
+# This fork maintains two ledger lines simultaneously:
+#
+#   codegen-rust  (stable)  → ledger 8, via PUBLISHED crates.io versions
+#                             (midnight-zswap = "8", midnight-onchain-* = "3").
+#                             This is the branch the CoIP cites as the
+#                             reference implementation, so it must build
+#                             against released crates only.
+#   develop       (forward) → ledger 9, via git tags on midnightntwrk/
+#                             midnight-ledger (ledger-9.x). Unreleased;
+#                             becomes the stable line once ledger 9 ships.
+#
+# The split is easy to violate by merge: a ledger-9 pin reaching
+# codegen-rust would silently make the "stable" branch depend on an
+# unreleased ledger, and nothing else in CI would notice — the Rust
+# tests pass either way. This job turns that convention into an
+# enforced invariant.
+
+on:
+  pull_request:
+    paths:
+      - "Cargo.toml"
+      - ".github/workflows/ledger-line-check.yml"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check-ledger-line:
+    name: Ledger line matches base branch
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Assert the ledger line matches the base branch
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+
+          # Every `tag = "ledger-N..."` pin in the workspace manifest. The
+          # [patch.crates-io] block also carries non-ledger tags (e.g.
+          # transient-crypto-2.2.0-rc.1), so match the ledger- prefix only.
+          ledger_tags=$(grep -oE 'tag = "ledger-[0-9]+' Cargo.toml | grep -oE '[0-9]+$' | sort -u || true)
+
+          case "$BASE_REF" in
+            codegen-rust)
+              expected="8 (published crates.io versions, no git pins)"
+              if [ -n "$ledger_tags" ]; then
+                echo "::error::codegen-rust is the ledger 8 stable branch, but Cargo.toml carries git tag pins for ledger $(echo "$ledger_tags" | tr '\n' ' ')."
+                {
+                  echo "codegen-rust must depend on PUBLISHED ledger 8 crates only."
+                  echo "Expected: $expected"
+                  echo ""
+                  echo "Offending pins:"
+                  grep -nE 'tag = "ledger-' Cargo.toml
+                  echo ""
+                  echo "A ledger 9 (or any git-pinned) dependency belongs on develop,"
+                  echo "not on the stable branch the CoIP cites as the reference"
+                  echo "implementation. Retarget this PR to develop, or drop the pins."
+                } >&2
+                exit 1
+              fi
+              if ! grep -qE '^midnight-zswap\s*=\s*"8"' Cargo.toml; then
+                echo "::error::codegen-rust expects midnight-zswap = \"8\" (the ledger 8 line) in [workspace.dependencies]."
+                exit 1
+              fi
+              echo "✓ codegen-rust: ledger 8 via published crates (midnight-zswap = \"8\", no ledger git pins)"
+              ;;
+            develop)
+              if [ -z "$ledger_tags" ]; then
+                echo "✓ develop: no ledger git pins yet — still on the published ledger 8 line (pre-ledger-9 merge)"
+                exit 0
+              fi
+              if [ "$ledger_tags" != "9" ]; then
+                echo "::error::develop is the ledger 9 forward branch, but Cargo.toml pins ledger $(echo "$ledger_tags" | tr '\n' ' ')."
+                {
+                  echo "All ledger- tags on develop must be on the same major line (9)."
+                  echo ""
+                  grep -nE 'tag = "ledger-' Cargo.toml
+                } >&2
+                exit 1
+              fi
+              echo "✓ develop: ledger 9 via git tags, single consistent major"
+              ;;
+            *)
+              echo "No ledger-line policy for base branch '$BASE_REF' — skipping."
+              echo "(main mirrors LFDT-Minokawa upstream and follows whatever it pins.)"
+              ;;
+          esac

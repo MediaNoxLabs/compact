@@ -109,6 +109,16 @@ const FIXTURES: &[(&str, &str)] = &[
     // tuple-returning witness. Executing gate:
     // tests/schnorr_attest_fixture.rs.
     ("schnorr_attest_fixture.compact", "schnorr-attest-fixture"),
+    // Mid-ladder widening casts in `mbits->rust-width`: the u16 and u32
+    // rungs, which no other fixture reaches. The ladder was otherwise
+    // exercised only at u64 (the same-width no-op, asset-registry /
+    // guarded-assert-arith) and u128 (a real widening, map-lambda's
+    // `x * 2` on Uint<64>) — so widening was covered but three rungs and
+    // both interior boundaries were not. An off-by-one in a rung
+    // comparison would pick a wrong width and, since `wrapping_*` cannot
+    // overflow, yield a WRONG VALUE in code that still compiles.
+    // Executing gate: tests/widening_arith_fixture.rs.
+    ("widening_arith_fixture.compact", "widening-arith-fixture"),
 ];
 
 /// Walks up from `start` looking for `./result/bin/compactc` (the nix

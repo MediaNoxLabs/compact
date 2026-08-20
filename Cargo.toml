@@ -53,6 +53,7 @@ members = [
     "tests-e2e-rust/contracts/guarded-assert-arith-fixture",
     "tests-e2e-rust/contracts/asset-registry-fixture",
     "tests-e2e-rust/contracts/schnorr-attest-fixture",
+    "tests-e2e-rust/contracts/widening-arith-fixture",
 ]
 
 [workspace.dependencies]

@@ -51,6 +51,8 @@ use compact_contract_asset_registry_fixture::{
 use compact_runtime::std_lib::OpaqueString;
 use compact_runtime::*;
 
+mod common;
+
 const TIMESTAMP: u64 = 1_700_000_000;
 const MAX_AGE_SECONDS: u64 = 86_400;
 
@@ -222,29 +224,7 @@ fn initial_state_readback_via_ledger_accessors() {
 fn constructor_flushes_writes_before_the_distinctness_assert() {
     const LIB: &str = include_str!("../contracts/asset-registry-fixture/lib.rs");
 
-    let start = LIB
-        .find("fn initial_state")
-        .expect("generated contract has an initial_state constructor");
-    let open = start
-        + LIB[start..]
-            .find('{')
-            .expect("initial_state has an opening brace");
-    let mut depth = 0usize;
-    let mut end = None;
-    for (i, ch) in LIB[open..].char_indices() {
-        match ch {
-            '{' => depth += 1,
-            '}' => {
-                depth -= 1;
-                if depth == 0 {
-                    end = Some(open + i);
-                    break;
-                }
-            }
-            _ => {}
-        }
-    }
-    let body = &LIB[start..=end.expect("unbalanced braces in initial_state body")];
+    let body = common::generated_fn_body(LIB, "initial_state");
 
     let assert_at = body
         .find("assert_operator_distinct_from_auditor")

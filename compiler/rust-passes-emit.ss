@@ -1391,6 +1391,13 @@
       ;; ", "-prefixed argument list with hoisted args replaced by their temp
       ;; names. Non-ctx args stay inline, so contracts without ctx-reading
       ;; call arguments are byte-unchanged.
+      ;;
+      ;; Covered by (grep the corpus for `_carg_`):
+      ;;   - schnorr_attest_fixture — a JubjubPoint ledger read forwarded
+      ;;     into the Schnorr verifier, the canonical shape above;
+      ;;   - asset_registry_fixture — a ledger read passed to an impure
+      ;;     circuit from inside a CONSTRUCTOR, so the hoist coexists with
+      ;;     the A28 write-flush and their ordering is pinned too.
       (define (hoist-ctx-args arg-strs step)
         (let hloop ([xs arg-strs] [i 0] [lines '()] [names '()])
           (cond
@@ -1662,6 +1669,16 @@
       ;; mbits=32) and a widening cast when an operand is narrower
       ;; (Uint<8> * literal). Only reached by pure circuits that use
       ;; wrapping arithmetic.
+      ;;
+      ;; Ladder coverage in the fixture corpus:
+      ;;   u16, u32 — widening_arith_fixture (both interior boundaries,
+      ;;              incl. the `Uint<8> * 365` shape cited above)
+      ;;   u64      — asset_registry_fixture / guarded_assert_arith_fixture
+      ;;              (the same-width no-op case)
+      ;;   u128     — map_lambda_fixture (`x * 2` on Uint<64>, mbits=65)
+      ;; A wrong rung cannot fault: `wrapping_*` truncates silently, so it
+      ;; yields a wrong VALUE in code that still compiles. That is why the
+      ;; widening fixture has an executing test and not only byte-parity.
       (define (arith-binop-rust op mbits expr1 expr2 native-id-ht)
         (let ([e1 (arith-operand-rust expr1 native-id-ht)]
               [e2 (arith-operand-rust expr2 native-id-ht)]

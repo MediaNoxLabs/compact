@@ -90,3 +90,8 @@ compact-contract-asset-registry-fixture = { path = "contracts/asset-registry-fix
 # `compact_runtime::schnorr_verify_jubjub`, proving the rewrite yields a call
 # that both type-checks and verifies a real signature.
 compact-contract-schnorr-attest-fixture = { path = "contracts/schnorr-attest-fixture" }
+# Widening-cast width gate: widening_arith_fixture.rs executes the generated
+# pure circuits at values where a one-rung-too-narrow cast would silently
+# truncate (`wrapping_*` does not panic), so the mbits->rust-width ladder is
+# pinned by arithmetic rather than only by the generated text.
+compact-contract-widening-arith-fixture = { path = "contracts/widening-arith-fixture" }

@@ -9,11 +9,15 @@ name: Rust runtime + e2e tests
 #  - pre-check: fmt + clippy on the whole workspace (fast, ~3 min).
 #  - test:      cargo test -p compact-runtime -p tests-e2e-rust on Linux + macOS.
 #
-# The `codegen_regression` integration test in tests-e2e-rust requires a
-# built compactc; it auto-skips with a warning when ./result/bin/compactc
-# is absent, so this workflow runs it but does not gate on it. A future
-# job can pair it with `nix build` from build-compiler.yml to assert
-# byte-identical regeneration of the committed contracts/*/lib.rs.
+# The `codegen_regression` byte-parity test requires a built compactc and
+# FAILS (does not skip) when one is absent — a skip would report a green
+# gate that regenerated nothing. Neither job here builds compactc, so the
+# test job excludes that one test BY NAME rather than relying on an
+# in-test escape hatch: the exclusion is visible in the step below and in
+# libtest's "filtered out" count, and any run that does execute the test
+# is guaranteed to have had a real compiler. The gate therefore runs
+# locally (`nix build .#compactc && cargo test -p tests-e2e-rust`) but not
+# in CI — see MediaNoxLabs/compact#23 for wiring a compactc-backed job.
 
 on:
   pull_request:
@@ -159,10 +163,11 @@ jobs:
         run: cargo test -p compact-runtime --locked
 
       - name: Integration tests — tests-e2e-rust
-        # The codegen_regression test auto-skips when ./result/bin/compactc
-        # is absent (its `Skip` branch logs a warning but returns Ok).
-        # It exercises the byte-identical regen guard when compactc IS
-        # available — leave it in the run so it's a no-op on the bare
-        # Ubuntu/macOS runners and an active gate locally / when we wire
-        # in a compactc-build job.
-        run: cargo test -p tests-e2e-rust --locked
+        # `rust_codegen_byte_parity_against_committed_fixtures` regenerates
+        # every fixture with compactc and asserts byte-identity, so it hard-
+        # fails without a compiler. These are bare Ubuntu/macOS runners with
+        # no nix build, so exclude that single test by name; everything else
+        # in tests-e2e-rust still gates here. Excluding it at the call site
+        # (rather than skipping inside the test) keeps the gate impossible to
+        # pass vacuously: it has no skip path of its own.
+        run: cargo test -p tests-e2e-rust --locked -- --skip rust_codegen_byte_parity

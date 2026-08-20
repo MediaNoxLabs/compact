@@ -29,18 +29,27 @@
 // the upstream nanopass IR they target) don't silently drift away from
 // the checked-in expectation.
 //
-// Behaviour:
-// - The test is **skipped with a warning** (not failed) when the
-//   `compactc` binary or the `examples/*.compact` sources cannot be
-//   located. This keeps CI green on builds that haven't run
-//   `nix build .#compactc` yet (e.g. a Rust-only contributor running
-//   `cargo test -p tests-e2e-rust` against a clean checkout). The test
-//   only enforces byte-parity when the binary is genuinely available,
-//   which is exactly the regression signal we want.
-// - The compactc location is resolved by walking up from the test
-//   crate's `CARGO_MANIFEST_DIR` looking for `./result/bin/compactc`.
-//   That symlink is what `nix build .#compactc` produces at the repo
-//   root. The `COMPACTC` env var overrides this if set.
+// Behaviour — the gate NEVER skips itself:
+// - A missing compiler, an unlocatable repo root, or a FIXTURES entry
+//   whose source or committed output is absent are all **hard failures**.
+//   This test used to skip with a warning in each of those cases so that
+//   `cargo test -p tests-e2e-rust` stayed green on a checkout that had
+//   not run `nix build .#compactc`. The effect was a byte-parity gate
+//   that reported success having regenerated nothing — which is what it
+//   did in CI for the entire life of the branch. A gate that cannot run
+//   must say so, not pass.
+// - Callers that genuinely cannot supply a compiler exclude this test by
+//   name (`-- --skip rust_codegen_byte_parity`) instead. That keeps the
+//   exclusion visible at the call site and in libtest's "filtered out"
+//   count, and it means any run that *does* execute this test is
+//   guaranteed to have had a real compiler. `rust-runtime-test.yml`'s
+//   bare Ubuntu/macOS runners do exactly that; MediaNoxLabs/compact#23
+//   tracks giving CI a real compactc so the gate runs there too.
+// - Resolution order: the repo root is the nearest ancestor of the test
+//   crate holding both `examples/` and `Cargo.toml` (independent of any
+//   nix build, so it works when the caller brings its own compiler).
+//   The compiler is `$COMPACTC` if set, else `<root>/result/bin/compactc`
+//   — the symlink `nix build .#compactc` produces.
 
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -121,13 +130,21 @@ const FIXTURES: &[(&str, &str)] = &[
     ("widening_arith_fixture.compact", "widening-arith-fixture"),
 ];
 
-/// Walks up from `start` looking for `./result/bin/compactc` (the nix
-/// build symlink). Returns the absolute path of the repo root that
-/// contains it, or `None` if not found within 6 levels.
+/// Walks up from `start` looking for the repository root: the nearest
+/// ancestor holding both `examples/` (the fixture sources this test
+/// compiles) and a `Cargo.toml`. Returns `None` if not found within 6
+/// levels.
+///
+/// Deliberately independent of `result/bin/compactc`. Keying the root off
+/// the nix symlink conflated two questions — "where is the checkout?" and
+/// "is there a compiler?" — so a caller that set `COMPACTC` to its own
+/// binary without ever running `nix build` resolved the root to the test
+/// crate's own directory. Fixtures then failed to resolve and the gate
+/// reported a missing-fixture error instead of the real problem.
 fn find_repo_root(start: &Path) -> Option<PathBuf> {
     let mut cur = start.to_path_buf();
     for _ in 0..6 {
-        if cur.join("result/bin/compactc").exists() && cur.join("examples").exists() {
+        if cur.join("examples").is_dir() && cur.join("Cargo.toml").is_file() {
             return Some(cur);
         }
         if !cur.pop() {
@@ -140,32 +157,36 @@ fn find_repo_root(start: &Path) -> Option<PathBuf> {
 #[test]
 fn rust_codegen_byte_parity_against_committed_fixtures() {
     let manifest = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let (compactc, repo_root): (PathBuf, PathBuf) = match std::env::var_os("COMPACTC") {
-        Some(p) => {
-            let path = PathBuf::from(p);
-            let root = find_repo_root(&manifest).unwrap_or_else(|| manifest.clone());
-            (path, root)
-        }
-        None => match find_repo_root(&manifest) {
-            Some(root) => (root.join("result/bin/compactc"), root),
-            None => {
-                eprintln!(
-                    "SKIP: compactc not found (no ./result/bin/compactc above {}; \
-                     run `nix build .#compactc` to enable this regression guard)",
-                    manifest.display()
-                );
-                return;
-            }
-        },
-    };
 
-    if !compactc.exists() {
-        eprintln!(
-            "SKIP: compactc binary at {} does not exist",
-            compactc.display()
-        );
-        return;
-    }
+    // Locate the checkout first, independently of any compiler. Failing
+    // here names the actual problem instead of letting every fixture
+    // resolve against the wrong directory and reporting them as missing.
+    let repo_root = find_repo_root(&manifest).unwrap_or_else(|| {
+        panic!(
+            "byte-parity gate cannot run: could not locate the repository root \
+             (no ancestor of {} within 6 levels contains both examples/ and \
+             Cargo.toml). The gate compiles fixture sources out of examples/, \
+             so it needs the checkout, not just a compiler.",
+            manifest.display()
+        )
+    });
+
+    // A missing compiler must FAIL, not skip: this test previously
+    // returned early here, so `cargo test -p tests-e2e-rust` without a
+    // prior `nix build .#compactc` printed "SKIP" and passed in 0.00s — a
+    // green byte-parity gate that compiled nothing. Callers that cannot
+    // supply a compiler exclude the test by name instead (see the header).
+    let (compactc, how) = match std::env::var_os("COMPACTC") {
+        Some(p) => (PathBuf::from(p), "COMPACTC"),
+        None => (repo_root.join("result/bin/compactc"), "default path"),
+    };
+    assert!(
+        compactc.exists(),
+        "byte-parity gate cannot run: no compactc at {} (from {}). \
+         Run `nix build .#compactc`, or point COMPACTC at a real binary.",
+        compactc.display(),
+        how
+    );
 
     let examples_dir = repo_root.join("examples");
     let contracts_dir = manifest.join("contracts");
@@ -174,18 +195,20 @@ fn rust_codegen_byte_parity_against_committed_fixtures() {
     for (src_name, dir_name) in FIXTURES {
         let src = examples_dir.join(src_name);
         let committed = contracts_dir.join(dir_name).join("lib.rs");
-        if !src.exists() {
-            eprintln!("SKIP {}: source {} missing", dir_name, src.display());
-            continue;
-        }
-        if !committed.exists() {
-            eprintln!(
-                "SKIP {}: committed {} missing",
-                dir_name,
-                committed.display()
-            );
-            continue;
-        }
+        // Missing inputs are a broken FIXTURES table, not a reason to skip:
+        // silently dropping an entry would quietly shrink the gate.
+        assert!(
+            src.exists(),
+            "fixture {}: source {} is missing — fix or remove its FIXTURES entry",
+            dir_name,
+            src.display()
+        );
+        assert!(
+            committed.exists(),
+            "fixture {}: committed {} is missing — regenerate it or remove its FIXTURES entry",
+            dir_name,
+            committed.display()
+        );
 
         let outdir = tempdir(&format!("codegen-regen-{}", dir_name));
         let status = Command::new(&compactc)

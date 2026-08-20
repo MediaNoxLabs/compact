@@ -253,11 +253,18 @@
                (cond
                  [(member rust-name seen) (loop (cdr xs) seen cur-qctx owned-in ci)]
                  [else
-                  (let* ([raw (guard (c [#t "/* TODO A24 */"])
-                                (parameterize ([current-qctx-ref cur-qctx])
-                                  (ctor-expr-rust expr local-binds
-                                                  native-id-ht witness-id-ht
-                                                  circuit-id-ht)))]
+                  ;; A24: this render was wrapped in
+                  ;; `(guard (c [#t "/* TODO A24 */"]) …)` — the same
+                  ;; catch-all as the A14 pair further down. `[#t …]`
+                  ;; matches every condition, so a deliberate
+                  ;; `rust-feature-error` was caught and replaced by a
+                  ;; comment emitted where an expression belongs, and a
+                  ;; genuine emitter bug became a comment instead of a
+                  ;; trace. Let it propagate.
+                  (let* ([raw (parameterize ([current-qctx-ref cur-qctx])
+                                (ctor-expr-rust expr local-binds
+                                                native-id-ht witness-id-ht
+                                                circuit-id-ht))]
                          [rendered (expr-rust-arg-cloned expr raw)])
                     (out (format "~alet ~a = ~a;\n" indent rust-name rendered))
                     (loop (cdr xs) (cons rust-name seen) cur-qctx owned-in ci))]))]

@@ -185,8 +185,12 @@
       (define (coerce-cmp-operand-rust expr type local-binds
                                         native-id-ht witness-id-ht circuit-id-ht)
         (cond
-          [(and (type-is-tfield? type) (literal-int-expr? expr))
-           (format "Fr::from(~au64)" (literal-int-expr? expr))]
+          [(and (type-tfield-ftype type) (literal-int-expr? expr))
+           ;; `Fr::from(<n>u64)` for native Field, `JubjubScalar::from`
+           ;; for the 0.33 embedded-scalar builtin (same From<u64> shape).
+           (format "~a::from(~au64)"
+                   (field-type-rust (type-tfield-ftype type))
+                   (literal-int-expr? expr))]
           [else
            (ctor-expr-rust expr local-binds
                            native-id-ht witness-id-ht circuit-id-ht)]))
@@ -829,45 +833,81 @@
              (and (null? map-arg*)
                   (map-expr-mvp-supported? src fun map-arg
                                            native-id-ht witness-id-ht circuit-id-ht))]
-            [(+ ,src ,mbits ,expr1 ,expr2)
+            [(+ ,src ,type ,expr1 ,expr2)
              ;; Iter 7 follow-up: unsigned addition in expression position
              ;; (e.g. inside a map() lambda body). We render via Rust's
              ;; wrapping_add — the Compact typer wraps non-trivial
              ;; arithmetic in a downcast-unsigned which checks the upper
              ;; bound, so wrapping semantics match the bounded-Uint
-             ;; contract. Only the non-modular shape (`mbits=#f`) is
-             ;; supported here — Field arithmetic (with mbits) is
-             ;; deferred.
-             (and (not mbits)
+             ;; contract.
+             ;;
+             ;; 0.33 replaced the `mbits` (maybe-bits) slot with the full
+             ;; result `Type`. The pre-0.33 guard here was `(not mbits)`,
+             ;; and `mbits = #f` was emitted by the typer's FIELD branch
+             ;; (analysis-passes.ss `(k #f ...)` with
+             ;; `result-type = (tfield src)`), so the literal translation
+             ;; is `(type-is-tfield? type)`. That is preserved verbatim
+             ;; to keep this port byte-parity-neutral.
+             ;;
+             ;; NOTE (follow-up, tracked on MediaNoxLabs/compact#17): the
+             ;; guard is inverted relative to its own intent —
+             ;; `arith-binop-rust` emits `.wrapping_*`, which `Fr` does
+             ;; not implement, so it should admit `tunsigned` and reject
+             ;; `tfield`. Every fixture that emits `wrapping_*` today has
+             ;; a Uint result type and reaches the emitter through the
+             ;; constructor / seq-stmt / cond-rust routes rather than
+             ;; here, i.e. these guards are effectively dead. Flipping
+             ;; them is expected to MOVE fixture bytes, so it is kept out
+             ;; of this integration commit.
+             (and (type-is-tfield? type)
                   (expr-supported? expr1 native-id-ht
                                    witness-id-ht circuit-id-ht)
                   (expr-supported? expr2 native-id-ht
                                    witness-id-ht circuit-id-ht))]
-            [(- ,src ,mbits ,expr1 ,expr2)
+            [(- ,src ,type ,expr1 ,expr2)
              ;; Iter 7 follow-up: unsigned subtraction. See the `+` clause
-             ;; above for the wrapping-vs-checked rationale.
-             (and (not mbits)
+             ;; above for the wrapping-vs-checked rationale and the 0.33
+             ;; `mbits`→`type` translation note.
+             (and (type-is-tfield? type)
                   (expr-supported? expr1 native-id-ht
                                    witness-id-ht circuit-id-ht)
                   (expr-supported? expr2 native-id-ht
                                    witness-id-ht circuit-id-ht))]
-            [(* ,src ,mbits ,expr1 ,expr2)
+            [(* ,src ,type ,expr1 ,expr2)
              ;; Iter 7 follow-up: unsigned multiplication.
-             (and (not mbits)
+             (and (type-is-tfield? type)
                   (expr-supported? expr1 native-id-ht
                                    witness-id-ht circuit-id-ht)
                   (expr-supported? expr2 native-id-ht
                                    witness-id-ht circuit-id-ht))]
-            [(downcast-unsigned ,src ,nat? ,nat ,expr)
+            [(downcast-unsigned ,src ,nat2 ,nat1 ,expr)
              ;; Iter 7 follow-up: the typer inserts `downcast-unsigned`
              ;; around arithmetic results whose declared output type is
              ;; narrower than the natural product/sum width (e.g.
              ;; `(x * 2) as Uint<64>`). The downcast's target width
-             ;; (`nat`, an unsigned upper bound) drives the Rust `as uN`
-             ;; suffix in expr-rust. Only widths on the standard
-             ;; 8/16/32/64/128 ladder are supported; other widths fall
-             ;; through to #f.
-             (and (tunsigned-rust-suffix-for-bound nat)
+             ;; (`nat1`, an unsigned upper bound — 0.33 made the source
+             ;; bound `nat2` mandatory but left the target in the second
+             ;; slot) drives the Rust `as uN` suffix in expr-rust. Only
+             ;; widths on the standard 8/16/32/64/128 ladder are
+             ;; supported; other widths fall through to #f.
+             (and (tunsigned-rust-suffix-for-bound nat1)
+                  (expr-supported? expr native-id-ht
+                                   witness-id-ht circuit-id-ht))]
+            ;; NOTE: no `cast-from-field` clause — `Field as Uint<N>` has
+            ;; no Rust lowering (`Fr` is a struct, so `as uN` is E0605),
+            ;; so it must reach the `else` arm and be rejected. See the
+            ;; `cast-from-field` clause in expr-rust for the full
+            ;; rationale and the follow-up.
+            [(cast-to-field ,src ,ftype ,type ,expr)
+             ;; 0.33: casts whose target is a `(tfield ftype)` distinct
+             ;; from the source type. Only the JubjubScalar direction has
+             ;; a runtime helper (`jubjub_scalar_from_field`); mirrors
+             ;; cast-to-field-rust's accepted shapes.
+             (and (field-type-jubjub-scalar? ftype)
+                  (or (and (type-tfield-ftype type)
+                           (field-type-native? (type-tfield-ftype type)))
+                      (let ([nat (type-peel-tunsigned type)])
+                        (and nat (<= nat 18446744073709551615))))
                   (expr-supported? expr native-id-ht
                                    witness-id-ht circuit-id-ht))]
             [else #f])))
@@ -970,21 +1010,28 @@
             [(quote ,src ,datum)
              (or (and (integer? datum) (exact? datum))
                  (boolean? datum))]
-            [(+ ,src ,mbits ,expr1 ,expr2)
-             (and (not mbits)
+            ;; 0.33 `mbits`→`type`: the pre-0.33 guard was `(not mbits)`,
+             ;; which the typer emitted only for FIELD arithmetic, so
+             ;; `(type-is-tfield? type)` is the literal translation. See
+             ;; the matching note in expr-supported? above — including the
+             ;; inversion follow-up.
+            [(+ ,src ,type ,expr1 ,expr2)
+             (and (type-is-tfield? type)
                   (walk (expr-strip-cast expr1))
                   (walk (expr-strip-cast expr2)))]
-            [(- ,src ,mbits ,expr1 ,expr2)
-             (and (not mbits)
+            [(- ,src ,type ,expr1 ,expr2)
+             (and (type-is-tfield? type)
                   (walk (expr-strip-cast expr1))
                   (walk (expr-strip-cast expr2)))]
-            [(* ,src ,mbits ,expr1 ,expr2)
-             (and (not mbits)
+            [(* ,src ,type ,expr1 ,expr2)
+             (and (type-is-tfield? type)
                   (walk (expr-strip-cast expr1))
                   (walk (expr-strip-cast expr2)))]
-            [(downcast-unsigned ,src ,nat? ,nat ,expr)
-             (and (tunsigned-rust-suffix-for-bound nat)
+            [(downcast-unsigned ,src ,nat2 ,nat1 ,expr)
+             (and (tunsigned-rust-suffix-for-bound nat1)
                   (walk (expr-strip-cast expr)))]
+            ;; No `cast-from-field` clause: `Field as Uint<N>` has no Rust
+            ;; lowering, so it falls through to #f. See expr-rust.
             [else #f])))
 
       ;; default-supported?: returns #t when default-value-rust would
@@ -995,7 +1042,10 @@
       (define (default-supported? type)
         (nanopass-case (Ltypescript Type) type
           [(tunsigned ,src ,nat) #t]
-          [(tfield ,src) #t]
+          [(tfield ,src ,ftype)
+           ;; Fr and JubjubScalar (EmbeddedFr) both derive Default (zero);
+           ;; zkir-v3 field variants are unreachable under --rust.
+           (or (field-type-native? ftype) (field-type-jubjub-scalar? ftype))]
           [(tboolean ,src) #t]
           [(tbytes ,src ,len) #t]
           [(tenum ,src ,enum-name ,elt-name ,elt-name* ...) #t]
@@ -1026,7 +1076,9 @@
       (define (type-rust-copy? type)
         (and type
              (nanopass-case (Ltypescript Type) type
-               [(tfield ,src) #t]
+               [(tfield ,src ,ftype)
+                ;; Fr and JubjubScalar (EmbeddedFr) are both Copy.
+                (or (field-type-native? ftype) (field-type-jubjub-scalar? ftype))]
                [(tboolean ,src) #t]
                [(tunsigned ,src ,nat) #t]
                [(tbytes ,src ,len) #t]
@@ -2734,28 +2786,40 @@
            (let ([sub (expr-subst-var-ref expr target-name replacement)])
              (with-output-language (Ltypescript Expression)
                `(safe-cast ,src ,type ,type^ ,sub)))]
-          [(+ ,src ,mbits ,expr1 ,expr2)
+          [(+ ,src ,type ,expr1 ,expr2)
            ;; Iter 7 follow-up: substitute through arithmetic so non-identity
            ;; lambda bodies like `(x + 1) as Uint<N>` survive the
-           ;; render-map-mvp per-element specialisation.
+           ;; render-map-mvp per-element specialisation. 0.33 replaced the
+           ;; `mbits` slot with the result `Type`; it is threaded through
+           ;; unchanged, exactly as `mbits` was.
            (let ([sub1 (expr-subst-var-ref expr1 target-name replacement)]
                  [sub2 (expr-subst-var-ref expr2 target-name replacement)])
              (with-output-language (Ltypescript Expression)
-               `(+ ,src ,mbits ,sub1 ,sub2)))]
-          [(- ,src ,mbits ,expr1 ,expr2)
+               `(+ ,src ,type ,sub1 ,sub2)))]
+          [(- ,src ,type ,expr1 ,expr2)
            (let ([sub1 (expr-subst-var-ref expr1 target-name replacement)]
                  [sub2 (expr-subst-var-ref expr2 target-name replacement)])
              (with-output-language (Ltypescript Expression)
-               `(- ,src ,mbits ,sub1 ,sub2)))]
-          [(* ,src ,mbits ,expr1 ,expr2)
+               `(- ,src ,type ,sub1 ,sub2)))]
+          [(* ,src ,type ,expr1 ,expr2)
            (let ([sub1 (expr-subst-var-ref expr1 target-name replacement)]
                  [sub2 (expr-subst-var-ref expr2 target-name replacement)])
              (with-output-language (Ltypescript Expression)
-               `(* ,src ,mbits ,sub1 ,sub2)))]
-          [(downcast-unsigned ,src ,nat? ,nat ,expr)
+               `(* ,src ,type ,sub1 ,sub2)))]
+          [(downcast-unsigned ,src ,nat2 ,nat1 ,expr)
            (let ([sub (expr-subst-var-ref expr target-name replacement)])
              (with-output-language (Ltypescript Expression)
-               `(downcast-unsigned ,src ,nat? ,nat ,sub)))]
+               `(downcast-unsigned ,src ,nat2 ,nat1 ,sub)))]
+          [(cast-from-field ,src ,nat ,ftype ,expr)
+           ;; 0.33: split out of downcast-unsigned's `nat? = #f` case;
+           ;; substitute through it the same way.
+           (let ([sub (expr-subst-var-ref expr target-name replacement)])
+             (with-output-language (Ltypescript Expression)
+               `(cast-from-field ,src ,nat ,ftype ,sub)))]
+          [(cast-to-field ,src ,ftype ,type ,expr)
+           (let ([sub (expr-subst-var-ref expr target-name replacement)])
+             (with-output-language (Ltypescript Expression)
+               `(cast-to-field ,src ,ftype ,type ,sub)))]
           [else e]))
 
       ;; fold-body-strip-acc-return: given a fold body (Statement) and

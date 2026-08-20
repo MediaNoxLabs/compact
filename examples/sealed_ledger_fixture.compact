@@ -72,7 +72,13 @@ export sealed ledger created_at: Uint<64>;
 export ledger flag: Boolean;
 
 constructor() {
-  admin = 42;
+  // Compiler 0.33: an integer literal is no longer implicitly widened to
+  // `Field` on the right-hand side of a ledger assignment (the typer
+  // reports "expected right-hand side of = to have type Field but
+  // received Uint<0..43>"). The explicit `as Field` is a `safe-cast` and
+  // lowers to the same `Fr::from(42u64)` the implicit path produced, so
+  // the emitted Rust and the on-state bytes are unchanged.
+  admin = 42 as Field;
   contract_id = pad(32, "lares:sealed:demo");
   created_at = 12345;
 }

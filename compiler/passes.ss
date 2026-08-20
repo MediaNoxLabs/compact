@@ -37,7 +37,8 @@
           (rust-passes)
           (circuit-passes)
           (zkir-passes)
-          (zkir-v3-passes))
+          (zkir-v3-passes)
+          (manifest-passes))
 
   (define-condition-type &pass-name &condition
     make-pass-name-condition pass-name-condition?
@@ -56,6 +57,19 @@
        (when test-hook (unless (procedure? test-hook) (internal-errorf 'generate-everything "invalid test-hook ~s" test-hook)))
        (when (and (skip-ts) (not (emit-rust)))
          (external-errorf "--skip-ts requires --rust (otherwise no contract code would be emitted)"))
+       ;; The Rust backend targets the ZKIR v2 pipeline only: the ZKIR v3
+       ;; natives carry no `(rust ...)` bindings and the v3-only type
+       ;; surface (secp256k1 base/scalar fields and points) has no Rust
+       ;; lowering, so the combination would emit a lib.rs that does not
+       ;; compile — either a hard `native-binding-missing` error or, worse,
+       ;; a placeholder comment where a type must go. compactc.ss rejects
+       ;; the flag pair up front for a friendlier CLI diagnostic; this
+       ;; check closes the same hole for programmatic drivers (compiler
+       ;; test.ss parameterizes emit-rust directly and never goes through
+       ;; compactc.ss). Follow-up for ZKIR v3 Rust support is tracked on
+       ;; MediaNoxLabs/compact#17.
+       (when (and (emit-rust) (feature-zkir-v3))
+         (external-errorf "--rust does not support --feature-zkir-v3 yet; use --rust with the default (ZKIR v2) backend"))
        (parameterize ([source-directory (path-parent pathname)]
                       [source-file-name (path-last (path-root pathname))]
                       [target-directory output-directory-pathname]
@@ -85,14 +99,12 @@
                    (cons x extra*)
                    passes)))
              (let ([created-dir* '()] [created-file* '()])
-               (module (create-directory with-target-ports)
+               (module (with-target-ports)
                  (define (create-hierarchy path)
                    (unless (or (equal? path "") (file-directory? path))
                      (create-hierarchy (path-parent path))
                      (guard (c [else (error-accessing-file c "creating output directory")]) (mkdir path))
                      (set! created-dir* (cons path created-dir*))))
-                 (define (create-directory path)
-                   (create-hierarchy (format "~a/~a" output-directory-pathname path)))
                  (define ($with-target-ports alist th preserve-preexisting?)
                    (define (open-target-port path)
                      (let ([path (format "~a/~a" output-directory-pathname path)])
@@ -127,49 +139,63 @@
                      (for-each delete-directory created-dir*))
                    (raise-continuable c))
                  (lambda ()
-                   (parameterize ([contract-ht (make-hashtable symbol-hash eq?)])
-                     (cond
-                       [(eq? final-pass 'parse-file/format/reparse)
+                   (cond
+                     [(eq? final-pass 'parse-file/format/reparse)
+                      (with-target-ports
+                        `((formatter-output.compact . ,(format "formatter/~a" (path-last pathname))))
+                        (run-passes formatter-testing-passes pathname))]
+                     [(eq? final-pass 'parse-file/fixup/format/reparse)
+                      (with-target-ports
+                        `((fixup-output.compact . ,(format "fixup/~a" (path-last pathname))))
+                        (run-passes fixup-testing-passes pathname))]
+                     [else
+                      (let* ([lsrc-ir (run-passes parser-passes pathname)]
+                             [frontend-ir (run-passes frontend-passes lsrc-ir)]
+                             [analyzed-ir (run-passes analysis-passes frontend-ir)]
+                             [circuit-ir (run-passes circuit-passes analyzed-ir)]
+                             [proof-circuit-name* (extract-circuit-names circuit-ir)])
+                        (define output-subdirectories '("compiler" "contract" "zkir" "keys"))
+                        (for-each
+                          (lambda (fn) (rm-rf (format "~a/~a" output-directory-pathname fn)))
+                          output-subdirectories)
                         (with-target-ports
-                          `((formatter-output.compact . ,(format "formatter/~a" (path-last pathname))))
-                          (run-passes formatter-testing-passes pathname))]
-                       [(eq? final-pass 'parse-file/fixup/format/reparse)
+                          '((contract-info.json . "compiler/contract-info.json"))
+                          (run-passes save-contract-info-passes analyzed-ir proof-circuit-name*))
                         (with-target-ports
-                          `((fixup-output.compact . ,(format "fixup/~a" (path-last pathname))))
-                          (run-passes fixup-testing-passes pathname))]
-                       [else
-                        (let* ([lsrc-ir (run-passes parser-passes pathname)]
-                               [frontend-ir (run-passes frontend-passes lsrc-ir)]
-                               [analyzed-ir (run-passes analysis-passes frontend-ir)]
-                               [circuit-ir (run-passes circuit-passes analyzed-ir)]
-                               [proof-circuit-name* (extract-circuit-names circuit-ir)])
-                          (rm-rf (format "~a/compiler" output-directory-pathname))
-                          (rm-rf (format "~a/zkir" output-directory-pathname))
-                          (rm-rf (format "~a/keys" output-directory-pathname))
-                          (with-target-ports
-                            '((contract-info.json . "compiler/contract-info.json"))
-                            (run-passes save-contract-info-passes analyzed-ir proof-circuit-name*))
-                          (with-target-ports
-                            (map (lambda (sym) (cons sym (format "zkir/~a.zkir" sym)))
-                                 proof-circuit-name*)
-                            (run-passes (if (feature-zkir-v3) zkir-v3-passes zkir-passes) circuit-ir))
-                          (unless (null? (pending-conditions)) (raise (make-halt-condition)))
-                          (unless (skip-zk)
-                            (if (zero? (system "command -v zkir > /dev/null"))
+                          (map (lambda (sym) (cons sym (format "zkir/~a.zkir" sym)))
+                               proof-circuit-name*)
+                          (run-passes (if (feature-zkir-v3) zkir-v3-passes zkir-passes) circuit-ir))
+                        (unless (null? (pending-conditions)) (raise (make-halt-condition)))
+                        (unless (skip-zk)
+                          (if (zero? (system "command -v zkir > /dev/null"))
                               ;; If we have zero circuits, the zkir directory won't exist,
                               ;; and zkir will fail to read it. Skip in that case silently.
                               (when (file-exists? (format "~a/zkir" output-directory-pathname))
                                 ;; TODO: Properly string escape!
                                 (let ([res (system (format "exec ~a compile-many '~a/zkir' '~a/keys'"
-                                                           (if (feature-zkir-v3) "zkir-v3" "zkir")
-                                                           output-directory-pathname
-                                                           output-directory-pathname))])
+                                                     (if (feature-zkir-v3) "zkir-v3" "zkir")
+                                                     output-directory-pathname
+                                                     output-directory-pathname))])
                                   (unless (zero? res)
                                     (external-errorf "zkir returned a non-zero exit status ~d" res))))
                               (unless (zkir-warning-issued)
                                 (zkir-warning-issued #t)
                                 (fprintf (console-error-port)
-                                         "Warning: ZKIR not found; skipping final circuit compilation.\n"))))
+                                  "Warning: ZKIR not found; skipping final circuit compilation.\n"))))
+                        ;; Fingerprint each proof circuit's compiled verifier key (its
+                        ;; `keys/<name>.verifier`, produced by the zkir step above) so the TypeScript
+                        ;; pass can embed `expectedVk` in the contract module. A `--skip-zk` build
+                        ;; generates no keys, leaving the alist empty.
+                        (let ([verifier-key-hash*
+                               (fold-right
+                                 (lambda (name acc)
+                                   (let ([vk-pathname
+                                          (format "~a/keys/~a.verifier" output-directory-pathname name)])
+                                     (if (file-exists? vk-pathname)
+                                         (cons (cons (symbol->string name) (sha256-file vk-pathname)) acc)
+                                         acc)))
+                                 '()
+                                 proof-circuit-name*)])
                           ;; Run the Lnodisclose -> Ltypescript prepare pass once;
                           ;; share the resulting Ltypescript IR between the TS and Rust emitters.
                           (let ([ltypescript-ir (run-passes prepare-for-typescript-passes analyzed-ir)])
@@ -178,7 +204,8 @@
                                '((contract.js . "contract/index.js")
                                  (contract.d.ts . "contract/index.d.ts")
                                  (contract.js.map . "contract/index.js.map"))
-                               (parameterize ([proof-circuit-names proof-circuit-name*])
+                               (parameterize ([proof-circuit-names proof-circuit-name*]
+                                              [verifier-key-hashes verifier-key-hash*])
                                  (run-passes print-typescript-passes ltypescript-ir))))
                             (when (emit-rust)
                               (with-target-ports
@@ -197,9 +224,21 @@
                                                     output-directory-pathname)])
                                 (when (and (zero? (system "command -v rustfmt > /dev/null 2>&1"))
                                            (file-exists? lib-rs))
-                                  (system (format "rustfmt --edition 2021 ~a > /dev/null 2>&1"
-                                                  lib-rs)))))) ; closes let, when-emit-rust
-                          (when final-pass (internal-errorf 'generate-everything "never encountered final pass ~s" final-pass)))]))))))))]))
+                                  ;; Single-quote the path so target
+                                  ;; directories containing spaces or shell
+                                  ;; metacharacters don't break the call.
+                                  ;; (Matches the neighbouring zkir
+                                  ;; invocations; a full escape helper is
+                                  ;; still a TODO shared with those.)
+                                  (system (format "rustfmt --edition 2021 '~a' > /dev/null 2>&1"
+                                                  lib-rs)))))))
+                        (let ([manifest-pathname* created-file*])
+                          (with-target-ports
+                            '((contract-manifest.json . "compiler/contract-manifest.json"))
+                            (run-passes manifest-passes circuit-ir
+                              output-directory-pathname
+                              output-subdirectories)))
+                        (when final-pass (internal-errorf 'generate-everything "never encountered final pass ~s" final-pass)))])))))))]))
 
   (define-pass extract-circuit-names : Lflattened (ir) -> * (ls)
     (definitions

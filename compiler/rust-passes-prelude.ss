@@ -148,9 +148,10 @@
       ;; `native-call-site-rust` extracts a usable Rust call-target from
       ;; a native Program-Element (or from any function-name id record
       ;; resolved to its native-entry by callers). When the binding hasn't
-      ;; been mapped yet, returns a TODO-tagged placeholder so the
-      ;; generated code makes the gap obvious. Used by I3b/J2 when
-      ;; emitting call sites for native circuits.
+      ;; been mapped yet it raises `rust-feature-error`
+      ;; (`native-binding-missing`), which surfaces as a compactc
+      ;; diagnostic and aborts the build — it does NOT emit a placeholder.
+      ;; Used by I3b/J2 when emitting call sites for native circuits.
       (define (native-pelt? pelt)
         (nanopass-case (Ltypescript Program-Element) pelt
           [(native ,src ,function-name ,native-entry (,arg* ...) ,type) #t]

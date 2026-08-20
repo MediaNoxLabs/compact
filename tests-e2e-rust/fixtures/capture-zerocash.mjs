@@ -44,7 +44,14 @@
 
 import { Contract, ledger } from '/tmp/zc-ts/contract/index.js';
 import * as cr from '@midnight-ntwrk/compact-runtime';
-import { leafHash, persistentHash, valueToBigInt } from '@midnight-ntwrk/onchain-runtime-v3';
+// Compiler 0.33 / ledger 9: `@midnight-ntwrk/onchain-runtime-v3` no longer
+// exists — the TS runtime depends on `@midnightntwrk/onchain-runtime-v4`
+// (note: no hyphen after "midnight"). Keep the direct import rather than
+// routing through `cr.`: the compact-runtime index re-exports `leafHash`
+// and `valueToBigInt`, but the low-level `persistentHash(align, val)` used
+// below is shadowed there by built-ins.ts's high-level
+// `persistentHash(rtType, value)`.
+import { leafHash, persistentHash, valueToBigInt } from '@midnightntwrk/onchain-runtime-v4';
 
 // ------------ Fixed deterministic witness payloads -----------------
 const FIXED_SK = new Uint8Array(32).fill(1);
@@ -175,13 +182,14 @@ const constructorCtx = {
 };
 
 // ---- Step 1: initialState -----------------------------------------
-const initResult = contract.initialState(constructorCtx);
+const initResult = await contract.initialState(constructorCtx);
 const afterInitContractState = initResult.currentContractState;
 const afterInitHex = Buffer.from(afterInitContractState.serialize()).toString(
   'hex',
 );
 
 let circuitCtx = cr.createCircuitContext(
+  'constructor',
   cr.dummyContractAddress(),
   emptyCpk,
   afterInitContractState.data,
@@ -200,7 +208,7 @@ function rewrapEnvelope(prev, newChargedState) {
 }
 
 function chargedStateFromCtx(ctx) {
-  return new cr.ChargedState(ctx.currentQueryContext.state.state);
+  return new cr.ChargedState(ctx.callContext.currentQueryContext.state.state);
 }
 
 const fixture = {
@@ -223,7 +231,8 @@ cmIndex.set(Buffer.from(mintCm).toString('hex'), nextIdx++);
 // ---- Step 2: zerocash_mint ----------------------------------------
 let afterMintContractState = null;
 try {
-  const mintOut = contract.circuits.zerocash_mint(circuitCtx);
+  circuitCtx.callContext.circuitId = 'zerocash_mint';
+  const mintOut = await contract.circuits.zerocash_mint(circuitCtx);
   circuitCtx = mintOut.context;
   afterMintContractState = rewrapEnvelope(
     afterInitContractState,
@@ -240,13 +249,14 @@ try {
 // ---- Step 3: spend ------------------------------------------------
 if (afterMintContractState) {
   try {
-    sharedState.rawStateValue = circuitCtx.currentQueryContext.state.state;
+    sharedState.rawStateValue = circuitCtx.callContext.currentQueryContext.state.state;
     const destPk = {
       zk: { bytes: new Uint8Array(32).fill(5) },
       encryption: new Uint8Array(32).fill(6),
     };
     const inputCoin = fixedCoinInfo();
-    const spendOut = contract.circuits.spend(circuitCtx, destPk, inputCoin);
+    circuitCtx.callContext.circuitId = 'spend';
+    const spendOut = await contract.circuits.spend(circuitCtx, destPk, inputCoin);
     circuitCtx = spendOut.context;
     const afterSpendContractState = rewrapEnvelope(
       afterMintContractState,

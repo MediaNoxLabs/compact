@@ -58,11 +58,11 @@ fn make_envelope(
         HashMap::new();
     operations = operations.insert(
         EntryPointBuf(b"reset_and_set".to_vec()),
-        ContractOperation::new(None),
+        ContractOperation::new(None, None),
     );
     operations = operations.insert(
         EntryPointBuf(b"reset".to_vec()),
-        ContractOperation::new(None),
+        ContractOperation::new(None, None),
     );
     ContractState {
         data,

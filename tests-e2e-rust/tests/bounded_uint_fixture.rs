@@ -59,7 +59,7 @@ fn make_envelope(
         HashMap::new();
     operations = operations.insert(
         EntryPointBuf(b"set_small".to_vec()),
-        ContractOperation::new(None),
+        ContractOperation::new(None, None),
     );
     ContractState {
         data,

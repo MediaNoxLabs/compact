@@ -29,7 +29,7 @@
 use compact_runtime::*;
 use std::marker::PhantomData;
 
-compact_runtime::check_runtime_version!("0.16.100");
+compact_runtime::check_runtime_version!("0.18.107");
 
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct SchemaRef {
@@ -3987,8 +3987,17 @@ pub mod pure_circuits {
     }
 
     pub fn verify_signature(pk: JubjubPoint, signature: Signature, challenge: Fr) -> bool {
-        let left_side = compact_runtime::ec_mul_generator(signature.s.clone());
-        let c_pk = compact_runtime::ec_mul(pk.clone(), challenge);
+        // Ledger-9 / compiler 0.33: ecMulGenerator/ecMul take JubjubScalar;
+        // reduce the Field-typed scalars the same way the stdlib's
+        // `as JubjubScalar` cast does (hand-applied — this fixture has no
+        // in-tree .compact source to regenerate from).
+        let left_side = compact_runtime::ec_mul_generator(
+            compact_runtime::jubjub_scalar_from_field(signature.s.clone()),
+        );
+        let c_pk = compact_runtime::ec_mul(
+            pk.clone(),
+            compact_runtime::jubjub_scalar_from_field(challenge),
+        );
         let right_side = compact_runtime::ec_add(signature.r.clone(), c_pk.clone());
         let x_matches = (compact_runtime::jubjub_point_x(left_side.clone())
             == compact_runtime::jubjub_point_x(right_side.clone()));

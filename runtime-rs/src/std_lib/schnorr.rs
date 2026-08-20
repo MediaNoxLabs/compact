@@ -34,7 +34,7 @@
 //! `[ann_x, ann_y, pk_x, pk_y, ...msg]` then reduce modulo the Jubjub
 //! scalar order → check `g^s == announcement + pk^c`.
 
-use midnight_transient_crypto::curve::{embedded, EmbeddedFr, Fr};
+use midnight_transient_crypto::curve::{EmbeddedFr, Fr};
 use midnight_transient_crypto::hash::transient_hash;
 
 use crate::{
@@ -73,17 +73,28 @@ fn compute_challenge(ann_x: Fr, ann_y: Fr, pk_x: Fr, pk_y: Fr, msg: &[Fr]) -> Em
     fr_to_embedded_fr(hash)
 }
 
-/// Reduce a BLS12-381 scalar `Fr` modulo the Jubjub scalar field order.
-/// `from_uniform_bytes` interprets a 64-byte buffer as a big integer
-/// and reduces — feeding the low 32 bytes mirrors what the matching
-/// circuit does via the `getSchnorrReduction` witness (the circuit
-/// must use a witness to expose the reduction as a constraint-friendly
-/// quotient/remainder pair; off-circuit we just take the modular
-/// reduction directly).
+/// Reduce a BLS12-381 scalar `Fr` modulo the Jubjub scalar field order,
+/// i.e. `x mod r_jubjub`. Single implementation lives in
+/// [`crate::std_lib::jubjub_scalar_from_field`], which is also what
+/// Compact's `as JubjubScalar` cast lowers to.
+///
+/// # Warning: this is NOT the vendored circuit's challenge reduction
+///
+/// The doc comment this replaced claimed the function "mirrors what the
+/// matching circuit does via the `getSchnorrReduction` witness". It does
+/// not. The vendored `examples/did-05/jubjub-schnorr/src/schnorr.compact`
+/// derives its challenge by **248-bit truncation** — `cFull = q·2^248 +
+/// cTruncated` with `c = cTruncated`, i.e. `cFull mod 2^248` — whereas
+/// this is `cFull mod r_jubjub`. Since `2^248 < r_jubjub` the two differ
+/// whenever `cFull >= 2^248`, which is essentially always, so
+/// [`schnorr_verify_jubjub`] and that circuit disagree. No test currently
+/// covers the gap (`did-05`'s tests are constructor-scaffold/readback
+/// only). The 0.33 standard library's `jubjubSchnorrVerify` uses the
+/// mod-`r` form, so this function matches the STDLIB semantics and a
+/// coordinated migration off the vendored module is the eventual fix.
+/// Tracked on MediaNoxLabs/compact#17.
 fn fr_to_embedded_fr(fr: Fr) -> EmbeddedFr {
-    let mut wide = [0u8; 64];
-    wide[..32].copy_from_slice(&fr.as_le_bytes());
-    EmbeddedFr(embedded::Scalar::from_bytes_wide(&wide))
+    crate::std_lib::jubjub_scalar_from_field(fr)
 }
 
 /// Off-circuit Schnorr verifier. Returns `true` iff the signature is
@@ -118,6 +129,52 @@ pub fn verify(pk: JubjubPoint, msg: &[Fr], sig: &SchnorrSignature) -> bool {
     let response_embed = fr_to_embedded_fr(sig.response);
     let lhs = JubjubPoint::generator() * response_embed;
     let rhs = sig.announcement + pk * challenge;
+    lhs == rhs
+}
+
+/// A Schnorr signature over the JubJub curve — the Rust mirror of the
+/// 0.33 standard library's `JubjubSchnorrSignature` struct
+/// (`announcement: JubjubPoint`, `response: Field`). Field layout and
+/// order match the Compact struct exactly so codegen-constructed
+/// values line up; the codegen's stdlib-struct mapping routes the
+/// Compact type here instead of emitting its own declaration.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct JubjubSchnorrSignature {
+    /// The announcement point, `R = k * G`.
+    pub announcement: JubjubPoint,
+    /// The response scalar, encoded as an outer-curve `Fr` (Compact
+    /// `Field`). Reduced modulo the JubJub scalar order before use,
+    /// matching the stdlib circuit's `response as JubjubScalar` cast.
+    pub response: Fr,
+}
+
+/// Pure-circuit-shaped verifier used by the compact codegen to replace
+/// calls to the 0.33 standard library's `jubjubSchnorrVerify<#N>`
+/// circuit. Mirrors the stdlib body exactly:
+///
+/// - challenge `c = transientHash(annX, annY, pkX, pkY, msg...)`
+///   reduced into the JubJub scalar field (the stdlib's
+///   `cNative as JubjubScalar` cast — plain mod-r reduction);
+/// - `response as JubjubScalar` — same reduction;
+/// - valid iff `s·G == R + c·pk`.
+///
+/// Identity points contribute zero coordinates to the hash (the
+/// `jubjubPointX`/`jubjubPointY` semantics), with no up-front identity
+/// rejection — exactly like the stdlib circuit.
+pub fn jubjub_schnorr_verify<const N: usize>(
+    msg: [Fr; N],
+    signature: JubjubSchnorrSignature,
+    pk: JubjubPoint,
+) -> bool {
+    let ann_x = signature.announcement.x().unwrap_or_else(|| Fr::from(0u64));
+    let ann_y = signature.announcement.y().unwrap_or_else(|| Fr::from(0u64));
+    let pk_x = pk.x().unwrap_or_else(|| Fr::from(0u64));
+    let pk_y = pk.y().unwrap_or_else(|| Fr::from(0u64));
+
+    let c = compute_challenge(ann_x, ann_y, pk_x, pk_y, &msg);
+
+    let lhs = JubjubPoint::generator() * fr_to_embedded_fr(signature.response);
+    let rhs = signature.announcement + pk * c;
     lhs == rhs
 }
 

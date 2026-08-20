@@ -129,24 +129,32 @@ fn rust_codegen_byte_parity_against_committed_fixtures() {
         }
         None => match find_repo_root(&manifest) {
             Some(root) => (root.join("result/bin/compactc"), root),
-            None => {
-                eprintln!(
-                    "SKIP: compactc not found (no ./result/bin/compactc above {}; \
-                     run `nix build .#compactc` to enable this regression guard)",
-                    manifest.display()
-                );
-                return;
-            }
+            None => panic!(
+                "byte-parity gate cannot run: no ./result/bin/compactc above {}. \
+                 Run `nix build .#compactc`, or set COMPACTC to a compiler binary. \
+                 (This is a hard failure on purpose: skipping would report a green \
+                 gate that verified nothing.)",
+                manifest.display()
+            ),
         },
     };
 
-    if !compactc.exists() {
-        eprintln!(
-            "SKIP: compactc binary at {} does not exist",
-            compactc.display()
-        );
-        return;
-    }
+    // A missing compiler must FAIL, not skip. Previously both paths above
+    // returned early, so `cargo test -p tests-e2e-rust` without a prior
+    // `nix build .#compactc` printed "SKIP" and passed in 0.00s — a green
+    // byte-parity gate that compiled nothing.
+    //
+    // Callers that genuinely cannot supply a compiler must exclude this
+    // test by name (`-- --skip rust_codegen_byte_parity`), not reintroduce
+    // an in-test skip: rust-runtime-test.yml's bare runners do exactly
+    // that, which keeps the exclusion visible in the workflow and in
+    // libtest's "filtered out" count instead of hidden in here.
+    assert!(
+        compactc.exists(),
+        "byte-parity gate cannot run: compactc binary at {} does not exist. \
+         Run `nix build .#compactc`, or point COMPACTC at a real binary.",
+        compactc.display()
+    );
 
     let examples_dir = repo_root.join("examples");
     let contracts_dir = manifest.join("contracts");
@@ -155,18 +163,20 @@ fn rust_codegen_byte_parity_against_committed_fixtures() {
     for (src_name, dir_name) in FIXTURES {
         let src = examples_dir.join(src_name);
         let committed = contracts_dir.join(dir_name).join("lib.rs");
-        if !src.exists() {
-            eprintln!("SKIP {}: source {} missing", dir_name, src.display());
-            continue;
-        }
-        if !committed.exists() {
-            eprintln!(
-                "SKIP {}: committed {} missing",
-                dir_name,
-                committed.display()
-            );
-            continue;
-        }
+        // Missing inputs are a broken FIXTURES table, not a reason to skip:
+        // silently dropping an entry would quietly shrink the gate.
+        assert!(
+            src.exists(),
+            "fixture {}: source {} is missing — fix or remove its FIXTURES entry",
+            dir_name,
+            src.display()
+        );
+        assert!(
+            committed.exists(),
+            "fixture {}: committed {} is missing — regenerate it or remove its FIXTURES entry",
+            dir_name,
+            committed.display()
+        );
 
         let outdir = tempdir(&format!("codegen-regen-{}", dir_name));
         let status = Command::new(&compactc)

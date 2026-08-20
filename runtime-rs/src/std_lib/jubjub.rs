@@ -24,7 +24,7 @@
 
 use crate::base_crypto::hash::HashOutput;
 use crate::transient_crypto::hash as transient_hash_mod;
-use crate::{Fr, JubjubPoint};
+use crate::{Fr, JubjubPoint, JubjubScalar};
 use midnight_base_crypto::repr::MemWrite;
 
 // R5a (2026-06-24): orphan-safe helpers for codegen of struct fields
@@ -126,16 +126,36 @@ pub fn ec_add(a: JubjubPoint, b: JubjubPoint) -> JubjubPoint {
     a + b
 }
 
-/// `ecMul(p, s)` — scalar multiplication. Upstream impls
-/// `Mul<Fr> for EmbeddedGroupAffine`.
+/// `ecNeg(a)` — group negation (compiler 0.33's new `ecNeg` native).
+/// Upstream `EmbeddedGroupAffine` impls `Neg` through
+/// `wrap_group_arith!`.
 #[inline]
-pub fn ec_mul(p: JubjubPoint, s: Fr) -> JubjubPoint {
+pub fn ec_neg(a: JubjubPoint) -> JubjubPoint {
+    -a
+}
+
+/// Compact's `Field as JubjubScalar` cast: reduce a native-field value
+/// (BLS12-381 scalar `Fr`) modulo the JubJub scalar order. Mirrors the
+/// TS runtime's `convertNumericToJubjubScalar` (`x mod r`). Values
+/// already below the embedded order round-trip unchanged.
+pub fn jubjub_scalar_from_field(f: Fr) -> JubjubScalar {
+    let mut wide = [0u8; 64];
+    wide[..32].copy_from_slice(&f.as_le_bytes());
+    JubjubScalar(midnight_transient_crypto::curve::embedded::Scalar::from_bytes_wide(&wide))
+}
+
+/// `ecMul(p, s)` — scalar multiplication. Compiler 0.33 types the
+/// scalar as `JubjubScalar` (the embedded curve's scalar field,
+/// upstream `EmbeddedFr`); upstream impls
+/// `Mul<EmbeddedFr> for EmbeddedGroupAffine` natively.
+#[inline]
+pub fn ec_mul(p: JubjubPoint, s: JubjubScalar) -> JubjubPoint {
     p * s
 }
 
 /// `ecMulGenerator(s)` — `generator() * s`.
 #[inline]
-pub fn ec_mul_generator(s: Fr) -> JubjubPoint {
+pub fn ec_mul_generator(s: JubjubScalar) -> JubjubPoint {
     JubjubPoint::generator() * s
 }
 

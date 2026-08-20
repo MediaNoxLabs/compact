@@ -29,7 +29,7 @@
 use compact_runtime::*;
 use std::marker::PhantomData;
 
-compact_runtime::check_runtime_version!("0.16.100");
+compact_runtime::check_runtime_version!("0.18.107");
 
 pub type Tag = [u8; 8];
 

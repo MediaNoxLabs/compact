@@ -120,7 +120,17 @@ const constructorCtx = {
   initialZswapLocalState: cr.emptyZswapLocalState(emptyCpk),
 };
 
-const initResult = contract.initialState(constructorCtx);
+// Compiler 0.33 / runtime 0.17.104 restructured the CircuitContext call
+// tree. Three things changed and every capture script must honour them:
+//   1. `initialState` is async — `await` it.
+//   2. `createCircuitContext` gained a leading `circuitId` argument.
+//   3. per-call state moved under `callContext`:
+//      `ctx.callContext.currentQueryContext.state.state`.
+// Circuit wrappers are async too, and they do NOT set `circuitId`
+// themselves — the caller must stamp it before each invocation:
+//      circuitCtx.callContext.circuitId = 'my_circuit';
+//      const out = await contract.circuits.my_circuit(circuitCtx);
+const initResult = await contract.initialState(constructorCtx);
 const afterInitHex = Buffer.from(initResult.currentContractState.serialize()).toString('hex');
 
 process.stdout.write(JSON.stringify({ afterInit: { stateHex: afterInitHex } }, null, 2) + '\n');

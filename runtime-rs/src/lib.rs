@@ -101,6 +101,25 @@ pub use midnight_onchain_state as onchain_state;
 pub use midnight_onchain_vm as onchain_vm;
 pub use midnight_storage as storage;
 pub use midnight_transient_crypto as transient_crypto;
+/// Re-export of `midnight_zswap`.
+///
+/// # Warning: proof verification is compiled out
+///
+/// The workspace builds `midnight-zswap` with `default-features = false`,
+/// which drops its `proof-verifying` feature (that feature pulls in
+/// `zkir_v2`, which needs a `midnight-transient-crypto ^2.2.0` that is not
+/// on crates.io). With the feature off, `zswap`'s
+/// `Offer::well_formed()` / `Input::well_formed()` and friends compile to
+/// the stub `{ Ok(()) }` — they accept **any** offer without checking a
+/// single proof.
+///
+/// `compact-runtime` itself only uses `zswap::local::State` (coin
+/// bookkeeping), which has no `proof-verifying` gates, so the crate's own
+/// behaviour is unaffected. But this re-export makes the stubbed verifier
+/// reachable as `compact_runtime::zswap::…`, so **do not use it to
+/// validate untrusted offers**. Note this differs from the ledger-8 line,
+/// where the fork took zswap's default features and the same calls did
+/// real verification.
 pub use midnight_zswap as zswap;
 
 pub use compact_runtime_macros::witnesses;
@@ -116,7 +135,9 @@ pub use midnight_base_crypto::fab::{
 
 // Field arithmetic + proof-system primitives.
 pub use midnight_base_crypto::repr::{BinaryHashRepr, MemWrite};
-pub use midnight_transient_crypto::curve::{EmbeddedGroupAffine as JubjubPoint, Fr};
+pub use midnight_transient_crypto::curve::{
+    EmbeddedFr as JubjubScalar, EmbeddedGroupAffine as JubjubPoint, Fr,
+};
 pub use midnight_transient_crypto::fab::ValueReprAlignedValue;
 pub use midnight_transient_crypto::merkle_tree::{
     leaf_hash, MerklePath, MerklePathEntry, MerkleTreeDigest,
@@ -230,6 +251,7 @@ pub use std_lib::{
     ec_add,
     ec_mul,
     ec_mul_generator,
+    ec_neg,
     // R5a: orphan-safe repr helpers for JubjubPoint-typed struct fields,
     // promoted to crate-root so codegen can spell
     // `compact_runtime::jubjub_point_*` without the `std_lib::` segment.
@@ -240,20 +262,26 @@ pub use std_lib::{
     jubjub_point_from_field_repr,
     jubjub_point_x,
     jubjub_point_y,
-    merkle_tree_path_root,
-    merkle_tree_path_root_no_leaf_hash,
-    none,
-    pad,
+    jubjub_scalar_from_field,
     // Module-1: Schnorr-on-Jubjub verifier + circuit-shaped wrapper.
     // Codegen rewrites `self.schnorr_verify(ctx, msg, sig, pk)?` calls
     // (the inner generic `schnorrVerify<#n>` from the jubjub-schnorr
     // import chain) into `compact_runtime::schnorr_verify_jubjub(ctx, ...)?`.
+    // 0.33 stdlib Schnorr: codegen routes `jubjubSchnorrVerify<#N>(...)`
+    // calls to `compact_runtime::std_lib::jubjub_schnorr_verify(...)` and
+    // the `JubjubSchnorrSignature` struct to the runtime mirror below.
+    jubjub_schnorr_verify,
+    merkle_tree_path_root,
+    merkle_tree_path_root_no_leaf_hash,
+    none,
+    pad,
     schnorr_verify,
     schnorr_verify_jubjub,
     some,
     upgrade_from_transient,
     vec_u8_from_field_repr,
     Bytes,
+    JubjubSchnorrSignature,
     Maybe,
     SchnorrSignature,
     JUBJUB_POINT_BINARY_LEN,

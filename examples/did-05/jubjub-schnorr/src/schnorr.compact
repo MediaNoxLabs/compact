@@ -57,8 +57,12 @@ module schnorr {
     );
 
     const c: Field = disclose(cTruncated) as Field;
-    const lhs: JubjubPoint = ecMulGenerator(response);
-    const rhs: JubjubPoint = ecAdd(announcement, ecMul(pk, c));
+    // Compiler 0.33: ecMulGenerator/ecMul take JubjubScalar (the embedded
+    // scalar field) instead of Field. Both operands here are already
+    // canonical scalars (response is produced reduced; c < 2^248 < r), so
+    // the `as JubjubScalar` reduction casts are value-preserving.
+    const lhs: JubjubPoint = ecMulGenerator(response as JubjubScalar);
+    const rhs: JubjubPoint = ecAdd(announcement, ecMul(pk, c as JubjubScalar));
     assert(
       jubjubPointX(lhs) == jubjubPointX(rhs) &&
         jubjubPointY(lhs) == jubjubPointY(rhs),

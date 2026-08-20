@@ -80,8 +80,11 @@ export ledger lastAlpha: Field;
 export ledger lastBeta: Field;
 
 constructor() {
-  lastAlpha = 0;
-  lastBeta = 0;
+  // Compiler 0.33: integer literals are no longer implicitly widened to
+  // `Field` in ledger-assignment position; the explicit `as Field` is a
+  // `safe-cast` that lowers to the same `Fr::from(0u64)`.
+  lastAlpha = 0 as Field;
+  lastBeta = 0 as Field;
 }
 
 export circuit runAlpha(x: Field): [] {

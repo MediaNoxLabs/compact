@@ -872,12 +872,22 @@
                                                          [(member rust-name seen)
                                                           (loop (cdr xs) seen)]
                                                          [else
+                                                          ;; A14: this render used to sit inside
+                                                          ;; `(guard (c [#t "/* TODO A14 */"]) …)`.
+                                                          ;; `[#t …]` matches EVERY condition, so a
+                                                          ;; deliberate `rust-feature-error` — the
+                                                          ;; mechanism that guarantees unsupported
+                                                          ;; constructs fail the compile — was caught
+                                                          ;; and replaced by a comment emitted where
+                                                          ;; an expression belongs. It also hid real
+                                                          ;; emitter bugs: a bad nanopass dispatch
+                                                          ;; became a comment instead of a trace.
+                                                          ;; Let the condition propagate.
                                                           (let* ([raw
-                                                                  (guard (c [#t "/* TODO A14 */"])
-                                                                    (ctor-expr-rust expr local-binds
-                                                                                    native-id-ht
-                                                                                    witness-id-ht
-                                                                                    circuit-id-ht))]
+                                                                  (ctor-expr-rust expr local-binds
+                                                                                  native-id-ht
+                                                                                  witness-id-ht
+                                                                                  circuit-id-ht)]
                                                                  ;; Bug-6: clone non-Copy
                                                                  ;; var-ref / elt-ref RHS so
                                                                  ;; the source struct stays
@@ -999,12 +1009,15 @@
                                                          [rust-name (symbol->string
                                                                       (camel->snake
                                                                         (id-sym var-name)))]
+                                                         ;; See the A14 note on the sibling render
+                                                         ;; above: the catch-all guard that used to
+                                                         ;; wrap this call swallowed deliberate
+                                                         ;; rejections as well as genuine bugs.
                                                          [rendered
-                                                          (guard (c [#t "/* TODO A14 */"])
-                                                            (ctor-expr-rust expr local-binds
-                                                                            native-id-ht
-                                                                            witness-id-ht
-                                                                            circuit-id-ht))])
+                                                          (ctor-expr-rust expr local-binds
+                                                                          native-id-ht
+                                                                          witness-id-ht
+                                                                          circuit-id-ht)])
                                                     (out (format "            let ~a = ~a;\n"
                                                                  rust-name rendered))))
                                                 pre-stmts)

@@ -1758,13 +1758,21 @@
                   ;; Non-exported (or impure) circuit call. Try to inline
                   ;; its body (the I3b/3 trick that turns the in_state
                   ;; placeholder into a semantically real comparison).
+                  ;;
+                  ;; When that fails we used to emit `/* TODO */ true`,
+                  ;; which lowers the assert to `assert!(true)` — a
+                  ;; constructor precondition that silently never fires,
+                  ;; in code that compiles and looks correct. Refuse
+                  ;; instead; see docs/rust-backend-limitations.md.
                   (or (inline-circuit-call c expr* local-binds
                                            native-id-ht witness-id-ht circuit-id-ht)
-                      (format "/* TODO M3: inline ~a in assert */ true"
-                              (id-sym function-name)))]
+                      (rust-feature-error src 'ctor-assert-condition-inline
+                        "cannot inline the call to `~a` used as an `assert` condition in a constructor"
+                        (id-sym function-name)))]
                  [else
-                  (format "/* TODO M3: inline ~a in assert */ true"
-                          (id-sym function-name))]))]
+                  (rust-feature-error src 'ctor-assert-condition-inline
+                    "cannot inline the call to `~a` used as an `assert` condition in a constructor"
+                    (id-sym function-name))]))]
             [else
              (ctor-expr-rust e local-binds
                              native-id-ht witness-id-ht circuit-id-ht)])))

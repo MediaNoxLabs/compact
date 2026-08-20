@@ -1495,14 +1495,24 @@
                  [(or ne w (and c (id-pure? function-name)))
                   (ctor-expr-rust e local-binds
                                   native-id-ht witness-id-ht circuit-id-ht)]
+                 ;; A call we cannot inline used to emit `/* TODO */ true`
+                 ;; here, which is the worst available outcome: the
+                 ;; condition becomes unconditionally true, so the
+                 ;; then-branch always runs and the else-branch is dead.
+                 ;; That compiles, reads plausibly, and gives no runtime
+                 ;; signal — any ledger write the author meant to be
+                 ;; conditional silently becomes unconditional. Refuse
+                 ;; instead; see docs/rust-backend-limitations.md.
                  [c
                   (or (inline-circuit-call c expr* local-binds
                                            native-id-ht witness-id-ht circuit-id-ht)
-                      (format "/* TODO M3-I3b/4: inline ~a in if-cond */ true"
-                              (id-sym function-name)))]
+                      (rust-feature-error src 'ctor-if-condition-inline
+                        "cannot inline the call to `~a` used as an `if` condition in a constructor"
+                        (id-sym function-name)))]
                  [else
-                  (format "/* TODO M3-I3b/4: inline ~a in if-cond */ true"
-                          (id-sym function-name))]))]
+                  (rust-feature-error src 'ctor-if-condition-inline
+                    "cannot inline the call to `~a` used as an `if` condition in a constructor"
+                    (id-sym function-name))]))]
             [else
              (ctor-expr-rust e local-binds
                              native-id-ht witness-id-ht circuit-id-ht)])))

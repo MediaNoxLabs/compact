@@ -47,6 +47,7 @@ midnight-storage          = { workspace = true }
 # `version = "=0.16.100"` is required for `cargo publish` to accept this
 # manifest — crates.io rejects path-only dependencies. The `=` pin keeps
 # the two crates lock-stepped: bumping `midnight-compact-runtime` to 0.16.101 must
-# also bump `midnight-compact-runtime-macros` to 0.16.101. See
-# docs/superpowers/notes/2026-06-02-crates-io-publication-plan.md.
+# also bump `midnight-compact-runtime-macros` to 0.16.101. The `=` pin below
+# is what enforces it: a mismatch fails to resolve rather than silently
+# pairing a runtime with a stale macro crate.
 midnight-compact-runtime-macros    = { path = "../runtime-rs-macros", version = "=0.16.100" }

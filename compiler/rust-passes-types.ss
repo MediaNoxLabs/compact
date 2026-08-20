@@ -13,6 +13,15 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
+;;; Compact type -> Rust type mapping.
+;;;
+;;; `type-rust` is the core translation. Also owns struct fingerprinting
+;;; (used to dedup structurally identical generic instantiations) and the
+;;; "problematic type" predicates that mark shapes needing special
+;;; handling rather than the default rendering.
+;;;
+;;; See compiler/README-rust-passes.md for the module map.
+
       ;; type-rust: walk an Ltypescript Type IR node and produce the
       ;; corresponding Rust type string. Covers M3-F1 scope: primitives
       ;; (tfield, tboolean, tunsigned, tbytes), ttuple, and tvector.

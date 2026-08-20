@@ -13,6 +13,23 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
+;;; The streamed constructor path.
+;;;
+;;; Most constructor bodies render as a single expression. Bodies that
+;;; branch, or carry multiple asserts, cannot — they become a SEQUENCE of
+;;; op-builder statements instead. `body-needs-streaming?` decides;
+;;; `emit-streaming-body` renders.
+;;;
+;;; Note this file has the deepest nesting in the backend (tracked in
+;;; MediaNoxLabs/compact#40). That is not only a readability problem: two
+;;; catch-all `(guard (c [#t ...]) ...)` handlers once lived at the
+;;; deepest point, swallowing deliberate rejections along with genuine
+;;; emitter bugs. At that indentation, wrapping a call in a
+;;; swallow-everything handler is easier than threading a failure out
+;;; properly — so prefer extracting a named helper over nesting further.
+;;;
+;;; See compiler/README-rust-passes.md for the module map.
+
       ;; -------------------------------------------------------------
       ;; Multi-stage streaming body walker
       ;; -------------------------------------------------------------

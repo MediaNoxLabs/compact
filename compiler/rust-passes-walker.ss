@@ -13,6 +13,30 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
+;;; Support analysis and body lowering — the largest file in the backend.
+;;;
+;;; Two jobs, and the split between them matters:
+;;;
+;;;   1. SUPPORT ANALYSIS. `body-walkable?` / `expr-supported?` decide
+;;;      whether every construct in a body has a lowering, BEFORE anything
+;;;      is emitted. This exists so a body is emitted or refused as a
+;;;      whole (no half-written circuits in the output stream), and so an
+;;;      unlowerable body can be routed to an alternative path such as the
+;;;      streamed constructor form.
+;;;   2. LOWERING. `emit-body-or-fallback` and `ctor-expr-rust` render
+;;;      bodies and constructor expressions.
+;;;
+;;; The cost of the split: the walker and the emitters must both
+;;; understand the same IR shapes, so a new construct generally needs
+;;; handling in BOTH. A shape the emitter can render but the walker
+;;; rejects is silently unsupported; the reverse is a crash.
+;;;
+;;; Also builds the witness / circuit / native id hashtables the emitters
+;;; consult at call sites.
+;;;
+;;; See compiler/README-rust-passes.md for the module map and the three
+;;; body routes (constructor / impure / pure).
+
       ;; witness-pelt?: returns #t if a Program-Element is a witness
       ;; declaration. Used by build-witness-id-ht to index witnesses.
       (define (witness-pelt? pelt)

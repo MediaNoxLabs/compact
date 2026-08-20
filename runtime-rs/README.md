@@ -116,4 +116,4 @@ build-time error rather than a runtime mystery.
 
 - [`../compiler/README-rust-passes.md`](../compiler/README-rust-passes.md) — Scheme codegen module map.
 - [`../tests-e2e-rust/README.md`](../tests-e2e-rust/README.md) — how byte-parity tests are structured.
-- [`../docs/superpowers/specs/2026-05-25-rust-codegen-design.md`](../docs/superpowers/specs/2026-05-25-rust-codegen-design.md) — original design doc.
+- [`../docs/rust-backend-limitations.md`](../docs/rust-backend-limitations.md) — what the backend refuses to lower, and why.

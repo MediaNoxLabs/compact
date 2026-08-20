@@ -15,12 +15,28 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
-;;; Rust code generator. Mirrors typescript-passes.ss in spirit: walks
-;;; the post-prepare-for-typescript `Ltypescript` IR and emits a Rust
-;;; crate (contract/lib.rs) that depends on the `compact-runtime` crate.
+;;; Rust code generator — the entry point for the backend.
 ;;;
-;;; See docs/superpowers/specs/2026-05-25-rust-codegen-design.md for the
-;;; full mapping between Compact constructs and Rust output.
+;;; Mirrors typescript-passes.ss in spirit: walks the
+;;; post-prepare-for-typescript `Ltypescript` IR and emits a Rust crate
+;;; (contract/lib.rs) depending on the `midnight-compact-runtime` crate.
+;;; Running over the same IR as the TypeScript backend is what makes
+;;; byte-parity between the two a checkable claim rather than an
+;;; aspiration.
+;;;
+;;; The pass body below is `Program -> Program` identity; it exists for
+;;; its effect, writing the crate through `out`. It is a leaf: nothing
+;;; else in the compiler reads its output, and with `--target` absent it
+;;; does not run.
+;;;
+;;; The eight included files are one `definitions` block, so every
+;;; definition is visible to every other file — the split is for human
+;;; navigation, not encapsulation. Include order matters for scope only.
+;;;
+;;; START HERE: compiler/README-rust-passes.md maps the modules, explains
+;;; the walker/emit split and the three body routes, and states the
+;;; rejection contract. docs/rust-backend-limitations.md lists what the
+;;; backend refuses to lower and why.
 
 (library (rust-passes)
   (export rust-passes)

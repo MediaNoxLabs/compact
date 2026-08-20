@@ -13,6 +13,17 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
+;;; File-level scaffolding for the emitted crate.
+;;;
+;;; Everything that surrounds the per-circuit output: licence header, `use`
+;;; lines, the `check_runtime_version!` pin, the `Witnesses` trait, and the
+;;; `Contract` struct. Also indexes the natives table and owns
+;;; `native-call-site-rust`, which REJECTS a native with no Rust binding
+;;; rather than emitting a placeholder — four natives are deliberately
+;;; unbound (see docs/rust-backend-limitations.md).
+;;;
+;;; See compiler/README-rust-passes.md for the module map.
+
       (define (header)
         ;; Full Apache-2.0 header in the form add_headers.py's --validate
         ;; gate expects. Keeps generated fixture lib.rs files passing the

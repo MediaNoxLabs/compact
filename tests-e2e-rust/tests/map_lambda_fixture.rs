@@ -29,7 +29,7 @@
 // `[2u64, 4u64, 6u64]` packed into a single AlignedValue.
 
 use compact_contract_map_lambda_fixture::Contract;
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 use midnight_serialize::tagged_serialize;
 use midnight_storage::storage::HashMap;
 use tests_e2e_rust::SmallFixtureTsReference;

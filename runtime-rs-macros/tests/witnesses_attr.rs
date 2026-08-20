@@ -17,8 +17,8 @@
 // Validates that the macro generates a trait impl that satisfies a
 // hand-written trait of the same shape rust-passes.ss would emit.
 
-use compact_runtime::WitnessContext;
-use compact_runtime_macros::witnesses;
+use midnight_compact_runtime::WitnessContext;
+use midnight_compact_runtime_macros::witnesses;
 
 #[allow(unused)]
 struct MyState;

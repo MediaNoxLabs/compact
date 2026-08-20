@@ -17,7 +17,7 @@
 //
 // Compact's `hashToCurve<A>(value: A): JubjubPoint` produces a Jubjub
 // curve point from a hashed input. The byte-parity test exercises:
-//   - the codegen routing through `compact_runtime::hash_to_curve` (the
+//   - the codegen routing through `midnight_compact_runtime::hash_to_curve` (the
 //     by-value wrapper added in this iteration),
 //   - upstream `midnight_transient_crypto::hash::hash_to_curve(&value)`,
 //   - the resulting `JubjubPoint`'s X / Y coordinates encoded into a

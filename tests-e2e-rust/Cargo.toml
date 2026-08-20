@@ -25,7 +25,7 @@ description = "Cross-language byte-parity tests for compactc --rust output."
 path = "src/lib.rs"
 
 [dependencies]
-compact-runtime = { path = "../runtime-rs" }
+midnight-compact-runtime = { path = "../runtime-rs" }
 midnight-base-crypto      = { workspace = true }
 midnight-onchain-state    = { workspace = true }
 midnight-onchain-vm       = { workspace = true }
@@ -87,7 +87,7 @@ compact-contract-guarded-assert-arith-fixture = { path = "contracts/guarded-asse
 compact-contract-asset-registry-fixture = { path = "contracts/asset-registry-fixture" }
 # Schnorr routing gate: schnorr_attest_fixture.rs executes a circuit whose
 # generic Schnorr verifier the emitter rewrites to
-# `compact_runtime::schnorr_verify_jubjub`, proving the rewrite yields a call
+# `midnight_compact_runtime::schnorr_verify_jubjub`, proving the rewrite yields a call
 # that both type-checks and verifies a real signature.
 compact-contract-schnorr-attest-fixture = { path = "contracts/schnorr-attest-fixture" }
 # Widening-cast width gate: widening_arith_fixture.rs executes the generated

@@ -21,7 +21,7 @@
 // body lowering for a generic impure circuit is not supported, so the
 // emitter does not lower it: `impure-call-target` in
 // compiler/rust-passes-helpers.ss rewrites the call to
-// `compact_runtime::schnorr_verify_jubjub`, and `stdlib-struct-mappings`
+// `midnight_compact_runtime::schnorr_verify_jubjub`, and `stdlib-struct-mappings`
 // routes the Compact `SchnorrSignature` type to the runtime's mirror
 // struct so the rewritten call site type-checks. Both rewrites are keyed
 // on NAMES, which byte-parity can only confirm textually.
@@ -34,8 +34,8 @@
 // key, message and signature — a swapped argument would still compile.
 
 use compact_contract_schnorr_attest_fixture::{ledger, pure_circuits, Contract, Ledger, Witnesses};
-use compact_runtime::transient_crypto::curve::{embedded, EmbeddedFr};
-use compact_runtime::*;
+use midnight_compact_runtime::transient_crypto::curve::{embedded, EmbeddedFr};
+use midnight_compact_runtime::*;
 
 /// Deterministic stub witnesses.
 ///
@@ -83,7 +83,7 @@ fn nonce() -> EmbeddedFr {
 }
 
 /// Reduce a BLS12-381 scalar into the Jubjub scalar field, exactly as
-/// `compact_runtime`'s off-circuit verifier does.
+/// `midnight_compact_runtime`'s off-circuit verifier does.
 fn fr_to_embedded(fr: Fr) -> EmbeddedFr {
     let mut wide = [0u8; 64];
     wide[..32].copy_from_slice(&fr.as_le_bytes());

@@ -38,7 +38,7 @@
 // mismatch on the post-circuit step.
 
 use compact_contract_set_size_fixture::Contract;
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 use midnight_serialize::tagged_serialize;
 use midnight_storage::storage::HashMap;
 use serde::Deserialize;

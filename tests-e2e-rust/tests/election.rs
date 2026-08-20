@@ -46,7 +46,7 @@
 //   - committed / revealed: Set<Bytes<32>>       (empty Map)
 
 use compact_contract_election::{Contract, Ledger, PermissibleVotes, PrivateState, Witnesses};
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 use midnight_serialize::tagged_serialize;
 use midnight_storage::storage::HashMap;
 use std::cell::RefCell;
@@ -133,13 +133,13 @@ impl Witnesses<()> for ElectionWitnesses {
         &self,
         _ctx: &WitnessContext<Ledger<'a>, ()>,
         _pk: [u8; 32],
-    ) -> ((), Maybe<compact_runtime::MerklePath<[u8; 32]>>) {
+    ) -> ((), Maybe<midnight_compact_runtime::MerklePath<[u8; 32]>>) {
         match ELIGIBLE_PATH.with(|c| c.borrow().clone()) {
             Some(p) => (
                 (),
                 Maybe {
                     is_some: true,
-                    value: compact_runtime::MerklePath {
+                    value: midnight_compact_runtime::MerklePath {
                         leaf: p.leaf_bytes(),
                         path: p.into_entries(),
                     },
@@ -149,7 +149,7 @@ impl Witnesses<()> for ElectionWitnesses {
                 (),
                 Maybe {
                     is_some: false,
-                    value: compact_runtime::default_merkle_path::<[u8; 32]>(),
+                    value: midnight_compact_runtime::default_merkle_path::<[u8; 32]>(),
                 },
             ),
         }
@@ -158,13 +158,13 @@ impl Witnesses<()> for ElectionWitnesses {
         &self,
         _ctx: &WitnessContext<Ledger<'a>, ()>,
         _cm: [u8; 32],
-    ) -> ((), Maybe<compact_runtime::MerklePath<[u8; 32]>>) {
+    ) -> ((), Maybe<midnight_compact_runtime::MerklePath<[u8; 32]>>) {
         match COMMITTED_PATH.with(|c| c.borrow().clone()) {
             Some(p) => (
                 (),
                 Maybe {
                     is_some: true,
-                    value: compact_runtime::MerklePath {
+                    value: midnight_compact_runtime::MerklePath {
                         leaf: p.leaf_bytes(),
                         path: p.into_entries(),
                     },
@@ -174,7 +174,7 @@ impl Witnesses<()> for ElectionWitnesses {
                 (),
                 Maybe {
                     is_some: false,
-                    value: compact_runtime::default_merkle_path::<[u8; 32]>(),
+                    value: midnight_compact_runtime::default_merkle_path::<[u8; 32]>(),
                 },
             ),
         }
@@ -312,7 +312,7 @@ fn election_init_then_set_topic_byte_parity() {
     let out = contract
         .set_topic(
             circ_ctx,
-            compact_runtime::std_lib::OpaqueString::from("hello"),
+            midnight_compact_runtime::std_lib::OpaqueString::from("hello"),
         )
         .expect("set_topic");
     let envelope = make_envelope(out.context.current_query_context.state.clone());
@@ -334,7 +334,7 @@ fn election_init_then_advance_byte_parity() {
     let after_set_topic = contract
         .set_topic(
             circ_ctx,
-            compact_runtime::std_lib::OpaqueString::from("hello"),
+            midnight_compact_runtime::std_lib::OpaqueString::from("hello"),
         )
         .expect("set_topic");
     let out = contract.advance(after_set_topic.context).expect("advance");
@@ -377,7 +377,10 @@ fn election_vote_commit_byte_parity() {
         .expect("initial_state");
     let ctx = CircuitContext::new(init.current_contract_state, init.current_private_state);
     let after_set_topic = contract
-        .set_topic(ctx, compact_runtime::std_lib::OpaqueString::from("hello"))
+        .set_topic(
+            ctx,
+            midnight_compact_runtime::std_lib::OpaqueString::from("hello"),
+        )
         .expect("set_topic");
     let after_add_voter = contract
         .add_voter(after_set_topic.context, VOTER_PK)
@@ -418,7 +421,10 @@ fn election_vote_reveal_byte_parity() {
         .expect("initial_state");
     let ctx = CircuitContext::new(init.current_contract_state, init.current_private_state);
     let after_set_topic = contract
-        .set_topic(ctx, compact_runtime::std_lib::OpaqueString::from("hello"))
+        .set_topic(
+            ctx,
+            midnight_compact_runtime::std_lib::OpaqueString::from("hello"),
+        )
         .expect("set_topic");
     let after_add_voter = contract
         .add_voter(after_set_topic.context, VOTER_PK)
@@ -463,7 +469,7 @@ fn authority_matches_pure_circuit_derivation() {
         108u8, 97, 114, 101, 115, 58, 101, 108, 101, 99, 116, 105, 111, 110, 58, 112, 107, 58, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     ];
-    let derived = compact_runtime::std_lib::persistent_hash_aligned(&[
+    let derived = midnight_compact_runtime::std_lib::persistent_hash_aligned(&[
         AlignedValue::from(DOMAIN_SEP),
         AlignedValue::from(FIXED_SK),
     ]);

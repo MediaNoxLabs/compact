@@ -1,13 +1,13 @@
 name: Rust runtime + e2e tests
 
-# CI for the `compactc --rust` Rust side: `compact-runtime` (the runtime
+# CI for the `compactc --rust` Rust side: `midnight-compact-runtime` (the runtime
 # crate generated contract code depends on) and `tests-e2e-rust` (the
 # cross-language byte-parity test crate). The compiler's own Scheme
 # tests live in build-compiler.yml.
 #
 # Two jobs:
 #  - pre-check: fmt + clippy on the whole workspace (fast, ~3 min).
-#  - test:      cargo test -p compact-runtime -p tests-e2e-rust on Linux + macOS.
+#  - test:      cargo test -p midnight-compact-runtime -p tests-e2e-rust on Linux + macOS.
 #
 # The `codegen_regression` byte-parity test requires a built compactc and
 # FAILS (does not skip) when one is absent — a skip would report a green
@@ -103,11 +103,11 @@ jobs:
       # Clippy with -D warnings turns lints into errors. We scope it to
       # our crates explicitly so changes to tools/compact don't
       # accidentally start gating on this workflow.
-      - name: Run Clippy on compact-runtime
-        run: cargo clippy -p compact-runtime --all-targets --all-features -- -D warnings
+      - name: Run Clippy on midnight-compact-runtime
+        run: cargo clippy -p midnight-compact-runtime --all-targets --all-features -- -D warnings
 
-      - name: Run Clippy on compact-runtime-macros
-        run: cargo clippy -p compact-runtime-macros --all-targets --all-features -- -D warnings
+      - name: Run Clippy on midnight-compact-runtime-macros
+        run: cargo clippy -p midnight-compact-runtime-macros --all-targets --all-features -- -D warnings
 
       - name: Run Clippy on tests-e2e-rust
         run: cargo clippy -p tests-e2e-rust --all-targets --all-features -- -D warnings
@@ -153,14 +153,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-target-rust-runtime-
 
-      - name: Build compact-runtime
-        run: cargo build -p compact-runtime --locked
+      - name: Build midnight-compact-runtime
+        run: cargo build -p midnight-compact-runtime --locked
 
       - name: Build tests-e2e-rust (incl. fixture crates)
         run: cargo build -p tests-e2e-rust --tests --locked
 
-      - name: Unit tests — compact-runtime
-        run: cargo test -p compact-runtime --locked
+      - name: Unit tests — midnight-compact-runtime
+        run: cargo test -p midnight-compact-runtime --locked
 
       - name: Integration tests — tests-e2e-rust
         # `rust_codegen_byte_parity_against_committed_fixtures` regenerates

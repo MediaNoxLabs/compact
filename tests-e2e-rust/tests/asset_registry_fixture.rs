@@ -48,8 +48,8 @@ use compact_contract_asset_registry_fixture::{
     ledger, pure_circuits, AssetClass, AssetRecord, Contract, ContractAddress as RegistryAddress,
     CustodyGrant, FreshnessPolicy, Ledger, Provenance, RecordMutation, Witnesses,
 };
-use compact_runtime::std_lib::OpaqueString;
-use compact_runtime::*;
+use midnight_compact_runtime::std_lib::OpaqueString;
+use midnight_compact_runtime::*;
 
 mod common;
 

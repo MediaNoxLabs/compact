@@ -12,7 +12,7 @@ TypeScript backend. For every `.compact` example under
 
 A new contributor's mental model: **TS is the spec, Rust is the
 candidate, the JSON is the contract.** If a Rust test fails, either
-the Scheme codegen or `compact-runtime` (or both) produced bytes that
+the Scheme codegen or `midnight-compact-runtime` (or both) produced bytes that
 don't match `ContractState.serialize()` from `@midnight-ntwrk/compact-runtime`.
 
 ## Layout
@@ -145,7 +145,7 @@ Mirror `tests/list_fixture.rs`. The pattern:
 
 ```rust
 use compact_contract_my_feature_fixture::Contract;
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 use midnight_serialize::tagged_serialize;
 use midnight_storage::storage::HashMap;
 use tests_e2e_rust::SmallFixtureTsReference;

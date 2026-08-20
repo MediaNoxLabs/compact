@@ -42,10 +42,10 @@
         ;; which rustc would otherwise flag).
         (out "#![allow(clippy::all, dead_code, unused_imports, unused_variables, unused_parens, non_camel_case_types, non_snake_case, non_upper_case_globals)]\n")
         (out "\n")
-        (out "use compact_runtime::*;\n")
+        (out "use midnight_compact_runtime::*;\n")
         (out "use std::marker::PhantomData;\n")
         (out "\n")
-        (out (format "compact_runtime::check_runtime_version!(\"~a\");\n" runtime-version-string))
+        (out (format "midnight_compact_runtime::check_runtime_version!(\"~a\");\n" runtime-version-string))
         (out "\n"))
 
       ;; emit-witnesses: emits the per-contract Witnesses<PS> trait.
@@ -142,7 +142,7 @@
       ;;   - `native-entry-function`      — the TS-side string
       ;;     (e.g. "__compactRuntime.persistentHash")
       ;;   - `native-entry-rust-function` — the Rust-side string
-      ;;     (e.g. "compact_runtime::persistent_hash"), or #f if not yet
+      ;;     (e.g. "midnight_compact_runtime::persistent_hash"), or #f if not yet
       ;;     mapped in midnight-natives.ss.
       ;;
       ;; `native-call-site-rust` extracts a usable Rust call-target from
@@ -272,7 +272,7 @@
       ;; `commitment_from_coin_info`). Stdlib specialisations like
       ;; `some<Field>` / `none<Field>` are excluded — they live in the
       ;; runtime as fixed Rust functions and the call-site dispatcher
-      ;; rewrites references to `compact_runtime::std_lib::some` etc.
+      ;; rewrites references to `midnight_compact_runtime::std_lib::some` etc.
       (define (program-circuits pelt*)
         (let loop ([pelt* pelt*] [acc '()])
           (cond

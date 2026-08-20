@@ -112,7 +112,7 @@ const FIXTURES: &[(&str, &str)] = &[
     // tests/asset_registry_fixture.rs.
     ("asset_registry_fixture.compact", "asset-registry-fixture"),
     // Schnorr-on-Jubjub routing: the emitter rewrites a call to the generic
-    // `schnorrVerify<#n>` into `compact_runtime::schnorr_verify_jubjub` and
+    // `schnorrVerify<#n>` into `midnight_compact_runtime::schnorr_verify_jubjub` and
     // routes `SchnorrSignature` to the runtime's mirror type. Also the only
     // fixture with a generic circuit, a generic struct at two widths, and a
     // tuple-returning witness. Executing gate:

@@ -18,7 +18,7 @@
 // shape of WitnessContext (concrete type construction). Lifetime/HRTB
 // exercise lands in M3 when tiny.compact is implemented.
 
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 
 #[test]
 fn no_witnesses_is_default_constructible() {

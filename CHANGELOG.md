@@ -9,6 +9,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _No changes yet._
 
+## [Toolchain 0.31.112, language 0.23.103, runtime 0.16.100] — Rust runtime crate renamed to midnight-compact-runtime (2026-08-20)
+
+### Changed
+
+- **Breaking (`--rust`): the Rust runtime crate is renamed
+  `compact-runtime` → `midnight-compact-runtime`** (and
+  `compact-runtime-macros` → `midnight-compact-runtime-macros`), with the
+  library paths following as `midnight_compact_runtime` /
+  `midnight_compact_runtime_macros`. Generated code now emits
+  `use midnight_compact_runtime::*;` and fully-qualified
+  `midnight_compact_runtime::…` paths.
+
+  Rationale (review feedback on LFDT-Minokawa/compact#730): Midnight's Rust
+  crates are uniformly `midnight-*` (`midnight-onchain-state`,
+  `midnight-transient-crypto`, …), so the prefix does for Rust what the
+  `@midnight-ntwrk` scope does for npm, and `compact-runtime` alone is
+  generic on crates.io. Generated code names the crate in every `use`, which
+  makes the choice effectively permanent once anything is published — cheap
+  to fix now, expensive later. The crate is unpublished, so no consumer is
+  affected and the runtime version stays 0.16.100 (generated contracts pin
+  it via `check_runtime_version!`, which requires exact equality).
+
+  The **TypeScript** package `@midnight-ntwrk/compact-runtime` shares the
+  name and is deliberately untouched; only the Rust crate is renamed. The
+  directory names `runtime-rs/` and `runtime-rs-macros/` are unchanged, and
+  historical entries in this file keep the name the crate had at the time.
+
+  All 34 byte-parity fixtures were regenerated: the diffs are the new crate
+  paths plus rustfmt reflow, since `midnight_compact_runtime` is nine
+  characters longer and pushes some lines past the 100-column limit. The
+  compiler's own `print-rust` snapshots (`compiler/snapshots/`) and the
+  TypeScript e2e man-page golden
+  (`tests-e2e/src/resources/compiler_man_page.txt`, which asserts
+  `compactc --help` verbatim) were updated to match.
+
 ## [Toolchain 0.31.111, language 0.23.103, runtime 0.16.100] — struct-field projections in trapping arithmetic (2026-08-10)
 
 ### Fixed

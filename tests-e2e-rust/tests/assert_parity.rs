@@ -50,13 +50,13 @@
 #![allow(clippy::unit_arg)]
 
 use compact_contract_assert_parity::{pure_circuits, Contract};
-use compact_runtime::{CompactError, ConstructorContext, NoWitnesses};
+use midnight_compact_runtime::{CompactError, ConstructorContext, NoWitnesses};
 
 fn ctor_ctx() -> ConstructorContext<()> {
     ConstructorContext {
         initial_private_state: (),
         empty_zswap_local_state: Default::default(),
-        cost_model: compact_runtime::INITIAL_COST_MODEL.clone(),
+        cost_model: midnight_compact_runtime::INITIAL_COST_MODEL.clone(),
         gas_limit: None,
     }
 }
@@ -90,7 +90,7 @@ fn passing_pure_circuit_assert_is_ok() {
 fn failing_impure_caller_of_pure_circuit_assert_is_err_not_panic() {
     let contract: Contract<(), NoWitnesses> = Contract::new(NoWitnesses);
     let init = contract.initial_state(ctor_ctx()).expect("initial_state");
-    let ctx = compact_runtime::CircuitContext::new(
+    let ctx = midnight_compact_runtime::CircuitContext::new(
         init.current_contract_state,
         init.current_private_state,
     );
@@ -118,7 +118,7 @@ fn failing_impure_caller_of_pure_circuit_assert_is_err_not_panic() {
 fn succeeding_impure_caller_of_pure_circuit_assert_is_ok() {
     let contract: Contract<(), NoWitnesses> = Contract::new(NoWitnesses);
     let init = contract.initial_state(ctor_ctx()).expect("initial_state");
-    let ctx = compact_runtime::CircuitContext::new(
+    let ctx = midnight_compact_runtime::CircuitContext::new(
         init.current_contract_state,
         init.current_private_state,
     );

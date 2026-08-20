@@ -630,7 +630,7 @@
                   (id-sym function-name))])]
             [stdlib
              ;; I3b/4: stdlib circuits (`some`, `none`) live in
-             ;; compact_runtime::std_lib. Render with the runtime path.
+             ;; midnight_compact_runtime::std_lib. Render with the runtime path.
              (let ([args
                     (map (lambda (e)
                            (arg-rust-clone-if-var e local-binds
@@ -1097,7 +1097,7 @@
              (lambda (path-elt*)
                (emit-struct-field-zero-read
                  path-elt*
-                 (format "compact_runtime::std_lib::decode_via_field_repr::<~a>"
+                 (format "midnight_compact_runtime::std_lib::decode_via_field_repr::<~a>"
                          enum-name)))]
             [else
              (arg-rust-clone-if-var actual local-binds
@@ -1873,7 +1873,7 @@
                      [local-binds '()]     ; (var-name . rust-name)
                      [witness-emitted? #f] ; have we emitted any witness call?
                      [pre-lines (if gas-acc?
-                                    (list "        let mut __gas_acc = compact_runtime::RunningCost::default();\n")
+                                    (list "        let mut __gas_acc = midnight_compact_runtime::RunningCost::default();\n")
                                     '())] ; reverse-accumulated Rust lines
                      [writes '()])         ; reverse-accumulated tagged
                                            ; mutations: each entry is

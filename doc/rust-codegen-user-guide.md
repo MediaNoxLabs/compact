@@ -10,7 +10,7 @@ see the three contributor READMEs linked at the bottom of this page.
 ## What is `compactc --rust`?
 
 `compactc --rust` lowers a Compact contract to a Rust crate that
-depends on the [`compact-runtime`](../runtime-rs) crate. Generated
+depends on the [`midnight-compact-runtime`](../runtime-rs) crate. Generated
 Rust mirrors the TypeScript backend's shape one-for-one: the
 contract becomes a `Contract<PS, W>` struct, the constructor becomes
 `Contract::initial_state(ctx, …)`, each impure circuit becomes a
@@ -94,28 +94,28 @@ treat it like a build artefact, not source.
 
 The simplest layout: copy the generated `lib.rs` into your crate
 under `src/contract/mod.rs` (or wherever you like), then depend on
-`compact-runtime`. Minimum `Cargo.toml` dependencies:
+`midnight-compact-runtime`. Minimum `Cargo.toml` dependencies:
 
 ```toml
 [dependencies]
-compact-runtime = { git = "https://github.com/LFDT-Minokawa/compact", branch = "main" }
+midnight-compact-runtime = { git = "https://github.com/LFDT-Minokawa/compact", branch = "main" }
 # Or, once published to crates.io:
-# compact-runtime = "0.16"
+# midnight-compact-runtime = "0.16"
 ```
 
 The generated `lib.rs` opens with:
 
 ```rust
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 use std::marker::PhantomData;
 
-compact_runtime::check_runtime_version!("0.16.100");
+midnight_compact_runtime::check_runtime_version!("0.16.100");
 ```
 
 The `check_runtime_version!` macro is a compile-time assertion: if
-the `compact-runtime` crate your contract is linking against has a
+the `midnight-compact-runtime` crate your contract is linking against has a
 different version than the compactc version that produced the file,
-the build fails with `compact-runtime version mismatch`. See
+the build fails with `midnight-compact-runtime version mismatch`. See
 [Versioning](#versioning) below.
 
 ### 4. Implement `Witnesses<PS>` for your private state
@@ -140,7 +140,7 @@ Each method returns `(updated_private_state, witness_value)`. The
 host implements the trait once for its private-state type:
 
 ```rust
-use compact_runtime::{NoWitnesses, WitnessContext};
+use midnight_compact_runtime::{NoWitnesses, WitnessContext};
 
 #[derive(Clone, Default)]
 struct MyPrivateState {
@@ -161,7 +161,7 @@ impl Witnesses<MyPrivateState> for MyWitnesses {
 ```
 
 If the contract declares zero witnesses, the codegen uses
-`compact_runtime::NoWitnesses` as the default bound and you can
+`midnight_compact_runtime::NoWitnesses` as the default bound and you can
 write `Contract::<_, NoWitnesses>::new(NoWitnesses)`.
 
 #### Witness privacy model
@@ -202,7 +202,7 @@ threading audit at
 ### 5. Run the constructor and circuits
 
 ```rust
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 
 // 1. Empty state + private-state seed.
 let empty_state = empty_charged_state();
@@ -256,14 +256,14 @@ you'd get from upstream `compactc`.
 
 | Feature | `--rust` | Notes |
 |---|---|---|
-| `Field` | Supported | Lowers to `compact_runtime::Fr`. |
+| `Field` | Supported | Lowers to `midnight_compact_runtime::Fr`. |
 | `Boolean` | Supported | Lowers to `bool`. |
 | `Bytes<N>` | Supported | Lowers to `[u8; N]`. |
 | `Vector<N, T>` | Supported | Lowers to `[T; N]`. |
 | `Uint<8>` … `Uint<128>` | Supported | Lowers to `u8` … `u128`. |
 | `Uint<L..U>` (bounded range) | Partial | Power-of-two byte widths lower correctly; arbitrary `L..U` ranges are accepted at the structural level but no generic-struct path exists. |
-| `Opaque<"string">` / `Opaque<T>` | Supported | Lowers via `compact_runtime::std_lib::OpaqueString`. |
-| `Maybe<T>` | Supported | `compact_runtime::Maybe<T>` + `some<T>(v)` / `none<T>()`. |
+| `Opaque<"string">` / `Opaque<T>` | Supported | Lowers via `midnight_compact_runtime::std_lib::OpaqueString`. |
+| `Maybe<T>` | Supported | `midnight_compact_runtime::Maybe<T>` + `some<T>(v)` / `none<T>()`. |
 
 ### Compact standard-library ADTs
 
@@ -283,7 +283,7 @@ you'd get from upstream `compactc`.
 |---|---|---|
 | `struct S { … }` (exported and non-exported) | Supported | `Aligned` / `FieldRepr` / `FromFieldRepr` impls are emitted automatically. |
 | Generic structs `struct S<a, #n> { … }` | Not yet | Compiler errors out. |
-| `enum E { variantA, variantB }` | Supported | `default<E>` lowers to `E::variantA`. As of v0.4.x (Bug-10, commit `62c81be`), `tenum`-typed ledger fields decode through `compact_runtime::std_lib::decode_via_field_repr::<EnumName>` rather than as a raw `u8`, so `state.read() == E::variantA` type-checks without a discriminant cast. The user enum already derives `FromFieldRepr` via the H4 path in `rust-passes-decls.ss`; this is a behaviour-preserving change visible only in the shape of the emitted Rust. |
+| `enum E { variantA, variantB }` | Supported | `default<E>` lowers to `E::variantA`. As of v0.4.x (Bug-10, commit `62c81be`), `tenum`-typed ledger fields decode through `midnight_compact_runtime::std_lib::decode_via_field_repr::<EnumName>` rather than as a raw `u8`, so `state.read() == E::variantA` type-checks without a discriminant cast. The user enum already derives `FromFieldRepr` via the H4 path in `rust-passes-decls.ss`; this is a behaviour-preserving change visible only in the shape of the emitted Rust. |
 | `type Alias = …` (transparent) | Supported | |
 | `type Alias = …` (nominal / newtype) | Supported | |
 | Chained aliases | Untested but expected to work | |
@@ -337,7 +337,7 @@ The Compact frontend pass `expand-modules-and-types` (at [`compiler/analysis-pas
 | Feature | `--rust` | Notes |
 |---|---|---|
 | `persistentHash` / `persistentCommit` / `transientHash` / `transientCommit` | Supported | |
-| `hashToCurve` | Supported | Routed through `compact_runtime::hash_to_curve`. |
+| `hashToCurve` | Supported | Routed through `midnight_compact_runtime::hash_to_curve`. |
 | Jubjub / EC primitives (`ec_add`, `ec_mul`, …) | Supported | |
 | Zswap witnesses | Supported | |
 | `keccak256` | ⚠ Mapped but stub | The symbol resolves but its runtime binding is `unimplemented!()` (see `compiler/midnight-natives.ss:57-61` — no upstream host-side keccak binding yet). A `.compact` source that calls `keccak256` will compile to malformed Rust. Tracked as an external blocker (needs `midnight_transient_crypto::hash::keccak256`). |
@@ -385,25 +385,25 @@ yet. Look up `X` in the [Feature support matrix](#feature-support-matrix).
 If it's listed as **Not yet**, the gap is known. If it's listed as
 **Supported**, please file an issue with the contract.
 
-### `compact-runtime version mismatch`
+### `midnight-compact-runtime version mismatch`
 
-Caused by linking your contract against a `compact-runtime` version
+Caused by linking your contract against a `midnight-compact-runtime` version
 that differs from the one `compactc` was built against. The
 generated `lib.rs` opens with:
 
 ```rust
-compact_runtime::check_runtime_version!("0.16.100");
+midnight_compact_runtime::check_runtime_version!("0.16.100");
 ```
 
 That literal is the version `compactc` expected. Compare against the
-`compact-runtime` version in your `Cargo.lock`:
+`midnight-compact-runtime` version in your `Cargo.lock`:
 
 ```bash
-cargo tree -p compact-runtime
+cargo tree -p midnight-compact-runtime
 ```
 
 Fix by either:
-- Bumping `compact-runtime` in your `Cargo.toml` to match the literal,
+- Bumping `midnight-compact-runtime` in your `Cargo.toml` to match the literal,
   or
 - Re-running `compactc` with a matching toolchain.
 
@@ -435,7 +435,7 @@ third-party types from your downstream crate, so the fix is:
 - Define the Compact-side type as the wrapper, so the codegen emits
   the trait impls for you via `H5–H7`-style struct emission.
 
-The helpers under `compact_runtime::std_lib` (`bytes_from_field_repr`,
+The helpers under `midnight_compact_runtime::std_lib` (`bytes_from_field_repr`,
 `vec_u8_from_field_repr`, `array_from_field_repr`) exist to make
 the codegen's deserialiser path orphan-safe; user code can call them
 too if you find yourself fighting the type system from inside a
@@ -455,7 +455,7 @@ name. Two common gotchas:
 
 ## Versioning
 
-`compact-runtime` and `compactc` share a synchronised version string.
+`midnight-compact-runtime` and `compactc` share a synchronised version string.
 The runtime crate exports `COMPACT_RUNTIME_VERSION` (currently
 `0.16.100`), and `compactc --runtime-version` prints the same string.
 
@@ -468,7 +468,7 @@ When you upgrade the compiler:
 
 1. Re-run `compactc --rust` on every `.compact` source. The emitted
    `check_runtime_version!` literal moves to the new version.
-2. Bump the `compact-runtime` dependency in your `Cargo.toml`
+2. Bump the `midnight-compact-runtime` dependency in your `Cargo.toml`
    accordingly.
 
 The version pin is **exact**, not semver-ranged: a `0.16.100`

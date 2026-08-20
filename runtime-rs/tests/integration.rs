@@ -18,8 +18,8 @@
 // Constructs a counter, runs the `increment` Op sequence, decodes the new
 // value. If this passes, the runtime is ready for codegen.
 
-use compact_runtime::std_lib::Counter;
-use compact_runtime::*;
+use midnight_compact_runtime::std_lib::Counter;
+use midnight_compact_runtime::*;
 
 #[test]
 fn increment_counter_end_to_end() {

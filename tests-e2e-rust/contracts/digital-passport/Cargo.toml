@@ -39,4 +39,4 @@ name = "compact_contract_digital_passport"
 path = "lib.rs"
 
 [dependencies]
-compact-runtime = { path = "../../../runtime-rs" }
+midnight-compact-runtime = { path = "../../../runtime-rs" }

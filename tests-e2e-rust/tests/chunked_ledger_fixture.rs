@@ -34,7 +34,7 @@
 // shape.
 
 use compact_contract_chunked_ledger_fixture::{ledger, Contract};
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 
 fn ctor_ctx() -> ConstructorContext<()> {
     ConstructorContext {

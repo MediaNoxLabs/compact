@@ -42,7 +42,7 @@
 use compact_contract_did_05::{
     ledger, Contract, ContractAddress as DidContractAddress, Ledger, Witnesses,
 };
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 
 /// Deterministic stub witnesses. The constructor invokes
 /// `local_controller_public_key`, `local_recovery_authority_public_key` and

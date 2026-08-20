@@ -15,10 +15,10 @@
 
 //
 // Smoke test asserting that every type the codegen will reference is
-// reachable through the `compact_runtime` prelude. Catches regressions
+// reachable through the `midnight_compact_runtime` prelude. Catches regressions
 // in re-exports without exercising behaviour.
 
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 
 #[test]
 fn prelude_resolves_all_required_symbols() {

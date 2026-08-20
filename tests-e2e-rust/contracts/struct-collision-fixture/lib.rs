@@ -26,10 +26,10 @@
     non_upper_case_globals
 )]
 
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 use std::marker::PhantomData;
 
-compact_runtime::check_runtime_version!("0.16.100");
+midnight_compact_runtime::check_runtime_version!("0.16.100");
 
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct Rec_1 {
@@ -63,14 +63,14 @@ impl FromFieldRepr for Rec_1 {
         Some(Rec_1 { alpha })
     }
 }
-impl From<Rec_1> for compact_runtime::Value {
-    fn from(s: Rec_1) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.alpha));
-        compact_runtime::Value::concat(_v.iter())
+impl From<Rec_1> for midnight_compact_runtime::Value {
+    fn from(s: Rec_1) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.alpha));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for Rec_1 {
+impl midnight_compact_runtime::BinaryHashRepr for Rec_1 {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.alpha.binary_repr(writer);
     }
@@ -111,14 +111,14 @@ impl FromFieldRepr for Wrap_1 {
         Some(Wrap_1 { inner })
     }
 }
-impl From<Wrap_1> for compact_runtime::Value {
-    fn from(s: Wrap_1) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.inner));
-        compact_runtime::Value::concat(_v.iter())
+impl From<Wrap_1> for midnight_compact_runtime::Value {
+    fn from(s: Wrap_1) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.inner));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for Wrap_1 {
+impl midnight_compact_runtime::BinaryHashRepr for Wrap_1 {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.inner.binary_repr(writer);
     }
@@ -159,14 +159,14 @@ impl FromFieldRepr for Inner_1 {
         Some(Inner_1 { a })
     }
 }
-impl From<Inner_1> for compact_runtime::Value {
-    fn from(s: Inner_1) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.a));
-        compact_runtime::Value::concat(_v.iter())
+impl From<Inner_1> for midnight_compact_runtime::Value {
+    fn from(s: Inner_1) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.a));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for Inner_1 {
+impl midnight_compact_runtime::BinaryHashRepr for Inner_1 {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.a.binary_repr(writer);
     }
@@ -207,14 +207,14 @@ impl FromFieldRepr for Rec {
         Some(Rec { beta })
     }
 }
-impl From<Rec> for compact_runtime::Value {
-    fn from(s: Rec) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.beta));
-        compact_runtime::Value::concat(_v.iter())
+impl From<Rec> for midnight_compact_runtime::Value {
+    fn from(s: Rec) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.beta));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for Rec {
+impl midnight_compact_runtime::BinaryHashRepr for Rec {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.beta.binary_repr(writer);
     }
@@ -255,14 +255,14 @@ impl FromFieldRepr for Wrap {
         Some(Wrap { inner })
     }
 }
-impl From<Wrap> for compact_runtime::Value {
-    fn from(s: Wrap) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.inner));
-        compact_runtime::Value::concat(_v.iter())
+impl From<Wrap> for midnight_compact_runtime::Value {
+    fn from(s: Wrap) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.inner));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for Wrap {
+impl midnight_compact_runtime::BinaryHashRepr for Wrap {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.inner.binary_repr(writer);
     }
@@ -303,14 +303,14 @@ impl FromFieldRepr for Inner {
         Some(Inner { b })
     }
 }
-impl From<Inner> for compact_runtime::Value {
-    fn from(s: Inner) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.b));
-        compact_runtime::Value::concat(_v.iter())
+impl From<Inner> for midnight_compact_runtime::Value {
+    fn from(s: Inner) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.b));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for Inner {
+impl midnight_compact_runtime::BinaryHashRepr for Inner {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.b.binary_repr(writer);
     }
@@ -347,7 +347,7 @@ where
     ) -> Result<ConstructorResult<PS>, CompactError> {
         let sv = new_array(vec![new_cell(Fr::default()), new_cell(Fr::default())]);
         let state = ChargedState::new(sv);
-        let qctx = QueryContext::new(state, compact_runtime::ContractAddress::default());
+        let qctx = QueryContext::new(state, midnight_compact_runtime::ContractAddress::default());
         let tmp = Fr::from(0u64);
         let tmp_0 = Fr::from(0u64);
         let ops = OpProgramVerify::<DefaultDB>::new()
@@ -441,7 +441,7 @@ impl<'a, D: DB> Ledger<'a, D> {
     pub fn last_alpha(&self) -> Result<Fr, CompactError> {
         let qctx = QueryContext::new(
             self.state.clone(),
-            compact_runtime::ContractAddress::default(),
+            midnight_compact_runtime::ContractAddress::default(),
         );
         let ops = OpProgramGather::<D>::new()
             .dup(0)
@@ -451,19 +451,19 @@ impl<'a, D: DB> Ledger<'a, D> {
         let results = query_for_read(&qctx, &ops, None, &initial_cost_model())
             .map_err(|e| CompactError::AssertionFailed(format!("ledger query failed: {:?}", e)))?;
         let av = match results.events.last() {
-            Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+            Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
             _ => {
                 return Err(CompactError::AssertionFailed(
                     "ledger: expected Read event".into(),
                 ))
             }
         };
-        compact_runtime::std_lib::decode_fr(av)
+        midnight_compact_runtime::std_lib::decode_fr(av)
     }
     pub fn last_beta(&self) -> Result<Fr, CompactError> {
         let qctx = QueryContext::new(
             self.state.clone(),
-            compact_runtime::ContractAddress::default(),
+            midnight_compact_runtime::ContractAddress::default(),
         );
         let ops = OpProgramGather::<D>::new()
             .dup(0)
@@ -473,14 +473,14 @@ impl<'a, D: DB> Ledger<'a, D> {
         let results = query_for_read(&qctx, &ops, None, &initial_cost_model())
             .map_err(|e| CompactError::AssertionFailed(format!("ledger query failed: {:?}", e)))?;
         let av = match results.events.last() {
-            Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+            Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
             _ => {
                 return Err(CompactError::AssertionFailed(
                     "ledger: expected Read event".into(),
                 ))
             }
         };
-        compact_runtime::std_lib::decode_fr(av)
+        midnight_compact_runtime::std_lib::decode_fr(av)
     }
 }
 

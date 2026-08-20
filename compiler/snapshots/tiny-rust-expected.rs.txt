@@ -17,10 +17,10 @@
 
 #![allow(clippy::all, dead_code, unused_imports, unused_variables, unused_parens, non_camel_case_types, non_snake_case, non_upper_case_globals)]
 
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 use std::marker::PhantomData;
 
-compact_runtime::check_runtime_version!("0.16.100");
+midnight_compact_runtime::check_runtime_version!("0.16.100");
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 #[repr(u8)]
@@ -51,12 +51,12 @@ impl FromFieldRepr for STATE {
         }
     }
 }
-impl From<STATE> for compact_runtime::Value {
-    fn from(v: STATE) -> compact_runtime::Value {
-        compact_runtime::Value::from(v as u8)
+impl From<STATE> for midnight_compact_runtime::Value {
+    fn from(v: STATE) -> midnight_compact_runtime::Value {
+        midnight_compact_runtime::Value::from(v as u8)
     }
 }
-impl compact_runtime::BinaryHashRepr for STATE {
+impl midnight_compact_runtime::BinaryHashRepr for STATE {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         (*self as u8).binary_repr(writer);
     }
@@ -94,7 +94,7 @@ where
             new_cell(0u8),
         ]);
         let state = ChargedState::new(sv);
-        let qctx = QueryContext::new(state, compact_runtime::ContractAddress::default());
+        let qctx = QueryContext::new(state, midnight_compact_runtime::ContractAddress::default());
         let _witness_ctx_0 = WitnessContext::new(ledger(&qctx.state), ctx.initial_private_state, &qctx);
         let (current_private_state, sk) = self.witnesses.private_secret_key(&_witness_ctx_0);
         let tmp = pure_circuits::public_key(sk)?;
@@ -138,15 +138,15 @@ where
             )
             .map_err(|e| CompactError::AssertionFailed(format!("ledger query failed: {:?}", e)))?;
             let _av = match _gather_results.events.last() {
-                Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+                Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
                 _ => return Err(CompactError::AssertionFailed("ledger: expected Read event".into())),
             };
-            compact_runtime::std_lib::decode_via_field_repr::<STATE>(_av)?
+            midnight_compact_runtime::std_lib::decode_via_field_repr::<STATE>(_av)?
         } == s);
         Ok(CircuitResults {
             result,
             context: ctx,
-            gas_cost: compact_runtime::RunningCost::default(),
+            gas_cost: midnight_compact_runtime::RunningCost::default(),
         })
     }
 
@@ -169,10 +169,10 @@ where
             )
             .map_err(|e| CompactError::AssertionFailed(format!("ledger query failed: {:?}", e)))?;
             let _av = match _gather_results.events.last() {
-                Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+                Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
                 _ => return Err(CompactError::AssertionFailed("ledger: expected Read event".into())),
             };
-            compact_runtime::std_lib::decode_via_field_repr::<STATE>(_av)?
+            midnight_compact_runtime::std_lib::decode_via_field_repr::<STATE>(_av)?
         } == STATE::unset), "set: attempted to overwrite recorded value");
         let _witness_ctx_1 = WitnessContext::new(ledger(&ctx.current_query_context.state), ctx.current_private_state, &ctx.current_query_context);
         let (current_private_state, sk) = self.witnesses.private_secret_key(&_witness_ctx_1);
@@ -225,12 +225,12 @@ where
             )
             .map_err(|e| CompactError::AssertionFailed(format!("ledger query failed: {:?}", e)))?;
             let _av = match _gather_results.events.last() {
-                Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+                Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
                 _ => return Err(CompactError::AssertionFailed("ledger: expected Read event".into())),
             };
-            compact_runtime::std_lib::decode_via_field_repr::<STATE>(_av)?
+            midnight_compact_runtime::std_lib::decode_via_field_repr::<STATE>(_av)?
         } == STATE::set) {
-            compact_runtime::std_lib::some::<Fr>({
+            midnight_compact_runtime::std_lib::some::<Fr>({
             let _gather_ops = OpProgramGather::<DefaultDB>::new()
                 .dup(0)
                 .idx_at_index(1u8, false)
@@ -244,18 +244,18 @@ where
             )
             .map_err(|e| CompactError::AssertionFailed(format!("ledger query failed: {:?}", e)))?;
             let _av = match _gather_results.events.last() {
-                Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+                Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
                 _ => return Err(CompactError::AssertionFailed("ledger: expected Read event".into())),
             };
-            compact_runtime::std_lib::decode_fr(_av)?
+            midnight_compact_runtime::std_lib::decode_fr(_av)?
         })
         } else {
-            compact_runtime::std_lib::none::<Fr>()
+            midnight_compact_runtime::std_lib::none::<Fr>()
         };
         Ok(CircuitResults {
             result,
             context: ctx,
-            gas_cost: compact_runtime::RunningCost::default(),
+            gas_cost: midnight_compact_runtime::RunningCost::default(),
         })
     }
 
@@ -277,10 +277,10 @@ where
             )
             .map_err(|e| CompactError::AssertionFailed(format!("ledger query failed: {:?}", e)))?;
             let _av = match _gather_results.events.last() {
-                Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+                Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
                 _ => return Err(CompactError::AssertionFailed("ledger: expected Read event".into())),
             };
-            compact_runtime::std_lib::decode_via_field_repr::<STATE>(_av)?
+            midnight_compact_runtime::std_lib::decode_via_field_repr::<STATE>(_av)?
         } == STATE::set), "clear: no value is currently recorded");
         let _witness_ctx_1 = WitnessContext::new(ledger(&ctx.current_query_context.state), ctx.current_private_state, &ctx.current_query_context);
         let (current_private_state, sk) = self.witnesses.private_secret_key(&_witness_ctx_1);
@@ -299,10 +299,10 @@ where
             )
             .map_err(|e| CompactError::AssertionFailed(format!("ledger query failed: {:?}", e)))?;
             let _av = match _gather_results.events.last() {
-                Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+                Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
                 _ => return Err(CompactError::AssertionFailed("ledger: expected Read event".into())),
             };
-            compact_runtime::std_lib::decode_bytes::<32>(_av)?
+            midnight_compact_runtime::std_lib::decode_bytes::<32>(_av)?
         }), "clear: attempted clear without proper authorization");
         let tmp = [0u8; 32];
         let ops = OpProgramVerify::<DefaultDB>::new()
@@ -347,7 +347,7 @@ pub fn ledger<D: DB>(state: &ChargedState<D>) -> Ledger<'_, D> {
 
 impl<'a, D: DB> Ledger<'a, D> {
     pub fn value(&self) -> Result<Fr, CompactError> {
-        let qctx = QueryContext::new(self.state.clone(), compact_runtime::ContractAddress::default());
+        let qctx = QueryContext::new(self.state.clone(), midnight_compact_runtime::ContractAddress::default());
         let ops = OpProgramGather::<D>::new()
             .dup(0)
             .idx_at_index(1u8, false)
@@ -356,10 +356,10 @@ impl<'a, D: DB> Ledger<'a, D> {
         let results = query_for_read(&qctx, &ops, None, &initial_cost_model())
             .map_err(|e| CompactError::AssertionFailed(format!("ledger query failed: {:?}", e)))?;
         let av = match results.events.last() {
-            Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+            Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
             _ => return Err(CompactError::AssertionFailed("ledger: expected Read event".into())),
         };
-        compact_runtime::std_lib::decode_fr(av)
+        midnight_compact_runtime::std_lib::decode_fr(av)
     }
 }
 
@@ -367,7 +367,7 @@ pub mod pure_circuits {
     use super::*;
 
     pub fn public_key(sk: [u8; 32]) -> Result<[u8; 32], CompactError> {
-        Ok(compact_runtime::std_lib::persistent_hash_aligned(&[compact_runtime::AlignedValue::from([108u8, 97, 114, 101, 115, 58, 116, 105, 110, 121, 58, 112, 107, 58, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]), compact_runtime::AlignedValue::from(sk)]))
+        Ok(midnight_compact_runtime::std_lib::persistent_hash_aligned(&[midnight_compact_runtime::AlignedValue::from([108u8, 97, 114, 101, 115, 58, 116, 105, 110, 121, 58, 112, 107, 58, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]), midnight_compact_runtime::AlignedValue::from(sk)]))
     }
 
 }

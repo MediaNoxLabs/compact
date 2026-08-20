@@ -40,7 +40,7 @@
 //   - afterPing: ContractState after ping()
 
 use compact_contract_sealed_ledger_fixture::Contract;
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 use midnight_serialize::tagged_serialize;
 use midnight_storage::storage::HashMap;
 use serde::Deserialize;

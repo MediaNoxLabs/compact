@@ -17,10 +17,10 @@
 // Smoke tests for the ergonomic helpers in compact-runtime::builders and
 // compact-runtime::query. One happy-path test per helper.
 
-use compact_runtime::std_lib::{
+use midnight_compact_runtime::std_lib::{
     decode_u128, decode_u16, decode_u32, decode_u64, decode_u8, serialize_contract_state,
 };
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 
 #[test]
 fn initial_cost_model_matches_constant() {
@@ -97,7 +97,9 @@ fn query_for_read_emits_read_events_for_popeq() {
     let res = query_for_read(&qctx, &ops, None, &initial_cost_model()).expect("query ok");
     // events should carry one Read with our value.
     let av = match res.events.last() {
-        Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av.clone(),
+        Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => {
+            av.clone()
+        }
         other => panic!("expected Read event, got {other:?}"),
     };
     assert_eq!(decode_u64(&av).unwrap(), 7);

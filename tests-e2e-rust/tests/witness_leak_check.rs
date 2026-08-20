@@ -33,7 +33,7 @@
 // the leaked offset, making the regression easy to bisect.
 
 use compact_contract_tiny::{Contract, Witnesses};
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 use midnight_serialize::tagged_serialize;
 use midnight_storage::storage::HashMap;
 

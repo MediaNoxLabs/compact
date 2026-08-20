@@ -143,6 +143,12 @@ fn rust_codegen_byte_parity_against_committed_fixtures() {
     // returned early, so `cargo test -p tests-e2e-rust` without a prior
     // `nix build .#compactc` printed "SKIP" and passed in 0.00s — a green
     // byte-parity gate that compiled nothing.
+    //
+    // Callers that genuinely cannot supply a compiler must exclude this
+    // test by name (`-- --skip rust_codegen_byte_parity`), not reintroduce
+    // an in-test skip: rust-runtime-test.yml's bare runners do exactly
+    // that, which keeps the exclusion visible in the workflow and in
+    // libtest's "filtered out" count instead of hidden in here.
     assert!(
         compactc.exists(),
         "byte-parity gate cannot run: compactc binary at {} does not exist. \

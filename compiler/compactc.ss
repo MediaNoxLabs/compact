@@ -104,10 +104,21 @@ The following flags, if present, affect the compiler's behavior as follows:
 ;; there.
 ;;
 ;; The action only COLLECTS; validation happens in the matched clause body.
-;; Actions can fire while a clause is merely being attempted, so erroring here
-;; could reject a --target value on a command line that was never going to
-;; match that clause. Collection is deduped, which also makes a repeated fire
-;; for one occurrence harmless.
+;;
+;; To be precise about why, since an earlier version of this comment had the
+;; reasoning wrong: actions do NOT fire for a clause that fails to match. The
+;; parser threads `act!` as a thunk chain — each occurrence rebinds it to
+;; `(lambda () (act!) action)`, accumulating without running — and invokes the
+;; chain only at the terminal node, inside `(let () (act!) . body)`, i.e. once
+;; the whole clause has matched. An abandoned attempt calls `(next orig-cl)`
+;; and the accumulated thunk is simply discarded.
+;;
+;; So validating inside the action would be correct too. Keeping it in the body
+;; is a style choice with two small benefits: every argument check for this
+;; clause sits together (beside `check-pathname` and the alias-mixing check),
+;; and diagnostics come out in a fixed order rather than in whichever order the
+;; flags happened to appear. Collection is deduped so a genuinely repeated
+;; value (`--target rust --target rust`) is idempotent.
 (define known-targets '("ts" "rust"))
 
 (define selected-targets '())

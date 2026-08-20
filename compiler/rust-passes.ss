@@ -143,8 +143,8 @@
              ;; users see as the codegen-rust frontier).
              ;;
              ;; NON-EXPORTED impure circuits are private helpers, e.g.
-             ;; did.compact's `recordUpdate`, `assertController`,
-             ;; `assertControllerCanUpdate`. They emit ONLY if their body
+             ;; a `recordWrite` bookkeeping circuit or an
+             ;; `assertWritable` guard. They emit ONLY if their body
              ;; is walkable in the current dispatcher — otherwise we skip
              ;; them silently (their callers inline them via the
              ;; assert-cond-rust inline-circuit-call path, or the caller's

@@ -618,7 +618,7 @@
                                (substring ctx-expr 1 (string-length ctx-expr))])
                           (out (format "        let ctx = CircuitContext { current_query_context: ~a.clone(), ..ctx };\n"
                                        referent))))
-                      ;; A-05 (did.compact 0.5.0): hoist any arg that reads the
+                      ;; A-05: hoist any arg that reads the
                       ;; context into a temp before the call moves `ctx`
                       ;; (borrow-after-move otherwise). See hoist-ctx-args.
                       (let-values ([(hoist-lines arg-tail)
@@ -675,9 +675,9 @@
                             (format "&~a.context" res-name)))])))]
             ;; A12: if/else-if chain where at least one arm carries a
             ;; leading `(assert ...)` OR the else-branch is itself a
-            ;; nested if-then-else (else-if pattern). did.compact's
-            ;; setAlsoKnownAs / setVerificationMethodRelation are the
-            ;; canonical cases. We accept N arms with optional final
+            ;; nested if-then-else (else-if pattern). A set-mutation
+            ;; circuit branching on Insert / Remove is the
+            ;; canonical case. We accept N arms with optional final
             ;; else. Emission: a Rust `if cond1 { ... } else if cond2
             ;; { ... } else { ... };` chain, each branch laying its
             ;; own `compact_assert!(...)` then OpProgramVerify chain.
@@ -1089,9 +1089,9 @@
                                            ctx-expr))])
                            (out "        };\n")
                            (out (format "        __gas_acc += ~a.gas_cost.clone();\n" res-name))
-                           ;; A12: rebind ctx so subsequent stmts (e.g.
-                           ;; the `recordUpdate()` call after the if in
-                           ;; did.compact's setAlsoKnownAs) see the
+                           ;; A12: rebind ctx so subsequent stmts (e.g. a
+                           ;; trailing `recordWrite()` call after the if)
+                           ;; see the
                            ;; updated context through the default
                            ;; `&ctx.current_query_context` ctx-expr.
                            ;; `_if_results_N.context` is a QueryContext;

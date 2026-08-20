@@ -60,8 +60,9 @@
 
       ;; current-impure-call-binds: A15 sibling of current-witness-call-binds
       ;; for non-pure user-circuit calls hoisted out of an assert/condition.
-      ;; did.compact's `assert(!verificationMethodExists(id), ...)` shape is
-      ;; the canonical case. Each entry is `(list function-name arg-expr*
+      ;; The canonical case is an assert whose condition negates a call to
+      ;; an impure predicate circuit — `assert(!exists(id), ...)`. Each
+      ;; entry is `(list function-name arg-expr*
       ;; rust-name)` mirroring the witness binds. Consulted by
       ;; ctor-call-rust's else branch BEFORE falling to call-rust (which
       ;; would error with "non-native-call"): on hit, the call renders as
@@ -74,15 +75,16 @@
       ;; an impure circuit resolves to a stdlib-provided Rust impl,
       ;; redirect to that path so the caller never tries to look up a
       ;; method that doesn't exist on `Contract<PS, W>`. Currently
-      ;; covers the Schnorr-on-Jubjub generic verifier from the
-      ;; jubjub-schnorr import chain — `Schnorr_schnorrVerify<#n>` snake-
-      ;; cases to `schnorr_verify`, which doesn't appear in the
-      ;; generated contract methods (the Compact body lowering for a
-      ;; generic impure circuit isn't supported); the inner schnorr
-      ;; module's body would otherwise need to be lowered. Instead we
-      ;; reuse the orphan-safe `compact_runtime::schnorr_verify_jubjub`
-      ;; wrapper (see runtime-rs/src/std_lib/schnorr.rs) which calls the
-      ;; vendored off-circuit verifier.
+      ;; covers a Schnorr-on-Jubjub generic verifier — a circuit whose
+      ;; snake-cased name is `schnorr_verify` (e.g. an imported
+      ;; `schnorrVerify<#n>`), which doesn't appear in the generated
+      ;; contract methods because the Compact body lowering for a
+      ;; GENERIC impure circuit isn't supported; the defining module's
+      ;; body would otherwise need to be lowered. Instead we reuse the
+      ;; orphan-safe `compact_runtime::schnorr_verify_jubjub` wrapper
+      ;; (see runtime-rs/src/std_lib/schnorr.rs) which calls the
+      ;; off-circuit verifier. Covered by
+      ;; examples/schnorr_attest_fixture.compact.
       (define (impure-call-target cname)
         (let ([cname-str
                (cond
@@ -120,9 +122,8 @@
       ;; reaching call-rust) is unaffected. Bug-1 companion to
       ;; current-var-substitution — closes the pure-circuit-body-emission
       ;; gap for contracts whose pure circuits call other user pure
-      ;; circuits in tail/statement position (midnight-verifiable-
-      ;; credentials digital-passport: assertValidDigitalPassportSchemaRef,
-      ;; credentialBodyRoot, etc.).
+      ;; circuits in tail/statement position (a validation circuit that
+      ;; delegates to smaller `assertValid*` / `*Root` helpers, say).
       (define current-circuit-id-ht
         (make-parameter (make-eq-hashtable)))
 
@@ -160,7 +161,8 @@
       ;; shared by more than one distinct fingerprint — assigning
       ;; `Name`, `Name_1`, `Name_2`, ... so two `import M<...>`
       ;; instantiations that produce same-named but field-distinct
-      ;; structs (digital-passport's `RequestMessage` / `ResultMessage`)
+      ;; structs (two `RequestMessage`s from different instantiations of
+      ;; the same generic module, say)
       ;; emit as distinct `pub struct`s and resolve consistently at every
       ;; type-rust rendering site. Defaults to an empty hashtable so
       ;; `struct-rust-name` falls back to the bare struct-name —
@@ -522,10 +524,10 @@
           (MerkleTreePathEntry
             ,(lambda (elt-name* type*) "compact_runtime::MerklePathEntry")
             #t)
-          ;; Module-1: the Compact-side `Schnorr.SchnorrSignature` struct
-          ;; (`announcement: JubjubPoint`, `response: Field`) is sourced
-          ;; from the jubjub-schnorr import chain and consumed by
-          ;; `compact_runtime::schnorr_verify_jubjub`. To make the call
+          ;; Module-1: a Compact-side `SchnorrSignature` struct
+          ;; (`announcement: JubjubPoint`, `response: Field`) comes from
+          ;; whichever module defines the Schnorr verifier and is consumed
+          ;; by `compact_runtime::schnorr_verify_jubjub`. To make the call
           ;; site type-check we elide the codegen-emitted struct + impls
           ;; entirely and route the type to the runtime's mirror
           ;; (`compact_runtime::SchnorrSignature`) which has the

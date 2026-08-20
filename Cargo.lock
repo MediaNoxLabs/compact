@@ -719,6 +719,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-contract-asset-registry-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-runtime",
+]
+
+[[package]]
 name = "compact-contract-bounded-uint-fixture"
 version = "0.1.0"
 dependencies = [
@@ -741,20 +748,6 @@ dependencies = [
 
 [[package]]
 name = "compact-contract-cross-circuit-fixture"
-version = "0.1.0"
-dependencies = [
- "compact-runtime",
-]
-
-[[package]]
-name = "compact-contract-did-05"
-version = "0.1.0"
-dependencies = [
- "compact-runtime",
-]
-
-[[package]]
-name = "compact-contract-digital-passport"
 version = "0.1.0"
 dependencies = [
  "compact-runtime",
@@ -873,6 +866,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-contract-schnorr-attest-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-runtime",
+]
+
+[[package]]
 name = "compact-contract-sealed-ledger-fixture"
 version = "0.1.0"
 dependencies = [
@@ -916,6 +916,13 @@ dependencies = [
 
 [[package]]
 name = "compact-contract-vector-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-runtime",
+]
+
+[[package]]
+name = "compact-contract-widening-arith-fixture"
 version = "0.1.0"
 dependencies = [
  "compact-runtime",
@@ -4786,12 +4793,11 @@ version = "0.1.0"
 dependencies = [
  "compact-contract-aliases-fixture",
  "compact-contract-assert-parity-fixture",
+ "compact-contract-asset-registry-fixture",
  "compact-contract-bounded-uint-fixture",
  "compact-contract-bug11-fixture",
  "compact-contract-chunked-ledger-fixture",
  "compact-contract-cross-circuit-fixture",
- "compact-contract-did-05",
- "compact-contract-digital-passport",
  "compact-contract-election",
  "compact-contract-fold-fixture",
  "compact-contract-for-iter-fixture",
@@ -4807,6 +4813,7 @@ dependencies = [
  "compact-contract-module-fixture",
  "compact-contract-nested-map-fixture",
  "compact-contract-pure-circuit-fixture",
+ "compact-contract-schnorr-attest-fixture",
  "compact-contract-sealed-ledger-fixture",
  "compact-contract-set-fixture",
  "compact-contract-set-size-fixture",
@@ -4814,6 +4821,7 @@ dependencies = [
  "compact-contract-tiny",
  "compact-contract-uints-fixture",
  "compact-contract-vector-fixture",
+ "compact-contract-widening-arith-fixture",
  "compact-contract-witnesses-fixture",
  "compact-contract-zerocash",
  "compact-runtime",

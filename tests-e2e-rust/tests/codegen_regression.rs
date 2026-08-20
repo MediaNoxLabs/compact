@@ -94,12 +94,31 @@ const FIXTURES: &[(&str, &str)] = &[
         "guarded_assert_arith_fixture.compact",
         "guarded-assert-arith-fixture",
     ),
-    // did.compact 0.5.0 (controller-authorization + recovery). Vendored
-    // under examples/did-05/ with its jubjub-schnorr dependency so the
-    // `../../jubjub-schnorr/src/schnorr` relative import resolves; exercises
-    // the 0.5.0-specific codegen (JubjubPoint decoder/default, ctor-mode
-    // impure calls, multi-assert branches).
-    ("did-05/contract/src/did.compact", "did-05"),
+    // Wide, structured state: 20 ledger fields (A29 chunked scaffold), a
+    // `ContractAddress` cell written from `kernel.self()` whose read goes
+    // through the alignment-aware `decode_via_field_repr` (A30/A31, incl.
+    // the all-zero / empty-normalised-atom case), `Map`/`Set` values that
+    // are structs, and a constructor that calls an impure circuit reading
+    // its own writes (A28). Executing gate:
+    // tests/asset_registry_fixture.rs.
+    ("asset_registry_fixture.compact", "asset-registry-fixture"),
+    // Schnorr-on-Jubjub routing: the emitter rewrites a call to the generic
+    // `schnorrVerify<#n>` into `compact_runtime::schnorr_verify_jubjub` and
+    // routes `SchnorrSignature` to the runtime's mirror type. Also the only
+    // fixture with a generic circuit, a generic struct at two widths, and a
+    // tuple-returning witness. Executing gate:
+    // tests/schnorr_attest_fixture.rs.
+    ("schnorr_attest_fixture.compact", "schnorr-attest-fixture"),
+    // Mid-ladder widening casts in `mbits->rust-width`: the u16 and u32
+    // rungs, which no other fixture reaches. The ladder was otherwise
+    // exercised only at u64 (the same-width no-op, asset-registry /
+    // guarded-assert-arith) and u128 (a real widening, map-lambda's
+    // `x * 2` on Uint<64>) — so widening was covered but three rungs and
+    // both interior boundaries were not. An off-by-one in a rung
+    // comparison would pick a wrong width and, since `wrapping_*` cannot
+    // overflow, yield a WRONG VALUE in code that still compiles.
+    // Executing gate: tests/widening_arith_fixture.rs.
+    ("widening_arith_fixture.compact", "widening-arith-fixture"),
 ];
 
 /// Walks up from `start` looking for `./result/bin/compactc` (the nix

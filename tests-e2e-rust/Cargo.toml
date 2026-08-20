@@ -65,20 +65,33 @@ compact-contract-nested-map-fixture = { path = "contracts/nested-map-fixture" }
 compact-contract-hash-to-curve-fixture = { path = "contracts/hash-to-curve-fixture" }
 compact-contract-hmt-default-fixture = { path = "contracts/hmt-default-fixture" }
 compact-contract-bug11-fixture = { path = "contracts/bug11-fixture" }
-compact-contract-digital-passport = { path = "contracts/digital-passport" }
 compact-contract-assert-parity-fixture = { path = "contracts/assert-parity-fixture" }
 # Listed so `cargo build -p tests-e2e-rust --tests` (the CI build gate)
 # actually compiles this crate: its purpose is to prove the disambiguated
 # codegen produces *compilable* Rust, which codegen_regression (byte-compare
 # only) does not check. Workspace membership alone would not pull it in.
 compact-contract-struct-collision-fixture = { path = "contracts/struct-collision-fixture" }
-# A29 executing constructor gate: did05_constructor_scaffold.rs runs the
-# generated did-05 initial_state and reads scalar fields back via ledger(),
-# proving the >16-field chunked scaffold matches the read/write paths.
-compact-contract-did-05 = { path = "contracts/did-05" }
+# A29 executing constructor gate: chunked_ledger_fixture.rs runs the generated
+# initial_state and reads scalar fields back via ledger(), proving the
+# >16-field chunked scaffold matches the read/write paths.
 compact-contract-chunked-ledger-fixture = { path = "contracts/chunked-ledger-fixture" }
 # G1 executing assert gate: guarded_assert_arith_fixture.rs calls the generated
 # pure circuits with values that satisfy and values that trip each assert,
 # proving the struct-field projection inside the trapping-subtraction guard
 # lowers to the right operand (byte-parity alone cannot see a swapped operand).
 compact-contract-guarded-assert-arith-fixture = { path = "contracts/guarded-assert-arith-fixture" }
+# Wide-state executing gate: asset_registry_fixture.rs runs the generated
+# initial_state (20 ledger fields, so the scaffold is chunked), reads every
+# scalar back through ledger(), and drives the map/set circuits so the
+# composite `decode_via_field_repr` reads actually execute.
+compact-contract-asset-registry-fixture = { path = "contracts/asset-registry-fixture" }
+# Schnorr routing gate: schnorr_attest_fixture.rs executes a circuit whose
+# generic Schnorr verifier the emitter rewrites to
+# `compact_runtime::schnorr_verify_jubjub`, proving the rewrite yields a call
+# that both type-checks and verifies a real signature.
+compact-contract-schnorr-attest-fixture = { path = "contracts/schnorr-attest-fixture" }
+# Widening-cast width gate: widening_arith_fixture.rs executes the generated
+# pure circuits at values where a one-rung-too-narrow cast would silently
+# truncate (`wrapping_*` does not panic), so the mbits->rust-width ladder is
+# pinned by arithmetic rather than only by the generated text.
+compact-contract-widening-arith-fixture = { path = "contracts/widening-arith-fixture" }

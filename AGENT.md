@@ -21,7 +21,7 @@ Human contributors should also read it — it captures the constraints CI enforc
 - `.github/workflows/` — CI. Six workflows; the relevant ones for LLM work are covered in §6.
 - `third_party/` — path-mounted deps materialised by `nix develop`. **Not present on a bare checkout.**
 
-Branch on this fork: `codegen-rust` is where all Rust codegen work lives. `main` mirrors LFDT-Minokawa upstream. Feature branches (`passport-contract`, `feature/*`) target `codegen-rust`, not `main`.
+Branch on this fork: `codegen-rust` is where all Rust codegen work lives. `main` mirrors LFDT-Minokawa upstream. Feature branches (`feature/*`) target `codegen-rust`, not `main`.
 
 ## 2. Non-negotiable rules
 
@@ -95,7 +95,7 @@ This fork carries **no** `if: github.repository != …` fork-scoped skips. Each 
 
 - **`compact-test.yml` "Test" matrix** (`tools/compact` toolchain-manager) is **non-hermetic**: its integration tests query the live compact release channel and assert `LATEST_COMPACTC_VERSION` (`tools/compact/tests/common/mod.rs`), which is a manually-synced constant that drifts every release. It is upstream tooling, unrelated to the codegen. Rather than a fork guard, its trigger is scoped to `tools/compact/**` — the tool it actually tests — so codegen/compiler PRs (which don't touch that tree) don't couple to the external version. If you change `tools/compact`, expect to bump that constant.
 
-Fmt coverage of the generated fixtures: **`rust-runtime-test.yml`'s "Format + Clippy" runs `cargo fmt --all --check`** (nix-nightly, the same rustfmt the emitter's post-pass uses), so every `contracts/*/` member crate is gated — including unregistered ones like `digital-passport` (which has no committed `.compact` source and so is not in `codegen_regression`'s `FIXTURES`). Registered fixtures are additionally byte-parity-gated by `codegen_regression` (it regenerates with the nix rustfmt and asserts identity). Clippy stays `-p`-scoped to our crates so `tools/compact` lints don't gate this workflow.
+Fmt coverage of the generated fixtures: **`rust-runtime-test.yml`'s "Format + Clippy" runs `cargo fmt --all --check`** (nix-nightly, the same rustfmt the emitter's post-pass uses), so every `contracts/*/` member crate is gated — including any that are not registered in `codegen_regression`'s `FIXTURES`. Registered fixtures are additionally byte-parity-gated by `codegen_regression` (it regenerates with the nix rustfmt and asserts identity). Clippy stays `-p`-scoped to our crates so `tools/compact` lints don't gate this workflow.
 
 ## 5. Standard workflows (agent-friendly recipes)
 

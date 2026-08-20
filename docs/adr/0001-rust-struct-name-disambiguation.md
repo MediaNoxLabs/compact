@@ -164,10 +164,15 @@ the fingerprint complete.
 
 ## Follow-ups
 
-- `digital-passport` is not yet registered in `codegen_regression` (no
+- ~~`digital-passport` is not yet registered in `codegen_regression` (no
   committed `.compact` source in this repo), so its generated `lib.rs` is
-  guarded only by `cargo fmt`/`clippy`, not regen byte-parity. Registering
-  it once a source lands would close that gap.
+  guarded only by `cargo fmt`/`clippy`, not regen byte-parity.~~
+  **Closed by removal rather than registration.** That fixture was dropped
+  when the corpus was de-branded for upstreaming, so the gap it described
+  is gone: every crate under `tests-e2e-rust/contracts/` now has a
+  committed `.compact` source and is byte-parity gated, none rely on
+  `fmt`/`clippy` alone. The colliding-struct shape it incidentally carried
+  is covered directly by `examples/struct_collision_fixture.compact`.
 - Enum-name collisions across module instantiations are not disambiguated
   (the tables are struct-only). No contract exercises this yet; the same
   fingerprint mechanism would extend to enums if needed.

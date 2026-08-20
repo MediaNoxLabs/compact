@@ -125,7 +125,7 @@
                   (out "        ]);\n")
                   (out "        let state = ChargedState::new(sv);\n")
                   ;; Bucket-1: fully-qualify ContractAddress so a user struct
-                  ;; named `ContractAddress` (e.g. midnight-did) does not
+                  ;; named `ContractAddress` does not
                   ;; shadow the upstream coin-structure type required by
                   ;; QueryContext::new.
                   (out "        let qctx = QueryContext::new(state, compact_runtime::ContractAddress::default());\n"))]
@@ -923,9 +923,9 @@
                     ;; A11: emit one `.idx_at_index(N, push)` per index.
                     ;; Single- and multi-index paths share the loop — the
                     ;; n=1 case (Counter et al. at top-level) is just the
-                    ;; specialisation. did.compact's recordUpdate writes
-                    ;; under a nested ledger struct (path `(1 6)`) needs
-                    ;; n>1; A8 already did this for vminstr->gather-builder-call,
+                    ;; specialisation. A write under a nested ledger
+                    ;; struct (path `(1 6)`, say) needs n>1; A8 already did
+                    ;; this for vminstr->gather-builder-call,
                     ;; this mirrors it for the Verify pipeline.
                     ;;
                     ;; A16: handle runtime-keyed paths (single vm-rust-expr
@@ -1383,14 +1383,21 @@
       ;; any argument whose rendered text references `ctx` — a ledger read
       ;; emits `&ctx.current_query_context` — must be bound to a temp BEFORE
       ;; the call moves `ctx`, or Rust rejects the borrow-after-move
-      ;; (did.compact 0.5.0's assertController ->
-      ;; Schnorr_schnorrVerifyDigest(digest, sig, controllerPublicKey), where
-      ;; controllerPublicKey is a JubjubPoint ledger read). Returns
+      ;; (a circuit forwarding a JubjubPoint LEDGER READ into a signature-
+      ;; verification helper — `verify(digest, sig, signerKey)` — is the
+      ;; canonical case). Returns
       ;; (values hoist-lines arg-tail): `hoist-lines` are the `let _carg… = …;`
       ;; strings (the caller emits or prepends them), and `arg-tail` is the
       ;; ", "-prefixed argument list with hoisted args replaced by their temp
       ;; names. Non-ctx args stay inline, so contracts without ctx-reading
       ;; call arguments are byte-unchanged.
+      ;;
+      ;; Covered by (grep the corpus for `_carg_`):
+      ;;   - schnorr_attest_fixture — a JubjubPoint ledger read forwarded
+      ;;     into the Schnorr verifier, the canonical shape above;
+      ;;   - asset_registry_fixture — a ledger read passed to an impure
+      ;;     circuit from inside a CONSTRUCTOR, so the hoist coexists with
+      ;;     the A28 write-flush and their ordering is pinned too.
       (define (hoist-ctx-args arg-strs step)
         (let hloop ([xs arg-strs] [i 0] [lines '()] [names '()])
           (cond
@@ -1541,10 +1548,10 @@
                              native-id-ht witness-id-ht circuit-id-ht)))
                     ;; A19: multi-arm if/else-if returning non-unit, or a
                     ;; single trailing return-expression body. Closes
-                    ;; did.compact's verificationMethodExists (single
-                    ;; return `member(x) || member(y)`) and
-                    ;; verificationMethodRelationMember (5-arm if/else-if
-                    ;; with trailing `return false`).
+                    ;; membership predicates (a single
+                    ;; `return member(x) || member(y)`) and relation
+                    ;; dispatchers (an n-arm if/else-if with a trailing
+                    ;; `return false`).
                     (let ([chain (stmt->if-chain-body stmt)])
                       (and chain
                            (not (unit-type? type))
@@ -1577,8 +1584,8 @@
                            ;; vote$reveal). Tried when emit-body-or-fallback
                            ;; bails — A18 dropped the body-needs-streaming?
                            ;; preference gate so terminal multi-arm if-chains
-                           ;; (did.compact's insertVerificationMethodRelation,
-                           ;; removeVerificationMethodRelationFromLedger) also
+                           ;; (an n-arm dispatcher that inserts into or removes
+                           ;; from one of several ledger sets) also
                            ;; route through streaming.
                            (and (body-streaming-walkable?
                                   stmt native-id-ht witness-id-ht circuit-id-ht)
@@ -1644,7 +1651,7 @@
       ;; width so e.g. `ageThresholdYears: Uint<8> * 365` (mbits=17) renders
       ;; as `((...) as u32).wrapping_mul((...) as u32)` — without the cast
       ;; `wrapping_mul` runs at the u8 receiver width and the u32 comparison
-      ;; side mismatches (digital-passport age-predicate).
+      ;; side mismatches (an age-predicate circuit, say).
       (define (mbits->rust-width mbits)
         (cond
           [(not (and (integer? mbits) (exact? mbits) (positive? mbits))) #f]
@@ -1660,8 +1667,18 @@
       ;; maps to a Rust unsigned type. The cast is a no-op when the
       ;; operands are already that width (e.g. Uint<32> - Uint<32>,
       ;; mbits=32) and a widening cast when an operand is narrower
-      ;; (Uint<8> * literal). No existing pure-circuit fixture uses
-      ;; wrapping arithmetic, so this only affects the digital-passport.
+      ;; (Uint<8> * literal). Only reached by pure circuits that use
+      ;; wrapping arithmetic.
+      ;;
+      ;; Ladder coverage in the fixture corpus:
+      ;;   u16, u32 — widening_arith_fixture (both interior boundaries,
+      ;;              incl. the `Uint<8> * 365` shape cited above)
+      ;;   u64      — asset_registry_fixture / guarded_assert_arith_fixture
+      ;;              (the same-width no-op case)
+      ;;   u128     — map_lambda_fixture (`x * 2` on Uint<64>, mbits=65)
+      ;; A wrong rung cannot fault: `wrapping_*` truncates silently, so it
+      ;; yields a wrong VALUE in code that still compiles. That is why the
+      ;; widening fixture has an executing test and not only byte-parity.
       (define (arith-binop-rust op mbits expr1 expr2 native-id-ht)
         (let ([e1 (arith-operand-rust expr1 native-id-ht)]
               [e2 (arith-operand-rust expr2 native-id-ht)]
@@ -2256,9 +2273,8 @@
       ;; var-rooted field access whose type is not Rust `Copy`. Pure
       ;; circuits are free functions taking args by value, so a non-Copy
       ;; struct passed as `foo(x)` would move `x` and break later reads
-      ;; of `x` in the same body (midnight-verifiable-credentials:
-      ;; `assertValidDigitalPassportCredential` passes `credential` to
-      ;; several helpers in sequence). `.clone()` borrows, so the owner
+      ;; of `x` in the same body (a validation circuit that passes the
+      ;; same record to several helpers in sequence). `.clone()` borrows, so the owner
       ;; stays usable. Mirrors arg-rust-clone-if-var's decision logic but
       ;; renders via expr-rust (the pure walker's renderer) and consults
       ;; current-formal-arg-types (seeded by emit-pure-circuit) for the
@@ -2441,10 +2457,9 @@
              ;; Args render via pure-call-arg-rust so by-value natives
              ;; that take a non-Copy struct / JubjubPoint (jubjub_point_x,
              ;; jubjub_point_y) get a defensive `.clone()` when the same
-             ;; value is read again later in the body — the
-             ;; digital-passport's
-             ;; `assertDigitalPassportIssuanceResultMatchesRequest` calls
-             ;; jubjubPointX then jubjubPointY on the same holderPublicKey
+             ;; value is read again later in the body — a key-comparison
+             ;; circuit calls
+             ;; jubjubPointX then jubjubPointY on the same public key
              ;; inside a `&&` expression; without the clone the first
              ;; call moves the field and the second fails to borrow.
              (let ([rust-name (native-call-site-rust ne)]
@@ -2928,8 +2943,8 @@
           [(topaque ,src ,opaque-type)
            ;; JubjubPoint (EmbeddedGroupAffine) has no FromFieldRepr impl —
            ;; orphan rules forbid one downstream — so a JubjubPoint-typed
-           ;; ledger read (did.compact 0.5.0's controllerPublicKey /
-           ;; recoveryAuthorityPublicKey) cannot go through
+           ;; ledger read (a `ledger signerKey: JubjubPoint` cell,
+           ;; say) cannot go through
            ;; decode_via_field_repr. Route it to the orphan-safe
            ;; decode_jubjub_point helper. Other opaque tags stay flagged.
            (if (equal? opaque-type "JubjubPoint")

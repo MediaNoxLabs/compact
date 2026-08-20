@@ -363,8 +363,9 @@ fn expand_segments(
 /// would have produced, then feeding that slice into
 /// `T::from_field_repr`. Used by the codegen for tenum ledger reads
 /// (e.g. election's `PublicState`), `ContractAddress` reads
-/// (`kernel.self()` / `ledger().id()`), and struct-typed cell / map
-/// reads (e.g. did-05's `VerificationMethod` lookups).
+/// (`kernel.self()` / `ledger().registry_id()`), and struct-typed
+/// cell / map reads (e.g. asset_registry_fixture's `AssetRecord`
+/// lookups).
 ///
 /// Cells are ALIGNMENT-encoded — one atom per leaf value — while
 /// `from_field_repr` consumes the field-repr layout, where a single
@@ -701,7 +702,7 @@ mod tests {
             kty: 1,
             crv: 3,
             x: OpaqueString::from(""),
-            y: OpaqueString::from(""), // did-05's JWK y="" case
+            y: OpaqueString::from(""), // the empty-string leaf case
         };
         let got = decode_via_field_repr::<JwkShape>(&cell_av(v.clone())).expect("struct decode");
         assert_eq!(got, v);

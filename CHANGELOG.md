@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+_No changes yet._
+
+## [Toolchain 0.31.113, language 0.23.103, runtime 0.16.100] — Rust runtime crate renamed to midnight-compact-runtime (2026-08-20)
+
 - **Changed** (breaking, `--rust`): the Rust runtime crate is renamed
   `compact-runtime` -> **`midnight-compact-runtime`** (and
   `compact-runtime-macros` -> `midnight-compact-runtime-macros`), with the

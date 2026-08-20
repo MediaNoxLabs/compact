@@ -44,8 +44,8 @@
 // the hand-built `alignment=b32, atoms=[-]` shape
 // (`via_field_repr_decodes_normalized_empty_bytes32_atom`).
 
-use compact_runtime::std_lib::decode_via_field_repr;
-use compact_runtime::*;
+use midnight_compact_runtime::std_lib::decode_via_field_repr;
+use midnight_compact_runtime::*;
 use midnight_serialize::{tagged_deserialize, tagged_serialize};
 use midnight_storage::storage::HashMap;
 

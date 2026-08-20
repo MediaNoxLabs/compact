@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 
 // Upstream API gotchas vs. the plan's test body:
 //   - `ChargedState` has no `Default` impl — only `ChargedState::new(StateValue)`.

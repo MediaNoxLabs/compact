@@ -27,7 +27,7 @@
 // test only covers the initial-state seed shape — equivalent to F1.1/F2.1.
 
 use compact_contract_map_fixture::Contract;
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 use midnight_serialize::tagged_serialize;
 use midnight_storage::storage::HashMap;
 use tests_e2e_rust::MapFixtureTsReferenceState;

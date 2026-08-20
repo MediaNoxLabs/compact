@@ -28,7 +28,7 @@
 // Closes the primitive-width rows in the M3.5 test matrix.
 
 use compact_contract_uints_fixture::Contract;
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 use midnight_serialize::tagged_serialize;
 use midnight_storage::storage::HashMap;
 use tests_e2e_rust::SmallFixtureTsReference;

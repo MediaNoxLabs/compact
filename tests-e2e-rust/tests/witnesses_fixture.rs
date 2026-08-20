@@ -30,7 +30,7 @@
 // witnesses regardless.
 
 use compact_contract_witnesses_fixture::{Contract, Ledger, Witnesses};
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 use midnight_serialize::tagged_serialize;
 use midnight_storage::storage::HashMap;
 use tests_e2e_rust::SmallFixtureTsReference;

@@ -9,13 +9,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _No changes yet._
 
+## [Toolchain 0.31.113, language 0.23.103, runtime 0.16.100] — Rust runtime crate renamed to midnight-compact-runtime (2026-08-20)
+
+- **Changed** (breaking, `--rust`): the Rust runtime crate is renamed
+  `compact-runtime` -> **`midnight-compact-runtime`** (and
+  `compact-runtime-macros` -> `midnight-compact-runtime-macros`), with the
+  library paths following as `midnight_compact_runtime` /
+  `midnight_compact_runtime_macros`. Generated code now emits
+  `use midnight_compact_runtime::*;` and fully-qualified
+  `midnight_compact_runtime::...` paths.
+
+  Rationale (review feedback on LFDT-Minokawa/compact#730): Midnight's Rust
+  crates are uniformly `midnight-*` (`midnight-onchain-state`,
+  `midnight-transient-crypto`, ...), the prefix does for Rust what the
+  `@midnight-ntwrk` scope does for npm, and `compact-runtime` alone is
+  generic on crates.io. Generated code names the crate in every `use`, so
+  the choice is effectively permanent once anything is published -- cheap to
+  fix now, expensive later. The crate is not yet published, so no consumer
+  is affected and the runtime version is unchanged.
+
+  The **TypeScript** package `@midnight-ntwrk/compact-runtime` is untouched;
+  only the Rust crate is renamed. Directory names `runtime-rs/` and
+  `runtime-rs-macros/` are unchanged.
+
+  Applied to both ledger lines: this branch and `codegen-rust` (the released
+  ledger-8 line) carry the same rename, so generated code is consistent
+  across them.
+
 ## [Toolchain 0.31.112, language 0.23.103, runtime 0.16.100] — all-zero byte-cell decode regression gate (2026-08-17)
 
 ### Added
 
 - **Alignment-kind-driven `Fr` expansion for normalized-empty `Bytes<N>`
   atoms (A31)** — regression coverage for MediaNoxLabs/compact#15, which
-  reported `compact_runtime::std_lib::decode_via_field_repr` failing with
+  reported `midnight_compact_runtime::std_lib::decode_via_field_repr` failing with
   `from_field_repr returned None` on ALL-zero `Bytes<32>` cells (e.g. a
   `ContractAddress` ledger field such as did.compact's `ledger().id()`):
   upstream `ValueAtom::normalize` strips trailing zero bytes, so an
@@ -32,12 +59,12 @@ _No changes yet._
   tree. The reported failure string is exactly what the PRE-A30 1:1
   atom→`Fr` decode produces for this value (`Fr::try_from(empty atom)` →
   a 1-`Fr` stream where `[u8; 32]::from_field_repr` requires length 2 →
-  `None`), and a pre-A30 `compact-runtime` build can silently outlive a
+  `None`), and a pre-A30 `midnight-compact-runtime` build can silently outlive a
   pin bump downstream: the crate version deliberately stays fixed
   (`check_runtime_version!` pins by exact string, so only the toolchain
   version advances) and nix-store-synced sources carry epoch mtimes, so
   cargo's mtime-based fingerprinting can miss a content swap on the path
-  dependency entirely — after a pin bump, `cargo clean -p compact-runtime`
+  dependency entirely — after a pin bump, `cargo clean -p midnight-compact-runtime`
   (or touching the synced sources) forces the rebuild that picks up the
   new decoder. What this tree was missing is a gate pinning the all-zero
   shapes end to end, so a future decoder change cannot regress them
@@ -118,7 +145,7 @@ _No changes yet._
 ### Fixed
 
 - **Field-repr-arity ledger-read decoding of alignment-encoded cells (A30)** —
-  `compact_runtime::std_lib::decode_via_field_repr<T>` converted the
+  `midnight_compact_runtime::std_lib::decode_via_field_repr<T>` converted the
   `AlignedValue`'s atoms to `Fr`s 1:1 (one `Fr::try_from(atom)` per atom) and
   fed that to `T::from_field_repr`. But cells are ALIGNMENT-encoded — one atom
   per leaf value — and a single leaf may span multiple field-repr `Fr`s: a
@@ -363,7 +390,7 @@ just a test result, is now the standing policy.
 ### Added
 
 - Adds `--rust` to `compactc`: lowers a `.compact` contract to a native
-  Rust crate (`contract/lib.rs`) that depends on the new `compact-runtime`
+  Rust crate (`contract/lib.rs`) that depends on the new `midnight-compact-runtime`
   crate. The Rust crate exposes `Contract::new(...)`, `initial_state(...)`,
   each impure circuit as a method on the contract, and a `Ledger<'a, D>`
   view for reading on-chain state — parallel to the TypeScript backend's
@@ -893,7 +920,7 @@ There are no user-visible changes.
 
 This release includes all changes for compiler versions in the range 0.27.100
 (inclusive) and 0.28.0 (exclusive); and language versions in the range 0.19.100
-(inclusive) and 0.20.0.  It uses compact-runtime 0.14.0-rc.0 and 
+(inclusive) and 0.20.0.  It uses midnight-compact-runtime 0.14.0-rc.0 and 
 on-chain runtime 2.0.0-alpha.1.
 
 ## [Unreleased compiler version 0.27.113, language version 0.19.103]

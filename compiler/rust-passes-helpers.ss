@@ -80,7 +80,7 @@
       ;; generated contract methods (the Compact body lowering for a
       ;; generic impure circuit isn't supported); the inner schnorr
       ;; module's body would otherwise need to be lowered. Instead we
-      ;; reuse the orphan-safe `compact_runtime::schnorr_verify_jubjub`
+      ;; reuse the orphan-safe `midnight_compact_runtime::schnorr_verify_jubjub`
       ;; wrapper (see runtime-rs/src/std_lib/schnorr.rs) which calls the
       ;; vendored off-circuit verifier.
       (define (impure-call-target cname)
@@ -91,7 +91,7 @@
                  [else (format "~a" cname)])])
           (cond
             [(string=? cname-str "schnorr_verify")
-             "compact_runtime::schnorr_verify_jubjub"]
+             "midnight_compact_runtime::schnorr_verify_jubjub"]
             [else
              (format "self.~a" cname-str)])))
 
@@ -514,41 +514,41 @@
             ,(lambda (elt-name* type*)
                (let loop ([names elt-name*] [types type*])
                  (cond
-                   [(null? names) "compact_runtime::MerklePath</* no leaf field */>"]
+                   [(null? names) "midnight_compact_runtime::MerklePath</* no leaf field */>"]
                    [(eq? (car names) 'leaf)
-                    (format "compact_runtime::MerklePath<~a>" (type-rust (car types)))]
+                    (format "midnight_compact_runtime::MerklePath<~a>" (type-rust (car types)))]
                    [else (loop (cdr names) (cdr types))])))
             #t)
           (MerkleTreePathEntry
-            ,(lambda (elt-name* type*) "compact_runtime::MerklePathEntry")
+            ,(lambda (elt-name* type*) "midnight_compact_runtime::MerklePathEntry")
             #t)
           ;; Module-1: the Compact-side `Schnorr.SchnorrSignature` struct
           ;; (`announcement: JubjubPoint`, `response: Field`) is sourced
           ;; from the jubjub-schnorr import chain and consumed by
-          ;; `compact_runtime::schnorr_verify_jubjub`. To make the call
+          ;; `midnight_compact_runtime::schnorr_verify_jubjub`. To make the call
           ;; site type-check we elide the codegen-emitted struct + impls
           ;; entirely and route the type to the runtime's mirror
-          ;; (`compact_runtime::SchnorrSignature`) which has the
+          ;; (`midnight_compact_runtime::SchnorrSignature`) which has the
           ;; matching layout.
           (SchnorrSignature
-            ,(lambda (elt-name* type*) "compact_runtime::SchnorrSignature")
+            ,(lambda (elt-name* type*) "midnight_compact_runtime::SchnorrSignature")
             #t)))
 
       (define stdlib-circuit-mappings
         `((some
             ,(lambda (cdefn)
                (let ([t (and cdefn (maybe-value-type (circuit-return-type cdefn)))])
-                 (format "compact_runtime::std_lib::some~a"
+                 (format "midnight_compact_runtime::std_lib::some~a"
                          (if t (format "::<~a>" (type-rust t)) "")))))
           (none
             ,(lambda (cdefn)
                (let ([t (and cdefn (maybe-value-type (circuit-return-type cdefn)))])
-                 (format "compact_runtime::std_lib::none~a"
+                 (format "midnight_compact_runtime::std_lib::none~a"
                          (if t (format "::<~a>" (type-rust t)) "")))))
           (merkleTreePathRoot
-            ,(lambda (cdefn) "compact_runtime::std_lib::merkle_tree_path_root"))
+            ,(lambda (cdefn) "midnight_compact_runtime::std_lib::merkle_tree_path_root"))
           (merkleTreePathRootNoLeafHash
-            ,(lambda (cdefn) "compact_runtime::std_lib::merkle_tree_path_root_no_leaf_hash"))))
+            ,(lambda (cdefn) "midnight_compact_runtime::std_lib::merkle_tree_path_root_no_leaf_hash"))))
 
       ;; lookup-stdlib-struct: return (type-rust-fn skip-decl?) list for a
       ;; struct-name, or #f if not a stdlib struct.

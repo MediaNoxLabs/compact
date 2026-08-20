@@ -16,7 +16,7 @@
 //
 // Tests for the typed Op-program builders.
 
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 
 #[test]
 fn verify_builder_produces_idx_addi_ins() {

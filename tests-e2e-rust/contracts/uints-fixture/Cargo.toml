@@ -25,4 +25,4 @@ name = "compact_contract_uints_fixture"
 path = "lib.rs"
 
 [dependencies]
-compact-runtime = { path = "../../../runtime-rs" }
+midnight-compact-runtime = { path = "../../../runtime-rs" }

@@ -34,7 +34,7 @@
 //   3. `which_u32(b)` direct-invocation maps true → 1u32, false → 0u32.
 
 use compact_contract_pure_circuit_fixture::Contract;
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 use midnight_serialize::tagged_serialize;
 use midnight_storage::storage::HashMap;
 use tests_e2e_rust::SmallFixtureTsReference;

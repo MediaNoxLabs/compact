@@ -31,10 +31,10 @@
 // state transitions to the TS path. That's the next spike (cross-language byte
 // parity), to be performed once compactc is built and the Rust emitter exists.
 
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 use std::marker::PhantomData;
 
-compact_runtime::check_runtime_version!("0.1.0-spike");
+midnight_compact_runtime::check_runtime_version!("0.1.0-spike");
 
 // ---------------------------------------------------------------------------
 // Witnesses trait

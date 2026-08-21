@@ -13,6 +13,23 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
+;;; The streamed constructor path.
+;;;
+;;; Most constructor bodies render as a single expression. Bodies that
+;;; branch, or carry multiple asserts, cannot — they become a SEQUENCE of
+;;; op-builder statements instead. `body-needs-streaming?` decides;
+;;; `emit-streaming-body` renders.
+;;;
+;;; Note this file has the deepest nesting in the backend (tracked in
+;;; MediaNoxLabs/compact#40). That is not only a readability problem: two
+;;; catch-all `(guard (c [#t ...]) ...)` handlers once lived at the
+;;; deepest point, swallowing deliberate rejections along with genuine
+;;; emitter bugs. At that indentation, wrapping a call in a
+;;; swallow-everything handler is easier than threading a failure out
+;;; properly — so prefer extracting a named helper over nesting further.
+;;;
+;;; See compiler/README-rust-passes.md for the module map.
+
       ;; -------------------------------------------------------------
       ;; Multi-stage streaming body walker
       ;; -------------------------------------------------------------
@@ -236,11 +253,18 @@
                (cond
                  [(member rust-name seen) (loop (cdr xs) seen cur-qctx owned-in ci)]
                  [else
-                  (let* ([raw (guard (c [#t "/* TODO A24 */"])
-                                (parameterize ([current-qctx-ref cur-qctx])
-                                  (ctor-expr-rust expr local-binds
-                                                  native-id-ht witness-id-ht
-                                                  circuit-id-ht)))]
+                  ;; A24: this render was wrapped in
+                  ;; `(guard (c [#t "/* TODO A24 */"]) …)` — the same
+                  ;; catch-all as the A14 pair further down. `[#t …]`
+                  ;; matches every condition, so a deliberate
+                  ;; `rust-feature-error` was caught and replaced by a
+                  ;; comment emitted where an expression belongs, and a
+                  ;; genuine emitter bug became a comment instead of a
+                  ;; trace. Let it propagate.
+                  (let* ([raw (parameterize ([current-qctx-ref cur-qctx])
+                                (ctor-expr-rust expr local-binds
+                                                native-id-ht witness-id-ht
+                                                circuit-id-ht))]
                          [rendered (expr-rust-arg-cloned expr raw)])
                     (out (format "~alet ~a = ~a;\n" indent rust-name rendered))
                     (loop (cdr xs) (cons rust-name seen) cur-qctx owned-in ci))]))]
@@ -872,12 +896,22 @@
                                                          [(member rust-name seen)
                                                           (loop (cdr xs) seen)]
                                                          [else
+                                                          ;; A14: this render used to sit inside
+                                                          ;; `(guard (c [#t "/* TODO A14 */"]) …)`.
+                                                          ;; `[#t …]` matches EVERY condition, so a
+                                                          ;; deliberate `rust-feature-error` — the
+                                                          ;; mechanism that guarantees unsupported
+                                                          ;; constructs fail the compile — was caught
+                                                          ;; and replaced by a comment emitted where
+                                                          ;; an expression belongs. It also hid real
+                                                          ;; emitter bugs: a bad nanopass dispatch
+                                                          ;; became a comment instead of a trace.
+                                                          ;; Let the condition propagate.
                                                           (let* ([raw
-                                                                  (guard (c [#t "/* TODO A14 */"])
-                                                                    (ctor-expr-rust expr local-binds
-                                                                                    native-id-ht
-                                                                                    witness-id-ht
-                                                                                    circuit-id-ht))]
+                                                                  (ctor-expr-rust expr local-binds
+                                                                                  native-id-ht
+                                                                                  witness-id-ht
+                                                                                  circuit-id-ht)]
                                                                  ;; Bug-6: clone non-Copy
                                                                  ;; var-ref / elt-ref RHS so
                                                                  ;; the source struct stays
@@ -999,12 +1033,15 @@
                                                          [rust-name (symbol->string
                                                                       (camel->snake
                                                                         (id-sym var-name)))]
+                                                         ;; See the A14 note on the sibling render
+                                                         ;; above: the catch-all guard that used to
+                                                         ;; wrap this call swallowed deliberate
+                                                         ;; rejections as well as genuine bugs.
                                                          [rendered
-                                                          (guard (c [#t "/* TODO A14 */"])
-                                                            (ctor-expr-rust expr local-binds
-                                                                            native-id-ht
-                                                                            witness-id-ht
-                                                                            circuit-id-ht))])
+                                                          (ctor-expr-rust expr local-binds
+                                                                          native-id-ht
+                                                                          witness-id-ht
+                                                                          circuit-id-ht)])
                                                     (out (format "            let ~a = ~a;\n"
                                                                  rust-name rendered))))
                                                 pre-stmts)

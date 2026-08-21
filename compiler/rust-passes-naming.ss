@@ -13,6 +13,17 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
+;;; Name disambiguation for prefix-instantiated modules.
+;;;
+;;; Builds the tables threaded via `current-id-rust-name-ht` and
+;;; `current-struct-rust-name-ht`, so that two module instantiations
+;;; contributing the same struct or circuit name do not collide in the
+;;; single flat Rust namespace.
+;;;
+;;; Rationale and the rejected alternatives are in
+;;; docs/adr/0001-rust-struct-name-disambiguation.md.
+;;; See compiler/README-rust-passes.md for the module map.
+
       ;; -----------------------------------------------------------------
       ;; Prefix-instantiation disambiguation tables.
       ;;

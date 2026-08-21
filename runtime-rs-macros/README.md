@@ -30,9 +30,8 @@ via an exact-version pin (`midnight-compact-runtime-macros = { version =
 "=0.16.100" }` in `midnight-compact-runtime`'s manifest). Bump them together; do
 not publish one without the other.
 
-See the [crates.io publication
-plan](../docs/superpowers/notes/2026-06-02-crates-io-publication-plan.md)
-for the release procedure.
+This crate is version-locked to `midnight-compact-runtime` with an `=`
+dependency pin, so the two must be released together at matching versions.
 
 ## Related
 

@@ -13,6 +13,15 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
+;;; Struct and enum declarations.
+;;;
+;;; Emits the type declarations the generated circuits refer to, including
+;;; user types reachable only from NON-exported circuits, which the
+;;; analysis-pass promotion does not catch (it runs before purity
+;;; inference is final).
+;;;
+;;; See compiler/README-rust-passes.md for the module map.
+
       ;; collect-pure-circuit-tdefns: scan non-exported user pure circuit
       ;; sigs AND non-exported impure circuit sigs whose bodies will be
       ;; emitted as inherent methods (per impure-circuit-body-walkable?),

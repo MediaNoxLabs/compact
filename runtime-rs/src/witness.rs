@@ -36,8 +36,7 @@
 //! to write to a public ledger field is the contract author's
 //! responsibility — the codegen has no way to tell which `T` values
 //! are private by intent. See the user-guide subsection
-//! [Witness privacy model][1] and the structural audit at
-//! `docs/superpowers/research/2026-06-02-witness-threading-audit.md`.
+//! [Witness privacy model][1].
 //! The operational guard is the regression test at
 //! `tests-e2e-rust/tests/witness_leak_check.rs` (Prod-11).
 //!

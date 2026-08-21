@@ -13,11 +13,23 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
+;;; Shared foundations for the Rust backend.
+;;;
+;;; Owns `out` (the emit port every renderer writes through) and
+;;; `rust-feature-error` — the single mechanism by which an unsupported
+;;; construct aborts the compile. There is no fallback path and there must
+;;; not be one; see docs/rust-backend-limitations.md for what happens when
+;;; that rule is broken. Also holds name mangling (`id->rust-name`,
+;;; `struct-rust-name`) and small predicates shared across the passes.
+;;;
+;;; Included first, so everything here is in scope for every other file.
+;;; See compiler/README-rust-passes.md for the module map.
+
       (define (out s)
         (display-string s (get-target-port 'contract.rs)))
 
       ;; rust-feature-error: raises a compactc error tagged with the
-      ;; `--rust:` prefix when the codegen hits an unsupported Compact
+      ;; `--target rust:` prefix when the codegen hits an unsupported Compact
       ;; construct. Use this in place of emitting `unimplemented!()`
       ;; Rust into the output — contracts that would otherwise compile
       ;; but panic at runtime now fail at compile time with a clear
@@ -32,7 +44,7 @@
       ;; — useful for users grepping the codegen to see what they hit
       ;; and for future cross-references in docs.
       (define (rust-feature-error src tag msg . args)
-        (let ([prefixed (format "compactc --rust: unsupported Compact construct (~a): ~a"
+        (let ([prefixed (format "compactc --target rust: unsupported Compact construct (~a): ~a"
                                 tag (apply format msg args))])
           (if src
               (source-errorf src "~a" prefixed)

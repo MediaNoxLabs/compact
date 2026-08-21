@@ -57,8 +57,12 @@
 (declare-native-entry circuit keccak256 [A]
   "__compactRuntime.keccak256"
   ([value A (discloses "a hash of")])
-  (Bytes 32)
-  (rust "/* TODO M3.5+: no upstream Rust binding for keccak256; midnight crypto exposes keccak only as a ZK circuit chip. */ unimplemented!()"))
+  (Bytes 32))
+;; No `(rust ...)` clause: there is no upstream Rust binding for keccak256 —
+;; midnight crypto exposes keccak only as a ZK circuit chip. Leaving the field
+;; #f makes `native-call-site-rust` reject a call at COMPILE time. It used to
+;; carry `unimplemented!()`, so a contract calling keccak256 compiled cleanly
+;; and panicked at run time instead.
 
 ;; ====
 (declare-native-entry circuit jubjubPointX
@@ -109,18 +113,21 @@
 (declare-native-entry witness ownPublicKey
   "__compactRuntime.ownPublicKey"
   ()
-  (TypeRef ZswapCoinPublicKey)
-  (rust "/* TODO M3.5+: ownPublicKey is a host-side zswap witness; needs WitnessContext-mediated binding. */ unimplemented!()"))
+  (TypeRef ZswapCoinPublicKey))
+;; No `(rust ...)` clause: host-side zswap witness, needs a
+;; WitnessContext-mediated binding. See the keccak256 note above.
 
 (declare-native-entry witness createZswapInput
   "__compactRuntime.createZswapInput"
   ([coin (TypeRef QualifiedShieldedCoinInfo) (discloses nothing)])
-  Void
-  (rust "/* TODO M3.5+: createZswapInput is a host-side zswap witness; needs WitnessContext-mediated binding. */ unimplemented!()"))
+  Void)
+;; No `(rust ...)` clause: host-side zswap witness, needs a
+;; WitnessContext-mediated binding. See the keccak256 note above.
 
 (declare-native-entry witness createZswapOutput
   "__compactRuntime.createZswapOutput"
   ([coin (TypeRef ShieldedCoinInfo) (discloses nothing)]
    [recipient (TypeRef Either (TypeRef ZswapCoinPublicKey) (TypeRef ContractAddress)) (discloses nothing)])
-  Void
-  (rust "/* TODO M3.5+: createZswapOutput is a host-side zswap witness; needs WitnessContext-mediated binding. */ unimplemented!()"))
+  Void)
+;; No `(rust ...)` clause: host-side zswap witness, needs a
+;; WitnessContext-mediated binding. See the keccak256 note above.

@@ -13,6 +13,20 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
+;;; The renderers — what the generated Rust actually looks like.
+;;;
+;;; The initial-state scaffold (including the >16-field chunked form),
+;;; circuit signatures and bodies, expressions (`expr-rust`), conditions
+;;; (`cond-rust`), and arithmetic (`arith-binop-rust`, whose width ladder
+;;; is pinned by widening_arith_fixture).
+;;;
+;;; Emission is string building through `out`, not construction of a Rust
+;;; AST. That is a deliberate trade: rustfmt as a post-pass plus
+;;; byte-parity testing gives the same guarantees for far less surface
+;;; area. It does mean renderers must produce text a formatter will accept.
+;;;
+;;; See compiler/README-rust-passes.md for the module map.
+
       ;; emit-scaffold-seed: emit one initial-state scaffold line for a
       ;; leaf public-binding at the given indentation. ADT-aware seeding
       ;; (R1 / K1.1): the Compact ADTs whose initial-value isn't a plain
@@ -1495,14 +1509,24 @@
                  [(or ne w (and c (id-pure? function-name)))
                   (ctor-expr-rust e local-binds
                                   native-id-ht witness-id-ht circuit-id-ht)]
+                 ;; A call we cannot inline used to emit `/* TODO */ true`
+                 ;; here, which is the worst available outcome: the
+                 ;; condition becomes unconditionally true, so the
+                 ;; then-branch always runs and the else-branch is dead.
+                 ;; That compiles, reads plausibly, and gives no runtime
+                 ;; signal — any ledger write the author meant to be
+                 ;; conditional silently becomes unconditional. Refuse
+                 ;; instead; see docs/rust-backend-limitations.md.
                  [c
                   (or (inline-circuit-call c expr* local-binds
                                            native-id-ht witness-id-ht circuit-id-ht)
-                      (format "/* TODO M3-I3b/4: inline ~a in if-cond */ true"
-                              (id-sym function-name)))]
+                      (rust-feature-error src 'ctor-if-condition-inline
+                        "cannot inline the call to `~a` used as an `if` condition in a constructor"
+                        (id-sym function-name)))]
                  [else
-                  (format "/* TODO M3-I3b/4: inline ~a in if-cond */ true"
-                          (id-sym function-name))]))]
+                  (rust-feature-error src 'ctor-if-condition-inline
+                    "cannot inline the call to `~a` used as an `if` condition in a constructor"
+                    (id-sym function-name))]))]
             [else
              (ctor-expr-rust e local-binds
                              native-id-ht witness-id-ht circuit-id-ht)])))

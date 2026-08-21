@@ -1,4 +1,4 @@
-# `compactc --rust` codegen — module map
+# `compactc --target rust` codegen — module map
 
 This document is a roadmap of the Scheme pass that emits Rust crates from
 Compact source. It's for engineers landing changes in `rust-passes-*.ss`.
@@ -9,7 +9,7 @@ why, see [`../docs/rust-backend-limitations.md`](../docs/rust-backend-limitation
 
 ## Where in the pipeline
 
-`compactc --rust` runs the standard frontend (parse → expand → type
+`compactc --target rust` runs the standard frontend (parse → expand → type
 infer → desugar modules → monomorphise → resolve natives → lower for
 the codegen target) and then hands an `Ltypescript` IR program to the
 `print-rust` pass defined in [`rust-passes.ss`](./rust-passes.ss). That
@@ -127,7 +127,7 @@ For most upstream-parity gaps, the path is:
    capture the TS reference state, and add a Rust byte-parity test.
    The recipe is in [`tests-e2e-rust/README.md`](../tests-e2e-rust/README.md).
 5. **Verify regen.** `cargo test -p tests-e2e-rust --test
-   codegen_regression` re-runs `compactc --rust` against every example
+   codegen_regression` re-runs `compactc --target rust` against every example
    and asserts the emitted `lib.rs` is byte-identical to the committed
    one. This is the regression guard that protects against the
    "Scheme doesn't compile but tests pass" failure mode.
@@ -162,7 +162,7 @@ For most upstream-parity gaps, the path is:
 ## When something breaks
 
 - **Codegen builds but emits malformed Rust.** Run `./result/bin/compactc
-  --rust --skip-zk examples/<failing>.compact /tmp/regen/` and read
+  --target rust --skip-zk examples/<failing>.compact /tmp/regen/` and read
   `/tmp/regen/contract/lib.rs`. Diff against a known-good fixture.
 - **Codegen Scheme doesn't compile.** Most often: pattern-matching against
   a non-terminal that's been removed at the current language layer.

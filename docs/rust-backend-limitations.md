@@ -1,4 +1,4 @@
-# `compactc --rust` — known limitations
+# `compactc --target rust` — known limitations
 
 What the Rust backend does *not* lower, and what happens when you hit it.
 
@@ -43,7 +43,7 @@ Diagnostics carry the source location and a kind symbol:
 
 ```
 probe.compact line 11 char 10:
-  compactc --rust: unsupported Compact construct (ctor-assert-condition-inline):
+  compactc --target rust: unsupported Compact construct (ctor-assert-condition-inline):
   cannot inline the call to `readFlag` used as an `assert` condition in a constructor
 ```
 
@@ -155,7 +155,7 @@ confirmed by compiling a contract that uses the construct:
 
 ```bash
 nix build .#compactc
-./result/bin/compactc --rust --skip-zk path/to/probe.compact /tmp/out
+./result/bin/compactc --target rust --skip-zk path/to/probe.compact /tmp/out
 ```
 
 A limitation that does *not* produce a diagnostic is itself a bug — that is

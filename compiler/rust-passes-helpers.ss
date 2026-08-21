@@ -29,7 +29,7 @@
         (display-string s (get-target-port 'contract.rs)))
 
       ;; rust-feature-error: raises a compactc error tagged with the
-      ;; `--rust:` prefix when the codegen hits an unsupported Compact
+      ;; `--target rust:` prefix when the codegen hits an unsupported Compact
       ;; construct. Use this in place of emitting `unimplemented!()`
       ;; Rust into the output — contracts that would otherwise compile
       ;; but panic at runtime now fail at compile time with a clear
@@ -44,7 +44,7 @@
       ;; — useful for users grepping the codegen to see what they hit
       ;; and for future cross-references in docs.
       (define (rust-feature-error src tag msg . args)
-        (let ([prefixed (format "compactc --rust: unsupported Compact construct (~a): ~a"
+        (let ([prefixed (format "compactc --target rust: unsupported Compact construct (~a): ~a"
                                 tag (apply format msg args))])
           (if src
               (source-errorf src "~a" prefixed)

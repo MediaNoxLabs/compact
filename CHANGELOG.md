@@ -13,6 +13,35 @@ _No changes yet._
 
 ### Fixed
 
+- **`Field` arithmetic emitted `wrapping_*` on `Fr`, which does not compile.**
+  `arith-binop-rust`'s fallback branch was reached whenever the width ladder
+  returned `#f` — which includes the typer's FIELD case (`mbits = #f`) — so
+  `return a + b` on two `Field`s produced `Ok((a).wrapping_add(b))`. `Fr`
+  implements `Add`/`Sub`/`Mul` but not the `wrapping_*` family, so `compactc`
+  exited 0 and the failure surfaced at `cargo build`. Field arithmetic now
+  lowers to plain `+`/`-`/`*`. An out-of-ladder result width — the *other*
+  reason the helper returns `#f`, and distinguishing the two is the fix —
+  raises `rust-feature-error` rather than emitting an operator the type may
+  not have. Byte-parity neutral: no fixture reached the branch.
+
+  This was fixed on the ledger-9 line only; the stable branch, which the CoIP
+  cites as the reference implementation, still carried it.
+
+### Testing
+
+- **`print-rust` coverage in the compiler's own suite: 2 cases -> 12.**
+  `compiler/test.ss` held two Rust snapshot tests against 711
+  `print-typescript` cases, so from inside the compiler's corpus the backend
+  looked untested — all of its real coverage lives in `tests-e2e-rust`. The
+  new cases cover crate scaffolding and the runtime-version pin, ledger reads
+  and initial-state seeding per ADT, `Vector<N,T>` seeding, all three body
+  routes with the temp uniquifier, witness trait shape and call site, three
+  rungs of the `mbits->rust-width` ladder, Field arithmetic, and a guard that
+  no placeholder reaches the output. They assert on content rather than
+  whole-file snapshots, and need no cargo, Rust toolchain or built compactc.
+
+### Fixed
+
 - **Four emitter paths produced valid, compiling, WRONG Rust instead of
   failing the compile.** The backend's central safety property is that a
   construct it cannot lower raises `rust-feature-error`; these violated it:

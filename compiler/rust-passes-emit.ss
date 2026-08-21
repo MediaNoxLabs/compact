@@ -1703,15 +1703,53 @@
       ;; A wrong rung cannot fault: `wrapping_*` truncates silently, so it
       ;; yields a wrong VALUE in code that still compiles. That is why the
       ;; widening fixture has an executing test and not only byte-parity.
-      (define (arith-binop-rust op mbits expr1 expr2 native-id-ht)
+      ;; field-arith-rust-operator: Rust operator for FIELD arithmetic.
+      ;; Field arithmetic is modular in the field's own characteristic, so the
+      ;; plain operators are the correct lowering — `Fr` implements Add/Sub/Mul
+      ;; and NOT the `wrapping_*` family, which exists only on Rust's
+      ;; fixed-width integers.
+      (define (field-arith-rust-operator op)
+        (cond
+          [(string=? op "add") "+"]
+          [(string=? op "sub") "-"]
+          [(string=? op "mul") "*"]
+          [else #f]))
+
+      (define (arith-binop-rust src op mbits expr1 expr2 native-id-ht)
         (let ([e1 (arith-operand-rust expr1 native-id-ht)]
               [e2 (arith-operand-rust expr2 native-id-ht)]
               [w (mbits->rust-width mbits)])
           (cond
             [w
              (format "((~a) as ~a).wrapping_~a((~a) as ~a)" e1 w op e2 w)]
+            ;; FIELD arithmetic. The typer emits `mbits = #f` for its FIELD
+            ;; branch, and this used to fall through to
+            ;; `(~a).wrapping_~a(~a)` — emitting e.g. `(a).wrapping_add(b)` on
+            ;; two `Fr`s, which does not compile because `Fr` has no
+            ;; `wrapping_add`. compactc exited 0 and the failure surfaced only
+            ;; at `cargo build`, from Compact as ordinary as
+            ;;     export pure circuit addF(a: Field, b: Field): Field {
+            ;;       return a + b;
+            ;;     }
+            ;; No fixture exercised the shape, so nothing caught it: the corpus
+            ;; only ever reached the `w` branch above.
+            ;;
+            ;; Note `mbits->rust-width` also returns #f for an out-of-ladder
+            ;; width (>128 bits), so the two cases MUST be distinguished here —
+            ;; conflating them is what let the field case ride the fallback.
+            [(not mbits)
+             (let ([rust-op (field-arith-rust-operator op)])
+               (unless rust-op
+                 (rust-feature-error src 'field-arith-operator
+                   "field arithmetic operator `~a` has no Rust lowering" op))
+               (format "(~a) ~a (~a)" e1 rust-op e2))]
+            ;; A width the ladder does not cover: refuse rather than emit
+            ;; `wrapping_*` against a type that may not have it. A guess here
+            ;; is exactly the silent-bad-output path the field case above spent
+            ;; a release demonstrating.
             [else
-             (format "(~a).wrapping_~a(~a)" e1 op e2)])))
+             (rust-feature-error src 'arith-result-width
+               "unsigned arithmetic with a ~a-bit result has no Rust lowering" mbits)])))
 
       ;; expr-rust: emit a Rust expression string for an Ltypescript
       ;; Expression. I3b/1 covers the variants needed by tiny.compact's
@@ -1893,13 +1931,13 @@
            ;; produce a value outside the source-side type's range, so
            ;; the wrap matches the post-downcast semantics. Both operands
            ;; are cast to the result width (mbits) via arith-binop-rust.
-           (arith-binop-rust "add" mbits expr1 expr2 native-id-ht)]
+           (arith-binop-rust src "add" mbits expr1 expr2 native-id-ht)]
           [(- ,src ,mbits ,expr1 ,expr2)
            ;; Iter 7 follow-up: unsigned subtraction. See `+` clause.
-           (arith-binop-rust "sub" mbits expr1 expr2 native-id-ht)]
+           (arith-binop-rust src "sub" mbits expr1 expr2 native-id-ht)]
           [(* ,src ,mbits ,expr1 ,expr2)
            ;; Iter 7 follow-up: unsigned multiplication. See `+` clause.
-           (arith-binop-rust "mul" mbits expr1 expr2 native-id-ht)]
+           (arith-binop-rust src "mul" mbits expr1 expr2 native-id-ht)]
           [(downcast-unsigned ,src ,nat? ,nat ,expr)
            ;; Iter 7 follow-up: cast the inner expression to the Rust
            ;; unsigned type whose upper bound is `nat`. The downcast

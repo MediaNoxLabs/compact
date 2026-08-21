@@ -80,16 +80,91 @@ The following flags, if present, affect the compiler's behavior as follows:
   --trace-passes causes the compiler to print tracing information that is
     generally useful only to compiler developers.
 
-  --rust causes the compiler to additionally emit a Rust crate (contract/lib.rs)
-    alongside the TypeScript output. Generated Rust depends on the `midnight-compact-runtime`
-    crate. See docs/superpowers/specs/2026-05-25-rust-codegen-design.md for details.
-
-  --skip-ts causes the compiler to skip emitting TypeScript output (contract/index.{js,d.ts,js.map}).
-    Must be combined with --rust; otherwise the compiler has no contract-code target.
-    ZKIR and proving keys are still generated unless --skip-zk is also set.
+  --target <language> selects a contract-code backend. It is repeatable, and the
+    valid targets are ts and rust. TypeScript is emitted when --target is absent,
+    so invocations that do not pass the flag are unaffected. Passing --target
+    replaces that default with exactly the targets listed, so --target rust emits
+    only the Rust crate (contract/lib.rs), while --target rust --target ts emits
+    both. Generated Rust depends on the `midnight-compact-runtime` crate.
+    ZKIR and proving keys are independent of this flag and are still generated
+    unless --skip-zk is also set.
 "))
 
 (usage "<flag> ... <source-pathname> <target-directory-pathname>")
+
+;; --target accumulation.
+;;
+;; `--target` is repeatable, but third_party's command-line-parsing keeps only
+;; the LAST value of a repeated flag — "if a flag occurs more than once on a
+;; command line, the final value of each corresponding <var> is its last
+;; specified value". A plain `[(--target) (string t)]` clause would therefore
+;; turn `--target rust --target ts` into just `ts`: silently wrong, which is
+;; worse than unsupported. The grammar does evaluate a flag's `$ <action>` once
+;; per occurrence with the var bound to the value seen, so accumulation goes
+;; there.
+;;
+;; The action only COLLECTS; validation happens in the matched clause body.
+;;
+;; To be precise about why, since an earlier version of this comment had the
+;; reasoning wrong: actions do NOT fire for a clause that fails to match. The
+;; parser threads `act!` as a thunk chain — each occurrence rebinds it to
+;; `(lambda () (act!) action)`, accumulating without running — and invokes the
+;; chain only at the terminal node, inside `(let () (act!) . body)`, i.e. once
+;; the whole clause has matched. An abandoned attempt calls `(next orig-cl)`
+;; and the accumulated thunk is simply discarded.
+;;
+;; So validating inside the action would be correct too. Keeping it in the body
+;; is a style choice with two small benefits: every argument check for this
+;; clause sits together (beside `check-pathname` and the alias-mixing check),
+;; and diagnostics come out in a fixed order rather than in whichever order the
+;; flags happened to appear. Collection is deduped so a genuinely repeated
+;; value (`--target rust --target rust`) is idempotent.
+(define known-targets '("ts" "rust"))
+
+(define selected-targets '())
+
+(define (collect-target! value)
+  (unless (member value selected-targets)
+    (set! selected-targets (append selected-targets (list value)))))
+
+(define (known-targets-string)
+  (let loop ([ts known-targets] [acc ""])
+    (cond
+      [(null? ts) acc]
+      [(string=? acc "") (loop (cdr ts) (car ts))]
+      [else (loop (cdr ts) (string-append acc ", " (car ts)))])))
+
+;; Reject unknown targets, naming the valid ones. Runs only after a clause has
+;; matched, so the message always describes a command line we really parsed.
+(define (check-targets!)
+  (for-each
+    (lambda (t)
+      (unless (member t known-targets)
+        (fprintf (current-error-port)
+                 "compactc: unknown --target ~s; valid targets are ~a\n"
+                 t (known-targets-string))
+        (exit 1)))
+    selected-targets))
+
+;; `--rust` / `--skip-ts` remain as undocumented aliases so existing callers
+;; (this fork's harness, and MediaNoxLabs/midnight-identity, which runs
+;; `compactc --rust --skip-ts`) keep working. Mixing the two spellings is an
+;; error rather than a silent precedence rule, so no invocation can be read two
+;; ways. The aliases are fork-transitional: upstream never shipped them, so
+;; there is nothing there to deprecate and they must not be carried upstream.
+(define (check-no-alias-mixing! rust? skip-ts?)
+  (when (and (pair? selected-targets) (or rust? skip-ts?))
+    (fprintf (current-error-port)
+             "compactc: --target cannot be combined with --rust or --skip-ts; use --target alone\n")
+    (exit 1)))
+
+;; Absent --target, fall back to the aliases; otherwise the listed targets are
+;; authoritative — `rust` present means emit Rust, `ts` absent means skip it.
+(define (resolve-emit-rust rust?)
+  (if (pair? selected-targets) (and (member "rust" selected-targets) #t) rust?))
+
+(define (resolve-skip-ts skip-ts?)
+  (if (pair? selected-targets) (not (member "ts" selected-targets)) skip-ts?))
 
 (parameterize ([reset-handler abort])
   (command-line-case (command-line)
@@ -106,18 +181,21 @@ The following flags, if present, affect the compiler's behavior as follows:
              [(--trace-search)]
              [(--trace-passes)]
              [(--feature-zkir-v3)]
+             [(--target) (string target-language) $ (collect-target! target-language)]
              [(--rust)]
              [(--skip-ts)])
       (string source-pathname)
       (string target-directory-pathname))
      (check-pathname source-pathname)
      (check-pathname target-directory-pathname)
+     (check-targets!)
+     (check-no-alias-mixing! ?--rust ?--skip-ts)
      (parameterize ([trace-passes ?--trace-passes]
                     [skip-zk ?--skip-zk]
                     [no-communications-commitment ?--no-communications-commitment]
                     [feature-zkir-v3 ?--feature-zkir-v3]
-                    [emit-rust ?--rust]
-                    [skip-ts ?--skip-ts]
+                    [emit-rust (resolve-emit-rust ?--rust)]
+                    [skip-ts (resolve-skip-ts ?--skip-ts)]
                     [compact-path (if ?--compact-path (split-search-path search-list) (compact-path))]
                     [trace-search ?--trace-search])
        (when source-root (register-source-root! source-root))
@@ -129,6 +207,7 @@ The following flags, if present, affect the compiler's behavior as follows:
              [(--ledger-version) $ (begin (print-ledger-version ?--feature-zkir-v3) (exit))]
              [(--runtime-version) $ (begin (print-runtime-version) (exit))]
              [(--feature-zkir-v3)]
+             [(--target) (string target-language) $ (collect-target! target-language)]
              [(--rust)]
              [(--skip-ts)])
       (string arg) ...)

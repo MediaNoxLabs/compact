@@ -17,7 +17,7 @@
 // Witness execution context + a trivial `NoWitnesses` marker for contracts
 // that declare zero witnesses.
 
-//! Witness execution context for `compactc --rust`-generated contracts.
+//! Witness execution context for `compactc --target rust`-generated contracts.
 //!
 //! # Witness privacy model
 //!

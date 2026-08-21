@@ -169,8 +169,15 @@ fn rust_codegen_byte_parity_against_committed_fixtures() {
         }
 
         let outdir = tempdir(&format!("codegen-regen-{}", dir_name));
+        // `--target rust` selects the Rust backend only. This doubles as the
+        // gate's coverage of the flag: nothing else in CI exercises `--target`,
+        // and a regression in its parsing would show up here as every fixture
+        // "drifting" (no lib.rs emitted at all) rather than as a flag bug — so
+        // read a total wipeout as a flag problem before a codegen one.
+        // Skipping TypeScript costs nothing; the gate reads only lib.rs.
         let status = Command::new(&compactc)
-            .arg("--rust")
+            .arg("--target")
+            .arg("rust")
             .arg("--skip-zk")
             .arg(&src)
             .arg(&outdir)

@@ -27,6 +27,39 @@ _No changes yet._
   This was fixed on the ledger-9 line only; the stable branch, which the CoIP
   cites as the reference implementation, still carried it.
 
+### Security
+
+- **The vendored Schnorr verifier accepted the identity element as a public
+  key**, in `examples/schnorr_attest_fixture.compact`. With `pk = O`,
+  `ecMul(pk, c)` is `O` for every `c`, so verification collapses to
+  `response*G == announcement` — the challenge, and with it the message,
+  drops out. An attacker picks any `s`, sets `response = s` and
+  `announcement = s*G`, and the pair verifies for **every** message under
+  that key, with no secret required.
+
+  Reachable rather than theoretical: `default<JubjubPoint>` IS the identity
+  and a ledger cell holds its type's default until written, so a contract
+  verifying against a key cell that was never set fails **open**.
+
+  The circuit now rejects an identity key or announcement. The off-circuit
+  Rust verifier already did.
+
+  Demonstrated rather than asserted: `identity_public_key_is_rejected`
+  constructs exactly that forgery, and removing the Rust guard makes the
+  test FAIL — the forged signature is accepted — which is what shows both
+  that the attack works and that the test is not vacuous.
+
+  Two scope notes worth keeping. This is a fixture, not the compiler's
+  standard library: the stdlib `jubjubSchnorrVerify` and
+  `secp256k1EcdsaVerify` arrived with 0.33 and exist only on the ledger-9
+  line, where the same fix landed separately. And the new test exercises the
+  RUST verifier's guard, not the circuit's — the emitter rewrites the
+  generic `schnorrVerify` call into
+  `midnight_compact_runtime::schnorr_verify_jubjub`, so the circuit body
+  never runs on the Rust path. Adding a security guard to the circuit left
+  byte-parity completely unchanged, which is the sharpest available
+  demonstration of the divergence tracked in #26.
+
 ### Testing
 
 - **`print-rust` coverage in the compiler's own suite: 2 cases -> 12.**

@@ -9,23 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _No changes yet._
 
-## [Toolchain 0.31.114, language 0.23.103, runtime 0.16.100] — unsupported constructs reject instead of emitting plausible output (2026-08-21)
-
-### Fixed
-
-- **`Field` arithmetic emitted `wrapping_*` on `Fr`, which does not compile.**
-  `arith-binop-rust`'s fallback branch was reached whenever the width ladder
-  returned `#f` — which includes the typer's FIELD case (`mbits = #f`) — so
-  `return a + b` on two `Field`s produced `Ok((a).wrapping_add(b))`. `Fr`
-  implements `Add`/`Sub`/`Mul` but not the `wrapping_*` family, so `compactc`
-  exited 0 and the failure surfaced at `cargo build`. Field arithmetic now
-  lowers to plain `+`/`-`/`*`. An out-of-ladder result width — the *other*
-  reason the helper returns `#f`, and distinguishing the two is the fix —
-  raises `rust-feature-error` rather than emitting an operator the type may
-  not have. Byte-parity neutral: no fixture reached the branch.
-
-  This was fixed on the ledger-9 line only; the stable branch, which the CoIP
-  cites as the reference implementation, still carried it.
+## [Toolchain 0.31.115, language 0.23.103, runtime 0.16.100] — Schnorr identity guard, Field-arithmetic port, print-rust coverage (2026-08-21)
 
 ### Security
 
@@ -60,6 +44,22 @@ _No changes yet._
   byte-parity completely unchanged, which is the sharpest available
   demonstration of the divergence tracked in #26.
 
+### Fixed
+
+- **`Field` arithmetic emitted `wrapping_*` on `Fr`, which does not compile.**
+  `arith-binop-rust`'s fallback branch was reached whenever the width ladder
+  returned `#f` — which includes the typer's FIELD case (`mbits = #f`) — so
+  `return a + b` on two `Field`s produced `Ok((a).wrapping_add(b))`. `Fr`
+  implements `Add`/`Sub`/`Mul` but not the `wrapping_*` family, so `compactc`
+  exited 0 and the failure surfaced at `cargo build`. Field arithmetic now
+  lowers to plain `+`/`-`/`*`. An out-of-ladder result width — the *other*
+  reason the helper returns `#f`, and distinguishing the two is the fix —
+  raises `rust-feature-error` rather than emitting an operator the type may
+  not have. Byte-parity neutral: no fixture reached the branch.
+
+  This was fixed on the ledger-9 line only; the stable branch, which the CoIP
+  cites as the reference implementation, still carried it.
+
 ### Testing
 
 - **`print-rust` coverage in the compiler's own suite: 2 cases -> 12.**
@@ -72,6 +72,8 @@ _No changes yet._
   rungs of the `mbits->rust-width` ladder, Field arithmetic, and a guard that
   no placeholder reaches the output. They assert on content rather than
   whole-file snapshots, and need no cargo, Rust toolchain or built compactc.
+
+## [Toolchain 0.31.114, language 0.23.103, runtime 0.16.100] — unsupported constructs reject instead of emitting plausible output (2026-08-21)
 
 ### Fixed
 

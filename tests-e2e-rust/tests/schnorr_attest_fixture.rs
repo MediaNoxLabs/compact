@@ -61,6 +61,27 @@ impl Witnesses<()> for StubWitnesses {
     }
 }
 
+/// Witnesses whose attestor key is the IDENTITY point.
+///
+/// This is not a contrived value: `JubjubPoint::default()` IS the identity,
+/// and a ledger cell holds its type's default until written, so this stands
+/// in for a contract whose key cell was never meaningfully set.
+struct IdentityKeyWitnesses;
+
+impl Witnesses<()> for IdentityKeyWitnesses {
+    fn get_schnorr_reduction<'a>(
+        &self,
+        _ctx: &WitnessContext<Ledger<'a>, ()>,
+        _challenge_hash: Fr,
+    ) -> ((), (u8, u128)) {
+        ((), (0u8, 0u128))
+    }
+
+    fn local_attestor_key<'a>(&self, _ctx: &WitnessContext<Ledger<'a>, ()>) -> ((), JubjubPoint) {
+        ((), JubjubPoint::default())
+    }
+}
+
 fn ctor_ctx() -> ConstructorContext<()> {
     ConstructorContext {
         initial_private_state: (),
@@ -230,4 +251,52 @@ fn attestation_digest_is_deterministic_and_epoch_separated() {
 
     let c = pure_circuits::attestation_digest(subject, 8u64, Fr::from(99u64)).expect("digest c");
     assert_ne!(a, c, "a different epoch must change the digest");
+}
+
+/// An identity public key must be rejected, and the forgery it would
+/// otherwise enable must fail.
+///
+/// With `pk = O`, `ecMul(pk, c)` is `O` for every `c`, so verification
+/// collapses to `response*G == announcement`: the challenge, and with it the
+/// message, drops out. An attacker needs no secret — pick any `s`, set
+/// `response = s` and `announcement = s*G`, and the pair verifies for EVERY
+/// message under that key. That is universal forgery, and it fails OPEN,
+/// which is the dangerous direction.
+///
+/// The forged signature below is constructed exactly that way, so this test
+/// fails if the identity guard is ever removed rather than merely asserting
+/// that some invalid signature is rejected.
+///
+/// SCOPE, worth being precise about: this exercises the guard in the RUST
+/// verifier (`midnight_compact_runtime::schnorr_verify_jubjub`), because the
+/// emitter rewrites the generic `schnorrVerify` call into it — so the
+/// circuit's own guard never runs on this path. The circuit guard added to
+/// `examples/schnorr_attest_fixture.compact` governs proving and the
+/// TypeScript path, and is NOT covered here. That gap is the divergence
+/// tracked in MediaNoxLabs/compact#26.
+#[test]
+fn identity_public_key_is_rejected() {
+    let contract = Contract::new(IdentityKeyWitnesses);
+    let init = contract.initial_state(ctor_ctx()).expect("initial_state");
+    let ctx = CircuitContext::new(init.current_contract_state, init.current_private_state);
+
+    // The forgery: response = s, announcement = s*G, for an arbitrary s.
+    let s = EmbeddedFr(embedded::Scalar::from(0xf0e_u64));
+    let forged = SchnorrSignature {
+        announcement: JubjubPoint::generator() * s,
+        response: Fr::from_le_bytes(&s.0.to_bytes()).expect("jubjub scalar fits in Fr"),
+    };
+
+    #[allow(clippy::err_expect)]
+    let err = contract
+        .verify_attestation(ctx, digest(), forged)
+        .err()
+        .expect("an identity public key must be rejected, not universally forgeable");
+    assert!(
+        matches!(
+            err,
+            CompactError::AssertionFailed(ref m) if m == "Schnorr signature verification failed"
+        ),
+        "expected the Schnorr rejection message, got {err:?}"
+    );
 }

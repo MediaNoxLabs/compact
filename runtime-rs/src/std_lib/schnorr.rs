@@ -88,7 +88,14 @@ fn fr_to_embedded_fr(fr: Fr) -> EmbeddedFr {
 
 /// Off-circuit Schnorr verifier. Returns `true` iff the signature is
 /// valid for `(pk, msg)`. Identity public-key / announcement are
-/// rejected up front, matching the circuit's identity guards.
+/// rejected up front.
+///
+/// The circuit-side verifier in `examples/schnorr_attest_fixture.compact`
+/// now carries the same guard, but note the two are NOT exercised
+/// together: the emitter rewrites a call to the generic `schnorrVerify`
+/// into this function, so on the Rust path the circuit's own body — guard
+/// included — never runs. The circuit guard governs proving and the
+/// TypeScript path. See MediaNoxLabs/compact#26.
 pub fn verify(pk: JubjubPoint, msg: &[Fr], sig: &SchnorrSignature) -> bool {
     if pk.is_identity() || sig.announcement.is_identity() {
         return false;

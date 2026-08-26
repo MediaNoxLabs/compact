@@ -82877,3 +82877,248 @@ groups than for single tests.
       "examples/tiny.compact"
       (output-file "compiler/testdir/contract/lib.rs"
         "compiler/snapshots/tiny-rust-expected.rs.txt"))))
+
+; ---------------------------------------------------------------------------
+; print-rust coverage (MediaNoxLabs/compact#38)
+;
+; Before these, this file held TWO print-rust cases against 711
+; print-typescript ones, so from inside compiler/test.ss the Rust backend
+; looked untested. Its real coverage lives in tests-e2e-rust — 34 byte-parity
+; fixtures, 89 e2e tests, 56 runtime unit tests — which a compiler maintainer
+; reading this file never sees. That inference was fair from where they stood,
+; so the evidence belongs here too.
+;
+; These assert on CONTENT rather than snapshotting whole files. Each case names
+; exactly which emitted construct it pins, which is the point: a whole-file
+; snapshot tells you something changed, not what mattered. The counter/tiny
+; snapshots above stay, because there the value IS catching any drift at all.
+;
+; They also need no cargo, no Rust toolchain and no built compactc, so they are
+; the only Rust-backend coverage a Scheme-only contributor can run — and, until
+; MediaNoxLabs/compact#23 wires a compactc-backed CI job, the only Rust-backend
+; coverage that runs in CI at all.
+; ---------------------------------------------------------------------------
+(let ()
+  (define (contains? hay ndl)
+    (let ([hl (string-length hay)] [nl (string-length ndl)])
+      (let loop ([i 0])
+        (and (fx<= (fx+ i nl) hl)
+             (or (let inner ([j 0])
+                   (or (fx= j nl)
+                       (and (char=? (string-ref hay (fx+ i j)) (string-ref ndl j))
+                            (inner (fx+ j 1)))))
+                 (loop (fx+ i 1)))))))
+  (define (emitted-text)
+    (call-with-port
+      (open-input-file "compiler/testdir/contract/lib.rs")
+      get-string-all))
+  ;; rust-emits: the emitted crate must contain every string in want* and none
+  ;; in avoid*. Reports the first failing needle, so a regression names itself
+  ;; rather than only reporting false.
+  (define (rust-emits want* avoid*)
+    (custom-check
+      (lambda (pass-name x)
+        (let ([text (emitted-text)])
+          (let loop ([w want*])
+            (if (pair? w)
+                (if (contains? text (car w))
+                    (loop (cdr w))
+                    (begin
+                      (printf "    print-rust: expected emitted crate to contain ~s\n" (car w))
+                      #f))
+                (let loop2 ([a avoid*])
+                  (if (pair? a)
+                      (if (contains? text (car a))
+                          (begin
+                            (printf "    print-rust: emitted crate must NOT contain ~s\n" (car a))
+                            #f)
+                          (loop2 (cdr a)))
+                      #t))))))))
+
+  (parameterize ([emit-rust #t])
+    (run-tests print-rust
+
+      ;; --- Crate scaffolding -------------------------------------------
+      ;; The runtime version is pinned by an exact-match macro, so a runtime
+      ;; bump without regenerating contracts is a compile error rather than a
+      ;; silent mismatch. Pins the crate path too: it is named in every `use`,
+      ;; which is what made renaming it a breaking change.
+      (test
+        '("export ledger n: Uint<64>;"
+          "export circuit set(v: Uint<64>): [] { n = disclose(v); }")
+        (rust-emits
+          '("use midnight_compact_runtime::*;"
+            "midnight_compact_runtime::check_runtime_version!("
+            "pub struct Contract<PS, W = NoWitnesses>")
+          '()))
+
+      ;; --- Ledger reads, per ADT ---------------------------------------
+      ;; A scalar cell and a Counter both read back through decode_u64. The
+      ;; `avoid` here is the load-bearing half: Map and Set get NO accessor on
+      ;; the Ledger view, so a future change that starts emitting one should
+      ;; fail this test and be considered deliberately.
+      (test
+        '("import CompactStandardLibrary;"
+          "export ledger n: Uint<64>;"
+          "export ledger c: Counter;"
+          "export ledger m: Map<Uint<8>, Uint<64>>;"
+          "export ledger s: Set<Uint<8>>;"
+          "export circuit touch(k: Uint<8>, v: Uint<64>): [] {"
+          "  c.increment(1);"
+          "  m.insert(disclose(k), disclose(v));"
+          "  s.insert(disclose(k));"
+          "  n = disclose(v);"
+          "}")
+        (rust-emits
+          '("pub fn n(&self) -> Result<u64, CompactError>"
+            "pub fn c(&self) -> Result<u64, CompactError>"
+            "midnight_compact_runtime::std_lib::decode_u64(av)"
+            "OpProgramGather::<D>::new()")
+          '("pub fn m(&self)"
+            "pub fn s(&self)")))
+
+      ;; Initial-state seeding is per-ADT: cells seed by type, and BOTH Map and
+      ;; Set seed as new_map() — the Set's values are Null. Pinning the exact
+      ;; scaffold matters because a wrong seed produces a state that decodes
+      ;; fine and is simply wrong.
+      (test
+        '("import CompactStandardLibrary;"
+          "export ledger n: Uint<64>;"
+          "export ledger c: Counter;"
+          "export ledger m: Map<Uint<8>, Uint<64>>;"
+          "export ledger s: Set<Uint<8>>;"
+          "export circuit touch(k: Uint<8>): [] { s.insert(disclose(k)); }")
+        (rust-emits
+          '("new_array(vec!["
+            "new_map()"
+            "push(true, StateValue::Null)")
+          '()))
+
+      ;; A Vector<N,T> ledger field seeds as one cell-array, not N cells, and
+      ;; writes through new_cell_array. Getting this wrong changes the state
+      ;; shape rather than erroring.
+      (test
+        '("import CompactStandardLibrary;"
+          "export ledger v: Vector<3, Uint<64>>;"
+          "export circuit setAll(a: Uint<64>): [] {"
+          "  v = [disclose(a), disclose(a), disclose(a)];"
+          "}")
+        (rust-emits
+          '("new_cell_array([0u64; 3])"
+            "new_cell_array(")
+          '()))
+
+      ;; --- The three body routes ---------------------------------------
+      ;; Pure circuits take no context and land in `mod pure_circuits`; the
+      ;; impure caller threads a CircuitContext. Both in one contract, because
+      ;; the routes differing is the property worth pinning.
+      (test
+        '("import CompactStandardLibrary;"
+          "export ledger n: Uint<64>;"
+          "export pure circuit double(x: Uint<32>): Uint<64> { return x * 2; }"
+          "export circuit bump(x: Uint<32>): [] { n = disclose(double(x)); }")
+        (rust-emits
+          '("pub mod pure_circuits {"
+            "pub fn double(x: u32) -> Result<u64, CompactError>"
+            "ctx: CircuitContext<PS>"
+            "query_for_verify(")
+          '()))
+
+      ;; The constructor route: default scaffold first, then the writes as an
+      ;; op program against it. Two writes both lowering to `tmp` in the front
+      ;; end must uniquify (Prod-14) — without that the second shadows the
+      ;; first and one cell silently gets the wrong value.
+      (test
+        '("export ledger admin: Uint<64>;"
+          "export ledger count: Uint<64>;"
+          "constructor() { admin = 42; count = 7; }")
+        (rust-emits
+          '("let tmp = 42u64;"
+            "let tmp_0 = 7u64;"
+            "new_cell(0u64)"
+            "OpProgramVerify::<DefaultDB>::new()")
+          '()))
+
+      ;; --- Witnesses ----------------------------------------------------
+      ;; A witness becomes a trait method taking a WitnessContext and returning
+      ;; (PS, T) — the private state is threaded back out, which is what makes
+      ;; witness state single-threaded rather than shared.
+      (test
+        '("export ledger n: Uint<64>;"
+          "witness pick(): Uint<64>;"
+          "export circuit take(): [] { n = disclose(pick()); }")
+        (rust-emits
+          '("pub trait Witnesses<PS> {"
+            "fn pick<'a>(&self, ctx: &WitnessContext<Ledger<'a>, PS>) -> (PS, u64);"
+            "self.witnesses.pick(")
+          '()))
+
+      ;; --- Arithmetic widths (mbits->rust-width) -------------------------
+      ;; Both operands are cast to the RESULT width before wrapping_*, so the
+      ;; operation runs at the width the type implies rather than the
+      ;; receiver's. A wrong rung cannot fault — wrapping_* truncates silently
+      ;; — so this is pinned per rung. See widening_arith_fixture.
+      (test
+        '("export pure circuit sumBytes(a: Uint<8>, b: Uint<8>): Uint<16> { return a + b; }"
+          "export pure circuit years(y: Uint<8>): Uint<32> { return y * 365; }"
+          "export pure circuit area(w: Uint<16>, h: Uint<16>): Uint<32> { return w * h; }")
+        (rust-emits
+          '("((a) as u16).wrapping_add((b) as u16)"
+            "((y) as u32).wrapping_mul((365) as u32)"
+            "((w) as u32).wrapping_mul((h) as u32)")
+          '()))
+
+      ;; Field arithmetic uses Fr's own operators. It must NOT use wrapping_*,
+      ;; which Fr does not implement — emitting it produced code that compiled
+      ;; 0 and failed at cargo build.
+      (test
+        '("export ledger total: Field;"
+          "export pure circuit addF(a: Field, b: Field): Field { return a + b; }"
+          "export circuit bump(a: Field, b: Field): [] { total = disclose(addF(a, b)); }")
+        (rust-emits
+          '("pub fn add_f(a: Fr, b: Fr) -> Result<Fr, CompactError>")
+          '("wrapping_add")))
+
+      ;; --- Rejections ---------------------------------------------------
+      ;; The backend's central property: an unsupported construct FAILS the
+      ;; compile. These assert the diagnostic, not the output, because the
+      ;; whole point is that there is no output. Without them, a regression
+      ;; that reintroduced a placeholder would pass every other test here.
+
+      ;; No placeholder may reach the output. This is the practical half of
+      ;; the rejection contract, expressed as an assertion that CAN run here:
+      ;; a contract exercising ledger writes, a pure circuit, a witness and
+      ;; arithmetic must emit a crate containing no `/* TODO` marker and no
+      ;; `unimplemented!()`.
+      ;;
+      ;; Four emitter paths used to violate this — `assert!(true)` for a
+      ;; non-inlinable constructor assert, `if true` for the same in an `if`,
+      ;; catch-all guards substituting a comment for an expression, and four
+      ;; natives emitting `unimplemented!()`. All four now raise
+      ;; `rust-feature-error`, so any regression that reintroduces a
+      ;; placeholder on a path this contract touches fails here.
+      ;;
+      ;; Asserting the DIAGNOSTIC of a rejection would be the stronger test,
+      ;; and `oops` is the harness's tool for it — but a `rust-feature-error`
+      ;; raised from inside `print-rust` is reported as an unexpected
+      ;; exception with a backtrace rather than bound as a source-error
+      ;; condition, so `oops` never matches it. Left as a known gap on
+      ;; MediaNoxLabs/compact#38 rather than papered over: the rejection
+      ;; paths ARE covered, by probe contracts in the issue and by the
+      ;; commit that introduced them, just not from inside this file.
+      (test
+        '("import CompactStandardLibrary;"
+          "export ledger n: Uint<64>;"
+          "export ledger w: Uint<64>;"
+          "export ledger c: Counter;"
+          "witness pick(): Uint<64>;"
+          "export pure circuit twice(x: Uint<32>): Uint<64> { return x * 2; }"
+          "export circuit go(x: Uint<32>): [] {"
+          "  c.increment(1);"
+          "  n = disclose(twice(x));"
+          "  w = disclose(pick());"
+          "}")
+        (rust-emits
+          '("pub mod pure_circuits {")
+          '("/* TODO" "unimplemented!()")))
+      )))

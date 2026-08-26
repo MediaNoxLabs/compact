@@ -9,6 +9,70 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _No changes yet._
 
+## [Toolchain 0.31.115, language 0.23.103, runtime 0.16.100] — Schnorr identity guard, Field-arithmetic port, print-rust coverage (2026-08-21)
+
+### Security
+
+- **The vendored Schnorr verifier accepted the identity element as a public
+  key**, in `examples/schnorr_attest_fixture.compact`. With `pk = O`,
+  `ecMul(pk, c)` is `O` for every `c`, so verification collapses to
+  `response*G == announcement` — the challenge, and with it the message,
+  drops out. An attacker picks any `s`, sets `response = s` and
+  `announcement = s*G`, and the pair verifies for **every** message under
+  that key, with no secret required.
+
+  Reachable rather than theoretical: `default<JubjubPoint>` IS the identity
+  and a ledger cell holds its type's default until written, so a contract
+  verifying against a key cell that was never set fails **open**.
+
+  The circuit now rejects an identity key or announcement. The off-circuit
+  Rust verifier already did.
+
+  Demonstrated rather than asserted: `identity_public_key_is_rejected`
+  constructs exactly that forgery, and removing the Rust guard makes the
+  test FAIL — the forged signature is accepted — which is what shows both
+  that the attack works and that the test is not vacuous.
+
+  Two scope notes worth keeping. This is a fixture, not the compiler's
+  standard library: the stdlib `jubjubSchnorrVerify` and
+  `secp256k1EcdsaVerify` arrived with 0.33 and exist only on the ledger-9
+  line, where the same fix landed separately. And the new test exercises the
+  RUST verifier's guard, not the circuit's — the emitter rewrites the
+  generic `schnorrVerify` call into
+  `midnight_compact_runtime::schnorr_verify_jubjub`, so the circuit body
+  never runs on the Rust path. Adding a security guard to the circuit left
+  byte-parity completely unchanged, which is the sharpest available
+  demonstration of the divergence tracked in #26.
+
+### Fixed
+
+- **`Field` arithmetic emitted `wrapping_*` on `Fr`, which does not compile.**
+  `arith-binop-rust`'s fallback branch was reached whenever the width ladder
+  returned `#f` — which includes the typer's FIELD case (`mbits = #f`) — so
+  `return a + b` on two `Field`s produced `Ok((a).wrapping_add(b))`. `Fr`
+  implements `Add`/`Sub`/`Mul` but not the `wrapping_*` family, so `compactc`
+  exited 0 and the failure surfaced at `cargo build`. Field arithmetic now
+  lowers to plain `+`/`-`/`*`. An out-of-ladder result width — the *other*
+  reason the helper returns `#f`, and distinguishing the two is the fix —
+  raises `rust-feature-error` rather than emitting an operator the type may
+  not have. Byte-parity neutral: no fixture reached the branch.
+
+  This was fixed on the ledger-9 line only; the stable branch, which the CoIP
+  cites as the reference implementation, still carried it.
+
+### Testing
+
+- **`print-rust` coverage in the compiler's own suite: 2 cases -> 12.**
+  `compiler/test.ss` held two Rust snapshot tests against 711
+  `print-typescript` cases, so from inside the compiler's corpus the backend
+  looked untested — all of its real coverage lives in `tests-e2e-rust`. The
+  new cases cover crate scaffolding and the runtime-version pin, ledger reads
+  and initial-state seeding per ADT, `Vector<N,T>` seeding, all three body
+  routes with the temp uniquifier, witness trait shape and call site, three
+  rungs of the `mbits->rust-width` ladder, Field arithmetic, and a guard that
+  no placeholder reaches the output. They assert on content rather than
+  whole-file snapshots, and need no cargo, Rust toolchain or built compactc.
+
 ## [Toolchain 0.31.114, language 0.23.103, runtime 0.16.100] — unsupported constructs reject instead of emitting plausible output (2026-08-21)
 
 ### Fixed

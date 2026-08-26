@@ -104,6 +104,22 @@ module Schnorr {
     const c: Field = disclose(cTruncated) as Field;
     const lhs: JubjubPoint = ecMulGenerator(response);
     const rhs: JubjubPoint = ecAdd(announcement, ecMul(pk, c));
+    // Reject the identity element as a key or announcement.
+    //
+    // With pk = O, ecMul(pk, c) is O for every c, so the check collapses
+    // to `response*G == announcement` and the challenge — with it, the
+    // MESSAGE — drops out entirely. An attacker picks any s, sets
+    // response = s and announcement = s*G, and the signature verifies for
+    // EVERY message under that key, with no secret required.
+    //
+    // Reachable in practice, not only in theory: `default<JubjubPoint>`
+    // IS the identity, and a ledger cell holds its type's default until
+    // written, so a contract verifying against a key cell that was never
+    // set fails OPEN.
+    assert(
+      pk != default<JubjubPoint> && announcement != default<JubjubPoint>,
+      "Schnorr verification requires a non-identity key and announcement"
+    );
     assert(
       jubjubPointX(lhs) == jubjubPointX(rhs) &&
         jubjubPointY(lhs) == jubjubPointY(rhs),

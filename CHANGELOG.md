@@ -7,12 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+_No changes yet._
+
+## [Toolchain 0.34.101, language 0.26.0, runtime 0.19.100] — upstream 0.34 merged into the Rust-codegen fork (2026-08-31)
+
 - **Fork**: merged upstream `LFDT-Minokawa/compact` `main` (toolchain 0.34.100,
   language 0.26.0, runtime 0.19.100) into the Rust-codegen fork. The merge was
   clean in every compiler source file — the only conflicts were the version
   stamps and this changelog — which is the practical evidence that the `--rust`
   backend is a leaf pass: it adds no IR and no semantics, so upstream IR work
   does not collide with it.
+
+  Upstream inserted two IR stages ahead of `Ltypescript` in this range
+  (`Lnodisclose → Lnoserialize → Lloweredemit → Ltypescript`), changing the
+  `emit` expression twice, dropping `serialize`/`deserialize`, adding
+  `event-version`/`event-tag` to the `field` terminal, and changing the
+  `program` production. No `rust-passes-*` clause matches any of those forms,
+  so none of it needed porting.
+
+- **Changed**: the `print-rust` snapshots are repinned to runtime `0.19.100`.
+  That is the only change to emitted Rust across the entire merge — one line
+  per snapshot.
 
 ## [Toolchain 0.34.100, language 0.26.0, runtime 0.19.100]
 

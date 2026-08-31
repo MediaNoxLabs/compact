@@ -45,6 +45,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `cast-from-field` rejection. It was not one — the kind did not exist. It
   does now.
 
+- **`default-value-rust` no longer has a catch-all.** An unrecognised type
+  fell through to `Default::default()`, which either fails to compile (no
+  `Default` impl — E0277, in generated code) or compiles and seeds a ledger
+  cell with a value that is not the Compact default. The walker's
+  `default-supported?` mirrors the handled arms and is meant to gate this, but
+  it is consulted at one of the seven `default-value-rust` call sites.
+
+  No contract reaches the arm today — every route probed was closed by the
+  decoder gate or the body walker first, and the full suite is unchanged by
+  the removal. That was defence by accident; it is now
+  `default-value-unsupported-type`.
+
 ### Added
 
 - `tests-e2e-rust/tests/rejection_corpus.rs` — the negative corpus. Every other

@@ -43,6 +43,28 @@
       ;; 'struct-literal-mismatch, 'enum-ref-non-tenum, 'witness-inline)
       ;; — useful for users grepping the codegen to see what they hit
       ;; and for future cross-references in docs.
+      ;; stmt-src: best-effort source location for a Statement.
+      ;;
+      ;; Most Ltypescript Statement productions carry `src` as their first
+      ;; field, but there is no accessor for it — callers normally reach the
+      ;; src through an expression they are already destructuring. A rejection
+      ;; raised at statement granularity has no such expression in hand, so
+      ;; this recovers the location for the diagnostic.
+      ;;
+      ;; Only forms confirmed to exist in Ltypescript are matched. The
+      ;; productions change as the language chain extends and a pattern for a
+      ;; form that no longer exists is a meta-parse failure at BUILD time, not
+      ;; a runtime miss — `statement-expression`, notably, has no src by this
+      ;; point. Anything unmatched yields #f and rust-feature-error reports
+      ;; without a location, because a missing location must never turn a
+      ;; clear rejection into a crash.
+      (define (stmt-src stmt)
+        (nanopass-case (Ltypescript Statement) stmt
+          [(seq ,src ,stmt* ... ,stmt^) src]
+          [(if ,src ,expr ,stmt1 ,stmt2) src]
+          [(const ,src (,local* ...)) src]
+          [else #f]))
+
       (define (rust-feature-error src tag msg . args)
         (let ([prefixed (format "compactc --target rust: unsupported Compact construct (~a): ~a"
                                 tag (apply format msg args))])

@@ -890,7 +890,17 @@
              ;; suffix in expr-rust. Only widths on the standard
              ;; 8/16/32/64/128 ladder are supported; other widths fall
              ;; through to #f.
-             (and (tunsigned-rust-suffix-for-bound nat)
+             ;;
+             ;; `nat?` is the SOURCE bound. The typer guarantees it is
+             ;; present exactly for a `Uint` source and #f exactly for a
+             ;; `Field` source (circuit-passes.ss `downcast-unsigned` typing
+             ;; rule), so #f here means `Field as Uint<N>` — which needs an
+             ;; `Fr`-narrowing runtime helper we do not have. Without this
+             ;; the emitter rendered `(x) as uN` on a struct: a non-primitive
+             ;; cast (E0605) that fails at `cargo build`, emitted from a
+             ;; compile that exited 0 (MediaNoxLabs/compact#45).
+             (and nat?
+                  (tunsigned-rust-suffix-for-bound nat)
                   (expr-supported? expr native-id-ht
                                    witness-id-ht circuit-id-ht))]
             [else #f])))
@@ -1006,7 +1016,10 @@
                   (walk (expr-strip-cast expr1))
                   (walk (expr-strip-cast expr2)))]
             [(downcast-unsigned ,src ,nat? ,nat ,expr)
-             (and (tunsigned-rust-suffix-for-bound nat)
+             ;; `nat?` = #f is a Field source; see the note on the
+             ;; expr-supported? clause above.
+             (and nat?
+                  (tunsigned-rust-suffix-for-bound nat)
                   (walk (expr-strip-cast expr)))]
             [else #f])))
 

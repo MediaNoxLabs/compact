@@ -170,6 +170,38 @@
                           (build-formal-arg-type-ht ctor-arg*)])
                        (emit-ctor-body-or-fallback stmt
                                                    native-id-ht witness-id-ht circuit-id-ht)))])
+          ;; `emitted?` is #f for two very different reasons, and conflating
+          ;; them was a MISCOMPILER (MediaNoxLabs/compact#45):
+          ;;
+          ;;   stmt = #f          there is no constructor at all. The bare
+          ;;                      K1-only return below is correct — the state
+          ;;                      really is just the seeded scaffold.
+          ;;
+          ;;   stmt present,      a constructor EXISTS and we failed to lower
+          ;;   emitted? = #f      it. Emitting the same bare return silently
+          ;;                      discards every write the author made, at
+          ;;                      exit 0, with no diagnostic and no marker.
+          ;;                      The contract then initialises to something
+          ;;                      other than what the source says.
+          ;;
+          ;; The second case is strictly worse than emitting non-compiling
+          ;; Rust: there is no signal at all, and byte-parity cannot catch it
+          ;; either — a fixture of that shape just pins the wrong bytes as
+          ;; expected. Refuse instead.
+          ;; `stmt` is NOT a reliable "the author wrote a constructor" signal:
+          ;; the front end synthesises a Ledger-Constructor for every contract
+          ;; with ledger fields, so a contract with no constructor still has a
+          ;; non-#f stmt — a bare unit `(tuple src)`. Testing `stmt` alone
+          ;; therefore rejects every constructor-less contract, which an
+          ;; earlier version of this fix did.
+          ;;
+          ;; `stmt-flatten` drops that bare unit, so a genuinely empty body
+          ;; flattens to '() while a real one does not. Reject only when there
+          ;; was something to lower and we failed to lower it.
+          (when (and stmt (not emitted?) (pair? (stmt-flatten stmt)))
+            (rust-feature-error (stmt-src stmt) 'ctor-body-emission
+              "no walker shape matched the constructor body; ~a"
+              "emitting the default scaffold here would silently discard every constructor write"))
           (unless emitted?
             (out "        Ok(ConstructorResult {\n")
             (out "            current_contract_state: qctx.state,\n")
@@ -1971,6 +2003,23 @@
                       [(<= nat 340282366920938463463374607431768211455) "u128"]
                       [else #f])])
              (cond
+               ;; `nat?` is the SOURCE bound, and the typer guarantees
+               ;; (circuit-passes.ss `downcast-unsigned` typing rule) that it
+               ;; is present exactly when the source is a `Uint`, and #f
+               ;; exactly when the source is a `Field`. So #f here means
+               ;; `Field as Uint<N>`.
+               ;;
+               ;; `Fr` is a struct (a re-export of
+               ;; midnight_transient_crypto::curve::Fr), so the `(x) as uN`
+               ;; below is a non-primitive cast — E0605. We were emitting it
+               ;; from a compile that exited 0, so the break landed at
+               ;; `cargo build` with no pointer back to the Compact source.
+               ;; Narrowing an Fr needs a range-checking runtime helper that
+               ;; does not exist yet; until it does, refuse.
+               [(not nat?)
+                (rust-feature-error src 'cast-from-field
+                  "`Field as Uint<~s>`: ~a" nat
+                  "narrowing a Field needs a range-checking runtime helper")]
                [(not w)
                 (rust-feature-error src 'downcast-unsigned-width
                   "downcast-unsigned: unsupported target width ~s" nat)]
@@ -3130,9 +3179,20 @@
                      [path* (binding-path-indices pb)]
                      [read-type (tadt-read-op-type (binding-type pb))]
                      [rust-ret (type-rust read-type)]
+                     ;; A missing decoder used to fall back to `decode_u64`
+                     ;; behind a TODO comment (MediaNoxLabs/compact#45). That
+                     ;; emits a call whose return type cannot match the
+                     ;; declared one — e.g. a `Vector<3, Bytes<32>>` field
+                     ;; produced `decode_u64` in tail position of
+                     ;; `Result<[[u8; 32]; 3], _>`, an E0308 — from a compile
+                     ;; that exited 0. Reachable with the smallest possible
+                     ;; contract: one ledger field, no circuits, no
+                     ;; constructor. Refuse instead of guessing a decoder.
                      [decoder (or (decoder-for-type read-type)
-                                  (format "/* TODO M3-R4: decoder for ~a */ midnight_compact_runtime::std_lib::decode_u64"
-                                          rust-ret))])
+                                  (rust-feature-error #f 'ledger-read-decoder-missing
+                                    "no ledger-read decoder for `~a`; ~a"
+                                    rust-ret
+                                    "the accessor cannot be emitted without one"))])
                 (out (format "    pub fn ~a(&self) -> Result<~a, CompactError> {\n" name rust-ret))
                 ;; Bucket-1: see note in J2 emitter — fully-qualify the
                 ;; upstream ContractAddress so user-defined shadow types

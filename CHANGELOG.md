@@ -7,7 +7,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_No changes yet._
+### Fixed
+
+- **`--target rust` silently discarded every constructor write** when no walker
+  shape matched the constructor body. `emit-initial-state` treated "there is no
+  constructor" and "there is a constructor and we could not lower it" as the
+  same state, and emitted the default scaffold for both. A contract whose
+  constructor seeded a `Map` and looped over a ledger cell compiled with **exit
+  0** and produced a contract that deployed with none of its initial state.
+
+  This is a miscompiler, not a missing feature: the output was well-formed
+  Rust that built and ran, so nothing downstream could notice. It is now a
+  `ctor-body-emission` rejection.
+
+  The discriminator is narrower than it looks. `ldecl-constructor-stmt` is
+  non-`#f` even when the author wrote no constructor, because the front end
+  synthesises one for any contract with ledger fields — so "a statement
+  exists" does not mean "the author wrote a constructor". The guard tests
+  whether the body flattens to anything; constructor-less contracts and
+  explicitly empty constructors both still compile.
+
+- **A ledger field with no decoder emitted `decode_u64`** behind a `TODO`
+  comment, so a `Vector<3, Bytes<32>>` accessor declared
+  `Result<[[u8; 32]; 3], _>` and returned a `u64` in tail position — E0308, in
+  generated code, from a compile that exited 0. Reachable with the smallest
+  possible contract: one ledger field, no circuits, no constructor. Now
+  `ledger-read-decoder-missing`.
+
+- **`Field as Uint<N>` emitted `(x) as uN` where `x: Fr`.** `Fr` is a struct,
+  so that is E0605, a non-primitive cast — again from a compile that exited 0.
+  Narrowing an `Fr` needs a range-checking runtime helper that does not exist
+  yet; the cast is refused until it does. The walker keys on the
+  `downcast-unsigned` source bound, which the typer guarantees is present
+  exactly for a `Uint` source and absent exactly for a `Field` source.
+
+  `docs/rust-backend-limitations.md` already documented this as a
+  `cast-from-field` rejection. It was not one — the kind did not exist. It
+  does now.
+
+### Added
+
+- `tests-e2e-rust/tests/rejection_corpus.rs` — the negative corpus. Every other
+  test in that crate pins what the backend *emits*; this one pins what it must
+  **refuse**, which is a distinct property and was untested. Byte parity
+  structurally cannot cover it: a construct that emits bad Rust agrees with its
+  own committed fixture perfectly, so the gate stays green forever. All three
+  bugs above shipped behind a green byte-parity run.
+
+  The corpus asserts on both sides — the constructs that must reject, and the
+  neighbouring shapes that must still compile. The second half is not
+  ceremony: the first version of the constructor guard keyed on the synthesised
+  statement and rejected every constructor-less contract.
 
 ## [Toolchain 0.34.102, language 0.26.0, runtime 0.19.100] — the Rust backend gets its own Cargo workspace (2026-08-31)
 

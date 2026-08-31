@@ -1,0 +1,61 @@
+// This file is part of Compact.
+// Copyright (C) 2026 contributors to Minokawa Compact
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//  	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+//
+// Narrowing casts (`x as Uint<N>`) — the meaning, not the text.
+//
+// The TypeScript backend lowers a narrowing cast to a bounds check that
+// throws. The Rust backend used to lower it to Rust's `as`, which checks
+// nothing, so the two disagreed on every out-of-range value
+// (MediaNoxLabs/compact#51).
+//
+// No byte-parity fixture could catch that. Byte parity compares committed
+// Rust against regenerated Rust, and `(x) as u8` agrees with itself
+// perfectly — the disagreement is a *runtime* one, visible only by feeding
+// the circuit a value the cast should reject.
+//
+// `shrink` is deliberately shaped so both failure modes are reachable with
+// a `Uint<0..1000>` argument:
+//
+//   * 100..=255 is inside `u8` but outside `Uint<0..100>`. Rust's `as`
+//     returned it unchanged — an out-of-range value that was not even
+//     truncated, so nothing made it visible.
+//   * 256..=1000 truncates: `300 as u8` is 44, turning an out-of-range
+//     value into a plausible in-range one.
+//
+// `shrink_wide` covers a wider pair — u32 source, u16 target — so a
+// regression is not masked by everything happening to fit in one byte.
+// Note the bound the emitter uses is 65534, not 65535: `Uint<0..N>` is
+// exclusive of N, which is exactly the kind of off-by-one that a
+// hand-written `as` cast gets wrong and a generated bound does not.
+//
+// Both are `pure circuit` so the test can call them directly, without a
+// ledger context standing between the input and the cast.
+
+import CompactStandardLibrary;
+
+export ledger last: Uint<0..100>;
+
+export pure circuit shrink(x: Uint<0..1000>): Uint<0..100> {
+  return x as Uint<0..100>;
+}
+
+export pure circuit shrink_wide(x: Uint<0..70000>): Uint<0..65535> {
+  return x as Uint<0..65535>;
+}
+
+export circuit record(x: Uint<0..1000>): [] {
+  last = disclose(shrink(x));
+}

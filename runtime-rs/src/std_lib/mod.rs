@@ -29,6 +29,7 @@ mod field_repr;
 mod jubjub;
 mod maybe;
 mod merkle_path;
+mod narrowing;
 mod opaque;
 mod schnorr;
 
@@ -70,6 +71,7 @@ pub use maybe::{none, some, Maybe};
 pub use merkle_path::{
     default_merkle_path, merkle_tree_path_root, merkle_tree_path_root_no_leaf_hash,
 };
+pub use narrowing::narrow;
 pub use opaque::OpaqueString;
 pub use schnorr::{
     jubjub_schnorr_verify, schnorr_verify_jubjub, verify as schnorr_verify, JubjubSchnorrSignature,

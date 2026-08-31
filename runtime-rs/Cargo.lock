@@ -453,6 +453,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-contract-narrowing-fixture"
+version = "0.1.0"
+dependencies = [
+ "compact-runtime",
+]
+
+[[package]]
 name = "compact-contract-nested-map-fixture"
 version = "0.1.0"
 dependencies = [
@@ -3388,6 +3395,7 @@ dependencies = [
  "compact-contract-map-fn-fixture",
  "compact-contract-map-lambda-fixture",
  "compact-contract-module-fixture",
+ "compact-contract-narrowing-fixture",
  "compact-contract-nested-map-fixture",
  "compact-contract-pure-circuit-fixture",
  "compact-contract-sealed-ledger-fixture",

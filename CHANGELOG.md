@@ -9,6 +9,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _No changes yet._
 
+## [Toolchain 0.34.105, language 0.26.0, runtime 0.19.100] — pin the boundaries the #51 sweep found (2026-09-01)
+
+### Added
+
+- Three more entries in the negative corpus, from a systematic sweep rather
+  than a lucky find. #51 turned up by comparing one lowering against
+  TypeScript's; this enumerates **every** value-check the TypeScript emitter
+  generates and asks what Rust does with each.
+
+  There are three: the narrowing cast (that was #51, now fixed), and both
+  directions of enum cast. **Rust refuses both enum casts**, so there is no
+  second divergence there — but the corpus now says so, and anyone adding an
+  enum-cast lowering has to delete an entry to do it, which is the moment to
+  remember the bound.
+
+- `Uint<128>` arithmetic, pinned on both sides, and this one is load-bearing.
+
+  Rust lowers `a + b` as `wrapping_add` on operands widened to the next width
+  up, then range-checks the narrowing back down. Below u128 that composes
+  correctly: `u64 + u64` cannot lose anything at u128, so the check sees the
+  true sum and agrees with TypeScript's exact bigints.
+
+  At u128 there is no next width, so a `wrapping_add` would wrap *before* the
+  check, the check would see an in-range value, and Rust would silently
+  return a wrapped result where TypeScript throws — #51 again, in a form the
+  narrowing fix cannot catch because the information is already gone. The
+  backend refuses instead, and the corpus records that `Uint<128>` values
+  themselves still work, so the guard is not widened by accident.
+
 ## [Toolchain 0.34.104, language 0.26.0, runtime 0.19.100] — narrowing casts agree with TypeScript again (2026-09-01)
 
 ### Fixed

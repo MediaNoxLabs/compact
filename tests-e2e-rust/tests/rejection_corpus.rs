@@ -88,6 +88,55 @@ const REJECTIONS: &[(&str, &str, &str)] = &[
         // a catch-all `(guard (c [#t #f]) ...)`, which swallows the
         // precise diagnostic and reports the generic one. The refusal is
         // correct; only the message is coarse. Tracked separately.
+        // `Uint<128>` arithmetic. This one is load-bearing rather than
+        // incidental, and the reasoning is worth keeping next to the test.
+        //
+        // Rust lowers `a + b` as `wrapping_add` on operands widened to the
+        // next width up, then range-checks the narrowing back down. Below
+        // u128 that composes correctly — `u64 + u64` cannot lose anything at
+        // u128, so the check sees the true sum and matches TypeScript, whose
+        // bigints are exact.
+        //
+        // At u128 there is no next width. A `wrapping_add` there would wrap
+        // *before* the check, the check would then see an in-range value, and
+        // Rust would silently return a wrapped result where TypeScript throws
+        // — reintroducing #51 in a form the narrowing fix cannot catch,
+        // because by then the information is gone.
+        //
+        // The backend refuses instead. `Uint<128>` values themselves are
+        // fine; only arithmetic on them is out. If someone lowers this, the
+        // wrap has to be detected rather than range-checked afterwards.
+        "Uint<128> arithmetic",
+        "export ledger n: Uint<128>;\n\
+         export pure circuit addBig(a: Uint<128>, b: Uint<128>): Uint<128> { return (a + b) as Uint<128>; }\n",
+        "pure-circuit-body-emission",
+    ),
+    (
+        // Enum casts. TypeScript emits a range check that throws for both
+        // directions — `cast from Field or Uint value to enum X failed` and
+        // `cast from enum X to Uint<0..N> failed`. Rust has no lowering for
+        // either, so both refuse.
+        //
+        // These are here to keep it that way. `x as Uint<N>` was the third
+        // value-check TypeScript emits, and it *did* have a Rust lowering
+        // that skipped the check — silently returning 44 for an input
+        // TypeScript throws on (MediaNoxLabs/compact#51). Anyone adding an
+        // enum-cast lowering has to delete an entry here to do it, which is
+        // the moment to remember the bound.
+        "cast from enum to Uint",
+        "enum Color { Red, Green, Blue }\n\
+         export ledger c: Uint<8>;\n\
+         export pure circuit toNum(x: Color): Uint<0..2> { return x as Uint<0..2>; }\n",
+        "pure-circuit-body-emission",
+    ),
+    (
+        "cast from Uint to enum",
+        "enum Color { Red, Green, Blue }\n\
+         export ledger c: Uint<8>;\n\
+         export pure circuit fromNum(n: Uint<0..2>): Color { return n as Color; }\n",
+        "pure-circuit-body-emission",
+    ),
+    (
         "Field narrowed to Uint",
         "export ledger n: Uint<64>;\n\
          export circuit narrow(f: Field): Uint<64> { return f as Uint<64>; }\n",
@@ -107,6 +156,14 @@ const ACCEPTIONS: &[(&str, &str)] = &[
     (
         "explicitly empty constructor",
         "export ledger n: Uint<64>;\nconstructor() { }\n",
+    ),
+    (
+        // The boundary above is arithmetic-only; the type itself is
+        // supported, and a guard that took out all of Uint<128> would be too
+        // wide.
+        "Uint<128> without arithmetic",
+        "export ledger n: Uint<128>;\n\
+         export pure circuit passBig(a: Uint<128>): Uint<128> { return a; }\n",
     ),
     (
         "constructor with plain writes",

@@ -57,46 +57,25 @@ where
         &self,
         ctx: ConstructorContext<PS>,
     ) -> Result<ConstructorResult<PS>, CompactError> {
-        let sv = new_array(vec![new_cell_array([0u64; 3])]);
+        let sv = new_array(vec![new_cell(0u8)]);
         let state = ChargedState::new(sv);
         let qctx = QueryContext::new(state, compact_runtime::ContractAddress::default());
-        let tmp = [
-            compact_runtime::std_lib::narrow::<u64>(
-                (((1u64) as u128).wrapping_mul((2u64) as u128)) as u128,
-                18446744073709551615_u128,
-                "map_lambda_fixture.compact line 40 char 44",
-            )?,
-            compact_runtime::std_lib::narrow::<u64>(
-                (((2u64) as u128).wrapping_mul((2u64) as u128)) as u128,
-                18446744073709551615_u128,
-                "map_lambda_fixture.compact line 40 char 44",
-            )?,
-            compact_runtime::std_lib::narrow::<u64>(
-                (((3u64) as u128).wrapping_mul((2u64) as u128)) as u128,
-                18446744073709551615_u128,
-                "map_lambda_fixture.compact line 40 char 44",
-            )?,
-        ];
-        let ops = OpProgramVerify::<DefaultDB>::new()
-            .push(false, new_cell(0u8))
-            .push(true, new_cell_array(tmp.clone()))
-            .ins(false, 1)
-            .build();
-
-        let results = query_for_verify(&qctx, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?;
-
         Ok(ConstructorResult {
-            current_contract_state: results.context.state,
+            current_contract_state: qctx.state,
             current_private_state: ctx.initial_private_state,
             current_zswap_local_state: ctx.empty_zswap_local_state,
         })
     }
 
-    pub fn ping(&self, ctx: CircuitContext<PS>) -> Result<CircuitResults<PS, ()>, CompactError> {
-        let tmp = [0u64, 0, 0];
+    pub fn record(
+        &self,
+        ctx: CircuitContext<PS>,
+        x: u16,
+    ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let tmp = pure_circuits::shrink(x)?;
         let ops = OpProgramVerify::<DefaultDB>::new()
             .push(false, new_cell(0u8))
-            .push(true, new_cell_array(tmp.clone()))
+            .push(true, new_cell(tmp))
             .ins(false, 1)
             .build();
 
@@ -127,7 +106,7 @@ pub fn ledger<D: DB>(state: &ChargedState<D>) -> Ledger<'_, D> {
 }
 
 impl<'a, D: DB> Ledger<'a, D> {
-    pub fn doubled(&self) -> Result<[u64; 3], CompactError> {
+    pub fn last(&self) -> Result<u8, CompactError> {
         let qctx = QueryContext::new(
             self.state.clone(),
             compact_runtime::ContractAddress::default(),
@@ -147,8 +126,26 @@ impl<'a, D: DB> Ledger<'a, D> {
                 ))
             }
         };
-        compact_runtime::std_lib::decode_vector_u64::<3>(av)
+        compact_runtime::std_lib::decode_u8(av)
     }
 }
 
-pub mod pure_circuits {}
+pub mod pure_circuits {
+    use super::*;
+
+    pub fn shrink(x: u16) -> Result<u8, CompactError> {
+        Ok(compact_runtime::std_lib::narrow::<u8>(
+            (x) as u128,
+            99_u128,
+            "narrowing_fixture.compact line 52 char 10",
+        )?)
+    }
+
+    pub fn shrink_wide(x: u32) -> Result<u16, CompactError> {
+        Ok(compact_runtime::std_lib::narrow::<u16>(
+            (x) as u128,
+            65534_u128,
+            "narrowing_fixture.compact line 56 char 10",
+        )?)
+    }
+}

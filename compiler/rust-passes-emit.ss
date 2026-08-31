@@ -2055,10 +2055,34 @@
                 (rust-feature-error src 'downcast-unsigned-width
                   "downcast-unsigned: unsupported target width ~s" nat1)]
                [else
-                (format "(~a) as ~a"
+                ;; Range-checked, not `as` (MediaNoxLabs/compact#51).
+                ;;
+                ;; TypeScript lowers this cast to a bounds check that throws
+                ;; (see `downcast-unsigned` in
+                ;; compiler/typescript-passes/print-typescript.ss). Rust's
+                ;; `as` checks nothing, and disagreed with it twice over:
+                ;;
+                ;;   * `w` is the smallest Rust width holding `nat1`, so for
+                ;;     `Uint<0..100>` it is u8 and 100..=255 was accepted
+                ;;     unchanged — outside the declared Compact type, and not
+                ;;     even truncated, so nothing made it visible.
+                ;;   * past that it truncates: `300 as u8` is 44, turning an
+                ;;     out-of-range value into a plausible in-range one.
+                ;;
+                ;; TypeScript is normative, so both were Rust bugs. The
+                ;; helper takes the Compact bound rather than the Rust one and
+                ;; reproduces TS's message verbatim, so the two backends
+                ;; report the same failure.
+                ;;
+                ;; `?` is safe in every position this renders into: circuit,
+                ;; pure-circuit and constructor bodies all return
+                ;; `Result<_, CompactError>` — `initial_state` included.
+                (format "compact_runtime::std_lib::narrow::<~a>((~a) as u128, ~a_u128, ~s)?"
+                        w
                         (parameterize ([current-arith-suffix w])
                           (expr-rust expr native-id-ht))
-                        w)]))]
+                        nat1
+                        (format-source-object src))]))]
           [(cast-from-field ,src ,nat ,ftype ,expr)
            ;; 0.33: `Field as Uint<N>` split out of `downcast-unsigned`
            ;; (which previously spelled it `(downcast-unsigned src #f nat

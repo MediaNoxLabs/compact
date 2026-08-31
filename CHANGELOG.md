@@ -9,6 +9,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _No changes yet._
 
+## [Toolchain 0.34.104, language 0.26.0, runtime 0.19.100] — narrowing casts agree with TypeScript again (2026-09-01)
+
+### Fixed
+
+- **`x as Uint<N>` silently returned wrong values instead of failing.**
+  TypeScript lowers a narrowing cast to a bounds check that throws; Rust
+  lowered it to `as`, which checks nothing. The two disagreed on every
+  out-of-range value, in two different ways (MediaNoxLabs/compact#51):
+
+  - `as` widens the accepted range to the **Rust** type's bound rather than
+    the Compact one. `Uint<0..100>` becomes `u8`, so `100..=255` was returned
+    unchanged — outside the declared type, and not truncated, so nothing made
+    it visible.
+  - past that it truncates. `shrink(300)` returned `Ok(44)`: an out-of-range
+    input became a plausible in-range output, which is worse than an error and
+    worse than a panic.
+
+  TypeScript is normative, so both were Rust bugs. Narrowing now goes through
+  `compact_runtime::std_lib::narrow`, which takes the Compact bound and
+  reproduces TypeScript's message verbatim, so a contract running on both
+  backends reports one story rather than two.
+
+  `?` is safe in every position this renders into — circuit, pure-circuit and
+  constructor bodies all return `Result<_, CompactError>`, `initial_state`
+  included, and 38 existing `?` uses in constructor bodies already relied on
+  that.
+
+### Added
+
+- `CompactError::CastFailed`, distinct from `AssertionFailed`. A failed cast
+  is not a user `assert`, and reporting it as one misattributes the failure to
+  contract code that does not exist.
+
+- `examples/narrowing_fixture.compact` and its **executing** test. Byte parity
+  is structurally blind to this class: it compares committed Rust against
+  regenerated Rust, and `(x) as u8` agrees with itself perfectly — the
+  disagreement exists only at run time, for inputs no fixture fed it. The test
+  asserts on the specific wrong answers (`shrink(300)` must not be `44`,
+  `shrink_wide(70000)` must not be `4464`), so a regression fails on the value
+  rather than only on the `Result` shape.
+
+  Verified by reverting the emitter to `as`: 5 of the 6 assertions fail, with
+  `shrink(300) returned Ok(Some(44))`, while the in-range test keeps passing —
+  so they are specific to the bug rather than failing everything.
+
 ## [Toolchain 0.34.103, language 0.26.0, runtime 0.19.100] — constructor miscompiler guard and the negative corpus (2026-09-01)
 
 ### Fixed

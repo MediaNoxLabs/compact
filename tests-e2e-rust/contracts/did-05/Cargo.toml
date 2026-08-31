@@ -26,6 +26,7 @@
 # producing code that compiles against compact-runtime.
 
 [package]
+workspace = "../../../runtime-rs"
 name = "compact-contract-did-05"
 version = "0.1.0"
 edition = "2021"

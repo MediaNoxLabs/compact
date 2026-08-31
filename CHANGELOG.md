@@ -9,6 +9,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _No changes yet._
 
+## [Toolchain 0.34.102, language 0.26.0, runtime 0.19.100] — the Rust backend gets its own Cargo workspace (2026-08-31)
+
+### Fixed
+
+- **The Rust crates broke `tools/compact`'s tests by being in the same Cargo
+  workspace.** `compact-runtime` depends on `midnight-base-crypto`, whose
+  default features enable `reqwest/rustls` → `__rustls-aws-lc-rs` →
+  `hyper-rustls/aws-lc-rs`. `tools/compact` reaches `rustls` via `ring`.
+  Cargo unifies features across a workspace, so `rustls` was built with
+  **both** providers, no default `CryptoProvider` could be selected, and four
+  of upstream's `fetch::tests` panicked in `rustls::crypto`.
+
+  `cargo tree -i aws-lc-rs` is misleading here — it shows only `tools/compact`
+  paths, because this is feature unification rather than a package edge. The
+  visible signal is the feature set: bare upstream builds `rustls` with `ring`
+  alone; before this change we added `aws-lc-rs` alongside it.
+
+  The Rust backend now lives in its own workspace rooted at `runtime-rs/`,
+  with `runtime-rs-macros`, `tests-e2e-rust` and the fixture crates as
+  members, and the root workspace `exclude`s all three. Members outside the
+  workspace directory declare `package.workspace` so Cargo resolves them to
+  the right root.
+
+  The result is checkable rather than asserted: the root `Cargo.toml` now
+  differs from upstream's by **5 lines** (the `exclude` block), the root
+  `Cargo.lock` is **byte-identical to upstream's**, and `cargo test
+  --workspace` at the root reproduces upstream's results exactly — including
+  the one pre-existing `test_compact_check_no_param` failure, which fails the
+  same way on a clean checkout of `upstream/main`.
+
+  A narrower fix — `default-features = false` on `midnight-base-crypto` —
+  was tried first and **does not work**: `cargo test -p compact --lib` passes
+  under it, but `cargo test --workspace` still fails the same four tests,
+  because single-package and workspace builds resolve features differently.
+  Only the workspace boundary makes upstream's resolution provably untouched.
+
+### Changed
+
+- `compact-runtime` and `compact-runtime-macros` are versioned **0.19.100**,
+  tracking the runtime version the compiler emits into
+  `check_runtime_version!`. The 0.34 merge moved that pin, and the crates had
+  not followed, so every generated fixture failed its own version assertion.
+
+- The 32 committed byte-parity fixtures are repinned to runtime `0.19.100` —
+  one line each, the only drift the 0.34 merge produced in generated Rust.
+
+- `rust-runtime-test.yml` runs its cargo steps in `runtime-rs/`, and its cache
+  key, cache path and `paths:` filter follow `runtime-rs/Cargo.lock`.
+
 ## [Toolchain 0.34.101, language 0.26.0, runtime 0.19.100] — upstream 0.34 merged into the Rust-codegen fork (2026-08-31)
 
 - **Fork**: merged upstream `LFDT-Minokawa/compact` `main` (toolchain 0.34.100,

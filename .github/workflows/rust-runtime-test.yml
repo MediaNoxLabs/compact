@@ -29,7 +29,7 @@ on:
       - "compiler/rust-passes/**"
       - "examples/**"
       - "Cargo.toml"
-      - "Cargo.lock"
+      - "runtime-rs/Cargo.lock"
       - ".github/workflows/rust-runtime-test.yml"
   push:
     branches:
@@ -42,7 +42,7 @@ on:
       - "compiler/rust-passes/**"
       - "examples/**"
       - "Cargo.toml"
-      - "Cargo.lock"
+      - "runtime-rs/Cargo.lock"
       - ".github/workflows/rust-runtime-test.yml"
   workflow_dispatch:
 
@@ -95,21 +95,27 @@ jobs:
       # digital-passport, which has no committed .compact source) is only
       # caught here. Formatting is hermetic (no network), and this is the
       # nix-nightly rustfmt the emitter's post-pass hook uses, so it is the
-      # authoritative fmt gate for the repo. `--all` includes tools/compact
-      # too — harmless, that tree is fmt-clean.
+      # authoritative fmt gate for our crates. Since the Rust backend now
+      # lives in its own workspace rooted at runtime-rs/, `--all` covers
+      # exactly that workspace; tools/compact is gated by upstream's own
+      # compact-test.yml.
       - name: Check formatting (whole workspace)
+        working-directory: runtime-rs
         run: cargo fmt --all --check
 
       # Clippy with -D warnings turns lints into errors. We scope it to
       # our crates explicitly so changes to tools/compact don't
       # accidentally start gating on this workflow.
       - name: Run Clippy on compact-runtime
+        working-directory: runtime-rs
         run: cargo clippy -p compact-runtime --all-targets --all-features -- -D warnings
 
       - name: Run Clippy on compact-runtime-macros
+        working-directory: runtime-rs
         run: cargo clippy -p compact-runtime-macros --all-targets --all-features -- -D warnings
 
       - name: Run Clippy on tests-e2e-rust
+        working-directory: runtime-rs
         run: cargo clippy -p tests-e2e-rust --all-targets --all-features -- -D warnings
 
   # Test matrix — runs the byte-parity suite on Linux and macOS to catch
@@ -148,18 +154,21 @@ jobs:
       - name: Cache target directory
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
-          path: target
-          key: ${{ runner.os }}-target-rust-runtime-${{ hashFiles('Cargo.lock', 'runtime-rs/**', 'runtime-rs-macros/**', 'tests-e2e-rust/**') }}
+          path: runtime-rs/target
+          key: ${{ runner.os }}-target-rust-runtime-${{ hashFiles('runtime-rs/Cargo.lock', 'runtime-rs/**', 'runtime-rs-macros/**', 'tests-e2e-rust/**') }}
           restore-keys: |
             ${{ runner.os }}-target-rust-runtime-
 
       - name: Build compact-runtime
+        working-directory: runtime-rs
         run: cargo build -p compact-runtime --locked
 
       - name: Build tests-e2e-rust (incl. fixture crates)
+        working-directory: runtime-rs
         run: cargo build -p tests-e2e-rust --tests --locked
 
       - name: Unit tests — compact-runtime
+        working-directory: runtime-rs
         run: cargo test -p compact-runtime --locked
 
       - name: Integration tests — tests-e2e-rust
@@ -170,4 +179,5 @@ jobs:
         # in tests-e2e-rust still gates here. Excluding it at the call site
         # (rather than skipping inside the test) keeps the gate impossible to
         # pass vacuously: it has no skip path of its own.
+        working-directory: runtime-rs
         run: cargo test -p tests-e2e-rust --locked -- --skip rust_codegen_byte_parity

@@ -29,7 +29,7 @@
 use compact_runtime::*;
 use std::marker::PhantomData;
 
-compact_runtime::check_runtime_version!("0.18.107");
+compact_runtime::check_runtime_version!("0.19.100");
 
 pub trait Witnesses<PS> {}
 impl<PS> Witnesses<PS> for NoWitnesses {}

@@ -29,6 +29,56 @@ runs:
         nix_path: ${{ inputs.nix_path }}
         extra_nix_config: ${{ inputs.extra_nix_config }}
 
+    # crates.io began returning 403 to any `curl/*` User-Agent. nixpkgs'
+    # fetchurl sends `curl/<ver> Nixpkgs/<ver>`, so every crate-*.tar.gz
+    # fixed-output derivation dies with
+    #
+    #   curl: (22) The requested URL returned error: 403
+    #   error: cannot download crate-actix-web-4.14.0.tar.gz from any mirror
+    #
+    # which takes out onchain-runtime-wasm and with it every nix job here.
+    # Verified by hand: that URL returns 403 for `curl/8.7.1` and for
+    # `curl/8.7.1 Nix/2.24.9`, and 302 for any other agent.
+    #
+    # Only one URL is attempted (no mirrors are configured), and none of
+    # cache.nixos.org, cache.iog.io, tarballs.nixos.org or the Attic cache
+    # holds the crate, so there is nothing to substitute from — the fetch
+    # itself has to be made to work.
+    #
+    # fetchurl declares NIX_CURL_FLAGS in impureEnvVars and appends it after
+    # its own --user-agent, and curl honours the last one given. impureEnvVars
+    # are read from the *daemon's* environment rather than the client's, so
+    # exporting it in this step would do nothing — it has to go on the service.
+    #
+    # Drop this once crates.io stops blocking, or once nixpkgs moves these
+    # fetches to static.crates.io, which still serves them (200, not 403).
+    - name: Work around crates.io blocking curl User-Agents
+      if: ${{ runner.os == 'Linux' }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        sudo mkdir -p /etc/systemd/system/nix-daemon.service.d
+        printf '[Service]\nEnvironment="NIX_CURL_FLAGS=--user-agent Mozilla/5.0 (compatible; midnight-compact-ci)"\n' \
+          | sudo tee /etc/systemd/system/nix-daemon.service.d/crates-io-ua.conf >/dev/null
+        sudo systemctl daemon-reload
+        sudo systemctl restart nix-daemon
+
+        # Prove the block is lifted now rather than 20 minutes into a build.
+        # The hash is deliberately wrong: a hash mismatch means the download
+        # succeeded, which is the only thing being tested here.
+        cat > "$RUNNER_TEMP/ua-probe.nix" <<'PROBE'
+        { pkgs ? import <nixpkgs> {} }:
+        pkgs.fetchurl {
+          url = "https://crates.io/api/v1/crates/actix-web/4.13.0/download";
+          sha256 = "0000000000000000000000000000000000000000000000000000000000000000";
+        }
+        PROBE
+        if nix-build "$RUNNER_TEMP/ua-probe.nix" --no-out-link 2>&1 | tee "$RUNNER_TEMP/ua-probe.log" | grep -q "error: 403"; then
+          echo "::error::crates.io still returns 403 to the nix fetcher; the daemon User-Agent override did not take effect."
+          exit 1
+        fi
+        echo "crates.io fetch works (a hash mismatch here is expected and fine)."
+
     - name: Cache Nix
       if: ${{ inputs.skip_cache != 'true' }}
       uses: input-output-hk/actions/attic@8663542d03a41382d97ee344a4e3955280db5f95 # latest

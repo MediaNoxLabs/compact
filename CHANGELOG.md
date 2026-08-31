@@ -9,6 +9,70 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _No changes yet._
 
+## [Toolchain 0.34.103, language 0.26.0, runtime 0.19.100] — constructor miscompiler guard and the negative corpus (2026-09-01)
+
+### Fixed
+
+- **`--rust` silently discarded every constructor write** when no walker shape
+  matched the constructor body. `emit-initial-state` treated "there is no
+  constructor" and "there is a constructor and we could not lower it" as the
+  same state, and emitted the default scaffold for both. A contract whose
+  constructor seeded a `Map` and looped over a ledger cell compiled with
+  **exit 0** and produced a contract that deployed with none of its initial
+  state.
+
+  That is a miscompiler, not a missing feature: the output was well-formed
+  Rust that built and ran, so nothing downstream could notice. It is now a
+  `ctor-body-emission` rejection.
+
+  The discriminator is narrower than it looks. `ldecl-constructor-stmt` is
+  non-`#f` even when the author wrote no constructor, because the front end
+  synthesises one for any contract with ledger fields — so "a statement
+  exists" does not mean "the author wrote a constructor". The guard tests
+  whether the body flattens to anything; constructor-less contracts and
+  explicitly empty constructors both still compile.
+
+- **A ledger field with no decoder** fell back to `decode_u64` behind a `TODO`
+  comment at the second of the two decoder sites, so a `Vector<3, Bytes<32>>`
+  accessor declared `Result<[[u8; 32]; 3], _>` and returned a `u64` in tail
+  position. Reachable with one ledger field, no circuits, no constructor. Both
+  sites now raise `ledger-read-decoder-missing`.
+
+- **`default-value-rust` no longer has a catch-all.** An unrecognised type fell
+  through to `Default::default()`, which either fails to compile (no `Default`
+  impl) or seeds a ledger cell with a value that is not the Compact default.
+  `default-supported?` in the walker mirrors the handled arms and is meant to
+  gate this, but it is consulted at one of the seven call sites. No contract
+  reaches the arm today and removing it leaves the suite unchanged, so this
+  converts defence by accident into defence by construction
+  (`default-value-unsupported-type`).
+
+### Added
+
+- `tests-e2e-rust/tests/rejection_corpus.rs` — the negative corpus. Every other
+  test in that crate pins what the backend *emits*; this pins what it must
+  **refuse**, which is a distinct property and was untested. Byte parity cannot
+  cover it: a construct that emits bad Rust agrees with its own committed
+  fixture perfectly, so the gate stays green forever. Both bugs above shipped
+  behind a green byte-parity run.
+
+  It asserts on both sides — the constructs that must reject, and the
+  neighbouring shapes that must still compile, because a rejection guard that
+  is too wide is its own bug.
+
+### Note on `Field as Uint<N>`
+
+The ledger-8 line needed a third fix here, because `Field as Uint<N>` was
+spelled `(downcast-unsigned src #f nat expr)` and shared an emitter clause with
+the `Uint`-source cast, which rendered `(x) as uN` on an `Fr` — a non-primitive
+cast from a compile that exited 0.
+
+**That fix does not apply to this line and is not needed.** 0.33 split the cast
+into its own `cast-from-field` production and made `downcast-unsigned` require
+an unsigned source, so the two can no longer share a clause; the emitter
+already raises `cast-from-field` and the walker already declines it. Ported as
+a comment rather than as code, so the guard is not reintroduced as dead code.
+
 ## [Toolchain 0.34.102, language 0.26.0, runtime 0.19.100] — the Rust backend gets its own Cargo workspace (2026-08-31)
 
 ### Fixed

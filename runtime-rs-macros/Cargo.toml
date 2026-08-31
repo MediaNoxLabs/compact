@@ -14,8 +14,9 @@
 # limitations under the License.
 
 [package]
+workspace = "../runtime-rs"
 name          = "compact-runtime-macros"
-version       = "0.18.107"
+version       = "0.19.100"
 edition       = "2021"
 license       = "Apache-2.0"
 description   = "Procedural macros for compact-runtime — emits Witnesses<PS> trait impls."

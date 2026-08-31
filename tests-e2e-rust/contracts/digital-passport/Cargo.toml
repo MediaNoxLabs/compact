@@ -28,6 +28,7 @@
 # instead of returning a handleable `Err(CompactError::AssertionFailed)`.
 
 [package]
+workspace = "../../../runtime-rs"
 name = "compact-contract-digital-passport"
 version = "0.1.0"
 edition = "2021"

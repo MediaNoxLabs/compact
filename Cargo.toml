@@ -15,74 +15,12 @@
 
 [workspace]
 resolver = "3"
-members = [
-    "tools/*",
+members = ["tools/*"]
+exclude = [
     "runtime-rs",
     "runtime-rs-macros",
     "tests-e2e-rust",
-    "tests-e2e-rust/contracts/tiny",
-    "tests-e2e-rust/contracts/zerocash",
-    "tests-e2e-rust/contracts/election",
-    "tests-e2e-rust/contracts/map-fixture",
-    "tests-e2e-rust/contracts/uints-fixture",
-    "tests-e2e-rust/contracts/vector-fixture",
-    "tests-e2e-rust/contracts/aliases-fixture",
-    "tests-e2e-rust/contracts/witnesses-fixture",
-    "tests-e2e-rust/contracts/if-stmt-fixture",
-    "tests-e2e-rust/contracts/cross-circuit-fixture",
-    "tests-e2e-rust/contracts/set-fixture",
-    "tests-e2e-rust/contracts/set-size-fixture",
-    "tests-e2e-rust/contracts/list-fixture",
-    "tests-e2e-rust/contracts/for-range-fixture",
-    "tests-e2e-rust/contracts/for-iter-fixture",
-    "tests-e2e-rust/contracts/fold-fixture",
-    "tests-e2e-rust/contracts/map-fn-fixture",
-    "tests-e2e-rust/contracts/map-lambda-fixture",
-    "tests-e2e-rust/contracts/module-fixture",
-    "tests-e2e-rust/contracts/bounded-uint-fixture",
-    "tests-e2e-rust/contracts/sealed-ledger-fixture",
-    "tests-e2e-rust/contracts/pure-circuit-fixture",
-    "tests-e2e-rust/contracts/nested-map-fixture",
-    "tests-e2e-rust/contracts/hash-to-curve-fixture",
-    "tests-e2e-rust/contracts/multi-pl-call-fixture",
-    "tests-e2e-rust/contracts/hmt-default-fixture",
-    "tests-e2e-rust/contracts/bug11-fixture",
-    "tests-e2e-rust/contracts/assert-parity-fixture",
-    "tests-e2e-rust/contracts/struct-collision-fixture",
-    "tests-e2e-rust/contracts/did-05",
-    "tests-e2e-rust/contracts/chunked-ledger-fixture",
-    "tests-e2e-rust/contracts/guarded-assert-arith-fixture",
 ]
-
-[workspace.dependencies]
-# Pinned to the same midnight-ledger line the TS runtime uses
-# (ledger-9.1.0.0-rc.3 per flake.nix). The ledger-9 crate line
-# (transient-crypto 3, coin-structure 3, onchain-* 4, zswap 9) is not yet
-# published to crates.io, so these are git dependencies on the release tag;
-# switch back to registry versions once ledger 9 is published.
-midnight-base-crypto      = { git = "https://github.com/midnightntwrk/midnight-ledger", tag = "ledger-9.1.0.0-rc.3" }
-midnight-transient-crypto = { git = "https://github.com/midnightntwrk/midnight-ledger", tag = "ledger-9.1.0.0-rc.3" }
-midnight-serialize        = { git = "https://github.com/midnightntwrk/midnight-ledger", tag = "ledger-9.1.0.0-rc.3" }
-midnight-storage          = { git = "https://github.com/midnightntwrk/midnight-ledger", tag = "ledger-9.1.0.0-rc.3" }
-midnight-coin-structure   = { git = "https://github.com/midnightntwrk/midnight-ledger", tag = "ledger-9.1.0.0-rc.3" }
-midnight-onchain-state    = { git = "https://github.com/midnightntwrk/midnight-ledger", tag = "ledger-9.1.0.0-rc.3" }
-midnight-onchain-vm       = { git = "https://github.com/midnightntwrk/midnight-ledger", tag = "ledger-9.1.0.0-rc.3" }
-midnight-onchain-runtime  = { git = "https://github.com/midnightntwrk/midnight-ledger", tag = "ledger-9.1.0.0-rc.3" }
-# default-features = false drops zswap's `proof-verifying` feature (zkir_v2),
-# which requires a midnight-transient-crypto ^2.2.0 that is not on crates.io.
-# compact-runtime only uses zswap::local state tracking, never proof checks.
-midnight-zswap            = { git = "https://github.com/midnightntwrk/midnight-ledger", tag = "ledger-9.1.0.0-rc.3", default-features = false }
-
-# Mirror midnight-ledger's own [patch.crates-io] (git-sourced instead of
-# path-sourced): ledger-9 crates depend on an "old" registry
-# midnight-transient-crypto (>=2.2 for zkir, >=2.0 for onchain-state) whose
-# transitive base-crypto/serialize must unify with the ledger-9 copies, and
-# 2.2.0 is only available as a git tag. Drop this section once the ledger-9
-# line is published to crates.io.
-[patch.crates-io]
-midnight-base-crypto      = { git = "https://github.com/midnightntwrk/midnight-ledger", tag = "ledger-9.1.0.0-rc.3" }
-midnight-serialize        = { git = "https://github.com/midnightntwrk/midnight-ledger", tag = "ledger-9.1.0.0-rc.3" }
-midnight-transient-crypto = { git = "https://github.com/midnightntwrk/midnight-ledger", tag = "transient-crypto-2.2.0-rc.1" }
 
 [workspace.package]
 version = "0.5.2"

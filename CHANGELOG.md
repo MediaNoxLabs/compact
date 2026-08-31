@@ -9,6 +9,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _No changes yet._
 
+## [Toolchain 0.34.106, language 0.26.0, runtime 0.19.100] — the streaming pass no longer emits a comment as an expression (2026-09-01)
+
+### Fixed
+
+- **Three catch-all handlers in the streaming pass substituted a comment
+  string for an expression.** `(guard (c [#t "/* TODO A24 */"]) …)` and two
+  `A14` siblings caught *any* failure while lowering a constructor
+  let-binding and handed back the comment text, which flowed straight into
+
+  ```rust
+  let some_name = /* TODO A24 */;
+  ```
+
+  That is not a degraded lowering, it is a syntax error — emitted from a
+  compile that exited 0, so the break landed at `cargo build` in generated
+  code with no pointer back to the Compact source. The same shape as
+  MediaNoxLabs/compact#45, in the one pass the earlier audit had not reached.
+
+  They now raise `ctor-lifted-binding-emission`. Nothing relied on the
+  fallback: the whole suite is unchanged by the switch, which is the
+  expected result, since the fallback could only ever have produced code
+  that failed to build.
+
+  The pass's other five catch-alls return `#f` rather than a string, and `#f`
+  propagates to a rejection, so they were already failing closed and are left
+  alone.
+
 ## [Toolchain 0.34.105, language 0.26.0, runtime 0.19.100] — pin the boundaries the #51 sweep found (2026-09-01)
 
 ### Added

@@ -236,7 +236,9 @@
                (cond
                  [(member rust-name seen) (loop (cdr xs) seen cur-qctx owned-in ci)]
                  [else
-                  (let* ([raw (guard (c [#t "/* TODO A24 */"])
+                  (let* ([raw (guard (c [#t (rust-feature-error #f 'ctor-lifted-binding-emission
+                       "could not lower a constructor let-binding; ~a"
+                       "a comment in its place renders as `let x = ;`")])
                                 (parameterize ([current-qctx-ref cur-qctx])
                                   (ctor-expr-rust expr local-binds
                                                   native-id-ht witness-id-ht
@@ -873,7 +875,9 @@
                                                           (loop (cdr xs) seen)]
                                                          [else
                                                           (let* ([raw
-                                                                  (guard (c [#t "/* TODO A14 */"])
+                                                                  (guard (c [#t (rust-feature-error #f 'ctor-lifted-binding-emission
+                       "could not lower a constructor let-binding; ~a"
+                       "a comment in its place renders as `let x = ;`")])
                                                                     (ctor-expr-rust expr local-binds
                                                                                     native-id-ht
                                                                                     witness-id-ht
@@ -1000,7 +1004,9 @@
                                                                       (camel->snake
                                                                         (id-sym var-name)))]
                                                          [rendered
-                                                          (guard (c [#t "/* TODO A14 */"])
+                                                          (guard (c [#t (rust-feature-error #f 'ctor-lifted-binding-emission
+                       "could not lower a constructor let-binding; ~a"
+                       "a comment in its place renders as `let x = ;`")])
                                                             (ctor-expr-rust expr local-binds
                                                                             native-id-ht
                                                                             witness-id-ht

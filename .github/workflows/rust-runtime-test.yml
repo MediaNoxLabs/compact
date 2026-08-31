@@ -172,12 +172,16 @@ jobs:
         run: cargo test -p compact-runtime --locked
 
       - name: Integration tests — tests-e2e-rust
-        # `rust_codegen_byte_parity_against_committed_fixtures` regenerates
-        # every fixture with compactc and asserts byte-identity, so it hard-
-        # fails without a compiler. These are bare Ubuntu/macOS runners with
-        # no nix build, so exclude that single test by name; everything else
-        # in tests-e2e-rust still gates here. Excluding it at the call site
-        # (rather than skipping inside the test) keeps the gate impossible to
-        # pass vacuously: it has no skip path of its own.
+        # Two gates here drive compactc directly and so hard-fail without a
+        # compiler: `rust_codegen_byte_parity_against_committed_fixtures`
+        # regenerates every fixture and asserts byte-identity, and the
+        # `rust_backend_*` rejection corpus compiles probe contracts and
+        # asserts they are refused. These are bare Ubuntu/macOS runners with
+        # no nix build, so both are excluded by name; everything else in
+        # tests-e2e-rust still gates here.
+        #
+        # Excluding at the call site rather than skipping inside the tests
+        # keeps them impossible to pass vacuously: neither has a skip path of
+        # its own, so any run that does execute them had a real compiler.
         working-directory: runtime-rs
-        run: cargo test -p tests-e2e-rust --locked -- --skip rust_codegen_byte_parity
+        run: cargo test -p tests-e2e-rust --locked -- --skip rust_codegen_byte_parity --skip rust_backend_

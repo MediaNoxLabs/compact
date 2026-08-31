@@ -161,7 +161,11 @@ fn compile(compactc: &Path, case: &str, source: &str) -> (Option<i32>, String, b
     let out = dir.join("out");
 
     let result = Command::new(compactc)
-        .args(["--target", "rust", "--skip-zk"])
+        // `--rust`, not `--target rust`: the repeatable `--target <language>`
+        // flag lives on the ledger-8 line and has not been carried over here
+        // yet. Kept in step with codegen_regression.rs, which drives the same
+        // compiler.
+        .args(["--rust", "--skip-zk"])
         .arg(&src)
         .arg(&out)
         .output()

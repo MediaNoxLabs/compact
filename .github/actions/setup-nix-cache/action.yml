@@ -57,15 +57,23 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
+        # The agent must be a single shell word. fetchurl's builder expands
+        # $NIX_CURL_FLAGS unquoted, so any space in the value splits into extra
+        # arguments, and curl reads those as further URLs — a first attempt at
+        # this used "Mozilla/5.0 (compatible; midnight-compact-ci)" and every
+        # fetch died with `curl: (3) URL rejected: Bad hostname`.
         sudo mkdir -p /etc/systemd/system/nix-daemon.service.d
-        printf '[Service]\nEnvironment="NIX_CURL_FLAGS=--user-agent Mozilla/5.0 (compatible; midnight-compact-ci)"\n' \
+        printf '[Service]\nEnvironment="NIX_CURL_FLAGS=--user-agent midnight-compact-ci/1.0"\n' \
           | sudo tee /etc/systemd/system/nix-daemon.service.d/crates-io-ua.conf >/dev/null
         sudo systemctl daemon-reload
         sudo systemctl restart nix-daemon
 
-        # Prove the block is lifted now rather than 20 minutes into a build.
-        # The hash is deliberately wrong: a hash mismatch means the download
-        # succeeded, which is the only thing being tested here.
+        # Prove the fetch works now rather than 20 minutes into a build. The
+        # hash is deliberately wrong, so success looks like a hash mismatch:
+        # that means the download completed. Assert on the mismatch rather than
+        # on the absence of "403" — absence alone would also be satisfied by
+        # curl failing some other way, which is exactly how the bad-agent
+        # version of this step slipped through.
         cat > "$RUNNER_TEMP/ua-probe.nix" <<'PROBE'
         { pkgs ? import <nixpkgs> {} }:
         pkgs.fetchurl {
@@ -73,11 +81,14 @@ runs:
           sha256 = "0000000000000000000000000000000000000000000000000000000000000000";
         }
         PROBE
-        if nix-build "$RUNNER_TEMP/ua-probe.nix" --no-out-link 2>&1 | tee "$RUNNER_TEMP/ua-probe.log" | grep -q "error: 403"; then
-          echo "::error::crates.io still returns 403 to the nix fetcher; the daemon User-Agent override did not take effect."
+        nix-build "$RUNNER_TEMP/ua-probe.nix" --no-out-link > "$RUNNER_TEMP/ua-probe.log" 2>&1 || true
+        if grep -qE "hash mismatch|got: +sha256" "$RUNNER_TEMP/ua-probe.log"; then
+          echo "crates.io fetch works (hash mismatch expected)."
+        else
+          echo "::error::nix could not download from crates.io. Probe output:"
+          tail -30 "$RUNNER_TEMP/ua-probe.log"
           exit 1
         fi
-        echo "crates.io fetch works (a hash mismatch here is expected and fine)."
 
     - name: Cache Nix
       if: ${{ inputs.skip_cache != 'true' }}

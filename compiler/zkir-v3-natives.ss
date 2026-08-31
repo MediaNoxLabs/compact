@@ -13,6 +13,12 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
+;; NOTE (--rust backend): entries in this file intentionally carry no
+;; `(rust "...")` annotation. ZKIR v3 natives are only reachable behind
+;; `--feature-zkir-v3`, which the Rust backend rejects (see compactc.ss);
+;; their `native-entry-rust-function` is #f and the Rust emitter never
+;; sees them. Revisit when ZKIR v3 support lands for --rust.
+
 ;; ==== Non-native fields and curve points
 (declare-native-type Secp256k1Base tfield (field-base (curve-secp256k1)))
 (declare-native-type Secp256k1Scalar tfield (field-scalar (curve-secp256k1)))

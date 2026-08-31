@@ -1,0 +1,60 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//  	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+//
+// Bug-11 regression coverage: non-literal writes into `Uint<L..U>` ledger
+// fields with non-power-of-2 upper bounds.
+//
+// Pre-Bug-11 the Rust walker rejected any `Uint<L..U>` whose upper bound
+// (`U`) did not sit on the power-of-2-minus-1 ladder
+// {255, 65535, 4294967295, u64::MAX, u128::MAX} — `tunsigned-rust-suffix-for-bound`
+// returned #f for any other nat, the surrounding `expr-supported?`
+// returned #f for `downcast-unsigned` shapes, and the body-walker
+// bailed with `circuit-body-emission: no walker shape matched`.
+//
+// The Compact language spec sanctions arbitrary `Uint<L..U>` upper
+// bounds, and the TS backend handles them via
+// `CompactTypeUnsignedInteger(maxValue, byte_len)` with arbitrary
+// `byte_len`. This fixture exercises:
+//
+//   * `tiny`   : `Uint<0..100>`     — byte_len 1, fits u8 (matches Rust width)
+//   * `medium` : `Uint<0..70000>`   — byte_len 3, fits u32 (non-power-of-2)
+//   * `wide`   : `Uint<0..5000000000>` — byte_len 5, fits u64 (non-power-of-2)
+//
+// Each circuit takes a parametric `Uint<L..U>` and writes it into the
+// matching field. Bug-11 is the gap on the non-power-of-2 byte_len
+// fields (`medium`, `wide`): pre-fix, codegen rejected; post-fix,
+// codegen routes the cell construction through
+// `new_cell_bounded_uint(value as u128, byte_len)` so the on-state
+// alignment matches the TS reference's
+// `CompactTypeUnsignedInteger(U, byte_len).toValue(v)` byte sequence.
+
+import CompactStandardLibrary;
+
+export ledger tiny: Uint<0..100>;
+export ledger medium: Uint<0..70000>;
+export ledger wide: Uint<0..5000000000>;
+
+export circuit set_tiny(v: Uint<0..100>): [] {
+  tiny.write(disclose(v));
+}
+
+export circuit set_medium(v: Uint<0..70000>): [] {
+  medium.write(disclose(v));
+}
+
+export circuit set_wide(v: Uint<0..5000000000>): [] {
+  wide.write(disclose(v));
+}

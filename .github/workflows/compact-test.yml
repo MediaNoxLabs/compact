@@ -2,9 +2,15 @@ name: Compact Tool Test
 
 on:
   pull_request:
+    # This workflow exercises the `tools/compact` toolchain-manager CLI, so
+    # it triggers on changes to that tool. It deliberately does NOT trigger
+    # on every `.github/workflows/**` change: its integration tests query the
+    # live compact release channel and assert the current latest version
+    # (tests/common/mod.rs `LATEST_COMPACTC_VERSION`), so running them on
+    # unrelated PRs (e.g. compiler / Rust-codegen work) just couples those
+    # PRs to an external, release-cadence-driven value they don't touch.
     paths:
       - "tools/compact/**"
-      - ".github/workflows/**"
   workflow_dispatch:
 
 permissions: {}

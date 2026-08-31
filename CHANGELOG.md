@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+_No changes yet._
+
+## [Toolchain 0.34.101, language 0.26.0, runtime 0.19.100] — upstream 0.34 merged into the Rust-codegen fork (2026-08-31)
+
+- **Fork**: merged upstream `LFDT-Minokawa/compact` `main` (toolchain 0.34.100,
+  language 0.26.0, runtime 0.19.100) into the Rust-codegen fork. The merge was
+  clean in every compiler source file — the only conflicts were the version
+  stamps and this changelog — which is the practical evidence that the `--rust`
+  backend is a leaf pass: it adds no IR and no semantics, so upstream IR work
+  does not collide with it.
+
+  Upstream inserted two IR stages ahead of `Ltypescript` in this range
+  (`Lnodisclose → Lnoserialize → Lloweredemit → Ltypescript`), changing the
+  `emit` expression twice, dropping `serialize`/`deserialize`, adding
+  `event-version`/`event-tag` to the `field` terminal, and changing the
+  `program` production. No `rust-passes-*` clause matches any of those forms,
+  so none of it needed porting.
+
+- **Changed**: the `print-rust` snapshots are repinned to runtime `0.19.100`.
+  That is the only change to emitted Rust across the entire merge — one line
+  per snapshot.
+
 ## [Toolchain 0.34.100, language 0.26.0, runtime 0.19.100]
 
 ### Fixed
@@ -73,6 +97,88 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 This release includes all changes for compiler versions in the range between
 0.33.100 and 0.34.0; language versions in the range between 0.25.100 and 0.26.0;
 and Compact runtime versions in the range between 0.18.100 and 0.19.0.
+
+## [Toolchain 0.33.124, language 0.25.107, runtime 0.18.107] — Field arithmetic lowering fix (2026-08-20)
+
+- **Fixed** (`--rust`): `Field` arithmetic emitted `wrapping_*` on `Fr`,
+  which does not compile. `arith-binop-rust`'s fallback branch was reached
+  whenever the result type had no unsigned width — i.e. every `Field`
+  result — so `return a + b` on two `Field`s produced
+  `Ok((a).wrapping_add(b))`. `Fr` implements `Add`/`Sub`/`Mul` but not the
+  `wrapping_*` family, so `compactc` exited 0 and the failure surfaced at
+  `cargo build`. Field arithmetic now lowers to plain `+`/`-`/`*`, which is
+  the correct semantics (field arithmetic is modular in the field
+  characteristic). An arithmetic result type that is neither a bounded
+  unsigned nor a field now raises a `rust-feature-error` rather than
+  emitting an operator the type may not have. Byte-parity neutral: no
+  fixture reached the branch.
+- **Changed** (`--rust`): the six `+`/`-`/`*` support guards in
+  `rust-passes-walker.ss` admitted only `tfield`, a literal translation of
+  the pre-0.33 `(not mbits)` condition and backwards for guards in front of
+  unsigned arithmetic. They now admit bounded unsigned *and* field results,
+  both of which have correct lowerings. Byte-parity neutral — the guards are
+  unreachable for the current corpus, which is also why the inversion went
+  unnoticed.
+- **Docs**: added `docs/rust-backend-limitations.md`, a consumer-facing list
+  of the constructs `--rust` refuses (27 kinds across 31 rejection sites),
+  the "unsupported must fail, never emit plausible output" contract, and the
+  command to enumerate the sites from the code so the page cannot drift.
+
+## [Toolchain 0.33.123, language 0.25.107, runtime 0.18.107]
+
+Fork-only release: integrates upstream 0.33.122 into the Rust-codegen fork.
+The `codegen-rust` branch is unaffected and stays on the released ledger-8
+line; this branch tracks upstream's own ledger-9 release-candidate pin
+(`ledger-9.1.0.0-rc.3`).
+
+### Fixed
+
+- Cross-contract-call compilation crashed with
+  `incorrect number of arguments 4 to #<procedure make-native-entry>`.
+  Upstream's new `circuit-passes/desugar-contract-calls.ss` synthesises a
+  `transientCommit` native, but the fork's `native-entry` record carries an
+  extra `rust-function` field. 47 tests across `save-contract-info`,
+  `print-zkir`, `print-zkir-v3` and `save-manifest` were failing.
+- `Field as Uint<N>` under `--rust` emitted `(<expr>) as uN` with an `Fr`
+  operand. `Fr` is a struct, so that is E0605 "non-primitive cast": compactc
+  exited 0 and the failure only appeared at `cargo build`. The cast is now
+  rejected with a diagnostic. (0.33 also gave it its own IR production,
+  `cast-from-field`, split out of `downcast-unsigned`.)
+
+### Changed
+
+- The Rust backend follows upstream's reshaped IR productions: arithmetic
+  `+ - *` carry a result `Type` instead of maybe-bits, `downcast-unsigned`'s
+  source bound became mandatory, and `cast-from-field` / `cast-to-field` are
+  new. All 32 `codegen_regression` fixtures regenerate with no codegen drift.
+- `Field`/`Uint<N≤64> as JubjubScalar` lowers to
+  `compact_runtime::jubjub_scalar_from_field`. `JubjubScalar as Field` has no
+  runtime helper and is rejected.
+- `ecMul` / `ecMulGenerator` take a `JubjubScalar` (upstream change); `ecNeg`
+  is bound to `compact_runtime::ec_neg`. Existing `.compact` sources passing a
+  `Field` need an explicit `as JubjubScalar`.
+- `JubjubPoint` moved from `Opaque<"JubjubPoint">` to the builtin `tpoint`
+  type, with the same decoder and default-seeding behaviour.
+- Upstream 0.33 no longer implicitly widens an integer literal to `Field` in
+  ledger-assignment position; `sealed_ledger_fixture.compact` and
+  `struct_collision_fixture.compact` gained explicit `as Field` casts.
+- The fork's F8 `nominal?` alias-export patch is now gated on `(emit-rust)`,
+  so the TypeScript pipeline sees exactly upstream's IR (ADR 0002).
+- TS byte-parity fixtures re-captured against the ledger-9 runtime:
+  `contract-state[v6]` → `[v8]`. A `capture-counter.mjs` was added — counter
+  was the one fixture in the corpus with no way to regenerate its reference.
+
+### Added
+
+- `--rust` now rejects `--feature-zkir-v3` with a clear diagnostic instead of
+  emitting a `lib.rs` that cannot compile (the v3 natives have no Rust
+  bindings and the secp256k1 type surface has no lowering). Enforced in both
+  `compactc.ss` and `generate-everything`, so programmatic drivers are covered
+  too. ZKIR v3 support in the Rust backend is tracked as follow-up work.
+- `compact_runtime::std_lib::jubjub_schnorr_verify` and
+  `JubjubSchnorrSignature`, mirroring the 0.33 standard library's Schnorr
+  verifier, with call-level routing so the generic stdlib body is never
+  lowered.
 
 ## [Toolchain 0.33.122, language 0.25.107, runtime 0.18.107]
 
@@ -785,6 +891,349 @@ and Compact runtime versions in the range between 0.16.100 and 0.17.0.
 - Schnorr signature verification over the JubJub embedded curve, via the new
   `JubjubSchnorrSignature` struct and `jubjubSchnorrVerify` circuit in the
   standard library.
+
+## Fork history — MediaNoxLabs Rust-codegen fork (pre-0.33 merge)
+
+> The entries below are MediaNoxLabs fork releases (toolchain
+> 0.31.104–0.31.111) made on top of upstream 0.31.103, before this fork
+> merged upstream 0.33.x. Version numbers in this block are fork-local and
+> do not correspond to upstream releases that may carry the same numbers.
+
+## [Toolchain 0.31.111, language 0.23.103, runtime 0.16.100] — struct-field projections in trapping arithmetic (2026-08-10)
+
+### Fixed
+
+- **Struct-field projection as an operand of trapping arithmetic (G1)** —
+  a pure circuit whose assert subtracted a struct-field projection failed to
+  compile with `unsupported Compact construct (pure-circuit-body-emission): no
+  walker shape matched pure circuit body`, e.g.
+  `if (policy.enforceMaxAge) { assert(currentTime -
+  attestation.proof.createdAt <= policy.maxAge, "..."); }`
+  (MediaNoxLabs/compact#5). The typer wraps trapping unsigned arithmetic in an
+  underflow guard `(seq (assert (>= a b)) (- a b))` and let\*-lifts any
+  operand that isn't already a simple local into its own temp, so a projection
+  operand nests TWO levels of lifted assignment:
+  `(= %t.0 (seq (= %t.1 (elt-ref attestation.proof createdAt)) (seq (assert
+  (>= currentTime %t.1) ...) (- currentTime %t.1))))`. `stmt-flatten`'s
+  `lift-seq-prefix-exprs` hoists the OUTER level to a statement, where
+  `stmt-pure-body-rust`'s `stmt->assignment` clause lowers it as
+  `let <temp> = <rhs>;` — but the inner level stayed inside the RHS and reached
+  `seq-stmt-rust`, which handled only `assert` and fell through to `expr-rust`,
+  which has no `(=)` clause at all. Plain scalar operands need only one level,
+  and the same projection under `==` rather than `<=` also stays single-level,
+  which is why every ingredient compiled in isolation and the `if` guard turned
+  out to be incidental (the unguarded assert failed identically).
+  `seq-stmt-rust` (`compiler/rust-passes-emit.ss`) now renders a nested
+  assignment through the same helpers the statement-level path uses —
+  `uniquify-rust-name` over `current-var-substitution`, then `expr-rust` for
+  the RHS — rather than gaining a second projection-aware renderer, and
+  `expr-rust`'s `seq` clause folds its prefix statements instead of mapping
+  them so a binding one introduces is in scope for the statements after it and
+  for the tail. The two `let`-binding clauses in `stmt-pure-body-rust` reserve
+  their own Rust name for the duration of the RHS render, so a temp lifted from
+  inside it uniquifies instead of shadowing the binder. Unblocks
+  midnight-verifiable-credentials' `status-proof-protocol.compact`
+  (`assertAuthorityAttestedStatusProofFreshEnough`, reached through
+  `revocation-registry.compact`) and `secret-birth-credential.compact`, both of
+  which previously died at `status-proof-protocol.compact:522`. Every existing
+  byte-parity fixture is UNCHANGED — bodies without a nested assignment take
+  the identical code path, and the digital-passport fixture's single-level
+  `let t = { assert!(...); ... }` block form is preserved. Guarded by the new
+  `examples/guarded_assert_arith_fixture.compact` fixture (byte parity via
+  `tests-e2e-rust/tests/codegen_regression.rs`) plus the executing assert gate
+  `tests-e2e-rust/tests/guarded_assert_arith_fixture.rs`, which calls the
+  generated pure circuits with values that satisfy and values that trip each
+  assert — pinning the inclusive boundary, the underflow trap (a dropped guard
+  would wrap on `u64` and silently pass), the skipped-guard path, and a
+  two-projection subtraction whose returned difference proves the two lifted
+  temps stayed distinct. Emitter-only fix: the runtime crate version stays
+  0.16.100 because generated contracts pin it via `check_runtime_version!`,
+  which requires exact equality — only the toolchain version advances.
+
+## [Toolchain 0.31.110, language 0.23.103, runtime 0.16.100] — alignment-aware ledger-read decode (2026-08-10)
+
+### Fixed
+
+- **Field-repr-arity ledger-read decoding of alignment-encoded cells (A30)** —
+  `compact_runtime::std_lib::decode_via_field_repr<T>` converted the
+  `AlignedValue`'s atoms to `Fr`s 1:1 (one `Fr::try_from(atom)` per atom) and
+  fed that to `T::from_field_repr`. But cells are ALIGNMENT-encoded — one atom
+  per leaf value — and a single leaf may span multiple field-repr `Fr`s: a
+  32-byte address cell is ONE atom but `[u8; 32]::FIELD_SIZE == 2` `Fr`s
+  (1-byte stray chunk + 31-byte chunk, packed from the end per upstream
+  `impl FieldRepr for [u8]`). Every `ContractAddress` read —
+  did.compact 0.5.0's `ledger().id()` accessor and the constructor's
+  `id = kernel.self()` readback — could therefore NEVER decode, and
+  multi-leaf struct reads (did-05's `VerificationMethod` map lookups: 6 atoms
+  vs `FIELD_SIZE` 3) hit the same arity mismatch. Found empirically in the
+  MediaNoxLabs/midnight-identity port (the "second decode-path finding" in the
+  MediaNoxLabs/compact#3 comment thread; MediaNoxLabs/compact#4 landed the
+  did-05 readback gate `#[ignore]`d on exactly this bug). The decoder now
+  walks `av.alignment` in lockstep with the atoms and expands each leaf into
+  exactly the `Fr` chunks its field-repr occupies: `Field` atoms as one `Fr`;
+  `Bytes { length }` atoms as `ceil(length/31)` 31-byte little-endian chunks
+  in reverse chunk order, with leading zero-`Fr`s re-padding the trailing
+  zero bytes stripped by `ValueAtom::normalize`; `Compress` atoms (opaque
+  strings / `Vec<u8>`) as raw-byte chunks of the actual atom — `ceil(n/31)`
+  `Fr`s, zero `Fr`s for the empty value — matching this runtime's
+  `OpaqueString`/`Vec<u8>` `FieldRepr` convention.
+  `OpaqueString::from_field_repr` now strips the 31-byte-chunk zero padding
+  (on-chain `Compress` atoms are normal-form, so trailing NULs are
+  unrepresentable — stripping is the faithful inverse). For fixed-size
+  targets the expanded stream must match `T::FIELD_SIZE` exactly, so a
+  NON-empty variable-length leaf inside a fixed-slicing struct fails loudly
+  instead of silently mis-slicing every following field
+  (`OpaqueString::FIELD_SIZE == 0` gives the generated `from_field_repr` no
+  slot for the bytes; variable-length struct leaves round-trip only while
+  empty — tracked as a codegen follow-up). Runtime-only fix: NO generated
+  code changes and byte-parity fixtures untouched; the runtime crate version
+  stays 0.16.100 because generated contracts pin it via
+  `check_runtime_version!`, which requires exact equality — only the
+  toolchain version advances. Guarded by round-trip unit tests in
+  `runtime-rs/src/std_lib/adts.rs` (`new_cell(T)` →
+  `decode_via_field_repr::<T>` for u8/u32/u64/bool/Fr, tuples,
+  `ContractAddress` incl. the all-zero normalised-empty-atom edge,
+  `[u8; 32]`, a `[u8; 32]`-bearing struct, a JWK-shaped struct with empty
+  string leaves, plain enums, opaque strings empty/short/31-byte/multi-chunk,
+  and the loud non-empty-string-leaf rejection) and by un-ignoring the
+  did-05 executing readback gate
+  (`tests-e2e-rust/tests/did05_constructor_scaffold.rs`), which now asserts
+  the full `initial_state` → `ledger()` accessor readback INCLUDING `id`
+  (the pre-A30 failure-mode pin test is removed).
+
+## [Toolchain 0.31.109, language 0.23.103, runtime 0.16.100] — initial-state chunked scaffold (2026-08-07)
+
+### Fixed
+
+- **Flat initial-state scaffold for >16-field ledgers (A29)** — contracts with
+  more than 16 ledger fields (did.compact 0.5.0 has 19) generated an
+  `initial_state` that seeded a *flat* n-element `new_array(vec![...])`
+  scaffold, while every read/write emission site — including the constructor's
+  own writes — used the front end's chunked nested shape
+  (`StateValue::Array` caps at 16; did-05 chunks as an outer 2-slot array of
+  4 + 15 fields). Executing the Rust constructor therefore wrote nested
+  `idx_at_index` paths into a flat scaffold, producing state the generated
+  `ledger()` accessors (and the chain shape) could not read. The scaffold
+  emission (`emit-scaffold-elements` in `compiler/rust-passes-emit.ss`) now
+  walks the IR's `public-ledger-array` structure recursively — the SAME
+  nested structure `binding-path-indices` and all read/write emitters derive
+  their paths from, mirroring `typescript-passes.ss::ledger-initializers` —
+  so the shapes cannot diverge. Contracts with <=16 fields have no nested
+  pl-arrays and stay byte-identical. Found while building the
+  indexer-backed snapshot decoder in midnight-identity (tracked in
+  MediaNoxLabs/compact#3 comments). Guarded by a new EXECUTING constructor
+  readback gate: `tests-e2e-rust/tests/chunked_ledger_fixture.rs` runs the
+  new 18-field `examples/chunked_ledger_fixture.compact`'s `initial_state`
+  and reads every field back via the generated `ledger()` accessors. The
+  did-05 equivalent (`tests-e2e-rust/tests/did05_constructor_scaffold.rs`)
+  pins the current failure mode and carries the full readback `#[ignore]`d —
+  did-05's constructor does `id = kernel.self()`, whose generated
+  `decode_via_field_repr::<ContractAddress>` read hits the separate
+  field-repr-vs-alignment decode bug (also tracked in the #3 comment
+  thread); un-ignore when that follow-up lands.
+
+## [Toolchain 0.31.108, language 0.23.103, runtime 0.16.100] — constructor read-your-writes (2026-08-05)
+
+### Fixed
+
+- **Constructor read-before-write for impure-call reads (A28)** — a constructor
+  that writes a ledger field and then calls an impure circuit reading that
+  field (did.compact 0.5.0's `controllerPublicKey` / `recoveryAuthorityPublicKey`
+  writes followed by `assertControllerPublicKeyDistinctFromRecoveryAuthority`,
+  which reads both) generated the read against the *unmodified initial ledger*,
+  because all writes were batched into a single `OpProgramVerify` applied at the
+  end. Both the argument read and the callee's own ledger reads saw
+  `JubjubPoint::default()`, silently defeating the distinctness invariant. The
+  codegen now flushes the pending cell-writes/pl-calls to `qctx`
+  (`ctor-write-flush-lines`) before an impure call in a constructor, giving
+  read-your-writes; the impure call and its args then observe the witnessed
+  values. Surfaced by Codex review (P1). Covered by a structural regression
+  test (the write-flush must precede the distinctness assert) plus the did-05
+  byte-parity lock; other constructors (no impure call) are byte-identical.
+
+## [Toolchain 0.31.107, language 0.23.103, runtime 0.16.100] — impure-call gas accounting (2026-08-05)
+
+### Fixed
+
+- **Circuit gas under-reporting for impure-helper calls (A27)** — a circuit
+  that calls an impure circuit (e.g. `recordUpdate()` after a mutation, or a
+  cross-circuit helper) rebound `ctx` from the callee's result but discarded
+  the callee's `gas_cost`, so the generated function returned only the terminal
+  write's gas and under-reported successful transactions. Both walkers now
+  accumulate callee gas: the streaming walker adds `__gas_acc += _cr.gas_cost`
+  for bare/const impure calls, and non-streamed circuit bodies with impure
+  calls seed a `__gas_acc` and return `__gas_acc + results.gas_cost`. Surfaced
+  by Codex review of the did.compact 0.5.0 circuits (setVerificationMethod /
+  rotateControllerKey / …); also corrected the latent same-shape gap in
+  `cross-circuit-fixture`. Covered by a new semantic gas test
+  (`reset_and_set` gas strictly exceeds `reset` gas) plus byte-parity locks.
+
+## [Toolchain 0.31.106, language 0.23.103, runtime 0.16.100] — did.compact 0.5.0 codegen support (2026-08-05)
+
+### Added
+
+- **did.compact 0.5.0 codegen support** — the `compactc --rust` backend now
+  generates and compiles the midnight-did 0.5.0 contract (controller-
+  authorization + recovery). New closures: a JubjubPoint ledger-read decoder
+  and typed initial-cell default; constructor-mode impure-circuit context
+  threading (query, private, and zswap-local state); multi-assert if/else
+  branches emitted in source order; and non-terminal branch calls threaded in
+  source order with their returned context carried into the terminal op
+  (A22–A26). Added the `did-05` regression fixture (vendored contract + its
+  jubjub-schnorr dependency under `examples/did-05/`) to the
+  `codegen_regression` byte-parity table and as a workspace compile gate. All
+  pre-existing fixtures regenerate byte-identically.
+
+## [Toolchain 0.31.105, language 0.23.103, runtime 0.16.100] — codegen correctness sweep + digital-passport (2026-07-10)
+
+### Fixed
+
+- **export-typedef promotion gated to `--rust`** — the M3.5-E2 pass that
+  synthesises `export-typedef` entries for user structs/enums (so the Rust
+  H5-H7 emitter can declare them) ran unconditionally and mutated the shared
+  `Lexpanded` IR, drifting ~64 `compiler/test.ss` goldens across
+  expand-modules-and-types / infer-types / reject-recursive-circuits /
+  track-witness-data / combine-ledger-declarations. It is now
+  `(when (emit-rust) …)`, so the TS-backend IR is unchanged and the Rust
+  fixtures still get their typedefs. This let the CI drop all fork-scoped
+  `if: github.repository != …` skips. See
+  [ADR 0002](docs/adr/0002-gate-export-typedef-promotion-to-rust.md).
+
+- **Struct-name disambiguation** — same-named structs from distinct module
+  imports (e.g. a generic protocol module instantiated twice, or two modules
+  each exporting `struct Rec`) are now resolved by structural fingerprint,
+  keyed on field **names** as well as types, and the disambiguated name
+  (`Name` / `Name_1`) is applied at **all** emission sites — struct
+  literals, decoder turbofish, and default expressions — not only in type
+  positions. Previously the fingerprint ignored field names (merging
+  distinct structs → `E0609`) and value sites emitted the raw name
+  (mismatch vs the disambiguated signature → `E0308`/`E0422`). Stdlib
+  structs (`Maybe`, `MerkleTreePath*`, `ContractAddress`) are excluded from
+  disambiguation. New `struct_collision_fixture` byte-parity gate; see
+  [ADR 0001](docs/adr/0001-rust-struct-name-disambiguation.md).
+
+- **A20** — read-no-arg adt-op vm-code lowering. `emit-ledger-read-expr`
+  no-arg branch in `compiler/rust-passes-emit.ss` was hardcoded to emit
+  `dup → idx → popeq` and silently discarded the adt-op's vm-code, so
+  any contract calling `Set.size`, `Set.isEmpty`, `Map.size`, `Map.isEmpty`,
+  `List.isEmpty`, `List.length`, or `HistoricMerkleTree.isFull` compiled
+  to misencoded gather chains that decoded the container as a raw `Cell`.
+  Fix routes these ops through `expand-vm-code` (same machinery as A8's
+  read-with-arg path). New `set_size_fixture` byte-parity gate.
+  Commits: [`0916b28`](../../commit/0916b28), [`c15af41`](../../commit/c15af41).
+
+- **A21** — `HistoricMerkleTree.insertIndexDefault` circuit-body shape.
+  Walker rejected the IR with `circuit-body-emission: no walker shape
+  matched`. Added the body-shape and op-builder support
+  (`lt`/`branch`/`jmp`/`swap`/`pop`). New `hmt_default_fixture`
+  byte-parity gate. Commits: [`6aa3cdc`](../../commit/6aa3cdc), [`776d83e`](../../commit/776d83e).
+
+- **Bug-8** — `==`/`!=` walker forced typed enum rendering when the
+  comparison's IR `type` was a tenum (Bug-4's optimisation), but the IR
+  type is the tenum even when one operand is a ledger-read decoded as
+  `u8`. Election's `state.read() == PublicState.commit` generated
+  invalid Rust `u8 == PublicState::commit`. Added `is-ledger-read-expr?`
+  predicate; in `==`/`!=` clauses, short-circuit `typed?` to `#f` when
+  either operand is a ledger-read. Commit: [`0fffe67`](../../commit/0fffe67).
+
+- **Bug-9** — non-exported tenum decls referenced by emitted impure
+  circuits. A18+A19 (`f9b509f`) taught the emitter to render
+  non-exported impure circuits as inherent methods on `Contract<PS, W>`,
+  but the type-declarations pass didn't follow the new type-reference
+  graph. Tiny's `circuit in_state(s: STATE): Boolean` was emitted as a
+  method, but the `STATE` enum was never declared. Extended
+  `collect-pure-circuit-tdefns` in `compiler/rust-passes-decls.ss` to
+  walk non-exported impure circuit signatures too. Commit:
+  [`a45d68d`](../../commit/a45d68d).
+
+- **Bug-10** — typed decoder for `tenum` ledger reads (Option A).
+  Previously `decoder-for-type` lowered tenum-typed ledger fields via
+  `decode_u8`, which broke `state == s` (where `s: STATE` is a
+  tenum-typed formal arg) because `u8 == STATE` doesn't compile.
+  Bug-8's `is-ledger-read-expr?` short-circuit fixed the case where the
+  RHS is an `enum-ref` literal (drops to u8 via `enum-ref->u8`), but had
+  no fallback for typed var-ref RHS. Option A's fix flips the LHS to
+  decode as the typed enum (`decode_via_field_repr::<EnumName>`),
+  eliminating the u8/tenum mismatch entirely. Bug-8's special-case
+  becomes redundant for tenum-typed reads. Commit: [`62c81be`](../../commit/62c81be).
+
+### Changed
+
+- **Rust codegen: `assert` is now a handleable error, not a panic
+  (parity with the TS backend).** `compactc --rust` now lowers every
+  `assert(cond, "msg")` inside a pure circuit to the `compact_assert!`
+  macro (returning `Err(CompactError::AssertionFailed(msg))`) and emits
+  pure circuits with a `Result<T, CompactError>` signature, appending
+  `?` at every pure-circuit call site so the error propagates through
+  impure callers. Previously pure-circuit asserts lowered to a
+  panicking `assert!`, aborting the host process — fundamentally
+  different from the TS backend's catchable `CompactError` throw. The
+  5 fixtures with pure circuits (tiny, zerocash, election,
+  if-stmt-fixture, pure-circuit-fixture) were regenerated; the on-chain
+  op-program/witness bytes are unchanged, so all 51 byte-parity tests
+  stay green. A new dedicated `assert_parity` fixture + test proves a
+  failing pure-circuit assert yields `Err(AssertionFailed)`, not a
+  panic. Note: the hand-imported `digital-passport` crate (no `.compact`
+  source in this repo) is not regenerated by the pipeline and keeps its
+  123 panicking `assert!` until re-emitted from upstream.
+
+- **24 fixture `lib.rs` files regenerated** against the post-Bug-10
+  compactc (commit [`4e322bc`](../../commit/4e322bc)). Drift categories:
+  `PS: Clone` widening (Bug-3, all 24); `.popeq(true)` → `.popeq(false)`
+  honouring the vm-code's `cached` flag (election, tiny); `tiny.in_state`
+  inherent method emission (Bug-9); typed tenum ledger decoders
+  (Bug-10). All 47 byte-parity tests + `codegen_regression` green.
+
+### Process notes
+
+The 5-bug cascade was surfaced by manually running `codegen_regression`
+against a fresh `compactc --rust` regen. The standing byte-parity test
+corpus is structurally blind to source-level codegen drift — bugs that
+change generated Rust without changing `ContractState::serialize()`
+output (Bug-8's `u8 == EnumName::variant` compile error; Bug-9's missing
+enum decl; Bug-10's wrong decoder) don't surface without an explicit
+regen-and-diff step. Treating `codegen_regression` as a CI gate, not
+just a test result, is now the standing policy.
+
+## [Toolchain 0.31.104, language 0.23.103, runtime 0.16.100]
+
+### Added
+
+- Adds `--rust` to `compactc`: lowers a `.compact` contract to a native
+  Rust crate (`contract/lib.rs`) that depends on the new `compact-runtime`
+  crate. The Rust crate exposes `Contract::new(...)`, `initial_state(...)`,
+  each impure circuit as a method on the contract, and a `Ledger<'a, D>`
+  view for reading on-chain state — parallel to the TypeScript backend's
+  surface, with byte-identical `ContractState.serialize()` output.
+  - **Runtime crate** (`runtime-rs/`): curated prelude over the Midnight
+    Rust crates (`midnight-base-crypto`, `midnight-transient-crypto`,
+    `midnight-storage`, `midnight-onchain-state` / `-vm` / `-runtime`,
+    `midnight-coin-structure`, `midnight-zswap`); facade aggregates
+    (`ConstructorContext`, `CircuitContext`, `ConstructorResult`,
+    `CircuitResults`, `WitnessContext`, `CompactError`); Compact stdlib
+    helpers (`Counter`, `Maybe<T>`, `OpaqueString`, `pad`, `disclose`,
+    `persistent_hash_aligned`, Jubjub/EC native shims, Merkle path
+    helpers); `OpProgramVerify` / `OpProgramGather` builders.
+  - **Codegen coverage**: scalars, ADTs as ledger fields
+    (`Counter`/`Cell`/`Map`/`Set`/`MerkleTree`/`HistoricMerkleTree`/`List`),
+    user structs and enums, transparent + nominal type aliases, witnesses,
+    native hashes, `if`-statement bodies, ADT method calls (`insert` /
+    `lookup` / `member` / `checkRoot`), cross-circuit calls, `for`-range
+    and `for`-iterable loops with compile-time unrolling, basic `fold`
+    with loop-var substitution, bounded `Uint<L..U>`, sealed ledger fields.
+  - **Compile-time safety**: unsupported Compact constructs now produce a
+    `compactc --rust: unsupported Compact construct (...)` error at
+    codegen time rather than emitting `unimplemented!()` Rust that
+    compiles but panics at runtime.
+  - **Test coverage**: 32 cross-language byte-parity tests under
+    `tests-e2e-rust/`, plus a codegen-regression guard asserting all
+    committed `lib.rs` files regenerate byte-identical via
+    `compactc --rust`.
+  - **Docs**: an end-user guide at `doc/rust-codegen-user-guide.md`,
+    contributor READMEs under `compiler/README-rust-passes.md`,
+    `runtime-rs/README.md`, and `tests-e2e-rust/README.md`, plus a
+    parity gap report under
+    `docs/superpowers/research/2026-06-02-upstream-parity-gap-report.md`.
 
 ## [Toolchain 0.31.103, language 0.23.103, runtime 0.16.100]
 

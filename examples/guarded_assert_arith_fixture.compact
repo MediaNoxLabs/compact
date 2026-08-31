@@ -1,0 +1,130 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//  	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+//
+// G1 fixture: struct-field projection as an operand of trapping
+// unsigned arithmetic, inside and outside an `if`-guarded assert.
+//
+// Compact's typer wraps trapping arithmetic (`a - b`, which must not
+// underflow) in `(seq (assert <guard>) (- a b))`, and let*-lifts each
+// operand that isn't already a simple local into its own temp. A
+// struct-field projection is such an operand, so the lowering nests
+// TWO levels of lifted assignment:
+//
+//   (= %t.0 (seq (= %t.1 (elt-ref attestation.proof createdAt))
+//                (seq (assert (>= currentTime %t.1) "...")
+//                     (- currentTime %t.1))))
+//
+// Before the G1 fix the Rust emitter only rendered the OUTER level —
+// `seq-stmt-rust` had no clause for a nested assignment and fell
+// through to `expr-rust`, which has no `(=)` clause — so the whole
+// pure-circuit body bailed with `no walker shape matched pure circuit
+// body`. Plain scalar operands (one level), and the same projection
+// under `==` rather than `<=`, both stayed on the single-level path,
+// which is why every ingredient compiled in isolation.
+//
+// This mirrors the shape in midnight-verifiable-credentials'
+// `status-proof-protocol.compact`
+// (`assertAuthorityAttestedStatusProofFreshEnough`) and
+// `secret-birth-credential.compact`.
+//
+// Circuits, in increasing order of what they exercise:
+//   - `assertFreshEnough`: the exact G1 shape — a nested (two-level)
+//     projection under `-` and `<=`, inside an `if` guard, alongside an
+//     unguarded assert over the same projection.
+//   - `assertAgeWithin`: the same arithmetic with NO `if` guard,
+//     pinning that the fix is in the shared expression renderer rather
+//     than in the branch emitter.
+//   - `ageGap`: projections on BOTH operands of `-`, in a
+//     value-returning circuit, so two lifted temps coexist in one body
+//     and the temp-name uniquifier is exercised.
+//   - `recordFreshEnough`: an IMPURE circuit calling the guarded pure
+//     circuit, so a failing guarded assert propagates out via `?`.
+
+import CompactStandardLibrary;
+
+// Nested struct: `attestation.proof.createdAt` is a two-level
+// projection, matching the real VC contracts (a one-level projection
+// triggers the same gap, but nesting pins the recursive case too).
+struct StatusProof {
+  createdAt: Uint<64>;
+  issuer: Uint<64>;
+}
+
+struct Attestation {
+  proof: StatusProof;
+  hasExpiration: Boolean;
+  expiresAt: Uint<64>;
+}
+
+struct VerifierPolicy {
+  enforceMaxAge: Boolean;
+  maxAge: Uint<64>;
+}
+
+export ledger accepted: Counter;
+
+// The G1 shape: `if`-guarded assert whose condition subtracts a nested
+// struct-field projection and compares the difference with `<=`.
+export pure circuit assertFreshEnough(
+  policy: VerifierPolicy,
+  attestation: Attestation,
+  currentTime: Uint<64>
+): [] {
+  assert(
+    currentTime >= attestation.proof.createdAt,
+    "attestation creation time cannot be in the future"
+  );
+  if (policy.enforceMaxAge) {
+    assert(
+      currentTime - attestation.proof.createdAt <= policy.maxAge,
+      "attestation exceeds the max-age policy"
+    );
+  }
+}
+
+// Same arithmetic with no `if` guard — the gap was in the shared
+// expression renderer, not the branch emitter, so this must compile too.
+export pure circuit assertAgeWithin(
+  attestation: Attestation,
+  currentTime: Uint<64>,
+  limit: Uint<64>
+): [] {
+  assert(
+    currentTime - attestation.proof.createdAt <= limit,
+    "attestation age exceeds the limit"
+  );
+}
+
+// Projections on BOTH operands of `-`, in a value-returning circuit:
+// two lifted temps in one body, so the uniquifier must keep them apart.
+export pure circuit ageGap(newer: Attestation, older: Attestation): Uint<64> {
+  assert(
+    newer.proof.createdAt >= older.proof.createdAt,
+    "newer attestation must not predate the older one"
+  );
+  return newer.proof.createdAt - older.proof.createdAt;
+}
+
+// Impure caller: a failing guarded assert must propagate out as
+// `Err(AssertionFailed)` through the `?` at the pure-circuit call site.
+export circuit recordFreshEnough(
+  policy: VerifierPolicy,
+  attestation: Attestation,
+  currentTime: Uint<64>
+): [] {
+  assertFreshEnough(policy, attestation, currentTime);
+  accepted.increment(1);
+}

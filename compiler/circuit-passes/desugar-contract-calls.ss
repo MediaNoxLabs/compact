@@ -77,7 +77,31 @@
                   (cons
                     (with-output-language (Lflattened Native-Declaration)
                       `(native ,src ,nm
+                         ;; Fork: `native-entry` carries a second field,
+                         ;; `rust-function`, holding the Rust-side binding
+                         ;; (langs.ss `define-record-type native-entry`).
+                         ;; This is upstream's own synthesized native, so
+                         ;; it needs the extra slot filled in — without it
+                         ;; the constructor is called with 4 of 5
+                         ;; arguments and every cross-contract-call test
+                         ;; dies with "incorrect number of arguments 4 to
+                         ;; #<procedure make-native-entry>" inside
+                         ;; desugar-contract-calls.
+                         ;;
+                         ;; `transientCommit`'s declared Rust binding is
+                         ;; `compact_runtime::transient_commit`
+                         ;; (midnight-natives.ss), and the same helper is
+                         ;; re-exported at the crate root, so the honest
+                         ;; value is that binding rather than #f. The Rust
+                         ;; backend does not lower cross-contract calls at
+                         ;; all yet (rust-passes.ss matches and ignores the
+                         ;; program node's contract-type* group), so this
+                         ;; entry is currently unreachable under --rust —
+                         ;; but if and when that support lands, the binding
+                         ;; is already correct instead of erroring as an
+                         ;; unmapped native.
                          ,(make-native-entry "__compactRuntime.transientCommit"
+                                             "compact_runtime::transient_commit"
                                              'circuit '(#f #f) '(#f #f #f))
                          ((argument (,value-vars ...) (ty (,aligns ...) (,prims ...)))
                           (argument (,(make-temp-id src 'rand))

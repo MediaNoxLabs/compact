@@ -3231,7 +3231,22 @@
                    (format "Maybe::<~a>::default()" (type-rust (car types)))]
                   [else (loop (cdr names) (cdr types))]))]
              [else (format "~a::default()" (struct-rust-name-of type struct-name))])]
-          [else "Default::default()"]))
+          ;; No catch-all. `Default::default()` here would be a guess about a
+          ;; type we did not recognise: it either fails to compile (no Default
+          ;; impl — E0277, in generated code) or compiles and seeds a cell with
+          ;; a value that is not the Compact default. The second is the #45
+          ;; failure mode, so refuse instead.
+          ;;
+          ;; `default-supported?` in the walker mirrors the arms above and is
+          ;; meant to gate this, but it is consulted at one of the seven
+          ;; `default-value-rust` call sites. Nothing reaches this arm today —
+          ;; every route probed was closed by the decoder gate or the body
+          ;; walker first — but that is defence by accident. This makes it
+          ;; defence by construction.
+          [else
+           (rust-feature-error #f 'default-value-unsupported-type
+             "no Rust default for this type; ~a"
+             "seeding it with `Default::default()` would guess at the initial state")]))
 
       ;; emit-ledger-view: emits the module-level `ledger()` factory and the
       ;; `Ledger<'a, D>` view struct with one accessor method per *exported*

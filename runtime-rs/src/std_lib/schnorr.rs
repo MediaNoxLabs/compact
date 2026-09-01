@@ -16,23 +16,34 @@
 //! Module-1 (Schnorr) — Schnorr-on-Jubjub signature verification
 //! exposed in a shape the compact codegen can call directly.
 //!
-//! The pinned `midnight-transient-crypto 2.1.0` does not yet expose the
-//! `schnorr` module that midnight-ledger ships locally (the impl was
-//! added post-2.1.0). To keep compact-runtime self-contained we vendor
-//! ~50 LOC of the verifier here, then expose a circuit-shaped wrapper
-//! (`schnorr_verify_jubjub`) that takes a `CircuitContext`, threads it
-//! through a no-op `query_for_verify`, and surfaces the verification
-//! result as a `CompactError::AssertionFailed` on rejection.
+//! This module used to vendor ~50 LOC of verifier because the pinned
+//! `midnight-transient-crypto 2.1.0` did not expose a `schnorr` module.
+//! On the ledger-9 line it does — this crate resolves transient-crypto
+//! **3.0.0** — so [`verify`] now delegates upstream instead.
 //!
-//! When upstream `midnight-transient-crypto` exposes `schnorr` in a
-//! future release the vendored bits can be deleted in favour of
-//! `pub use midnight_transient_crypto::schnorr::*` and the wrapper
-//! unchanged.
+//! Two things did *not* move upstream, and the reasons are worth keeping
+//! next to the code:
 //!
-//! Algorithm matches `jubjub-schnorr/src/schnorr.compact`'s
-//! `schnorrVerify` exactly: Poseidon over
-//! `[ann_x, ann_y, pk_x, pk_y, ...msg]` then reduce modulo the Jubjub
-//! scalar order → check `g^s == announcement + pk^c`.
+//! - **The signature type stays local.** Ours declares `response: Fr`
+//!   because Compact declares that field `Field`; upstream's declares
+//!   `response: EmbeddedFr`. Codegen constructs these values by field
+//!   name and type, so the layout has to match the Compact struct. The
+//!   reduction between the two is [`fr_to_embedded_fr`], applied at the
+//!   call boundary in [`verify`].
+//!
+//! - **[`jubjub_schnorr_verify`] keeps its own body**, and must. It
+//!   mirrors the 0.33 standard library's `jubjubSchnorrVerify` circuit,
+//!   which performs **no up-front identity rejection** — identity points
+//!   simply contribute zero coordinates to the hash. Upstream's `verify`
+//!   *does* reject identity. Routing that function through upstream would
+//!   make the Rust path refuse signatures the stdlib circuit accepts,
+//!   which is a new divergence rather than a fix. So the challenge
+//!   machinery below stays, serving that one caller.
+//!
+//! [`schnorr_verify_jubjub`] is the circuit-shaped wrapper codegen calls:
+//! it takes a `CircuitContext`, threads it through a no-op
+//! `query_for_verify`, and surfaces rejection as
+//! `CompactError::AssertionFailed`.
 
 use midnight_transient_crypto::curve::{EmbeddedFr, Fr};
 use midnight_transient_crypto::hash::transient_hash;
@@ -99,37 +110,36 @@ fn fr_to_embedded_fr(fr: Fr) -> EmbeddedFr {
 
 /// Off-circuit Schnorr verifier. Returns `true` iff the signature is
 /// valid for `(pk, msg)`. Identity public-key / announcement are
-/// rejected up front, matching the circuit's identity guards.
+/// rejected, matching the circuit's identity guards.
+///
+/// This delegates to `midnight_transient_crypto::schnorr::verify` rather
+/// than repeating it. The module header used to explain that the pinned
+/// `midnight-transient-crypto 2.1.0` did not expose a `schnorr` module,
+/// so ~50 lines of verifier were vendored here until it did. On the
+/// ledger-9 line it does: this crate resolves transient-crypto **3.0.0**,
+/// which exports `pub mod schnorr` with the same challenge derivation
+/// (Poseidon over `[ann_x, ann_y, pk_x, pk_y, ..msg]`, reduced mod
+/// `r_jubjub`), the same verification equation, and the same up-front
+/// identity rejection this function documents.
+///
+/// So the stated precondition for deleting the vendored copy is met, and
+/// the security-critical path is now upstream's implementation rather
+/// than our transcription of it — which is the point. A copy that agrees
+/// today is a copy that can silently stop agreeing.
+///
+/// The signature type still cannot be a re-export: ours carries
+/// `response: Fr` because Compact declares that field `Field`, while
+/// upstream's carries `response: EmbeddedFr`. The reduction between them
+/// is exactly `fr_to_embedded_fr`, applied here at the boundary.
 pub fn verify(pk: JubjubPoint, msg: &[Fr], sig: &SchnorrSignature) -> bool {
-    if pk.is_identity() || sig.announcement.is_identity() {
-        return false;
-    }
-    let pk_x = match pk.x() {
-        Some(x) => x,
-        None => return false,
-    };
-    let pk_y = match pk.y() {
-        Some(y) => y,
-        None => return false,
-    };
-    let ann_x = match sig.announcement.x() {
-        Some(x) => x,
-        None => return false,
-    };
-    let ann_y = match sig.announcement.y() {
-        Some(y) => y,
-        None => return false,
-    };
-
-    let challenge = compute_challenge(ann_x, ann_y, pk_x, pk_y, msg);
-    // Compact's `SchnorrSignature.response` is declared `Field` (Fr) —
-    // wider than the embedded scalar order. Reduce before the
-    // group-arithmetic check, matching what the in-circuit
-    // `getSchnorrReduction` witness would expose as (q, r).
-    let response_embed = fr_to_embedded_fr(sig.response);
-    let lhs = JubjubPoint::generator() * response_embed;
-    let rhs = sig.announcement + pk * challenge;
-    lhs == rhs
+    midnight_transient_crypto::schnorr::verify(
+        pk,
+        msg,
+        &midnight_transient_crypto::schnorr::SchnorrSignature {
+            announcement: sig.announcement,
+            response: fr_to_embedded_fr(sig.response),
+        },
+    )
 }
 
 /// A Schnorr signature over the JubJub curve — the Rust mirror of the
@@ -214,4 +224,100 @@ where
         },
         gas_cost: results.gas_cost,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::std_lib::jubjub_scalar_from_field;
+
+    /// A signature whose response is `s` and whose announcement is `s·G`.
+    ///
+    /// Against an **identity** public key this is a universal forgery, and
+    /// that is the whole point of the identity guard: with `pk = O`,
+    /// `pk·c = O` for every challenge `c`, so the verification equation
+    /// collapses from `s·G == R + pk·c` to `s·G == R` — which this pair
+    /// satisfies by construction, for any message, with no secret key.
+    fn forgery_against_identity() -> (SchnorrSignature, [Fr; 2]) {
+        let response = Fr::from(12345u64);
+        let announcement = JubjubPoint::generator() * jubjub_scalar_from_field(response);
+        (
+            SchnorrSignature {
+                announcement,
+                response,
+            },
+            [Fr::from(7u64), Fr::from(9u64)],
+        )
+    }
+
+    /// The security property. `verify` now delegates to
+    /// `midnight_transient_crypto::schnorr::verify`, so this asserts that
+    /// upstream's guard is really in force on our path — a delegation that
+    /// quietly dropped the check would leave every contract verifying
+    /// against an unset key wide open, because a ledger cell holds its
+    /// type's default until written and `JubjubPoint::default()` **is** the
+    /// identity.
+    #[test]
+    fn identity_public_key_is_rejected() {
+        let (sig, msg) = forgery_against_identity();
+        assert!(
+            !verify(JubjubPoint::identity(), &msg, &sig),
+            "an identity public key must never verify: pk·c is O for every \
+             challenge, so any (s, s·G) pair satisfies the equation"
+        );
+    }
+
+    #[test]
+    fn identity_announcement_is_rejected() {
+        let sig = SchnorrSignature {
+            announcement: JubjubPoint::identity(),
+            response: Fr::from(1u64),
+        };
+        let pk = JubjubPoint::generator() * jubjub_scalar_from_field(Fr::from(99u64));
+        assert!(!verify(pk, &[Fr::from(1u64)], &sig));
+    }
+
+    /// `JubjubPoint::default()` is the identity, which is why the guard is
+    /// reachable rather than theoretical: an unwritten ledger key cell
+    /// holds exactly this value.
+    #[test]
+    fn the_default_jubjub_point_is_the_identity() {
+        assert!(JubjubPoint::default().is_identity());
+        let (sig, msg) = forgery_against_identity();
+        assert!(!verify(JubjubPoint::default(), &msg, &sig));
+    }
+
+    /// Pins the deliberate difference between the two verifiers, so that
+    /// nobody later "tidies" `jubjub_schnorr_verify` into a call to
+    /// upstream's `verify` and silently changes its meaning.
+    ///
+    /// `jubjub_schnorr_verify` mirrors the 0.33 standard library's
+    /// `jubjubSchnorrVerify` circuit, which performs **no** identity
+    /// rejection — identity points just contribute zero coordinates to the
+    /// hash. So the same forgery that `verify` refuses is **accepted**
+    /// here, exactly as the circuit accepts it.
+    ///
+    /// This asserts a weakness on purpose. It is not an endorsement of it:
+    /// the Rust path matching the circuit is what makes the two comparable,
+    /// and closing the hole belongs in the circuit, where the divergence
+    /// would otherwise be invisible.
+    #[test]
+    fn the_stdlib_mirror_deliberately_does_not_reject_identity() {
+        let (sig, msg) = forgery_against_identity();
+        let stdlib_sig = JubjubSchnorrSignature {
+            announcement: sig.announcement,
+            response: sig.response,
+        };
+
+        assert!(
+            jubjub_schnorr_verify(msg, stdlib_sig, JubjubPoint::identity()),
+            "the stdlib mirror must accept what the stdlib circuit accepts; \
+             if this fails, it has been routed through a guarded verifier and \
+             now disagrees with the circuit it exists to match"
+        );
+        assert!(
+            !verify(JubjubPoint::identity(), &msg, &sig),
+            "…while the guarded verifier refuses the same pair"
+        );
+    }
 }

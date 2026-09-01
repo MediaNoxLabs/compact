@@ -9,6 +9,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _No changes yet._
 
+## [Toolchain 0.34.107, language 0.26.0, runtime 0.19.100] — Schnorr verification delegates to the ledger (2026-09-01)
+
+### Changed
+
+- **`std_lib::schnorr::verify` now calls
+  `midnight_transient_crypto::schnorr::verify`** instead of repeating it.
+  The module header explained that the verifier was vendored because the
+  pinned transient-crypto 2.1.0 exposed no `schnorr` module, and that the copy
+  could go once upstream shipped one. On the ledger-9 line it has: this crate
+  resolves transient-crypto **3.0.0**, whose implementation matches ours in
+  every respect that matters — same Poseidon challenge over
+  `[ann_x, ann_y, pk_x, pk_y, ..msg]`, same reduction mod `r_jubjub`, same
+  verification equation, and the same up-front identity rejection.
+
+  The gain is provenance, not size: the security-critical path is upstream's
+  implementation rather than our transcription of it. A copy that agrees today
+  is a copy that can silently stop agreeing.
+
+  The signature type stays local — ours declares `response: Fr` because
+  Compact declares that field `Field`, upstream's declares `EmbeddedFr` — so
+  the reduction is applied at the call boundary.
+
+### Added
+
+- **Four tests on a path that had none.** This branch carried no Schnorr
+  fixture and no Schnorr test at all, so the verifier was being changed with
+  zero coverage. They pin the security property directly: an identity public
+  key is rejected, an identity announcement is rejected, and
+  `JubjubPoint::default()` is the identity — which is what makes the guard
+  reachable rather than theoretical, since an unwritten ledger key cell holds
+  exactly that value.
+
+  The forgery is constructed explicitly rather than described: with `pk = O`,
+  `pk·c` is `O` for every challenge, so `s·G == R + pk·c` collapses to
+  `s·G == R`, which any `(s, s·G)` pair satisfies for any message with no
+  secret key.
+
+- **A test pinning a deliberate difference.** `jubjub_schnorr_verify` mirrors
+  the 0.33 standard library's circuit, which performs **no** identity
+  rejection, so it *accepts* the same forgery `verify` refuses. Routing it
+  through upstream would have made the Rust path disagree with the circuit it
+  exists to match — a new divergence rather than a fix. The test asserts that
+  weakness on purpose, so nobody removes the difference by tidying it away.
+
 ## [Toolchain 0.34.106, language 0.26.0, runtime 0.19.100] — the streaming pass no longer emits a comment as an expression (2026-09-01)
 
 ### Fixed

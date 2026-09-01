@@ -9,6 +9,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _No changes yet._
 
+## [Toolchain 0.34.108, language 0.26.0, runtime 0.19.100] — split the walker by capability (2026-09-02)
+
+### Changed
+
+- **`rust-passes-walker.ss` (3,792 lines) is split into eight files by
+  capability.** No behavioural change: every one is `include`d into the same
+  `(definitions ...)` block in `rust-passes.ss`, where internal defines are
+  mutually recursive, so the grouping carries no ordering constraint. Byte
+  parity over the fixture corpus is what proves that rather than assertion.
+
+  | File | Lines | Defines |
+  |---|---:|---:|
+  | `-tables` — witness/circuit lookup, enum coercion | 207 | 11 |
+  | `-ctor-expr` — constructor-context expression rendering | 516 | 12 |
+  | `-support` — the "can this be lowered" predicates | 589 | 15 |
+  | `-hoisting` — impure and witness call hoisting | 303 | 8 |
+  | `-body` — walkability and the body/ctor dispatchers | 1,002 | 7 |
+  | `-stmt` — statement classification | 404 | 15 |
+  | `-branches` — if/else analysis, public-ledger call lines | 294 | 4 |
+  | `-terminals` — writes, mutations, loops, if/else | 662 | 11 |
+
+  This is a precondition for upstreaming rather than housekeeping. A
+  3,792-line file cannot be sent to a project whose median merged PR is
+  ~100–150 lines; seven of these eight can.
+
+  `-body` is the exception at 1,002 lines, because it still contains
+  `emit-body-or-fallback` (568 lines in one define). Decomposing that is
+  MediaNoxLabs/compact#40 and is a semantic change, deliberately kept out of a
+  refactor whose whole claim is that it changes nothing.
+
 ## [Toolchain 0.34.107, language 0.26.0, runtime 0.19.100] — Schnorr verification delegates to the ledger (2026-09-01)
 
 ### Changed

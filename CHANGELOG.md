@@ -9,6 +9,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _No changes yet._
 
+## [Toolchain 0.34.109, language 0.26.0, runtime 0.19.100] — forward `nominal?` unconditionally (2026-09-02)
+
+### Fixed
+
+- **`apply-type-alias` now forwards the alias's `nominal?` flag** in
+  `expand-modules-and-types.ss`, instead of the hardcoded `#f` it used to pass.
+
+  `nominal?` is in scope, bound by the enclosing `Info-type-alias` pattern, and
+  the other two `apply-type-alias` call sites already forward it. This one did
+  not. `apply-type-alias` puts the flag straight into
+  `(talias ,alias-src ,nominal? ...)`, and `sametype?` opens its `talias`
+  clause with `(assert nominal1?)` — so passing `#f` makes the IR assert a
+  falsehood about the type's identity.
+
+  It never fires today only because `already-exported?` compares `Info`s rather
+  than types, so the mis-flagged node never reaches `sametype?`. That is luck,
+  not design: a change routing export-typedef types through `sametype?` turns
+  it into an assertion failure.
+
+### Changed
+
+- **The fix is no longer gated on `(emit-rust)`.** It was written as
+  `(and (emit-rust) nominal?)` on the theory that changing shared IR might
+  perturb the TypeScript pipeline.
+
+  Measured rather than assumed: with the gate removed, TypeScript output is
+  **byte-identical across all 37 contracts** in the two `examples/` trees,
+  compared against a compiler built from pristine `upstream/main`. The gate was
+  protecting against nothing, and it obscured that this is a plain bug fix that
+  belongs upstream on its own merits — where the `#f` is still present.
+
 ## [Toolchain 0.34.108, language 0.26.0, runtime 0.19.100] — split the walker by capability (2026-09-02)
 
 ### Changed

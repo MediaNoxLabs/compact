@@ -13,12 +13,12 @@
 1. Add a `--rust` flag to `compactc` that, alongside the existing TypeScript
    output, emits a native Rust crate equivalent to the generated
    `contract/index.{js,d.ts}` files.
-2. Ship a new sibling runtime crate (`runtime-rs/` → `compact-runtime` on
+2. Ship a new sibling runtime crate (`runtime-rs/` → `midnight-compact-runtime` on
    crates.io eventually) that mirrors the TS `runtime/`'s public surface in
    Rust.
 3. Generated Rust must be usable from server services (async/tokio), CLI
    tools (sync, std), and browser dApps (wasm-bindgen) without per-app
-   forks. Feature flags on `compact-runtime` distinguish the shapes; the
+   forks. Feature flags on `midnight-compact-runtime` distinguish the shapes; the
    per-contract generated code stays identical.
 4. Preserve full backward compatibility: an invocation that does not pass
    `--rust` behaves byte-for-byte as it does today.
@@ -95,7 +95,7 @@ The TS and Rust emitters share the same `Ltypescript` IR — there is no
 parallel `Lrust` and no shared abstraction (matching the existing
 TS/ZKIR split).
 
-## 4. The `compact-runtime` crate (runtime-rs)
+## 4. The `midnight-compact-runtime` crate (runtime-rs)
 
 ### 4.1 Curated re-exports
 
@@ -148,7 +148,7 @@ pub use midnight_zswap::local::State as ZswapLocalState;
 
 ### 4.2 Facade aggregates
 
-These are the only types `compact-runtime` defines from scratch. Each is a
+These are the only types `midnight-compact-runtime` defines from scratch. Each is a
 small bundle of existing crate types in the shape the compiler emits
 references to.
 
@@ -194,8 +194,8 @@ where D: DB {
 ```
 
 The `Witnesses<PS>` "trait" is actually emitted per-contract by the codegen
-(see §5.4) — it's not in `compact-runtime` because the method signatures
-vary per contract. `compact-runtime` provides a `NoWitnesses` marker type
+(see §5.4) — it's not in `midnight-compact-runtime` because the method signatures
+vary per contract. `midnight-compact-runtime` provides a `NoWitnesses` marker type
 that the codegen uses as the default bound when a contract declares zero
 witnesses.
 
@@ -207,7 +207,7 @@ macro_rules! check_runtime_version {
     ($expected:literal) => {
         const _: () = assert!(
             $crate::version::const_str_eq($expected, $crate::version::COMPACT_RUNTIME_VERSION),
-            "compact-runtime version mismatch"
+            "midnight-compact-runtime version mismatch"
         );
     };
 }
@@ -244,7 +244,7 @@ serde   = ["dep:serde"]
 
 ### 4.5 Versioning & release alignment
 
-- `compact-runtime`'s major version tracks `midnight-onchain-runtime`'s
+- `midnight-compact-runtime`'s major version tracks `midnight-onchain-runtime`'s
   major version (matches what the TS facade does relative to
   `@midnight-ntwrk/onchain-runtime-v3`).
 - Generated Rust pins a compatible range via `check_runtime_version!()`
@@ -258,7 +258,7 @@ serde   = ["dep:serde"]
 The M1/M2 implementation surfaced a set of friction points where the
 upstream `midnight-ledger` Rust APIs diverge from the conventions the
 TypeScript facade exposes (and from idiomatic Rust). Rather than emit the
-longhand at every call site in generated code, `compact-runtime` papers
+longhand at every call site in generated code, `midnight-compact-runtime` papers
 over each gap with a thin wrapper. The Tier-4 doc (companion
 `2026-05-25-rust-codegen-upstream-prs.md`) proposes upstreaming the fixes;
 this section is the catalogue.
@@ -283,7 +283,7 @@ this section is the catalogue.
    `AlignedValue::from(42u64)` is a 1-byte atom `[42]`, not 8 bytes. Why
    it matters: any decoder that assumes fixed-width atoms will silently
    misread small values. Resolution: the `decode_u8/u16/u32/u64/u128`
-   family in `compact_runtime::std_lib` accepts variable-length atoms with
+   family in `midnight_compact_runtime::std_lib` accepts variable-length atoms with
    little-endian zero-padding.
 7. **`ContractState::new` signature is heavy.** It takes `(data, ops,
    maintenance_authority)` where `ops` is `HashMap<EntryPointBuf,
@@ -314,7 +314,7 @@ this section is the catalogue.
     only finding inside this repo rather than upstream.
 
 All twelve wrappers are deliberately trivial — they exist so the codegen
-stays terse and so the `compact-runtime` ↔ upstream-API delta is
+stays terse and so the `midnight-compact-runtime` ↔ upstream-API delta is
 catalogued in one place. Once the upstream PRs land (see Tier-4 doc), the
 wrappers become re-exports or are deleted outright.
 
@@ -354,8 +354,8 @@ Major emitted constructs (described in §5.4–§5.8 below).
 
 | TS output | Rust output |
 |---|---|
-| `import * as __compactRuntime from '@midnight-ntwrk/compact-runtime';` | `use compact_runtime::*;` |
-| `__compactRuntime.checkRuntimeVersion('0.16.100');` | `compact_runtime::check_runtime_version!("0.16.100");` |
+| `import * as __compactRuntime from '@midnight-ntwrk/compact-runtime';` | `use midnight_compact_runtime::*;` |
+| `__compactRuntime.checkRuntimeVersion('0.16.100');` | `midnight_compact_runtime::check_runtime_version!("0.16.100");` |
 | `class CompactTypeFoo { alignment(); toValue(v); fromValue(v); }` | `impl Aligned for Foo`, `impl FieldRepr for Foo`, `impl FromFieldRepr for Foo` — manual impls, uniform across struct/enum |
 | `export type Witnesses<PS> = { secretKey(ctx, ...): [PS, R]; ... }` | `pub trait Witnesses<PS> { fn secret_key(&self, ctx: &WitnessContext<Ledger<'_>, PS>, ...) -> (PS, R); ... }` |
 | `export type Circuits<PS>` / `ImpureCircuits` / `PureCircuits` | inherent methods on `impl<PS, W: Witnesses<PS>> Contract<PS, W>` |
@@ -454,7 +454,7 @@ getters). The Op program is the same dup+idx+popeq pattern the TS emits.
 
 `CompactStandardLibrary` exposes a handful of generic types and functions
 that every contract may use. The Rust equivalents live in
-`compact-runtime::std_lib`:
+`midnight-compact-runtime::std_lib`:
 
 | Compact | Rust |
 |---|---|
@@ -462,20 +462,20 @@ that every contract may use. The Rust equivalents live in
 | `Either<L, R>` (`is_left: Bool`, `left: L`, `right: R`) | `Result<L, R>` (semantics flipped — Compact's `Either` is symmetric; map `is_left=true → Ok`, `is_left=false → Err`) OR a dedicated `Either<L, R>` enum if symmetry matters. Decision: ship dedicated `Either<L, R>` to preserve symmetry. |
 | `some<T>(x)` / `none<T>()` | `Some(x)` / `None` |
 | `default<T>` | `<T as Default>::default()` — emitted as `Default::default()` with type-annotated context |
-| `pad(n, "lit")` | `compact_runtime::pad::<{N}>(b"lit")` — generic length parameter |
+| `pad(n, "lit")` | `midnight_compact_runtime::pad::<{N}>(b"lit")` — generic length parameter |
 | `persistentHash<T>(v)` | `persistent_hash(&v)` — Rust generics infer `T` |
 | `transientHash<T>(v)` | `transient_hash(&v)` |
-| `Counter` ledger ADT | `compact_runtime::Counter` (newtype over `StateValue::Cell(u64)`) |
-| `Cell<T>` ledger ADT | `compact_runtime::Cell<T>` (newtype over `StateValue::Cell(AlignedValue)`) |
-| `Map<K, V>` ledger ADT | `compact_runtime::Map<K, V>` (newtype over `StateValue::Map`) |
-| `Set<T>` | `compact_runtime::Set<T>` |
-| `List<T>` | `compact_runtime::List<T>` |
-| `MerkleTree<T>` | `compact_runtime::MerkleTree<T>` |
-| `assert(cond)` / `assert(cond, msg)` | `compact_runtime::assert!(cond)` / `compact_runtime::assert!(cond, msg)` — macros that return `Err(CompactError::AssertionFailed(...))` rather than panic (see §5.10.1) |
-| `disclose(x)` | `compact_runtime::disclose(x)` — identity function, no-op (the disclose check is enforced at the Compact frontend, before codegen) |
+| `Counter` ledger ADT | `midnight_compact_runtime::Counter` (newtype over `StateValue::Cell(u64)`) |
+| `Cell<T>` ledger ADT | `midnight_compact_runtime::Cell<T>` (newtype over `StateValue::Cell(AlignedValue)`) |
+| `Map<K, V>` ledger ADT | `midnight_compact_runtime::Map<K, V>` (newtype over `StateValue::Map`) |
+| `Set<T>` | `midnight_compact_runtime::Set<T>` |
+| `List<T>` | `midnight_compact_runtime::List<T>` |
+| `MerkleTree<T>` | `midnight_compact_runtime::MerkleTree<T>` |
+| `assert(cond)` / `assert(cond, msg)` | `midnight_compact_runtime::assert!(cond)` / `midnight_compact_runtime::assert!(cond, msg)` — macros that return `Err(CompactError::AssertionFailed(...))` rather than panic (see §5.10.1) |
+| `disclose(x)` | `midnight_compact_runtime::disclose(x)` — identity function, no-op (the disclose check is enforced at the Compact frontend, before codegen) |
 
 The ledger-ADT newtypes (`Counter`, `Cell<T>`, `Map<K,V>`, etc.) live in
-`compact-runtime` rather than in generated code, because their Op-program
+`midnight-compact-runtime` rather than in generated code, because their Op-program
 methods (e.g., `Counter::read()` emitting `dup+idx+popeq`) are shared
 across every contract that uses them. This matches how `runtime/` puts
 the corresponding logic in the TS facade rather than inlining it per-
@@ -495,7 +495,7 @@ new field per row:
 ```
 
 `rust-passes.ss` reads the `rust` field and emits
-`compact_runtime::persistent_hash(...)` accordingly.
+`midnight_compact_runtime::persistent_hash(...)` accordingly.
 
 ### 5.9 Naming conventions
 
@@ -542,7 +542,7 @@ whole service. Generated code propagates with `?`:
 
 ```rust
 pub fn clear(&self, ctx: CircuitContext<PS>) -> Result<CircuitResults<PS, ()>, CompactError> {
-    compact_runtime::assert!(self.in_state(STATE::Set), "clear: no value is currently recorded")?;
+    midnight_compact_runtime::assert!(self.in_state(STATE::Set), "clear: no value is currently recorded")?;
     /* ... */
 }
 ```
@@ -576,7 +576,7 @@ trait is implementable for any caller's lifetime.
 contain an existing `Cargo.toml`:
 
 1. `contract/lib.rs` — the generated Rust source.
-2. `contract/Cargo.toml` — a minimal manifest declaring `compact-runtime`
+2. `contract/Cargo.toml` — a minimal manifest declaring `midnight-compact-runtime`
    as the sole dependency:
 
 ```toml
@@ -589,11 +589,11 @@ edition = "2021"
 path = "lib.rs"
 
 [dependencies]
-compact-runtime = "<pinned-version>"
+midnight-compact-runtime = "<pinned-version>"
 ```
 
 If a `Cargo.toml` already exists in the target directory, the compiler
-only emits `lib.rs` and prints a hint about the required `compact-runtime`
+only emits `lib.rs` and prints a hint about the required `midnight-compact-runtime`
 dep. This matches what the TS path does today with `package.json`.
 
 ### 5.11 Sourcemaps
@@ -616,7 +616,7 @@ New parallel directory. For each `.compact` test:
 
 1. Run `compactc --rust --skip-zk` on the source.
 2. Drop the generated `contract/lib.rs` into a templated cargo project
-   (workspace pinning the production `compact-runtime` version).
+   (workspace pinning the production `midnight-compact-runtime` version).
 3. `cargo check` — gate 1: types resolve.
 4. `cargo test` — gate 2: hand-written exercise tests for the contract
    complete without panic.
@@ -628,7 +628,7 @@ For a fixed initial state and a fixed sequence of circuit calls:
 
 1. Execute the TS contract via `@midnight-ntwrk/compact-runtime` (using
    `runtime/test/` harness as a model).
-2. Execute the Rust contract via `compact-runtime` directly.
+2. Execute the Rust contract via `midnight-compact-runtime` directly.
 3. Compare the resulting `ChargedState` after each step byte-for-byte
    (`Serializable` round-trip both sides → equal byte vectors).
 4. Compare the public transcript byte-for-byte.
@@ -648,11 +648,11 @@ same state machine as the TS output". Full ZK proof verification is v1.1.
 
 | Phase | Deliverable | Effort | Status |
 |---|---|---|---|
-| **M1** | `compact-runtime` v0.1.0 published from `runtime-rs/`. Compiles, ships re-exports + facade aggregates + macro. Covered by unit tests. | 1w | ✅ Complete |
+| **M1** | `midnight-compact-runtime` v0.1.0 published from `runtime-rs/`. Compiles, ships re-exports + facade aggregates + macro. Covered by unit tests. | 1w | ✅ Complete |
 | **M2** | `compactc --rust counter.compact` produces a `contract/lib.rs` that compiles via `cargo check` and matches the TS Op program byte-for-byte. Foundational `rust-passes.ss` skeleton. | 2w | ✅ Complete |
 | **M3** | `tiny.compact` + `proposal.compact` working — full struct/enum/witness/hash coverage. Cross-language byte-parity harness running in CI. | 2w | pending |
-| **M4** | `compact-runtime` feature `async` + emitter support. `AsyncWitnesses` exercised in a server-shape sample. | 1w | pending |
-| **M5** | `compact-runtime` feature `wasm` + emitter support. Browser-loadable sample shipped. | 2w | pending |
+| **M4** | `midnight-compact-runtime` feature `async` + emitter support. `AsyncWitnesses` exercised in a server-shape sample. | 1w | pending |
+| **M5** | `midnight-compact-runtime` feature `wasm` + emitter support. Browser-loadable sample shipped. | 2w | pending |
 | **M6** | Documentation, examples, public announcement, contribution of enum derive to `midnight-base-crypto-derive`. | 1w | pending |
 | **Total v1 (M1–M3)** | sync/std Rust path, byte-parity with TS, covered by CI | **5w** | M1+M2 ✅ |
 | **Total full (M1–M6)** | adds async + wasm + docs + upstream cleanups | **9w** | M1+M2 ✅ |
@@ -666,10 +666,10 @@ same state machine as the TS output". Full ZK proof verification is v1.1.
 1. **Repo location for `runtime-rs/`** — same monorepo (this design's
    assumption) vs separate `midnight-compact-runtime-rs` repo. Defer to
    the LFDT-Minokawa governance decision.
-2. **Crate name** — `compact-runtime` (matches TS package name) vs
+2. **Crate name** — `midnight-compact-runtime` (matches TS package name) vs
    `midnight-compact-runtime` (matches existing crates.io prefix
    convention). Recommend the latter for consistency with the
-   `midnight-*` ecosystem; document `compact-runtime` as a local
+   `midnight-*` ecosystem; document `midnight-compact-runtime` as a local
    convenience alias.
 3. **`async` trait machinery** — `async_trait` (v1) vs AFIT (v2). Defer.
 4. **Whether `--skip-ts` should be added now** for users who want
@@ -684,7 +684,7 @@ A reviewer should be able to:
 - Predict, for any TS construct in the current `print-typescript` output,
   what the Rust equivalent looks like.
 - Run the v1 acceptance test: `compactc --rust counter.compact` → drop
-  into a cargo project against published `compact-runtime` → `cargo
+  into a cargo project against published `midnight-compact-runtime` → `cargo
   check` passes → state-transition byte-parity vs TS holds for an
   agreed sequence of inputs.
 
@@ -693,7 +693,7 @@ A reviewer should be able to:
 The spike that validated this design is preserved under `spike/` in this
 repo. It contains:
 
-- `spike/runtime-rs/` — minimal `compact-runtime` (110 LOC) exercising the
+- `spike/runtime-rs/` — minimal `midnight-compact-runtime` (110 LOC) exercising the
   re-export + facade-aggregate pattern.
 - `spike/counter-contract/` — hand-translated `counter.compact` against the
   spike runtime. Compiles clean.
@@ -721,10 +721,10 @@ export circuit increment(): [] { round.increment(1); }
 
 #![allow(clippy::all, dead_code, unused_imports, unused_variables)]
 
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 use std::marker::PhantomData;
 
-compact_runtime::check_runtime_version!("0.16.100");
+midnight_compact_runtime::check_runtime_version!("0.16.100");
 
 // ---- Witnesses (none declared in source) ----
 pub trait Witnesses<PS> {}
@@ -848,7 +848,7 @@ Notes on this worked example:
 - The `Op::Push` immediate alignment for the path key is u8 (one byte) — same as the TS `_descriptor_7`, not u64.
 - `initial_state` mirrors the TS `Contract.initialState()` Op sequence (`push storage=false 0u8`, `push storage=true 0u64`, `ins n=1`).
 - `Ledger::round()` returns `Result<u64, CompactError>` rather than panicking on a malformed state — see §5.10.1.
-- `decode_u64` is a small helper provided by `compact-runtime` that converts an `AlignedValue` event to a `u64`. Each primitive Compact type has a corresponding `decode_*` helper.
+- `decode_u64` is a small helper provided by `midnight-compact-runtime` that converts an `AlignedValue` event to a `u64`. Each primitive Compact type has a corresponding `decode_*` helper.
 
 ## 13. Appendix C — comparison of spike output vs real compactc output
 

@@ -10,7 +10,7 @@
 |---|---|---|---|
 | **E1** — Implicit constructor support | E1.1 ✅ (verified, no fix needed) | done | — |
 | **E2** — Non-exported struct promotion | E2.1 ✅ | done | `c56372e` |
-| **R1** — Re-export ADT wrappers in compact-runtime + builder helpers | R1.1 ✅, R1.2 ✅, R1.3 ✅ | done | `3e0bb74` |
+| **R1** — Re-export ADT wrappers in midnight-compact-runtime + builder helpers | R1.1 ✅, R1.2 ✅, R1.3 ✅ | done | `3e0bb74` |
 | **R2** — Native function mapping audit | R2.1 ✅ (TODO), R2.2 ✅, R2.3 ✅, R2.4 ✅ (TODO), R2.5 ✅ | done | `8f71d7f` |
 | **R3** — persistent_hash argument encoding fix | R3.1 ✅ | done | — |
 | **R4** — Extended decoders + collection-ADT view skip | R4.1 ✅ | done | `88af088` |
@@ -110,7 +110,7 @@ When a user struct is referenced by a ledger field's type but not in the `export
 **Files:** `runtime-rs/src/lib.rs`, possibly new wrapper module if upstream API doesn't fit codegen needs
 
 - [ ] Locate upstream types (`midnight_storage::storage::HashMap`, `midnight_storage::storage::Set` if it exists, `midnight_onchain_state::merkle_tree::*` or wherever)
-- [ ] Re-export under stable names: `compact_runtime::Set<T>`, `compact_runtime::Map<K, V>`, `compact_runtime::MerkleTree<const H: usize, T>`, `compact_runtime::HistoricMerkleTree<const H: usize, T>`
+- [ ] Re-export under stable names: `midnight_compact_runtime::Set<T>`, `midnight_compact_runtime::Map<K, V>`, `midnight_compact_runtime::MerkleTree<const H: usize, T>`, `midnight_compact_runtime::HistoricMerkleTree<const H: usize, T>`
 - [ ] If the upstream API exposes methods with names that match the Compact-level method names (`insert`, `remove`, `lookup`, `check_root`, `find_element`, etc.), great; if not, add a thin wrapper struct in `runtime-rs/src/std_lib.rs`
 - [ ] Add a unit test that constructs each and exercises one method
 - [ ] Counter + tiny snapshots untouched
@@ -142,8 +142,8 @@ The Ltypescript `tadt` form wraps Compact ADT references. `type-rust` currently 
 **Files:** `compiler/midnight-natives.ss`, `runtime-rs/src/lib.rs`
 
 - [ ] Find keccak256 in upstream (`midnight_base_crypto::hash::keccak256` likely)
-- [ ] Re-export from `compact-runtime`
-- [ ] Add `(rust "compact_runtime::keccak256")` to keccak256's `declare-native-entry`
+- [ ] Re-export from `midnight-compact-runtime`
+- [ ] Add `(rust "midnight_compact_runtime::keccak256")` to keccak256's `declare-native-entry`
 - [ ] Commit + push
 
 ### Task R2.2: Jubjub bundle (6 functions)
@@ -151,7 +151,7 @@ The Ltypescript `tadt` form wraps Compact ADT references. `type-rust` currently 
 **Files:** same as above
 
 - [ ] Locate each upstream function: `jubjubPointX`/`Y`, `ecAdd`, `ecMul`, `ecMulGenerator`, `hashToCurve`, `constructJubjubPoint`
-- [ ] Re-export from `compact-runtime`
+- [ ] Re-export from `midnight-compact-runtime`
 - [ ] Annotate each native entry with `(rust "...")`
 - [ ] Commit + push
 
@@ -177,14 +177,14 @@ The Ltypescript `tadt` form wraps Compact ADT references. `type-rust` currently 
 
 ### Task R3.1: Replace `.concat().0` with FieldRepr-aware Value encoding
 
-**Files:** `compiler/rust-passes.ss` (specifically the I3b/1 `compact_runtime::persistent_hash` specialisation in `call-rust`)
+**Files:** `compiler/rust-passes.ss` (specifically the I3b/1 `midnight_compact_runtime::persistent_hash` specialisation in `call-rust`)
 
 Background: I3b/1 (commit `5c76f9e`) emits `persistent_hash(&[a, b].concat()).0` which produces a 64-byte raw concat for two `[u8; 32]` inputs. The TS path uses `rtType.toValue(value)` which adds alignment framing. They coincide for uniform `Bytes<32>` inputs (which is why tiny passes) but diverge for mixed-type inputs.
 
 - [ ] Replace the specialisation with an alignment-aware emit: serialize the args through `FieldRepr` / `Aligned` so the byte sequence matches TS's `toValue` output
 - [ ] Specifically: emit `let mut buf = Vec::new(); (a, b, ...).field_repr_bytes(&mut buf); persistent_hash(&buf)` or similar
 - [ ] Verify tiny byte-parity still passes (which it should — its inputs are uniform)
-- [ ] Add a small unit test in compact-runtime that hashes a mixed `(Fr, Bytes<32>)` input and confirms the output matches a known TS hash output
+- [ ] Add a small unit test in midnight-compact-runtime that hashes a mixed `(Fr, Bytes<32>)` input and confirms the output matches a known TS hash output
 - [ ] Commit + push
 
 ---

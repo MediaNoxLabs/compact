@@ -35,9 +35,9 @@ None. The two major safety concerns (witness threading, contract abstraction) ar
 
 ### Compact runtime-rs
 
-Module layout is clean. The curated prelude in `runtime-rs/src/lib.rs:93-150` re-exports upstream Midnight types under stable `compact_runtime::*` paths; codegen never names `midnight_xyz::Foo` directly. This insulates generated code from upstream reorganization. Five submodules (`context`, `results`, `witness`, `error`, `version`) are well-separated; `std_lib/` contains the Compact-specific ADT ecosystem (Counter, Maybe, Bytes, Jubjub ops) — no leakage into upstream.
+Module layout is clean. The curated prelude in `runtime-rs/src/lib.rs:93-150` re-exports upstream Midnight types under stable `midnight_compact_runtime::*` paths; codegen never names `midnight_xyz::Foo` directly. This insulates generated code from upstream reorganization. Five submodules (`context`, `results`, `witness`, `error`, `version`) are well-separated; `std_lib/` contains the Compact-specific ADT ecosystem (Counter, Maybe, Bytes, Jubjub ops) — no leakage into upstream.
 
-**Boundary cleanliness: Strong.** The only cross-crate dependency is the compile-time `check_runtime_version!` macro (via `compact-runtime-macros`), which pins generated code to the compiler version. Versioning is lock-stepped (`=0.16.100`) in the manifest (`runtime-rs/Cargo.toml:52`).
+**Boundary cleanliness: Strong.** The only cross-crate dependency is the compile-time `check_runtime_version!` macro (via `midnight-compact-runtime-macros`), which pins generated code to the compiler version. Versioning is lock-stepped (`=0.16.100`) in the manifest (`runtime-rs/Cargo.toml:52`).
 
 ### Midnight-did-rs crate split
 
@@ -65,7 +65,7 @@ ADR 0008 (R2-2/R2-3, 2026-06-25) retired the trait-erased `DidContract` in favor
 
 ### Error handling
 
-**compact-runtime:** 1 `unwrap()` (in test), 4 `expect()` calls (e.g., `runtime-rs/src/builders.rs`). All are in fallible constructors where the panic is acceptable (e.g., constructing a `MerkleTree` with OOM should panic). No gratuitous panics in the hot path.
+**midnight-compact-runtime:** 1 `unwrap()` (in test), 4 `expect()` calls (e.g., `runtime-rs/src/builders.rs`). All are in fallible constructors where the panic is acceptable (e.g., constructing a `MerkleTree` with OOM should panic). No gratuitous panics in the hot path.
 
 **midnight-did-rs:** 91 `unwrap()` calls across crates (domain: 6, api: 59, others: 26). **This is high.** Spot-check of domain:
 - `crypto_codecs.rs:179`: `decode_base64url().expect("decode")` — appropriate panic on malformed codec.
@@ -100,7 +100,7 @@ The prior security audit (`docs/superpowers/research/2026-06-02-witness-threadin
 
 ### Compact
 
-- **Unit tests:** 44 (compact-runtime + tests-e2e-rust/src = 456 LOC test code)
+- **Unit tests:** 44 (midnight-compact-runtime + tests-e2e-rust/src = 456 LOC test code)
 - **Byte-parity E2E tests:** 41 fixtures (24 generated + tiny, election, zerocash, map, set, election.variant, etc.)
 - **Total:** 85 structural tests
 
@@ -144,7 +144,7 @@ Byte-parity is the primary correctness gate. Tested features: Counter, Maybe, Ma
 
 ### Cryptography — Schnorr on Jubjub
 
-`compact_runtime::schnorr_verify_jubjub` (runtime-rs/std_lib) calls into upstream `midnight_transient_crypto::schnorr_verify`. The signature is reduced modulo Fr internally. Correctness against the spec (`midnight-base-crypto` Schnorr definition) should be verified against the reference spec, not just the TS port. **Flag for cryptographic audit with Midnight Crypto team.**
+`midnight_compact_runtime::schnorr_verify_jubjub` (runtime-rs/std_lib) calls into upstream `midnight_transient_crypto::schnorr_verify`. The signature is reduced modulo Fr internally. Correctness against the spec (`midnight-base-crypto` Schnorr definition) should be verified against the reference spec, not just the TS port. **Flag for cryptographic audit with Midnight Crypto team.**
 
 ### Constant-time concerns
 
@@ -189,11 +189,11 @@ No explicit constant-time path isolation found. Secrets (e.g., controller key ro
 
 ### Compact runtime-rs
 
-`runtime-rs/Cargo.toml:38-44` pins to workspace-mounted midnight-ledger crates (path-deps). No version skew risk because the crates are path-only. The `compact-runtime-macros` sibling (`version = "=0.16.100"`) is lock-stepped via the `=` pin on line 52. **Status: clean.**
+`runtime-rs/Cargo.toml:38-44` pins to workspace-mounted midnight-ledger crates (path-deps). No version skew risk because the crates are path-only. The `midnight-compact-runtime-macros` sibling (`version = "=0.16.100"`) is lock-stepped via the `=` pin on line 52. **Status: clean.**
 
 ### Midnight-did-rs
 
-`Cargo.toml:14-24` pins midnight-ledger crates via path-deps (mounted by devshell into `third_party/midnight-ledger`). Compact's `compact-runtime` is similarly path-mounted (`third_party/compact/runtime-rs`).
+`Cargo.toml:14-24` pins midnight-ledger crates via path-deps (mounted by devshell into `third_party/midnight-ledger`). Compact's `midnight-compact-runtime` is similarly path-mounted (`third_party/compact/runtime-rs`).
 
 **Patch:** `[patch.crates-io]` on line 75-76 overrides `midnight-proofs` with the `yshyn-iohk/midnight-zk` fork pinned to a specific rev (`cf60e3cc…`). This is intentional and documented in ADR 0006. Rev pinning ensures reproducibility.
 
@@ -228,7 +228,7 @@ Spot-check via `cargo tree -d`:
 
 **First commit:** merge the pending PR(s) adding set-fixture, hmt-fixture, hash-fixture, and keccak-fixture to tests-e2e-rust/contracts. Regenerate the feature matrix in doc/rust-codegen-user-guide.md with the updated coverage.
 
-### 3. **Document witness-value privacy intent in compact-runtime** (Impact: 3, Tractability: 4)
+### 3. **Document witness-value privacy intent in midnight-compact-runtime** (Impact: 3, Tractability: 4)
 
 **What:** Add a section to `runtime-rs/src/witness.rs` + `doc/rust-codegen-user-guide.md` explaining that `Witnesses<PS>::<method>` returns `(PS, T)` where `PS` is automatically isolated but `T` (the witness value) can be pushed to the ledger by the contract author. Provide guidance on marking secret witness values (e.g., via a type wrapper or convention).
 
@@ -238,7 +238,7 @@ Spot-check via `cargo tree -d`:
 
 ### 4. **Upgrade Schnorr-on-Jubjub verification against spec** (Impact: 4, Tractability: 3)
 
-**What:** Coordinate with the Midnight Crypto team to verify that `midnight_transient_crypto::schnorr_verify` (called by `compact_runtime::schnorr_verify_jubjub`) is correct against the published spec (likely from `midnight-base-crypto`). Verify Fr-reduction modulo contract in particular.
+**What:** Coordinate with the Midnight Crypto team to verify that `midnight_transient_crypto::schnorr_verify` (called by `midnight_compact_runtime::schnorr_verify_jubjub`) is correct against the published spec (likely from `midnight-base-crypto`). Verify Fr-reduction modulo contract in particular.
 
 **Why:** Schnorr signatures are cryptographically sensitive. The TS → Rust port is relatively new; an off-by-one error in the curve arithmetic could silently break signature verification.
 
@@ -258,4 +258,4 @@ Spot-check via `cargo tree -d`:
 
 Both repos are well-architected and production-ready with minor documentation refreshes needed. The Compact codegen is structurally sound (witness threading audit passed, zero unsafe), test coverage is comprehensive (85 byte-parity tests + 41 fixtures), and module boundaries are clean. Midnight-did-rs's R2 contract reformation is correctly implemented (Path 2 shape, 56 integration tests ported, ADRs up-to-date). The main remediation is validation audit of the api-layer operation builders and cryptographic sign-off on Schnorr reduction.
 
-**Publication-ready:** compact-runtime v0.16.100 (already on crates.io candidate); midnight-did-rs v0.4.0 candidates (all crates pinned, CI green).
+**Publication-ready:** midnight-compact-runtime v0.16.100 (already on crates.io candidate); midnight-did-rs v0.4.0 candidates (all crates pinned, CI green).

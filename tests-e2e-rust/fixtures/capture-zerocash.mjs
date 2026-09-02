@@ -47,7 +47,7 @@ import * as cr from '@midnight-ntwrk/compact-runtime';
 // Compiler 0.33 / ledger 9: `@midnight-ntwrk/onchain-runtime-v3` no longer
 // exists — the TS runtime depends on `@midnightntwrk/onchain-runtime-v4`
 // (note: no hyphen after "midnight"). Keep the direct import rather than
-// routing through `cr.`: the compact-runtime index re-exports `leafHash`
+// routing through `cr.`: the midnight-compact-runtime index re-exports `leafHash`
 // and `valueToBigInt`, but the low-level `persistentHash(align, val)` used
 // below is shadowed there by built-ins.ts's high-level
 // `persistentHash(rtType, value)`.

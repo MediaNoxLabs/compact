@@ -4,7 +4,7 @@
 
 **Goal:** Extend `compiler/rust-passes.ss` and `runtime-rs/src/lib.rs` so that `compactc --rust --skip-ts examples/tiny.compact <out>` succeeds and the emitted Rust crate compiles, with `counter.compact` byte-parity regression remaining green.
 
-**Architecture:** Universal helpers (`Bytes<N>`, `Maybe<T>`, `pad`, `disclose`) land in `compact-runtime`. A new sibling crate `compact-runtime-macros` provides a `#[witnesses]` proc-macro that auto-generates the `Witnesses<PS>` trait impl that `rust-passes.ss` emits. Per-contract code (enum impls, contract struct, constructor, circuits, ledger view) is generated in Rust by extending `rust-passes.ss`'s nanopass walk of the `Ltypescript` IR.
+**Architecture:** Universal helpers (`Bytes<N>`, `Maybe<T>`, `pad`, `disclose`) land in `midnight-compact-runtime`. A new sibling crate `midnight-compact-runtime-macros` provides a `#[witnesses]` proc-macro that auto-generates the `Witnesses<PS>` trait impl that `rust-passes.ss` emits. Per-contract code (enum impls, contract struct, constructor, circuits, ledger view) is generated in Rust by extending `rust-passes.ss`'s nanopass walk of the `Ltypescript` IR.
 
 **Tech Stack:** Chez Scheme + nanopass framework (compiler); Rust 1.85+ edition 2021 (runtime + macros); `syn 2` + `quote 1` + `proc-macro2 1` (macros crate); existing midnight-ledger crates (Fr, Op, persistent_hash, AlignedValue, etc.).
 
@@ -31,7 +31,7 @@
 | Path (relative to compact worktree) | Status | Purpose |
 |---|---|---|
 | `Cargo.toml` (workspace root) | modify | add `runtime-rs-macros` as a member |
-| `runtime-rs/Cargo.toml` | modify | add `compact-runtime-macros` dep |
+| `runtime-rs/Cargo.toml` | modify | add `midnight-compact-runtime-macros` dep |
 | `runtime-rs/src/lib.rs` | modify | re-export macro; add new universal helpers via `pub mod std_lib_ext`; or just add to `std_lib` |
 | `runtime-rs/src/std_lib.rs` | modify | add `Bytes<N>` alias, `Maybe<T>`, `pad`, `disclose`, `some`, `none` |
 | `runtime-rs-macros/Cargo.toml` | create | proc-macro crate manifest |
@@ -59,7 +59,7 @@ Expect leading column `G`. If `B` or `N`, amend immediately: `git commit --amend
 
 ---
 
-## Task M1 — `compact-runtime` universal helpers
+## Task M1 — `midnight-compact-runtime` universal helpers
 
 **Files:**
 - Modify: `runtime-rs/src/std_lib.rs`
@@ -118,7 +118,7 @@ mod tests_m3a_helpers {
 
 ```bash
 cd /Users/ysh/iohk/compact/.claude/worktrees/admiring-lehmann-05e4d9
-cargo test -p compact-runtime tests_m3a_helpers 2>&1 | tail -10
+cargo test -p midnight-compact-runtime tests_m3a_helpers 2>&1 | tail -10
 ```
 Expected: compilation errors — `some`, `none`, `Maybe`, `pad`, `disclose` not in scope.
 
@@ -196,14 +196,14 @@ pub use std_lib::{disclose, none, pad, some, Bytes, Maybe};
 - [ ] **Step 1.6: Run tests; expect pass**
 
 ```bash
-cargo test -p compact-runtime tests_m3a_helpers 2>&1 | tail -10
+cargo test -p midnight-compact-runtime tests_m3a_helpers 2>&1 | tail -10
 ```
 Expected: 4 tests pass.
 
 - [ ] **Step 1.7: Run the full crate test suite to confirm no regression**
 
 ```bash
-cargo test -p compact-runtime 2>&1 | tail -10
+cargo test -p midnight-compact-runtime 2>&1 | tail -10
 ```
 Expected: all tests pass.
 
@@ -213,7 +213,7 @@ Expected: all tests pass.
 cd /Users/ysh/iohk/compact/.claude/worktrees/admiring-lehmann-05e4d9
 git add runtime-rs/src/std_lib.rs runtime-rs/src/lib.rs
 git commit -S -s -m "feat(runtime): add Bytes<N>, Maybe<T>, pad, disclose universal helpers" \
-  -m "Universal types and helpers that every Compact-emitted contract needs (M3a step 1/10). Hand-written in std_lib so the codegen can reference them by short name (e.g. compact_runtime::Maybe, compact_runtime::pad)." \
+  -m "Universal types and helpers that every Compact-emitted contract needs (M3a step 1/10). Hand-written in std_lib so the codegen can reference them by short name (e.g. midnight_compact_runtime::Maybe, midnight_compact_runtime::pad)." \
   -m "Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 git log --format="%h %G? %s" -1
 ```
@@ -221,7 +221,7 @@ Expected: `<hash> G feat(runtime): …`
 
 ---
 
-## Task M2 — `compact-runtime-macros` crate skeleton
+## Task M2 — `midnight-compact-runtime-macros` crate skeleton
 
 **Files:**
 - Create: `runtime-rs-macros/Cargo.toml`
@@ -232,15 +232,15 @@ Expected: `<hash> G feat(runtime): …`
 
 ```toml
 [package]
-name        = "compact-runtime-macros"
+name        = "midnight-compact-runtime-macros"
 version     = "0.16.100"
 edition     = "2021"
 license     = "Apache-2.0"
-description = "Procedural macros for compact-runtime — emits Witnesses<PS> trait impls."
+description = "Procedural macros for midnight-compact-runtime — emits Witnesses<PS> trait impls."
 repository  = "https://github.com/LFDT-Minokawa/compact"
 
 [lib]
-name = "compact_runtime_macros"
+name = "midnight_compact_runtime_macros"
 path = "src/lib.rs"
 proc-macro = true
 
@@ -266,7 +266,7 @@ to confirm the array form, then edit appropriately.
 ```rust
 // SPDX-License-Identifier: Apache-2.0
 //
-// Procedural macros for compact-runtime. The `#[witnesses]` attribute
+// Procedural macros for midnight-compact-runtime. The `#[witnesses]` attribute
 // macro generates `impl Witnesses<PS> for <UserType>` blocks matching the
 // trait that rust-passes.ss emits in the generated contract crate.
 //
@@ -295,7 +295,7 @@ pub fn witnesses(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
 ```bash
 cd /Users/ysh/iohk/compact/.claude/worktrees/admiring-lehmann-05e4d9
-cargo build -p compact-runtime-macros 2>&1 | tail -10
+cargo build -p midnight-compact-runtime-macros 2>&1 | tail -10
 ```
 Expected: builds cleanly.
 
@@ -303,7 +303,7 @@ Expected: builds cleanly.
 
 ```bash
 git add runtime-rs-macros/Cargo.toml runtime-rs-macros/src/lib.rs Cargo.toml
-git commit -S -s -m "feat(runtime-macros): scaffold compact-runtime-macros crate" \
+git commit -S -s -m "feat(runtime-macros): scaffold midnight-compact-runtime-macros crate" \
   -m "New proc-macro sibling crate. M2 ships a stub #[witnesses] attribute (pass-through). M3 implements the trait-impl generation." \
   -m "Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 git log --format="%h %G? %s" -1
@@ -339,8 +339,8 @@ impl MyWitnesses {
     }
 }
 
-impl compact_runtime::Witnesses<MyState> for MyWitnesses {
-    fn secret_key(&self, ctx: &compact_runtime::WitnessContext<crate::contract::Ledger<'_>, MyState>) -> (MyState, compact_runtime::Bytes<32>) {
+impl midnight_compact_runtime::Witnesses<MyState> for MyWitnesses {
+    fn secret_key(&self, ctx: &midnight_compact_runtime::WitnessContext<crate::contract::Ledger<'_>, MyState>) -> (MyState, midnight_compact_runtime::Bytes<32>) {
         Self::secret_key(self, ctx)
     }
 }
@@ -357,8 +357,8 @@ The macro parses the `impl Foo { ... }` block, extracts each `fn` declared, and 
 // Validates that the macro generates a trait impl that satisfies a
 // hand-written trait of the same shape rust-passes.ss would emit.
 
-use compact_runtime::WitnessContext;
-use compact_runtime_macros::witnesses;
+use midnight_compact_runtime::WitnessContext;
+use midnight_compact_runtime_macros::witnesses;
 
 #[allow(unused)]
 struct MyState;
@@ -405,13 +405,13 @@ In `runtime-rs-macros/Cargo.toml`, append:
 
 ```toml
 [dev-dependencies]
-compact-runtime = { path = "../runtime-rs" }
+midnight-compact-runtime = { path = "../runtime-rs" }
 ```
 
 - [ ] **Step 3.3: Run test; expect failure**
 
 ```bash
-cargo test -p compact-runtime-macros 2>&1 | tail -20
+cargo test -p midnight-compact-runtime-macros 2>&1 | tail -20
 ```
 Expected: compile error like "trait `Witnesses` is not implemented for `MyWitnesses`" (the stub macro does nothing).
 
@@ -422,7 +422,7 @@ Replace `runtime-rs-macros/src/lib.rs` with:
 ```rust
 // SPDX-License-Identifier: Apache-2.0
 //
-// Procedural macros for compact-runtime.
+// Procedural macros for midnight-compact-runtime.
 
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
@@ -458,7 +458,7 @@ impl Parse for WitnessesArgs {
 }
 
 /// `#[witnesses(StructName, PS = StateType)]` — generates an
-/// `impl compact_runtime::Witnesses<PS> for StructName` block forwarding
+/// `impl midnight_compact_runtime::Witnesses<PS> for StructName` block forwarding
 /// each declared inherent method to the user impl.
 #[proc_macro_attribute]
 pub fn witnesses(attr: TokenStream, item: TokenStream) -> TokenStream {
@@ -519,30 +519,30 @@ struct _NoteOnArgsParseError {} // hack so syn::Error parser remains in scope
 - [ ] **Step 3.5: Run test; expect pass**
 
 ```bash
-cargo test -p compact-runtime-macros 2>&1 | tail -10
+cargo test -p midnight-compact-runtime-macros 2>&1 | tail -10
 ```
 Expected: 1 test passes.
 
 If you get errors about `WitnessContext` not being in scope, the `pub use` in `runtime-rs/src/lib.rs` for `WitnessContext` is fine — make sure the test file imports it correctly.
 
-- [ ] **Step 3.6: Wire macros into compact-runtime**
+- [ ] **Step 3.6: Wire macros into midnight-compact-runtime**
 
 In `runtime-rs/Cargo.toml`, add to `[dependencies]`:
 
 ```toml
-compact-runtime-macros = { path = "../runtime-rs-macros" }
+midnight-compact-runtime-macros = { path = "../runtime-rs-macros" }
 ```
 
 In `runtime-rs/src/lib.rs`, add (near the top, after the foundational re-exports):
 
 ```rust
-pub use compact_runtime_macros::witnesses;
+pub use midnight_compact_runtime_macros::witnesses;
 ```
 
-- [ ] **Step 3.7: Verify compact-runtime still builds**
+- [ ] **Step 3.7: Verify midnight-compact-runtime still builds**
 
 ```bash
-cargo build -p compact-runtime 2>&1 | tail -5
+cargo build -p midnight-compact-runtime 2>&1 | tail -5
 ```
 Expected: builds cleanly.
 
@@ -778,31 +778,31 @@ After `emit-pure-circuits` (around line 270), add:
                (out "}\n\n")
 
                ;; Aligned impl — single-field alignment (u8 discriminant).
-               (out (format "impl compact_runtime::Aligned for ~a {\n" name))
-               (out (format "    fn alignment() -> compact_runtime::Alignment {\n"))
-               (out (format "        compact_runtime::Alignment::singleton_atom(\n"))
-               (out (format "            compact_runtime::base_crypto::fab::AtomicAlignment::Compress { size: 1 },\n"))
+               (out (format "impl midnight_compact_runtime::Aligned for ~a {\n" name))
+               (out (format "    fn alignment() -> midnight_compact_runtime::Alignment {\n"))
+               (out (format "        midnight_compact_runtime::Alignment::singleton_atom(\n"))
+               (out (format "            midnight_compact_runtime::base_crypto::fab::AtomicAlignment::Compress { size: 1 },\n"))
                (out (format "        )\n"))
                (out (format "    }\n"))
                (out (format "}\n\n"))
 
                ;; FieldRepr impl — discriminant as u8 → Fr.
-               (out (format "impl compact_runtime::FieldRepr for ~a {\n" name))
-               (out (format "    fn field_repr(&self) -> Vec<compact_runtime::Fr> {\n"))
+               (out (format "impl midnight_compact_runtime::FieldRepr for ~a {\n" name))
+               (out (format "    fn field_repr(&self) -> Vec<midnight_compact_runtime::Fr> {\n"))
                (out (format "        let disc: u8 = match self {\n"))
                (let loop ([vs variant*] [i 0])
                  (unless (null? vs)
                    (out (format "            ~a::~a => ~a,\n" name (car vs) i))
                    (loop (cdr vs) (+ i 1))))
                (out (format "        };\n"))
-               (out (format "        vec![compact_runtime::Fr::from(disc as u64)]\n"))
+               (out (format "        vec![midnight_compact_runtime::Fr::from(disc as u64)]\n"))
                (out (format "    }\n"))
                (out (format "    fn field_size() -> usize { 1 }\n"))
                (out (format "}\n\n"))
 
                ;; FromFieldRepr impl — u8 ← Fr.
-               (out (format "impl compact_runtime::FromFieldRepr for ~a {\n" name))
-               (out (format "    fn from_field_repr(fs: &[compact_runtime::Fr]) -> Option<Self> {\n"))
+               (out (format "impl midnight_compact_runtime::FromFieldRepr for ~a {\n" name))
+               (out (format "    fn from_field_repr(fs: &[midnight_compact_runtime::Fr]) -> Option<Self> {\n"))
                (out (format "        if fs.len() != 1 { return None; }\n"))
                (out (format "        let n: u64 = u64::from_field_repr(&[fs[0]])?;\n"))
                (out (format "        match n as u8 {\n"))
@@ -983,9 +983,9 @@ After `type-rust`, add:
       ;;   - identifier reference (local const)
       ;;   - witness call:  private$secret_key()  →  self.witnesses.secret_key(ctx)
       ;;   - enum variant:  STATE.set             →  STATE::set
-      ;;   - disclose(x)                          →  compact_runtime::disclose(<x>)
+      ;;   - disclose(x)                          →  midnight_compact_runtime::disclose(<x>)
       ;;   - public_key(sk) (inner-circuit call)  →  Self::public_key(self, sk)
-      ;;   - pad(N, "lit")                        →  compact_runtime::pad(N, "lit")
+      ;;   - pad(N, "lit")                        →  midnight_compact_runtime::pad(N, "lit")
       ;;   - persistentHash<T>(v)                 →  let buf = T::field_repr(&v); persistent_hash(&buf)
       ;;
       ;; M3b will extend for Map.lookup, Set.member, generic calls, etc.
@@ -1006,9 +1006,9 @@ After `type-rust`, add:
           [(call ,fn-name (,arg* ...))
            (cond
              [(eq? fn-name 'disclose)
-              (format "compact_runtime::disclose(~a)" (expr-rust (car arg*)))]
+              (format "midnight_compact_runtime::disclose(~a)" (expr-rust (car arg*)))]
              [(eq? fn-name 'pad)
-              (format "compact_runtime::pad(~a, ~a)"
+              (format "midnight_compact_runtime::pad(~a, ~a)"
                       (expr-rust (car arg*))
                       (expr-rust (cadr arg*)))]
              [else

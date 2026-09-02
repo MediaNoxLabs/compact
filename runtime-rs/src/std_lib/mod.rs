@@ -14,10 +14,10 @@
 // limitations under the License.
 
 //
-// `compact-runtime` standard library.
+// `midnight-compact-runtime` standard library.
 //
 // Submodules carry the surface area generated contract code reaches
-// into via the `compact_runtime::std_lib::*` path. The flat re-export
+// into via the `midnight_compact_runtime::std_lib::*` path. The flat re-export
 // below preserves that path — adding a new helper means adding it to
 // one of the submodules and re-exporting it here.
 //
@@ -52,7 +52,7 @@ pub use jubjub::{
     ec_mul_generator,
     ec_neg,
     // R5a: orphan-safe repr helpers used by codegen for JubjubPoint-typed
-    // struct fields. Re-exported into `compact_runtime::std_lib::` so
+    // struct fields. Re-exported into `midnight_compact_runtime::std_lib::` so
     // generated code can avoid `<JubjubPoint as FromFieldRepr>::*`
     // syntax (which the orphan rule forbids us from impl'ing).
     jubjub_point_binary_len,

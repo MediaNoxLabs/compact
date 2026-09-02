@@ -496,7 +496,7 @@
              (lambda (path-elt*)
                (emit-struct-field-zero-read
                  path-elt*
-                 (format "compact_runtime::std_lib::decode_via_field_repr::<~a>"
+                 (format "midnight_compact_runtime::std_lib::decode_via_field_repr::<~a>"
                          enum-name)))]
             [else
              (arg-rust-clone-if-var actual local-binds

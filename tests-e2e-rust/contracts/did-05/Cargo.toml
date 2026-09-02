@@ -23,7 +23,7 @@
 # means `cargo build` also compile-checks the generated code — the
 # end-to-end guard that the 0.5.0-specific codegen paths (JubjubPoint
 # decoder/default, ctor-mode impure calls, multi-assert branches) keep
-# producing code that compiles against compact-runtime.
+# producing code that compiles against midnight-compact-runtime.
 
 [package]
 workspace = "../../../runtime-rs"
@@ -38,4 +38,4 @@ name = "compact_contract_did_05"
 path = "lib.rs"
 
 [dependencies]
-compact-runtime = { path = "../../../runtime-rs" }
+midnight-compact-runtime = { path = "../../../runtime-rs" }

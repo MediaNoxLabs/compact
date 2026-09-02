@@ -84,7 +84,7 @@ The following flags, if present, affect the compiler's behavior as follows:
     generally useful only to compiler developers.
 
   --rust causes the compiler to additionally emit a Rust crate (contract/lib.rs)
-    alongside the TypeScript output. Generated Rust depends on the `compact-runtime`
+    alongside the TypeScript output. Generated Rust depends on the `midnight-compact-runtime`
     crate. Not yet compatible with --feature-zkir-v3 (the Rust backend targets the
     ZKIR v2 pipeline). See docs/superpowers/specs/2026-05-25-rust-codegen-design.md
     for details.

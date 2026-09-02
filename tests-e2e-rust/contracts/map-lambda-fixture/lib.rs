@@ -26,10 +26,10 @@
     non_upper_case_globals
 )]
 
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 use std::marker::PhantomData;
 
-compact_runtime::check_runtime_version!("0.19.100");
+midnight_compact_runtime::check_runtime_version!("0.19.100");
 
 pub trait Witnesses<PS> {}
 impl<PS> Witnesses<PS> for NoWitnesses {}
@@ -59,19 +59,19 @@ where
     ) -> Result<ConstructorResult<PS>, CompactError> {
         let sv = new_array(vec![new_cell_array([0u64; 3])]);
         let state = ChargedState::new(sv);
-        let qctx = QueryContext::new(state, compact_runtime::ContractAddress::default());
+        let qctx = QueryContext::new(state, midnight_compact_runtime::ContractAddress::default());
         let tmp = [
-            compact_runtime::std_lib::narrow::<u64>(
+            midnight_compact_runtime::std_lib::narrow::<u64>(
                 (((1u64) as u128).wrapping_mul((2u64) as u128)) as u128,
                 18446744073709551615_u128,
                 "map_lambda_fixture.compact line 40 char 44",
             )?,
-            compact_runtime::std_lib::narrow::<u64>(
+            midnight_compact_runtime::std_lib::narrow::<u64>(
                 (((2u64) as u128).wrapping_mul((2u64) as u128)) as u128,
                 18446744073709551615_u128,
                 "map_lambda_fixture.compact line 40 char 44",
             )?,
-            compact_runtime::std_lib::narrow::<u64>(
+            midnight_compact_runtime::std_lib::narrow::<u64>(
                 (((3u64) as u128).wrapping_mul((2u64) as u128)) as u128,
                 18446744073709551615_u128,
                 "map_lambda_fixture.compact line 40 char 44",
@@ -130,7 +130,7 @@ impl<'a, D: DB> Ledger<'a, D> {
     pub fn doubled(&self) -> Result<[u64; 3], CompactError> {
         let qctx = QueryContext::new(
             self.state.clone(),
-            compact_runtime::ContractAddress::default(),
+            midnight_compact_runtime::ContractAddress::default(),
         );
         let ops = OpProgramGather::<D>::new()
             .dup(0)
@@ -140,14 +140,14 @@ impl<'a, D: DB> Ledger<'a, D> {
         let results = query_for_read(&qctx, &ops, None, &initial_cost_model())
             .map_err(|e| CompactError::AssertionFailed(format!("ledger query failed: {:?}", e)))?;
         let av = match results.events.last() {
-            Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+            Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
             _ => {
                 return Err(CompactError::AssertionFailed(
                     "ledger: expected Read event".into(),
                 ))
             }
         };
-        compact_runtime::std_lib::decode_vector_u64::<3>(av)
+        midnight_compact_runtime::std_lib::decode_vector_u64::<3>(av)
     }
 }
 

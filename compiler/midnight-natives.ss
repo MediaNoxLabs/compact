@@ -22,40 +22,40 @@
   "__compactRuntime.transientHash"
   ([value A (discloses "a hash of")])
   Field
-  (rust "compact_runtime::transient_hash"))
+  (rust "midnight_compact_runtime::transient_hash"))
 
 (declare-native-entry circuit transientCommit [A]
   "__compactRuntime.transientCommit"
   ([value A (discloses nothing)]
    [rand Field (discloses nothing)])
   Field
-  (rust "compact_runtime::transient_commit"))
+  (rust "midnight_compact_runtime::transient_commit"))
 
 ;; ==== Hashing
 (declare-native-entry circuit persistentHash [A]
   "__compactRuntime.persistentHash"
   ([value A (discloses "a hash of")])
   (Bytes 32)
-  (rust "compact_runtime::persistent_hash"))
+  (rust "midnight_compact_runtime::persistent_hash"))
 
 (declare-native-entry circuit persistentCommit [A]
   "__compactRuntime.persistentCommit"
   ([value A (discloses nothing)]
    [rand (Bytes 32) (discloses nothing)])
   (Bytes 32)
-  (rust "compact_runtime::persistent_commit"))
+  (rust "midnight_compact_runtime::persistent_commit"))
 
 (declare-native-entry circuit degradeToTransient
   "__compactRuntime.degradeToTransient"
   ([x (Bytes 32) (discloses "a modulus of")])
   Field
-  (rust "compact_runtime::degrade_to_transient"))
+  (rust "midnight_compact_runtime::degrade_to_transient"))
 
 (declare-native-entry circuit upgradeFromTransient
   "__compactRuntime.upgradeFromTransient"
   ([x Field (discloses "a converted form of")])
   (Bytes 32)
-  (rust "compact_runtime::upgrade_from_transient"))
+  (rust "midnight_compact_runtime::upgrade_from_transient"))
 
 (declare-native-entry circuit keccak256 [A]
   "__compactRuntime.keccak256"
@@ -68,52 +68,52 @@
   "__compactRuntime.jubjubPointX"
   ([pt (TypeRef JubjubPoint) (discloses "the X coordinate of")])
   Field
-  (rust "compact_runtime::jubjub_point_x"))
+  (rust "midnight_compact_runtime::jubjub_point_x"))
 
 (declare-native-entry circuit jubjubPointY
   "__compactRuntime.jubjubPointY"
   ([pt (TypeRef JubjubPoint) (discloses "the Y coordinate of")])
   Field
-  (rust "compact_runtime::jubjub_point_y"))
+  (rust "midnight_compact_runtime::jubjub_point_y"))
 
 (declare-native-entry circuit ecAdd
   "__compactRuntime.ecAdd"
   ([a (TypeRef JubjubPoint) (discloses "an elliptic curve sum including")]
    [b (TypeRef JubjubPoint) (discloses "an elliptic curve sum including")])
   (TypeRef JubjubPoint)
-  (rust "compact_runtime::ec_add"))
+  (rust "midnight_compact_runtime::ec_add"))
 
 (declare-native-entry circuit ecNeg
   "__compactRuntime.ecNeg"
   ([a (TypeRef JubjubPoint) (discloses "the elliptic curve negation of")])
   (TypeRef JubjubPoint)
-  (rust "compact_runtime::ec_neg"))
+  (rust "midnight_compact_runtime::ec_neg"))
 
 (declare-native-entry circuit ecMul
   "__compactRuntime.ecMul"
   ([a (TypeRef JubjubPoint) (discloses "an elliptic curve product including")]
    [b (TypeRef JubjubScalar) (discloses "an elliptic curve product including")])
   (TypeRef JubjubPoint)
-  (rust "compact_runtime::ec_mul"))
+  (rust "midnight_compact_runtime::ec_mul"))
 
 (declare-native-entry circuit ecMulGenerator
   "__compactRuntime.ecMulGenerator"
   ([b (TypeRef JubjubScalar) (discloses "the product of the embedded group generator with")])
   (TypeRef JubjubPoint)
-  (rust "compact_runtime::ec_mul_generator"))
+  (rust "midnight_compact_runtime::ec_mul_generator"))
 
 (declare-native-entry circuit hashToCurve [A]
   "__compactRuntime.hashToCurve"
   ([value A (discloses "a hash of")])
   (TypeRef JubjubPoint)
-  (rust "compact_runtime::hash_to_curve"))
+  (rust "midnight_compact_runtime::hash_to_curve"))
 
 (declare-native-entry circuit constructJubjubPoint
   "__compactRuntime.constructJubjubPoint"
   ([x Field (discloses "a JubjubPoint containing X coordinate")]
    [y Field (discloses "a JubjubPoint containing Y coordinate")])
   (TypeRef JubjubPoint)
-  (rust "compact_runtime::construct_jubjub_point"))
+  (rust "midnight_compact_runtime::construct_jubjub_point"))
 
 (declare-native-entry witness ownPublicKey
   "__compactRuntime.ownPublicKey"

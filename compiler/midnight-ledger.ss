@@ -843,7 +843,7 @@
   (function read head () (Maybe value_type)
     "Retrieves the head of this List, returning a Maybe, ensuring this call \
     succeeds on the empty list. \
-    Maybe is defined in CompactStandardLibrary (compact-runtime from Typescript)."
+    Maybe is defined in CompactStandardLibrary (midnight-compact-runtime from Typescript)."
     ;; [context, effects, state]
     ((dup [n 0])
      ;; [context, effects, state, state]
@@ -974,7 +974,7 @@
                                       (state-value 'cell (align 0 8)))))
   (function js-only root () "${rtlib}MerkleTreeDigest"
     "Retrieves the root of the Merkle tree. \
-    MerkleTreeDigest is defined in compact-runtime."
+    MerkleTreeDigest is defined in midnight-compact-runtime."
     ("((result) => result"
      "             ? ${rtlib}CompactTypeMerkleTreeDigest.fromValue(result)"
      "             : undefined)(${this}.asArray()[0].asBoundedMerkleTree().rehash().root()?.value)"))
@@ -985,7 +985,7 @@
     "Returns the Merkle path, given the knowledge that a specified leaf is at \
     the given index. It is an error to call this if this leaf is not \
     contained at the given index. \
-    MerkleTreePath is defined in compact-runtime."
+    MerkleTreePath is defined in midnight-compact-runtime."
     ("((result) => result"
      "             ? new ${rtlib}CompactTypeMerkleTreePath(${nat}, ${value_type}).fromValue(result)"
      "             : undefined)("
@@ -1000,7 +1000,7 @@
     "Finds the path for a given leaf in a Merkle tree. Be warned that this is \
     O(n) and should be avoided for large trees. Returns undefined if no such \
     leaf exists. \
-    MerkleTreePath is defined in compact-runtime."
+    MerkleTreePath is defined in midnight-compact-runtime."
     ("((result) => result"
      "             ? new ${rtlib}CompactTypeMerkleTreePath(${nat}, ${value_type}).fromValue(result)"
      "             : undefined)("
@@ -1030,7 +1030,7 @@
      (popeq [cached #t] [result (void)])))
   (function read checkRoot ([rt MerkleTreeDigest]) Boolean
     "Tests if the given Merkle tree root is the root for this Merkle tree. \
-    MerkleTreeDigest is defined in CompactStandardLibrary (compact-runtime from Typescript)."
+    MerkleTreeDigest is defined in CompactStandardLibrary (midnight-compact-runtime from Typescript)."
     ((dup [n 0])
      (idx [cached f-cached] [pushPath #f] [path f])
      (idx [cached #f] [pushPath #f] [path (list (align 0 1))])
@@ -1131,7 +1131,7 @@
                                       (state-value 'map ()))))
   (function js-only root () "${rtlib}MerkleTreeDigest"
     "Retrieves the root of the Merkle tree. \
-    MerkleTreeDigest is defined in compact-runtime."
+    MerkleTreeDigest is defined in midnight-compact-runtime."
     ("((result) => result"
      "             ? ${rtlib}CompactTypeMerkleTreeDigest.fromValue(result)"
      "             : undefined)(${this}.asArray()[0].asBoundedMerkleTree().rehash().root()?.value)"))
@@ -1141,7 +1141,7 @@
   (function js-only path_for_leaf ([index Field] [leaf value_type]) "${rtlib}MerkleTreePath<${value_type}>"
     "Returns the Merkle path, given the knowledge that a specified leaf is at \
     the given index. It is an error to call this if the index is out of bounds. \
-    MerkleTreePath is defined in compact-runtime."
+    MerkleTreePath is defined in midnight-compact-runtime."
     ("((result) => result"
      "             ? new ${rtlib}CompactTypeMerkleTreePath(${nat}, ${value_type}).fromValue(result)"
      "             : undefined)("
@@ -1156,7 +1156,7 @@
     "Finds the path for a given leaf in a Merkle tree. Be warned that this is \
     O(n) and should be avoided for large trees. Returns undefined if no such \
     leaf exists. 
-    MerkleTreePath is defined in compact-runtime."
+    MerkleTreePath is defined in midnight-compact-runtime."
     ("((result) => result"
      "             ? new ${rtlib}CompactTypeMerkleTreePath(${nat}, ${value_type}).fromValue(result)"
      "             : undefined)("
@@ -1169,7 +1169,7 @@
   (function js-only history () "Iterator<${rtlib}MerkleTreeDigest>"
     "An iterator over the roots that are considered valid past roots for this \
     Merkle tree. \
-    MerkleTreeDigest is defined in compact-runtime."
+    MerkleTreeDigest is defined in midnight-compact-runtime."
     ("${this}.asArray()[2].asMap().keys().map("
      "  (elem) => ${rtlib}CompactTypeMerkleTreeDigest.fromValue(elem.value)"
      ")[Symbol.iterator]()"))
@@ -1201,7 +1201,7 @@
   (function read checkRoot ([rt MerkleTreeDigest]) Boolean
     "Tests if the given Merkle tree root is one of the past roots for this \
     Merkle tree. \
-    MerkleTreeDigest is defined in CompactStandardLibrary (compact-runtime from Typescript)."
+    MerkleTreeDigest is defined in CompactStandardLibrary (midnight-compact-runtime from Typescript)."
     ((dup [n 0])
      (idx [cached f-cached] [pushPath #f] [path f])
      (idx [cached #f] [pushPath #f] [path (list (align 2 1))])

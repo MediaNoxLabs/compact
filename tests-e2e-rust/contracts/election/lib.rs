@@ -26,10 +26,10 @@
     non_upper_case_globals
 )]
 
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 use std::marker::PhantomData;
 
-compact_runtime::check_runtime_version!("0.19.100");
+midnight_compact_runtime::check_runtime_version!("0.19.100");
 
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct MerkleTreeDigest {
@@ -63,14 +63,14 @@ impl FromFieldRepr for MerkleTreeDigest {
         Some(MerkleTreeDigest { field })
     }
 }
-impl From<MerkleTreeDigest> for compact_runtime::Value {
-    fn from(s: MerkleTreeDigest) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.field));
-        compact_runtime::Value::concat(_v.iter())
+impl From<MerkleTreeDigest> for midnight_compact_runtime::Value {
+    fn from(s: MerkleTreeDigest) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.field));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for MerkleTreeDigest {
+impl midnight_compact_runtime::BinaryHashRepr for MerkleTreeDigest {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.field.binary_repr(writer);
     }
@@ -110,12 +110,12 @@ impl FromFieldRepr for PermissibleVotes {
         }
     }
 }
-impl From<PermissibleVotes> for compact_runtime::Value {
-    fn from(v: PermissibleVotes) -> compact_runtime::Value {
-        compact_runtime::Value::from(v as u8)
+impl From<PermissibleVotes> for midnight_compact_runtime::Value {
+    fn from(v: PermissibleVotes) -> midnight_compact_runtime::Value {
+        midnight_compact_runtime::Value::from(v as u8)
     }
 }
-impl compact_runtime::BinaryHashRepr for PermissibleVotes {
+impl midnight_compact_runtime::BinaryHashRepr for PermissibleVotes {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         (*self as u8).binary_repr(writer);
     }
@@ -147,16 +147,16 @@ impl FieldRepr for LeafPreimage {
 }
 impl FromFieldRepr for LeafPreimage {
     const FIELD_SIZE: usize =
-        compact_runtime::bytes_field_size(6) + <[u8; 32] as FromFieldRepr>::FIELD_SIZE;
+        midnight_compact_runtime::bytes_field_size(6) + <[u8; 32] as FromFieldRepr>::FIELD_SIZE;
     fn from_field_repr(_repr: &[Fr]) -> Option<Self> {
         if _repr.len() < Self::FIELD_SIZE {
             return None;
         }
         let mut _offset = 0usize;
-        let domain_sep = compact_runtime::bytes_from_field_repr::<6>(
-            &_repr[_offset.._offset + compact_runtime::bytes_field_size(6)],
+        let domain_sep = midnight_compact_runtime::bytes_from_field_repr::<6>(
+            &_repr[_offset.._offset + midnight_compact_runtime::bytes_field_size(6)],
         )?;
-        _offset += compact_runtime::bytes_field_size(6);
+        _offset += midnight_compact_runtime::bytes_field_size(6);
         let data = <[u8; 32] as FromFieldRepr>::from_field_repr(
             &_repr[_offset.._offset + <[u8; 32] as FromFieldRepr>::FIELD_SIZE],
         )?;
@@ -165,15 +165,15 @@ impl FromFieldRepr for LeafPreimage {
         Some(LeafPreimage { domain_sep, data })
     }
 }
-impl From<LeafPreimage> for compact_runtime::Value {
-    fn from(s: LeafPreimage) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.domain_sep));
-        _v.push(compact_runtime::Value::from(s.data));
-        compact_runtime::Value::concat(_v.iter())
+impl From<LeafPreimage> for midnight_compact_runtime::Value {
+    fn from(s: LeafPreimage) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.domain_sep));
+        _v.push(midnight_compact_runtime::Value::from(s.data));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for LeafPreimage {
+impl midnight_compact_runtime::BinaryHashRepr for LeafPreimage {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.domain_sep.binary_repr(writer);
         self.data.binary_repr(writer);
@@ -216,12 +216,12 @@ impl FromFieldRepr for PrivateState {
         }
     }
 }
-impl From<PrivateState> for compact_runtime::Value {
-    fn from(v: PrivateState) -> compact_runtime::Value {
-        compact_runtime::Value::from(v as u8)
+impl From<PrivateState> for midnight_compact_runtime::Value {
+    fn from(v: PrivateState) -> midnight_compact_runtime::Value {
+        midnight_compact_runtime::Value::from(v as u8)
     }
 }
-impl compact_runtime::BinaryHashRepr for PrivateState {
+impl midnight_compact_runtime::BinaryHashRepr for PrivateState {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         (*self as u8).binary_repr(writer);
     }
@@ -264,12 +264,12 @@ impl FromFieldRepr for PublicState {
         }
     }
 }
-impl From<PublicState> for compact_runtime::Value {
-    fn from(v: PublicState) -> compact_runtime::Value {
-        compact_runtime::Value::from(v as u8)
+impl From<PublicState> for midnight_compact_runtime::Value {
+    fn from(v: PublicState) -> midnight_compact_runtime::Value {
+        midnight_compact_runtime::Value::from(v as u8)
     }
 }
-impl compact_runtime::BinaryHashRepr for PublicState {
+impl midnight_compact_runtime::BinaryHashRepr for PublicState {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         (*self as u8).binary_repr(writer);
     }
@@ -292,12 +292,12 @@ pub trait Witnesses<PS> {
         &self,
         ctx: &WitnessContext<Ledger<'a>, PS>,
         pk: [u8; 32],
-    ) -> (PS, Maybe<compact_runtime::MerklePath<[u8; 32]>>);
+    ) -> (PS, Maybe<midnight_compact_runtime::MerklePath<[u8; 32]>>);
     fn context_committed_votes_path_of<'a>(
         &self,
         ctx: &WitnessContext<Ledger<'a>, PS>,
         cm: [u8; 32],
-    ) -> (PS, Maybe<compact_runtime::MerklePath<[u8; 32]>>);
+    ) -> (PS, Maybe<midnight_compact_runtime::MerklePath<[u8; 32]>>);
 }
 
 pub struct Contract<PS, W = NoWitnesses>
@@ -327,7 +327,7 @@ where
         let sv = new_array(vec![
             new_cell([0u8; 32]),
             new_cell(0u8),
-            new_cell(Maybe::<compact_runtime::std_lib::OpaqueString>::default()),
+            new_cell(Maybe::<midnight_compact_runtime::std_lib::OpaqueString>::default()),
             new_cell(0u64),
             new_cell(0u64),
             new_merkle_tree(10),
@@ -336,7 +336,7 @@ where
             new_map(),
         ]);
         let state = ChargedState::new(sv);
-        let qctx = QueryContext::new(state, compact_runtime::ContractAddress::default());
+        let qctx = QueryContext::new(state, midnight_compact_runtime::ContractAddress::default());
         let ops = OpProgramVerify::<DefaultDB>::new()
             .push(false, new_cell(0u8))
             .push(true, new_cell(authority_init))
@@ -357,7 +357,7 @@ where
         ctx: CircuitContext<PS>,
         ballot: PermissibleVotes,
     ) -> Result<CircuitResults<PS, ()>, CompactError> {
-        let mut __gas_acc = compact_runtime::RunningCost::default();
+        let mut __gas_acc = midnight_compact_runtime::RunningCost::default();
         let _witness_ctx_h0 = WitnessContext::new(
             ledger(&ctx.current_query_context.state),
             ctx.current_private_state,
@@ -382,14 +382,16 @@ where
                     CompactError::AssertionFailed(format!("ledger query failed: {:?}", e))
                 })?;
                 let _av = match _gather_results.events.last() {
-                    Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+                    Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(
+                        av,
+                    )) => av,
                     _ => {
                         return Err(CompactError::AssertionFailed(
                             "ledger: expected Read event".into(),
                         ))
                     }
                 };
-                compact_runtime::std_lib::decode_via_field_repr::<PublicState>(_av)?
+                midnight_compact_runtime::std_lib::decode_via_field_repr::<PublicState>(_av)?
             } == PublicState::commit)
                 && (_w_private_state_0 == PrivateState::initial)),
             "In illegal state for committing"
@@ -428,14 +430,16 @@ where
                     CompactError::AssertionFailed(format!("ledger query failed: {:?}", e))
                 })?;
                 let _av = match _gather_results.events.last() {
-                    Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+                    Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(
+                        av,
+                    )) => av,
                     _ => {
                         return Err(CompactError::AssertionFailed(
                             "ledger: expected Read event".into(),
                         ))
                     }
                 };
-                compact_runtime::std_lib::decode_bool(_av)?
+                midnight_compact_runtime::std_lib::decode_bool(_av)?
             })),
             "Unexpected attempt to double use of nullifier"
         );
@@ -448,7 +452,7 @@ where
         let (current_private_state, path) = self
             .witnesses
             .context_eligible_voters_path_of(&_witness_ctx_8, pk);
-        let tmp = compact_runtime::std_lib::merkle_tree_path_root(path.value.clone());
+        let tmp = midnight_compact_runtime::std_lib::merkle_tree_path_root(path.value.clone());
         compact_assert!(
             ((path.is_some && {
                 let _gather_ops = OpProgramGather::<DefaultDB>::new()
@@ -470,14 +474,16 @@ where
                     CompactError::AssertionFailed(format!("ledger query failed: {:?}", e))
                 })?;
                 let _av = match _gather_results.events.last() {
-                    Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+                    Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(
+                        av,
+                    )) => av,
                     _ => {
                         return Err(CompactError::AssertionFailed(
                             "ledger: expected Read event".into(),
                         ))
                     }
                 };
-                compact_runtime::std_lib::decode_bool(_av)?
+                midnight_compact_runtime::std_lib::decode_bool(_av)?
             }) && (pk == path.value.leaf)),
             "Attempted to vote without authorization - need to add-voter"
         );
@@ -542,7 +548,7 @@ where
         &self,
         ctx: CircuitContext<PS>,
     ) -> Result<CircuitResults<PS, ()>, CompactError> {
-        let mut __gas_acc = compact_runtime::RunningCost::default();
+        let mut __gas_acc = midnight_compact_runtime::RunningCost::default();
         let _witness_ctx_h0 = WitnessContext::new(
             ledger(&ctx.current_query_context.state),
             ctx.current_private_state,
@@ -567,14 +573,16 @@ where
                     CompactError::AssertionFailed(format!("ledger query failed: {:?}", e))
                 })?;
                 let _av = match _gather_results.events.last() {
-                    Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+                    Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(
+                        av,
+                    )) => av,
                     _ => {
                         return Err(CompactError::AssertionFailed(
                             "ledger: expected Read event".into(),
                         ))
                     }
                 };
-                compact_runtime::std_lib::decode_via_field_repr::<PublicState>(_av)?
+                midnight_compact_runtime::std_lib::decode_via_field_repr::<PublicState>(_av)?
             } == PublicState::reveal)
                 && (_w_private_state_0 == PrivateState::committed)),
             "In illegal state for revealing"
@@ -605,14 +613,16 @@ where
                     CompactError::AssertionFailed(format!("ledger query failed: {:?}", e))
                 })?;
                 let _av = match _gather_results.events.last() {
-                    Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+                    Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(
+                        av,
+                    )) => av,
                     _ => {
                         return Err(CompactError::AssertionFailed(
                             "ledger: expected Read event".into(),
                         ))
                     }
                 };
-                compact_runtime::std_lib::decode_bool(_av)?
+                midnight_compact_runtime::std_lib::decode_bool(_av)?
             })),
             "Attempted to double vote"
         );
@@ -631,7 +641,7 @@ where
         let (current_private_state, path) = self
             .witnesses
             .context_committed_votes_path_of(&_witness_ctx_8, cm);
-        let tmp = compact_runtime::std_lib::merkle_tree_path_root(path.value.clone());
+        let tmp = midnight_compact_runtime::std_lib::merkle_tree_path_root(path.value.clone());
         compact_assert!(
             ((path.is_some && {
                 let _gather_ops = OpProgramGather::<DefaultDB>::new()
@@ -653,14 +663,16 @@ where
                     CompactError::AssertionFailed(format!("ledger query failed: {:?}", e))
                 })?;
                 let _av = match _gather_results.events.last() {
-                    Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+                    Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(
+                        av,
+                    )) => av,
                     _ => {
                         return Err(CompactError::AssertionFailed(
                             "ledger: expected Read event".into(),
                         ))
                     }
                 };
-                compact_runtime::std_lib::decode_bool(_av)?
+                midnight_compact_runtime::std_lib::decode_bool(_av)?
             }) && (cm == path.value.leaf)),
             "Attempted to reveal incorrectly"
         );
@@ -749,14 +761,16 @@ where
                     CompactError::AssertionFailed(format!("ledger query failed: {:?}", e))
                 })?;
                 let _av = match _gather_results.events.last() {
-                    Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+                    Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(
+                        av,
+                    )) => av,
                     _ => {
                         return Err(CompactError::AssertionFailed(
                             "ledger: expected Read event".into(),
                         ))
                     }
                 };
-                compact_runtime::std_lib::decode_bytes::<32>(_av)?
+                midnight_compact_runtime::std_lib::decode_bytes::<32>(_av)?
             }),
             "Attempted to advance state without authorization"
         );
@@ -777,14 +791,16 @@ where
                     CompactError::AssertionFailed(format!("ledger query failed: {:?}", e))
                 })?;
                 let _av = match _gather_results.events.last() {
-                    Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+                    Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(
+                        av,
+                    )) => av,
                     _ => {
                         return Err(CompactError::AssertionFailed(
                             "ledger: expected Read event".into(),
                         ))
                     }
                 };
-                compact_runtime::std_lib::decode_bool(_av)?
+                midnight_compact_runtime::std_lib::decode_bool(_av)?
             },
             "Attempted to start election without a topic"
         );
@@ -802,14 +818,16 @@ where
             )
             .map_err(|e| CompactError::AssertionFailed(format!("ledger query failed: {:?}", e)))?;
             let _av = match _gather_results.events.last() {
-                Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+                Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => {
+                    av
+                }
                 _ => {
                     return Err(CompactError::AssertionFailed(
                         "ledger: expected Read event".into(),
                     ))
                 }
             };
-            compact_runtime::std_lib::decode_via_field_repr::<PublicState>(_av)?
+            midnight_compact_runtime::std_lib::decode_via_field_repr::<PublicState>(_av)?
         })?;
         let ops = OpProgramVerify::<DefaultDB>::new()
             .push(false, new_cell(1u8))
@@ -838,7 +856,7 @@ where
     pub fn set_topic(
         &self,
         ctx: CircuitContext<PS>,
-        t: compact_runtime::std_lib::OpaqueString,
+        t: midnight_compact_runtime::std_lib::OpaqueString,
     ) -> Result<CircuitResults<PS, ()>, CompactError> {
         let _witness_ctx_0 = WitnessContext::new(
             ledger(&ctx.current_query_context.state),
@@ -864,14 +882,16 @@ where
                     CompactError::AssertionFailed(format!("ledger query failed: {:?}", e))
                 })?;
                 let _av = match _gather_results.events.last() {
-                    Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+                    Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(
+                        av,
+                    )) => av,
                     _ => {
                         return Err(CompactError::AssertionFailed(
                             "ledger: expected Read event".into(),
                         ))
                     }
                 };
-                compact_runtime::std_lib::decode_bytes::<32>(_av)?
+                midnight_compact_runtime::std_lib::decode_bytes::<32>(_av)?
             }),
             "Attempted to set topic without authorization"
         );
@@ -892,14 +912,16 @@ where
                     CompactError::AssertionFailed(format!("ledger query failed: {:?}", e))
                 })?;
                 let _av = match _gather_results.events.last() {
-                    Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+                    Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(
+                        av,
+                    )) => av,
                     _ => {
                         return Err(CompactError::AssertionFailed(
                             "ledger: expected Read event".into(),
                         ))
                     }
                 };
-                compact_runtime::std_lib::decode_via_field_repr::<PublicState>(_av)?
+                midnight_compact_runtime::std_lib::decode_via_field_repr::<PublicState>(_av)?
             } == PublicState::setup),
             "Attempted to set topic after setup phase"
         );
@@ -972,14 +994,16 @@ where
                     CompactError::AssertionFailed(format!("ledger query failed: {:?}", e))
                 })?;
                 let _av = match _gather_results.events.last() {
-                    Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+                    Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(
+                        av,
+                    )) => av,
                     _ => {
                         return Err(CompactError::AssertionFailed(
                             "ledger: expected Read event".into(),
                         ))
                     }
                 };
-                compact_runtime::std_lib::decode_bytes::<32>(_av)?
+                midnight_compact_runtime::std_lib::decode_bytes::<32>(_av)?
             }),
             "Attempted to add a voter without authorization"
         );
@@ -1000,14 +1024,16 @@ where
                     CompactError::AssertionFailed(format!("ledger query failed: {:?}", e))
                 })?;
                 let _av = match _gather_results.events.last() {
-                    Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+                    Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(
+                        av,
+                    )) => av,
                     _ => {
                         return Err(CompactError::AssertionFailed(
                             "ledger: expected Read event".into(),
                         ))
                     }
                 };
-                compact_runtime::std_lib::decode_via_field_repr::<PublicState>(_av)?
+                midnight_compact_runtime::std_lib::decode_via_field_repr::<PublicState>(_av)?
             } == PublicState::setup),
             "Attempted to add a voter after setup phase"
         );
@@ -1086,39 +1112,47 @@ pub mod pure_circuits {
     }
 
     pub(crate) fn commitment_nullifier(sk: [u8; 32]) -> Result<[u8; 32], CompactError> {
-        Ok(compact_runtime::std_lib::persistent_hash_aligned(&[
-            compact_runtime::AlignedValue::from([
-                108u8, 97, 114, 101, 115, 58, 101, 108, 101, 99, 116, 105, 111, 110, 58, 99, 109,
-                45, 110, 117, 108, 58, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            ]),
-            compact_runtime::AlignedValue::from(sk),
-        ]))
+        Ok(midnight_compact_runtime::std_lib::persistent_hash_aligned(
+            &[
+                midnight_compact_runtime::AlignedValue::from([
+                    108u8, 97, 114, 101, 115, 58, 101, 108, 101, 99, 116, 105, 111, 110, 58, 99,
+                    109, 45, 110, 117, 108, 58, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                ]),
+                midnight_compact_runtime::AlignedValue::from(sk),
+            ],
+        ))
     }
 
     pub(crate) fn reveal_nullifier(sk: [u8; 32]) -> Result<[u8; 32], CompactError> {
-        Ok(compact_runtime::std_lib::persistent_hash_aligned(&[
-            compact_runtime::AlignedValue::from([
-                108u8, 97, 114, 101, 115, 58, 101, 108, 101, 99, 116, 105, 111, 110, 58, 114, 118,
-                45, 110, 117, 108, 58, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            ]),
-            compact_runtime::AlignedValue::from(sk),
-        ]))
+        Ok(midnight_compact_runtime::std_lib::persistent_hash_aligned(
+            &[
+                midnight_compact_runtime::AlignedValue::from([
+                    108u8, 97, 114, 101, 115, 58, 101, 108, 101, 99, 116, 105, 111, 110, 58, 114,
+                    118, 45, 110, 117, 108, 58, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                ]),
+                midnight_compact_runtime::AlignedValue::from(sk),
+            ],
+        ))
     }
 
     pub(crate) fn public_key(sk: [u8; 32]) -> Result<[u8; 32], CompactError> {
-        Ok(compact_runtime::std_lib::persistent_hash_aligned(&[
-            compact_runtime::AlignedValue::from([
-                108u8, 97, 114, 101, 115, 58, 101, 108, 101, 99, 116, 105, 111, 110, 58, 112, 107,
-                58, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            ]),
-            compact_runtime::AlignedValue::from(sk),
-        ]))
+        Ok(midnight_compact_runtime::std_lib::persistent_hash_aligned(
+            &[
+                midnight_compact_runtime::AlignedValue::from([
+                    108u8, 97, 114, 101, 115, 58, 101, 108, 101, 99, 116, 105, 111, 110, 58, 112,
+                    107, 58, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                ]),
+                midnight_compact_runtime::AlignedValue::from(sk),
+            ],
+        ))
     }
 
     pub(crate) fn commit_with_sk(ballot: [u8; 32], sk: [u8; 32]) -> Result<[u8; 32], CompactError> {
-        Ok(compact_runtime::std_lib::persistent_hash_aligned(&[
-            compact_runtime::AlignedValue::from(ballot),
-            compact_runtime::AlignedValue::from(sk),
-        ]))
+        Ok(midnight_compact_runtime::std_lib::persistent_hash_aligned(
+            &[
+                midnight_compact_runtime::AlignedValue::from(ballot),
+                midnight_compact_runtime::AlignedValue::from(sk),
+            ],
+        ))
     }
 }

@@ -154,9 +154,9 @@ Top categories:
 
 ### 5a. compact
 
-**Result:** `cargo rustdoc -p compact-runtime --no-deps` produced no missing-doc warnings.
+**Result:** `cargo rustdoc -p midnight-compact-runtime --no-deps` produced no missing-doc warnings.
 
-**Assessment:** Runtime crate is well-documented or uses a blanket allow. Macro crate (`compact-runtime-macros`) has minimal public API surface.
+**Assessment:** Runtime crate is well-documented or uses a blanket allow. Macro crate (`midnight-compact-runtime-macros`) has minimal public API surface.
 
 ### 5b. midnight-did-rs
 

@@ -17,7 +17,7 @@
 
 ;;; Rust code generator. Mirrors typescript-passes.ss in spirit: walks
 ;;; the post-prepare-for-typescript `Ltypescript` IR and emits a Rust
-;;; crate (contract/lib.rs) that depends on the `compact-runtime` crate.
+;;; crate (contract/lib.rs) that depends on the `midnight-compact-runtime` crate.
 ;;;
 ;;; See docs/superpowers/specs/2026-05-25-rust-codegen-design.md for the
 ;;; full mapping between Compact constructs and Rust output.

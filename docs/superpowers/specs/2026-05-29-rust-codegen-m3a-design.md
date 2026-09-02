@@ -8,7 +8,7 @@ This design originated from a discovery during a *downstream* project (`midnight
 
 ## 1. Goal
 
-`compactc --rust --skip-ts examples/tiny.compact <out>` succeeds AND the emitted Rust crate compiles against `compact-runtime`, with the existing `counter.compact` byte-parity test remaining green.
+`compactc --rust --skip-ts examples/tiny.compact <out>` succeeds AND the emitted Rust crate compiles against `midnight-compact-runtime`, with the existing `counter.compact` byte-parity test remaining green.
 
 ## 2. Non-goals
 
@@ -32,18 +32,18 @@ From `examples/tiny.compact` (the M3a test target):
 | Constructor calling witness | `constructor(v: Field) { const sk = private$secret_key(); … }` | No | Yes — constructor body IR walk incl. witness calls |
 | Multiple circuits with args + control flow | 5 circuits: `in_state`, `set`, `get`, `clear`, `public_key` | Counter-only hardcoded | Yes — generic circuit-body IR walker emitting Op programs |
 | `assert(cond, msg)` | 3 sites | No | Yes — emit `Op::Eq` + `Op::Branch` skip-on-false (or runtime panic equivalent) |
-| `disclose(x)` no-op | 2 sites | No | Yes — emit as identity via `compact_runtime::disclose` |
-| Standard library: `Maybe<T>`, `some<T>`, `none<T>`, `default<T>`, `pad`, `persistentHash<T>` | All used | No | Yes — codegen mapping table + compact-runtime extensions |
+| `disclose(x)` no-op | 2 sites | No | Yes — emit as identity via `midnight_compact_runtime::disclose` |
+| Standard library: `Maybe<T>`, `some<T>`, `none<T>`, `default<T>`, `pad`, `persistentHash<T>` | All used | No | Yes — codegen mapping table + midnight-compact-runtime extensions |
 | Primitive types: `Bytes<N>`, `Field`, `Boolean` | All used | Field only (as `Fr`) | Add `Bytes<N>` alias + `Boolean → bool` mapping |
 | Equality `==` and ternary `?:` | Used in `in_state`, `get`, `clear` | No | Yes — emit Rust `==` in non-circuit context; `Op::Eq` + `Branch` in circuit context |
 
 ## 4. Architecture — where things live
 
-Clean separation between **universal** concerns (in `compact-runtime`) and **per-contract** concerns (in emitted code):
+Clean separation between **universal** concerns (in `midnight-compact-runtime`) and **per-contract** concerns (in emitted code):
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│  compact-runtime  +  compact-runtime-macros (new sibling crate)     │
+│  midnight-compact-runtime  +  midnight-compact-runtime-macros (new sibling crate)     │
 │  ──────────────────────────────────────────────────────────────     │
 │  • Bytes<const N: usize> = [u8; N]   (alias + helper impls)         │
 │  • Maybe<T> enum + some()/none()/is_some()                          │
@@ -73,16 +73,16 @@ Clean separation between **universal** concerns (in `compact-runtime`) and **per
 
 | # | Decision | Rationale |
 |---|---|---|
-| D1 | **Witness pattern: `#[witness]` proc-macro registration**, not per-contract trait | User chose. Trade-offs accepted: more infrastructure (new `compact-runtime-macros` crate, proc-macro build dep), but more flexible — witnesses can live anywhere, no per-contract trait impl boilerplate. |
+| D1 | **Witness pattern: `#[witness]` proc-macro registration**, not per-contract trait | User chose. Trade-offs accepted: more infrastructure (new `midnight-compact-runtime-macros` crate, proc-macro build dep), but more flexible — witnesses can live anywhere, no per-contract trait impl boilerplate. |
 | D2 | **Enum `Aligned`/`FieldRepr`/`FromFieldRepr` impls are hand-emitted per enum**, not derived | Faster path. `base-crypto-derive` doesn't support enums today (verified). Forking it to add enum support is a worthwhile cycle-N investment but not M3a — emit by hand for now (≈20 LOC per enum × few enums). |
-| D3 | **Universals (`Bytes<N>`, `Maybe<T>`, `pad`, `disclose`) live in `compact-runtime`**; per-contract code is fully in the emitted crate | Keeps the facade thin; emitted code is self-contained except for the curated runtime. |
+| D3 | **Universals (`Bytes<N>`, `Maybe<T>`, `pad`, `disclose`) live in `midnight-compact-runtime`**; per-contract code is fully in the emitted crate | Keeps the facade thin; emitted code is self-contained except for the curated runtime. |
 | D4 | **No backwards-compat shims for M2 output**: counter.compact emission may need touch-ups | M2 emitter hardcodes Counter; M3a's generic circuit-body walker should subsume it. If counter.compact byte-parity test goes red, we either fix the new walker or update the snapshot. |
 | D5 | **Test contract for M3a is `examples/tiny.compact` only**. did.compact + proposal.compact + election.compact are M3b/M3c gates | Bounded scope. tiny.compact exercises the M3a feature set without dragging in M3b/c surface. |
 | D6 | **Cross-language byte-parity (vs TS output) is best-effort, not a gate** | TS reference for tiny.compact may not exist or may differ stylistically. M3a's hard gate is `cargo build`, not byte parity. Byte parity is the M3b/c gate where it's tractable. |
 
 ## 6. Deliverables
 
-### 6.1 `compact-runtime` extensions (~150 LOC)
+### 6.1 `midnight-compact-runtime` extensions (~150 LOC)
 
 In `runtime-rs/src/lib.rs` (or split into sub-modules under `runtime-rs/src/std_lib/`):
 
@@ -118,12 +118,12 @@ pub fn pad(width: usize, s: &str) -> Vec<u8> {
 pub fn disclose<T>(x: T) -> T { x }
 ```
 
-### 6.2 `compact-runtime-macros` (new sibling crate)
+### 6.2 `midnight-compact-runtime-macros` (new sibling crate)
 
 ```toml
 # runtime-rs-macros/Cargo.toml
 [package]
-name = "compact-runtime-macros"
+name = "midnight-compact-runtime-macros"
 edition = "2021"
 
 [lib]
@@ -144,7 +144,7 @@ pub fn witness(_attr: TokenStream, item: TokenStream) -> TokenStream { … }
 
 Applied as:
 ```rust
-use compact_runtime::witness;
+use midnight_compact_runtime::witness;
 
 #[witness]
 fn secret_key() -> Bytes<32> { /* user impl */ }
@@ -153,10 +153,10 @@ fn secret_key() -> Bytes<32> { /* user impl */ }
 Macro responsibilities:
 - Validate the function signature (no `self`, return type is a representable Rust type).
 - Register the function in a per-process or per-contract dispatch table keyed by `(contract_id, witness_name)`.
-- Emit a thin wrapper that the generated contract code can call by name (e.g. `compact_runtime::witnesses::secret_key()` or `WitnessRegistry::call("secret_key", ...)`).
+- Emit a thin wrapper that the generated contract code can call by name (e.g. `midnight_compact_runtime::witnesses::secret_key()` or `WitnessRegistry::call("secret_key", ...)`).
 - The exact registry mechanism is an M3a sub-design — see §11 Open decisions.
 
-`compact-runtime` re-exports the macro: `pub use compact_runtime_macros::witness;`
+`midnight-compact-runtime` re-exports the macro: `pub use midnight_compact_runtime_macros::witness;`
 
 ### 6.3 `compiler/rust-passes.ss` extensions (~600-800 LOC of Scheme)
 
@@ -164,7 +164,7 @@ New emit-* functions (one per concern):
 
 - **`emit-enums`** — walks all enum decls; emits `enum Foo { A, B, ... }` + hand-written `Aligned`/`FieldRepr`/`FromFieldRepr` impls per enum. Discriminant assigned by declaration order; alignment is `Alignment::field(1)` (single field for discriminant); FieldRepr serializes discriminant as a small int.
 - **`emit-witness-trait`** — emits per-contract no-op marker: the macro-based pattern means **no compiler-emitted trait** is needed; instead the emitter records witness signatures in `pure_circuits` module as `extern fn`-style declarations that link to the macro-registered impls at runtime.
-- **`emit-constructor`** — generic constructor body IR walk. Recurses on each statement/expression, emitting Rust assignments and witness calls (`compact_runtime::witnesses::secret_key()`). Handles `disclose(x)` as identity.
+- **`emit-constructor`** — generic constructor body IR walk. Recurses on each statement/expression, emitting Rust assignments and witness calls (`midnight_compact_runtime::witnesses::secret_key()`). Handles `disclose(x)` as identity.
 - **`emit-circuits-generic`** — generic circuit-body IR walker (replaces M2's hardcoded `emit-increment-circuit`). For each circuit:
   - Emit fn signature with arguments.
   - Walk body: `assert` → `assert!()` macro call (or Op::Eq+Branch in circuit context); `if`/`?:` → Rust if-else; method calls on ledger → corresponding Op sequence; control flow over enum variants → match expressions.
@@ -174,20 +174,20 @@ Mapping table extract:
 
 | Compact | Emitted Rust |
 |---|---|
-| `disclose(x)` | `compact_runtime::disclose(x)` |
-| `persistentHash<T>(v)` | Two-step: emit `let __h_buf = <T as compact_runtime::FieldRepr>::field_repr(&v);` then `compact_runtime::persistent_hash(&__h_buf)`. `FieldRepr::field_repr` already exists in midnight-ledger; the buffer type is `Vec<Fr>` or `&[u8]` per its signature — resolve concretely during implementation by reading the trait signature. |
+| `disclose(x)` | `midnight_compact_runtime::disclose(x)` |
+| `persistentHash<T>(v)` | Two-step: emit `let __h_buf = <T as midnight_compact_runtime::FieldRepr>::field_repr(&v);` then `midnight_compact_runtime::persistent_hash(&__h_buf)`. `FieldRepr::field_repr` already exists in midnight-ledger; the buffer type is `Vec<Fr>` or `&[u8]` per its signature — resolve concretely during implementation by reading the trait signature. |
 | `default<T>()` | `<T as core::default::Default>::default()` |
-| `pad(w, s)` | `compact_runtime::pad(w, s)` |
-| `some<T>(v)` | `compact_runtime::some(v)` |
-| `none<T>()` | `compact_runtime::none::<T>()` |
-| `Field` | `compact_runtime::Fr` |
-| `Bytes<N>` | `compact_runtime::Bytes::<N>` |
+| `pad(w, s)` | `midnight_compact_runtime::pad(w, s)` |
+| `some<T>(v)` | `midnight_compact_runtime::some(v)` |
+| `none<T>()` | `midnight_compact_runtime::none::<T>()` |
+| `Field` | `midnight_compact_runtime::Fr` |
+| `Bytes<N>` | `midnight_compact_runtime::Bytes::<N>` |
 | `Boolean` | `bool` |
 | `Uint<8/16/32/64>` | `u8/u16/u32/u64` |
 
 ### 6.4 Cargo.toml emission (small update)
 
-`emit-cargo-toml` already exists; extend it to depend on the new `compact-runtime-macros` crate via re-export from `compact-runtime`. No new dep entry in emitted Cargo.toml expected (the proc-macro is re-exported transitively).
+`emit-cargo-toml` already exists; extend it to depend on the new `midnight-compact-runtime-macros` crate via re-export from `midnight-compact-runtime`. No new dep entry in emitted Cargo.toml expected (the proc-macro is re-exported transitively).
 
 ## 7. Testing
 
@@ -214,8 +214,8 @@ Mapping table extract:
 
 Implementation order matters because earlier features unblock later ones:
 
-1. **`compact-runtime` extensions** (Bytes, Maybe, pad, disclose) — small, independent.
-2. **`compact-runtime-macros` crate skeleton** + `#[witness]` macro stub (registers + emits dummy code).
+1. **`midnight-compact-runtime` extensions** (Bytes, Maybe, pad, disclose) — small, independent.
+2. **`midnight-compact-runtime-macros` crate skeleton** + `#[witness]` macro stub (registers + emits dummy code).
 3. **Enum emission in `rust-passes.ss`** (`emit-enums`) — STATE first, independent of circuits.
 4. **Stdlib mapping table + primitive type mapping** — needed before circuit body walks.
 5. **Witness emission** (per the macro pattern from D1) — needed before constructor.
@@ -249,7 +249,7 @@ These are deliberately not fixed in this spec — they require code-level invest
    - Simplest first; iterate. Document choice in the M3a plan.
 2. **Where the generated code calls into witnesses.** Options:
    - Direct function call: `secret_key()` (requires the user's function to be in scope).
-   - Through a dispatch: `compact_runtime::call_witness::<_, Bytes<32>>("secret_key")`.
+   - Through a dispatch: `midnight_compact_runtime::call_witness::<_, Bytes<32>>("secret_key")`.
    - The macro determines the name; rust-passes emits the call form expected by whatever shape we pick.
 3. **Whether to fork `base-crypto-derive` for enum derives**. Resolve based on M3b enum count: if M3b adds ≥3 more enums, fork; otherwise keep hand-emitting.
 4. **Cross-language byte parity for tiny.compact**. Skip in M3a (per D6), revisit if it falls out for free.
@@ -259,7 +259,7 @@ These are deliberately not fixed in this spec — they require code-level invest
 Captured in `~/.claude/skills/midnight-identity-rust/SKILL.md`. M3a-relevant entries added 2026-05-29:
 - M2-vs-M3 milestone gap (decisive — codegen-rust hard-codes Counter ADT).
 - midnight-ledger primitives inventory: Fr, Op, persistent_hash, Aligned/FieldRepr stack all exist.
-- Witness boundary undefined in compact-runtime; M3a creates the pattern.
+- Witness boundary undefined in midnight-compact-runtime; M3a creates the pattern.
 - Enum derives missing from `base-crypto-derive`; hand-emit for now.
 
 ## 13. Next steps

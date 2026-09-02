@@ -26,10 +26,10 @@
     non_upper_case_globals
 )]
 
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 use std::marker::PhantomData;
 
-compact_runtime::check_runtime_version!("0.19.100");
+midnight_compact_runtime::check_runtime_version!("0.19.100");
 
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct StatusProof {
@@ -73,15 +73,15 @@ impl FromFieldRepr for StatusProof {
         Some(StatusProof { createdAt, issuer })
     }
 }
-impl From<StatusProof> for compact_runtime::Value {
-    fn from(s: StatusProof) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.createdAt));
-        _v.push(compact_runtime::Value::from(s.issuer));
-        compact_runtime::Value::concat(_v.iter())
+impl From<StatusProof> for midnight_compact_runtime::Value {
+    fn from(s: StatusProof) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.createdAt));
+        _v.push(midnight_compact_runtime::Value::from(s.issuer));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for StatusProof {
+impl midnight_compact_runtime::BinaryHashRepr for StatusProof {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.createdAt.binary_repr(writer);
         self.issuer.binary_repr(writer);
@@ -145,16 +145,16 @@ impl FromFieldRepr for Attestation {
         })
     }
 }
-impl From<Attestation> for compact_runtime::Value {
-    fn from(s: Attestation) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.proof));
-        _v.push(compact_runtime::Value::from(s.hasExpiration));
-        _v.push(compact_runtime::Value::from(s.expiresAt));
-        compact_runtime::Value::concat(_v.iter())
+impl From<Attestation> for midnight_compact_runtime::Value {
+    fn from(s: Attestation) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.proof));
+        _v.push(midnight_compact_runtime::Value::from(s.hasExpiration));
+        _v.push(midnight_compact_runtime::Value::from(s.expiresAt));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for Attestation {
+impl midnight_compact_runtime::BinaryHashRepr for Attestation {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.proof.binary_repr(writer);
         self.hasExpiration.binary_repr(writer);
@@ -210,15 +210,15 @@ impl FromFieldRepr for VerifierPolicy {
         })
     }
 }
-impl From<VerifierPolicy> for compact_runtime::Value {
-    fn from(s: VerifierPolicy) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.enforceMaxAge));
-        _v.push(compact_runtime::Value::from(s.maxAge));
-        compact_runtime::Value::concat(_v.iter())
+impl From<VerifierPolicy> for midnight_compact_runtime::Value {
+    fn from(s: VerifierPolicy) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.enforceMaxAge));
+        _v.push(midnight_compact_runtime::Value::from(s.maxAge));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for VerifierPolicy {
+impl midnight_compact_runtime::BinaryHashRepr for VerifierPolicy {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.enforceMaxAge.binary_repr(writer);
         self.maxAge.binary_repr(writer);
@@ -256,7 +256,7 @@ where
     ) -> Result<ConstructorResult<PS>, CompactError> {
         let sv = new_array(vec![new_cell(0u64)]);
         let state = ChargedState::new(sv);
-        let qctx = QueryContext::new(state, compact_runtime::ContractAddress::default());
+        let qctx = QueryContext::new(state, midnight_compact_runtime::ContractAddress::default());
         Ok(ConstructorResult {
             current_contract_state: qctx.state,
             current_private_state: ctx.initial_private_state,
@@ -310,7 +310,7 @@ impl<'a, D: DB> Ledger<'a, D> {
     pub fn accepted(&self) -> Result<u64, CompactError> {
         let qctx = QueryContext::new(
             self.state.clone(),
-            compact_runtime::ContractAddress::default(),
+            midnight_compact_runtime::ContractAddress::default(),
         );
         let ops = OpProgramGather::<D>::new()
             .dup(0)
@@ -320,14 +320,14 @@ impl<'a, D: DB> Ledger<'a, D> {
         let results = query_for_read(&qctx, &ops, None, &initial_cost_model())
             .map_err(|e| CompactError::AssertionFailed(format!("ledger query failed: {:?}", e)))?;
         let av = match results.events.last() {
-            Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+            Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
             _ => {
                 return Err(CompactError::AssertionFailed(
                     "ledger: expected Read event".into(),
                 ))
             }
         };
-        compact_runtime::std_lib::decode_u64(av)
+        midnight_compact_runtime::std_lib::decode_u64(av)
     }
 }
 

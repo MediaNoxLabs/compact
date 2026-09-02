@@ -24,13 +24,13 @@
 // generated lib.rs picks the smallest Rust unsigned width that fits each
 // declared upper bound (u8/u16/u32/u64), the K1 default-value emitter
 // emits matching `0uN` literals, and decoder dispatch uses `decode_uN`
-// from `compact_runtime::std_lib`.
+// from `midnight_compact_runtime::std_lib`.
 //
 // Drives the generated bounded-uint-fixture crate through initial_state()
 // and asserts the serialized ContractState matches the TS reference.
 
 use compact_contract_bounded_uint_fixture::Contract;
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 use midnight_serialize::tagged_serialize;
 use midnight_storage::storage::HashMap;
 use tests_e2e_rust::SmallFixtureTsReference;

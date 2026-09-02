@@ -15,11 +15,11 @@
 | L — Compact stdlib mapping | L1 ✅, L2 ✅, L3 ✅ (pre-existing), L4 ✅ (pre-existing) | done | `1d89a16` |
 | M — Tests for tiny.compact | M1 ✅, M2 ✅ (PASSES), M3 partial (snapshot test landed earlier) | **done** | `5dde297` |
 
-**Milestone reached (after K2):** `compactc --rust examples/tiny.compact /tmp/out/` produces a Rust crate that **compiles cleanly** against the local `compact-runtime`. `cargo build` succeeds end-to-end — all type references resolve, Witnesses trait + Maybe<T> + Ledger view + circuit signatures all type-check. Bodies remain `unimplemented!()` so the crate panics at runtime, but the surface is correct. This proves M3's "generalised emission" architectural goal is sound; remaining work is body correctness (K1/J2/I3) and byte-parity validation (M).
+**Milestone reached (after K2):** `compactc --rust examples/tiny.compact /tmp/out/` produces a Rust crate that **compiles cleanly** against the local `midnight-compact-runtime`. `cargo build` succeeds end-to-end — all type references resolve, Witnesses trait + Maybe<T> + Ledger view + circuit signatures all type-check. Bodies remain `unimplemented!()` so the crate panics at runtime, but the surface is correct. This proves M3's "generalised emission" architectural goal is sound; remaining work is body correctness (K1/J2/I3) and byte-parity validation (M).
 
 **Counter byte-parity restored (I3a, commit `9456eaa`):** circuit body emission now walks the Statement IR. For the narrow shape "single `public-ledger` call as statement-expression", it uses `expand-vm-code` from `(vm)` to evaluate the ADT op's vm-code with concrete path indices + argument expressions, then emits each vminstr as an `OpProgramVerify` builder call. The frontend lowers `round.increment(1)` to a nested `seq` introducing a temp via `safe-cast`; the emitter handles this by flattening seqs, gathering leading `(const ...)` bindings into an alist, resolving `var-ref` through that alist, and stripping `safe-cast` layers before passing args to `expand-vm-code`. Counter's snapshot now contains real Op programs again.
 
-**Milestone reached after I3b/4 (commit `1871e84`):** `compactc --rust examples/tiny.compact` produces a Rust crate where **zero circuit bodies fall back to `unimplemented!()`**. All four circuits (`set`, `get`, `clear`, `public_key`) plus the parameterised constructor emit real bodies; the generated crate compiles cleanly against the local `compact-runtime`. Counter byte-parity preserved throughout.
+**Milestone reached after I3b/4 (commit `1871e84`):** `compactc --rust examples/tiny.compact` produces a Rust crate where **zero circuit bodies fall back to `unimplemented!()`**. All four circuits (`set`, `get`, `clear`, `public_key`) plus the parameterised constructor emit real bodies; the generated crate compiles cleanly against the local `midnight-compact-runtime`. Counter byte-parity preserved throughout.
 
 **🎉 M3 CLOSE-OUT MILESTONE (commit `5dde297`):** The byte-parity test for tiny.compact **PASSES**. Driving the generated Rust contract through `initial_state(ctx, 42)` with a deterministic witness produces a `ContractState` whose `tagged_serialize`d bytes match the TypeScript reference byte-for-byte (1024 hex chars / 512 bytes). The Rust codegen for tiny.compact is correctness-verified end-to-end against the TS reference path. Both e2e tests (counter + tiny) pass.
 
@@ -41,7 +41,7 @@ After I3 + J2 + I4, tiny.compact's emitted crate has correct bodies. Then M (sna
 
 - Witnesses trait now emits arg lists too (G1, commit `ef7bf13`).
 - `emit-type-decls` walks Ltypescript `export-typedef` Program-Elements, emitting `#[derive(...)] #[repr(u8)] pub enum N { ... }` with Aligned/FieldRepr/FromFieldRepr impls per enum (H1–H4, commits `45bf810`, `49fe847`). tstruct/talias get TODO placeholders pending H5–H7.
-- `Maybe<T>` lives in `compact-runtime::std_lib` with full repr impls; `emit-type-decls` skips the per-contract definition and `type-rust` maps `(tstruct Maybe ...)` references to `Maybe<<value-type>>` (L1, commit `2171d1c`). The runtime also gained `pub use midnight_base_crypto::repr::MemWrite`.
+- `Maybe<T>` lives in `midnight-compact-runtime::std_lib` with full repr impls; `emit-type-decls` skips the per-contract definition and `type-rust` maps `(tstruct Maybe ...)` references to `Maybe<<value-type>>` (L1, commit `2171d1c`). The runtime also gained `pub use midnight_base_crypto::repr::MemWrite`.
 - `type-rust` now emits the bare enum name for `tenum` type references (F3, commit `d89861d`).
 - Circuit emission switched from hardcoded `emit-increment-circuit` to a real walk (I1+I2, commit `899ec90`). Impure circuits become methods on the Contract impl; pure circuits become free functions in `mod pure_circuits`. Bodies are placeholders `unimplemented!("M3-I3: ...")`. Counter snapshot updated to match — byte-parity restoration is gated on I3.
 - counter.compact emission still parses, builds, and (via the e2e parity test in `tests-e2e-rust/tests/counter.rs`) reproduces the TS ContractState bytes — that test hand-rolls Op sequences and doesn't depend on the generated lib.rs text.
@@ -62,7 +62,7 @@ After I3 + J2 + I4, tiny.compact's emitted crate has correct bodies. Then M (sna
 - The witness IR's `function-name` field is an id record: always use `(id-sym function-name)` to extract the symbol. Same pattern applies to circuit declarations.
 - `camel->snake` now also handles `$` characters. If other special characters appear (e.g. backtick-quoted operators in identifiers), extend there.
 - The `(when (null? witness-decl*) ...)` guard around the `impl<PS> Witnesses<PS> for NoWitnesses {}` blanket is already in place — G3 effectively done.
-- F1 surfaced a parallel-work commit `9a5c0fc` ("test(m3a): minimal witness repro + diagnostic note") and a `compact-runtime-macros` crate (`51aac77`, `58b11ab`). Those are user-driven proc-macro experiments orthogonal to the compactc-side codegen path; leave them alone unless explicitly merging the two approaches.
+- F1 surfaced a parallel-work commit `9a5c0fc` ("test(m3a): minimal witness repro + diagnostic note") and a `midnight-compact-runtime-macros` crate (`51aac77`, `58b11ab`). Those are user-driven proc-macro experiments orthogonal to the compactc-side codegen path; leave them alone unless explicitly merging the two approaches.
 
 **Goal:** Make `compactc --rust examples/tiny.compact` produce a working Rust crate that compiles, runs, and byte-parity-matches the existing TS path's `ContractState`. tiny.compact exercises witnesses, enums, multiple circuits (pure + impure), hashing, `Maybe<T>` returns, `disclose()`, `default<T>`, and a parameterized constructor — the full generalisation surface.
 
@@ -82,7 +82,7 @@ After I3 + J2 + I4, tiny.compact's emitted crate has correct bodies. Then M (sna
 - `rust-passes.ss` has hardcoded `emit-increment-circuit` (matches counter.compact only)
 - `rust-passes.ss` has hardcoded `emit-initial-state` (matches counter.compact only)
 - `rust-passes.ss` has hardcoded `Ledger::round()` ledger view (matches counter.compact only)
-- `compact-runtime` has the full M1 + Tier 1/3 helper set
+- `midnight-compact-runtime` has the full M1 + Tier 1/3 helper set
 
 **TS target reference** (`/tmp/tiny-ts/contract/index.d.ts`):
 
@@ -514,9 +514,9 @@ Compact's `Maybe<T>` is `{ is_some: bool, value: T }`. The TS facade emits it as
 - (a) Reuse `Option<T>` (idiomatic Rust)
 - (b) Emit a dedicated `Maybe<T>` struct matching the TS shape exactly
 
-Choice (b) makes byte-parity simpler (the struct layout matches the TS object layout). Recommended: emit `pub struct Maybe<T> { pub is_some: bool, pub value: T }` per-contract or in `compact-runtime::stdlib`.
+Choice (b) makes byte-parity simpler (the struct layout matches the TS object layout). Recommended: emit `pub struct Maybe<T> { pub is_some: bool, pub value: T }` per-contract or in `midnight-compact-runtime::stdlib`.
 
-- [ ] **Step 1: Add `Maybe<T>` to `compact-runtime`**
+- [ ] **Step 1: Add `Maybe<T>` to `midnight-compact-runtime`**
 
 ```rust
 pub struct Maybe<T> {
@@ -528,7 +528,7 @@ impl<T: FieldRepr> FieldRepr for Maybe<T> { ... }
 impl<T: FromFieldRepr + Default> FromFieldRepr for Maybe<T> { ... }
 ```
 
-- [ ] **Step 2: Emit `compact_runtime::Maybe` in type-rust for Maybe<T>**
+- [ ] **Step 2: Emit `midnight_compact_runtime::Maybe` in type-rust for Maybe<T>**
 
 - [ ] **Step 3: Commit**
 
@@ -544,7 +544,7 @@ The `(declare-native-entry ...)` rows already have a TypeScript name. Add `rust-
 
 - [ ] **Step 3: Commit**
 
-### Task L3: `pad` helper in compact-runtime
+### Task L3: `pad` helper in midnight-compact-runtime
 
 **Files:** `runtime-rs/src/std_lib.rs`
 

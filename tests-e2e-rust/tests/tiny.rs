@@ -31,7 +31,7 @@
 // Each impure step is byte-checked against the captured TS fixture.
 
 use compact_contract_tiny::{ledger, Contract, Witnesses};
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 use midnight_serialize::tagged_serialize;
 use midnight_storage::storage::HashMap;
 use tests_e2e_rust::{TinyStepSnapshot, TinyTsReferenceState};

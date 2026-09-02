@@ -17,7 +17,7 @@
       ;; leaf public-binding at the given indentation. ADT-aware seeding
       ;; (R1 / K1.1): the Compact ADTs whose initial-value isn't a plain
       ;; Cell — Map, Set, MerkleTree, HistoricMerkleTree — have dedicated
-      ;; builders in compact-runtime that produce the exact StateValue
+      ;; builders in midnight-compact-runtime that produce the exact StateValue
       ;; shape declared in midnight-ledger.ss. Cell / Counter / anything
       ;; else with a read op keeps the K1 path — new_cell(<default>).
       ;; Special case: tvector defaults to [T; N] which doesn't impl
@@ -128,7 +128,7 @@
                   ;; named `ContractAddress` (e.g. midnight-did) does not
                   ;; shadow the upstream coin-structure type required by
                   ;; QueryContext::new.
-                  (out "        let qctx = QueryContext::new(state, compact_runtime::ContractAddress::default());\n"))]
+                  (out "        let qctx = QueryContext::new(state, midnight_compact_runtime::ContractAddress::default());\n"))]
                ;; J2: emit the constructor body if we have one and its shape
                ;; matches. Fall back to the K1-only return otherwise (counter has
                ;; no constructor body, so it lands here naturally).
@@ -975,7 +975,7 @@
                     ;; key indexing.
                     (cond
                       [runtime-key
-                       (format "            .idx(~a, ~a, vec![compact_runtime::Key::Value(compact_runtime::AlignedValue::from(~a))])\n"
+                       (format "            .idx(~a, ~a, vec![midnight_compact_runtime::Key::Value(midnight_compact_runtime::AlignedValue::from(~a))])\n"
                                (if (cdr cached-pair) "true" "false")
                                (if push-path "true" "false")
                                (vm-rust-expr-text runtime-key))]
@@ -1169,7 +1169,7 @@
                     ;; `.idx(cached, push, vec![Key::Value(AlignedValue::from(<expr>))])`.
                     (cond
                       [runtime-key
-                       (format "                .idx(~a, ~a, vec![compact_runtime::Key::Value(compact_runtime::AlignedValue::from(~a))])\n"
+                       (format "                .idx(~a, ~a, vec![midnight_compact_runtime::Key::Value(midnight_compact_runtime::AlignedValue::from(~a))])\n"
                                (if (cdr cached-pair) "true" "false")
                                (if push-path "true" "false")
                                (vm-rust-expr-text runtime-key))]
@@ -1328,7 +1328,7 @@
              (out "        Ok(CircuitResults {\n")
              (out "            result,\n")
              (out "            context: ctx,\n")
-             (out "            gas_cost: compact_runtime::RunningCost::default(),\n")
+             (out "            gas_cost: midnight_compact_runtime::RunningCost::default(),\n")
              (out "        })\n")
              #t])))
 
@@ -1369,7 +1369,7 @@
              (out "        Ok(CircuitResults {\n")
              (out "            result,\n")
              (out "            context: ctx,\n")
-             (out "            gas_cost: compact_runtime::RunningCost::default(),\n")
+             (out "            gas_cost: midnight_compact_runtime::RunningCost::default(),\n")
              (out "        })\n")
              #t]
             [else
@@ -1392,7 +1392,7 @@
              (out "        Ok(CircuitResults {\n")
              (out "            result,\n")
              (out "            context: ctx,\n")
-             (out "            gas_cost: compact_runtime::RunningCost::default(),\n")
+             (out "            gas_cost: midnight_compact_runtime::RunningCost::default(),\n")
              (out "        })\n")
              #t])))
 
@@ -1714,7 +1714,7 @@
            (lambda (src-ftype)
              (cond
                [(field-type-native? src-ftype)
-                (format "compact_runtime::jubjub_scalar_from_field(~a)"
+                (format "midnight_compact_runtime::jubjub_scalar_from_field(~a)"
                         (render-inner))]
                [else
                 (rust-feature-error src 'cast-to-field-source
@@ -1724,7 +1724,7 @@
            (lambda (nat)
              (cond
                [(<= nat 18446744073709551615)
-                (format "compact_runtime::jubjub_scalar_from_field(Fr::from((~a) as u64))"
+                (format "midnight_compact_runtime::jubjub_scalar_from_field(Fr::from((~a) as u64))"
                         (render-inner))]
                [else
                 (rust-feature-error src 'cast-to-field-source
@@ -2077,7 +2077,7 @@
                 ;; `?` is safe in every position this renders into: circuit,
                 ;; pure-circuit and constructor bodies all return
                 ;; `Result<_, CompactError>` — `initial_state` included.
-                (format "compact_runtime::std_lib::narrow::<~a>((~a) as u128, ~a_u128, ~s)?"
+                (format "midnight_compact_runtime::std_lib::narrow::<~a>((~a) as u128, ~a_u128, ~s)?"
                         w
                         (parameterize ([current-arith-suffix w])
                           (expr-rust expr native-id-ht))
@@ -2100,14 +2100,14 @@
            ;; byte-identical across this change), so failing loudly here
            ;; costs nothing and removes a silent-bad-output path.
            ;;
-           ;; Lowering it properly needs a `compact_runtime` helper that
+           ;; Lowering it properly needs a `midnight_compact_runtime` helper that
            ;; range-checks an `Fr` and narrows it to `uN` (the TS runtime
            ;; does the equivalent with a bigint bounds check). Tracked as a
            ;; follow-up on MediaNoxLabs/compact#17.
            (rust-feature-error src 'cast-from-field
              "Field-to-Uint cast (`as Uint<~s>`) has no Rust lowering; ~a"
              nat
-             "a range-checking compact_runtime helper is needed")]
+             "a range-checking midnight_compact_runtime helper is needed")]
           [(cast-to-field ,src ,ftype ,type ,expr)
            ;; 0.33: `X as Field`-family casts where the TARGET is a
            ;; (tfield ftype) distinct from the source type. On the
@@ -2305,7 +2305,7 @@
             "            )\n"
             "            .map_err(|e| CompactError::AssertionFailed(format!(\"ledger query failed: {:?}\", e)))?;\n"
             "            let _av = match _gather_results.events.last() {\n"
-            "                Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,\n"
+            "                Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,\n"
             "                _ => return Err(CompactError::AssertionFailed(\"ledger: expected Read event\".into())),\n"
             "            };\n"
             "            " decoder "(_av)?\n"
@@ -2391,7 +2391,7 @@
                            "            )\n"
                            "            .map_err(|e| CompactError::AssertionFailed(format!(\"ledger query failed: {:?}\", e)))?;\n"
                            "            let _av = match _gather_results.events.last() {\n"
-                           "                Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,\n"
+                           "                Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,\n"
                            "                _ => return Err(CompactError::AssertionFailed(\"ledger: expected Read event\".into())),\n"
                            "            };\n"
                            "            " decoder "(_av)?\n"
@@ -2447,7 +2447,7 @@
                           "            )\n"
                           "            .map_err(|e| CompactError::AssertionFailed(format!(\"ledger query failed: {:?}\", e)))?;\n"
                           "            let _av = match _gather_results.events.last() {\n"
-                          "                Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,\n"
+                          "                Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,\n"
                           "                _ => return Err(CompactError::AssertionFailed(\"ledger: expected Read event\".into())),\n"
                           "            };\n"
                           "            " decoder "(_av)?\n"
@@ -2515,7 +2515,7 @@
              ;; net for any future ascription-free use site.
              (let ([args
                     (map (lambda (e) (expr-rust e native-id-ht)) expr*)])
-               (format "compact_runtime::std_lib::~a(~a)"
+               (format "midnight_compact_runtime::std_lib::~a(~a)"
                        sym
                        (let join ([xs args] [acc ""])
                          (cond
@@ -2524,7 +2524,7 @@
                            [else (join (cdr xs)
                                        (string-append acc (car xs) ", "))]))))]
             [(and ne (equal? (native-entry-rust-function ne)
-                             "compact_runtime::persistent_hash"))
+                             "midnight_compact_runtime::persistent_hash"))
              ;; R3: alignment-aware lowering of Compact's
              ;; `persistentHash<T>(value)`. The TS path constructs an
              ;; `AlignedValue` from `value` (via the runtime type
@@ -2561,14 +2561,14 @@
                          (nanopass-case (Ltypescript Expression) arg
                            [(tuple ,src ,tuple-arg* ...)
                             (map (lambda (ta)
-                                   (format "compact_runtime::AlignedValue::from(~a)"
+                                   (format "midnight_compact_runtime::AlignedValue::from(~a)"
                                            (tuple-arg-rust ta native-id-ht)))
                                  tuple-arg*)]
                            [else
-                            (list (format "compact_runtime::AlignedValue::from(~a)"
+                            (list (format "midnight_compact_runtime::AlignedValue::from(~a)"
                                           (expr-rust arg native-id-ht)))])])
                     (string-append
-                      "compact_runtime::std_lib::persistent_hash_aligned(&["
+                      "midnight_compact_runtime::std_lib::persistent_hash_aligned(&["
                       (let join ([xs elt-strs] [acc ""])
                         (cond
                           [(null? xs) acc]
@@ -2581,7 +2581,7 @@
                   "persistentHash arity ~a not yet supported (expected 1)"
                   (length expr*))])]
             [(and ne (equal? (native-entry-rust-function ne)
-                             "compact_runtime::transient_hash"))
+                             "midnight_compact_runtime::transient_hash"))
              ;; R5: alignment-aware lowering of Compact's
              ;; `transientHash<A>(value): Field`. The upstream
              ;; `transient_hash(elems: &[Fr]) -> Fr` takes a field-element
@@ -2602,14 +2602,14 @@
                          (nanopass-case (Ltypescript Expression) arg
                            [(tuple ,src ,tuple-arg* ...)
                             (map (lambda (ta)
-                                   (format "compact_runtime::AlignedValue::from(~a)"
+                                   (format "midnight_compact_runtime::AlignedValue::from(~a)"
                                            (tuple-arg-rust ta native-id-ht)))
                                  tuple-arg*)]
                            [else
-                            (list (format "compact_runtime::AlignedValue::from(~a)"
+                            (list (format "midnight_compact_runtime::AlignedValue::from(~a)"
                                           (expr-rust arg native-id-ht)))])])
                     (string-append
-                      "compact_runtime::std_lib::transient_hash_aligned(&["
+                      "midnight_compact_runtime::std_lib::transient_hash_aligned(&["
                       (let join ([xs elt-strs] [acc ""])
                         (cond
                           [(null? xs) acc]
@@ -2621,7 +2621,7 @@
                   "transientHash arity ~a not yet supported (expected 1)"
                   (length expr*))])]
             [(and ne (equal? (native-entry-rust-function ne)
-                             "compact_runtime::persistent_commit"))
+                             "midnight_compact_runtime::persistent_commit"))
              ;; R4: lowering of Compact's
              ;; `persistentCommit<T>(value, opening)`. The upstream
              ;; `persistent_commit<T: BinaryHashRepr + ?Sized>(value: &T,
@@ -2643,15 +2643,15 @@
                 ;; HashOutput`. The Compact `persistentCommit<A>(v, o):
                 ;; Bytes<32>` surfaces `[u8; 32]`, so wrap the opening in
                 ;; `HashOutput(...)` and extract `.0` from the result.
-                ;; `HashOutput` isn't in compact_runtime's curated prelude
+                ;; `HashOutput` isn't in midnight_compact_runtime's curated prelude
                 ;; but is reachable as
-                ;; `compact_runtime::base_crypto::hash::HashOutput`
+                ;; `midnight_compact_runtime::base_crypto::hash::HashOutput`
                 ;; (midnight-base-crypto re-exports the crate as
                 ;; `base_crypto` and `hash` is a pub module).
                 (string-append
-                  "compact_runtime::persistent_commit(&"
+                  "midnight_compact_runtime::persistent_commit(&"
                   (expr-rust (car expr*) native-id-ht)
-                  ", compact_runtime::base_crypto::hash::HashOutput("
+                  ", midnight_compact_runtime::base_crypto::hash::HashOutput("
                   (expr-rust (cadr expr*) native-id-ht)
                   ")).0")]
                [else
@@ -3093,18 +3093,18 @@
                   (or result (loop (cdr ops))))]))]
           [else type]))
 
-      ;; decoder-for-type: pick the `compact_runtime::std_lib::decode_*`
+      ;; decoder-for-type: pick the `midnight_compact_runtime::std_lib::decode_*`
       ;; helper that turns an AlignedValue back into the Rust type returned
       ;; by `type-rust`. Mirrors `uint-rust-width` for the integer cases.
       (define (decoder-for-type type)
         (nanopass-case (Ltypescript Type) type
           [(tunsigned ,src ,nat)
            (cond
-             [(<= nat 255) "compact_runtime::std_lib::decode_u8"]
-             [(<= nat 65535) "compact_runtime::std_lib::decode_u16"]
-             [(<= nat 4294967295) "compact_runtime::std_lib::decode_u32"]
-             [(<= nat 18446744073709551615) "compact_runtime::std_lib::decode_u64"]
-             [else "compact_runtime::std_lib::decode_u128"])]
+             [(<= nat 255) "midnight_compact_runtime::std_lib::decode_u8"]
+             [(<= nat 65535) "midnight_compact_runtime::std_lib::decode_u16"]
+             [(<= nat 4294967295) "midnight_compact_runtime::std_lib::decode_u32"]
+             [(<= nat 18446744073709551615) "midnight_compact_runtime::std_lib::decode_u64"]
+             [else "midnight_compact_runtime::std_lib::decode_u128"])]
           [(tfield ,src ,ftype)
            ;; Native Field decodes via decode_fr. A JubjubScalar-typed
            ;; ledger read has no decoder yet (EmbeddedFr lacks
@@ -3112,9 +3112,9 @@
            ;; flagged (#f) so the caller reports the gap instead of
            ;; emitting wrong code.
            (if (field-type-native? ftype)
-               "compact_runtime::std_lib::decode_fr"
+               "midnight_compact_runtime::std_lib::decode_fr"
                #f)]
-          [(tboolean ,src) "compact_runtime::std_lib::decode_bool"]
+          [(tboolean ,src) "midnight_compact_runtime::std_lib::decode_bool"]
           [(tenum ,src ,enum-name ,elt-name ,elt-name* ...)
            ;; Bug-10 (2026-06-29): decode tenum-typed ledger reads as the
            ;; typed enum rather than as the raw u8 discriminant. Going
@@ -3132,10 +3132,10 @@
            ;; Boolean and Uint ledger reads still flow through their
            ;; integer decoders (decode_bool, decode_u8/u16/u32/u64/u128),
            ;; so Bug-8's short-circuit remains in force for those.
-           (format "compact_runtime::std_lib::decode_via_field_repr::<~a>"
+           (format "midnight_compact_runtime::std_lib::decode_via_field_repr::<~a>"
                    (symbol->string enum-name))]
           [(tbytes ,src ,len)
-           (format "compact_runtime::std_lib::decode_bytes::<~a>" len)]
+           (format "midnight_compact_runtime::std_lib::decode_bytes::<~a>" len)]
           [(tvector ,src ,len ,type)
            ;; Vector<N, T>: dispatch on element type. For Vector<N, Field>
            ;; and Vector<N, Uint<64>> we have dedicated decoders. Other
@@ -3144,7 +3144,7 @@
            (nanopass-case (Ltypescript Type) type
              [(tfield ,src ,ftype)
               (and (field-type-native? ftype)
-                   (format "compact_runtime::std_lib::decode_vector_fr::<~a>" len))]
+                   (format "midnight_compact_runtime::std_lib::decode_vector_fr::<~a>" len))]
              [(tunsigned ,src ,nat)
               ;; Iter 7: Uint<64> element → decode_vector_u64<N>. Wider
               ;; widths (u128) and narrower (u8/u16/u32) would each need
@@ -3152,7 +3152,7 @@
               (cond
                 [(and (> nat 4294967295)
                       (<= nat 18446744073709551615))
-                 (format "compact_runtime::std_lib::decode_vector_u64::<~a>" len)]
+                 (format "midnight_compact_runtime::std_lib::decode_vector_u64::<~a>" len)]
                 [else #f])]
              [else #f])]
           [(talias ,src ,nominal? ,type-name ,type) (decoder-for-type type)]
@@ -3164,13 +3164,13 @@
            ;; decode_via_field_repr. Route it to the orphan-safe
            ;; decode_jubjub_point helper. Other opaque tags stay flagged.
            (if (equal? opaque-type "JubjubPoint")
-               "compact_runtime::std_lib::decode_jubjub_point"
+               "midnight_compact_runtime::std_lib::decode_jubjub_point"
                #f)]
           [(tpoint ,src ,ctype)
            ;; 0.33: JubjubPoint is the builtin (tpoint (curve-jubjub));
            ;; same orphan-rule routing as the old topaque spelling.
            (nanopass-case (Ltypescript Curve-Type) ctype
-             [(curve-jubjub) "compact_runtime::std_lib::decode_jubjub_point"]
+             [(curve-jubjub) "midnight_compact_runtime::std_lib::decode_jubjub_point"]
              [else #f])]
           ;; A5: struct types (user-defined or stdlib like
           ;; `ContractAddress`) decode via the FromFieldRepr trait —
@@ -3179,10 +3179,10 @@
           ;; midnight-base-crypto derive it natively. The Rust type
           ;; name comes through unqualified — it must already be in
           ;; scope at the call site (the codegen's `use
-          ;; compact_runtime::*` import covers re-exported stdlib
+          ;; midnight_compact_runtime::*` import covers re-exported stdlib
           ;; types; user structs are emitted at module scope).
           [(tstruct ,src ,struct-name (,elt-name* ,type*) ...)
-           (format "compact_runtime::std_lib::decode_via_field_repr::<~a>"
+           (format "midnight_compact_runtime::std_lib::decode_via_field_repr::<~a>"
                    (struct-rust-name-of type struct-name))]
           [else #f]))
 
@@ -3217,7 +3217,7 @@
            ;; A23 equivalent for the 0.33 builtin point type: seed initial
            ;; cells with a concrete typed default so new_cell(...) infers.
            (nanopass-case (Ltypescript Curve-Type) ctype
-             [(curve-jubjub) "compact_runtime::JubjubPoint::default()"]
+             [(curve-jubjub) "midnight_compact_runtime::JubjubPoint::default()"]
              [else "Default::default()"])]
           [(tboolean ,src) "false"]
           [(tbytes ,src ,len) (format "[0u8; ~a]" len)]
@@ -3235,12 +3235,12 @@
            ;; workaround for Aligned/FieldRepr on bare String); other
            ;; opaques stay as their direct mapping.
            (cond
-             [(equal? opaque-type "string") "compact_runtime::std_lib::OpaqueString::default()"]
+             [(equal? opaque-type "string") "midnight_compact_runtime::std_lib::OpaqueString::default()"]
              [(equal? opaque-type "Uint8Array") "Vec::<u8>::new()"]
              ;; A23: JubjubPoint (EmbeddedGroupAffine) derives Default but the
              ;; generic `new_cell(Default::default())` can't infer the element
              ;; type, so seed the initial cell with a concrete typed default.
-             [(equal? opaque-type "JubjubPoint") "compact_runtime::JubjubPoint::default()"]
+             [(equal? opaque-type "JubjubPoint") "midnight_compact_runtime::JubjubPoint::default()"]
              [else "Default::default()"])]
           [(tstruct ,src ,struct-name (,elt-name* ,type*) ...)
            ;; Maybe<T> needs an explicit type parameter so `Default::default()`
@@ -3329,7 +3329,7 @@
                 ;; Bucket-1: see note in J2 emitter — fully-qualify the
                 ;; upstream ContractAddress so user-defined shadow types
                 ;; don't break QueryContext::new.
-                (out "        let qctx = QueryContext::new(self.state.clone(), compact_runtime::ContractAddress::default());\n")
+                (out "        let qctx = QueryContext::new(self.state.clone(), midnight_compact_runtime::ContractAddress::default());\n")
                 (out "        let ops = OpProgramGather::<D>::new()\n")
                 (out "            .dup(0)\n")
                 (for-each
@@ -3341,7 +3341,7 @@
                 (out "        let results = query_for_read(&qctx, &ops, None, &initial_cost_model())\n")
                 (out "            .map_err(|e| CompactError::AssertionFailed(format!(\"ledger query failed: {:?}\", e)))?;\n")
                 (out "        let av = match results.events.last() {\n")
-                (out "            Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,\n")
+                (out "            Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,\n")
                 (out "            _ => return Err(CompactError::AssertionFailed(\"ledger: expected Read event\".into())),\n")
                 (out "        };\n")
                 (out (format "        ~a(av)\n" decoder))
@@ -3358,7 +3358,7 @@
       ;; signatures, which reference `CompactError`) see crate-level
       ;; types — `CompactError`, `Maybe<T>`, user structs emitted by H5-H7,
       ;; the `compact_assert!` macro, etc. — without qualification.
-      ;; `use super::*;` reaches the parent's `use compact_runtime::*;`
+      ;; `use super::*;` reaches the parent's `use midnight_compact_runtime::*;`
       ;; glob, so `CompactError` / `compact_assert!` resolve. Contracts
       ;; with no pure circuits (e.g. counter.compact) get an empty
       ;; module with no `use`.
@@ -3374,7 +3374,7 @@
         (out "}\n"))
 
       ;; emit-cargo-toml: emits a Cargo.toml alongside lib.rs so users can
-      ;; `cargo build` the emitted contract directly. The compact-runtime
+      ;; `cargo build` the emitted contract directly. The midnight-compact-runtime
       ;; dep is pinned to the same version the lib.rs embeds via
       ;; check_runtime_version!.
       (define (emit-cargo-toml)
@@ -3390,7 +3390,7 @@ edition = \"2021\"
 path = \"lib.rs\"
 
 [dependencies]
-compact-runtime = \"~a\"
+midnight-compact-runtime = \"~a\"
 "
               runtime-version-string)
             port)))

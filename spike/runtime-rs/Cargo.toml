@@ -14,7 +14,7 @@
 # limitations under the License.
 
 [package]
-name = "compact-runtime"
+name = "midnight-compact-runtime"
 version = "0.1.0-spike"
 edition.workspace = true
 license.workspace = true

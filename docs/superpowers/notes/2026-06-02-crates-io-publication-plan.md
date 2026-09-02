@@ -1,4 +1,4 @@
-# crates.io Publication Plan — `compact-runtime` + `compact-runtime-macros`
+# crates.io Publication Plan — `midnight-compact-runtime` + `midnight-compact-runtime-macros`
 
 **Date:** 2026-06-02
 **Task:** Prod-16
@@ -17,8 +17,8 @@ checklist so the maintainer can pull the trigger when upstream is ready.
 
 | Crate                    | Version    | Where it lives        | Notes                                           |
 |--------------------------|------------|-----------------------|-------------------------------------------------|
-| `compact-runtime`        | `0.16.100` | `runtime-rs/`         | Library facade for generated code.              |
-| `compact-runtime-macros` | `0.16.100` | `runtime-rs-macros/`  | `proc-macro` companion; exports `witnesses!`.   |
+| `midnight-compact-runtime`        | `0.16.100` | `runtime-rs/`         | Library facade for generated code.              |
+| `midnight-compact-runtime-macros` | `0.16.100` | `runtime-rs-macros/`  | `proc-macro` companion; exports `witnesses!`.   |
 
 Both crates are version-coupled to the TypeScript sibling
 [`@midnight-ntwrk/compact-runtime` `0.16.100`](../../../runtime/package.json). The
@@ -47,14 +47,14 @@ Rust crate's `description` calls this out explicitly:
 
 18 generated fixture crates under `tests-e2e-rust/contracts/*` (`tiny`,
 `zerocash`, `election`, plus the 15 feature fixtures) all use
-`compact-runtime = { path = "../../../runtime-rs" }` and are marked
+`midnight-compact-runtime = { path = "../../../runtime-rs" }` and are marked
 `publish = false`. They're CI-only and never go to crates.io.
 
 The only path edge that crosses the publish boundary is the link from
-`compact-runtime` → `compact-runtime-macros` inside `runtime-rs/Cargo.toml`:
+`midnight-compact-runtime` → `midnight-compact-runtime-macros` inside `runtime-rs/Cargo.toml`:
 
 ```toml
-compact-runtime-macros = { path = "../runtime-rs-macros" }
+midnight-compact-runtime-macros = { path = "../runtime-rs-macros" }
 ```
 
 That needs to become `{ version = "0.16.100", path = "../runtime-rs-macros" }`
@@ -64,7 +64,7 @@ before publishing — see §3.
 
 `flake.nix` line 223 pins `compactc` at `0.31.104`, mirrored in
 `compiler/compiler-version.ss` (`(make-version 'compiler 0 31 104)`). Generated
-contracts emit `compact_runtime::check_runtime_version!("0.16.100");` at the top
+contracts emit `midnight_compact_runtime::check_runtime_version!("0.16.100");` at the top
 of each `lib.rs` — that string is the runtime crate's version, not the compiler's.
 
 `Cargo.toml` workspace deps target the published `midnight-*` ledger crates
@@ -94,12 +94,12 @@ we publish?"
 
 ### Option A — Publish now (private, before upstream)
 
-Push `compact-runtime 0.16.100` to crates.io today from this branch.
+Push `midnight-compact-runtime 0.16.100` to crates.io today from this branch.
 
 | Pro                                                       | Con                                                      |
 |-----------------------------------------------------------|----------------------------------------------------------|
-| Reserves the crate name `compact-runtime`.                | No `compactc --rust` binary in any official release.     |
-| Lets `docs.rs` start indexing.                            | `cargo add compact-runtime` succeeds but is unusable.    |
+| Reserves the crate name `midnight-compact-runtime`.                | No `compactc --rust` binary in any official release.     |
+| Lets `docs.rs` start indexing.                            | `cargo add midnight-compact-runtime` succeeds but is unusable.    |
 | Discoverable on crates.io search.                         | First-time users will hit a dead end.                    |
 |                                                           | Forks the source-of-truth: branch ≠ upstream `main`.     |
 
@@ -109,7 +109,7 @@ publish a `0.0.0` placeholder, not `0.16.100`.
 ### Option B — Publish on first upstream release
 
 Couple the crate publication to the next `compactc` release. The trigger is:
-"toolchain `0.31.105` ships with `--rust` flag enabled → `compact-runtime` goes
+"toolchain `0.31.105` ships with `--rust` flag enabled → `midnight-compact-runtime` goes
 to crates.io the same day."
 
 | Pro                                                       | Con                                                      |
@@ -125,7 +125,7 @@ first. If we're confident the merge is imminent, this is the natural choice.
 
 Wait until the `codegen-rust` branch is merged into
 `github.com/LFDT-Minokawa/compact` `main`, then publish from there. The first
-release tagged on upstream `main` that bumps `compact-runtime` is the one that
+release tagged on upstream `main` that bumps `midnight-compact-runtime` is the one that
 goes to crates.io.
 
 | Pro                                                       | Con                                                      |
@@ -136,7 +136,7 @@ goes to crates.io.
 | Sets a precedent for future bumps (`X.Y.Z` everywhere).   |                                                          |
 
 **Verdict:** Recommended. Codegen + runtime are tightly coupled —
-`compact_runtime::check_runtime_version!("0.16.100");` is the first line of every
+`midnight_compact_runtime::check_runtime_version!("0.16.100");` is the first line of every
 generated `lib.rs`. Publishing the runtime crate before `compactc --rust` is
 buildable from a tagged upstream release leaves users without a working compiler
 to pair with it. The published runtime would be a library nobody can drive.
@@ -156,21 +156,21 @@ branch — not as part of `codegen-rust`.
 
 ### Crate-name availability
 
-- [ ] `cargo search compact-runtime` → verify the name is unowned, or owned by
+- [ ] `cargo search midnight-compact-runtime` → verify the name is unowned, or owned by
       the Midnight Foundation crates.io account.
 - [ ] If unavailable: fall back to `midnight-compact-runtime`. Update `name = ...`
       in `runtime-rs/Cargo.toml` and the macro emitted by codegen
       (`compactc --rust`'s `check_runtime_version!` path resolution).
-- [ ] Same for `compact-runtime-macros` (fallback: `midnight-compact-runtime-macros`).
+- [ ] Same for `midnight-compact-runtime-macros` (fallback: `midnight-compact-runtime-macros`).
 
 ### Macro crate publish posture
 
-- [ ] Decide whether `compact-runtime-macros` is public API.
-  - **Public**: needed because generated code uses `compact_runtime::witnesses!`
+- [ ] Decide whether `midnight-compact-runtime-macros` is public API.
+  - **Public**: needed because generated code uses `midnight_compact_runtime::witnesses!`
     re-exported from the macro crate. The current `[dev-dependencies]` edge from
-    macros → `compact-runtime` is fine; cargo handles dev-only cycles.
+    macros → `midnight-compact-runtime` is fine; cargo handles dev-only cycles.
   - **Private**: set `publish = false` and inline the proc-macros into
-    `compact-runtime` via the `proc-macro` lib type — but that would force the
+    `midnight-compact-runtime` via the `proc-macro` lib type — but that would force the
     runtime crate itself to be a proc-macro crate, which it can't be (it already
     has runtime code). **Public it is.**
 - [ ] Add the missing metadata to `runtime-rs-macros/Cargo.toml`:
@@ -181,7 +181,7 @@ branch — not as part of `codegen-rust`.
 
 - [ ] In `runtime-rs/Cargo.toml`, change the macros dep to:
       ```toml
-      compact-runtime-macros = { version = "=0.16.100", path = "../runtime-rs-macros" }
+      midnight-compact-runtime-macros = { version = "=0.16.100", path = "../runtime-rs-macros" }
       ```
       The `=` pin guarantees the lockstep version policy described in §4.
 - [ ] In root `Cargo.toml`, tighten `[workspace.dependencies]` from caret to
@@ -190,17 +190,17 @@ branch — not as part of `codegen-rust`.
       (ledger-8.0.2 currently).
 - [ ] No git deps. No `*` deps. (Already true today — re-verify on the publish
       branch.)
-- [ ] `cargo tree -p compact-runtime --duplicates` → confirm no version skew.
+- [ ] `cargo tree -p midnight-compact-runtime --duplicates` → confirm no version skew.
 
 ### Verify packaging
 
-- [ ] `cargo publish --dry-run -p compact-runtime-macros` from the workspace root.
-- [ ] `cargo publish --dry-run -p compact-runtime` — must be run *after* macros
+- [ ] `cargo publish --dry-run -p midnight-compact-runtime-macros` from the workspace root.
+- [ ] `cargo publish --dry-run -p midnight-compact-runtime` — must be run *after* macros
       is published, because the dry-run resolves the macros crate from crates.io,
       not from the path.
-- [ ] Inspect the `.crate` tarball: `cargo package --list -p compact-runtime` —
+- [ ] Inspect the `.crate` tarball: `cargo package --list -p midnight-compact-runtime` —
       confirm no stray fixture / target / snapshot files leak in.
-- [ ] `cargo doc --no-deps -p compact-runtime` locally; open the rendered HTML
+- [ ] `cargo doc --no-deps -p midnight-compact-runtime` locally; open the rendered HTML
       and confirm the top-level module doc and `check_runtime_version!` page
       render cleanly. (docs.rs reproduces this exactly.)
 
@@ -215,7 +215,7 @@ branch — not as part of `codegen-rust`.
 - [ ] Add a `cargo publish` step (or manual runbook) to the release workflow
       so future bumps don't go stale.
 - [ ] Document the publish order: **macros first, runtime second**. Crates.io
-      rejects a runtime release if its `compact-runtime-macros` dep isn't already
+      rejects a runtime release if its `midnight-compact-runtime-macros` dep isn't already
       indexed.
 
 ---
@@ -233,14 +233,14 @@ Three artefacts must share the same `X.Y.Z`:
                  ▼
   ┌─────────────────────────────────────────────┐
   │  contract/src/lib.rs (generated):           │
-  │  compact_runtime::check_runtime_version!(   │
+  │  midnight_compact_runtime::check_runtime_version!(   │
   │      "0.16.100"                             │
   │  );                                         │
   └──────────────┬──────────────────────────────┘
                  │ pinned to
                  ▼
   ┌──────────────────────────────┐     ┌──────────────────────────────┐
-  │  compact-runtime  0.16.100   │ ←── │  compact-runtime-macros      │
+  │  midnight-compact-runtime  0.16.100   │ ←── │  midnight-compact-runtime-macros      │
   │  (Rust crate, crates.io)     │  =  │  0.16.100                    │
   └──────────────┬───────────────┘     └──────────────────────────────┘
                  │ mirrors
@@ -275,7 +275,7 @@ ever diverges we revisit this).
 
 ### Upstream `midnight-*` ledger crates
 
-`compact-runtime` depends on 9 `midnight-*` crates that are workspace deps today:
+`midnight-compact-runtime` depends on 9 `midnight-*` crates that are workspace deps today:
 
 ```
 midnight-base-crypto, midnight-transient-crypto, midnight-onchain-state,
@@ -283,7 +283,7 @@ midnight-onchain-vm, midnight-onchain-runtime, midnight-coin-structure,
 midnight-zswap, midnight-serialize, midnight-storage
 ```
 
-All 9 must be **published on crates.io** before `compact-runtime` can publish.
+All 9 must be **published on crates.io** before `midnight-compact-runtime` can publish.
 Crates.io rejects path-only or git-only deps. Pre-publish gate:
 
 - [ ] `cargo search midnight-base-crypto` and confirm each of the 9 crates
@@ -323,7 +323,7 @@ The publish credential should live in a team account, not a personal account.
 crates.io supports team-owned crates via GitHub team handles. Pre-publish:
 
 - [ ] Create or identify the team (e.g. `@LFDT-Minokawa/runtime-maintainers`).
-- [ ] After first publish: `cargo owner --add github:LFDT-Minokawa:runtime-maintainers compact-runtime`.
+- [ ] After first publish: `cargo owner --add github:LFDT-Minokawa:runtime-maintainers midnight-compact-runtime`.
 
 ---
 
@@ -333,7 +333,7 @@ The following decisions are left for the maintainer to fill in before pulling
 the trigger. They're intentionally blank — Prod-16 stops here.
 
 - **Crate name:** ______________________________
-  (default `compact-runtime`; fallback `midnight-compact-runtime`)
+  (default `midnight-compact-runtime`; fallback `midnight-compact-runtime`)
 
 - **First publish version:** ______________________________
   (default `0.16.100` mirroring the TS sibling; alternative `0.0.0` placeholder

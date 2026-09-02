@@ -20,11 +20,11 @@
 //! `compactc --rust` depends on it; you typically do not consume it
 //! directly — instead, you compile a `.compact` source with
 //! `compactc --rust` and let the emitted `lib.rs` import from
-//! `compact_runtime::*`.
+//! `midnight_compact_runtime::*`.
 //!
 //! # User-facing entry points
 //!
-//! End users of `compactc --rust` interact with `compact-runtime`
+//! End users of `compactc --rust` interact with `midnight-compact-runtime`
 //! through a small surface:
 //!
 //! - [`Contract`](#)-shaped structs in generated code call into:
@@ -48,11 +48,11 @@
 //!
 //! At the top of this file is a curated prelude — re-exports of the
 //! upstream Midnight types (`AlignedValue`, `Fr`, `JubjubPoint`,
-//! `StateValue`, `Op`, …) under stable `compact_runtime::*` paths.
+//! `StateValue`, `Op`, …) under stable `midnight_compact_runtime::*` paths.
 //! Generated code only ever names types through this prelude; the
 //! codegen's `type-rust` mapping in
 //! [`compiler/rust-passes-types.ss`](https://github.com/LFDT-Minokawa/compact/blob/main/compiler/rust-passes-types.ss)
-//! always emits `compact_runtime::Foo`, never `midnight_xyz::Foo`. That
+//! always emits `midnight_compact_runtime::Foo`, never `midnight_xyz::Foo`. That
 //! lets us replace upstream symbols without regenerating fixtures.
 //!
 //! The Rust-side facade modules add the Compact-level types that don't
@@ -81,7 +81,7 @@
 //!
 //! [`COMPACT_RUNTIME_VERSION`] is exposed as a `&'static str` constant
 //! and re-exposed by `compactc --runtime-version`. Every generated
-//! `lib.rs` opens with `compact_runtime::check_runtime_version!(...)`
+//! `lib.rs` opens with `midnight_compact_runtime::check_runtime_version!(...)`
 //! so a runtime/compiler mismatch surfaces as a compile-time error.
 //!
 //! # Crate-level docs vs user guide
@@ -113,16 +113,16 @@ pub use midnight_transient_crypto as transient_crypto;
 /// the stub `{ Ok(()) }` — they accept **any** offer without checking a
 /// single proof.
 ///
-/// `compact-runtime` itself only uses `zswap::local::State` (coin
+/// `midnight-compact-runtime` itself only uses `zswap::local::State` (coin
 /// bookkeeping), which has no `proof-verifying` gates, so the crate's own
 /// behaviour is unaffected. But this re-export makes the stubbed verifier
-/// reachable as `compact_runtime::zswap::…`, so **do not use it to
+/// reachable as `midnight_compact_runtime::zswap::…`, so **do not use it to
 /// validate untrusted offers**. Note this differs from the ledger-8 line,
 /// where the fork took zswap's default features and the same calls did
 /// real verification.
 pub use midnight_zswap as zswap;
 
-pub use compact_runtime_macros::witnesses;
+pub use midnight_compact_runtime_macros::witnesses;
 
 // ---------------------------------------------------------------------------
 // Curated prelude — the symbols the codegen references directly.
@@ -254,7 +254,7 @@ pub use std_lib::{
     ec_neg,
     // R5a: orphan-safe repr helpers for JubjubPoint-typed struct fields,
     // promoted to crate-root so codegen can spell
-    // `compact_runtime::jubjub_point_*` without the `std_lib::` segment.
+    // `midnight_compact_runtime::jubjub_point_*` without the `std_lib::` segment.
     jubjub_point_binary_len,
     jubjub_point_binary_repr,
     jubjub_point_field_repr,
@@ -266,9 +266,9 @@ pub use std_lib::{
     // Module-1: Schnorr-on-Jubjub verifier + circuit-shaped wrapper.
     // Codegen rewrites `self.schnorr_verify(ctx, msg, sig, pk)?` calls
     // (the inner generic `schnorrVerify<#n>` from the jubjub-schnorr
-    // import chain) into `compact_runtime::schnorr_verify_jubjub(ctx, ...)?`.
+    // import chain) into `midnight_compact_runtime::schnorr_verify_jubjub(ctx, ...)?`.
     // 0.33 stdlib Schnorr: codegen routes `jubjubSchnorrVerify<#N>(...)`
-    // calls to `compact_runtime::std_lib::jubjub_schnorr_verify(...)` and
+    // calls to `midnight_compact_runtime::std_lib::jubjub_schnorr_verify(...)` and
     // the `JubjubSchnorrSignature` struct to the runtime mirror below.
     jubjub_schnorr_verify,
     merkle_tree_path_root,

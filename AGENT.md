@@ -15,7 +15,7 @@ Human contributors should also read it — it captures the constraints CI enforc
 **compact** is the Compact language toolchain. This fork adds a Rust codegen target (`compactc --rust`).
 
 - `compiler/` — Chez Scheme sources. `rust-passes-*.ss` are the Rust codegen (7 modules, ~9 kLOC).
-- `runtime-rs/` + `runtime-rs-macros/` — the `compact-runtime` Rust crate that generated `lib.rs` files depend on.
+- `runtime-rs/` + `runtime-rs-macros/` — the `midnight-compact-runtime` Rust crate that generated `lib.rs` files depend on.
 - `tests-e2e-rust/` — byte-parity test corpus. 25+ fixture crates + integration tests.
 - `examples/` — canonical `.compact` sources exercised by the fixtures.
 - `.github/workflows/` — CI. Six workflows; the relevant ones for LLM work are covered in §6.
@@ -41,13 +41,13 @@ Before every push, run the commands that mirror the CI gates and confirm each is
 
 ```bash
 # 1. Format (the exact three crates CI checks).
-nix develop --command cargo fmt -p compact-runtime -p compact-runtime-macros -p tests-e2e-rust --check
+nix develop --command cargo fmt -p midnight-compact-runtime -p midnight-compact-runtime-macros -p tests-e2e-rust --check
 
 # 2. Clippy at CI's severity (-D warnings turns every lint into an error).
-nix develop --command cargo clippy -p compact-runtime -p compact-runtime-macros -p tests-e2e-rust --all-targets --all-features -- -D warnings
+nix develop --command cargo clippy -p midnight-compact-runtime -p midnight-compact-runtime-macros -p tests-e2e-rust --all-targets --all-features -- -D warnings
 
 # 3. Full test suite INCLUDING codegen_regression (the byte-parity + fixture-drift gate).
-nix develop --command cargo test -p compact-runtime -p tests-e2e-rust
+nix develop --command cargo test -p midnight-compact-runtime -p tests-e2e-rust
 
 # 4. If you bumped compiler/compiler-version.ss, sweep for every place the
 #    old version string is embedded — CI regenerates + compares these:
@@ -67,7 +67,7 @@ Every PR to `codegen-rust` (or any base branch on this fork) must clear:
 Runs `cargo fmt --check` + `cargo clippy -- -D warnings` under `nix develop`. Common trip-ups:
 
 - rustfmt output can diverge across rustfmt *releases* (CI pins `dtolnay/rust-toolchain@stable`). If CI fails on `Diff in .../file.rs:N`, run `nix develop --command cargo fmt` locally and commit the resulting diff.
-- Clippy's `incompatible_msrv` fires on stdlib methods newer than the crate's declared MSRV (currently Rust 1.85 for `compact-runtime`). Prefer the older idiom (`% 2 != 0` over `.is_multiple_of(2)`) instead of bumping MSRV.
+- Clippy's `incompatible_msrv` fires on stdlib methods newer than the crate's declared MSRV (currently Rust 1.85 for `midnight-compact-runtime`). Prefer the older idiom (`% 2 != 0` over `.is_multiple_of(2)`) instead of bumping MSRV.
 - Clippy's `should_implement_trait` on a method whose name shadows a std trait: add `#[allow(clippy::should_implement_trait)]` with a comment explaining why the name is load-bearing (usually: codegen emits against it).
 
 ### 3.2 Changelog Check (`.github/workflows/changelog-check.yml`)
@@ -83,7 +83,7 @@ The check accepts a `skip-changelog` label as an escape hatch for typo fixes / i
 
 ### 3.3 Runtime + e2e tests
 
-`cargo test -p compact-runtime -p tests-e2e-rust`. Includes `codegen_regression` which regenerates every fixture's `lib.rs` under the current compactc and asserts byte-identity. **Any codegen change requires the fixtures to be regenerated in the same commit.**
+`cargo test -p midnight-compact-runtime -p tests-e2e-rust`. Includes `codegen_regression` which regenerates every fixture's `lib.rs` under the current compactc and asserts byte-identity. **Any codegen change requires the fixtures to be regenerated in the same commit.**
 
 ## 4. CI notes: things that once looked like fork infra, and the real fixes
 

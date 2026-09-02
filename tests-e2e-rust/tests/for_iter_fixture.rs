@@ -31,7 +31,7 @@
 // the VM state mutation the TS-side _folder_0 helper produces.
 
 use compact_contract_for_iter_fixture::Contract;
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 use midnight_serialize::tagged_serialize;
 use midnight_storage::storage::HashMap;
 use tests_e2e_rust::SmallFixtureTsReference;

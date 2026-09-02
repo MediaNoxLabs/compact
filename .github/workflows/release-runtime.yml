@@ -1,7 +1,7 @@
 # Release publish of @midnight-ntwrk/compact-runtime.
 #
 # Purpose
-#   Publish a RELEASE-versioned compact-runtime npm package to GitHub Packages,
+#   Publish a RELEASE-versioned midnight-compact-runtime npm package to GitHub Packages,
 #   using the version already committed in runtime/package.json (e.g. 0.18.0-rc.1)
 #   -- NOT a dev-<sha> coordinate. This is the "right names, right place" analogue
 #   of dev-publish.yml's publish-runtime job:
@@ -15,11 +15,11 @@
 #   GitHub Packages is the source of truth. Promotion to public npmjs.org is a
 #   separate, manual step run from midnight-ntwrk/artifacts:
 #     gh workflow run push-npm-package.yml --repo midnight-ntwrk/artifacts \
-#       -f library=compact-runtime -f version=<version> -f use_legacy_behavior=false
+#       -f library=midnight-compact-runtime -f version=<version> -f use_legacy_behavior=false
 #   (that workflow `npm pack`s this package from GitHub Packages and republishes
 #   it to npmjs.org, deriving the same dist-tag and leaving `latest` on the last
 #   stable release).
-name: Release publish of compact-runtime
+name: Release publish of midnight-compact-runtime
 
 on:
   workflow_dispatch:
@@ -39,7 +39,7 @@ concurrency:
 
 jobs:
   publish-runtime:
-    name: Publish compact-runtime to GitHub Packages
+    name: Publish midnight-compact-runtime to GitHub Packages
     runs-on: ubuntu-latest
     # npm publish authenticates with the MIDNIGHTCI_PACKAGES_WRITE PAT against the
     # @midnight-ntwrk scope on GitHub Packages, so contents:read (for checkout) is
@@ -88,7 +88,7 @@ jobs:
           cd stage
 
           VERSION="$(node -p "require('./package.json').version")"
-          echo "compact-runtime version: ${VERSION}"
+          echo "midnight-compact-runtime version: ${VERSION}"
 
           # This is a RELEASE action. Refuse dev/dirty coordinates -- those belong
           # to dev-publish.yml. Fail loudly rather than silently mis-publishing.
@@ -130,4 +130,4 @@ jobs:
           echo ""
           echo "Next step -- promote to public npmjs.org from midnight-ntwrk/artifacts:"
           echo "  gh workflow run push-npm-package.yml --repo midnight-ntwrk/artifacts \\"
-          echo "    -f library=compact-runtime -f version=${VERSION} -f use_legacy_behavior=false"
+          echo "    -f library=midnight-compact-runtime -f version=${VERSION} -f use_legacy_behavior=false"

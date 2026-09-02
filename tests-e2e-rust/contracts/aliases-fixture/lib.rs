@@ -26,10 +26,10 @@
     non_upper_case_globals
 )]
 
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 use std::marker::PhantomData;
 
-compact_runtime::check_runtime_version!("0.19.100");
+midnight_compact_runtime::check_runtime_version!("0.19.100");
 
 pub type Tag = [u8; 8];
 
@@ -61,7 +61,7 @@ where
     ) -> Result<ConstructorResult<PS>, CompactError> {
         let sv = new_array(vec![new_cell(0u16), new_cell([0u8; 8]), new_cell([0u8; 8])]);
         let state = ChargedState::new(sv);
-        let qctx = QueryContext::new(state, compact_runtime::ContractAddress::default());
+        let qctx = QueryContext::new(state, midnight_compact_runtime::ContractAddress::default());
         Ok(ConstructorResult {
             current_contract_state: qctx.state,
             current_private_state: ctx.initial_private_state,
@@ -82,7 +82,7 @@ impl<'a, D: DB> Ledger<'a, D> {
     pub fn score(&self) -> Result<u16, CompactError> {
         let qctx = QueryContext::new(
             self.state.clone(),
-            compact_runtime::ContractAddress::default(),
+            midnight_compact_runtime::ContractAddress::default(),
         );
         let ops = OpProgramGather::<D>::new()
             .dup(0)
@@ -92,19 +92,19 @@ impl<'a, D: DB> Ledger<'a, D> {
         let results = query_for_read(&qctx, &ops, None, &initial_cost_model())
             .map_err(|e| CompactError::AssertionFailed(format!("ledger query failed: {:?}", e)))?;
         let av = match results.events.last() {
-            Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+            Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
             _ => {
                 return Err(CompactError::AssertionFailed(
                     "ledger: expected Read event".into(),
                 ))
             }
         };
-        compact_runtime::std_lib::decode_u16(av)
+        midnight_compact_runtime::std_lib::decode_u16(av)
     }
     pub fn raw(&self) -> Result<[u8; 8], CompactError> {
         let qctx = QueryContext::new(
             self.state.clone(),
-            compact_runtime::ContractAddress::default(),
+            midnight_compact_runtime::ContractAddress::default(),
         );
         let ops = OpProgramGather::<D>::new()
             .dup(0)
@@ -114,19 +114,19 @@ impl<'a, D: DB> Ledger<'a, D> {
         let results = query_for_read(&qctx, &ops, None, &initial_cost_model())
             .map_err(|e| CompactError::AssertionFailed(format!("ledger query failed: {:?}", e)))?;
         let av = match results.events.last() {
-            Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+            Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
             _ => {
                 return Err(CompactError::AssertionFailed(
                     "ledger: expected Read event".into(),
                 ))
             }
         };
-        compact_runtime::std_lib::decode_bytes::<8>(av)
+        midnight_compact_runtime::std_lib::decode_bytes::<8>(av)
     }
     pub fn tag(&self) -> Result<Tag, CompactError> {
         let qctx = QueryContext::new(
             self.state.clone(),
-            compact_runtime::ContractAddress::default(),
+            midnight_compact_runtime::ContractAddress::default(),
         );
         let ops = OpProgramGather::<D>::new()
             .dup(0)
@@ -136,14 +136,14 @@ impl<'a, D: DB> Ledger<'a, D> {
         let results = query_for_read(&qctx, &ops, None, &initial_cost_model())
             .map_err(|e| CompactError::AssertionFailed(format!("ledger query failed: {:?}", e)))?;
         let av = match results.events.last() {
-            Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+            Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
             _ => {
                 return Err(CompactError::AssertionFailed(
                     "ledger: expected Read event".into(),
                 ))
             }
         };
-        compact_runtime::std_lib::decode_bytes::<8>(av)
+        midnight_compact_runtime::std_lib::decode_bytes::<8>(av)
     }
 }
 

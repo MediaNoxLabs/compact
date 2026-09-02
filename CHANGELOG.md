@@ -9,6 +9,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _No changes yet._
 
+## [Toolchain 0.34.109, language 0.26.0, runtime 0.19.100] — rename the runtime crate to `midnight-compact-runtime` (2026-09-02)
+
+### Changed
+
+- **`compact-runtime` → `midnight-compact-runtime`**, and
+  `compact-runtime-macros` → `midnight-compact-runtime-macros`, with lib names
+  following (`midnight_compact_runtime`, `midnight_compact_runtime_macros`).
+
+  This is the name agreed on the CoIP (LFDT-Minokawa/compact#730), where the
+  reviewer's argument was that the Midnight Rust ecosystem is consistently
+  `midnight-*` — `midnight-onchain-state`, `midnight-transient-crypto` — and the
+  `midnight-` prefix is the Rust analogue of the TypeScript runtime's
+  `@midnight-ntwrk` npm scope. Generated code pins the crate name, so it is
+  effectively permanent after first release and trivial to change now.
+
+  2,346 references across 188 files. Two things the substitution had to keep
+  apart, and both were checked afterwards:
+
+  - **The TypeScript package keeps its name.** `@midnight-ntwrk/compact-runtime`
+    is the npm package, not this crate; its 133 references are untouched. Two
+    `flake.nix` lines that describe *that* package were wrongly prefixed by the
+    first pass and reverted.
+  - **Six fixtures were regenerated rather than text-substituted.** The longer
+    crate name pushes some lines past 100 columns, so rustfmt rewraps them —
+    a substitution would have left them in a form the compiler no longer emits,
+    and byte parity caught exactly that.
+
 ## [Toolchain 0.34.108, language 0.26.0, runtime 0.19.100] — split the walker by capability (2026-09-02)
 
 ### Changed
@@ -157,7 +184,7 @@ _No changes yet._
     worse than a panic.
 
   TypeScript is normative, so both were Rust bugs. Narrowing now goes through
-  `compact_runtime::std_lib::narrow`, which takes the Compact bound and
+  `midnight_compact_runtime::std_lib::narrow`, which takes the Compact bound and
   reproduces TypeScript's message verbatim, so a contract running on both
   backends reports one story rather than two.
 
@@ -253,7 +280,7 @@ a comment rather than as code, so the guard is not reintroduced as dead code.
 ### Fixed
 
 - **The Rust crates broke `tools/compact`'s tests by being in the same Cargo
-  workspace.** `compact-runtime` depends on `midnight-base-crypto`, whose
+  workspace.** `midnight-compact-runtime` depends on `midnight-base-crypto`, whose
   default features enable `reqwest/rustls` → `__rustls-aws-lc-rs` →
   `hyper-rustls/aws-lc-rs`. `tools/compact` reaches `rustls` via `ring`.
   Cargo unifies features across a workspace, so `rustls` was built with
@@ -286,7 +313,7 @@ a comment rather than as code, so the guard is not reintroduced as dead code.
 
 ### Changed
 
-- `compact-runtime` and `compact-runtime-macros` are versioned **0.19.100**,
+- `midnight-compact-runtime` and `midnight-compact-runtime-macros` are versioned **0.19.100**,
   tracking the runtime version the compiler emits into
   `check_runtime_version!`. The 0.34 merge moved that pin, and the crates had
   not followed, so every generated fixture failed its own version assertion.
@@ -440,10 +467,10 @@ line; this branch tracks upstream's own ledger-9 release-candidate pin
   source bound became mandatory, and `cast-from-field` / `cast-to-field` are
   new. All 32 `codegen_regression` fixtures regenerate with no codegen drift.
 - `Field`/`Uint<N≤64> as JubjubScalar` lowers to
-  `compact_runtime::jubjub_scalar_from_field`. `JubjubScalar as Field` has no
+  `midnight_compact_runtime::jubjub_scalar_from_field`. `JubjubScalar as Field` has no
   runtime helper and is rejected.
 - `ecMul` / `ecMulGenerator` take a `JubjubScalar` (upstream change); `ecNeg`
-  is bound to `compact_runtime::ec_neg`. Existing `.compact` sources passing a
+  is bound to `midnight_compact_runtime::ec_neg`. Existing `.compact` sources passing a
   `Field` need an explicit `as JubjubScalar`.
 - `JubjubPoint` moved from `Opaque<"JubjubPoint">` to the builtin `tpoint`
   type, with the same decoder and default-seeding behaviour.
@@ -463,7 +490,7 @@ line; this branch tracks upstream's own ledger-9 release-candidate pin
   bindings and the secp256k1 type surface has no lowering). Enforced in both
   `compactc.ss` and `generate-everything`, so programmatic drivers are covered
   too. ZKIR v3 support in the Rust backend is tracked as follow-up work.
-- `compact_runtime::std_lib::jubjub_schnorr_verify` and
+- `midnight_compact_runtime::std_lib::jubjub_schnorr_verify` and
   `JubjubSchnorrSignature`, mirroring the 0.33 standard library's Schnorr
   verifier, with call-level routing so the generic stdlib body is never
   lowered.
@@ -1080,7 +1107,7 @@ and Compact runtime versions in the range between 0.17.100 and 0.18.0.
   field on `CircuitContext`.  Both refer to the same array; events emitted
   by `emit` expressions during the circuit's execution are appended in order
   of evaluation.  Pure circuits' wrapped return values are unaffected.
-- Updates the compact-runtime: adds the required `events` field
+- Updates the midnight-compact-runtime: adds the required `events` field
   to `CircuitContext` and `CircuitResults`.  This is a **breaking** change
   for TypeScript code that constructs these types by hand; code that uses
   the runtime's `createCircuitContext` helper is unaffected.
@@ -1243,7 +1270,7 @@ and Compact runtime versions in the range between 0.16.100 and 0.17.0.
 ### Fixed
 
 - **Field-repr-arity ledger-read decoding of alignment-encoded cells (A30)** —
-  `compact_runtime::std_lib::decode_via_field_repr<T>` converted the
+  `midnight_compact_runtime::std_lib::decode_via_field_repr<T>` converted the
   `AlignedValue`'s atoms to `Fr`s 1:1 (one `Fr::try_from(atom)` per atom) and
   fed that to `T::from_field_repr`. But cells are ALIGNMENT-encoded — one atom
   per leaf value — and a single leaf may span multiple field-repr `Fr`s: a
@@ -1488,7 +1515,7 @@ just a test result, is now the standing policy.
 ### Added
 
 - Adds `--rust` to `compactc`: lowers a `.compact` contract to a native
-  Rust crate (`contract/lib.rs`) that depends on the new `compact-runtime`
+  Rust crate (`contract/lib.rs`) that depends on the new `midnight-compact-runtime`
   crate. The Rust crate exposes `Contract::new(...)`, `initial_state(...)`,
   each impure circuit as a method on the contract, and a `Ledger<'a, D>`
   view for reading on-chain state — parallel to the TypeScript backend's
@@ -2018,7 +2045,7 @@ There are no user-visible changes.
 
 This release includes all changes for compiler versions in the range 0.27.100
 (inclusive) and 0.28.0 (exclusive); and language versions in the range 0.19.100
-(inclusive) and 0.20.0.  It uses compact-runtime 0.14.0-rc.0 and 
+(inclusive) and 0.20.0.  It uses midnight-compact-runtime 0.14.0-rc.0 and 
 on-chain runtime 2.0.0-alpha.1.
 
 ## [Unreleased compiler version 0.27.113, language version 0.19.103]

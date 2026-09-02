@@ -91,7 +91,7 @@ export const checkCallProofData = async (
 /**
  * A deployed contract, as returned by {@link TestChain.deploy}. Mirrors the
  * subset of {@link DeployedDependency} a caller needs to reference the contract
- * in subsequent transactions: its address (how `compact-runtime` identifies a
+ * in subsequent transactions: its address (how `midnight-compact-runtime` identifies a
  * contract) and the encoded form used to pass it as a contract-typed argument.
  */
 export interface DeployedContract<C extends Contract<any, any> = Contract<any, any>> {

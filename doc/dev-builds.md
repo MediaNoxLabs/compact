@@ -11,7 +11,7 @@ Nix-building compactc on every CI run.
 
 | Artifact          | Coordinate                                                         | Where                                              |
 | ----------------- | ----------------------------------------------------------------- | -------------------------------------------------- |
-| compact-runtime   | `@midnight-ntwrk/compact-runtime@<base>-dev.<sha>`                 | GitHub Packages npm, scope `@midnight-ntwrk`       |
+| midnight-compact-runtime   | `@midnight-ntwrk/compact-runtime@<base>-dev.<sha>`                 | GitHub Packages npm, scope `@midnight-ntwrk`       |
 | compactc binary   | release tag `compactc-dev-<sha>` (assets per architecture)        | GitHub prerelease on `LFDT-Minokawa/compact`       |
 
 `<base>` is the current `version` from `runtime/package.json`; `<sha>` is the

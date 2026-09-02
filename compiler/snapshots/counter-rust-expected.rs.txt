@@ -17,10 +17,10 @@
 
 #![allow(clippy::all, dead_code, unused_imports, unused_variables, unused_parens, non_camel_case_types, non_snake_case, non_upper_case_globals)]
 
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 use std::marker::PhantomData;
 
-compact_runtime::check_runtime_version!("0.19.100");
+midnight_compact_runtime::check_runtime_version!("0.19.100");
 
 pub trait Witnesses<PS> {
 }
@@ -50,7 +50,7 @@ where
             new_cell(0u64),
         ]);
         let state = ChargedState::new(sv);
-        let qctx = QueryContext::new(state, compact_runtime::ContractAddress::default());
+        let qctx = QueryContext::new(state, midnight_compact_runtime::ContractAddress::default());
         Ok(ConstructorResult {
             current_contract_state: qctx.state,
             current_private_state: ctx.initial_private_state,
@@ -97,7 +97,7 @@ pub fn ledger<D: DB>(state: &ChargedState<D>) -> Ledger<'_, D> {
 
 impl<'a, D: DB> Ledger<'a, D> {
     pub fn round(&self) -> Result<u64, CompactError> {
-        let qctx = QueryContext::new(self.state.clone(), compact_runtime::ContractAddress::default());
+        let qctx = QueryContext::new(self.state.clone(), midnight_compact_runtime::ContractAddress::default());
         let ops = OpProgramGather::<D>::new()
             .dup(0)
             .idx_at_index(0u8, false)
@@ -106,10 +106,10 @@ impl<'a, D: DB> Ledger<'a, D> {
         let results = query_for_read(&qctx, &ops, None, &initial_cost_model())
             .map_err(|e| CompactError::AssertionFailed(format!("ledger query failed: {:?}", e)))?;
         let av = match results.events.last() {
-            Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+            Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
             _ => return Err(CompactError::AssertionFailed("ledger: expected Read event".into())),
         };
-        compact_runtime::std_lib::decode_u64(av)
+        midnight_compact_runtime::std_lib::decode_u64(av)
     }
 }
 

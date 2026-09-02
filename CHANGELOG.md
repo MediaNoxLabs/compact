@@ -9,6 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _No changes yet._
 
+## [Toolchain 0.34.111, language 0.26.0, runtime 0.19.100] — split the emitter by capability (2026-09-02)
+
+### Changed
+
+- **`rust-passes-emit.ss` (3,397 lines) is split into ten files by capability**,
+  the same treatment `rust-passes-walker.ss` got in 0.34.108 and by the same
+  method: textual, into the shared `(definitions ...)` block, with byte parity
+  over the fixture corpus as the proof that nothing moved.
+
+  | File | Lines | Defines |
+  |---|---:|---:|
+  | `-scaffold` — initial-state scaffold, circuit arg lists | 221 | 4 |
+  | `-structs` — struct/Maybe helpers, struct literals | 131 | 6 |
+  | `-stmt-shapes` — statement shape extraction | 435 | 19 |
+  | `-vm` — vm-value lowering, op-program builder calls | 539 | 10 |
+  | `-impure` — public-ledger bodies, impure circuits | 418 | 9 |
+  | `-arith` — arithmetic, casts, width selection | 279 | 8 |
+  | `-expr` — the expression renderer | 376 | 1 |
+  | `-calls` — ledger reads and call sites | 510 | 6 |
+  | `-pure` — pure circuit bodies | 275 | 3 |
+  | `-view` — ledger view, decoders, defaults, manifest | 448 | 17 |
+
+  Unlike the walker, every one of these is PR-sized — there is no equivalent
+  of `-body`'s 1,002-line outlier, because `expr-rust` at 388 lines fits a
+  file on its own.
 ## [Toolchain 0.34.110, language 0.26.0, runtime 0.19.100] — two defects in compact-test.yml (2026-09-02)
 
 ### Fixed

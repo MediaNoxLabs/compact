@@ -31,7 +31,7 @@ macro_rules! check_runtime_version {
         // Spike just asserts string equality.
         const _: () = assert!(
             $crate::version::const_str_eq($expected, $crate::version::COMPACT_RUNTIME_VERSION),
-            "compact-runtime version mismatch"
+            "midnight-compact-runtime version mismatch"
         );
     };
 }

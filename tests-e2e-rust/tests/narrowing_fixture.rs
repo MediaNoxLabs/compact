@@ -28,7 +28,7 @@
 // "does not return 44 where TypeScript throws".
 
 use compact_contract_narrowing_fixture::pure_circuits;
-use compact_runtime::CompactError;
+use midnight_compact_runtime::CompactError;
 
 /// Values inside the declared bound are returned unchanged. This is the
 /// assertion that keeps the fix from being "reject everything".

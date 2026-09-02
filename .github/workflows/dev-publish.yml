@@ -275,7 +275,7 @@ jobs:
             -F draft=false -F prerelease=true
 
   publish-runtime:
-    name: Publish compact-runtime dev npm package
+    name: Publish midnight-compact-runtime dev npm package
     if: ${{ inputs.publish_runtime }}
     runs-on: ubuntu-latest
     # npm publish authenticates with the MIDNIGHTCI_PACKAGES_WRITE PAT against the

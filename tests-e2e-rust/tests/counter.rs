@@ -28,8 +28,8 @@
 // This is the v1 correctness signal. If it stays green, the Rust path
 // reproduces TS state transitions for counter.compact.
 
-use compact_runtime::std_lib::Counter;
-use compact_runtime::*;
+use midnight_compact_runtime::std_lib::Counter;
+use midnight_compact_runtime::*;
 use midnight_onchain_state::state::{
     ContractMaintenanceAuthority, ContractOperation, EntryPointBuf,
 };

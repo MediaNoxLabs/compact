@@ -35,7 +35,7 @@
 // satisfying the at-least-one-exported-circuit invariant.
 
 use compact_contract_fold_fixture::Contract;
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 use midnight_serialize::tagged_serialize;
 use midnight_storage::storage::HashMap;
 use tests_e2e_rust::SmallFixtureTsReference;

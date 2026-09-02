@@ -40,14 +40,14 @@ pub const fn const_str_eq(a: &str, b: &str) -> bool {
     true
 }
 
-/// Fail the build if the linked compact-runtime doesn't match the
+/// Fail the build if the linked midnight-compact-runtime doesn't match the
 /// version the contract was compiled against.
 #[macro_export]
 macro_rules! check_runtime_version {
     ($expected:literal) => {
         const _: () = assert!(
             $crate::version::const_str_eq($expected, $crate::version::COMPACT_RUNTIME_VERSION),
-            "compact-runtime version mismatch"
+            "midnight-compact-runtime version mismatch"
         );
     };
 }

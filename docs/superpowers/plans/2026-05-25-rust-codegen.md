@@ -12,23 +12,23 @@
 | D — counter.compact emission | D2–D8 ✅ | ✅ Complete | `00814b5` |
 | E — Byte-parity validation | E1–E5 ✅ | ✅ Complete | `8550363` |
 
-**Status: DONE — M2 milestone gate green.** `compactc --rust counter.compact` emits a working Rust crate that compiles via `cargo build` against `compact-runtime` and matches the TS path's post-increment `ChargedState` byte-for-byte (`tests-e2e-rust/tests/counter.rs`). Snapshot regression guard installed in `compiler/test.ss`. Spec doc Section 7 updated to mark M1 and M2 ✅.
+**Status: DONE — M2 milestone gate green.** `compactc --rust counter.compact` emits a working Rust crate that compiles via `cargo build` against `midnight-compact-runtime` and matches the TS path's post-increment `ChargedState` byte-for-byte (`tests-e2e-rust/tests/counter.rs`). Snapshot regression guard installed in `compiler/test.ss`. Spec doc Section 7 updated to mark M1 and M2 ✅.
 
 Follow-up work tracked in M3+ (see Section 7 of the spec and "Follow-up plans" below).
 
 **State today (after C4):**
 - `runtime-rs` crate exports the full public API the codegen will reference. 16 tests pass, no warnings, clippy clean.
-- `compactc --rust counter.compact /tmp/out/` produces a stub `contract/lib.rs` that compiles cleanly against `compact-runtime`. The stub contains the file header, `check_runtime_version!`, an empty `Witnesses<PS>` trait + `NoWitnesses` blanket impl, and a placeholder `Contract<PS, W>` struct. Real circuit / ledger / witness / initial_state emission lands in D2-D7.
-- `compact-runtime` version is pinned to **`0.16.100`** (matched to the TS runtime version that `runtime-version-string` from `compiler/runtime-version.ss` resolves to). Keep them in lockstep on future bumps.
+- `compactc --rust counter.compact /tmp/out/` produces a stub `contract/lib.rs` that compiles cleanly against `midnight-compact-runtime`. The stub contains the file header, `check_runtime_version!`, an empty `Witnesses<PS>` trait + `NoWitnesses` blanket impl, and a placeholder `Contract<PS, W>` struct. Real circuit / ledger / witness / initial_state emission lands in D2-D7.
+- `midnight-compact-runtime` version is pinned to **`0.16.100`** (matched to the TS runtime version that `runtime-version-string` from `compiler/runtime-version.ss` resolves to). Keep them in lockstep on future bumps.
 
 **Upstream-API corrections already applied to the plan (do not rediscover these):**
 
-1. `CostModel::initial()` doesn't exist — use `INITIAL_COST_MODEL` (re-exported from `compact-runtime`).
+1. `CostModel::initial()` doesn't exist — use `INITIAL_COST_MODEL` (re-exported from `midnight-compact-runtime`).
 2. `ChargedState::default()` doesn't exist — use `ChargedState::new(StateValue::Null)`.
 3. `StateValue::new_cell(X)` doesn't exist — use `StateValue::from(X)` (via `impl From<AlignedValue> for StateValue<D>`).
 4. `StateValue::new_array().array_push(X)` doesn't exist — build with `Array::<StateValue, _>::new().push(X)` and wrap in `StateValue::Array(...)`. `Array::push` takes `&self` and returns a new Array (immutable update).
 5. `AlignedValue.value` is `Value(Vec<ValueAtom>)`; access bytes via `av.value.0.first()` returning `Option<&ValueAtom>`, then `atom.0` for the byte slice.
-6. base-crypto strips trailing zero bytes from numeric atoms — `AlignedValue::from(42u64)` is a 1-byte atom `[42]`. `decode_u64` (already in `compact_runtime::std_lib`) accepts variable-length (≤ 8 byte) atoms and zero-pads, little-endian.
+6. base-crypto strips trailing zero bytes from numeric atoms — `AlignedValue::from(42u64)` is a 1-byte atom `[42]`. `decode_u64` (already in `midnight_compact_runtime::std_lib`) accepts variable-length (≤ 8 byte) atoms and zero-pads, little-endian.
 7. `ContractState::new(data, operations, maintenance_authority)` is the actual constructor — requires `HashMap<EntryPointBuf, ContractOperation, D>` and `ContractMaintenanceAuthority` (no Defaults).
 8. `QueryResults.context.state` is `ChargedState<D>`, not `StateValue<D>`. To get the inner StateValue, call `.get_ref()` on the ChargedState.
 
@@ -48,7 +48,7 @@ The plan said `rust-passes` operates on `Ltypescript` IR. **It doesn't yet.** `p
 
 ---
 
-**Goal:** Ship a v1 of `compactc --rust` that emits a working Rust crate for `examples/counter.compact`, plus a new `compact-runtime` crate the generated code depends on. Result is a counter contract you can build with `cargo` and exercise from native Rust, producing the same on-chain state transitions as the existing TypeScript output.
+**Goal:** Ship a v1 of `compactc --rust` that emits a working Rust crate for `examples/counter.compact`, plus a new `midnight-compact-runtime` crate the generated code depends on. Result is a counter contract you can build with `cargo` and exercise from native Rust, producing the same on-chain state transitions as the existing TypeScript output.
 
 **Architecture:** Mirror the existing TS path. Add a `--rust` flag in `compactc.ss` that triggers a new branch in `passes.ss::generate-everything`. The new branch runs a parallel emitter `rust-passes.ss` (analogous to `typescript-passes.ss`) over the existing `Ltypescript` IR. Generated Rust depends on a thin new `runtime-rs/` crate that curates re-exports of published Midnight crates (`midnight-onchain-runtime`, `midnight-onchain-state`, etc.) and adds a handful of facade aggregates (`CircuitContext`, `WitnessContext`, etc.).
 
@@ -140,7 +140,7 @@ Expected: a key ID and `true`. If not, run `bash ~/iohk/git-iohk.sh`.
 
 ---
 
-## Phase B — compact-runtime crate (M1)
+## Phase B — midnight-compact-runtime crate (M1)
 
 This phase ships `runtime-rs/` as a self-contained crate. Each task ends with a green `cargo test` + a signed commit. The crate is small (~10 source files) but every type the codegen will reference must be present and stable before Phase C starts.
 
@@ -186,7 +186,7 @@ midnight-zswap            = "8"
 
 ```toml
 [package]
-name        = "compact-runtime"
+name        = "midnight-compact-runtime"
 version     = "0.1.0"
 edition     = "2021"
 license     = "Apache-2.0"
@@ -195,7 +195,7 @@ repository  = "https://github.com/LFDT-Minokawa/compact"
 readme      = "README.md"
 
 [lib]
-name = "compact_runtime"
+name = "midnight_compact_runtime"
 path = "src/lib.rs"
 
 [dependencies]
@@ -215,7 +215,7 @@ midnight-storage          = { workspace = true }
 ```rust
 // SPDX-License-Identifier: Apache-2.0
 //
-// compact-runtime — native Rust facade matching @midnight-ntwrk/compact-runtime.
+// midnight-compact-runtime — native Rust facade matching @midnight-ntwrk/compact-runtime.
 //
 // Generated code emitted by `compactc --rust` depends on this crate. It exposes:
 //   - a curated set of re-exports from the published `midnight-*` Rust crates
@@ -235,7 +235,7 @@ midnight-storage          = { workspace = true }
 - [ ] **Step 4: Create `runtime-rs/README.md`**
 
 ```markdown
-# compact-runtime
+# midnight-compact-runtime
 
 Native Rust runtime for contracts emitted by `compactc --rust`.
 
@@ -259,7 +259,7 @@ Expected: no output (success). Failure indicates a missing crate version or work
 - [ ] **Step 6: Verify `cargo check` passes**
 
 ```bash
-cargo check -p compact-runtime
+cargo check -p midnight-compact-runtime
 ```
 
 Expected: `Finished` with no errors or warnings.
@@ -269,9 +269,9 @@ Expected: `Finished` with no errors or warnings.
 ```bash
 git add Cargo.toml runtime-rs/
 git commit -S -s -m "$(cat <<'EOF'
-runtime-rs: scaffold compact-runtime crate
+runtime-rs: scaffold midnight-compact-runtime crate
 
-Adds an empty `compact-runtime` crate under runtime-rs/. Wired into the
+Adds an empty `midnight-compact-runtime` crate under runtime-rs/. Wired into the
 workspace and pinned to the published midnight-ledger crate versions
 matching the ledger-8.0.2 line used by the TS runtime path.
 
@@ -288,7 +288,7 @@ Verify signature:
 git log --format="%h %G? %s" -1
 ```
 
-Expected: `... G runtime-rs: scaffold compact-runtime crate`.
+Expected: `... G runtime-rs: scaffold midnight-compact-runtime crate`.
 
 ---
 
@@ -298,7 +298,7 @@ Expected: `... G runtime-rs: scaffold compact-runtime crate`.
 - Modify: `runtime-rs/src/lib.rs`
 - Create: `runtime-rs/tests/reexports.rs`
 
-This task ensures every type the codegen plans to reference is reachable through `compact_runtime::*`.
+This task ensures every type the codegen plans to reference is reachable through `midnight_compact_runtime::*`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -308,10 +308,10 @@ Create `runtime-rs/tests/reexports.rs`:
 // SPDX-License-Identifier: Apache-2.0
 //
 // Smoke test asserting that every type the codegen will reference is
-// reachable through the `compact_runtime` prelude. Catches regressions
+// reachable through the `midnight_compact_runtime` prelude. Catches regressions
 // in re-exports without exercising behaviour.
 
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 
 #[test]
 fn prelude_resolves_all_required_symbols() {
@@ -360,7 +360,7 @@ fn prelude_resolves_all_required_symbols() {
 - [ ] **Step 2: Run the test and confirm it fails**
 
 ```bash
-cargo test -p compact-runtime --test reexports 2>&1 | tail -20
+cargo test -p midnight-compact-runtime --test reexports 2>&1 | tail -20
 ```
 
 Expected: many `error[E0432]: unresolved import` errors — the symbols aren't re-exported yet.
@@ -372,7 +372,7 @@ Replace the body of `runtime-rs/src/lib.rs` with:
 ```rust
 // SPDX-License-Identifier: Apache-2.0
 //
-// compact-runtime — native Rust facade. See lib doc comment in Task B1.
+// midnight-compact-runtime — native Rust facade. See lib doc comment in Task B1.
 
 #![forbid(unsafe_code)]
 
@@ -438,7 +438,7 @@ pub use midnight_zswap::local::State as ZswapLocalState;
 - [ ] **Step 4: Re-run the test**
 
 ```bash
-cargo test -p compact-runtime --test reexports 2>&1 | tail -10
+cargo test -p midnight-compact-runtime --test reexports 2>&1 | tail -10
 ```
 
 Expected: `test prelude_resolves_all_required_symbols ... ok` and `test result: ok. 1 passed`.
@@ -446,7 +446,7 @@ Expected: `test prelude_resolves_all_required_symbols ... ok` and `test result: 
 - [ ] **Step 5: Verify no warnings**
 
 ```bash
-cargo check -p compact-runtime --all-targets 2>&1 | grep -E "warning|error" | head
+cargo check -p midnight-compact-runtime --all-targets 2>&1 | grep -E "warning|error" | head
 ```
 
 Expected: no output.
@@ -458,7 +458,7 @@ git add runtime-rs/
 git commit -S -s -m "$(cat <<'EOF'
 runtime-rs: curated re-exports of midnight-* crates
 
-Adds the prelude generated code will import via `use compact_runtime::*;`.
+Adds the prelude generated code will import via `use midnight_compact_runtime::*;`.
 Covers state (StateValue, ContractState, ChargedState), VM ops (Op, Key,
 Array), runtime (QueryContext, QueryResults, TranscriptRejected,
 Transcript), encoding (Aligned, AlignedValue, Alignment, Value), field
@@ -490,7 +490,7 @@ Create `runtime-rs/tests/context.rs`:
 ```rust
 // SPDX-License-Identifier: Apache-2.0
 
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 
 #[test]
 fn circuit_context_can_be_constructed() {
@@ -520,7 +520,7 @@ fn constructor_context_can_be_constructed() {
 - [ ] **Step 2: Run and confirm failure**
 
 ```bash
-cargo test -p compact-runtime --test context 2>&1 | tail -10
+cargo test -p midnight-compact-runtime --test context 2>&1 | tail -10
 ```
 
 Expected: errors that `CircuitContext` and `ConstructorContext` are unresolved.
@@ -576,7 +576,7 @@ pub use context::{CircuitContext, ConstructorContext};
 - [ ] **Step 5: Re-run the test**
 
 ```bash
-cargo test -p compact-runtime --test context 2>&1 | tail -10
+cargo test -p midnight-compact-runtime --test context 2>&1 | tail -10
 ```
 
 Expected: both tests pass.
@@ -641,7 +641,7 @@ fn constructor_result_can_be_constructed() {
 - [ ] **Step 2: Run and confirm failure**
 
 ```bash
-cargo test -p compact-runtime --test context 2>&1 | tail -10
+cargo test -p midnight-compact-runtime --test context 2>&1 | tail -10
 ```
 
 Expected: errors for `CircuitResults` and `ConstructorResult`.
@@ -691,7 +691,7 @@ pub use results::{CircuitResults, ConstructorResult};
 - [ ] **Step 5: Re-run the test**
 
 ```bash
-cargo test -p compact-runtime --test context 2>&1 | tail -10
+cargo test -p midnight-compact-runtime --test context 2>&1 | tail -10
 ```
 
 Expected: all four tests pass.
@@ -732,7 +732,7 @@ Create `runtime-rs/tests/witness.rs`:
 // shape of WitnessContext (concrete type construction). Lifetime/HRTB
 // exercise lands in M3 when tiny.compact is implemented.
 
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 
 #[test]
 fn no_witnesses_is_default_constructible() {
@@ -753,7 +753,7 @@ fn witness_context_struct_resolves() {
 - [ ] **Step 2: Run and confirm failure**
 
 ```bash
-cargo test -p compact-runtime --test witness 2>&1 | tail -10
+cargo test -p midnight-compact-runtime --test witness 2>&1 | tail -10
 ```
 
 Expected: errors for `NoWitnesses` and `WitnessContext`.
@@ -804,7 +804,7 @@ pub use witness::{NoWitnesses, WitnessContext};
 - [ ] **Step 5: Re-run the test**
 
 ```bash
-cargo test -p compact-runtime --test witness 2>&1 | tail -10
+cargo test -p midnight-compact-runtime --test witness 2>&1 | tail -10
 ```
 
 Expected: both tests pass.
@@ -842,7 +842,7 @@ Create `runtime-rs/tests/error.rs`:
 ```rust
 // SPDX-License-Identifier: Apache-2.0
 
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 
 #[test]
 fn compact_error_constructs_assertion() {
@@ -864,7 +864,7 @@ fn transcript_rejected_converts_to_compact_error() {
 #[test]
 fn compact_assert_macro_passes_when_true() {
     fn check() -> Result<(), CompactError> {
-        compact_runtime::compact_assert!(2 + 2 == 4, "math broken");
+        midnight_compact_runtime::compact_assert!(2 + 2 == 4, "math broken");
         Ok(())
     }
     check().unwrap();
@@ -873,7 +873,7 @@ fn compact_assert_macro_passes_when_true() {
 #[test]
 fn compact_assert_macro_errors_when_false() {
     fn check() -> Result<(), CompactError> {
-        compact_runtime::compact_assert!(2 + 2 == 5, "nope");
+        midnight_compact_runtime::compact_assert!(2 + 2 == 5, "nope");
         Ok(())
     }
     match check() {
@@ -886,7 +886,7 @@ fn compact_assert_macro_errors_when_false() {
 - [ ] **Step 2: Run and confirm failure**
 
 ```bash
-cargo test -p compact-runtime --test error 2>&1 | tail -15
+cargo test -p midnight-compact-runtime --test error 2>&1 | tail -15
 ```
 
 Expected: errors that `CompactError` and `compact_assert!` are unresolved.
@@ -960,7 +960,7 @@ pub use error::CompactError;
 - [ ] **Step 5: Re-run the test**
 
 ```bash
-cargo test -p compact-runtime --test error 2>&1 | tail -10
+cargo test -p midnight-compact-runtime --test error 2>&1 | tail -10
 ```
 
 Expected: all 4 tests pass.
@@ -1002,21 +1002,21 @@ Create `runtime-rs/tests/version.rs`:
 #[test]
 fn matching_version_compiles() {
     // The macro expands to a const assertion. If the expected string equals
-    // compact_runtime::COMPACT_RUNTIME_VERSION, the assertion passes and the
+    // midnight_compact_runtime::COMPACT_RUNTIME_VERSION, the assertion passes and the
     // test compiles. If not, compilation fails.
-    compact_runtime::check_runtime_version!("0.1.0");
+    midnight_compact_runtime::check_runtime_version!("0.1.0");
 }
 
 #[test]
 fn version_constant_is_exposed() {
-    assert_eq!(compact_runtime::COMPACT_RUNTIME_VERSION, "0.1.0");
+    assert_eq!(midnight_compact_runtime::COMPACT_RUNTIME_VERSION, "0.1.0");
 }
 ```
 
 - [ ] **Step 2: Run and confirm failure**
 
 ```bash
-cargo test -p compact-runtime --test version 2>&1 | tail -10
+cargo test -p midnight-compact-runtime --test version 2>&1 | tail -10
 ```
 
 Expected: macro and constant unresolved.
@@ -1054,14 +1054,14 @@ pub const fn const_str_eq(a: &str, b: &str) -> bool {
     true
 }
 
-/// Fail the build if the linked compact-runtime doesn't match the
+/// Fail the build if the linked midnight-compact-runtime doesn't match the
 /// version the contract was compiled against.
 #[macro_export]
 macro_rules! check_runtime_version {
     ($expected:literal) => {
         const _: () = assert!(
             $crate::version::const_str_eq($expected, $crate::version::COMPACT_RUNTIME_VERSION),
-            "compact-runtime version mismatch"
+            "midnight-compact-runtime version mismatch"
         );
     };
 }
@@ -1081,7 +1081,7 @@ pub use version::COMPACT_RUNTIME_VERSION;
 - [ ] **Step 5: Re-run the test**
 
 ```bash
-cargo test -p compact-runtime --test version 2>&1 | tail -10
+cargo test -p midnight-compact-runtime --test version 2>&1 | tail -10
 ```
 
 Expected: both tests pass.
@@ -1122,8 +1122,8 @@ Create `runtime-rs/tests/std_lib.rs`:
 ```rust
 // SPDX-License-Identifier: Apache-2.0
 
-use compact_runtime::*;
-use compact_runtime::std_lib::Counter;
+use midnight_compact_runtime::*;
+use midnight_compact_runtime::std_lib::Counter;
 
 #[test]
 fn counter_decode_reads_u64_from_state_value() {
@@ -1143,7 +1143,7 @@ fn counter_decode_errors_on_wrong_shape() {
 - [ ] **Step 2: Run and confirm failure**
 
 ```bash
-cargo test -p compact-runtime --test std_lib 2>&1 | tail -10
+cargo test -p midnight-compact-runtime --test std_lib 2>&1 | tail -10
 ```
 
 Expected: errors that `Counter` and `std_lib` are unresolved.
@@ -1215,7 +1215,7 @@ pub mod std_lib;
 - [ ] **Step 5: Re-run the test**
 
 ```bash
-cargo test -p compact-runtime --test std_lib 2>&1 | tail -10
+cargo test -p midnight-compact-runtime --test std_lib 2>&1 | tail -10
 ```
 
 Expected: both tests pass. If the first test fails with `assertion left == right` showing the bytes interpreted in the wrong order, switch `u64::from_be_bytes` to `u64::from_le_bytes` in `decode_u64`.
@@ -1223,7 +1223,7 @@ Expected: both tests pass. If the first test fails with `assertion left == right
 - [ ] **Step 6: Verify the full suite is still green**
 
 ```bash
-cargo test -p compact-runtime 2>&1 | tail -5
+cargo test -p midnight-compact-runtime 2>&1 | tail -5
 ```
 
 Expected: `test result: ok` across all test files.
@@ -1267,8 +1267,8 @@ Create `runtime-rs/tests/integration.rs`:
 // Constructs a counter, runs the `increment` Op sequence, decodes the new
 // value. If this passes, the runtime is ready for codegen.
 
-use compact_runtime::std_lib::Counter;
-use compact_runtime::*;
+use midnight_compact_runtime::std_lib::Counter;
+use midnight_compact_runtime::*;
 
 #[test]
 fn increment_counter_end_to_end() {
@@ -1312,7 +1312,7 @@ fn increment_counter_end_to_end() {
 - [ ] **Step 2: Run the test**
 
 ```bash
-cargo test -p compact-runtime --test integration 2>&1 | tail -20
+cargo test -p midnight-compact-runtime --test integration 2>&1 | tail -20
 ```
 
 Expected: pass. If it fails:
@@ -1348,9 +1348,9 @@ EOF
 - [ ] **Step 1: Full suite + warnings**
 
 ```bash
-cargo test -p compact-runtime 2>&1 | tail -10
-cargo check -p compact-runtime --all-targets 2>&1 | grep -E "warning|error" | head
-cargo clippy -p compact-runtime --all-targets -- -D warnings 2>&1 | tail -5
+cargo test -p midnight-compact-runtime 2>&1 | tail -10
+cargo check -p midnight-compact-runtime --all-targets 2>&1 | grep -E "warning|error" | head
+cargo clippy -p midnight-compact-runtime --all-targets -- -D warnings 2>&1 | tail -5
 ```
 
 Expected: all tests pass, no warnings, clippy clean.
@@ -1448,7 +1448,7 @@ Add to the help text in `print-help` after the `--feature-zkir-v3` section:
 
 ```scheme
   --rust causes the compiler to additionally emit a Rust crate (contract/lib.rs)
-    alongside the TypeScript output. Generated Rust depends on the `compact-runtime`
+    alongside the TypeScript output. Generated Rust depends on the `midnight-compact-runtime`
     crate. See docs/superpowers/specs/2026-05-25-rust-codegen-design.md for details.
 ```
 
@@ -1526,7 +1526,7 @@ Create `compiler/rust-passes.ss`:
 
 ;;; Rust code generator. Mirrors typescript-passes.ss in spirit: walks
 ;;; the post-prepare-for-typescript `Ltypescript` IR and emits a Rust
-;;; crate (contract/lib.rs) that depends on the `compact-runtime` crate.
+;;; crate (contract/lib.rs) that depends on the `midnight-compact-runtime` crate.
 ;;;
 ;;; See docs/superpowers/specs/2026-05-25-rust-codegen-design.md for the
 ;;; full mapping between Compact constructs and Rust output.
@@ -1553,13 +1553,13 @@ Create `compiler/rust-passes.ss`:
         (out "\n")
         (out "#![allow(clippy::all, dead_code, unused_imports, unused_variables)]\n")
         (out "\n")
-        (out "use compact_runtime::*;\n")
+        (out "use midnight_compact_runtime::*;\n")
         (out "use std::marker::PhantomData;\n")
         (out "\n")
-        (out (format "compact_runtime::check_runtime_version!(\"~a\");\n" (runtime-version)))
+        (out (format "midnight_compact_runtime::check_runtime_version!(\"~a\");\n" (runtime-version)))
         (out "\n")
         (out "// TODO(rust-codegen M2/D): emit Witnesses trait, Contract struct, circuits, ledger view.\n")
-        (out "// Placeholder body so the file compiles against compact-runtime.\n")
+        (out "// Placeholder body so the file compiles against midnight-compact-runtime.\n")
         (out "\n")
         (out "pub trait Witnesses<PS> {}\n")
         (out "impl<PS> Witnesses<PS> for NoWitnesses {}\n")
@@ -1650,7 +1650,7 @@ rm -rf /tmp/counter-rust && \
   cat /tmp/counter-rust/contract/lib.rs | head -25
 ```
 
-Expected: the stub `lib.rs` content prints, including `compact_runtime::check_runtime_version!("...");` and the `Contract<PS, W>` placeholder struct.
+Expected: the stub `lib.rs` content prints, including `midnight_compact_runtime::check_runtime_version!("...");` and the `Contract<PS, W>` placeholder struct.
 
 - [ ] **Step 4: Verify the stub compiles**
 
@@ -1666,7 +1666,7 @@ edition = "2021"
 path = "src-temp.rs"
 
 [dependencies]
-compact-runtime = { path = "/Users/ysh/iohk/compact/.claude/worktrees/admiring-lehmann-05e4d9/runtime-rs" }
+midnight-compact-runtime = { path = "/Users/ysh/iohk/compact/.claude/worktrees/admiring-lehmann-05e4d9/runtime-rs" }
 EOF
 cargo check 2>&1 | tail -5
 ```
@@ -1915,7 +1915,7 @@ Expected: the `initial_state` method appears with the Op sequence and the `Const
 cd /tmp/counter-rust-build && cp /tmp/counter-rust/contract/lib.rs src-temp.rs && cargo check 2>&1 | tail -5
 ```
 
-Expected: `Finished` with no errors. Any errors here mean a type/method name doesn't match `compact-runtime` — fix the emitter, not the runtime.
+Expected: `Finished` with no errors. Any errors here mean a type/method name doesn't match `midnight-compact-runtime` — fix the emitter, not the runtime.
 
 - [ ] **Step 4: Commit**
 
@@ -2009,7 +2009,7 @@ In `/tmp/counter-rust-build/`, add a quick test in `src-temp.rs` (just append, t
 #[cfg(test)]
 mod _smoke {
     use super::*;
-    use compact_runtime::*;
+    use midnight_compact_runtime::*;
 
     #[test]
     fn increment_works() {
@@ -2036,7 +2036,7 @@ mod _smoke {
         // Walk to the counter cell at path [0]
         let arr = match new_state { StateValue::Array(a) => a, _ => panic!() };
         let cell = arr.get(0).unwrap();
-        let value = compact_runtime::std_lib::Counter::decode_from(&cell).unwrap();
+        let value = midnight_compact_runtime::std_lib::Counter::decode_from(&cell).unwrap();
         assert_eq!(value, 1);
     }
 }
@@ -2061,7 +2061,7 @@ counter shape — M3 generalises to arbitrary circuit bodies via a real
 IR walk.
 
 Verified end-to-end: the generated contract compiles against
-compact-runtime and a hand-written increment test produces Counter==1
+midnight-compact-runtime and a hand-written increment test produces Counter==1
 after one call.
 
 Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
@@ -2103,7 +2103,7 @@ In `rust-passes.ss`, add (called from `Program` after the contract impl block is
         (out "        ];\n")
         (out "        let results = qctx.query(&ops, None, &INITIAL_COST_MODEL)?;\n")
         (out "        let event = results.events.last().ok_or_else(|| CompactError::AssertionFailed(\"empty events\".into()))?;\n")
-        (out "        compact_runtime::std_lib::decode_u64(event)\n")
+        (out "        midnight_compact_runtime::std_lib::decode_u64(event)\n")
         (out "    }\n")
         (out "}\n\n"))
 ```
@@ -2242,7 +2242,7 @@ edition = \"2021\"
 path = \"lib.rs\"
 
 [dependencies]
-compact-runtime = \"~a\"
+midnight-compact-runtime = \"~a\"
 "
               (runtime-version))
             port)))
@@ -2259,13 +2259,13 @@ nix build --no-link --print-out-paths 2>&1 | tail -3 && \
   cat /tmp/counter-rust/contract/Cargo.toml
 ```
 
-Expected: a valid Cargo.toml with `name = "compact-contract"` and a `compact-runtime` dep.
+Expected: a valid Cargo.toml with `name = "compact-contract"` and a `midnight-compact-runtime` dep.
 
 - [ ] **Step 4: Verify the emitted crate compiles by itself**
 
 ```bash
 cd /tmp/counter-rust/contract && \
-  sed -i.bak 's|^compact-runtime = .*|compact-runtime = { path = "/Users/ysh/iohk/compact/.claude/worktrees/admiring-lehmann-05e4d9/runtime-rs" }|' Cargo.toml && \
+  sed -i.bak 's|^midnight-compact-runtime = .*|midnight-compact-runtime = { path = "/Users/ysh/iohk/compact/.claude/worktrees/admiring-lehmann-05e4d9/runtime-rs" }|' Cargo.toml && \
   cargo check 2>&1 | tail -5
 ```
 
@@ -2278,7 +2278,7 @@ git add compiler/passes.ss compiler/rust-passes.ss
 git commit -S -s -m "$(cat <<'EOF'
 rust-passes: emit Cargo.toml alongside lib.rs
 
-The Cargo.toml declares compact-runtime as the sole dependency, pinned
+The Cargo.toml declares midnight-compact-runtime as the sole dependency, pinned
 to the runtime version the compiler embeds via check_runtime_version!.
 Users can `cargo build` the emitted contract directly.
 
@@ -2405,7 +2405,7 @@ description = "Cross-language byte-parity tests for compactc --rust output."
 path = "src/lib.rs"
 
 [dependencies]
-compact-runtime = { path = "../runtime-rs" }
+midnight-compact-runtime = { path = "../runtime-rs" }
 serde       = { version = "1",   features = ["derive"] }
 serde_json  = "1"
 hex         = "0.4"
@@ -2469,7 +2469,7 @@ git commit -S -s -m "$(cat <<'EOF'
 tests-e2e-rust: scaffold byte-parity workspace
 
 Pulls in serde_json and hex for loading TS reference snapshots,
-plus the local compact-runtime crate for driving the Rust path.
+plus the local midnight-compact-runtime crate for driving the Rust path.
 
 Subsequent commits add counter.rs (the parity test for counter.compact).
 
@@ -2488,7 +2488,7 @@ EOF
 
 This test:
 1. Runs `compactc --rust counter.compact` at test-time (via a build.rs or via a fixed pre-built path).
-2. Imports the generated `lib.rs` somehow — easiest: read it as bytes and assert it contains the expected structure, then drive `compact-runtime` directly to reproduce the post-increment state.
+2. Imports the generated `lib.rs` somehow — easiest: read it as bytes and assert it contains the expected structure, then drive `midnight-compact-runtime` directly to reproduce the post-increment state.
 3. Compares the resulting state against `fixtures/counter-ts-state.json`.
 
 Because compiling generated Rust at test-time inside another cargo crate is awkward, the cleanest approach is: the test drives the runtime crate directly using the same Op sequence the generator emits, then asserts byte parity. The codegen snapshot test (Task D1) ensures the actual emitter produces matching Op sequences.
@@ -2510,8 +2510,8 @@ Create `tests-e2e-rust/tests/counter.rs`:
 // This is the v1 correctness signal. If it stays green, the Rust path
 // reproduces TS state transitions for counter.compact.
 
-use compact_runtime::std_lib::Counter;
-use compact_runtime::*;
+use midnight_compact_runtime::std_lib::Counter;
+use midnight_compact_runtime::*;
 use midnight_serialize::Serializable;
 use tests_e2e_rust::TsReferenceState;
 
@@ -2674,7 +2674,7 @@ Expected: `tests passed: N (with N including the new counter-rust test).`
 cargo test --workspace 2>&1 | tail -15
 ```
 
-Expected: all suites pass (compact-runtime tests + tests-e2e-rust counter parity test).
+Expected: all suites pass (midnight-compact-runtime tests + tests-e2e-rust counter parity test).
 
 - [ ] **Step 3: Clippy clean**
 
@@ -2697,7 +2697,7 @@ Expected: at minimum `index.js`, `index.d.ts`, `lib.rs`, `Cargo.toml` in the con
 
 ```bash
 cd /tmp/counter-final/contract && \
-  sed -i.bak 's|^compact-runtime = .*|compact-runtime = { path = "/Users/ysh/iohk/compact/.claude/worktrees/admiring-lehmann-05e4d9/runtime-rs" }|' Cargo.toml && \
+  sed -i.bak 's|^midnight-compact-runtime = .*|midnight-compact-runtime = { path = "/Users/ysh/iohk/compact/.claude/worktrees/admiring-lehmann-05e4d9/runtime-rs" }|' Cargo.toml && \
   cargo build 2>&1 | tail -5
 ```
 
@@ -2712,7 +2712,7 @@ git add docs/superpowers/specs/2026-05-25-rust-codegen-design.md
 git commit -S -s -m "$(cat <<'EOF'
 docs: mark M1 and M2 milestones complete
 
-M1: compact-runtime crate shipped (re-exports + facade aggregates +
+M1: midnight-compact-runtime crate shipped (re-exports + facade aggregates +
 helpers + integration tests).
 M2: compactc --rust counter.compact emits a working Rust crate that
 byte-parity-matches the TS path.
@@ -2734,13 +2734,13 @@ This plan is complete when:
 1. `cargo test --workspace` passes from a clean clone.
 2. `./compiler/go` passes from a clean clone.
 3. `compactc --rust --skip-zk examples/counter.compact /tmp/out/` emits a `lib.rs` + `Cargo.toml` that:
-   - Builds with `cargo build` against `compact-runtime`.
+   - Builds with `cargo build` against `midnight-compact-runtime`.
    - Reproduces the TS-path's post-increment `ChargedState` byte-for-byte (verified by `tests-e2e-rust/tests/counter.rs`).
 4. The branch is pushed to `origin/codegen-rust` on the user's fork with each commit GPG-signed (`G`) and DCO-signed-off.
 
 ## Follow-up plans (out of scope here)
 
 - **M3:** Extend emitter to `tiny.compact` (witnesses + enum + multiple circuits) and `proposal.compact` (multiple ledger fields + Cell/Map ADTs). Will need to land struct/enum manual impls of `Aligned`/`FieldRepr`/`FromFieldRepr` in `runtime-rs/src/std_lib.rs` and a real IR-walk in `rust-passes.ss`.
-- **M4:** `async` cargo feature on `compact-runtime` + `AsyncWitnesses<PS>` trait emission.
+- **M4:** `async` cargo feature on `midnight-compact-runtime` + `AsyncWitnesses<PS>` trait emission.
 - **M5:** `wasm` cargo feature + wasm-bindgen layer for browser dApps.
 - **M6:** Documentation polish, examples, CI wiring, upstream contribution of enum derives to `midnight-base-crypto-derive`.

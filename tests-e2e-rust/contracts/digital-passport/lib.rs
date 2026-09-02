@@ -26,10 +26,10 @@
     non_upper_case_globals
 )]
 
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 use std::marker::PhantomData;
 
-compact_runtime::check_runtime_version!("0.19.100");
+midnight_compact_runtime::check_runtime_version!("0.19.100");
 
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct SchemaRef {
@@ -97,17 +97,17 @@ impl FromFieldRepr for SchemaRef {
         })
     }
 }
-impl From<SchemaRef> for compact_runtime::Value {
-    fn from(s: SchemaRef) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.packageId));
-        _v.push(compact_runtime::Value::from(s.schemaId));
-        _v.push(compact_runtime::Value::from(s.majorVersion));
-        _v.push(compact_runtime::Value::from(s.minorVersion));
-        compact_runtime::Value::concat(_v.iter())
+impl From<SchemaRef> for midnight_compact_runtime::Value {
+    fn from(s: SchemaRef) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.packageId));
+        _v.push(midnight_compact_runtime::Value::from(s.schemaId));
+        _v.push(midnight_compact_runtime::Value::from(s.majorVersion));
+        _v.push(midnight_compact_runtime::Value::from(s.minorVersion));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for SchemaRef {
+impl midnight_compact_runtime::BinaryHashRepr for SchemaRef {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.packageId.binary_repr(writer);
         self.schemaId.binary_repr(writer);
@@ -188,19 +188,25 @@ impl FromFieldRepr for SchemaCapabilities {
         })
     }
 }
-impl From<SchemaCapabilities> for compact_runtime::Value {
-    fn from(s: SchemaCapabilities) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.supportsSelectiveDisclosure));
-        _v.push(compact_runtime::Value::from(s.supportsPredicateProofs));
-        _v.push(compact_runtime::Value::from(
+impl From<SchemaCapabilities> for midnight_compact_runtime::Value {
+    fn from(s: SchemaCapabilities) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(
+            s.supportsSelectiveDisclosure,
+        ));
+        _v.push(midnight_compact_runtime::Value::from(
+            s.supportsPredicateProofs,
+        ));
+        _v.push(midnight_compact_runtime::Value::from(
             s.supportsVerifierScopedPseudonym,
         ));
-        _v.push(compact_runtime::Value::from(s.supportsSameHolderProof));
-        compact_runtime::Value::concat(_v.iter())
+        _v.push(midnight_compact_runtime::Value::from(
+            s.supportsSameHolderProof,
+        ));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for SchemaCapabilities {
+impl midnight_compact_runtime::BinaryHashRepr for SchemaCapabilities {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.supportsSelectiveDisclosure.binary_repr(writer);
         self.supportsPredicateProofs.binary_repr(writer);
@@ -260,15 +266,15 @@ impl FromFieldRepr for SchemaFamilyResolutionHint {
         })
     }
 }
-impl From<SchemaFamilyResolutionHint> for compact_runtime::Value {
-    fn from(s: SchemaFamilyResolutionHint) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.hasResolverHint));
-        _v.push(compact_runtime::Value::from(s.resolverHint));
-        compact_runtime::Value::concat(_v.iter())
+impl From<SchemaFamilyResolutionHint> for midnight_compact_runtime::Value {
+    fn from(s: SchemaFamilyResolutionHint) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.hasResolverHint));
+        _v.push(midnight_compact_runtime::Value::from(s.resolverHint));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for SchemaFamilyResolutionHint {
+impl midnight_compact_runtime::BinaryHashRepr for SchemaFamilyResolutionHint {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.hasResolverHint.binary_repr(writer);
         self.resolverHint.binary_repr(writer);
@@ -334,16 +340,18 @@ impl FromFieldRepr for SchemaDescriptor {
         })
     }
 }
-impl From<SchemaDescriptor> for compact_runtime::Value {
-    fn from(s: SchemaDescriptor) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.schema));
-        _v.push(compact_runtime::Value::from(s.capabilities));
-        _v.push(compact_runtime::Value::from(s.familyResolutionHint));
-        compact_runtime::Value::concat(_v.iter())
+impl From<SchemaDescriptor> for midnight_compact_runtime::Value {
+    fn from(s: SchemaDescriptor) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.schema));
+        _v.push(midnight_compact_runtime::Value::from(s.capabilities));
+        _v.push(midnight_compact_runtime::Value::from(
+            s.familyResolutionHint,
+        ));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for SchemaDescriptor {
+impl midnight_compact_runtime::BinaryHashRepr for SchemaDescriptor {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.schema.binary_repr(writer);
         self.capabilities.binary_repr(writer);
@@ -401,15 +409,15 @@ impl FromFieldRepr for VerificationMethodRef {
         })
     }
 }
-impl From<VerificationMethodRef> for compact_runtime::Value {
-    fn from(s: VerificationMethodRef) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.didContractAddress));
-        _v.push(compact_runtime::Value::from(s.methodId));
-        compact_runtime::Value::concat(_v.iter())
+impl From<VerificationMethodRef> for midnight_compact_runtime::Value {
+    fn from(s: VerificationMethodRef) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.didContractAddress));
+        _v.push(midnight_compact_runtime::Value::from(s.methodId));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for VerificationMethodRef {
+impl midnight_compact_runtime::BinaryHashRepr for VerificationMethodRef {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.didContractAddress.binary_repr(writer);
         self.methodId.binary_repr(writer);
@@ -443,12 +451,14 @@ impl FromFieldRepr for NoPublicClaims {
         Some(NoPublicClaims {})
     }
 }
-impl From<NoPublicClaims> for compact_runtime::Value {
-    fn from(s: NoPublicClaims) -> compact_runtime::Value {
-        compact_runtime::Value::concat(core::iter::empty::<&compact_runtime::Value>())
+impl From<NoPublicClaims> for midnight_compact_runtime::Value {
+    fn from(s: NoPublicClaims) -> midnight_compact_runtime::Value {
+        midnight_compact_runtime::Value::concat(
+            core::iter::empty::<&midnight_compact_runtime::Value>(),
+        )
     }
 }
-impl compact_runtime::BinaryHashRepr for NoPublicClaims {
+impl midnight_compact_runtime::BinaryHashRepr for NoPublicClaims {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         let _ = writer;
     }
@@ -481,12 +491,14 @@ impl FromFieldRepr for NoClaimCommitments {
         Some(NoClaimCommitments {})
     }
 }
-impl From<NoClaimCommitments> for compact_runtime::Value {
-    fn from(s: NoClaimCommitments) -> compact_runtime::Value {
-        compact_runtime::Value::concat(core::iter::empty::<&compact_runtime::Value>())
+impl From<NoClaimCommitments> for midnight_compact_runtime::Value {
+    fn from(s: NoClaimCommitments) -> midnight_compact_runtime::Value {
+        midnight_compact_runtime::Value::concat(
+            core::iter::empty::<&midnight_compact_runtime::Value>(),
+        )
     }
 }
-impl compact_runtime::BinaryHashRepr for NoClaimCommitments {
+impl midnight_compact_runtime::BinaryHashRepr for NoClaimCommitments {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         let _ = writer;
     }
@@ -510,25 +522,25 @@ impl Aligned for Signature {
 }
 impl FieldRepr for Signature {
     fn field_repr<W: MemWrite<Fr>>(&self, writer: &mut W) {
-        compact_runtime::jubjub_point_field_repr(&self.r, writer);
+        midnight_compact_runtime::jubjub_point_field_repr(&self.r, writer);
         self.s.field_repr(writer);
     }
     fn field_size(&self) -> usize {
-        compact_runtime::jubjub_point_field_size(&self.r) + self.s.field_size()
+        midnight_compact_runtime::jubjub_point_field_size(&self.r) + self.s.field_size()
     }
 }
 impl FromFieldRepr for Signature {
     const FIELD_SIZE: usize =
-        compact_runtime::JUBJUB_POINT_FIELD_SIZE + <Fr as FromFieldRepr>::FIELD_SIZE;
+        midnight_compact_runtime::JUBJUB_POINT_FIELD_SIZE + <Fr as FromFieldRepr>::FIELD_SIZE;
     fn from_field_repr(_repr: &[Fr]) -> Option<Self> {
         if _repr.len() < Self::FIELD_SIZE {
             return None;
         }
         let mut _offset = 0usize;
-        let r = compact_runtime::jubjub_point_from_field_repr(
-            &_repr[_offset.._offset + compact_runtime::JUBJUB_POINT_FIELD_SIZE],
+        let r = midnight_compact_runtime::jubjub_point_from_field_repr(
+            &_repr[_offset.._offset + midnight_compact_runtime::JUBJUB_POINT_FIELD_SIZE],
         )?;
-        _offset += compact_runtime::JUBJUB_POINT_FIELD_SIZE;
+        _offset += midnight_compact_runtime::JUBJUB_POINT_FIELD_SIZE;
         let s = <Fr as FromFieldRepr>::from_field_repr(
             &_repr[_offset.._offset + <Fr as FromFieldRepr>::FIELD_SIZE],
         )?;
@@ -537,21 +549,21 @@ impl FromFieldRepr for Signature {
         Some(Signature { r, s })
     }
 }
-impl From<Signature> for compact_runtime::Value {
-    fn from(s: Signature) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.r));
-        _v.push(compact_runtime::Value::from(s.s));
-        compact_runtime::Value::concat(_v.iter())
+impl From<Signature> for midnight_compact_runtime::Value {
+    fn from(s: Signature) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.r));
+        _v.push(midnight_compact_runtime::Value::from(s.s));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for Signature {
+impl midnight_compact_runtime::BinaryHashRepr for Signature {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
-        compact_runtime::jubjub_point_binary_repr(&self.r, writer);
+        midnight_compact_runtime::jubjub_point_binary_repr(&self.r, writer);
         self.s.binary_repr(writer);
     }
     fn binary_len(&self) -> usize {
-        compact_runtime::jubjub_point_binary_len(&self.r) + self.s.binary_len()
+        midnight_compact_runtime::jubjub_point_binary_len(&self.r) + self.s.binary_len()
     }
 }
 
@@ -590,14 +602,16 @@ impl FromFieldRepr for ExplicitHolderBinding {
         })
     }
 }
-impl From<ExplicitHolderBinding> for compact_runtime::Value {
-    fn from(s: ExplicitHolderBinding) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.holderVerificationMethodRef));
-        compact_runtime::Value::concat(_v.iter())
+impl From<ExplicitHolderBinding> for midnight_compact_runtime::Value {
+    fn from(s: ExplicitHolderBinding) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(
+            s.holderVerificationMethodRef,
+        ));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for ExplicitHolderBinding {
+impl midnight_compact_runtime::BinaryHashRepr for ExplicitHolderBinding {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.holderVerificationMethodRef.binary_repr(writer);
     }
@@ -617,40 +631,40 @@ impl Aligned for JubjubHolderBinding {
 }
 impl FieldRepr for JubjubHolderBinding {
     fn field_repr<W: MemWrite<Fr>>(&self, writer: &mut W) {
-        compact_runtime::jubjub_point_field_repr(&self.holderPublicKey, writer);
+        midnight_compact_runtime::jubjub_point_field_repr(&self.holderPublicKey, writer);
     }
     fn field_size(&self) -> usize {
-        compact_runtime::jubjub_point_field_size(&self.holderPublicKey)
+        midnight_compact_runtime::jubjub_point_field_size(&self.holderPublicKey)
     }
 }
 impl FromFieldRepr for JubjubHolderBinding {
-    const FIELD_SIZE: usize = compact_runtime::JUBJUB_POINT_FIELD_SIZE;
+    const FIELD_SIZE: usize = midnight_compact_runtime::JUBJUB_POINT_FIELD_SIZE;
     fn from_field_repr(_repr: &[Fr]) -> Option<Self> {
         if _repr.len() < Self::FIELD_SIZE {
             return None;
         }
         let mut _offset = 0usize;
-        let holderPublicKey = compact_runtime::jubjub_point_from_field_repr(
-            &_repr[_offset.._offset + compact_runtime::JUBJUB_POINT_FIELD_SIZE],
+        let holderPublicKey = midnight_compact_runtime::jubjub_point_from_field_repr(
+            &_repr[_offset.._offset + midnight_compact_runtime::JUBJUB_POINT_FIELD_SIZE],
         )?;
-        _offset += compact_runtime::JUBJUB_POINT_FIELD_SIZE;
+        _offset += midnight_compact_runtime::JUBJUB_POINT_FIELD_SIZE;
         let _ = _offset;
         Some(JubjubHolderBinding { holderPublicKey })
     }
 }
-impl From<JubjubHolderBinding> for compact_runtime::Value {
-    fn from(s: JubjubHolderBinding) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.holderPublicKey));
-        compact_runtime::Value::concat(_v.iter())
+impl From<JubjubHolderBinding> for midnight_compact_runtime::Value {
+    fn from(s: JubjubHolderBinding) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.holderPublicKey));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for JubjubHolderBinding {
+impl midnight_compact_runtime::BinaryHashRepr for JubjubHolderBinding {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
-        compact_runtime::jubjub_point_binary_repr(&self.holderPublicKey, writer);
+        midnight_compact_runtime::jubjub_point_binary_repr(&self.holderPublicKey, writer);
     }
     fn binary_len(&self) -> usize {
-        compact_runtime::jubjub_point_binary_len(&self.holderPublicKey)
+        midnight_compact_runtime::jubjub_point_binary_len(&self.holderPublicKey)
     }
 }
 
@@ -673,18 +687,18 @@ impl FieldRepr for OffchainMidnightHolderBinding {
     fn field_repr<W: MemWrite<Fr>>(&self, writer: &mut W) {
         self.holderDidStateHash.field_repr(writer);
         self.holderMethodId.field_repr(writer);
-        compact_runtime::jubjub_point_field_repr(&self.holderPublicKey, writer);
+        midnight_compact_runtime::jubjub_point_field_repr(&self.holderPublicKey, writer);
     }
     fn field_size(&self) -> usize {
         self.holderDidStateHash.field_size()
             + self.holderMethodId.field_size()
-            + compact_runtime::jubjub_point_field_size(&self.holderPublicKey)
+            + midnight_compact_runtime::jubjub_point_field_size(&self.holderPublicKey)
     }
 }
 impl FromFieldRepr for OffchainMidnightHolderBinding {
     const FIELD_SIZE: usize = <[u8; 32] as FromFieldRepr>::FIELD_SIZE
         + <[u8; 32] as FromFieldRepr>::FIELD_SIZE
-        + compact_runtime::JUBJUB_POINT_FIELD_SIZE;
+        + midnight_compact_runtime::JUBJUB_POINT_FIELD_SIZE;
     fn from_field_repr(_repr: &[Fr]) -> Option<Self> {
         if _repr.len() < Self::FIELD_SIZE {
             return None;
@@ -698,10 +712,10 @@ impl FromFieldRepr for OffchainMidnightHolderBinding {
             &_repr[_offset.._offset + <[u8; 32] as FromFieldRepr>::FIELD_SIZE],
         )?;
         _offset += <[u8; 32] as FromFieldRepr>::FIELD_SIZE;
-        let holderPublicKey = compact_runtime::jubjub_point_from_field_repr(
-            &_repr[_offset.._offset + compact_runtime::JUBJUB_POINT_FIELD_SIZE],
+        let holderPublicKey = midnight_compact_runtime::jubjub_point_from_field_repr(
+            &_repr[_offset.._offset + midnight_compact_runtime::JUBJUB_POINT_FIELD_SIZE],
         )?;
-        _offset += compact_runtime::JUBJUB_POINT_FIELD_SIZE;
+        _offset += midnight_compact_runtime::JUBJUB_POINT_FIELD_SIZE;
         let _ = _offset;
         Some(OffchainMidnightHolderBinding {
             holderDidStateHash,
@@ -710,25 +724,25 @@ impl FromFieldRepr for OffchainMidnightHolderBinding {
         })
     }
 }
-impl From<OffchainMidnightHolderBinding> for compact_runtime::Value {
-    fn from(s: OffchainMidnightHolderBinding) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.holderDidStateHash));
-        _v.push(compact_runtime::Value::from(s.holderMethodId));
-        _v.push(compact_runtime::Value::from(s.holderPublicKey));
-        compact_runtime::Value::concat(_v.iter())
+impl From<OffchainMidnightHolderBinding> for midnight_compact_runtime::Value {
+    fn from(s: OffchainMidnightHolderBinding) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.holderDidStateHash));
+        _v.push(midnight_compact_runtime::Value::from(s.holderMethodId));
+        _v.push(midnight_compact_runtime::Value::from(s.holderPublicKey));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for OffchainMidnightHolderBinding {
+impl midnight_compact_runtime::BinaryHashRepr for OffchainMidnightHolderBinding {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.holderDidStateHash.binary_repr(writer);
         self.holderMethodId.binary_repr(writer);
-        compact_runtime::jubjub_point_binary_repr(&self.holderPublicKey, writer);
+        midnight_compact_runtime::jubjub_point_binary_repr(&self.holderPublicKey, writer);
     }
     fn binary_len(&self) -> usize {
         self.holderDidStateHash.binary_len()
             + self.holderMethodId.binary_len()
-            + compact_runtime::jubjub_point_binary_len(&self.holderPublicKey)
+            + midnight_compact_runtime::jubjub_point_binary_len(&self.holderPublicKey)
     }
 }
 
@@ -777,15 +791,19 @@ impl FromFieldRepr for SecretHolderBinding {
         })
     }
 }
-impl From<SecretHolderBinding> for compact_runtime::Value {
-    fn from(s: SecretHolderBinding) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.holderSecretCommitment));
-        _v.push(compact_runtime::Value::from(s.requestChallengeResponse));
-        compact_runtime::Value::concat(_v.iter())
+impl From<SecretHolderBinding> for midnight_compact_runtime::Value {
+    fn from(s: SecretHolderBinding) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(
+            s.holderSecretCommitment,
+        ));
+        _v.push(midnight_compact_runtime::Value::from(
+            s.requestChallengeResponse,
+        ));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for SecretHolderBinding {
+impl midnight_compact_runtime::BinaryHashRepr for SecretHolderBinding {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.holderSecretCommitment.binary_repr(writer);
         self.requestChallengeResponse.binary_repr(writer);
@@ -851,18 +869,20 @@ impl FromFieldRepr for BlindedSecretHolderBinding {
         })
     }
 }
-impl From<BlindedSecretHolderBinding> for compact_runtime::Value {
-    fn from(s: BlindedSecretHolderBinding) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(
+impl From<BlindedSecretHolderBinding> for midnight_compact_runtime::Value {
+    fn from(s: BlindedSecretHolderBinding) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(
             s.blindedHolderSecretCommitment,
         ));
-        _v.push(compact_runtime::Value::from(s.issuerNonce));
-        _v.push(compact_runtime::Value::from(s.requestChallengeResponse));
-        compact_runtime::Value::concat(_v.iter())
+        _v.push(midnight_compact_runtime::Value::from(s.issuerNonce));
+        _v.push(midnight_compact_runtime::Value::from(
+            s.requestChallengeResponse,
+        ));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for BlindedSecretHolderBinding {
+impl midnight_compact_runtime::BinaryHashRepr for BlindedSecretHolderBinding {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.blindedHolderSecretCommitment.binary_repr(writer);
         self.issuerNonce.binary_repr(writer);
@@ -899,14 +919,14 @@ impl FieldRepr for Proof {
         self.signerVerificationMethodRef.field_repr(writer);
         self.createdAt.field_repr(writer);
         self.challengeHash.field_repr(writer);
-        compact_runtime::jubjub_point_field_repr(&self.publicKey, writer);
+        midnight_compact_runtime::jubjub_point_field_repr(&self.publicKey, writer);
         self.signature.field_repr(writer);
     }
     fn field_size(&self) -> usize {
         self.signerVerificationMethodRef.field_size()
             + self.createdAt.field_size()
             + self.challengeHash.field_size()
-            + compact_runtime::jubjub_point_field_size(&self.publicKey)
+            + midnight_compact_runtime::jubjub_point_field_size(&self.publicKey)
             + self.signature.field_size()
     }
 }
@@ -914,7 +934,7 @@ impl FromFieldRepr for Proof {
     const FIELD_SIZE: usize = <VerificationMethodRef as FromFieldRepr>::FIELD_SIZE
         + <u64 as FromFieldRepr>::FIELD_SIZE
         + <[u8; 32] as FromFieldRepr>::FIELD_SIZE
-        + compact_runtime::JUBJUB_POINT_FIELD_SIZE
+        + midnight_compact_runtime::JUBJUB_POINT_FIELD_SIZE
         + <Signature as FromFieldRepr>::FIELD_SIZE;
     fn from_field_repr(_repr: &[Fr]) -> Option<Self> {
         if _repr.len() < Self::FIELD_SIZE {
@@ -934,10 +954,10 @@ impl FromFieldRepr for Proof {
             &_repr[_offset.._offset + <[u8; 32] as FromFieldRepr>::FIELD_SIZE],
         )?;
         _offset += <[u8; 32] as FromFieldRepr>::FIELD_SIZE;
-        let publicKey = compact_runtime::jubjub_point_from_field_repr(
-            &_repr[_offset.._offset + compact_runtime::JUBJUB_POINT_FIELD_SIZE],
+        let publicKey = midnight_compact_runtime::jubjub_point_from_field_repr(
+            &_repr[_offset.._offset + midnight_compact_runtime::JUBJUB_POINT_FIELD_SIZE],
         )?;
-        _offset += compact_runtime::JUBJUB_POINT_FIELD_SIZE;
+        _offset += midnight_compact_runtime::JUBJUB_POINT_FIELD_SIZE;
         let signature = <Signature as FromFieldRepr>::from_field_repr(
             &_repr[_offset.._offset + <Signature as FromFieldRepr>::FIELD_SIZE],
         )?;
@@ -952,30 +972,32 @@ impl FromFieldRepr for Proof {
         })
     }
 }
-impl From<Proof> for compact_runtime::Value {
-    fn from(s: Proof) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.signerVerificationMethodRef));
-        _v.push(compact_runtime::Value::from(s.createdAt));
-        _v.push(compact_runtime::Value::from(s.challengeHash));
-        _v.push(compact_runtime::Value::from(s.publicKey));
-        _v.push(compact_runtime::Value::from(s.signature));
-        compact_runtime::Value::concat(_v.iter())
+impl From<Proof> for midnight_compact_runtime::Value {
+    fn from(s: Proof) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(
+            s.signerVerificationMethodRef,
+        ));
+        _v.push(midnight_compact_runtime::Value::from(s.createdAt));
+        _v.push(midnight_compact_runtime::Value::from(s.challengeHash));
+        _v.push(midnight_compact_runtime::Value::from(s.publicKey));
+        _v.push(midnight_compact_runtime::Value::from(s.signature));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for Proof {
+impl midnight_compact_runtime::BinaryHashRepr for Proof {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.signerVerificationMethodRef.binary_repr(writer);
         self.createdAt.binary_repr(writer);
         self.challengeHash.binary_repr(writer);
-        compact_runtime::jubjub_point_binary_repr(&self.publicKey, writer);
+        midnight_compact_runtime::jubjub_point_binary_repr(&self.publicKey, writer);
         self.signature.binary_repr(writer);
     }
     fn binary_len(&self) -> usize {
         self.signerVerificationMethodRef.binary_len()
             + self.createdAt.binary_len()
             + self.challengeHash.binary_len()
-            + compact_runtime::jubjub_point_binary_len(&self.publicKey)
+            + midnight_compact_runtime::jubjub_point_binary_len(&self.publicKey)
             + self.signature.binary_len()
     }
 }
@@ -1013,12 +1035,12 @@ impl FromFieldRepr for HolderBindingProfile {
         }
     }
 }
-impl From<HolderBindingProfile> for compact_runtime::Value {
-    fn from(v: HolderBindingProfile) -> compact_runtime::Value {
-        compact_runtime::Value::from(v as u8)
+impl From<HolderBindingProfile> for midnight_compact_runtime::Value {
+    fn from(v: HolderBindingProfile) -> midnight_compact_runtime::Value {
+        midnight_compact_runtime::Value::from(v as u8)
     }
 }
-impl compact_runtime::BinaryHashRepr for HolderBindingProfile {
+impl midnight_compact_runtime::BinaryHashRepr for HolderBindingProfile {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         (*self as u8).binary_repr(writer);
     }
@@ -1092,19 +1114,25 @@ impl FromFieldRepr for CredentialProtocolFeatures {
         })
     }
 }
-impl From<CredentialProtocolFeatures> for compact_runtime::Value {
-    fn from(s: CredentialProtocolFeatures) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.supportsSelectiveDisclosure));
-        _v.push(compact_runtime::Value::from(s.supportsPredicateProofs));
-        _v.push(compact_runtime::Value::from(
+impl From<CredentialProtocolFeatures> for midnight_compact_runtime::Value {
+    fn from(s: CredentialProtocolFeatures) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(
+            s.supportsSelectiveDisclosure,
+        ));
+        _v.push(midnight_compact_runtime::Value::from(
+            s.supportsPredicateProofs,
+        ));
+        _v.push(midnight_compact_runtime::Value::from(
             s.supportsVerifierScopedPseudonym,
         ));
-        _v.push(compact_runtime::Value::from(s.supportsSameHolderProof));
-        compact_runtime::Value::concat(_v.iter())
+        _v.push(midnight_compact_runtime::Value::from(
+            s.supportsSameHolderProof,
+        ));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for CredentialProtocolFeatures {
+impl midnight_compact_runtime::BinaryHashRepr for CredentialProtocolFeatures {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.supportsSelectiveDisclosure.binary_repr(writer);
         self.supportsPredicateProofs.binary_repr(writer);
@@ -1225,21 +1253,21 @@ impl FromFieldRepr for ProtocolMessageEnvelope {
         })
     }
 }
-impl From<ProtocolMessageEnvelope> for compact_runtime::Value {
-    fn from(s: ProtocolMessageEnvelope) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.version));
-        _v.push(compact_runtime::Value::from(s.messageId));
-        _v.push(compact_runtime::Value::from(s.threadId));
-        _v.push(compact_runtime::Value::from(s.initialMessage));
-        _v.push(compact_runtime::Value::from(s.respondsToMessageId));
-        _v.push(compact_runtime::Value::from(s.createdAt));
-        _v.push(compact_runtime::Value::from(s.hasExpiresAt));
-        _v.push(compact_runtime::Value::from(s.expiresAt));
-        compact_runtime::Value::concat(_v.iter())
+impl From<ProtocolMessageEnvelope> for midnight_compact_runtime::Value {
+    fn from(s: ProtocolMessageEnvelope) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.version));
+        _v.push(midnight_compact_runtime::Value::from(s.messageId));
+        _v.push(midnight_compact_runtime::Value::from(s.threadId));
+        _v.push(midnight_compact_runtime::Value::from(s.initialMessage));
+        _v.push(midnight_compact_runtime::Value::from(s.respondsToMessageId));
+        _v.push(midnight_compact_runtime::Value::from(s.createdAt));
+        _v.push(midnight_compact_runtime::Value::from(s.hasExpiresAt));
+        _v.push(midnight_compact_runtime::Value::from(s.expiresAt));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for ProtocolMessageEnvelope {
+impl midnight_compact_runtime::BinaryHashRepr for ProtocolMessageEnvelope {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.version.binary_repr(writer);
         self.messageId.binary_repr(writer);
@@ -1308,17 +1336,17 @@ impl FromFieldRepr for StatusRegistryRef {
         })
     }
 }
-impl From<StatusRegistryRef> for compact_runtime::Value {
-    fn from(s: StatusRegistryRef) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.registryId));
-        _v.push(compact_runtime::Value::from(
+impl From<StatusRegistryRef> for midnight_compact_runtime::Value {
+    fn from(s: StatusRegistryRef) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.registryId));
+        _v.push(midnight_compact_runtime::Value::from(
             s.authorityVerificationMethodRef,
         ));
-        compact_runtime::Value::concat(_v.iter())
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for StatusRegistryRef {
+impl midnight_compact_runtime::BinaryHashRepr for StatusRegistryRef {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.registryId.binary_repr(writer);
         self.authorityVerificationMethodRef.binary_repr(writer);
@@ -1352,12 +1380,14 @@ impl FromFieldRepr for NoStatusBinding {
         Some(NoStatusBinding {})
     }
 }
-impl From<NoStatusBinding> for compact_runtime::Value {
-    fn from(s: NoStatusBinding) -> compact_runtime::Value {
-        compact_runtime::Value::concat(core::iter::empty::<&compact_runtime::Value>())
+impl From<NoStatusBinding> for midnight_compact_runtime::Value {
+    fn from(s: NoStatusBinding) -> midnight_compact_runtime::Value {
+        midnight_compact_runtime::Value::concat(
+            core::iter::empty::<&midnight_compact_runtime::Value>(),
+        )
     }
 }
-impl compact_runtime::BinaryHashRepr for NoStatusBinding {
+impl midnight_compact_runtime::BinaryHashRepr for NoStatusBinding {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         let _ = writer;
     }
@@ -1395,12 +1425,12 @@ impl FromFieldRepr for StatusType {
         }
     }
 }
-impl From<StatusType> for compact_runtime::Value {
-    fn from(v: StatusType) -> compact_runtime::Value {
-        compact_runtime::Value::from(v as u8)
+impl From<StatusType> for midnight_compact_runtime::Value {
+    fn from(v: StatusType) -> midnight_compact_runtime::Value {
+        midnight_compact_runtime::Value::from(v as u8)
     }
 }
-impl compact_runtime::BinaryHashRepr for StatusType {
+impl midnight_compact_runtime::BinaryHashRepr for StatusType {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         (*self as u8).binary_repr(writer);
     }
@@ -1464,16 +1494,18 @@ impl FromFieldRepr for RegistryBoundStatusBinding {
         })
     }
 }
-impl From<RegistryBoundStatusBinding> for compact_runtime::Value {
-    fn from(s: RegistryBoundStatusBinding) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.statusType));
-        _v.push(compact_runtime::Value::from(s.registryRef));
-        _v.push(compact_runtime::Value::from(s.statusHandleCommitment));
-        compact_runtime::Value::concat(_v.iter())
+impl From<RegistryBoundStatusBinding> for midnight_compact_runtime::Value {
+    fn from(s: RegistryBoundStatusBinding) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.statusType));
+        _v.push(midnight_compact_runtime::Value::from(s.registryRef));
+        _v.push(midnight_compact_runtime::Value::from(
+            s.statusHandleCommitment,
+        ));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for RegistryBoundStatusBinding {
+impl midnight_compact_runtime::BinaryHashRepr for RegistryBoundStatusBinding {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.statusType.binary_repr(writer);
         self.registryRef.binary_repr(writer);
@@ -1562,18 +1594,24 @@ impl FromFieldRepr for DigitalPassportClaimCommitments {
         })
     }
 }
-impl From<DigitalPassportClaimCommitments> for compact_runtime::Value {
-    fn from(s: DigitalPassportClaimCommitments) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.firstNameCommitment));
-        _v.push(compact_runtime::Value::from(s.lastNameCommitment));
-        _v.push(compact_runtime::Value::from(s.dateOfBirthCommitment));
-        _v.push(compact_runtime::Value::from(s.documentNumberCommitment));
-        _v.push(compact_runtime::Value::from(s.issuingStateCommitment));
-        compact_runtime::Value::concat(_v.iter())
+impl From<DigitalPassportClaimCommitments> for midnight_compact_runtime::Value {
+    fn from(s: DigitalPassportClaimCommitments) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.firstNameCommitment));
+        _v.push(midnight_compact_runtime::Value::from(s.lastNameCommitment));
+        _v.push(midnight_compact_runtime::Value::from(
+            s.dateOfBirthCommitment,
+        ));
+        _v.push(midnight_compact_runtime::Value::from(
+            s.documentNumberCommitment,
+        ));
+        _v.push(midnight_compact_runtime::Value::from(
+            s.issuingStateCommitment,
+        ));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for DigitalPassportClaimCommitments {
+impl midnight_compact_runtime::BinaryHashRepr for DigitalPassportClaimCommitments {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.firstNameCommitment.binary_repr(writer);
         self.lastNameCommitment.binary_repr(writer);
@@ -1637,8 +1675,8 @@ impl FieldRepr for DigitalPassportClaimValues {
     }
 }
 impl FromFieldRepr for DigitalPassportClaimValues {
-    const FIELD_SIZE: usize = compact_runtime::bytes_field_size(64)
-        + compact_runtime::bytes_field_size(64)
+    const FIELD_SIZE: usize = midnight_compact_runtime::bytes_field_size(64)
+        + midnight_compact_runtime::bytes_field_size(64)
         + <u32 as FromFieldRepr>::FIELD_SIZE
         + <[u8; 32] as FromFieldRepr>::FIELD_SIZE
         + <[u8; 32] as FromFieldRepr>::FIELD_SIZE;
@@ -1647,14 +1685,14 @@ impl FromFieldRepr for DigitalPassportClaimValues {
             return None;
         }
         let mut _offset = 0usize;
-        let firstNameValuePadded = compact_runtime::bytes_from_field_repr::<64>(
-            &_repr[_offset.._offset + compact_runtime::bytes_field_size(64)],
+        let firstNameValuePadded = midnight_compact_runtime::bytes_from_field_repr::<64>(
+            &_repr[_offset.._offset + midnight_compact_runtime::bytes_field_size(64)],
         )?;
-        _offset += compact_runtime::bytes_field_size(64);
-        let lastNameValuePadded = compact_runtime::bytes_from_field_repr::<64>(
-            &_repr[_offset.._offset + compact_runtime::bytes_field_size(64)],
+        _offset += midnight_compact_runtime::bytes_field_size(64);
+        let lastNameValuePadded = midnight_compact_runtime::bytes_from_field_repr::<64>(
+            &_repr[_offset.._offset + midnight_compact_runtime::bytes_field_size(64)],
         )?;
-        _offset += compact_runtime::bytes_field_size(64);
+        _offset += midnight_compact_runtime::bytes_field_size(64);
         let dateOfBirthDays = <u32 as FromFieldRepr>::from_field_repr(
             &_repr[_offset.._offset + <u32 as FromFieldRepr>::FIELD_SIZE],
         )?;
@@ -1677,18 +1715,20 @@ impl FromFieldRepr for DigitalPassportClaimValues {
         })
     }
 }
-impl From<DigitalPassportClaimValues> for compact_runtime::Value {
-    fn from(s: DigitalPassportClaimValues) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.firstNameValuePadded));
-        _v.push(compact_runtime::Value::from(s.lastNameValuePadded));
-        _v.push(compact_runtime::Value::from(s.dateOfBirthDays));
-        _v.push(compact_runtime::Value::from(s.documentNumberValue));
-        _v.push(compact_runtime::Value::from(s.issuingStateValue));
-        compact_runtime::Value::concat(_v.iter())
+impl From<DigitalPassportClaimValues> for midnight_compact_runtime::Value {
+    fn from(s: DigitalPassportClaimValues) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(
+            s.firstNameValuePadded,
+        ));
+        _v.push(midnight_compact_runtime::Value::from(s.lastNameValuePadded));
+        _v.push(midnight_compact_runtime::Value::from(s.dateOfBirthDays));
+        _v.push(midnight_compact_runtime::Value::from(s.documentNumberValue));
+        _v.push(midnight_compact_runtime::Value::from(s.issuingStateValue));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for DigitalPassportClaimValues {
+impl midnight_compact_runtime::BinaryHashRepr for DigitalPassportClaimValues {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.firstNameValuePadded.binary_repr(writer);
         self.lastNameValuePadded.binary_repr(writer);
@@ -1781,18 +1821,20 @@ impl FromFieldRepr for DigitalPassportOpenings {
         })
     }
 }
-impl From<DigitalPassportOpenings> for compact_runtime::Value {
-    fn from(s: DigitalPassportOpenings) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.firstNameOpening));
-        _v.push(compact_runtime::Value::from(s.lastNameOpening));
-        _v.push(compact_runtime::Value::from(s.dateOfBirthOpening));
-        _v.push(compact_runtime::Value::from(s.documentNumberOpening));
-        _v.push(compact_runtime::Value::from(s.issuingStateOpening));
-        compact_runtime::Value::concat(_v.iter())
+impl From<DigitalPassportOpenings> for midnight_compact_runtime::Value {
+    fn from(s: DigitalPassportOpenings) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.firstNameOpening));
+        _v.push(midnight_compact_runtime::Value::from(s.lastNameOpening));
+        _v.push(midnight_compact_runtime::Value::from(s.dateOfBirthOpening));
+        _v.push(midnight_compact_runtime::Value::from(
+            s.documentNumberOpening,
+        ));
+        _v.push(midnight_compact_runtime::Value::from(s.issuingStateOpening));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for DigitalPassportOpenings {
+impl midnight_compact_runtime::BinaryHashRepr for DigitalPassportOpenings {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.firstNameOpening.binary_repr(writer);
         self.lastNameOpening.binary_repr(writer);
@@ -1854,15 +1896,15 @@ impl FromFieldRepr for DigitalPassportCredentialPrivateParts {
         })
     }
 }
-impl From<DigitalPassportCredentialPrivateParts> for compact_runtime::Value {
-    fn from(s: DigitalPassportCredentialPrivateParts) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.claimValues));
-        _v.push(compact_runtime::Value::from(s.openings));
-        compact_runtime::Value::concat(_v.iter())
+impl From<DigitalPassportCredentialPrivateParts> for midnight_compact_runtime::Value {
+    fn from(s: DigitalPassportCredentialPrivateParts) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.claimValues));
+        _v.push(midnight_compact_runtime::Value::from(s.openings));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for DigitalPassportCredentialPrivateParts {
+impl midnight_compact_runtime::BinaryHashRepr for DigitalPassportCredentialPrivateParts {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.claimValues.binary_repr(writer);
         self.openings.binary_repr(writer);
@@ -1965,10 +2007,10 @@ impl FieldRepr for DigitalPassportDisclosures {
 }
 impl FromFieldRepr for DigitalPassportDisclosures {
     const FIELD_SIZE: usize = <bool as FromFieldRepr>::FIELD_SIZE
-        + compact_runtime::bytes_field_size(64)
+        + midnight_compact_runtime::bytes_field_size(64)
         + <[u8; 32] as FromFieldRepr>::FIELD_SIZE
         + <bool as FromFieldRepr>::FIELD_SIZE
-        + compact_runtime::bytes_field_size(64)
+        + midnight_compact_runtime::bytes_field_size(64)
         + <[u8; 32] as FromFieldRepr>::FIELD_SIZE
         + <bool as FromFieldRepr>::FIELD_SIZE
         + <u8 as FromFieldRepr>::FIELD_SIZE
@@ -1987,10 +2029,10 @@ impl FromFieldRepr for DigitalPassportDisclosures {
             &_repr[_offset.._offset + <bool as FromFieldRepr>::FIELD_SIZE],
         )?;
         _offset += <bool as FromFieldRepr>::FIELD_SIZE;
-        let firstNameValuePadded = compact_runtime::bytes_from_field_repr::<64>(
-            &_repr[_offset.._offset + compact_runtime::bytes_field_size(64)],
+        let firstNameValuePadded = midnight_compact_runtime::bytes_from_field_repr::<64>(
+            &_repr[_offset.._offset + midnight_compact_runtime::bytes_field_size(64)],
         )?;
-        _offset += compact_runtime::bytes_field_size(64);
+        _offset += midnight_compact_runtime::bytes_field_size(64);
         let firstNameOpening = <[u8; 32] as FromFieldRepr>::from_field_repr(
             &_repr[_offset.._offset + <[u8; 32] as FromFieldRepr>::FIELD_SIZE],
         )?;
@@ -1999,10 +2041,10 @@ impl FromFieldRepr for DigitalPassportDisclosures {
             &_repr[_offset.._offset + <bool as FromFieldRepr>::FIELD_SIZE],
         )?;
         _offset += <bool as FromFieldRepr>::FIELD_SIZE;
-        let lastNameValuePadded = compact_runtime::bytes_from_field_repr::<64>(
-            &_repr[_offset.._offset + compact_runtime::bytes_field_size(64)],
+        let lastNameValuePadded = midnight_compact_runtime::bytes_from_field_repr::<64>(
+            &_repr[_offset.._offset + midnight_compact_runtime::bytes_field_size(64)],
         )?;
-        _offset += compact_runtime::bytes_field_size(64);
+        _offset += midnight_compact_runtime::bytes_field_size(64);
         let lastNameOpening = <[u8; 32] as FromFieldRepr>::from_field_repr(
             &_repr[_offset.._offset + <[u8; 32] as FromFieldRepr>::FIELD_SIZE],
         )?;
@@ -2058,27 +2100,35 @@ impl FromFieldRepr for DigitalPassportDisclosures {
         })
     }
 }
-impl From<DigitalPassportDisclosures> for compact_runtime::Value {
-    fn from(s: DigitalPassportDisclosures) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.revealFirstName));
-        _v.push(compact_runtime::Value::from(s.firstNameValuePadded));
-        _v.push(compact_runtime::Value::from(s.firstNameOpening));
-        _v.push(compact_runtime::Value::from(s.revealLastName));
-        _v.push(compact_runtime::Value::from(s.lastNameValuePadded));
-        _v.push(compact_runtime::Value::from(s.lastNameOpening));
-        _v.push(compact_runtime::Value::from(s.proveAgeOverThreshold));
-        _v.push(compact_runtime::Value::from(s.ageThresholdYears));
-        _v.push(compact_runtime::Value::from(s.revealDocumentNumber));
-        _v.push(compact_runtime::Value::from(s.documentNumberValue));
-        _v.push(compact_runtime::Value::from(s.documentNumberOpening));
-        _v.push(compact_runtime::Value::from(s.revealIssuingState));
-        _v.push(compact_runtime::Value::from(s.issuingStateValue));
-        _v.push(compact_runtime::Value::from(s.issuingStateOpening));
-        compact_runtime::Value::concat(_v.iter())
+impl From<DigitalPassportDisclosures> for midnight_compact_runtime::Value {
+    fn from(s: DigitalPassportDisclosures) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.revealFirstName));
+        _v.push(midnight_compact_runtime::Value::from(
+            s.firstNameValuePadded,
+        ));
+        _v.push(midnight_compact_runtime::Value::from(s.firstNameOpening));
+        _v.push(midnight_compact_runtime::Value::from(s.revealLastName));
+        _v.push(midnight_compact_runtime::Value::from(s.lastNameValuePadded));
+        _v.push(midnight_compact_runtime::Value::from(s.lastNameOpening));
+        _v.push(midnight_compact_runtime::Value::from(
+            s.proveAgeOverThreshold,
+        ));
+        _v.push(midnight_compact_runtime::Value::from(s.ageThresholdYears));
+        _v.push(midnight_compact_runtime::Value::from(
+            s.revealDocumentNumber,
+        ));
+        _v.push(midnight_compact_runtime::Value::from(s.documentNumberValue));
+        _v.push(midnight_compact_runtime::Value::from(
+            s.documentNumberOpening,
+        ));
+        _v.push(midnight_compact_runtime::Value::from(s.revealIssuingState));
+        _v.push(midnight_compact_runtime::Value::from(s.issuingStateValue));
+        _v.push(midnight_compact_runtime::Value::from(s.issuingStateOpening));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for DigitalPassportDisclosures {
+impl midnight_compact_runtime::BinaryHashRepr for DigitalPassportDisclosures {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.revealFirstName.binary_repr(writer);
         self.firstNameValuePadded.binary_repr(writer);
@@ -2240,27 +2290,39 @@ impl FromFieldRepr for DigitalPassportPresentationRequest {
         })
     }
 }
-impl From<DigitalPassportPresentationRequest> for compact_runtime::Value {
-    fn from(s: DigitalPassportPresentationRequest) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.version));
-        _v.push(compact_runtime::Value::from(s.schema));
-        _v.push(compact_runtime::Value::from(s.issuerVerificationMethodRef));
-        _v.push(compact_runtime::Value::from(s.requireFirstNameDisclosure));
-        _v.push(compact_runtime::Value::from(s.requireLastNameDisclosure));
-        _v.push(compact_runtime::Value::from(s.requireAgeOverThreshold));
-        _v.push(compact_runtime::Value::from(s.requestedAgeThresholdYears));
-        _v.push(compact_runtime::Value::from(
+impl From<DigitalPassportPresentationRequest> for midnight_compact_runtime::Value {
+    fn from(s: DigitalPassportPresentationRequest) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.version));
+        _v.push(midnight_compact_runtime::Value::from(s.schema));
+        _v.push(midnight_compact_runtime::Value::from(
+            s.issuerVerificationMethodRef,
+        ));
+        _v.push(midnight_compact_runtime::Value::from(
+            s.requireFirstNameDisclosure,
+        ));
+        _v.push(midnight_compact_runtime::Value::from(
+            s.requireLastNameDisclosure,
+        ));
+        _v.push(midnight_compact_runtime::Value::from(
+            s.requireAgeOverThreshold,
+        ));
+        _v.push(midnight_compact_runtime::Value::from(
+            s.requestedAgeThresholdYears,
+        ));
+        _v.push(midnight_compact_runtime::Value::from(
             s.requireDocumentNumberDisclosure,
         ));
-        _v.push(compact_runtime::Value::from(
+        _v.push(midnight_compact_runtime::Value::from(
             s.requireIssuingStateDisclosure,
         ));
-        _v.push(compact_runtime::Value::from(s.verifierChallengeHash));
-        compact_runtime::Value::concat(_v.iter())
+        _v.push(midnight_compact_runtime::Value::from(
+            s.verifierChallengeHash,
+        ));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for DigitalPassportPresentationRequest {
+impl midnight_compact_runtime::BinaryHashRepr for DigitalPassportPresentationRequest {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.version.binary_repr(writer);
         self.schema.binary_repr(writer);
@@ -2343,16 +2405,20 @@ impl FromFieldRepr for DigitalPassportIssuanceOfferBody {
         })
     }
 }
-impl From<DigitalPassportIssuanceOfferBody> for compact_runtime::Value {
-    fn from(s: DigitalPassportIssuanceOfferBody) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.supportsExpiration));
-        _v.push(compact_runtime::Value::from(s.defaultExpirationDays));
-        _v.push(compact_runtime::Value::from(s.requiresHolderPublicKey));
-        compact_runtime::Value::concat(_v.iter())
+impl From<DigitalPassportIssuanceOfferBody> for midnight_compact_runtime::Value {
+    fn from(s: DigitalPassportIssuanceOfferBody) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.supportsExpiration));
+        _v.push(midnight_compact_runtime::Value::from(
+            s.defaultExpirationDays,
+        ));
+        _v.push(midnight_compact_runtime::Value::from(
+            s.requiresHolderPublicKey,
+        ));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for DigitalPassportIssuanceOfferBody {
+impl midnight_compact_runtime::BinaryHashRepr for DigitalPassportIssuanceOfferBody {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.supportsExpiration.binary_repr(writer);
         self.defaultExpirationDays.binary_repr(writer);
@@ -2387,14 +2453,14 @@ impl Aligned for DigitalPassportIssuanceRequestBody {
 impl FieldRepr for DigitalPassportIssuanceRequestBody {
     fn field_repr<W: MemWrite<Fr>>(&self, writer: &mut W) {
         self.holderBinding.field_repr(writer);
-        compact_runtime::jubjub_point_field_repr(&self.holderPublicKey, writer);
+        midnight_compact_runtime::jubjub_point_field_repr(&self.holderPublicKey, writer);
         self.holderChallengeHash.field_repr(writer);
         self.requestExpiration.field_repr(writer);
         self.requestedExpirationDays.field_repr(writer);
     }
     fn field_size(&self) -> usize {
         self.holderBinding.field_size()
-            + compact_runtime::jubjub_point_field_size(&self.holderPublicKey)
+            + midnight_compact_runtime::jubjub_point_field_size(&self.holderPublicKey)
             + self.holderChallengeHash.field_size()
             + self.requestExpiration.field_size()
             + self.requestedExpirationDays.field_size()
@@ -2402,7 +2468,7 @@ impl FieldRepr for DigitalPassportIssuanceRequestBody {
 }
 impl FromFieldRepr for DigitalPassportIssuanceRequestBody {
     const FIELD_SIZE: usize = <ExplicitHolderBinding as FromFieldRepr>::FIELD_SIZE
-        + compact_runtime::JUBJUB_POINT_FIELD_SIZE
+        + midnight_compact_runtime::JUBJUB_POINT_FIELD_SIZE
         + <[u8; 32] as FromFieldRepr>::FIELD_SIZE
         + <bool as FromFieldRepr>::FIELD_SIZE
         + <u16 as FromFieldRepr>::FIELD_SIZE;
@@ -2415,10 +2481,10 @@ impl FromFieldRepr for DigitalPassportIssuanceRequestBody {
             &_repr[_offset.._offset + <ExplicitHolderBinding as FromFieldRepr>::FIELD_SIZE],
         )?;
         _offset += <ExplicitHolderBinding as FromFieldRepr>::FIELD_SIZE;
-        let holderPublicKey = compact_runtime::jubjub_point_from_field_repr(
-            &_repr[_offset.._offset + compact_runtime::JUBJUB_POINT_FIELD_SIZE],
+        let holderPublicKey = midnight_compact_runtime::jubjub_point_from_field_repr(
+            &_repr[_offset.._offset + midnight_compact_runtime::JUBJUB_POINT_FIELD_SIZE],
         )?;
-        _offset += compact_runtime::JUBJUB_POINT_FIELD_SIZE;
+        _offset += midnight_compact_runtime::JUBJUB_POINT_FIELD_SIZE;
         let holderChallengeHash = <[u8; 32] as FromFieldRepr>::from_field_repr(
             &_repr[_offset.._offset + <[u8; 32] as FromFieldRepr>::FIELD_SIZE],
         )?;
@@ -2441,28 +2507,30 @@ impl FromFieldRepr for DigitalPassportIssuanceRequestBody {
         })
     }
 }
-impl From<DigitalPassportIssuanceRequestBody> for compact_runtime::Value {
-    fn from(s: DigitalPassportIssuanceRequestBody) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.holderBinding));
-        _v.push(compact_runtime::Value::from(s.holderPublicKey));
-        _v.push(compact_runtime::Value::from(s.holderChallengeHash));
-        _v.push(compact_runtime::Value::from(s.requestExpiration));
-        _v.push(compact_runtime::Value::from(s.requestedExpirationDays));
-        compact_runtime::Value::concat(_v.iter())
+impl From<DigitalPassportIssuanceRequestBody> for midnight_compact_runtime::Value {
+    fn from(s: DigitalPassportIssuanceRequestBody) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.holderBinding));
+        _v.push(midnight_compact_runtime::Value::from(s.holderPublicKey));
+        _v.push(midnight_compact_runtime::Value::from(s.holderChallengeHash));
+        _v.push(midnight_compact_runtime::Value::from(s.requestExpiration));
+        _v.push(midnight_compact_runtime::Value::from(
+            s.requestedExpirationDays,
+        ));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for DigitalPassportIssuanceRequestBody {
+impl midnight_compact_runtime::BinaryHashRepr for DigitalPassportIssuanceRequestBody {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.holderBinding.binary_repr(writer);
-        compact_runtime::jubjub_point_binary_repr(&self.holderPublicKey, writer);
+        midnight_compact_runtime::jubjub_point_binary_repr(&self.holderPublicKey, writer);
         self.holderChallengeHash.binary_repr(writer);
         self.requestExpiration.binary_repr(writer);
         self.requestedExpirationDays.binary_repr(writer);
     }
     fn binary_len(&self) -> usize {
         self.holderBinding.binary_len()
-            + compact_runtime::jubjub_point_binary_len(&self.holderPublicKey)
+            + midnight_compact_runtime::jubjub_point_binary_len(&self.holderPublicKey)
             + self.holderChallengeHash.binary_len()
             + self.requestExpiration.binary_len()
             + self.requestedExpirationDays.binary_len()
@@ -2492,14 +2560,14 @@ impl FieldRepr for DigitalPassportIssuanceResultBody {
     fn field_repr<W: MemWrite<Fr>>(&self, writer: &mut W) {
         self.credential.field_repr(writer);
         self.credentialProof.field_repr(writer);
-        compact_runtime::jubjub_point_field_repr(&self.holderPublicKey, writer);
+        midnight_compact_runtime::jubjub_point_field_repr(&self.holderPublicKey, writer);
         self.issuanceChallengeHash.field_repr(writer);
         self.privateParts.field_repr(writer);
     }
     fn field_size(&self) -> usize {
         self.credential.field_size()
             + self.credentialProof.field_size()
-            + compact_runtime::jubjub_point_field_size(&self.holderPublicKey)
+            + midnight_compact_runtime::jubjub_point_field_size(&self.holderPublicKey)
             + self.issuanceChallengeHash.field_size()
             + self.privateParts.field_size()
     }
@@ -2507,7 +2575,7 @@ impl FieldRepr for DigitalPassportIssuanceResultBody {
 impl FromFieldRepr for DigitalPassportIssuanceResultBody {
     const FIELD_SIZE: usize = <Credential as FromFieldRepr>::FIELD_SIZE
         + <Proof as FromFieldRepr>::FIELD_SIZE
-        + compact_runtime::JUBJUB_POINT_FIELD_SIZE
+        + midnight_compact_runtime::JUBJUB_POINT_FIELD_SIZE
         + <[u8; 32] as FromFieldRepr>::FIELD_SIZE
         + <DigitalPassportCredentialPrivateParts as FromFieldRepr>::FIELD_SIZE;
     fn from_field_repr(_repr: &[Fr]) -> Option<Self> {
@@ -2523,10 +2591,10 @@ impl FromFieldRepr for DigitalPassportIssuanceResultBody {
             &_repr[_offset.._offset + <Proof as FromFieldRepr>::FIELD_SIZE],
         )?;
         _offset += <Proof as FromFieldRepr>::FIELD_SIZE;
-        let holderPublicKey = compact_runtime::jubjub_point_from_field_repr(
-            &_repr[_offset.._offset + compact_runtime::JUBJUB_POINT_FIELD_SIZE],
+        let holderPublicKey = midnight_compact_runtime::jubjub_point_from_field_repr(
+            &_repr[_offset.._offset + midnight_compact_runtime::JUBJUB_POINT_FIELD_SIZE],
         )?;
-        _offset += compact_runtime::JUBJUB_POINT_FIELD_SIZE;
+        _offset += midnight_compact_runtime::JUBJUB_POINT_FIELD_SIZE;
         let issuanceChallengeHash = <[u8; 32] as FromFieldRepr>::from_field_repr(
             &_repr[_offset.._offset + <[u8; 32] as FromFieldRepr>::FIELD_SIZE],
         )?;
@@ -2548,29 +2616,31 @@ impl FromFieldRepr for DigitalPassportIssuanceResultBody {
         })
     }
 }
-impl From<DigitalPassportIssuanceResultBody> for compact_runtime::Value {
-    fn from(s: DigitalPassportIssuanceResultBody) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.credential));
-        _v.push(compact_runtime::Value::from(s.credentialProof));
-        _v.push(compact_runtime::Value::from(s.holderPublicKey));
-        _v.push(compact_runtime::Value::from(s.issuanceChallengeHash));
-        _v.push(compact_runtime::Value::from(s.privateParts));
-        compact_runtime::Value::concat(_v.iter())
+impl From<DigitalPassportIssuanceResultBody> for midnight_compact_runtime::Value {
+    fn from(s: DigitalPassportIssuanceResultBody) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.credential));
+        _v.push(midnight_compact_runtime::Value::from(s.credentialProof));
+        _v.push(midnight_compact_runtime::Value::from(s.holderPublicKey));
+        _v.push(midnight_compact_runtime::Value::from(
+            s.issuanceChallengeHash,
+        ));
+        _v.push(midnight_compact_runtime::Value::from(s.privateParts));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for DigitalPassportIssuanceResultBody {
+impl midnight_compact_runtime::BinaryHashRepr for DigitalPassportIssuanceResultBody {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.credential.binary_repr(writer);
         self.credentialProof.binary_repr(writer);
-        compact_runtime::jubjub_point_binary_repr(&self.holderPublicKey, writer);
+        midnight_compact_runtime::jubjub_point_binary_repr(&self.holderPublicKey, writer);
         self.issuanceChallengeHash.binary_repr(writer);
         self.privateParts.binary_repr(writer);
     }
     fn binary_len(&self) -> usize {
         self.credential.binary_len()
             + self.credentialProof.binary_len()
-            + compact_runtime::jubjub_point_binary_len(&self.holderPublicKey)
+            + midnight_compact_runtime::jubjub_point_binary_len(&self.holderPublicKey)
             + self.issuanceChallengeHash.binary_len()
             + self.privateParts.binary_len()
     }
@@ -2662,23 +2732,31 @@ impl FromFieldRepr for DigitalPassportVerificationRequestBody {
         })
     }
 }
-impl From<DigitalPassportVerificationRequestBody> for compact_runtime::Value {
-    fn from(s: DigitalPassportVerificationRequestBody) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.requireFirstNameDisclosure));
-        _v.push(compact_runtime::Value::from(s.requireLastNameDisclosure));
-        _v.push(compact_runtime::Value::from(s.requireAgeOverThreshold));
-        _v.push(compact_runtime::Value::from(s.requestedAgeThresholdYears));
-        _v.push(compact_runtime::Value::from(
+impl From<DigitalPassportVerificationRequestBody> for midnight_compact_runtime::Value {
+    fn from(s: DigitalPassportVerificationRequestBody) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(
+            s.requireFirstNameDisclosure,
+        ));
+        _v.push(midnight_compact_runtime::Value::from(
+            s.requireLastNameDisclosure,
+        ));
+        _v.push(midnight_compact_runtime::Value::from(
+            s.requireAgeOverThreshold,
+        ));
+        _v.push(midnight_compact_runtime::Value::from(
+            s.requestedAgeThresholdYears,
+        ));
+        _v.push(midnight_compact_runtime::Value::from(
             s.requireDocumentNumberDisclosure,
         ));
-        _v.push(compact_runtime::Value::from(
+        _v.push(midnight_compact_runtime::Value::from(
             s.requireIssuingStateDisclosure,
         ));
-        compact_runtime::Value::concat(_v.iter())
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for DigitalPassportVerificationRequestBody {
+impl midnight_compact_runtime::BinaryHashRepr for DigitalPassportVerificationRequestBody {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.requireFirstNameDisclosure.binary_repr(writer);
         self.requireLastNameDisclosure.binary_repr(writer);
@@ -2763,17 +2841,17 @@ impl FromFieldRepr for DigitalPassportVerificationSubmissionBody {
         })
     }
 }
-impl From<DigitalPassportVerificationSubmissionBody> for compact_runtime::Value {
-    fn from(s: DigitalPassportVerificationSubmissionBody) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.credential));
-        _v.push(compact_runtime::Value::from(s.credentialProof));
-        _v.push(compact_runtime::Value::from(s.presentation));
-        _v.push(compact_runtime::Value::from(s.presentationProof));
-        compact_runtime::Value::concat(_v.iter())
+impl From<DigitalPassportVerificationSubmissionBody> for midnight_compact_runtime::Value {
+    fn from(s: DigitalPassportVerificationSubmissionBody) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.credential));
+        _v.push(midnight_compact_runtime::Value::from(s.credentialProof));
+        _v.push(midnight_compact_runtime::Value::from(s.presentation));
+        _v.push(midnight_compact_runtime::Value::from(s.presentationProof));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for DigitalPassportVerificationSubmissionBody {
+impl midnight_compact_runtime::BinaryHashRepr for DigitalPassportVerificationSubmissionBody {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.credential.binary_repr(writer);
         self.credentialProof.binary_repr(writer);
@@ -2833,15 +2911,17 @@ impl FromFieldRepr for DigitalPassportVerificationResultBody {
         })
     }
 }
-impl From<DigitalPassportVerificationResultBody> for compact_runtime::Value {
-    fn from(s: DigitalPassportVerificationResultBody) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.credentialRoot));
-        _v.push(compact_runtime::Value::from(s.verifiedThresholdYears));
-        compact_runtime::Value::concat(_v.iter())
+impl From<DigitalPassportVerificationResultBody> for midnight_compact_runtime::Value {
+    fn from(s: DigitalPassportVerificationResultBody) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.credentialRoot));
+        _v.push(midnight_compact_runtime::Value::from(
+            s.verifiedThresholdYears,
+        ));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for DigitalPassportVerificationResultBody {
+impl midnight_compact_runtime::BinaryHashRepr for DigitalPassportVerificationResultBody {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.credentialRoot.binary_repr(writer);
         self.verifiedThresholdYears.binary_repr(writer);
@@ -2939,19 +3019,23 @@ impl FromFieldRepr for OfferMessage {
         })
     }
 }
-impl From<OfferMessage> for compact_runtime::Value {
-    fn from(s: OfferMessage) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.envelope));
-        _v.push(compact_runtime::Value::from(s.schema));
-        _v.push(compact_runtime::Value::from(s.issuerVerificationMethodRef));
-        _v.push(compact_runtime::Value::from(s.holderBindingProfile));
-        _v.push(compact_runtime::Value::from(s.features));
-        _v.push(compact_runtime::Value::from(s.body));
-        compact_runtime::Value::concat(_v.iter())
+impl From<OfferMessage> for midnight_compact_runtime::Value {
+    fn from(s: OfferMessage) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.envelope));
+        _v.push(midnight_compact_runtime::Value::from(s.schema));
+        _v.push(midnight_compact_runtime::Value::from(
+            s.issuerVerificationMethodRef,
+        ));
+        _v.push(midnight_compact_runtime::Value::from(
+            s.holderBindingProfile,
+        ));
+        _v.push(midnight_compact_runtime::Value::from(s.features));
+        _v.push(midnight_compact_runtime::Value::from(s.body));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for OfferMessage {
+impl midnight_compact_runtime::BinaryHashRepr for OfferMessage {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.envelope.binary_repr(writer);
         self.schema.binary_repr(writer);
@@ -3002,14 +3086,14 @@ impl FromFieldRepr for ContractAddress {
         Some(ContractAddress { bytes })
     }
 }
-impl From<ContractAddress> for compact_runtime::Value {
-    fn from(s: ContractAddress) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.bytes));
-        compact_runtime::Value::concat(_v.iter())
+impl From<ContractAddress> for midnight_compact_runtime::Value {
+    fn from(s: ContractAddress) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.bytes));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for ContractAddress {
+impl midnight_compact_runtime::BinaryHashRepr for ContractAddress {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.bytes.binary_repr(writer);
     }
@@ -3156,24 +3240,26 @@ impl FromFieldRepr for Credential {
         })
     }
 }
-impl From<Credential> for compact_runtime::Value {
-    fn from(s: Credential) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.version));
-        _v.push(compact_runtime::Value::from(s.schema));
-        _v.push(compact_runtime::Value::from(s.issuerVerificationMethodRef));
-        _v.push(compact_runtime::Value::from(s.holderBinding));
-        _v.push(compact_runtime::Value::from(s.statusBinding));
-        _v.push(compact_runtime::Value::from(s.issuedAt));
-        _v.push(compact_runtime::Value::from(s.hasExpiration));
-        _v.push(compact_runtime::Value::from(s.expiresAt));
-        _v.push(compact_runtime::Value::from(s.claims));
-        _v.push(compact_runtime::Value::from(s.claimCommitments));
-        _v.push(compact_runtime::Value::from(s.claimRoot));
-        compact_runtime::Value::concat(_v.iter())
+impl From<Credential> for midnight_compact_runtime::Value {
+    fn from(s: Credential) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.version));
+        _v.push(midnight_compact_runtime::Value::from(s.schema));
+        _v.push(midnight_compact_runtime::Value::from(
+            s.issuerVerificationMethodRef,
+        ));
+        _v.push(midnight_compact_runtime::Value::from(s.holderBinding));
+        _v.push(midnight_compact_runtime::Value::from(s.statusBinding));
+        _v.push(midnight_compact_runtime::Value::from(s.issuedAt));
+        _v.push(midnight_compact_runtime::Value::from(s.hasExpiration));
+        _v.push(midnight_compact_runtime::Value::from(s.expiresAt));
+        _v.push(midnight_compact_runtime::Value::from(s.claims));
+        _v.push(midnight_compact_runtime::Value::from(s.claimCommitments));
+        _v.push(midnight_compact_runtime::Value::from(s.claimRoot));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for Credential {
+impl midnight_compact_runtime::BinaryHashRepr for Credential {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.version.binary_repr(writer);
         self.schema.binary_repr(writer);
@@ -3289,19 +3375,21 @@ impl FromFieldRepr for Presentation {
         })
     }
 }
-impl From<Presentation> for compact_runtime::Value {
-    fn from(s: Presentation) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.version));
-        _v.push(compact_runtime::Value::from(s.schema));
-        _v.push(compact_runtime::Value::from(s.credentialClaimRoot));
-        _v.push(compact_runtime::Value::from(s.issuerVerificationMethodRef));
-        _v.push(compact_runtime::Value::from(s.holderBinding));
-        _v.push(compact_runtime::Value::from(s.disclosed));
-        compact_runtime::Value::concat(_v.iter())
+impl From<Presentation> for midnight_compact_runtime::Value {
+    fn from(s: Presentation) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.version));
+        _v.push(midnight_compact_runtime::Value::from(s.schema));
+        _v.push(midnight_compact_runtime::Value::from(s.credentialClaimRoot));
+        _v.push(midnight_compact_runtime::Value::from(
+            s.issuerVerificationMethodRef,
+        ));
+        _v.push(midnight_compact_runtime::Value::from(s.holderBinding));
+        _v.push(midnight_compact_runtime::Value::from(s.disclosed));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for Presentation {
+impl midnight_compact_runtime::BinaryHashRepr for Presentation {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.version.binary_repr(writer);
         self.schema.binary_repr(writer);
@@ -3409,19 +3497,23 @@ impl FromFieldRepr for SubmissionMessage {
         })
     }
 }
-impl From<SubmissionMessage> for compact_runtime::Value {
-    fn from(s: SubmissionMessage) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.envelope));
-        _v.push(compact_runtime::Value::from(s.schema));
-        _v.push(compact_runtime::Value::from(s.issuerVerificationMethodRef));
-        _v.push(compact_runtime::Value::from(s.holderBindingProfile));
-        _v.push(compact_runtime::Value::from(s.challengeHash));
-        _v.push(compact_runtime::Value::from(s.body));
-        compact_runtime::Value::concat(_v.iter())
+impl From<SubmissionMessage> for midnight_compact_runtime::Value {
+    fn from(s: SubmissionMessage) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.envelope));
+        _v.push(midnight_compact_runtime::Value::from(s.schema));
+        _v.push(midnight_compact_runtime::Value::from(
+            s.issuerVerificationMethodRef,
+        ));
+        _v.push(midnight_compact_runtime::Value::from(
+            s.holderBindingProfile,
+        ));
+        _v.push(midnight_compact_runtime::Value::from(s.challengeHash));
+        _v.push(midnight_compact_runtime::Value::from(s.body));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for SubmissionMessage {
+impl midnight_compact_runtime::BinaryHashRepr for SubmissionMessage {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.envelope.binary_repr(writer);
         self.schema.binary_repr(writer);
@@ -3518,18 +3610,22 @@ impl FromFieldRepr for ResultMessage_1 {
         })
     }
 }
-impl From<ResultMessage_1> for compact_runtime::Value {
-    fn from(s: ResultMessage_1) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.envelope));
-        _v.push(compact_runtime::Value::from(s.schema));
-        _v.push(compact_runtime::Value::from(s.issuerVerificationMethodRef));
-        _v.push(compact_runtime::Value::from(s.holderBindingProfile));
-        _v.push(compact_runtime::Value::from(s.body));
-        compact_runtime::Value::concat(_v.iter())
+impl From<ResultMessage_1> for midnight_compact_runtime::Value {
+    fn from(s: ResultMessage_1) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.envelope));
+        _v.push(midnight_compact_runtime::Value::from(s.schema));
+        _v.push(midnight_compact_runtime::Value::from(
+            s.issuerVerificationMethodRef,
+        ));
+        _v.push(midnight_compact_runtime::Value::from(
+            s.holderBindingProfile,
+        ));
+        _v.push(midnight_compact_runtime::Value::from(s.body));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for ResultMessage_1 {
+impl midnight_compact_runtime::BinaryHashRepr for ResultMessage_1 {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.envelope.binary_repr(writer);
         self.schema.binary_repr(writer);
@@ -3644,20 +3740,26 @@ impl FromFieldRepr for RequestMessage {
         })
     }
 }
-impl From<RequestMessage> for compact_runtime::Value {
-    fn from(s: RequestMessage) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.envelope));
-        _v.push(compact_runtime::Value::from(s.schema));
-        _v.push(compact_runtime::Value::from(s.issuerVerificationMethodRef));
-        _v.push(compact_runtime::Value::from(s.holderBindingProfile));
-        _v.push(compact_runtime::Value::from(s.features));
-        _v.push(compact_runtime::Value::from(s.verifierChallengeHash));
-        _v.push(compact_runtime::Value::from(s.body));
-        compact_runtime::Value::concat(_v.iter())
+impl From<RequestMessage> for midnight_compact_runtime::Value {
+    fn from(s: RequestMessage) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.envelope));
+        _v.push(midnight_compact_runtime::Value::from(s.schema));
+        _v.push(midnight_compact_runtime::Value::from(
+            s.issuerVerificationMethodRef,
+        ));
+        _v.push(midnight_compact_runtime::Value::from(
+            s.holderBindingProfile,
+        ));
+        _v.push(midnight_compact_runtime::Value::from(s.features));
+        _v.push(midnight_compact_runtime::Value::from(
+            s.verifierChallengeHash,
+        ));
+        _v.push(midnight_compact_runtime::Value::from(s.body));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for RequestMessage {
+impl midnight_compact_runtime::BinaryHashRepr for RequestMessage {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.envelope.binary_repr(writer);
         self.schema.binary_repr(writer);
@@ -3756,18 +3858,22 @@ impl FromFieldRepr for RequestMessage_1 {
         })
     }
 }
-impl From<RequestMessage_1> for compact_runtime::Value {
-    fn from(s: RequestMessage_1) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.envelope));
-        _v.push(compact_runtime::Value::from(s.schema));
-        _v.push(compact_runtime::Value::from(s.issuerVerificationMethodRef));
-        _v.push(compact_runtime::Value::from(s.holderBindingProfile));
-        _v.push(compact_runtime::Value::from(s.body));
-        compact_runtime::Value::concat(_v.iter())
+impl From<RequestMessage_1> for midnight_compact_runtime::Value {
+    fn from(s: RequestMessage_1) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.envelope));
+        _v.push(midnight_compact_runtime::Value::from(s.schema));
+        _v.push(midnight_compact_runtime::Value::from(
+            s.issuerVerificationMethodRef,
+        ));
+        _v.push(midnight_compact_runtime::Value::from(
+            s.holderBindingProfile,
+        ));
+        _v.push(midnight_compact_runtime::Value::from(s.body));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for RequestMessage_1 {
+impl midnight_compact_runtime::BinaryHashRepr for RequestMessage_1 {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.envelope.binary_repr(writer);
         self.schema.binary_repr(writer);
@@ -3839,16 +3945,16 @@ impl FromFieldRepr for ResultMessage {
         })
     }
 }
-impl From<ResultMessage> for compact_runtime::Value {
-    fn from(s: ResultMessage) -> compact_runtime::Value {
-        let mut _v: Vec<compact_runtime::Value> = Vec::new();
-        _v.push(compact_runtime::Value::from(s.envelope));
-        _v.push(compact_runtime::Value::from(s.approved));
-        _v.push(compact_runtime::Value::from(s.body));
-        compact_runtime::Value::concat(_v.iter())
+impl From<ResultMessage> for midnight_compact_runtime::Value {
+    fn from(s: ResultMessage) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.envelope));
+        _v.push(midnight_compact_runtime::Value::from(s.approved));
+        _v.push(midnight_compact_runtime::Value::from(s.body));
+        midnight_compact_runtime::Value::concat(_v.iter())
     }
 }
-impl compact_runtime::BinaryHashRepr for ResultMessage {
+impl midnight_compact_runtime::BinaryHashRepr for ResultMessage {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         self.envelope.binary_repr(writer);
         self.approved.binary_repr(writer);
@@ -3887,7 +3993,7 @@ where
     ) -> Result<ConstructorResult<PS>, CompactError> {
         let sv = new_array(vec![]);
         let state = ChargedState::new(sv);
-        let qctx = QueryContext::new(state, compact_runtime::ContractAddress::default());
+        let qctx = QueryContext::new(state, midnight_compact_runtime::ContractAddress::default());
         Ok(ConstructorResult {
             current_contract_state: qctx.state,
             current_private_state: ctx.initial_private_state,
@@ -3991,18 +4097,18 @@ pub mod pure_circuits {
         // reduce the Field-typed scalars the same way the stdlib's
         // `as JubjubScalar` cast does (hand-applied — this fixture has no
         // in-tree .compact source to regenerate from).
-        let left_side = compact_runtime::ec_mul_generator(
-            compact_runtime::jubjub_scalar_from_field(signature.s.clone()),
+        let left_side = midnight_compact_runtime::ec_mul_generator(
+            midnight_compact_runtime::jubjub_scalar_from_field(signature.s.clone()),
         );
-        let c_pk = compact_runtime::ec_mul(
+        let c_pk = midnight_compact_runtime::ec_mul(
             pk.clone(),
-            compact_runtime::jubjub_scalar_from_field(challenge),
+            midnight_compact_runtime::jubjub_scalar_from_field(challenge),
         );
-        let right_side = compact_runtime::ec_add(signature.r.clone(), c_pk.clone());
-        let x_matches = (compact_runtime::jubjub_point_x(left_side.clone())
-            == compact_runtime::jubjub_point_x(right_side.clone()));
-        let y_matches = (compact_runtime::jubjub_point_y(left_side.clone())
-            == compact_runtime::jubjub_point_y(right_side.clone()));
+        let right_side = midnight_compact_runtime::ec_add(signature.r.clone(), c_pk.clone());
+        let x_matches = (midnight_compact_runtime::jubjub_point_x(left_side.clone())
+            == midnight_compact_runtime::jubjub_point_x(right_side.clone()));
+        let y_matches = (midnight_compact_runtime::jubjub_point_y(left_side.clone())
+            == midnight_compact_runtime::jubjub_point_y(right_side.clone()));
         assert!((x_matches && y_matches), "Signature verification failed");
         (x_matches && y_matches)
     }
@@ -4033,20 +4139,22 @@ pub mod pure_circuits {
         context_tag: [u8; 32],
         proof: Proof,
     ) -> [u8; 32] {
-        compact_runtime::std_lib::persistent_hash_aligned(&[
-            compact_runtime::AlignedValue::from(body_root),
-            compact_runtime::AlignedValue::from(context_tag),
-            compact_runtime::AlignedValue::from(compact_runtime::std_lib::persistent_hash_aligned(
-                &[compact_runtime::AlignedValue::from(
-                    proof.signerVerificationMethodRef,
-                )],
-            )),
-            compact_runtime::AlignedValue::from(compact_runtime::upgrade_from_transient(
-                compact_runtime::std_lib::transient_hash_aligned(&[
-                    compact_runtime::AlignedValue::from(proof.createdAt),
+        midnight_compact_runtime::std_lib::persistent_hash_aligned(&[
+            midnight_compact_runtime::AlignedValue::from(body_root),
+            midnight_compact_runtime::AlignedValue::from(context_tag),
+            midnight_compact_runtime::AlignedValue::from(
+                midnight_compact_runtime::std_lib::persistent_hash_aligned(&[
+                    midnight_compact_runtime::AlignedValue::from(proof.signerVerificationMethodRef),
                 ]),
-            )),
-            compact_runtime::AlignedValue::from(proof.challengeHash),
+            ),
+            midnight_compact_runtime::AlignedValue::from(
+                midnight_compact_runtime::upgrade_from_transient(
+                    midnight_compact_runtime::std_lib::transient_hash_aligned(&[
+                        midnight_compact_runtime::AlignedValue::from(proof.createdAt),
+                    ]),
+                ),
+            ),
+            midnight_compact_runtime::AlignedValue::from(proof.challengeHash),
         ])
     }
 
@@ -4055,23 +4163,31 @@ pub mod pure_circuits {
         context_tag: [u8; 32],
         proof: Proof,
     ) -> Fr {
-        compact_runtime::degrade_to_transient(compact_runtime::std_lib::persistent_hash_aligned(&[
-            compact_runtime::AlignedValue::from(pure_circuits::proof_payload_root_for_context(
-                body_root,
-                context_tag,
-                proof.clone(),
-            )),
-            compact_runtime::AlignedValue::from(compact_runtime::upgrade_from_transient(
-                compact_runtime::std_lib::transient_hash_aligned(&[
-                    compact_runtime::AlignedValue::from(proof.publicKey),
-                ]),
-            )),
-            compact_runtime::AlignedValue::from(compact_runtime::upgrade_from_transient(
-                compact_runtime::std_lib::transient_hash_aligned(&[
-                    compact_runtime::AlignedValue::from(proof.signature.r),
-                ]),
-            )),
-        ]))
+        midnight_compact_runtime::degrade_to_transient(
+            midnight_compact_runtime::std_lib::persistent_hash_aligned(&[
+                midnight_compact_runtime::AlignedValue::from(
+                    pure_circuits::proof_payload_root_for_context(
+                        body_root,
+                        context_tag,
+                        proof.clone(),
+                    ),
+                ),
+                midnight_compact_runtime::AlignedValue::from(
+                    midnight_compact_runtime::upgrade_from_transient(
+                        midnight_compact_runtime::std_lib::transient_hash_aligned(&[
+                            midnight_compact_runtime::AlignedValue::from(proof.publicKey),
+                        ]),
+                    ),
+                ),
+                midnight_compact_runtime::AlignedValue::from(
+                    midnight_compact_runtime::upgrade_from_transient(
+                        midnight_compact_runtime::std_lib::transient_hash_aligned(&[
+                            midnight_compact_runtime::AlignedValue::from(proof.signature.r),
+                        ]),
+                    ),
+                ),
+            ]),
+        )
     }
 
     pub(crate) fn assert_valid_proof_for_context(
@@ -4162,9 +4278,9 @@ pub mod pure_circuits {
     }
 
     pub(crate) fn credential_body_root(credential: Credential) -> [u8; 32] {
-        compact_runtime::std_lib::persistent_hash_aligned(&[compact_runtime::AlignedValue::from(
-            credential,
-        )])
+        midnight_compact_runtime::std_lib::persistent_hash_aligned(&[
+            midnight_compact_runtime::AlignedValue::from(credential),
+        ])
     }
 
     pub(crate) fn assert_valid_credential_envelope(
@@ -4213,9 +4329,9 @@ pub mod pure_circuits {
     }
 
     pub(crate) fn presentation_body_root(presentation: Presentation) -> [u8; 32] {
-        compact_runtime::std_lib::persistent_hash_aligned(&[compact_runtime::AlignedValue::from(
-            presentation,
-        )])
+        midnight_compact_runtime::std_lib::persistent_hash_aligned(&[
+            midnight_compact_runtime::AlignedValue::from(presentation),
+        ])
     }
 
     pub(crate) fn assert_valid_presentation_envelope(presentation: Presentation) -> () {
@@ -4301,8 +4417,9 @@ pub mod pure_circuits {
 
     pub fn assert_valid_jubjub_holder_binding(binding: JubjubHolderBinding) -> () {
         assert!(
-            ((compact_runtime::jubjub_point_x(binding.holderPublicKey.clone()) != Fr::from(0u64))
-                || (compact_runtime::jubjub_point_y(binding.holderPublicKey.clone())
+            ((midnight_compact_runtime::jubjub_point_x(binding.holderPublicKey.clone())
+                != Fr::from(0u64))
+                || (midnight_compact_runtime::jubjub_point_y(binding.holderPublicKey.clone())
                     != Fr::from(0u64))),
             "Jubjub holder binding public key must be set"
         );
@@ -4313,12 +4430,15 @@ pub mod pure_circuits {
         presentation_binding: JubjubHolderBinding,
     ) -> () {
         assert!(
-            ((compact_runtime::jubjub_point_x(presentation_binding.holderPublicKey.clone())
-                == compact_runtime::jubjub_point_x(credential_binding.holderPublicKey.clone()))
-                && (compact_runtime::jubjub_point_y(presentation_binding.holderPublicKey.clone())
-                    == compact_runtime::jubjub_point_y(
-                        credential_binding.holderPublicKey.clone()
-                    ))),
+            ((midnight_compact_runtime::jubjub_point_x(
+                presentation_binding.holderPublicKey.clone()
+            ) == midnight_compact_runtime::jubjub_point_x(
+                credential_binding.holderPublicKey.clone()
+            )) && (midnight_compact_runtime::jubjub_point_y(
+                presentation_binding.holderPublicKey.clone()
+            ) == midnight_compact_runtime::jubjub_point_y(
+                credential_binding.holderPublicKey.clone()
+            ))),
             "Presentation Jubjub holder key does not match the credential holder binding"
         );
     }
@@ -4328,10 +4448,12 @@ pub mod pure_circuits {
         presentation_proof: Proof,
     ) -> () {
         assert!(
-            ((compact_runtime::jubjub_point_x(binding.holderPublicKey.clone())
-                == compact_runtime::jubjub_point_x(presentation_proof.publicKey.clone()))
-                && (compact_runtime::jubjub_point_y(binding.holderPublicKey.clone())
-                    == compact_runtime::jubjub_point_y(presentation_proof.publicKey.clone()))),
+            ((midnight_compact_runtime::jubjub_point_x(binding.holderPublicKey.clone())
+                == midnight_compact_runtime::jubjub_point_x(presentation_proof.publicKey.clone()))
+                && (midnight_compact_runtime::jubjub_point_y(binding.holderPublicKey.clone())
+                    == midnight_compact_runtime::jubjub_point_y(
+                        presentation_proof.publicKey.clone()
+                    ))),
             "Presentation proof public key must match the Jubjub holder binding"
         );
     }
@@ -4409,9 +4531,9 @@ pub mod pure_circuits {
         holder_secret: [u8; 32],
         opening: [u8; 32],
     ) -> [u8; 32] {
-        compact_runtime::persistent_commit(
+        midnight_compact_runtime::persistent_commit(
             &holder_secret,
-            compact_runtime::base_crypto::hash::HashOutput(opening),
+            midnight_compact_runtime::base_crypto::hash::HashOutput(opening),
         )
         .0
     }
@@ -4420,13 +4542,13 @@ pub mod pure_circuits {
         holder_secret: [u8; 32],
         verifier_challenge_hash: [u8; 32],
     ) -> [u8; 32] {
-        compact_runtime::std_lib::persistent_hash_aligned(&[
-            compact_runtime::AlignedValue::from([
+        midnight_compact_runtime::std_lib::persistent_hash_aligned(&[
+            midnight_compact_runtime::AlignedValue::from([
                 109u8, 105, 100, 110, 105, 103, 104, 116, 58, 118, 99, 58, 104, 111, 108, 100, 101,
                 114, 45, 99, 104, 97, 108, 108, 0, 0, 0, 0, 0, 0, 0, 0,
             ]),
-            compact_runtime::AlignedValue::from(holder_secret),
-            compact_runtime::AlignedValue::from(verifier_challenge_hash),
+            midnight_compact_runtime::AlignedValue::from(holder_secret),
+            midnight_compact_runtime::AlignedValue::from(verifier_challenge_hash),
         ])
     }
 
@@ -4434,13 +4556,13 @@ pub mod pure_circuits {
         holder_secret: [u8; 32],
         verifier_domain_hash: [u8; 32],
     ) -> [u8; 32] {
-        compact_runtime::std_lib::persistent_hash_aligned(&[
-            compact_runtime::AlignedValue::from([
+        midnight_compact_runtime::std_lib::persistent_hash_aligned(&[
+            midnight_compact_runtime::AlignedValue::from([
                 109u8, 105, 100, 110, 105, 103, 104, 116, 58, 118, 99, 58, 104, 111, 108, 100, 101,
                 114, 45, 112, 115, 101, 117, 100, 111, 110, 121, 109, 0, 0, 0, 0,
             ]),
-            compact_runtime::AlignedValue::from(holder_secret),
-            compact_runtime::AlignedValue::from(verifier_domain_hash),
+            midnight_compact_runtime::AlignedValue::from(holder_secret),
+            midnight_compact_runtime::AlignedValue::from(verifier_domain_hash),
         ])
     }
 
@@ -4461,14 +4583,14 @@ pub mod pure_circuits {
         issuer_nonce: [u8; 32],
         blinding_factor: [u8; 32],
     ) -> [u8; 32] {
-        compact_runtime::std_lib::persistent_hash_aligned(&[
-            compact_runtime::AlignedValue::from([
+        midnight_compact_runtime::std_lib::persistent_hash_aligned(&[
+            midnight_compact_runtime::AlignedValue::from([
                 109u8, 105, 100, 110, 105, 103, 104, 116, 58, 118, 99, 58, 98, 108, 105, 110, 100,
                 45, 104, 111, 108, 100, 101, 114, 0, 0, 0, 0, 0, 0, 0, 0,
             ]),
-            compact_runtime::AlignedValue::from(holder_secret_commitment),
-            compact_runtime::AlignedValue::from(issuer_nonce),
-            compact_runtime::AlignedValue::from(blinding_factor),
+            midnight_compact_runtime::AlignedValue::from(holder_secret_commitment),
+            midnight_compact_runtime::AlignedValue::from(issuer_nonce),
+            midnight_compact_runtime::AlignedValue::from(blinding_factor),
         ])
     }
 
@@ -4879,45 +5001,45 @@ pub mod pure_circuits {
 
     pub fn registry_bound_status_binding_root(binding: RegistryBoundStatusBinding) -> [u8; 32] {
         pure_circuits::assert_valid_registry_bound_status_binding(binding.clone());
-        compact_runtime::std_lib::persistent_hash_aligned(&[compact_runtime::AlignedValue::from(
-            binding,
-        )])
+        midnight_compact_runtime::std_lib::persistent_hash_aligned(&[
+            midnight_compact_runtime::AlignedValue::from(binding),
+        ])
     }
 
     pub fn digital_passport_claim_root(commitments: DigitalPassportClaimCommitments) -> [u8; 32] {
-        compact_runtime::std_lib::persistent_hash_aligned(&[
-            compact_runtime::AlignedValue::from([
+        midnight_compact_runtime::std_lib::persistent_hash_aligned(&[
+            midnight_compact_runtime::AlignedValue::from([
                 109u8, 105, 100, 110, 105, 103, 104, 116, 58, 118, 99, 58, 100, 105, 103, 105, 116,
                 97, 108, 45, 112, 97, 115, 115, 112, 111, 114, 116, 58, 118, 49, 0,
             ]),
-            compact_runtime::AlignedValue::from(commitments.firstNameCommitment),
-            compact_runtime::AlignedValue::from(commitments.lastNameCommitment),
-            compact_runtime::AlignedValue::from(commitments.dateOfBirthCommitment),
-            compact_runtime::AlignedValue::from(commitments.documentNumberCommitment),
-            compact_runtime::AlignedValue::from(commitments.issuingStateCommitment),
+            midnight_compact_runtime::AlignedValue::from(commitments.firstNameCommitment),
+            midnight_compact_runtime::AlignedValue::from(commitments.lastNameCommitment),
+            midnight_compact_runtime::AlignedValue::from(commitments.dateOfBirthCommitment),
+            midnight_compact_runtime::AlignedValue::from(commitments.documentNumberCommitment),
+            midnight_compact_runtime::AlignedValue::from(commitments.issuingStateCommitment),
         ])
     }
 
     pub fn first_name_commitment(first_name_value_padded: [u8; 64], opening: [u8; 32]) -> [u8; 32] {
-        compact_runtime::persistent_commit(
+        midnight_compact_runtime::persistent_commit(
             &first_name_value_padded,
-            compact_runtime::base_crypto::hash::HashOutput(opening),
+            midnight_compact_runtime::base_crypto::hash::HashOutput(opening),
         )
         .0
     }
 
     pub fn last_name_commitment(last_name_value_padded: [u8; 64], opening: [u8; 32]) -> [u8; 32] {
-        compact_runtime::persistent_commit(
+        midnight_compact_runtime::persistent_commit(
             &last_name_value_padded,
-            compact_runtime::base_crypto::hash::HashOutput(opening),
+            midnight_compact_runtime::base_crypto::hash::HashOutput(opening),
         )
         .0
     }
 
     pub fn date_of_birth_commitment(date_of_birth_days: u32, opening: [u8; 32]) -> [u8; 32] {
-        compact_runtime::persistent_commit(
+        midnight_compact_runtime::persistent_commit(
             &date_of_birth_days,
-            compact_runtime::base_crypto::hash::HashOutput(opening),
+            midnight_compact_runtime::base_crypto::hash::HashOutput(opening),
         )
         .0
     }
@@ -4926,28 +5048,28 @@ pub mod pure_circuits {
         document_number_value: [u8; 32],
         opening: [u8; 32],
     ) -> [u8; 32] {
-        compact_runtime::persistent_commit(
+        midnight_compact_runtime::persistent_commit(
             &document_number_value,
-            compact_runtime::base_crypto::hash::HashOutput(opening),
+            midnight_compact_runtime::base_crypto::hash::HashOutput(opening),
         )
         .0
     }
 
     pub fn issuing_state_commitment(issuing_state_value: [u8; 32], opening: [u8; 32]) -> [u8; 32] {
-        compact_runtime::persistent_commit(
+        midnight_compact_runtime::persistent_commit(
             &issuing_state_value,
-            compact_runtime::base_crypto::hash::HashOutput(opening),
+            midnight_compact_runtime::base_crypto::hash::HashOutput(opening),
         )
         .0
     }
 
     pub fn document_number_null_commitment() -> [u8; 32] {
-        compact_runtime::std_lib::persistent_hash_aligned(&[
-            compact_runtime::AlignedValue::from([
+        midnight_compact_runtime::std_lib::persistent_hash_aligned(&[
+            midnight_compact_runtime::AlignedValue::from([
                 109u8, 105, 100, 110, 105, 103, 104, 116, 58, 118, 99, 58, 100, 105, 103, 105, 116,
                 97, 108, 45, 112, 97, 115, 115, 112, 111, 114, 116, 58, 110, 105, 108,
             ]),
-            compact_runtime::AlignedValue::from([
+            midnight_compact_runtime::AlignedValue::from([
                 100u8, 111, 99, 117, 109, 101, 110, 116, 45, 110, 117, 109, 98, 101, 114, 0, 0, 0,
                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             ]),
@@ -5018,9 +5140,9 @@ pub mod pure_circuits {
     pub fn digital_passport_presentation_request_body_root(
         request: DigitalPassportPresentationRequest,
     ) -> [u8; 32] {
-        compact_runtime::std_lib::persistent_hash_aligned(&[compact_runtime::AlignedValue::from(
-            request,
-        )])
+        midnight_compact_runtime::std_lib::persistent_hash_aligned(&[
+            midnight_compact_runtime::AlignedValue::from(request),
+        ])
     }
 
     pub fn assert_valid_digital_passport_schema_ref(schema: SchemaRef) -> () {
@@ -5370,10 +5492,13 @@ pub mod pure_circuits {
             result.body.credential.holderBinding.clone(),
         );
         assert!(
-            ((compact_runtime::jubjub_point_x(request.body.holderPublicKey.clone())
-                == compact_runtime::jubjub_point_x(result.body.holderPublicKey.clone()))
-                && (compact_runtime::jubjub_point_y(request.body.holderPublicKey.clone())
-                    == compact_runtime::jubjub_point_y(result.body.holderPublicKey.clone()))),
+            ((midnight_compact_runtime::jubjub_point_x(request.body.holderPublicKey.clone())
+                == midnight_compact_runtime::jubjub_point_x(result.body.holderPublicKey.clone()))
+                && (midnight_compact_runtime::jubjub_point_y(
+                    request.body.holderPublicKey.clone()
+                ) == midnight_compact_runtime::jubjub_point_y(
+                    result.body.holderPublicKey.clone()
+                ))),
             "Digital-passport issuance result holder public key does not match the request"
         );
     }

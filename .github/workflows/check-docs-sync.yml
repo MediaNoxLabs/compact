@@ -62,15 +62,15 @@ jobs:
             REL="${SRC_FILE#doc/api/runtime/}"
             # README.md is handled separately below (it has a prepended header)
             [ "$REL" = "README.md" ] && continue
-            check "$SRC_FILE" "api-reference/compact-runtime/$REL"
+            check "$SRC_FILE" "api-reference/midnight-compact-runtime/$REL"
           done < <(find doc/api/runtime -type f -print0)
 
           # Check runtime README.md — docs version has a prepended header line
           # Expected content: "# Compact runtime API\n\n" + original README
           EXPECTED=$(printf "# Compact runtime API\n\n"; cat doc/api/runtime/README.md)
-          ACTUAL=$(cat midnight-docs/api-reference/compact-runtime/README.md)
+          ACTUAL=$(cat midnight-docs/api-reference/midnight-compact-runtime/README.md)
           if [ "$EXPECTED" != "$ACTUAL" ]; then
-            echo "::error::Out of sync: doc/api/runtime/README.md vs api-reference/compact-runtime/README.md"
+            echo "::error::Out of sync: doc/api/runtime/README.md vs api-reference/midnight-compact-runtime/README.md"
             diff <(echo "$EXPECTED") <(echo "$ACTUAL") || true
             FAILED=1
           else

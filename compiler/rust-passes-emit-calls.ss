@@ -91,7 +91,7 @@
             "            )\n"
             "            .map_err(|e| CompactError::AssertionFailed(format!(\"ledger query failed: {:?}\", e)))?;\n"
             "            let _av = match _gather_results.events.last() {\n"
-            "                Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,\n"
+            "                Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,\n"
             "                _ => return Err(CompactError::AssertionFailed(\"ledger: expected Read event\".into())),\n"
             "            };\n"
             "            " decoder "(_av)?\n"
@@ -177,7 +177,7 @@
                            "            )\n"
                            "            .map_err(|e| CompactError::AssertionFailed(format!(\"ledger query failed: {:?}\", e)))?;\n"
                            "            let _av = match _gather_results.events.last() {\n"
-                           "                Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,\n"
+                           "                Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,\n"
                            "                _ => return Err(CompactError::AssertionFailed(\"ledger: expected Read event\".into())),\n"
                            "            };\n"
                            "            " decoder "(_av)?\n"
@@ -233,7 +233,7 @@
                           "            )\n"
                           "            .map_err(|e| CompactError::AssertionFailed(format!(\"ledger query failed: {:?}\", e)))?;\n"
                           "            let _av = match _gather_results.events.last() {\n"
-                          "                Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,\n"
+                          "                Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,\n"
                           "                _ => return Err(CompactError::AssertionFailed(\"ledger: expected Read event\".into())),\n"
                           "            };\n"
                           "            " decoder "(_av)?\n"
@@ -301,7 +301,7 @@
              ;; net for any future ascription-free use site.
              (let ([args
                     (map (lambda (e) (expr-rust e native-id-ht)) expr*)])
-               (format "compact_runtime::std_lib::~a(~a)"
+               (format "midnight_compact_runtime::std_lib::~a(~a)"
                        sym
                        (let join ([xs args] [acc ""])
                          (cond
@@ -310,7 +310,7 @@
                            [else (join (cdr xs)
                                        (string-append acc (car xs) ", "))]))))]
             [(and ne (equal? (native-entry-rust-function ne)
-                             "compact_runtime::persistent_hash"))
+                             "midnight_compact_runtime::persistent_hash"))
              ;; R3: alignment-aware lowering of Compact's
              ;; `persistentHash<T>(value)`. The TS path constructs an
              ;; `AlignedValue` from `value` (via the runtime type
@@ -347,14 +347,14 @@
                          (nanopass-case (Ltypescript Expression) arg
                            [(tuple ,src ,tuple-arg* ...)
                             (map (lambda (ta)
-                                   (format "compact_runtime::AlignedValue::from(~a)"
+                                   (format "midnight_compact_runtime::AlignedValue::from(~a)"
                                            (tuple-arg-rust ta native-id-ht)))
                                  tuple-arg*)]
                            [else
-                            (list (format "compact_runtime::AlignedValue::from(~a)"
+                            (list (format "midnight_compact_runtime::AlignedValue::from(~a)"
                                           (expr-rust arg native-id-ht)))])])
                     (string-append
-                      "compact_runtime::std_lib::persistent_hash_aligned(&["
+                      "midnight_compact_runtime::std_lib::persistent_hash_aligned(&["
                       (let join ([xs elt-strs] [acc ""])
                         (cond
                           [(null? xs) acc]
@@ -367,7 +367,7 @@
                   "persistentHash arity ~a not yet supported (expected 1)"
                   (length expr*))])]
             [(and ne (equal? (native-entry-rust-function ne)
-                             "compact_runtime::transient_hash"))
+                             "midnight_compact_runtime::transient_hash"))
              ;; R5: alignment-aware lowering of Compact's
              ;; `transientHash<A>(value): Field`. The upstream
              ;; `transient_hash(elems: &[Fr]) -> Fr` takes a field-element
@@ -388,14 +388,14 @@
                          (nanopass-case (Ltypescript Expression) arg
                            [(tuple ,src ,tuple-arg* ...)
                             (map (lambda (ta)
-                                   (format "compact_runtime::AlignedValue::from(~a)"
+                                   (format "midnight_compact_runtime::AlignedValue::from(~a)"
                                            (tuple-arg-rust ta native-id-ht)))
                                  tuple-arg*)]
                            [else
-                            (list (format "compact_runtime::AlignedValue::from(~a)"
+                            (list (format "midnight_compact_runtime::AlignedValue::from(~a)"
                                           (expr-rust arg native-id-ht)))])])
                     (string-append
-                      "compact_runtime::std_lib::transient_hash_aligned(&["
+                      "midnight_compact_runtime::std_lib::transient_hash_aligned(&["
                       (let join ([xs elt-strs] [acc ""])
                         (cond
                           [(null? xs) acc]
@@ -407,7 +407,7 @@
                   "transientHash arity ~a not yet supported (expected 1)"
                   (length expr*))])]
             [(and ne (equal? (native-entry-rust-function ne)
-                             "compact_runtime::persistent_commit"))
+                             "midnight_compact_runtime::persistent_commit"))
              ;; R4: lowering of Compact's
              ;; `persistentCommit<T>(value, opening)`. The upstream
              ;; `persistent_commit<T: BinaryHashRepr + ?Sized>(value: &T,
@@ -429,15 +429,15 @@
                 ;; HashOutput`. The Compact `persistentCommit<A>(v, o):
                 ;; Bytes<32>` surfaces `[u8; 32]`, so wrap the opening in
                 ;; `HashOutput(...)` and extract `.0` from the result.
-                ;; `HashOutput` isn't in compact_runtime's curated prelude
+                ;; `HashOutput` isn't in midnight_compact_runtime's curated prelude
                 ;; but is reachable as
-                ;; `compact_runtime::base_crypto::hash::HashOutput`
+                ;; `midnight_compact_runtime::base_crypto::hash::HashOutput`
                 ;; (midnight-base-crypto re-exports the crate as
                 ;; `base_crypto` and `hash` is a pub module).
                 (string-append
-                  "compact_runtime::persistent_commit(&"
+                  "midnight_compact_runtime::persistent_commit(&"
                   (expr-rust (car expr*) native-id-ht)
-                  ", compact_runtime::base_crypto::hash::HashOutput("
+                  ", midnight_compact_runtime::base_crypto::hash::HashOutput("
                   (expr-rust (cadr expr*) native-id-ht)
                   ")).0")]
                [else

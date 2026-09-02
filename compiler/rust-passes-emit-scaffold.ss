@@ -27,7 +27,7 @@
       ;; leaf public-binding at the given indentation. ADT-aware seeding
       ;; (R1 / K1.1): the Compact ADTs whose initial-value isn't a plain
       ;; Cell — Map, Set, MerkleTree, HistoricMerkleTree — have dedicated
-      ;; builders in compact-runtime that produce the exact StateValue
+      ;; builders in midnight-compact-runtime that produce the exact StateValue
       ;; shape declared in midnight-ledger.ss. Cell / Counter / anything
       ;; else with a read op keeps the K1 path — new_cell(<default>).
       ;; Special case: tvector defaults to [T; N] which doesn't impl
@@ -138,7 +138,7 @@
                   ;; named `ContractAddress` (e.g. midnight-did) does not
                   ;; shadow the upstream coin-structure type required by
                   ;; QueryContext::new.
-                  (out "        let qctx = QueryContext::new(state, compact_runtime::ContractAddress::default());\n"))]
+                  (out "        let qctx = QueryContext::new(state, midnight_compact_runtime::ContractAddress::default());\n"))]
                ;; J2: emit the constructor body if we have one and its shape
                ;; matches. Fall back to the K1-only return otherwise (counter has
                ;; no constructor body, so it lands here naturally).

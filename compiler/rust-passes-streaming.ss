@@ -316,7 +316,7 @@
       (define (emit-streaming-body stmt native-id-ht witness-id-ht circuit-id-ht)
         ;; gas-acc init: emit once at top so subsequent flushes can `+=` it.
         ;; We track step-count via a state-machine variable.
-        (out "        let mut __gas_acc = compact_runtime::RunningCost::default();\n")
+        (out "        let mut __gas_acc = midnight_compact_runtime::RunningCost::default();\n")
         (let loop ([stmts (stmt-flatten stmt)]
                    [local-binds '()]
                    [witness-emitted? #f]

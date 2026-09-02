@@ -15,7 +15,7 @@ wasm-compiled `@midnight-ntwrk/onchain-runtime-v3`.
 
 Proposal: add a new compiler flag (working name `--rust`) that emits a native
 Rust crate equivalent to the TypeScript output. Generated Rust depends on a
-new sibling runtime crate, `compact-runtime` (under `runtime-rs/` in this
+new sibling runtime crate, `midnight-compact-runtime` (under `runtime-rs/` in this
 repo), which in turn re-exports the published Midnight Rust crates
 (`midnight-onchain-runtime`, `midnight-onchain-state`, etc.) that the wasm
 packages are built from.
@@ -129,7 +129,7 @@ before committing to a full implementation plan.
 ```
 spike/
 ├── Cargo.toml             (workspace pinning all 9 Midnight crates)
-├── runtime-rs/            ~110 LOC — minimal `compact-runtime` facade
+├── runtime-rs/            ~110 LOC — minimal `midnight-compact-runtime` facade
 │   └── src/
 │       ├── lib.rs         curated re-exports
 │       ├── context.rs     CircuitContext / ConstructorContext aggregates
@@ -151,9 +151,9 @@ export circuit increment(): [] { round.increment(1); }
 
 - All 9 Midnight crates resolved from crates.io and built from source in
   ~15s on first build.
-- `compact-runtime` stub: compiles clean, no warnings.
+- `midnight-compact-runtime` stub: compiles clean, no warnings.
 - `counter-contract`: compiles clean, no warnings, depending only on
-  `compact-runtime` (`Key`, `Array`, etc. are re-exported through the
+  `midnight-compact-runtime` (`Key`, `Array`, etc. are re-exported through the
   facade — generated code never reaches around it).
 - Compared the spike's `increment()` Op program byte-for-byte against the
   real TS output (`compactc --skip-zk counter.compact`). The lowering is
@@ -197,7 +197,7 @@ both Chez Scheme and Rust:
 
 | Workstream | Effort |
 |---|---|
-| `compact-runtime` Rust crate (the facade) | 1 week |
+| `midnight-compact-runtime` Rust crate (the facade) | 1 week |
 | `compiler/rust-passes.ss` — codegen pass | 3–4 weeks |
 | `compactc.ss` + `passes.ss` integration | 0.5 week |
 | `tests-e2e` cross-language byte parity harness | 1 week |
@@ -221,7 +221,7 @@ the spike makes the runtime crate and dependency story low-risk.
    or be its own repo under `midnightntwrk/`? The design assumes the former
    to match where `runtime/` lives today, but ownership/release cadence may
    point elsewhere.
-2. Do we publish `compact-runtime` to crates.io, or vendor it from a git
+2. Do we publish `midnight-compact-runtime` to crates.io, or vendor it from a git
    tag the way the TS runtime depends on a specific ledger commit?
 3. Will Midnight publish `midnight-zkir-v3` to crates.io within this work's
    timeline? (Not blocking, but affects how external tooling can verify

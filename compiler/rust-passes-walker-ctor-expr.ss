@@ -462,7 +462,7 @@
                   (id-sym function-name))])]
             [stdlib
              ;; I3b/4: stdlib circuits (`some`, `none`) live in
-             ;; compact_runtime::std_lib. Render with the runtime path.
+             ;; midnight_compact_runtime::std_lib. Render with the runtime path.
              (let ([args
                     (map (lambda (e)
                            (arg-rust-clone-if-var e local-binds

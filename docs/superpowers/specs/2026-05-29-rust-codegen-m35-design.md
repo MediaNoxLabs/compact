@@ -28,7 +28,7 @@ This is bigger than M3 was. The phasing is in `2026-05-29-rust-codegen-m35.md`.
   handles (F4 from M3 already does this).
 - Reimplementing types that exist upstream. Map, Set, MerkleTree, HistoricMerkleTree, and primitive
   field/hash machinery already live in `midnight-storage`, `midnight-onchain-state`,
-  `midnight-base-crypto`, and `midnight-transient-crypto`. M3.5 wraps these in thin `compact-runtime`
+  `midnight-base-crypto`, and `midnight-transient-crypto`. M3.5 wraps these in thin `midnight-compact-runtime`
   re-exports / facade types; it does NOT clone them.
 - proposal.compact verbatim. The file as written uses `type Ledger = { ... }` syntax that the
   current frontend rejects. M3.5 substitutes **zerocash.compact** (which parses today, has the same
@@ -164,10 +164,10 @@ statement-of-unit-return position (with each branch a sequence of statements).
 ### Runtime
 
 **R1. Re-export `Set<T>`, `Map<K, V>`, `MerkleTree<H, T>`, `HistoricMerkleTree<H, T>`.** All four
-live upstream. Re-exported via `compact_runtime::std_lib` so generated code can write
+live upstream. Re-exported via `midnight_compact_runtime::std_lib` so generated code can write
 `Set<Nullifier>` etc.
 
-**R2. Native function bindings — full audit.** `compact-runtime/src/lib.rs:64-68` re-exports four
+**R2. Native function bindings — full audit.** `midnight-compact-runtime/src/lib.rs:64-68` re-exports four
 hash functions. M3.5 audits `midnight-natives.ss` against actual upstream symbols and re-exports
 the rest: `keccak256` (likely in `midnight_base_crypto::hash`), Jubjub primitives (likely in
 `midnight_transient_crypto::curve`), `degradeToTransient`/`upgradeFromTransient`. Add `(rust ...)`

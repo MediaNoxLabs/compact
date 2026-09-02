@@ -35,7 +35,7 @@ let tmp = ({
     let _gather_ops = OpProgramGather::<DefaultDB>::new()
         .dup(0).idx_at_index(0u8, false).size().popeq(true).build();
     /* ... query_for_read ... */
-    compact_runtime::std_lib::decode_u64(_av)?
+    midnight_compact_runtime::std_lib::decode_u64(_av)?
 }) as u8;
 let ops = OpProgramVerify::<DefaultDB>::new()
     .push(false, new_cell(1u8))

@@ -22,7 +22,7 @@
 //   export circuit increment(): [] { round.increment(1); }
 //
 // This is what `compactc --rust counter.compact` SHOULD produce. The goal of
-// the spike is to confirm the shape compiles against the real compact-runtime
+// the spike is to confirm the shape compiles against the real midnight-compact-runtime
 // crate and the published Midnight Rust ecosystem. The exact Op-program bytes
 // emitted by the lowering pass are validated separately (the IR is documented
 // at compiler/midnight-ledger.ss:587-606 — Counter ADT).
@@ -31,10 +31,10 @@
 // state transitions to the TS path. That's the next spike (cross-language byte
 // parity), to be performed once compactc is built and the Rust emitter exists.
 
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 use std::marker::PhantomData;
 
-compact_runtime::check_runtime_version!("0.1.0-spike");
+midnight_compact_runtime::check_runtime_version!("0.1.0-spike");
 
 // ---------------------------------------------------------------------------
 // Witnesses trait

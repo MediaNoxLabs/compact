@@ -112,7 +112,7 @@
              (out "        Ok(CircuitResults {\n")
              (out "            result,\n")
              (out "            context: ctx,\n")
-             (out "            gas_cost: compact_runtime::RunningCost::default(),\n")
+             (out "            gas_cost: midnight_compact_runtime::RunningCost::default(),\n")
              (out "        })\n")
              #t])))
 
@@ -153,7 +153,7 @@
              (out "        Ok(CircuitResults {\n")
              (out "            result,\n")
              (out "            context: ctx,\n")
-             (out "            gas_cost: compact_runtime::RunningCost::default(),\n")
+             (out "            gas_cost: midnight_compact_runtime::RunningCost::default(),\n")
              (out "        })\n")
              #t]
             [else
@@ -176,7 +176,7 @@
              (out "        Ok(CircuitResults {\n")
              (out "            result,\n")
              (out "            context: ctx,\n")
-             (out "            gas_cost: compact_runtime::RunningCost::default(),\n")
+             (out "            gas_cost: midnight_compact_runtime::RunningCost::default(),\n")
              (out "        })\n")
              #t])))
 

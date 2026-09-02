@@ -1,4 +1,4 @@
-# Upstream PRs to retire `compact-runtime` friction wrappers
+# Upstream PRs to retire `midnight-compact-runtime` friction wrappers
 
 **Author:** ysh
 **Date:** 2026-05-25
@@ -10,10 +10,10 @@ findings these PRs resolve), `2026-05-25-rust-codegen-feasibility.md`.
 
 `midnight-ledger` (`midnightntwrk/midnight-ledger`) is the Rust workspace
 that publishes the core on-chain primitives consumed by the Midnight node
-and by `compact-runtime`: `midnight-base-crypto`, `midnight-transient-crypto`,
+and by `midnight-compact-runtime`: `midnight-base-crypto`, `midnight-transient-crypto`,
 `midnight-onchain-state`, `midnight-onchain-vm`, `midnight-onchain-runtime`,
 `midnight-storage`, `midnight-coin-structure`, `midnight-zswap`. Today
-`compact-runtime` (this repo's `runtime-rs/`) carries a small set of
+`midnight-compact-runtime` (this repo's `runtime-rs/`) carries a small set of
 ergonomic wrappers — documented in design spec §4.6 — that paper over
 gaps between the upstream Rust API and the conventions the TypeScript
 facade exposes (and that idiomatic Rust expects). The PRs below retire
@@ -54,9 +54,9 @@ the corresponding upstream PR lands.
   }
   ```
 
-- **Impact on `compact-runtime`:** Deletes `new_cell`, `new_array`, and
-  `new_empty_array` from `compact-runtime::builders`. Call sites in
-  generated code shift from `compact_runtime::new_cell(v)` to
+- **Impact on `midnight-compact-runtime`:** Deletes `new_cell`, `new_array`, and
+  `new_empty_array` from `midnight-compact-runtime::builders`. Call sites in
+  generated code shift from `midnight_compact_runtime::new_cell(v)` to
   `StateValue::new_cell(v)`.
 - **Estimated effort:** ~12 lines + doctest. 30 minutes.
 
@@ -79,8 +79,8 @@ the corresponding upstream PR lands.
   }
   ```
 
-- **Impact on `compact-runtime`:** Deletes `empty_charged_state` from
-  `compact-runtime::builders`. Generated code uses
+- **Impact on `midnight-compact-runtime`:** Deletes `empty_charged_state` from
+  `midnight-compact-runtime::builders`. Generated code uses
   `ChargedState::default()`.
 - **Estimated effort:** ~5 lines. 15 minutes.
 
@@ -103,8 +103,8 @@ the corresponding upstream PR lands.
   }
   ```
 
-- **Impact on `compact-runtime`:** Deletes `initial_cost_model` from
-  `compact-runtime::builders`. Generated code calls `CostModel::initial()`
+- **Impact on `midnight-compact-runtime`:** Deletes `initial_cost_model` from
+  `midnight-compact-runtime::builders`. Generated code calls `CostModel::initial()`
   directly.
 - **Estimated effort:** ~3 lines. 10 minutes.
 
@@ -128,7 +128,7 @@ the corresponding upstream PR lands.
   }
   ```
 
-- **Impact on `compact-runtime`:** `entry_point("name")` becomes
+- **Impact on `midnight-compact-runtime`:** `entry_point("name")` becomes
   `EntryPointBuf::from("name")` or simply `"name".into()` at call sites
   with type inference.
 - **Estimated effort:** ~4 lines. 10 minutes.
@@ -158,7 +158,7 @@ the corresponding upstream PR lands.
     - variant payloads (`STATE::set(Field)` vs unit-only variants —
       Compact frontend currently emits unit-only, but the derive should
       support payloads for future-proofing).
-- **Impact on `compact-runtime`:** The M3 codegen can use
+- **Impact on `midnight-compact-runtime`:** The M3 codegen can use
   `#[derive(FieldRepr, FromFieldRepr)]` on generated enums instead of
   emitting manual impls per type. Reduces generated-LOC noticeably.
 - **Estimated effort:** ~1 day including tests, plus design review for
@@ -178,14 +178,14 @@ the corresponding upstream PR lands.
   downstream Rust consumer hits a wall. Documenting it in the rustdoc of
   `AlignedValue::from<u*>` and the inverse decode path makes the
   invariant discoverable before someone writes a fixed-width decoder and
-  loses an afternoon to it. (This wrapper's `compact-runtime` cousin —
+  loses an afternoon to it. (This wrapper's `midnight-compact-runtime` cousin —
   the `decode_u*` family — already handles the variable-length case
   correctly; this PR is about discoverability of the upstream
   invariant.)
 - **Proposed change:** Rustdoc additions only — no code changes. One
   paragraph each on `From<u8>`, `From<u16>`, `From<u32>`, `From<u64>`,
   `From<u128>`, with a worked example showing the trailing-zero strip.
-- **Impact on `compact-runtime`:** No change to the `decode_*` helpers
+- **Impact on `midnight-compact-runtime`:** No change to the `decode_*` helpers
   (they're correct), but reduces the chance of future consumers
   discovering the invariant the hard way.
 - **Estimated effort:** ~30 minutes of rustdoc.
@@ -207,7 +207,7 @@ the corresponding upstream PR lands.
   `prepare-for-typescript-passes` → `prepare-for-codegen-passes`, and
   `print-typescript-passes` → keep as-is (it remains TS-specific). No
   functional change; cleanup only.
-- **Impact on `compact-runtime`:** None (this is compiler-side).
+- **Impact on `midnight-compact-runtime`:** None (this is compiler-side).
 - **Estimated effort:** ~30 minutes if pursued.
 
 ---
@@ -225,7 +225,7 @@ the corresponding upstream PR lands.
 - PR 7 is internal to this repo and is already done; track only the
   optional rename follow-up.
 
-Once PRs 1–4 land, the entire `compact-runtime::builders` module
+Once PRs 1–4 land, the entire `midnight-compact-runtime::builders` module
 (~90 LOC) collapses to a handful of re-exports or is deleted outright.
 Once PR 6 lands, the `decode_*` family's rustdoc can reference the
 upstream rustdoc rather than re-explaining the invariant. Once PR 5

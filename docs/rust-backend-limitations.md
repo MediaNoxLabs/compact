@@ -65,7 +65,7 @@ Diagnostics carry the source location and a kind symbol:
 
 ```
 Field-to-Uint cast (`as Uint<8>`) has no Rust lowering;
-a range-checking compact_runtime helper is needed
+a range-checking midnight_compact_runtime helper is needed
 ```
 
 ## Enumerating the current set
@@ -171,7 +171,7 @@ build, check that your deployed initial state is what you wrote.
 ### `Field as Uint<N>` — no lowering
 
 `cast-from-field`. Narrowing a `Field` to a bounded unsigned integer needs
-a `compact_runtime` helper that range-checks an `Fr` and narrows it to
+a `midnight_compact_runtime` helper that range-checks an `Fr` and narrows it to
 `uN`; the TS runtime does the equivalent with a bigint bounds check. Until
 that helper exists the cast is rejected.
 
@@ -186,7 +186,7 @@ byte-parity-neutral for the existing corpus.
 A generic *impure* circuit's body is not lowered. The one case that matters
 in practice, the Schnorr-on-Jubjub verifier, is handled by rewriting the
 call to an orphan-safe runtime wrapper
-(`compact_runtime::schnorr_verify_jubjub`) rather than by lowering the
+(`midnight_compact_runtime::schnorr_verify_jubjub`) rather than by lowering the
 generic body — see `runtime-rs/src/std_lib/schnorr.rs` and the
 `schnorr_attest_fixture`. Generic *pure* circuits are supported.
 

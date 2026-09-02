@@ -15,7 +15,7 @@
 
 //
 // hash_to_curve_fixture.compact byte-parity test — Prod-18 honourable-
-// mention follow-up. Exercises the `compact_runtime::hash_to_curve`
+// mention follow-up. Exercises the `midnight_compact_runtime::hash_to_curve`
 // by-value wrapper introduced in this iteration alongside
 // `jubjubPointX` / `jubjubPointY` from the existing R2 native bundle.
 //
@@ -31,7 +31,7 @@
 //     matches across both runtimes.
 
 use compact_contract_hash_to_curve_fixture::Contract;
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 use midnight_serialize::tagged_serialize;
 use midnight_storage::storage::HashMap;
 use tests_e2e_rust::SmallFixtureTsReference;

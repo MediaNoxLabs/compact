@@ -22,7 +22,7 @@
 // Rust's orphan rules forbid us from supplying the missing ones
 // directly (the trait + the foreign type are both upstream). To
 // sidestep the orphan rule, we expose plain functions in
-// `compact_runtime` that the codegen calls from inside generated
+// `midnight_compact_runtime` that the codegen calls from inside generated
 // struct `FromFieldRepr` bodies. The local struct's own impl is OK by
 // orphan rules; the per-field deserialiser doesn't need to go through
 // `<T as FromFieldRepr>` for problematic T.

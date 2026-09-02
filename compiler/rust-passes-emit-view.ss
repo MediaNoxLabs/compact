@@ -144,18 +144,18 @@
                   (or result (loop (cdr ops))))]))]
           [else type]))
 
-      ;; decoder-for-type: pick the `compact_runtime::std_lib::decode_*`
+      ;; decoder-for-type: pick the `midnight_compact_runtime::std_lib::decode_*`
       ;; helper that turns an AlignedValue back into the Rust type returned
       ;; by `type-rust`. Mirrors `uint-rust-width` for the integer cases.
       (define (decoder-for-type type)
         (nanopass-case (Ltypescript Type) type
           [(tunsigned ,src ,nat)
            (cond
-             [(<= nat 255) "compact_runtime::std_lib::decode_u8"]
-             [(<= nat 65535) "compact_runtime::std_lib::decode_u16"]
-             [(<= nat 4294967295) "compact_runtime::std_lib::decode_u32"]
-             [(<= nat 18446744073709551615) "compact_runtime::std_lib::decode_u64"]
-             [else "compact_runtime::std_lib::decode_u128"])]
+             [(<= nat 255) "midnight_compact_runtime::std_lib::decode_u8"]
+             [(<= nat 65535) "midnight_compact_runtime::std_lib::decode_u16"]
+             [(<= nat 4294967295) "midnight_compact_runtime::std_lib::decode_u32"]
+             [(<= nat 18446744073709551615) "midnight_compact_runtime::std_lib::decode_u64"]
+             [else "midnight_compact_runtime::std_lib::decode_u128"])]
           [(tfield ,src ,ftype)
            ;; Native Field decodes via decode_fr. A JubjubScalar-typed
            ;; ledger read has no decoder yet (EmbeddedFr lacks
@@ -163,9 +163,9 @@
            ;; flagged (#f) so the caller reports the gap instead of
            ;; emitting wrong code.
            (if (field-type-native? ftype)
-               "compact_runtime::std_lib::decode_fr"
+               "midnight_compact_runtime::std_lib::decode_fr"
                #f)]
-          [(tboolean ,src) "compact_runtime::std_lib::decode_bool"]
+          [(tboolean ,src) "midnight_compact_runtime::std_lib::decode_bool"]
           [(tenum ,src ,enum-name ,elt-name ,elt-name* ...)
            ;; Bug-10 (2026-06-29): decode tenum-typed ledger reads as the
            ;; typed enum rather than as the raw u8 discriminant. Going
@@ -183,10 +183,10 @@
            ;; Boolean and Uint ledger reads still flow through their
            ;; integer decoders (decode_bool, decode_u8/u16/u32/u64/u128),
            ;; so Bug-8's short-circuit remains in force for those.
-           (format "compact_runtime::std_lib::decode_via_field_repr::<~a>"
+           (format "midnight_compact_runtime::std_lib::decode_via_field_repr::<~a>"
                    (symbol->string enum-name))]
           [(tbytes ,src ,len)
-           (format "compact_runtime::std_lib::decode_bytes::<~a>" len)]
+           (format "midnight_compact_runtime::std_lib::decode_bytes::<~a>" len)]
           [(tvector ,src ,len ,type)
            ;; Vector<N, T>: dispatch on element type. For Vector<N, Field>
            ;; and Vector<N, Uint<64>> we have dedicated decoders. Other
@@ -195,7 +195,7 @@
            (nanopass-case (Ltypescript Type) type
              [(tfield ,src ,ftype)
               (and (field-type-native? ftype)
-                   (format "compact_runtime::std_lib::decode_vector_fr::<~a>" len))]
+                   (format "midnight_compact_runtime::std_lib::decode_vector_fr::<~a>" len))]
              [(tunsigned ,src ,nat)
               ;; Iter 7: Uint<64> element → decode_vector_u64<N>. Wider
               ;; widths (u128) and narrower (u8/u16/u32) would each need
@@ -203,7 +203,7 @@
               (cond
                 [(and (> nat 4294967295)
                       (<= nat 18446744073709551615))
-                 (format "compact_runtime::std_lib::decode_vector_u64::<~a>" len)]
+                 (format "midnight_compact_runtime::std_lib::decode_vector_u64::<~a>" len)]
                 [else #f])]
              [else #f])]
           [(talias ,src ,nominal? ,type-name ,type) (decoder-for-type type)]
@@ -215,13 +215,13 @@
            ;; decode_via_field_repr. Route it to the orphan-safe
            ;; decode_jubjub_point helper. Other opaque tags stay flagged.
            (if (equal? opaque-type "JubjubPoint")
-               "compact_runtime::std_lib::decode_jubjub_point"
+               "midnight_compact_runtime::std_lib::decode_jubjub_point"
                #f)]
           [(tpoint ,src ,ctype)
            ;; 0.33: JubjubPoint is the builtin (tpoint (curve-jubjub));
            ;; same orphan-rule routing as the old topaque spelling.
            (nanopass-case (Ltypescript Curve-Type) ctype
-             [(curve-jubjub) "compact_runtime::std_lib::decode_jubjub_point"]
+             [(curve-jubjub) "midnight_compact_runtime::std_lib::decode_jubjub_point"]
              [else #f])]
           ;; A5: struct types (user-defined or stdlib like
           ;; `ContractAddress`) decode via the FromFieldRepr trait —
@@ -230,10 +230,10 @@
           ;; midnight-base-crypto derive it natively. The Rust type
           ;; name comes through unqualified — it must already be in
           ;; scope at the call site (the codegen's `use
-          ;; compact_runtime::*` import covers re-exported stdlib
+          ;; midnight_compact_runtime::*` import covers re-exported stdlib
           ;; types; user structs are emitted at module scope).
           [(tstruct ,src ,struct-name (,elt-name* ,type*) ...)
-           (format "compact_runtime::std_lib::decode_via_field_repr::<~a>"
+           (format "midnight_compact_runtime::std_lib::decode_via_field_repr::<~a>"
                    (struct-rust-name-of type struct-name))]
           [else #f]))
 
@@ -268,7 +268,7 @@
            ;; A23 equivalent for the 0.33 builtin point type: seed initial
            ;; cells with a concrete typed default so new_cell(...) infers.
            (nanopass-case (Ltypescript Curve-Type) ctype
-             [(curve-jubjub) "compact_runtime::JubjubPoint::default()"]
+             [(curve-jubjub) "midnight_compact_runtime::JubjubPoint::default()"]
              [else "Default::default()"])]
           [(tboolean ,src) "false"]
           [(tbytes ,src ,len) (format "[0u8; ~a]" len)]
@@ -286,12 +286,12 @@
            ;; workaround for Aligned/FieldRepr on bare String); other
            ;; opaques stay as their direct mapping.
            (cond
-             [(equal? opaque-type "string") "compact_runtime::std_lib::OpaqueString::default()"]
+             [(equal? opaque-type "string") "midnight_compact_runtime::std_lib::OpaqueString::default()"]
              [(equal? opaque-type "Uint8Array") "Vec::<u8>::new()"]
              ;; A23: JubjubPoint (EmbeddedGroupAffine) derives Default but the
              ;; generic `new_cell(Default::default())` can't infer the element
              ;; type, so seed the initial cell with a concrete typed default.
-             [(equal? opaque-type "JubjubPoint") "compact_runtime::JubjubPoint::default()"]
+             [(equal? opaque-type "JubjubPoint") "midnight_compact_runtime::JubjubPoint::default()"]
              [else "Default::default()"])]
           [(tstruct ,src ,struct-name (,elt-name* ,type*) ...)
            ;; Maybe<T> needs an explicit type parameter so `Default::default()`
@@ -380,7 +380,7 @@
                 ;; Bucket-1: see note in J2 emitter — fully-qualify the
                 ;; upstream ContractAddress so user-defined shadow types
                 ;; don't break QueryContext::new.
-                (out "        let qctx = QueryContext::new(self.state.clone(), compact_runtime::ContractAddress::default());\n")
+                (out "        let qctx = QueryContext::new(self.state.clone(), midnight_compact_runtime::ContractAddress::default());\n")
                 (out "        let ops = OpProgramGather::<D>::new()\n")
                 (out "            .dup(0)\n")
                 (for-each
@@ -392,7 +392,7 @@
                 (out "        let results = query_for_read(&qctx, &ops, None, &initial_cost_model())\n")
                 (out "            .map_err(|e| CompactError::AssertionFailed(format!(\"ledger query failed: {:?}\", e)))?;\n")
                 (out "        let av = match results.events.last() {\n")
-                (out "            Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,\n")
+                (out "            Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,\n")
                 (out "            _ => return Err(CompactError::AssertionFailed(\"ledger: expected Read event\".into())),\n")
                 (out "        };\n")
                 (out (format "        ~a(av)\n" decoder))
@@ -409,7 +409,7 @@
       ;; signatures, which reference `CompactError`) see crate-level
       ;; types — `CompactError`, `Maybe<T>`, user structs emitted by H5-H7,
       ;; the `compact_assert!` macro, etc. — without qualification.
-      ;; `use super::*;` reaches the parent's `use compact_runtime::*;`
+      ;; `use super::*;` reaches the parent's `use midnight_compact_runtime::*;`
       ;; glob, so `CompactError` / `compact_assert!` resolve. Contracts
       ;; with no pure circuits (e.g. counter.compact) get an empty
       ;; module with no `use`.
@@ -425,7 +425,7 @@
         (out "}\n"))
 
       ;; emit-cargo-toml: emits a Cargo.toml alongside lib.rs so users can
-      ;; `cargo build` the emitted contract directly. The compact-runtime
+      ;; `cargo build` the emitted contract directly. The midnight-compact-runtime
       ;; dep is pinned to the same version the lib.rs embeds via
       ;; check_runtime_version!.
       (define (emit-cargo-toml)
@@ -441,7 +441,7 @@ edition = \"2021\"
 path = \"lib.rs\"
 
 [dependencies]
-compact-runtime = \"~a\"
+midnight-compact-runtime = \"~a\"
 "
               runtime-version-string)
             port)))

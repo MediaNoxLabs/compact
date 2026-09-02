@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 
 #[test]
 fn compact_error_constructs_assertion() {
@@ -35,7 +35,7 @@ fn transcript_rejected_converts_to_compact_error() {
 #[test]
 fn compact_assert_macro_passes_when_true() {
     fn check() -> Result<(), CompactError> {
-        compact_runtime::compact_assert!(2 + 2 == 4, "math broken");
+        midnight_compact_runtime::compact_assert!(2 + 2 == 4, "math broken");
         Ok(())
     }
     check().unwrap();
@@ -44,7 +44,7 @@ fn compact_assert_macro_passes_when_true() {
 #[test]
 fn compact_assert_macro_errors_when_false() {
     fn check() -> Result<(), CompactError> {
-        compact_runtime::compact_assert!(2 + 2 == 5, "nope");
+        midnight_compact_runtime::compact_assert!(2 + 2 == 5, "nope");
         Ok(())
     }
     match check() {

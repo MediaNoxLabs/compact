@@ -105,7 +105,7 @@
            (lambda (src-ftype)
              (cond
                [(field-type-native? src-ftype)
-                (format "compact_runtime::jubjub_scalar_from_field(~a)"
+                (format "midnight_compact_runtime::jubjub_scalar_from_field(~a)"
                         (render-inner))]
                [else
                 (rust-feature-error src 'cast-to-field-source
@@ -115,7 +115,7 @@
            (lambda (nat)
              (cond
                [(<= nat 18446744073709551615)
-                (format "compact_runtime::jubjub_scalar_from_field(Fr::from((~a) as u64))"
+                (format "midnight_compact_runtime::jubjub_scalar_from_field(Fr::from((~a) as u64))"
                         (render-inner))]
                [else
                 (rust-feature-error src 'cast-to-field-source

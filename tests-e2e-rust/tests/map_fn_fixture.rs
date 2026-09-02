@@ -35,7 +35,7 @@
 // walker path so it's validated by `cargo test`'s build phase.
 
 use compact_contract_map_fn_fixture::Contract;
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 use midnight_serialize::tagged_serialize;
 use midnight_storage::storage::HashMap;
 use tests_e2e_rust::SmallFixtureTsReference;

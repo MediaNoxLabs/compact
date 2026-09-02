@@ -15,7 +15,7 @@
 
 // SPDX-License-Identifier: Apache-2.0
 //
-// Spike `compact-runtime` — native Rust facade matching @midnight-ntwrk/compact-runtime.
+// Spike `midnight-compact-runtime` — native Rust facade matching @midnight-ntwrk/compact-runtime.
 //
 // Strictly minimal: only what the validation spike (counter-contract) needs.
 // Everything else is either a curated re-export of an upstream Midnight crate or

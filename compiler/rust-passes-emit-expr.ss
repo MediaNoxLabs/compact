@@ -214,7 +214,7 @@
                 ;; `?` is safe in every position this renders into: circuit,
                 ;; pure-circuit and constructor bodies all return
                 ;; `Result<_, CompactError>` — `initial_state` included.
-                (format "compact_runtime::std_lib::narrow::<~a>((~a) as u128, ~a_u128, ~s)?"
+                (format "midnight_compact_runtime::std_lib::narrow::<~a>((~a) as u128, ~a_u128, ~s)?"
                         w
                         (parameterize ([current-arith-suffix w])
                           (expr-rust expr native-id-ht))
@@ -237,14 +237,14 @@
            ;; byte-identical across this change), so failing loudly here
            ;; costs nothing and removes a silent-bad-output path.
            ;;
-           ;; Lowering it properly needs a `compact_runtime` helper that
+           ;; Lowering it properly needs a `midnight_compact_runtime` helper that
            ;; range-checks an `Fr` and narrows it to `uN` (the TS runtime
            ;; does the equivalent with a bigint bounds check). Tracked as a
            ;; follow-up on MediaNoxLabs/compact#17.
            (rust-feature-error src 'cast-from-field
              "Field-to-Uint cast (`as Uint<~s>`) has no Rust lowering; ~a"
              nat
-             "a range-checking compact_runtime helper is needed")]
+             "a range-checking midnight_compact_runtime helper is needed")]
           [(cast-to-field ,src ,ftype ,type ,expr)
            ;; 0.33: `X as Field`-family casts where the TARGET is a
            ;; (tfield ftype) distinct from the source type. On the

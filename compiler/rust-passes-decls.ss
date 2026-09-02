@@ -174,9 +174,9 @@
                     ;; the upstream DynAligned blanket) so `new_cell(<enum>)`
                     ;; type-checks at ledger-write sites (e.g.
                     ;; election.advance's `state.write(successor(...))`).
-                    (out (format "impl From<~a> for compact_runtime::Value {\n" enum-name))
-                    (out (format "    fn from(v: ~a) -> compact_runtime::Value {\n" enum-name))
-                    (out "        compact_runtime::Value::from(v as u8)\n")
+                    (out (format "impl From<~a> for midnight_compact_runtime::Value {\n" enum-name))
+                    (out (format "    fn from(v: ~a) -> midnight_compact_runtime::Value {\n" enum-name))
+                    (out "        midnight_compact_runtime::Value::from(v as u8)\n")
                     (out "    }\n")
                     (out "}\n")
                     ;; M3.5: BinaryHashRepr for the enum — delegate via the
@@ -184,7 +184,7 @@
                     ;; wrappers whose generic params require BinaryHashRepr
                     ;; (e.g. merkle_tree_path_root::<T>(path) when T is or
                     ;; contains a user enum, transitively).
-                    (out (format "impl compact_runtime::BinaryHashRepr for ~a {\n" enum-name))
+                    (out (format "impl midnight_compact_runtime::BinaryHashRepr for ~a {\n" enum-name))
                     (out "    fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {\n")
                     (out "        (*self as u8).binary_repr(writer);\n")
                     (out "    }\n")
@@ -196,7 +196,7 @@
                          (and entry (cadr entry)))
                        ;; Stdlib struct (Maybe / MerkleTreePath /
                        ;; MerkleTreePathEntry) is provided by
-                       ;; compact-runtime — skip per-contract emission.
+                       ;; midnight-compact-runtime — skip per-contract emission.
                        (void)]
                       [(not (null? tvar-name*))
                        ;; H5: generic structs not yet handled. Emit a TODO so
@@ -338,13 +338,13 @@
                        ;; Value (primitives + Maybe<T> + recursively user
                        ;; structs that go through this same impl), which we
                        ;; concat in field order — matching FieldRepr.
-                       (out (format "impl From<~a> for compact_runtime::Value {\n"
+                       (out (format "impl From<~a> for midnight_compact_runtime::Value {\n"
                                     struct-name))
-                       (out (format "    fn from(s: ~a) -> compact_runtime::Value {\n"
+                       (out (format "    fn from(s: ~a) -> midnight_compact_runtime::Value {\n"
                                     struct-name))
                        (cond
                          [(null? elt-name*)
-                          (out "        compact_runtime::Value::concat(core::iter::empty::<&compact_runtime::Value>())\n")]
+                          (out "        midnight_compact_runtime::Value::concat(core::iter::empty::<&midnight_compact_runtime::Value>())\n")]
                          [else
                           ;; Build a Vec<Value> field-by-field, then concat.
                           ;; Use explicit `Value::from(...)` per field rather
@@ -357,18 +357,18 @@
                           ;; For `[T; N]` where T is a user struct, upstream
                           ;; has no `From<[T; N]> for Value`, so we expand
                           ;; the array element-by-element into the Vec.
-                          (out "        let mut _v: Vec<compact_runtime::Value> = Vec::new();\n")
+                          (out "        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();\n")
                           (for-each
                             (lambda (name type)
                               (cond
                                 [(problematic-vector? type)
-                                 (out (format "        for _e in s.~a.iter() { _v.push(compact_runtime::Value::from(_e.clone())); }\n"
+                                 (out (format "        for _e in s.~a.iter() { _v.push(midnight_compact_runtime::Value::from(_e.clone())); }\n"
                                               name))]
                                 [else
-                                 (out (format "        _v.push(compact_runtime::Value::from(s.~a));\n"
+                                 (out (format "        _v.push(midnight_compact_runtime::Value::from(s.~a));\n"
                                               name))]))
                             elt-name* type*)
-                          (out "        compact_runtime::Value::concat(_v.iter())\n")])
+                          (out "        midnight_compact_runtime::Value::concat(_v.iter())\n")])
                        (out "    }\n")
                        (out "}\n")
                        ;; M3.5: BinaryHashRepr for the struct — delegate
@@ -376,7 +376,7 @@
                        ;; Required by stdlib wrappers like
                        ;; merkle_tree_path_root::<T>(path) where T: BinaryHashRepr
                        ;; (e.g. zerocash.spend's `commitments.path_root::<commitment>(path)`).
-                       (out (format "impl compact_runtime::BinaryHashRepr for ~a {\n"
+                       (out (format "impl midnight_compact_runtime::BinaryHashRepr for ~a {\n"
                                     struct-name))
                        (out "    fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {\n")
                        (cond
@@ -388,13 +388,13 @@
                               ;; R5a: orphan-safe routing for JubjubPoint
                               ;; fields (BinaryHashRepr isn't impl'd on
                               ;; upstream EmbeddedGroupAffine; we go
-                              ;; through compact_runtime helpers).
+                              ;; through midnight_compact_runtime helpers).
                               ;; R5b: same shape for `[T; N]` whose
                               ;; element T has BinaryHashRepr — upstream
                               ;; has no `[T; N]: BinaryHashRepr` impl.
                               (cond
                                 [(problematic-jubjub-point? type)
-                                 (out (format "        compact_runtime::jubjub_point_binary_repr(&self.~a, writer);\n"
+                                 (out (format "        midnight_compact_runtime::jubjub_point_binary_repr(&self.~a, writer);\n"
                                               name))]
                                 [(problematic-vector? type)
                                  (out (format "        for _e in self.~a.iter() { _e.binary_repr(writer); }\n"
@@ -415,7 +415,7 @@
                                (let ([term
                                       (cond
                                         [(problematic-jubjub-point? (car types))
-                                         (format "compact_runtime::jubjub_point_binary_len(&self.~a)"
+                                         (format "midnight_compact_runtime::jubjub_point_binary_len(&self.~a)"
                                                  (car names))]
                                         [(problematic-vector? (car types))
                                          (format "self.~a.iter().map(|e| e.binary_len()).sum::<usize>()"

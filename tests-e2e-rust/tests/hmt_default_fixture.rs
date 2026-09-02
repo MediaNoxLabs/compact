@@ -52,7 +52,7 @@
 // surface as a byte mismatch at step 2 or step 3.
 
 use compact_contract_hmt_default_fixture::Contract;
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 use midnight_serialize::tagged_serialize;
 use midnight_storage::storage::HashMap;
 use serde::Deserialize;

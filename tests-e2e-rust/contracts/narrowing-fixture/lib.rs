@@ -26,10 +26,10 @@
     non_upper_case_globals
 )]
 
-use compact_runtime::*;
+use midnight_compact_runtime::*;
 use std::marker::PhantomData;
 
-compact_runtime::check_runtime_version!("0.19.100");
+midnight_compact_runtime::check_runtime_version!("0.19.100");
 
 pub trait Witnesses<PS> {}
 impl<PS> Witnesses<PS> for NoWitnesses {}
@@ -59,7 +59,7 @@ where
     ) -> Result<ConstructorResult<PS>, CompactError> {
         let sv = new_array(vec![new_cell(0u8)]);
         let state = ChargedState::new(sv);
-        let qctx = QueryContext::new(state, compact_runtime::ContractAddress::default());
+        let qctx = QueryContext::new(state, midnight_compact_runtime::ContractAddress::default());
         Ok(ConstructorResult {
             current_contract_state: qctx.state,
             current_private_state: ctx.initial_private_state,
@@ -109,7 +109,7 @@ impl<'a, D: DB> Ledger<'a, D> {
     pub fn last(&self) -> Result<u8, CompactError> {
         let qctx = QueryContext::new(
             self.state.clone(),
-            compact_runtime::ContractAddress::default(),
+            midnight_compact_runtime::ContractAddress::default(),
         );
         let ops = OpProgramGather::<D>::new()
             .dup(0)
@@ -119,14 +119,14 @@ impl<'a, D: DB> Ledger<'a, D> {
         let results = query_for_read(&qctx, &ops, None, &initial_cost_model())
             .map_err(|e| CompactError::AssertionFailed(format!("ledger query failed: {:?}", e)))?;
         let av = match results.events.last() {
-            Some(compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+            Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
             _ => {
                 return Err(CompactError::AssertionFailed(
                     "ledger: expected Read event".into(),
                 ))
             }
         };
-        compact_runtime::std_lib::decode_u8(av)
+        midnight_compact_runtime::std_lib::decode_u8(av)
     }
 }
 
@@ -134,7 +134,7 @@ pub mod pure_circuits {
     use super::*;
 
     pub fn shrink(x: u16) -> Result<u8, CompactError> {
-        Ok(compact_runtime::std_lib::narrow::<u8>(
+        Ok(midnight_compact_runtime::std_lib::narrow::<u8>(
             (x) as u128,
             99_u128,
             "narrowing_fixture.compact line 52 char 10",
@@ -142,7 +142,7 @@ pub mod pure_circuits {
     }
 
     pub fn shrink_wide(x: u32) -> Result<u16, CompactError> {
-        Ok(compact_runtime::std_lib::narrow::<u16>(
+        Ok(midnight_compact_runtime::std_lib::narrow::<u16>(
             (x) as u128,
             65534_u128,
             "narrowing_fixture.compact line 56 char 10",

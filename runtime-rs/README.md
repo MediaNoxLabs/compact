@@ -1,7 +1,7 @@
-# `compact-runtime`
+# `midnight-compact-runtime`
 
 [![CI](https://github.com/LFDT-Minokawa/compact/actions/workflows/rust-runtime-test.yml/badge.svg?branch=codegen-rust)](https://github.com/LFDT-Minokawa/compact/actions/workflows/rust-runtime-test.yml)
-[![docs.rs](https://img.shields.io/docsrs/compact-runtime)](https://docs.rs/compact-runtime)
+[![docs.rs](https://img.shields.io/docsrs/midnight-compact-runtime)](https://docs.rs/midnight-compact-runtime)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](../LICENSE)
 
 Native Rust runtime for contracts emitted by `compactc --rust`. This
@@ -15,8 +15,8 @@ generated crate, implement `Witnesses<PS>`, drive circuits), read the
 
 ## What this crate provides
 
-- **A curated prelude** (`use compact_runtime::*;`). Generated `lib.rs`
-  files reference upstream Midnight types via `compact_runtime`'s
+- **A curated prelude** (`use midnight_compact_runtime::*;`). Generated `lib.rs`
+  files reference upstream Midnight types via `midnight_compact_runtime`'s
   re-exports — never directly. That keeps the codegen's `type-rust`
   mapping in [`compiler/rust-passes-types.ss`](../compiler/rust-passes-types.ss)
   short and stable, and lets us replace upstream symbols without
@@ -43,12 +43,12 @@ generated crate, implement `Witnesses<PS>`, drive circuits), read the
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  Generated contract (tests-e2e-rust/contracts/*/lib.rs)     │
-│  - Uses only items from compact_runtime's prelude.          │
+│  - Uses only items from midnight_compact_runtime's prelude.          │
 └────────────────────────┬────────────────────────────────────┘
                          │
                          ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  compact-runtime  (this crate)                              │
+│  midnight-compact-runtime  (this crate)                              │
 │  - Curates the prelude.                                     │
 │  - Adds the Compact-level facades (Maybe, Counter, …).      │
 │  - Wraps upstream so the codegen can stay schema-stable.    │
@@ -67,7 +67,7 @@ generated crate, implement `Witnesses<PS>`, drive circuits), read the
 ```
 
 The codegen never names an upstream type directly; it always goes
-through `compact_runtime::*`. When upstream renames or relocates a
+through `midnight_compact_runtime::*`. When upstream renames or relocates a
 type, we update the prelude here, not in every generated file.
 
 ## Module map
@@ -108,7 +108,7 @@ table.
 
 `COMPACT_RUNTIME_VERSION` is a compile-time string in
 [`src/version.rs`](./src/version.rs). Every generated `lib.rs` opens
-with `compact_runtime::check_runtime_version!("X.Y.Z");` so a mismatch
+with `midnight_compact_runtime::check_runtime_version!("X.Y.Z");` so a mismatch
 between the runtime crate and the codegen version surfaces as a
 build-time error rather than a runtime mystery.
 

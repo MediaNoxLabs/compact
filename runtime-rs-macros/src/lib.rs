@@ -14,7 +14,7 @@
 // limitations under the License.
 
 //
-// Procedural macros for compact-runtime.
+// Procedural macros for midnight-compact-runtime.
 
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;

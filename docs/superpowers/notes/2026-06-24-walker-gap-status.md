@@ -155,7 +155,7 @@ still has ~12 unique Rust compile errors, grouped:
   constructor body read from the local qctx (built from the K1 seed)
   instead of `&ctx.current_query_context` (which doesn't exist on
   ConstructorContext).
-- ~~**Bug-3**: `compact_runtime::CircuitContext::clone` trait bound
+- ~~**Bug-3**: `midnight_compact_runtime::CircuitContext::clone` trait bound
   not satisfied~~ **Closed 2026-06-24** ([1c66b32](../../../compiler/rust-passes-prelude.ss)):
   added `PS: Clone` to the `impl<PS, W> Contract<PS, W>` where-clause
   in `emit-contract-struct`. Upward-compatible.
@@ -194,7 +194,7 @@ still has ~12 unique Rust compile errors, grouped:
   added free helper functions `jubjub_point_field_repr` /
   `jubjub_point_from_field_repr` / `jubjub_point_field_size` /
   `jubjub_point_binary_repr` / `jubjub_point_binary_len` in
-  `compact_runtime`, plus a `problematic-jubjub-point?` predicate in
+  `midnight_compact_runtime`, plus a `problematic-jubjub-point?` predicate in
   codegen that routes `topaque "JubjubPoint"` struct fields through
   the helpers (mirroring the orphan-safe `bytes_from_field_repr`
   pattern used for `[u8; N]` / `Vec<u8>`). Encoding matches upstream's
@@ -217,7 +217,7 @@ still has ~12 unique Rust compile errors, grouped:
 - ~~`schnorr_verify` witness method missing — module-import / generic-
   resolution gap~~ **Closed 2026-06-24** (commits `8c0ec16` + `4536209`
   + `960fc26`): the imported `Schnorr_schnorrVerify<#n>` is now routed
-  to `compact_runtime::schnorr_verify_jubjub` (a circuit-shaped
+  to `midnight_compact_runtime::schnorr_verify_jubjub` (a circuit-shaped
   wrapper around an off-circuit Schnorr verifier vendored from
   midnight-ledger's `transient_crypto::schnorr`). Codegen uses a new
   `impure-call-target` helper to swap `self.<cname>(ctx, ...)` for the

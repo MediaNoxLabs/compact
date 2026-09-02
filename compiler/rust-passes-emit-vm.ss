@@ -273,7 +273,7 @@
                     ;; key indexing.
                     (cond
                       [runtime-key
-                       (format "            .idx(~a, ~a, vec![compact_runtime::Key::Value(compact_runtime::AlignedValue::from(~a))])\n"
+                       (format "            .idx(~a, ~a, vec![midnight_compact_runtime::Key::Value(midnight_compact_runtime::AlignedValue::from(~a))])\n"
                                (if (cdr cached-pair) "true" "false")
                                (if push-path "true" "false")
                                (vm-rust-expr-text runtime-key))]
@@ -467,7 +467,7 @@
                     ;; `.idx(cached, push, vec![Key::Value(AlignedValue::from(<expr>))])`.
                     (cond
                       [runtime-key
-                       (format "                .idx(~a, ~a, vec![compact_runtime::Key::Value(compact_runtime::AlignedValue::from(~a))])\n"
+                       (format "                .idx(~a, ~a, vec![midnight_compact_runtime::Key::Value(midnight_compact_runtime::AlignedValue::from(~a))])\n"
                                (if (cdr cached-pair) "true" "false")
                                (if push-path "true" "false")
                                (vm-rust-expr-text runtime-key))]

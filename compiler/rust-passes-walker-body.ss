@@ -430,7 +430,7 @@
                      [local-binds '()]     ; (var-name . rust-name)
                      [witness-emitted? #f] ; have we emitted any witness call?
                      [pre-lines (if gas-acc?
-                                    (list "        let mut __gas_acc = compact_runtime::RunningCost::default();\n")
+                                    (list "        let mut __gas_acc = midnight_compact_runtime::RunningCost::default();\n")
                                     '())] ; reverse-accumulated Rust lines
                      [writes '()])         ; reverse-accumulated tagged
                                            ; mutations: each entry is

@@ -89,7 +89,7 @@
                          ;; desugar-contract-calls.
                          ;;
                          ;; `transientCommit`'s declared Rust binding is
-                         ;; `compact_runtime::transient_commit`
+                         ;; `midnight_compact_runtime::transient_commit`
                          ;; (midnight-natives.ss), and the same helper is
                          ;; re-exported at the crate root, so the honest
                          ;; value is that binding rather than #f. The Rust
@@ -101,7 +101,7 @@
                          ;; is already correct instead of erroring as an
                          ;; unmapped native.
                          ,(make-native-entry "__compactRuntime.transientCommit"
-                                             "compact_runtime::transient_commit"
+                                             "midnight_compact_runtime::transient_commit"
                                              'circuit '(#f #f) '(#f #f #f))
                          ((argument (,value-vars ...) (ty (,aligns ...) (,prims ...)))
                           (argument (,(make-temp-id src 'rand))

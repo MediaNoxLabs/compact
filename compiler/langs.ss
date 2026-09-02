@@ -405,7 +405,7 @@
   (define-record-type native-entry
     (nongenerative)
     ;; `function`      — the TS-side binding string (e.g. "__compactRuntime.persistentHash").
-    ;; `rust-function` — the Rust-side binding string (e.g. "compact_runtime::persistent_hash"),
+    ;; `rust-function` — the Rust-side binding string (e.g. "midnight_compact_runtime::persistent_hash"),
     ;;                   or #f if not yet mapped. Used by rust-passes.ss when emitting native
     ;;                   call sites. See M3 plan task L2.
     (fields function rust-function class disclosure* maybe-type-param*))

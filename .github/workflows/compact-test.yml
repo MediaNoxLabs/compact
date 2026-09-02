@@ -11,6 +11,15 @@ on:
     # PRs to an external, release-cadence-driven value they don't touch.
     paths:
       - "tools/compact/**"
+      # `tools/compact` is a member of the ROOT workspace and inherits
+      # version / edition / rust-version from `[workspace.package]`, so its
+      # build depends on files outside its own directory. Without these, a
+      # change to the root manifest or lockfile that breaks this crate's
+      # dependency resolution does not trigger the job that would catch it —
+      # the breakage then surfaces on some later, unrelated contributor's PR,
+      # where it looks like their fault.
+      - "Cargo.toml"
+      - "Cargo.lock"
   workflow_dispatch:
 
 permissions: {}
@@ -51,7 +60,7 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('tools/compact/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
 
@@ -96,15 +105,15 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('tools/compact/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
 
       - name: Cache target directory
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
-          path: tools/compact/target
-          key: ${{ runner.os }}-target-${{ hashFiles('tools/compact/Cargo.lock') }}
+          path: target
+          key: ${{ runner.os }}-target-${{ hashFiles('Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-target-
 

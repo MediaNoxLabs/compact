@@ -9,6 +9,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _No changes yet._
 
+## [Toolchain 0.34.110, language 0.26.0, runtime 0.19.100] — two defects in compact-test.yml (2026-09-02)
+
+### Fixed
+
+- **The Cargo caches in `compact-test.yml` keyed on a file that does not
+  exist.** All three cache steps used
+  `hashFiles('tools/compact/Cargo.lock')`, and the target cache used
+  `path: tools/compact/target`. Neither path exists — `Cargo.lock` and
+  `target/` both live at the repository root, because `tools/compact` is a
+  workspace member rather than a standalone crate.
+
+  `hashFiles` returns an empty string when nothing matches, so the key was the
+  constant `<os>-cargo-`: it never invalidated when the lockfile changed, and
+  the target cache had nothing to save. Both now key on the root `Cargo.lock`,
+  and the target cache points at the root `target/`.
+
+- **The `paths:` filter could not catch workspace regressions.** It listed only
+  `tools/compact/**`, but that crate is a member of the root workspace and
+  inherits `version` / `edition` / `rust-version` from `[workspace.package]`,
+  so its build depends on files outside its own directory.
+
+  A change to the root manifest or lockfile that breaks this crate's dependency
+  resolution therefore did not trigger the job that would catch it — the
+  breakage surfaces later, on an unrelated contributor's PR, where it looks
+  like their fault. `Cargo.toml` and `Cargo.lock` are now in the filter.
+
+  This is not hypothetical: it is exactly how a rustls feature conflict
+  introduced by a root-workspace change went unnoticed here until it was
+  tracked down by hand.
+
 ## [Toolchain 0.34.109, language 0.26.0, runtime 0.19.100] — forward `nominal?` unconditionally (2026-09-02)
 
 ### Fixed

@@ -51,7 +51,16 @@
 
       (include "rust-passes-streaming.ss")
 
-      (include "rust-passes-emit.ss")
+      (include "rust-passes-emit-scaffold.ss")
+      (include "rust-passes-emit-structs.ss")
+      (include "rust-passes-emit-stmt-shapes.ss")
+      (include "rust-passes-emit-vm.ss")
+      (include "rust-passes-emit-impure.ss")
+      (include "rust-passes-emit-arith.ss")
+      (include "rust-passes-emit-expr.ss")
+      (include "rust-passes-emit-calls.ss")
+      (include "rust-passes-emit-pure.ss")
+      (include "rust-passes-emit-view.ss")
 
       (include "rust-passes-naming.ss"))
 

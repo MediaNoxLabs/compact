@@ -1067,24 +1067,34 @@
                       (unless (already-exported? src export-name info)
                         (set! exported-type*
                           (cons
-                            ;; F8 (fork): preserve the alias's `nominal?`
-                            ;; flag through the export so the Rust emitter
-                            ;; can tell `type Foo = Field;` (transparent)
-                            ;; from a nominal alias and emit a newtype
-                            ;; instead of collapsing to the underlying
-                            ;; type. Upstream passes `#f` unconditionally.
+                            ;; Forward the alias's `nominal?` flag rather than
+                            ;; the hardcoded `#f` this used to pass.
                             ;;
-                            ;; Gated to the Rust target: this mutates the
-                            ;; shared Lexpanded IR, and per ADR 0002 any
-                            ;; Rust-driven IR change must not perturb the
-                            ;; TS pipeline. `print-typescript` destructures
-                            ;; `nominal?` but discards it, and
-                            ;; `extract-contract-info` never walks
-                            ;; `export-typedef`, so no TS behaviour is known
-                            ;; to depend on it — but gating removes the
-                            ;; divergence rather than relying on that
-                            ;; audit staying true upstream.
-                            (let ([type (apply-type-alias src src^ (and (emit-rust) nominal?)
+                            ;; `nominal?` is in scope, bound by the enclosing
+                            ;; `Info-type-alias` pattern, and the other two
+                            ;; `apply-type-alias` call sites already forward
+                            ;; it. This one did not, which reads as an
+                            ;; oversight rather than a decision:
+                            ;; `apply-type-alias` puts the flag straight into
+                            ;; `(talias ,alias-src ,nominal? ...)`, and
+                            ;; `sametype?` opens its `talias` clause with
+                            ;; `(assert nominal1?)` — so a `#f` here makes the
+                            ;; IR assert a falsehood about the type's identity.
+                            ;;
+                            ;; It never fires today only because
+                            ;; `already-exported?` compares `Info`s rather than
+                            ;; types, so the mis-flagged node never reaches
+                            ;; `sametype?`. That is luck, not design.
+                            ;;
+                            ;; This was previously gated as
+                            ;; `(and (emit-rust) nominal?)`, on the theory that
+                            ;; changing shared IR might perturb the TypeScript
+                            ;; pipeline. Measured rather than assumed: with the
+                            ;; gate removed, TypeScript output is byte-identical
+                            ;; across all 37 contracts in the two `examples/`
+                            ;; trees. The gate was protecting against nothing,
+                            ;; and it obscured that this is a plain bug fix.
+                            (let ([type (apply-type-alias src src^ nominal?
                                           type-name type-param* type p^
                                           (map Info-free-tvar (map type-param->tvar-name type-param*)))]
                                   [tvar-name* (fold-right

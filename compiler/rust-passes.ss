@@ -40,7 +40,14 @@
       (include "rust-passes-prelude.ss")
       (include "rust-passes-decls.ss")
 
-      (include "rust-passes-walker.ss")
+      (include "rust-passes-walker-tables.ss")
+      (include "rust-passes-walker-ctor-expr.ss")
+      (include "rust-passes-walker-support.ss")
+      (include "rust-passes-walker-hoisting.ss")
+      (include "rust-passes-walker-body.ss")
+      (include "rust-passes-walker-stmt.ss")
+      (include "rust-passes-walker-branches.ss")
+      (include "rust-passes-walker-terminals.ss")
 
       (include "rust-passes-streaming.ss")
 

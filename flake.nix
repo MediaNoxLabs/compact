@@ -212,7 +212,7 @@
             NODE_PATH = "";
             buildInputs = [
               pkgs.nodejs
-              pkgs.nodePackages.typescript
+              pkgs.typescript
               chez
             ];
             checkPhase = "";
@@ -238,7 +238,7 @@
 
             buildInputs = [
               pkgs.nodejs
-              pkgs.nodePackages.typescript
+              pkgs.typescript
               packages.runtime.package
               packages.runtime.node-modules
               chez
@@ -431,11 +431,28 @@
             ];
           };
 
-          packages.compact-vscode-extension-node-modules = pkgs.mkYarnModules {
+          # NB: `mkYarnModules` (yarn2nix) was removed from nixpkgs (2026-04-25).
+          # Use the standard yarn v1 flow: fetchYarnDeps + yarnConfigHook.
+          packages.compact-vscode-extension-node-modules = pkgs.stdenv.mkDerivation {
             pname = "compact-vscode-extension-node-modules";
             version = vscode-extension-version;
-            packageJSON = ./editor-support/vsc/compact/package.json;
-            yarnLock = ./editor-support/vsc/compact/yarn.lock;
+            src = ./editor-support/vsc/compact;
+            yarnOfflineCache = pkgs.fetchYarnDeps {
+              yarnLock = ./editor-support/vsc/compact/yarn.lock;
+              hash = "sha256-Rdh9LGi1JxbTo4Zy3u7nDQih4m//39Sngeg+yeUnS9c=";
+            };
+            # NB: nodejs is needed here so that patchShebangs (invoked by
+            # yarnConfigHook) can rewrite `#!/usr/bin/env node` shebangs,
+            # which would otherwise break inside the build sandbox.
+            nativeBuildInputs = with pkgs; [
+              nodejs
+              yarn
+              yarnConfigHook
+            ];
+            installPhase = ''
+              mkdir -p $out/node_modules
+              cp -r node_modules/. $out/node_modules/
+            '';
           };
 
           packages.compact-vscode-extension =
@@ -473,10 +490,12 @@
                 cd ..
 
                 echo Run unit tests
+                export PATH="$PWD/node_modules/.bin:$PATH"
                 yarn run --offline test --ci --reporters=jest-silent-reporter --reporters=summary
               '';
 
             installPhase = ''
+              export PATH="$PWD/node_modules/.bin:$PATH"
               mkdir -p $out
               yarn build
               yarn vsce package --yarn -o $out

@@ -33,27 +33,35 @@
       # version from this url.
       url = "github:midnightntwrk/midnight-ledger/ledger-8.0.2"; # zkir-v2
       inputs.zkir.follows = "zkir";
+      # NB: follow our nixpkgs so the ledger stack's crate vendoring stops
+      # breaking on crates.io 403s whenever we bump nixpkgs (their own pin
+      # lags behind).
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     onchain-runtime-v3 = {
       # dependency for compact-runtime release
       # all notes for the zkir input applies to onchain-runtime input too.
       url = "github:midnightntwrk/midnight-ledger/ledger-8.0.2";
       inputs.zkir.follows = "zkir";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     zkir-wasm = {
       # dependency for test-center
       url = "github:midnightntwrk/midnight-ledger/ledger-8.0.2";
       inputs.zkir.follows = "zkir";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     zkir-v3 = {
       # zkir-v3 binary for v3 IR format
       url = "github:midnightntwrk/midnight-ledger/ambrona@zkirv3-typed-inputs"; # zkir-v3
       inputs.zkir.follows = "zkir";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     zkir-v3-wasm = {
       # zkir-v3-wasm for test-center v3 support
       url = "github:midnightntwrk/midnight-ledger/ambrona@zkirv3-typed-inputs";
       inputs.zkir.follows = "zkir";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     n2c.url = "github:nlewo/nix2container";
     chez-exe.url = "github:tkerber/chez-exe";
@@ -142,10 +150,14 @@
         dry-install = pretzel-js.mkPackage {
           pkgs = import nixpkgs {
             inherit system;
-            overlays = [ pretzel-js.overlay ];
+            overlays = [ node-pin pretzel-js.overlay ];
           };
           src = nix/dry-install;
         };
+        # Keep every pretzel-js package (runtime, test-center, dry-install)
+        # building with the Node LTS from .nvmrc, matching CI, instead of
+        # nixpkgs' default nodejs.
+        node-pin = final: prev: { nodejs = final.nodejs_22; };
       in
         rec {
           lib.pretzel-js = pretzel-js;
@@ -163,7 +175,7 @@
           in lib.pretzel-js.mkPackage {
             pkgs = import nixpkgs {
               inherit system;
-              overlays = [overlays.pretzel-js];
+              overlays = [ node-pin overlays.pretzel-js ];
             };
             #name = "compact-runtime";
             #version = runtime-version;
@@ -191,7 +203,7 @@
           packages.test-center = lib.pretzel-js.mkPackage {
             pkgs = import nixpkgs {
               inherit system;
-              overlays = [overlays.pretzel-js];
+              overlays = [ node-pin overlays.pretzel-js ];
             };
             src = ./test-center;
 

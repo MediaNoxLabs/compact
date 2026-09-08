@@ -47,9 +47,10 @@
 // entry that stops rejecting is a regression whether or not the emitted
 // code happens to compile.
 //
-// Like the byte-parity gate, this test never skips itself: a missing
+// Like the byte-parity gate, these tests never skip themselves: a missing
 // compiler is a hard failure, and callers that cannot supply one exclude
-// it by name (`-- --skip rust_backend_rejects`). See codegen_regression.rs.
+// them by name (`-- --skip rust_backend_`, which is why both are named with
+// that prefix). See codegen_regression.rs for the same arrangement.
 
 use std::path::{Path, PathBuf};
 use std::process::Command;

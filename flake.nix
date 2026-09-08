@@ -33,27 +33,35 @@
       # version from this url.
       url = "github:midnightntwrk/midnight-ledger/ledger-8.0.2"; # zkir-v2
       inputs.zkir.follows = "zkir";
+      # NB: follow our nixpkgs so the ledger stack's crate vendoring stops
+      # breaking on crates.io 403s whenever we bump nixpkgs (their own pin
+      # lags behind).
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     onchain-runtime-v3 = {
       # dependency for compact-runtime release
       # all notes for the zkir input applies to onchain-runtime input too.
       url = "github:midnightntwrk/midnight-ledger/ledger-8.0.2";
       inputs.zkir.follows = "zkir";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     zkir-wasm = {
       # dependency for test-center
       url = "github:midnightntwrk/midnight-ledger/ledger-8.0.2";
       inputs.zkir.follows = "zkir";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     zkir-v3 = {
       # zkir-v3 binary for v3 IR format
       url = "github:midnightntwrk/midnight-ledger/ambrona@zkirv3-typed-inputs"; # zkir-v3
       inputs.zkir.follows = "zkir";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     zkir-v3-wasm = {
       # zkir-v3-wasm for test-center v3 support
       url = "github:midnightntwrk/midnight-ledger/ambrona@zkirv3-typed-inputs";
       inputs.zkir.follows = "zkir";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     n2c.url = "github:nlewo/nix2container";
     chez-exe.url = "github:tkerber/chez-exe";
@@ -87,7 +95,10 @@
           # hack to get npmlock2nix working, by pretending we're using an old
           # node version
           nodejs-16_x = final.nodejs;
-          nodejs = final.nodejs_latest;
+          # NB: pin to the Node LTS from .nvmrc instead of nodejs_latest, so
+          # that nixpkgs bumps don't silently change the Node major used to
+          # build runtime.forPublish and the extension (CI uses Node 22).
+          nodejs = final.nodejs_22;
         });
         isDarwin = pkgs.lib.hasSuffix "-darwin" system;
         chez = if isDarwin then pkgs.chez.override {
@@ -139,10 +150,14 @@
         dry-install = pretzel-js.mkPackage {
           pkgs = import nixpkgs {
             inherit system;
-            overlays = [ pretzel-js.overlay ];
+            overlays = [ node-pin pretzel-js.overlay ];
           };
           src = nix/dry-install;
         };
+        # Keep every pretzel-js package (runtime, test-center, dry-install)
+        # building with the Node LTS from .nvmrc, matching CI, instead of
+        # nixpkgs' default nodejs.
+        node-pin = final: prev: { nodejs = final.nodejs_22; };
       in
         rec {
           lib.pretzel-js = pretzel-js;
@@ -160,7 +175,7 @@
           in lib.pretzel-js.mkPackage {
             pkgs = import nixpkgs {
               inherit system;
-              overlays = [overlays.pretzel-js];
+              overlays = [ node-pin overlays.pretzel-js ];
             };
             #name = "compact-runtime";
             #version = runtime-version;
@@ -188,7 +203,7 @@
           packages.test-center = lib.pretzel-js.mkPackage {
             pkgs = import nixpkgs {
               inherit system;
-              overlays = [overlays.pretzel-js];
+              overlays = [ node-pin overlays.pretzel-js ];
             };
             src = ./test-center;
 
@@ -212,7 +227,7 @@
             NODE_PATH = "";
             buildInputs = [
               pkgs.nodejs
-              pkgs.nodePackages.typescript
+              pkgs.typescript
               chez
             ];
             checkPhase = "";
@@ -238,7 +253,7 @@
 
             buildInputs = [
               pkgs.nodejs
-              pkgs.nodePackages.typescript
+              pkgs.typescript
               packages.runtime.package
               packages.runtime.node-modules
               chez
@@ -431,11 +446,37 @@
             ];
           };
 
-          packages.compact-vscode-extension-node-modules = pkgs.mkYarnModules {
+          # NB: `mkYarnModules` (yarn2nix) was removed from nixpkgs (2026-04-25).
+          # Use the standard yarn v1 flow: fetchYarnDeps + yarnConfigHook.
+          packages.compact-vscode-extension-node-modules = pkgs.stdenv.mkDerivation {
             pname = "compact-vscode-extension-node-modules";
             version = vscode-extension-version;
-            packageJSON = ./editor-support/vsc/compact/package.json;
-            yarnLock = ./editor-support/vsc/compact/yarn.lock;
+            # Only the manifest and lockfile are needed for the offline
+            # yarn install; using the full extension tree as src would
+            # invalidate the 800+ package cache on every source edit.
+            src = pkgs.runCommand "compact-vscode-extension-manifests" {} ''
+              mkdir -p $out
+              cp ${./editor-support/vsc/compact/package.json} $out/package.json
+              cp ${./editor-support/vsc/compact/yarn.lock} $out/yarn.lock
+            '';
+            yarnOfflineCache = pkgs.fetchYarnDeps {
+              yarnLock = ./editor-support/vsc/compact/yarn.lock;
+              hash = "sha256-Rdh9LGi1JxbTo4Zy3u7nDQih4m//39Sngeg+yeUnS9c=";
+            };
+            # NB: nodejs is needed here so that patchShebangs (invoked by
+            # yarnConfigHook) can rewrite `#!/usr/bin/env node` shebangs,
+            # which would otherwise break inside the build sandbox.
+            nativeBuildInputs = with pkgs; [
+              nodejs
+              yarn
+              yarnConfigHook
+            ];
+            installPhase = ''
+              runHook preInstall
+              mkdir -p $out
+              mv node_modules $out/node_modules
+              runHook postInstall
+            '';
           };
 
           packages.compact-vscode-extension =
@@ -473,10 +514,12 @@
                 cd ..
 
                 echo Run unit tests
+                export PATH="$PWD/node_modules/.bin:$PATH"
                 yarn run --offline test --ci --reporters=jest-silent-reporter --reporters=summary
               '';
 
             installPhase = ''
+              export PATH="$PWD/node_modules/.bin:$PATH"
               mkdir -p $out
               yarn build
               yarn vsce package --yarn -o $out

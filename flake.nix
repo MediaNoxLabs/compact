@@ -87,7 +87,10 @@
           # hack to get npmlock2nix working, by pretending we're using an old
           # node version
           nodejs-16_x = final.nodejs;
-          nodejs = final.nodejs_latest;
+          # NB: pin to the Node LTS from .nvmrc instead of nodejs_latest, so
+          # that nixpkgs bumps don't silently change the Node major used to
+          # build runtime.forPublish and the extension (CI uses Node 22).
+          nodejs = final.nodejs_22;
         });
         isDarwin = pkgs.lib.hasSuffix "-darwin" system;
         chez = if isDarwin then pkgs.chez.override {
@@ -436,7 +439,14 @@
           packages.compact-vscode-extension-node-modules = pkgs.stdenv.mkDerivation {
             pname = "compact-vscode-extension-node-modules";
             version = vscode-extension-version;
-            src = ./editor-support/vsc/compact;
+            # Only the manifest and lockfile are needed for the offline
+            # yarn install; using the full extension tree as src would
+            # invalidate the 800+ package cache on every source edit.
+            src = pkgs.runCommand "compact-vscode-extension-manifests" {} ''
+              mkdir -p $out
+              cp ${./editor-support/vsc/compact/package.json} $out/package.json
+              cp ${./editor-support/vsc/compact/yarn.lock} $out/yarn.lock
+            '';
             yarnOfflineCache = pkgs.fetchYarnDeps {
               yarnLock = ./editor-support/vsc/compact/yarn.lock;
               hash = "sha256-Rdh9LGi1JxbTo4Zy3u7nDQih4m//39Sngeg+yeUnS9c=";
@@ -450,8 +460,10 @@
               yarnConfigHook
             ];
             installPhase = ''
-              mkdir -p $out/node_modules
-              cp -r node_modules/. $out/node_modules/
+              runHook preInstall
+              mkdir -p $out
+              mv node_modules $out/node_modules
+              runHook postInstall
             '';
           };
 

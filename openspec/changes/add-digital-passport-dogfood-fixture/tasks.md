@@ -4,19 +4,19 @@ Prerequisite: `fix-ternary-expression-codegen` merged (rust target must compile 
 
 ## 1. Vendor the upstream tree
 
-- [ ] 1.1 Clone upstream at rev `cdeb860b` and copy `packages/midnight-verifiable-credential-digital-passport/src/` → `examples/dogfood/digital-passport-credential/src/` **verbatim** (upstream headers intact). Verify: `git diff --no-index` against the upstream clone shows zero diffs.
-- [ ] 1.2 Stage the core without pnpm: `curl -L $(npm view @midnight-ntwrk/credential-compact@0.1.0-rc3 dist.tarball) | tar xz`, copy `dist/credentials.compact` + `dist/credentials/` → `examples/dogfood/digital-passport-credential/core-compact-staging/` (15 files; mirrors `scripts/stage-core-compact.mjs`'s exports-map resolution). Verify: file count and byte-compare against the tarball.
-- [ ] 1.3 Write `examples/dogfood/digital-passport-credential/PROVENANCE.md`: upstream URL, rev `cdeb860b`, license (Apache-2.0), npm core package+version, staging procedure (incl. the no-pnpm variant), refresh policy (explicit manual re-sync; update rev in same commit), note on possible future neutralization. Verify: a reader can re-sync from PROVENANCE alone.
-- [ ] 1.4 Run `git status --ignored` over the vendored tree and confirm all files are tracked (`.gitignore` bare `dist`/`gen`/`out`/`artifacts` patterns can silently truncate). Rename any colliding segment and record it in PROVENANCE. Verify: `git ls-files examples/dogfood | wc -l` matches the source count.
+- [x] 1.1 Clone upstream at rev `cdeb860b` and copy `packages/midnight-verifiable-credential-digital-passport/src/` → `examples/dogfood/digital-passport-credential/src/` **verbatim** (upstream headers intact). Verify: `git diff --no-index` against the upstream clone shows zero diffs.
+- [x] 1.2 Stage the core without pnpm: `curl -L $(npm view @midnight-ntwrk/credential-compact@0.1.0-rc3 dist.tarball) | tar xz`, copy `dist/credentials.compact` + `dist/credentials/` → `examples/dogfood/digital-passport-credential/core-compact-staging/` (15 files; mirrors `scripts/stage-core-compact.mjs`'s exports-map resolution). Verify: file count and byte-compare against the tarball.
+- [x] 1.3 Write `examples/dogfood/digital-passport-credential/PROVENANCE.md`: upstream URL, rev `cdeb860b`, license (Apache-2.0), npm core package+version, staging procedure (incl. the no-pnpm variant), refresh policy (explicit manual re-sync; update rev in same commit), note on possible future neutralization. Verify: a reader can re-sync from PROVENANCE alone.
+- [x] 1.4 Run `git status --ignored` over the vendored tree and confirm all files are tracked (`.gitignore` bare `dist`/`gen`/`out`/`artifacts` patterns can silently truncate). Rename any colliding segment and record it in PROVENANCE. Verify: `git ls-files examples/dogfood | wc -l` matches the source count.
 
 ## 2. Compile smoke + header exclusion
 
-- [ ] 2.1 Add `excluded_directories` entry `dogfood` to `header_config.json`. Verify: `python add_headers.py --validate` passes with the vendored tree present.
-- [ ] 2.2 Local compile smoke both targets: `result/bin/compactc --target ts --skip-zk examples/dogfood/digital-passport-credential/src/digital-passport-credential.compact /tmp/out-ts/` and the rust equivalent. Verify: both exit 0 (rust requires change 1 landed).
+- [x] 2.1 Add `excluded_directories` entry `dogfood` to `header_config.json`. Verify: `python add_headers.py --validate` passes with the vendored tree present.
+- [x] 2.2 Local compile smoke both targets: `result/bin/compactc --target ts --skip-zk examples/dogfood/digital-passport-credential/src/digital-passport-credential.compact /tmp/out-ts/` and the rust equivalent. Verify: both exit 0 (rust requires change 1 landed).
 
 ## 3. Fixture crate + registration
 
-- [ ] 3.1 Generate: `result/bin/compactc --target rust --skip-zk examples/dogfood/digital-passport-credential/src/digital-passport-credential.compact tests-e2e-rust/contracts/digital-passport-credential/`. Verify: `lib.rs` (~3,509± lines) emitted, rustfmt-clean, zero `unimplemented!`/`todo!`.
+- [x] 3.1 Generate: `result/bin/compactc --target rust --skip-zk examples/dogfood/digital-passport-credential/src/digital-passport-credential.compact tests-e2e-rust/contracts/digital-passport-credential/`. Verify: `lib.rs` (~3,509± lines) emitted, rustfmt-clean, zero `unimplemented!`/`todo!`.
 - [ ] 3.2 Register: root `Cargo.toml` workspace member, `tests-e2e-rust/Cargo.toml` dev-dep, FIXTURES row `("dogfood/digital-passport-credential/src/digital-passport-credential.compact", "digital-passport-credential")`, updated `Cargo.lock` committed. Verify: `cargo build -p tests-e2e-rust --tests --locked` green.
 - [ ] 3.3 Byte-parity: `cargo test -p tests-e2e-rust rust_codegen_byte_parity` green (dogfood row regenerates byte-identically). Verify: full FIXTURES table green.
 

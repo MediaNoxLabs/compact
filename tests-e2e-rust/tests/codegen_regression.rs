@@ -136,6 +136,17 @@ const FIXTURES: &[(&str, &str)] = &[
     // lowering (underflow guards stay INSIDE their branch) alongside the
     // executing laziness gate in tests/ternary_cond_fixture.rs.
     ("ternary_cond_fixture.compact", "ternary-cond-fixture"),
+    // Dogfood fixture: the real third-party contract this toolchain exists
+    // to serve — upstream midnight-verifiable-credential-digital-passport
+    // @ cdeb860b, vendored verbatim under examples/dogfood/ (see that dir's
+    // PROVENANCE.md). First FIXTURES row with a nested source path; keeps
+    // the regression sweep proving the compiler still compiles + regenerates
+    // a production pure-circuit library byte-identically, not just synthetic
+    // fixtures. Executing gates: phase 2 (tests/digital_passport_credential.rs).
+    (
+        "dogfood/digital-passport-credential/src/digital-passport-credential.compact",
+        "digital-passport-credential",
+    ),
 ];
 
 /// Walks up from `start` looking for the repository root: the nearest

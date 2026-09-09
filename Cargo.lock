@@ -754,6 +754,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-contract-digital-passport-credential"
+version = "0.1.0"
+dependencies = [
+ "midnight-compact-runtime",
+]
+
+[[package]]
 name = "compact-contract-election"
 version = "0.1.0"
 dependencies = [
@@ -4805,6 +4812,7 @@ dependencies = [
  "compact-contract-bug11-fixture",
  "compact-contract-chunked-ledger-fixture",
  "compact-contract-cross-circuit-fixture",
+ "compact-contract-digital-passport-credential",
  "compact-contract-election",
  "compact-contract-fold-fixture",
  "compact-contract-for-iter-fixture",

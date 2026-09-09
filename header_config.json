@@ -51,6 +51,7 @@
     "target",
     "third_party",
     "dist",
+    "dogfood",
     "reports",
     "result",
     "out",

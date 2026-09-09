@@ -56,7 +56,7 @@ members = [
     "tests-e2e-rust/contracts/widening-arith-fixture",
     "tests-e2e-rust/contracts/ternary-cond-fixture",
     "tests-e2e-rust/contracts/mixed-width-operand-fixture",
-  "tests-e2e-rust/contracts/digital-passport-credential",
+    "tests-e2e-rust/contracts/digital-passport-credential",
 ]
 
 [workspace.dependencies]

@@ -17,24 +17,24 @@ Prerequisite: `fix-ternary-expression-codegen` merged (rust target must compile 
 ## 3. Fixture crate + registration
 
 - [x] 3.1 Generate: `result/bin/compactc --target rust --skip-zk examples/dogfood/digital-passport-credential/src/digital-passport-credential.compact tests-e2e-rust/contracts/digital-passport-credential/`. Verify: `lib.rs` (~3,509± lines) emitted, rustfmt-clean, zero `unimplemented!`/`todo!`.
-- [ ] 3.2 Register: root `Cargo.toml` workspace member, `tests-e2e-rust/Cargo.toml` dev-dep, FIXTURES row `("dogfood/digital-passport-credential/src/digital-passport-credential.compact", "digital-passport-credential")`, updated `Cargo.lock` committed. Verify: `cargo build -p tests-e2e-rust --tests --locked` green.
-- [ ] 3.3 Byte-parity: `cargo test -p tests-e2e-rust rust_codegen_byte_parity` green (dogfood row regenerates byte-identically). Verify: full FIXTURES table green.
+- [x] 3.2 Register: root `Cargo.toml` workspace member, `tests-e2e-rust/Cargo.toml` dev-dep, FIXTURES row `("dogfood/digital-passport-credential/src/digital-passport-credential.compact", "digital-passport-credential")`, updated `Cargo.lock` committed. Verify: `cargo build -p tests-e2e-rust --tests --locked` green.
+- [x] 3.3 Byte-parity: `cargo test -p tests-e2e-rust rust_codegen_byte_parity` green (dogfood row regenerates byte-identically). Verify: full FIXTURES table green.
 
 ## 4. CI wiring
 
-- [ ] 4.1 `rust-runtime-test.yml`: add clippy step `cargo clippy -p compact-contract-digital-passport-credential --all-targets --all-features -- -D warnings` to the pre-check allowlist (dev-deps are `--cap-lints allow`; nothing automatic covers the crate). Verify: step present; existing steps untouched.
-- [ ] 4.2 `build-compiler.yml` smoke step: add `nix develop .#compiler --command compactc --target ts --skip-zk examples/dogfood/… out/` and the rust-target twin. Verify: workflow YAML lints; codegen-only (no cargo on that lane).
+- [x] 4.1 `rust-runtime-test.yml`: add clippy step `cargo clippy -p compact-contract-digital-passport-credential --all-targets --all-features -- -D warnings` to the pre-check allowlist (dev-deps are `--cap-lints allow`; nothing automatic covers the crate). Verify: step present; existing steps untouched.
+- [x] 4.2 `build-compiler.yml` smoke step: add `nix develop .#compiler --command compactc --target ts --skip-zk examples/dogfood/… out/` and the rust-target twin. Verify: workflow YAML lints; codegen-only (no cargo on that lane).
 
 ## 5. Phase 2 — parity captures + executing test
 
-- [ ] 5.1 Author `tests-e2e-rust/fixtures/capture-digital-passport-credential.mjs` (Apache header) per the existing capture pattern: civil-date helpers (`assertCivilDateMatchesEpochDays`, `assertValidDigitalPassportAgePredicate` — include the ternary sites and assert-fail paths) + one issuance/presentation/verification round-trip, using upstream `testing/` utils (jubjub, credential fixtures) as construction reference. Verify: script runs, emits committed JSON.
-- [ ] 5.2 Write `tests-e2e-rust/tests/digital_passport_credential.rs` (Apache header) asserting Rust outcomes byte-equal the TS reference at each step, modeled on the closest large-fixture parity test. Verify: `cargo test -p tests-e2e-rust digital_passport` green.
-- [ ] 5.3 If a capture is disproportionately hard, shrink the protocol subset (never the helpers) and record the decision in the change notes. Verify: helper captures + at least one round-trip present.
+- [x] 5.1 Author `tests-e2e-rust/fixtures/capture-digital-passport-credential.mjs` (Apache header) per the existing capture pattern: civil-date helpers (`assertCivilDateMatchesEpochDays`, `assertValidDigitalPassportAgePredicate` — include the ternary sites and assert-fail paths) + one issuance/presentation/verification round-trip, using upstream `testing/` utils (jubjub, credential fixtures) as construction reference. Verify: script runs, emits committed JSON.
+- [x] 5.2 Write `tests-e2e-rust/tests/digital_passport_credential.rs` (Apache header) asserting Rust outcomes byte-equal the TS reference at each step, modeled on the closest large-fixture parity test. Verify: `cargo test -p tests-e2e-rust digital_passport` green.
+- [x] 5.3 If a capture is disproportionately hard, shrink the protocol subset (never the helpers) and record the decision in the change notes. Verify: helper captures + at least one round-trip present.
 
 ## 6. ADR, AGENT.md, version, changelog
 
-- [ ] 6.1 New ADR (next number after existing): dogfood enclave rationale, bounds (`examples/dogfood/` only), explicit supersession of `08decb1`'s stance for this enclave, pinning policy. Verify: cross-references ADR-0001 and commit `08decb1`.
-- [ ] 6.2 AGENT.md §1: document the `examples/dogfood/` third-party enclave category (one paragraph; exclusion + refresh pointer to PROVENANCE). Verify: a new contributor understands the category exists and why.
-- [ ] 6.3 Version bump 0.31.118 → 0.31.119 (renumbered from 0.31.117 → 0.31.118: `fix-mixed-width-operand-casts` owns 0.31.118) with full embed-site sweep (`compiler-version.ss`, `flake.nix`, `doc/ledger-adt.mdx` regen, grep old triple) + CHANGELOG entry (dogfood fixture vendoring + registration + CI). Verify: zero stale embeds; `changelog-check` satisfied.
-- [ ] 6.4 Full local gates before push: fmt, clippy (incl. new crate), `cargo test -p midnight-compact-runtime -p tests-e2e-rust`, `add_headers.py --validate`. Verify: all green under `nix develop`.
-- [ ] 6.5 Commit signed+DCO on `feature/add-digital-passport-dogfood-fixture` (cut after change 1 merges; merges into `digital-passport-patch`). Verify: `git log --show-signature` clean; vendored bytes unchanged by the commit (`git diff --stat` shows only moves/additions).
+- [x] 6.1 New ADR (next number after existing): dogfood enclave rationale, bounds (`examples/dogfood/` only), explicit supersession of `08decb1`'s stance for this enclave, pinning policy. Verify: cross-references ADR-0001 and commit `08decb1`.
+- [x] 6.2 AGENT.md §1: document the `examples/dogfood/` third-party enclave category (one paragraph; exclusion + refresh pointer to PROVENANCE). Verify: a new contributor understands the category exists and why.
+- [x] 6.3 Version bump 0.31.118 → 0.31.119 (renumbered from 0.31.117 → 0.31.118: `fix-mixed-width-operand-casts` owns 0.31.118) with full embed-site sweep (`compiler-version.ss`, `flake.nix`, `doc/ledger-adt.mdx` regen, grep old triple) + CHANGELOG entry (dogfood fixture vendoring + registration + CI). Verify: zero stale embeds; `changelog-check` satisfied.
+- [x] 6.4 Full local gates before push: fmt, clippy (incl. new crate), `cargo test -p midnight-compact-runtime -p tests-e2e-rust`, `add_headers.py --validate`. Verify: all green under `nix develop`.
+- [x] 6.5 Commit signed+DCO on `feature/add-digital-passport-dogfood-fixture` (cut after change 1 merges; merges into `digital-passport-patch`). Verify: `git log --show-signature` clean; vendored bytes unchanged by the commit (`git diff --stat` shows only moves/additions).

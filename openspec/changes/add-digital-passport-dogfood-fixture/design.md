@@ -52,3 +52,5 @@ Cut `feature/add-digital-passport-dogfood-fixture` from `feature/fix-ternary-exp
 ## Open Questions
 
 None blocking. Capture-subset tuning (exactly which protocol round-trip to pin) is decided during phase 2 against upstream's `testing/credential-fixtures.ts` and can shrink/grow without touching the spec's representative-subset contract.
+
+**Phase 2 outcome (recorded):** no shrink was needed — the full representative subset landed. One capture-design decision: `assertCivilDateMatchesEpochDays` is not exported by the contract (it is `pub(crate)` on the Rust side and an internal circuit-class method on the TS side), so its ternary sites and assert-fail paths are driven through the exported `assertValidDigitalPassportAgePredicate` — the helper's only call site and the same route upstream's own vitest suite takes; each civil-date assert surfaces verbatim through the predicate, so attribution and parity are preserved.

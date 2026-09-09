@@ -113,6 +113,18 @@ jobs:
       - name: Run Clippy on tests-e2e-rust
         run: cargo clippy -p tests-e2e-rust --all-targets --all-features -- -D warnings
 
+      # The fixture crates are workspace members but only ever consumed as
+      # dev-dependencies of tests-e2e-rust, and cargo builds dependency
+      # crates with `--cap-lints allow` — so unlike fmt above (which covers
+      # every member via --all), clippy never reaches them without an
+      # explicit -p step. The dogfood crate gets one because its ~6k-line
+      # emitter output comes from real third-party source
+      # (examples/dogfood/, see its PROVENANCE.md): a clippy regression
+      # against it is a codegen regression against upstream code, and no
+      # other step here would catch it.
+      - name: Run Clippy on compact-contract-digital-passport-credential
+        run: cargo clippy -p compact-contract-digital-passport-credential --all-targets --all-features -- -D warnings
+
   # Test matrix — runs the byte-parity suite on Linux and macOS to catch
   # platform-dependent encoding bugs.
   test:

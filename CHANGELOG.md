@@ -5,6 +5,55 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Toolchain 0.31.119, language 0.23.103, runtime 0.16.100] — digital-passport dogfood enclave (2026-09-10)
+
+### Added
+
+- **Bounded third-party dogfood enclave: `examples/dogfood/`** — the repo
+  again compiles real, named, production upstream contracts, as a deliberate,
+  documented exception to the corpus de-branding (commit `08decb1`) that
+  supersedes it for this directory only; see
+  [ADR 0003](docs/adr/0003-bounded-dogfood-enclave.md). First (and so far
+  only) tenant: `examples/dogfood/digital-passport-credential/`, the upstream
+  `midnight-verifiable-credential-digital-passport` package `src/` tree
+  vendored **verbatim** (upstream Apache-2.0 headers intact) at pinned
+  revision `cdeb860b`, plus a committed `core-compact-staging/` (the 15 npm
+  `@midnight-ntwrk/credential-compact@0.1.0-rc3` `dist/` files its relative
+  include needs) so the fixture is hermetic and CI is network-free.
+  `PROVENANCE.md` records upstream identity, license, byte-verification, and
+  the manual re-sync procedure; nothing under the enclave is ever locally
+  modified, and it is exempt from license-header validation via a single
+  `header_config.json` `excluded_directories` entry (`dogfood`). Rationale in
+  brief: the enclave's first landing already surfaced two genuine
+  rust-backend gaps that the entire neutral corpus passed through (ternary
+  sub-expressions, 0.31.117; mixed-width comparison operands, 0.31.118) —
+  synthetic fixtures cover shapes, not contracts we do not author.
+
+- **Dogfood fixture crate + full gate registration** — generated
+  `tests-e2e-rust/contracts/digital-passport-credential/`
+  (`compact-contract-digital-passport-credential`) is registered like any
+  first-class fixture: root workspace member, `tests-e2e-rust` dev-dependency
+  (so the build gate compiles it), and a `codegen_regression` FIXTURES row
+  (nested source path) so the committed crate is byte-parity-gated against
+  regeneration from the vendored source. Rust↔TS behavior parity is pinned
+  for a representative subset by a committed TS reference capture
+  (`fixtures/capture-digital-passport-credential.mjs` →
+  `digital-passport-credential-ts-state.json`: the civil-date helpers —
+  including every conditional-expression site and assert-fail path — and one
+  issuance/presentation/verification round-trip) and an executing test
+  (`tests/digital_passport_credential.rs`) asserting byte-equal outcomes at
+  each step. Upstream's own vitest suite and smoke-consumer are deliberately
+  not ported (different purpose, node ecosystem).
+
+- **CI wiring for the enclave** — `rust-runtime-test.yml` gains an explicit
+  `cargo clippy -p compact-contract-digital-passport-credential` step
+  (dev-dependency crates build `--cap-lints allow`, so nothing else in that
+  workflow lints the crate) and `build-compiler.yml`'s smoke step compiles
+  the dogfood entry on both targets (`--target ts` and `--target rust`, both
+  `--skip-zk`; codegen-only — building/linting the emitted crate stays on the
+  rust-runtime lane). Fixture/CI/docs-only release: no compiler behavior
+  change; all pre-existing fixtures regenerate byte-identically.
+
 ## [Toolchain 0.31.118, language 0.23.103, runtime 0.16.100]
 
 ### Fixed

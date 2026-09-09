@@ -5,6 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Toolchain 0.31.117, language 0.23.103, runtime 0.16.100]
+
+### Fixed
+
+- **`--target rust` rejected every conditional (ternary) expression used as a
+  sub-expression.** The shared rust expression renderer `expr-rust` had no
+  clause for `(if c e1 e2)`, so its catch-all raised a location-less
+  `expr-variant` that guarded callers swallowed into "no walker shape
+  matched" body errors — `pure-circuit-body-emission` in pure circuits,
+  `circuit-body-emission` in impure ones, and the bare `expr-variant` in
+  constructors, whose walkability gate `expr-supported?` was missing the same
+  arm. Only return-position ternaries compiled, because statement-position
+  conditionals are lifted and routed to the statement walkers.
+
+  The gap was not theoretical: `midnight-verifiable-credential-digital-passport`
+  failed with `pure-circuit-body-emission: no walker shape matched pure circuit
+  body` at 5 sites in 3 syntactic positions (const binding right-hand side,
+  assert argument, interior arithmetic operand) across all 3 body routes
+  (pure circuit, impure circuit, constructor). The TS backend compiled the
+  same contract, and `doc/rust-codegen-user-guide.md` already claimed ternary
+  support.
+
+  One clause in `expr-rust` (mirroring the TS clause) plus one recursive arm
+  in `expr-supported?` closes every position and route. Emission is a Rust
+  `if` expression, so evaluation stays lazy as the language spec requires
+  ("only one of e1 and e2 is evaluated"): a branch-local underflow guard
+  renders inside its own branch, so an untaken `c - 10` can never abort an
+  execution that the source would not.
+
+- New fixture `examples/ternary_cond_fixture.compact` (→
+  `tests-e2e-rust/contracts/ternary-cond-fixture/`, registered in
+  `codegen_regression`) pins the fix: const-RHS, assert-argument, arithmetic
+  operand, boolean-branch, nested, struct- and enum-valued, return-position,
+  impure-circuit and constructor ternaries. The executing test pins laziness
+  in both directions — `pick(9)` returns `Ok(9)` without tripping the `c - 10`
+  underflow assert, `pick(20)` returns `Ok(10)` — and byte parity against the
+  captured TS reference locks the emitted text.
+
 ## [Toolchain 0.31.116, language 0.23.103, runtime 0.16.100]
 
 ### Fixed

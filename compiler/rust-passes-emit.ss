@@ -1926,6 +1926,43 @@
            (format "(~a || ~a)"
                    (expr-rust expr1 native-id-ht)
                    (expr-rust expr2 native-id-ht))]
+          [(if ,src ,expr0 ,expr1 ,expr2)
+           ;; Conditional (ternary) expression in expression position
+           ;; (const RHS, assert argument, interior arithmetic operand,
+           ;; constructor binding — everywhere a general expression is
+           ;; allowed). Mirrors the TS clause in typescript-passes.ss's
+           ;; Expr pass (`c ? e1 : e2`); before this clause the `[else]`
+           ;; raised `expr-variant`, which guarded callers swallowed
+           ;; into "no walker shape matched" body errors (pure circuits
+           ;; via stmt-pure-body-rust, impure circuits via the
+           ;; body-walkable? gate, constructors via ctor-expr-rust's
+           ;; fall-through to here — so all three routes are fixed by
+           ;; this one clause).
+           ;;
+           ;; A Rust `if` expression evaluates lazily — only the taken
+           ;; branch runs — matching the language spec's requirement
+           ;; that a conditional evaluate e1 or e2, never both. Branch
+           ;; recursion goes through expr-rust itself so a branch-local
+           ;; `seq` guard block (the typer's underflow assert around
+           ;; trapping `-`) renders via the existing `seq` clause
+           ;; INSIDE its branch and can never trap an untaken branch —
+           ;; an eager select-style lowering would abort valid
+           ;; executions (e.g. `c = 9` under `c > 15 ? c - 10 : c`).
+           ;;
+           ;; The condition renders through cond-rust — the same
+           ;; routing the seq-guard assert and the statement-level if
+           ;; emitters use — so comparisons, user pure-circuit calls,
+           ;; and inlined circuit calls lower correctly. The witness /
+           ;; circuit id hashtables come from the dynamic parameters
+           ;; (populated by emit-pure-circuit), exactly as in
+           ;; seq-stmt-rust's assert clause.
+           (format "if ~a { ~a } else { ~a }"
+                   (cond-rust expr0 (current-var-substitution)
+                              native-id-ht
+                              (current-witness-id-ht)
+                              (current-circuit-id-ht))
+                   (expr-rust expr1 native-id-ht)
+                   (expr-rust expr2 native-id-ht))]
           [(elt-ref ,src ,expr ,elt-name ,nat)
            ;; F1.2: struct field access.
            (format "~a.~a"

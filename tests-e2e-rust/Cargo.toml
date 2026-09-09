@@ -95,3 +95,10 @@ compact-contract-schnorr-attest-fixture = { path = "contracts/schnorr-attest-fix
 # truncate (`wrapping_*` does not panic), so the mbits->rust-width ladder is
 # pinned by arithmetic rather than only by the generated text.
 compact-contract-widening-arith-fixture = { path = "contracts/widening-arith-fixture" }
+# Ternary executing gate: ternary_cond_fixture.rs runs the generated pure
+# circuits in both laziness directions (untaken branch must not trip the
+# underflow guard, taken branch must compute) and drives the impure and
+# constructor routes, pinning that a conditional lowers to a lazy Rust `if`
+# rather than an eager both-branches select (byte-parity alone cannot see
+# evaluation order).
+compact-contract-ternary-cond-fixture = { path = "contracts/ternary-cond-fixture" }

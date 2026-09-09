@@ -76,9 +76,9 @@ grep -rn "(rust-feature-error" compiler/rust-passes*.ss \
   | grep -v "define (rust-feature-error" | wc -l
 ```
 
-At the time of writing that is **33 call sites** across 4 passes
-(`rust-passes-emit.ss` 27, `rust-passes-walker.ss` 4,
-`rust-passes-helpers.ss` 1, `rust-passes-prelude.ss` 1), spanning **27
+At the time of writing that is **34 call sites** across 4 passes
+(`rust-passes-emit.ss` 28, `rust-passes-walker.ss` 4,
+`rust-passes-helpers.ss` 1, `rust-passes-prelude.ss` 1), spanning **28
 distinct kinds**.
 
 One caveat when reading a diagnostic: several emitters probe alternative

@@ -24,9 +24,9 @@ Both backends consume the same `Ltypescript` IR. The TS backend prints condition
    *Alternative rejected*: desugar ternaries to statement `if`s in a shared pass — no such pass exists for expression-position conditionals; return-position lifting is the only precedent and only handles top-level statements.
 
 2. **Emit a Rust `if` expression `if <cond> { <e1> } else { <e2> }`** — lazy by Rust semantics, matching the spec. Branch-local `seq` guard blocks (underflow asserts) render via the existing `seq` clause and stay inside their branch. Condition rendering recurses through the same condition routing the existing clauses use, preserving circuit/witness id routing.
-   *Alternative rejected*: eager both-branches + select (ZK-select style) — observably wrong: an untaken underflowing branch would abort valid executions (e.g. `c = 9` in `c > 5 ? c - 10 : c`).
+   *Alternative rejected*: eager both-branches + select (ZK-select style) — observably wrong: an untaken underflowing branch would abort valid executions (e.g. `c = 9` in `c > 15 ? c - 10 : c`).
 
-3. **Fixture `examples/ternary_cond_fixture.compact`** rather than extending `guarded_assert_arith_fixture.compact`: keeps each byte-parity crate attributable to one construct family, and the executing test needs the dedicated laziness oracle (`c = 9` must not trip; `c = 6` must compute) plus impure/constructor variants that don't belong in the arithmetic fixture.
+3. **Fixture `examples/ternary_cond_fixture.compact`** rather than extending `guarded_assert_arith_fixture.compact`: keeps each byte-parity crate attributable to one construct family, and the executing test needs the dedicated laziness oracle (`c = 9` must not trip; `c = 20` must compute) plus impure/constructor variants that don't belong in the arithmetic fixture.
 
 4. **Version 0.31.117, `### Fixed` CHANGELOG entry** — mirrors the G1 fix's shape (compiler-only bump; language 0.23.103 / runtime 0.16.100 unchanged).
 

@@ -1,0 +1,362 @@
+// This file is part of midnightntwrk/midnight-verifiable-credential-digital-passport.
+// Copyright (C) Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Digital-passport-family schema helpers and request normalization.
+// These helpers stay pure because they only derive schema-local roots and
+// verifier-request shapes; they never read ledger state.
+export pure circuit digitalPassportCredentialBodyRoot(
+                      credential: DigitalPassportCredential
+                      ): Bytes<32> {
+  return credentialBodyRoot(credential);
+}
+
+export pure circuit digitalPassportPresentationBodyRoot(
+                      presentation: DigitalPassportPresentation
+                      ): Bytes<32> {
+  return presentationBodyRoot(presentation);
+}
+
+export pure circuit digitalPassportPresentationRequestBodyRoot(
+                      request: DigitalPassportPresentationRequest
+                      ): Bytes<32> {
+  return persistentHash<DigitalPassportPresentationRequest>(request);
+}
+
+// =====================
+// Schema and verifier-request validation
+// =====================
+export pure circuit assertValidDigitalPassportSchemaRef(schema: SchemaRef): [] {
+  assert(schema.packageId == pad(32, "midnight:vc:digital-passport"),
+         "Digital-passport package identifier mismatch"
+         );
+  assert(schema.schemaId == pad(32, "digital-passport:v1"),
+         "Digital-passport schema identifier mismatch"
+         );
+  assert(schema.majorVersion == 1, "Digital-passport major version mismatch");
+  assert(schema.minorVersion == 0, "Digital-passport minor version mismatch");
+}
+
+export pure circuit assertValidDigitalPassportPresentationRequest(
+                      request: DigitalPassportPresentationRequest
+                      ): [] {
+  assert(request.version == 1, "Digital-passport request version mismatch");
+  assertValidDigitalPassportSchemaRef(request.schema);
+  assertValidVerificationMethodRef(request.issuerVerificationMethodRef);
+  if (request.requireAgeOverThreshold) {
+    assert(request.requestedAgeThresholdYears > 0, "Requested age threshold must be positive");
+  } else {
+    assert(request.requestedAgeThresholdYears == 0,
+           "Requested age threshold must be zero when disabled"
+           );
+  }
+  assert(request.verifierChallengeHash != pad(32, ""),
+         "Digital-passport verifier challenge must be set"
+         );
+}
+
+// NOTE: this normalization deliberately strips the transport envelope so the
+// credential-family request semantics stay reusable across protocol wrappers.
+// The derived request pins the digital-passport presentation-request format
+// version (1) instead of inheriting `envelope.version`: the transport-envelope
+// and request-format version domains evolve independently, so conflating them
+// would make request validity depend on an unrelated transport bump.
+export pure circuit digitalPassportPresentationRequestFromProtocol(
+                      request: DigitalPassportVerificationRequest
+                      ): DigitalPassportPresentationRequest {
+  return DigitalPassportPresentationRequest { version: 1,
+                                              schema: request.schema,
+                                              issuerVerificationMethodRef: request.issuerVerificationMethodRef,
+                                              requireFirstNameDisclosure: request.body.requireFirstNameDisclosure,
+                                              requireLastNameDisclosure: request.body.requireLastNameDisclosure,
+                                              requireAgeOverThreshold: request.body.requireAgeOverThreshold,
+                                              requestedAgeThresholdYears: request.body.requestedAgeThresholdYears,
+                                              requireDocumentNumberDisclosure: request.body.requireDocumentNumberDisclosure,
+                                              requireIssuingStateDisclosure: request.body.requireIssuingStateDisclosure,
+                                              verifierChallengeHash: request.verifierChallengeHash, };
+}
+
+// =====================
+// Credential and presentation validation
+// =====================
+export pure circuit assertValidDigitalPassportCredential(
+                      credential: DigitalPassportCredential,
+                      proof: Proof
+                      ): [] {
+  assertValidDigitalPassportSchemaRef(credential.schema);
+  assertValidCredentialEnvelope(credential, digitalPassportClaimRoot(credential.claimCommitments));
+  assertValidNoStatusBinding(credential.statusBinding);
+  assertValidExplicitHolderBinding(credential.holderBinding);
+  assertValidCredentialProof(credential, proof);
+}
+
+export pure circuit assertValidDigitalPassportPresentation(
+                      credential: DigitalPassportCredential,
+                      credentialProof: Proof,
+                      presentation: DigitalPassportPresentation,
+                      presentationProof: Proof
+                      ): [] {
+  assertValidDigitalPassportCredential(credential, credentialProof);
+  assertValidDigitalPassportSchemaRef(presentation.schema);
+  assertValidPresentationEnvelope(presentation);
+  DigitalPassportPresentation_assertMatchingCredentialPresentation(credential, presentation);
+  assertValidExplicitHolderBinding(presentation.holderBinding);
+  assertMatchingExplicitHolderBindings(credential.holderBinding, presentation.holderBinding);
+
+  if (presentation.disclosed.revealFirstName) {
+    assert(firstNameCommitment(
+             presentation.disclosed.firstNameValuePadded,
+             presentation.disclosed.firstNameOpening
+             ) ==
+           credential.claimCommitments.firstNameCommitment,
+           "Presentation first-name disclosure does not match the credential"
+           );
+  }
+  if (presentation.disclosed.revealLastName) {
+    assert(lastNameCommitment(
+             presentation.disclosed.lastNameValuePadded,
+             presentation.disclosed.lastNameOpening
+             ) ==
+           credential.claimCommitments.lastNameCommitment,
+           "Presentation last-name disclosure does not match the credential"
+           );
+  }
+  // Null-commitment guard: documentNumber may be absent (sentinel commitment).
+  // When the credential carries the null sentinel, the holder must not claim
+  // to disclose a documentNumber value. This check must precede the
+  // disclosure-verification check so that the descriptive null-commitment
+  // error is returned instead of a generic commitment-mismatch error.
+  if (credential.claimCommitments.documentNumberCommitment == documentNumberNullCommitment()) {
+    assert(!presentation.disclosed.revealDocumentNumber,
+           "Cannot reveal document-number when the credential has no document number (null commitment)"
+           );
+  }
+  if (presentation.disclosed.revealDocumentNumber) {
+    assert(documentNumberCommitment(
+             presentation.disclosed.documentNumberValue,
+             presentation.disclosed.documentNumberOpening
+             ) ==
+           credential.claimCommitments.documentNumberCommitment,
+           "Presentation document-number disclosure does not match the credential"
+           );
+  }
+  if (presentation.disclosed.revealIssuingState) {
+    assert(issuingStateCommitment(
+             presentation.disclosed.issuingStateValue,
+             presentation.disclosed.issuingStateOpening
+             ) ==
+           credential.claimCommitments.issuingStateCommitment,
+           "Presentation issuing-state disclosure does not match the credential"
+           );
+  }
+  if (presentation.disclosed.proveAgeOverThreshold) {
+    assert(presentation.disclosed.ageThresholdYears > 0, "Age threshold must be positive");
+  }
+
+  assertProofMatchesExplicitHolderBinding(presentation.holderBinding, presentationProof);
+  assertValidPresentationContextProof(
+    digitalPassportPresentationBodyRoot(presentation),
+    presentationProof
+    );
+}
+
+// TRUST BOUNDARY: `request` is verifier-supplied and may be stricter than the
+// holder expects. This helper only proves that the presentation satisfies the
+// declared request semantics; it does not authenticate who authored the
+// request outside the challenge and issuer-binding checks below.
+export pure circuit assertDigitalPassportPresentationSatisfiesRequest(
+                      credential: DigitalPassportCredential,
+                      request: DigitalPassportPresentationRequest,
+                      presentation: DigitalPassportPresentation,
+                      presentationProof: Proof
+                      ): [] {
+  assertValidDigitalPassportPresentationRequest(request);
+  assertValidDigitalPassportSchemaRef(presentation.schema);
+  assertMatchingSchemaRefs(request.schema, credential.schema);
+  assertMatchingSchemaRefs(request.schema, presentation.schema);
+  assert(request.issuerVerificationMethodRef.didContractAddress ==
+         credential.issuerVerificationMethodRef.didContractAddress,
+         "Presentation request issuer contract does not match the credential issuer"
+         );
+  assert(request.issuerVerificationMethodRef.methodId ==
+         credential.issuerVerificationMethodRef.methodId,
+         "Presentation request issuer method reference does not match the credential issuer"
+         );
+  assert(presentationProof.challengeHash == request.verifierChallengeHash,
+         "Presentation proof challenge does not match the request challenge"
+         );
+  if (request.requireFirstNameDisclosure) {
+    assert(presentation.disclosed.revealFirstName,
+           "Presentation request requires the first-name disclosure"
+           );
+  }
+  if (request.requireLastNameDisclosure) {
+    assert(presentation.disclosed.revealLastName,
+           "Presentation request requires the last-name disclosure"
+           );
+  }
+  if (request.requireAgeOverThreshold) {
+    assert(presentation.disclosed.proveAgeOverThreshold,
+           "Presentation request requires the age-over-threshold predicate"
+           );
+    assert(presentation.disclosed.ageThresholdYears == request.requestedAgeThresholdYears,
+           "Presentation age threshold does not match the request"
+           );
+  }
+  if (request.requireDocumentNumberDisclosure) {
+    assert(presentation.disclosed.revealDocumentNumber,
+           "Presentation request requires the document-number disclosure"
+           );
+  }
+  if (request.requireIssuingStateDisclosure) {
+    assert(presentation.disclosed.revealIssuingState,
+           "Presentation request requires the issuing-state disclosure"
+           );
+  }
+}
+
+// =====================
+// Predicate validation
+// =====================
+// Calendar decomposition of a day number, supplied as a verified witness.
+// Compact has no integer division, so the age predicate cannot derive civil
+// dates from day numbers inside the circuit; callers supply the decomposition
+// and the circuit verifies it by exact reconstruction below.
+export struct DigitalPassportCivilDate {
+  year: Uint<32>,
+  month: Uint<32>,
+  day: Uint<32>,
+  // floor(yearAdjusted / 4), floor(yearAdjusted / 100), and
+  // floor(yearAdjusted / 400) where yearAdjusted is the March-based year
+  // (year - 1 for January and February).
+  yearAdjustedQuotient4: Uint<32>,
+  yearAdjustedQuotient100: Uint<32>,
+  yearAdjustedQuotient400: Uint<32>,
+  // floor((153 * shiftedMonth + 2) / 5): the March-based day-of-year offset
+  // of the first day of the month.
+  marchBasedMonthDayOffset: Uint<32>,
+}
+
+// Verifies that a caller-supplied calendar decomposition is the unique civil
+// date of `epochDays` in the proleptic Gregorian calendar with day 0 =
+// 1970-01-01. Every quotient field is pinned by a q*d <= n < q*d + d range
+// check (multiplication only), the day is bounded by the true month length,
+// and the day number is re-derived exactly via days_from_civil, which is
+// injective on valid dates. A forged decomposition cannot pass all checks.
+pure circuit assertCivilDateMatchesEpochDays(
+                      date: DigitalPassportCivilDate,
+                      epochDays: Uint<32>
+                      ): [] {
+  assert(date.year >= 1970, "Civil date year must be at least 1970");
+  assert(date.month >= 1, "Civil date month must be at least 1");
+  assert(date.month <= 12, "Civil date month must be at most 12");
+  assert(date.day >= 1, "Civil date day must be at least 1");
+  // March-based year adjustment: the calendar leap cycle starts on March 1.
+  const yearAdjusted = date.month <= 2 ? date.year - 1 : date.year;
+  // Pin the Gregorian leap-cycle quotients of the March-based year.
+  assert(date.yearAdjustedQuotient4 * 4 <= yearAdjusted
+         && yearAdjusted < date.yearAdjustedQuotient4 * 4 + 4,
+         "Civil date quotient for 4 is invalid"
+         );
+  assert(date.yearAdjustedQuotient100 * 100 <= yearAdjusted
+         && yearAdjusted < date.yearAdjustedQuotient100 * 100 + 100,
+         "Civil date quotient for 100 is invalid"
+         );
+  assert(date.yearAdjustedQuotient400 * 400 <= yearAdjusted
+         && yearAdjusted < date.yearAdjustedQuotient400 * 400 + 400,
+         "Civil date quotient for 400 is invalid"
+         );
+  const remainder4 = yearAdjusted - date.yearAdjustedQuotient4 * 4;
+  const remainder100 = yearAdjusted - date.yearAdjustedQuotient100 * 100;
+  const remainder400 = yearAdjusted - date.yearAdjustedQuotient400 * 400;
+  // Leap status of the civil year. For March-onward dates the civil year is
+  // the adjusted year itself; for January and February it is the following
+  // year, so a zero civil-year remainder corresponds to a remainder of
+  // divisor - 1 here.
+  const isLeap = date.month >= 3
+    ? (remainder4 == 0 && remainder100 != 0) || remainder400 == 0
+    : (remainder4 == 3 && remainder100 != 99) || remainder400 == 399;
+  // Pin the March-based month day offset.
+  const shiftedMonth = date.month >= 3 ? date.month - 3 : date.month + 9;
+  const monthNumerator = 153 * shiftedMonth + 2;
+  assert(date.marchBasedMonthDayOffset * 5 <= monthNumerator
+         && monthNumerator < date.marchBasedMonthDayOffset * 5 + 5,
+         "Civil date month day offset is invalid"
+         );
+  // Bound the day by the Gregorian month length.
+  if (date.month == 1 || date.month == 3 || date.month == 5 || date.month == 7
+      || date.month == 8 || date.month == 10 || date.month == 12) {
+    assert(date.day <= 31, "Civil date day exceeds the 31-day month length");
+  } else {
+    if (date.month == 2) {
+      assert(isLeap ? date.day <= 29 : date.day <= 28,
+             "Civil date day exceeds the February month length"
+             );
+    } else {
+      assert(date.day <= 30, "Civil date day exceeds the 30-day month length");
+    }
+  }
+  // Re-derive the day number: days_from_civil with every quotient supplied by
+  // a range-checked witness field.
+  assert(epochDays == 365 * yearAdjusted
+         + date.yearAdjustedQuotient4
+         - date.yearAdjustedQuotient100
+         + date.yearAdjustedQuotient400
+         + date.marchBasedMonthDayOffset
+         + date.day
+         - 1
+         - 719468,
+         "Civil date does not match the day number"
+         );
+}
+
+// TRUST BOUNDARY: `currentDay` is caller-supplied policy input. Callers must
+// source it from a trustworthy time/calendar oracle when the age predicate is
+// used for real acceptance decisions. Day numbers follow the proleptic
+// Gregorian calendar with day 0 = 1970-01-01 (Unix epoch days); a holder born
+// on February 29 reaches each age threshold on March 1 of non-leap years.
+// Because Compact has no integer division, the caller also supplies the
+// calendar decomposition of each day number; the circuit rejects any
+// decomposition that does not exactly reconstruct its day number.
+export pure circuit assertValidDigitalPassportAgePredicate(
+                      credential: DigitalPassportCredential,
+                      presentation: DigitalPassportPresentation,
+                      currentDay: Uint<32>,
+                      dateOfBirthDays: Uint<32>,
+                      dateOfBirthOpening: Bytes<32>,
+                      currentDate: DigitalPassportCivilDate,
+                      dateOfBirthDate: DigitalPassportCivilDate
+                      ): [] {
+  assert(presentation.disclosed.proveAgeOverThreshold,
+         "Presentation must request the age-over-threshold predicate"
+         );
+  assert(dateOfBirthCommitment(dateOfBirthDays, dateOfBirthOpening) ==
+         credential.claimCommitments.dateOfBirthCommitment,
+         "Date-of-birth witness does not match credential commitment"
+         );
+  assert(currentDay >= dateOfBirthDays, "Current day must not precede the date-of-birth witness");
+  assertCivilDateMatchesEpochDays(currentDate, currentDay);
+  assertCivilDateMatchesEpochDays(dateOfBirthDate, dateOfBirthDays);
+  // Full calendar years elapsed: the age increments on the birth month/day
+  // each year, counting leap days, instead of every flat 365 days.
+  const beforeBirthdayThisYear =
+    currentDate.month < dateOfBirthDate.month
+    || (currentDate.month == dateOfBirthDate.month
+        && currentDate.day < dateOfBirthDate.day);
+  const ageInYears = currentDate.year - dateOfBirthDate.year
+                     - (beforeBirthdayThisYear ? 1 : 0);
+  assert(ageInYears >= presentation.disclosed.ageThresholdYears,
+         "Age predicate does not satisfy the requested threshold"
+         );
+}

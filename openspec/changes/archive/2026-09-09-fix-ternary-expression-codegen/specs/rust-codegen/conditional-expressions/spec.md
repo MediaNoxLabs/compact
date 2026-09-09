@@ -31,12 +31,12 @@ A contract that uses a conditional expression `c ? e1 : e2` anywhere a general e
 Generated Rust MUST evaluate a conditional expression exactly as the language specification requires: the condition is evaluated first and **only the selected branch** is evaluated. Branch-local trapping guards (e.g. the underflow assertion guarding unsigned subtraction) MUST be emitted inside the selected branch, so an untaken branch can never abort execution.
 
 #### Scenario: untaken branch must not trap
-- **WHEN** the executed circuit is `pick(c) { return c > 5 ? c - 10 : c; }` and it is invoked with `c = 9`
+- **WHEN** the executed circuit is `pick(c) { return c > 15 ? c - 10 : c; }` and it is invoked with `c = 9`
 - **THEN** the subtraction `c - 10` (which would underflow) is not evaluated and the call succeeds returning `9`
 
-#### Scenario: taken branch traps as specified
-- **WHEN** the same circuit is invoked with `c = 6`
-- **THEN** the taken branch's subtraction succeeds and the call returns a value computed from it
+#### Scenario: taken branch computes when selected
+- **WHEN** the same circuit is invoked with `c = 20`
+- **THEN** the taken branch's subtraction is evaluated and the call succeeds returning `10`
 
 ### Requirement: Typed branch values unify
 

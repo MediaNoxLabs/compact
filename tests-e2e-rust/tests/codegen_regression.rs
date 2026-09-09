@@ -128,6 +128,14 @@ const FIXTURES: &[(&str, &str)] = &[
     // overflow, yield a WRONG VALUE in code that still compiles.
     // Executing gate: tests/widening_arith_fixture.rs.
     ("widening_arith_fixture.compact", "widening-arith-fixture"),
+    // Ternary (conditional) expressions in every sub-expression position
+    // and body route: const RHS in pure/impure/constructor bodies, assert
+    // argument, interior arithmetic operand, boolean &&/|| branches,
+    // nested + struct-valued branches, enum-valued branches, and
+    // return position. Locks the lazy `if <cond> { e1 } else { e2 }`
+    // lowering (underflow guards stay INSIDE their branch) alongside the
+    // executing laziness gate in tests/ternary_cond_fixture.rs.
+    ("ternary_cond_fixture.compact", "ternary-cond-fixture"),
 ];
 
 /// Walks up from `start` looking for the repository root: the nearest

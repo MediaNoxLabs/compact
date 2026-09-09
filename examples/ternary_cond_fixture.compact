@@ -1,0 +1,152 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//  	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+//
+// Ternary fixture: conditional (ternary) expressions in every
+// sub-expression position and body route the rust backend's shared
+// expression renderer must handle.
+//
+// Before the fix, `expr-rust` (compiler/rust-passes-emit.ss) had no
+// clause for the `(if c e1 e2)` IR shape, and `expr-supported?`
+// (compiler/rust-passes-walker.ss) rejected any body containing one
+// before emission was even attempted. The TS backend compiled all of
+// these; only `--target rust` failed:
+//
+//   - const-RHS ternary in a PURE circuit bailed with
+//     `pure-circuit-body-emission: no walker shape matched pure
+//     circuit body` (the midnight-verifiable-credential-digital-passport
+//     failure),
+//   - the same shape in an IMPURE circuit failed the walkability gate
+//     (`circuit-body-emission`),
+//   - and in a CONSTRUCTOR it died with a location-less `expr-variant`.
+//
+// The lowering must also be LAZY per the language spec (only the
+// selected branch is evaluated): a Rust `if` expression, never an
+// eager evaluate-both-then-select. `pick` is the laziness oracle —
+// `c = 9` takes the else branch, so the underflowing `c - 10` in the
+// then branch must never be evaluated (an eager lowering would trap a
+// valid execution).
+//
+// Circuits, in increasing order of what they exercise:
+//   - `pick`: return-position ternary (worked before the fix via the
+//     statement-position if lifting — kept as a regression) whose
+//     then-branch carries a guarded `-`; THE laziness oracle.
+//   - `constPick`: const-RHS ternary in a pure circuit — the exact
+//     digital-passport failure shape; also pins the inverse oracle
+//     (c = 0 takes the guarded then branch and must trap).
+//   - `assertDay`: ternary as an assert argument (leap-day bound).
+//   - `decrement`: ternary as an interior arithmetic operand.
+//   - `andOrBranches`: `&&` / `||` expressions as branch values.
+//   - `chooseStruct`: NESTED ternary with struct-valued branches.
+//   - `chooseLabel`: enum-valued branches.
+//   - `recordPick`: a const ternary in an impure, ledger-writing
+//     circuit, with an assert so both Ok and Err sides execute. Its
+//     condition is a Boolean parameter and its assert uses `!=` on
+//     purpose: impure bodies route through the `expr-supported?`
+//     walkability gate, which (pre-existing, independent of ternaries)
+//     admits no ordering comparisons (`<`, `<=`, `>`, `>=`) and no
+//     `seq`-guarded subtraction in expression position — so the
+//     guarded `-` and the `c > 15` comparison stay in the pure and
+//     constructor routes, which do not gate through that predicate.
+//   - the constructor: the same const ternary as `pick`, written to the
+//     ledger so `initial_state()` (and the byte-parity reference) pins
+//     the constructor body route — including its guarded `-`.
+
+import CompactStandardLibrary;
+
+struct Choice {
+  low: Boolean;
+  value: Uint<64>;
+}
+
+enum Label {
+  hot,
+  cold,
+}
+
+export ledger lastPick: Uint<64>;
+export ledger picks: Counter;
+
+// Constructor route: the same const ternary as `pick`, written to the
+// ledger so the captured after-init state bytes pin it.
+constructor(start: Uint<64>) {
+  const initial = start > 15 ? start - 10 : start;
+  lastPick = disclose(initial);
+}
+
+// Laziness oracle + return-position regression. `c = 9` must return 9
+// WITHOUT evaluating `c - 10` (else branch taken); `c = 20` computes
+// the guarded subtraction and returns 10.
+export pure circuit pick(c: Uint<64>): Uint<64> {
+  return c > 15 ? c - 10 : c;
+}
+
+// Const-RHS ternary in a pure circuit — the digital-passport failure
+// shape. `c = 5` skips the guarded then branch; `c = 2` takes it; and
+// `c = 0` takes it and must TRIP the underflow guard (taken branch
+// traps), the inverse of pick's oracle.
+export pure circuit constPick(c: Uint<64>): Uint<64> {
+  const x = c <= 2 ? c - 1 : c;
+  return x;
+}
+
+// Ternary in an assert argument: which day bound applies depends on
+// the leap flag, and the assert must see the selected comparison only.
+export pure circuit assertDay(day: Uint<64>, isLeap: Boolean): [] {
+  assert(isLeap ? day <= 29 : day <= 28, "day out of range for the month");
+}
+
+// Ternary as an interior arithmetic operand.
+export pure circuit decrement(n: Uint<64>, flag: Boolean): Uint<64> {
+  return n - (flag ? 1 : 0);
+}
+
+// `&&` / `||` as branch values: both branches reduce to `b`, so any
+// eager-then-select lowering that evaluated the WRONG branch shape
+// still yields `b` — but the emitted `&&`/`||` operands are pinned by
+// the executing test.
+export pure circuit andOrBranches(a: Boolean, b: Boolean): Boolean {
+  return a ? (a && b) : (a || b);
+}
+
+// Nested ternary with struct-valued branches: the outer else and both
+// inner arms produce `Choice` values, so the generated Rust arms must
+// unify to one type.
+export pure circuit chooseStruct(c: Uint<64>): Choice {
+  return c > 15
+    ? (c > 30
+        ? Choice { low: false, value: c - 10 }
+        : Choice { low: false, value: c - 5 })
+    : Choice { low: true, value: c };
+}
+
+// Enum-valued branches.
+export pure circuit chooseLabel(c: Uint<64>): Label {
+  return c > 15 ? Label.hot : Label.cold;
+}
+
+// Impure route: a const ternary inside a ledger-writing circuit, with
+// an assert so both the Ok and Err(AssertionFailed) sides execute. The
+// Boolean condition, `!=` assert, and non-trapping branches are
+// deliberate: impure bodies gate through `expr-supported?`, which
+// (pre-existing, ternary or not) admits no ordering comparisons and no
+// expression-position `seq` guards — those live in the pure and
+// constructor routes instead.
+export circuit recordPick(c: Uint<64>, hot: Boolean): [] {
+  assert(c != 0, "pick input must be non-zero");
+  const picked = hot ? 10 : c;
+  lastPick.write(disclose(picked));
+  picks.increment(1);
+}

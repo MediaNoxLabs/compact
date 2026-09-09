@@ -314,7 +314,10 @@ pub mod pure_circuits {
 
     pub fn decrement(n: u64, flag: bool) -> Result<u64, CompactError> {
         let t = if flag { 1 } else { 0 };
-        compact_assert!((n >= t), "result of subtraction would be negative");
+        compact_assert!(
+            (n >= ((t) as u64)),
+            "result of subtraction would be negative"
+        );
         Ok(((n) as u64).wrapping_sub((t) as u64))
     }
 

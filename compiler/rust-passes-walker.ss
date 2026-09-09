@@ -204,13 +204,30 @@
       ;; renders `(quote 0)` as the bare Rust integer `0` — which then
       ;; fails to type-check against the `Fr` produced by the other
       ;; operand (e.g. a `jubjub_point_x(...) != 0` key-binding check).
-      ;; Non-Field types and non-literal operands
-      ;; render via ctor-expr-rust unchanged.
+      ;; Non-Field types and non-literal operands render via
+      ;; ctor-expr-rust unchanged.
+      ;;
+      ;; Mixed-width widening: when the operand carries the typer's
+      ;; safe-cast wrapper to a wider Uint range (the equality-operator
+      ;; analogue of the ordering fix in expr-rust's comparison
+      ;; clauses — see safecast-widening in rust-passes-emit.ss), the
+      ;; wrapper materialises as `(inner) as <wider>` so the operands
+      ;; meet at one minimal Rust width instead of failing cargo build
+      ;; with E0308.
       (define (coerce-cmp-operand-rust expr type local-binds
                                         native-id-ht witness-id-ht circuit-id-ht)
         (cond
           [(and (type-is-tfield? type) (literal-int-expr? expr))
            (format "Fr::from(~au64)" (literal-int-expr? expr))]
+          [(safecast-widening expr) =>
+           (lambda (w+e)
+             ;; The cast is parenthesised as a whole (`((x) as u32)`) —
+             ;; a cast operand can be followed by `<`, which Rust would
+             ;; otherwise read as generic arguments on the width type.
+             (format "((~a) as ~a)"
+                     (ctor-expr-rust (cdr w+e) local-binds
+                                     native-id-ht witness-id-ht circuit-id-ht)
+                     (car w+e)))]
           [else
            (ctor-expr-rust expr local-binds
                            native-id-ht witness-id-ht circuit-id-ht)]))
@@ -2088,6 +2105,21 @@
                      (caddr body-parts) (cadddr body-parts)
                      local-binds mode witness-emitted? (reverse pre-lines)
                      native-id-ht witness-id-ht circuit-id-ht)))]
+              [(const-decl-only? (car stmts))
+               ;; Declaration-only const — the forward declaration the
+               ;; typer emits when a const RHS needs its own temps lifted
+               ;; (`const diff = base - q * 4` lifts the range-widened
+               ;; product into `%t`, declared here and assigned inside the
+               ;; following const's RHS seq). Nothing to emit: the real
+               ;; binding renders via seq-stmt-rust's `(=)` clause inside
+               ;; that RHS. Without this clause the loop fell through to
+               ;; the [else], failed the public-ledger-write match, and
+               ;; the whole constructor body was unwalkable (a
+               ;; mixed-width guarded subtraction in a constructor hit
+               ;; exactly that). Mirrors the streaming walker's own
+               ;; const-decl-only skip.
+               (loop (cdr stmts) local-binds witness-emitted? pre-lines
+                     writes)]
               [(stmt->assert (car stmts)) =>
                (lambda (a)
                  (let* ([expr (car a)]

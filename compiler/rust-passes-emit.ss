@@ -587,6 +587,60 @@
                 (type-peel-tunsigned type^)]
                [else #f])))
 
+      ;; safecast-widening: at a binary-operation boundary the typer has
+      ;; already annotated exactly how wide each operand must be. When a
+      ;; comparison / equality operand's own type differs from the
+      ;; operation's joined type, `relational-operator` /
+      ;; `equality-operator` (analysis-passes.ss) wrap that operand in
+      ;; `(safe-cast <joined-type> <own-type> <expr>)`. The value-range
+      ;; typer produces such wrappers whenever minimal Rust widths mix:
+      ;; in `q * 4 <= y` (q, y: Uint<32>) the product ranges to
+      ;; Uint<0..17179869180> (u64), so `y` is wrapped with the u64
+      ;; range as the joined type. expr-rust's safe-cast clause peels the
+      ;; wrapper transparently — right for literal widening inside
+      ;; tuple/array literals (Rust infers the element type) but wrong
+      ;; here: peeled, the operands meet at different minimal Rust
+      ;; widths and the crate fails `cargo build` with E0308 (13 such
+      ;; errors in the digital-passport dogfood, all rooted in
+      ;; assertCivilDateMatchesEpochDays / the age predicate).
+      ;;
+      ;; Analyzes one operand: when the wrapper really does widen the
+      ;; operand's minimal Rust width (`uint-rust-width` of the two nats
+      ;; differs) it returns `(width . inner-expr)` so the caller renders
+      ;; `(inner) as <width>` — a lossless zero-extension, since the
+      ;; joined range contains the operand's range (that is what makes
+      ;; the cast safe). Returns #f — render unchanged — when there is no
+      ;; wrapper, either side is not a Uint (Field/Boolean/enum
+      ;; comparisons keep their existing rendering), the two widths
+      ;; already agree (byte-stability: a `Uint<0..256> <= Uint<0..65535>`
+      ;; site is u16 either way and compiles as-is), or the inner
+      ;; expression strips to a bare integer literal, which Rust infers
+      ;; at the other operand's width (casting it would only churn
+      ;; bytes at sites that already compile).
+      (define (safecast-widening expr)
+        (nanopass-case (Ltypescript Expression) expr
+          [(safe-cast ,src ,type ,type^ ,expr^)
+           (let ([target-nat (type-peel-tunsigned type)]
+                 [source-nat (type-peel-tunsigned type^)])
+             (cond
+               [(not (and target-nat source-nat)) #f]
+               [(string=? (uint-rust-width target-nat)
+                          (uint-rust-width source-nat))
+                #f]
+               [(literal-int-expr? expr^) #f]
+               [else (cons (uint-rust-width target-nat) expr^)]))]
+          [else #f]))
+
+      ;; comparison-operand-rust: render one operand of the ordering /
+      ;; equality comparisons in expr-rust, honouring the typer's
+      ;; widening annotation (see safecast-widening). The wider side of
+      ;; a mixed-width comparison carries no wrapper and renders at its
+      ;; own minimal width — range-widened arithmetic like `q * 4` keeps
+      ;; its u64 rendering; only the narrower side gains the lossless
+      ;; `as <wider>` cast where the operands meet. The `+ - *` routes
+      ;; need no counterpart: arith-binop-rust already casts BOTH
+      ;; operands to the result width derived from the node's mbits.
+
       ;; uniquify-rust-name: Prod-14 — Compact's frontend lowering produces
       ;; per-statement `const tmp = ...; <ledger> = tmp;` shapes, so a
       ;; constructor body like
@@ -1783,6 +1837,34 @@
              (rust-feature-error src 'arith-result-width
                "unsigned arithmetic with a ~a-bit result has no Rust lowering" mbits)])))
 
+      ;; widening-operand-rust: render one operand of the ordering /
+      ;; equality comparisons in expr-rust — and one branch of a
+      ;; conditional expression — honouring the typer's widening
+      ;; annotation (see safecast-widening). The wider side of a
+      ;; mixed-width operation carries no wrapper and renders at its
+      ;; own minimal width — range-widened arithmetic like `q * 4` keeps
+      ;; its u64 rendering; only the narrower side gains the lossless
+      ;; `as <wider>` cast where the widths must agree. The `+ - *`
+      ;; routes need no counterpart: arith-binop-rust already casts BOTH
+      ;; operands to the result width derived from the node's mbits.
+      ;;
+      ;; The cast is wrapped in its own parentheses — `((x) as u64)` —
+      ;; because a bare `x as u64 < y` does not parse: Rust reads the `<`
+      ;; as the start of generic arguments on `u64`. An `as` cast
+      ;; followed by `.` or `<=` happens to parse without them, but a
+      ;; comparison operand can be followed by any of `< <= > >=`.
+      ;;
+      ;; Closes over expr-rust (defined below), the same forward
+      ;; reference literal-int-expr? makes to expr-strip-cast.
+      (define (widening-operand-rust expr native-id-ht)
+        (cond
+          [(safecast-widening expr) =>
+           (lambda (w+e)
+             (format "((~a) as ~a)"
+                     (expr-rust (cdr w+e) native-id-ht)
+                     (car w+e)))]
+          [else (expr-rust expr native-id-ht)]))
+
       ;; expr-rust: emit a Rust expression string for an Ltypescript
       ;; Expression. I3b/1 covers the variants needed by tiny.compact's
       ;; public_key body — bytevector literal, var-ref, tuple (array
@@ -1910,9 +1992,11 @@
            ;; I3b/3: equality comparison. Parenthesised so it composes
            ;; safely inside larger expressions (e.g. inside a Rust assert
            ;; macro call without surrounding parens being implicit).
+           ;; Operands render via widening-operand-rust so a mixed-width
+           ;; operand's safe-cast wrapper materialises as `as <wider>`.
            (format "(~a == ~a)"
-                   (expr-rust expr1 native-id-ht)
-                   (expr-rust expr2 native-id-ht))]
+                   (widening-operand-rust expr1 native-id-ht)
+                   (widening-operand-rust expr2 native-id-ht))]
           [(not ,src ,expr)
            ;; F1.2: Boolean negation.
            (format "(!(~a))" (expr-rust expr native-id-ht))]
@@ -1956,13 +2040,23 @@
            ;; circuit id hashtables come from the dynamic parameters
            ;; (populated by emit-pure-circuit), exactly as in
            ;; seq-stmt-rust's assert clause.
+           ;;
+           ;; Branches render through widening-operand-rust: the typer
+           ;; joins a conditional's branches at the wider value range
+           ;; and safe-casts the narrower branch (e.g.
+           ;; `month >= 3 ? month - 3 : month + 9` — the else ranges past
+           ;; u32, so the then branch is wrapped to the u64 join).
+           ;; Peeled, the Rust if-expression arms mismatch (E0308 on the
+           ;; dogfood's shiftedMonth); materialised, both arms share the
+           ;; joined width. Same-type branches carry no wrapper and are
+           ;; byte-unchanged.
            (format "if ~a { ~a } else { ~a }"
                    (cond-rust expr0 (current-var-substitution)
                               native-id-ht
                               (current-witness-id-ht)
                               (current-circuit-id-ht))
-                   (expr-rust expr1 native-id-ht)
-                   (expr-rust expr2 native-id-ht))]
+                   (widening-operand-rust expr1 native-id-ht)
+                   (widening-operand-rust expr2 native-id-ht))]
           [(elt-ref ,src ,expr ,elt-name ,nat)
            ;; F1.2: struct field access.
            (format "~a.~a"
@@ -2102,31 +2196,35 @@
            ;; F1.3: inequality. Parenthesised so it composes safely inside
            ;; larger expressions (assert macro args, && operands). Mirrors
            ;; the `==` rendering; structs derive PartialEq/Eq so `!=` is
-           ;; structural for user types just as `==` is.
+           ;; structural for user types just as `==` is. Operands render
+           ;; via widening-operand-rust for mixed-width widening.
            (format "(~a != ~a)"
-                   (expr-rust expr1 native-id-ht)
-                   (expr-rust expr2 native-id-ht))]
+                   (widening-operand-rust expr1 native-id-ht)
+                   (widening-operand-rust expr2 native-id-ht))]
           [(< ,src ,bits ,expr1 ,expr2)
            ;; F1.3: ordering comparisons on Uint<N> (Rust unsigned ints).
-           ;; Operands render through expr-rust so downcast-unsigned /
-           ;; arithmetic / field-access lower correctly; the typer inserts
-           ;; downcast-unsigned around literals so both sides share the
-           ;; same Rust unsigned width (no i32/u32 mismatch).
+           ;; Operands render through widening-operand-rust so
+           ;; downcast-unsigned / arithmetic / field-access lower
+           ;; correctly AND a mixed-width operand's safe-cast wrapper
+           ;; (inserted by the typer's relational-operator when the two
+           ;; value ranges map to different minimal Rust widths) becomes
+           ;; an `as <wider>` cast at the boundary — `q * 4 <= y` meets
+           ;; at u64, not u64-vs-u32.
            (format "(~a < ~a)"
-                   (expr-rust expr1 native-id-ht)
-                   (expr-rust expr2 native-id-ht))]
+                   (widening-operand-rust expr1 native-id-ht)
+                   (widening-operand-rust expr2 native-id-ht))]
           [(<= ,src ,bits ,expr1 ,expr2)
            (format "(~a <= ~a)"
-                   (expr-rust expr1 native-id-ht)
-                   (expr-rust expr2 native-id-ht))]
+                   (widening-operand-rust expr1 native-id-ht)
+                   (widening-operand-rust expr2 native-id-ht))]
           [(> ,src ,bits ,expr1 ,expr2)
            (format "(~a > ~a)"
-                   (expr-rust expr1 native-id-ht)
-                   (expr-rust expr2 native-id-ht))]
+                   (widening-operand-rust expr1 native-id-ht)
+                   (widening-operand-rust expr2 native-id-ht))]
           [(>= ,src ,bits ,expr1 ,expr2)
            (format "(~a >= ~a)"
-                   (expr-rust expr1 native-id-ht)
-                   (expr-rust expr2 native-id-ht))]
+                   (widening-operand-rust expr1 native-id-ht)
+                   (widening-operand-rust expr2 native-id-ht))]
           [(seq ,src ,expr* ... ,expr)
            ;; F1.4: a guarded expression block. The Compact typer wraps
            ;; trapping unsigned arithmetic (e.g. `currentDay - dateOfBirthDays`

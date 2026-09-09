@@ -845,6 +845,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-contract-mixed-width-operand-fixture"
+version = "0.1.0"
+dependencies = [
+ "midnight-compact-runtime",
+]
+
+[[package]]
 name = "compact-contract-module-fixture"
 version = "0.1.0"
 dependencies = [
@@ -4825,6 +4832,7 @@ dependencies = [
  "compact-contract-map-fixture",
  "compact-contract-map-fn-fixture",
  "compact-contract-map-lambda-fixture",
+ "compact-contract-mixed-width-operand-fixture",
  "compact-contract-module-fixture",
  "compact-contract-nested-map-fixture",
  "compact-contract-pure-circuit-fixture",

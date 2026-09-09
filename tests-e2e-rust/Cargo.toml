@@ -108,3 +108,9 @@ compact-contract-digital-passport-credential = { path = "contracts/digital-passp
 # rather than an eager both-branches select (byte-parity alone cannot see
 # evaluation order).
 compact-contract-ternary-cond-fixture = { path = "contracts/ternary-cond-fixture" }
+# Mixed-width operand executing gate: mixed_width_operand_fixture.rs runs
+# each comparison operator and arithmetic route at values crossing the
+# 2^32 boundary, pinning that the emitter's widening cast zero-extends
+# (a truncating or wrongly-directed cast still compiles but yields wrong
+# values, so byte-parity alone cannot see the difference).
+compact-contract-mixed-width-operand-fixture = { path = "contracts/mixed-width-operand-fixture" }

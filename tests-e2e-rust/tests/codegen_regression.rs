@@ -136,6 +136,19 @@ const FIXTURES: &[(&str, &str)] = &[
     // lowering (underflow guards stay INSIDE their branch) alongside the
     // executing laziness gate in tests/ternary_cond_fixture.rs.
     ("ternary_cond_fixture.compact", "ternary-cond-fixture"),
+    // Mixed minimal-width operands: every comparison operator with one
+    // range-widened operand (a Uint<32> field times 4 ranges to u64),
+    // mixed-width + - * including the guarded-subtraction route, the
+    // digital-passport dogfood shape (narrow ternary join vs widened
+    // product inside a chained assert), cascading consts, an impure
+    // caller, and a constructor site. Locks safecast-widening /
+    // comparison-operand-rust (rust-passes-emit.ss) and the ctor-path
+    // twin in coerce-cmp-operand-rust (rust-passes-walker.ss) alongside
+    // the executing gate in tests/mixed_width_operand_fixture.rs.
+    (
+        "mixed_width_operand_fixture.compact",
+        "mixed-width-operand-fixture",
+    ),
     // Dogfood fixture: the real third-party contract this toolchain exists
     // to serve — upstream midnight-verifiable-credential-digital-passport
     // @ cdeb860b, vendored verbatim under examples/dogfood/ (see that dir's

@@ -34,7 +34,7 @@ Precedent is split: the did-05 fixture (`09263a9`) vendored `.compact` source un
 
 6. **Phase 2 captures as tasks within this change**, gated behind phase-1 landing: representative subset (helpers + one issuance/presentation/verification round-trip). Captures need TS-side Jubjub/Proof fixture construction — upstream's `testing/` utils show how; our `fixtures/capture-*.mjs` pattern shows the harness. If a capture proves disproportionately hard, record the blocker and shrink the subset — never weaken the helper captures (they pin the ternary laziness fix from the consumer side).
 
-7. **Own patch bump 0.31.118** with full embed-site sweep — `changelog-check.yml` requires CHANGELOG + compiler-version.ss in every PR diff; fixture-only releases have precedent (0.31.106 did.compact support).
+7. **Own patch bump 0.31.119** (renumbered from 0.31.118 — `fix-mixed-width-operand-casts` owns that bump) with full embed-site sweep — `changelog-check.yml` requires CHANGELOG + compiler-version.ss in every PR diff; fixture-only releases have precedent (0.31.106 did.compact support).
 
 ## Risks / Trade-offs
 

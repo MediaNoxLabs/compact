@@ -13,7 +13,7 @@ The compiler team needs standing proof that this toolchain builds the real, name
 - CI: new explicit clippy step for the crate in `rust-runtime-test.yml` (clippy is `-p`-allowlisted, not automatic); TS+rust codegen-only compile smoke of the dogfood entry added to `build-compiler.yml`'s smoke step; updated `Cargo.lock` committed (`--locked` gates).
 - Phase 2 (same change, later tasks): TS reference captures (`fixtures/capture-digital-passport-credential.mjs` → JSON — representative subset: civil-date helpers incl. all ternary sites and assert-fail paths, one issuance/presentation/verification round-trip) + executing parity test `tests/digital_passport_credential.rs`. Upstream's own vitest suite and smoke-consumer are **not** ported (different purpose, node ecosystem).
 - Short new ADR superseding `08decb1`'s de-branding for a clearly-bounded dogfood enclave, plus AGENT.md §1 update for the new category.
-- Version bump to 0.31.118 (own patch bump — `changelog-check.yml` requires CHANGELOG + compiler-version in the diff) + full embed-site sweep + CHANGELOG entry.
+- Version bump to 0.31.119 (own patch bump — `changelog-check.yml` requires CHANGELOG + compiler-version in the diff; renumbered from 0.31.118 because `fix-mixed-width-operand-casts` owns that bump) + full embed-site sweep + CHANGELOG entry.
 
 Depends on `fix-ternary-expression-codegen` (0.31.117) — the crate cannot be generated until the rust backend compiles the contract.
 
@@ -31,5 +31,5 @@ Depends on `fix-ternary-expression-codegen` (0.31.117) — the crate cannot be g
 
 - New vendored third-party tree under `examples/dogfood/` (license: Apache-2.0, upstream headers intact); `header_config.json` exclusion.
 - New fixture crate + registrations; `Cargo.lock`; two workflow files (`rust-runtime-test.yml`, `build-compiler.yml`).
-- New ADR; AGENT.md §1; CHANGELOG; version triple 0.31.117 → 0.31.118 across embed sites.
+- New ADR; AGENT.md §1; CHANGELOG; version triple 0.31.118 → 0.31.119 across embed sites.
 - Reverses (with explicit rationale, bounded to the enclave) the third-party-material stance of `08decb1` / ADR-0001's follow-up note.

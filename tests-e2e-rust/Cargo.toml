@@ -114,3 +114,14 @@ compact-contract-ternary-cond-fixture = { path = "contracts/ternary-cond-fixture
 # (a truncating or wrongly-directed cast still compiles but yields wrong
 # values, so byte-parity alone cannot see the difference).
 compact-contract-mixed-width-operand-fixture = { path = "contracts/mixed-width-operand-fixture" }
+# Field-return-tail fixture: examples/field_return_tail_fixture.compact's
+# FIXTURES gate is byte-compare only — it cannot see an uncompilable
+# emission. Listing the crate here pulls it into
+# `cargo build -p tests-e2e-rust --tests` (and the -p-scoped clippy steps)
+# so the emitted Fr::from/coercion shapes must actually type-check; workspace
+# membership alone does not do that (see the struct-collision comment above).
+compact-contract-field-return-tail-fixture = { path = "contracts/field-return-tail-fixture" }
+# Same wiring for the multi-pl-call fixture — the other workspace member
+# whose crate nothing else depends on; without this it too would only ever
+# be rustfmt-parsed in CI, never compiled.
+compact-contract-multi-pl-call-fixture = { path = "contracts/multi-pl-call-fixture" }

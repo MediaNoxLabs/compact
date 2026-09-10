@@ -70,7 +70,7 @@ where
     pub fn reset(&self, ctx: CircuitContext<PS>) -> Result<CircuitResults<PS, ()>, CompactError> {
         let ops = OpProgramVerify::<DefaultDB>::new()
             .push(false, new_cell(0u8))
-            .push(true, new_cell(0u64))
+            .push(true, new_cell((0u64) as u64))
             .ins(false, 1)
             .build();
 
@@ -102,7 +102,7 @@ where
         __gas_acc += _cr_1.gas_cost.clone();
         let ops = OpProgramVerify::<DefaultDB>::new()
             .push(false, new_cell(0u8))
-            .push(true, new_cell(v))
+            .push(true, new_cell((v) as u64))
             .ins(false, 1)
             .build();
 

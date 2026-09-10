@@ -3263,6 +3263,22 @@
                [bounded-uint-bytes
                 (and use-bounded-uint?
                      (guard (c [#t #f]) (tunsigned-byte-length dest-read-type)))]
+               ;; Plain-uint destinations: the value must hit the state at
+               ;; the FIELD's width, not whatever minimal width the value's
+               ;; own inferred type produced. `const picked = hot ? 10 : 20`
+               ;; infers Uint<8>, renders `if hot { 10u8 } else { 20u8 }`, and
+               ;; without this cast commits a 1-byte-aligned cell into a
+               ;; `lastPick: Uint<64>` where TS's field descriptor
+               ;; (CompactTypeUnsignedInteger(2^64-1, 8)) commits 8 bytes —
+               ;; same decoded value, divergent state bytes. Subtyping
+               ;; guarantees the value's width never exceeds the field's,
+               ;; so the cast is a lossless zero-extension (or a no-op).
+               [dest-uint-width
+                (and dest-read-type
+                     (not use-cell-array?)
+                     (not use-bounded-uint?)
+                     (let ([nat (type-peel-tunsigned dest-read-type)])
+                       (and nat (uint-rust-width nat))))]
                [cell-builder
                 (cond
                   [use-cell-array? "new_cell_array"]
@@ -3270,10 +3286,15 @@
                   [else "new_cell"])])
           (list
             (format "            .push(false, new_cell(~au8))\n" idx)
-            (if use-bounded-uint?
-                (format "            .push(true, ~a(~a as u128, ~a))\n"
-                        cell-builder rust-val bounded-uint-bytes)
-                (format "            .push(true, ~a(~a))\n" cell-builder rust-val))
+            (cond
+              [use-bounded-uint?
+               (format "            .push(true, ~a(~a as u128, ~a))\n"
+                       cell-builder rust-val bounded-uint-bytes)]
+              [dest-uint-width
+               (format "            .push(true, ~a((~a) as ~a))\n"
+                       cell-builder rust-val dest-uint-width)]
+              [else
+               (format "            .push(true, ~a(~a))\n" cell-builder rust-val)])
             "            .ins(false, 1)\n")))
 
       ;; A28: emit a mid-constructor flush of the pending cell-writes. Applies
@@ -3427,6 +3448,20 @@
                                  (and use-bounded-uint?
                                       (guard (c [#t #f])
                                         (tunsigned-byte-length dest-read-type)))]
+                                ;; Plain-uint destinations: keep the value
+                                ;; at the FIELD's width — see the parallel
+                                ;; comment in cell-write-op-lines (the
+                                ;; ternary-literal const written to a wider
+                                ;; Uint field must commit the field's
+                                ;; alignment, not the const's minimal one).
+                                [dest-uint-width
+                                 (and dest-read-type
+                                      (not use-cell-array?)
+                                      (not use-bounded-uint?)
+                                      (let ([nat
+                                            (type-peel-tunsigned
+                                              dest-read-type)])
+                                        (and nat (uint-rust-width nat))))]
                                 [cell-builder
                                  (cond
                                    [use-cell-array? "new_cell_array"]
@@ -3437,6 +3472,9 @@
                                    [use-bounded-uint?
                                     (format "            .push(true, ~a(~a as u128, ~a))\n"
                                             cell-builder rust-val bounded-uint-bytes)]
+                                   [dest-uint-width
+                                    (format "            .push(true, ~a((~a) as ~a))\n"
+                                            cell-builder rust-val dest-uint-width)]
                                    [else
                                     (format "            .push(true, ~a(~a))\n"
                                             cell-builder rust-val)])]

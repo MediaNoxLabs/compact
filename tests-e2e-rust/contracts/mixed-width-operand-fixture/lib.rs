@@ -74,7 +74,7 @@ where
         };
         let ops = OpProgramVerify::<DefaultDB>::new()
             .push(false, new_cell(0u8))
-            .push(true, new_cell(diff.clone()))
+            .push(true, new_cell((diff.clone()) as u32))
             .ins(false, 1)
             .build();
 

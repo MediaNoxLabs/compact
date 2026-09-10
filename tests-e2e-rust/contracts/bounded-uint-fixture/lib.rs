@@ -79,7 +79,7 @@ where
     ) -> Result<CircuitResults<PS, ()>, CompactError> {
         let ops = OpProgramVerify::<DefaultDB>::new()
             .push(false, new_cell(0u8))
-            .push(true, new_cell(v))
+            .push(true, new_cell((v) as u8))
             .ins(false, 1)
             .build();
 

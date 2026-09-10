@@ -121,6 +121,28 @@ export pure circuit constPick(c: Uint<64>): Uint<64> {
   return x;
 }
 
+// UNANNOTATED const with both-literal arms feeding the return — the
+// let*-lifted `(seq (= v <lit-if>) v)` route (typescript-passes lowers
+// the unannotated const + return as an expression-level let*). With the
+// let kept, the binding strands at its own minimal width with no
+// context to unify against and `Ok(x)` fails E0308 (or i32 overflows
+// for the big-literal twin below); the lowering inlines the literal-if
+// at the tail so the return context sizes the arms — byte-identical to
+// the no-const `pick` form. The executing test pins both arm values.
+export pure circuit literalPick(hot: Boolean): Uint<64> {
+  const picked = hot ? 10 : 20;
+  return picked;
+}
+
+// The big-literal twin: 5000000000 exceeds i32::MAX, so a bare arm
+// cannot even default to i32 — found by the dogfood review as a
+// regression where compactc exited 0 and rustc failed with `literal
+// out of range for 'i32'`.
+export pure circuit bigLiteralPick(hot: Boolean): Uint<64> {
+  const picked = hot ? 5000000000 : 0;
+  return picked;
+}
+
 // Ternary in an assert argument: which day bound applies depends on
 // the leap flag, and the assert must see the selected comparison only.
 export pure circuit assertDay(day: Uint<64>, isLeap: Boolean): [] {

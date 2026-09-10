@@ -5833,7 +5833,7 @@ pub mod pure_circuits {
                 }
             };
             {
-                let t_0 = if before_birthday_this_year { 1 } else { 0 };
+                let t_0 = if before_birthday_this_year { 1u8 } else { 0u8 };
                 {
                     compact_assert!(
                         (t >= ((t_0) as u32)),

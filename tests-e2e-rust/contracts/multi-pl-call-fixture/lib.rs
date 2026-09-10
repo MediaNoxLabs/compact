@@ -82,7 +82,7 @@ where
             .addi(tmp_0.clone() as u32)
             .ins(true, 1)
             .push(false, new_cell(2u8))
-            .push(true, new_cell(value))
+            .push(true, new_cell((value) as u64))
             .ins(false, 1)
             .build();
 

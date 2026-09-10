@@ -81,7 +81,7 @@ where
             )
             .ins(false, 1)
             .push(false, new_cell(2u8))
-            .push(true, new_cell(tmp_0.clone()))
+            .push(true, new_cell((tmp_0.clone()) as u64))
             .ins(false, 1)
             .build();
 

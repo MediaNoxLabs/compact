@@ -47,6 +47,28 @@ use midnight_serialize::tagged_serialize;
 use midnight_storage::storage::HashMap;
 use tests_e2e_rust::SmallFixtureTsReference;
 
+/// The ternary fixture's TS reference additionally carries an
+/// `afterRecordLiteralPick` snapshot (see capture-ternary-cond-fixture.mjs):
+/// the state after executing `recordLiteralPick(true)` from the post-init
+/// state on the TS driver. `SmallFixtureTsReference` models the shared
+/// afterInit-only shape, so parse the extended document locally.
+#[derive(serde::Deserialize)]
+struct TernaryTsReference {
+    #[serde(rename = "afterRecordLiteralPick")]
+    after_record_literal_pick: tests_e2e_rust::SmallFixtureStepSnapshot,
+}
+
+impl TernaryTsReference {
+    fn load() -> Self {
+        let raw = std::fs::read_to_string(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/fixtures/ternary-cond-fixture-ts-state.json"
+        ))
+        .expect("read ternary fixture json");
+        serde_json::from_str(&raw).expect("parse ternary fixture json")
+    }
+}
+
 /// Constructor argument used on BOTH sides of the byte-parity capture:
 /// 20 > 15, so the constructor's ternary takes its then branch and the
 /// guarded `start - 10` computes 10. The branch TEXT is byte-locked by
@@ -195,6 +217,27 @@ fn const_pick_takes_each_branch_and_traps_when_taken() {
             CompactError::AssertionFailed(ref m) if m == "result of subtraction would be negative"
         ),
         "expected the underflow guard to fire, got {err:?}"
+    );
+}
+
+/// The UNANNOTATED const + both-literal-arms + return route — the
+/// dogfood-review regression shapes. The lowering inlines the literal-if
+/// at the tail (`Ok(if hot { 10 } else { 20 })`, byte-identical to the
+/// no-const `pick` form) so the return context sizes the arms; a
+/// let-bound i32 default fails E0308 here, and the big-literal twin
+/// (`5000000000 > i32::MAX`) cannot even default. Pins both arm values
+/// of both circuits.
+#[test]
+fn literal_pick_const_routes_size_arms_from_the_return_context() {
+    assert_eq!(pure_circuits::literal_pick(true).expect("hot arm"), 10u64);
+    assert_eq!(pure_circuits::literal_pick(false).expect("cold arm"), 20u64);
+    assert_eq!(
+        pure_circuits::big_literal_pick(true).expect("big hot arm"),
+        5_000_000_000u64
+    );
+    assert_eq!(
+        pure_circuits::big_literal_pick(false).expect("big cold arm"),
+        0u64
     );
 }
 
@@ -399,6 +442,51 @@ fn record_literal_pick_commits_each_suffixed_arm() {
     let view = ledger(&after_cold.context.current_query_context.state);
     assert_eq!(view.last_pick().expect("last_pick"), 20);
     assert_eq!(view.picks().expect("picks"), 2);
+}
+
+/// The literal-arm WRITE path's byte-parity gate — the dogfood-review
+/// regression. `recordLiteralPick`'s const ternary arms are both small
+/// integer literals, so the binding's own inferred width is u8; without
+/// the destination-field coercion the Rust backend committed a
+/// 1-byte-aligned cell into `lastPick: Uint<64>` while the TS field
+/// descriptor (`CompactTypeUnsignedInteger(2^64-1, 8)`) commits 8 bytes —
+/// identical decoded values, divergent state bytes. The decoded-value
+/// test below cannot see that; this executes the same circuit from the
+/// same post-init state on both drivers and byte-compares the serialized
+/// envelopes, so the alignment divergence fails here.
+#[test]
+fn record_literal_pick_byte_parity() {
+    let ts_ref = TernaryTsReference::load();
+    let contract: Contract<(), NoWitnesses> = Contract::new(NoWitnesses);
+    let init = contract
+        .initial_state(ctor_ctx(), CAPTURE_START)
+        .expect("initial_state");
+
+    let after = contract
+        .record_literal_pick(
+            CircuitContext::new(init.current_contract_state.clone(), ()),
+            true,
+        )
+        .expect("record_literal_pick(true) must commit");
+
+    let envelope = make_envelope(after.context.current_query_context.state);
+    let mut buf = Vec::new();
+    tagged_serialize(&envelope, &mut buf).expect("tagged_serialize");
+
+    let ts_bytes = ts_ref.after_record_literal_pick.state_bytes();
+    assert_eq!(
+        buf,
+        ts_bytes,
+        "Rust post-recordLiteralPick state bytes differ from TS reference\
+\
+Rust ({} B): {}\
+\
+TS   ({} B): {}",
+        buf.len(),
+        hex::encode(&buf),
+        ts_bytes.len(),
+        hex::encode(&ts_bytes),
+    );
 }
 
 /// The Field-typed twin of the literal-arm regression: a Field-annotated

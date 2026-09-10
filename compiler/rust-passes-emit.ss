@@ -694,6 +694,18 @@
         (let ([n (literal-int-expr? rhs)])
           (and n (coerce-literal-int decl-type n))))
 
+      ;; literal-if-int-arms?: #t when `expr` strips (through safe-cast
+      ;; layers) to an `(if ...)` whose branches are BOTH integer
+      ;; literals — the shape whose bare rendering leaves Rust nothing to
+      ;; infer from (the whole if defaults to i32). Used to gate the
+      ;; degenerate-seq inline in expr-rust's seq clause.
+      (define (literal-if-int-arms? e)
+        (let ([e (expr-strip-cast e)])
+          (nanopass-case (Ltypescript Expression) e
+            [(if ,src ,expr0 ,expr1 ,expr2)
+             (and (literal-int-expr? expr1) (literal-int-expr? expr2))]
+            [else #f])))
+
       ;; coerce-literal-if-rhs-rendered: the ternary analogue of
       ;; coerce-literal-rhs-rendered. `const v = flag ? 10 : 20;` lowers to
       ;; a const-binding whose RHS is an `(if ...)` with integer-literal
@@ -716,6 +728,16 @@
       ;; guard: an unrenderable condition returns #f so the caller falls
       ;; back to the generic ctor-expr-rust rendering and its usual error
       ;; path.
+      ;;
+      ;; `decl-type` may be #f — the let*-lifted `(=)` route in
+      ;; seq-stmt-rust has no binder type (typescript-passes' Expr-level
+      ;; let* lowering drops it). The arms are then sized from the
+      ;; literals themselves: the minimal type covering both datums is
+      ;; max(n1, n2), never narrower than either arm and never the i32 a
+      ;; bare-literal if would default to (the `5000000000 : 0` overflow
+      ;; class). The USE-site width can still be wider — the degenerate
+      ;; `(seq (= v lit-if) v)` inline in expr-rust's seq clause handles
+      ;; the return-position case via context inference.
       (define (coerce-literal-if-rhs-rendered decl-type rhs local-binds
                                               native-id-ht witness-id-ht
                                               circuit-id-ht)
@@ -726,8 +748,13 @@
                    [n2 (literal-int-expr? expr2)])
                (if (not (and n1 n2))
                    #f
-                   (let ([a1 (coerce-literal-int decl-type n1)]
-                         [a2 (coerce-literal-int decl-type n2)])
+                   (let* ([join-width (uint-rust-width (max n1 n2))]
+                          [a1 (if decl-type
+                                (coerce-literal-int decl-type n1)
+                                (format "~a~a" n1 join-width))]
+                          [a2 (if decl-type
+                                (coerce-literal-int decl-type n2)
+                                (format "~a~a" n2 join-width))])
                      (and a1 a2
                           (guard (c [#t #f])
                             (format "if ~a { ~a } else { ~a }"
@@ -1930,6 +1957,31 @@
            (format "Fr::from(~au64)" (literal-int-expr? expr))]
           [else (widening-operand-rust expr native-id-ht)]))
 
+      ;; var-ref-is?: #t when `expr` strips (through safe-cast layers)
+      ;; down to a var-ref of exactly `target-id` (id-object identity).
+      ;; The pattern keeps the grammar's canonical `var-name` field name —
+      ;; nanopass-case rejects renamed id-typed fields.
+      (define (var-ref-is? expr target-id)
+        (let ([e (expr-strip-cast expr)])
+          (nanopass-case (Ltypescript Expression) e
+            [(var-ref ,src ,var-name) (eq? var-name target-id)]
+            [else #f])))
+
+      ;; seq-degenerate-inline-rhs: the let*-lifted const ternary shape
+      ;; `(seq (= v <literal-if>) v)` — a single `=` prefix whose RHS is
+      ;; an if with integer-literal arms, tailed by a bare use of exactly
+      ;; that binder — is a pure renaming, so return the RHS for inline
+      ;; rendering at the tail; #f for anything else. See the degenerate
+      ;; inline comment in expr-rust's seq clause.
+      (define (seq-degenerate-inline-rhs prefix* tail)
+        (and (fx= (length prefix*) 1)
+             (nanopass-case (Ltypescript Expression) (car prefix*)
+               [(= ,src ,var-name ,expr^)
+                (and (literal-if-int-arms? expr^)
+                     (var-ref-is? tail var-name)
+                     expr^)]
+               [else #f])))
+
       ;; expr-rust: emit a Rust expression string for an Ltypescript
       ;; Expression. I3b/1 covers the variants needed by tiny.compact's
       ;; public_key body — bytevector literal, var-ref, tuple (array
@@ -1990,10 +2042,19 @@
            ;; projection-aware renderer. The RHS renders under the
            ;; pre-binding substitution — a lifted temp never references
            ;; itself.
+           ;;
+           ;; A both-literal-arms `(if ...)` RHS is coerced with #f as
+           ;; the decl-type (the `(=)` node carries no binder type): the
+           ;; arms get sized from max(arm) so a `5000000000 : 0` join
+           ;; cannot default to i32 and overflow.
            (let* ([binds (current-var-substitution)]
                   [proposed (symbol->string (camel->snake (id-sym var-name)))]
                   [rust-name (uniquify-rust-name proposed binds)]
-                  [rhs (expr-rust expr^ native-id-ht)])
+                  [rhs (or (coerce-literal-if-rhs-rendered #f expr^ binds
+                                                           native-id-ht
+                                                           (current-witness-id-ht)
+                                                           (current-circuit-id-ht))
+                           (expr-rust expr^ native-id-ht))])
              (values (format "let ~a = ~a;" rust-name rhs)
                      (cons var-name rust-name)))]
           [else
@@ -2312,7 +2373,28 @@
            ;; stmt-pure-body-rust does at statement level. Prefixes that
            ;; bind nothing leave the substitution untouched, so bodies
            ;; without a nested assignment render exactly as before.
-           (let loop ([xs expr*] [binds (current-var-substitution)] [rev-pre '()])
+           ;;
+           ;; Degenerate inline: `(seq (= v <literal-if>) v)` — a single
+           ;; `=` prefix whose RHS is a both-integer-literal if, tailed by
+           ;; a bare use of exactly that binder — is a pure renaming, so
+           ;; the RHS renders INLINE at the tail and the let disappears:
+           ;; `Ok(if flag { 10 } else { 20 })` sizes its arms from the
+           ;; surrounding context, exactly like the no-const return
+           ;; position (`pick` in ternary_cond_fixture). Keeping the let
+           ;; would strand the literal-if at its own minimal width with
+           ;; no context to unify against (let-bound, then `Ok(x)` —
+           ;; E0308 whenever the context is wider, or i32 overflow when a
+           ;; literal exceeds i32::MAX); there is no binder type on the
+           ;; `(=)` node to size the arms from instead. Non-degenerate
+           ;; seqs and non-literal RHSes keep the let form unchanged.
+           (let ([inline-rhs (seq-degenerate-inline-rhs expr* expr)])
+             (cond
+               [(and inline-rhs
+                     (guard (c [#t #f])
+                       (expr-rust inline-rhs native-id-ht)))
+                => (lambda (s) s)]
+               [else
+                (let loop ([xs expr*] [binds (current-var-substitution)] [rev-pre '()])
              (cond
                [(pair? xs)
                 (let-values ([(line bind)
@@ -2340,7 +2422,7 @@
                            [else (join (cdr xs) (string-append acc (car xs) " "))]))
                        (if (pair? pre) " " "")
                        tail
-                       " }")]))]))]
+                       " }")]))]))]))]
           [else
            (rust-feature-error #f 'expr-variant
              "unhandled Expression variant in expr-rust")]))
@@ -2957,10 +3039,29 @@
                         ;; clause) uniquifies instead of shadowing this
                         ;; binder. The RHS can't reference var-name itself, so
                         ;; adding the entry early only affects name selection.
-                        [rhs-binds (cons (cons var-name rust-name) binds)])
+                        [rhs-binds (cons (cons var-name rust-name) binds)]
+                        ;; The binder's declared Type (annotated or inferred)
+                        ;; drives the literal coercions below — the same
+                        ;; Prod-9/Prod-13 machinery the impure/constructor
+                        ;; const route already applies (rust-passes-walker's
+                        ;; const clause). Without it, `const t = flag ?
+                        ;; 5000000000 : 0` renders a bare `if` whose arms
+                        ;; default to i32 (rustc: literal out of range), and
+                        ;; `const p: Field = c ? 1 : 0` renders bare integers
+                        ;; against Fr (E0308) — the pure route emitted Rust
+                        ;; that dies in rustc instead of refusing or
+                        ;; coercing.
+                        [decl-type (const-binding-decl-type (car xs))])
                    (let ([s (guard (c [#t #f])
                               (parameterize ([current-var-substitution rhs-binds])
-                                (expr-rust rhs native-id-ht)))])
+                                (or (and decl-type
+                                         (or (coerce-literal-rhs-rendered
+                                               decl-type rhs)
+                                             (coerce-literal-if-rhs-rendered
+                                               decl-type rhs binds
+                                               native-id-ht witness-id-ht
+                                               circuit-id-ht)))
+                                    (expr-rust rhs native-id-ht))))])
                      (cond
                        [(or (not s) (rendered-has-todo? s)) #f]
                        [else

@@ -180,7 +180,7 @@ where
         };
         let ops = OpProgramVerify::<DefaultDB>::new()
             .push(false, new_cell(0u8))
-            .push(true, new_cell(initial.clone()))
+            .push(true, new_cell((initial.clone()) as u64))
             .ins(false, 1)
             .build();
 
@@ -204,7 +204,7 @@ where
         let tmp = 1u16;
         let ops = OpProgramVerify::<DefaultDB>::new()
             .push(false, new_cell(0u8))
-            .push(true, new_cell(picked.clone()))
+            .push(true, new_cell((picked.clone()) as u64))
             .ins(false, 1)
             .idx_at_index(1u8, true)
             .addi(tmp.clone() as u32)
@@ -238,7 +238,7 @@ where
         let tmp_0 = 1u16;
         let ops = OpProgramVerify::<DefaultDB>::new()
             .push(false, new_cell(0u8))
-            .push(true, new_cell(tmp.clone()))
+            .push(true, new_cell((tmp.clone()) as u64))
             .ins(false, 1)
             .idx_at_index(1u8, true)
             .addi(tmp_0.clone() as u32)
@@ -433,6 +433,14 @@ pub mod pure_circuits {
         Ok(x)
     }
 
+    pub fn literal_pick(hot: bool) -> Result<u64, CompactError> {
+        Ok(if hot { 10 } else { 20 })
+    }
+
+    pub fn big_literal_pick(hot: bool) -> Result<u64, CompactError> {
+        Ok(if hot { 5000000000 } else { 0 })
+    }
+
     pub fn assert_day(day: u64, is_leap: bool) -> Result<(), CompactError> {
         compact_assert!(
             if is_leap { (day <= 29) } else { (day <= 28) },
@@ -442,7 +450,7 @@ pub mod pure_circuits {
     }
 
     pub fn decrement(n: u64, flag: bool) -> Result<u64, CompactError> {
-        let t = if flag { 1 } else { 0 };
+        let t = if flag { 1u8 } else { 0u8 };
         compact_assert!(
             (n >= ((t) as u64)),
             "result of subtraction would be negative"

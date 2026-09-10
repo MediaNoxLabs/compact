@@ -756,6 +756,58 @@
                   (list expr0 expr1 expr2))]
             [else #f])))
 
+      ;; field-if-join-uint?: #t when `expr` is a whole-expression
+      ;; `(safe-cast _ <tfield> <tunsigned> _)` wrapper — the typer's
+      ;; judgment that the wrapped expression (typically an `(if ...)`
+      ;; that joined at Uint, e.g. `flag ? u : 0` flowing into a Field
+      ;; slot) came from a Uint context, so under
+      ;; render-field-joined-if EVERY arm is Uint-valued and a
+      ;; NON-literal arm must materialise as Fr::from((arm) as u64) —
+      ;; the literal arm already renders Fr::from(<n>u64), and a bare
+      ;; Uint arm (a `u32`) opposite it fails E0308 at cargo build
+      ;; while compactc exits 0. A tfield→tfield wrapper (redundant
+      ;; Field cast) returns #f: the arms are then Field-typed and
+      ;; render bare as before.
+      (define (field-if-join-uint? expr)
+        (nanopass-case (Ltypescript Expression) expr
+          [(safe-cast ,src ,type ,type^ ,expr^)
+           (and (type-is-tfield? type)
+                (type-peel-tunsigned type^)
+                #t)]
+          [else #f]))
+
+      ;; if-expr?/seq-expr?: #t when `expr` strips (through safe-cast
+      ;; layers) down to an `(if ...)` / `(seq ...)` node. Used by
+      ;; tail-widening-expr? to keep compound tails on the expr-rust
+      ;; renderer: a return ternary's arms carry their own (arm-level)
+      ;; widening wrappers which expr-rust's if clause already
+      ;; materialises, and widening the WHOLE if or the seq-lifted const
+      ;; instead (`((if ...) as u64)`) churns bytes on shapes that
+      ;; compile bare (a both-literal `return hot ? 10 : 20;` sizes its
+      ;; arms by inference against the return type).
+      (define (if-expr? expr)
+        (nanopass-case (Ltypescript Expression) (expr-strip-cast expr)
+          [(if ,src ,expr0 ,expr1 ,expr2) #t]
+          [else #f]))
+      (define (seq-expr? expr)
+        (nanopass-case (Ltypescript Expression) (expr-strip-cast expr)
+          [(seq ,src ,expr* ... ,expr) #t]
+          [else #f]))
+
+      ;; tail-widening-expr?: #t when `expr` is a TOP-LEVEL safe-cast
+      ;; wrapper (not merely strips to one) around a non-compound inner —
+      ;; the statement-lifted branch-tail shapes (`(safe-cast u64 u8 s)',
+      ;; `(safe-cast tfield u32 u)') whose widening/Field wrapper the
+      ;; pure tail must materialise. Compound inners (whole ifs, the
+      ;; seq-lifted const) return #f: those keep the expr-rust render,
+      ;; whose own if clause / degenerate inline already sizes the arms.
+      (define (tail-widening-expr? expr)
+        (and (nanopass-case (Ltypescript Expression) expr
+               [(safe-cast ,src ,type ,type^ ,expr^) #t]
+               [else #f])
+             (not (if-expr? expr))
+             (not (seq-expr? expr))))
+
       ;; if-src: the src of an `(if ...)` expression (through safe-cast
       ;; layers), or #f. Reporting only — used to localize
       ;; rust-feature-error refusals for ternary operands; never consulted
@@ -782,17 +834,32 @@
       ;; Nested literal ternaries inside a NON-literal arm render via the
       ;; site renderer's own recursion (which applies this coercion again
       ;; where that route supports it).
-      (define (render-field-joined-if parts arm-renderer cond-renderer)
-        (let ([expr0 (car parts)]
+      (define (render-field-joined-if parts arm-renderer cond-renderer
+                                     . maybe-uint-join?)
+        (let ([uint-join? (and (not (null? maybe-uint-join?))
+                               (car maybe-uint-join?))]
+              [expr0 (car parts)]
               [expr1 (cadr parts)]
               [expr2 (caddr parts)])
           (guard (c [#t #f])
             (let ([arm
                     (lambda (e)
                       (let ([n (literal-int-expr? e)])
-                        (if n
-                            (format "Fr::from(~au64)" n)
-                            (arm-renderer e))))])
+                        (cond
+                          [n (format "Fr::from(~au64)" n)]
+                          ;; uint-join? (2026-09-11): the whole if carried
+                          ;; a tfield←tunsigned wrapper (field-if-join-uint?),
+                          ;; so the if joined at Uint and every NON-literal
+                          ;; arm is Uint-valued — a bare `u32` arm opposite
+                          ;; the literal arm's `Fr::from(0u64)` fails E0308
+                          ;; while compactc exits 0. The `as u64` cast is a
+                          ;; lossless zero-extension (the wrapper's tunsigned
+                          ;; source fits u64, else the caller's guard would
+                          ;; not have fired), and the arm-renderer's own
+                          ;; recursion keeps nested shapes' widening casts.
+                          [uint-join?
+                           (format "Fr::from((~a) as u64)" (arm-renderer e))]
+                          [else (arm-renderer e)])))])
               (format "if ~a { ~a } else { ~a }"
                       (cond-renderer expr0)
                       (arm expr1)
@@ -900,7 +967,12 @@
            (lambda (n) (format "Fr::from(~au64)" n))]
           [(literal-int-if? expr) =>
            (lambda (parts)
-             (render-field-joined-if parts arm-renderer cond-renderer))]
+             ;; The 4th arg propagates a whole-expression tfield←tunsigned
+             ;; wrapper on `expr` (a Uint-joined ternary flowing into the
+             ;; Field slot) so non-literal Uint arms materialise as
+             ;; Fr::from((arm) as u64) — see render-field-joined-if.
+             (render-field-joined-if parts arm-renderer cond-renderer
+                                     (field-if-join-uint? expr)))]
           [else #f]))
 
       ;; coerce-literal-if-rhs-rendered: the ternary analogue of
@@ -982,7 +1054,12 @@
                     arm-renderer
                     (lambda (e)
                       (cond-rust e local-binds native-id-ht
-                                 witness-id-ht circuit-id-ht)))]
+                                 witness-id-ht circuit-id-ht))
+                    ;; `const picked: Field = flag ? u : 0;` — the RHS
+                    ;; joins at Uint and the typer wraps the whole if
+                    ;; tfield←tunsigned: the non-literal `u` arm is
+                    ;; Uint-valued and needs Fr::from((u) as u64).
+                    (field-if-join-uint? rhs))]
                  [else #f]))]
             [else #f])))
 
@@ -1685,8 +1762,31 @@
                                witness-id-ht circuit-id-ht)))
                 (rust-feature-error (if-src expr) 'field-return-tail
                   "cannot render a Field return-tail value (unsupported ternary arm or condition)"))
-            (ctor-expr-rust expr local-binds
-                            native-id-ht witness-id-ht circuit-id-ht)))
+            (cond
+              ;; Field/Uint return types (2026-09-11): route NON-literal
+              ;; arms through coerce-cmp-operand-rust instead of bare
+              ;; ctor-expr-rust. A Field return with a Uint-valued arm
+              ;; (`return flag ? u : 0;` in an impure circuit — the typer
+              ;; wraps the arm tfield←tunsigned) previously emitted a bare
+              ;; `u32` opposite the literal arm's Fr (E0308, compactc exit
+              ;; 0); coerce-cmp-operand-rust materialises that wrapper as
+              ;; Fr::from((u) as u64), and its literal-int-if? interception
+              ;; (with the tfield return type as context) coerces nested
+              ;; ternaries. A Uint return with a widening wrapper
+              ;; (`return flag ? s : b;`, Uint<8>/Uint<64>) gets the same
+              ;; ((arm) as u64) materialisation the const-binding route
+              ;; already applies — the impure return tail was the one
+              ;; position that stripped it. Field/other-typed arms without
+              ;; wrappers fall through coerce-cmp-operand-rust's else to
+              ;; ctor-expr-rust, byte-identical to before.
+              [(or (type-is-tfield? return-type)
+                   (type-peel-tunsigned return-type))
+               (coerce-cmp-operand-rust expr return-type local-binds
+                                        native-id-ht witness-id-ht
+                                        circuit-id-ht)]
+              [else
+               (ctor-expr-rust expr local-binds
+                               native-id-ht witness-id-ht circuit-id-ht)])))
 
       ;; emit-if-expression-body: emit the I3b/4 body shape — a single
       ;; if-expression in statement position producing a non-unit value.
@@ -2196,7 +2296,13 @@
                    (lambda (e)
                      (cond-rust e (current-var-substitution) native-id-ht
                                 (current-witness-id-ht)
-                                (current-circuit-id-ht))))
+                                (current-circuit-id-ht)))
+                   ;; The whole operand can itself be tfield←tunsigned
+                   ;; wrapped (`f + (flag ? u : 0)` joins the if at Uint
+                   ;; and wraps it into the Field arithmetic): every
+                   ;; non-literal arm is then Uint-valued and must
+                   ;; materialise as Fr::from((arm) as u64).
+                   (field-if-join-uint? expr))
                  (rust-feature-error (if-src expr) 'field-ternary-arith-operand
                    "cannot render a Field-joined ternary arithmetic operand (unsupported arm or condition)")))]
           [(nanopass-case (Ltypescript Expression) expr
@@ -2281,6 +2387,33 @@
              (format "((~a) as ~a)"
                      (expr-rust (cdr w+e) native-id-ht)
                      (car w+e)))]
+          ;; Uint→Field safe-cast (2026-09-11): a tfield-TARGET wrapper on
+          ;; the operand (`(safe-cast _ <tfield> <tunsigned> inner)` — the
+          ;; typer's judgment that a Uint value flows into a Field slot,
+          ;; e.g. an arm of `flag ? u : w` whose Field join safe-casts the
+          ;; Uint arm in place) materialises as Fr::from((inner) as u64),
+          ;; mirroring field-arith-operand's bare-operand clause. Peeled
+          ;; (the old behaviour — expr-rust peels the layer), a `u32`
+          ;; renders bare opposite an `Fr` and the crate fails E0308 while
+          ;; compactc exits 0. Guarded to stay byte-identical where the
+          ;; wrapper doesn't occur, the inner is a bare literal (the
+          ;; interception sites own literal coercion; a Fr::from wrap here
+          ;; would only churn bytes), the inner is itself Field-typed
+          ;; (redundant wrapper — peels as before), or the source range
+          ;; exceeds u64 (no lossless cast — keep the old rendering rather
+          ;; than truncate).
+          [(nanopass-case (Ltypescript Expression) expr
+             [(safe-cast ,src ,type ,type^ ,expr^)
+              (and (type-is-tfield? type)
+                   (not (literal-int-expr? expr^))
+                   (not (expr-known-field? expr^ native-id-ht))
+                   (let ([nat (type-peel-tunsigned type^)])
+                     (and nat
+                          (<= nat 18446744073709551615)
+                          (format "Fr::from((~a) as u64)"
+                                  (expr-rust expr^ native-id-ht)))))]
+             [else #f])
+           => (lambda (s) s)]
           [else (expr-rust expr native-id-ht)]))
 
       ;; eq-operand-rust: render an ==/!= operand for the shared expression
@@ -2320,7 +2453,12 @@
                    (lambda (e)
                      (cond-rust e (current-var-substitution) native-id-ht
                                 (current-witness-id-ht)
-                                (current-circuit-id-ht))))
+                                (current-circuit-id-ht)))
+                   ;; `y == (flag ? u : 0)`: the whole ternary operand can
+                   ;; be tfield←tunsigned wrapped — the if joined at Uint
+                   ;; — so non-literal arms are Uint-valued and need
+                   ;; Fr::from((arm) as u64) like the literal arm.
+                   (field-if-join-uint? expr))
                  (rust-feature-error (if-src expr) 'field-ternary-cmp-operand
                    "cannot render a Field-joined ternary ==/!= operand (unsupported arm or condition)")))]
           [else (widening-operand-rust expr native-id-ht)]))
@@ -3502,7 +3640,13 @@
                                          (lambda (e)
                                            (cond-rust e local-binds native-id-ht
                                                       witness-id-ht
-                                                      circuit-id-ht))))))
+                                                      circuit-id-ht))
+                                         ;; `return flag ? u : 0;` (u: Uint) —
+                                         ;; the typer wraps the whole if
+                                         ;; tfield←tunsigned, so non-literal
+                                         ;; arms are Uint-valued and need
+                                         ;; Fr::from((arm) as u64).
+                                         (field-if-join-uint? expr)))))
                            ;; Degenerate-seq tail (2026-09-11):
                            ;; `const picked = flag ? 1 : 0; return picked;`
                            ;; lowers the whole return into
@@ -3524,29 +3668,72 @@
                            ;; failure fall through to the generic render
                            ;; (the surrounding guard makes a loud refusal
                            ;; here indistinguishable from #f).
+                           ;; MIXED arms (2026-09-11: `const picked =
+                           ;; flag ? u : 0; return picked;` with u Uint —
+                           ;; the if joins at Uint and the typer wraps the
+                           ;; RHS or the whole seq tfield←tunsigned):
+                           ;; seq-degenerate-inline-rhs deliberately requires
+                           ;; BOTH arms literal (the generic inline has no
+                           ;; type context), so these shapes fell through to
+                           ;; the block render whose `let picked: u32` then
+                           ;; failed E0308 in the Ok() position. Here the
+                           ;; Field return type IS the context: accept any
+                           ;; literal-int-if? RHS (both-literal shapes render
+                           ;; exactly as before — uint-join? never touches a
+                           ;; literal arm) and pass the wrapper judgment
+                           ;; through, from the RHS or from a wrapper around
+                           ;; the whole seq.
                            (and last?
                                 (type-is-tfield? (current-pure-return-type))
-                                (nanopass-case (Ltypescript Expression)
-                                  (expr-strip-cast expr)
-                                  [(seq ,src ,expr* ... ,expr)
-                                   (cond
-                                     [(seq-degenerate-inline-rhs expr* expr) =>
-                                      (lambda (rhs)
-                                        (let ([parts (literal-int-if? rhs)])
-                                          (and parts
-                                               (render-field-joined-if
-                                                 parts
-                                                 (lambda (e)
-                                                   (widening-operand-rust
-                                                     e native-id-ht))
-                                                 (lambda (e)
-                                                   (cond-rust
-                                                     e local-binds native-id-ht
-                                                     witness-id-ht
-                                                     circuit-id-ht))))))]
-                                     [else #f])]
-                                  [else #f]))
-                           (expr-rust expr native-id-ht)))])
+                                (let ([whole expr])
+                                  (nanopass-case (Ltypescript Expression)
+                                    (expr-strip-cast expr)
+                                    [(seq ,src ,expr* ... ,expr)
+                                     (and (fx= (length expr*) 1)
+                                          (nanopass-case (Ltypescript Expression)
+                                            (car expr*)
+                                            [(= ,src^ ,var-name ,expr^)
+                                             (and (var-ref-is? expr var-name)
+                                                  (literal-int-if? expr^)
+                                                  (render-field-joined-if
+                                                    (literal-int-if? expr^)
+                                                    (lambda (e)
+                                                      (widening-operand-rust
+                                                        e native-id-ht))
+                                                    (lambda (e)
+                                                      (cond-rust
+                                                        e local-binds native-id-ht
+                                                        witness-id-ht
+                                                        circuit-id-ht))
+                                                    (or (field-if-join-uint? whole)
+                                                        (field-if-join-uint? expr^))))]
+                                            [else #f]))]
+                                    [else #f])))
+                           ;; Uint-return tails (2026-09-11) route through
+                           ;; widening-operand-rust instead of expr-rust:
+                           ;; `return flag ? s : b;` (Uint<8> vs Uint<64>)
+                           ;; lowers the if to statement position with each
+                           ;; branch tail carrying the typer's widening
+                           ;; wrapper; expr-rust PEELS the layer (its Iter-7
+                           ;; clause) and emits a bare `s` opposite `b` —
+                           ;; E0308 at cargo build, compactc exit 0, the
+                           ;; exact gap the const-binding route had already
+                           ;; closed. widening-operand-rust materialises the
+                           ;; wrapper as ((s) as u64) (and, for Field
+                           ;; returns, a tfield-target wrapper as
+                           ;; Fr::from((arm) as u64)). Whole `(if ...)` tails
+                           ;; stay on expr-rust (if-expr?): their arms carry
+                           ;; their own arm-level wrappers the if clause
+                           ;; already materialises, and both-literal shapes
+                           ;; (`return hot ? 10 : 20;`) compile bare —
+                           ;; wrapping the whole if would only churn bytes.
+                           ;; Everything without a width-changing wrapper
+                           ;; renders byte-identically through the expr-rust
+                           ;; fallback. Non-tail statements keep the plain
+                           ;; renderer.
+                           (if (and last? (tail-widening-expr? expr))
+                               (widening-operand-rust expr native-id-ht)
+                               (expr-rust expr native-id-ht))))])
                 (cond
                   [(or (not s) (rendered-has-todo? s)) #f]
                   [last? s]

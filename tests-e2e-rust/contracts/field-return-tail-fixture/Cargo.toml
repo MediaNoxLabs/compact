@@ -18,7 +18,7 @@ name = "compact-contract-field-return-tail-fixture"
 version = "0.1.0"
 edition = "2021"
 publish = false
-description = "Generated Rust crate for examples/field-return-tail-fixture.compact, used by tests-e2e-rust byte-parity tests."
+description = "Generated Rust crate for examples/field_return_tail_fixture.compact, used by tests-e2e-rust byte-parity tests."
 
 [lib]
 name = "compact_contract_field_return_tail_fixture"

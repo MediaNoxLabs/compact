@@ -32,6 +32,9 @@
 // impurity the circuit auto-purifies onto the pure route (whose tail
 // already coerced) and the bug vanishes.
 //
+// 2026-09-11 extension: Uint-arm joins in Field contexts (and their
+// Uint-return mixed-width twins) — see the section comment below.
+//
 // Circuits, in increasing order of what they exercise:
 //   - `pickCall`: I3b/4 tail with a pure-circuit call arm + literal arm
 //     — the canonical failure shape (`pure_circuits::idf(y)?` opposite
@@ -77,4 +80,94 @@ export circuit pickChain(c: Boolean, y: Field): Field {
 
 export pure circuit pickPure(c: Boolean, y: Field): Field {
   return c ? idf(y) : 0;
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Uint-arm joins (2026-09-11). A Uint-valued ternary arm in a Field
+// context — opposite a literal arm, a Field arm, or feeding Field
+// arithmetic / == / the return tail — used to emit a bare Rust integer
+// (`u32`) that never unifies with `Fr` (E0308 at `cargo build`, compactc
+// exit 0), across every route: pure and impure return tails, the
+// seq-lifted unannotated const, the annotated const, the no-literal
+// `u : y` join, the `==` operand, Field arithmetic, and the assert
+// route. The typer's safe-cast annotations carry the Uint→Field
+// judgment (whole-if, arm-level, or seq-level); the renderers now
+// materialise it as `Fr::from((arm) as u64)` (a lossless zero-extension
+// — the source range fits u64).
+//
+// Uint-return tails follow the same pattern: a mixed-width ternary
+// (`Uint<8> : Uint<64>`) in return position used to strip the typer's
+// widening wrapper and emit `s` (u8) opposite `b` (u64) — E0308 on the
+// impure route AND the pure statement-lifted route, while the identical
+// value through a const binding correctly got `((s) as u64)`. The
+// ledger read in each impure condition stays load-bearing (without it
+// the circuit auto-purifies onto the pure route).
+// ─────────────────────────────────────────────────────────────────────
+
+export ledger q: Uint<64>;
+
+// I3b/4 impure tail, Uint arm + literal arm: the typer wraps the arm
+// tfield←tunsigned; must emit Fr::from((u) as u64), not a bare `u32`.
+export circuit pickUintArm(c: Boolean, y: Field, u: Uint<32>): Field {
+  return (f.read() != y) ? u : 0;
+}
+
+// I3b/4 impure tail, Uint arm vs Field arm (no literal): the Field join
+// safe-casts the Uint arm in place.
+export circuit pickUintVsField(c: Boolean, y: Field, u: Uint<32>): Field {
+  return (f.read() != y) ? u : y;
+}
+
+// Pure tail: the typer wraps the whole ternary tfield←tunsigned.
+export pure circuit pickUintArmPure(c: Boolean, u: Uint<32>): Field {
+  return c ? u : 0;
+}
+
+// Pure tail, no-literal join: Uint arm against a Field formal.
+export pure circuit pickUintVsFieldPure(c: Boolean, y: Field, u: Uint<32>): Field {
+  return c ? u : y;
+}
+
+// Unannotated const RHS, lifted to `(seq (= picked <if>) picked)`: the
+// binding joins at Uint and the seq feeds the Field return — the
+// degenerate-seq inline requires both arms literal, so this shape needs
+// the Field return type threaded into the RHS render.
+export pure circuit pickUintConst(c: Boolean, u: Uint<32>): Field {
+  const picked = c ? u : 0;
+  return picked;
+}
+
+// Annotated const RHS: the tfield decl-type mixed-arm route.
+export pure circuit pickUintConstAnn(c: Boolean, u: Uint<32>): Field {
+  const picked: Field = c ? u : 0;
+  return picked;
+}
+
+// Field arithmetic operand position.
+export pure circuit arithUintArm(c: Boolean, y: Field, u: Uint<32>): Field {
+  return y + (c ? u : 0);
+}
+
+// == operand position on the ctor route (impure assert).
+export circuit assertUintArmEq(c: Boolean, y: Field, u: Uint<32>): [] {
+  assert((f.read() == (c ? u : 0)), "uint arm eq");
+}
+
+// I3b/4 impure Uint tail, mixed widths: the Uint<8> arm carries the
+// widening wrapper the impure tail used to strip.
+export circuit pickTailW(c: Boolean, s: Uint<8>, b: Uint<64>): Uint<64> {
+  return (q.read() != b) ? s : b;
+}
+
+// Pure statement-lifted Uint tail, mixed widths — the route-lifted twin
+// of pickTailW.
+export pure circuit pickTailWPure(c: Boolean, s: Uint<8>, b: Uint<64>): Uint<64> {
+  return c ? s : b;
+}
+
+// Const-binding control: this route already widened correctly and must
+// stay byte-identical.
+export pure circuit pickTailWConst(c: Boolean, s: Uint<8>, b: Uint<64>): Uint<64> {
+  const picked = c ? s : b;
+  return picked;
 }

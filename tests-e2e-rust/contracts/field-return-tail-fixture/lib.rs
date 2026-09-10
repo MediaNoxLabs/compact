@@ -57,7 +57,7 @@ where
         &self,
         ctx: ConstructorContext<PS>,
     ) -> Result<ConstructorResult<PS>, CompactError> {
-        let sv = new_array(vec![new_cell(Fr::default())]);
+        let sv = new_array(vec![new_cell(Fr::default()), new_cell(0u64)]);
         let state = ChargedState::new(sv);
         let qctx = QueryContext::new(state, midnight_compact_runtime::ContractAddress::default());
         Ok(ConstructorResult {
@@ -247,6 +247,198 @@ where
             gas_cost: midnight_compact_runtime::RunningCost::default(),
         })
     }
+
+    pub fn pick_uint_arm(
+        &self,
+        ctx: CircuitContext<PS>,
+        c: bool,
+        y: Fr,
+        u: u32,
+    ) -> Result<CircuitResults<PS, Fr>, CompactError> {
+        let result = if ({
+            let _gather_ops = OpProgramGather::<DefaultDB>::new()
+                .dup(0)
+                .idx_at_index(0u8, false)
+                .popeq(false)
+                .build();
+            let _gather_results = query_for_read(
+                &ctx.current_query_context,
+                &_gather_ops,
+                None,
+                &initial_cost_model(),
+            )
+            .map_err(|e| CompactError::AssertionFailed(format!("ledger query failed: {:?}", e)))?;
+            let _av = match _gather_results.events.last() {
+                Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => {
+                    av
+                }
+                _ => {
+                    return Err(CompactError::AssertionFailed(
+                        "ledger: expected Read event".into(),
+                    ))
+                }
+            };
+            midnight_compact_runtime::std_lib::decode_fr(_av)?
+        } != y)
+        {
+            Fr::from((u) as u64)
+        } else {
+            Fr::from(0u64)
+        };
+        Ok(CircuitResults {
+            result,
+            context: ctx,
+            gas_cost: midnight_compact_runtime::RunningCost::default(),
+        })
+    }
+
+    pub fn pick_uint_vs_field(
+        &self,
+        ctx: CircuitContext<PS>,
+        c: bool,
+        y: Fr,
+        u: u32,
+    ) -> Result<CircuitResults<PS, Fr>, CompactError> {
+        let result = if ({
+            let _gather_ops = OpProgramGather::<DefaultDB>::new()
+                .dup(0)
+                .idx_at_index(0u8, false)
+                .popeq(false)
+                .build();
+            let _gather_results = query_for_read(
+                &ctx.current_query_context,
+                &_gather_ops,
+                None,
+                &initial_cost_model(),
+            )
+            .map_err(|e| CompactError::AssertionFailed(format!("ledger query failed: {:?}", e)))?;
+            let _av = match _gather_results.events.last() {
+                Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => {
+                    av
+                }
+                _ => {
+                    return Err(CompactError::AssertionFailed(
+                        "ledger: expected Read event".into(),
+                    ))
+                }
+            };
+            midnight_compact_runtime::std_lib::decode_fr(_av)?
+        } != y)
+        {
+            Fr::from((u) as u64)
+        } else {
+            y
+        };
+        Ok(CircuitResults {
+            result,
+            context: ctx,
+            gas_cost: midnight_compact_runtime::RunningCost::default(),
+        })
+    }
+
+    pub fn assert_uint_arm_eq(
+        &self,
+        ctx: CircuitContext<PS>,
+        c: bool,
+        y: Fr,
+        u: u32,
+    ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        compact_assert!(
+            ({
+                let _gather_ops = OpProgramGather::<DefaultDB>::new()
+                    .dup(0)
+                    .idx_at_index(0u8, false)
+                    .popeq(false)
+                    .build();
+                let _gather_results = query_for_read(
+                    &ctx.current_query_context,
+                    &_gather_ops,
+                    None,
+                    &initial_cost_model(),
+                )
+                .map_err(|e| {
+                    CompactError::AssertionFailed(format!("ledger query failed: {:?}", e))
+                })?;
+                let _av = match _gather_results.events.last() {
+                    Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(
+                        av,
+                    )) => av,
+                    _ => {
+                        return Err(CompactError::AssertionFailed(
+                            "ledger: expected Read event".into(),
+                        ))
+                    }
+                };
+                midnight_compact_runtime::std_lib::decode_fr(_av)?
+            } == if c {
+                Fr::from((u) as u64)
+            } else {
+                Fr::from(0u64)
+            }),
+            "uint arm eq"
+        );
+        let ops = OpProgramVerify::<DefaultDB>::new().build();
+
+        let results = query_for_verify(
+            &ctx.current_query_context,
+            &ops,
+            ctx.gas_limit.clone(),
+            &ctx.cost_model,
+        )?;
+
+        Ok(CircuitResults {
+            result: (),
+            context: CircuitContext {
+                current_query_context: results.context,
+                ..ctx
+            },
+            gas_cost: results.gas_cost,
+        })
+    }
+
+    pub fn pick_tail_w(
+        &self,
+        ctx: CircuitContext<PS>,
+        c: bool,
+        s: u8,
+        b: u64,
+    ) -> Result<CircuitResults<PS, u64>, CompactError> {
+        let result = if ({
+            let _gather_ops = OpProgramGather::<DefaultDB>::new()
+                .dup(0)
+                .idx_at_index(1u8, false)
+                .popeq(false)
+                .build();
+            let _gather_results = query_for_read(
+                &ctx.current_query_context,
+                &_gather_ops,
+                None,
+                &initial_cost_model(),
+            )
+            .map_err(|e| CompactError::AssertionFailed(format!("ledger query failed: {:?}", e)))?;
+            let _av = match _gather_results.events.last() {
+                Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => {
+                    av
+                }
+                _ => {
+                    return Err(CompactError::AssertionFailed(
+                        "ledger: expected Read event".into(),
+                    ))
+                }
+            };
+            midnight_compact_runtime::std_lib::decode_u64(_av)?
+        } != b)
+        {
+            ((s) as u64)
+        } else {
+            b
+        };
+        Ok(CircuitResults {
+            result,
+            context: ctx,
+            gas_cost: midnight_compact_runtime::RunningCost::default(),
+        })
+    }
 }
 
 pub struct Ledger<'a, D: DB = DefaultDB> {
@@ -280,6 +472,28 @@ impl<'a, D: DB> Ledger<'a, D> {
         };
         midnight_compact_runtime::std_lib::decode_fr(av)
     }
+    pub fn q(&self) -> Result<u64, CompactError> {
+        let qctx = QueryContext::new(
+            self.state.clone(),
+            midnight_compact_runtime::ContractAddress::default(),
+        );
+        let ops = OpProgramGather::<D>::new()
+            .dup(0)
+            .idx_at_index(1u8, false)
+            .popeq(true)
+            .build();
+        let results = query_for_read(&qctx, &ops, None, &initial_cost_model())
+            .map_err(|e| CompactError::AssertionFailed(format!("ledger query failed: {:?}", e)))?;
+        let av = match results.events.last() {
+            Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+            _ => {
+                return Err(CompactError::AssertionFailed(
+                    "ledger: expected Read event".into(),
+                ))
+            }
+        };
+        midnight_compact_runtime::std_lib::decode_u64(av)
+    }
 }
 
 pub mod pure_circuits {
@@ -295,5 +509,52 @@ pub mod pure_circuits {
         } else {
             Fr::from(0u64)
         })
+    }
+
+    pub fn pick_uint_arm_pure(c: bool, u: u32) -> Result<Fr, CompactError> {
+        Ok(if c {
+            Fr::from((u) as u64)
+        } else {
+            Fr::from(0u64)
+        })
+    }
+
+    pub fn pick_uint_vs_field_pure(c: bool, y: Fr, u: u32) -> Result<Fr, CompactError> {
+        Ok(if c { Fr::from((u) as u64) } else { y })
+    }
+
+    pub fn pick_uint_const(c: bool, u: u32) -> Result<Fr, CompactError> {
+        Ok(if c {
+            Fr::from((u) as u64)
+        } else {
+            Fr::from(0u64)
+        })
+    }
+
+    pub fn pick_uint_const_ann(c: bool, u: u32) -> Result<Fr, CompactError> {
+        let picked = if c {
+            Fr::from((u) as u64)
+        } else {
+            Fr::from(0u64)
+        };
+        Ok(picked)
+    }
+
+    pub fn arith_uint_arm(c: bool, y: Fr, u: u32) -> Result<Fr, CompactError> {
+        Ok((y)
+            + (if c {
+                Fr::from((u) as u64)
+            } else {
+                Fr::from(0u64)
+            }))
+    }
+
+    pub fn pick_tail_w_pure(c: bool, s: u8, b: u64) -> Result<u64, CompactError> {
+        Ok(if c { ((s) as u64) } else { b })
+    }
+
+    pub fn pick_tail_w_const(c: bool, s: u8, b: u64) -> Result<u64, CompactError> {
+        let picked = if c { ((s) as u64) } else { b };
+        Ok(picked)
     }
 }

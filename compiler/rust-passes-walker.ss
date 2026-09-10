@@ -241,7 +241,13 @@
                                               circuit-id-ht))
                    (lambda (e)
                      (cond-rust e local-binds native-id-ht
-                                witness-id-ht circuit-id-ht)))
+                                witness-id-ht circuit-id-ht))
+                   ;; `y == (flag ? u : 0)` on the ctor/streaming route:
+                   ;; the whole ternary operand can be tfield←tunsigned
+                   ;; wrapped — the if joined at Uint — so non-literal arms
+                   ;; are Uint-valued and need Fr::from((arm) as u64)
+                   ;; like the literal arm.
+                   (field-if-join-uint? expr))
                  (rust-feature-error (if-src expr) 'field-ternary-cmp-operand
                    "cannot render a Field-joined ternary ==/!= operand (unsupported arm or condition)")))]
           [(safecast-widening expr) =>
@@ -253,6 +259,32 @@
                      (ctor-expr-rust (cdr w+e) local-binds
                                      native-id-ht witness-id-ht circuit-id-ht)
                      (car w+e)))]
+          ;; Uint→Field safe-cast (2026-09-11): a tfield-TARGET wrapper
+          ;; (`(safe-cast _ <tfield> <tunsigned> inner)` — the typer's
+          ;; judgment that a Uint value flows into a Field slot, e.g. an
+          ;; arm of `flag ? u : w` whose Field join safe-casts the Uint
+          ;; arm in place, or a return-tail arm under a Field return)
+          ;; materialises as Fr::from((inner) as u64), mirroring the pure
+          ;; route's widening-operand-rust clause and field-arith-operand.
+          ;; Peeled (the old behaviour — ctor-expr-rust strips the layer
+          ;; up front), a `u32` renders bare opposite an `Fr` and the
+          ;; crate fails E0308 while compactc exits 0. Same guards: no
+          ;; wrapper / bare-literal inner / Field-typed inner / source
+          ;; range beyond u64 all keep the old rendering, byte-identical.
+          [(nanopass-case (Ltypescript Expression) expr
+             [(safe-cast ,src ,type ,type^ ,expr^)
+              (and (type-is-tfield? type)
+                   (not (literal-int-expr? expr^))
+                   (not (expr-known-field? expr^ native-id-ht))
+                   (let ([nat (type-peel-tunsigned type^)])
+                     (and nat
+                          (<= nat 18446744073709551615)
+                          (format "Fr::from((~a) as u64)"
+                                  (ctor-expr-rust expr^ local-binds
+                                                  native-id-ht witness-id-ht
+                                                  circuit-id-ht)))))]
+             [else #f])
+           => (lambda (s) s)]
           [else
            (ctor-expr-rust expr local-binds
                            native-id-ht witness-id-ht circuit-id-ht)]))

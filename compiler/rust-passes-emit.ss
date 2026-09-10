@@ -277,11 +277,21 @@
       ;; Field initialiser exprs are rendered through ctor-expr-rust so
       ;; var-refs resolve against the current local-binds and nested
       ;; ledger reads / calls / etc. lower correctly.
+      ;;
+      ;; Field-joined initialisers (2026-09-11): a member whose declared
+      ;; type is tfield gets Field-context rendering for integer-literal
+      ;; shapes — a bare literal (`Box { f: 0 }`) and a ternary with a
+      ;; literal arm (mixed or both-literal) render with `Fr::from(...)`
+      ;; arms via field-context-arg-rendered. Without this the member
+      ;; renders a bare integer against the struct's `Fr` field (E0308
+      ;; at cargo build, compactc exit 0). Non-literal initialisers and
+      ;; non-tfield members keep the existing rendering byte-for-byte.
       (define (render-struct-literal src type expr* local-binds
                                      native-id-ht witness-id-ht circuit-id-ht)
         (let* ([st (struct-of-type type)]
                [struct-name (and st (car st))]
-               [elt-name* (and st (cadr st))])
+               [elt-name* (and st (cadr st))]
+               [elt-type* (and st (caddr st))])
           (cond
             [(not st)
              (rust-feature-error src 'struct-literal-non-tstruct
@@ -293,12 +303,32 @@
             [else
              (let* ([rust-struct-name (struct-rust-name-of type struct-name)]
                     [field-strs
-                     (map (lambda (name e)
+                     (map (lambda (name ftype e)
                             (format "~a: ~a"
                                     (symbol->string name)
-                                    (ctor-expr-rust e local-binds
-                                                    native-id-ht witness-id-ht circuit-id-ht)))
-                          elt-name* expr*)])
+                                    (cond
+                                      [(and (type-is-tfield? ftype)
+                                            (or (literal-int-expr? e)
+                                                (literal-int-if? e)))
+                                       (or (field-context-arg-rendered
+                                             e
+                                             (lambda (e2)
+                                               (coerce-cmp-operand-rust
+                                                 e2 #f local-binds
+                                                 native-id-ht witness-id-ht
+                                                 circuit-id-ht))
+                                             (lambda (e2)
+                                               (cond-rust e2 local-binds
+                                                          native-id-ht
+                                                          witness-id-ht
+                                                          circuit-id-ht)))
+                                           (rust-feature-error src
+                                             'field-struct-literal-member
+                                             "cannot render a Field struct member initialiser (unsupported ternary arm or condition)"))]
+                                      [else
+                                       (ctor-expr-rust e local-binds
+                                                       native-id-ht witness-id-ht circuit-id-ht)])))
+                          elt-name* elt-type* expr*)])
                (string-append
                  rust-struct-name
                  " { "
@@ -767,6 +797,110 @@
                       (cond-renderer expr0)
                       (arm expr1)
                       (arm expr2))))))
+
+      ;; expr-known-field?: a SOUND (no false positives) best-effort
+      ;; inference that `expr` is Field-typed. The `(if ...)` IR node
+      ;; carries no join type (unlike `(==)`/`(!=)` which carry the
+      ;; comparison type), so the if clauses in expr-rust /
+      ;; ctor-expr-rust cannot ask the node what a ternary joins at —
+      ;; they ask the ARMS instead: when either arm is provably Field,
+      ;; the join is Field (the typer requires a common type and
+      ;; absorbs Uint into Field via safe-cast). Recognised shapes:
+      ;;   - safe-cast whose TARGET is tfield (the typer's own type
+      ;;     judgment; a tunsigned target is definitively NOT Field);
+      ;;   - `+ - *` with `mbits = #f` — the typer's Field-arithmetic
+      ;;     marker (see arith-binop-rust);
+      ;;   - a var-ref whose binding type is recorded in
+      ;;     current-formal-arg-types (circuit/constructor formals plus
+      ;;     the return types record-const-binding-type! records);
+      ;;   - a call to a user pure circuit or witness whose declared
+      ;;     return type is tfield, or a known Field-returning native
+      ;;     (jubjubPointX / jubjubPointY / transientHash);
+      ;;   - a nested `(if ...)` with a Field-known arm (join absorbs);
+      ;;   - a `(seq ...)` with a Field-known tail.
+      ;; Everything else (integer literals, Uint vars, elt-refs,
+      ;; unknown calls, ...) returns #f — a false NEGATIVE merely keeps
+      ;; today's rendering (the caller only uses #t to switch into the
+      ;; Field-joined path), while a false POSITIVE would wrap a Uint
+      ;; context in Fr::from, so only provable shapes count.
+      (define (expr-known-field? expr native-id-ht)
+        (nanopass-case (Ltypescript Expression) expr
+          [(safe-cast ,src ,type ,type^ ,expr^)
+           (cond
+             [(type-is-tfield? type) #t]
+             [(type-peel-tunsigned type) #f]
+             [else (expr-known-field? expr^ native-id-ht)])]
+          [(+ ,src ,mbits ,expr1 ,expr2) (not mbits)]
+          [(- ,src ,mbits ,expr1 ,expr2) (not mbits)]
+          [(* ,src ,mbits ,expr1 ,expr2) (not mbits)]
+          [(if ,src ,expr0 ,expr1 ,expr2)
+           (or (expr-known-field? expr1 native-id-ht)
+               (expr-known-field? expr2 native-id-ht))]
+          [(seq ,src ,expr* ... ,expr)
+           (expr-known-field? expr native-id-ht)]
+          [(var-ref ,src ,var-name)
+           (let ([ht (current-formal-arg-types)])
+             (and ht
+                  (type-is-tfield?
+                    (eq-hashtable-ref ht (id-sym var-name) #f))))]
+          [(call ,src ,function-name ,expr* ...)
+           (let ([w (eq-hashtable-ref (current-witness-id-ht)
+                                      function-name #f)]
+                 [c (eq-hashtable-ref (current-circuit-id-ht)
+                                      function-name #f)])
+             (cond
+               [(and c (id-pure? function-name))
+                (type-is-tfield? (circuit-return-type c))]
+               [w
+                (type-is-tfield?
+                  (nanopass-case (Ltypescript Program-Element) w
+                    [(witness ,src^ ,function-name^ (,arg* ...) ,type) type]
+                    [else #f]))]
+               [else (native-field-returning? function-name)]))]
+          [else #f]))
+
+      ;; native-field-returning?: the natives whose Compact signature
+      ;; returns Field (see midnight-natives.ss). native-entry records
+      ;; carry no return type, so this is an explicit checked table —
+      ;; keep it in sync with the declare-native-entry signatures.
+      (define native-field-returning?
+        (let ([field-natives '(jubjubPointX jubjubPointY transientHash)])
+          (lambda (function-name)
+            (and (memq (id-sym function-name) field-natives) #t))))
+
+      ;; circuit-arg-types: the formal types (an `(,var-name ,type)`
+      ;; Argument list's types, in positional order) of a Circuit
+      ;; Program-Element, or #f for a non-circuit. Used by the call
+      ;; sites to apply Field-context literal coercion per tfield
+      ;; formal — the callee's declared signature is the one type
+      ;; context a call-argument position always has.
+      (define (circuit-arg-types cdefn)
+        (nanopass-case (Ltypescript Program-Element) cdefn
+          [(circuit ,src ,function-name (,arg* ...) ,type ,stmt)
+           (map (lambda (a)
+                  (nanopass-case (Ltypescript Argument) a
+                    [(,var-name ,type) type]))
+                arg*)]
+          [else #f]))
+
+      ;; field-context-arg-rendered: render `expr` at a use position
+      ;; whose context type is KNOWN to be Field (a tfield call formal,
+      ;; a tfield struct-member initialiser). A bare integer literal
+      ;; renders as `Fr::from(<n>u64)`; a ternary with an integer-literal
+      ;; arm (mixed or both-literal) renders via render-field-joined-if
+      ;; with the site-supplied renderers. Returns #f when `expr` is
+      ;; neither shape (the caller falls back to its default renderer)
+      ;; or when render-field-joined-if's guard refuses (the caller
+      ;; must rust-feature-error rather than fall back — a tfield
+      ;; context makes the fallback silent bad output).
+      (define (field-context-arg-rendered expr arm-renderer cond-renderer)
+        (cond
+          [(literal-int-expr? expr) =>
+           (lambda (n) (format "Fr::from(~au64)" n))]
+          [(literal-int-if? expr) =>
+           (lambda (parts)
+             (render-field-joined-if parts arm-renderer cond-renderer))]
+          [else #f]))
 
       ;; coerce-literal-if-rhs-rendered: the ternary analogue of
       ;; coerce-literal-rhs-rendered. `const v = flag ? 10 : 20;` lowers to
@@ -1970,6 +2104,18 @@
       ;; 0) — so the whole if renders via render-field-joined-if when the
       ;; context is Field. Everything else renders via arith-operand-rust
       ;; unchanged (field arithmetic carries no arith suffix).
+      ;;
+      ;; Uint→Field safe-cast (2026-09-11): when the typer wraps a
+      ;; Uint-typed operand in `(safe-cast _ <tfield> <tunsigned> inner)`
+      ;; (a `const picked = flag ? 1 : 0;`-sized let flowing into Field
+      ;; arithmetic, `picked + x`), the wrapper's target type IS the
+      ;; Field context — materialise it as `Fr::from((inner) as u64)`
+      ;; (lossless: the source type's range fits u64, and Fr::from(u64)
+      ;; exists upstream). Guarded to stay byte-identical everywhere the
+      ;; wrapper doesn't occur or the inner expression is itself
+      ;; Field-typed (the wrapper is then redundant and peels away as
+      ;; before); a source range wider than u64 keeps the old rendering
+      ;; rather than emit a truncating cast.
       (define (field-arith-operand expr native-id-ht)
         (cond
           [(literal-int-if? expr) =>
@@ -1992,6 +2138,17 @@
                                 (current-circuit-id-ht))))
                  (rust-feature-error (if-src expr) 'field-ternary-arith-operand
                    "cannot render a Field-joined ternary arithmetic operand (unsupported arm or condition)")))]
+          [(nanopass-case (Ltypescript Expression) expr
+             [(safe-cast ,src ,type ,type^ ,expr^)
+              (and (type-is-tfield? type)
+                   (not (expr-known-field? expr^ native-id-ht))
+                   (let ([nat (type-peel-tunsigned type^)])
+                     (and nat
+                          (<= nat 18446744073709551615)
+                          (format "Fr::from((~a) as u64)"
+                                  (arith-operand-rust expr^ native-id-ht)))))]
+             [else #f])
+           => (lambda (s) s)]
           [else (arith-operand-rust expr native-id-ht)]))
 
       (define (arith-binop-rust src op mbits expr1 expr2 native-id-ht)
@@ -2345,15 +2502,47 @@
            ;; per type-rust-copy? — so existing fixtures are
            ;; byte-unchanged and only non-Copy var-valued arms gain the
            ;; suffix.
-           (format "if ~a { ~a } else { ~a }"
-                   (cond-rust expr0 (current-var-substitution)
-                              native-id-ht
-                              (current-witness-id-ht)
-                              (current-circuit-id-ht))
-                   (expr-rust-arg-cloned expr1
-                     (widening-operand-rust expr1 native-id-ht))
-                   (expr-rust-arg-cloned expr2
-                     (widening-operand-rust expr2 native-id-ht)))]
+           ;; Field-joined arms (2026-09-11): when an arm is an integer
+           ;; literal and the OTHER arm is provably Field-typed
+           ;; (expr-known-field?), the join is Field and a bare literal
+           ;; arm never unifies with the other arm's `Fr` (an integer
+           ;; literal can only be a primitive numeric type) — E0308 at
+           ;; cargo build with compactc exiting 0, the exact regression
+           ;; this clause opened (pre-clause these shapes were refused
+           ;; via expr-variant). Render the whole if via
+           ;; render-field-joined-if so literal arms carry
+           ;; `Fr::from(<n>u64)`; refuse loudly when that renderer's
+           ;; guard fails rather than splice a `#f`. Both-literal arms
+           ;; with no Field-known arm keep the bare rendering: the join
+           ;; may be Uint (`c ? 1 : 0` into a uN formal compiles bare
+           ;; via integer inference), and the use positions that DO
+           ;; know a tfield context (call formals, struct members, the
+           ;; return tail) intercept the shape before this clause.
+           (let ([field-join?
+                   (and (or (literal-int-expr? expr1)
+                            (literal-int-expr? expr2))
+                        (or (expr-known-field? expr1 native-id-ht)
+                            (expr-known-field? expr2 native-id-ht)))])
+             (if field-join?
+                 (or (render-field-joined-if
+                       (list expr0 expr1 expr2)
+                       (lambda (e) (widening-operand-rust e native-id-ht))
+                       (lambda (e)
+                         (cond-rust e (current-var-substitution)
+                                    native-id-ht
+                                    (current-witness-id-ht)
+                                    (current-circuit-id-ht))))
+                     (rust-feature-error src 'field-ternary-expression
+                       "cannot render a Field-joined conditional expression (unsupported arm or condition)"))
+                 (format "if ~a { ~a } else { ~a }"
+                         (cond-rust expr0 (current-var-substitution)
+                                    native-id-ht
+                                    (current-witness-id-ht)
+                                    (current-circuit-id-ht))
+                         (expr-rust-arg-cloned expr1
+                           (widening-operand-rust expr1 native-id-ht))
+                         (expr-rust-arg-cloned expr2
+                           (widening-operand-rust expr2 native-id-ht)))))]
           [(elt-ref ,src ,expr ,elt-name ,nat)
            ;; F1.2: struct field access.
            (format "~a.~a"
@@ -2461,9 +2650,16 @@
            ;; inside a quote/tuple consumer). Renders each field via the
            ;; raw expr-rust path; for the body-walker context the
            ;; corresponding case in ctor-expr-rust is used instead.
+           ;;
+           ;; Field-joined initialisers (2026-09-11): a tfield member
+           ;; with an integer-literal initialiser (bare or ternary-arm)
+           ;; renders via field-context-arg-rendered so the value carries
+           ;; `Fr::from(...)` — see render-struct-literal's note for the
+           ;; ctor-route twin and the E0308 this prevents.
            (let* ([st (struct-of-type type)]
                   [struct-name (and st (car st))]
-                  [elt-name* (and st (cadr st))])
+                  [elt-name* (and st (cadr st))]
+                  [elt-type* (and st (caddr st))])
              (cond
                [(or (not st)
                     (not (fx= (length expr*) (length elt-name*))))
@@ -2474,11 +2670,27 @@
                   (length expr*))]
                [else
                 (let* ([field-strs
-                        (map (lambda (name e)
+                        (map (lambda (name ftype e)
                                (format "~a: ~a"
                                        (symbol->string name)
-                                       (expr-rust e native-id-ht)))
-                             elt-name* expr*)])
+                                       (cond
+                                         [(and (type-is-tfield? ftype)
+                                               (or (literal-int-expr? e)
+                                                   (literal-int-if? e)))
+                                          (or (field-context-arg-rendered
+                                                e
+                                                (lambda (e2)
+                                                  (widening-operand-rust e2 native-id-ht))
+                                                (lambda (e2)
+                                                  (cond-rust e2 (current-var-substitution)
+                                                             native-id-ht
+                                                             (current-witness-id-ht)
+                                                             (current-circuit-id-ht))))
+                                              (rust-feature-error src
+                                                'field-struct-literal-member
+                                                "cannot render a Field struct member initialiser (unsupported ternary arm or condition)"))]
+                                         [else (expr-rust e native-id-ht)])))
+                             elt-name* elt-type* expr*)])
                   (string-append
                     (struct-rust-name-of type struct-name)
                     " { "
@@ -3052,11 +3264,45 @@
              ;; resolves pure-circuit calls earlier via ctor-call-rust, so
              ;; this else is only reached during pure-circuit emission
              ;; where current-circuit-id-ht is populated.
+             ;;
+             ;; Field-formal coercion (2026-09-11): an argument passed to
+             ;; a tfield formal gets Field-context rendering for
+             ;; integer-literal shapes (bare literal, ternary with a
+             ;; literal arm — mixed or both-literal). The callee's
+             ;; declared formal type is the one type context a call-arg
+             ;; position always has; without it `idf(flag ? x : 0)` and
+             ;; `idf(flag ? 1 : 0)` emit bare integer arms against the
+             ;; callee's `Fr` parameter (E0308 at cargo build, compactc
+             ;; exit 0 — the regression ternary support opened here; the
+             ;; mixed-arm shape is also caught by expr-rust's if-clause
+             ;; inference, this covers the both-literal one). Non-literal
+             ;; args and non-tfield formals keep pure-call-arg-rust
+             ;; byte-for-byte.
              (let ([c (eq-hashtable-ref (current-circuit-id-ht) function-name #f)])
                (cond
                  [(and c (id-pure? function-name))
-                  (let ([rust-name (id->rust-name function-name)]
-                        [args (map (lambda (e) (pure-call-arg-rust e native-id-ht)) expr*)])
+                  (let* ([rust-name (id->rust-name function-name)]
+                         [formal-type* (or (circuit-arg-types c)
+                         (make-list (length expr*) #f))]
+                         [args
+                          (map (lambda (ft e)
+                                 (cond
+                                   [(and (type-is-tfield? ft)
+                                         (or (literal-int-expr? e)
+                                             (literal-int-if? e)))
+                                    (or (field-context-arg-rendered
+                                          e
+                                          (lambda (e2)
+                                            (widening-operand-rust e2 native-id-ht))
+                                          (lambda (e2)
+                                            (cond-rust e2 (current-var-substitution)
+                                                       native-id-ht
+                                                       (current-witness-id-ht)
+                                                       (current-circuit-id-ht))))
+                                        (rust-feature-error src 'field-call-arg
+                                          "cannot render a Field call argument (unsupported ternary arm or condition)"))]
+                                   [else (pure-call-arg-rust e native-id-ht)]))
+                               formal-type* expr*)])
                     ;; Append `?` so the `Result<T, CompactError>` a pure
                     ;; circuit returns is unwrapped at the call site. Every
                     ;; generated position that calls a pure circuit (pure-
@@ -3162,6 +3408,7 @@
              [else
               (let ([s (guard (c [#t #f])
                          (or
+
                            ;; Tail (return-position) expression of a pure
                            ;; circuit whose declared return type is Field:
                            ;; an integer-literal tail — bare (`return 0;`) or
@@ -3195,6 +3442,49 @@
                                            (cond-rust e local-binds native-id-ht
                                                       witness-id-ht
                                                       circuit-id-ht))))))
+                           ;; Degenerate-seq tail (2026-09-11):
+                           ;; `const picked = flag ? 1 : 0; return picked;`
+                           ;; lowers the whole return into
+                           ;; `(seq (= picked <literal-if>) picked)`. The
+                           ;; literal-int-expr?/literal-int-if? checks above
+                           ;; strip only safe-cast layers — NOT seq — so
+                           ;; the tail fell through to the generic expr-rust
+                           ;; render, whose degenerate-seq inline renders
+                           ;; the RHS type-context-free: `Ok(if flag { 1 }
+                           ;; else { 0 })` against `Result<Fr, _>` — E0308
+                           ;; at cargo build with compactc exiting 0 (the
+                           ;; annotated `const picked: Field` and direct
+                           ;; `return flag ? 1 : 0;` shapes were covered;
+                           ;; only the unannotated seq-lifted one escaped).
+                           ;; Unwrap the same degenerate shape the inline
+                           ;; matches on (seq-degenerate-inline-rhs) and
+                           ;; render the RHS through render-field-joined-if
+                           ;; under the Field return-type context. On guard
+                           ;; failure fall through to the generic render
+                           ;; (the surrounding guard makes a loud refusal
+                           ;; here indistinguishable from #f).
+                           (and last?
+                                (type-is-tfield? (current-pure-return-type))
+                                (nanopass-case (Ltypescript Expression)
+                                  (expr-strip-cast expr)
+                                  [(seq ,src ,expr* ... ,expr)
+                                   (cond
+                                     [(seq-degenerate-inline-rhs expr* expr) =>
+                                      (lambda (rhs)
+                                        (let ([parts (literal-int-if? rhs)])
+                                          (and parts
+                                               (render-field-joined-if
+                                                 parts
+                                                 (lambda (e)
+                                                   (widening-operand-rust
+                                                     e native-id-ht))
+                                                 (lambda (e)
+                                                   (cond-rust
+                                                     e local-binds native-id-ht
+                                                     witness-id-ht
+                                                     circuit-id-ht))))))]
+                                     [else #f])]
+                                  [else #f]))
                            (expr-rust expr native-id-ht)))])
                 (cond
                   [(or (not s) (rendered-has-todo? s)) #f]

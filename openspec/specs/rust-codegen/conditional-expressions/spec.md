@@ -26,6 +26,18 @@ A contract that uses a conditional expression `c ? e1 : e2` anywhere a general e
 - **WHEN** a ledger-writing circuit or a contract constructor initialises a value with a ternary
 - **THEN** compilation under `--target rust` succeeds (no `circuit-body-emission` / `ctor-body-emission` / `expr-variant` failure)
 
+#### Scenario: Field-joined ternary as a call argument
+- **WHEN** a conditional with an integer-literal arm is passed as an argument to a circuit whose corresponding formal is `Field` — mixed-arm (`idf(flag ? x : 0)`) or both-literal (`idf(flag ? 1 : 0)`) — in a pure circuit, an impure circuit, or a constructor
+- **THEN** the literal arm(s) render with the `Fr::from(<n>u64)` coercion derived from the callee's declared formal type, and the generated crate compiles under `cargo build`
+
+#### Scenario: Field-joined ternary as a struct-literal member
+- **WHEN** a struct with a `Field` member is initialised with a conditional carrying an integer-literal arm for that member
+- **THEN** the member's declared type drives the same coercion and the generated crate compiles under `cargo build`
+
+#### Scenario: unannotated both-literal const returned from a Field circuit
+- **WHEN** a Field-returning circuit contains `const picked = flag ? 1 : 0; return picked;` (no type annotation on the const)
+- **THEN** the let*-lifted tail renders with both arms coerced from the circuit's Field return type, and the generated crate compiles under `cargo build`
+
 ### Requirement: Lazy branch evaluation is preserved
 
 Generated Rust MUST evaluate a conditional expression exactly as the language specification requires: the condition is evaluated first and **only the selected branch** is evaluated. Branch-local trapping guards (e.g. the underflow assertion guarding unsigned subtraction) MUST be emitted inside the selected branch, so an untaken branch can never abort execution.

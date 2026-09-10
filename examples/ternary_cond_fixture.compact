@@ -391,3 +391,80 @@ export circuit recordStructPick(c: Boolean, s: Choice, s2: Choice): [] {
   assert(s2.value != 100, "s2 must stay usable after the pick");
   lastPick.write(disclose(picked.value));
 }
+
+// ---------------------------------------------------------------------
+// Nested-call-argument and struct-member Field joins; unannotated
+// both-literal const to a Field return (dogfood review, round 4). The
+// earlier rounds proved the coercion at binding sites, operands, the
+// return tail and write values; round 4 closes the positions the
+// review validated as still emitting bare integers (an integer never
+// unifies with `Fr`, so the crate fails E0308 at cargo build while
+// compactc exits 0 — the exact silent-bad-output mode this file
+// exists to prevent):
+//
+//   - `fieldId` (helper): a pure circuit with a Field formal — the
+//     call target that gives the call-argument positions below their
+//     only type context.
+//   - `fieldCallArgPick` / `fieldCallArgBothLit`: the ternary as a
+//     NESTED CALL ARGUMENT in the pure route — mixed arm
+//     (`flag ? x : 0`) and both-literal twin. The argument renderer
+//     must consult the callee's declared Field formal; the if-clause
+//     renderer additionally infers the Field join from the other arm.
+//   - `fieldStructPick`: the ternary as a STRUCT-LITERAL member
+//     initialiser — mixed arm on `f`, both-literal arm on `g`; the
+//     member's declared type drives the coercion.
+//   - `constFieldPick`: UNANNOTATED `const picked = flag ? 1 : 0;`
+//     returned from a Field circuit — the let*-lifted
+//     `(safe-cast tfield (seq (= picked <lit-if>) picked))` tail whose
+//     seq wrapper escaped the return-tail literal checks (the
+//     annotated `const picked: Field` and the direct
+//     `return flag ? 1 : 0;` were covered; only the unannotated
+//     seq-lifted shape fell through to the type-context-free inline).
+//   - `pickedFieldArith`: the same unannotated const consumed by Field
+//     arithmetic — the typer wraps the Uint-typed binding in a
+//     safe-cast to Field at the `+`, which the field-operand renderer
+//     materialises as `Fr::from(.. as u64)` (the Uint<8>-let analogue
+//     of the bare-literal `3 + x`).
+//   - `recordFieldCallArg`: the IMPURE (walker-route) twins — the
+//     nested ternary as a call argument in a const-binding
+//     (render-pure-circuit-arg with the callee's formal type), in
+//     expression position (`origin.write(disclose(fieldId(..)))` via
+//     ctor-call-rust), and in both-literal form.
+
+pure circuit fieldId(v: Field): Field {
+  return v;
+}
+
+export pure circuit fieldCallArgPick(flag: Boolean, x: Field): Field {
+  return fieldId(flag ? x : 0);
+}
+
+export pure circuit fieldCallArgBothLit(flag: Boolean): Field {
+  return fieldId(flag ? 1 : 0);
+}
+
+struct FieldBox {
+  f: Field,
+  g: Field,
+}
+
+export pure circuit fieldStructPick(flag: Boolean, x: Field): FieldBox {
+  return FieldBox { f: flag ? x : 0, g: flag ? 1 : 0 };
+}
+
+export pure circuit constFieldPick(flag: Boolean): Field {
+  const picked = flag ? 1 : 0;
+  return picked;
+}
+
+export pure circuit pickedFieldArith(flag: Boolean, x: Field): Field {
+  const picked = flag ? 1 : 0;
+  return picked + x;
+}
+
+export circuit recordFieldCallArg(x: Field, flag: Boolean): [] {
+  const v = fieldId(flag ? x : 0);
+  const w = fieldId(flag ? 1 : 0);
+  origin.write(disclose(fieldId(flag ? x : 0)));
+  picks.increment(1);
+}

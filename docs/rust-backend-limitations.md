@@ -76,10 +76,24 @@ grep -rn "(rust-feature-error" compiler/rust-passes*.ss \
   | grep -v "define (rust-feature-error" | wc -l
 ```
 
-At the time of writing that is **34 call sites** across 4 passes
-(`rust-passes-emit.ss` 28, `rust-passes-walker.ss` 4,
-`rust-passes-helpers.ss` 1, `rust-passes-prelude.ss` 1), spanning **28
+At the time of writing that is **44 call sites** across 4 passes
+(`rust-passes-emit.ss` 34, `rust-passes-walker.ss` 8,
+`rust-passes-helpers.ss` 1, `rust-passes-prelude.ss` 1), spanning **37
 distinct kinds**.
+
+A second, smaller class is NOT covered by that count: shapes that are
+accepted but emit Rust a `cargo build` of the generated crate rejects.
+The Field-literal coercions (`Fr::from(<n>u64)`) cover every position
+that knows a type — call formals (both routes), struct members, ledger
+writes, the return tail, `==`/`!=`/Field-arithmetic operands, and the
+const-binding sites — plus, for mixed-arm joins (`c ? x : 0` with
+`x: Field`), arm-level inference in the two ternary if-clauses. Still
+open: a both-literal ternary (`c ? 1 : 0`) in a position with no
+type context — as an element of a vector literal feeding
+`persistentHash`, or as the argument of `some<T>`/`none<T>` or of a
+native whose formal types the emitter does not carry. These join the
+pre-existing bare-literal family there (`[0]`, `some(0)`): bind the
+value to a typed `const` first (`const v: Field = c ? 1 : 0;`).
 
 One caveat when reading a diagnostic: several emitters probe alternative
 shapes under a catch-all `(guard (c [#t #f]) …)`, which swallows a specific

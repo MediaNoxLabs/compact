@@ -32,6 +32,62 @@ use std::marker::PhantomData;
 midnight_compact_runtime::check_runtime_version!("0.16.100");
 
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
+pub struct FieldBox {
+    pub f: Fr,
+    pub g: Fr,
+}
+impl Aligned for FieldBox {
+    fn alignment() -> Alignment {
+        Alignment::concat([&<Fr as Aligned>::alignment(), &<Fr as Aligned>::alignment()])
+    }
+}
+impl FieldRepr for FieldBox {
+    fn field_repr<W: MemWrite<Fr>>(&self, writer: &mut W) {
+        self.f.field_repr(writer);
+        self.g.field_repr(writer);
+    }
+    fn field_size(&self) -> usize {
+        self.f.field_size() + self.g.field_size()
+    }
+}
+impl FromFieldRepr for FieldBox {
+    const FIELD_SIZE: usize = <Fr as FromFieldRepr>::FIELD_SIZE + <Fr as FromFieldRepr>::FIELD_SIZE;
+    fn from_field_repr(_repr: &[Fr]) -> Option<Self> {
+        if _repr.len() < Self::FIELD_SIZE {
+            return None;
+        }
+        let mut _offset = 0usize;
+        let f = <Fr as FromFieldRepr>::from_field_repr(
+            &_repr[_offset.._offset + <Fr as FromFieldRepr>::FIELD_SIZE],
+        )?;
+        _offset += <Fr as FromFieldRepr>::FIELD_SIZE;
+        let g = <Fr as FromFieldRepr>::from_field_repr(
+            &_repr[_offset.._offset + <Fr as FromFieldRepr>::FIELD_SIZE],
+        )?;
+        _offset += <Fr as FromFieldRepr>::FIELD_SIZE;
+        let _ = _offset;
+        Some(FieldBox { f, g })
+    }
+}
+impl From<FieldBox> for midnight_compact_runtime::Value {
+    fn from(s: FieldBox) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.f));
+        _v.push(midnight_compact_runtime::Value::from(s.g));
+        midnight_compact_runtime::Value::concat(_v.iter())
+    }
+}
+impl midnight_compact_runtime::BinaryHashRepr for FieldBox {
+    fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
+        self.f.binary_repr(writer);
+        self.g.binary_repr(writer);
+    }
+    fn binary_len(&self) -> usize {
+        self.f.binary_len() + self.g.binary_len()
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct Choice {
     pub low: bool,
     pub value: u64,
@@ -615,6 +671,42 @@ where
             gas_cost: results.gas_cost,
         })
     }
+
+    pub fn record_field_call_arg(
+        &self,
+        ctx: CircuitContext<PS>,
+        x: Fr,
+        flag: bool,
+    ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let v = pure_circuits::field_id(if flag { x } else { Fr::from(0u64) })?;
+        let w = pure_circuits::field_id(if flag { Fr::from(1u64) } else { Fr::from(0u64) })?;
+        let tmp = pure_circuits::field_id(if flag { x } else { Fr::from(0u64) })?;
+        let tmp_0 = 1u16;
+        let ops = OpProgramVerify::<DefaultDB>::new()
+            .push(false, new_cell(2u8))
+            .push(true, new_cell(tmp))
+            .ins(false, 1)
+            .idx_at_index(1u8, true)
+            .addi(tmp_0 as u32)
+            .ins(true, 1)
+            .build();
+
+        let results = query_for_verify(
+            &ctx.current_query_context,
+            &ops,
+            ctx.gas_limit.clone(),
+            &ctx.cost_model,
+        )?;
+
+        Ok(CircuitResults {
+            result: (),
+            context: CircuitContext {
+                current_query_context: results.context,
+                ..ctx
+            },
+            gas_cost: results.gas_cost,
+        })
+    }
 }
 
 pub struct Ledger<'a, D: DB = DefaultDB> {
@@ -825,5 +917,41 @@ pub mod pure_circuits {
             }
         };
         Ok((s.low == picked.low))
+    }
+
+    pub(crate) fn field_id(v: Fr) -> Result<Fr, CompactError> {
+        Ok(v)
+    }
+
+    pub fn field_call_arg_pick(flag: bool, x: Fr) -> Result<Fr, CompactError> {
+        Ok(pure_circuits::field_id(if flag {
+            x
+        } else {
+            Fr::from(0u64)
+        })?)
+    }
+
+    pub fn field_call_arg_both_lit(flag: bool) -> Result<Fr, CompactError> {
+        Ok(pure_circuits::field_id(if flag {
+            Fr::from(1u64)
+        } else {
+            Fr::from(0u64)
+        })?)
+    }
+
+    pub fn field_struct_pick(flag: bool, x: Fr) -> Result<FieldBox, CompactError> {
+        Ok(FieldBox {
+            f: if flag { x } else { Fr::from(0u64) },
+            g: if flag { Fr::from(1u64) } else { Fr::from(0u64) },
+        })
+    }
+
+    pub fn const_field_pick(flag: bool) -> Result<Fr, CompactError> {
+        Ok(if flag { Fr::from(1u64) } else { Fr::from(0u64) })
+    }
+
+    pub fn picked_field_arith(flag: bool, x: Fr) -> Result<Fr, CompactError> {
+        let picked = if flag { 1u8 } else { 0u8 };
+        Ok((Fr::from((picked) as u64)) + (x))
     }
 }

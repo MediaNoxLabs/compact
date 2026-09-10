@@ -423,17 +423,49 @@
              ;; types); literal / Field-literal / safecast-Uint / ctor /
              ;; call arms are unaffected — Field itself is Copy per
              ;; type-rust-copy? — so existing fixtures are byte-unchanged.
-             (format "if ~a { ~a } else { ~a }"
-                     (cond-rust expr0 local-binds
-                                native-id-ht witness-id-ht circuit-id-ht)
-                     (expr-rust-arg-cloned expr1
-                       (coerce-cmp-operand-rust expr1 #f local-binds
-                                                native-id-ht witness-id-ht
-                                                circuit-id-ht))
-                     (expr-rust-arg-cloned expr2
-                       (coerce-cmp-operand-rust expr2 #f local-binds
-                                                native-id-ht witness-id-ht
-                                                circuit-id-ht)))]
+             ;; Field-joined arms (2026-09-11): mirror of the expr-rust
+             ;; if-clause fix — when an arm is an integer literal and the
+             ;; other arm is provably Field-typed, the join is Field and
+             ;; the bare literal arm fails E0308 while compactc exits 0
+             ;; (verified: `origin.write(disclose(idf(flag ? x : 0)))`
+             ;; emitted `idf(if flag { x } else { 0 })?`). Render via
+             ;; render-field-joined-if with the ctor-path renderers
+             ;; (coerce-cmp-operand-rust with #f for arms — the arm
+             ;; renderer — and cond-rust with local-binds for the
+             ;; condition); refuse loudly on guard failure. Field arms
+             ;; are Copy per type-rust-copy?, so the Bug-12 clone
+             ;; wrapper is not needed on this path. Both-literal joins
+             ;; keep the bare rendering here and rely on the tfield
+             ;; call-formal interception in ctor-call-rust (and the
+             ;; const-binding / write-value sites) for Field contexts.
+             (let ([field-join?
+                     (and (or (literal-int-expr? expr1)
+                              (literal-int-expr? expr2))
+                          (or (expr-known-field? expr1 native-id-ht)
+                              (expr-known-field? expr2 native-id-ht)))])
+               (if field-join?
+                   (or (render-field-joined-if
+                         (list expr0 expr1 expr2)
+                         (lambda (e)
+                           (coerce-cmp-operand-rust e #f local-binds
+                                                    native-id-ht witness-id-ht
+                                                    circuit-id-ht))
+                         (lambda (e)
+                           (cond-rust e local-binds native-id-ht
+                                      witness-id-ht circuit-id-ht)))
+                       (rust-feature-error src 'field-ternary-expression
+                         "cannot render a Field-joined conditional expression (unsupported arm or condition)"))
+                   (format "if ~a { ~a } else { ~a }"
+                           (cond-rust expr0 local-binds
+                                      native-id-ht witness-id-ht circuit-id-ht)
+                           (expr-rust-arg-cloned expr1
+                             (coerce-cmp-operand-rust expr1 #f local-binds
+                                                      native-id-ht witness-id-ht
+                                                      circuit-id-ht))
+                           (expr-rust-arg-cloned expr2
+                             (coerce-cmp-operand-rust expr2 #f local-binds
+                                                      native-id-ht witness-id-ht
+                                                      circuit-id-ht)))))]
             [(elt-ref ,src ,expr ,elt-name ,nat)
              ;; F1.2: struct field access (`struct.field`). The field
              ;; name comes from the source language; rust-variant-name
@@ -765,12 +797,40 @@
                            [else (join (cdr xs)
                                        (string-append acc (car xs) ", "))]))))]
             [(and c (id-pure? function-name))
-             (let ([rust-name (id->rust-name function-name)]
-                   [args
-                    (map (lambda (e)
-                           (arg-rust-clone-if-var e local-binds
-                                                  native-id-ht witness-id-ht circuit-id-ht))
-                         expr*)])
+             ;; Field-formal coercion (2026-09-11): an argument passed to a
+             ;; tfield formal gets Field-context rendering for integer-
+             ;; literal shapes (bare literal, ternary with a literal arm —
+             ;; mixed or both-literal) — see call-rust's pure-circuit arm in
+             ;; rust-passes-emit for the rationale. Without it
+             ;; `disclose(idf(flag ? 1 : 0))` in a constructor or impure
+             ;; circuit emits bare integer arms against the callee's `Fr`
+             ;; parameter (E0308 at cargo build, compactc exit 0).
+             (let* ([rust-name (id->rust-name function-name)]
+                    [formal-type* (or (circuit-arg-types c)
+                         (make-list (length expr*) #f))]
+                    [args
+                     (map (lambda (ft e)
+                            (cond
+                              [(and (type-is-tfield? ft)
+                                    (or (literal-int-expr? e)
+                                        (literal-int-if? e)))
+                               (or (field-context-arg-rendered
+                                     e
+                                     (lambda (e2)
+                                       (coerce-cmp-operand-rust
+                                         e2 #f local-binds
+                                         native-id-ht witness-id-ht
+                                         circuit-id-ht))
+                                     (lambda (e2)
+                                       (cond-rust e2 local-binds native-id-ht
+                                                  witness-id-ht circuit-id-ht)))
+                                   (rust-feature-error src 'field-call-arg
+                                     "cannot render a Field call argument (unsupported ternary arm or condition)"))]
+                              [else
+                               (arg-rust-clone-if-var e local-binds
+                                                      native-id-ht witness-id-ht
+                                                      circuit-id-ht)]))
+                          formal-type* expr*)])
                ;; Append `?` to unwrap the `Result<T, CompactError>` a
                ;; pure circuit returns. Every position reaching here
                ;; (cond-rust/assert-cond-rust conditions, if-branch
@@ -1230,11 +1290,36 @@
       ;; (decode_via_field_repr::<EnumName>) so the call receives the
       ;; actual enum variant rather than the bare u8 discriminant. Other
       ;; shapes fall through to ctor-expr-rust.
+      ;; render-pure-circuit-arg: render a single actual arg expression
+      ;; against the callee's formal type. A tfield formal with an
+      ;; integer-literal actual (bare literal, or a ternary with a
+      ;; literal arm — mixed or both-literal) renders via
+      ;; field-context-arg-rendered so the value carries `Fr::from(...)`
+      ;; — without it `const v = idf(flag ? 1 : 0)` in a constructor /
+      ;; impure body emits bare integer arms against the callee's `Fr`
+      ;; parameter (E0308 at cargo build, compactc exit 0). A tenum
+      ;; formal with a ledger-read actual keeps the decode_via_field_repr
+      ;; coercion; everything else renders via arg-rust-clone-if-var
+      ;; unchanged.
       (define (render-pure-circuit-arg actual formal-type local-binds
                                        native-id-ht witness-id-ht circuit-id-ht)
         (let* ([enum-name (tenum-name-of-type formal-type)]
                [e (expr-strip-cast actual)])
           (cond
+            [(and (type-is-tfield? formal-type)
+                  (or (literal-int-expr? actual)
+                      (literal-int-if? actual)))
+             (or (field-context-arg-rendered
+                   actual
+                   (lambda (e2)
+                     (coerce-cmp-operand-rust
+                       e2 #f local-binds
+                       native-id-ht witness-id-ht circuit-id-ht))
+                   (lambda (e2)
+                     (cond-rust e2 local-binds native-id-ht
+                                witness-id-ht circuit-id-ht)))
+                 (rust-feature-error (if-src actual) 'field-call-arg
+                   "cannot render a Field call argument (unsupported ternary arm or condition)"))]
             [(and enum-name
                   (nanopass-case (Ltypescript Expression) e
                     [(public-ledger ,src ,ledger-field-name ,sugar? (,path-elt* ...) ,src^ ,adt-op ,expr* ...)

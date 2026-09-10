@@ -24,7 +24,13 @@
 //   (`decrement`), `&&`/`||` branch values (`and_or_branches`), nested
 //   + struct-valued branches (`choose_struct`), enum-valued branches
 //   (`choose_label`), an impure ledger-writing circuit
-//   (`record_pick`), and the constructor (`initial_state`'s `initial`).
+//   (`record_pick`), the constructor (`initial_state`'s `initial`),
+//   and the round-4 Field-join positions: nested call arguments
+//   (`field_call_arg_pick` / `field_call_arg_both_lit`),
+//   struct-member initialisers (`field_struct_pick`), the unannotated
+//   both-literal const to a Field return (`const_field_pick` /
+//   `picked_field_arith`), and the impure nested-call-argument twin
+//   (`record_field_call_arg`).
 //
 // Byte-parity (codegen_regression) locks the generated TEXT but cannot
 // tell a lazy `if c { e1 } else { e2 }` from an eager
@@ -112,7 +118,7 @@ fn make_envelope(
         HashMap::new();
     // One entry per exported impure circuit — the TS reference's
     // initialState() pre-registers them all, so byte-parity requires the
-    // same ten here.
+    // same eleven here.
     for name in [
         "recordPick",
         "recordLiteralPick",
@@ -124,6 +130,7 @@ fn make_envelope(
         "streamNarrowWrite",
         "inlineBigPick",
         "recordStructPick",
+        "recordFieldCallArg",
     ] {
         operations = operations.insert(
             EntryPointBuf(name.as_bytes().to_vec()),
@@ -1000,4 +1007,130 @@ fn record_struct_pick_byte_parity() {
         ts_bytes.len(),
         hex::encode(&ts_bytes),
     );
+}
+
+// ---------------------------------------------------------------------
+// Round 4 (dogfood review): nested call arguments, struct-member
+// initialisers, and the unannotated both-literal const to a Field
+// return. Every position below emitted a BARE integer where `Fr` was
+// required (E0308 at cargo build while compactc exited 0) before the
+// callee-formal / struct-member / return-tail coercions landed; these
+// executing tests pin both the compilation and the committed arm
+// values.
+
+/// NESTED CALL ARGUMENT (pure route, mixed arm): `fieldId(flag ? x :
+/// 0)` — the callee's Field formal is the only type context the
+/// position has, and an integer literal never unifies with the other
+/// arm's `Fr`.
+#[test]
+fn field_call_arg_pick_returns_each_arm() {
+    let x = Fr::from(42u64);
+    assert_eq!(
+        pure_circuits::field_call_arg_pick(true, x).expect("then arm"),
+        x
+    );
+    assert_eq!(
+        pure_circuits::field_call_arg_pick(false, x).expect("else arm"),
+        Fr::from(0u64)
+    );
+}
+
+/// NESTED CALL ARGUMENT (pure route, both-literal arms): nothing in
+/// the arms gives inference a type, so both arms must render
+/// `Fr::from(<n>u64)` from the callee's formal.
+#[test]
+fn field_call_arg_both_lit_returns_each_arm() {
+    assert_eq!(
+        pure_circuits::field_call_arg_both_lit(true).expect("then arm"),
+        Fr::from(1u64)
+    );
+    assert_eq!(
+        pure_circuits::field_call_arg_both_lit(false).expect("else arm"),
+        Fr::from(0u64)
+    );
+}
+
+/// STRUCT-LITERAL member initialisers: `f` carries the mixed arm, `g`
+/// the both-literal arm — each member's declared Field type drives its
+/// own coercion, independently of the other.
+#[test]
+fn field_struct_pick_coerces_each_member() {
+    let x = Fr::from(9u64);
+    let hot = pure_circuits::field_struct_pick(true, x).expect("then arms");
+    assert_eq!(hot.f, x);
+    assert_eq!(hot.g, Fr::from(1u64));
+
+    let cold = pure_circuits::field_struct_pick(false, x).expect("else arms");
+    assert_eq!(cold.f, Fr::from(0u64));
+    assert_eq!(cold.g, Fr::from(0u64));
+}
+
+/// The UNANNOTATED `const picked = flag ? 1 : 0; return picked;` in a
+/// Field circuit — the let*-lifted `(safe-cast tfield (seq (= picked
+/// <lit-if>) picked))` tail. The seq wrapper escaped the return-tail
+/// literal checks (which strip only safe-cast layers), so the tail fell
+/// through to the type-context-free degenerate-seq inline and emitted
+/// `Ok(if flag { 1 } else { 0 })` against `Result<Fr, _>`.
+#[test]
+fn const_field_pick_sizes_arms_from_the_field_return() {
+    assert_eq!(
+        pure_circuits::const_field_pick(true).expect("hot arm"),
+        Fr::from(1u64)
+    );
+    assert_eq!(
+        pure_circuits::const_field_pick(false).expect("cold arm"),
+        Fr::from(0u64)
+    );
+}
+
+/// The same unannotated const consumed by FIELD ARITHMETIC: the typer
+/// wraps the Uint-typed binding in a safe-cast to Field at the `+`,
+/// which the field-operand renderer materialises as
+/// `Fr::from((picked) as u64)`.
+#[test]
+fn picked_field_arith_widens_the_unannotated_const() {
+    let x = Fr::from(10u64);
+    assert_eq!(
+        pure_circuits::picked_field_arith(true, x).expect("hot arm: 1 + x"),
+        Fr::from(11u64)
+    );
+    assert_eq!(
+        pure_circuits::picked_field_arith(false, x).expect("cold arm: 0 + x"),
+        x
+    );
+}
+
+/// The IMPURE (walker-route) twin: the nested ternary as a call
+/// argument in a const-binding, in both-literal form, and in
+/// expression position (`origin.write(disclose(fieldId(..)))`) — all
+/// three render through walker-side call-arg paths that previously
+/// carried no Field context. The committed origin value pins the
+/// expression-position write.
+#[test]
+fn record_field_call_arg_commits_the_mixed_join() {
+    let contract: Contract<(), NoWitnesses> = Contract::new(NoWitnesses);
+    let init = contract
+        .initial_state(ctor_ctx(), CAPTURE_START)
+        .expect("initial_state");
+
+    let x = Fr::from(5u64);
+    let after = contract
+        .record_field_call_arg(
+            CircuitContext::new(init.current_contract_state.clone(), ()),
+            x,
+            true,
+        )
+        .expect("record_field_call_arg(5, true) must commit");
+    let view = ledger(&after.context.current_query_context.state);
+    assert_eq!(view.origin().expect("origin"), x);
+
+    let after_false = contract
+        .record_field_call_arg(
+            CircuitContext::new(after.context.current_query_context.state, ()),
+            x,
+            false,
+        )
+        .expect("record_field_call_arg(5, false) must commit");
+    let view = ledger(&after_false.context.current_query_context.state);
+    assert_eq!(view.origin().expect("origin"), Fr::from(0u64));
 }

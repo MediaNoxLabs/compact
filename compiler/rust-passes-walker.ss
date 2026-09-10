@@ -204,7 +204,12 @@
       ;; renders `(quote 0)` as the bare Rust integer `0` — which then
       ;; fails to type-check against the `Fr` produced by the other
       ;; operand (e.g. a `jubjub_point_x(...) != 0` key-binding check).
-      ;; Non-Field types and non-literal operands render via
+      ;; A ternary OPERAND with a literal arm (`f == (c ? 1 : 0)`, both-
+      ;; literal or mixed) fails the same way — ctor-expr-rust's if clause
+      ;; renders the literal arm bare (its `#f` comparison type carries no
+      ;; Field context) and an integer never unifies with Fr — so it
+      ;; renders via render-field-joined-if with the ctor-path arm
+      ;; renderer. Non-Field types and non-literal operands render via
       ;; ctor-expr-rust unchanged.
       ;;
       ;; Mixed-width widening: when the operand carries the typer's
@@ -219,6 +224,17 @@
         (cond
           [(and (type-is-tfield? type) (literal-int-expr? expr))
            (format "Fr::from(~au64)" (literal-int-expr? expr))]
+          [(and (type-is-tfield? type) (literal-int-if? expr)) =>
+           (lambda (parts)
+             (render-field-joined-if
+               parts
+               (lambda (e)
+                 (coerce-cmp-operand-rust e #f local-binds
+                                          native-id-ht witness-id-ht
+                                          circuit-id-ht))
+               (lambda (e)
+                 (cond-rust e local-binds native-id-ht
+                            witness-id-ht circuit-id-ht))))]
           [(safecast-widening expr) =>
            (lambda (w+e)
              ;; The cast is parenthesised as a whole (`((x) as u32)`) —
@@ -2395,7 +2411,12 @@
                               (or (coerce-literal-rhs-rendered decl-type rhs)
                                   (coerce-literal-if-rhs-rendered
                                     decl-type rhs local-binds
-                                    native-id-ht witness-id-ht circuit-id-ht))]
+                                    native-id-ht witness-id-ht circuit-id-ht
+                                    (lambda (e)
+                                      (coerce-cmp-operand-rust
+                                        e #f local-binds
+                                        native-id-ht witness-id-ht
+                                        circuit-id-ht))))]
                              [raw
                               (or coerced
                                   (ctor-expr-rust rhs local-binds
@@ -3246,8 +3267,6 @@
                                    native-id-ht witness-id-ht circuit-id-ht)
         (let* ([idx (car w)]
                [val-expr (cdr w)]
-               [rust-val (arg-rust-clone-if-var val-expr local-binds
-                                                native-id-ht witness-id-ht circuit-id-ht)]
                [dest-type
                 (let ([ht (current-ledger-field-types)])
                   (and ht (hashtable-ref ht idx #f)))]
@@ -3283,7 +3302,36 @@
                 (cond
                   [use-cell-array? "new_cell_array"]
                   [use-bounded-uint? "new_cell_bounded_uint"]
-                  [else "new_cell"])])
+                  [else "new_cell"])]
+               ;; Inline-write value coercion: an INLINE ternary write value
+               ;; (`lastPick.write(disclose(hot ? 5000000000 : 0))` — no
+               ;; const binding, so the const-clause coercion never sees it)
+               ;; renders its literal arms bare: both-literal arms default
+               ;; the whole if to i32 (`5000000000` cannot even default —
+               ;; E060), and a Field destination meets the same E0308 as
+               ;; everywhere else. Size/coerce the arms from the DESTINATION
+               ;; field's read type — the width the cell must commit at —
+               ;; exactly like a const binding whose declared type is the
+               ;; field's. Skipped for cell-array/bounded-uint destinations
+               ;; (their builders take differently-shaped values) and for
+               ;; non-ternary values (coerce returns #f).
+               [coerced-val
+                (and dest-read-type
+                     (not use-cell-array?)
+                     (not use-bounded-uint?)
+                     (guard (c [#t #f])
+                       (coerce-literal-if-rhs-rendered
+                         dest-read-type val-expr local-binds
+                         native-id-ht witness-id-ht circuit-id-ht
+                         (lambda (e)
+                           (coerce-cmp-operand-rust
+                             e #f local-binds
+                             native-id-ht witness-id-ht circuit-id-ht)))))]
+               [rust-val
+                (or coerced-val
+                    (arg-rust-clone-if-var val-expr local-binds
+                                           native-id-ht witness-id-ht
+                                           circuit-id-ht))])
           (list
             (format "            .push(false, new_cell(~au8))\n" idx)
             (cond

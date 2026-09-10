@@ -330,6 +330,257 @@ where
             gas_cost: results.gas_cost,
         })
     }
+
+    pub fn record_mixed_field_pick(
+        &self,
+        ctx: CircuitContext<PS>,
+        x: Fr,
+        flag: bool,
+    ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let picked = if flag { x } else { Fr::from(0u64) };
+        let tmp = 1u16;
+        let ops = OpProgramVerify::<DefaultDB>::new()
+            .push(false, new_cell(2u8))
+            .push(true, new_cell(picked.clone()))
+            .ins(false, 1)
+            .idx_at_index(1u8, true)
+            .addi(tmp.clone() as u32)
+            .ins(true, 1)
+            .build();
+
+        let results = query_for_verify(
+            &ctx.current_query_context,
+            &ops,
+            ctx.gas_limit.clone(),
+            &ctx.cost_model,
+        )?;
+
+        Ok(CircuitResults {
+            result: (),
+            context: CircuitContext {
+                current_query_context: results.context,
+                ..ctx
+            },
+            gas_cost: results.gas_cost,
+        })
+    }
+
+    pub fn assert_field_eq_operand(
+        &self,
+        ctx: CircuitContext<PS>,
+        f: Fr,
+        c: bool,
+    ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        compact_assert!(
+            (f == if c { Fr::from(1u64) } else { Fr::from(0u64) }),
+            "f must equal the picked literal"
+        );
+        let tmp = 1u16;
+        let ops = OpProgramVerify::<DefaultDB>::new()
+            .idx_at_index(1u8, true)
+            .addi(tmp.clone() as u32)
+            .ins(true, 1)
+            .build();
+
+        let results = query_for_verify(
+            &ctx.current_query_context,
+            &ops,
+            ctx.gas_limit.clone(),
+            &ctx.cost_model,
+        )?;
+
+        Ok(CircuitResults {
+            result: (),
+            context: CircuitContext {
+                current_query_context: results.context,
+                ..ctx
+            },
+            gas_cost: results.gas_cost,
+        })
+    }
+
+    pub fn stream_literal_pick(
+        &self,
+        ctx: CircuitContext<PS>,
+        hot: bool,
+    ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let mut __gas_acc = midnight_compact_runtime::RunningCost::default();
+        let shown = hot;
+        let picked = if shown { 10u8 } else { 20u8 };
+        let tmp = picked.clone();
+
+        let _ops_3 = OpProgramVerify::<DefaultDB>::new()
+            .push(false, new_cell(0u8))
+            .push(true, new_cell((tmp.clone()) as u64))
+            .ins(false, 1)
+            .build();
+        let _results_3 = query_for_verify(
+            &ctx.current_query_context,
+            &_ops_3,
+            ctx.gas_limit.clone(),
+            &ctx.cost_model,
+        )?;
+        __gas_acc += _results_3.gas_cost.clone();
+
+        let _if_results_4 = if shown {
+            let ops = OpProgramVerify::<DefaultDB>::new()
+                .idx_at_index(1u8, true)
+                .addi(1)
+                .ins(true, 1)
+                .build();
+            query_for_verify(
+                &_results_3.context,
+                &ops,
+                ctx.gas_limit.clone(),
+                &ctx.cost_model,
+            )?
+        } else {
+            let ops = OpProgramVerify::<DefaultDB>::new()
+                .idx_at_index(1u8, true)
+                .addi(2)
+                .ins(true, 1)
+                .build();
+            query_for_verify(
+                &_results_3.context,
+                &ops,
+                ctx.gas_limit.clone(),
+                &ctx.cost_model,
+            )?
+        };
+        __gas_acc += _if_results_4.gas_cost.clone();
+        let tmp = 3u16;
+
+        let _ops_6 = OpProgramVerify::<DefaultDB>::new()
+            .idx_at_index(1u8, true)
+            .addi(tmp.clone() as u32)
+            .ins(true, 1)
+            .build();
+        let _results_6 = query_for_verify(
+            &_if_results_4.context,
+            &_ops_6,
+            ctx.gas_limit.clone(),
+            &ctx.cost_model,
+        )?;
+        __gas_acc += _results_6.gas_cost.clone();
+
+        Ok(CircuitResults {
+            result: (),
+            context: CircuitContext {
+                current_query_context: _results_6.context,
+                ..ctx
+            },
+            gas_cost: __gas_acc,
+        })
+    }
+
+    pub fn stream_narrow_write(
+        &self,
+        ctx: CircuitContext<PS>,
+        hot: bool,
+        v: u8,
+    ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let mut __gas_acc = midnight_compact_runtime::RunningCost::default();
+        let flag = hot;
+        let dv = v;
+        let tmp = dv.clone();
+
+        let _ops_3 = OpProgramVerify::<DefaultDB>::new()
+            .push(false, new_cell(0u8))
+            .push(true, new_cell((tmp.clone()) as u64))
+            .ins(false, 1)
+            .build();
+        let _results_3 = query_for_verify(
+            &ctx.current_query_context,
+            &_ops_3,
+            ctx.gas_limit.clone(),
+            &ctx.cost_model,
+        )?;
+        __gas_acc += _results_3.gas_cost.clone();
+
+        let _if_results_4 = if flag {
+            let ops = OpProgramVerify::<DefaultDB>::new()
+                .idx_at_index(1u8, true)
+                .addi(1)
+                .ins(true, 1)
+                .build();
+            query_for_verify(
+                &_results_3.context,
+                &ops,
+                ctx.gas_limit.clone(),
+                &ctx.cost_model,
+            )?
+        } else {
+            let ops = OpProgramVerify::<DefaultDB>::new()
+                .idx_at_index(1u8, true)
+                .addi(2)
+                .ins(true, 1)
+                .build();
+            query_for_verify(
+                &_results_3.context,
+                &ops,
+                ctx.gas_limit.clone(),
+                &ctx.cost_model,
+            )?
+        };
+        __gas_acc += _if_results_4.gas_cost.clone();
+        let tmp = 3u16;
+
+        let _ops_6 = OpProgramVerify::<DefaultDB>::new()
+            .idx_at_index(1u8, true)
+            .addi(tmp.clone() as u32)
+            .ins(true, 1)
+            .build();
+        let _results_6 = query_for_verify(
+            &_if_results_4.context,
+            &_ops_6,
+            ctx.gas_limit.clone(),
+            &ctx.cost_model,
+        )?;
+        __gas_acc += _results_6.gas_cost.clone();
+
+        Ok(CircuitResults {
+            result: (),
+            context: CircuitContext {
+                current_query_context: _results_6.context,
+                ..ctx
+            },
+            gas_cost: __gas_acc,
+        })
+    }
+
+    pub fn inline_big_pick(
+        &self,
+        ctx: CircuitContext<PS>,
+        hot: bool,
+    ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let shown = hot;
+        let tmp = if shown { 5000000000u64 } else { 0u64 };
+        let tmp_0 = 1u16;
+        let ops = OpProgramVerify::<DefaultDB>::new()
+            .push(false, new_cell(0u8))
+            .push(true, new_cell((tmp.clone()) as u64))
+            .ins(false, 1)
+            .idx_at_index(1u8, true)
+            .addi(tmp_0.clone() as u32)
+            .ins(true, 1)
+            .build();
+
+        let results = query_for_verify(
+            &ctx.current_query_context,
+            &ops,
+            ctx.gas_limit.clone(),
+            &ctx.cost_model,
+        )?;
+
+        Ok(CircuitResults {
+            result: (),
+            context: CircuitContext {
+                current_query_context: results.context,
+                ..ctx
+            },
+            gas_cost: results.gas_cost,
+        })
+    }
 }
 
 pub struct Ledger<'a, D: DB = DefaultDB> {
@@ -500,5 +751,22 @@ pub mod pure_circuits {
             (midnight_compact_runtime::jubjub_point_y(p.clone()) != Fr::from(0u64))
         };
         Ok(populated)
+    }
+
+    pub fn mixed_field_join(flag: bool, x: Fr) -> Result<Fr, CompactError> {
+        let p = if flag { x } else { Fr::from(0u64) };
+        Ok(p)
+    }
+
+    pub fn return_field(flag: bool, x: Fr) -> Result<Fr, CompactError> {
+        Ok(if flag { x } else { Fr::from(0u64) })
+    }
+
+    pub fn field_eq_operand(f: Fr, c: bool) -> Result<bool, CompactError> {
+        Ok((f == if c { Fr::from(1u64) } else { Fr::from(0u64) }))
+    }
+
+    pub fn field_add_operand(f: Fr, c: bool) -> Result<Fr, CompactError> {
+        Ok((f) + (if c { Fr::from(1u64) } else { Fr::from(0u64) }))
     }
 }

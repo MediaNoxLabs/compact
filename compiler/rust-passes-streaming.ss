@@ -188,16 +188,17 @@
                      [else #f])))]
               [else #f]))))
 
-      ;; Cell.write builder lines: emit the hardcoded
-      ;;   .push(false, new_cell(<idx>u8))
-      ;;   .push(true,  new_cell(<value>))
-      ;;   .ins(false, 1)
-      ;; chain for a single Cell.write op. Returns a list of indented Rust
-      ;; lines (matching compute-pl-builder-lines's output shape).
-      (define (cell-write-builder-lines idx rust-val)
-        (list (format "            .push(false, new_cell(~au8))\n" idx)
-              (format "            .push(true, new_cell(~a))\n" rust-val)
-              "            .ins(false, 1)\n"))
+      ;; Cell.write builder lines: delegate to the walker's
+      ;; cell-write-op-lines (rust-passes-walker.ss) so the streaming
+      ;; route's cell-writes carry EXACTLY the same value-builder selection
+      ;; and width casts as the other two routes. This used to be a local
+      ;; hardcoded `new_cell(<val>)` twin that none of the dest-uint-width /
+      ;; bounded-uint / cell-array routing reached: a Uint<8> value written
+      ;; to a Uint<64> field committed 1 byte here and 8 bytes on the other
+      ;; routes — same decoded value, divergent committed state bytes, and
+      ;; both compiles clean (only the byte-parity harness could see it).
+      ;; Inline ternary write values get their literal arms coerced from
+      ;; the destination field's type there too (see cell-write-op-lines).
 
       ;; A24: does a branch's ordered body-items contain more than one
       ;; assert? Multi-assert branches need in-source-order emission (the
@@ -547,13 +548,43 @@
                               witness-emitted? (+ step 3)
                               "&ctx.current_query_context")))]
                    [else
-                    (let* ([raw
-                            (guard (c [#t #f])
-                              (ctor-expr-rust rhs local-binds
-                                              native-id-ht witness-id-ht circuit-id-ht))]
+                    (let* ([decl-type
+                            ;; Same decl-type coercion contract as the
+                            ;; walker's const clause (emit-body-or-fallback)
+                            ;; and the pure route (stmt-pure-body-rust):
+                            ;; `const picked = hot ? 10 : 20;` here used to
+                            ;; fall straight to ctor-expr-rust, whose if
+                            ;; clause leaves both arms bare — the whole if
+                            ;; defaults to i32 and the write's
+                            ;; `Into<AlignedValue>` bound fails E0277 at
+                            ;; cargo build while compactc exits 0. This
+                            ;; streaming const emitter was the one route the
+                            ;; coercion dance never reached (found by the
+                            ;; dogfood review: the body-walkable? gate's new
+                            ;; ternary arm admits these bodies here).
+                            (const-binding-decl-type (car stmts))]
+                           [coerced
+                            (or (coerce-literal-rhs-rendered decl-type rhs)
+                                (coerce-literal-if-rhs-rendered
+                                  decl-type rhs local-binds
+                                  native-id-ht witness-id-ht circuit-id-ht
+                                  (lambda (e)
+                                    (coerce-cmp-operand-rust
+                                      e #f local-binds
+                                      native-id-ht witness-id-ht
+                                      circuit-id-ht))))]
+                           [raw
+                            (or coerced
+                                (guard (c [#t #f])
+                                  (ctor-expr-rust rhs local-binds
+                                                  native-id-ht witness-id-ht circuit-id-ht)))]
                            ;; Bug-6: clone non-Copy var-ref / elt-ref RHS so
                            ;; the source struct/local stays usable after.
-                           [rendered (and raw (expr-rust-arg-cloned rhs raw))])
+                           [rendered
+                            (and raw
+                                 (if coerced
+                                     raw
+                                     (expr-rust-arg-cloned rhs raw)))])
                       (cond
                         [(not rendered) #f]
                         [else
@@ -672,12 +703,15 @@
                          [is-write?
                           (let* ([w (stmt->public-ledger-write (car stmts))]
                                  [idx (car w)]
-                                 [val-expr (cdr w)]
-                                 [rust-val
-                                  (guard (c [#t #f])
-                                    (arg-rust-clone-if-var val-expr local-binds
-                                                           native-id-ht witness-id-ht circuit-id-ht))])
-                            (and rust-val (cell-write-builder-lines idx rust-val)))]
+                                 [val-expr (cdr w)])
+                            ;; Route-shared cell-write emission: the same
+                            ;; builder selection + width casts as the walker
+                            ;; and constructor routes (see the note at the old
+                            ;; cell-write-builder-lines site above).
+                            (guard (c [#t #f])
+                              (cell-write-op-lines (cons idx val-expr) local-binds
+                                                   native-id-ht witness-id-ht
+                                                   circuit-id-ht)))]
                          [else
                           (compute-pl-builder-lines
                             src adt-op path-elt* expr* local-binds

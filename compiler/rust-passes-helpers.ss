@@ -296,6 +296,17 @@
       (define current-ledger-field-types
         (make-parameter #f))
 
+      ;; current-pure-return-type: the declared return Type of the pure
+      ;; circuit currently being emitted (#f outside emit-pure-circuit, or
+      ;; when the route is impure/constructor/streaming). The body's tail
+      ;; expression renders against it so a Field-returning circuit can
+      ;; coerce ternary literal arms to `Fr::from(<n>u64)` (see
+      ;; render-field-joined-if in rust-passes-emit.ss) — the tail has no
+      ;; other type context, and a bare integer arm against the other
+      ;; arm's Fr fails E0308 at cargo build while compactc exits 0.
+      (define current-pure-return-type
+        (make-parameter #f))
+
       ;; current-arith-suffix: Rust unsigned-type suffix ("u8" / "u16" /
       ;; "u32" / "u64" / "u128") that wrapping_add / wrapping_sub /
       ;; wrapping_mul operands should carry on their integer-literal

@@ -47,15 +47,21 @@ use midnight_serialize::tagged_serialize;
 use midnight_storage::storage::HashMap;
 use tests_e2e_rust::SmallFixtureTsReference;
 
-/// The ternary fixture's TS reference additionally carries an
-/// `afterRecordLiteralPick` snapshot (see capture-ternary-cond-fixture.mjs):
-/// the state after executing `recordLiteralPick(true)` from the post-init
-/// state on the TS driver. `SmallFixtureTsReference` models the shared
-/// afterInit-only shape, so parse the extended document locally.
+/// The ternary fixture's TS reference additionally carries
+/// `afterRecordLiteralPick`, `afterStreamLiteralPick`, and
+/// `afterStreamNarrowWrite` snapshots (see
+/// capture-ternary-cond-fixture.mjs): the state after executing the
+/// named circuit from the prior captured state on the TS driver.
+/// `SmallFixtureTsReference` models the shared afterInit-only shape,
+/// so parse the extended document locally.
 #[derive(serde::Deserialize)]
 struct TernaryTsReference {
     #[serde(rename = "afterRecordLiteralPick")]
     after_record_literal_pick: tests_e2e_rust::SmallFixtureStepSnapshot,
+    #[serde(rename = "afterStreamLiteralPick")]
+    after_stream_literal_pick: tests_e2e_rust::SmallFixtureStepSnapshot,
+    #[serde(rename = "afterStreamNarrowWrite")]
+    after_stream_narrow_write: tests_e2e_rust::SmallFixtureStepSnapshot,
 }
 
 impl TernaryTsReference {
@@ -93,9 +99,9 @@ fn ctor_ctx() -> ConstructorContext<()> {
 }
 
 /// Build a `ContractState` envelope around a freshly minted `ChargedState`.
-/// `ternary_cond_fixture` exports one IMPURE circuit (`recordPick`), so the
-/// operations map must register one entry under that name to match the
-/// TS-side `initialState()` output (the seven pure circuits live in
+/// `ternary_cond_fixture` exports several IMPURE circuits, so the
+/// operations map must register one entry under each exported name to
+/// match the TS-side `initialState()` output (the pure circuits live in
 /// `pure_circuits` and are not part of the dispatch map).
 fn make_envelope(
     data: ChargedState<midnight_storage::DefaultDB>,
@@ -104,12 +110,17 @@ fn make_envelope(
         HashMap::new();
     // One entry per exported impure circuit — the TS reference's
     // initialState() pre-registers them all, so byte-parity requires the
-    // same four here.
+    // same nine here.
     for name in [
         "recordPick",
         "recordLiteralPick",
         "recordFieldPick",
         "recordFieldBranches",
+        "recordMixedFieldPick",
+        "assertFieldEqOperand",
+        "streamLiteralPick",
+        "streamNarrowWrite",
+        "inlineBigPick",
     ] {
         operations = operations.insert(
             EntryPointBuf(name.as_bytes().to_vec()),
@@ -584,4 +595,295 @@ fn record_field_branches_asserts_the_selected_coordinate() {
         .expect("generator point must commit");
     let view = ledger(&after.context.current_query_context.state);
     assert_eq!(view.picks().expect("picks"), 1);
+}
+
+// ---- dogfood-review round 2: mixed-arm Field joins, operand/return
+// positions, streaming-route literals, and the streaming write width. --
+
+/// PURE mixed-arm Field const: `flag ? x : 0` with x: Field must render
+/// the literal arm as `Fr::from(0u64)` — an integer literal never
+/// unifies with the other arm's `Fr` (E0308 at cargo build, compactc
+/// exit 0 before the fix). Both directions pin the selected VALUE.
+#[test]
+fn mixed_field_join_returns_each_arm() {
+    let x = Fr::from(42u64);
+    assert_eq!(
+        pure_circuits::mixed_field_join(true, x).expect("then arm"),
+        x
+    );
+    assert_eq!(
+        pure_circuits::mixed_field_join(false, x).expect("else arm"),
+        Fr::from(0u64)
+    );
+}
+
+/// RETURN position: the frontend lifts `return flag ? x : 0;` to an if
+/// STATEMENT, so the literal becomes its own branch tail with no
+/// binding type to size from — the circuit's Field return type must
+/// drive the coercion there.
+#[test]
+fn return_field_returns_each_arm() {
+    let x = Fr::from(7u64);
+    assert_eq!(pure_circuits::return_field(true, x).expect("then arm"), x);
+    assert_eq!(
+        pure_circuits::return_field(false, x).expect("else arm"),
+        Fr::from(0u64)
+    );
+}
+
+/// The ternary as an OPERAND of a Field `==`: the whole if renders
+/// inside the comparison, literal arms coerced.
+#[test]
+fn field_eq_operand_selects_the_literal_side() {
+    let one = Fr::from(1u64);
+    assert!(pure_circuits::field_eq_operand(one, true).expect("c: 1 == 1"));
+    assert!(!pure_circuits::field_eq_operand(one, false).expect("c: 1 == 0"));
+}
+
+/// The ternary as an operand of FIELD arithmetic (`+` renders via the
+/// Fr operators, not `wrapping_add`).
+#[test]
+fn field_add_operand_adds_the_selected_literal() {
+    let ten = Fr::from(10u64);
+    assert_eq!(
+        pure_circuits::field_add_operand(ten, true).expect("10 + 1"),
+        Fr::from(11u64)
+    );
+    assert_eq!(
+        pure_circuits::field_add_operand(ten, false).expect("10 + 0"),
+        ten
+    );
+}
+
+/// The impure (walker-route) twin of `mixed_field_join`, committing the
+/// mixed join to the Field ledger. Both directions execute and decode.
+#[test]
+fn record_mixed_field_pick_commits_each_arm() {
+    let contract: Contract<(), NoWitnesses> = Contract::new(NoWitnesses);
+    let init = contract
+        .initial_state(ctor_ctx(), CAPTURE_START)
+        .expect("initial_state");
+
+    let x = Fr::from(33u64);
+    let after_true = contract
+        .record_mixed_field_pick(
+            CircuitContext::new(init.current_contract_state.clone(), ()),
+            x,
+            true,
+        )
+        .expect("flag = true must commit");
+    let view = ledger(&after_true.context.current_query_context.state);
+    assert_eq!(view.origin().expect("origin"), x);
+
+    let after_false = contract
+        .record_mixed_field_pick(
+            CircuitContext::new(after_true.context.current_query_context.state, ()),
+            x,
+            false,
+        )
+        .expect("flag = false must commit");
+    let view = ledger(&after_false.context.current_query_context.state);
+    assert_eq!(view.origin().expect("origin"), Fr::from(0u64));
+}
+
+/// The impure twin of `field_eq_operand`: the walker's comparison
+/// renderer carries the same Field-if coercion inside the assert. The
+/// passing side commits; the failing side returns AssertionFailed.
+#[test]
+fn assert_field_eq_operand_passes_and_fails() {
+    let contract: Contract<(), NoWitnesses> = Contract::new(NoWitnesses);
+    let init = contract
+        .initial_state(ctor_ctx(), CAPTURE_START)
+        .expect("initial_state");
+
+    let one = Fr::from(1u64);
+    let after_pass = contract
+        .assert_field_eq_operand(
+            CircuitContext::new(init.current_contract_state.clone(), ()),
+            one,
+            true,
+        )
+        .expect("1 == 1 must commit");
+    let view = ledger(&after_pass.context.current_query_context.state);
+    assert_eq!(view.picks().expect("picks"), 1);
+
+    let err = match contract.assert_field_eq_operand(
+        CircuitContext::new(after_pass.context.current_query_context.state, ()),
+        one,
+        false,
+    ) {
+        Err(e) => e,
+        Ok(_) => panic!("1 == 0 must trip the assert"),
+    };
+    assert!(
+        matches!(err, CompactError::AssertionFailed(_)),
+        "expected AssertionFailed, got {err:?}"
+    );
+}
+
+/// The STREAMING route's both-literal const (`streamLiteralPick`): the
+/// streaming const emitter predates the literal-arm coercion, so the
+/// same `shown ? 10 : 20` the walker route suffixed emitted an
+/// i32-defaulted if into `new_cell` (E0277). The non-terminal `if`
+/// forces the streaming route; both flag directions commit their arm.
+#[test]
+fn stream_literal_pick_commits_each_suffixed_arm() {
+    let contract: Contract<(), NoWitnesses> = Contract::new(NoWitnesses);
+    let init = contract
+        .initial_state(ctor_ctx(), CAPTURE_START)
+        .expect("initial_state");
+
+    let after_true = contract
+        .stream_literal_pick(
+            CircuitContext::new(init.current_contract_state.clone(), ()),
+            true,
+        )
+        .expect("hot = true must commit");
+    let view = ledger(&after_true.context.current_query_context.state);
+    assert_eq!(view.last_pick().expect("last_pick"), 10);
+    // picks: 1 (then branch) + 3 (terminal) = 4 — the write targets
+    // lastPick, not picks.
+    assert_eq!(view.picks().expect("picks"), 4);
+
+    let after_false = contract
+        .stream_literal_pick(
+            CircuitContext::new(after_true.context.current_query_context.state, ()),
+            false,
+        )
+        .expect("hot = false must commit");
+    let view = ledger(&after_false.context.current_query_context.state);
+    assert_eq!(view.last_pick().expect("last_pick"), 20);
+    // picks: 4 + 2 (else branch) + 3 (terminal) = 9.
+    assert_eq!(view.picks().expect("picks"), 9);
+}
+
+/// The streaming-route byte pin for the both-literal const write — the
+/// twin of `record_literal_pick_byte_parity` through
+/// emit-streaming-body.
+#[test]
+fn stream_literal_pick_byte_parity() {
+    let ts_ref = TernaryTsReference::load();
+    let contract: Contract<(), NoWitnesses> = Contract::new(NoWitnesses);
+    let init = contract
+        .initial_state(ctor_ctx(), CAPTURE_START)
+        .expect("initial_state");
+
+    // Reproduce the capture chain: recordLiteralPick(true) then
+    // streamLiteralPick(true) from its post-state.
+    let after_record = contract
+        .record_literal_pick(
+            CircuitContext::new(init.current_contract_state.clone(), ()),
+            true,
+        )
+        .expect("record_literal_pick(true) must commit");
+    let after = contract
+        .stream_literal_pick(
+            CircuitContext::new(after_record.context.current_query_context.state, ()),
+            true,
+        )
+        .expect("stream_literal_pick(true) must commit");
+
+    let envelope = make_envelope(after.context.current_query_context.state);
+    let mut buf = Vec::new();
+    tagged_serialize(&envelope, &mut buf).expect("tagged_serialize");
+
+    let ts_bytes = ts_ref.after_stream_literal_pick.state_bytes();
+    assert_eq!(
+        buf,
+        ts_bytes,
+        "Rust post-streamLiteralPick state bytes differ from TS reference\n\nRust ({} B): {}\n\nTS   ({} B): {}",
+        buf.len(),
+        hex::encode(&buf),
+        ts_bytes.len(),
+        hex::encode(&ts_bytes),
+    );
+}
+
+/// THE streaming width pin (the dogfood-review round-2 regression): a
+/// Uint<8> value written into the Uint<64> `lastPick` field through the
+/// streaming route. The pre-fix streaming cell-write had no
+/// destination-width cast, committing a 1-byte-aligned cell where every
+/// other route — and the TS field descriptor — commits 8: identical
+/// decoded value, divergent state bytes. The decoded assertion below
+/// passes either way; only this byte comparison against the TS
+/// reference catches the divergence.
+#[test]
+fn stream_narrow_write_commits_at_field_width() {
+    let ts_ref = TernaryTsReference::load();
+    let contract: Contract<(), NoWitnesses> = Contract::new(NoWitnesses);
+    let init = contract
+        .initial_state(ctor_ctx(), CAPTURE_START)
+        .expect("initial_state");
+
+    // Reproduce the capture chain: recordLiteralPick(true) ->
+    // streamLiteralPick(true) -> streamNarrowWrite(true, 7).
+    let after_record = contract
+        .record_literal_pick(
+            CircuitContext::new(init.current_contract_state.clone(), ()),
+            true,
+        )
+        .expect("record_literal_pick(true) must commit");
+    let after_lit = contract
+        .stream_literal_pick(
+            CircuitContext::new(after_record.context.current_query_context.state, ()),
+            true,
+        )
+        .expect("stream_literal_pick(true) must commit");
+    let after = contract
+        .stream_narrow_write(
+            CircuitContext::new(after_lit.context.current_query_context.state, ()),
+            true,
+            7,
+        )
+        .expect("stream_narrow_write(true, 7) must commit");
+
+    // Decoded value: the 8-bit 7 zero-extended into lastPick.
+    let view = ledger(&after.context.current_query_context.state);
+    assert_eq!(view.last_pick().expect("last_pick"), 7);
+
+    // Committed bytes: must match the TS reference exactly.
+    let envelope = make_envelope(after.context.current_query_context.state);
+    let mut buf = Vec::new();
+    tagged_serialize(&envelope, &mut buf).expect("tagged_serialize");
+
+    let ts_bytes = ts_ref.after_stream_narrow_write.state_bytes();
+    assert_eq!(
+        buf,
+        ts_bytes,
+        "Rust post-streamNarrowWrite state bytes differ from TS reference\n\nRust ({} B): {}\n\nTS   ({} B): {}",
+        buf.len(),
+        hex::encode(&buf),
+        ts_bytes.len(),
+        hex::encode(&ts_bytes),
+    );
+}
+
+/// INLINE both-literal write with no const binding (`inlineBigPick`):
+/// the write site itself must size the arms from the destination field
+/// — bare arms default the if to i32 and `5000000000` overflows even
+/// that. Both flag directions commit their arm.
+#[test]
+fn inline_big_pick_commits_each_arm() {
+    let contract: Contract<(), NoWitnesses> = Contract::new(NoWitnesses);
+    let init = contract
+        .initial_state(ctor_ctx(), CAPTURE_START)
+        .expect("initial_state");
+
+    let after_true = contract
+        .inline_big_pick(
+            CircuitContext::new(init.current_contract_state.clone(), ()),
+            true,
+        )
+        .expect("hot = true must commit");
+    let view = ledger(&after_true.context.current_query_context.state);
+    assert_eq!(view.last_pick().expect("last_pick"), 5_000_000_000);
+
+    let after_false = contract
+        .inline_big_pick(
+            CircuitContext::new(after_true.context.current_query_context.state, ()),
+            false,
+        )
+        .expect("hot = false must commit");
+    let view = ledger(&after_false.context.current_query_context.state);
+    assert_eq!(view.last_pick().expect("last_pick"), 0);
 }

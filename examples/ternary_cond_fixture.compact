@@ -234,3 +234,100 @@ export circuit recordFieldBranches(flag: Boolean, p: JubjubPoint): [] {
   assert(populated, "point must be non-origin");
   picks.increment(1);
 }
+
+// ---------------------------------------------------------------------
+// Mixed-arm Field joins and route gaps (dogfood review, round 2). The
+// both-literal circuits above only proved the both-literal coercion;
+// the review found the MIXED shape (`flag ? x : 0` with x: Field)
+// broken in every route, the operand/return positions uncovered, the
+// streaming const emitter missing the coercion entirely, and the
+// streaming cell-write missing the destination-width cast:
+//
+//   - `mixedFieldJoin`: PURE const-RHS with a mixed arm — the literal
+//     arm must render `Fr::from(0u64)` (an integer literal never
+//     unifies with the other arm's `Fr`; E0308 while compactc exits
+//     0).
+//   - `returnField`: RETURN position — the frontend lifts the ternary
+//     to an if STATEMENT, so the literal becomes its own branch tail;
+//     the tail must render `Fr::from(0u64)` from the circuit's Field
+//     return type.
+//   - `fieldEqOperand` / `fieldAddOperand`: the ternary as an OPERAND
+//     of a Field `==` / `+` — the literal arm must coerce inside the
+//     operand render, not just at const-bindings.
+//   - `recordMixedFieldPick`: the impure (walker-route) twin of
+//     `mixedFieldJoin`, writing the mixed join to the Field ledger.
+//   - `assertFieldEqOperand`: the impure twin of `fieldEqOperand` —
+//     the walker's comparison-operand renderer carries the same
+//     coercion.
+//   - `streamLiteralPick`: the non-terminal `if` forces the STREAMING
+//     route; its const emitter predates the literal coercion, so the
+//     same `shown ? 10 : 20` that the walker route suffixed emitted an
+//     i32-defaulted if into `new_cell` (E0277).
+//   - `streamNarrowWrite`: the streaming cell-write predates the
+//     destination-width cast, so a Uint<8> value into the Uint<64>
+//     field committed a 1-byte cell where every other route (and the
+//     TS reference) commits 8 — same decoded value, divergent state
+//     bytes. The executing test byte-compares the post-circuit state
+//     against the TS reference.
+//   - `inlineBigPick`: an INLINE both-literal write (no const binding,
+//     so no decl-type to size from) — the write site itself must size
+//     the arms from the destination field; bare arms default to i32
+//     and `5000000000` cannot even do that.
+
+export pure circuit mixedFieldJoin(flag: Boolean, x: Field): Field {
+  const p: Field = flag ? x : 0;
+  return p;
+}
+
+export pure circuit returnField(flag: Boolean, x: Field): Field {
+  return flag ? x : 0;
+}
+
+export pure circuit fieldEqOperand(f: Field, c: Boolean): Boolean {
+  return f == (c ? 1 : 0);
+}
+
+export pure circuit fieldAddOperand(f: Field, c: Boolean): Field {
+  return f + (c ? 1 : 0);
+}
+
+export circuit recordMixedFieldPick(x: Field, flag: Boolean): [] {
+  const picked: Field = flag ? x : 0;
+  origin.write(disclose(picked));
+  picks.increment(1);
+}
+
+export circuit assertFieldEqOperand(f: Field, c: Boolean): [] {
+  assert(f == (c ? 1 : 0), "f must equal the picked literal");
+  picks.increment(1);
+}
+
+export circuit streamLiteralPick(hot: Boolean): [] {
+  const shown = disclose(hot);
+  const picked = shown ? 10 : 20;
+  lastPick.write(disclose(picked));
+  if (shown) {
+    picks.increment(1);
+  } else {
+    picks.increment(2);
+  }
+  picks.increment(3);
+}
+
+export circuit streamNarrowWrite(hot: Boolean, v: Uint<8>): [] {
+  const flag = disclose(hot);
+  const dv = disclose(v);
+  lastPick.write(dv);
+  if (flag) {
+    picks.increment(1);
+  } else {
+    picks.increment(2);
+  }
+  picks.increment(3);
+}
+
+export circuit inlineBigPick(hot: Boolean): [] {
+  const shown = disclose(hot);
+  lastPick.write(disclose(shown ? 5000000000 : 0));
+  picks.increment(1);
+}

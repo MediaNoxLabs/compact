@@ -102,4 +102,55 @@ fixture.afterRecordLiteralPick = {
   stateHex: Buffer.from(afterRecordEnvelope.serialize()).toString('hex'),
 };
 
+// --- afterStreamLiteralPick: init -> streamLiteralPick(true) --------
+// The streaming route's both-literal const write — same width oracle
+// as afterRecordLiteralPick but through emit-streaming-body, whose
+// const emitter predates the literal-arm coercion (a bare i32 if into
+// new_cell fails `Into<AlignedValue>` at cargo build).
+const streamLitOut = contract.circuits.streamLiteralPick(
+  cr.createCircuitContext(
+    cr.dummyContractAddress(),
+    emptyCpk,
+    afterRecordEnvelope.data,
+    initResult.currentPrivateState,
+  ),
+  true,
+);
+if (streamLitOut.result.err !== undefined) {
+  throw new Error(`streamLiteralPick(true) failed: ${streamLitOut.result.err}`);
+}
+const afterStreamLitEnvelope = rewrapEnvelope(
+  afterRecordEnvelope,
+  new cr.ChargedState(streamLitOut.context.currentQueryContext.state.state),
+);
+fixture.afterStreamLiteralPick = {
+  stateHex: Buffer.from(afterStreamLitEnvelope.serialize()).toString('hex'),
+};
+
+// --- afterStreamNarrowWrite: init -> streamNarrowWrite(true, 7n) -----
+// THE streaming width pin: a Uint<8> value into the Uint<64> `lastPick`
+// field. The pre-fix streaming cell-write committed a 1-byte-aligned
+// cell where the TS field descriptor commits 8 — same decoded value,
+// divergent state bytes — so only this byte comparison catches it.
+const streamNarrowOut = contract.circuits.streamNarrowWrite(
+  cr.createCircuitContext(
+    cr.dummyContractAddress(),
+    emptyCpk,
+    afterStreamLitEnvelope.data,
+    initResult.currentPrivateState,
+  ),
+  true,
+  7n,
+);
+if (streamNarrowOut.result.err !== undefined) {
+  throw new Error(`streamNarrowWrite(true, 7n) failed: ${streamNarrowOut.result.err}`);
+}
+const afterStreamNarrowEnvelope = rewrapEnvelope(
+  afterStreamLitEnvelope,
+  new cr.ChargedState(streamNarrowOut.context.currentQueryContext.state.state),
+);
+fixture.afterStreamNarrowWrite = {
+  stateHex: Buffer.from(afterStreamNarrowEnvelope.serialize()).toString('hex'),
+};
+
 process.stdout.write(JSON.stringify(fixture, null, 2) + '\n');

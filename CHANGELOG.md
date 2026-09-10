@@ -5,6 +5,73 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Toolchain 0.31.120, language 0.23.103, runtime 0.16.100] — rust-codegen review fixes: mixed-arm Field ternaries, streaming-route literals, streaming write width (2026-09-10)
+
+### Fixed
+
+Three Rust-codegen correctness gaps found by the PR review's adversarial
+validation pass (each reproduced end-to-end: `compactc --target rust` exits
+0 while the generated crate fails `cargo build` — or, for the third,
+compiles cleanly and silently commits wrong-width bytes):
+
+- **Mixed-arm Field ternaries emitted a bare Rust integer** —
+  `const a: Field = flag ? x : 0;` produced `if flag { x } else { 0 }`:
+  an integer literal never unifies with the other arm's `Fr` (a struct),
+  so every body route failed E0308 while compactc exited 0. The
+  both-literal coercion shipped in 0.31.119 deliberately exempted mixed
+  arms ("the non-literal arm gives Rust's inference a real type") — sound
+  for `Uint` joins, unsound for `Field`. Fixed at every use position that
+  knows its type is Field: const RHS in all three routes
+  (`coerce-literal-if-rhs-rendered` now takes a site-supplied arm
+  renderer and coerces the literal arm to `Fr::from(<n>u64)` for `tfield`
+  decl-types), comparison operands (`eq-operand-rust` pure route,
+  `coerce-cmp-operand-rust` ctor/streaming routes), field-arithmetic
+  operands (`f + (c ? 1 : 0)`), and the return position
+  (`current-pure-return-type` parameterizes the tail render — covering
+  both the bare `return 0;` and the branch tails of the if-statement the
+  frontend lifts `return flag ? x : 0;` into). New shared helpers:
+  `literal-int-if?` + `render-field-joined-if` (rust-passes-emit.ss).
+
+- **The streaming impure route admitted ternaries its emitter could not
+  render** — the new `expr-supported?` if-arm routes bodies containing
+  `const picked = shown ? 10 : 20;` to `emit-streaming-body` when a
+  non-terminal `if` forces the streaming route, but the streaming const
+  emitter predates 0.31.119's literal-arm coercion: it emitted an
+  i32-defaulted `if` into `new_cell` (E0277), and an inline
+  `write(disclose(shown ? 5000000000 : 0))` could not even default
+  (`literal out of range for i32`). Before this PR both shapes were
+  cleanly rejected (`circuit-body-emission`); the review flagged the new
+  silent-bad-codegen path as a regression. The streaming const clause now
+  mirrors the walker's coercion dance (`const-binding-decl-type` +
+  `coerce-literal-rhs-rendered` / `coerce-literal-if-rhs-rendered`), and
+  both write routes coerce INLINE ternary write values from the
+  destination field's type.
+
+- **The streaming cell-write had no destination-width cast** —
+  `cell-write-builder-lines` (rust-passes-streaming.ss) was a local
+  hard-coded `new_cell(<val>)` twin that none of the `dest-uint-width` /
+  bounded-uint / cell-array routing reached: a `Uint<8>` value written to
+  a `Uint<64>` field committed a **1-byte**-aligned cell on the streaming
+  route and **8 bytes** on every other route (and in TS) — same decoded
+  value, divergent committed state bytes, compiling cleanly. It now
+  delegates to the walker's `cell-write-op-lines`, making all three
+  routes share one emitter for the builder selection, width casts, and
+  inline-value coercion (which also brings `new_cell_array`/
+  `new_cell_bounded_uint` routing to streaming writes).
+
+Regression coverage: `examples/ternary_cond_fixture.compact` grows nine
+circuits — `mixedFieldJoin`, `returnField`, `fieldEqOperand`,
+`fieldAddOperand` (pure route positions), `recordMixedFieldPick`,
+`assertFieldEqOperand` (walker route), `streamLiteralPick`,
+`streamNarrowWrite` (streaming route; `streamNarrowWrite` is gated by a
+state-BYTE comparison against a new TS-reference capture, the only kind
+of test that can see the 1-vs-8-byte divergence), and `inlineBigPick`
+(inline both-literal write) — each driven by an executing test, with two
+new TS capture steps (`afterStreamLiteralPick`, `afterStreamNarrowWrite`).
+The five new exported impure circuits enlarge the contract's operations
+map, so the fixture's `afterInit` reference changes; all other
+pre-existing fixtures regenerate byte-identically.
+
 ## [Toolchain 0.31.119, language 0.23.103, runtime 0.16.100] — digital-passport dogfood enclave (2026-09-10)
 
 ### Added
@@ -92,8 +159,13 @@ Regression coverage: `examples/ternary_cond_fixture.compact` grows
 `recordLiteralPick` (both-literal Uint arms), `recordFieldPick` (Field-typed
 arms → `Fr::from`), and `fieldBranches`/`recordFieldBranches` (Field
 comparisons in ternary branches, pure + impure routes), each driven by an
-executing test plus the byte-parity capture; all other pre-existing
-fixtures still regenerate byte-identically.
+executing test plus the byte-parity capture. The destination-width
+cell-write cast that drives ternary literal widths from the ledger field
+also re-renders as same-width no-op casts (`(v) as u64` on already-u64
+values) in six pre-existing fixtures' committed `lib.rs`
+(bounded-uint, bug11, cross-circuit, multi-pl-call, sealed-ledger,
+uints) — value-identical, byte-visible, and gated by the same
+regeneration sweep.
 
 ## [Toolchain 0.31.118, language 0.23.103, runtime 0.16.100]
 

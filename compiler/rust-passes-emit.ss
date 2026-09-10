@@ -706,6 +706,53 @@
              (and (literal-int-expr? expr1) (literal-int-expr? expr2))]
             [else #f])))
 
+      ;; literal-int-if?: `expr` strips (through safe-cast layers) to an
+      ;; `(if ...)` with AT LEAST ONE integer-literal arm; returns the
+      ;; (cond then else) triple, #f otherwise. This is the shape whose
+      ;; Field-joined rendering needs arm coercion: a literal arm renders
+      ;; as a bare Rust integer, and an integer literal can never unify
+      ;; with the other arm's `Fr` (a struct — inference only falls back
+      ;; to primitive integer types), so the generated crate fails E0308
+      ;; while compactc exits 0. Covers both the mixed-arm
+      ;; (`flag ? x : 0`) and both-literal (`c ? 1 : 0`) joins; used by
+      ;; every use-position site that knows its context type is Field
+      ;; (eq-operand-rust, field arithmetic, coerce-cmp-operand-rust, the
+      ;; pure-route return tail).
+      (define (literal-int-if? expr)
+        (let ([e (expr-strip-cast expr)])
+          (nanopass-case (Ltypescript Expression) e
+            [(if ,src ,expr0 ,expr1 ,expr2)
+             (and (or (literal-int-expr? expr1) (literal-int-expr? expr2))
+                  (list expr0 expr1 expr2))]
+            [else #f])))
+
+      ;; render-field-joined-if: render an `(if ...)` triple whose join
+      ;; context is Field: every integer-literal arm renders as
+      ;; `Fr::from(<n>u64)`, non-literal arms via `arm-renderer` and the
+      ;; condition via `cond-renderer` (both site-supplied, matching how
+      ;; each route renders if-arms/conditions today: widening-operand-rust
+      ;; + cond-rust on the pure route, coerce-cmp-operand-rust + cond-rust
+      ;; on the ctor/streaming routes). Guarded: an arm/condition that
+      ;; cannot render returns #f so the caller falls back or refuses.
+      ;; Nested literal ternaries inside a NON-literal arm render via the
+      ;; site renderer's own recursion (which applies this coercion again
+      ;; where that route supports it).
+      (define (render-field-joined-if parts arm-renderer cond-renderer)
+        (let ([expr0 (car parts)]
+              [expr1 (cadr parts)]
+              [expr2 (caddr parts)])
+          (guard (c [#t #f])
+            (let ([arm
+                    (lambda (e)
+                      (let ([n (literal-int-expr? e)])
+                        (if n
+                            (format "Fr::from(~au64)" n)
+                            (arm-renderer e))))])
+              (format "if ~a { ~a } else { ~a }"
+                      (cond-renderer expr0)
+                      (arm expr1)
+                      (arm expr2))))))
+
       ;; coerce-literal-if-rhs-rendered: the ternary analogue of
       ;; coerce-literal-rhs-rendered. `const v = flag ? 10 : 20;` lowers to
       ;; a const-binding whose RHS is an `(if ...)` with integer-literal
@@ -720,10 +767,13 @@
       ;; `if <cond> { <arm1> } else { <arm2> }` with each arm coerced from
       ;; decl-type (`Fr::from(10u64)` / `10u64`), so the joined type is
       ;; exactly the declared one. A literal/non-literal arm mix returns
-      ;; #f: the non-literal arm gives Rust's inference a real type to
-      ;; unify the literal against (verified: `if hot { 10 } else { c }`
-      ;; compiles at c's width), so suffixing there would only churn
-      ;; bytes. The condition renders via cond-rust (the ctor-aware
+      ;; #f for Uint joins: the non-literal arm gives Rust's inference a
+      ;; real type to unify the literal against (verified: `if hot { 10 }
+      ;; else { c }` compiles at c's width), so suffixing there would only
+      ;; churn bytes. A Field decl-type is the exception — integer
+      ;; literals never unify with the struct `Fr`, so the mixed shape
+      ;; falls through to render-field-joined-if below (see its comment).
+      ;; The condition renders via cond-rust (the ctor-aware
       ;; renderer — local-binds + witness/circuit hashtables) under a
       ;; guard: an unrenderable condition returns #f so the caller falls
       ;; back to the generic ctor-expr-rust rendering and its usual error
@@ -738,29 +788,52 @@
       ;; class). The USE-site width can still be wider — the degenerate
       ;; `(seq (= v lit-if) v)` inline in expr-rust's seq clause handles
       ;; the return-position case via context inference.
+      ;;
+      ;; MIXED arms with a `tfield` decl-type are the Field-join shape
+      ;; (`const a: Field = flag ? x : 0;`): the non-literal arm is Fr,
+      ;; and the "non-literal arm gives inference a real type" rationale
+      ;; above does NOT transfer from Uint to Field — integer literals
+      ;; never unify with a struct, so the bare literal arm fails E0308.
+      ;; The literal arm renders as `Fr::from(<n>u64)` and the non-literal
+      ;; arm via `arm-renderer` (site-supplied: widening-operand-rust on
+      ;; the pure route, coerce-cmp-operand-rust on the ctor/streaming
+      ;; routes — exactly how each route's if-clause renders branches).
       (define (coerce-literal-if-rhs-rendered decl-type rhs local-binds
                                               native-id-ht witness-id-ht
-                                              circuit-id-ht)
+                                              circuit-id-ht arm-renderer)
         (let ([e (expr-strip-cast rhs)])
           (nanopass-case (Ltypescript Expression) e
             [(if ,src ,expr0 ,expr1 ,expr2)
              (let ([n1 (literal-int-expr? expr1)]
                    [n2 (literal-int-expr? expr2)])
-               (if (not (and n1 n2))
-                   #f
-                   (let* ([join-width (uint-rust-width (max n1 n2))]
-                          [a1 (if decl-type
-                                (coerce-literal-int decl-type n1)
-                                (format "~a~a" n1 join-width))]
-                          [a2 (if decl-type
-                                (coerce-literal-int decl-type n2)
-                                (format "~a~a" n2 join-width))])
-                     (and a1 a2
-                          (guard (c [#t #f])
-                            (format "if ~a { ~a } else { ~a }"
-                                    (cond-rust expr0 local-binds native-id-ht
-                                               witness-id-ht circuit-id-ht)
-                                    a1 a2))))))]
+               (cond
+                 [(and n1 n2)
+                  (let* ([join-width (uint-rust-width (max n1 n2))]
+                         [a1 (if decl-type
+                               (coerce-literal-int decl-type n1)
+                               (format "~a~a" n1 join-width))]
+                         [a2 (if decl-type
+                               (coerce-literal-int decl-type n2)
+                               (format "~a~a" n2 join-width))])
+                    (and a1 a2
+                         (guard (c [#t #f])
+                           (format "if ~a { ~a } else { ~a }"
+                                   (cond-rust expr0 local-binds native-id-ht
+                                              witness-id-ht circuit-id-ht)
+                                   a1 a2))))]
+                 ;; Mixed arms, Field join: coerce only the literal arm.
+                 ;; Uint joins stay on the existing rationale (the typer
+                 ;; safe-casts the narrow non-literal arm and Rust's
+                 ;; inference sizes the literal) — returning #f there
+                 ;; keeps byte-identical output for them.
+                 [(and (type-is-tfield? decl-type) (or n1 n2))
+                  (render-field-joined-if
+                    (list expr0 expr1 expr2)
+                    arm-renderer
+                    (lambda (e)
+                      (cond-rust e local-binds native-id-ht
+                                 witness-id-ht circuit-id-ht)))]
+                 [else #f]))]
             [else #f])))
 
       ;; const-decl-only?: detect a `(const ,src (,local* ...))` Statement —
@@ -1874,10 +1947,31 @@
           [(string=? op "mul") "*"]
           [else #f]))
 
+      ;; field-arith-operand: one operand of FIELD arithmetic (the
+      ;; `mbits = #f` branch of arith-binop-rust). A ternary operand with
+      ;; an integer-literal arm (`f + (c ? 1 : 0)`) renders its literal arm
+      ;; bare through expr-rust's if clause, and an integer never unifies
+      ;; with the other side's `Fr` (E0308 at cargo build, compactc exit
+      ;; 0) — so the whole if renders via render-field-joined-if when the
+      ;; context is Field. Everything else renders via arith-operand-rust
+      ;; unchanged (field arithmetic carries no arith suffix).
+      (define (field-arith-operand expr native-id-ht)
+        (cond
+          [(literal-int-if? expr) =>
+           (lambda (parts)
+             (render-field-joined-if
+               parts
+               (lambda (e) (widening-operand-rust e native-id-ht))
+               (lambda (e)
+                 (cond-rust e (current-var-substitution) native-id-ht
+                            (current-witness-id-ht)
+                            (current-circuit-id-ht)))))]
+          [else (arith-operand-rust expr native-id-ht)]))
+
       (define (arith-binop-rust src op mbits expr1 expr2 native-id-ht)
-        (let ([e1 (arith-operand-rust expr1 native-id-ht)]
-              [e2 (arith-operand-rust expr2 native-id-ht)]
-              [w (mbits->rust-width mbits)])
+        (let* ([e1 (arith-operand-rust expr1 native-id-ht)]
+               [e2 (arith-operand-rust expr2 native-id-ht)]
+               [w (mbits->rust-width mbits)])
           (cond
             [w
              (format "((~a) as ~a).wrapping_~a((~a) as ~a)" e1 w op e2 w)]
@@ -1901,7 +1995,14 @@
                (unless rust-op
                  (rust-feature-error src 'field-arith-operator
                    "field arithmetic operator `~a` has no Rust lowering" op))
-               (format "(~a) ~a (~a)" e1 rust-op e2))]
+               ;; Field operands re-render through field-arith-operand so a
+               ;; literal-arm ternary operand is coerced (see its comment);
+               ;; e1/e2 above (bare arith-operand-rust renders) are discarded
+               ;; for this branch only.
+               (format "(~a) ~a (~a)"
+                       (field-arith-operand expr1 native-id-ht)
+                       rust-op
+                       (field-arith-operand expr2 native-id-ht)))]
             ;; A width the ladder does not cover: refuse rather than emit
             ;; `wrapping_*` against a type that may not have it. A guess here
             ;; is exactly the silent-bad-output path the field case above spent
@@ -1948,13 +2049,26 @@
       ;; widening-operand-rust (e.g. `flag ? (jubjubPointX(p) != 0 as Field)
       ;; : ...` as a pure-circuit const) — before this coercion the branch
       ;; compared Fr against a bare integer and the generated crate failed
-      ;; cargo build. Uint-typed comparisons keep the bare literal (Rust
-      ;; unifies it with the other operand's width); all other operands
-      ;; render via widening-operand-rust unchanged.
+      ;; cargo build. A ternary OPERAND with a literal arm (`f == (c ? 1 :
+      ;; 0)`, both-literal or mixed) has the same failure: the if-clause
+      ;; renders the literal arm bare and an integer never unifies with Fr,
+      ;; so the whole if renders via render-field-joined-if instead.
+      ;; Uint-typed comparisons keep the bare literal (Rust unifies it with
+      ;; the other operand's width); all other operands render via
+      ;; widening-operand-rust unchanged.
       (define (eq-operand-rust expr type native-id-ht)
         (cond
           [(and (type-is-tfield? type) (literal-int-expr? expr))
            (format "Fr::from(~au64)" (literal-int-expr? expr))]
+          [(and (type-is-tfield? type) (literal-int-if? expr)) =>
+           (lambda (parts)
+             (render-field-joined-if
+               parts
+               (lambda (e) (widening-operand-rust e native-id-ht))
+               (lambda (e)
+                 (cond-rust e (current-var-substitution) native-id-ht
+                            (current-witness-id-ht)
+                            (current-circuit-id-ht)))))]
           [else (widening-operand-rust expr native-id-ht)]))
 
       ;; var-ref-is?: #t when `expr` strips (through safe-cast layers)
@@ -2053,7 +2167,9 @@
                   [rhs (or (coerce-literal-if-rhs-rendered #f expr^ binds
                                                            native-id-ht
                                                            (current-witness-id-ht)
-                                                           (current-circuit-id-ht))
+                                                           (current-circuit-id-ht)
+                                                           (lambda (e)
+                                                             (expr-rust e native-id-ht)))
                            (expr-rust expr^ native-id-ht))])
              (values (format "let ~a = ~a;" rust-name rhs)
                      (cons var-name rust-name)))]
@@ -2990,7 +3106,42 @@
                    (format "compact_assert!(~a, ~s);" cond-str
                            (if (string? mesg) mesg ""))]))]
              [else
-              (let ([s (guard (c [#t #f]) (expr-rust expr native-id-ht))])
+              (let ([s (guard (c [#t #f])
+                         (or
+                           ;; Tail (return-position) expression of a pure
+                           ;; circuit whose declared return type is Field:
+                           ;; an integer-literal tail — bare (`return 0;`) or
+                           ;; a ternary with a literal arm, including the
+                           ;; branch tails of a lifted return-ternary if
+                           ;; STATEMENT (`return c ? x : 0;` lowers the if
+                           ;; to statement position, leaving `0` as its own
+                           ;; branch tail) — must render as
+                           ;; `Fr::from(<n>u64)`: the tail has no other type
+                           ;; context, and a bare integer fails E0308
+                           ;; against the function's Fr return while
+                           ;; compactc exits 0 (see
+                           ;; render-field-joined-if). Non-tail statements
+                           ;; and non-Field returns fall through to the
+                           ;; generic render unchanged.
+                           (and last?
+                                (type-is-tfield? (current-pure-return-type))
+                                (let ([n (literal-int-expr? expr)])
+                                  (and n
+                                       (coerce-literal-int
+                                         (current-pure-return-type) n))))
+                           (and last?
+                                (type-is-tfield? (current-pure-return-type))
+                                (let ([parts (literal-int-if? expr)])
+                                  (and parts
+                                       (render-field-joined-if
+                                         parts
+                                         (lambda (e)
+                                           (widening-operand-rust e native-id-ht))
+                                         (lambda (e)
+                                           (cond-rust e local-binds native-id-ht
+                                                      witness-id-ht
+                                                      circuit-id-ht))))))
+                           (expr-rust expr native-id-ht)))])
                 (cond
                   [(or (not s) (rendered-has-todo? s)) #f]
                   [last? s]
@@ -3060,7 +3211,10 @@
                                              (coerce-literal-if-rhs-rendered
                                                decl-type rhs binds
                                                native-id-ht witness-id-ht
-                                               circuit-id-ht)))
+                                               circuit-id-ht
+                                               (lambda (e)
+                                                 (widening-operand-rust
+                                                   e native-id-ht)))))
                                     (expr-rust rhs native-id-ht))))])
                      (cond
                        [(or (not s) (rendered-has-todo? s)) #f]
@@ -3167,7 +3321,8 @@
            (out (format ") -> Result<~a, CompactError> {\n" (type-rust type)))
            (parameterize ([current-formal-arg-types (build-formal-arg-type-ht arg*)]
                           [current-circuit-id-ht circuit-id-ht]
-                          [current-witness-id-ht witness-id-ht])
+                          [current-witness-id-ht witness-id-ht]
+                          [current-pure-return-type type])
              (let ([body (stmt-pure-body-rust stmt native-id-ht
                                               witness-id-ht circuit-id-ht '()
                                               #t)])

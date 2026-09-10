@@ -122,8 +122,35 @@ jobs:
       # (examples/dogfood/, see its PROVENANCE.md): a clippy regression
       # against it is a codegen regression against upstream code, and no
       # other step here would catch it.
+      #
+      # Re-arming: the emitter stamps `#![allow(clippy::all, ...)]` on
+      # every generated crate, and source-level lint attributes override
+      # command-line -D flags (verified empirically: `--force-warn
+      # clippy::all` still exits 0, and `--forbid` loses to the inner
+      # group-allow; see rust-lang/rust#81670) — so clippy through the
+      # committed file as-is could never fire a clippy lint and this step
+      # was dead-on-arrival. The sed strips the `clippy::all` line from
+      # THIS JOB'S CHECKOUT ONLY: the committed fixture stays
+      # byte-identical (codegen_regression and the test job's fresh
+      # checkout never see this step), and clippy lints return to their
+      # DEFAULT levels for the crate below.
+      #
+      # The gate deliberately does NOT pass `-D warnings`: the generated
+      # code today carries ~170 warn-level findings (vec_init_then_push,
+      # needless_question_mark, clone_on_copy, unnecessary_cast, unit_arg
+      # — the emitter's deliberate string-building style and defensive
+      # clones), all visible in the step log but none correctness bugs.
+      # Denying all of them would make this step permanently red; instead
+      # the deny-by-default clippy CORRECTNESS lints (e.g.
+      # absurd_extreme_comparisons — which caught a real always-false
+      # guard in the zero-field FromFieldRepr scaffold, since fixed) gate
+      # the step. Promoting to `-D warnings` is blocked on an emitter
+      # lint-cleanliness pass, not on this workflow.
+      - name: Re-arm clippy for the dogfood crate (strip the emitted clippy::all allow)
+        run: sed -i '/^    clippy::all,$/d' tests-e2e-rust/contracts/digital-passport-credential/lib.rs
+
       - name: Run Clippy on compact-contract-digital-passport-credential
-        run: cargo clippy -p compact-contract-digital-passport-credential --all-targets --all-features -- -D warnings
+        run: cargo clippy -p compact-contract-digital-passport-credential --all-targets --all-features
 
   # Test matrix — runs the byte-parity suite on Linux and macOS to catch
   # platform-dependent encoding bugs.

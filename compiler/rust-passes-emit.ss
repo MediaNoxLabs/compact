@@ -726,6 +726,17 @@
                   (list expr0 expr1 expr2))]
             [else #f])))
 
+      ;; if-src: the src of an `(if ...)` expression (through safe-cast
+      ;; layers), or #f. Reporting only — used to localize
+      ;; rust-feature-error refusals for ternary operands; never consulted
+      ;; for control flow (a missing location must never turn a clear
+      ;; rejection into a crash).
+      (define (if-src expr)
+        (let ([e (expr-strip-cast expr)])
+          (nanopass-case (Ltypescript Expression) e
+            [(if ,src ,expr0 ,expr1 ,expr2) src]
+            [else #f])))
+
       ;; render-field-joined-if: render an `(if ...)` triple whose join
       ;; context is Field: every integer-literal arm renders as
       ;; `Fr::from(<n>u64)`, non-literal arms via `arm-renderer` and the
@@ -733,7 +744,11 @@
       ;; each route renders if-arms/conditions today: widening-operand-rust
       ;; + cond-rust on the pure route, coerce-cmp-operand-rust + cond-rust
       ;; on the ctor/streaming routes). Guarded: an arm/condition that
-      ;; cannot render returns #f so the caller falls back or refuses.
+      ;; cannot render returns #f so the caller falls back or refuses —
+      ;; and every direct `cond =>' recipient MUST refuse on #f
+      ;; (rust-feature-error): `=>' does not fall through, so an unchecked
+      ;; #f becomes the operand string itself and splices the literal
+      ;; text `#f' into lib.rs while compactc exits 0.
       ;; Nested literal ternaries inside a NON-literal arm render via the
       ;; site renderer's own recursion (which applies this coercion again
       ;; where that route supports it).
@@ -1959,13 +1974,24 @@
         (cond
           [(literal-int-if? expr) =>
            (lambda (parts)
-             (render-field-joined-if
-               parts
-               (lambda (e) (widening-operand-rust e native-id-ht))
-               (lambda (e)
-                 (cond-rust e (current-var-substitution) native-id-ht
-                            (current-witness-id-ht)
-                            (current-circuit-id-ht)))))]
+             ;; render-field-joined-if's guard turns ANY raise into #f,
+             ;; and a `cond =>' recipient does not fall through — an
+             ;; unchecked #f here would splice literal `#f` into the
+             ;; `(~a) ~a (~a)` field-arithmetic emission with compactc
+             ;; still exiting 0. Refuse loudly instead. (In practice the
+             ;; operand pre-render in arith-binop-rust raises first on
+             ;; the identical sub-render; this is the belt to those
+             ;; braces — kept because the pre-render's fail-fast is an
+             ;; accident of ordering, not a guarantee.)
+             (or (render-field-joined-if
+                   parts
+                   (lambda (e) (widening-operand-rust e native-id-ht))
+                   (lambda (e)
+                     (cond-rust e (current-var-substitution) native-id-ht
+                                (current-witness-id-ht)
+                                (current-circuit-id-ht))))
+                 (rust-feature-error (if-src expr) 'field-ternary-arith-operand
+                   "cannot render a Field-joined ternary arithmetic operand (unsupported arm or condition)")))]
           [else (arith-operand-rust expr native-id-ht)]))
 
       (define (arith-binop-rust src op mbits expr1 expr2 native-id-ht)
@@ -2062,13 +2088,23 @@
            (format "Fr::from(~au64)" (literal-int-expr? expr))]
           [(and (type-is-tfield? type) (literal-int-if? expr)) =>
            (lambda (parts)
-             (render-field-joined-if
-               parts
-               (lambda (e) (widening-operand-rust e native-id-ht))
-               (lambda (e)
-                 (cond-rust e (current-var-substitution) native-id-ht
-                            (current-witness-id-ht)
-                            (current-circuit-id-ht)))))]
+             ;; `cond =>' does not fall through: render-field-joined-if's
+             ;; catch-all guard converts ANY raise into #f, and an
+             ;; unchecked #f here reaches the callers'
+             ;; `(format "(~a == ~a)" ...)' verbatim — emitting `(#f == x)'
+             ;; into lib.rs while compactc exits 0, with the only
+             ;; downstream check (rendered-has-todo?) scanning for
+             ;; `/* TODO`. Refuse loudly instead: an arm/condition this
+             ;; route cannot render is a rust-feature-error, not a #f.
+             (or (render-field-joined-if
+                   parts
+                   (lambda (e) (widening-operand-rust e native-id-ht))
+                   (lambda (e)
+                     (cond-rust e (current-var-substitution) native-id-ht
+                                (current-witness-id-ht)
+                                (current-circuit-id-ht))))
+                 (rust-feature-error (if-src expr) 'field-ternary-cmp-operand
+                   "cannot render a Field-joined ternary ==/!= operand (unsupported arm or condition)")))]
           [else (widening-operand-rust expr native-id-ht)]))
 
       ;; var-ref-is?: #t when `expr` strips (through safe-cast layers)
@@ -3239,7 +3275,25 @@
                         [rhs-binds (cons (cons var-name rust-name) binds)])
                    (let ([s (guard (c [#t #f])
                               (parameterize ([current-var-substitution rhs-binds])
-                                (expr-rust rhs native-id-ht)))])
+                                ;; G2: mirror seq-stmt-rust's `(=)' clause
+                                ;; (and the const-binding clause above): a
+                                ;; both-literal-arms `(if ...)' RHS is
+                                ;; coerced with #f as the decl-type — the
+                                ;; `(=)' node carries no binder type, so
+                                ;; coerce-literal-if-rhs-rendered sizes the
+                                ;; arms from max(arm) and a lifted
+                                ;; `%t = flag ? 5000000000 : 0' cannot
+                                ;; default its arms to i32 (rustc: literal
+                                ;; out of range) with compactc exiting 0.
+                                ;; Anything the coercion cannot shape
+                                ;; falls back to the plain render and its
+                                ;; usual error path.
+                                (or (coerce-literal-if-rhs-rendered
+                                      #f rhs binds native-id-ht
+                                      witness-id-ht circuit-id-ht
+                                      (lambda (e)
+                                        (expr-rust e native-id-ht)))
+                                    (expr-rust rhs native-id-ht))))])
                      (cond
                        [(or (not s) (rendered-has-todo? s)) #f]
                        [else

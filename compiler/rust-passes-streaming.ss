@@ -381,8 +381,23 @@
                       [rust-name (symbol->string (camel->snake (id-sym var-name)))]
                       [raw
                        (guard (c [#t #f])
-                         (ctor-expr-rust rhs local-binds
-                                         native-id-ht witness-id-ht circuit-id-ht))]
+                         ;; G2: streaming twin of stmt-pure-body-rust's
+                         ;; stmt->assignment clause — coerce a
+                         ;; both-literal-arms `(if ...)' RHS with #f as the
+                         ;; decl-type (max(arm) sizing) so a lifted
+                         ;; `flag ? 5000000000 : 0' cannot default its
+                         ;; arms to i32; anything the coercion cannot
+                         ;; shape falls back to the plain render and its
+                         ;; usual error path.
+                         (or (coerce-literal-if-rhs-rendered
+                               #f rhs local-binds native-id-ht
+                               witness-id-ht circuit-id-ht
+                               (lambda (e)
+                                 (coerce-cmp-operand-rust
+                                   e #f local-binds
+                                   native-id-ht witness-id-ht circuit-id-ht)))
+                             (ctor-expr-rust rhs local-binds
+                                             native-id-ht witness-id-ht circuit-id-ht)))]
                       ;; Bug-6: clone non-Copy var-ref / elt-ref RHS so the
                       ;; source struct/local stays usable after the lift.
                       [rendered

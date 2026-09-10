@@ -226,15 +226,24 @@
            (format "Fr::from(~au64)" (literal-int-expr? expr))]
           [(and (type-is-tfield? type) (literal-int-if? expr)) =>
            (lambda (parts)
-             (render-field-joined-if
-               parts
-               (lambda (e)
-                 (coerce-cmp-operand-rust e #f local-binds
-                                          native-id-ht witness-id-ht
-                                          circuit-id-ht))
-               (lambda (e)
-                 (cond-rust e local-binds native-id-ht
-                            witness-id-ht circuit-id-ht))))]
+             ;; Same refusal as eq-operand-rust on the pure route: `cond
+             ;; =>' does not fall through, and an unchecked #f from
+             ;; render-field-joined-if's catch-all guard would splice
+             ;; `(#f == Fr::from(0u64))' into compact_assert! while
+             ;; compactc exits 0 — downgrading the pre-PR behaviour (the
+             ;; raise used to propagate as a clean refusal) into silent
+             ;; bad output.
+             (or (render-field-joined-if
+                   parts
+                   (lambda (e)
+                     (coerce-cmp-operand-rust e #f local-binds
+                                              native-id-ht witness-id-ht
+                                              circuit-id-ht))
+                   (lambda (e)
+                     (cond-rust e local-binds native-id-ht
+                                witness-id-ht circuit-id-ht)))
+                 (rust-feature-error (if-src expr) 'field-ternary-cmp-operand
+                   "cannot render a Field-joined ternary ==/!= operand (unsupported arm or condition)")))]
           [(safecast-widening expr) =>
            (lambda (w+e)
              ;; The cast is parenthesised as a whole (`((x) as u32)`) —

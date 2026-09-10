@@ -93,6 +93,39 @@ const REJECTIONS: &[(&str, &str, &str)] = &[
          export circuit narrow(f: Field): Uint<64> { return f as Uint<64>; }\n",
         "pure-circuit-body-emission",
     ),
+    (
+        // A witness call inside a ternary arm of a Field `==` operand.
+        // collect-witness-subcalls does not walk `(if ...)`, so this shape
+        // passes the gates and reaches render-field-joined-if, whose
+        // catch-all guard converts the witness-inline raise into #f —
+        // and the `cond =>' recipient used to return that #f verbatim,
+        // splicing `} == #f), "mismatch");' into compact_assert! while
+        // compactc exited 0. The refusal is the fix; the pre-PR compiler
+        // rejected this cleanly (the raise propagated before the guard
+        // was added), so this also pins the no-regression side.
+        "Field-joined ternary ==/!= operand the route cannot render",
+        "witness fetch_field(): Field;\n\
+         export ledger f: Field;\n\
+         export circuit check(flag: Boolean): [] {\n\
+         assert(f == (flag ? fetch_field() : 0), \"mismatch\");\n\
+         }\n",
+        "field-ternary-cmp-operand",
+    ),
+    (
+        // Pure-route twin of the entry above: a Vector-indexed arm in a
+        // Field `==` ternary (expr-rust has no vector-ref clause) used
+        // to splice literal `#f` into `Ok((x == #f))` with exit 0. The
+        // kind is the enclosing body's for the same reason as the Uint
+        // narrowing entry above — the pure-circuit emitter probes
+        // shapes under a catch-all guard, which swallows the precise
+        // field-ternary-cmp-operand diagnostic and reports the generic
+        // one. The refusal is correct; only the message is coarse.
+        "Field-joined ternary ==/!= operand on the pure route",
+        "export pure circuit check(x: Field, flag: Boolean, v: Vector<3, Field>): Boolean {\n\
+         return x == (flag ? 0 : v[0]);\n\
+         }\n",
+        "pure-circuit-body-emission",
+    ),
 ];
 
 /// Contracts that must still compile — the other half of the property.
@@ -113,6 +146,18 @@ const ACCEPTIONS: &[(&str, &str)] = &[
         "export ledger admin: Uint<64>;\n\
          export ledger count: Uint<64>;\n\
          constructor() { admin = 42; count = 7; }\n",
+    ),
+    (
+        // A let*-lifted statement-level ternary whose literal arms exceed
+        // i32: must compile — with max-arm-sized (u64) literals, pinned by
+        // the emitter. Pre-fix it also "compiled" (exit 0) but emitted
+        // bare `5000000000`, which rustc rejects (literal out of range
+        // for i32) — this entry keeps it on the accepted side while the
+        // two field-ternary REJECTIONS keep their side.
+        "statement-level literal ternary above i32",
+        "export pure circuit check(n: Uint<64>, flag: Boolean): Boolean {\n\
+         return (n - (flag ? 5000000000 : 0)) == n;\n\
+         }\n",
     ),
 ];
 

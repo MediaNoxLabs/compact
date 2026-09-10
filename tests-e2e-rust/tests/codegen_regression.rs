@@ -161,6 +161,25 @@ const FIXTURES: &[(&str, &str)] = &[
         "dogfood/digital-passport-credential/src/digital-passport-credential.compact",
         "digital-passport-credential",
     ),
+    // Field-return-tail: literal-armed value expressions in the RETURN TAIL
+    // of genuinely-impure circuits. The I3b/4 (single if-expression body)
+    // and A19 (if/else-if chain) matchers dissolve `return c ? a : b;`
+    // into cond/then/else pieces rendered separately, so ctor-expr-rust's
+    // if clause — the usual net for literal-arm ternary Field-join
+    // detection — never sees an `(if ...)` expression node there. Before
+    // the return-tail-arm-rust fix every impure shape below emitted a
+    // bare Rust integer opposite an `Fr`-valued arm (E0308 at cargo
+    // build, compactc exit 0) while the pure-route twin compiled: the
+    // pure tail reads its Field context from current-pure-return-type,
+    // these matchers ignored their (declared) return-type argument. The
+    // ledger read in each condition is load-bearing — without genuine
+    // impurity the circuit auto-purifies onto the pure route and the
+    // regression hides. No executing gate: the assertion IS the emitted
+    // bytes (Fr::from on every literal arm).
+    (
+        "field_return_tail_fixture.compact",
+        "field-return-tail-fixture",
+    ),
 ];
 
 /// Walks up from `start` looking for the repository root: the nearest

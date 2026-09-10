@@ -1,0 +1,80 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//  	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+// implied. See the License for the specific language governing
+// permissions and limitations under the License.
+
+//
+// Field-return-tail fixture: literal-armed value expressions in the
+// RETURN TAIL of genuinely-impure circuits, against the rust backend's
+// I3b/4 / A19 return-tail matchers.
+//
+// The matchers dissolve `return (cond) ? a : b;` into cond/then/else
+// pieces rendered SEPARATELY, so ctor-expr-rust's if clause — whose
+// Field-join detection is the usual net for literal-arm ternaries —
+// never sees an `(if ...)` expression node on this path. Before the
+// fix, every non-pure circuit below emitted a bare Rust integer
+// opposite an `Fr`-valued arm (E0308 at `cargo build`, compactc exit
+// 0) while the identical source in a pure circuit compiled, because
+// the pure return tail reads its Field context from the declared
+// return type and these impure matchers ignored theirs.
+//
+// The ledger read in each condition is load-bearing: without genuine
+// impurity the circuit auto-purifies onto the pure route (whose tail
+// already coerced) and the bug vanishes.
+//
+// Circuits, in increasing order of what they exercise:
+//   - `pickCall`: I3b/4 tail with a pure-circuit call arm + literal arm
+//     — the canonical failure shape (`pure_circuits::idf(y)?` opposite
+//     a bare `0`).
+//   - `pickLit`: I3b/4 tail with BOTH arms literal.
+//   - `pickNested`: I3b/4 tail whose else arm is itself a literal-armed
+//     ternary (both-literal inner join).
+//   - `pickChain`: A19 if/else-if chain tail with a call arm, a bare
+//     literal arm, and a bare literal else.
+//   - `pickPure`: the pure-route control — the identical source in a
+//     `pure circuit` body, which compiled before the fix and must stay
+//     byte-identical after it.
+
+import CompactStandardLibrary;
+
+export ledger f: Field;
+
+export pure circuit idf(x: Field): Field {
+  return x;
+}
+
+export circuit pickCall(c: Boolean, y: Field): Field {
+  return (f.read() != y) ? idf(y) : 0;
+}
+
+export circuit pickLit(c: Boolean, y: Field): Field {
+  return (f.read() != y) ? 1 : 0;
+}
+
+export circuit pickNested(c: Boolean, d: Boolean, y: Field): Field {
+  return (f.read() != y) ? idf(y) : (d ? 1 : 0);
+}
+
+export circuit pickChain(c: Boolean, y: Field): Field {
+  if (f.read() == y) {
+    return idf(y);
+  } else if (c) {
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+export pure circuit pickPure(c: Boolean, y: Field): Field {
+  return c ? idf(y) : 0;
+}

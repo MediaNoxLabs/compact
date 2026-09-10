@@ -768,6 +768,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-contract-field-return-tail-fixture"
+version = "0.1.0"
+dependencies = [
+ "midnight-compact-runtime",
+]
+
+[[package]]
 name = "compact-contract-fold-fixture"
 version = "0.1.0"
 dependencies = [

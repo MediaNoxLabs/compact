@@ -864,7 +864,8 @@
       ;; carry no return type, so this is an explicit checked table —
       ;; keep it in sync with the declare-native-entry signatures.
       (define native-field-returning?
-        (let ([field-natives '(jubjubPointX jubjubPointY transientHash)])
+        (let ([field-natives '(jubjubPointX jubjubPointY transientHash
+                             transientCommit degradeToTransient)])
           (lambda (function-name)
             (and (memq (id-sym function-name) field-natives) #t))))
 
@@ -1648,11 +1649,52 @@
                         (out "        })\n")
                         #t]))]))])]))
 
+      ;; return-tail-arm-rust: render one then/else VALUE expression of a
+      ;; non-unit impure-circuit body against the circuit's DECLARED return
+      ;; type. The I3b/4 / A19 return-tail matchers dissolve a
+      ;; `return cond ? a : b;` body into cond/then/else pieces rendered
+      ;; SEPARATELY, so ctor-expr-rust's if clause — whose Field-join
+      ;; detection is the usual net for literal-arm ternaries — never sees
+      ;; an (if ...) expression node on this path. When the return type is
+      ;; Field and the value is an integer-literal shape (bare literal, or
+      ;; a ternary with a literal arm — mixed or both-literal), render via
+      ;; field-context-arg-rendered so the value carries Fr::from(...):
+      ;; without it `return (f.read() != y) ? idf(y) : 0;` in an impure
+      ;; circuit emitted a bare `0` opposite the call arm's `Fr` (E0308 at
+      ;; cargo build, compactc exit 0) while the identical source in a
+      ;; pure circuit compiled — the pure return tail reads its context
+      ;; from current-pure-return-type; these matchers have the declared
+      ;; return type as an explicit (previously unused) argument instead.
+      ;; Mirrors render-struct-literal's tfield member coercion and
+      ;; render-pure-circuit-arg's tfield formal coercion. Refuse loudly
+      ;; when the guarded render fails — under a tfield context the
+      ;; bare-ctor-expr-rust fallback is silent bad output.
+      (define (return-tail-arm-rust return-type expr local-binds
+                                    native-id-ht witness-id-ht circuit-id-ht)
+        (if (and (type-is-tfield? return-type)
+                 (or (literal-int-expr? expr)
+                     (literal-int-if? expr)))
+            (or (field-context-arg-rendered
+                  expr
+                  (lambda (e2)
+                    (coerce-cmp-operand-rust e2 #f local-binds
+                                             native-id-ht witness-id-ht
+                                             circuit-id-ht))
+                  (lambda (e2)
+                    (cond-rust e2 local-binds native-id-ht
+                               witness-id-ht circuit-id-ht)))
+                (rust-feature-error (if-src expr) 'field-return-tail
+                  "cannot render a Field return-tail value (unsupported ternary arm or condition)"))
+            (ctor-expr-rust expr local-binds
+                            native-id-ht witness-id-ht circuit-id-ht)))
+
       ;; emit-if-expression-body: emit the I3b/4 body shape — a single
       ;; if-expression in statement position producing a non-unit value.
-      ;; The cond / then / else are rendered via ctor-expr-rust so existing
-      ;; logic for inlining `in_state`, ledger reads in expression position,
-      ;; and `some` / `none` runtime mapping all apply uniformly.
+      ;; The cond is rendered via cond-rust and the arms via
+      ;; return-tail-arm-rust (declared-return-type-aware, so Field-typed
+      ;; literal arms coerce) so existing logic for inlining `in_state`,
+      ;; ledger reads in expression position, and `some` / `none` runtime
+      ;; mapping all apply uniformly.
       ;;
       ;; Returns #t on success, #f if any rendered sub-expression contains
       ;; an `unimplemented!()` marker (caller falls back to `unimplemented!()`).
@@ -1663,10 +1705,12 @@
                                        native-id-ht witness-id-ht circuit-id-ht)
         (let* ([cond-str (cond-rust cond-expr '()
                                     native-id-ht witness-id-ht circuit-id-ht)]
-               [then-str (ctor-expr-rust then-expr '()
-                                         native-id-ht witness-id-ht circuit-id-ht)]
-               [else-str (ctor-expr-rust else-expr '()
-                                         native-id-ht witness-id-ht circuit-id-ht)])
+               [then-str (return-tail-arm-rust return-type then-expr '()
+                                               native-id-ht witness-id-ht
+                                               circuit-id-ht)]
+               [else-str (return-tail-arm-rust return-type else-expr '()
+                                               native-id-ht witness-id-ht
+                                               circuit-id-ht)])
           (cond
             [(or (rendered-has-todo? cond-str)
                  (rendered-has-todo? then-str)
@@ -1698,14 +1742,15 @@
                        (let ([c-str (cond-rust (car a) '()
                                                native-id-ht witness-id-ht
                                                circuit-id-ht)]
-                             [t-str (ctor-expr-rust (cadr a) '()
-                                                    native-id-ht witness-id-ht
-                                                    circuit-id-ht)])
+                             [t-str (return-tail-arm-rust return-type (cadr a) '()
+                                                          native-id-ht
+                                                          witness-id-ht
+                                                          circuit-id-ht)])
                          (list c-str t-str)))
                      arms)]
-               [else-str (ctor-expr-rust else-expr '()
-                                         native-id-ht witness-id-ht
-                                         circuit-id-ht)]
+               [else-str (return-tail-arm-rust return-type else-expr '()
+                                               native-id-ht witness-id-ht
+                                               circuit-id-ht)]
                [any-todo?
                 (or (rendered-has-todo? else-str)
                     (let loop ([xs arm-strs])
@@ -1938,7 +1983,23 @@
            (emit-circuit-args arg*)
            (out (format ",\n    ) -> Result<CircuitResults<PS, ~a>, CompactError> {\n"
                         (type-rust type)))
-           (parameterize ([current-formal-arg-types (build-formal-arg-type-ht arg*)])
+           ;; current-circuit-id-ht / current-witness-id-ht: mirror of
+           ;; emit-pure-circuit's parameterize. expr-known-field?'s call
+           ;; arm — which the ctor-expr-rust if clause consults for
+           ;; Field-join ternary detection — classifies user pure-circuit
+           ;; and witness calls through these dynamic parameters, and
+           ;; without them here the impure route read the empty defaults:
+           ;; `return (f.read() != y) ? idf(y) : 0;` inside an impure
+           ;; circuit escaped detection and emitted a bare `0` opposite
+           ;; `Fr` (E0308 at cargo build, compactc exit 0) while the
+           ;; identical source in a pure circuit compiled. Only
+           ;; expr-known-field? reads these on this route — call-rust
+           ;; never runs here (the walker resolves calls through
+           ;; ctor-call-rust's explicit tables first) — so parameterized
+           ;; lookups can only change from guaranteed miss to correct hit.
+           (parameterize ([current-formal-arg-types (build-formal-arg-type-ht arg*)]
+                          [current-circuit-id-ht circuit-id-ht]
+                          [current-witness-id-ht witness-id-ht])
            (let ([emitted?
                   (or
                     ;; I3b/4: single if-expression body returning non-unit.

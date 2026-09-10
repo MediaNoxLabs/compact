@@ -668,6 +668,17 @@
                    [(member candidate taken) (loop (fx+ n 1))]
                    [else candidate])))])))
 
+      ;; coerce-literal-int: render the integer literal `n` at
+      ;; `decl-type`: `Fr::from(<n>u64)` when the declared type is Field
+      ;; (tfield, Prod-9), the width-suffixed form `<n>u8`..<n>u128`
+      ;; when it is Uint<N> (tunsigned, Prod-13), #f otherwise.
+      (define (coerce-literal-int decl-type n)
+        (cond
+          [(type-is-tfield? decl-type) (format "Fr::from(~au64)" n)]
+          [(type-peel-tunsigned decl-type) =>
+           (lambda (nat) (format "~a~a" n (uint-rust-width nat)))]
+          [else #f]))
+
       ;; coerce-literal-rhs-rendered: Prod-9/Prod-13 — typed integer literals
       ;; need to be rendered with the correct Rust type so the ledger-write
       ;; builder's `Into<AlignedValue>` bound is satisfied.
@@ -680,15 +691,50 @@
       ;; All other RHS shapes return #f so the caller falls back to its
       ;; existing rendering.
       (define (coerce-literal-rhs-rendered decl-type rhs)
-        (cond
-          [(type-is-tfield? decl-type)
-           (let ([n (literal-int-expr? rhs)])
-             (and n (format "Fr::from(~au64)" n)))]
-          [(type-peel-tunsigned decl-type) =>
-           (lambda (nat)
-             (let ([n (literal-int-expr? rhs)])
-               (and n (format "~a~a" n (uint-rust-width nat)))))]
-          [else #f]))
+        (let ([n (literal-int-expr? rhs)])
+          (and n (coerce-literal-int decl-type n))))
+
+      ;; coerce-literal-if-rhs-rendered: the ternary analogue of
+      ;; coerce-literal-rhs-rendered. `const v = flag ? 10 : 20;` lowers to
+      ;; a const-binding whose RHS is an `(if ...)` with integer-literal
+      ;; branches; expr-rust's if clause renders both arms unsuffixed, and
+      ;; with BOTH arms literal Rust has nothing else to infer from, so
+      ;; the whole if-expression defaults to i32. Feeding the binding into
+      ;; a ledger-write builder then fails `Into<AlignedValue>` with E0277
+      ;; (Prod-9/Prod-13's whole-RHS guard cannot see through the if
+      ;; shape), and a branch literal above i32::MAX cannot even default.
+      ;; When the binding's declared type is tfield/tunsigned and both
+      ;; arms strip down to integer literals, render the full
+      ;; `if <cond> { <arm1> } else { <arm2> }` with each arm coerced from
+      ;; decl-type (`Fr::from(10u64)` / `10u64`), so the joined type is
+      ;; exactly the declared one. A literal/non-literal arm mix returns
+      ;; #f: the non-literal arm gives Rust's inference a real type to
+      ;; unify the literal against (verified: `if hot { 10 } else { c }`
+      ;; compiles at c's width), so suffixing there would only churn
+      ;; bytes. The condition renders via cond-rust (the ctor-aware
+      ;; renderer — local-binds + witness/circuit hashtables) under a
+      ;; guard: an unrenderable condition returns #f so the caller falls
+      ;; back to the generic ctor-expr-rust rendering and its usual error
+      ;; path.
+      (define (coerce-literal-if-rhs-rendered decl-type rhs local-binds
+                                              native-id-ht witness-id-ht
+                                              circuit-id-ht)
+        (let ([e (expr-strip-cast rhs)])
+          (nanopass-case (Ltypescript Expression) e
+            [(if ,src ,expr0 ,expr1 ,expr2)
+             (let ([n1 (literal-int-expr? expr1)]
+                   [n2 (literal-int-expr? expr2)])
+               (if (not (and n1 n2))
+                   #f
+                   (let ([a1 (coerce-literal-int decl-type n1)]
+                         [a2 (coerce-literal-int decl-type n2)])
+                     (and a1 a2
+                          (guard (c [#t #f])
+                            (format "if ~a { ~a } else { ~a }"
+                                    (cond-rust expr0 local-binds native-id-ht
+                                               witness-id-ht circuit-id-ht)
+                                    a1 a2))))))]
+            [else #f])))
 
       ;; const-decl-only?: detect a `(const ,src (,local* ...))` Statement —
       ;; the "forward declaration" form produced by typescript-passes when a
@@ -1865,6 +1911,25 @@
                      (car w+e)))]
           [else (expr-rust expr native-id-ht)]))
 
+      ;; eq-operand-rust: render an ==/!= operand for the shared expression
+      ;; path (pure-circuit bodies; the constructor/impure route uses
+      ;; coerce-cmp-operand-rust in rust-passes-walker.ss). When the
+      ;; comparison's own IR `type` is Field, an integer-literal operand must
+      ;; render as `Fr::from(<n>u64)`: the typer types such literals as
+      ;; Field, but expr-rust's quote clause emits a bare Rust integer, and
+      ;; `Fr != 0` fails E0308. Ternary branches reach here through
+      ;; widening-operand-rust (e.g. `flag ? (jubjubPointX(p) != 0 as Field)
+      ;; : ...` as a pure-circuit const) — before this coercion the branch
+      ;; compared Fr against a bare integer and the generated crate failed
+      ;; cargo build. Uint-typed comparisons keep the bare literal (Rust
+      ;; unifies it with the other operand's width); all other operands
+      ;; render via widening-operand-rust unchanged.
+      (define (eq-operand-rust expr type native-id-ht)
+        (cond
+          [(and (type-is-tfield? type) (literal-int-expr? expr))
+           (format "Fr::from(~au64)" (literal-int-expr? expr))]
+          [else (widening-operand-rust expr native-id-ht)]))
+
       ;; expr-rust: emit a Rust expression string for an Ltypescript
       ;; Expression. I3b/1 covers the variants needed by tiny.compact's
       ;; public_key body — bytevector literal, var-ref, tuple (array
@@ -1992,11 +2057,12 @@
            ;; I3b/3: equality comparison. Parenthesised so it composes
            ;; safely inside larger expressions (e.g. inside a Rust assert
            ;; macro call without surrounding parens being implicit).
-           ;; Operands render via widening-operand-rust so a mixed-width
-           ;; operand's safe-cast wrapper materialises as `as <wider>`.
+           ;; Operands render via eq-operand-rust: widening-operand-rust
+           ;; plus the Field-literal `Fr::from(<n>u64)` coercion when the
+           ;; comparison's type is tfield (see eq-operand-rust).
            (format "(~a == ~a)"
-                   (widening-operand-rust expr1 native-id-ht)
-                   (widening-operand-rust expr2 native-id-ht))]
+                   (eq-operand-rust expr1 type native-id-ht)
+                   (eq-operand-rust expr2 type native-id-ht))]
           [(not ,src ,expr)
            ;; F1.2: Boolean negation.
            (format "(!(~a))" (expr-rust expr native-id-ht))]
@@ -2197,10 +2263,11 @@
            ;; larger expressions (assert macro args, && operands). Mirrors
            ;; the `==` rendering; structs derive PartialEq/Eq so `!=` is
            ;; structural for user types just as `==` is. Operands render
-           ;; via widening-operand-rust for mixed-width widening.
+           ;; via eq-operand-rust for mixed-width widening and the
+           ;; Field-literal Fr::from coercion.
            (format "(~a != ~a)"
-                   (widening-operand-rust expr1 native-id-ht)
-                   (widening-operand-rust expr2 native-id-ht))]
+                   (eq-operand-rust expr1 type native-id-ht)
+                   (eq-operand-rust expr2 type native-id-ht))]
           [(< ,src ,bits ,expr1 ,expr2)
            ;; F1.3: ordering comparisons on Uint<N> (Rust unsigned ints).
            ;; Operands render through widening-operand-rust so

@@ -63,6 +63,24 @@
 //   - the constructor: the same const ternary as `pick`, written to the
 //     ledger so `initial_state()` (and the byte-parity reference) pins
 //     the constructor body route — including its guarded `-`.
+//
+// Ternary literal-arm coercion (two further gaps, both found by the
+// digital-passport dogfood review):
+//   - `recordLiteralPick`: a const ternary whose arms are BOTH integer
+//     literals, written to a Uint ledger. With both arms bare, Rust
+//     infers the whole `if c { 10 } else { 20 }` as i32 and the
+//     ledger-write builder's `Into<AlignedValue>` bound fails (E0277);
+//     the emitter must suffix each arm from the binding's declared
+//     type (coerce-literal-if-rhs-rendered in rust-passes-emit.ss).
+//   - `recordFieldPick`: the Field-typed twin — the arms must render as
+//     `Fr::from(1u64)` / `Fr::from(0u64)` to satisfy the same bound on
+//     a Field ledger.
+//   - `fieldBranches` / `recordFieldBranches`: ternary branches that
+//     are Field comparisons (`jubjubPointX(p) != 0 as Field`). The
+//     literal `0` must render as `Fr::from(0u64)` in EVERY body route
+//     (pure circuits via eq-operand-rust, impure/constructor bodies
+//     via ctor-expr-rust's if clause) — a bare `0` fails E0308 against
+//     the Fr the native returns while compactc still exits 0.
 
 import CompactStandardLibrary;
 
@@ -78,6 +96,7 @@ enum Label {
 
 export ledger lastPick: Uint<64>;
 export ledger picks: Counter;
+export ledger origin: Field;
 
 // Constructor route: the same const ternary as `pick`, written to the
 // ledger so the captured after-init state bytes pin it.
@@ -148,5 +167,48 @@ export circuit recordPick(c: Uint<64>, hot: Boolean): [] {
   assert(c != 0, "pick input must be non-zero");
   const picked = hot ? 10 : c;
   lastPick.write(disclose(picked));
+  picks.increment(1);
+}
+
+// Both arms are integer literals: nothing in the arms gives Rust's
+// inference a type, so the generated `let picked = if hot { 10 } else
+// { 20 };` must carry the declared width on each arm (`10u8`/`20u8`)
+// or the write's `Into<AlignedValue>` bound fails E0277. Both flag
+// values are driven by the executing test, so the committed VALUE of
+// each arm is pinned too.
+export circuit recordLiteralPick(hot: Boolean): [] {
+  const picked = hot ? 10 : 20;
+  lastPick.write(disclose(picked));
+  picks.increment(1);
+}
+
+// The Field-typed twin: the arms render as `Fr::from(1u64)` /
+// `Fr::from(0u64)` from the binding's declared Field type, the ternary
+// analogue of the whole-RHS Prod-9 literal coercion.
+export circuit recordFieldPick(c: Boolean): [] {
+  const picked: Field = c ? 1 : 0;
+  origin.write(disclose(picked));
+  picks.increment(1);
+}
+
+// Field-comparison ternary branches in the PURE route: each arm is a
+// `!=` whose literal operand must render `Fr::from(0u64)` (a bare `0`
+// fails E0308 against the Fr jubjubPointX/Y return). The identity
+// point selects false arms, the generator true arms.
+export pure circuit fieldBranches(flag: Boolean, p: JubjubPoint): Boolean {
+  const populated = flag
+    ? (jubjubPointX(p) != 0 as Field)
+    : (jubjubPointY(p) != 0 as Field);
+  return populated;
+}
+
+// The impure twin: same const ternary, an assert so the Err side
+// (identity point → populated false) executes, and a ledger increment
+// so the Ok side commits.
+export circuit recordFieldBranches(flag: Boolean, p: JubjubPoint): [] {
+  const populated = flag
+    ? (jubjubPointX(p) != 0 as Field)
+    : (jubjubPointY(p) != 0 as Field);
+  assert(populated, "point must be non-origin");
   picks.increment(1);
 }

@@ -80,10 +80,20 @@ fn make_envelope(
 ) -> ContractState<midnight_storage::DefaultDB> {
     let mut operations: HashMap<EntryPointBuf, ContractOperation, midnight_storage::DefaultDB> =
         HashMap::new();
-    operations = operations.insert(
-        EntryPointBuf(b"recordPick".to_vec()),
-        ContractOperation::new(None),
-    );
+    // One entry per exported impure circuit — the TS reference's
+    // initialState() pre-registers them all, so byte-parity requires the
+    // same four here.
+    for name in [
+        "recordPick",
+        "recordLiteralPick",
+        "recordFieldPick",
+        "recordFieldBranches",
+    ] {
+        operations = operations.insert(
+            EntryPointBuf(name.as_bytes().to_vec()),
+            ContractOperation::new(None),
+        );
+    }
     ContractState {
         data,
         operations,
@@ -355,4 +365,135 @@ fn record_pick_commits_the_selected_branch_and_propagates_failures() {
     let view = ledger(&after_cold.context.current_query_context.state);
     assert_eq!(view.last_pick().expect("last_pick"), 7);
     assert_eq!(view.picks().expect("picks"), 2);
+}
+
+/// Both-literal arms (the unsuffixed-i32 regression): `hot ? 10 : 20`
+/// written to a Uint ledger. With both arms bare the generated
+/// `let picked = if hot { 10 } else { 20 };` infers i32 and the write's
+/// `Into<AlignedValue>` bound fails E0277 — the arms must carry the
+/// declared width. Driving both flag values pins each arm's committed
+/// VALUE, so a swapped or mis-typed arm cannot pass by compiling.
+#[test]
+fn record_literal_pick_commits_each_suffixed_arm() {
+    let contract: Contract<(), NoWitnesses> = Contract::new(NoWitnesses);
+    let init = contract
+        .initial_state(ctor_ctx(), CAPTURE_START)
+        .expect("initial_state");
+
+    let after_hot = contract
+        .record_literal_pick(
+            CircuitContext::new(init.current_contract_state.clone(), ()),
+            true,
+        )
+        .expect("hot = true must commit");
+    let view = ledger(&after_hot.context.current_query_context.state);
+    assert_eq!(view.last_pick().expect("last_pick"), 10);
+    assert_eq!(view.picks().expect("picks"), 1);
+
+    let after_cold = contract
+        .record_literal_pick(
+            CircuitContext::new(after_hot.context.current_query_context.state, ()),
+            false,
+        )
+        .expect("hot = false must commit");
+    let view = ledger(&after_cold.context.current_query_context.state);
+    assert_eq!(view.last_pick().expect("last_pick"), 20);
+    assert_eq!(view.picks().expect("picks"), 2);
+}
+
+/// The Field-typed twin of the literal-arm regression: a Field-annotated
+/// const whose arms are both literals must render them as
+/// `Fr::from(1u64)` / `Fr::from(0u64)` — a bare literal fails the
+/// `Into<AlignedValue>` bound on a Field ledger.
+#[test]
+fn record_field_pick_commits_fr_literal_arms() {
+    let contract: Contract<(), NoWitnesses> = Contract::new(NoWitnesses);
+    let init = contract
+        .initial_state(ctor_ctx(), CAPTURE_START)
+        .expect("initial_state");
+
+    let after_true = contract
+        .record_field_pick(
+            CircuitContext::new(init.current_contract_state.clone(), ()),
+            true,
+        )
+        .expect("c = true must commit");
+    let view = ledger(&after_true.context.current_query_context.state);
+    assert_eq!(view.origin().expect("origin"), Fr::from(1u64));
+
+    let after_false = contract
+        .record_field_pick(
+            CircuitContext::new(after_true.context.current_query_context.state, ()),
+            false,
+        )
+        .expect("c = false must commit");
+    let view = ledger(&after_false.context.current_query_context.state);
+    assert_eq!(view.origin().expect("origin"), Fr::from(0u64));
+}
+
+/// Field-comparison ternary branches in the PURE route: each arm's
+/// `!= 0` literal must render as `Fr::from(0u64)` — a bare `0` fails
+/// E0308 against the Fr jubjubPointX/Y return. The generator's
+/// coordinates are non-zero (both arms true); the twisted-Edwards
+/// neutral element is (0, 1), so `JubjubPoint::default()` selects the
+/// x-arm false side while its y stays non-zero.
+#[test]
+fn field_branches_compare_the_selected_coordinate() {
+    let generator = JubjubPoint::generator();
+    let identity = JubjubPoint::default();
+
+    assert!(
+        pure_circuits::field_branches(true, generator).expect("generator x != 0"),
+        "generator's x coordinate must be non-zero"
+    );
+    assert!(
+        pure_circuits::field_branches(false, generator).expect("generator y != 0"),
+        "generator's y coordinate must be non-zero"
+    );
+    assert!(
+        !pure_circuits::field_branches(true, identity).expect("identity x == 0"),
+        "identity's x coordinate must be zero"
+    );
+    assert!(
+        pure_circuits::field_branches(false, identity).expect("identity y == 1"),
+        "identity's y coordinate is 1 (neutral element), non-zero"
+    );
+}
+
+/// The impure twin of the field-branch comparison: the assert must fire
+/// on the identity point (Err before any write) and pass on the
+/// generator (Ok, incrementing `picks`).
+#[test]
+fn record_field_branches_asserts_the_selected_coordinate() {
+    let contract: Contract<(), NoWitnesses> = Contract::new(NoWitnesses);
+    let init = contract
+        .initial_state(ctor_ctx(), CAPTURE_START)
+        .expect("initial_state");
+
+    #[allow(clippy::err_expect)]
+    let err = contract
+        .record_field_branches(
+            CircuitContext::new(init.current_contract_state.clone(), ()),
+            true,
+            JubjubPoint::default(),
+        )
+        .err()
+        .expect("identity point must trip the non-origin assert");
+    assert!(
+        matches!(
+            err,
+            CompactError::AssertionFailed(ref m) if m == "point must be non-origin"
+        ),
+        "expected the non-origin assert, got {err:?}"
+    );
+
+    let after = contract
+        .record_field_branches(
+            CircuitContext::new(init.current_contract_state.clone(), ()),
+            false,
+            JubjubPoint::generator(),
+        )
+        .expect("generator point must commit");
+    let view = ledger(&after.context.current_query_context.state);
+    assert_eq!(view.picks().expect("picks"), 1);
 }

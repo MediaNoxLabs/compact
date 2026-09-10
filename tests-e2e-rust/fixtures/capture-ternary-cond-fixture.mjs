@@ -17,9 +17,11 @@
 //
 // Capture TS reference state for ternary_cond_fixture.compact's
 // initial_state(). Two ledger fields (`lastPick: Uint<64>`,
-// `picks: Counter`), seven exported pure circuits covering conditional
-// expressions in every sub-expression position, one exported impure
-// circuit (`recordPick`), and a constructor whose body evaluates a
+// `picks: Counter`, `origin: Field`), eight exported pure circuits
+// covering conditional expressions in every sub-expression position,
+// four exported impure circuits (`recordPick`, `recordLiteralPick`,
+// `recordFieldPick`, `recordFieldBranches`), and a constructor whose
+// body evaluates a
 // const ternary with a guarded subtraction and writes the result to
 // `lastPick` — the state captured here pins the constructor route
 // against the Rust side (tests/ternary_cond_fixture.rs).

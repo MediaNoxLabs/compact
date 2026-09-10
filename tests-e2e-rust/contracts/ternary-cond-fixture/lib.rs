@@ -163,7 +163,11 @@ where
         ctx: ConstructorContext<PS>,
         start: u64,
     ) -> Result<ConstructorResult<PS>, CompactError> {
-        let sv = new_array(vec![new_cell(0u64), new_cell(0u64)]);
+        let sv = new_array(vec![
+            new_cell(0u64),
+            new_cell(0u64),
+            new_cell(Fr::default()),
+        ]);
         let state = ChargedState::new(sv);
         let qctx = QueryContext::new(state, midnight_compact_runtime::ContractAddress::default());
         let initial = if (start > 15) {
@@ -202,6 +206,109 @@ where
             .push(false, new_cell(0u8))
             .push(true, new_cell(picked.clone()))
             .ins(false, 1)
+            .idx_at_index(1u8, true)
+            .addi(tmp.clone() as u32)
+            .ins(true, 1)
+            .build();
+
+        let results = query_for_verify(
+            &ctx.current_query_context,
+            &ops,
+            ctx.gas_limit.clone(),
+            &ctx.cost_model,
+        )?;
+
+        Ok(CircuitResults {
+            result: (),
+            context: CircuitContext {
+                current_query_context: results.context,
+                ..ctx
+            },
+            gas_cost: results.gas_cost,
+        })
+    }
+
+    pub fn record_literal_pick(
+        &self,
+        ctx: CircuitContext<PS>,
+        hot: bool,
+    ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let picked = if hot { 10u8 } else { 20u8 };
+        let tmp = picked.clone();
+        let tmp_0 = 1u16;
+        let ops = OpProgramVerify::<DefaultDB>::new()
+            .push(false, new_cell(0u8))
+            .push(true, new_cell(tmp.clone()))
+            .ins(false, 1)
+            .idx_at_index(1u8, true)
+            .addi(tmp_0.clone() as u32)
+            .ins(true, 1)
+            .build();
+
+        let results = query_for_verify(
+            &ctx.current_query_context,
+            &ops,
+            ctx.gas_limit.clone(),
+            &ctx.cost_model,
+        )?;
+
+        Ok(CircuitResults {
+            result: (),
+            context: CircuitContext {
+                current_query_context: results.context,
+                ..ctx
+            },
+            gas_cost: results.gas_cost,
+        })
+    }
+
+    pub fn record_field_pick(
+        &self,
+        ctx: CircuitContext<PS>,
+        c: bool,
+    ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let picked = if c { Fr::from(1u64) } else { Fr::from(0u64) };
+        let tmp = 1u16;
+        let ops = OpProgramVerify::<DefaultDB>::new()
+            .push(false, new_cell(2u8))
+            .push(true, new_cell(picked.clone()))
+            .ins(false, 1)
+            .idx_at_index(1u8, true)
+            .addi(tmp.clone() as u32)
+            .ins(true, 1)
+            .build();
+
+        let results = query_for_verify(
+            &ctx.current_query_context,
+            &ops,
+            ctx.gas_limit.clone(),
+            &ctx.cost_model,
+        )?;
+
+        Ok(CircuitResults {
+            result: (),
+            context: CircuitContext {
+                current_query_context: results.context,
+                ..ctx
+            },
+            gas_cost: results.gas_cost,
+        })
+    }
+
+    pub fn record_field_branches(
+        &self,
+        ctx: CircuitContext<PS>,
+        flag: bool,
+        p: JubjubPoint,
+    ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let populated = if flag {
+            (midnight_compact_runtime::jubjub_point_x(p.clone()) != Fr::from(0u64))
+        } else {
+            (midnight_compact_runtime::jubjub_point_y(p.clone()) != Fr::from(0u64))
+        };
+        compact_assert!(populated, "point must be non-origin");
+        let tmp = 1u16;
+        let ops = OpProgramVerify::<DefaultDB>::new()
             .idx_at_index(1u8, true)
             .addi(tmp.clone() as u32)
             .ins(true, 1)
@@ -277,6 +384,28 @@ impl<'a, D: DB> Ledger<'a, D> {
             }
         };
         midnight_compact_runtime::std_lib::decode_u64(av)
+    }
+    pub fn origin(&self) -> Result<Fr, CompactError> {
+        let qctx = QueryContext::new(
+            self.state.clone(),
+            midnight_compact_runtime::ContractAddress::default(),
+        );
+        let ops = OpProgramGather::<D>::new()
+            .dup(0)
+            .idx_at_index(2u8, false)
+            .popeq(true)
+            .build();
+        let results = query_for_read(&qctx, &ops, None, &initial_cost_model())
+            .map_err(|e| CompactError::AssertionFailed(format!("ledger query failed: {:?}", e)))?;
+        let av = match results.events.last() {
+            Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
+            _ => {
+                return Err(CompactError::AssertionFailed(
+                    "ledger: expected Read event".into(),
+                ))
+            }
+        };
+        midnight_compact_runtime::std_lib::decode_fr(av)
     }
 }
 
@@ -354,5 +483,14 @@ pub mod pure_circuits {
 
     pub fn choose_label(c: u64) -> Result<Label, CompactError> {
         Ok(if (c > 15) { Label::hot } else { Label::cold })
+    }
+
+    pub fn field_branches(flag: bool, p: JubjubPoint) -> Result<bool, CompactError> {
+        let populated = if flag {
+            (midnight_compact_runtime::jubjub_point_x(p.clone()) != Fr::from(0u64))
+        } else {
+            (midnight_compact_runtime::jubjub_point_y(p.clone()) != Fr::from(0u64))
+        };
+        Ok(populated)
     }
 }

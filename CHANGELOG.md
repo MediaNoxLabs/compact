@@ -58,6 +58,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   rust-runtime lane). Fixture/CI/docs-only release: no compiler behavior
   change; all pre-existing fixtures regenerate byte-identically.
 
+### Fixed
+
+Two Rust-codegen correctness gaps in the ternary (`if`-expression) lowering
+added by this release, both found by reviewing the dogfood crate and both
+reproduced end-to-end (`compactc --target rust` exits 0, the generated crate
+fails `cargo build`):
+
+- **Ternaries with two integer-literal arms emitted unsuffixed literals**
+  (`const v = flag ? 10 : 20;` feeding a ledger write) — with both arms
+  bare, Rust infers the whole `if`-expression as `i32` and the write's
+  `Into<AlignedValue>` bound fails E0277; an arm above `i32::MAX` cannot
+  even default. The const-binding coercion site
+  (`coerce-literal-if-rhs-rendered`, rust-passes-emit.ss) now renders both
+  arms from the binding's declared type (`10u64`, or `Fr::from(10u64)` for
+  `Field`), the ternary analogue of the existing whole-RHS Prod-9/Prod-13
+  literal guard. Mixed literal/expression arms are unchanged (Rust unifies
+  the literal with the other arm's type).
+- **Ternary branches lost the constructor-path coercions** —
+  `ctor-expr-rust` had no `if` clause, so constructor/impure-circuit
+  ternaries fell through to `expr-rust`, whose branch rendering dropped the
+  `Fr::from(<n>u64)` literal coercion on Field-typed `==`/`!=` (plus
+  typed-enum comparisons, struct-field-zero ledger reads, and ctor-call
+  inlining): `flag ? (jubjubPointX(p) != 0 as Field) : ...` emitted
+  `Fr != 0` and failed E0308 on all three body routes while `compactc`
+  exited 0. `ctor-expr-rust` now has an `if` clause rendering the condition
+  via the ctor-aware `cond-rust` and each branch through
+  `coerce-cmp-operand-rust` (ctor-path widening + coercions), and the pure
+  route gains the same Field-literal coercion in `expr-rust`'s own
+  `==`/`!=` clauses (`eq-operand-rust`).
+
+Regression coverage: `examples/ternary_cond_fixture.compact` grows
+`recordLiteralPick` (both-literal Uint arms), `recordFieldPick` (Field-typed
+arms → `Fr::from`), and `fieldBranches`/`recordFieldBranches` (Field
+comparisons in ternary branches, pure + impure routes), each driven by an
+executing test plus the byte-parity capture; all other pre-existing
+fixtures still regenerate byte-identically.
+
 ## [Toolchain 0.31.118, language 0.23.103, runtime 0.16.100]
 
 ### Fixed

@@ -355,6 +355,45 @@
                                      native-id-ht witness-id-ht circuit-id-ht)
                      (ctor-expr-rust expr2 local-binds
                                      native-id-ht witness-id-ht circuit-id-ht))]
+            [(if ,src ,expr0 ,expr1 ,expr2)
+             ;; Ternary in constructor/circuit expression position.
+             ;; Previously this shape fell through the [else] to
+             ;; expr-rust's if clause, whose branch rendering
+             ;; (widening-operand-rust → expr-rust) drops every ctor-path
+             ;; lowering: the Fr::from(<n>u64) literal coercion on
+             ;; Field-typed ==/!= (coerce-cmp-operand-rust), the typed-enum
+             ;; ==/!= rendering, struct-field-zero ledger reads, and
+             ;; ctor-call-rust inlining. `flag ? (jubjubPointX(p) != 0 as
+             ;; Field) : false` emitted `... != 0` — Fr against a bare
+             ;; integer — so the generated crate failed cargo build with
+             ;; E0308 while compactc exited 0.
+             ;;
+             ;; The condition renders via cond-rust (ctor-aware: threads
+             ;; local-binds and the witness/circuit id hashtables, inlines
+             ;; circuit calls). Each branch renders through
+             ;; coerce-cmp-operand-rust with #f as the comparison type —
+             ;; that helper is the ctor-path widening-operand-rust: it
+             ;; materialises a branch's safe-cast wrapper as
+             ;; `(arm) as <wider>` (the typer joins ternary branches at
+             ;; the wider value range) and recurses via ctor-expr-rust so
+             ;; branch-local ==/!= comparisons keep their Field-literal
+             ;; and typed-enum coercions. The #f type disables only the
+             ;; comparison's own literal coercion — that belongs to the
+             ;; ==/!= node's type, not the branch join. Both-literal arms
+             ;; never need it here: the const-binding site intercepts
+             ;; those with the binding's declared type first (see
+             ;; coerce-literal-if-rhs-rendered in rust-passes-emit.ss).
+             ;; Like expr-rust's if clause, a Rust `if` expression keeps
+             ;; the branches lazy — only the taken arm evaluates.
+             (format "if ~a { ~a } else { ~a }"
+                     (cond-rust expr0 local-binds
+                                native-id-ht witness-id-ht circuit-id-ht)
+                     (coerce-cmp-operand-rust expr1 #f local-binds
+                                              native-id-ht witness-id-ht
+                                              circuit-id-ht)
+                     (coerce-cmp-operand-rust expr2 #f local-binds
+                                              native-id-ht witness-id-ht
+                                              circuit-id-ht))]
             [(elt-ref ,src ,expr ,elt-name ,nat)
              ;; F1.2: struct field access (`struct.field`). The field
              ;; name comes from the source language; rust-variant-name
@@ -2345,8 +2384,18 @@
                       ;;     ledger v: Field;
                       ;;     constructor() { v = 42; }
                       ;; emit `let tmp = 42;` and fail to compile.
+                      ;;
+                      ;; The ternary twin: an `(if ...)` RHS whose branches
+                      ;; are BOTH integer literals also needs the decl-type
+                      ;; coercion — with both arms bare, Rust infers the
+                      ;; whole `if c { 10 } else { 20 }` as i32 and the same
+                      ;; `Into<AlignedValue>` bound fails (E0277).
                       (let* ([decl-type (const-binding-decl-type (car stmts))]
-                             [coerced (coerce-literal-rhs-rendered decl-type rhs)]
+                             [coerced
+                              (or (coerce-literal-rhs-rendered decl-type rhs)
+                                  (coerce-literal-if-rhs-rendered
+                                    decl-type rhs local-binds
+                                    native-id-ht witness-id-ht circuit-id-ht))]
                              [raw
                               (or coerced
                                   (ctor-expr-rust rhs local-binds

@@ -40,8 +40,10 @@
 //      rejections upstream's protocol test pins.
 //
 // Fixture construction is a faithful port of upstream
-// src/testing/{credential-fixtures,civil-date,jubjub-utils}.ts at the
-// pinned rev (see PROVENANCE.md): same labels, scalars, and constants.
+// src/testing/{credential-fixtures,civil-date,jubjub-utils}.ts: same
+// labels, scalars, and constants. The reference originals live upstream
+// at the pinned rev (see PROVENANCE.md) — only the `.compact` sources are
+// vendored in this repo, so the port has no in-tree copy to diff against.
 //
 // Usage:
 //   compactc --target ts --skip-zk \

@@ -162,3 +162,36 @@ captures (`tests-e2e-rust/fixtures/capture-digital-passport-credential.mjs`
 - **A scheduled CI job fetching upstream HEAD.** Rejected in planning: a
   network-dependent, time-variant gate breaks the byte-stability that makes
   committed-crate byte-parity meaningful. Refresh stays a human act.
+
+## Follow-up note (2026-09-10): vendored set trimmed to the `.compact` subset
+
+The openspec change `trim-dogfood-to-compact-only` redefined the enclave's
+vendored set from upstream's whole package `src/` tree to its `*.compact`
+subset (6 files: the entry + five modules) plus the unchanged staged core
+(15 files) — the 16 upstream TypeScript files (runtime codecs, contract
+wrapper, testing utils, vitest suites) were removed as inert: no gate
+compiled, executed, or read them (compiler input is `.compact` only; the
+parity capture is a *port* of upstream's testing TS importing the
+compiler-generated output). Re-weighing the decision above in light of it:
+
+- The decision table's "source in tree" cell for the enclave becomes
+  "verbatim `.compact` subset + staged core": the rationale is unchanged —
+  the enclave still compiles real, named, third-party production source,
+  now carried entirely by the `.compact` files, each still byte-identical
+  to the pinned rev.
+- The accepted-risk bullet "verbatim is what keeps the fixture
+  byte-comparable" still holds *per file*: comparability of what is
+  vendored is preserved, while the cost side lightens (the inert ~3.2k
+  lines of TS branding are gone).
+- Byte-verification becomes **manifest-based** (PROVENANCE.md): per-file
+  `cmp` of the 6 files plus a file-list completeness check (vendored
+  `src/**/*.compact` list == upstream list at the pin), so a newly added
+  upstream `.compact` module cannot be silently missed — the one property
+  the whole-tree diff previously gave for free. Slightly more procedure;
+  recorded and scripted in PROVENANCE.md.
+- One trade-off accepted: the capture script's ported fixture logic loses
+  its in-repo reference — the originals are reviewable upstream at the
+  pinned rev instead.
+
+Everything else about the decision — pinning policy, gating, the bounded
+supersession of `08decb1` for this enclave only — stands as written above.

@@ -13,8 +13,21 @@ decision of commit `08decb1` / ADR-0001's follow-up note. Everything outside
 
 | Path | Source | Files |
 | --- | --- | --- |
-| `src/` | Upstream package `midnight-verifiable-credential-digital-passport`, package tree `packages/midnight-verifiable-credential-digital-passport/src/`, copied **verbatim** (upstream Apache-2.0 headers intact) | 22 |
+| `src/` | Upstream package `midnight-verifiable-credential-digital-passport`, package tree `packages/midnight-verifiable-credential-digital-passport/src/`, **`.compact` subset only** — the entry `digital-passport-credential.compact` plus the five modules under `digital-passport-credential/` — each copied **verbatim** (upstream Apache-2.0 headers intact) | 6 |
 | `core-compact-staging/` | npm package `@midnight-ntwrk/credential-compact@0.1.0-rc3`, `dist/credentials.compact` + `dist/credentials/` (the 15 files the upstream staging script `scripts/stage-core-compact.mjs` resolves through the package's exports map) | 15 |
+
+The TypeScript half of upstream's `src/` tree (16 files: runtime codecs,
+contract wrapper, testing utils, vitest suites) is deliberately **not**
+vendored — a recorded divergence from whole-tree verbatim (cross-linked in
+ADR 0003's follow-up note): no gate compiles, executes, or reads it
+(compiler input is `.compact` only, and the parity capture's fixture logic
+is a *port* of upstream's testing TS that imports the compiler-generated
+output, not the vendored tree), so the dogfood claim — compiling real,
+unmodified third-party production source — is fully carried by the
+`.compact` subset above. Because the vendored set is a subset, verification
+below is manifest-based: per-file byte identity **plus** a file-list
+completeness check, so a newly added upstream `.compact` module cannot be
+silently missed on refresh.
 
 Upstream `src/digital-passport-credential.compact` contains
 `include "../core-compact-staging/credentials";` — the staging directory must
@@ -47,7 +60,9 @@ revision recorded above **in the same commit**.
 ```sh
 git clone https://github.com/midnightntwrk/midnight-verifiable-credential-digital-passport.git /tmp/upstream-dpp
 git -C /tmp/upstream-dpp checkout <NEW_REV>
-rsync -a --delete /tmp/upstream-dpp/packages/midnight-verifiable-credential-digital-passport/src/ src/
+rsync -a --include='*/' --include='*.compact' --exclude='*' --delete \
+  /tmp/upstream-dpp/packages/midnight-verifiable-credential-digital-passport/src/ src/
+# copies only the Compact sources; --delete prunes upstream-removed modules
 # then update the pinned revision in this file, same commit
 ```
 
@@ -73,8 +88,18 @@ the same commit.)
 ### 3. Verification
 
 ```sh
-# src/ is byte-identical to the pinned upstream rev (expect: no output, exit 0)
-git diff --no-index /tmp/upstream-dpp/packages/midnight-verifiable-credential-digital-passport/src src
+# src/ per-file identity: each vendored .compact byte-identical to its
+# counterpart at the pinned rev (expect 6 silent "cmp" successes)
+for f in $(cd src && find . -name '*.compact' | sort); do
+  cmp "src/$f" "/tmp/upstream-dpp/packages/midnight-verifiable-credential-digital-passport/src/$f"
+done
+
+# src/ subset completeness: the vendored list equals the upstream list, so
+# an added/renamed upstream module surfaces as a list diff, not silent
+# absence (expect: no output, exit 0)
+diff <(cd src && find . -name '*.compact' | sort) \
+     <(cd /tmp/upstream-dpp/packages/midnight-verifiable-credential-digital-passport/src \
+       && find . -name '*.compact' | sort)
 
 # staging is byte-identical to the npm dist/ (expect 15 "cmp" successes)
 find core-compact-staging -type f | wc -l   # → 15
@@ -84,8 +109,12 @@ for f in /tmp/core-tarball-staging/package/dist/credentials/*; do
 done
 
 # nothing silently dropped by .gitignore's bare dist/gen/out/artifacts patterns
-git status --ignored --porcelain .          # → must be empty (run from the repo root)
-git ls-files examples/dogfood | wc -l       # → 38 (22 src + 15 staged + this PROVENANCE.md)
+# (scoped to the enclave — a bare `.` from the repo root would also list
+#  ignored target/, result/, … elsewhere in the repo)
+git status --ignored --porcelain examples/dogfood/digital-passport-credential   # → must be empty
+git ls-files examples/dogfood | wc -l       # → 22 (6 src + 15 staged + this PROVENANCE.md)
+# (the two `git` lines run from the repo root; the `cmp`/`find` lines above
+#  run from this directory, examples/dogfood/digital-passport-credential/)
 ```
 
 The `.gitignore` truncation check matters: the repo's `.gitignore` has bare
@@ -96,9 +125,16 @@ introduces one, rename that segment and record the rename here.
 
 ## Neutralization note
 
-Vendoring is deliberately **verbatim**: upstream headers, names, and branding
-stay intact so the fixture remains recognizable and byte-comparable against
-upstream. A future neutralization pass (renaming/rebadging) remains possible if
-the branding cost ever outweighs the dogfood value; if undertaken it must be
-recorded here and in the dogfood ADR as a deliberate divergence from verbatim
-(which this file otherwise forbids).
+Vendoring is deliberately **verbatim per `.compact` file**: upstream headers,
+names, and branding stay intact so the fixture remains recognizable and
+byte-comparable against upstream. The subset policy above is part of that
+stance — TypeScript is never vendored, so only the 6 `src/` files and the 15
+staged files carry branding at all. One caveat for any future pass: the
+parity capture
+(`tests-e2e-rust/fixtures/capture-digital-passport-credential.mjs`) embeds a
+port of upstream's testing TS whose reference originals live **upstream at
+the pinned rev, not in this tree**. A future neutralization pass
+(renaming/rebadging) remains possible if the branding cost ever outweighs
+the dogfood value; if undertaken it must be recorded here and in the dogfood
+ADR as a deliberate divergence from verbatim (which this file otherwise
+forbids).

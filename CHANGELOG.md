@@ -14,14 +14,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   documented exception to the corpus de-branding (commit `08decb1`) that
   supersedes it for this directory only; see
   [ADR 0003](docs/adr/0003-bounded-dogfood-enclave.md). First (and so far
-  only) tenant: `examples/dogfood/digital-passport-credential/`, the upstream
-  `midnight-verifiable-credential-digital-passport` package `src/` tree
-  vendored **verbatim** (upstream Apache-2.0 headers intact) at pinned
-  revision `cdeb860b`, plus a committed `core-compact-staging/` (the 15 npm
+  only) tenant: `examples/dogfood/digital-passport-credential/`, the
+  upstream `midnight-verifiable-credential-digital-passport` package's
+  Compact sources — the 6-file `*.compact` subset of its `src/` tree
+  (entry + five modules), the upstream TypeScript deliberately never
+  vendored — copied **verbatim per file** (upstream Apache-2.0 headers
+  intact) at pinned revision `cdeb860b`, plus a committed
+  `core-compact-staging/` (the 15 npm
   `@midnight-ntwrk/credential-compact@0.1.0-rc3` `dist/` files its relative
   include needs) so the fixture is hermetic and CI is network-free.
-  `PROVENANCE.md` records upstream identity, license, byte-verification, and
-  the manual re-sync procedure; nothing under the enclave is ever locally
+  `PROVENANCE.md` records upstream identity, license, manifest-based
+  byte-verification (per-file identity plus file-list completeness against
+  the pin), and the manual re-sync procedure; nothing under the enclave is ever locally
   modified, and it is exempt from license-header validation via a single
   `header_config.json` `excluded_directories` entry (`dogfood`). Rationale in
   brief: the enclave's first landing already surfaced two genuine

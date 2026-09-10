@@ -151,11 +151,12 @@ const FIXTURES: &[(&str, &str)] = &[
     ),
     // Dogfood fixture: the real third-party contract this toolchain exists
     // to serve — upstream midnight-verifiable-credential-digital-passport
-    // @ cdeb860b, vendored verbatim under examples/dogfood/ (see that dir's
-    // PROVENANCE.md). First FIXTURES row with a nested source path; keeps
-    // the regression sweep proving the compiler still compiles + regenerates
-    // a production pure-circuit library byte-identically, not just synthetic
-    // fixtures. Executing gates: phase 2 (tests/digital_passport_credential.rs).
+    // @ cdeb860b, vendored under examples/dogfood/ as its `.compact`
+    // subset only, verbatim per file (see that dir's PROVENANCE.md).
+    // First FIXTURES row with a nested source path; keeps the regression
+    // sweep proving the compiler still compiles + regenerates a production
+    // pure-circuit library byte-identically, not just synthetic fixtures.
+    // Executing gates: phase 2 (tests/digital_passport_credential.rs).
     (
         "dogfood/digital-passport-credential/src/digital-passport-credential.compact",
         "digital-passport-credential",

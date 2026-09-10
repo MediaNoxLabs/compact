@@ -153,4 +153,38 @@ fixture.afterStreamNarrowWrite = {
   stateHex: Buffer.from(afterStreamNarrowEnvelope.serialize()).toString('hex'),
 };
 
+// --- afterRecordStructPick: init -> recordStructPick(true, s, s2) ----
+// Bug-12 (dogfood review, round 3): the non-Copy ternary-arm pin. The
+// circuit picks between two STRUCT args and re-reads both after the
+// pick (`lastPick.write(disclose(picked.value))` after two asserts); the
+// Rust if-expression moves the taken arm, so only `.clone()`d arms
+// compile on the Rust side. Executed here from the POST-INIT state
+// (same discipline as afterRecordLiteralPick) so the Rust test can
+// byte-compare the same step.
+//
+// NOTE: adding this impure circuit also changed `afterInit` (the TS
+// initialState pre-registers every impure circuit in the operations
+// map), so ALL captured steps in this file were recaptured together.
+const structPickOut = contract.circuits.recordStructPick(
+  cr.createCircuitContext(
+    cr.dummyContractAddress(),
+    emptyCpk,
+    afterInitContractState.data,
+    initResult.currentPrivateState,
+  ),
+  true,
+  { low: false, value: 2n },
+  { low: true, value: 3n },
+);
+if (structPickOut.result.err !== undefined) {
+  throw new Error(`recordStructPick(true, ..) failed: ${structPickOut.result.err}`);
+}
+const afterStructPickEnvelope = rewrapEnvelope(
+  afterInitContractState,
+  new cr.ChargedState(structPickOut.context.currentQueryContext.state.state),
+);
+fixture.afterRecordStructPick = {
+  stateHex: Buffer.from(afterStructPickEnvelope.serialize()).toString('hex'),
+};
+
 process.stdout.write(JSON.stringify(fixture, null, 2) + '\n');

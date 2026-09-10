@@ -2329,13 +2329,31 @@
            ;; dogfood's shiftedMonth); materialised, both arms share the
            ;; joined width. Same-type branches carry no wrapper and are
            ;; byte-unchanged.
+           ;;
+           ;; Bug-12 (2026-09-10): the arms additionally render through
+           ;; expr-rust-arg-cloned — a Rust `if` EXPRESSION moves the
+           ;; taken arm's value out of its owner, so a struct-typed arm
+           ;; that is a bare var-ref (`flag ? s : s2`) followed by any
+           ;; later read of `s` fails E0382 at cargo build while
+           ;; compactc exits 0. The `.clone()` suffix keeps the owner
+           ;; usable — the same decision logic pure-call-arg-rust
+           ;; applies to call args (known-Copy formals skip the clone;
+           ;; let-lifted locals without a recorded type over-clone,
+           ;; semantically a no-op for Clone types). Safecast-wrapped
+           ;; arms strip to a Uint var (Copy once recorded), literal /
+           ;; ctor / call arms are not var-refs, and Field arms are Copy
+           ;; per type-rust-copy? — so existing fixtures are
+           ;; byte-unchanged and only non-Copy var-valued arms gain the
+           ;; suffix.
            (format "if ~a { ~a } else { ~a }"
                    (cond-rust expr0 (current-var-substitution)
                               native-id-ht
                               (current-witness-id-ht)
                               (current-circuit-id-ht))
-                   (widening-operand-rust expr1 native-id-ht)
-                   (widening-operand-rust expr2 native-id-ht))]
+                   (expr-rust-arg-cloned expr1
+                     (widening-operand-rust expr1 native-id-ht))
+                   (expr-rust-arg-cloned expr2
+                     (widening-operand-rust expr2 native-id-ht)))]
           [(elt-ref ,src ,expr ,elt-name ,nat)
            ;; F1.2: struct field access.
            (format "~a.~a"

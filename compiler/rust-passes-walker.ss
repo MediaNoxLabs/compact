@@ -410,15 +410,30 @@
              ;; coerce-literal-if-rhs-rendered in rust-passes-emit.ss).
              ;; Like expr-rust's if clause, a Rust `if` expression keeps
              ;; the branches lazy — only the taken arm evaluates.
+             ;;
+             ;; Bug-12 (2026-09-10): the arms additionally render through
+             ;; expr-rust-arg-cloned (defined in rust-passes-emit.ss,
+             ;; included after this file — the same forward reference the
+             ;; Bug-6 let-RHS site below already makes). A Rust `if`
+             ;; EXPRESSION moves the taken arm's value, so a struct-typed
+             ;; arm that is a bare var-ref (`flag ? s : s2`) followed by
+             ;; any later read of `s` or `s2` fails E0382 at cargo build
+             ;; while compactc exits 0. Known-Copy formals skip the
+             ;; clone; let-lifted locals over-clone (no-op for Clone
+             ;; types); literal / Field-literal / safecast-Uint / ctor /
+             ;; call arms are unaffected — Field itself is Copy per
+             ;; type-rust-copy? — so existing fixtures are byte-unchanged.
              (format "if ~a { ~a } else { ~a }"
                      (cond-rust expr0 local-binds
                                 native-id-ht witness-id-ht circuit-id-ht)
-                     (coerce-cmp-operand-rust expr1 #f local-binds
-                                              native-id-ht witness-id-ht
-                                              circuit-id-ht)
-                     (coerce-cmp-operand-rust expr2 #f local-binds
-                                              native-id-ht witness-id-ht
-                                              circuit-id-ht))]
+                     (expr-rust-arg-cloned expr1
+                       (coerce-cmp-operand-rust expr1 #f local-binds
+                                                native-id-ht witness-id-ht
+                                                circuit-id-ht))
+                     (expr-rust-arg-cloned expr2
+                       (coerce-cmp-operand-rust expr2 #f local-binds
+                                                native-id-ht witness-id-ht
+                                                circuit-id-ht)))]
             [(elt-ref ,src ,expr ,elt-name ,nat)
              ;; F1.2: struct field access (`struct.field`). The field
              ;; name comes from the source language; rust-variant-name

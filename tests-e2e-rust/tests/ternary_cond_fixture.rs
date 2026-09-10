@@ -48,8 +48,8 @@ use midnight_storage::storage::HashMap;
 use tests_e2e_rust::SmallFixtureTsReference;
 
 /// The ternary fixture's TS reference additionally carries
-/// `afterRecordLiteralPick`, `afterStreamLiteralPick`, and
-/// `afterStreamNarrowWrite` snapshots (see
+/// `afterRecordLiteralPick`, `afterStreamLiteralPick`,
+/// `afterStreamNarrowWrite`, and `afterRecordStructPick` snapshots (see
 /// capture-ternary-cond-fixture.mjs): the state after executing the
 /// named circuit from the prior captured state on the TS driver.
 /// `SmallFixtureTsReference` models the shared afterInit-only shape,
@@ -62,6 +62,8 @@ struct TernaryTsReference {
     after_stream_literal_pick: tests_e2e_rust::SmallFixtureStepSnapshot,
     #[serde(rename = "afterStreamNarrowWrite")]
     after_stream_narrow_write: tests_e2e_rust::SmallFixtureStepSnapshot,
+    #[serde(rename = "afterRecordStructPick")]
+    after_record_struct_pick: tests_e2e_rust::SmallFixtureStepSnapshot,
 }
 
 impl TernaryTsReference {
@@ -110,7 +112,7 @@ fn make_envelope(
         HashMap::new();
     // One entry per exported impure circuit — the TS reference's
     // initialState() pre-registers them all, so byte-parity requires the
-    // same nine here.
+    // same ten here.
     for name in [
         "recordPick",
         "recordLiteralPick",
@@ -121,6 +123,7 @@ fn make_envelope(
         "streamLiteralPick",
         "streamNarrowWrite",
         "inlineBigPick",
+        "recordStructPick",
     ] {
         operations = operations.insert(
             EntryPointBuf(name.as_bytes().to_vec()),
@@ -886,4 +889,115 @@ fn inline_big_pick_commits_each_arm() {
         .expect("hot = false must commit");
     let view = ledger(&after_false.context.current_query_context.state);
     assert_eq!(view.last_pick().expect("last_pick"), 0);
+}
+
+/// Bug-12 (dogfood review, round 3): a Rust `if` EXPRESSION moves the
+/// taken arm's value out of its owner, so a struct-typed arm that is a
+/// bare var-ref and is re-read after the ternary must carry
+/// `.clone()` — pre-fix the pure route emitted `let picked = if c { s }
+/// else { s2 };` followed by the asserts' reads of `s`/`s2`, failing
+/// E0382 at cargo build while compactc exited 0 (this very test — the
+/// generated crate — would not compile). Every other value position
+/// (call args, Bug-6 let RHS) already cloned non-Copy var-refs; only
+/// the two ternary if-clauses were exposed. Both formal arms are
+/// re-read by the circuit's asserts, so BOTH arms need the clone; the
+/// formals' types are recorded, so the clones are exact rather than
+/// over-clones. The returned struct pins WHICH arm won.
+#[test]
+fn clone_struct_pick_reuses_both_formal_arms() {
+    // Fresh values per call: the pure fn takes its args by value, so
+    // the test itself would move them otherwise.
+    let picked = pure_circuits::clone_struct_pick(
+        true,
+        Choice {
+            low: false,
+            value: 2,
+        },
+        Choice {
+            low: true,
+            value: 3,
+        },
+    )
+    .expect("then arm picks s; the post-pick asserts re-read s and s2");
+    assert!(!picked.low && picked.value == 2);
+
+    let picked = pure_circuits::clone_struct_pick(
+        false,
+        Choice {
+            low: false,
+            value: 2,
+        },
+        Choice {
+            low: true,
+            value: 3,
+        },
+    )
+    .expect("else arm picks s2");
+    assert!(picked.low && picked.value == 3);
+}
+
+/// Bug-12, the let-lifted twin: `s` is a LOCAL, not a formal, so its
+/// type is not in `current-formal-arg-types` and the clone decision is
+/// type-blind (an unrecorded local always clones — safe over-clone).
+/// The local IS re-read after the pick (`s.low` in the return), so the
+/// clone is load-bearing here too: without it that read fails E0382.
+#[test]
+fn clone_struct_local_reuses_the_lifted_local() {
+    assert!(pure_circuits::clone_struct_local(true).expect("then arm picks s (low = true)"));
+    assert!(
+        !pure_circuits::clone_struct_local(false).expect("else arm is a fresh ctor (low = false)")
+    );
+}
+
+/// Bug-12 walker-route twin: the same both-formals shape through
+/// ctor-expr-rust's if clause (the streaming route funnels into the
+/// same clause, so it is covered too). Adding the impure circuit also
+/// changes the TS `initialState()` envelope — it pre-registers every
+/// impure circuit — so the whole ts-state.json was recaptured and this
+/// executes the same circuit from the same post-init state on both
+/// drivers to byte-compare the serialized envelopes, exactly like
+/// `record_literal_pick_byte_parity` above.
+#[test]
+fn record_struct_pick_byte_parity() {
+    let ts_ref = TernaryTsReference::load();
+    let contract: Contract<(), NoWitnesses> = Contract::new(NoWitnesses);
+    let init = contract
+        .initial_state(ctor_ctx(), CAPTURE_START)
+        .expect("initial_state");
+
+    let after = contract
+        .record_struct_pick(
+            CircuitContext::new(init.current_contract_state.clone(), ()),
+            true,
+            Choice {
+                low: false,
+                value: 2,
+            },
+            Choice {
+                low: true,
+                value: 3,
+            },
+        )
+        .expect("record_struct_pick(true, ..) must commit");
+
+    // lastPick after init is 10 (CAPTURE_START's then branch); the
+    // circuit writes picked.value (2 — the then arm IS s), with the
+    // two asserts re-reading s/s2 before the write.
+    let view = ledger(&after.context.current_query_context.state);
+    assert_eq!(view.last_pick().expect("last_pick"), 2);
+
+    let envelope = make_envelope(after.context.current_query_context.state);
+    let mut buf = Vec::new();
+    tagged_serialize(&envelope, &mut buf).expect("tagged_serialize");
+
+    let ts_bytes = ts_ref.after_record_struct_pick.state_bytes();
+    assert_eq!(
+        buf,
+        ts_bytes,
+        "Rust post-recordStructPick state bytes differ from TS reference\n\nRust ({} B): {}\n\nTS   ({} B): {}",
+        buf.len(),
+        hex::encode(&buf),
+        ts_bytes.len(),
+        hex::encode(&ts_bytes),
+    );
 }

@@ -331,3 +331,63 @@ export circuit inlineBigPick(hot: Boolean): [] {
   lastPick.write(disclose(shown ? 5000000000 : 0));
   picks.increment(1);
 }
+
+// ---------------------------------------------------------------------
+// Non-Copy ternary arms (dogfood review, round 3 — Bug-12). Every fix
+// above sized or coerced literal arms; the review's validation pass
+// found the MOVE side of the if-expression lowering entirely missing:
+// a Rust `if` EXPRESSION moves the taken arm's value out of its owner,
+// so a struct-typed arm that is a bare var-ref and is later re-read
+// emits E0382 (borrow of moved value) at cargo build while compactc
+// exits 0 — and every other value position (call args, Bug-6 let RHS)
+// already clones non-Copy var-refs, so only the two ternary if-clauses
+// (expr-rust in rust-passes-emit.ss, ctor-expr-rust in
+// rust-passes-walker.ss) were exposed:
+//
+//   - `cloneStructPick`: PURE route, both arms are formal struct args
+//     and BOTH are re-read in asserts after the pick — statically each
+//     arm may move, so the reuse fails E0382 unless every non-Copy var
+//     arm carries `.clone()`. (The reads are asserts, not a `+` sum:
+//     summing three Uint<64> fields widens past the declared range and
+//     the typer refuses — a separate, correct refusal.) The formals'
+//     types are recorded, so the clones here are exact (not
+//     over-clones). Returns the picked struct so the executing test
+//     pins WHICH arm won.
+//   - `cloneStructLocal`: the let-lifted twin — `s` is a LOCAL, not a
+//     formal, so its type is not in current-formal-arg-types and the
+//     arm over-clones: the clone decision for unrecorded locals is
+//     type-blind (always clone), so even an arm whose local is never
+//     re-read would carry `.clone()`. Safe — a Clone of a Clone type is
+//     semantically a no-op — and it pins the conservative direction of
+//     the fix. The local IS re-read (`s.low` in the return), so the
+//     clone is load-bearing too.
+//   - `recordStructPick`: the IMPURE (walker-route) twin of
+//     `cloneStructPick` — same both-formals shape through
+//     ctor-expr-rust's if clause, committing the picked value to the
+//     ledger so the executing test also byte-compares the committed
+//     state against the TS reference.
+//
+// The enum-valued `chooseLabel` never regressed: its arms are enum
+// VARIANTS (fresh values), not var-refs. Field arms (`mixedFieldJoin`)
+// are Copy per type-rust-copy?, matching how call-arg sites already
+// treat them.
+
+export pure circuit cloneStructPick(c: Boolean, s: Choice, s2: Choice): Choice {
+  const picked: Choice = c ? s : s2;
+  assert(s.value != 100, "s must stay usable after the pick");
+  assert(s2.value != 100, "s2 must stay usable after the pick");
+  return picked;
+}
+
+export pure circuit cloneStructLocal(c: Boolean): Boolean {
+  const s = Choice { low: true, value: 7 };
+  const picked: Choice = c ? s : Choice { low: false, value: 1 };
+  return s.low == picked.low;
+}
+
+export circuit recordStructPick(c: Boolean, s: Choice, s2: Choice): [] {
+  const picked: Choice = c ? s : s2;
+  assert(s.value != 100, "s must stay usable after the pick");
+  assert(s2.value != 100, "s2 must stay usable after the pick");
+  lastPick.write(disclose(picked.value));
+}

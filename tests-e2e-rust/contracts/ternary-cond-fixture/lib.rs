@@ -581,6 +581,40 @@ where
             gas_cost: results.gas_cost,
         })
     }
+
+    pub fn record_struct_pick(
+        &self,
+        ctx: CircuitContext<PS>,
+        c: bool,
+        s: Choice,
+        s2: Choice,
+    ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let picked = if c { s.clone() } else { s2.clone() };
+        compact_assert!((s.value != 100), "s must stay usable after the pick");
+        compact_assert!((s2.value != 100), "s2 must stay usable after the pick");
+        let tmp = picked.value.clone();
+        let ops = OpProgramVerify::<DefaultDB>::new()
+            .push(false, new_cell(0u8))
+            .push(true, new_cell((tmp.clone()) as u64))
+            .ins(false, 1)
+            .build();
+
+        let results = query_for_verify(
+            &ctx.current_query_context,
+            &ops,
+            ctx.gas_limit.clone(),
+            &ctx.cost_model,
+        )?;
+
+        Ok(CircuitResults {
+            result: (),
+            context: CircuitContext {
+                current_query_context: results.context,
+                ..ctx
+            },
+            gas_cost: results.gas_cost,
+        })
+    }
 }
 
 pub struct Ledger<'a, D: DB = DefaultDB> {
@@ -768,5 +802,28 @@ pub mod pure_circuits {
 
     pub fn field_add_operand(f: Fr, c: bool) -> Result<Fr, CompactError> {
         Ok((f) + (if c { Fr::from(1u64) } else { Fr::from(0u64) }))
+    }
+
+    pub fn clone_struct_pick(c: bool, s: Choice, s2: Choice) -> Result<Choice, CompactError> {
+        let picked = if c { s.clone() } else { s2.clone() };
+        compact_assert!((s.value != 100), "s must stay usable after the pick");
+        compact_assert!((s2.value != 100), "s2 must stay usable after the pick");
+        Ok(picked)
+    }
+
+    pub fn clone_struct_local(c: bool) -> Result<bool, CompactError> {
+        let s = Choice {
+            low: true,
+            value: 7,
+        };
+        let picked = if c {
+            s.clone()
+        } else {
+            Choice {
+                low: false,
+                value: 1,
+            }
+        };
+        Ok((s.low == picked.low))
     }
 }

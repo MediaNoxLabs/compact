@@ -5,14 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Toolchain 0.31.120, language 0.23.103, runtime 0.16.100] — rust-codegen review fixes: mixed-arm Field ternaries, streaming-route literals, streaming write width (2026-09-10)
+## [Toolchain 0.31.120, language 0.23.103, runtime 0.16.100] — rust-codegen review fixes: mixed-arm Field ternaries, streaming-route literals, streaming write width, non-Copy ternary arms (2026-09-10)
 
 ### Fixed
 
-Three Rust-codegen correctness gaps found by the PR review's adversarial
+Four Rust-codegen correctness gaps found by the PR review's adversarial
 validation pass (each reproduced end-to-end: `compactc --target rust` exits
 0 while the generated crate fails `cargo build` — or, for the third,
-compiles cleanly and silently commits wrong-width bytes):
+compiles cleanly and silently commits wrong-width bytes), plus one
+scaffold defect surfaced by the re-armed dogfood clippy gate:
 
 - **Mixed-arm Field ternaries emitted a bare Rust integer** —
   `const a: Field = flag ? x : 0;` produced `if flag { x } else { 0 }`:
@@ -59,18 +60,69 @@ compiles cleanly and silently commits wrong-width bytes):
   inline-value coercion (which also brings `new_cell_array`/
   `new_cell_bounded_uint` routing to streaming writes).
 
-Regression coverage: `examples/ternary_cond_fixture.compact` grows nine
+- **Non-Copy ternary arms moved their owner (Bug-12)** — a Rust `if`
+  EXPRESSION moves the taken arm's value, so `const picked = c ? s : s2;`
+  (struct-typed arms that are bare var-refs) followed by any later read
+  of `s`/`s2` failed E0382 at cargo build while compactc exited 0. Every
+  other value position (call args via `pure-call-arg-rust` /
+  `arg-rust-clone-if-var`, Bug-6 let RHS) already cloned non-Copy
+  var-refs; only the two ternary if-clauses were exposed. Both
+  (`expr-rust` in rust-passes-emit.ss — pure route; `ctor-expr-rust` in
+  rust-passes-walker.ss — ctor route, which the streaming route's const
+  fallback funnels into as well) now render each arm through
+  `expr-rust-arg-cloned`: known-Copy formals skip the clone, Field arms
+  are Copy per `type-rust-copy?`, literal/ctor/call arms are not
+  var-refs, and let-lifted locals conservatively over-clone (a no-op for
+  Clone types) — so the neutral fixtures regenerate byte-identically
+  and only non-Copy var-valued arms gain `.clone()`. The regenerated
+  dogfood crate picks up one such arm (`date.year` in the credential
+  validity date adjustment).
+
+- **Zero-field `FromFieldRepr` impls carried an always-false guard** —
+  the struct scaffold emitted `if _repr.len() < Self::FIELD_SIZE` even
+  when `FIELD_SIZE = 0` (zero-field structs like the dogfood's
+  `NoPublicClaims`), a comparison clippy's deny-by-default
+  `absurd_extreme_comparisons` flags as always false. Found by the
+  re-armed dogfood clippy gate (below) on its first live run; the guard
+  is now emitted only for structs with at least one field.
+
+Regression coverage: `examples/ternary_cond_fixture.compact` grows twelve
 circuits — `mixedFieldJoin`, `returnField`, `fieldEqOperand`,
 `fieldAddOperand` (pure route positions), `recordMixedFieldPick`,
 `assertFieldEqOperand` (walker route), `streamLiteralPick`,
 `streamNarrowWrite` (streaming route; `streamNarrowWrite` is gated by a
 state-BYTE comparison against a new TS-reference capture, the only kind
-of test that can see the 1-vs-8-byte divergence), and `inlineBigPick`
-(inline both-literal write) — each driven by an executing test, with two
-new TS capture steps (`afterStreamLiteralPick`, `afterStreamNarrowWrite`).
-The five new exported impure circuits enlarge the contract's operations
-map, so the fixture's `afterInit` reference changes; all other
-pre-existing fixtures regenerate byte-identically.
+of test that can see the 1-vs-8-byte divergence), `inlineBigPick`
+(inline both-literal write), and the Bug-12 set `cloneStructPick` /
+`cloneStructLocal` (pure route; exact formal clones + the over-cloning
+let-lifted local) and `recordStructPick` (walker route, byte-compared
+against a new `afterRecordStructPick` TS capture) — each driven by an
+executing test, with three new TS capture steps (`afterStreamLiteralPick`,
+`afterStreamNarrowWrite`, `afterRecordStructPick`). The six new exported
+impure circuits enlarge the contract's operations map, so the fixture's
+`afterInit` reference changes; all other pre-existing fixtures regenerate
+byte-identically.
+
+### CI
+
+- **The dogfood clippy gate was dead-on-arrival** — the emitter stamps
+  `#![allow(clippy::all, ...)]` on every generated crate, and source-level
+  lint attributes override command-line `-D` flags (verified empirically:
+  `--force-warn clippy::all` still exits 0; `--forbid` loses to the inner
+  group-allow), so `cargo clippy -p …digital-passport-credential -- -D
+  warnings` could never fire a clippy lint. The pre-check now strips the
+  `clippy::all` line from that job's checkout only (the committed fixture
+  stays byte-identical; `codegen_regression` and the test job's fresh
+  checkout are unaffected) and runs clippy at DEFAULT lint levels: the
+  deny-by-default clippy **correctness** lints now gate the step (its
+  first live run flagged the always-false guard above), while the ~170
+  warn-level findings (vec_init_then_push, clone_on_copy, …) stay
+  visible-but-non-fatal in the log — promoting to `-D warnings` is
+  blocked on an emitter lint-cleanliness pass, not on the workflow.
+- `doc/ledger-adt.mdx` regenerated at 0.31.120 — the 0.31.120 bump in
+  `9e1040d` updated `compiler-version.ss` and `CHANGELOG.md` but not the
+  doc embed, failing the version-match gates (`build-compiler.yml`,
+  `check-docs.yml`).
 
 ## [Toolchain 0.31.119, language 0.23.103, runtime 0.16.100] — digital-passport dogfood enclave (2026-09-10)
 

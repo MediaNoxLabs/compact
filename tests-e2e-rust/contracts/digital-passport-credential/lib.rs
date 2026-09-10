@@ -443,9 +443,6 @@ impl FieldRepr for NoPublicClaims {
 impl FromFieldRepr for NoPublicClaims {
     const FIELD_SIZE: usize = 0;
     fn from_field_repr(_repr: &[Fr]) -> Option<Self> {
-        if _repr.len() < Self::FIELD_SIZE {
-            return None;
-        }
         let mut _offset = 0usize;
         let _ = _offset;
         Some(NoPublicClaims {})
@@ -483,9 +480,6 @@ impl FieldRepr for NoClaimCommitments {
 impl FromFieldRepr for NoClaimCommitments {
     const FIELD_SIZE: usize = 0;
     fn from_field_repr(_repr: &[Fr]) -> Option<Self> {
-        if _repr.len() < Self::FIELD_SIZE {
-            return None;
-        }
         let mut _offset = 0usize;
         let _ = _offset;
         Some(NoClaimCommitments {})
@@ -1372,9 +1366,6 @@ impl FieldRepr for NoStatusBinding {
 impl FromFieldRepr for NoStatusBinding {
     const FIELD_SIZE: usize = 0;
     fn from_field_repr(_repr: &[Fr]) -> Option<Self> {
-        if _repr.len() < Self::FIELD_SIZE {
-            return None;
-        }
         let mut _offset = 0usize;
         let _ = _offset;
         Some(NoStatusBinding {})
@@ -5627,7 +5618,7 @@ pub mod pure_circuits {
                 }
             }
         } else {
-            date.year
+            date.year.clone()
         };
         let t_3 = ((date.yearAdjustedQuotient4) as u64).wrapping_mul((4) as u64);
         compact_assert!(

@@ -147,7 +147,13 @@ jobs:
       # the step. Promoting to `-D warnings` is blocked on an emitter
       # lint-cleanliness pass, not on this workflow.
       - name: Re-arm clippy for the dogfood crate (strip the emitted clippy::all allow)
-        run: sed -i '/^    clippy::all,$/d' tests-e2e-rust/contracts/digital-passport-credential/lib.rs
+        # Guard first: sed exits 0 on no match, so a rustfmt line-wrap
+        # change in the emitted attribute block would silently return
+        # this gate to the dead (group-allowed) state it exists to fix.
+        run: |
+          grep -q '^    clippy::all,$' tests-e2e-rust/contracts/digital-passport-credential/lib.rs \
+            || { echo "::error::clippy::all allow line not found — emitter output shape changed; update the sed pattern"; exit 1; }
+          sed -i '/^    clippy::all,$/d' tests-e2e-rust/contracts/digital-passport-credential/lib.rs
 
       - name: Run Clippy on compact-contract-digital-passport-credential
         run: cargo clippy -p compact-contract-digital-passport-credential --all-targets --all-features

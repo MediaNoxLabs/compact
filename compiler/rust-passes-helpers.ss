@@ -72,45 +72,232 @@
               (source-errorf src "~a" prefixed)
               (external-errorf "~a" prefixed))))
 
+      ;; type-strip-alias: peel `talias` layers, returning the underlying
+      ;; structural Type. The Uint→Field coercion walker below recurses into
+      ;; aggregate shapes (Vector<N, Field>, tuples, and their nesting), so it
+      ;; needs structural type access rather than the scalar-only
+      ;; `type-is-tfield?` predicate.
+      (define (type-strip-alias type)
+        (nanopass-case (Ltypescript Type) type
+          [(talias ,src ,nominal? ,type-name ,type^) (type-strip-alias type^)]
+          [else type]))
+
+      ;; type-elt-types: when `type` is an aggregate of length `len` — a
+      ;; `(tvector len T)` or a `(ttuple T ...)` — return its element types in
+      ;; order; #f otherwise (including a length mismatch). Bridges the IR's
+      ;; two aggregate spellings: a `Vector<N, T>` target routinely arrives
+      ;; with a `ttuple` source (the typer's element-wise join), as in
+      ;; `(safe-cast (tvector 2 tfield) (ttuple (tunsigned …) (tunsigned …)) …)`.
+      (define (type-elt-types t n)
+        (nanopass-case (Ltypescript Type) (type-strip-alias t)
+          [(tvector ,src ,len ,type) (and (= len n) (make-list n type))]
+          [(ttuple ,src ,type* ...) (and (= (length type*) n) type*)]
+          [else #f]))
+
+      ;; uint-coercion-cast-width: the Rust primitive that losslessly holds
+      ;; every value of a `(tunsigned nat)` — "u64" through 2^64-1 (kept for
+      ;; byte parity with the original scalar path), "u128" through 2^128-1,
+      ;; #f above u128::MAX. `Uint<N>` stores its inclusive max
+      ;; (`Uint<128>` → 2^128-1), so the u128 rung covers every legal Compact
+      ;; width: `impl From<u128> for Fr` exists upstream and the field modulus
+      ;; is ~2^255, so `as u128` is a lossless zero-extension. The first cut of
+      ;; this fix refused that rung on the false premise that no lossless cast
+      ;; existed.
+      (define (uint-coercion-cast-width nat)
+        (cond
+          [(<= nat 18446744073709551615) "u64"]
+          [(<= nat 340282366920938463463374607431768211455) "u128"]
+          [else #f]))
+
+      ;; uint-to-field-needed?: type-level predicate — does coaxing a value of
+      ;; `source-type` into `target-type` require materialising a Uint→Field
+      ;; conversion? Recurses structurally, so aggregates are decided before
+      ;; any expression is rendered: a `Vector<2, Field>` target from a
+      ;; `Vector<2, Field>` source needs nothing and stays on the byte-identical
+      ;; peel path. Field←Uint is the only conversion this backend materialises;
+      ;; other mismatches are not this decision's business.
+      (define (uint-to-field-needed? target-type source-type)
+        (nanopass-case (Ltypescript Type) (type-strip-alias target-type)
+          [(tfield ,src) (and (type-peel-tunsigned source-type) #t)]
+          [(tvector ,src ,len ,type)
+           (let ([source-elt* (type-elt-types source-type len)])
+             (and source-elt*
+                  (ormap (lambda (se) (uint-to-field-needed? type se))
+                         source-elt*)))]
+          [(ttuple ,src ,type* ...)
+           (let ([source-elt* (type-elt-types source-type (length type*))])
+             (and source-elt*
+                  (ormap (lambda (te se) (uint-to-field-needed? te se))
+                         type* source-elt*)))]
+          [else #f]))
+
+      ;; join-strings: comma-separate rendered parts into a Rust array body.
+      (define (join-strings parts)
+        (let loop ([xs parts] [acc ""])
+          (cond
+            [(null? xs) acc]
+            [(null? (cdr xs)) (string-append acc (car xs))]
+            [else (loop (cdr xs) (string-append acc (car xs) ", "))])))
+
+      ;; uint-to-field-scalar: render one Uint→Field scalar coercion from an
+      ;; already-rendered inner value (`inner-text`). The value is cast to the
+      ;; width that losslessly holds the source range, then wrapped in
+      ;; `Fr::from`. A range above u128::MAX has no lossless Rust cast and is
+      ;; refused loudly rather than emitted as a bare (wrong-width) Uint.
+      (define (uint-to-field-scalar src nat inner-text)
+        (let ([w (uint-coercion-cast-width nat)])
+          (if w
+              (format "Fr::from((~a) as ~a)" inner-text w)
+              (rust-feature-error src 'field-uint-coercion
+                "a Uint source range up to ~a has no lossless coercion to Field (exceeds u128)"
+                nat))))
+
+      ;; uint-to-field-element: render one element of an aggregate coercion.
+      ;; Nested aggregates recurse; a scalar Field←Uint coerces; an element
+      ;; that needs no conversion (already Field, or a non-Field slot) renders
+      ;; unchanged through the caller's renderer.
+      (define (uint-to-field-element target-elt source-elt tuple-arg render-inner)
+        (nanopass-case (Ltypescript Tuple-Argument) tuple-arg
+          [(single ,src ,expr)
+           (or (uint-to-field-coercion-render src target-elt source-elt expr render-inner)
+               (render-inner expr))]
+          [(spread ,src ,nat ,expr)
+           (rust-feature-error src 'tuple-spread
+             "tuple spread (`...expr`) not supported")]))
+
+      ;; uint-to-field-aggregate-text: build the Rust array literal that coerces
+      ;; a value already bound to `base-text` (a temp name), element by element.
+      ;; Indexing recurses, so nested aggregates (Vector<N, Vector<M, Uint>> →
+      ;; Vector<N, Vector<M, Field>>) are coerced at every depth. Returns #f
+      ;; when no element needs coercing.
+      (define (uint-to-field-aggregate-text src target-elt* source-elt* base-text)
+        (if (not (ormap (lambda (te se) (uint-to-field-needed? te se))
+                        target-elt* source-elt*))
+            #f
+            (string-append
+              "["
+              (join-strings
+                (let loop ([i 0] [te* target-elt*] [se* source-elt*] [acc '()])
+                  (if (null? te*)
+                      (reverse acc)
+                      (let ([access (format "~a[~a]" base-text i)])
+                        (loop (+ i 1) (cdr te*) (cdr se*)
+                              (cons (or (uint-to-field-text src (car te*) (car se*) access)
+                                        access)
+                                    acc))))))
+              "]")))
+
+      ;; uint-to-field-text: coerce an already-rendered Rust value (`base-text`)
+      ;; of `source-type` into `target-type`, returning the coerced text or #f
+      ;; when no conversion is needed. Used for aggregate values whose element
+      ;; boundaries are not syntactically visible (a `default`, a `seq`-lifted
+      ;; const, a var-ref): the value is bound once and coerced by index.
+      (define (uint-to-field-text src target-type source-type base-text)
+        (nanopass-case (Ltypescript Type) (type-strip-alias target-type)
+          [(tfield ,src^)
+           (let ([nat (type-peel-tunsigned source-type)])
+             (and nat (uint-to-field-scalar src nat base-text)))]
+          [(tvector ,src^ ,len ,type)
+           (let ([source-elt* (type-elt-types source-type len)])
+             (and source-elt*
+                  (uint-to-field-aggregate-text src (make-list len type)
+                                                source-elt* base-text)))]
+          [(ttuple ,src^ ,type* ...)
+           (let ([source-elt* (type-elt-types source-type (length type*))])
+             (and source-elt*
+                  (uint-to-field-aggregate-text src type* source-elt* base-text)))]
+          [else #f]))
+
+      ;; uint-to-field-aggregate: render an aggregate Uint→Field coercion. Returns
+      ;; #f when no element needs coercing (the byte-identical peel).
+      ;;
+      ;; A `(tuple …)` literal is decomposed syntactically, so each element's own
+      ;; expression (and any wrapper already on it) is preserved. Any OTHER
+      ;; aggregate value — a `seq`-lifted `const`, a `default`, a var-ref, a
+      ;; call — has no syntactic element boundaries, so it is bound once to a
+      ;; temp and coerced by index (uint-to-field-text). Both shapes matter: the
+      ;; ctor write and the direct `return [x, x]` are tuple literals, while
+      ;; `const v = [x, x]; return v;` and `test3(default<Vector<...>>)` present
+      ;; the aggregate through a seq / a default. Refusing the latter instead of
+      ;; indexing it is what turned working-but-E0308 contracts into generic body
+      ;; refusals.
+      (define (uint-to-field-aggregate src target-elt* source-elt* expr render-inner)
+        (if (not (ormap (lambda (te se) (uint-to-field-needed? te se))
+                        target-elt* source-elt*))
+            #f
+            (nanopass-case (Ltypescript Expression) expr
+              [(tuple ,src^ ,tuple-arg* ...)
+               (if (= (length tuple-arg*) (length target-elt*))
+                   (string-append
+                     "["
+                     (join-strings
+                       (map (lambda (ta te se)
+                              (uint-to-field-element te se ta render-inner))
+                            tuple-arg* target-elt* source-elt*))
+                     "]")
+                   (rust-feature-error src 'field-uint-coercion
+                     "aggregate Uint→Field coercion arity mismatch"))]
+              [else
+               (let ([tmp "__compact_field_coerce"])
+                 (format "{ let ~a = ~a; ~a }"
+                         tmp (render-inner expr)
+                         (uint-to-field-aggregate-text src target-elt* source-elt* tmp)))])))
+
+      ;; uint-to-field-coercion-render: the recursive coerce-or-refuse decision
+      ;; for a `(safe-cast <target> <source> inner)` whose target is Field-ward.
+      ;; Returns #f when no conversion is needed (target contains no Field,
+      ;; source has no Uint, or the wrapper is a plain widening); otherwise the
+      ;; rendered Rust coercion, or a loud `rust-feature-error` when a needed
+      ;; coercion cannot be rendered losslessly. Kept separate from
+      ;; `uint-to-field-coercion` below so aggregate elements recurse without
+      ;; the top-level literal / known-field guards.
+      (define (uint-to-field-coercion-render src target-type source-type expr render-inner)
+        (nanopass-case (Ltypescript Type) (type-strip-alias target-type)
+          [(tfield ,src^)
+           (let ([nat (type-peel-tunsigned source-type)])
+             (and nat (uint-to-field-scalar src nat (render-inner expr))))]
+          [(tvector ,src^ ,len ,type)
+           (let ([source-elt* (type-elt-types source-type len)])
+             (and source-elt*
+                  (uint-to-field-aggregate src
+                                           (make-list len type)
+                                           source-elt* expr render-inner)))]
+          [(ttuple ,src^ ,type* ...)
+           (let ([source-elt* (type-elt-types source-type (length type*))])
+             (and source-elt*
+                  (uint-to-field-aggregate src type* source-elt* expr render-inner)))]
+          [else #f]))
+
       ;; uint-to-field-coercion: the single decision point for the typer's
-      ;; `tfield←tunsigned` safe-cast wrapper — its judgment that a Uint
-      ;; value flows into a Field slot. `expr` is such a wrapper when it is
-      ;; `(safe-cast _ <tfield> <tunsigned> inner)`.
+      ;; Uint→Field safe-cast wrapper — its judgment that a Uint value flows
+      ;; into a Field slot, at scalar or aggregate type. `expr` is such a
+      ;; wrapper when it is `(safe-cast _ <Field-ward> <Uint-ward> inner)`.
       ;;
       ;; Returns #f when `expr` is not a Uint→Field wrapper (the caller keeps
       ;; its own rendering), when the inner is a bare integer literal (the
-      ;; use-position sites own literal coercion — `field-context-arg-rendered`
+      ;; use-position sites own scalar literal coercion — `field-context-arg-rendered`
       ;; / the `literal-int-*?` interceptions — and a literal that reaches a
       ;; generic `FieldRepr` callee infers correctly, so peeling is
       ;; byte-identical and sound), or when the wrapper is redundant — the
       ;; inner is itself Field-typed per `known-field?`. Otherwise returns the
-      ;; coercion rendered by `render-inner`:
-      ;;   - `Fr::from((<inner>) as u64)` for a source range that fits u64 —
-      ;;     a lossless zero-extension;
-      ;;   - a LOUD `rust-feature-error` when the source range exceeds u64.
-      ;;     There is no lossless Rust cast there, and emitting the bare Uint
-      ;;     produces E0308 at `cargo build` while compactc exits 0.
+      ;; coercion rendered by `render-inner`: `Fr::from((<inner>) as u64)` or
+      ;; `… as u128` for a scalar source range that fits that width, an
+      ;; element-wise `[Fr::from(…)…]` for an aggregate Field target, or a
+      ;; LOUD `rust-feature-error` when no lossless rendering exists.
       ;;
       ;; Every Field context must make this same coerce-or-refuse decision.
       ;; The per-site guards used to fall through to the bare Uint on an
-      ;; out-of-range source (or when a use-position shape was not
-      ;; recognised), which is exactly the silent-bad-output class this
-      ;; closes: the generic renderers (expr-rust / ctor-expr-rust) route
-      ;; their safe-cast clause through here, so a wrapper can never be
-      ;; dropped merely because a caller declined to materialise it.
+      ;; out-of-range source, an unrecognised aggregate target, or a
+      ;; use-position shape they did not own — exactly the silent-bad-output
+      ;; class this closes. The generic renderers (expr-rust / ctor-expr-rust)
+      ;; route their safe-cast clause through here, so a wrapper can no longer
+      ;; be dropped merely because a caller declined to materialise it.
       (define (uint-to-field-coercion expr render-inner known-field?)
         (nanopass-case (Ltypescript Expression) expr
           [(safe-cast ,src ,type ,type^ ,expr^)
-           (and (type-is-tfield? type)
-                (not (literal-int-expr? expr^))
+           (and (not (literal-int-expr? expr^))
                 (not (known-field? expr^))
-                (let ([nat (type-peel-tunsigned type^)])
-                  (and nat
-                       (if (<= nat 18446744073709551615)
-                           (format "Fr::from((~a) as u64)" (render-inner expr^))
-                           (rust-feature-error src 'field-uint-coercion
-                             "a Uint source range up to ~a has no lossless coercion to Field (exceeds u64)"
-                             nat)))))]
+                (uint-to-field-coercion-render src type type^ expr^ render-inner))]
           [else #f]))
 
       ;; current-qctx-ref: Rust expression string referring to the

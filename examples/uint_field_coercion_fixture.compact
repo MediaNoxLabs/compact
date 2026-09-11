@@ -1,0 +1,77 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//  	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+//
+// Uint→Field coercion fixture.
+//
+// The typer wraps a Uint value that flows into a Field slot in a
+// `tfield←tunsigned` safe-cast — at scalar type, and element-wise when an
+// aggregate Field slot meets an aggregate Uint value. The Rust backend
+// must materialise that wrapper at every use position; peeling it leaves a
+// bare `u32`/`u128` opposite `Fr` (E0308 at cargo build while compactc
+// exits 0) or — on the ledger-write route, where the builder is generic —
+// silently commits Bytes-aligned state into a Field cell.
+//
+// Scalar: a Uint source range wider than u64 has no lossless `as u64`; the
+// lossless rendering is `Fr::from((x) as u128)` (the Field modulus is
+// ~2^255, so the whole Uint<128> range embeds without reduction).
+//
+// Aggregate: a `Vector<N, Field>` slot filled from Uint elements needs an
+// element-wise coercion. This fixture pins every shape the walker must
+// reach: the tuple literal (`vecField`, `returnVector`), the let*-lifted
+// `const` whose tuple is buried in a `seq` (`liftedVector`), a nested
+// aggregate (`nestedVector`), and the scalar u128 rung (`wideField`,
+// `returnWide`). `viaCall` additionally pins the ctor-route call-binding
+// branch, whose raw `let <name> = <call>;` is shadowed by the coercion
+// `let <name> = Fr::from((<name>) as u64);`.
+//
+// The ledger writes compile to `[Fr::from((a) as u64), …]` / `Fr::from((w)
+// as u128)` and are byte-parity-gated by codegen_regression; the pure
+// circuits also have an executing value gate in
+// tests/uint_field_coercion_fixture.rs.
+
+import CompactStandardLibrary;
+
+export ledger wideField: Field;
+export ledger vecField: Vector<2, Field>;
+export ledger viaCall: Field;
+
+export pure circuit pickUint(x: Uint<32>): Uint<32> {
+  return x;
+}
+
+constructor(wide: Uint<128>, a: Uint<32>, b: Uint<32>) {
+  wideField = disclose(wide);
+  vecField = [disclose(a), disclose(b)];
+  const w: Field = pickUint(a);
+  viaCall = disclose(w);
+}
+
+export pure circuit returnWide(x: Uint<128>): Field {
+  return x;
+}
+
+export pure circuit returnVector(x: Uint<32>): Vector<2, Field> {
+  return [x, x];
+}
+
+export pure circuit liftedVector(x: Uint<32>): Vector<2, Field> {
+  const v = [x, x];
+  return v;
+}
+
+export pure circuit nestedVector(x: Uint<128>): Vector<2, Vector<1, Field>> {
+  return [[x], [x]];
+}

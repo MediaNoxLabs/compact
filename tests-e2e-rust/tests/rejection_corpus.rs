@@ -126,20 +126,6 @@ const REJECTIONS: &[(&str, &str, &str)] = &[
          }\n",
         "pure-circuit-body-emission",
     ),
-    (
-        // A Uint source range wider than u64 flowing into a Field slot.
-        // There is no lossless `as u64` cast, and the pre-fix emitter
-        // dropped the `tfield←tunsigned` wrapper and emitted the bare
-        // `u128` — E0308 at cargo build while compactc exited 0. The
-        // ctor route is deliberate: it surfaces the specific
-        // `field-uint-coercion` tag, whereas the pure-circuit emitter's
-        // catch-all guard would collapse it to the generic
-        // `pure-circuit-body-emission` (see the two entries above).
-        "Uint wider than u64 coerced to Field",
-        "export ledger f: Field;\n\
-         constructor(x: Uint<128>) { f = disclose(x); }\n",
-        "field-uint-coercion",
-    ),
 ];
 
 /// Contracts that must still compile — the other half of the property.
@@ -172,6 +158,26 @@ const ACCEPTIONS: &[(&str, &str)] = &[
         "export pure circuit check(n: Uint<64>, flag: Boolean): Boolean {\n\
          return (n - (flag ? 5000000000 : 0)) == n;\n\
          }\n",
+    ),
+    (
+        // A Uint source range wider than u64 flowing into a Field slot is
+        // NOT a rejection: the whole Uint<128> range embeds losslessly in
+        // Fr, so the coercion is `Fr::from((x) as u128)`. An earlier cut
+        // refused it on the false premise that no lossless cast existed;
+        // this keeps it on the accepting side.
+        "Uint wider than u64 coerced to Field",
+        "export ledger f: Field;\n\
+         constructor(x: Uint<128>) { f = disclose(x); }\n",
+    ),
+    (
+        // An aggregate Field slot filled from aggregate Uint values must
+        // coerce element-wise, not peel to a bare Uint array. Pre-fix the
+        // ctor write compiled (generic `new_cell_array`) but committed
+        // Bytes-aligned state into a Field cell; the pure twin was E0308.
+        "Vector<Field> slot filled from Uint elements",
+        "export ledger fs: Vector<2, Field>;\n\
+         export pure circuit v(x: Uint<32>): Vector<2, Field> { return [x, x]; }\n\
+         constructor(u: Uint<32>) { fs = [disclose(u), disclose(u)]; }\n",
     ),
 ];
 

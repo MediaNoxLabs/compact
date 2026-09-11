@@ -125,3 +125,11 @@ compact-contract-field-return-tail-fixture = { path = "contracts/field-return-ta
 # whose crate nothing else depends on; without this it too would only ever
 # be rustfmt-parsed in CI, never compiled.
 compact-contract-multi-pl-call-fixture = { path = "contracts/multi-pl-call-fixture" }
+# Uint→Field coercion gate: uint_field_coercion_fixture.rs runs the generated
+# ctor (a Uint<128> scalar write and a Vector<2, Field> write from Uint
+# elements) and the pure-route coercion shapes, pinning that the `as u128`
+# rung and the element-wise aggregate wrapper produce the right VALUES, not
+# just compilable text. Byte-parity cannot see a mis-aligned vector write
+# (the atoms coincide for small values), so compiling the crate here plus the
+# executing gate is what proves the Field-aligned `[Fr; N]` was emitted.
+compact-contract-uint-field-coercion-fixture = { path = "contracts/uint-field-coercion-fixture" }

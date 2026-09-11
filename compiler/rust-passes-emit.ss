@@ -2580,16 +2580,18 @@
            ;; rely on Rust's inference from the array element type).
            ;; Mirrors `expr-strip-cast` but for the rendering path.
            ;;
-           ;; EXCEPT a `tfield←tunsigned` wrapper: that is the typer's
-           ;; judgment that a Uint value flows into a Field slot, and
-           ;; peeling it drops the value's Rust type to the bare Uint
+           ;; EXCEPT a Uint→Field wrapper: that is the typer's judgment
+           ;; that a Uint value flows into a Field slot, and peeling it
+           ;; drops the value's Rust type to the bare Uint
            ;; (`u32`/`u128`) opposite `Fr` — E0308 at cargo build while
-           ;; compactc exits 0. uint-to-field-coercion materialises the
-           ;; lossless `Fr::from((inner) as u64)` (or refuses when the
-           ;; source range has no lossless cast), so a wrapper reaching
-           ;; this generic renderer — e.g. the seq-lifted const under a
-           ;; Field return whose use-position guard did not intercept it
-           ;; — can never be silently dropped.
+           ;; compactc exits 0, or (on the generic ledger-write route)
+           ;; silently Bytes-aligned state in a Field cell.
+           ;; uint-to-field-coercion materialises the lossless coercion —
+           ;; `Fr::from((inner) as u64|u128)` for a scalar source, an
+           ;; element-wise array for an aggregate Field target (or a loud
+           ;; refusal when no lossless rendering exists) — so a wrapper
+           ;; reaching this generic renderer can never be silently
+           ;; dropped merely because the caller did not intercept it.
            (or (uint-to-field-coercion expr
                  (lambda (e) (expr-rust e native-id-ht))
                  (lambda (e) (expr-known-field? e native-id-ht)))

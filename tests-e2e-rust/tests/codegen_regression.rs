@@ -180,6 +180,18 @@ const FIXTURES: &[(&str, &str)] = &[
         "field_return_tail_fixture.compact",
         "field-return-tail-fixture",
     ),
+    // Uint→Field coercion: the scalar u128 rung (a Uint<128> source has no
+    // lossless `as u64`, so the coercion must be `Fr::from((x) as u128)`)
+    // and the element-wise aggregate wrapper for a `Vector<N, Field>` slot
+    // filled from Uint values. Covers the ctor/ledger route and the pure
+    // route's tuple-literal, let*-lifted, and nested-aggregate shapes.
+    // Before the fix each peeled to a bare `u32`/`u128` — E0308 on the pure
+    // route, silently Bytes-aligned state on the generic ledger-write route.
+    // Executing value gate: tests/uint_field_coercion_fixture.rs.
+    (
+        "uint_field_coercion_fixture.compact",
+        "uint-field-coercion-fixture",
+    ),
 ];
 
 /// Walks up from `start` looking for the repository root: the nearest

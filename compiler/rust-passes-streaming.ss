@@ -440,7 +440,13 @@
                       [rhs (cdr b)]
                       [rust-name (symbol->string (camel->snake (id-sym var-name)))]
                       [classified
-                       (classify-const-rhs rhs witness-id-ht circuit-id-ht)])
+                       (classify-const-rhs rhs witness-id-ht circuit-id-ht)]
+                      ;; Same as the non-streaming walker's const clause: a
+                      ;; call-typed RHS wrapped in a Uint→Field safe-cast has
+                      ;; its cast stripped by classify-const-rhs, so shadow the
+                      ;; raw call binding with the coercion.
+                      [coercion-line
+                       (const-binding-field-coercion rhs rust-name)])
                  ;; M3.5: record the var's declared type (when inferable
                  ;; from the RHS — currently direct witness / pure-circuit
                  ;; calls) so later `==` rendering can detect tenum-typed
@@ -477,6 +483,7 @@
                                        [(null? xs) acc]
                                        [else (join (cdr xs)
                                                    (string-append acc ", " (car xs)))]))))
+                      (if coercion-line (out coercion-line))
                       (loop (cdr stmts)
                             (cons (cons var-name rust-name) local-binds)
                             #t (+ step 2) ctx-expr))]
@@ -511,6 +518,7 @@
                                        [(null? xs) acc]
                                        [(null? (cdr xs)) (string-append acc (car xs))]
                                        [else (join (cdr xs) (string-append acc (car xs) ", "))]))))
+                      (if coercion-line (out coercion-line))
                       (loop (cdr stmts)
                             (cons (cons var-name rust-name) local-binds)
                             witness-emitted? (+ step 1) ctx-expr))]
@@ -558,6 +566,7 @@
                         ;; circuit does not under-report gas for successful txs.
                         (out (format "        __gas_acc += ~a.gas_cost.clone();\n" cr-name))
                         (out (format "        let ~a = ~a.result;\n" rust-name cr-name))
+                        (if coercion-line (out coercion-line))
                         (loop (cdr stmts)
                               (cons (cons var-name rust-name) local-binds)
                               witness-emitted? (+ step 3)

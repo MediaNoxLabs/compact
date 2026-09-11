@@ -5,6 +5,55 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Toolchain 0.31.122, language 0.23.103, runtime 0.16.100] — rust-codegen review fixes: Uint→Field coercion is lossless at every width and aggregate shape (2026-09-12)
+
+### Fixed
+
+Two follow-up Rust-codegen correctness gaps from the PR review, both in
+the `field-coercion` family and both fixed at the single decision point
+`uint-to-field-coercion` (rust-passes-helpers.ss) rather than per-site.
+
+- **A Uint source range above u64::MAX is coerced, not refused.** The
+  0.31.121 cut refused it on the premise that no lossless Rust cast
+  existed. That premise is false: `impl From<u128> for Fr` exists and the
+  Field modulus is ~2^255, so the whole `Uint<128>` range embeds without
+  reduction. The scalar coercion now casts to the Rust width that holds
+  the source range — `as u64`, or `as u128` for ranges above u64 — and
+  refuses (`field-uint-coercion`) only above u128::MAX, which no Rust
+  integer holds and which is not reachable from a legal `Uint<N>`. This
+  restores acceptance of contracts the 0.31.121 cut rejected.
+
+- **An aggregate Field target is coerced element-wise.** The helper keyed
+  on the scalar `tfield`, so a `Vector<N, Field>` slot filled from Uint
+  values still peeled its `tvector<Field>←tvector<Uint>` wrapper. On the
+  pure route that emitted `Ok([u32; N])` against `Result<[Fr; N], _>`
+  (E0308, compactc exit 0); on the generic ledger-write route it
+  *compiled* — the bare `[u32; N]` satisfies `new_cell_array`'s
+  `Into<AlignedValue>` bound — and silently committed Bytes-aligned state
+  into a Field cell. The coercion now recurses through the target type: a
+  `(tuple …)` literal is decomposed syntactically, and any other aggregate
+  value (`const v = [x, x]; return v;`, a `default<Vector<…>>`, a
+  var-ref) is bound to a temp and coerced by index, nested aggregates
+  included.
+
+- **A call-typed `const` binding in a ctor/impure body dropped the wrapper
+  too.** The body walker classifies a binding by stripping casts
+  (`classify-const-rhs`), and the `witness` / `pure-circuit` /
+  `impure-exported` branches then bound the bare call result — so
+  `const x: Field = w()` (a witness or circuit returning `Uint<N>`) still
+  emitted `let x = w();` with `x` a `u32`. Those branches now shadow the
+  raw binding with the coercion
+  (`let x = w(); let x = Fr::from((x) as u64);`; the aggregate form
+  indexes). The generic `else` branch already coerced, so only the three
+  call branches changed.
+
+Coverage: `uint_field_coercion_fixture` (new) pins the scalar u128 rung,
+the ctor `Vector<2, Field>` write, the ctor-route call-binding shadow, and
+the pure route's tuple-literal, let*-lifted, and nested shapes —
+byte-parity plus an executing value gate in
+`tests/uint_field_coercion_fixture.rs`. `rejection_corpus` moves the
+`Uint<128>` case to its ACCEPTIONS half and adds the aggregate case.
+
 ## [Toolchain 0.31.121, language 0.23.103, runtime 0.16.100] — rust-codegen review fixes: Uint-to-Field coercion is never silently peeled (2026-09-11)
 
 ### Fixed

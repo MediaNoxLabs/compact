@@ -40,7 +40,11 @@ A contract that uses a conditional expression `c ? e1 : e2` anywhere a general e
 
 #### Scenario: unannotated no-literal Uint const returned from a Field circuit
 - **WHEN** a Field-returning circuit contains `const picked = flag ? u : v; return picked;` with both `u` and `v` of type `Uint<N>` (no integer-literal arm)
-- **THEN** the let*-lifted tail's `tfield←tunsigned` safe-cast wrapper renders as `Fr::from((<inner>) as u64)` — the seq-lifted shape is not intercepted by the literal-arm checks — and the generated crate compiles under `cargo build`
+- **THEN** the let*-lifted tail's `tfield←tunsigned` safe-cast wrapper renders as `Fr::from((<inner>) as <width>)` — the Rust width that losslessly holds the Uint range (`u64`, or `u128` when the range exceeds u64) — and the generated crate compiles under `cargo build`
+
+#### Scenario: aggregate Field target filled from Uint values
+- **WHEN** a value of aggregate type (`Vector<N, Uint<M>>`, nested included) flows into an aggregate `Field` slot — a `Vector<N, Field>` returned from a circuit, or a `Vector<N, Field>` ledger field written from Uint elements — through a tuple literal, a let*-lifted `const`, or a `default`
+- **THEN** the element-wise `tvector<Field>←tvector<Uint>` safe-cast renders as `[Fr::from((<el>) as u64|u128), …]` (the aggregate value is bound to a temp and indexed when its elements are not syntactically visible), and the generated crate compiles and the `Vector<N, Field>` accessor reads back the same elements
 
 ### Requirement: Lazy branch evaluation is preserved
 

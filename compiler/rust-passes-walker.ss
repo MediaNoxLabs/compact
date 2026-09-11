@@ -2360,7 +2360,14 @@
                            (symbol->string (camel->snake (id-sym var-name)))
                            local-binds)]
                         [classified
-                         (classify-const-rhs rhs witness-id-ht circuit-id-ht)])
+                         (classify-const-rhs rhs witness-id-ht circuit-id-ht)]
+                        ;; A call-typed binding whose RHS the typer wrapped in
+                        ;; a Uint→Field safe-cast (classify-const-rhs strips it
+                        ;; to see the call): the call branches below bind the
+                        ;; bare Uint result, so this shadowing `let` restores
+                        ;; the coercion. #f when none is needed.
+                        [coercion-line
+                         (const-binding-field-coercion rhs rust-name)])
                    ;; M3.5: record the var's declared type so later `==`
                    ;; rendering can detect tenum-typed locals.
                    (record-const-binding-type! var-name rhs
@@ -2412,7 +2419,8 @@
                         (loop (cdr stmts)
                               (cons (cons var-name rust-name) local-binds)
                               #t
-                              (cons bind-line (cons call-line pre-lines))
+                              (prepend-coercion coercion-line
+                                (cons bind-line (cons call-line pre-lines)))
                               writes))]
                      [(pure-circuit)
                       ;; A6: witness sub-calls inside pure-circuit args.
@@ -2479,7 +2487,8 @@
                         (loop (cdr stmts)
                               (cons (cons var-name rust-name) local-binds)
                               we2
-                              (cons bind-line (append hoist-lines pre-lines))
+                              (prepend-coercion coercion-line
+                                (cons bind-line (append hoist-lines pre-lines)))
                               writes))]
                      [(impure-exported)
                       ;; E5: const binding whose RHS is a call to an
@@ -2526,11 +2535,12 @@
                             (loop (cdr stmts)
                                   (cons (cons var-name rust-name) local-binds)
                                   (if (eq? mode 'ctor) #t witness-emitted?)
-                                  (cons bind-line
-                                        (append (reverse thread-lines)
-                                                (append (reverse hoist-lines)
-                                                        (append (reverse flush-lines)
-                                                                pre-lines))))
+                                  (prepend-coercion coercion-line
+                                    (cons bind-line
+                                          (append (reverse thread-lines)
+                                                  (append (reverse hoist-lines)
+                                                          (append (reverse flush-lines)
+                                                                  pre-lines)))))
                                   writes-after))))]
                      [else
                       ;; Unknown rhs shape — try a generic ctor-expr-rust
@@ -2753,6 +2763,28 @@
                        [ctor-zswap-threaded? #f])
           (emit-body-or-fallback stmt 'ctor
                                  native-id-ht witness-id-ht circuit-id-ht)))
+
+      ;; const-binding-field-coercion: when a call-typed const-binding's RHS
+      ;; carries the typer's Uint→Field safe-cast — which `classify-const-rhs`
+      ;; strips to recognise the call — return the line that coerces the
+      ;; just-bound `rust-name` (a shadowing `let`), rather than letting the
+      ;; witness / pure-circuit / impure-exported branches bind the bare Uint
+      ;; to a Field-typed local. `uint-to-field-text` renders both the scalar
+      ;; cast and the aggregate (indexed) coercion. #f when none is needed.
+      (define (const-binding-field-coercion rhs rust-name)
+        (nanopass-case (Ltypescript Expression) rhs
+          [(safe-cast ,src ,type ,type^ ,expr^)
+           (and (uint-to-field-needed? type type^)
+                (let ([coerced (uint-to-field-text src type type^ rust-name)])
+                  (and coerced
+                       (format "        let ~a = ~a;\n" rust-name coerced))))]
+          [else #f]))
+
+      ;; prepend-coercion: cons `line` onto `lines` only when it is not #f, so
+      ;; a branch that sometimes needs a coercion line never splices `#f` into
+      ;; the emitted body.
+      (define (prepend-coercion line lines)
+        (if line (cons line lines) lines))
 
       ;; classify-const-rhs: inspect a `const` binding's RHS expression and
       ;; classify the call (or return 'unknown). Returns

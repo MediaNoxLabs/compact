@@ -76,9 +76,9 @@ grep -rn "(rust-feature-error" compiler/rust-passes*.ss \
   | grep -v "define (rust-feature-error" | wc -l
 ```
 
-At the time of writing that is **47 call sites** across 4 passes
+At the time of writing that is **49 call sites** across 4 passes
 (`rust-passes-emit.ss` 36, `rust-passes-walker.ss` 8,
-`rust-passes-helpers.ss` 2, `rust-passes-prelude.ss` 1), spanning **36
+`rust-passes-helpers.ss` 4, `rust-passes-prelude.ss` 1), spanning **36
 distinct kinds**.
 
 A second, smaller class is NOT covered by that count: shapes that are
@@ -97,10 +97,27 @@ value to a typed `const` first (`const v: Field = c ? 1 : 0;`).
 
 A Uint→Field safe-cast wrapper — the typer's judgment that a Uint value
 flows into a Field slot — is materialised by `uint-to-field-coercion` at
-the generic expression renderers (`expr-rust` / `ctor-expr-rust`) and the
-use-position guards, so it can no longer be silently peeled into a bare
-`u32`/`u128` against `Fr`. A source range wider than u64 has no lossless
-`as u64` cast and is refused (`field-uint-coercion`) instead.
+the generic expression renderers (`expr-rust` / `ctor-expr-rust`), the
+use-position guards, and the ctor/impure/streaming call-typed `const`
+bindings (which shadow the raw call result with the coercion), so it can
+no longer be silently peeled into a bare `u32`/`u128` against `Fr`. The
+coercion is lossless: a scalar source is
+cast to the Rust width that holds its whole range and wrapped in
+`Fr::from` (`as u64`, or `as u128` for a `Uint<128>`-class range whose max
+exceeds u64 — the Field modulus is ~2^255, so the value embeds without
+reduction), and an aggregate Field target (`Vector<N, Field>`, nested) is
+coerced element-wise. Only a source range above u128::MAX — which no Rust
+integer holds — is refused (`field-uint-coercion`); that range is not
+reachable from a legal Compact `Uint<N>`.
+
+The element-wise case is worth spelling out because it has two shapes:
+a `(tuple …)` literal is decomposed syntactically, while an aggregate
+value with no visible element boundaries (`const v = [x, x]; return v;`,
+a `default<Vector<…>>`, a var-ref) is bound to a temp and coerced by
+index. Before this was closed, the generic ledger-write builder accepted
+a bare `[u32; N]` (`new_cell_array`'s `Into<AlignedValue>` bound) and
+silently committed Bytes-aligned state into a Field cell, while the pure
+route emitted `Ok([u32; N])` against `Result<[Fr; N], _>` (E0308).
 
 One caveat when reading a diagnostic: several emitters probe alternative
 shapes under a catch-all `(guard (c [#t #f]) …)`, which swallows a specific

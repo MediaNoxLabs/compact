@@ -139,8 +139,10 @@ fn constructor_guarded_diff_writes_the_difference() {
 }
 
 /// `<=`: the pass side sits at the top of the range (product =
-/// `2^32 - 4`); the fail side's product is exactly `2^32`, one past any
-/// u32 `y` — a truncating cast would wrap it to `0` and wrongly pass.
+/// `2^32 - 4`); the fail side's product is `17179869180` (`4 * 2^32 -
+/// 4`), which truncates to `2^32 - 4` under a u32 wrap — a
+/// truncating cast would wrongly pass, so this fail side doubles as
+/// the truncation detector.
 #[test]
 fn assert_product_le_both_sides() {
     pure_circuits::assert_product_l_e(CAPTURE_Q, u32::MAX)
@@ -153,13 +155,21 @@ fn assert_product_le_both_sides() {
     );
 }
 
-/// `<`: pass side three below the bound; fail side equal to it.
+/// `<`: pass side three below the bound; fail side equal to it, plus
+/// the truncation detector (`Q_MAX * 4` truncates to `2^32 - 4 <
+/// u32::MAX`, so a u32-wrapping product would wrongly pass).
 #[test]
 fn assert_product_lt_both_sides() {
     pure_circuits::assert_product_l_t(CAPTURE_Q, u32::MAX)
         .expect("4294967292 < 4294967295 must hold");
     let err = pure_circuits::assert_product_l_t(CAPTURE_Q, 4_294_967_292)
         .expect_err("4294967292 < 4294967292 must fail");
+    assert!(
+        matches!(err, CompactError::AssertionFailed(ref m) if m == "product must stay below the bound"),
+        "expected the bound assert, got {err:?}"
+    );
+    let err = pure_circuits::assert_product_l_t(Q_MAX, u32::MAX)
+        .expect_err("17179869180 < 4294967295 must fail (truncation detector)");
     assert!(
         matches!(err, CompactError::AssertionFailed(ref m) if m == "product must stay below the bound"),
         "expected the bound assert, got {err:?}"
@@ -296,6 +306,16 @@ fn guarded_diff_computes_and_traps() {
     );
     let err = pure_circuits::guarded_diff(0, 1)
         .expect_err("0 - 4 must trip the underflow guard, not wrap");
+    assert!(
+        matches!(err, CompactError::AssertionFailed(ref m) if m == "result of subtraction would be negative"),
+        "expected the underflow guard, got {err:?}"
+    );
+
+    // Truncation detector: `1_073_741_824 * 4 = 2^32` exactly, so the
+    // true difference is negative and the guard must fire; a u32-
+    // wrapping product would truncate to `0` and wrongly return 1000.
+    let err = pure_circuits::guarded_diff(1_000, 1_073_741_824)
+        .expect_err("1000 - 2^32 must trip the underflow guard, not truncate to 1000");
     assert!(
         matches!(err, CompactError::AssertionFailed(ref m) if m == "result of subtraction would be negative"),
         "expected the underflow guard, got {err:?}"

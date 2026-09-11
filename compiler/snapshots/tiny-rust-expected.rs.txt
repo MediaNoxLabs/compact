@@ -20,7 +20,7 @@
 use midnight_compact_runtime::*;
 use std::marker::PhantomData;
 
-midnight_compact_runtime::check_runtime_version!("0.19.100");
+midnight_compact_runtime::check_runtime_version!("0.19.101");
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 #[repr(u8)]

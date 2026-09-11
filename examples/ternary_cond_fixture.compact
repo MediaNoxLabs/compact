@@ -425,6 +425,15 @@ export circuit recordStructPick(c: Boolean, s: Choice, s2: Choice): [] {
 //     safe-cast to Field at the `+`, which the field-operand renderer
 //     materialises as `Fr::from(.. as u64)` (the Uint<8>-let analogue
 //     of the bare-literal `3 + x`).
+//   - `constFieldPickUint`: the no-literal twin of `constFieldPick` —
+//     `const picked = flag ? u : v;` with BOTH arms Uint and a Field
+//     return. `literal-int-if?` requires a literal arm, so the
+//     seq-lifted RHS escaped the tail interception; the generic
+//     renderer must materialise the `tfield←tunsigned` wrapper
+//     (uint-to-field-coercion). Before the fix it emitted
+//     `Ok({ let picked = if flag { u } else { v }; picked })` — a u32 in
+//     the `Result<Fr, _>` position, E0308 at cargo build while compactc
+//     exited 0.
 //   - `recordFieldCallArg`: the IMPURE (walker-route) twins — the
 //     nested ternary as a call argument in a const-binding
 //     (render-pure-circuit-arg with the callee's formal type), in
@@ -460,6 +469,11 @@ export pure circuit constFieldPick(flag: Boolean): Field {
 export pure circuit pickedFieldArith(flag: Boolean, x: Field): Field {
   const picked = flag ? 1 : 0;
   return picked + x;
+}
+
+export pure circuit constFieldPickUint(flag: Boolean, u: Uint<32>, v: Uint<32>): Field {
+  const picked = flag ? u : v;
+  return picked;
 }
 
 export circuit recordFieldCallArg(x: Field, flag: Boolean): [] {

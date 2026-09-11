@@ -126,6 +126,20 @@ const REJECTIONS: &[(&str, &str, &str)] = &[
          }\n",
         "pure-circuit-body-emission",
     ),
+    (
+        // A Uint source range wider than u64 flowing into a Field slot.
+        // There is no lossless `as u64` cast, and the pre-fix emitter
+        // dropped the `tfield←tunsigned` wrapper and emitted the bare
+        // `u128` — E0308 at cargo build while compactc exited 0. The
+        // ctor route is deliberate: it surfaces the specific
+        // `field-uint-coercion` tag, whereas the pure-circuit emitter's
+        // catch-all guard would collapse it to the generic
+        // `pure-circuit-body-emission` (see the two entries above).
+        "Uint wider than u64 coerced to Field",
+        "export ledger f: Field;\n\
+         constructor(x: Uint<128>) { f = disclose(x); }\n",
+        "field-uint-coercion",
+    ),
 ];
 
 /// Contracts that must still compile — the other half of the property.

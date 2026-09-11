@@ -38,6 +38,10 @@ A contract that uses a conditional expression `c ? e1 : e2` anywhere a general e
 - **WHEN** a Field-returning circuit contains `const picked = flag ? 1 : 0; return picked;` (no type annotation on the const)
 - **THEN** the let*-lifted tail renders with both arms coerced from the circuit's Field return type, and the generated crate compiles under `cargo build`
 
+#### Scenario: unannotated no-literal Uint const returned from a Field circuit
+- **WHEN** a Field-returning circuit contains `const picked = flag ? u : v; return picked;` with both `u` and `v` of type `Uint<N>` (no integer-literal arm)
+- **THEN** the let*-lifted tail's `tfield←tunsigned` safe-cast wrapper renders as `Fr::from((<inner>) as u64)` — the seq-lifted shape is not intercepted by the literal-arm checks — and the generated crate compiles under `cargo build`
+
 ### Requirement: Lazy branch evaluation is preserved
 
 Generated Rust MUST evaluate a conditional expression exactly as the language specification requires: the condition is evaluated first and **only the selected branch** is evaluated. Branch-local trapping guards (e.g. the underflow assertion guarding unsigned subtraction) MUST be emitted inside the selected branch, so an untaken branch can never abort execution.

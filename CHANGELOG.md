@@ -5,6 +5,53 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Toolchain 0.31.121, language 0.23.103, runtime 0.16.100] — rust-codegen review fixes: Uint-to-Field coercion is never silently peeled (2026-09-11)
+
+### Fixed
+
+Two Rust-codegen correctness gaps from the PR review's adversarial
+validation pass, both in the same family: a `tfield←tunsigned` safe-cast
+wrapper — the typer's judgment that a Uint value flows into a Field slot
+— was dropped by a use-position guard that declined to materialise it,
+leaving a bare `u32`/`u128` in an `Fr` position. `compactc --target rust`
+exited 0; the generated crate failed `cargo build` with E0308.
+
+- **A Uint source range wider than u64 emitted a bare `u128` against
+  `Fr`** — `return x;` from a `Uint<128>` circuit declared `: Field`
+  (and the equivalent Field-arithmetic operand, `==` operand, and
+  constructor write) fell through the `(<= nat u64::MAX)` guard to the
+  peeling render. There is no lossless `as u64` cast for such a range, so
+  the coercion helper now REFUSES loudly
+  (`rust-feature-error 'field-uint-coercion`) instead of emitting the
+  bare value. The refusal is surfaced on the constructor/impure routes;
+  on the pure route the circuit-body walker's catch-all guard reports the
+  generic `pure-circuit-body-emission`, as it already does for the other
+  precise refusals.
+
+- **A seq-lifted const with a no-literal Uint ternary join under a Field
+  return was left uncoerced** — `const picked = flag ? u : v; return
+  picked;` (both arms Uint) emitted
+  `Ok({ let picked = if flag { u } else { v }; picked })`, a u32 in the
+  `Result<Fr, _>` position. `literal-int-if?` requires a literal arm, so
+  the seq-lifted RHS escaped the tail interception; the generic
+  expression renderers now materialise the wrapper as
+  `Fr::from((inner) as u64)`.
+
+The root cause is shared and fixed once: `uint-to-field-coercion`
+(rust-passes-helpers.ss) is the single coerce-or-refuse decision point,
+and both generic renderers — `expr-rust` (pure route) and
+`ctor-expr-rust` (constructor/impure/streaming routes) — route their
+safe-cast clause through it. A `tfield←tunsigned` wrapper can no longer
+be silently dropped merely because a use-position shape was not
+recognised. Literal-armed wrappers keep peeling at the use positions that
+own their coercion (byte-identical), so the neutral fixtures regenerate
+unchanged.
+
+Coverage: `ternary_cond_fixture`'s new `constFieldPickUint` circuit pins
+the no-literal coercion (byte-parity plus an executing gate in
+`tests/ternary_cond_fixture.rs`), and `rejection_corpus` pins the
+out-of-range refusal (`field-uint-coercion`).
+
 ## [Toolchain 0.31.120, language 0.23.103, runtime 0.16.100] — rust-codegen review fixes: mixed-arm Field ternaries, streaming-route literals, streaming write width, non-Copy ternary arms (2026-09-10)
 
 ### Fixed

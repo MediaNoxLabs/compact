@@ -72,6 +72,47 @@
               (source-errorf src "~a" prefixed)
               (external-errorf "~a" prefixed))))
 
+      ;; uint-to-field-coercion: the single decision point for the typer's
+      ;; `tfield←tunsigned` safe-cast wrapper — its judgment that a Uint
+      ;; value flows into a Field slot. `expr` is such a wrapper when it is
+      ;; `(safe-cast _ <tfield> <tunsigned> inner)`.
+      ;;
+      ;; Returns #f when `expr` is not a Uint→Field wrapper (the caller keeps
+      ;; its own rendering), when the inner is a bare integer literal (the
+      ;; use-position sites own literal coercion — `field-context-arg-rendered`
+      ;; / the `literal-int-*?` interceptions — and a literal that reaches a
+      ;; generic `FieldRepr` callee infers correctly, so peeling is
+      ;; byte-identical and sound), or when the wrapper is redundant — the
+      ;; inner is itself Field-typed per `known-field?`. Otherwise returns the
+      ;; coercion rendered by `render-inner`:
+      ;;   - `Fr::from((<inner>) as u64)` for a source range that fits u64 —
+      ;;     a lossless zero-extension;
+      ;;   - a LOUD `rust-feature-error` when the source range exceeds u64.
+      ;;     There is no lossless Rust cast there, and emitting the bare Uint
+      ;;     produces E0308 at `cargo build` while compactc exits 0.
+      ;;
+      ;; Every Field context must make this same coerce-or-refuse decision.
+      ;; The per-site guards used to fall through to the bare Uint on an
+      ;; out-of-range source (or when a use-position shape was not
+      ;; recognised), which is exactly the silent-bad-output class this
+      ;; closes: the generic renderers (expr-rust / ctor-expr-rust) route
+      ;; their safe-cast clause through here, so a wrapper can never be
+      ;; dropped merely because a caller declined to materialise it.
+      (define (uint-to-field-coercion expr render-inner known-field?)
+        (nanopass-case (Ltypescript Expression) expr
+          [(safe-cast ,src ,type ,type^ ,expr^)
+           (and (type-is-tfield? type)
+                (not (literal-int-expr? expr^))
+                (not (known-field? expr^))
+                (let ([nat (type-peel-tunsigned type^)])
+                  (and nat
+                       (if (<= nat 18446744073709551615)
+                           (format "Fr::from((~a) as u64)" (render-inner expr^))
+                           (rust-feature-error src 'field-uint-coercion
+                             "a Uint source range up to ~a has no lossless coercion to Field (exceeds u64)"
+                             nat)))))]
+          [else #f]))
+
       ;; current-qctx-ref: Rust expression string referring to the
       ;; QueryContext that ledger-read sub-expressions should read from.
       ;; In circuit bodies this is `&ctx.current_query_context`; in the

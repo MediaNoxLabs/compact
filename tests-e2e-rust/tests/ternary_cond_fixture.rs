@@ -641,6 +641,25 @@ fn return_field_returns_each_arm() {
     );
 }
 
+/// No-literal Uint ternary join lifted into a const under a Field return:
+/// both arms are Uint, so `literal-int-if?` does not intercept the
+/// seq-lifted RHS and the generic renderer must materialise the
+/// `tfield←tunsigned` wrapper (`uint-to-field-coercion`). Before the fix
+/// this emitted `Ok({ let picked = if flag { u } else { v }; picked })` —
+/// a u32 in the `Result<Fr, _>` position, E0308 at cargo build while
+/// compactc exited 0. Both directions pin the selected value.
+#[test]
+fn const_field_pick_uint_coerces_the_uint_join_to_field() {
+    assert_eq!(
+        pure_circuits::const_field_pick_uint(true, 7, 9).expect("then arm"),
+        Fr::from(7u64)
+    );
+    assert_eq!(
+        pure_circuits::const_field_pick_uint(false, 7, 9).expect("else arm"),
+        Fr::from(9u64)
+    );
+}
+
 /// The ternary as an OPERAND of a Field `==`: the whole if renders
 /// inside the comparison, literal arms coerced.
 #[test]

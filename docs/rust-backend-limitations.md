@@ -76,9 +76,9 @@ grep -rn "(rust-feature-error" compiler/rust-passes*.ss \
   | grep -v "define (rust-feature-error" | wc -l
 ```
 
-At the time of writing that is **46 call sites** across 4 passes
+At the time of writing that is **47 call sites** across 4 passes
 (`rust-passes-emit.ss` 36, `rust-passes-walker.ss` 8,
-`rust-passes-helpers.ss` 1, `rust-passes-prelude.ss` 1), spanning **34
+`rust-passes-helpers.ss` 2, `rust-passes-prelude.ss` 1), spanning **36
 distinct kinds**.
 
 A second, smaller class is NOT covered by that count: shapes that are
@@ -94,6 +94,13 @@ type context — as an element of a vector literal feeding
 native whose formal types the emitter does not carry. These join the
 pre-existing bare-literal family there (`[0]`, `some(0)`): bind the
 value to a typed `const` first (`const v: Field = c ? 1 : 0;`).
+
+A Uint→Field safe-cast wrapper — the typer's judgment that a Uint value
+flows into a Field slot — is materialised by `uint-to-field-coercion` at
+the generic expression renderers (`expr-rust` / `ctor-expr-rust`) and the
+use-position guards, so it can no longer be silently peeled into a bare
+`u32`/`u128` against `Fr`. A source range wider than u64 has no lossless
+`as u64` cast and is refused (`field-uint-coercion`) instead.
 
 One caveat when reading a diagnostic: several emitters probe alternative
 shapes under a catch-all `(guard (c [#t #f]) …)`, which swallows a specific

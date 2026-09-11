@@ -2579,7 +2579,21 @@
            ;; type once we ascribe it at the surrounding context (or
            ;; rely on Rust's inference from the array element type).
            ;; Mirrors `expr-strip-cast` but for the rendering path.
-           (expr-rust expr^ native-id-ht)]
+           ;;
+           ;; EXCEPT a `tfield←tunsigned` wrapper: that is the typer's
+           ;; judgment that a Uint value flows into a Field slot, and
+           ;; peeling it drops the value's Rust type to the bare Uint
+           ;; (`u32`/`u128`) opposite `Fr` — E0308 at cargo build while
+           ;; compactc exits 0. uint-to-field-coercion materialises the
+           ;; lossless `Fr::from((inner) as u64)` (or refuses when the
+           ;; source range has no lossless cast), so a wrapper reaching
+           ;; this generic renderer — e.g. the seq-lifted const under a
+           ;; Field return whose use-position guard did not intercept it
+           ;; — can never be silently dropped.
+           (or (uint-to-field-coercion expr
+                 (lambda (e) (expr-rust e native-id-ht))
+                 (lambda (e) (expr-known-field? e native-id-ht)))
+               (expr-rust expr^ native-id-ht))]
           [(quote ,src ,datum)
            (cond
              [(bytevector? datum) (bytevector->rust-array-literal datum)]

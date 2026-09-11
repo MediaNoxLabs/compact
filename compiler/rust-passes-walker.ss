@@ -297,7 +297,11 @@
         ;; introduced by inline-circuit-call. The dynamic binding mirrors
         ;; the explicit local-binds parameter — both must stay in sync.
         (parameterize ([current-var-substitution local-binds])
-        (let ([e (expr-strip-cast expr)])
+        (or (uint-to-field-coercion expr
+              (lambda (e) (ctor-expr-rust e local-binds
+                                         native-id-ht witness-id-ht circuit-id-ht))
+              (lambda (e) (expr-known-field? e native-id-ht)))
+            (let ([e (expr-strip-cast expr)])
           (nanopass-case (Ltypescript Expression) e
             [(var-ref ,src ,var-name)
              (cond
@@ -556,7 +560,7 @@
              (render-map-mvp src fun map-arg native-id-ht)]
             [else
              ;; quote/tuple/etc. fall through to the existing expr-rust.
-             (expr-rust e native-id-ht)]))))
+             (expr-rust e native-id-ht)])))))
 
       ;; render-map-mvp: render a `(map src len fun map-arg)` IR node
       ;; as a Rust array literal `[v0, v1, ..., vN-1]`. Assumes

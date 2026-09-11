@@ -954,4 +954,13 @@ pub mod pure_circuits {
         let picked = if flag { 1u8 } else { 0u8 };
         Ok((Fr::from((picked) as u64)) + (x))
     }
+
+    pub fn const_field_pick_uint(flag: bool, u: u32, v: u32) -> Result<Fr, CompactError> {
+        Ok(Fr::from(
+            ({
+                let picked = if flag { u } else { v };
+                picked
+            }) as u64,
+        ))
+    }
 }

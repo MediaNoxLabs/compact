@@ -76,9 +76,9 @@ grep -rn "(rust-feature-error" compiler/rust-passes*.ss \
   | grep -v "define (rust-feature-error" | wc -l
 ```
 
-At the time of writing that is **44 call sites** across 4 passes
-(`rust-passes-emit.ss` 34, `rust-passes-walker.ss` 8,
-`rust-passes-helpers.ss` 1, `rust-passes-prelude.ss` 1), spanning **37
+At the time of writing that is **46 call sites** across 4 passes
+(`rust-passes-emit.ss` 36, `rust-passes-walker.ss` 8,
+`rust-passes-helpers.ss` 1, `rust-passes-prelude.ss` 1), spanning **34
 distinct kinds**.
 
 A second, smaller class is NOT covered by that count: shapes that are

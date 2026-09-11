@@ -75,13 +75,13 @@ const afterInitValue = ledger(afterInitContractState.data).value.toString();
 // invocations: thread the latest ContractState into a new
 // CircuitContext. We use the same deterministic witness, same private
 // state, same empty zswap.
-let circuitCtx = cr.createCircuitContext(
-  'constructor',
-  cr.dummyContractAddress(),
-  emptyCpk,
-  afterInitContractState.data,
-  initResult.currentPrivateState,
-);
+let circuitCtx = cr.createCircuitContext({
+  circuitId: 'constructor',
+  contractAddress: cr.dummyContractAddress(),
+  coinPublicKeyOrZswapState: emptyCpk,
+  contractState: afterInitContractState.data,
+  privateState: initResult.currentPrivateState,
+});
 
 // Helper: wrap a CircuitContext's currentQueryContext.state back into
 // a full ContractState envelope (operations + authority + balance)

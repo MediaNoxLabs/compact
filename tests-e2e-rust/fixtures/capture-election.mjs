@@ -214,13 +214,13 @@ function chargedStateFromCtx(ctx) {
 
 function freshCtx() {
   return {
-    ctx: cr.createCircuitContext(
-      'constructor',
-      cr.dummyContractAddress(),
-      emptyCpk,
-      afterInitContractState.data,
-      initResult.currentPrivateState,
-    ),
+    ctx: cr.createCircuitContext({
+      circuitId: 'constructor',
+      contractAddress: cr.dummyContractAddress(),
+      coinPublicKeyOrZswapState: emptyCpk,
+      contractState: afterInitContractState.data,
+      privateState: initResult.currentPrivateState,
+    }),
     envelope: afterInitContractState,
   };
 }

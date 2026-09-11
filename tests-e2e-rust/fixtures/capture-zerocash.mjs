@@ -188,13 +188,13 @@ const afterInitHex = Buffer.from(afterInitContractState.serialize()).toString(
   'hex',
 );
 
-let circuitCtx = cr.createCircuitContext(
-  'constructor',
-  cr.dummyContractAddress(),
-  emptyCpk,
-  afterInitContractState.data,
-  initResult.currentPrivateState,
-);
+let circuitCtx = cr.createCircuitContext({
+  circuitId: 'constructor',
+  contractAddress: cr.dummyContractAddress(),
+  coinPublicKeyOrZswapState: emptyCpk,
+  contractState: afterInitContractState.data,
+  privateState: initResult.currentPrivateState,
+});
 
 function rewrapEnvelope(prev, newChargedState) {
   const next = new cr.ContractState();

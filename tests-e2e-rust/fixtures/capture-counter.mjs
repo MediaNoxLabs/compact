@@ -55,13 +55,13 @@ const initResult = await contract.initialState(constructorCtx);
 const afterInitContractState = initResult.currentContractState;
 
 // ---- Step 2: increment() --------------------------------------------------
-let circuitCtx = cr.createCircuitContext(
-  'constructor',
-  cr.dummyContractAddress(),
-  emptyCpk,
-  afterInitContractState.data,
-  initResult.currentPrivateState,
-);
+let circuitCtx = cr.createCircuitContext({
+  circuitId: 'constructor',
+  contractAddress: cr.dummyContractAddress(),
+  coinPublicKeyOrZswapState: emptyCpk,
+  contractState: afterInitContractState.data,
+  privateState: initResult.currentPrivateState,
+});
 circuitCtx.callContext.circuitId = 'increment';
 const incOut = await contract.circuits.increment(circuitCtx);
 circuitCtx = incOut.context;

@@ -46,3 +46,6 @@ dist
 tests-e2e/failed-contracts/
 
 tests-e2e-rust/target/
+
+# luau
+.luaurc

@@ -9,6 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _No changes yet._
 
+## [Toolchain 0.34.113, language 0.26.0, runtime 0.19.101] — merge upstream `c47230cc` (2026-09-11)
+
+### Changed
+
+- **Merged `LFDT-Minokawa/compact@c47230cc`** into the Rust-codegen line, 45
+  commits further on than the branch sat. Merged rather than rebased: replaying
+  the 118 fork commits against a moving base stopped on the third with four
+  conflicted Scheme passes upstream had never touched, while the real overlap is
+  12 files and merging against the final state produced 5 conflicts.
+
+- **Runtime moves to `0.19.101`**, which compactc bakes into every emitted
+  contract via `check_runtime_version!`. The two `print-rust` snapshots are
+  repinned — one line each, and the only change to emitted Rust across the whole
+  merge.
+
+### Inbound from upstream
+
+- **Cross-contract calls resolve their callee at run time.** A caller no longer
+  names the module implementing the contract deployed at the call target; the
+  application supplies one and the runtime checks it against both the caller's
+  contract type and the chain.
+
 ## [Toolchain 0.34.112, language 0.26.0, runtime 0.19.100] — rename the runtime crate to `midnight-compact-runtime` (2026-09-02)
 
 ### Changed

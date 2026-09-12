@@ -51,6 +51,7 @@
 //   The compiler is `$COMPACTC` if set, else `<root>/result/bin/compactc`
 //   — the symlink `nix build .#compactc` produces.
 
+use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -271,6 +272,74 @@ fn rust_codegen_byte_parity_against_committed_fixtures() {
             summary
         );
     }
+}
+
+/// Every `FIXTURES` row's generated crate MUST also be a dev-dependency of
+/// `tests-e2e-rust`.
+///
+/// Workspace membership alone does not make `cargo build -p tests-e2e-rust
+/// --tests` (the CI build gate) compile a crate — only a dependency edge
+/// does. A registered fixture whose crate is not a dev-dependency is
+/// therefore byte-compared by the gate above but never compiled, so a
+/// codegen change that emits non-compiling Rust for it would pass CI. That
+/// is exactly how `compact-contract-multi-pl-call-fixture` was invisible.
+///
+/// This test is deliberately compiler-free: it only reads the `FIXTURES`
+/// table defined above and the crate manifest, so it also runs on the
+/// bare no-Nix `test` matrix, where it is the only thing keeping the two
+/// registrations in sync.
+#[test]
+fn every_fixture_crate_is_a_dev_dependency() {
+    let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let cargo_toml_path = manifest_dir.join("Cargo.toml");
+    let cargo_toml = std::fs::read_to_string(&cargo_toml_path)
+        .unwrap_or_else(|e| panic!("read {}: {}", cargo_toml_path.display(), e));
+
+    // Keys declared under `[dev-dependencies]`, which runs until the next
+    // top-level `[section]` header. Fixture packages are named exactly
+    // `compact-contract-<dir-name>`, so the `FIXTURES` dir-name is enough to
+    // derive the expected key. (This mirrors the manifest's own convention;
+    // the assertion below fails loudly if that convention ever drifts.)
+    let mut dev_deps = BTreeSet::new();
+    let mut in_dev_deps = false;
+    for raw in cargo_toml.lines() {
+        let line = raw.trim();
+        if line.starts_with('[') {
+            in_dev_deps = line == "[dev-dependencies]";
+            continue;
+        }
+        if !in_dev_deps || line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+        if let Some((key, _)) = line.split_once('=') {
+            dev_deps.insert(key.trim().to_string());
+        }
+    }
+    assert!(
+        !dev_deps.is_empty(),
+        "parsed no [dev-dependencies] from {} — this test's parser no longer \
+         matches the manifest layout",
+        cargo_toml_path.display()
+    );
+
+    let missing: Vec<String> = FIXTURES
+        .iter()
+        .map(|(_, dir_name)| format!("compact-contract-{}", dir_name))
+        .filter(|crate_name| !dev_deps.contains(crate_name))
+        .collect();
+
+    assert!(
+        missing.is_empty(),
+        "codegen_regression FIXTURES row(s) are not tests-e2e-rust dev-dependencies: {:?}\n\
+         A workspace member in the root Cargo.toml does not make `cargo build \
+         -p tests-e2e-rust --tests` compile the crate; only a dev-dependency edge does, \
+         so these fixtures would be byte-compared but never compiled. Add each as \
+         `compact-contract-<dir-name> = {{ path = \"contracts/<dir-name>\" }}` under \
+         `[dev-dependencies]` in {} (and refresh Cargo.lock so every `--locked` gate \
+         stays valid), then reference the crate from a `tests/<dir-name>.rs`.",
+        missing,
+        cargo_toml_path.display()
+    );
 }
 
 /// Create a fresh temp dir under `$TMPDIR/<prefix>-<pid>-<nanos>`. Used

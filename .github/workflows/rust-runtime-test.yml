@@ -32,6 +32,12 @@ on:
     paths:
       - "runtime-rs/**"
       - "runtime-rs-macros/**"
+      # `runtime/package.json`'s version is embedded into every generated
+      # fixture `lib.rs` via `check_runtime_version!` (see
+      # compiler/runtime-version.ss), so a runtime-only bump changes all 34
+      # fixtures' bytes without touching any other watched path. `flake.lock`
+      # similarly changes the Nix build environment of compactc.
+      - "runtime/**"
       - "tests-e2e-rust/**"
       # Any compiler change may alter Rust emit — not just the rust-passes
       # tree. The previous `compiler/rust-passes*` / `compiler/rust-passes/**`
@@ -43,6 +49,10 @@ on:
       - "Cargo.toml"
       - "Cargo.lock"
       - "flake.nix"
+      - "flake.lock"
+      # The compiler-backed job depends on this composite action; editing it
+      # must re-run the lane that uses it.
+      - ".github/actions/setup-nix-cache/**"
       - ".github/workflows/rust-runtime-test.yml"
   push:
     branches:
@@ -50,12 +60,15 @@ on:
     paths:
       - "runtime-rs/**"
       - "runtime-rs-macros/**"
+      - "runtime/**"
       - "tests-e2e-rust/**"
       - "compiler/**"
       - "examples/**"
       - "Cargo.toml"
       - "Cargo.lock"
       - "flake.nix"
+      - "flake.lock"
+      - ".github/actions/setup-nix-cache/**"
       - ".github/workflows/rust-runtime-test.yml"
   workflow_dispatch:
 

@@ -1,14 +1,14 @@
-# Delta Spec: rust-codegen/type-directed-coercion
+# rust-codegen/type-directed-coercion Specification
 
 ## Purpose
 
 The Rust code generation backend of the Compact compiler renders every expression against the Compact type expected at its use position, materialising the typechecker's `safe-cast` decisions losslessly at a single decision point, so that a value's Rust type and width are correct wherever the language lets it appear.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Expressions are rendered against their expected type
 
-The Rust backend MUST render an expression using the Compact type required by its use position — the declared type of a `const` binding, the declared return type, the operand type of a comparison or arithmetic operation, the declared formal type of a call argument, the declared member type of a struct literal, the element type of a vector/array or native argument, and the destination field type of a ledger write. The typechecker's `(safe-cast <target> <src> expr)` wrapper MUST be materialised from `<target>`, not discarded.
+The Rust backend MUST render an expression using the Compact type required by its use position — the declared type of a `const` binding, the declared return type, the operand type of a comparison, the operand type of a `Field` binary `+`/`-`/`*`, the declared formal type of a call argument, the declared member type of a struct literal, the element type of a vector/array or native argument, and the destination field type of a ledger write. The typechecker's `(safe-cast <target> <src> expr)` wrapper MUST be materialised from `<target>`, not discarded.
 
 #### Scenario: Field-typed literal in a const binding
 - **WHEN** a circuit contains `const x: Field = 0;`
@@ -48,7 +48,7 @@ Wherever a `Uint`-ranged value flows into a `Field` position, the backend MUST m
 
 ### Requirement: Mixed minimal-width operands widen losslessly
 
-Where the typechecker wraps one comparison/equality operand in `(safe-cast <wider> <narrower> …)` because their ranges differ, the backend MUST materialise a lossless zero-extending cast on the narrower operand (and leave the wider side at its own minimal width). Branch arms of a conditional whose arms join to a wider type MUST be widened the same way. Two ranges that share the same Rust width MUST NOT gain a cast. Binary `+ - *` operands MUST keep their existing same-width normalisation and MUST NOT be pushed an expected type.
+Where the typechecker wraps one comparison/equality operand in `(safe-cast <wider> <narrower> …)` because their ranges differ, the backend MUST materialise a lossless zero-extending cast on the narrower operand (and leave the wider side at its own minimal width). Branch arms of a conditional whose arms join to a wider type MUST be widened the same way. Two ranges that share the same Rust width MUST NOT gain a cast. UNSIGNED binary `+ - *` operands MUST keep their existing `mbits` width normalisation and MUST NOT be pushed an expected type (materialising the operand's `safe-cast` too would double-cast). `Field` binary `+ - *` operands have no width normalisation and MUST instead be materialised against each operand's coerced type, so an untyped integer operand cannot reach `Fr` arithmetic.
 
 #### Scenario: mixed-width comparison compiles
 - **WHEN** a `Uint<32>`-ranged expression that widened to `u64` (e.g. `q * 4`) is compared with a `Uint<32>`-ranged value
@@ -61,6 +61,10 @@ Where the typechecker wraps one comparison/equality operand in `(safe-cast <wide
 #### Scenario: width is pinned by execution
 - **WHEN** the mixed-width fixture is executed with values whose product crosses `2^32`
 - **THEN** the result is correct, so a truncating or wrongly-directed cast cannot pass by merely compiling
+
+#### Scenario: Field arithmetic operand is materialised
+- **WHEN** a `Field` circuit evaluates `x + 1`, `1 + x`, `x - 1`, `x * 2`, or `x + u` where `u: Uint<8>`
+- **THEN** each operand is materialised as an `Fr` (`(x) + (Fr::from(1u64))`, `(x) + (Fr::from((u) as u64))`), a literal above `u64::MAX` renders via `field-literal-rust` (`Fr::from_le_bytes`), and the generated crate compiles
 
 ### Requirement: No sentinel reaches emitted Rust
 

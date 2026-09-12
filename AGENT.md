@@ -93,7 +93,9 @@ The check accepts a `skip-changelog` label as an escape hatch for typo fixes / i
 
 `codegen_regression` needs a compiler and **hard-fails without one** — run `nix build .#compactc` first (§2.1 step 3), or point `COMPACTC` at a binary. It has no skip path: it used to skip when the compiler was absent, which meant CI reported a green byte-parity gate that regenerated nothing for the entire life of the branch.
 
-Consequently **this gate is local-only today.** `rust-runtime-test.yml`'s Ubuntu/macOS runners have no `nix build`, so they exclude that one test by name (`-- --skip rust_codegen_byte_parity`); everything else in `tests-e2e-rust` still gates there. Excluding it at the call site rather than inside the test keeps the exclusion visible in the workflow and in libtest's `filtered out` count, and guarantees any run that *does* execute it had a real compiler. MediaNoxLabs/compact#23 tracks giving CI a real compactc. Until it lands, **you are the only thing enforcing byte-parity** — do not skip step 3.
+`rust-runtime-test.yml` runs two lanes. The `byte-parity-compiler-backed` (`ubuntu-latest`) job builds compactc via Nix and runs the full `tests-e2e-rust` suite with **no** `--skip`, so `codegen_regression` (byte-parity) and the `rust_backend_*` rejection corpus execute in CI. The Linux+macOS `test` matrix has no Nix, so it still excludes those tests by name (`-- --skip rust_codegen_byte_parity --skip rust_backend_`); everything else in `tests-e2e-rust` gates there. Excluding at the call site rather than inside the tests keeps the exclusion visible in the workflow and in libtest's `filtered out` count, and guarantees any run that *does* execute them had a real compiler. [MediaNoxLabs/compact#23](https://github.com/MediaNoxLabs/compact/issues/23) tracks replacing the per-PR Nix build with a compactc artifact shared from `build-compiler.yml`. **Step 3 is still required locally** — CI now catches drift on PRs, but the local run stays the fast loop.
+
+Every `codegen_regression` `FIXTURES` row's contract crate must also be a `tests-e2e-rust` `[dev-dependencies]` entry. A workspace `members` entry alone does **not** make `cargo build -p tests-e2e-rust --tests` compile the crate — the dev-dependency edge does — so a row without that entry is invisible to the CI build gate even though `codegen_regression` still byte-compares its emitted `lib.rs`. The `every_fixture_contract_is_a_dev_dependency` test enforces this, and `check_regenerated_lib` additionally `cargo check`s each freshly regenerated `lib.rs` against the committed fixture manifest, independent of byte-parity.
 
 ## 4. CI notes: things that once looked like fork infra, and the real fixes
 
@@ -117,7 +119,7 @@ Fmt coverage of the generated fixtures: **`rust-runtime-test.yml`'s "Format + Cl
    nix build .#compactc
    result/bin/compactc --target rust --skip-zk examples/<name>.compact tests-e2e-rust/contracts/<name>/
    ```
-3. If it's a new fixture, register it in `tests-e2e-rust/Cargo.toml` (workspace members) and `tests-e2e-rust/tests/codegen_regression.rs` (FIXTURES list).
+3. If it's a new fixture, register it in `tests-e2e-rust/Cargo.toml` **`[dev-dependencies]`** — a workspace `members` entry alone does not compile the crate for `cargo build -p tests-e2e-rust --tests` — and add it to `tests-e2e-rust/tests/codegen_regression.rs` (FIXTURES list). `every_fixture_contract_is_a_dev_dependency` fails until the dev-dependency entry exists.
 4. Capture the TS reference bytes — mirror the pattern used by an existing similarly-shaped fixture. The capture script lives under `tests-e2e-rust/fixtures/` or is named `capture-<name>.mjs`.
 5. Write the Rust byte-parity test at `tests-e2e-rust/tests/<name>.rs` (constructor → each circuit → assert `ContractState::serialize()` byte-equals the TS reference at every step).
 6. Quality gate: `nix develop --command cargo fmt --all` then `nix develop --command cargo test -p tests-e2e-rust`.

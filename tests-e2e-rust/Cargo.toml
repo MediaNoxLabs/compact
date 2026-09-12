@@ -71,6 +71,13 @@ compact-contract-assert-parity-fixture = { path = "contracts/assert-parity-fixtu
 # codegen produces *compilable* Rust, which codegen_regression (byte-compare
 # only) does not check. Workspace membership alone would not pull it in.
 compact-contract-struct-collision-fixture = { path = "contracts/struct-collision-fixture" }
+# A4 walker-gap fixture: a single circuit whose body is two non-write
+# public-ledger calls followed by a Cell write (midnight-did's
+# `recordUpdate` shape). Listed as a dev-dependency — workspace membership
+# alone does not compile a crate for `cargo build -p tests-e2e-rust --tests`
+# — and referenced from tests/multi_pl_call_fixture.rs, so non-compiling
+# Rust emitted for this shape fails the build gate.
+compact-contract-multi-pl-call-fixture = { path = "contracts/multi-pl-call-fixture" }
 # A29 executing constructor gate: chunked_ledger_fixture.rs runs the generated
 # initial_state and reads scalar fields back via ledger(), proving the
 # >16-field chunked scaffold matches the read/write paths.

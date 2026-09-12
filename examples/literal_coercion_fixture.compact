@@ -32,6 +32,11 @@
 //                           (`Fr::from((x) as u128)`, lossless)
 //   - `vectorEltWise`     — aggregate target: `[x, x]` into `Vector<2, Field>`
 //                           (element-wise coercion)
+//   - `addFieldLiteral`/`subFieldLiteral`/`mulHugeFieldLiteral`/`litLhsFieldLiteral`
+//                         — Field `+ - *` operands (`arith-binop-rust`'s
+//                           FIELD branch), incl. a literal above `u64::MAX`
+//   - `addUintFieldOperand` — `Uint` operand of a Field op (`Fr::from((u) as u64)`)
+//   - `nestedFieldArith`  — recursive operand materialisation
 // plus a constructor that writes Field / Uint<64> / `Vector<2, Field>`
 // ledger cells so the destination-typed write path is exercised and its
 // committed state can be compared byte-for-byte against the TS backend.
@@ -133,6 +138,44 @@ export pure circuit vectorEltHugeFieldLiteral(): Vector<1, Field> {
 
 export pure circuit cmpHugeFieldLiteral(x: Field): Boolean {
   return x == (1606938044258990275541962092341162602522202993782792835301376 as Field);
+}
+
+// Field arithmetic operands. `arith-binop-rust`'s FIELD branch (`mbits = #f`)
+// has no width cast to normalise its operands, so every operand the
+// typechecker coerced to Field must be materialised as an `Fr` there. Before
+// that, a bare integer literal operand stayed an untyped Rust integer
+// (`x + 1` -> `(x) + (1)`), which `Fr` cannot absorb (no `Add<{integer}>`) —
+// `compactc` exited 0 and `cargo build` failed with E0308; a literal above
+// `u64::MAX` additionally overflowed the literal (E0080). A `Uint` operand had
+// the same gap (`(x) + (u: u8)`). Each operator, both literal sides, the
+// `u64`/above-`u64` rungs, and a `Uint` operand are covered; `nested`
+// exercises recursive operand materialisation.
+export pure circuit addFieldLiteral(x: Field): Field {
+  return x + 1;
+}
+
+export pure circuit addHugeFieldLiteral(x: Field): Field {
+  return x + (1606938044258990275541962092341162602522202993782792835301376 as Field);
+}
+
+export pure circuit litLhsFieldLiteral(x: Field): Field {
+  return 1 + x;
+}
+
+export pure circuit subFieldLiteral(x: Field): Field {
+  return x - 1;
+}
+
+export pure circuit mulHugeFieldLiteral(x: Field): Field {
+  return x * (1606938044258990275541962092341162602522202993782792835301376 as Field);
+}
+
+export pure circuit addUintFieldOperand(x: Field, u: Uint<8>): Field {
+  return x + u;
+}
+
+export pure circuit nestedFieldArith(x: Field): Field {
+  return (x + 1) * (x + 2);
 }
 
 // Destination-typed ledger writes (the cell-write position). The hash and

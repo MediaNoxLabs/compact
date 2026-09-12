@@ -1725,6 +1725,24 @@
              (string-append rendered s)]
             [else rendered])))
 
+      ;; field-arith-operand-rust: render one operand of a FIELD `+`/`-`/`*`.
+      ;; Field arithmetic has no `mbits` cast to normalise its operands, so an
+      ;; operand the typechecker coerced to Field must be materialised HERE.
+      ;; The typer wraps such an operand in `(safe-cast (tfield ...) ...)`
+      ;; (`expr-expected-type` recovers that target), so rendering at the
+      ;; operand's own recorded type turns a bare integer literal into an `Fr`
+      ;; (`field-literal-rust`, lossless above `u64::MAX`) and a `Uint` operand
+      ;; into `Fr::from((x) as uN)`. A `Field`-typed operand carries no wrapper
+      ;; and renders unchanged. Without this, `Fr` — a struct with no
+      ;; `Add<{integer}>` impl — cannot absorb an unmaterialised operand, and
+      ;; `a + 1` emitted `(a) + (1)`: compactc exited 0, `cargo build` failed
+      ;; (E0308). This is the FIELD half of the `arith-binop-rust` split below.
+      (define (field-arith-operand-rust expr native-id-ht)
+        (let ([lit (literal-int-expr? expr)])
+          (cond
+            [lit (field-literal-rust lit)]
+            [else (expr-rust-typed expr (expr-expected-type expr) native-id-ht)])))
+
       ;; mbits->rust-width: map a `(+/−/* ,src ,mbits ...)` result bit-width
       ;; (the typer's `(integer-length result-nat)`, analysis-passes.ss:2113)
       ;; to the smallest Rust unsigned int type that holds it. Returns #f for
@@ -1774,18 +1792,26 @@
           [else #f]))
 
       (define (arith-binop-rust src op mbits expr1 expr2 native-id-ht)
-        ;; Operands are NOT type-directed: the typer wraps both in
-        ;; safe-casts to the result width, but `arith-binop-rust` already
-        ;; casts each operand to the `mbits`-derived width. Materialising the
-        ;; operand wrappers too would double-cast (`((x) as u64) as u64`),
-        ;; so the expected type is cleared for the operand renders.
-        (parameterize ([current-expr-expected-type #f])
-        (let ([e1 (arith-operand-rust expr1 native-id-ht)]
-              [e2 (arith-operand-rust expr2 native-id-ht)]
-              [w (mbits->rust-width mbits)])
+        ;; The two branches type their operands DIFFERENTLY, so the operand
+        ;; renders and the expected-type scoping must be per-branch:
+        ;;
+        ;;   * UNSIGNED (`w` present) — `arith-binop-rust` already casts each
+        ;;     operand to the `mbits`-derived width, so materialising the
+        ;;     typechecker's operand `safe-cast` too would double-cast
+        ;;     (`((x) as u64) as u64`). The expected type is cleared, and a
+        ;;     bare literal is typed by the `current-arith-suffix` mechanism.
+        ;;
+        ;;   * FIELD (`mbits = #f`) — there is no width cast, so each operand
+        ;;     is materialised from its own `safe-cast` target by
+        ;;     `field-arith-operand-rust` (a bare literal -> `Fr`, a `Uint` ->
+        ;;     `Fr::from((x) as uN)`).
+        (let ([w (mbits->rust-width mbits)])
           (cond
             [w
-             (format "((~a) as ~a).wrapping_~a((~a) as ~a)" e1 w op e2 w)]
+             (parameterize ([current-expr-expected-type #f])
+               (format "((~a) as ~a).wrapping_~a((~a) as ~a)"
+                 (arith-operand-rust expr1 native-id-ht) w op
+                 (arith-operand-rust expr2 native-id-ht) w))]
             ;; FIELD arithmetic. The typer emits `mbits = #f` for its FIELD
             ;; branch, and this used to fall through to
             ;; `(~a).wrapping_~a(~a)` — emitting e.g. `(a).wrapping_add(b)` on
@@ -1806,14 +1832,16 @@
                (unless rust-op
                  (rust-feature-error src 'field-arith-operator
                    "field arithmetic operator `~a` has no Rust lowering" op))
-               (format "(~a) ~a (~a)" e1 rust-op e2))]
+               (format "(~a) ~a (~a)"
+                 (field-arith-operand-rust expr1 native-id-ht) rust-op
+                 (field-arith-operand-rust expr2 native-id-ht)))]
             ;; A width the ladder does not cover: refuse rather than emit
             ;; `wrapping_*` against a type that may not have it. A guess here
             ;; is exactly the silent-bad-output path the field case above spent
             ;; a release demonstrating.
             [else
              (rust-feature-error src 'arith-result-width
-               "unsigned arithmetic with a ~a-bit result has no Rust lowering" mbits)]))))
+               "unsigned arithmetic with a ~a-bit result has no Rust lowering" mbits)])))
 
       ;; expr-rust: emit a Rust expression string for an Ltypescript
       ;; Expression. I3b/1 covers the variants needed by tiny.compact's

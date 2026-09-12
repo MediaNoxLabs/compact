@@ -383,4 +383,44 @@ pub mod pure_circuits {
             ])
             .expect("Field literal is canonical")))
     }
+
+    pub fn add_field_literal(x: Fr) -> Result<Fr, CompactError> {
+        Ok((x) + (Fr::from(1u64)))
+    }
+
+    pub fn add_huge_field_literal(x: Fr) -> Result<Fr, CompactError> {
+        Ok((x)
+            + (Fr::from_le_bytes(&[
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00,
+            ])
+            .expect("Field literal is canonical")))
+    }
+
+    pub fn lit_lhs_field_literal(x: Fr) -> Result<Fr, CompactError> {
+        Ok((Fr::from(1u64)) + (x))
+    }
+
+    pub fn sub_field_literal(x: Fr) -> Result<Fr, CompactError> {
+        Ok((x) - (Fr::from(1u64)))
+    }
+
+    pub fn mul_huge_field_literal(x: Fr) -> Result<Fr, CompactError> {
+        Ok((x)
+            * (Fr::from_le_bytes(&[
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00,
+            ])
+            .expect("Field literal is canonical")))
+    }
+
+    pub fn add_uint_field_operand(x: Fr, u: u8) -> Result<Fr, CompactError> {
+        Ok((x) + (Fr::from((u) as u64)))
+    }
+
+    pub fn nested_field_arith(x: Fr) -> Result<Fr, CompactError> {
+        Ok(((x) + (Fr::from(1u64))) * ((x) + (Fr::from(2u64))))
+    }
 }

@@ -220,3 +220,54 @@ fn wide_field_literals_never_overflow_u64() {
     assert!(pure_circuits::cmp_huge_field_literal(huge).expect("cmp huge"));
     assert!(!pure_circuits::cmp_huge_field_literal(Fr::from(0u64)).expect("cmp zero"));
 }
+
+/// Field arithmetic operands are materialised as `Fr` at the typechecker's
+/// recorded coercion target. Before the fix, `arith-binop-rust`'s FIELD branch
+/// (`mbits = #f`) had no width cast to normalise its operands, so `x + 1`
+/// emitted `(x) + (1)` — an untyped Rust integer operand on an `Fr`, which
+/// `compactc` accepted (exit 0) but `cargo build` rejected (E0308); a literal
+/// above `u64::MAX` additionally overflowed (E0080). A `Uint` operand had the
+/// same gap (`(x) + (u: u8)`). Each operator, both literal sides, the
+/// "small" and above-`u64::MAX` rungs, a `Uint` operand, and nested
+/// arithmetic are covered.
+#[test]
+fn field_arithmetic_operands_are_materialised() {
+    let x = Fr::from(5u64);
+    let huge = pure_circuits::ret_huge_field_literal().expect("huge literal");
+
+    // Small literal, both operand sides and `+` / `-`.
+    assert_eq!(
+        pure_circuits::add_field_literal(x).expect("add"),
+        Fr::from(6u64)
+    );
+    assert_eq!(
+        pure_circuits::lit_lhs_field_literal(x).expect("add lhs"),
+        Fr::from(6u64)
+    );
+    assert_eq!(
+        pure_circuits::sub_field_literal(x).expect("sub"),
+        Fr::from(4u64)
+    );
+
+    // A literal above `u64::MAX` takes the byte rung inside the operand.
+    assert_eq!(
+        pure_circuits::add_huge_field_literal(x).expect("add huge"),
+        x + huge
+    );
+    assert_eq!(
+        pure_circuits::mul_huge_field_literal(x).expect("mul huge"),
+        x * huge
+    );
+
+    // A `Uint` operand is coerced losslessly to Field.
+    assert_eq!(
+        pure_circuits::add_uint_field_operand(x, 7u8).expect("add uint"),
+        x + Fr::from(7u64)
+    );
+
+    // Nested arithmetic materialises every operand at every level.
+    assert_eq!(
+        pure_circuits::nested_field_arith(x).expect("nested"),
+        (x + Fr::from(1u64)) * (x + Fr::from(2u64))
+    );
+}

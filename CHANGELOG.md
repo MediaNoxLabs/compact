@@ -30,6 +30,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   then the little-endian `Fr::from_le_bytes` constructor for the range above
   `u128::MAX`. The `u64` rung keeps previously-correct output byte-identical.
 
+- **A `Field` literal or `Uint` operand of `+`/`-`/`*` was emitted as an
+  un-typed Rust integer.** The FIELD branch of `arith-binop-rust` (`mbits = #f`)
+  has no width cast to normalise its operands, so `return x + 1;` in a `Field`
+  circuit emitted `(x) + (1)` — and a `Uint` operand `(x) + (u: u8)` — which
+  `Fr` cannot absorb (it has no `Add<{integer}>` impl), failing `cargo build`
+  with E0308 while `compactc` exited 0; a literal above `u64::MAX` additionally
+  overflowed the emitted literal. Each `Field` arithmetic operand is now
+  materialised from its typechecker `safe-cast` target as an `Fr`
+  (`field-literal-rust` for a literal, `Fr::from((x) as uN)` for a `Uint`); the
+  unsigned branch keeps its existing `mbits` cast and is byte-identical.
+
 - **Mixed minimal-width comparison operands were peeled instead of widened.**
   `q * 4` on `q: Uint<32>` range-types to `u64`; compared against a `Uint<32>`
   value, the typechecker wraps the narrower operand and the emitter peeled the

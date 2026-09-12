@@ -1,33 +1,32 @@
-# Proposal: fix-ternary-expression-codegen
-
 ## Why
 
-`compactc --target rust` rejects conditional (ternary) expressions wherever they appear as a sub-expression rather than in tail/return position. Real third-party code hits this today: the `midnight-verifiable-credential-digital-passport` contract fails with `pure-circuit-body-emission: no walker shape matched pure circuit body` (5 sites, 3 syntactic positions), and the same construct fails in impure circuits (`circuit-body-emission`) and constructors (a location-less `expr-variant` error). The TS backend already compiles all of these, so the rust backend is the divergent one; `doc/rust-codegen-user-guide.md:324` already (incorrectly) claims ternary is supported.
+`compactc --target rust` rejects conditional (ternary) expressions wherever they appear as a sub-expression rather than in tail/return position. Real third-party code hits this: the digital-passport contract fails at 5 sites in 3 syntactic positions, and the TS backend compiles all of them, so the Rust backend is the divergent one. PR #70 attempted this fix as "one clause" plus per-position patches and grew to ~10 compiler review-fix commits, because each new shape (both-literal arms, mixed arms, Uint-into-Field arms, struct arms, streaming route, ledger width) had to be patched at every use site. With `type-directed-expression-coercion` landed, the ternary fix becomes what it should have been: **one `(if …)` clause that renders each arm through the typed entry**, so type/width correctness is inherited rather than re-specified per position.
 
 ## What Changes
 
-- Add the missing `(if c e1 e2)` clause to `expr-rust` (`compiler/rust-passes-emit.ss`), the shared rust expression renderer — fixing ternaries in const-RHS, assert-argument, interior-operand, and constructor positions in one clause, mirroring the TS clause at `typescript-passes.ss:2850`.
-- Add the corresponding recursive arm to `expr-supported?` (`compiler/rust-passes-walker.ss`) so impure/streaming bodies admit ternaries (pure bodies need no walker change).
-- Emission must be **lazy** per the language spec (`compiler/compact-reference-proto.mdx:2114`: "only one of e₁ and e₂ is evaluated"): a Rust `if` expression, never eager both-branches evaluation; branch-local underflow guards (`seq` blocks) must render inside the taken branch only.
-- New neutral fixture `examples/ternary_cond_fixture.compact` + generated crate `tests-e2e-rust/contracts/ternary-cond-fixture/`, registered per the full AGENT.md §5.1 recipe (workspace member, dev-dep, `codegen_regression.rs` FIXTURES row), with an executing test that pins lazy evaluation (the `c = 9` / `c > 5 ? c - 10 : c` case must not trip the underflow assert) and covers pure + impure + constructor positions, nested/struct/enum branch values, and return-position regression.
-- Version bump to 0.31.117 with full embed-site sweep (`compiler/compiler-version.ss`, `flake.nix`, `doc/ledger-adt.mdx` via `./compiler/go`, grep for old triple) + CHANGELOG entry under `### Fixed`.
-- Docs sweep: re-run the live-count recipe in `docs/rust-backend-limitations.md`; `doc/rust-codegen-user-guide.md`'s ternary row becomes true (no text change expected).
+- Add the `(if c e1 e2)` clause to `expr-rust`, mirroring the TS clause (`typescript-passes.ss:2850`): render a Rust `if` expression, with each arm rendered by `expr-rust-typed` against the expected type supplied by the use position; `ctor-expr-rust` and the streaming renderers inherit it. No per-position coercion logic.
+- Add the recursive `(if …)` arm to `expr-supported?` so impure/streaming bodies admit ternaries.
+- Preserve laziness exactly: only the selected branch is evaluated; branch-local `seq` underflow guards render inside the taken arm.
+- New neutral fixture `examples/ternary_cond_fixture.compact` + crate registered per the full recipe (workspace member, **`tests-e2e-rust` dev-dependency**, `FIXTURES` row), with executing tests and TS reference captures, plus an explicit `route × position × value-shape` coverage matrix (below) where every reachable cell has a probe and every unsupported cell is a documented refusal — never a blank.
+- Ledger-write cells additionally get a serialized **state-byte** parity check against the TS reference (decoded-value checks cannot see alignment divergence).
+- Flip the ternary oracle probes from `vendor-digital-passport-harness` from REJECTION to ACCEPTION.
+- Version 0.31.118 with the full embed-site sweep + CHANGELOG entry.
 
-Not breaking: no frontend/typechecker/TS-backend change, no language-version or runtime change (verified against precedent commit `8018e02`, the structurally identical G1 fix).
+Not breaking: no frontend/typechecker/TS-backend/language/runtime change.
 
 ## Capabilities
 
 ### New Capabilities
 
-- `rust-codegen/conditional-expressions`: the rust backend emits Compact conditional (ternary) expressions with lazy branch evaluation, in all body routes (pure circuit, impure circuit, constructor) and all sub-expression positions.
+- `rust-codegen/conditional-expressions`: the Rust backend emits Compact conditional (ternary) expressions with lazy branch evaluation, in all body routes and all sub-expression positions, with type/width correctness inherited from `rust-codegen/type-directed-coercion`.
 
 ### Modified Capabilities
 
-(none — `openspec/specs/` is empty; this change bootstraps the capability tree)
+(none)
 
 ## Impact
 
-- `compiler/rust-passes-emit.ss` (new `expr-rust` clause), `compiler/rust-passes-walker.ss` (new `expr-supported?` arm).
-- New example + fixture crate + test files; `root Cargo.toml`, `tests-e2e-rust/Cargo.toml`, `Cargo.lock`, `codegen_regression.rs` registrations.
-- `compiler/compiler-version.ss` 0.31.116 → 0.31.117, `flake.nix`, `doc/ledger-adt.mdx`, `CHANGELOG.md`.
-- Downstream enabler for `add-digital-passport-dogfood-fixture` (its crate cannot be generated until this lands).
+- `compiler/rust-passes-emit.ss` (one `expr-rust` clause), `compiler/rust-passes-walker.ss` (`expr-supported?` arm).
+- New example + fixture crate + test files; `root Cargo.toml`, `tests-e2e-rust/Cargo.toml`, `Cargo.lock`, `codegen_regression.rs`.
+- `compiler/compiler-version.ss` 0.31.117 → 0.31.118, `flake.nix`, `doc/ledger-adt.mdx`, `CHANGELOG.md`.
+- Depends on `type-directed-expression-coercion` and `vendor-digital-passport-harness` (whose probes this flips). Enables the whole-contract dogfood compile (together with `fix-mixed-width-operand`).

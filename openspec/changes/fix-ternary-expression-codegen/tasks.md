@@ -1,33 +1,32 @@
 # Tasks: fix-ternary-expression-codegen
 
-All compiler/test work happens inside `nix develop` (AGENT.md §1 rule 2). Byte-parity is local-only — never skip AGENT.md §2.1 step 3 (`nix build .#compactc`) before running tests.
+Prerequisite: `type-directed-expression-coercion` merged. All work inside `nix develop`; `nix build .#compactc` before any byte-parity test.
 
-## 1. Compiler fix
+## 1. Compiler fix (one clause, no per-position logic)
 
-- [ ] 1.1 Add the `(if ,src ,c ,e1 ,e2)` clause to `expr-rust` in `compiler/rust-passes-emit.ss`, mirroring the TS clause at `typescript-passes.ss:2850`: render `if <cond> { <e1> } else { <e2> }`, recursing through the existing condition routing; branch `seq` guard blocks render via the existing `seq` clause. Verify: `nix build .#compactc` succeeds and a minimal `const x = c <= 2 ? c - 1 : c;` pure circuit compiles under `result/bin/compactc --target rust --skip-zk`.
-- [ ] 1.2 Add the recursive `(if ...)` arm to `expr-supported?` in `compiler/rust-passes-walker.ss` (before the `[else #f]`). Verify: a ternary in a **ledger-writing circuit** and in a **constructor** both compile (previously `circuit-body-emission` / `expr-variant`).
-- [ ] 1.3 Confirm laziness in the emitted bytes by inspection: the underflow guard (`compact_assert!(...)`) for a branch subtraction appears **inside** the conditional's branch arm, never hoisted. Verify: read the generated Rust for the 1.1 minimal case.
+- [ ] 1.1 Add the `(if ,src ,c ,e1 ,e2)` clause to `expr-rust` in `compiler/rust-passes-emit.ss`, mirroring the TS clause at `typescript-passes.ss:2850`: render `if <cond> { <arm1> } else { <arm2> }` with each arm via `expr-rust-typed` at the expected type supplied by the use position; branch `seq` guard blocks render via the existing `seq` clause **inside the arm**. Verify: a minimal `const x = c <= 2 ? c - 1 : c;` pure circuit compiles under `result/bin/compactc --target rust --skip-zk`.
+- [ ] 1.2 Add the recursive `(if ...)` arm to `expr-supported?` in `compiler/rust-passes-walker.ss` (before `[else #f]`). Verify: a ternary in a ledger-writing circuit and in a constructor both compile.
+- [ ] 1.3 Confirm **no** ternary-specific coercion was added: `git diff` touches only the clause and the gate arm (no literal/width logic). Verify: grep the diff for coercion helpers returns nothing new.
+- [ ] 1.4 Confirm laziness in the emitted bytes: the underflow guard for a branch subtraction appears **inside** the arm, never hoisted. Verify: read the generated Rust for 1.1.
 
-## 2. Neutral fixture (full §5.1 recipe)
+## 2. Coverage matrix (every reachable cell has a probe)
 
-- [ ] 2.1 Author `examples/ternary_cond_fixture.compact` (with Apache header) covering: const-RHS ternary with guarded `-` in the taken-conditional branch (`pick(c) { return c > 5 ? c - 10 : c; }`), ternary in an assert argument, ternary as arithmetic operand, boolean `&&`/`||` branches, nested ternary, struct- and enum-valued branches, return-position ternary (regression), the same const ternary in an impure circuit and in a constructor. Verify: file parses and `compactc --target ts --skip-zk` compiles it.
-- [ ] 2.2 Generate the crate: `result/bin/compactc --target rust --skip-zk examples/ternary_cond_fixture.compact tests-e2e-rust/contracts/ternary-cond-fixture/`. Verify: `lib.rs` emitted, rustfmt-clean, zero `unimplemented!`.
-- [ ] 2.3 Register: root `Cargo.toml` workspace member, `tests-e2e-rust/Cargo.toml` dev-dep, `codegen_regression.rs` FIXTURES row `("ternary_cond_fixture.compact", "ternary-cond-fixture")`. Verify: `cargo build -p tests-e2e-rust --tests --locked` passes.
-- [ ] 2.4 Write `tests-e2e-rust/tests/ternary_cond_fixture.rs` executing-test modeled on `guarded_assert_arith_fixture.rs`: laziness oracle (invoke `pick(9)` → `Ok(9)`, no underflow assert; `pick(6)` → computes) plus each circuit's pass and `Err(AssertionFailed)` sides; constructor/impure variants invoked too. Verify: `cargo test -p tests-e2e-rust ternary_cond` green.
-- [ ] 2.5 TS reference capture per recipe (`fixtures/capture-ternary-cond-fixture.mjs` → JSON) and byte-parity assertions in the executing test, mirroring the closest existing capture fixture. Verify: capture script runs and parity assertions pass.
+- [ ] 2.1 Author probes for **routes × positions**: {pure, impure-walker, impure-streaming, constructor} × {const RHS annotated, const RHS unannotated/seq-lifted, return tail (pure stmt-lifted / I3b-4 / A19 chain), assert arg, arith operand, comparison operand, call arg (pure/witness/ctor), struct member, vector element, native arg, nested if, ledger cell write, inline write value}. Verify: a table in the PR/notes shows each cell checked or explicitly refused (with a `docs/rust-backend-limitations.md` link).
+- [ ] 2.2 Author probes for **value shapes** in each applicable position: {both-literal, mixed literal/expr, Uint arm into Field, differing Uint widths, Field-typed arms, struct-valued (non-Copy), enum-valued, literal > `i32::MAX`, literal > `u64::MAX` (Uint<128>), branch-local underflow guard}. Verify: each shape has an executing assertion.
+- [ ] 2.3 Author `examples/ternary_cond_fixture.compact` (Apache header) collecting the probes; verify `compactc --target ts --skip-zk` compiles it.
+- [ ] 2.4 Generate the crate; register it (root workspace member, `tests-e2e-rust` **dev-dependency**, `FIXTURES` row). Verify: `cargo build -p tests-e2e-rust --tests --locked` compiles it.
+- [ ] 2.5 Write `tests-e2e-rust/tests/ternary_cond_fixture.rs` with an executing assertion per probe: laziness both ways (`pick(9)` → `Ok(9)` no trap; `pick(6)` → computes), each circuit's pass and `Err(AssertionFailed)` sides, and the constructor/impure variants. Verify: `cargo test -p tests-e2e-rust ternary_cond` green.
+- [ ] 2.6 Add TS reference captures (`fixtures/capture-ternary-cond-fixture.mjs` → JSON) and a **serialized state-byte** parity assertion for every ledger-write cell. Verify: parity assertions pass and would fail if the destination width were wrong.
 
-## 3. Regression sweep & gates
+## 3. Flip the oracle probes
 
-- [ ] 3.1 Regen **every** existing fixture (`codegen_regression`) and inspect `git diff tests-e2e-rust/contracts/` — any unrelated diff is an unintended consequence: STOP per AGENT.md §5.2. Verify: byte-parity green across the whole FIXTURES table, zero unexpected diffs.
-- [ ] 3.2 Local gates: `nix develop --command cargo fmt --all --check`, clippy for touched crates, full `cargo test -p midnight-compact-runtime -p tests-e2e-rust` (AGENT.md §2.1). Verify: all green locally before any push.
+- [ ] 3.1 Convert the ternary-site probes added by `vendor-digital-passport-harness` from REJECTION to ACCEPTION (they must now compile). Verify: `rejection_corpus` green with the fixed compiler; the probes assert successful emission.
+- [ ] 3.2 Confirm the mixed-width oracle probe was already flipped by `type-directed-expression-coercion` and is not left as a stale REJECTION. Verify: `grep` finds no mixed-width REJECTION entry.
 
-## 4. Version, docs, changelog
+## 4. Regression sweep, traces, version
 
-- [ ] 4.1 Bump `compiler/compiler-version.ss` to 0.31.117, `flake.nix` `packages.compactc.version`, regenerate `doc/ledger-adt.mdx` via `./compiler/go`, and grep-sweep the old triple (`compiler/ flake.nix doc/ledger-adt.mdx`). Verify: zero stale `0.31.116` embeds.
-- [ ] 4.2 CHANGELOG.md: new `## [Toolchain 0.31.117, language 0.23.103, runtime 0.16.100]` heading under `### Fixed`, describing the ternary codegen gap (5 sites / 3 positions / 3 body routes) and the new fixture. Verify: `changelog-check` preconditions (CHANGELOG.md + compiler-version.ss both in diff).
-- [ ] 4.3 Docs sweep: re-run the live-count recipe in `docs/rust-backend-limitations.md` and update counts; confirm `doc/rust-codegen-user-guide.md` ternary row is now accurate. Verify: counts match a fresh grep.
-- [ ] 4.4 Commit signed+DCO (`git commit -S -s`), compiler change + regenerated fixtures in the same logical commit set, on branch `feature/fix-ternary-expression-codegen` (cut from `codegen-rust`, merges into `digital-passport-patch`). Verify: `git log --show-signature` clean.
-
-## 5. Dogfood cross-check (evidence, not implementation)
-
-- [ ] 5.1 Compile the dogfood contract sources (once vendored by `add-digital-passport-dogfood-fixture`, or from the probe copy under `/tmp/passport-probe`) with the fixed compiler: `--target rust --skip-zk` and `--target ts --skip-zk` both exit 0. Verify: 3,509±lines `lib.rs`, zero `unimplemented!` — confirming this change is sufficient for change 2.
+- [ ] 4.1 Regenerate **every** fixture and classify each diff per AGENT.md §5.2; STOP on unexplained diffs. Verify: `codegen_regression` green.
+- [ ] 4.2 Traceability: map every `#### Scenario:` in the delta spec to a named test/command. Verify: no scenario without a test, no test without a scenario.
+- [ ] 4.3 Mutation check: temporarily revert the `if` clause (or the `expr-supported?` arm) and confirm a specific matrix test goes red; restore. Verify: recorded evidence.
+- [ ] 4.4 Local gates: `cargo fmt --all --check`, touched-crate clippy, full `cargo test -p midnight-compact-runtime -p tests-e2e-rust`. Verify: all green.
+- [ ] 4.5 Bump 0.31.117 → 0.31.118 (`compiler-version.ss`, `flake.nix`, regenerate `doc/ledger-adt.mdx`, grep old triple) + CHANGELOG `### Fixed` entry. Verify: zero stale embeds; `changelog-check` satisfied.

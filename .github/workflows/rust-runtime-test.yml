@@ -26,39 +26,46 @@ name: Rust runtime + e2e tests
 # build-compiler.yml and share the artifact with this lane via
 # `workflow_run`, instead of paying the Nix build per PR here.
 #
-# Trigger paths include the WHOLE `compiler/**` tree, not an enumerated subset
-# of pass files. Any compiler input can change emitted Rust — the pass chain is
-# frontend-passes -> analysis-passes / circuit-passes / config-params -> the
-# rust-passes-*.ss emitters, and the natives feed the emitter — so naming only
-# some files silently skipped this lane for changes to the ones it omitted.
-# Listing the tree keeps the byte-parity gate impossible to bypass by editing an
-# unlisted compiler source.
+# Triggering is fail-safe: this workflow runs for EVERY change except
+# documentation and planning artifacts that provably cannot affect the
+# compiler, the runtime crates, or the emitted Rust (see `paths-ignore`).
+# It must not be an allow-list of "inputs that matter": such a list is
+# impossible to keep complete and silently skipped the lane for every input it
+# failed to name. That already happened twice — first only
+# `compiler/rust-passes*.ss` / `compiler/passes.ss` were listed, so the rest of
+# the pass chain missed the gate; widening to the whole `compiler/**` tree was
+# still incomplete, because emitted Rust also depends on the TypeScript runtime
+# version (`runtime/package.json` -> `compiler/runtime-version.ss` ->
+# `check_runtime_version!`), the vendored Chez libraries in
+# `third_party/compiler/**`, and the compactc build recipe/toolchain pins in
+# `flake.nix` / `flake.lock`. Running by default is the only filter that cannot
+# miss a build input.
 
 on:
   pull_request:
-    paths:
-      - "runtime-rs/**"
-      - "runtime-rs-macros/**"
-      - "tests-e2e-rust/**"
-      # The whole compiler tree: see the trigger-paths note in the header.
-      - "compiler/**"
-      - "examples/**"
-      - "Cargo.toml"
-      - "Cargo.lock"
-      - ".github/workflows/rust-runtime-test.yml"
+    paths-ignore:
+      # Only content that provably cannot alter the compactc build or the Rust
+      # crates/tests: documentation and planning artifacts. Every other change
+      # runs the lane; see the fail-safe trigger note in the header.
+      - "**/*.md"
+      - "docs/**"
+      - "doc/**"
+      - "openspec/**"
+      - "meetings/**"
+      - "specification/**"
+      - "LICENSE"
   push:
     branches:
       - main
-    paths:
-      - "runtime-rs/**"
-      - "runtime-rs-macros/**"
-      - "tests-e2e-rust/**"
-      # The whole compiler tree: see the trigger-paths note in the header.
-      - "compiler/**"
-      - "examples/**"
-      - "Cargo.toml"
-      - "Cargo.lock"
-      - ".github/workflows/rust-runtime-test.yml"
+    paths-ignore:
+      # Same fail-safe list as `pull_request`; keep the two in sync.
+      - "**/*.md"
+      - "docs/**"
+      - "doc/**"
+      - "openspec/**"
+      - "meetings/**"
+      - "specification/**"
+      - "LICENSE"
   workflow_dispatch:
 
 permissions: {}

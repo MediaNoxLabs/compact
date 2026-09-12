@@ -45,6 +45,19 @@ on:
       # could skew the emitted Rust without running the gate. `compiler/**`
       # subsumes those narrower patterns.
       - "compiler/**"
+      # The compactc derivation is built from more than `compiler/**`, so the
+      # gate must run when any of those other inputs changes too:
+      #  - `_sources/generated.nix` / `nvfetcher.toml` supply the
+      #    nvfetcher-managed nanopass and rough-draft sources that `flake.nix`
+      #    puts on `CHEZSCHEMELIBDIRS`; `flake.lock` pins neither, so a source
+      #    bump can change the pass framework and the emitted Rust bytes.
+      #  - `third_party/compiler/**` supplies the lexer/parser libraries that
+      #    `compiler/lexer.ss` imports (`state-case`, `streams`) and
+      #    `compiler/parser.ss` includes (`ez-grammar`); the `compiler/**`
+      #    glob above does not match it.
+      - "_sources/**"
+      - "nvfetcher.toml"
+      - "third_party/compiler/**"
       - "examples/**"
       - "Cargo.toml"
       - "Cargo.lock"
@@ -63,6 +76,13 @@ on:
       - "runtime/**"
       - "tests-e2e-rust/**"
       - "compiler/**"
+      # Other inputs to the compactc derivation: nvfetcher-managed nanopass/
+      # rough-draft sources (see `_sources/generated.nix`, `nvfetcher.toml`)
+      # and the vendored compiler libraries under `third_party/compiler/**`.
+      # Kept in sync with the `pull_request` list above.
+      - "_sources/**"
+      - "nvfetcher.toml"
+      - "third_party/compiler/**"
       - "examples/**"
       - "Cargo.toml"
       - "Cargo.lock"

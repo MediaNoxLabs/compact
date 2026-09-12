@@ -32,11 +32,12 @@
 //      scenario table below drives every conditional-expression site of both
 //      helpers (the `yearAdjusted` / `isLeap` / `shiftedMonth` ternaries, the
 //      31-/30-day and February leap/non-leap branches, `beforeBirthdayThisYear`
-//      and the `? 1 : 0` age correction) and every `assert`-fail path. Both
-//      branches of each site are exercised — including the second disjunct of
-//      `beforeBirthdayThisYear` at the threshold boundary, so an off-by-one
-//      there (a dropped disjunct, or `day <=` for `day <`) changes a recorded
-//      outcome instead of slipping through undetected.
+//      and the `? 1 : 0` age correction) and every `assert`-fail path. Each
+//      disjunct of the `beforeBirthdayThisYear` disjunction is isolated at the
+//      accept/reject threshold (a first-disjunct-only reject, a
+//      second-disjunct-only reject, and a both-false accept), so dropping,
+//      negating, or widening either disjunct changes a recorded outcome
+//      instead of slipping through undetected.
 //
 //   2. One issuance/presentation/verification round-trip. Honest credential and
 //      presentation proofs are produced in-script with the contract's own
@@ -382,6 +383,18 @@ const civilDateScenarios = [
     'reject_before_birthday_disjunct',
     "currentDate.month == dateOfBirthDate.month && currentDate.day < dateOfBirthDate.day (beforeBirthdayThisYear second disjunct true) at the threshold boundary — 'Age predicate does not satisfy the requested threshold'",
     { dob: [1990, 5, 15], current: [2024, 5, 10], threshold: 34n },
+  ),
+  // The ONLY scenario that makes `beforeBirthdayThisYear`'s FIRST disjunct
+  // (`current.month < dob.month`) — and only that disjunct — true. The
+  // threshold equals the year difference, so the correct age (difference − 1)
+  // is one below it; a lowering that DROPS this disjunct, or negates its `<`
+  // to `>`, counts the full year and passes, so this is the first-disjunct
+  // detector. (Its sibling `accept_birthday_today_at_threshold`, month and day
+  // equal, is what catches a first disjunct widened to `<=`.)
+  defineScenario(
+    'reject_before_birthday_first_disjunct',
+    "currentDate.month < dateOfBirthDate.month (beforeBirthdayThisYear first disjunct alone true) at the threshold boundary — 'Age predicate does not satisfy the requested threshold'",
+    { dob: [1990, 5, 15], current: [2024, 3, 10], threshold: 34n },
   ),
 ];
 

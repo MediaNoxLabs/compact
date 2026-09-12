@@ -25,6 +25,14 @@ name: Rust runtime + e2e tests
 # Follow-up (MediaNoxLabs/compact#23): build compactc once in
 # build-compiler.yml and share the artifact with this lane via
 # `workflow_run`, instead of paying the Nix build per PR here.
+#
+# Trigger paths include the WHOLE `compiler/**` tree, not an enumerated subset
+# of pass files. Any compiler input can change emitted Rust — the pass chain is
+# frontend-passes -> analysis-passes / circuit-passes / config-params -> the
+# rust-passes-*.ss emitters, and the natives feed the emitter — so naming only
+# some files silently skipped this lane for changes to the ones it omitted.
+# Listing the tree keeps the byte-parity gate impossible to bypass by editing an
+# unlisted compiler source.
 
 on:
   pull_request:
@@ -32,9 +40,8 @@ on:
       - "runtime-rs/**"
       - "runtime-rs-macros/**"
       - "tests-e2e-rust/**"
-      - "compiler/rust-passes*.ss"
-      - "compiler/rust-passes/**"
-      - "compiler/passes.ss"
+      # The whole compiler tree: see the trigger-paths note in the header.
+      - "compiler/**"
       - "examples/**"
       - "Cargo.toml"
       - "Cargo.lock"
@@ -46,9 +53,8 @@ on:
       - "runtime-rs/**"
       - "runtime-rs-macros/**"
       - "tests-e2e-rust/**"
-      - "compiler/rust-passes*.ss"
-      - "compiler/rust-passes/**"
-      - "compiler/passes.ss"
+      # The whole compiler tree: see the trigger-paths note in the header.
+      - "compiler/**"
       - "examples/**"
       - "Cargo.toml"
       - "Cargo.lock"

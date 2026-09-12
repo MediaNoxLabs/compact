@@ -98,6 +98,43 @@ export pure circuit vectorEltWise(x: Uint<32>): Vector<2, Field> {
   return [x, x];
 }
 
+// Field literals above `u64::MAX`. Before type-directed coercion the
+// emitter hardcoded `Fr::from(<n>u64)`, so any Field literal past `u64::MAX`
+// emitted a `u64` literal that overflowed and failed `cargo build` while
+// `compactc` exited 0. The literal is now rendered at the Field width — the
+// `u128` rung up to `u128::MAX`, then the little-endian `Fr::from_le_bytes`
+// constructor for the `max-field` range above it. One circuit per
+// `field-literal-rust` call site (return tail reads both the u64 and the
+// larger rungs; the rest exercise the scalar and aggregate coercion sites).
+export pure circuit retU128FieldLiteral(): Field {
+  return (340282366920938463463374607431768211455 as Field);
+}
+
+export pure circuit retHugeFieldLiteral(): Field {
+  return (1606938044258990275541962092341162602522202993782792835301376 as Field);
+}
+
+export pure circuit constHugeFieldLiteral(): Field {
+  const x: Field = (1606938044258990275541962092341162602522202993782792835301376 as Field);
+  return x;
+}
+
+export pure circuit callArgHugeFieldLiteral(): Field {
+  return idf(1606938044258990275541962092341162602522202993782792835301376 as Field);
+}
+
+export pure circuit structMemberHugeFieldLiteral(): Box {
+  return Box { f: (1606938044258990275541962092341162602522202993782792835301376 as Field) };
+}
+
+export pure circuit vectorEltHugeFieldLiteral(): Vector<1, Field> {
+  return [(1606938044258990275541962092341162602522202993782792835301376 as Field)];
+}
+
+export pure circuit cmpHugeFieldLiteral(x: Field): Boolean {
+  return x == (1606938044258990275541962092341162602522202993782792835301376 as Field);
+}
+
 // Destination-typed ledger writes (the cell-write position). The hash and
 // curve-point writes put their coerced values into the committed state so
 // the executing test's byte-parity against the TS backend pins them too.

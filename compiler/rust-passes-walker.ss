@@ -198,8 +198,8 @@
       ;; native-id-ht / witness-id-ht / circuit-id-ht let call-site
       ;; classification distinguish pure-circuit / witness / native calls.
       ;; coerce-cmp-operand-rust: render a comparison (`==`/`!=`) operand,
-      ;; coercing a bare integer literal to `Fr::from(<n>u64)` when the
-      ;; comparison `type` is `Field` (tfield). The typer types integer
+      ;; coercing a bare integer literal to an `Fr` (`field-literal-rust`)
+      ;; when the comparison `type` is `Field` (tfield). The typer types integer
       ;; literals in a Field-typed comparison as `Field`, but expr-rust
       ;; renders `(quote 0)` as the bare Rust integer `0` — which then
       ;; fails to type-check against the `Fr` produced by the other
@@ -212,11 +212,11 @@
           ;; Bare-literal peel preserved for byte-stability (Rust unifies a
           ;; bare integer literal with the other operand's primitive width)
           ;; EXCEPT when the joined type is Field, where an integer literal
-          ;; can never unify with the `Fr` struct and must become
-          ;; `Fr::from(<n>u64)`.
+          ;; can never unify with the `Fr` struct and must be materialised as
+          ;; an `Fr` (`field-literal-rust`).
           [(literal-int-expr? expr)
            (if (type-is-tfield? type)
-               (format "Fr::from(~au64)" (literal-int-expr? expr))
+               (field-literal-rust (literal-int-expr? expr))
                (parameterize ([current-expr-expected-type #f])
                  (ctor-expr-rust expr local-binds
                                  native-id-ht witness-id-ht circuit-id-ht)))]

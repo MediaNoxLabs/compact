@@ -21,6 +21,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   coercion zero-extends losslessly (`Fr::from((x) as u64)`, or `as u128` above
   `u64::MAX`) and refuses above `u128::MAX` rather than truncating.
 
+- **A `Field` literal above `u64::MAX` emitted an out-of-range `u64` literal.**
+  Every literal coerced into a `Field` position was rendered `Fr::from(<n>u64)`,
+  so a legal `Field` literal past `u64::MAX` — a range that runs up to
+  `max-field` (~2^255) — produced a `u64` literal that overflowed and failed
+  `cargo build` while `compactc` exited 0. Literals now pick their width from
+  the `Field` domain at one point (`field-literal-rust`): `u64`, then `u128`,
+  then the little-endian `Fr::from_le_bytes` constructor for the range above
+  `u128::MAX`. The `u64` rung keeps previously-correct output byte-identical.
+
 - **Mixed minimal-width comparison operands were peeled instead of widened.**
   `q * 4` on `q: Uint<32>` range-types to `u64`; compared against a `Uint<32>`
   value, the typechecker wraps the narrower operand and the emitter peeled the

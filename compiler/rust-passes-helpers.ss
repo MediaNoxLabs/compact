@@ -670,6 +670,41 @@
                 "a Uint source range up to ~a has no lossless coercion to Field (exceeds u128)"
                 nat))))
 
+      ;; field-literal-rust: render a compile-time Field literal `n` (a
+      ;; non-negative exact integer) as a Rust `Fr` value. The lexer bounds
+      ;; every numeric literal to `max-field` and Field arithmetic folds
+      ;; modulo `max-field + 1`, so `n` is always a canonical field element.
+      ;;
+      ;; Small values go through the runtime's `u64` / `u128` `From` impls;
+      ;; the `u64` rung keeps the pre-existing `Fr::from(<n>u64)` bytes for
+      ;; the common small-literal case, so neutral output stays
+      ;; byte-identical. A Field literal above `u128::MAX` (legal — `max-field`
+      ;; is a ~2^255 value, well above `u128::MAX`) is rendered from its
+      ;; little-endian bytes via `Fr::from_le_bytes`, whose canonical-range
+      ;; check always succeeds for a lexer-admitted literal. Picking the
+      ;; width from the Field domain — rather than a fixed `u64` — is what
+      ;; stops `Fr::from(<n>u64)` from overflowing `u64` and failing
+      ;; `cargo build` while `compactc` exits 0.
+      (define (field-literal-rust n)
+        (cond
+          [(<= n 18446744073709551615) (format "Fr::from(~au64)" n)]
+          [(<= n 340282366920938463463374607431768211455)
+           (format "Fr::from(~au128)" n)]
+          [else
+           (format "Fr::from_le_bytes(&[~a]).expect(\"Field literal is canonical\")"
+             (join-rendered
+               (map (lambda (b)
+                      (let ([s (number->string b 16)])
+                        (format "0x~a"
+                          (if (fx= (string-length s) 1)
+                              (string-append "0" s)
+                              s))))
+                 (let loop ([n n] [i 0] [acc '()])
+                   (if (fx= i 32)
+                       (reverse acc)
+                       (loop (ash n -8) (fx+ i 1)
+                             (cons (bitwise-and n #xff) acc)))))))]))
+
       ;; render-inner-at: bind `expected` as the current expected type and
       ;; render a sub-expression. `materialize-at-type` owns the expected type
       ;; around every inner render: a scalar inner is rendered at its SOURCE
@@ -692,7 +727,7 @@
           [(tfield ,src^)
            (let ([lit (literal-int-expr? expr)])
              (cond
-               [lit (format "Fr::from(~au64)" lit)]
+               [lit (field-literal-rust lit)]
                [else
                 (let ([nat (type-peel-tunsigned source-type)])
                   (and nat

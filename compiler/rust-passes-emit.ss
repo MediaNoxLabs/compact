@@ -622,7 +622,7 @@
       ;; coerce-literal-rhs-rendered: Prod-9/Prod-13 — typed integer literals
       ;; need to be rendered with the correct Rust type so the ledger-write
       ;; builder's `Into<AlignedValue>` bound is satisfied.
-      ;;   - `tfield`: wrap as `Fr::from(<n>u64)`.
+      ;;   - `tfield`: materialise as an `Fr` (`field-literal-rust`).
       ;;   - `tunsigned`: append the width suffix (`<n>u8` .. `<n>u128`) so
       ;;     the literal types as the same Rust primitive the ledger field
       ;;     uses. Without this, `ledger v: Uint<64>; v = 42;` lowered into
@@ -634,7 +634,7 @@
         (cond
           [(type-is-tfield? decl-type)
            (let ([n (literal-int-expr? rhs)])
-             (and n (format "Fr::from(~au64)" n)))]
+             (and n (field-literal-rust n)))]
           [(type-peel-tunsigned decl-type) =>
            (lambda (nat)
              (let ([n (literal-int-expr? rhs)])
@@ -1911,15 +1911,16 @@
       ;; own minimal Rust width. A bare integer literal is peeled (rendered
       ;; un-suffixed) so it unifies with the other operand through Rust
       ;; inference — EXCEPT when the join is Field, where an integer literal
-      ;; can never unify with the `Fr` struct and must become
-      ;; `Fr::from(<n>u64)`. `joined-type` is the comparison node's own type
+      ;; can never unify with the `Fr` struct and must be materialised as an
+      ;; `Fr` (`field-literal-rust`, which picks the lossless width).
+      ;; `joined-type` is the comparison node's own type
       ;; for `==`/`!=`; for ordering nodes (which carry only `bits`) it is
       ;; recovered from whichever operand the typer wrapped.
       (define (cmp-operand-rust expr joined-type native-id-ht)
         (cond
           [(literal-int-expr? expr)
            (if (type-is-tfield? joined-type)
-               (format "Fr::from(~au64)" (literal-int-expr? expr))
+               (field-literal-rust (literal-int-expr? expr))
                (expr-rust-typed expr #f native-id-ht))]
           [else (expr-rust-typed expr joined-type native-id-ht)]))
 
@@ -1935,15 +1936,15 @@
       ;; return type, preserving the bare-literal peel for primitive (Uint)
       ;; returns — Rust infers the literal from the function's return type,
       ;; so suffixing would churn a both-literal ternary's arms — while a
-      ;; Field return coerces the literal to `Fr::from(<n>u64)` (an integer
-      ;; can never unify with the `Fr` struct). `render-at` is a one-argument
+      ;; Field return materialises the literal as an `Fr` (`field-literal-rust`;
+      ;; an integer can never unify with the `Fr` struct). `render-at` is a one-argument
       ;; thunk taking the expected type so this composes over either the
       ;; expression (`expr-rust`) or constructor (`ctor-expr-rust`) renderer.
       (define (render-tail-at expr return-type render-at)
         (cond
           [(literal-int-expr? expr)
            (if (type-is-tfield? return-type)
-               (format "Fr::from(~au64)" (literal-int-expr? expr))
+               (field-literal-rust (literal-int-expr? expr))
                (render-at #f))]
           [else (render-at return-type)]))
 
@@ -1976,7 +1977,7 @@
               (let ([expected (current-expr-expected-type)])
                 (cond
                   [(and expected (type-is-tfield? expected))
-                   (format "Fr::from(~au64)" datum)]
+                   (field-literal-rust datum)]
                   [(and expected (type-peel-tunsigned expected)) =>
                    (lambda (nat) (format "~a~a" datum (uint-rust-width nat)))]
                   [else (format "~a" datum)]))]

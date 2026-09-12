@@ -176,3 +176,47 @@ fn every_coerced_position_round_trips() {
         [Fr::from(7u64), Fr::from(7u64)]
     );
 }
+
+/// Field literals above `u64::MAX` are rendered at the Field width — the
+/// `u128` rung, then the little-endian byte constructor above `u128::MAX` —
+/// rather than a fixed `u64` literal that overflowed and failed
+/// `cargo build` while `compactc` exited 0. Each literal-coercion call site
+/// is exercised so no site can regress to the `u64`-only form.
+#[test]
+fn wide_field_literals_never_overflow_u64() {
+    // `u128::MAX` — the top of the `u128` rung.
+    assert_eq!(
+        pure_circuits::ret_u128_field_literal().expect("u128 rung"),
+        Fr::from(u128::MAX)
+    );
+
+    // 2^200 — above `u128::MAX`, so it takes the byte constructor. Pinning
+    // the little-endian bytes proves the value is exactly the literal, not a
+    // wrapped or truncated one.
+    let huge = pure_circuits::ret_huge_field_literal().expect("huge literal");
+    let mut expected = [0u8; 32];
+    expected[25] = 1; // 2^200 = 0x01 << 200
+    assert_eq!(huge.as_le_bytes(), expected.to_vec());
+
+    // The remaining literal-coercion sites carry the same value.
+    assert_eq!(
+        pure_circuits::const_huge_field_literal().expect("const"),
+        huge
+    );
+    assert_eq!(
+        pure_circuits::call_arg_huge_field_literal().expect("call arg"),
+        huge
+    );
+    assert_eq!(
+        pure_circuits::struct_member_huge_field_literal()
+            .expect("struct member")
+            .f,
+        huge
+    );
+    assert_eq!(
+        pure_circuits::vector_elt_huge_field_literal().expect("vector elt"),
+        [huge]
+    );
+    assert!(pure_circuits::cmp_huge_field_literal(huge).expect("cmp huge"));
+    assert!(!pure_circuits::cmp_huge_field_literal(Fr::from(0u64)).expect("cmp zero"));
+}

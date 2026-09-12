@@ -32,7 +32,11 @@
 //      scenario table below drives every conditional-expression site of both
 //      helpers (the `yearAdjusted` / `isLeap` / `shiftedMonth` ternaries, the
 //      31-/30-day and February leap/non-leap branches, `beforeBirthdayThisYear`
-//      and the `? 1 : 0` age correction) and every `assert`-fail path.
+//      and the `? 1 : 0` age correction) and every `assert`-fail path. Both
+//      branches of each site are exercised — including the second disjunct of
+//      `beforeBirthdayThisYear` at the threshold boundary, so an off-by-one
+//      there (a dropped disjunct, or `day <=` for `day <`) changes a recorded
+//      outcome instead of slipping through undetected.
 //
 //   2. One issuance/presentation/verification round-trip. Honest credential and
 //      presentation proofs are produced in-script with the contract's own
@@ -271,6 +275,15 @@ const civilDateScenarios = [
     '30-day month branch (current and birth month both April)',
     { dob: [1990, 4, 15], current: [2024, 4, 30] },
   ),
+  // Birthday exactly today: both disjuncts of `beforeBirthdayThisYear` are
+  // false, so the full year counts. The threshold is the exact year difference,
+  // so widening the second disjunct from `day <` to `day <=` drops the age by
+  // one and flips this accept to a reject — the `<=` mutation detector.
+  defineScenario(
+    'accept_birthday_today_at_threshold',
+    'currentDate.month == dateOfBirthDate.month && currentDate.day == dateOfBirthDate.day (both beforeBirthdayThisYear disjuncts false: full year counted); threshold == year difference',
+    { dob: [1990, 5, 15], current: [2024, 5, 15], threshold: 34n },
+  ),
 
   // --- assert-fail paths of assertValidDigitalPassportAgePredicate ---
   defineScenario(
@@ -359,6 +372,16 @@ const civilDateScenarios = [
     'reject_age_below_threshold',
     "assert(ageInYears >= presentation.disclosed.ageThresholdYears) — 'Age predicate does not satisfy the requested threshold'",
     { threshold: 40n },
+  ),
+  // The ONLY scenario that makes `beforeBirthdayThisYear`'s second disjunct
+  // (`current.month == dob.month && current.day < dob.day`) true. The threshold
+  // equals the year difference, so the correct age (difference − 1) is one
+  // below it; a lowering that DROPS this disjunct counts the full year and
+  // passes, so this scenario is the drop detector.
+  defineScenario(
+    'reject_before_birthday_disjunct',
+    "currentDate.month == dateOfBirthDate.month && currentDate.day < dateOfBirthDate.day (beforeBirthdayThisYear second disjunct true) at the threshold boundary — 'Age predicate does not satisfy the requested threshold'",
+    { dob: [1990, 5, 15], current: [2024, 5, 10], threshold: 34n },
   ),
 ];
 

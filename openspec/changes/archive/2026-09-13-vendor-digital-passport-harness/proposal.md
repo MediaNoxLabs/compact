@@ -25,4 +25,4 @@ The Rust backend's correctness has been validated only against fixtures we autho
 - New vendored tree `examples/dogfood/digital-passport-credential/` (`.compact` only; 22 files incl. `PROVENANCE.md`), `header_config.json`.
 - `tests-e2e-rust/fixtures/` (capture script + JSON), `tests-e2e-rust/tests/rejection_corpus.rs` (oracle probes).
 - No compiler change, no `compiler-version.ss` bump → request the maintainer-applied `skip-changelog` label.
-- Depends on `compiler-backed-ci-gate` (the probes must run in CI to be enforced). Prerequisite for `type-directed-expression-coercion`, `fix-ternary-expression-codegen`, `fix-mixed-width-operand`, and `add-digital-passport-dogfood-fixture`.
+- Depends on `compiler-backed-ci-gate` (the probes must run in CI to be enforced). Prerequisite for `type-directed-expression-coercion`, `fix-ternary-expression-codegen`, and `add-digital-passport-dogfood-fixture`.

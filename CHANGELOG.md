@@ -9,6 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _No changes yet._
 
+## [Toolchain 0.34.1113, language 0.26.0, runtime 0.19.101] — the fork reserves patch numbers ≥ 1000 (2026-09-12)
+
+### Changed
+
+- **The fork's toolchain patch numbers now start at 1000.** Upstream releases into `0.34.x`
+  and this fork bumped patch numbers in the same space, so the two could and did
+  collide: the previous release left **two `0.34.101` entries** in this file —
+  upstream's cross-contract-call release and our "upstream 0.34 merged into the
+  Rust-codegen fork" — distinguishable only by their runtime version.
+
+  Nothing in the old scheme prevented that; being ahead of upstream's patch
+  number was luck, not design.
+
+  A fork patch band of `1000+` is disjoint from anything upstream will publish,
+  so the collision cannot recur, and the offset is a constant: `0.34.1113` is
+  the fork's 113th toolchain build against upstream's `0.34` line.
+
+  **Bumping the major to `10` was tried first and rejected.** It breaks the
+  common idiom `pragma compiler_version >= x && < 0.99.0`: `10.34.113` does not
+  satisfy `< 0.99.0`, so every contract upper-bounding below `1.0` would stop
+  compiling. Four test groups caught it — `print-zkir`, `print-zkir-v3` and
+  `save-manifest` — whose fixtures declare exactly that pragma.
+
+  The patch band avoids this because `< 0.99.0` constrains the **minor**, which
+  is unchanged, and leaves the patch unbounded.
+
 ## [Toolchain 0.34.113, language 0.26.0, runtime 0.19.101] — merge upstream `c47230cc` (2026-09-11)
 
 ### Changed

@@ -54,13 +54,13 @@ const afterInitContractState = initResult.currentContractState;
 const afterInitHex = Buffer.from(afterInitContractState.serialize()).toString('hex');
 
 // Build a CircuitContext from the post-init state so we can call set_*.
-let circuitCtx = cr.createCircuitContext(
-  'constructor',
-  cr.dummyContractAddress(),
-  emptyCpk,
-  afterInitContractState.data,
-  initResult.currentPrivateState,
-);
+let circuitCtx = cr.createCircuitContext({
+  circuitId: 'constructor',
+  contractAddress: cr.dummyContractAddress(),
+  coinPublicKeyOrZswapState: emptyCpk,
+  contractState: afterInitContractState.data,
+  privateState: initResult.currentPrivateState,
+});
 
 function rewrapEnvelope(prev, newChargedState) {
   const next = new cr.ContractState();

@@ -51,6 +51,27 @@
 // compiler is a hard failure, and callers that cannot supply one exclude
 // them by name (`-- --skip rust_backend_`, which is why both are named with
 // that prefix). See codegen_regression.rs for the same arrangement.
+//
+// ---------------------------------------------------------------------
+// Oracle probes (expected refusals)
+//
+// The vendored digital-passport contract is the oracle for the rust
+// backend's real-idiom gaps. `vendor-digital-passport-harness` records
+// each current gap as an executable expectation:
+//
+//   * `REJECTIONS` gains a minimal extract per real ternary site (const
+//     RHS, assert argument, interior arithmetic operand), plus the
+//     mixed-width comparison operand (`q * 4` vs a `Uint<32>` value) that
+//     the constructor route cannot lower. Each entry NAMES the fix change
+//     that flips it.
+//   * `rust_backend_dogfood_entry_is_refused_pre_fix` compiles the whole
+//     vendored entry in place (by repo-relative path — see
+//     `compile_repo_relative`) and asserts the end-to-end refusal with the
+//     kind task 2.2 recorded.
+//
+// The whole-entry gate is expected-fail by design: it flips to
+// "exits 0 + contract/lib.rs emitted" in `add-digital-passport-dogfood-fixture`,
+// once the ternary and mixed-width fix changes land.
 
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -93,6 +114,66 @@ const REJECTIONS: &[(&str, &str, &str)] = &[
          export circuit narrow(f: Field): Uint<64> { return f as Uint<64>; }\n",
         "pure-circuit-body-emission",
     ),
+    // ---- Vendored digital-passport oracle ----------------------------
+    //
+    // Minimal extracts at the contract's real gap sites. The upstream
+    // source (`examples/dogfood/digital-passport-credential/.../helpers.compact`)
+    // has a ternary in each of three syntactic positions and a mixed-width
+    // comparison operand; each extract below is the smallest form that
+    // still refuses, and each names the fix change that flips it.
+    //
+    // Ternary extracts — flipped by `fix-ternary-expression-codegen`
+    // (task 3.1 converts these from refusal to acceptance). Upstream sites:
+    //   const yearAdjusted = date.month <= 2 ? date.year - 1 : date.year;
+    //   assert(isLeap ? date.day <= 29 : date.day <= 28, "...");
+    //   ... - (beforeBirthdayThisYear ? 1 : 0);
+    // `expr-rust` has no `(if ...)` clause, so the pure-circuit emitter
+    // bails; its catch-all guard swallows the precise diagnostic and reports
+    // the generic body error (task 2.2's recorded failure), which is why the
+    // expected kind is `pure-circuit-body-emission`, not ternary-specific.
+    (
+        "ternary in const RHS [flips in fix-ternary-expression-codegen]",
+        "export ledger dummy: Uint<64>;\n\
+         export pure circuit ternaryConstRhs(c: Uint<32>): Uint<32> {\n\
+           const x = c <= 2 ? c - 1 : c;\n\
+           return x;\n\
+         }\n",
+        "pure-circuit-body-emission",
+    ),
+    (
+        "ternary in assert argument [flips in fix-ternary-expression-codegen]",
+        "export ledger dummy: Uint<64>;\n\
+         export pure circuit ternaryAssertArg(c: Uint<32>, flag: Boolean): [] {\n\
+           assert(flag ? c <= 29 : c <= 28, \"bounded\");\n\
+         }\n",
+        "pure-circuit-body-emission",
+    ),
+    (
+        "ternary as interior arithmetic operand [flips in fix-ternary-expression-codegen]",
+        "export ledger dummy: Uint<64>;\n\
+         export pure circuit ternaryArithOperand(a: Uint<32>, b: Uint<32>, flag: Boolean): Uint<32> {\n\
+           return a - b - (flag ? 1 : 0);\n\
+         }\n",
+        "pure-circuit-body-emission",
+    ),
+    // Mixed-width comparison operand — flipped by
+    // `type-directed-expression-coercion` (task 4.4 owns the flip). `q * 4`
+    // on `q: Uint<32>` range-types wider than `y`, so the typer wraps the
+    // narrower operand in a coercion wrapper; on the constructor route that
+    // lift is a construct the ctor walker cannot lower, so the body refuses.
+    // The uniform-width neighbour (`assert(q <= y, ...)`) in the SAME
+    // constructor shape ACCEPTS — pinned in ACCEPTIONS below — so this entry
+    // keys on the mixed width, not merely on a comparison in a constructor.
+    (
+        "mixed-width comparison operand [flips in type-directed-expression-coercion]",
+        "import CompactStandardLibrary;\n\
+         export ledger last: Uint<32>;\n\
+         constructor(q: Uint<32>, y: Uint<32>) {\n\
+           assert(q * 4 <= y, \"product must not exceed the bound\");\n\
+           last = disclose(y);\n\
+         }\n",
+        "ctor-body-emission",
+    ),
 ];
 
 /// Contracts that must still compile — the other half of the property.
@@ -101,7 +182,7 @@ const REJECTIONS: &[(&str, &str, &str)] = &[
 /// keyed on "is there a constructor statement?", which is true even when
 /// the author wrote no constructor (the front end synthesises one), so
 /// the first attempt rejected every constructor-less contract in the
-/// world. These three pin the boundary from the accepting side.
+/// world. These pin the boundary from the accepting side.
 const ACCEPTIONS: &[(&str, &str)] = &[
     ("no constructor at all", "export ledger n: Uint<64>;\n"),
     (
@@ -113,6 +194,19 @@ const ACCEPTIONS: &[(&str, &str)] = &[
         "export ledger admin: Uint<64>;\n\
          export ledger count: Uint<64>;\n\
          constructor() { admin = 42; count = 7; }\n",
+    ),
+    (
+        // The mixed-width comparison REJECTION's neighbour, from the
+        // accepting side: the SAME constructor with a uniform-width
+        // comparison compiles. Pins that the oracle entry keys on the
+        // mixed width, not on "a comparison in a constructor".
+        "uniform-width comparison in a constructor",
+        "import CompactStandardLibrary;\n\
+         export ledger last: Uint<32>;\n\
+         constructor(q: Uint<32>, y: Uint<32>) {\n\
+           assert(q <= y, \"bounded\");\n\
+           last = disclose(y);\n\
+         }\n",
     ),
 ];
 
@@ -177,6 +271,48 @@ fn compile(compactc: &Path, case: &str, source: &str) -> (Option<i32>, String, b
     (result.status.code(), text, emitted)
 }
 
+/// Compile a source file **in place** by repo-relative path, writing output
+/// to a fresh temp dir. Returns (exit code, stderr+stdout, whether a contract
+/// crate was emitted).
+///
+/// Unlike [`compile`], the probe is NOT relocated to a temp dir. That matters
+/// for the vendored dogfood entry, whose body resolves relative `include
+/// ../core-compact-staging/...` directives against the source file's directory:
+/// copying it elsewhere would break that resolution and report a bogus
+/// missing-include error instead of the real codegen refusal. Mirrors
+/// `codegen_regression.rs`'s invocation (`compactc --target rust --skip-zk
+/// <src> <outdir>`).
+fn compile_repo_relative(source_path: &str) -> (Option<i32>, String, bool) {
+    let root = find_repo_root(Path::new(env!("CARGO_MANIFEST_DIR")))
+        .expect("rejection corpus cannot run: no ancestor holds both examples/ and Cargo.toml");
+    let compactc = compiler();
+
+    let src = root.join(source_path);
+    assert!(
+        src.exists(),
+        "compile_repo_relative: source {} is missing",
+        src.display()
+    );
+    let out = std::env::temp_dir().join(format!("compact-repo-relative-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&out);
+
+    let result = Command::new(&compactc)
+        .args(["--target", "rust", "--skip-zk"])
+        .arg(&src)
+        .arg(&out)
+        .output()
+        .expect("run compactc");
+
+    let text = format!(
+        "{}{}",
+        String::from_utf8_lossy(&result.stderr),
+        String::from_utf8_lossy(&result.stdout)
+    );
+    let emitted = out.join("contract/lib.rs").exists();
+    let _ = std::fs::remove_dir_all(&out);
+    (result.status.code(), text, emitted)
+}
+
 #[test]
 fn rust_backend_rejects_what_it_cannot_lower() {
     let compactc = compiler();
@@ -219,4 +355,46 @@ fn rust_backend_still_accepts_neighbouring_shapes() {
         );
         assert!(emitted, "{case}: compactc exited 0 but emitted no lib.rs");
     }
+}
+
+/// Whole-entry expected-failure gate for the vendored digital-passport
+/// contract (task 4.3).
+///
+/// The inline `REJECTIONS` cases isolate each gap site; this gate pins the
+/// end-to-end state: compiling the real contract's entry with the pre-fix
+/// rust target refuses, emits no crate, and reports the kind task 2.2
+/// recorded (`pure-circuit-body-emission` at
+/// `src/digital-passport-credential/helpers.compact:257`). It compiles the
+/// entry **in place** (see [`compile_repo_relative`]) so the contract's
+/// relative core imports resolve; the temp-dir `compile()` cannot.
+///
+/// Expected-fail by design: it flips to "exits 0 + `contract/lib.rs`
+/// emitted" in `add-digital-passport-dogfood-fixture`, which registers the
+/// generated crate. That change (together with `fix-ternary-expression-codegen`
+/// and `type-directed-expression-coercion`) owns the flip; until then this
+/// gate must stay green by asserting the refusal.
+#[test]
+fn rust_backend_dogfood_entry_is_refused_pre_fix() {
+    let (code, text, emitted) = compile_repo_relative(
+        "examples/dogfood/digital-passport-credential/src/digital-passport-credential.compact",
+    );
+
+    assert_ne!(
+        code,
+        Some(0),
+        "the vendored dogfood entry compiled. The pre-fix rust target refuses it \
+         (the ternary/mixed-width gaps); a successful exit means this gate has \
+         flipped to acceptance — update it in `add-digital-passport-dogfood-fixture` \
+         rather than letting it pass silently.\n--- output ---\n{text}"
+    );
+    assert!(
+        !emitted,
+        "the refused dogfood entry still wrote contract/lib.rs; a refused compile \
+         must leave no output behind for a build to pick up."
+    );
+    assert!(
+        text.contains("pure-circuit-body-emission"),
+        "expected the diagnostic to name `pure-circuit-body-emission` (the kind \
+         recorded by task 2.2), so the refusal is greppable and attributable.\n--- output ---\n{text}"
+    );
 }

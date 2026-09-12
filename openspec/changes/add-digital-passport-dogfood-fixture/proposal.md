@@ -1,35 +1,29 @@
-# Proposal: add-digital-passport-dogfood-fixture
-
 ## Why
 
-The compiler team needs standing proof that this toolchain builds the real, named, third-party contracts it exists to serve — not just synthetic fixtures. The removal of the identity fixtures (`08decb1`) de-branded the corpus but also ended direct dogfooding. `midnight-verifiable-credential-digital-passport` is the natural first dogfood target: it is a production pure-circuit library that already exposed a real rust-backend gap (fixed by `fix-ternary-expression-codegen`), and its full source (plus staged npm core) is now available where the previously-removed `digital-passport` crate had none.
+With the upstream contract vendored and its gaps fixed (`vendor-digital-passport-harness`, `type-directed-expression-coercion`, `fix-ternary-expression-codegen`), the digital-passport contract must become a **first-class, standing regression fixture** rather than a one-off probe: its generated crate registered and byte-parity-gated, its compile/fmt/lint gated in CI, and its Rust↔TS behaviour pinned. This is the payoff of dogfooding — the toolchain continuously proves it builds a real, named, third-party production contract.
 
 ## What Changes
 
-- New third-party enclave `examples/dogfood/` (a new category under `examples/`, documented in AGENT.md §1): first tenant `examples/dogfood/digital-passport-credential/` carrying the upstream package's `src/` tree **verbatim** at pinned rev `cdeb860b`, plus `core-compact-staging/` staged from `@midnight-ntwrk/credential-compact@0.1.0-rc3` `dist/` (15 files, relative includes preserved).
-- `PROVENANCE.md` in the vendored dir recording upstream URL, rev, npm package + version, staging procedure (no-pnpm `curl` + `tar` variant included), refresh policy (explicit manual re-sync), and the deliberate relationship to `08decb1`'s de-branding.
-- Generated fixture crate `tests-e2e-rust/contracts/digital-passport-credential/` (`compact-contract-digital-passport-credential`), registered per the full recipe: root `Cargo.toml` workspace member, `tests-e2e-rust/Cargo.toml` dev-dep, FIXTURES row `("dogfood/digital-passport-credential/src/digital-passport-credential.compact", "digital-passport-credential")` (nested source path, did-05 precedent).
-- Header exclusion via a single `excluded_directories` entry for the enclave (upstream Apache-2.0 headers stay verbatim); post-vendor `git status --ignored` truncation check against `.gitignore`'s bare `dist`/`gen`/`out` patterns.
-- CI: new explicit clippy step for the crate in `rust-runtime-test.yml` (clippy is `-p`-allowlisted, not automatic); TS+rust codegen-only compile smoke of the dogfood entry added to `build-compiler.yml`'s smoke step; updated `Cargo.lock` committed (`--locked` gates).
-- Phase 2 (same change, later tasks): TS reference captures (`fixtures/capture-digital-passport-credential.mjs` → JSON — representative subset: civil-date helpers incl. all ternary sites and assert-fail paths, one issuance/presentation/verification round-trip) + executing parity test `tests/digital_passport_credential.rs`. Upstream's own vitest suite and smoke-consumer are **not** ported (different purpose, node ecosystem).
-- Short new ADR superseding `08decb1`'s de-branding for a clearly-bounded dogfood enclave, plus AGENT.md §1 update for the new category.
-- Version bump to 0.31.118 (own patch bump — `changelog-check.yml` requires CHANGELOG + compiler-version in the diff) + full embed-site sweep + CHANGELOG entry.
-
-Depends on `fix-ternary-expression-codegen` (0.31.117) — the crate cannot be generated until the rust backend compiles the contract.
+- Generate and register the fixture crate `tests-e2e-rust/contracts/digital-passport-credential/` (`compact-contract-digital-passport-credential`) per the full recipe: root `Cargo.toml` workspace member, `tests-e2e-rust` **dev-dependency**, and a `codegen_regression` `FIXTURES` row with the nested source path `("dogfood/digital-passport-credential/src/digital-passport-credential.compact", "digital-passport-credential")`; commit the updated `Cargo.lock` (`--locked` gates).
+- Flip the whole-entry expected-failure gate from `vendor-digital-passport-harness` to a hard compile requirement: both `compactc --target ts --skip-zk` and `compactc --target rust --skip-zk` compile the vendored entry with zero `unimplemented!`/`todo!`.
+- Execute the parity test that runs against the TS reference captures authored by `vendor-digital-passport-harness`: `tests-e2e-rust/tests/digital_passport_credential.rs` asserts Rust outcomes (including assert-fail paths) byte-equal the TS reference at every captured step, with serialized state-byte comparison where the capture records state.
+- CI wiring: a crate-specific clippy step in `rust-runtime-test.yml` (the crate is a dev-dependency built with `--cap-lints allow`, so nothing else lints it) and a dual-target codegen smoke in `build-compiler.yml`'s smoke step (codegen-only; that lane has no Rust toolchain).
+- New ADR recording the bounded third-party enclave (superseding `08decb1`'s de-branding for `examples/dogfood/` only) and AGENT.md §1 documenting the category, the header exclusion, and the PROVENANCE refresh pointer.
 
 ## Capabilities
 
 ### New Capabilities
 
-- `dogfooding/digital-passport-fixture`: the repo vendors the upstream digital-passport contract at a pinned revision, regenerates its rust crate byte-identically from source, and gates it in CI (compile/fmt/clippy/integration + local byte-parity per AGENT.md convention).
+- `dogfooding/digital-passport-fixture`: the repo compiles the pinned upstream digital-passport contract with both codegen targets, regenerates its Rust crate byte-identically, gates it in CI, and pins Rust↔TS behaviour parity.
 
 ### Modified Capabilities
 
-(none — capability tree is being bootstrapped; the ADR + AGENT.md updates are documentation, not spec deltas)
+(none)
 
 ## Impact
 
-- New vendored third-party tree under `examples/dogfood/` (license: Apache-2.0, upstream headers intact); `header_config.json` exclusion.
-- New fixture crate + registrations; `Cargo.lock`; two workflow files (`rust-runtime-test.yml`, `build-compiler.yml`).
-- New ADR; AGENT.md §1; CHANGELOG; version triple 0.31.117 → 0.31.118 across embed sites.
-- Reverses (with explicit rationale, bounded to the enclave) the third-party-material stance of `08decb1` / ADR-0001's follow-up note.
+- New fixture crate + registrations; `Cargo.lock`; `tests-e2e-rust/tests/digital_passport_credential.rs`.
+- `.github/workflows/rust-runtime-test.yml`, `.github/workflows/build-compiler.yml`.
+- New ADR; AGENT.md §1.
+- Fixture/docs-only: request the maintainer-applied `skip-changelog` label (no `compiler-version.ss` bump).
+- Depends on `compiler-backed-ci-gate`, `vendor-digital-passport-harness`, `type-directed-expression-coercion`, and `fix-ternary-expression-codegen`.

@@ -2,25 +2,13 @@
 
 ## Purpose
 
-The repository carries a pinned, verbatim copy of the upstream `midnight-verifiable-credential-digital-passport` contract and continuously proves the toolchain compiles it — keeping dogfood regressions visible in CI and local byte-parity gates.
+The repository compiles the pinned upstream `midnight-verifiable-credential-digital-passport` contract with both codegen targets, regenerates its Rust crate byte-identically from the vendored Compact source, gates it in CI, and pins Rust↔TS behaviour parity.
 
 ## ADDED Requirements
 
-### Requirement: Vendored upstream source at a pinned revision
-
-The repo MUST contain the upstream contract sources byte-identical to upstream rev `cdeb860b` under `examples/dogfood/digital-passport-credential/` (package `src/` tree plus `core-compact-staging/` from `@midnight-ntwrk/credential-compact@0.1.0-rc3` `dist/`), with a `PROVENANCE.md` recording upstream URL, revision, npm package/version, staging and refresh procedure. The vendored sources MUST NOT be locally modified — any upstream divergence is picked up only by an explicit, recorded re-sync.
-
-#### Scenario: provenance is answerable
-- **WHEN** a reader asks "what code is this and where did it come from"
-- **THEN** `PROVENANCE.md` states the upstream repo, exact rev, npm core package+version, and how to refresh both
-
-#### Scenario: refresh is an explicit act
-- **WHEN** upstream moves after the pin
-- **THEN** nothing in this repo changes until a human re-syncs and the PROVENANCE revision is updated in the same commit
-
 ### Requirement: Both codegen targets build the contract
 
-The current toolchain MUST compile `examples/dogfood/digital-passport-credential/src/digital-passport-credential.compact` successfully with `compactc --target ts --skip-zk` and `compactc --target rust --skip-zk` (after `fix-ternary-expression-codegen`), and CI MUST fail if either target stops compiling (smoke step) or if the committed crate stops building/formatting/linting (rust-runtime-test gates).
+The current toolchain MUST compile `examples/dogfood/digital-passport-credential/src/digital-passport-credential.compact` successfully with `compactc --target ts --skip-zk` and `compactc --target rust --skip-zk`, with zero `unimplemented!`/`todo!` in the emitted Rust. CI MUST fail if either target stops compiling (smoke step) or if the committed crate stops building/formatting/linting.
 
 #### Scenario: rust codegen regression is caught
 - **WHEN** a compiler change makes the dogfood contract fail under `--target rust`
@@ -32,23 +20,31 @@ The current toolchain MUST compile `examples/dogfood/digital-passport-credential
 
 ### Requirement: Byte-parity from vendored source
 
-The committed crate at `tests-e2e-rust/contracts/digital-passport-credential/` MUST be regenerable byte-identically from the vendored source by `codegen_regression` (FIXTURES row present), enforcing that the committed artifact is exactly what the current compiler emits.
+The committed crate at `tests-e2e-rust/contracts/digital-passport-credential/` MUST be regenerable byte-identically from the vendored source by `codegen_regression` (FIXTURES row present), enforcing that the committed artifact is exactly what the current compiler emits. The crate MUST also be a `tests-e2e-rust` dev-dependency so the CI build gate actually type-checks it.
 
 #### Scenario: emitter drift against the dogfood is detected
-- **WHEN** `cargo test -p tests-e2e-rust rust_codegen_byte_parity` runs locally per AGENT.md §2.1
+- **WHEN** `cargo test -p tests-e2e-rust rust_codegen_byte_parity` runs
 - **THEN** regeneration over the dogfood entry either matches the committed `lib.rs` byte-for-byte or the gate fails
 
-### Requirement: Representative Rust↔TS parity captures
+#### Scenario: the crate is actually compiled
+- **WHEN** `cargo build -p tests-e2e-rust --tests --locked` runs in CI
+- **THEN** the dogfood crate is compiled because it is a dev-dependency, not merely a workspace member
 
-The fixture MUST pin observable behavior parity for a representative subset of the contract — the civil-date helpers (including every conditional-expression site and their assert-fail paths) and one issuance/presentation/verification round-trip — via a committed TS reference capture and an executing Rust test asserting equivalence.
+### Requirement: Rust-to-TypeScript behaviour parity
 
-#### Scenario: helper behavior parity
+The fixture MUST pin observable behaviour parity with the TypeScript backend using the committed TS reference captures: the civil-date helpers (including every conditional-expression site and their assert-fail paths) and one issuance/presentation/verification round-trip. The executing Rust test MUST assert byte-equal outcomes at each captured step, using serialized state bytes where the capture records state.
+
+#### Scenario: helper behaviour parity
 - **WHEN** the executing test runs the civil-date helper circuits against the captured TS reference values
-- **THEN** Rust outcomes (including assertion-failure cases) match the reference byte-for-byte at each step
+- **THEN** Rust outcomes (including assertion-failure cases) match the reference at each step
+
+#### Scenario: state-byte parity
+- **WHEN** a captured step records ledger state
+- **THEN** the Rust serialized state bytes equal the TS reference bytes, so an alignment/width divergence cannot pass on decoded value alone
 
 ### Requirement: Bounded third-party enclave
 
-Third-party material MUST live only under `examples/dogfood/`, excluded from the repo's license-header validation via the enclave's directory exclusion, with upstream license headers intact; the enclave's existence and its relationship to the corpus de-branding decision MUST be recorded in an ADR and AGENT.md.
+Third-party material MUST live only under `examples/dogfood/`, excluded from the repo's license-header validation via the enclave's directory exclusion, with upstream license headers intact; the enclave's existence, its compact-only scope, and its relationship to the corpus de-branding decision MUST be recorded in an ADR and AGENT.md.
 
 #### Scenario: header validation tolerates upstream headers
 - **WHEN** `python add_headers.py --validate` runs in CI

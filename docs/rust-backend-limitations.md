@@ -159,6 +159,52 @@ because until recently it was not a limitation at all — it emitted the
 default scaffold and threw the constructor away. If you are on an older
 build, check that your deployed initial state is what you wrote.
 
+### Impure bodies past the walker's expression shapes
+
+`circuit-body-emission`. An impure circuit body is lowered by
+shape-matching, and its expression gate admits only a narrow set of forms.
+Arithmetic — including the trapping subtraction the typer wraps in an
+underflow guard — and ordering comparisons (`<`, `<=`, `>`, `>=`) are not
+admitted inline, so a body whose statement needs either is refused as a
+whole:
+
+```compact
+circuit record(x: Uint<32>, y: Uint<32>): [] {
+  assert(x + 1 <= y, "…");   // rejected: inline arithmetic + ordering
+  count.increment(1);
+}
+```
+
+Conditional expressions do not change this. A ternary whose *arm or
+condition* needs either shape — `c ? a - 1 : a`, `c ? 1 : 2` used as an
+arithmetic operand, a comparison the impure walker will not admit inline —
+is refused for the same reason its un-conditional equivalent is; the
+offending shape, not the `? :`, is what the gate rejects. Equality (`==`,
+`!=`) and calls are admitted.
+
+**Workaround:** move the arithmetic/ordering into a `pure` circuit and call
+it from the impure body. `guarded_assert_arith_fixture` and
+`mixed_width_operand_fixture` both do this (the impure circuit forwards to
+the pure callee, which lowers the construct). The
+`ternary_cond_fixture` matrix records which cells are refused for this
+reason.
+
+### Witness calls as sub-expressions
+
+`witness-inline`. A witness call is lowered only in *top-level binding*
+position (`const w = echo(…);`); using one as a general sub-expression is
+refused:
+
+```compact
+circuit f(c: Boolean): Field {
+  return echoField(c ? 1 : 2);   // rejected: witness call as a sub-expression
+}
+```
+
+**Workaround:** bind it first — `const w = echoField(c ? 1 : 2); return w;`.
+A conditional as the *argument* of a witness call is fine in that binding
+shape.
+
 ### `Field as Uint<N>` — no lowering
 
 `cast-from-field`. Narrowing a `Field` to a bounded unsigned integer needs

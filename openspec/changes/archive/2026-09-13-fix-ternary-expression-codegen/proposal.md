@@ -9,7 +9,7 @@
 - Preserve laziness exactly: only the selected branch is evaluated; branch-local `seq` underflow guards render inside the taken arm.
 - New neutral fixture `examples/ternary_cond_fixture.compact` + crate registered per the full recipe (workspace member, **`tests-e2e-rust` dev-dependency**, `FIXTURES` row), with executing tests and TS reference captures, plus an explicit `route × position × value-shape` coverage matrix (below) where every reachable cell has a probe and every unsupported cell is a documented refusal — never a blank.
 - Ledger-write cells additionally get a serialized **state-byte** parity check against the TS reference (decoded-value checks cannot see alignment divergence).
-- Flip the ternary oracle probes from `vendor-digital-passport-harness` from REJECTION to ACCEPTION.
+- Flip the ternary oracle probes from `vendor-digital-passport-harness` from REJECTION to ACCEPTION, including the **whole-entry expected-failure gate** (`rust_backend_dogfood_entry_is_refused_pre_fix`): this change is what makes the vendored entry compile, so the gate flips here rather than being left red for `add-digital-passport-dogfood-fixture`.
 - Version 0.31.118 with the full embed-site sweep + CHANGELOG entry.
 
 Not breaking: no frontend/typechecker/TS-backend/language/runtime change.

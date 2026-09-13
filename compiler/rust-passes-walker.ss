@@ -931,6 +931,25 @@
                   (tunsigned-rust-suffix-for-bound nat)
                   (expr-supported? expr native-id-ht
                                    witness-id-ht circuit-id-ht))]
+            [(if ,src ,expr0 ,expr1 ,expr2)
+             ;; Conditional (ternary) expression: recurse into the
+             ;; condition and both arms. The emitter's matching `if`
+             ;; clause (expr-rust in rust-passes-emit.ss) renders a lazy
+             ;; Rust `if` expression, routing the condition through
+             ;; cond-rust and each arm through the expression renderer, so
+             ;; every part must be a shape those renderers handle.
+             ;; Without this arm the `[else #f]` rejected any body
+             ;; containing a ternary BEFORE emission was attempted
+             ;; (impure circuits' `circuit-body-emission`, constructors
+             ;; via the same gate), even though the emitter could render
+             ;; it. Pure bodies need no walker change —
+             ;; stmt-pure-body-rust doesn't gate through expr-supported?.
+             (and (expr-supported? expr0 native-id-ht
+                                   witness-id-ht circuit-id-ht)
+                  (expr-supported? expr1 native-id-ht
+                                   witness-id-ht circuit-id-ht)
+                  (expr-supported? expr2 native-id-ht
+                                   witness-id-ht circuit-id-ht))]
             [else #f])))
 
       ;; map-expr-mvp-supported?: narrow-shape predicate for a

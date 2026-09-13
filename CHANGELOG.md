@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Toolchain 0.31.118, language 0.23.103, runtime 0.16.100]
+
+### Fixed
+
+- **`--target rust` rejected conditional (ternary) expressions wherever they
+  appeared as a sub-expression**, so real contracts the TypeScript backend
+  compiles failed on the Rust backend. `expr-rust` had no `(if c e1 e2)`
+  clause, so its `[else]` raised `expr-variant`, which the guarded body
+  emitters swallowed into "no walker shape matched" `pure-circuit-body-emission`
+  / `circuit-body-emission` / `ctor-body-emission` errors; the `expr-supported?`
+  walkability gate had the same missing arm, so impure and streaming bodies
+  refused a ternary before emission was even attempted. A single `(if ...)`
+  clause in `expr-rust` now renders a Rust `if` expression — lazily, so only
+  the selected branch is evaluated (a branch-local underflow guard stays inside
+  its arm and cannot trap an untaken branch) — with each arm rendered through
+  the type-directed coercion path introduced in 0.31.117, so type/width
+  correctness is inherited rather than re-specified per position. A matching
+  arm in `expr-supported?` admits ternaries to the impure, streaming, and
+  constructor routes. The vendored digital-passport contract's three ternary
+  sites now compile under `--target rust`.
+
 ## [Toolchain 0.31.117, language 0.23.103, runtime 0.16.100]
 
 ### Fixed

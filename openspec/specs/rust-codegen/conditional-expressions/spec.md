@@ -1,10 +1,10 @@
-# Delta Spec: rust-codegen/conditional-expressions
+# rust-codegen/conditional-expressions Specification
 
 ## Purpose
 
 The Rust code generation backend of the Compact compiler (`compactc --target rust`) accepts and correctly compiles conditional (ternary) expressions in every position and body route where the language permits them, matching the TypeScript backend's acceptance and the language specification's evaluation semantics.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Ternary expressions compile in all sub-expression positions
 
@@ -35,12 +35,12 @@ A contract that uses a conditional expression `c ? e1 : e2` anywhere a general e
 Generated Rust MUST evaluate a conditional expression exactly as the language specification requires: the condition is evaluated first and **only the selected branch** is evaluated. Branch-local trapping guards (e.g. the underflow assertion guarding unsigned subtraction) MUST be emitted inside the selected branch, so an untaken branch can never abort execution.
 
 #### Scenario: untaken branch must not trap
-- **WHEN** the executed circuit is `pick(c) { return c > 5 ? c - 10 : c; }` and it is invoked with `c = 9`
-- **THEN** the subtraction `c - 10` (which would underflow) is not evaluated and the call succeeds returning `9`
+- **WHEN** the executed circuit is `pick(c) { return c > 5 ? c - 10 : c; }` and it is invoked with `c = 3`
+- **THEN** the subtraction `c - 10` (which would underflow) is not evaluated and the call succeeds returning `3`
 
-#### Scenario: taken branch traps as specified
-- **WHEN** the same circuit is invoked with `c = 6`
-- **THEN** the taken branch's subtraction succeeds and the call returns a value computed from it
+#### Scenario: taken branch computes its value
+- **WHEN** the same circuit is invoked with `c = 12`
+- **THEN** the taken branch's subtraction succeeds and the call returns `2`
 
 ### Requirement: Arm values are typed by the use position
 

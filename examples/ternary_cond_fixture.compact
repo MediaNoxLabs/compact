@@ -1,0 +1,339 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//  	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+//
+// Conditional (ternary) expression coverage fixture.
+//
+// The Rust backend's one `(if c e1 e2)` clause in `expr-rust`
+// (compiler/rust-passes-emit.ss) plus the `expr-supported?` arm
+// (compiler/rust-passes-walker.ss) make a conditional expression legal
+// in every sub-expression position and body route the language allows.
+// This fixture is the *route x position x value-shape* matrix's probe
+// set: every reachable cell names one of the circuits below, and every
+// unsupported cell is recorded in docs/rust-backend-limitations.md.
+//
+// The matrix itself lives in the change's `tasks.md` (task 2.1). The
+// executing gate is tests-e2e-rust/tests/ternary_cond_fixture.rs; the
+// byte-parity gate for the ledger-writing cells is the TS capture in
+// tests-e2e-rust/fixtures/capture-ternary-cond-fixture.mjs.
+//
+// Pure route — one circuit per sub-expression position:
+//   - `constAnnotatedBothLiteral`  const RHS, annotated (both-literal arms)
+//   - `constUnannotatedSeqLifted`  const RHS, unannotated, seq-lifted
+//                                  (branch-local subtraction guard)
+//   - `returnTailMixed`            return tail, mixed literal/expr arms
+//   - `returnTailNested`           nested conditional in the return tail
+//   - `assertArg`                  assert argument
+//   - `arithOperand`               arithmetic operand
+//   - `cmpOperand`                 comparison operand
+//   - `callArgPure`                argument of a pure user circuit
+//   - `callArgCtor`                argument of `some<T>` (ctor call)
+//   - `structMember`               struct-literal member
+//   - `structValuedArms`           struct-valued (non-`Copy`) arms
+//   - `vectorElement`              vector element
+//   - `nativeArg`                  argument of a native (`hashToCurve`)
+//   - `fieldTypedArms`             Field-typed arms
+//   - `enumValued`                 enum-valued arms
+//   - `literalAboveI32`            literal arm > `i32::MAX`
+//   - `literalAboveU64`            literal arm > `u64::MAX` (Uint<128>)
+//   - `differingUintWidths`        arms of differing Uint widths
+//   - `uintArmIntoField`           Uint-ranged arm into a Field position
+//   - `pick`                       laziness: `c > 5 ? c - 10 : c`
+//
+// Impure-walker route (one terminal ledger write / return per circuit):
+//   - `walkerConstAnnotated`  const RHS, annotated
+//   - `walkerCompareEq`       comparison (equality) operand
+//   - `walkerCallPure`        argument of a pure user circuit
+//   - `walkerCallCtor`        argument of `some<T>` (ctor call)
+//   - `walkerStructMember`    struct-literal member
+//   - `walkerVectorElement`   vector element
+//   - `walkerNativeArg`       native (`hashToCurve`) argument
+//   - `walkerNestedIf`        nested conditional
+//   - `walkerReturnTail`      return tail
+//   - `walkerInlineWrite`     inline write value (`Counter.increment`)
+//   - `walkerWrite`           ledger-cell write
+//   - `witnessArg`            conditional argument to a witness call, in
+//                             its supported top-level binding shape
+//
+// Impure-streaming route (a ledger read interleaved with the conditional):
+//   - `streamAssertEq`        assert argument (equality)
+//   - `streamCallPure`        argument of a pure user circuit
+//   - `streamCallWitness`     witness-call argument (top-level binding)
+//   - `streamCompareEq`       comparison (equality) operand
+//   - `streamConstAnnotated`  const RHS, annotated
+//   - `streamIncrement`       inline `increment` value + ledger-cell write
+//   - `streamNativeArg`       native (`hashToCurve`) argument
+//   - `streamNestedIf`        nested conditional
+//   - `streamStructMember`    struct-literal member
+//   - `streamVectorElement`   vector element
+//   - `streamWrite`           non-terminal ledger call + ledger-cell write
+//
+// Constructor route:
+//   - the constructor binds conditional const RHS values (`a` annotated,
+//     `y` unannotated), a struct member (`b`), a nested conditional
+//     (`z`), a native argument (`p`), a pure call argument (`r`), and a
+//     comparison operand (`cmp`); it carries a conditional assert
+//     argument, adds conditional arithmetic operands, and writes three
+//     cells (Field / Uint<64> / `Vector<2, Field>`) — the state-byte
+//     parity cells.
+
+import CompactStandardLibrary;
+
+struct Box {
+  f: Field,
+}
+
+struct Pair {
+  left: Field,
+  right: Field,
+}
+
+enum Color {
+  red,
+  green,
+  blue,
+}
+
+witness echoField(x: Field): Field;
+
+export ledger flag: Boolean;
+export ledger fieldCell: Field;
+export ledger wideCell: Uint<64>;
+export ledger vecCell: Vector<2, Field>;
+export ledger ops: Counter;
+
+export pure circuit idf(x: Field): Field {
+  return x;
+}
+
+export pure circuit constAnnotatedBothLiteral(c: Boolean): Uint<8> {
+  const x: Uint<8> = c ? 1 : 2;
+  return x;
+}
+
+export pure circuit constUnannotatedSeqLifted(c: Boolean, a: Uint<8>): Uint<8> {
+  const x = c ? a - 1 : a;
+  return x;
+}
+
+export pure circuit returnTailMixed(c: Boolean, x: Uint<8>): Uint<8> {
+  return c ? 5 : x;
+}
+
+export pure circuit returnTailNested(c: Boolean, d: Boolean): Uint<8> {
+  return c ? (d ? 1 : 2) : (d ? 3 : 4);
+}
+
+export pure circuit assertArg(c: Boolean, x: Uint<8>): [] {
+  assert(c ? x > 1 : x > 2, "ternary assert");
+}
+
+export pure circuit arithOperand(c: Boolean, n: Uint<8>): Uint<64> {
+  return n + (c ? 1 : 0);
+}
+
+export pure circuit cmpOperand(c: Boolean, x: Uint<8>): Boolean {
+  return x == (c ? 1 : 0);
+}
+
+export pure circuit callArgPure(c: Boolean, a: Field, b: Field): Field {
+  return idf(c ? a : b);
+}
+
+export pure circuit callArgCtor(c: Boolean, a: Field, b: Field): Maybe<Field> {
+  return some<Field>(c ? a : b);
+}
+
+export pure circuit structMember(c: Boolean): Box {
+  return Box { f: c ? 1 : 2 };
+}
+
+export pure circuit structValuedArms(c: Boolean, s1: Box, s2: Box): Box {
+  return c ? s1 : s2;
+}
+
+export pure circuit vectorElement(c: Boolean): Vector<2, Field> {
+  return [c ? 1 : 2, c ? 3 : 4];
+}
+
+export pure circuit nativeArg(c: Boolean, a: Field, b: Field): JubjubPoint {
+  return hashToCurve<Field>(c ? a : b);
+}
+
+export pure circuit fieldTypedArms(c: Boolean, f1: Field, f2: Field): Field {
+  return c ? f1 : f2;
+}
+
+export pure circuit enumValued(c: Boolean): Color {
+  return c ? Color.red : Color.green;
+}
+
+export pure circuit literalAboveI32(c: Boolean): Uint<64> {
+  const x: Uint<64> = c ? 3000000000 : 0;
+  return x;
+}
+
+export pure circuit literalAboveU64(c: Boolean): Uint<128> {
+  const x: Uint<128> = c ? 340282366920938463463374607431768211455 : 0;
+  return x;
+}
+
+export pure circuit differingUintWidths(c: Boolean, a: Uint<8>, b: Uint<32>): Uint<32> {
+  return c ? a : b;
+}
+
+export pure circuit uintArmIntoField(c: Boolean, a: Uint<8>, b: Uint<8>): Field {
+  return c ? a : b;
+}
+
+// The language-spec laziness shape (compact-reference-proto.mdx): the
+// taken branch's subtraction is guarded, and the untaken branch must never
+// trap.
+export pure circuit pick(c: Uint<8>): Uint<8> {
+  return c > 5 ? c - 10 : c;
+}
+
+export circuit walkerConstAnnotated(c: Boolean): [] {
+  const x: Uint<8> = c ? 1 : 2;
+  fieldCell = disclose(x as Field);
+}
+
+export circuit walkerCompareEq(c: Boolean, x: Uint<8>): [] {
+  const b = (x == (c ? 1 : 0));
+  fieldCell = disclose(b as Field);
+}
+
+export circuit walkerCallPure(c: Boolean): [] {
+  fieldCell = disclose(idf(c ? 1 : 2));
+}
+
+export circuit walkerStructMember(c: Boolean): [] {
+  const b = Box { f: c ? 1 : 2 };
+  fieldCell = disclose(b.f);
+}
+
+export circuit walkerWrite(c: Boolean, x: Field): [] {
+  fieldCell = disclose(c ? x : 0 as Field);
+}
+
+export circuit witnessArg(c: Boolean): [] {
+  const w = echoField(c ? 1 : 2);
+  fieldCell = disclose(w);
+}
+
+export circuit streamIncrement(): [] {
+  const f = flag.read();
+  ops.increment(f ? 3 : 4);
+  wideCell = f ? 10 : 20;
+}
+
+export circuit streamCompareEq(): [] {
+  const f = flag.read();
+  const b = (1 == (f ? 1 : 0));
+  fieldCell = disclose(b as Field);
+}
+
+export circuit streamWrite(c: Boolean, x: Field): [] {
+  ops.increment(disclose(c ? 1 : 2));
+  fieldCell = disclose(x);
+}
+
+export circuit walkerReturnTail(c: Boolean): Field {
+  return (c ? 1 : 2) as Field;
+}
+
+export circuit walkerCallCtor(c: Boolean): Maybe<Field> {
+  return some<Field>(c ? 1 : 2);
+}
+
+export circuit walkerVectorElement(c: Boolean): [] {
+  vecCell = disclose([c ? 1 : 2, c ? 3 : 4]);
+}
+
+export circuit walkerNativeArg(c: Boolean): [] {
+  const p = hashToCurve<Field>(c ? 1 : 2);
+  fieldCell = disclose(jubjubPointX(p));
+}
+
+export circuit walkerNestedIf(c: Boolean, d: Boolean): [] {
+  const x = c ? (d ? 1 : 2) : (d ? 3 : 4);
+  fieldCell = disclose(x as Field);
+}
+
+export circuit walkerInlineWrite(c: Boolean): [] {
+  ops.increment(disclose(c ? 1 : 2));
+}
+
+export circuit streamCallPure(): [] {
+  const f = flag.read();
+  fieldCell = disclose(idf(f ? 1 : 2));
+}
+
+export circuit streamVectorElement(): [] {
+  const f = flag.read();
+  vecCell = disclose([f ? 1 : 2, f ? 3 : 4]);
+}
+
+export circuit streamNativeArg(): [] {
+  const f = flag.read();
+  const p = hashToCurve<Field>(f ? 1 : 2);
+  fieldCell = disclose(jubjubPointX(p));
+}
+
+export circuit streamStructMember(): [] {
+  const f = flag.read();
+  const b = Box { f: f ? 1 : 2 };
+  fieldCell = disclose(b.f);
+}
+
+export circuit streamCallWitness(): [] {
+  const f = flag.read();
+  const w = echoField(f ? 1 : 2);
+  fieldCell = disclose(w);
+}
+
+export circuit streamConstAnnotated(): [] {
+  const f = flag.read();
+  const x: Uint<16> = f ? 1 : 2;
+  ops.increment(x);
+  fieldCell = disclose(1 as Field);
+}
+
+export circuit streamAssertEq(): [] {
+  const f = flag.read();
+  assert(f ? (1 == 1) : (2 == 2), "stream ternary assert");
+  fieldCell = disclose(1 as Field);
+}
+
+export circuit streamNestedIf(): [] {
+  const f = flag.read();
+  const x = f ? (f ? 1 : 2) : (f ? 3 : 4);
+  fieldCell = disclose(x as Field);
+  ops.increment(1);
+}
+
+constructor(c: Boolean, d: Boolean, x: Field) {
+  const a: Uint<8> = c ? 1 : 2;
+  const y = c ? x : 0 as Field;
+  const b = Box { f: c ? 1 : 2 };
+  const z = c ? (d ? 1 : 2) : (d ? 3 : 4);
+  const p = hashToCurve<Field>(c ? 3 : 4);
+  const r = idf(c ? 7 : 8);
+  const cmp = (0 == (c ? 1 : 0));
+  assert(c ? (x == x) : (x == x), "ctor ternary assert");
+  fieldCell = disclose(y + b.f + (z as Field) + jubjubPointX(p) + (a as Field) + r + (cmp ? 1 : 0));
+  wideCell = disclose(c ? 10 : 20);
+  vecCell = disclose([c ? 1 : 2, c ? 3 : 4]);
+}

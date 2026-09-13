@@ -53,19 +53,21 @@
 // that prefix). See codegen_regression.rs for the same arrangement.
 //
 // ---------------------------------------------------------------------
-// Oracle probes (expected refusals)
+// Oracle probes
 //
 // The vendored digital-passport contract is the oracle for the rust
-// backend's real-idiom gaps. `vendor-digital-passport-harness` records
-// each current gap as an executable expectation:
+// backend's real-idiom gaps. `vendor-digital-passport-harness` recorded
+// each gap of its day as an executable expectation; the change that closes
+// a gap flips its probe from REJECTION to ACCEPTION:
 //
-//   * `REJECTIONS` gains a minimal extract per real ternary site (const
-//     RHS, assert argument, interior arithmetic operand). Each entry NAMES
-//     the fix change that flips it.
-//   * `rust_backend_dogfood_entry_is_refused_pre_fix` compiles the whole
-//     vendored entry in place (by repo-relative path — see
-//     `compile_repo_relative`) and asserts the end-to-end refusal with the
-//     kind task 2.2 recorded.
+//   * the three ternary extracts (const RHS, assert argument, interior
+//     arithmetic operand) refused under the pre-fix emitter;
+//     `fix-ternary-expression-codegen` added the `(if ...)` clause to
+//     `expr-rust`, so they are now ACCEPTIONS.
+//   * `rust_backend_dogfood_entry_compiles` compiles the whole vendored
+//     entry in place (by repo-relative path — see `compile_repo_relative`)
+//     and asserts the end-to-end acceptance: exit 0 and `contract/lib.rs`
+//     emitted.
 //
 // The mixed-width comparison operand (`q * 4` vs a `Uint<32>` value) used to
 // be a REJECTION on the constructor route and an ill-typed emission
@@ -73,12 +75,11 @@
 // widened the narrow operand on both routes (task 2.3/2.9) and taught the ctor
 // walker to lower the lifted temp (task 3.1), so both are now plain ACCEPTIONS.
 //
-// The whole-entry gate is expected-fail by design: it flips to
-// "exits 0 + contract/lib.rs emitted" in `add-digital-passport-dogfood-fixture`,
-// once the ternary fix lands. The entry's pure-route mixed-width comparison
-// (`helpers.compact:268`) is no longer a separate blocker — coercion lands it —
-// so only the ternary refusal at `helpers.compact:257` keeps the whole-entry
-// gate red.
+// The whole-entry gate flipped here rather than in
+// `add-digital-passport-dogfood-fixture`: `fix-ternary-expression-codegen`'s
+// `(if ...)` clause is what makes the ternary at `helpers.compact:257` compile,
+// and the pure-route mixed-width comparison (`helpers.compact:268`) had already
+// stopped blocking when coercion widened the narrow operand.
 
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -132,49 +133,6 @@ const REJECTIONS: &[(&str, &str, &str)] = &[
          export ledger f: Field;\n\
          constructor(x: Uint<248>) { f = disclose(x); }\n",
         "field-uint-coercion",
-    ),
-    // ---- Vendored digital-passport oracle ----------------------------
-    //
-    // Minimal extracts at the contract's real gap sites. The upstream
-    // source (`examples/dogfood/digital-passport-credential/.../helpers.compact`)
-    // has a ternary in each of three syntactic positions; each extract below
-    // is the smallest form that still refuses, and each names the fix change
-    // that flips it. (Its mixed-width comparison operand no longer refuses —
-    // coercion flips it to an ACCEPTION below.)
-    //
-    // Ternary extracts — flipped by `fix-ternary-expression-codegen`
-    // (task 3.1 converts these from refusal to acceptance). Upstream sites:
-    //   const yearAdjusted = date.month <= 2 ? date.year - 1 : date.year;
-    //   assert(isLeap ? date.day <= 29 : date.day <= 28, "...");
-    //   ... - (beforeBirthdayThisYear ? 1 : 0);
-    // `expr-rust` has no `(if ...)` clause, so the pure-circuit emitter
-    // bails; its catch-all guard swallows the precise diagnostic and reports
-    // the generic body error (task 2.2's recorded failure), which is why the
-    // expected kind is `pure-circuit-body-emission`, not ternary-specific.
-    (
-        "ternary in const RHS [flips in fix-ternary-expression-codegen]",
-        "export ledger dummy: Uint<64>;\n\
-         export pure circuit ternaryConstRhs(c: Uint<32>): Uint<32> {\n\
-           const x = c <= 2 ? c - 1 : c;\n\
-           return x;\n\
-         }\n",
-        "pure-circuit-body-emission",
-    ),
-    (
-        "ternary in assert argument [flips in fix-ternary-expression-codegen]",
-        "export ledger dummy: Uint<64>;\n\
-         export pure circuit ternaryAssertArg(c: Uint<32>, flag: Boolean): [] {\n\
-           assert(flag ? c <= 29 : c <= 28, \"bounded\");\n\
-         }\n",
-        "pure-circuit-body-emission",
-    ),
-    (
-        "ternary as interior arithmetic operand [flips in fix-ternary-expression-codegen]",
-        "export ledger dummy: Uint<64>;\n\
-         export pure circuit ternaryArithOperand(a: Uint<32>, b: Uint<32>, flag: Boolean): Uint<32> {\n\
-           return a - b - (flag ? 1 : 0);\n\
-         }\n",
-        "pure-circuit-body-emission",
     ),
 ];
 
@@ -243,6 +201,81 @@ const ACCEPTIONS: &[(&str, &str)] = &[
         "import CompactStandardLibrary;\n\
          export ledger f: Field;\n\
          constructor(x: Uint<128>) { f = disclose(x); }\n",
+    ),
+    // ---- Vendored digital-passport oracle: ternary sites -------------
+    //
+    // The three ternary extracts `vendor-digital-passport-harness` recorded
+    // as REJECTIONS, at the contract's real gap sites. Each is a minimal
+    // extract in the upstream source
+    // (`examples/dogfood/digital-passport-credential/.../helpers.compact`),
+    // in source order:
+    //   const yearAdjusted = date.month <= 2 ? date.year - 1 : date.year;
+    //   assert(isLeap ? date.day <= 29 : date.day <= 28, "...");
+    //   ... - (beforeBirthdayThisYear ? 1 : 0);
+    // `fix-ternary-expression-codegen` added the `(if ...)` clause to
+    // `expr-rust`, so the pure-circuit emitter renders a lazy Rust `if`
+    // expression instead of bailing on `expr-variant`; all three are now
+    // accepted (task 3.1).
+    (
+        "ternary in const RHS",
+        "export ledger dummy: Uint<64>;\n\
+         export pure circuit ternaryConstRhs(c: Uint<32>): Uint<32> {\n\
+           const x = c <= 2 ? c - 1 : c;\n\
+           return x;\n\
+         }\n",
+    ),
+    (
+        "ternary in assert argument",
+        "export ledger dummy: Uint<64>;\n\
+         export pure circuit ternaryAssertArg(c: Uint<32>, flag: Boolean): [] {\n\
+           assert(flag ? c <= 29 : c <= 28, \"bounded\");\n\
+         }\n",
+    ),
+    (
+        "ternary as interior arithmetic operand",
+        "export ledger dummy: Uint<64>;\n\
+         export pure circuit ternaryArithOperand(a: Uint<32>, b: Uint<32>, flag: Boolean): Uint<32> {\n\
+           return a - b - (flag ? 1 : 0);\n\
+         }\n",
+    ),
+    // ---- Ternary condition is a call, on the impure / constructor routes ----
+    //
+    // `expr-supported?` validates the ternary condition against the REAL
+    // witness / circuit id tables it receives as arguments, but the emitter's
+    // `cond-rust` reads them from the dynamic `current-witness-id-ht` /
+    // `current-circuit-id-ht` parameters — which were bound only inside
+    // `emit-pure-circuit`. On the impure and constructor routes those stayed
+    // at their empty default, so the predicate accepted the body and then
+    // `cond-rust` RAISED (`ctor-if-condition-inline`) instead of letting the
+    // streaming fallback try. Binding the tables in `emit-impure-circuit` /
+    // `emit-initial-state` too (mirroring the pure emitter) fixes it; these
+    // two probes pin the condition-call shape on both routes, and the third
+    // pins a pure-circuit call in an ARM (resolved through `call-rust`, which
+    // reads the same dynamic table).
+    (
+        "ternary with a pure-circuit-call condition, impure route",
+        "import CompactStandardLibrary;\n\
+         export ledger f: Field;\n\
+         export pure circuit isBig(x: Uint<8>): Boolean { return x > 5; }\n\
+         export circuit impureCondCall(): [] {\n\
+           f = disclose(isBig(7) ? 1 : 2);\n\
+         }\n",
+    ),
+    (
+        "ternary with a pure-circuit-call condition, constructor route",
+        "import CompactStandardLibrary;\n\
+         export ledger f: Field;\n\
+         export pure circuit isBig(x: Uint<8>): Boolean { return x > 5; }\n\
+         constructor() { f = disclose(isBig(7) ? 1 : 2); }\n",
+    ),
+    (
+        "ternary with a pure-circuit call in an arm, impure route",
+        "import CompactStandardLibrary;\n\
+         export ledger f: Field;\n\
+         export pure circuit idf(x: Field): Field { return x; }\n\
+         export circuit impureArmCall(c: Boolean): [] {\n\
+           f = disclose(c ? idf(1) : idf(2));\n\
+         }\n",
     ),
 ];
 
@@ -393,49 +426,48 @@ fn rust_backend_still_accepts_neighbouring_shapes() {
     }
 }
 
-/// Whole-entry expected-failure gate for the vendored digital-passport
-/// contract (task 4.3).
+/// Whole-entry acceptance gate for the vendored digital-passport contract.
 ///
-/// The inline `REJECTIONS` cases isolate each gap site; this gate pins the
-/// end-to-end state: compiling the real contract's entry with the pre-fix
-/// rust target refuses, emits no crate, and reports the kind task 2.2
-/// recorded (`pure-circuit-body-emission` at
-/// `src/digital-passport-credential/helpers.compact:257`). It compiles the
-/// entry **in place** (see [`compile_repo_relative`]) so the contract's
-/// relative core imports resolve; the temp-dir `compile()` cannot.
+/// The inline `ACCEPTIONS` cases isolate each former gap site; this gate
+/// pins the end-to-end state: compiling the real contract's entry with the
+/// fixed rust target exits 0 and emits a crate. It compiles the entry **in
+/// place** (see [`compile_repo_relative`]) so the contract's relative core
+/// imports resolve; the temp-dir `compile()` cannot.
 ///
-/// Attribution: this refusal is the *ternary* at `helpers.compact:257`
-/// (`assertCivilDateMatchesEpochDays` bails before emission), NOT the
-/// mixed-width comparison further down at `:268` — the latter is now an
-/// ACCEPTION (coercion widens the narrow operand), so only the ternary keeps
-/// this gate red.
+/// History: `vendor-digital-passport-harness` recorded this as an
+/// expected-failure gate (`rust_backend_dogfood_entry_is_refused_pre_fix`),
+/// asserting a `pure-circuit-body-emission` refusal at
+/// `src/digital-passport-credential/helpers.compact:257` — the ternary in
+/// `assertCivilDateMatchesEpochDays` bailing before emission.
+/// `fix-ternary-expression-codegen` added the `(if ...)` clause to
+/// `expr-rust`, which is what makes that ternary compile, so this change
+/// flips the gate to acceptance (task 3.3). The pure-route mixed-width
+/// comparison further down at `:268` had already stopped blocking when
+/// `type-directed-expression-coercion` widened the narrow operand.
 ///
-/// Expected-fail by design: it flips to "exits 0 + `contract/lib.rs`
-/// emitted" in `add-digital-passport-dogfood-fixture`, which registers the
-/// generated crate. `fix-ternary-expression-codegen` owns that flip. Until it
-/// lands, this gate must stay green by asserting the refusal.
+/// `add-digital-passport-dogfood-fixture` no longer owns a flip here; it
+/// registers the crate this gate now proves compiles.
 #[test]
-fn rust_backend_dogfood_entry_is_refused_pre_fix() {
+fn rust_backend_dogfood_entry_compiles() {
     let (code, text, emitted) = compile_repo_relative(
         "examples/dogfood/digital-passport-credential/src/digital-passport-credential.compact",
     );
 
-    assert_ne!(
+    assert_eq!(
         code,
         Some(0),
-        "the vendored dogfood entry compiled. The pre-fix rust target refuses it \
-         (the ternary at helpers.compact:257). A successful exit means this gate \
-         has flipped to acceptance — update it in \
-         `add-digital-passport-dogfood-fixture` rather than letting it pass silently.\n--- output ---\n{text}"
+        "the fixed rust target refused the vendored dogfood entry. Its remaining \
+         block was the ternary at helpers.compact:257, now lowered by the \
+         `(if ...)` clause; a refusal means that clause regressed.\n--- output ---\n{text}"
     );
     assert!(
-        !emitted,
-        "the refused dogfood entry still wrote contract/lib.rs; a refused compile \
-         must leave no output behind for a build to pick up."
+        emitted,
+        "the dogfood entry compiled but wrote no contract/lib.rs; a successful \
+         compile must leave the crate for a build to pick up."
     );
     assert!(
-        text.contains("pure-circuit-body-emission"),
-        "expected the diagnostic to name `pure-circuit-body-emission` (the kind \
-         recorded by task 2.2), so the refusal is greppable and attributable.\n--- output ---\n{text}"
+        !text.contains("pure-circuit-body-emission"),
+        "the diagnostic still names `pure-circuit-body-emission`; the entry no \
+         longer refuses on a ternary, so this kind should be gone.\n--- output ---\n{text}"
     );
 }

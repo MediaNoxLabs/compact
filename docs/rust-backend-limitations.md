@@ -159,6 +159,67 @@ because until recently it was not a limitation at all — it emitted the
 default scaffold and threw the constructor away. If you are on an older
 build, check that your deployed initial state is what you wrote.
 
+### Impure bodies past the walker's expression shapes
+
+`circuit-body-emission`. An impure circuit body is lowered by
+shape-matching, and its expression gate admits only a narrow set of forms.
+Arithmetic — including the trapping subtraction the typer wraps in an
+underflow guard — and ordering comparisons (`<`, `<=`, `>`, `>=`) are not
+admitted inline, so a body whose statement needs either is refused as a
+whole:
+
+```compact
+circuit record(x: Uint<32>, y: Uint<32>): [] {
+  assert(x + 1 <= y, "…");   // rejected: inline arithmetic + ordering
+  count.increment(1);
+}
+```
+
+Conditional expressions do not change this. A ternary whose *arm or
+condition* needs either shape — `c ? a - 1 : a`, `c ? 1 : 2` used as an
+arithmetic operand, a comparison the impure walker will not admit inline —
+is refused for the same reason its un-conditional equivalent is; the
+offending shape, not the `? :`, is what the gate rejects. Equality (`==`,
+`!=`) and calls are admitted.
+
+**Workaround:** move the arithmetic/ordering into a `pure` circuit and call
+it from the impure body. `guarded_assert_arith_fixture` and
+`mixed_width_operand_fixture` both do this (the impure circuit forwards to
+the pure callee, which lowers the construct). The
+`ternary_cond_fixture` matrix records which cells are refused for this
+reason.
+
+### Witness calls as sub-expressions
+
+`witness-inline`. A witness call cannot be inlined in a **returned
+expression** — it returns `(PS, T)`, so the backend hoists it to a
+`let`-binding first. The disclosure checker runs before this gate, so the
+diagnostic you hit depends on the shape:
+
+```compact
+circuit f(c: Boolean): Field {
+  // disclosure error first (the witness value is not disclosed) …
+  // return echoField(c ? 1 : 2);
+  // … and once disclosed, the witness-inline gate:
+  return disclose(echoField(c ? 1 : 2));   // rejected: sub-expression in a return
+}
+```
+
+**Workaround:** bind the witness call to a top-level `const`, then consume
+the binding — e.g. write it to a ledger field:
+
+```compact
+circuit f(c: Boolean): [] {
+  const w = echoField(c ? 1 : 2);
+  fieldCell = disclose(w);   // bind first, then disclose into the write
+}
+```
+
+A conditional as the *argument* of a witness call is fine in that binding
+shape. Returning the bound value (`const w = echoField(…); return disclose(w);`)
+is a separate, unlowered shape — refused as `circuit-body-emission` — so
+consume the binding in a ledger write rather than returning it.
+
 ### `Field as Uint<N>` — no lowering
 
 `cast-from-field`. Narrowing a `Field` to a bounded unsigned integer needs

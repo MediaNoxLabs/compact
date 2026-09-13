@@ -915,6 +915,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-contract-ternary-cond-fixture"
+version = "0.1.0"
+dependencies = [
+ "midnight-compact-runtime",
+]
+
+[[package]]
 name = "compact-contract-tiny"
 version = "0.1.0"
 dependencies = [
@@ -4835,6 +4842,7 @@ dependencies = [
  "compact-contract-set-fixture",
  "compact-contract-set-size-fixture",
  "compact-contract-struct-collision-fixture",
+ "compact-contract-ternary-cond-fixture",
  "compact-contract-tiny",
  "compact-contract-uints-fixture",
  "compact-contract-vector-fixture",

@@ -10,7 +10,7 @@ Prerequisites merged: `compiler-backed-ci-gate`, `vendor-digital-passport-harnes
 
 ## 2. Compile requirement and behaviour parity
 
-- [ ] 2.1 Flip the whole-entry expected-failure gate from `vendor-digital-passport-harness` to a hard pass: both `--target ts --skip-zk` and `--target rust --skip-zk` compile the entry. Verify: the gate is green and no longer marked expected-fail.
+- [ ] 2.1 Confirm the whole-entry gate was already flipped to a hard pass by `fix-ternary-expression-codegen` (task 3.3), so the entry now compiles under `--target rust`; this change no longer owns that flip. Additionally verify `--target ts --skip-zk` compiles the entry. Verify: the acceptance gate is green and no longer asserts a pre-fix refusal.
 - [ ] 2.2 Write `tests-e2e-rust/tests/digital_passport_credential.rs` (Apache header) asserting Rust outcomes byte-equal the change-2 TS reference at each step (civil-date helpers incl. assert-fail paths, plus the protocol round-trip), with serialized state-byte comparison where state is captured. Verify: `cargo test -p tests-e2e-rust digital_passport` green; an induced wrong-width/literal bug makes it red.
 
 ## 3. CI wiring

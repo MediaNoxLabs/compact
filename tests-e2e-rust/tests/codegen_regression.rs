@@ -151,6 +151,16 @@ const FIXTURES: &[(&str, &str)] = &[
         "literal_coercion_fixture.compact",
         "literal-coercion-fixture",
     ),
+    // Conditional (ternary) expression coverage matrix: the one `(if c e1 e2)`
+    // clause in `expr-rust` plus the `expr-supported?` arm make a ternary legal
+    // in every sub-expression position and body route. This fixture is the
+    // probe set for the route x position x value-shape matrix (in the change's
+    // tasks.md) — pure const/return/assert/operand/call/struct/vector/native/
+    // nested/enum/wide-literal positions; impure-walker, impure-streaming, and
+    // constructor routes; and the branch-local subtraction guard. Executing
+    // gate: tests/ternary_cond_fixture.rs (state-byte parity + per-probe
+    // assertions).
+    ("ternary_cond_fixture.compact", "ternary-cond-fixture"),
 ];
 
 /// Walks up from `start` looking for the repository root: the nearest

@@ -111,3 +111,9 @@ compact-contract-literal-coercion-fixture = { path = "contracts/literal-coercion
 # `cargo build -p tests-e2e-rust --tests` compile it. The invariant test
 # `every_fixture_crate_is_a_dev_dependency` enforces this pairing.
 compact-contract-multi-pl-call-fixture = { path = "contracts/multi-pl-call-fixture" }
+# Conditional-expression coverage gate: ternary_cond_fixture.rs drives every
+# probe in the route x position x value-shape matrix (declared in the change's
+# tasks.md) and byte-compares each ledger-writing cell's serialised state
+# against the TS capture, so a missing laziness/width/route lowering cannot
+# hide behind a crate that merely compiles.
+compact-contract-ternary-cond-fixture = { path = "contracts/ternary-cond-fixture" }

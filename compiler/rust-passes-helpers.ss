@@ -214,14 +214,15 @@
         (make-parameter '()))
 
       ;; current-circuit-id-ht: eq-hashtable mapping a circuit function-name
-      ;; id to its circuit Program-Element, threaded dynamically by
-      ;; emit-pure-circuit so that expr-rust/call-rust (which do NOT take
+      ;; id to its circuit Program-Element, threaded dynamically by every
+      ;; body emitter — emit-pure-circuit, emit-impure-circuit, and
+      ;; emit-initial-state — so that expr-rust/call-rust (which do NOT take
       ;; circuit-id-ht as an explicit argument) can still recognise a
       ;; call to a user-defined *pure* circuit and route it to
-      ;; `pure_circuits::<snake>(...)`. Defaults to an empty hashtable so
-      ;; the impure-walker path (which resolves pure-circuit calls via
-      ;; ctor-call-rust's explicit circuit-id-ht argument before ever
-      ;; reaching call-rust) is unaffected. Bug-1 companion to
+      ;; `pure_circuits::<snake>(...)`. This also lets cond-rust resolve a
+      ;; user-pure-circuit call used as a ternary condition on the impure /
+      ;; constructor routes. Defaults to an empty hashtable for code paths
+      ;; outside a body emission. Bug-1 companion to
       ;; current-var-substitution — closes the pure-circuit-body-emission
       ;; gap for contracts whose pure circuits call other user pure
       ;; circuits in tail/statement position (a validation circuit that
@@ -230,9 +231,10 @@
         (make-parameter (make-eq-hashtable)))
 
       ;; current-witness-id-ht: companion to current-circuit-id-ht — the
-      ;; witness-id-ht threaded by emit-pure-circuit so call-rust's
-      ;; native/stdlib dispatch (and any future witness-aware path in the
-      ;; pure walker) sees the real witness table. Defaults to an empty
+      ;; witness-id-ht threaded by every body emitter (emit-pure-circuit,
+      ;; emit-impure-circuit, emit-initial-state) so call-rust's
+      ;; native/stdlib dispatch, cond-rust's witness-call routing, and any
+      ;; witness-aware path see the real witness table. Defaults to an empty
       ;; hashtable.
       (define current-witness-id-ht
         (make-parameter (make-eq-hashtable)))

@@ -191,19 +191,34 @@ reason.
 
 ### Witness calls as sub-expressions
 
-`witness-inline`. A witness call is lowered only in *top-level binding*
-position (`const w = echo(…);`); using one as a general sub-expression is
-refused:
+`witness-inline`. A witness call cannot be inlined in a **returned
+expression** — it returns `(PS, T)`, so the backend hoists it to a
+`let`-binding first. The disclosure checker runs before this gate, so the
+diagnostic you hit depends on the shape:
 
 ```compact
 circuit f(c: Boolean): Field {
-  return echoField(c ? 1 : 2);   // rejected: witness call as a sub-expression
+  // disclosure error first (the witness value is not disclosed) …
+  // return echoField(c ? 1 : 2);
+  // … and once disclosed, the witness-inline gate:
+  return disclose(echoField(c ? 1 : 2));   // rejected: sub-expression in a return
 }
 ```
 
-**Workaround:** bind it first — `const w = echoField(c ? 1 : 2); return w;`.
+**Workaround:** bind the witness call to a top-level `const`, then consume
+the binding — e.g. write it to a ledger field:
+
+```compact
+circuit f(c: Boolean): [] {
+  const w = echoField(c ? 1 : 2);
+  fieldCell = disclose(w);   // bind first, then disclose into the write
+}
+```
+
 A conditional as the *argument* of a witness call is fine in that binding
-shape.
+shape. Returning the bound value (`const w = echoField(…); return disclose(w);`)
+is a separate, unlowered shape — refused as `circuit-body-emission` — so
+consume the binding in a ledger write rather than returning it.
 
 ### `Field as Uint<N>` — no lowering
 

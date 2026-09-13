@@ -238,6 +238,45 @@ const ACCEPTIONS: &[(&str, &str)] = &[
            return a - b - (flag ? 1 : 0);\n\
          }\n",
     ),
+    // ---- Ternary condition is a call, on the impure / constructor routes ----
+    //
+    // `expr-supported?` validates the ternary condition against the REAL
+    // witness / circuit id tables it receives as arguments, but the emitter's
+    // `cond-rust` reads them from the dynamic `current-witness-id-ht` /
+    // `current-circuit-id-ht` parameters — which were bound only inside
+    // `emit-pure-circuit`. On the impure and constructor routes those stayed
+    // at their empty default, so the predicate accepted the body and then
+    // `cond-rust` RAISED (`ctor-if-condition-inline`) instead of letting the
+    // streaming fallback try. Binding the tables in `emit-impure-circuit` /
+    // `emit-initial-state` too (mirroring the pure emitter) fixes it; these
+    // two probes pin the condition-call shape on both routes, and the third
+    // pins a pure-circuit call in an ARM (resolved through `call-rust`, which
+    // reads the same dynamic table).
+    (
+        "ternary with a pure-circuit-call condition, impure route",
+        "import CompactStandardLibrary;\n\
+         export ledger f: Field;\n\
+         export pure circuit isBig(x: Uint<8>): Boolean { return x > 5; }\n\
+         export circuit impureCondCall(): [] {\n\
+           f = disclose(isBig(7) ? 1 : 2);\n\
+         }\n",
+    ),
+    (
+        "ternary with a pure-circuit-call condition, constructor route",
+        "import CompactStandardLibrary;\n\
+         export ledger f: Field;\n\
+         export pure circuit isBig(x: Uint<8>): Boolean { return x > 5; }\n\
+         constructor() { f = disclose(isBig(7) ? 1 : 2); }\n",
+    ),
+    (
+        "ternary with a pure-circuit call in an arm, impure route",
+        "import CompactStandardLibrary;\n\
+         export ledger f: Field;\n\
+         export pure circuit idf(x: Field): Field { return x; }\n\
+         export circuit impureArmCall(c: Boolean): [] {\n\
+           f = disclose(c ? idf(1) : idf(2));\n\
+         }\n",
+    ),
 ];
 
 fn find_repo_root(start: &Path) -> Option<PathBuf> {

@@ -167,7 +167,18 @@
                      ;; not here.
                      (parameterize
                        ([current-formal-arg-types
-                          (build-formal-arg-type-ht ctor-arg*)])
+                          (build-formal-arg-type-ht ctor-arg*)]
+                        ;; Bind the witness / circuit id tables so the
+                        ;; ternary clause's condition routing in `expr-rust`
+                        ;; (and `call-rust`'s pure-circuit call routing),
+                        ;; which read these dynamic parameters, see the real
+                        ;; tables on the constructor route too — mirroring
+                        ;; emit-pure-circuit / emit-impure-circuit. Without
+                        ;; this, cond-rust sees empty tables and hard-aborts
+                        ;; a ternary whose condition is a witness /
+                        ;; user-pure-circuit call.
+                        [current-witness-id-ht witness-id-ht]
+                        [current-circuit-id-ht circuit-id-ht])
                        (emit-ctor-body-or-fallback stmt
                                                    native-id-ht witness-id-ht circuit-id-ht)))])
           ;; `emitted?` is #f for two very different reasons, and conflating
@@ -1615,7 +1626,18 @@
            (emit-circuit-args arg*)
            (out (format ",\n    ) -> Result<CircuitResults<PS, ~a>, CompactError> {\n"
                         (type-rust type)))
-           (parameterize ([current-formal-arg-types (build-formal-arg-type-ht arg*)])
+           ;; Bind the witness / circuit id tables for the whole body
+           ;; emission (walker, streaming, and if-body/if-chain routes) so
+           ;; the ternary clause's condition routing in `expr-rust` and the
+           ;; pure-circuit call routing in `call-rust` — both of which read
+           ;; these dynamic parameters — see the real tables. Mirrors
+           ;; emit-pure-circuit; without it cond-rust sees empty tables on
+           ;; this route and hard-aborts a ternary whose condition is a
+           ;; witness / user-pure-circuit call (see the ternary clause in
+           ;; expr-rust).
+           (parameterize ([current-formal-arg-types (build-formal-arg-type-ht arg*)]
+                          [current-witness-id-ht witness-id-ht]
+                          [current-circuit-id-ht circuit-id-ht])
            (let ([emitted?
                   (or
                     ;; I3b/4: single if-expression body returning non-unit.
@@ -2103,9 +2125,11 @@
            ;; the seq-guard assert and the statement-level if emitters
            ;; use — so comparisons, user pure-circuit calls, and inlined
            ;; circuit calls lower correctly. The witness / circuit id
-           ;; hashtables come from the dynamic parameters (populated by
-           ;; the body emitters), exactly as in seq-stmt-rust's assert
-           ;; clause.
+           ;; hashtables come from the dynamic parameters, which every body
+           ;; emitter binds around its body (emit-pure-circuit,
+           ;; emit-impure-circuit, emit-initial-state). If a route left them
+           ;; at the empty default, cond-rust would raise instead of
+           ;; returning #f and hard-abort a call-conditioned ternary.
            ;;
            ;; Each arm renders through expr-rust-typed at the type
            ;; expected at that arm's position. The typer's `if` rule
@@ -2824,17 +2848,18 @@
                  ")"))]
             [else
              ;; A user-defined circuit call. Resolve via
-             ;; current-circuit-id-ht (threaded by emit-pure-circuit): if
-             ;; the callee is a user pure circuit, route to
+             ;; current-circuit-id-ht (threaded by every body emitter —
+             ;; emit-pure-circuit, emit-impure-circuit, emit-initial-state):
+             ;; if the callee is a user pure circuit, route to
              ;; `pure_circuits::<snake>(...)` — both exported (`pub fn`)
              ;; and non-exported (`pub(crate) fn`) pure circuits land in
              ;; the `pure_circuits` module. Args use pure-call-arg-rust so
              ;; non-Copy struct args are cloned (the callee takes them by
              ;; value). Impure circuits and unknown callees keep the
-             ;; existing non-native-call error — the impure walker
-             ;; resolves pure-circuit calls earlier via ctor-call-rust, so
-             ;; this else is only reached during pure-circuit emission
-             ;; where current-circuit-id-ht is populated.
+             ;; existing non-native-call error; on the impure route pure
+             ;; calls are usually resolved earlier via ctor-call-rust, but
+             ;; expression positions (e.g. a ternary arm) reach this
+             ;; branch, where current-circuit-id-ht is now populated.
              (let ([c (eq-hashtable-ref (current-circuit-id-ht) function-name #f)])
                (cond
                  [(and c (id-pure? function-name))

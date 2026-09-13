@@ -1,10 +1,10 @@
-# Delta Spec: dogfooding/digital-passport-fixture
+# dogfooding/digital-passport-fixture Specification
 
 ## Purpose
 
 The repository compiles the pinned upstream `midnight-verifiable-credential-digital-passport` contract with both codegen targets, regenerates its Rust crate byte-identically from the vendored Compact source, gates it in CI, and pins Rust↔TS behaviour parity.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Both codegen targets build the contract
 
@@ -32,15 +32,15 @@ The committed crate at `tests-e2e-rust/contracts/digital-passport-credential/` M
 
 ### Requirement: Rust-to-TypeScript behaviour parity
 
-The fixture MUST pin observable behaviour parity with the TypeScript backend using the committed TS reference captures: the civil-date helpers (including every conditional-expression site and their assert-fail paths) and one issuance/presentation/verification round-trip. The executing Rust test MUST assert byte-equal outcomes at each captured step, using serialized state bytes where the capture records state.
+The fixture MUST pin observable behaviour parity with the TypeScript backend using the committed TS reference captures: the civil-date helpers (including every conditional-expression site and their assert-fail paths) and one issuance/presentation/verification round-trip. The executing Rust test MUST assert that the Rust outcome at each captured step equals the TS reference — the outcome/error for helper steps, and the returned bytes (the 32-byte body roots) for the round-trip steps.
 
 #### Scenario: helper behaviour parity
 - **WHEN** the executing test runs the civil-date helper circuits against the captured TS reference values
 - **THEN** Rust outcomes (including assertion-failure cases) match the reference at each step
 
-#### Scenario: state-byte parity
-- **WHEN** a captured step records ledger state
-- **THEN** the Rust serialized state bytes equal the TS reference bytes, so an alignment/width divergence cannot pass on decoded value alone
+#### Scenario: body-root byte parity
+- **WHEN** a captured round-trip step records a body-root value (`credentialBodyRoot`, `presentationBodyRoot`, `presentationRequestBodyRoot`)
+- **THEN** the Rust-returned root bytes equal the TS reference bytes, so an alignment/width divergence cannot pass on a decoded value alone
 
 ### Requirement: Bounded third-party enclave
 

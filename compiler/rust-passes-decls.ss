@@ -315,7 +315,15 @@
                                (loop (cdr types) #f)]))])
                        (out ";\n")
                        (out "    fn from_field_repr(_repr: &[Fr]) -> Option<Self> {\n")
-                       (out "        if _repr.len() < Self::FIELD_SIZE { return None; }\n")
+                       ;; Emit the length guard only for structs with at least
+                       ;; one field. A zero-field struct has FIELD_SIZE = 0, so
+                       ;; `_repr.len() < 0` is always false — harmless at
+                       ;; runtime, but it is clippy's deny-by-default
+                       ;; `absurd_extreme_comparisons`, which made the dogfood
+                       ;; crate's clippy gate (rust-runtime-test.yml) red on
+                       ;; otherwise-clean output.
+                       (unless (null? type*)
+                         (out "        if _repr.len() < Self::FIELD_SIZE { return None; }\n"))
                        (out "        let mut _offset = 0usize;\n")
                        (for-each
                          (lambda (name type)

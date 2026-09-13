@@ -158,6 +158,49 @@ jobs:
       - name: Run Clippy on tests-e2e-rust
         run: cargo clippy -p tests-e2e-rust --all-targets --all-features -- -D warnings
 
+      # The fixture crates are workspace members but only ever consumed as
+      # dev-dependencies of tests-e2e-rust, and cargo builds dependency
+      # crates with `--cap-lints allow` — so unlike fmt above (which covers
+      # every member via --all), clippy never reaches them without an
+      # explicit -p step. The dogfood crate gets one because its ~6k-line
+      # emitter output comes from real third-party source
+      # (examples/dogfood/, see its PROVENANCE.md): a clippy regression
+      # against it is a codegen regression against upstream code, and no
+      # other step here would catch it.
+      #
+      # Re-arming: the emitter stamps `#![allow(clippy::all, ...)]` on
+      # every generated crate, and source-level lint attributes override
+      # command-line -D flags (verified empirically: `--force-warn
+      # clippy::all` still exits 0, and `--forbid` loses to the inner
+      # group-allow; see rust-lang/rust#81670) — so clippy through the
+      # committed file as-is could never fire a clippy lint and this step
+      # was dead-on-arrival. The sed strips the `clippy::all` line from
+      # THIS JOB'S CHECKOUT ONLY: the committed fixture stays
+      # byte-identical (codegen_regression and the test job's fresh
+      # checkout never see this step), and clippy lints return to their
+      # DEFAULT levels for the crate below.
+      #
+      # The gate deliberately does NOT pass `-D warnings`: the generated
+      # code today carries ~170 warn-level findings (vec_init_then_push,
+      # needless_question_mark, clone_on_copy, unnecessary_cast, unit_arg
+      # — the emitter's deliberate string-building style and defensive
+      # clones), all visible in the step log but none correctness bugs.
+      # Denying all of them would make this step permanently red; instead
+      # the deny-by-default clippy CORRECTNESS lints gate the step.
+      # Promoting to `-D warnings` is blocked on an emitter
+      # lint-cleanliness pass, not on this workflow.
+      - name: Re-arm clippy for the dogfood crate (strip the emitted clippy::all allow)
+        # Guard first: sed exits 0 on no match, so a rustfmt line-wrap
+        # change in the emitted attribute block would silently return
+        # this gate to the dead (group-allowed) state it exists to fix.
+        run: |
+          grep -q '^    clippy::all,$' tests-e2e-rust/contracts/digital-passport-credential/lib.rs \
+            || { echo "::error::clippy::all allow line not found — emitter output shape changed; update the sed pattern"; exit 1; }
+          sed -i '/^    clippy::all,$/d' tests-e2e-rust/contracts/digital-passport-credential/lib.rs
+
+      - name: Run Clippy on compact-contract-digital-passport-credential
+        run: cargo clippy -p compact-contract-digital-passport-credential --all-targets --all-features
+
   # Test matrix — runs the byte-parity suite on Linux and macOS to catch
   # platform-dependent encoding bugs.
   test:

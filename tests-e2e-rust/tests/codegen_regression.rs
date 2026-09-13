@@ -161,6 +161,18 @@ const FIXTURES: &[(&str, &str)] = &[
     // gate: tests/ternary_cond_fixture.rs (state-byte parity + per-probe
     // assertions).
     ("ternary_cond_fixture.compact", "ternary-cond-fixture"),
+    // Dogfood enclave: the whole vendored third-party digital-passport contract,
+    // registered exactly like a first-class fixture so the committed crate is
+    // byte-parity-gated. The source path is nested because the enclave preserves
+    // upstream's package layout under examples/dogfood/; `src_name` is joined
+    // onto examples/, so the relative path resolves without special-casing.
+    // Behaviour parity (Rust outcomes vs the TS reference captures) is pinned by
+    // tests/digital_passport_credential.rs; the dev-dependency edge makes the CI
+    // build gate type-check the crate.
+    (
+        "dogfood/digital-passport-credential/src/digital-passport-credential.compact",
+        "digital-passport-credential",
+    ),
 ];
 
 /// Walks up from `start` looking for the repository root: the nearest

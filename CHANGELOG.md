@@ -5,6 +5,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Toolchain 0.31.119, language 0.23.103, runtime 0.16.100]
+
+### Added
+
+- **Digital-passport dogfood fixture + gate registration** — the vendored
+  upstream `examples/dogfood/digital-passport-credential/` contract becomes a
+  first-class fixture. The generated
+  `tests-e2e-rust/contracts/digital-passport-credential/`
+  (`compact-contract-digital-passport-credential`) is registered exactly like
+  any other: a root workspace member, a `tests-e2e-rust` dev-dependency (so
+  the build gate actually type-checks it), and a `codegen_regression` FIXTURES
+  row (the nested source path), so the committed crate is byte-parity-gated
+  against regeneration from the vendored source. Rust↔TS behaviour parity is
+  pinned by an executing test (`tests/digital_passport_credential.rs`) that
+  replays the committed TS reference capture — every civil-date helper
+  scenario (including the assertion-failure paths) and one
+  issuance/presentation/verification round-trip — and asserts the Rust outcome
+  equals the TS reference at each step, comparing the round-trip's 32-byte
+  body roots byte-for-byte.
+
+- **CI wiring for the dogfood crate** — `rust-runtime-test.yml` gains a
+  crate-specific clippy step (dependency crates build with `--cap-lints
+  allow`, so no other step in that workflow lints it), preceded by a guarded
+  strip of the emitter's `#![allow(clippy::all, …)]` so the gate actually
+  lints rather than passing vacuously; `build-compiler.yml`'s smoke step
+  compiles the entry on both targets (`--target ts` and `--target rust`, both
+  `--skip-zk`; codegen-only — no cargo on that lane). The bounded enclave is
+  recorded in ADR 0003 and AGENT.md §1.
+
+### Fixed
+
+- **`--target rust` emitted an always-false length guard in the zero-field
+  `FromFieldRepr` scaffold** — a struct with no fields has `FIELD_SIZE = 0`,
+  so the emitted `if _repr.len() < Self::FIELD_SIZE { return None; }` was
+  always false. Harmless at runtime, but it is clippy's deny-by-default
+  `absurd_extreme_comparisons`, which made the new dogfood clippy gate red on
+  otherwise-clean output; the guard is now emitted only for structs with at
+  least one field. Surfaced by the dogfood enclave; only the dogfood fixture
+  carries zero-field structs and it regenerates byte-identically.
+
 ## [Toolchain 0.31.118, language 0.23.103, runtime 0.16.100]
 
 ### Fixed

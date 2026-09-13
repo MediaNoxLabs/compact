@@ -21,6 +21,8 @@ Human contributors should also read it — it captures the constraints CI enforc
 - `.github/workflows/` — CI. Six workflows; the relevant ones for LLM work are covered in §6.
 - `third_party/` — path-mounted deps materialised by `nix develop`. **Not present on a bare checkout.**
 
+`examples/dogfood/` is a **bounded third-party enclave**: it holds the real, pinned upstream digital-passport contract (`.compact` subset only) so the toolchain continuously compiles a genuine, named production contract rather than only synthetic fixtures. It is exempt from license-header validation via `header_config.json`'s `dogfood` `excluded_directories` entry — upstream Apache-2.0 headers stay verbatim — while every file outside `examples/dogfood/` still requires ours. Refresh is an explicit human act: `examples/dogfood/digital-passport-credential/PROVENANCE.md` records what is vendored, the pinned revision, and the re-sync procedure. This narrows, and does not reverse, the corpus de-branding of `08decb1` — everything outside the enclave stays third-party-free ([ADR 0003](docs/adr/0003-bounded-dogfood-enclave.md)).
+
 Branch on this fork: `codegen-rust` is where all Rust codegen work lives. `main` mirrors LFDT-Minokawa upstream. Feature branches (`feature/*`) target `codegen-rust`, not `main`.
 
 ## 2. Non-negotiable rules

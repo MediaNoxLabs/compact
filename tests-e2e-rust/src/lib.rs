@@ -25,6 +25,7 @@
 // See README.md for the full "add a new fixture" walkthrough.
 
 mod common;
+mod digital_passport_credential;
 mod election;
 mod map_fixture;
 mod tiny;
@@ -35,6 +36,10 @@ mod zerocash;
 pub use common::{
     CapturedMerklePath, CapturedMerklePathEntry, SmallFixtureStepSnapshot, SmallFixtureTsReference,
     TsReferenceState,
+};
+pub use digital_passport_credential::{
+    CivilDateFields, CivilDateHelperInputs, CivilDateHelperScenario,
+    DigitalPassportCredentialTsReference, StepOutcome,
 };
 pub use election::{ElectionStepSnapshot, ElectionTsReferenceState};
 pub use map_fixture::{MapFixtureStepSnapshot, MapFixtureTsReferenceState};

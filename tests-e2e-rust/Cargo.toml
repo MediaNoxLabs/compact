@@ -117,3 +117,9 @@ compact-contract-multi-pl-call-fixture = { path = "contracts/multi-pl-call-fixtu
 # against the TS capture, so a missing laziness/width/route lowering cannot
 # hide behind a crate that merely compiles.
 compact-contract-ternary-cond-fixture = { path = "contracts/ternary-cond-fixture" }
+# Dogfood enclave: the whole vendored third-party digital-passport contract,
+# registered like any other fixture. The dev-dependency edge is what makes
+# `cargo build -p tests-e2e-rust --tests` actually compile the generated crate;
+# `every_fixture_crate_is_a_dev_dependency` enforces this pairing against the
+# nested FIXTURES row, and codegen_regression byte-compares the committed lib.rs.
+compact-contract-digital-passport-credential = { path = "contracts/digital-passport-credential" }

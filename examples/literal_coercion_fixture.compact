@@ -26,6 +26,9 @@
 //   - `structLiteral`     — struct Field-member literal (`Box { f: 0 }`)
 //   - `someFieldLiteral`  — `some<Field>(0)`
 //   - `hashZeroLiteral`   — `persistentHash([0])` (vector element literal)
+//   - `hashUintVarRefElem` — var-ref element into a `Vector<2, Field>` native
+//                           argument (`Fr::from((x) as u64)`, Field-aligned)
+//   - `hashNestedUintVarRefElem` — nested aggregate native arg (leaves flatten)
 //   - `nativeArgLiteral`  — native-arg literal (`hashToCurve<Field>(0)`)
 //   - `uintToField`       — scalar `Uint<8>` → `Field` (`Fr::from((x) as u64)`)
 //   - `u128Rung`          — the wide `Uint<128>` rung
@@ -176,6 +179,19 @@ export pure circuit addUintFieldOperand(x: Field, u: Uint<8>): Field {
 
 export pure circuit nestedFieldArith(x: Field): Field {
   return (x + 1) * (x + 2);
+}
+
+// Var-ref element into a `Vector<2, Field>` native argument: the element
+// is coerced element-wise to its Field destination (`Fr::from((x) as
+// u64)`), so the hash is Field-aligned rather than silently Byte-aligned.
+export pure circuit hashUintVarRefElem(x: Uint<8>): Bytes<32> {
+  return persistentHash<Vector<2, Field>>([x, 0]);
+}
+
+// The same coercion through a NESTED aggregate: the leaves flatten to the
+// aligned hash's atom list instead of a nested (and un-`From`-able) array.
+export pure circuit hashNestedUintVarRefElem(x: Uint<8>): Bytes<32> {
+  return persistentHash<Vector<1, Vector<2, Field>>>([[x, 0]]);
 }
 
 // Destination-typed ledger writes (the cell-write position). The hash and

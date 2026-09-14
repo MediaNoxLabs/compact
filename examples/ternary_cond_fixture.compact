@@ -44,6 +44,10 @@
 //   - `structValuedArms`           struct-valued (non-`Copy`) arms
 //   - `vectorElement`              vector element
 //   - `nativeArg`                  argument of a native (`hashToCurve`)
+//   - `nativeVectorElemTernary`    conditional as a `persistentHash` element
+//                                  (both arms must land at Field)
+//   - `largeLiteralArithOperand`   large literal arm in an UNSIGNED `+`
+//                                  operand (must carry a width, not `i32`)
 //   - `fieldTypedArms`             Field-typed arms
 //   - `enumValued`                 enum-valued arms
 //   - `literalAboveI32`            literal arm > `i32::MAX`
@@ -322,6 +326,23 @@ export circuit streamNestedIf(): [] {
   const x = f ? (f ? 1 : 2) : (f ? 3 : 4);
   fieldCell = disclose(x as Field);
   ops.increment(1);
+}
+
+// Conditional arms as a `persistentHash` VECTOR element. The enclosing
+// element type is Field, so BOTH arms must be coerced to it; the shape
+// used to fall back to the destination on the unwrapped arm while the
+// safe-cast arm stayed at its narrower width (`if c { Fr::from(1u64) }
+// else { 0u8 }`, E0308).
+export pure circuit nativeVectorElemTernary(c: Boolean): Bytes<32> {
+  return persistentHash<Vector<2, Field>>([c ? 1 : 0, 2]);
+}
+
+// A large bare literal inside a conditional arm used as an UNSIGNED `+`
+// operand. The operand carries no per-node width, so without the operand's
+// declared type the arm defaulted to Rust `i32` and the literal (3e9)
+// failed to compile.
+export pure circuit largeLiteralArithOperand(c: Boolean, n: Uint<64>): Uint<128> {
+  return n + (c ? 3000000000 : 3000000000);
 }
 
 constructor(c: Boolean, d: Boolean, x: Field) {

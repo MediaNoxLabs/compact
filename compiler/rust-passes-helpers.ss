@@ -638,6 +638,18 @@
           [(ttuple ,src ,type* ...) (and (= (length type*) n) type*)]
           [else #f]))
 
+      ;; type-is-aggregate?: is `type` an aggregate (a Vector<N, T> or a
+      ;; Tuple<...>), possibly through `talias` layers, at any arity? Used by
+      ;; the native-vector flattening to decide whether an element must be
+      ;; recursed into (its leaves concatenated) rather than emitted as one
+      ;; atom. Companion to `type-elt-types`, which is arity-specific.
+      (define (type-is-aggregate? type)
+        (and type
+             (nanopass-case (Ltypescript Type) (type-strip-alias type)
+               [(tvector ,src ,len ,type) #t]
+               [(ttuple ,src ,type* ...) #t]
+               [else #f])))
+
       ;; uint-coercion-cast-width: the Rust primitive that losslessly holds
       ;; every value of a `(tunsigned nat)` — "u64" through 2^64-1 (kept for
       ;; byte parity with the original scalar path), "u128" through 2^128-1,
@@ -877,6 +889,20 @@
       (define (expr-expected-type expr)
         (nanopass-case (Ltypescript Expression) expr
           [(safe-cast ,src ,type ,type^ ,expr^) type]
+          [else #f]))
+
+      ;; expr-source-type: the source type a `safe-cast` wrapper records for
+      ;; its inner expression. Companion to `expr-expected-type` (which
+      ;; returns the target): a boundary that wants to render the wrapped
+      ;; value AT its own coerced type WITHOUT materialising the cast (so the
+      ;; enclosing context's width cast stays the only one) binds this as the
+      ;; expected type. Because target == source at that call,
+      ;; `materialize-at-type` emits no cast, but nested sub-expressions (a
+      ;; ternary arm, a bare literal) still see a width. Returns #f for an
+      ;; un-wrapped expression.
+      (define (expr-source-type expr)
+        (nanopass-case (Ltypescript Expression) expr
+          [(safe-cast ,src ,type ,type^ ,expr^) type^]
           [else #f]))
 
       ;; -----------------------------------------------------------------

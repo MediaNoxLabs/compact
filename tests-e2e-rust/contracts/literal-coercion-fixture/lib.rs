@@ -423,4 +423,22 @@ pub mod pure_circuits {
     pub fn nested_field_arith(x: Fr) -> Result<Fr, CompactError> {
         Ok(((x) + (Fr::from(1u64))) * ((x) + (Fr::from(2u64))))
     }
+
+    pub fn hash_uint_var_ref_elem(x: u8) -> Result<[u8; 32], CompactError> {
+        Ok(midnight_compact_runtime::std_lib::persistent_hash_aligned(
+            &[
+                midnight_compact_runtime::AlignedValue::from(Fr::from((x) as u64)),
+                midnight_compact_runtime::AlignedValue::from(Fr::from(0u64)),
+            ],
+        ))
+    }
+
+    pub fn hash_nested_uint_var_ref_elem(x: u8) -> Result<[u8; 32], CompactError> {
+        Ok(midnight_compact_runtime::std_lib::persistent_hash_aligned(
+            &[
+                midnight_compact_runtime::AlignedValue::from(Fr::from((x) as u64)),
+                midnight_compact_runtime::AlignedValue::from(Fr::from(0u64)),
+            ],
+        ))
+    }
 }

@@ -1740,8 +1740,26 @@
       ;; Iter 7 follow-up: introduced to support non-identity lambdas
       ;; in `map()` (`x * 2 as Uint<64>` and friends).
       (define (arith-operand-rust expr native-id-ht)
-        (let ([rendered (expr-rust expr native-id-ht)]
-              [s (current-arith-suffix)])
+        ;; UNSIGNED `+ - *` operands are cast to the `mbits` result width by
+        ;; the caller, so the operand's own `safe-cast` MUST NOT be
+        ;; materialised here (that would double-cast). But its SOURCE type is
+        ;; still the operand's declared type, and a compound operand whose
+        ;; sub-expressions carry no per-node wrapper — a ternary whose arms
+        ;; are bare literals — loses all width information otherwise and
+        ;; defaults to Rust's `i32` (so `n + (c ? 3000000000 : 3000000000)`
+        ;; failed to compile). Render such an operand at its own source type:
+        ;; target == source, so `materialize-at-type` emits no cast, while the
+        ;; arm/literal still sees a width. A bare integer-literal operand
+        ;; keeps its pre-existing rendering (the caller's `as <w>` types it,
+        ;; and `current-arith-suffix` covers the downcast case), preserving
+        ;; byte parity for the common literal-operand shape.
+        (let* ([rendered
+                (if (literal-int-expr? expr)
+                    (expr-rust expr native-id-ht)
+                    (parameterize ([current-expr-expected-type
+                                    (expr-source-type expr)])
+                      (expr-rust expr native-id-ht)))]
+               [s (current-arith-suffix)])
           (cond
             [(and s (integer-literal-rendering? rendered))
              (string-append rendered s)]
@@ -2131,29 +2149,34 @@
            ;; at the empty default, cond-rust would raise instead of
            ;; returning #f and hard-abort a call-conditioned ternary.
            ;;
-           ;; Each arm renders through expr-rust-typed at the type
-           ;; expected at that arm's position. The typer's `if` rule
-           ;; (analysis-passes.ss) joins the arms and `maybe-safecast`s
-           ;; each narrower arm to the join, so the arm's own safe-cast
-           ;; wrapper records the destination; a bare arm already has the
-           ;; join type and needs no wrapper. The enclosing use position's
-           ;; expectation (bound when the whole conditional is itself
-           ;; safe-cast to a wider slot, e.g. a Uint arm into a Field) is
-           ;; the fallback. Type/width correctness is inherited entirely
-           ;; from rust-codegen/type-directed-coercion: this clause adds
-           ;; NO arm-specific literal/width logic.
+           ;; Each arm renders through expr-rust-typed at the conditional's
+           ;; USE-POSITION type — the destination bound as
+           ;; `current-expr-expected-type` — which the arm's own safe-cast is
+           ;; materialised against. The arm's own wrapper is only a fallback
+           ;; for when no use position declared a type. Using the use-position
+           ;; type for BOTH arms is what keeps them at one Rust type: the
+           ;; typer's `if` rule (analysis-passes.ss) joins the arms and
+           ;; `maybe-safecast`s each narrower arm to the join, but an element
+           ;; boundary that coerces the whole conditional (e.g. a
+           ;; `Vector<N, Field>` native argument) may supply a destination
+           ;; WIDER than an individual arm's wrapper — and if each arm
+           ;; preferred its own narrower wrapper those Rust types would
+           ;; diverge (`if c { Fr::from(1u64) } else { 0u8 }`, E0308).
+           ;; Type/width correctness is inherited entirely from
+           ;; rust-codegen/type-directed-coercion: this clause adds NO
+           ;; arm-specific literal/width logic.
            (format "if ~a { ~a } else { ~a }"
                    (cond-rust expr0 (current-var-substitution)
                               native-id-ht
                               (current-witness-id-ht)
                               (current-circuit-id-ht))
                    (expr-rust-typed expr1
-                                    (or (expr-expected-type expr1)
-                                        (current-expr-expected-type))
+                                    (or (current-expr-expected-type)
+                                        (expr-expected-type expr1))
                                     native-id-ht)
                    (expr-rust-typed expr2
-                                    (or (expr-expected-type expr2)
-                                        (current-expr-expected-type))
+                                    (or (current-expr-expected-type)
+                                        (expr-expected-type expr2))
                                     native-id-ht))]
           [(elt-ref ,src ,expr ,elt-name ,nat)
            ;; F1.2: struct field access.
@@ -2660,27 +2683,60 @@
             [else rendered])))
 
       ;; native-vector-elem-strs: render a vector-typed native argument
-      ;; (persistentHash / transientHash) as a list of
-      ;; `AlignedValue::from(<elem>)` atoms. The argument is a `(tuple ...)`
-      ;; typically wrapped in `(safe-cast <Vector<N,T>> ...)`; peeling the
-      ;; cast exposes the tuple and the wrapper's target supplies the
-      ;; element type, so a bare literal element is coerced
-      ;; (`[0]` -> `AlignedValue::from(Fr::from(0u64))`). A non-tuple
+      ;; (persistentHash / transientHash) as a FLAT list of
+      ;; `AlignedValue::from(<leaf>)` atoms. The aligned hash concatenates
+      ;; these atoms, and a nested aggregate's alignment is the concat of its
+      ;; leaves, so a nested vector is flattened rather than emitted as a
+      ;; nested Rust array (there is no `From<[T; N]> for AlignedValue` beyond
+      ;; `[u8; N]`).
+      ;;
+      ;; The argument is usually a `(tuple ...)` wrapped in
+      ;; `(safe-cast <Vector<N,T>> <source> ...)`. Peeling the cast exposes
+      ;; the tuple; the wrapper's target and source supply the element types,
+      ;; and each element goes through the central element-wise coercion
+      ;; (`materialize-element` / `materialize-at-type`), so a var-ref or a
+      ;; ternary arm is rendered AT the element type instead of being passed
+      ;; through uncoerced (which silently Byte-aligned a Field element and
+      ;; left a ternary's arms at divergent Rust types). A non-aggregate
       ;; argument renders whole at its own expected type.
       (define (native-vector-elem-strs arg native-id-ht)
-        (let ([t (expr-expected-type arg)])
-          (nanopass-case (Ltypescript Expression) (expr-strip-cast arg)
-            [(tuple ,src ,tuple-arg* ...)
-             (let* ([n (length tuple-arg*)]
-                    [elt-types (and t (type-elt-types t n))])
-               (map (lambda (ta et)
-                      (format "midnight_compact_runtime::AlignedValue::from(~a)"
-                              (tuple-arg-rust ta native-id-ht et)))
+        (native-vector-atoms arg (expr-expected-type arg) (expr-source-type arg)
+                             native-id-ht))
+
+      (define (native-vector-atoms arg-expr target-type source-type native-id-ht)
+        (nanopass-case (Ltypescript Expression) (expr-strip-cast arg-expr)
+          [(tuple ,src ,tuple-arg* ...)
+           (let* ([n (length tuple-arg*)]
+                  [target-elt* (and target-type (type-elt-types target-type n))]
+                  [source-elt* (and source-type (type-elt-types source-type n))])
+             (apply append
+               (map (lambda (ta te se)
+                      (let ([inner
+                             (nanopass-case (Ltypescript Tuple-Argument) ta
+                               [(single ,src^ ,expr) expr]
+                               [(spread ,src^ ,nat ,expr)
+                                (rust-feature-error src^ 'tuple-spread
+                                  "tuple spread (`...expr`) not supported")])])
+                        (if (and te (type-is-aggregate? te))
+                            (native-vector-atoms inner te se native-id-ht)
+                            (list
+                              (format "midnight_compact_runtime::AlignedValue::from(~a)"
+                                (if (and te se)
+                                    (materialize-element src te se ta
+                                      (lambda (e) (expr-rust e native-id-ht)))
+                                    (tuple-arg-rust ta native-id-ht te)))))))
                     tuple-arg*
-                    (or elt-types (make-list n #f))))]
-            [else
-             (list (format "midnight_compact_runtime::AlignedValue::from(~a)"
-                           (expr-rust-typed arg t native-id-ht)))])))
+                    (or target-elt* (make-list n #f))
+                    (or source-elt* (make-list n #f)))))]
+          [else
+           (list
+             (format "midnight_compact_runtime::AlignedValue::from(~a)"
+               (if (and target-type source-type)
+                   (or (materialize-at-type #f target-type source-type
+                         (expr-strip-cast arg-expr)
+                         (lambda (e) (expr-rust e native-id-ht)))
+                       (expr-rust-typed arg-expr target-type native-id-ht))
+                   (expr-rust-typed arg-expr target-type native-id-ht))))]))
 
       (define (call-rust src function-name expr* native-id-ht)
         (let ([ne (eq-hashtable-ref native-id-ht function-name #f)]

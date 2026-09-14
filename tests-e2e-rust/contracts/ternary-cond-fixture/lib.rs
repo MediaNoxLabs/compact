@@ -1322,7 +1322,7 @@ pub mod pure_circuits {
     }
 
     pub fn arith_operand(c: bool, n: u8) -> Result<u64, CompactError> {
-        Ok(((((n) as u16).wrapping_add((if c { 1 } else { 0u8 }) as u16)) as u64))
+        Ok(((((n) as u16).wrapping_add((if c { 1u8 } else { 0u8 }) as u16)) as u64))
     }
 
     pub fn cmp_operand(c: bool, x: u8) -> Result<bool, CompactError> {
@@ -1413,5 +1413,20 @@ pub mod pure_circuits {
         Ok(midnight_compact_runtime::std_lib::some(Fr::from(
             (if c { 1u8 } else { 2u8 }) as u64,
         )))
+    }
+
+    pub fn native_vector_elem_ternary(c: bool) -> Result<[u8; 32], CompactError> {
+        Ok(midnight_compact_runtime::std_lib::persistent_hash_aligned(
+            &[
+                midnight_compact_runtime::AlignedValue::from(Fr::from(
+                    (if c { 1u8 } else { 0u8 }) as u64,
+                )),
+                midnight_compact_runtime::AlignedValue::from(Fr::from(2u64)),
+            ],
+        ))
+    }
+
+    pub fn large_literal_arith_operand(c: bool, n: u64) -> Result<u128, CompactError> {
+        Ok(((n) as u128).wrapping_add((if c { 3000000000u32 } else { 3000000000u32 }) as u128))
     }
 }

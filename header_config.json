@@ -50,6 +50,7 @@
     "coverage",
     "target",
     "third_party",
+    "dogfood",
     "dist",
     "reports",
     "result",

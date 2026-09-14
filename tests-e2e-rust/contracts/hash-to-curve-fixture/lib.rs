@@ -61,8 +61,12 @@ where
         let state = ChargedState::new(sv);
         let qctx = QueryContext::new(state, midnight_compact_runtime::ContractAddress::default());
         let tmp = [
-            midnight_compact_runtime::jubjub_point_x(midnight_compact_runtime::hash_to_curve(1)),
-            midnight_compact_runtime::jubjub_point_y(midnight_compact_runtime::hash_to_curve(1)),
+            midnight_compact_runtime::jubjub_point_x(midnight_compact_runtime::hash_to_curve(
+                Fr::from(1u64),
+            )),
+            midnight_compact_runtime::jubjub_point_y(midnight_compact_runtime::hash_to_curve(
+                Fr::from(1u64),
+            )),
         ];
         let ops = OpProgramVerify::<DefaultDB>::new()
             .push(false, new_cell(1u8))

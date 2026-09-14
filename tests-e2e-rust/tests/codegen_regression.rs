@@ -51,6 +51,7 @@
 //   The compiler is `$COMPACTC` if set, else `<root>/result/bin/compactc`
 //   — the symlink `nix build .#compactc` produces.
 
+use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -128,6 +129,60 @@ const FIXTURES: &[(&str, &str)] = &[
     // overflow, yield a WRONG VALUE in code that still compiles.
     // Executing gate: tests/widening_arith_fixture.rs.
     ("widening_arith_fixture.compact", "widening-arith-fixture"),
+    // Mixed-MINIMAL-width operands at comparison/equality boundaries: the
+    // typer wraps the narrower operand of `q * 4 <= y` (product ranges to
+    // u64, `y` is u32) in a `safe-cast`, which the emitter now materialises
+    // as `((y) as u64)`. `widening_arith_fixture` covers the mbits ladder at
+    // uniform declared widths; this one covers operands of ONE binary
+    // operation whose minimal Rust widths differ, across all six comparison
+    // operators, mixed-width `+ - *`, the guarded-subtraction route, an
+    // impure inline equality, and the constructor. Executing gate:
+    // tests/mixed_width_operand_fixture.rs.
+    (
+        "mixed_width_operand_fixture.compact",
+        "mixed-width-operand-fixture",
+    ),
+    // Type-directed coercion of bare literals and Uint values: Field const
+    // RHS, struct Field member, `some<Field>(0)`, `persistentHash([0])`,
+    // native / pure-call argument, return tail, scalar and wide Uint→Field,
+    // aggregate Field vector, and destination-typed ledger writes. Executing
+    // gate: tests/literal_coercion.rs (state-byte parity + round-trips).
+    (
+        "literal_coercion_fixture.compact",
+        "literal-coercion-fixture",
+    ),
+    // Inline-call type scope: a non-exported impure helper is inlined into its
+    // caller, and the helper's OWN formal types must drive the native-hash
+    // scalar-vs-aggregate decision (not the caller's same-named bindings).
+    // Locks a formal collision that produced a compiling-but-wrong half-vector
+    // hash and an `x[0]` on a scalar, plus the no-collision recovery. Executing
+    // gate: tests/inline_type_scope_fixture.rs.
+    (
+        "inline_type_scope_fixture.compact",
+        "inline-type-scope-fixture",
+    ),
+    // Conditional (ternary) expression coverage matrix: the one `(if c e1 e2)`
+    // clause in `expr-rust` plus the `expr-supported?` arm make a ternary legal
+    // in every sub-expression position and body route. This fixture is the
+    // probe set for the route x position x value-shape matrix (in the change's
+    // tasks.md) — pure const/return/assert/operand/call/struct/vector/native/
+    // nested/enum/wide-literal positions; impure-walker, impure-streaming, and
+    // constructor routes; and the branch-local subtraction guard. Executing
+    // gate: tests/ternary_cond_fixture.rs (state-byte parity + per-probe
+    // assertions).
+    ("ternary_cond_fixture.compact", "ternary-cond-fixture"),
+    // Dogfood enclave: the whole vendored third-party digital-passport contract,
+    // registered exactly like a first-class fixture so the committed crate is
+    // byte-parity-gated. The source path is nested because the enclave preserves
+    // upstream's package layout under examples/dogfood/; `src_name` is joined
+    // onto examples/, so the relative path resolves without special-casing.
+    // Behaviour parity (Rust outcomes vs the TS reference captures) is pinned by
+    // tests/digital_passport_credential.rs; the dev-dependency edge makes the CI
+    // build gate type-check the crate.
+    (
+        "dogfood/digital-passport-credential/src/digital-passport-credential.compact",
+        "digital-passport-credential",
+    ),
 ];
 
 /// Walks up from `start` looking for the repository root: the nearest
@@ -271,6 +326,74 @@ fn rust_codegen_byte_parity_against_committed_fixtures() {
             summary
         );
     }
+}
+
+/// Every `FIXTURES` row's generated crate MUST also be a dev-dependency of
+/// `tests-e2e-rust`.
+///
+/// Workspace membership alone does not make `cargo build -p tests-e2e-rust
+/// --tests` (the CI build gate) compile a crate — only a dependency edge
+/// does. A registered fixture whose crate is not a dev-dependency is
+/// therefore byte-compared by the gate above but never compiled, so a
+/// codegen change that emits non-compiling Rust for it would pass CI. That
+/// is exactly how `compact-contract-multi-pl-call-fixture` was invisible.
+///
+/// This test is deliberately compiler-free: it only reads the `FIXTURES`
+/// table defined above and the crate manifest, so it also runs on the
+/// bare no-Nix `test` matrix, where it is the only thing keeping the two
+/// registrations in sync.
+#[test]
+fn every_fixture_crate_is_a_dev_dependency() {
+    let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let cargo_toml_path = manifest_dir.join("Cargo.toml");
+    let cargo_toml = std::fs::read_to_string(&cargo_toml_path)
+        .unwrap_or_else(|e| panic!("read {}: {}", cargo_toml_path.display(), e));
+
+    // Keys declared under `[dev-dependencies]`, which runs until the next
+    // top-level `[section]` header. Fixture packages are named exactly
+    // `compact-contract-<dir-name>`, so the `FIXTURES` dir-name is enough to
+    // derive the expected key. (This mirrors the manifest's own convention;
+    // the assertion below fails loudly if that convention ever drifts.)
+    let mut dev_deps = BTreeSet::new();
+    let mut in_dev_deps = false;
+    for raw in cargo_toml.lines() {
+        let line = raw.trim();
+        if line.starts_with('[') {
+            in_dev_deps = line == "[dev-dependencies]";
+            continue;
+        }
+        if !in_dev_deps || line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+        if let Some((key, _)) = line.split_once('=') {
+            dev_deps.insert(key.trim().to_string());
+        }
+    }
+    assert!(
+        !dev_deps.is_empty(),
+        "parsed no [dev-dependencies] from {} — this test's parser no longer \
+         matches the manifest layout",
+        cargo_toml_path.display()
+    );
+
+    let missing: Vec<String> = FIXTURES
+        .iter()
+        .map(|(_, dir_name)| format!("compact-contract-{}", dir_name))
+        .filter(|crate_name| !dev_deps.contains(crate_name))
+        .collect();
+
+    assert!(
+        missing.is_empty(),
+        "codegen_regression FIXTURES row(s) are not tests-e2e-rust dev-dependencies: {:?}\n\
+         A workspace member in the root Cargo.toml does not make `cargo build \
+         -p tests-e2e-rust --tests` compile the crate; only a dev-dependency edge does, \
+         so these fixtures would be byte-compared but never compiled. Add each as \
+         `compact-contract-<dir-name> = {{ path = \"contracts/<dir-name>\" }}` under \
+         `[dev-dependencies]` in {} (and refresh Cargo.lock so every `--locked` gate \
+         stays valid), then reference the crate from a `tests/<dir-name>.rs`.",
+        missing,
+        cargo_toml_path.display()
+    );
 }
 
 /// Create a fresh temp dir under `$TMPDIR/<prefix>-<pid>-<nanos>`. Used

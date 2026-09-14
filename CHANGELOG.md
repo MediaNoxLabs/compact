@@ -5,6 +5,138 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Toolchain 0.31.119, language 0.23.103, runtime 0.16.100]
+
+### Added
+
+- **Digital-passport dogfood fixture + gate registration** — the vendored
+  upstream `examples/dogfood/digital-passport-credential/` contract becomes a
+  first-class fixture. The generated
+  `tests-e2e-rust/contracts/digital-passport-credential/`
+  (`compact-contract-digital-passport-credential`) is registered exactly like
+  any other: a root workspace member, a `tests-e2e-rust` dev-dependency (so
+  the build gate actually type-checks it), and a `codegen_regression` FIXTURES
+  row (the nested source path), so the committed crate is byte-parity-gated
+  against regeneration from the vendored source. Rust↔TS behaviour parity is
+  pinned by an executing test (`tests/digital_passport_credential.rs`) that
+  replays the committed TS reference capture — every civil-date helper
+  scenario (including the assertion-failure paths) and one
+  issuance/presentation/verification round-trip — and asserts the Rust outcome
+  equals the TS reference at each step, comparing the round-trip's 32-byte
+  body roots byte-for-byte.
+
+- **CI wiring for the dogfood crate** — `rust-runtime-test.yml` gains a
+  crate-specific clippy step (dependency crates build with `--cap-lints
+  allow`, so no other step in that workflow lints it), preceded by a guarded
+  strip of the emitter's `#![allow(clippy::all, …)]` so the gate actually
+  lints rather than passing vacuously; `build-compiler.yml`'s smoke step
+  compiles the entry on both targets (`--target ts` and `--target rust`, both
+  `--skip-zk`; codegen-only — no cargo on that lane). The bounded enclave is
+  recorded in ADR 0003 and AGENT.md §1.
+
+### Fixed
+
+- **`--target rust` emitted an always-false length guard in the zero-field
+  `FromFieldRepr` scaffold** — a struct with no fields has `FIELD_SIZE = 0`,
+  so the emitted `if _repr.len() < Self::FIELD_SIZE { return None; }` was
+  always false. Harmless at runtime, but it is clippy's deny-by-default
+  `absurd_extreme_comparisons`, which made the new dogfood clippy gate red on
+  otherwise-clean output; the guard is now emitted only for structs with at
+  least one field. Surfaced by the dogfood enclave; only the dogfood fixture
+  carries zero-field structs and it regenerates byte-identically.
+
+- **`--target rust` inlined a helper's var-ref against the caller's type
+  tables** — `inline-circuit-call` renders a non-exported impure helper's body
+  in its caller's body but did not establish the helper's own formal scope, so
+  `expr-value-type` resolved a helper formal through the caller's same-named
+  binding. A scalar helper formal colliding with a caller vector flattened a
+  scalar (`x[0]`, E0608); a `Vector<4, Field>` helper formal colliding with a
+  caller `Vector<2, Field>` hashed only two of the four leaves — code that
+  compiled but silently computed the wrong value. The inlined body now rebinds
+  the type tables to the helper's formals. New
+  `inline_type_scope_fixture` (source, crate, executing gate, and
+  `codegen_regression` row) pins all three shapes; the other fixtures
+  regenerate byte-identically.
+
+## [Toolchain 0.31.118, language 0.23.103, runtime 0.16.100]
+
+### Fixed
+
+- **`--target rust` rejected conditional (ternary) expressions wherever they
+  appeared as a sub-expression**, so real contracts the TypeScript backend
+  compiles failed on the Rust backend. `expr-rust` had no `(if c e1 e2)`
+  clause, so its `[else]` raised `expr-variant`, which the guarded body
+  emitters swallowed into "no walker shape matched" `pure-circuit-body-emission`
+  / `circuit-body-emission` / `ctor-body-emission` errors; the `expr-supported?`
+  walkability gate had the same missing arm, so impure and streaming bodies
+  refused a ternary before emission was even attempted. A single `(if ...)`
+  clause in `expr-rust` now renders a Rust `if` expression — lazily, so only
+  the selected branch is evaluated (a branch-local underflow guard stays inside
+  its arm and cannot trap an untaken branch) — with each arm rendered through
+  the type-directed coercion path introduced in 0.31.117, so type/width
+  correctness is inherited rather than re-specified per position. A matching
+  arm in `expr-supported?` admits ternaries to the impure, streaming, and
+  constructor routes. The vendored digital-passport contract's three ternary
+  sites now compile under `--target rust`.
+
+## [Toolchain 0.31.117, language 0.23.103, runtime 0.16.100]
+
+### Fixed
+
+- **`--target rust` emitted un-typed Rust integers wherever a bare literal (or
+  a `Uint` value) sat in a typed position**, so the generated crate failed
+  `cargo build` while `compactc` exited 0. A `Field` const RHS (`const x: Field
+  = 0;`), a struct `Field` member, `some<Field>(0)`, a `persistentHash([0])`
+  element, a native argument, a return tail, and a destination-typed ledger
+  write each emitted a bare `0`/`1`/ambiguous `AlignedValue::from(0)` instead of
+  the destination type. Every expression is now rendered against the Compact
+  type its use position requires, materialising the typechecker's `safe-cast`
+  wrapper at a single decision point (`materialize-at-type`); a `Uint → Field`
+  coercion zero-extends losslessly (`Fr::from((x) as u64)`, or `as u128` above
+  `u64::MAX`) and refuses above `u128::MAX` rather than truncating.
+
+- **A `Field` literal above `u64::MAX` emitted an out-of-range `u64` literal.**
+  Every literal coerced into a `Field` position was rendered `Fr::from(<n>u64)`,
+  so a legal `Field` literal past `u64::MAX` — a range that runs up to
+  `max-field` (~2^255) — produced a `u64` literal that overflowed and failed
+  `cargo build` while `compactc` exited 0. Literals now pick their width from
+  the `Field` domain at one point (`field-literal-rust`): `u64`, then `u128`,
+  then the little-endian `Fr::from_le_bytes` constructor for the range above
+  `u128::MAX`. The `u64` rung keeps previously-correct output byte-identical.
+
+- **A `Field` literal or `Uint` operand of `+`/`-`/`*` was emitted as an
+  un-typed Rust integer.** The FIELD branch of `arith-binop-rust` (`mbits = #f`)
+  has no width cast to normalise its operands, so `return x + 1;` in a `Field`
+  circuit emitted `(x) + (1)` — and a `Uint` operand `(x) + (u: u8)` — which
+  `Fr` cannot absorb (it has no `Add<{integer}>` impl), failing `cargo build`
+  with E0308 while `compactc` exited 0; a literal above `u64::MAX` additionally
+  overflowed the emitted literal. Each `Field` arithmetic operand is now
+  materialised from its typechecker `safe-cast` target as an `Fr`
+  (`field-literal-rust` for a literal, `Fr::from((x) as uN)` for a `Uint`); the
+  unsigned branch keeps its existing `mbits` cast and is byte-identical.
+
+- **Mixed minimal-width comparison operands were peeled instead of widened.**
+  `q * 4` on `q: Uint<32>` range-types to `u64`; compared against a `Uint<32>`
+  value, the typechecker wraps the narrower operand and the emitter peeled the
+  wrapper, so the two sides met at different Rust widths (E0308 at `cargo
+  build`, `compactc` exit 0). The narrower operand is now widened losslessly
+  (`((x) as u64)`), on both the pure and constructor/impure routes; ranges that
+  already share a Rust width gain no cast, and `+ - *` keep their existing
+  same-width normalisation.
+
+- **A constructor whose `const` RHS lifted a temp was unwalkable.** The
+  declaration-only `const` the typer emits for a `maybe-bind`-lifted temp (e.g.
+  `const diff = base - q * 4;`) was not skipped by the constructor walker, so a
+  body like `constructor(q, y) { assert(q * 4 <= y, …); … }` fell outside every
+  shape. The constructor walker now skips the declaration and renders the
+  matching lifted assignment, mirroring the streaming walker.
+
+- **A renderer that could not lower an expression could splice a `#f`
+  sentinel into `lib.rs`.** The emitted text is now buffered and scanned before
+  it is written; a `#f` outside a string/comment/raw-identifier aborts with a
+  located `sentinel-splice` error and writes no `lib.rs`, replacing the weak
+  `/* TODO` scan as the correctness guarantee.
+
 ## [Toolchain 0.31.116, language 0.23.103, runtime 0.16.100]
 
 ### Fixed

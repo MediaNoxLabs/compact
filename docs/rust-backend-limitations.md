@@ -76,10 +76,12 @@ grep -rn "(rust-feature-error" compiler/rust-passes*.ss \
   | grep -v "define (rust-feature-error" | wc -l
 ```
 
-At the time of writing that is **33 call sites** across 4 passes
-(`rust-passes-emit.ss` 27, `rust-passes-walker.ss` 4,
-`rust-passes-helpers.ss` 1, `rust-passes-prelude.ss` 1), spanning **27
-distinct kinds**.
+At the time of writing that is **38 call sites** across 4 passes
+(`rust-passes-emit.ss` 28, `rust-passes-walker.ss` 4,
+`rust-passes-helpers.ss` 5, `rust-passes-prelude.ss` 1), spanning **30
+distinct kinds**. (The `rust-passes-helpers.ss` count includes the
+post-emit `sentinel-splice` guard added by
+`type-directed-expression-coercion` — see below.)
 
 One caveat when reading a diagnostic: several emitters probe alternative
 shapes under a catch-all `(guard (c [#t #f]) …)`, which swallows a specific
@@ -157,6 +159,67 @@ because until recently it was not a limitation at all — it emitted the
 default scaffold and threw the constructor away. If you are on an older
 build, check that your deployed initial state is what you wrote.
 
+### Impure bodies past the walker's expression shapes
+
+`circuit-body-emission`. An impure circuit body is lowered by
+shape-matching, and its expression gate admits only a narrow set of forms.
+Arithmetic — including the trapping subtraction the typer wraps in an
+underflow guard — and ordering comparisons (`<`, `<=`, `>`, `>=`) are not
+admitted inline, so a body whose statement needs either is refused as a
+whole:
+
+```compact
+circuit record(x: Uint<32>, y: Uint<32>): [] {
+  assert(x + 1 <= y, "…");   // rejected: inline arithmetic + ordering
+  count.increment(1);
+}
+```
+
+Conditional expressions do not change this. A ternary whose *arm or
+condition* needs either shape — `c ? a - 1 : a`, `c ? 1 : 2` used as an
+arithmetic operand, a comparison the impure walker will not admit inline —
+is refused for the same reason its un-conditional equivalent is; the
+offending shape, not the `? :`, is what the gate rejects. Equality (`==`,
+`!=`) and calls are admitted.
+
+**Workaround:** move the arithmetic/ordering into a `pure` circuit and call
+it from the impure body. `guarded_assert_arith_fixture` and
+`mixed_width_operand_fixture` both do this (the impure circuit forwards to
+the pure callee, which lowers the construct). The
+`ternary_cond_fixture` matrix records which cells are refused for this
+reason.
+
+### Witness calls as sub-expressions
+
+`witness-inline`. A witness call cannot be inlined in a **returned
+expression** — it returns `(PS, T)`, so the backend hoists it to a
+`let`-binding first. The disclosure checker runs before this gate, so the
+diagnostic you hit depends on the shape:
+
+```compact
+circuit f(c: Boolean): Field {
+  // disclosure error first (the witness value is not disclosed) …
+  // return echoField(c ? 1 : 2);
+  // … and once disclosed, the witness-inline gate:
+  return disclose(echoField(c ? 1 : 2));   // rejected: sub-expression in a return
+}
+```
+
+**Workaround:** bind the witness call to a top-level `const`, then consume
+the binding — e.g. write it to a ledger field:
+
+```compact
+circuit f(c: Boolean): [] {
+  const w = echoField(c ? 1 : 2);
+  fieldCell = disclose(w);   // bind first, then disclose into the write
+}
+```
+
+A conditional as the *argument* of a witness call is fine in that binding
+shape. Returning the bound value (`const w = echoField(…); return disclose(w);`)
+is a separate, unlowered shape — refused as `circuit-body-emission` — so
+consume the binding in a ledger write rather than returning it.
+
 ### `Field as Uint<N>` — no lowering
 
 `cast-from-field`. Narrowing a `Field` to a bounded unsigned integer needs
@@ -195,6 +258,33 @@ new decoder arm plus a fixture.
 
 `map-mvp-shape`. `map()` is lowered for the shapes the fixtures cover
 (identity body, non-identity lambda, named function); other shapes reject.
+
+### `Uint` wider than `u128` into a `Field`
+
+`field-uint-coercion`. A `Uint<N>` value flowing into a `Field` position is
+zero-extended through the widest lossless Rust cast available — `Fr::from((x)
+as u64)`, then `Fr::from((x) as u128)` once the range passes `u64::MAX`. A
+source range that runs past `u128::MAX` (e.g. `Uint<248>`, Compact's maximum
+width) has no lossless cast into `Fr`, so it rejects rather than truncate:
+
+```compact
+ledger f: Field;
+constructor(x: Uint<248>) { f = disclose(x); }   // rejected (field-uint-coercion)
+```
+
+The `Uint<128>` boundary itself is accepted — its max is exactly `u128::MAX`,
+so `From<u128> for Fr` is lossless.
+
+### Sentinel splice
+
+`sentinel-splice`. The emitted `lib.rs` is buffered and scanned before it is
+written: a `#f` from a renderer that could not lower an expression — the
+value that used to reach the output when an unchecked caller fed it to
+`format` — aborts the compile with a location instead of producing Rust that
+merely looks plausible. The scan ignores `#f` inside string/char literals,
+comments, and raw identifiers (`r#foo`), so it only fires on an actual
+splice. This is the backstop that replaced the old reliance on the
+`rendered-has-todo?` `/* TODO` scan for correctness.
 
 ## Verifying a claim on this page
 

@@ -11,6 +11,7 @@ target
 artifacts
 node_modules
 plonk-napi/pkg
+.luaurc
 .parcel-cache
 *.node
 

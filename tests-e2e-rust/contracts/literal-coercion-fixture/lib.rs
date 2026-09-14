@@ -79,6 +79,61 @@ impl midnight_compact_runtime::BinaryHashRepr for Box {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Default)]
+pub struct VecBox {
+    pub v: [Fr; 2],
+}
+impl Aligned for VecBox {
+    fn alignment() -> Alignment {
+        Alignment::concat([&<Fr as Aligned>::alignment(), &<Fr as Aligned>::alignment()])
+    }
+}
+impl FieldRepr for VecBox {
+    fn field_repr<W: MemWrite<Fr>>(&self, writer: &mut W) {
+        for _e in self.v.iter() {
+            _e.field_repr(writer);
+        }
+    }
+    fn field_size(&self) -> usize {
+        self.v.iter().map(|e| e.field_size()).sum::<usize>()
+    }
+}
+impl FromFieldRepr for VecBox {
+    const FIELD_SIZE: usize = <Fr as FromFieldRepr>::FIELD_SIZE * 2;
+    fn from_field_repr(_repr: &[Fr]) -> Option<Self> {
+        if _repr.len() < Self::FIELD_SIZE {
+            return None;
+        }
+        let mut _offset = 0usize;
+        let v = midnight_compact_runtime::array_from_field_repr::<Fr, 2>(
+            &_repr[_offset.._offset + <Fr as FromFieldRepr>::FIELD_SIZE * 2],
+            <Fr as FromFieldRepr>::FIELD_SIZE,
+        )?;
+        _offset += <Fr as FromFieldRepr>::FIELD_SIZE * 2;
+        let _ = _offset;
+        Some(VecBox { v })
+    }
+}
+impl From<VecBox> for midnight_compact_runtime::Value {
+    fn from(s: VecBox) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        for _e in s.v.iter() {
+            _v.push(midnight_compact_runtime::Value::from(_e.clone()));
+        }
+        midnight_compact_runtime::Value::concat(_v.iter())
+    }
+}
+impl midnight_compact_runtime::BinaryHashRepr for VecBox {
+    fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
+        for _e in self.v.iter() {
+            _e.binary_repr(writer);
+        }
+    }
+    fn binary_len(&self) -> usize {
+        self.v.iter().map(|e| e.binary_len()).sum::<usize>()
+    }
+}
+
 pub trait Witnesses<PS> {}
 impl<PS> Witnesses<PS> for NoWitnesses {}
 
@@ -469,6 +524,86 @@ pub mod pure_circuits {
                     midnight_compact_runtime::AlignedValue::from(Fr::from(
                         (__compact_hash_arg_0[1]) as u64,
                     )),
+                ]
+            },
+        ))
+    }
+
+    pub fn hash_same_type_vector_arg(w: [Fr; 2]) -> Result<[u8; 32], CompactError> {
+        Ok(midnight_compact_runtime::std_lib::persistent_hash_aligned(
+            &{
+                let __compact_hash_arg_0 = w;
+                [
+                    midnight_compact_runtime::AlignedValue::from(__compact_hash_arg_0[0]),
+                    midnight_compact_runtime::AlignedValue::from(__compact_hash_arg_0[1]),
+                ]
+            },
+        ))
+    }
+
+    pub fn hash_same_type_nested_arg(w: [Fr; 2]) -> Result<[u8; 32], CompactError> {
+        Ok(midnight_compact_runtime::std_lib::persistent_hash_aligned(
+            &{
+                let __compact_hash_arg_0 = w;
+                let __compact_hash_arg_1 = w;
+                [
+                    midnight_compact_runtime::AlignedValue::from(__compact_hash_arg_0[0]),
+                    midnight_compact_runtime::AlignedValue::from(__compact_hash_arg_0[1]),
+                    midnight_compact_runtime::AlignedValue::from(__compact_hash_arg_1[0]),
+                    midnight_compact_runtime::AlignedValue::from(__compact_hash_arg_1[1]),
+                ]
+            },
+        ))
+    }
+
+    pub fn hash_const_vector_arg() -> Result<[u8; 32], CompactError> {
+        let w = [Fr::from(5u64), Fr::from(0u64)];
+        Ok(midnight_compact_runtime::std_lib::persistent_hash_aligned(
+            &{
+                let __compact_hash_arg_0 = w;
+                [
+                    midnight_compact_runtime::AlignedValue::from(__compact_hash_arg_0[0]),
+                    midnight_compact_runtime::AlignedValue::from(__compact_hash_arg_0[1]),
+                ]
+            },
+        ))
+    }
+
+    pub fn same_type_vec() -> Result<[Fr; 2], CompactError> {
+        Ok([Fr::from(5u64), Fr::from(0u64)])
+    }
+
+    pub fn hash_call_vector_arg() -> Result<[u8; 32], CompactError> {
+        Ok(midnight_compact_runtime::std_lib::persistent_hash_aligned(
+            &{
+                let __compact_hash_arg_0 = pure_circuits::same_type_vec()?;
+                [
+                    midnight_compact_runtime::AlignedValue::from(__compact_hash_arg_0[0]),
+                    midnight_compact_runtime::AlignedValue::from(__compact_hash_arg_0[1]),
+                ]
+            },
+        ))
+    }
+
+    pub fn hash_struct_field_vector_arg(b: VecBox) -> Result<[u8; 32], CompactError> {
+        Ok(midnight_compact_runtime::std_lib::persistent_hash_aligned(
+            &{
+                let __compact_hash_arg_0 = b.v;
+                [
+                    midnight_compact_runtime::AlignedValue::from(__compact_hash_arg_0[0]),
+                    midnight_compact_runtime::AlignedValue::from(__compact_hash_arg_0[1]),
+                ]
+            },
+        ))
+    }
+
+    pub fn hash_default_vector_arg() -> Result<[u8; 32], CompactError> {
+        Ok(midnight_compact_runtime::std_lib::persistent_hash_aligned(
+            &{
+                let __compact_hash_arg_0 = [Fr::default(); 2];
+                [
+                    midnight_compact_runtime::AlignedValue::from(__compact_hash_arg_0[0]),
+                    midnight_compact_runtime::AlignedValue::from(__compact_hash_arg_0[1]),
                 ]
             },
         ))

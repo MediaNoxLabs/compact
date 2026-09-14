@@ -353,6 +353,17 @@
       (define current-formal-arg-types
         (make-parameter #f))
 
+      ;; current-value-types: eq-hashtable mapping a var-name id-sym → the
+      ;; declared Compact type of a const-bound local. Populated by the
+      ;; body emitters as they walk `const` bindings. Kept SEPARATE from
+      ;; current-formal-arg-types so that recording a type here cannot
+      ;; perturb the byte-parity-sensitive `.clone()` / enum decisions
+      ;; that consult the formal-arg table. Read by `expr-value-type` so
+      ;; the native hash flattening can recover an aggregate argument's
+      ;; shape even when the typer inserted no safe-cast. Defaults to #f.
+      (define current-value-types
+        (make-parameter #f))
+
       ;; current-ledger-field-types: eqv-hashtable mapping a ledger
       ;; field's path-index (a non-negative integer) → its declared
       ;; binding Type (the tadt wrapper, e.g.
@@ -504,6 +515,18 @@
               (when t
                 (eq-hashtable-set! ht (id-sym var-name) t))))))
 
+      ;; record-value-type!: record a const-binding's DECLARED type into
+      ;; current-value-types so `expr-value-type` can recover it at a later
+      ;; native hash use site. Separate from `record-const-binding-type!`
+      ;; (which feeds the clone / enum decisions in
+      ;; current-formal-arg-types) so recording here cannot perturb those
+      ;; byte-parity-sensitive renderings. A no-op when the parameter is
+      ;; unbound (#f) or the declared type is unknown.
+      (define (record-value-type! var-name type)
+        (let ([ht (current-value-types)])
+          (when (and ht type)
+            (eq-hashtable-set! ht (id-sym var-name) type))))
+
       ;; infer-rhs-type: best-effort declared type of a const-binding RHS.
       ;; Currently recognises direct witness calls (the only shape we care
       ;; about for tenum detection); pure-circuit calls are handled too
@@ -527,6 +550,50 @@
             ;; redundant clones on Copy default values.
             [(default ,src ,type) type]
             [else #f])))
+
+      ;; expr-value-type: best-effort static Compact type of a
+      ;; value-producing expression, used by the native hash flattening
+      ;; (`native-vector-atoms`) when the typer inserted NO `safe-cast`
+      ;; around the argument. The typer's `maybe-safecast` omits the cast
+      ;; whenever the argument already has the destination type, so
+      ;; `expr-expected-type` / `expr-source-type` both return #f and the
+      ;; flattener cannot tell an aggregate value from a scalar leaf — it
+      ;; then wraps the whole array in `AlignedValue::from(<array>)`, which
+      ;; has no `From` / `Aligned` impl beyond `[u8; N]` and fails
+      ;; `cargo build` for a nested aggregate.
+      ;;
+      ;; Recognises the shapes whose type is recoverable without a cast:
+      ;;   - var-ref    → current-value-types (const-binding declared
+      ;;                  types) and current-formal-arg-types (circuit /
+      ;;                  constructor formals plus const-binding RHS types
+      ;;                  recorded by the body emitters)
+      ;;   - elt-ref    → the named field's declared type, from the base
+      ;;                  value's struct type
+      ;;   - default<T> → the node's own type
+      ;;   - call       → the witness / pure-circuit declared return type
+      ;; Returns #f for anything else, leaving the previous single-atom
+      ;; rendering byte-identical.
+      (define (expr-value-type expr)
+        (let ([e (expr-strip-cast expr)])
+          (nanopass-case (Ltypescript Expression) e
+            [(var-ref ,src ,var-name)
+             (let ([sym (id-sym var-name)])
+               (or (let ([ht (current-value-types)])
+                     (and ht (eq-hashtable-ref ht sym #f)))
+                   (let ([ht (current-formal-arg-types)])
+                     (and ht (eq-hashtable-ref ht sym #f)))))]
+            [(elt-ref ,src ,expr^ ,elt-name ,nat)
+             (let* ([base (expr-value-type expr^)]
+                    [st (and base (struct-of-type base))])
+               (and st
+                    (let ([names (cadr st)] [types (caddr st)])
+                      (let loop ([names names] [types types])
+                        (cond
+                          [(null? names) #f]
+                          [(eq? (car names) elt-name) (car types)]
+                          [else (loop (cdr names) (cdr types))])))))]
+            [else
+             (infer-rhs-type e (current-witness-id-ht) (current-circuit-id-ht))])))
 
       ;; rust-keyword?: returns #t when the symbol matches a Rust reserved
       ;; keyword (strict + reserved). Enum variant names like

@@ -435,6 +435,10 @@
                  ;; locals.
                  (record-const-binding-type! var-name rhs
                                              witness-id-ht circuit-id-ht)
+                 ;; Record the declared type for value-shape recovery at
+                 ;; native hash use sites (expr-value-type).
+                 (record-value-type! var-name
+                                     (const-binding-decl-type (car stmts)))
                  (case (car classified)
                    [(witness)
                     (let* ([wname (cadr classified)]

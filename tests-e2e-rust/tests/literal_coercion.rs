@@ -34,7 +34,7 @@
 //      round-trip), driven directly in Rust — the pure circuits have no
 //      TS-side runtime entry point.
 
-use compact_contract_literal_coercion_fixture::{ledger, pure_circuits, Contract};
+use compact_contract_literal_coercion_fixture::{ledger, pure_circuits, Contract, VecBox};
 use midnight_compact_runtime::*;
 use midnight_serialize::tagged_serialize;
 use midnight_storage::storage::HashMap;
@@ -199,6 +199,50 @@ fn every_coerced_position_round_trips() {
     assert_eq!(
         pure_circuits::hash_nested_var_ref_vector_arg([5u8, 0]).expect("nested var-ref vector arg"),
         expected_var_ref_hash
+    );
+    // Same-typed whole aggregate: no `safe-cast` is emitted, so the emitter
+    // must recover the argument's own type. A regression re-wraps the whole
+    // `[Fr; N]` in `AlignedValue::from` (no `From` impl) — a `cargo build`
+    // failure pinned here by compilation plus the executing assertions.
+    assert_eq!(
+        pure_circuits::hash_same_type_vector_arg([Fr::from(5u64), Fr::from(0u64)])
+            .expect("same-type vector arg"),
+        expected_var_ref_hash
+    );
+    let expected_same_type_nested_hash =
+        midnight_compact_runtime::std_lib::persistent_hash_aligned(&[
+            AlignedValue::from(Fr::from(5u64)),
+            AlignedValue::from(Fr::from(6u64)),
+            AlignedValue::from(Fr::from(5u64)),
+            AlignedValue::from(Fr::from(6u64)),
+        ]);
+    assert_eq!(
+        pure_circuits::hash_same_type_nested_arg([Fr::from(5u64), Fr::from(6u64)])
+            .expect("same-type nested arg"),
+        expected_same_type_nested_hash
+    );
+    assert_eq!(
+        pure_circuits::hash_const_vector_arg().expect("const vector arg"),
+        expected_var_ref_hash
+    );
+    assert_eq!(
+        pure_circuits::hash_call_vector_arg().expect("call vector arg"),
+        expected_var_ref_hash
+    );
+    assert_eq!(
+        pure_circuits::hash_struct_field_vector_arg(VecBox {
+            v: [Fr::from(5u64), Fr::from(0u64)],
+        })
+        .expect("struct-field vector arg"),
+        expected_var_ref_hash
+    );
+    let expected_default_hash = midnight_compact_runtime::std_lib::persistent_hash_aligned(&[
+        AlignedValue::from(Fr::from(0u64)),
+        AlignedValue::from(Fr::from(0u64)),
+    ]);
+    assert_eq!(
+        pure_circuits::hash_default_vector_arg().expect("default vector arg"),
+        expected_default_hash
     );
 }
 

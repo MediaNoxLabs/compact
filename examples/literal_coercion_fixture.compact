@@ -33,6 +33,19 @@
 //                           bound once, leaves indexed and Field-coerced
 //   - `hashNestedVarRefVectorArg` — nested element that is not itself a
 //                           tuple literal (bound and flattened by index)
+//   - `hashSameTypeVectorArg` — a whole aggregate whose type ALREADY matches
+//                           the native target, so the typer emits no
+//                           `safe-cast`; the emitter recovers the argument's
+//                           own type to flatten it
+//   - `hashSameTypeNestedArg` — the same no-cast recovery for a nested
+//                           aggregate element of a same-typed vector
+//   - `hashConstVectorArg` — the recovered type comes from a `const`
+//                           binding's declared type
+//   - `hashCallVectorArg` — the recovered type comes from a pure-circuit
+//                           call's declared return type
+//   - `hashStructFieldVectorArg` — the recovered type comes from a struct
+//                           field projection (the field's declared type)
+//   - `hashDefaultVectorArg` — `default<Vector<2, Field>>` whole argument
 //   - `nativeArgLiteral`  — native-arg literal (`hashToCurve<Field>(0)`)
 //   - `uintToField`       — scalar `Uint<8>` → `Field` (`Fr::from((x) as u64)`)
 //   - `u128Rung`          — the wide `Uint<128>` rung
@@ -52,6 +65,10 @@ import CompactStandardLibrary;
 
 struct Box {
   f: Field;
+}
+
+struct VecBox {
+  v: Vector<2, Field>;
 }
 
 export ledger fieldCell: Field;
@@ -210,6 +227,48 @@ export pure circuit hashVarRefVectorArg(w: Vector<2, Uint<8>>): Bytes<32> {
 // literal is bound and flattened by index.
 export pure circuit hashNestedVarRefVectorArg(w: Vector<2, Uint<8>>): Bytes<32> {
   return persistentHash<Vector<1, Vector<2, Field>>>([w]);
+}
+
+// A whole aggregate whose type already matches the native target: the typer
+// emits no `safe-cast`, so `expr-expected-type` is #f and the emitter must
+// recover the argument's own type to recognise it as an aggregate. Without
+// that the value was wrapped whole in `AlignedValue::from([Fr; 2])` (no
+// `From` impl, so `cargo build` failed).
+export pure circuit hashSameTypeVectorArg(w: Vector<2, Field>): Bytes<32> {
+  return persistentHash<Vector<2, Field>>(w);
+}
+
+// The same gap one level down: elements of a same-typed nested vector are
+// not individually cast, so each `w` is flattened by recovering its own type
+// recursively rather than wrapped whole.
+export pure circuit hashSameTypeNestedArg(w: Vector<2, Field>): Bytes<32> {
+  return persistentHash<Vector<2, Vector<2, Field>>>([w, w]);
+}
+
+// The recovered type comes from a `const` binding's declared type (recorded
+// by the walker separately from the clone-decision table).
+export pure circuit hashConstVectorArg(): Bytes<32> {
+  const w: Vector<2, Field> = [5, 0];
+  return persistentHash<Vector<2, Field>>(w);
+}
+
+// The recovered type comes from a pure-circuit call's declared return type.
+export pure circuit sameTypeVec(): Vector<2, Field> {
+  return [5, 0];
+}
+export pure circuit hashCallVectorArg(): Bytes<32> {
+  return persistentHash<Vector<2, Field>>(sameTypeVec());
+}
+
+// The recovered type comes from a struct field projection (the field's
+// declared type, resolved from the base value's struct type).
+export pure circuit hashStructFieldVectorArg(b: VecBox): Bytes<32> {
+  return persistentHash<Vector<2, Field>>(b.v);
+}
+
+// The recovered type comes from the `default<T>` node itself.
+export pure circuit hashDefaultVectorArg(): Bytes<32> {
+  return persistentHash<Vector<2, Field>>(default<Vector<2, Field>>);
 }
 
 // Destination-typed ledger writes (the cell-write position). The hash and

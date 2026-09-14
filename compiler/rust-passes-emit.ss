@@ -168,6 +168,7 @@
                      (parameterize
                        ([current-formal-arg-types
                           (build-formal-arg-type-ht ctor-arg*)]
+                        [current-value-types (make-eq-hashtable)]
                         ;; Bind the witness / circuit id tables so the
                         ;; ternary clause's condition routing in `expr-rust`
                         ;; (and `call-rust`'s pure-circuit call routing),
@@ -1636,6 +1637,7 @@
            ;; witness / user-pure-circuit call (see the ternary clause in
            ;; expr-rust).
            (parameterize ([current-formal-arg-types (build-formal-arg-type-ht arg*)]
+                          [current-value-types (make-eq-hashtable)]
                           [current-witness-id-ht witness-id-ht]
                           [current-circuit-id-ht circuit-id-ht])
            (let ([emitted?
@@ -2755,9 +2757,19 @@
                              [(single ,src^ ,expr) expr]
                              [(spread ,src^ ,nat ,expr)
                               (rust-feature-error src^ 'tuple-spread
-                                "tuple spread (`...expr`) not supported")])])
-                     (if (and te (type-is-aggregate? te))
-                         (let ([sub (native-vector-atoms inner te se fresh-temp native-id-ht)])
+                                "tuple spread (`...expr`) not supported")])]
+                          ;; When the enclosing argument carried no
+                          ;; safe-cast (the whole vector already has its
+                          ;; destination type), `te`/`se` are #f and a nested
+                          ;; aggregate element would otherwise be wrapped
+                          ;; whole. Recover the element's own type so it is
+                          ;; flattened recursively too; a scalar element
+                          ;; stays a single atom (byte-identical).
+                          [inferred (and (not te) (expr-value-type inner))]
+                          [recur-te (or te inferred)]
+                          [recur-se (or se inferred)])
+                     (if (type-is-aggregate? recur-te)
+                         (let ([sub (native-vector-atoms inner recur-te recur-se fresh-temp native-id-ht)])
                            (loop (cdr ta*) (cdr te*) (cdr se*)
                                  (append bindings (car sub))
                                  (append atoms (cdr sub))))
@@ -2771,21 +2783,29 @@
                                            (lambda (e) (expr-rust e native-id-ht)))
                                          (tuple-arg-rust ta native-id-ht te)))))))))))]
           [else
-           (if (type-is-aggregate? target-type)
-               (let ([tmp (fresh-temp)])
-                 (cons
-                   (list (cons tmp
-                           (expr-rust-typed (expr-strip-cast arg-expr) source-type native-id-ht)))
-                   (native-vector-atoms-from-text tmp target-type source-type)))
-               (cons '()
-                 (list
-                   (format "midnight_compact_runtime::AlignedValue::from(~a)"
-                     (if (and target-type source-type)
-                         (or (materialize-at-type #f target-type source-type
-                               (expr-strip-cast arg-expr)
-                               (lambda (e) (expr-rust e native-id-ht)))
-                             (expr-rust-typed arg-expr target-type native-id-ht))
-                         (expr-rust-typed arg-expr target-type native-id-ht))))))]))
+           ;; No safe-cast means the argument already has the destination
+           ;; type; recover its own type so an aggregate value is still
+           ;; flattened. `value-type` exists only in the no-cast case, and
+           ;; the coercion types stay the ORIGINAL target/source so a
+           ;; no-cast scalar keeps its byte-identical single-atom render.
+           (let* ([value-type (and (not target-type) (expr-value-type arg-expr))]
+                  [elt-target (or target-type value-type)]
+                  [elt-source (or source-type value-type)])
+             (if (type-is-aggregate? elt-target)
+                 (let ([tmp (fresh-temp)])
+                   (cons
+                     (list (cons tmp
+                             (expr-rust-typed (expr-strip-cast arg-expr) elt-source native-id-ht)))
+                     (native-vector-atoms-from-text tmp elt-target elt-source)))
+                 (cons '()
+                   (list
+                     (format "midnight_compact_runtime::AlignedValue::from(~a)"
+                       (if (and target-type source-type)
+                           (or (materialize-at-type #f target-type source-type
+                                 (expr-strip-cast arg-expr)
+                                 (lambda (e) (expr-rust e native-id-ht)))
+                               (expr-rust-typed arg-expr target-type native-id-ht))
+                           (expr-rust-typed arg-expr target-type native-id-ht)))))))]))
 
       ;; native-vector-atoms-from-text: flatten the already-bound Rust value
       ;; `base-text` (an indexable lvalue) of `target-type` / `source-type`
@@ -3154,7 +3174,13 @@
                         ;; clause) uniquifies instead of shadowing this
                         ;; binder. The RHS can't reference var-name itself, so
                         ;; adding the entry early only affects name selection.
-                        [rhs-binds (cons (cons var-name rust-name) binds)])
+                        [rhs-binds (cons (cons var-name rust-name) binds)]
+                        [decl-type (const-binding-decl-type (car xs))])
+                   ;; Record the const's declared type so a later native hash
+                   ;; argument that refers to this const can recover its
+                   ;; aggregate shape via `expr-value-type` even when the
+                   ;; typer inserted no safe-cast at the use site.
+                   (record-value-type! var-name decl-type)
                    ;; Render the RHS at the binding's declared type (task
                    ;; 2.1, pure route). The typer wraps a consequential RHS
                    ;; in `safe-cast` to the declared type; a bare literal
@@ -3163,7 +3189,7 @@
                    (let ([s (guard (c [#t #f])
                               (parameterize ([current-var-substitution rhs-binds]
                                              [current-expr-expected-type
-                                              (or (const-binding-decl-type (car xs))
+                                              (or decl-type
                                                   (expr-expected-type rhs))])
                                 (expr-rust rhs native-id-ht)))])
                      (cond
@@ -3271,6 +3297,7 @@
                 (loop (cdr arg*) #f)]))
            (out (format ") -> Result<~a, CompactError> {\n" (type-rust type)))
            (parameterize ([current-formal-arg-types (build-formal-arg-type-ht arg*)]
+                          [current-value-types (make-eq-hashtable)]
                           [current-circuit-id-ht circuit-id-ht]
                           [current-witness-id-ht witness-id-ht]
                           ;; Task 2.2: the pure walker threads the declared

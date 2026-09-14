@@ -151,6 +151,16 @@ const FIXTURES: &[(&str, &str)] = &[
         "literal_coercion_fixture.compact",
         "literal-coercion-fixture",
     ),
+    // Inline-call type scope: a non-exported impure helper is inlined into its
+    // caller, and the helper's OWN formal types must drive the native-hash
+    // scalar-vs-aggregate decision (not the caller's same-named bindings).
+    // Locks a formal collision that produced a compiling-but-wrong half-vector
+    // hash and an `x[0]` on a scalar, plus the no-collision recovery. Executing
+    // gate: tests/inline_type_scope_fixture.rs.
+    (
+        "inline_type_scope_fixture.compact",
+        "inline-type-scope-fixture",
+    ),
     // Conditional (ternary) expression coverage matrix: the one `(if c e1 e2)`
     // clause in `expr-rust` plus the `expr-supported?` arm make a ternary legal
     // in every sub-expression position and body route. This fixture is the

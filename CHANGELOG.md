@@ -45,6 +45,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   least one field. Surfaced by the dogfood enclave; only the dogfood fixture
   carries zero-field structs and it regenerates byte-identically.
 
+- **`--target rust` inlined a helper's var-ref against the caller's type
+  tables** — `inline-circuit-call` renders a non-exported impure helper's body
+  in its caller's body but did not establish the helper's own formal scope, so
+  `expr-value-type` resolved a helper formal through the caller's same-named
+  binding. A scalar helper formal colliding with a caller vector flattened a
+  scalar (`x[0]`, E0608); a `Vector<4, Field>` helper formal colliding with a
+  caller `Vector<2, Field>` hashed only two of the four leaves — code that
+  compiled but silently computed the wrong value. The inlined body now rebinds
+  the type tables to the helper's formals. New
+  `inline_type_scope_fixture` (source, crate, executing gate, and
+  `codegen_regression` row) pins all three shapes; the other fixtures
+  regenerate byte-identically.
+
 ## [Toolchain 0.31.118, language 0.23.103, runtime 0.16.100]
 
 ### Fixed

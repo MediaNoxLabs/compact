@@ -1933,8 +1933,30 @@
                                           (cons var-name rendered))]))
                                    arg* actual-expr*)]
                              [extended-binds (append formal-binds outer-local-binds)])
-                        (ctor-expr-rust expr extended-binds
-                                        native-id-ht witness-id-ht circuit-id-ht))])]
+                        ;; The inlined callee has its OWN formal scope. A
+                        ;; body var-ref must resolve to the callee's declared
+                        ;; formal type, never the caller's same-named binding:
+                        ;; the caller's `current-formal-arg-types` /
+                        ;; `current-value-types` were seeded for the caller's
+                        ;; body and are still in force here. Rebind the type
+                        ;; tables to the callee's formals for the body render
+                        ;; (exactly what a top-level body emitter does), so
+                        ;; `expr-value-type`'s scalar-vs-aggregate decision —
+                        ;; and the clone / enum lookups that consult the same
+                        ;; tables — see the inline scope instead of the
+                        ;; caller's. Without this a formal named like a
+                        ;; caller binding of a different type chose the wrong
+                        ;; native-vector rendering: a silent half-vector hash
+                        ;; or `x[0]` on a scalar (E0608). `parameterize`
+                        ;; restores the caller's tables when the render
+                        ;; returns. The actuals are already rendered above,
+                        ;; under the caller's scope.
+                        (parameterize ([current-formal-arg-types
+                                         (build-formal-arg-type-ht arg*)]
+                                       [current-value-types (make-eq-hashtable)])
+                          (ctor-expr-rust expr extended-binds
+                                          native-id-ht witness-id-ht
+                                          circuit-id-ht)))])]
                   [else #f])]))]))
 
       ;; emit-body-or-fallback: walk the body of a constructor or circuit and

@@ -106,6 +106,7 @@ compact-contract-mixed-width-operand-fixture = { path = "contracts/mixed-width-o
 # argument, vector element, return tail, scalar and wide Uint→Field, ledger
 # write) and byte-compares the constructor's seeded state against TS.
 compact-contract-literal-coercion-fixture = { path = "contracts/literal-coercion-fixture" }
+compact-contract-inline-type-scope-fixture = { path = "contracts/inline-type-scope-fixture" }
 # Registered in codegen_regression's FIXTURES table, so it MUST carry a
 # dev-dependency edge too: workspace membership alone does not make
 # `cargo build -p tests-e2e-rust --tests` compile it. The invariant test

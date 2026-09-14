@@ -2682,13 +2682,13 @@
                [else (string-append rendered ".clone()")])]
             [else rendered])))
 
-      ;; native-vector-elem-strs: render a vector-typed native argument
-      ;; (persistentHash / transientHash) as a FLAT list of
-      ;; `AlignedValue::from(<leaf>)` atoms. The aligned hash concatenates
-      ;; these atoms, and a nested aggregate's alignment is the concat of its
-      ;; leaves, so a nested vector is flattened rather than emitted as a
-      ;; nested Rust array (there is no `From<[T; N]> for AlignedValue` beyond
-      ;; `[u8; N]`).
+      ;; native-vector-aligned-slice: render a vector-typed native argument
+      ;; (persistentHash / transientHash) as the Rust expression
+      ;; `&[AlignedValue::from(<leaf>), ...]` — a FLAT list of leaf atoms.
+      ;; The aligned hash concatenates these atoms, and a nested aggregate's
+      ;; alignment is the concat of its leaves, so a nested vector is
+      ;; flattened rather than emitted as a nested Rust array (there is no
+      ;; `From<[T; N]> for AlignedValue` beyond `[u8; N]`).
       ;;
       ;; The argument is usually a `(tuple ...)` wrapped in
       ;; `(safe-cast <Vector<N,T>> <source> ...)`. Peeling the cast exposes
@@ -2696,47 +2696,133 @@
       ;; and each element goes through the central element-wise coercion
       ;; (`materialize-element` / `materialize-at-type`), so a var-ref or a
       ;; ternary arm is rendered AT the element type instead of being passed
-      ;; through uncoerced (which silently Byte-aligned a Field element and
-      ;; left a ternary's arms at divergent Rust types). A non-aggregate
-      ;; argument renders whole at its own expected type.
-      (define (native-vector-elem-strs arg native-id-ht)
-        (native-vector-atoms arg (expr-expected-type arg) (expr-source-type arg)
-                             native-id-ht))
+      ;; through uncoerced.
+      ;;
+      ;; A NON-tuple aggregate value — a var-ref, `default`, seq-lifted const,
+      ;; call — has no syntactic element boundaries, so `native-vector-atoms`
+      ;; binds it once to a temp and `native-vector-atoms-from-text` indexes
+      ;; out and coerces each leaf. That is what stops a coerced non-tuple
+      ;; vector (and a nested aggregate element that is not itself a tuple
+      ;; literal) from being wrapped whole in `AlignedValue::from(<array>)`,
+      ;; which has no `From` impl and fails `cargo build`. A non-aggregate
+      ;; argument still renders whole as a single atom.
+      (define (native-vector-aligned-slice arg native-id-ht)
+        (let ([counter 0])
+          (define (fresh-temp)
+            (let ([n counter])
+              (set! counter (fx+ n 1))
+              (format "__compact_hash_arg_~a" n)))
+          (let* ([result (native-vector-atoms arg
+                           (expr-expected-type arg) (expr-source-type arg)
+                           fresh-temp native-id-ht)]
+                 [bindings (car result)]
+                 [atoms (cdr result)])
+            (if (null? bindings)
+                (string-append "&[" (join-rendered atoms) "]")
+                (string-append
+                  "&{ "
+                  (apply string-append
+                    (map (lambda (b)
+                           (format "let ~a = ~a; " (car b) (cdr b)))
+                         bindings))
+                  "[" (join-rendered atoms) "] }")))))
 
-      (define (native-vector-atoms arg-expr target-type source-type native-id-ht)
+      ;; native-vector-atoms: flatten `arg-expr` (of `target-type` /
+      ;; `source-type`) into `(bindings . atoms)`. `bindings` is an ordered
+      ;; list of `(name . value-rust)` temp bindings that the caller emits as
+      ;; `let` statements; `atoms` is the flat list of
+      ;; `AlignedValue::from(<leaf>)` expressions. `fresh-temp` allocates a
+      ;; unique name per bound non-tuple aggregate so sequential bindings in
+      ;; one block never shadow one another.
+      (define (native-vector-atoms arg-expr target-type source-type fresh-temp native-id-ht)
         (nanopass-case (Ltypescript Expression) (expr-strip-cast arg-expr)
           [(tuple ,src ,tuple-arg* ...)
            (let* ([n (length tuple-arg*)]
                   [target-elt* (and target-type (type-elt-types target-type n))]
                   [source-elt* (and source-type (type-elt-types source-type n))])
-             (apply append
-               (map (lambda (ta te se)
-                      (let ([inner
-                             (nanopass-case (Ltypescript Tuple-Argument) ta
-                               [(single ,src^ ,expr) expr]
-                               [(spread ,src^ ,nat ,expr)
-                                (rust-feature-error src^ 'tuple-spread
-                                  "tuple spread (`...expr`) not supported")])])
-                        (if (and te (type-is-aggregate? te))
-                            (native-vector-atoms inner te se native-id-ht)
-                            (list
-                              (format "midnight_compact_runtime::AlignedValue::from(~a)"
-                                (if (and te se)
-                                    (materialize-element src te se ta
-                                      (lambda (e) (expr-rust e native-id-ht)))
-                                    (tuple-arg-rust ta native-id-ht te)))))))
-                    tuple-arg*
-                    (or target-elt* (make-list n #f))
-                    (or source-elt* (make-list n #f)))))]
+             (let loop ([ta* tuple-arg*]
+                        [te* (or target-elt* (make-list n #f))]
+                        [se* (or source-elt* (make-list n #f))]
+                        [bindings '()]
+                        [atoms '()])
+               (if (null? ta*)
+                   (cons bindings atoms)
+                   (let* ([ta (car ta*)]
+                          [te (car te*)]
+                          [se (car se*)]
+                          [inner
+                           (nanopass-case (Ltypescript Tuple-Argument) ta
+                             [(single ,src^ ,expr) expr]
+                             [(spread ,src^ ,nat ,expr)
+                              (rust-feature-error src^ 'tuple-spread
+                                "tuple spread (`...expr`) not supported")])])
+                     (if (and te (type-is-aggregate? te))
+                         (let ([sub (native-vector-atoms inner te se fresh-temp native-id-ht)])
+                           (loop (cdr ta*) (cdr te*) (cdr se*)
+                                 (append bindings (car sub))
+                                 (append atoms (cdr sub))))
+                         (loop (cdr ta*) (cdr te*) (cdr se*)
+                               bindings
+                               (append atoms
+                                 (list
+                                   (format "midnight_compact_runtime::AlignedValue::from(~a)"
+                                     (if (and te se)
+                                         (materialize-element src te se ta
+                                           (lambda (e) (expr-rust e native-id-ht)))
+                                         (tuple-arg-rust ta native-id-ht te)))))))))))]
+          [else
+           (if (type-is-aggregate? target-type)
+               (let ([tmp (fresh-temp)])
+                 (cons
+                   (list (cons tmp
+                           (expr-rust-typed (expr-strip-cast arg-expr) source-type native-id-ht)))
+                   (native-vector-atoms-from-text tmp target-type source-type)))
+               (cons '()
+                 (list
+                   (format "midnight_compact_runtime::AlignedValue::from(~a)"
+                     (if (and target-type source-type)
+                         (or (materialize-at-type #f target-type source-type
+                               (expr-strip-cast arg-expr)
+                               (lambda (e) (expr-rust e native-id-ht)))
+                             (expr-rust-typed arg-expr target-type native-id-ht))
+                         (expr-rust-typed arg-expr target-type native-id-ht))))))]))
+
+      ;; native-vector-atoms-from-text: flatten the already-bound Rust value
+      ;; `base-text` (an indexable lvalue) of `target-type` / `source-type`
+      ;; into a flat list of `AlignedValue::from(<leaf>)` atoms. Each leaf is
+      ;; indexed out of the binding once and coerced by
+      ;; `materialize-at-type-text`; nested aggregates recurse by index. The
+      ;; binding is evaluated once by the caller, so no expression is
+      ;; duplicated.
+      (define (native-vector-atoms-from-text base-text target-type source-type)
+        (nanopass-case (Ltypescript Type) (type-strip-alias target-type)
+          [(tvector ,src ,len ,type)
+           (let ([se* (type-elt-types source-type len)])
+             (let loop ([i 0])
+               (if (fx= i len)
+                   '()
+                   (append
+                     (native-vector-atoms-from-text
+                       (format "~a[~a]" base-text i)
+                       type
+                       (and se* (list-ref se* i)))
+                     (loop (fx+ i 1))))))]
+          [(ttuple ,src ,type* ...)
+           (let ([se* (type-elt-types source-type (length type*))])
+             (let loop ([i 0] [te* type*])
+               (if (null? te*)
+                   '()
+                   (append
+                     (native-vector-atoms-from-text
+                       (format "~a[~a]" base-text i)
+                       (car te*)
+                       (and se* (list-ref se* i)))
+                     (loop (fx+ i 1) (cdr te*))))))]
           [else
            (list
              (format "midnight_compact_runtime::AlignedValue::from(~a)"
-               (if (and target-type source-type)
-                   (or (materialize-at-type #f target-type source-type
-                         (expr-strip-cast arg-expr)
-                         (lambda (e) (expr-rust e native-id-ht)))
-                       (expr-rust-typed arg-expr target-type native-id-ht))
-                   (expr-rust-typed arg-expr target-type native-id-ht))))]))
+               (or (materialize-at-type-text #f target-type source-type base-text)
+                   base-text)))]))
 
       (define (call-rust src function-name expr* native-id-ht)
         (let ([ne (eq-hashtable-ref native-id-ht function-name #f)]
@@ -2775,11 +2861,12 @@
              ;; argument to an `AlignedValue` and calling
              ;; `persistent_hash_aligned`, which delegates to
              ;; `ValueReprAlignedValue::binary_repr` + the upstream SHA-256
-             ;; persistent hash. When the argument is a `Vector<N, T>` the
-             ;; IR represents it as a `(tuple ...)` and we lift each
-             ;; element separately so each gets its own alignment atom; for
-             ;; any other shape we wrap the single argument in a one-element
-             ;; slice.
+             ;; persistent hash. When the argument is a `Vector<N, T>` — a
+             ;; `(tuple ...)` literal, or any other aggregate value bound to a
+             ;; temp and indexed — we lift every LEAF separately so each gets
+             ;; its own alignment atom (`native-vector-aligned-slice`; a
+             ;; non-tuple aggregate is flattened, not wrapped whole). Only a
+             ;; non-aggregate value becomes a one-element slice.
              ;;
              ;; Previous emit (I3b/1):
              ;;   `persistent_hash(&[a, b, ...].concat()).0`
@@ -2791,21 +2878,10 @@
              (cond
                [(fx= (length expr*) 1)
                 (let ([arg (car expr*)])
-                  (let ([elt-strs
-                         ;; If the single argument is a `tuple` IR node
-                         ;; (Compact-level Vector), break it apart so each
-                         ;; element becomes its own AlignedValue. Otherwise,
-                         ;; emit a one-element slice.
-                         (native-vector-elem-strs arg native-id-ht)])
-                    (string-append
-                      "midnight_compact_runtime::std_lib::persistent_hash_aligned(&["
-                      (let join ([xs elt-strs] [acc ""])
-                        (cond
-                          [(null? xs) acc]
-                          [(null? (cdr xs)) (string-append acc (car xs))]
-                          [else (join (cdr xs)
-                                      (string-append acc (car xs) ", "))]))
-                      "])")))]
+                  (string-append
+                    "midnight_compact_runtime::std_lib::persistent_hash_aligned("
+                    (native-vector-aligned-slice arg native-id-ht)
+                    ")"))]
                [else
                 (rust-feature-error src 'persistent-hash-arity
                   "persistentHash arity ~a not yet supported (expected 1)"
@@ -2822,22 +2898,16 @@
              ;; preimage (via `ValueReprAlignedValue: FieldRepr`) and
              ;; Poseidon-hashes it — matching the TS runtime's
              ;; `transientHash(alignment, toValue(value))`. A `Vector<N,T>`
-             ;; arg lowers to a `(tuple ...)` and is broken apart so each
-             ;; element gets its own alignment atom; any other shape wraps
-             ;; the single argument in a one-element slice.
+             ;; arg lowers to a `(tuple ...)` (or another aggregate value) and
+             ;; is flattened so each leaf gets its own alignment atom; only a
+             ;; non-aggregate value becomes a one-element slice.
              (cond
                [(fx= (length expr*) 1)
                 (let ([arg (car expr*)])
-                  (let ([elt-strs
-                         (native-vector-elem-strs arg native-id-ht)])
-                    (string-append
-                      "midnight_compact_runtime::std_lib::transient_hash_aligned(&["
-                      (let join ([xs elt-strs] [acc ""])
-                        (cond
-                          [(null? xs) acc]
-                          [(null? (cdr xs)) (string-append acc (car xs))]
-                          [else (join (cdr xs) (string-append acc (car xs) ", "))]))
-                      "])")))]
+                  (string-append
+                    "midnight_compact_runtime::std_lib::transient_hash_aligned("
+                    (native-vector-aligned-slice arg native-id-ht)
+                    ")"))]
                [else
                 (rust-feature-error src 'transient-hash-arity
                   "transientHash arity ~a not yet supported (expected 1)"

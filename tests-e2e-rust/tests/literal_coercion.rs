@@ -175,6 +175,31 @@ fn every_coerced_position_round_trips() {
         pure_circuits::vector_elt_wise(7).expect("vector"),
         [Fr::from(7u64), Fr::from(7u64)]
     );
+    // Native-vector element / argument coercion: a var-ref element must be
+    // Field-aligned (`Fr::from((x) as u64)`), not passed through as a
+    // Byte-aligned `u8`; a nested element or whole argument that is not a
+    // tuple literal must bind once and flatten to its leaves rather than wrap
+    // a coerced array in `AlignedValue::from` (which has no `From` impl).
+    let expected_var_ref_hash = midnight_compact_runtime::std_lib::persistent_hash_aligned(&[
+        AlignedValue::from(Fr::from(5u64)),
+        AlignedValue::from(Fr::from(0u64)),
+    ]);
+    assert_eq!(
+        pure_circuits::hash_uint_var_ref_elem(5).expect("var-ref elem"),
+        expected_var_ref_hash
+    );
+    assert_eq!(
+        pure_circuits::hash_nested_uint_var_ref_elem(5).expect("nested var-ref elem"),
+        expected_var_ref_hash
+    );
+    assert_eq!(
+        pure_circuits::hash_var_ref_vector_arg([5u8, 0]).expect("var-ref vector arg"),
+        expected_var_ref_hash
+    );
+    assert_eq!(
+        pure_circuits::hash_nested_var_ref_vector_arg([5u8, 0]).expect("nested var-ref vector arg"),
+        expected_var_ref_hash
+    );
 }
 
 /// Field literals above `u64::MAX` are rendered at the Field width — the

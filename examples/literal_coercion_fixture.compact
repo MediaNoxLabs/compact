@@ -29,6 +29,10 @@
 //   - `hashUintVarRefElem` — var-ref element into a `Vector<2, Field>` native
 //                           argument (`Fr::from((x) as u64)`, Field-aligned)
 //   - `hashNestedUintVarRefElem` — nested aggregate native arg (leaves flatten)
+//   - `hashVarRefVectorArg` — a WHOLE vector argument (not a tuple literal):
+//                           bound once, leaves indexed and Field-coerced
+//   - `hashNestedVarRefVectorArg` — nested element that is not itself a
+//                           tuple literal (bound and flattened by index)
 //   - `nativeArgLiteral`  — native-arg literal (`hashToCurve<Field>(0)`)
 //   - `uintToField`       — scalar `Uint<8>` → `Field` (`Fr::from((x) as u64)`)
 //   - `u128Rung`          — the wide `Uint<128>` rung
@@ -192,6 +196,20 @@ export pure circuit hashUintVarRefElem(x: Uint<8>): Bytes<32> {
 // aligned hash's atom list instead of a nested (and un-`From`-able) array.
 export pure circuit hashNestedUintVarRefElem(x: Uint<8>): Bytes<32> {
   return persistentHash<Vector<1, Vector<2, Field>>>([[x, 0]]);
+}
+
+// A WHOLE aggregate passed to the native (not a tuple literal): the value is
+// bound once and its leaves are indexed out and Field-coerced, rather than
+// the coerced array being wrapped whole in `AlignedValue::from(<array>)`
+// (which has no `From` impl and fails `cargo build`).
+export pure circuit hashVarRefVectorArg(w: Vector<2, Uint<8>>): Bytes<32> {
+  return persistentHash<Vector<2, Field>>(w);
+}
+
+// The same one aggregate deeper: a nested element that is not itself a tuple
+// literal is bound and flattened by index.
+export pure circuit hashNestedVarRefVectorArg(w: Vector<2, Uint<8>>): Bytes<32> {
+  return persistentHash<Vector<1, Vector<2, Field>>>([w]);
 }
 
 // Destination-typed ledger writes (the cell-write position). The hash and

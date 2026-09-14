@@ -441,4 +441,36 @@ pub mod pure_circuits {
             ],
         ))
     }
+
+    pub fn hash_var_ref_vector_arg(w: [u8; 2]) -> Result<[u8; 32], CompactError> {
+        Ok(midnight_compact_runtime::std_lib::persistent_hash_aligned(
+            &{
+                let __compact_hash_arg_0 = w;
+                [
+                    midnight_compact_runtime::AlignedValue::from(Fr::from(
+                        (__compact_hash_arg_0[0]) as u64,
+                    )),
+                    midnight_compact_runtime::AlignedValue::from(Fr::from(
+                        (__compact_hash_arg_0[1]) as u64,
+                    )),
+                ]
+            },
+        ))
+    }
+
+    pub fn hash_nested_var_ref_vector_arg(w: [u8; 2]) -> Result<[u8; 32], CompactError> {
+        Ok(midnight_compact_runtime::std_lib::persistent_hash_aligned(
+            &{
+                let __compact_hash_arg_0 = w;
+                [
+                    midnight_compact_runtime::AlignedValue::from(Fr::from(
+                        (__compact_hash_arg_0[0]) as u64,
+                    )),
+                    midnight_compact_runtime::AlignedValue::from(Fr::from(
+                        (__compact_hash_arg_0[1]) as u64,
+                    )),
+                ]
+            },
+        ))
+    }
 }

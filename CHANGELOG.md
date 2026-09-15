@@ -36,6 +36,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`--target rust` built tuple-typed values as arrays** — a circuit returning
+  `[Field, Field]` was declared `-> Result<(Fr, Fr), _>` but its body was
+  `Ok([x, x])`, so every tuple return, tuple-typed `const`, and tuple coercion
+  was E0308 and the emitted crate did not compile ([#83]). The value renderers
+  now take the aggregate *kind* from the type that `type-rust` already
+  declares: a `Tuple<...>` literal is `(a, b)` / `(a,)` / `()`, a `Vector<N,
+  T>` stays `[a, b]`; a coercion temp is read with `.0`/`.1` on a tuple and
+  `[0]`/`[1]` on an array; a tuple-typed value at a `Vector` position (or the
+  reverse) is bridged element-wise even when the typer inserted no
+  `safe-cast`, because the two are different Rust types. A forward-declared
+  `const` with a declared aggregate type now renders its assignment at that
+  type. New fixture `tuple_fixture` (eight pure circuits covering every shape
+  in the report, byte-parity + direct invocation); no other committed fixture
+  changed.
+
 - **`--target rust` emitted an always-false length guard in the zero-field
   `FromFieldRepr` scaffold** — a struct with no fields has `FIELD_SIZE = 0`,
   so the emitted `if _repr.len() < Self::FIELD_SIZE { return None; }` was

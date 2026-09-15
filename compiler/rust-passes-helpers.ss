@@ -717,6 +717,39 @@
                [(ttuple ,src ,type* ...) #t]
                [else #f])))
 
+      ;; type-aggregate-kind: which Rust spelling an aggregate `type` takes —
+      ;; 'vector for a `Vector<N, T>` (`[T; N]`, indexed `[i]`), 'tuple for a
+      ;; `Tuple<...>` (`(T, ...)`, indexed `.i`), #f for a non-aggregate. Looks
+      ;; through `talias` layers like `type-elt-types`. This is the one source
+      ;; of the spelling: `type-rust` declares it, and every value renderer
+      ;; asks here, so a declared `(Fr, u16)` is never constructed as `[...]`
+      ;; (compact#83 — the emitted crate did not compile).
+      (define (type-aggregate-kind type)
+        (and type
+             (nanopass-case (Ltypescript Type) (type-strip-alias type)
+               [(tvector ,src ,len ,type) 'vector]
+               [(ttuple ,src ,type* ...) 'tuple]
+               [else #f])))
+
+      ;; aggregate-literal-rust: wrap already-rendered element texts in the
+      ;; spelling of `kind`. A Rust 1-tuple needs its trailing comma and the
+      ;; empty tuple is `()`; arrays have no such cases.
+      (define (aggregate-literal-rust kind parts)
+        (case kind
+          [(tuple)
+           (cond
+             [(null? parts) "()"]
+             [(null? (cdr parts)) (format "(~a,)" (car parts))]
+             [else (string-append "(" (join-rendered parts) ")")])]
+          [else (string-append "[" (join-rendered parts) "]")]))
+
+      ;; aggregate-index-rust: the i-th element of a value already bound to
+      ;; `base-text`, in the spelling of that value's own kind.
+      (define (aggregate-index-rust kind base-text i)
+        (case kind
+          [(tuple) (format "~a.~a" base-text i)]
+          [else (format "~a[~a]" base-text i)]))
+
       ;; uint-coercion-cast-width: the Rust primitive that losslessly holds
       ;; every value of a `(tunsigned nat)` — "u64" through 2^64-1 (kept for
       ;; byte parity with the original scalar path), "u128" through 2^128-1,
@@ -843,26 +876,29 @@
            (rust-feature-error src^ 'tuple-spread
              "tuple spread (`...expr`) not supported")]))
 
-      ;; materialize-indexed-text: build the Rust array literal that coerces an
-      ;; aggregate value already bound to `base-text` (a temp name) element by
-      ;; element. Indexing recurses, so nested aggregates are coerced at every
-      ;; depth. Returns #f when no element needs coercing.
-      (define (materialize-indexed-text src target-elt* source-elt* base-text)
-        (if (not (ormap (lambda (te se) (materialize-needed? te se))
-                        target-elt* source-elt*))
+      ;; materialize-indexed-text: build the Rust aggregate literal that
+      ;; coerces an aggregate value already bound to `base-text` (a temp name)
+      ;; element by element. The literal takes the *target's* spelling and each
+      ;; element is read in the *source's* — `t.0` out of a tuple, `t[0]` out of
+      ;; an array — so a tuple-typed value flows into a `Vector` position (or
+      ;; the reverse) as well as a same-kind value with differing elements.
+      ;; Indexing recurses, so nested aggregates are coerced at every depth.
+      ;; Returns #f when the kinds agree and no element needs coercing.
+      (define (materialize-indexed-text src target-kind source-kind
+                                        target-elt* source-elt* base-text)
+        (if (and (eq? target-kind source-kind)
+                 (not (ormap (lambda (te se) (materialize-needed? te se))
+                             target-elt* source-elt*)))
             #f
-            (string-append
-              "["
-              (join-rendered
-                (let loop ([i 0] [te* target-elt*] [se* source-elt*] [acc '()])
-                  (if (null? te*)
-                      (reverse acc)
-                      (let ([access (format "~a[~a]" base-text i)])
-                        (loop (+ i 1) (cdr te*) (cdr se*)
-                              (cons (or (materialize-at-type-text src (car te*) (car se*) access)
-                                        access)
-                                    acc))))))
-              "]")))
+            (aggregate-literal-rust target-kind
+              (let loop ([i 0] [te* target-elt*] [se* source-elt*] [acc '()])
+                (if (null? te*)
+                    (reverse acc)
+                    (let ([access (aggregate-index-rust source-kind base-text i)])
+                      (loop (+ i 1) (cdr te*) (cdr se*)
+                            (cons (or (materialize-at-type-text src (car te*) (car se*) access)
+                                      access)
+                                  acc))))))))
 
       ;; materialize-at-type-text: coerce an already-rendered Rust value
       ;; (`base-text`) of `source-type` into `target-type`, returning the
@@ -884,16 +920,20 @@
                          (format "((~a) as ~a)" base-text wt)))))]
           [(tvector ,src^ ,len ,type)
            (let ([se* (type-elt-types source-type len)])
-             (and se* (materialize-indexed-text src (make-list len type) se* base-text)))]
+             (and se* (materialize-indexed-text src 'vector (type-aggregate-kind source-type)
+                                                (make-list len type) se* base-text)))]
           [(ttuple ,src^ ,type* ...)
            (let ([se* (type-elt-types source-type (length type*))])
-             (and se* (materialize-indexed-text src type* se* base-text)))]
+             (and se* (materialize-indexed-text src 'tuple (type-aggregate-kind source-type)
+                                                type* se* base-text)))]
           [else #f]))
 
       ;; materialize-needed?: type-level predicate — would coercing a value of
       ;; `source-type` into `target-type` change its Rust rendering? Delegates
       ;; to the text renderer with a placeholder base, so the predicate and the
-      ;; renderer cannot drift.
+      ;; renderer cannot drift. A tuple flowing into a `Vector` position (or the
+      ;; reverse) needs it even when every element type agrees: the two are
+      ;; different Rust types.
       (define (materialize-needed? target-type source-type)
         (materialize-at-type-text #f target-type source-type "__materialize_probe"))
 
@@ -904,27 +944,30 @@
       ;; element boundaries, so it is bound once to a temp and coerced by
       ;; index (`materialize-indexed-text`). Returns #f when no element needs
       ;; coercing.
-      (define (materialize-aggregate src target-elt* source-elt* expr render-inner)
-        (if (not (ormap (lambda (te se) (materialize-needed? te se))
-                        target-elt* source-elt*))
+      (define (materialize-aggregate src target-kind source-kind
+                                     target-elt* source-elt* expr render-inner)
+        (if (and (eq? target-kind source-kind)
+                 (not (ormap (lambda (te se) (materialize-needed? te se))
+                             target-elt* source-elt*)))
             #f
             (nanopass-case (Ltypescript Expression) expr
               [(tuple ,src^ ,tuple-arg* ...)
+               ;; A literal is rebuilt in the target's spelling from its own
+               ;; elements, so a Compact tuple literal at a `Vector` position
+               ;; is `[...]` and at a tuple position `(...)`.
                (if (= (length tuple-arg*) (length target-elt*))
-                   (string-append
-                     "["
-                     (join-rendered
-                       (map (lambda (ta te se)
-                              (materialize-element src te se ta render-inner))
-                            tuple-arg* target-elt* source-elt*))
-                     "]")
+                   (aggregate-literal-rust target-kind
+                     (map (lambda (ta te se)
+                            (materialize-element src te se ta render-inner))
+                          tuple-arg* target-elt* source-elt*))
                    (rust-feature-error src 'field-uint-coercion
                      "aggregate coercion arity mismatch"))]
               [else
                (let ([tmp "__compact_materialize"])
                  (format "{ let ~a = ~a; ~a }"
                          tmp (render-inner-at #f render-inner expr)
-                         (materialize-indexed-text src target-elt* source-elt* tmp)))])))
+                         (materialize-indexed-text src target-kind source-kind
+                                                   target-elt* source-elt* tmp)))])))
 
       ;; materialize-at-type: the single type-directed coercion decision.
       ;; Render `expr` (an Expression) of `source-type` at `target-type`, with
@@ -937,10 +980,12 @@
         (nanopass-case (Ltypescript Type) (type-strip-alias target-type)
           [(tvector ,src^ ,len ,type)
            (let ([se* (type-elt-types source-type len)])
-             (and se* (materialize-aggregate src (make-list len type) se* expr render-inner)))]
+             (and se* (materialize-aggregate src 'vector (type-aggregate-kind source-type)
+                                             (make-list len type) se* expr render-inner)))]
           [(ttuple ,src^ ,type* ...)
            (let ([se* (type-elt-types source-type (length type*))])
-             (and se* (materialize-aggregate src type* se* expr render-inner)))]
+             (and se* (materialize-aggregate src 'tuple (type-aggregate-kind source-type)
+                                             type* se* expr render-inner)))]
           [else
            (materialize-scalar src target-type source-type expr render-inner)]))
 

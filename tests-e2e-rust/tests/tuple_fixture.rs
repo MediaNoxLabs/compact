@@ -138,10 +138,7 @@ fn tuple_fixture_empty_tuple_is_unit() {
 fn tuple_fixture_coerced_literal_is_a_tuple() {
     // Every element coerced Uint<8> -> Field through the literal path.
     use compact_contract_tuple_fixture::pure_circuits::tuple_coerce;
-    assert_eq!(
-        tuple_coerce(5u8).unwrap(),
-        (Fr::from(5u64), Fr::from(5u64))
-    );
+    assert_eq!(tuple_coerce(5u8).unwrap(), (Fr::from(5u64), Fr::from(5u64)));
 }
 
 #[test]

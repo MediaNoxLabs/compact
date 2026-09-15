@@ -884,21 +884,45 @@
       ;; the reverse) as well as a same-kind value with differing elements.
       ;; Indexing recurses, so nested aggregates are coerced at every depth.
       ;; Returns #f when the kinds agree and no element needs coercing.
+      ;;
+      ;; A `Vector` source is not indexed but destructured: Rust refuses to
+      ;; move a non-`Copy` element out of an owned array through `a[i]`
+      ;; (E0508), and a generated user struct derives `Clone`, not `Copy`, so
+      ;; `(__compact_materialize[0], …)` failed for `Vector<N, UserStruct>`
+      ;; (compact PR #87 review, F-031). An irrefutable array pattern moves
+      ;; every element out at once, with no clone and no borrow, and each
+      ;; bound name then takes the same per-element coercion an index did.
+      ;; A tuple source keeps `.i`: partial moves out of an owned tuple are
+      ;; allowed.
       (define (materialize-indexed-text src target-kind source-kind
                                         target-elt* source-elt* base-text)
         (if (and (eq? target-kind source-kind)
                  (not (ormap (lambda (te se) (materialize-needed? te se))
                              target-elt* source-elt*)))
             #f
-            (aggregate-literal-rust target-kind
-              (let loop ([i 0] [te* target-elt*] [se* source-elt*] [acc '()])
-                (if (null? te*)
-                    (reverse acc)
-                    (let ([access (aggregate-index-rust source-kind base-text i)])
-                      (loop (+ i 1) (cdr te*) (cdr se*)
-                            (cons (or (materialize-at-type-text src (car te*) (car se*) access)
-                                      access)
-                                  acc))))))))
+            (case source-kind
+              [(vector)
+               (let ([name* (let loop ([i 0] [acc '()])
+                              (if (= i (length target-elt*))
+                                  (reverse acc)
+                                  (loop (+ i 1) (cons (format "__compact_elt_~a" i) acc))))])
+                 (format "{ let [~a] = ~a; ~a }"
+                         (join-rendered name*)
+                         base-text
+                         (aggregate-literal-rust target-kind
+                           (map (lambda (te se name)
+                                  (or (materialize-at-type-text src te se name) name))
+                                target-elt* source-elt* name*))))]
+              [else
+               (aggregate-literal-rust target-kind
+                 (let loop ([i 0] [te* target-elt*] [se* source-elt*] [acc '()])
+                   (if (null? te*)
+                       (reverse acc)
+                       (let ([access (aggregate-index-rust source-kind base-text i)])
+                         (loop (+ i 1) (cdr te*) (cdr se*)
+                               (cons (or (materialize-at-type-text src (car te*) (car se*) access)
+                                         access)
+                                     acc))))))])))
 
       ;; materialize-at-type-text: coerce an already-rendered Rust value
       ;; (`base-text`) of `source-type` into `target-type`, returning the

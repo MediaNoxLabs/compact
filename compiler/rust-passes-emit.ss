@@ -3253,12 +3253,22 @@
                    ;; in `safe-cast` to the declared type; a bare literal
                    ;; therefore becomes `Fr::from(<n>u64)` / `<n>u64` and a
                    ;; widening materialises.
+                   ;;
+                   ;; Through `expr-rust-typed`, not `expr-rust` under a bound
+                   ;; expectation: this is the route `const t: [Pair, Pair] =
+                   ;; v` takes when `v` is a declared `Vector<2, Pair>` (the
+                   ;; typer inserts no `safe-cast` — it calls the two the same
+                   ;; type), and only the aggregate-kind bridge inside
+                   ;; `expr-rust-typed` knows that `[Pair; 2]` is not
+                   ;; `(Pair, Pair)`. Rendered bare, it was `let t = v;` and
+                   ;; E0308 (found while pinning F-031). Scalars are unaffected:
+                   ;; the bridge acts only on a kind mismatch.
                    (let ([s (guard (c [#t #f])
-                              (parameterize ([current-var-substitution rhs-binds]
-                                             [current-expr-expected-type
-                                              (or decl-type
-                                                  (expr-expected-type rhs))])
-                                (expr-rust rhs native-id-ht)))])
+                              (parameterize ([current-var-substitution rhs-binds])
+                                (expr-rust-typed rhs
+                                                 (or decl-type
+                                                     (expr-expected-type rhs))
+                                                 native-id-ht)))])
                      (cond
                        [(or (not s) (rendered-has-todo? s)) #f]
                        [else
@@ -3286,12 +3296,19 @@
                         ;; G1: see the const-binding clause above — reserve
                         ;; rust-name for the duration of the RHS render.
                         [rhs-binds (cons (cons var-name rust-name) binds)])
+                   ;; Render the RHS through `expr-rust-typed`, the same
+                   ;; boundary the const-binding clause uses, so the
+                   ;; aggregate-kind bridge sees it: `const t: [Pair, Pair] =
+                   ;; v` with `v: Vector<2, Pair>` rendered as a bare
+                   ;; `let t = v;` (E0308) when only the expected type was
+                   ;; bound and the bridge was never consulted (found while
+                   ;; pinning F-031).
                    (let ([s (guard (c [#t #f])
-                              (parameterize ([current-var-substitution rhs-binds]
-                                             [current-expr-expected-type
-                                              (or (expr-expected-type rhs)
-                                                  (recorded-aggregate-type var-name))])
-                                (expr-rust rhs native-id-ht)))])
+                              (parameterize ([current-var-substitution rhs-binds])
+                                (expr-rust-typed rhs
+                                                 (or (expr-expected-type rhs)
+                                                     (recorded-aggregate-type var-name))
+                                                 native-id-ht)))])
                      (cond
                        [(or (not s) (rendered-has-todo? s)) #f]
                        [else

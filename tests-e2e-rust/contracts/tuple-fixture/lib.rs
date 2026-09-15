@@ -31,6 +31,62 @@ use std::marker::PhantomData;
 
 midnight_compact_runtime::check_runtime_version!("0.16.100");
 
+#[derive(Clone, Debug, PartialEq, Eq, Default)]
+pub struct Pair {
+    pub a: Fr,
+    pub b: u8,
+}
+impl Aligned for Pair {
+    fn alignment() -> Alignment {
+        Alignment::concat([&<Fr as Aligned>::alignment(), &<u8 as Aligned>::alignment()])
+    }
+}
+impl FieldRepr for Pair {
+    fn field_repr<W: MemWrite<Fr>>(&self, writer: &mut W) {
+        self.a.field_repr(writer);
+        self.b.field_repr(writer);
+    }
+    fn field_size(&self) -> usize {
+        self.a.field_size() + self.b.field_size()
+    }
+}
+impl FromFieldRepr for Pair {
+    const FIELD_SIZE: usize = <Fr as FromFieldRepr>::FIELD_SIZE + <u8 as FromFieldRepr>::FIELD_SIZE;
+    fn from_field_repr(_repr: &[Fr]) -> Option<Self> {
+        if _repr.len() < Self::FIELD_SIZE {
+            return None;
+        }
+        let mut _offset = 0usize;
+        let a = <Fr as FromFieldRepr>::from_field_repr(
+            &_repr[_offset.._offset + <Fr as FromFieldRepr>::FIELD_SIZE],
+        )?;
+        _offset += <Fr as FromFieldRepr>::FIELD_SIZE;
+        let b = <u8 as FromFieldRepr>::from_field_repr(
+            &_repr[_offset.._offset + <u8 as FromFieldRepr>::FIELD_SIZE],
+        )?;
+        _offset += <u8 as FromFieldRepr>::FIELD_SIZE;
+        let _ = _offset;
+        Some(Pair { a, b })
+    }
+}
+impl From<Pair> for midnight_compact_runtime::Value {
+    fn from(s: Pair) -> midnight_compact_runtime::Value {
+        let mut _v: Vec<midnight_compact_runtime::Value> = Vec::new();
+        _v.push(midnight_compact_runtime::Value::from(s.a));
+        _v.push(midnight_compact_runtime::Value::from(s.b));
+        midnight_compact_runtime::Value::concat(_v.iter())
+    }
+}
+impl midnight_compact_runtime::BinaryHashRepr for Pair {
+    fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
+        self.a.binary_repr(writer);
+        self.b.binary_repr(writer);
+    }
+    fn binary_len(&self) -> usize {
+        self.a.binary_len() + self.b.binary_len()
+    }
+}
+
 pub trait Witnesses<PS> {}
 impl<PS> Witnesses<PS> for NoWitnesses {}
 
@@ -171,5 +227,28 @@ pub mod pure_circuits {
             let __compact_materialize = t;
             [__compact_materialize.0, __compact_materialize.1]
         })
+    }
+
+    pub fn struct_vector_return(x: Fr) -> Result<(Pair, Pair), CompactError> {
+        let v = [Pair { a: x, b: 1u8 }, Pair { a: x, b: 2u8 }];
+        Ok({
+            let __compact_materialize = v;
+            {
+                let [__compact_elt_0, __compact_elt_1] = __compact_materialize;
+                (__compact_elt_0, __compact_elt_1)
+            }
+        })
+    }
+
+    pub fn struct_vector_to_tuple(x: Fr) -> Result<(Pair, Pair), CompactError> {
+        let v = [Pair { a: x, b: 1u8 }, Pair { a: x, b: 2u8 }];
+        let t = {
+            let __compact_materialize = v;
+            {
+                let [__compact_elt_0, __compact_elt_1] = __compact_materialize;
+                (__compact_elt_0, __compact_elt_1)
+            }
+        };
+        Ok(t)
     }
 }

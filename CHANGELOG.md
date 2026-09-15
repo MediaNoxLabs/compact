@@ -20,9 +20,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   reverse) is bridged element-wise even when the typer inserted no
   `safe-cast`, because the two are different Rust types. A forward-declared
   `const` with a declared aggregate type now renders its assignment at that
-  type. New fixture `tuple_fixture` (eight pure circuits covering every shape
+  type. New fixture `tuple_fixture` (nine pure circuits covering every shape
   in the report, byte-parity + direct invocation); no other committed fixture
   changed.
+- **The vector→tuple bridge moved non-`Copy` elements through indexing** — a
+  `Vector<N, UserStruct>` flowing into a tuple position was emitted as
+  `(__compact_materialize[0], …)`, and Rust refuses to move a non-`Copy` value
+  out of an owned array by index (E0508), so the emitted crate did not compile
+  for any generated struct (they derive `Clone`, not `Copy`). Found in review of
+  [#87]. A `Vector` source is now destructured with an irrefutable array
+  pattern — `{ let [__compact_elt_0, __compact_elt_1] = v; (…) }` — which moves
+  every element out at once with no clone; a tuple source keeps `.0`/`.1`.
+  Pinning it also found that a `const` *with an initialiser* never consulted
+  the kind bridge: `const t: [Pair, Pair] = v` with a declared `Vector` `v`
+  lowers to one `(const (t …) v)` statement whose renderer bound the expected
+  type and called the raw renderer, so it emitted a bare `let t = v;` (E0308)
+  — the typer inserts no `safe-cast` there because it treats the two as one
+  type. That route, and the forward-declaration assignment route beside it,
+  now render their RHS through the same typed boundary the return path uses.
+  `tuple_fixture` gains `struct_vector_return` and `struct_vector_to_tuple`.
 
 ## [Toolchain 0.31.119, language 0.23.103, runtime 0.16.100]
 

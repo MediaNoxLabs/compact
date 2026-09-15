@@ -154,6 +154,37 @@ fn tuple_fixture_var_ref_coerces_through_a_temp_with_dot_indexing() {
 }
 
 #[test]
+fn tuple_fixture_struct_vector_returned_as_a_tuple_moves_without_cloning() {
+    // F-031 (PR #87 review): a `Vector<2, Pair>` const returned at a
+    // `[Pair, Pair]` type. `Pair` derives `Clone`, not `Copy`, so the earlier
+    // `(__compact_materialize[0], __compact_materialize[1])` was E0508 —
+    // this test exists only because the crate now compiles — and the value
+    // must be the two structs, in order, moved out through an array pattern
+    // rather than copied.
+    use compact_contract_tuple_fixture::pure_circuits::struct_vector_return;
+    use compact_contract_tuple_fixture::Pair;
+    let x = Fr::from(17u64);
+    assert_eq!(
+        struct_vector_return(x).unwrap(),
+        (Pair { a: x, b: 1u8 }, Pair { a: x, b: 2u8 })
+    );
+}
+
+#[test]
+fn tuple_fixture_struct_vector_assigned_to_a_tuple_const_is_bridged() {
+    // The second path: `const t: [Pair, Pair] = v;`. The assignment renderer
+    // used to emit `let t = v;` with no kind bridge at all (E0308, found while
+    // pinning F-031); it now renders the RHS at the const's declared type.
+    use compact_contract_tuple_fixture::pure_circuits::struct_vector_to_tuple;
+    use compact_contract_tuple_fixture::Pair;
+    let x = Fr::from(19u64);
+    assert_eq!(
+        struct_vector_to_tuple(x).unwrap(),
+        (Pair { a: x, b: 1u8 }, Pair { a: x, b: 2u8 })
+    );
+}
+
+#[test]
 fn tuple_fixture_tuple_const_flows_into_a_vector_position() {
     // The kind conversion in the other direction: a tuple-typed const
     // returned where a `Vector<2, Field>` is declared becomes `[t.0, t.1]`.

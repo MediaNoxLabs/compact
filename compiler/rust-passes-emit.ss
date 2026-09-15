@@ -665,6 +665,40 @@
           [(const ,src (,local* ...)) #t]
           [else #f]))
 
+      ;; const-decl-locals: the `(var-name . type)` pairs a forward
+      ;; declaration `(const ,src (,local* ...))` introduces. The declared
+      ;; type is the only place the binder's aggregate *kind* is written
+      ;; down when the typer inserts no `safe-cast` on the later assignment
+      ;; (the RHS already has that type), so it is recorded here and read
+      ;; back by `recorded-value-type` when the `(= ...)` renders.
+      (define (const-decl-locals stmt)
+        (nanopass-case (Ltypescript Statement) stmt
+          [(const ,src (,local* ...))
+           (map (lambda (local)
+                  (nanopass-case (Ltypescript Argument) local
+                    [(,var-name ,type) (cons var-name type)]))
+                local*)]
+          [else '()]))
+
+      ;; recorded-value-type: the declared type recorded for `var-name` by
+      ;; `record-value-type!`, or #f when none (or when the table is not
+      ;; bound). The var-ref half of `expr-value-type`, by name.
+      (define (recorded-value-type var-name)
+        (let ([ht (current-value-types)])
+          (and ht (eq-hashtable-ref ht (id-sym var-name) #f))))
+
+      ;; recorded-aggregate-type: `recorded-value-type` restricted to aggregate
+      ;; declarations. The `(= ...)` renderers fall back to this — not to every
+      ;; recorded type — because only an aggregate's *kind* is lost when the
+      ;; typer inserts no `safe-cast`; a scalar RHS already renders at the
+      ;; width Rust infers, and rendering it at the declared width instead
+      ;; would re-suffix literals across the committed corpus for no gain
+      ;; (the digital-passport fixture's `{ 1 } else { 0u8 }` temp showed
+      ;; exactly that drift).
+      (define (recorded-aggregate-type var-name)
+        (let ([t (recorded-value-type var-name)])
+          (and t (type-aggregate-kind t) t)))
+
       ;; stmt->assignment: detect a `(statement-expression (= src var-name
       ;; expr))` and return (cons var-name expr). The assignment Expression
       ;; is what typescript-passes emits for `<name> = <expr>` after lifting
@@ -1950,8 +1984,16 @@
                   [rust-name (uniquify-rust-name proposed binds)]
                   ;; Render at the RHS wrapper's own target — the lifted
                   ;; temp's declared type — so a bare literal / widening
-                  ;; materialises (task 2.1, assignment route).
-                  [rhs (expr-rust-typed expr^ (expr-expected-type expr^) native-id-ht)])
+                  ;; materialises (task 2.1, assignment route). When the
+                  ;; typer left no wrapper (the RHS already has the declared
+                  ;; type), fall back to the binder's recorded declaration so
+                  ;; an aggregate RHS still takes the declared *kind*: a
+                  ;; `const w: [Uint<8>, Uint<8>] = [x, x]` is a tuple, and a
+                  ;; later `w.0` needs it to have been one (compact#83).
+                  [rhs (expr-rust-typed expr^
+                                        (or (expr-expected-type expr^)
+                                            (recorded-aggregate-type var-name))
+                                        native-id-ht)])
              (values (format "let ~a = ~a;" rust-name rhs)
                      (cons var-name rust-name)))]
           [else
@@ -1970,7 +2012,28 @@
         ;; inherited expectation as well as set one. Binding #f where the
         ;; enclosing extent already has #f is byte-identical to not binding.
         (parameterize ([current-expr-expected-type expected])
-          (expr-rust expr native-id-ht)))
+          (or (aggregate-kind-bridge expr expected native-id-ht)
+              (expr-rust expr native-id-ht))))
+
+      ;; aggregate-kind-bridge: a value whose own declared type is one
+      ;; aggregate kind, rendered at a position of the other — a tuple-typed
+      ;; const or parameter where a `Vector` is expected, or the reverse.
+      ;; When every element type already agrees the typer inserts no
+      ;; `safe-cast`, so the coercion machinery never sees the value; yet
+      ;; `(Fr, Fr)` and `[Fr; 2]` are different Rust types and the crate does
+      ;; not compile (compact#83). Only a value with a *recorded* declared type
+      ;; (`expr-value-type`: declared consts, formal parameters, struct
+      ;; fields) can be bridged; a literal has no type of its own and is
+      ;; handled by the `tuple` clause. Returns #f when nothing needs bridging.
+      (define (aggregate-kind-bridge expr expected native-id-ht)
+        (let ([target-kind (type-aggregate-kind expected)])
+          (and target-kind
+               (let ([value-type (expr-value-type expr)])
+                 (and value-type
+                      (type-aggregate-kind value-type)
+                      (not (eq? (type-aggregate-kind value-type) target-kind))
+                      (materialize-at-type #f expected value-type expr
+                        (lambda (e) (expr-rust e native-id-ht))))))))
 
       ;; cmp-operand-rust: render one ordering/equality comparison operand at
       ;; the joined operand type `joined-type`. The typechecker wraps a
@@ -2064,31 +2127,27 @@
              [(assq var-name (current-var-substitution)) => cdr]
              [else (symbol->string (camel->snake (id-sym var-name)))])]
           [(tuple ,src ,tuple-arg* ...)
-           ;; Compact's `Vector<N, T>` lowers to a Rust `[T; N]`. The IR
-           ;; uses `tuple` for both tuples and vectors at the value level;
-           ;; the immediate caller (e.g. a native taking a Vector) knows
-           ;; which form is wanted. For I3b/1 we render every `tuple` as a
-           ;; Rust array literal — the only consumer is persistent_hash,
-           ;; where the elements have identical type ([u8; 32]).
+           ;; The IR uses `tuple` for both tuples and vectors at the value
+           ;; level; the position's expected type says which Rust aggregate
+           ;; it is. A `Vector<N, T>` is `[T; N]`, so the literal is `[...]`;
+           ;; a `Tuple<...>` is `(T, ...)`, so the literal is `(...)` — the
+           ;; spelling `type-rust` already declares for it. Constructing a
+           ;; tuple-typed value as an array was compact#83: the emitted crate
+           ;; did not compile.
            ;;
-           ;; When the enclosing position declared an aggregate expected
-           ;; type (a `safe-cast` to `Vector<N, T>` recovered by the
-           ;; caller), each element renders at the element type so a bare
-           ;; literal element is coerced (`[0]` -> `[Fr::from(0u64)]`).
+           ;; Each element renders at the element type the expected type
+           ;; declares, so a bare literal element is coerced (`[0]` ->
+           ;; `[Fr::from(0u64)]`). With no expected type the literal stays an
+           ;; array, which is what every existing consumer of that case
+           ;; (native-vector arguments) has relied on.
            (let* ([n (length tuple-arg*)]
                   [elt-types (expected-elt-types n)]
+                  [kind (or (type-aggregate-kind (current-expr-expected-type)) 'vector)]
                   [parts
                    (map (lambda (ta et) (tuple-arg-rust ta native-id-ht et))
                         tuple-arg*
                         (or elt-types (make-list n #f)))])
-             (string-append
-               "["
-               (let join ([xs parts] [acc ""])
-                 (cond
-                   [(null? xs) acc]
-                   [(null? (cdr xs)) (string-append acc (car xs))]
-                   [else (join (cdr xs) (string-append acc (car xs) ", "))]))
-               "]"))]
+             (aggregate-literal-rust kind parts))]
           [(call ,src ,function-name ,expr* ...)
            (call-rust src function-name expr* native-id-ht)]
           [(default ,src ,type)
@@ -2815,6 +2874,14 @@
       ;; binding is evaluated once by the caller, so no expression is
       ;; duplicated.
       (define (native-vector-atoms-from-text base-text target-type source-type)
+        ;; `base-text` holds a value of `source-type`, so each element is read
+        ;; in the source's spelling (`.i` for a tuple, `[i]` for an array); the
+        ;; target only says how far to recurse. A value whose source kind is
+        ;; unknown is read in the target's spelling, as before.
+        (define (elt-access i)
+          (aggregate-index-rust
+            (or (type-aggregate-kind source-type) (type-aggregate-kind target-type))
+            base-text i))
         (nanopass-case (Ltypescript Type) (type-strip-alias target-type)
           [(tvector ,src ,len ,type)
            (let ([se* (type-elt-types source-type len)])
@@ -2823,7 +2890,7 @@
                    '()
                    (append
                      (native-vector-atoms-from-text
-                       (format "~a[~a]" base-text i)
+                       (elt-access i)
                        type
                        (and se* (list-ref se* i)))
                      (loop (fx+ i 1))))))]
@@ -2834,7 +2901,7 @@
                    '()
                    (append
                      (native-vector-atoms-from-text
-                       (format "~a[~a]" base-text i)
+                       (elt-access i)
                        (car te*)
                        (and se* (list-ref se* i)))
                      (loop (fx+ i 1) (cdr te*))))))]
@@ -3186,12 +3253,22 @@
                    ;; in `safe-cast` to the declared type; a bare literal
                    ;; therefore becomes `Fr::from(<n>u64)` / `<n>u64` and a
                    ;; widening materialises.
+                   ;;
+                   ;; Through `expr-rust-typed`, not `expr-rust` under a bound
+                   ;; expectation: this is the route `const t: [Pair, Pair] =
+                   ;; v` takes when `v` is a declared `Vector<2, Pair>` (the
+                   ;; typer inserts no `safe-cast` — it calls the two the same
+                   ;; type), and only the aggregate-kind bridge inside
+                   ;; `expr-rust-typed` knows that `[Pair; 2]` is not
+                   ;; `(Pair, Pair)`. Rendered bare, it was `let t = v;` and
+                   ;; E0308 (found while pinning F-031). Scalars are unaffected:
+                   ;; the bridge acts only on a kind mismatch.
                    (let ([s (guard (c [#t #f])
-                              (parameterize ([current-var-substitution rhs-binds]
-                                             [current-expr-expected-type
-                                              (or decl-type
-                                                  (expr-expected-type rhs))])
-                                (expr-rust rhs native-id-ht)))])
+                              (parameterize ([current-var-substitution rhs-binds])
+                                (expr-rust-typed rhs
+                                                 (or decl-type
+                                                     (expr-expected-type rhs))
+                                                 native-id-ht)))])
                      (cond
                        [(or (not s) (rendered-has-todo? s)) #f]
                        [else
@@ -3199,9 +3276,15 @@
                               (cons (cons var-name rust-name) binds)
                               (cons (format "let ~a = ~a;" rust-name s) acc))]))))]
               [(const-decl-only? (car xs))
-               ;; Forward declaration `(const src (local* ...))` — no-op;
-               ;; the assignment lands later as a `(statement-expression
-               ;; (= ...))` which the next clause renders as `let`.
+               ;; Forward declaration `(const src (local* ...))` — emits
+               ;; nothing; the assignment lands later as a
+               ;; `(statement-expression (= ...))` which the next clause
+               ;; renders as `let`. Its declared types are recorded so that
+               ;; assignment can render its RHS at the declared type when the
+               ;; typer left no `safe-cast` on it (compact#83: a declared
+               ;; tuple was otherwise built as an array).
+               (for-each (lambda (p) (record-value-type! (car p) (cdr p)))
+                         (const-decl-locals (car xs)))
                (loop (cdr xs) binds acc)]
               [(stmt->assignment (car xs))
                =>
@@ -3213,10 +3296,19 @@
                         ;; G1: see the const-binding clause above — reserve
                         ;; rust-name for the duration of the RHS render.
                         [rhs-binds (cons (cons var-name rust-name) binds)])
+                   ;; Render the RHS through `expr-rust-typed`, the same
+                   ;; boundary the const-binding clause uses, so the
+                   ;; aggregate-kind bridge sees it: `const t: [Pair, Pair] =
+                   ;; v` with `v: Vector<2, Pair>` rendered as a bare
+                   ;; `let t = v;` (E0308) when only the expected type was
+                   ;; bound and the bridge was never consulted (found while
+                   ;; pinning F-031).
                    (let ([s (guard (c [#t #f])
-                              (parameterize ([current-var-substitution rhs-binds]
-                                             [current-expr-expected-type (expr-expected-type rhs)])
-                                (expr-rust rhs native-id-ht)))])
+                              (parameterize ([current-var-substitution rhs-binds])
+                                (expr-rust-typed rhs
+                                                 (or (expr-expected-type rhs)
+                                                     (recorded-aggregate-type var-name))
+                                                 native-id-ht)))])
                      (cond
                        [(or (not s) (rendered-has-todo? s)) #f]
                        [else

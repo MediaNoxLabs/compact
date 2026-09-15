@@ -76,6 +76,10 @@ const FIXTURES: &[(&str, &str)] = &[
     ("multi_pl_call_fixture.compact", "multi-pl-call-fixture"),
     ("nested_map_fixture.compact", "nested-map-fixture"),
     ("pure_circuit_fixture.compact", "pure-circuit-fixture"),
+    // CPT-006 / compact#83: tuple-typed values must take the Rust tuple
+    // spelling their declared type has — `(x, x)`, `(x,)`, `.0` — while
+    // Vector values stay arrays. No earlier fixture returned a tuple type.
+    ("tuple_fixture.compact", "tuple-fixture"),
     ("sealed_ledger_fixture.compact", "sealed-ledger-fixture"),
     ("set_fixture.compact", "set-fixture"),
     ("set_size_fixture.compact", "set-size-fixture"),

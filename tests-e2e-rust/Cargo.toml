@@ -61,6 +61,11 @@ compact-contract-module-fixture = { path = "contracts/module-fixture" }
 compact-contract-bounded-uint-fixture = { path = "contracts/bounded-uint-fixture" }
 compact-contract-sealed-ledger-fixture = { path = "contracts/sealed-ledger-fixture" }
 compact-contract-pure-circuit-fixture = { path = "contracts/pure-circuit-fixture" }
+# Tuple-spelling gate (CPT-006 / compact#83): tuple_fixture.rs calls the
+# generated pure circuits and compares against Rust tuple values, so a
+# tuple-typed value constructed as an array cannot pass by merely compiling —
+# and it would not compile, which is what the report found.
+compact-contract-tuple-fixture = { path = "contracts/tuple-fixture" }
 compact-contract-nested-map-fixture = { path = "contracts/nested-map-fixture" }
 compact-contract-hash-to-curve-fixture = { path = "contracts/hash-to-curve-fixture" }
 compact-contract-hmt-default-fixture = { path = "contracts/hmt-default-fixture" }

@@ -101,9 +101,15 @@
           nodejs = final.nodejs_22;
         });
         isDarwin = pkgs.lib.hasSuffix "-darwin" system;
-        chez = if isDarwin then pkgs.chez.override {
-          stdenv = pkgs.llvmPackages_18.stdenv;
-        } else pkgs.chez;
+        # NB: on darwin, build chez with nixpkgs' default stdenv. Do NOT pin
+        # an older LLVM set here (e.g. llvmPackages_18.stdenv): nixpkgs' darwin
+        # clang wrappers deliberately pair *every* LLVM set's clang with the
+        # top-level `darwin.libcxx` (the "system libc++"), not the set's own
+        # libcxx. When the two drift apart, compiler-rt-libc of the older LLVM
+        # set — a hard dependency of its clang wrapper — is compiled by the old
+        # clang against the new libc++ headers and fails (libc++ 21 needs
+        # clang >= 19 builtins like __builtin_ctzg). See issue #85.
+        chez = pkgs.chez;
         sources = (import ./_sources/generated.nix) {inherit (pkgs) fetchgit fetchurl fetchFromGitHub;};
         nanopass = sources.nanopass.src;
         rough-draft = sources.rough-draft.src;

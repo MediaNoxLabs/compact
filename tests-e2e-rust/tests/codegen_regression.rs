@@ -61,7 +61,9 @@ const FIXTURES: &[(&str, &str)] = &[
     ("bounded_uint_fixture.compact", "bounded-uint-fixture"),
     ("bug11_fixture.compact", "bug11-fixture"),
     ("cross_circuit_fixture.compact", "cross-circuit-fixture"),
-    ("election.compact", "election"),
+    // Upstream's example plus a seeding constructor; the crate keeps its name so
+    // the executing test and the TS reference capture are unchanged.
+    ("election_fixture.compact", "election"),
     ("fold_fixture.compact", "fold-fixture"),
     ("for_iter_fixture.compact", "for-iter-fixture"),
     ("for_range_fixture.compact", "for-range-fixture"),

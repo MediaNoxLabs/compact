@@ -75923,7 +75923,7 @@ groups than for single tests.
         "                  context$committed_votes$path_of(x: any): any { return; }"
         "                 };"
         "test('check 1', async () => {"
-        "  const [C, Ctxt] = await startContract(contractCode, witnesses, 0, new Uint8Array(32));"
+        "  const [C, Ctxt] = await startContract(contractCode, witnesses, 0);"
         "  expect(typeof(C.circuits)).toEqual('object');"
         "});"
         ))

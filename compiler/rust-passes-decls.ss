@@ -208,12 +208,13 @@
                        ;; midnight-compact-runtime — skip per-contract emission.
                        (void)]
                       [(not (null? tvar-name*))
-                       ;; H5: generic structs not yet handled. Emit a TODO so
-                       ;; non-zero `tvar-name*` is visible to downstream
-                       ;; tasks. Monomorphic structs fall through to real
-                       ;; emission below.
-                       (out (format "// TODO M3-H5: generic struct ~a<~{~a~^, ~}>\n"
-                                    struct-name tvar-name*))]
+                       ;; Generic structs are not lowered: an exported
+                       ;; generic struct has no monomorphic Rust declaration
+                       ;; to emit, and a comment in its place would leave the
+                       ;; crate referencing a type that does not exist.
+                       (rust-feature-error src 'generic-struct
+                         "exported generic struct ~a<~{~a~^, ~}> is not lowered to Rust"
+                         struct-name tvar-name*)]
                       [else
                        (let ([struct-name (struct-rust-name type)])
                          (unless (hashtable-ref seen struct-name #f)
@@ -454,7 +455,8 @@
                       (out (format "pub type ~a = ~a;\n\n"
                                    type-name (type-rust type))))]
                    [else
-                    (out "// TODO M3: unhandled export-typedef variant\n")])]
+                    (rust-feature-error #f 'export-typedef-variant
+                      "unhandled export-typedef variant in the Rust backend")])]
                 [else (void)]))
             export-tdefn*))
           (out "\n")))

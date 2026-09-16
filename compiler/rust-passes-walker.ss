@@ -266,11 +266,15 @@
                 (or (enum-ref->typed-rust e)
                     (let ([n (enum-ref->u8 e)])
                       (if n (format "~au8" n)
-                          "/* TODO M3-J2: unresolved enum-ref */ 0u8")))]
+                          (rust-feature-error src 'enum-ref-unresolved
+                            "enum-ref ~s could not be resolved to a discriminant"
+                            elt-name))))]
                [else
                 (let ([n (enum-ref->u8 e)])
                   (if n (format "~au8" n)
-                      "/* TODO M3-J2: unresolved enum-ref */ 0u8"))])]
+                      (rust-feature-error src 'enum-ref-unresolved
+                        "enum-ref ~s could not be resolved to a discriminant"
+                        elt-name)))])]
             [(call ,src ,function-name ,expr* ...)
              (ctor-call-rust src function-name expr* local-binds
                              native-id-ht witness-id-ht circuit-id-ht)]

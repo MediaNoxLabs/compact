@@ -21,97 +21,122 @@
 (declare-native-entry circuit transientHash [A]
   "__compactRuntime.transientHash"
   ([value A (discloses "a hash of")])
-  Field)
+  Field
+  (rust "midnight_compact_runtime::transient_hash"))
 
 (declare-native-entry circuit transientCommit [A]
   "__compactRuntime.transientCommit"
   ([value A (discloses nothing)]
    [rand Field (discloses nothing)])
-  Field)
+  Field
+  (rust "midnight_compact_runtime::transient_commit"))
 
 ;; ==== Hashing
 (declare-native-entry circuit persistentHash [A]
   "__compactRuntime.persistentHash"
   ([value A (discloses "a hash of")])
-  (Bytes 32))
+  (Bytes 32)
+  (rust "midnight_compact_runtime::persistent_hash"))
 
 (declare-native-entry circuit persistentCommit [A]
   "__compactRuntime.persistentCommit"
   ([value A (discloses nothing)]
    [rand (Bytes 32) (discloses nothing)])
-  (Bytes 32))
+  (Bytes 32)
+  (rust "midnight_compact_runtime::persistent_commit"))
 
 (declare-native-entry circuit degradeToTransient
   "__compactRuntime.degradeToTransient"
   ([x (Bytes 32) (discloses "a modulus of")])
-  Field)
+  Field
+  (rust "midnight_compact_runtime::degrade_to_transient"))
 
 (declare-native-entry circuit upgradeFromTransient
   "__compactRuntime.upgradeFromTransient"
   ([x Field (discloses "a converted form of")])
-  (Bytes 32))
+  (Bytes 32)
+  (rust "midnight_compact_runtime::upgrade_from_transient"))
 
 (declare-native-entry circuit keccak256 [A]
   "__compactRuntime.keccak256"
   ([value A (discloses "a hash of")])
   (Bytes 32))
+;; No `(rust ...)` clause: there is no upstream Rust binding for keccak256 —
+;; midnight crypto exposes keccak only as a ZK circuit chip. Leaving the field
+;; #f makes `native-call-site-rust` reject a call at COMPILE time. It used to
+;; carry `unimplemented!()`, so a contract calling keccak256 compiled cleanly
+;; and panicked at run time instead.
 
 ;; ==== Curves
 (declare-native-entry circuit jubjubPointX
   "__compactRuntime.jubjubPointX"
   ([pt (TypeRef JubjubPoint) (discloses "the X coordinate of")])
-  Field)
+  Field
+  (rust "midnight_compact_runtime::jubjub_point_x"))
 
 (declare-native-entry circuit jubjubPointY
   "__compactRuntime.jubjubPointY"
   ([pt (TypeRef JubjubPoint) (discloses "the Y coordinate of")])
-  Field)
+  Field
+  (rust "midnight_compact_runtime::jubjub_point_y"))
 
 (declare-native-entry circuit ecAdd
   "__compactRuntime.ecAdd"
   ([a (TypeRef JubjubPoint) (discloses "an elliptic curve sum including")]
    [b (TypeRef JubjubPoint) (discloses "an elliptic curve sum including")])
-  (TypeRef JubjubPoint))
+  (TypeRef JubjubPoint)
+  (rust "midnight_compact_runtime::ec_add"))
 
 (declare-native-entry circuit ecNeg
   "__compactRuntime.ecNeg"
   ([a (TypeRef JubjubPoint) (discloses "the elliptic curve negation of")])
-  (TypeRef JubjubPoint))
+  (TypeRef JubjubPoint)
+  (rust "midnight_compact_runtime::ec_neg"))
 
 (declare-native-entry circuit ecMul
   "__compactRuntime.ecMul"
   ([a (TypeRef JubjubPoint) (discloses "an elliptic curve product including")]
    [b (TypeRef JubjubScalar) (discloses "an elliptic curve product including")])
-  (TypeRef JubjubPoint))
+  (TypeRef JubjubPoint)
+  (rust "midnight_compact_runtime::ec_mul"))
 
 (declare-native-entry circuit ecMulGenerator
   "__compactRuntime.ecMulGenerator"
   ([b (TypeRef JubjubScalar) (discloses "the product of the embedded group generator with")])
-  (TypeRef JubjubPoint))
+  (TypeRef JubjubPoint)
+  (rust "midnight_compact_runtime::ec_mul_generator"))
 
 (declare-native-entry circuit hashToCurve [A]
   "__compactRuntime.hashToCurve"
   ([value A (discloses "a hash of")])
-  (TypeRef JubjubPoint))
+  (TypeRef JubjubPoint)
+  (rust "midnight_compact_runtime::hash_to_curve"))
 
 (declare-native-entry circuit constructJubjubPoint
   "__compactRuntime.constructJubjubPoint"
   ([x Field (discloses "a JubjubPoint containing X coordinate")]
    [y Field (discloses "a JubjubPoint containing Y coordinate")])
-  (TypeRef JubjubPoint))
+  (TypeRef JubjubPoint)
+  (rust "midnight_compact_runtime::construct_jubjub_point"))
 
 (declare-native-entry witness ownPublicKey
   "__compactRuntime.ownPublicKey"
   ()
   (TypeRef ZswapCoinPublicKey))
+;; No `(rust ...)` clause: host-side zswap witness, needs a
+;; WitnessContext-mediated binding. See the keccak256 note above.
 
 (declare-native-entry witness createZswapInput
   "__compactRuntime.createZswapInput"
   ([coin (TypeRef QualifiedShieldedCoinInfo) (discloses nothing)])
   Void)
+;; No `(rust ...)` clause: host-side zswap witness, needs a
+;; WitnessContext-mediated binding. See the keccak256 note above.
 
 (declare-native-entry witness createZswapOutput
   "__compactRuntime.createZswapOutput"
   ([coin (TypeRef ShieldedCoinInfo) (discloses nothing)]
    [recipient (TypeRef Either (TypeRef ZswapCoinPublicKey) (TypeRef ContractAddress)) (discloses nothing)])
   Void)
+;; No `(rust ...)` clause: host-side zswap witness, needs a
+;; WitnessContext-mediated binding. See the keccak256 note above.

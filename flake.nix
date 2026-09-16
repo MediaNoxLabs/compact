@@ -23,25 +23,34 @@
   };
 
   inputs = {
+    # NB: the ledger inputs follow our nixpkgs. Their own pins predate the
+    # nixpkgs change that stopped crates.io returning 403 to `fetchurl`'s
+    # `curl/*` User-Agent, so left to themselves their crate vendoring fails
+    # (`nix develop` dies building `zkir`).
     zkir = {
       # zkir key-generation binary for ZKIR 2
       url = "github:midnightntwrk/midnight-ledger/ledger-9.1.0.0-rc.3"; # zkir-v2
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     onchain-runtime-v4 = {
       # dependency for Compact runtime release
       url = "github:midnightntwrk/midnight-ledger/ledger-9.1.0.0-rc.3";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     zkir-wasm = {
       # dependency for test-center
       url = "github:midnightntwrk/midnight-ledger/ledger-9.1.0.0-rc.3";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     zkir-v3 = {
       # zkir-v3 key-generation binary for v3 IR format
       url = "github:midnightntwrk/midnight-ledger/04c9c5d9bcebb8d4427d8589fb54d58a55599c14"; # zkir-v3
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     zkir-v3-wasm = {
       # zkir-v3-wasm for test-center v3 support
       url = "github:midnightntwrk/midnight-ledger/04c9c5d9bcebb8d4427d8589fb54d58a55599c14";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     n2c.url = "github:nlewo/nix2container";
     chez-exe.url = "github:tkerber/chez-exe";
@@ -75,13 +84,22 @@
           # hack to get npmlock2nix working, by pretending we're using an old
           # node version
           nodejs-16_x = final.nodejs;
-          nodejs = final.nodejs_latest;
+          # NB: pin to the Node LTS from .nvmrc instead of nodejs_latest, so
+          # that nixpkgs bumps don't silently change the Node major used to
+          # build runtime.forPublish and the extension (CI uses Node 22).
+          nodejs = final.nodejs_22;
         });
         isDarwin = pkgs.lib.hasSuffix "-darwin" system;
+        # NB: on darwin, build chez with nixpkgs' default stdenv. Do NOT pin
+        # an older LLVM set here (e.g. llvmPackages_18.stdenv): nixpkgs' darwin
+        # clang wrappers deliberately pair *every* LLVM set's clang with the
+        # top-level `darwin.libcxx` (the "system libc++"), not the set's own
+        # libcxx. When the two drift apart, compiler-rt-libc of the older LLVM
+        # set — a hard dependency of its clang wrapper — is compiled by the old
+        # clang against the new libc++ headers and fails (libc++ 21 needs
+        # clang >= 19 builtins like __builtin_ctzg). See issue #85.
         libcrypto = if isDarwin then null else "${pkgs.openssl.out}/lib/libcrypto.so";
-        chez = if isDarwin then pkgs.chez.override {
-          stdenv = pkgs.llvmPackages_18.stdenv;
-        } else pkgs.chez;
+        chez = pkgs.chez;
         sources = (import ./_sources/generated.nix) {inherit (pkgs) fetchgit fetchurl fetchFromGitHub;};
         nanopass = sources.nanopass.src;
         rough-draft = sources.rough-draft.src;
@@ -131,10 +149,14 @@
         dry-install = pretzel-js.mkPackage {
           pkgs = import nixpkgs {
             inherit system;
-            overlays = [ pretzel-js.overlay ];
+            overlays = [ node-pin pretzel-js.overlay ];
           };
           src = nix/dry-install;
         };
+        # Keep every pretzel-js package (runtime, test-center, dry-install)
+        # building with the Node LTS from .nvmrc, matching CI, instead of
+        # nixpkgs' default nodejs.
+        node-pin = final: prev: { nodejs = final.nodejs_22; };
       in
         rec {
           lib.pretzel-js = pretzel-js;
@@ -152,7 +174,7 @@
           in lib.pretzel-js.mkPackage {
             pkgs = import nixpkgs {
               inherit system;
-              overlays = [overlays.pretzel-js];
+              overlays = [ node-pin overlays.pretzel-js ];
             };
             #name = "compact-runtime";
             #version = runtime-version;
@@ -180,7 +202,7 @@
           packages.test-center = lib.pretzel-js.mkPackage {
             pkgs = import nixpkgs {
               inherit system;
-              overlays = [overlays.pretzel-js];
+              overlays = [ node-pin overlays.pretzel-js ];
             };
             src = ./test-center;
 
@@ -212,7 +234,7 @@
 
           packages.compactc = pkgs.stdenv.mkDerivation {
             name = "compactc";
-            version = "0.34.101"; # NB: also update compiler-version in compiler/compiler-version.ss
+            version = "0.34.120"; # NB: also update compiler-version in compiler/compiler-version.ss
             src = inclusive.lib.inclusive ./. [
               ./compiler
               ./examples
@@ -231,7 +253,7 @@
 
             buildInputs = [
               pkgs.nodejs
-              pkgs.nodePackages.typescript
+              pkgs.typescript
               packages.runtime.package
               packages.runtime.node-modules
               chez
@@ -425,11 +447,37 @@
             ];
           };
 
-          packages.compact-vscode-extension-node-modules = pkgs.mkYarnModules {
+          # NB: `mkYarnModules` (yarn2nix) was removed from nixpkgs (2026-04-25).
+          # Use the standard yarn v1 flow: fetchYarnDeps + yarnConfigHook.
+          packages.compact-vscode-extension-node-modules = pkgs.stdenv.mkDerivation {
             pname = "compact-vscode-extension-node-modules";
             version = vscode-extension-version;
-            packageJSON = ./editor-support/vsc/compact/package.json;
-            yarnLock = ./editor-support/vsc/compact/yarn.lock;
+            # Only the manifest and lockfile are needed for the offline
+            # yarn install; using the full extension tree as src would
+            # invalidate the 800+ package cache on every source edit.
+            src = pkgs.runCommand "compact-vscode-extension-manifests" {} ''
+              mkdir -p $out
+              cp ${./editor-support/vsc/compact/package.json} $out/package.json
+              cp ${./editor-support/vsc/compact/yarn.lock} $out/yarn.lock
+            '';
+            yarnOfflineCache = pkgs.fetchYarnDeps {
+              yarnLock = ./editor-support/vsc/compact/yarn.lock;
+              hash = "sha256-L2hhFEZphJTLzEFYVYNBHS+7oFVbMe822ybQgDuWmKo=";
+            };
+            # NB: nodejs is needed here so that patchShebangs (invoked by
+            # yarnConfigHook) can rewrite `#!/usr/bin/env node` shebangs,
+            # which would otherwise break inside the build sandbox.
+            nativeBuildInputs = with pkgs; [
+              nodejs
+              yarn
+              yarnConfigHook
+            ];
+            installPhase = ''
+              runHook preInstall
+              mkdir -p $out
+              mv node_modules $out/node_modules
+              runHook postInstall
+            '';
           };
 
           packages.compact-vscode-extension =
@@ -467,10 +515,12 @@
                 cd ..
 
                 echo Run unit tests
+                export PATH="$PWD/node_modules/.bin:$PATH"
                 yarn run --offline test --ci --reporters=jest-silent-reporter --reporters=summary
               '';
 
             installPhase = ''
+              export PATH="$PWD/node_modules/.bin:$PATH"
               mkdir -p $out
               yarn build
               yarn vsce package --yarn -o $out

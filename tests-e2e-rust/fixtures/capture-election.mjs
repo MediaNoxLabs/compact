@@ -38,7 +38,7 @@
 // can return a path whose leaf matches.
 //
 // Usage:
-//   compactc --skip-zk examples/election.compact /tmp/election-ts-driver/
+//   compactc --skip-zk examples/election_fixture.compact /tmp/election-ts-driver/
 //   echo '{"type":"module"}' > /tmp/election-ts-driver/contract/package.json
 //   ln -sfn "$PWD/node_modules" /tmp/election-ts-driver/contract/node_modules
 //   node tests-e2e-rust/fixtures/capture-election.mjs \

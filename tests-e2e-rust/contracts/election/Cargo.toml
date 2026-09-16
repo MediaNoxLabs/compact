@@ -19,7 +19,7 @@ name = "compact-contract-election"
 version = "0.1.0"
 edition = "2021"
 publish = false
-description = "Generated Rust crate for examples/election.compact, used by tests-e2e-rust byte-parity tests."
+description = "Generated Rust crate for examples/election_fixture.compact (upstream's election example plus a seeding constructor), used by tests-e2e-rust byte-parity tests."
 
 [lib]
 name = "compact_contract_election"

@@ -1,0 +1,127 @@
+# This file is part of Compact.
+# Copyright (C) 2026 Midnight Foundation
+# SPDX-License-Identifier: Apache-2.0
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#  	http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+[package]
+workspace = "../runtime-rs"
+name        = "tests-e2e-rust"
+version     = "0.1.0"
+edition     = "2021"
+license     = "Apache-2.0"
+publish     = false
+description = "Cross-language byte-parity tests for compactc --rust output."
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+midnight-compact-runtime = { path = "../runtime-rs" }
+midnight-base-crypto      = { workspace = true }
+midnight-onchain-state    = { workspace = true }
+midnight-onchain-vm       = { workspace = true }
+midnight-onchain-runtime  = { workspace = true }
+midnight-coin-structure   = { workspace = true }
+midnight-storage          = { workspace = true }
+midnight-serialize        = { workspace = true }
+midnight-transient-crypto = { workspace = true }
+serde       = { version = "1",   features = ["derive"] }
+serde_json  = "1"
+hex         = "0.4"
+
+[dev-dependencies]
+compact-contract-tiny = { path = "contracts/tiny" }
+compact-contract-zerocash = { path = "contracts/zerocash" }
+compact-contract-election = { path = "contracts/election" }
+compact-contract-map-fixture = { path = "contracts/map-fixture" }
+compact-contract-uints-fixture = { path = "contracts/uints-fixture" }
+compact-contract-vector-fixture = { path = "contracts/vector-fixture" }
+compact-contract-aliases-fixture = { path = "contracts/aliases-fixture" }
+compact-contract-witnesses-fixture = { path = "contracts/witnesses-fixture" }
+compact-contract-if-stmt-fixture = { path = "contracts/if-stmt-fixture" }
+compact-contract-cross-circuit-fixture = { path = "contracts/cross-circuit-fixture" }
+compact-contract-set-fixture = { path = "contracts/set-fixture" }
+compact-contract-set-size-fixture = { path = "contracts/set-size-fixture" }
+compact-contract-list-fixture = { path = "contracts/list-fixture" }
+compact-contract-for-range-fixture = { path = "contracts/for-range-fixture" }
+compact-contract-for-iter-fixture = { path = "contracts/for-iter-fixture" }
+compact-contract-fold-fixture = { path = "contracts/fold-fixture" }
+compact-contract-map-fn-fixture = { path = "contracts/map-fn-fixture" }
+compact-contract-map-lambda-fixture = { path = "contracts/map-lambda-fixture" }
+compact-contract-narrowing-fixture = { path = "contracts/narrowing-fixture" }
+compact-contract-module-fixture = { path = "contracts/module-fixture" }
+compact-contract-bounded-uint-fixture = { path = "contracts/bounded-uint-fixture" }
+compact-contract-sealed-ledger-fixture = { path = "contracts/sealed-ledger-fixture" }
+compact-contract-pure-circuit-fixture = { path = "contracts/pure-circuit-fixture" }
+# Tuple-spelling gate (CPT-006 / compact#83): tuple_fixture.rs calls the
+# generated pure circuits and compares against Rust tuple values, so a
+# tuple-typed value constructed as an array cannot pass by merely compiling —
+# and it would not compile, which is what the report found.
+compact-contract-tuple-fixture = { path = "contracts/tuple-fixture" }
+compact-contract-nested-map-fixture = { path = "contracts/nested-map-fixture" }
+compact-contract-hash-to-curve-fixture = { path = "contracts/hash-to-curve-fixture" }
+compact-contract-hmt-default-fixture = { path = "contracts/hmt-default-fixture" }
+compact-contract-bug11-fixture = { path = "contracts/bug11-fixture" }
+compact-contract-assert-parity-fixture = { path = "contracts/assert-parity-fixture" }
+# Listed so `cargo build -p tests-e2e-rust --tests` (the CI build gate)
+# actually compiles this crate: its purpose is to prove the disambiguated
+# codegen produces *compilable* Rust, which codegen_regression (byte-compare
+# only) does not check. Workspace membership alone would not pull it in.
+compact-contract-struct-collision-fixture = { path = "contracts/struct-collision-fixture" }
+# A29 executing constructor gate: chunked_ledger_fixture.rs runs the generated
+# initial_state and reads scalar fields back via ledger(), proving the
+# >16-field chunked scaffold matches the read/write paths.
+compact-contract-chunked-ledger-fixture = { path = "contracts/chunked-ledger-fixture" }
+# G1 executing assert gate: guarded_assert_arith_fixture.rs calls the generated
+# pure circuits with values that satisfy and values that trip each assert,
+# proving the struct-field projection inside the trapping-subtraction guard
+# lowers to the right operand (byte-parity alone cannot see a swapped operand).
+compact-contract-guarded-assert-arith-fixture = { path = "contracts/guarded-assert-arith-fixture" }
+# Wide-state executing gate: asset_registry_fixture.rs runs the generated
+# initial_state (20 ledger fields, so the scaffold is chunked), reads every
+# scalar back through ledger(), and drives the map/set circuits so the
+# composite `decode_via_field_repr` reads actually execute.
+compact-contract-asset-registry-fixture = { path = "contracts/asset-registry-fixture" }
+# Schnorr routing gate: schnorr_attest_fixture.rs executes a circuit whose
+# generic Schnorr verifier the emitter rewrites to
+# `midnight_compact_runtime::schnorr_verify_jubjub`, proving the rewrite yields a call
+# that both type-checks and verifies a real signature.
+compact-contract-schnorr-attest-fixture = { path = "contracts/schnorr-attest-fixture" }
+# Widening-cast width gate: widening_arith_fixture.rs executes the generated
+# pure circuits at values where a one-rung-too-narrow cast would silently
+# truncate (`wrapping_*` does not panic), so the mbits->rust-width ladder is
+# pinned by arithmetic rather than only by the generated text.
+compact-contract-widening-arith-fixture = { path = "contracts/widening-arith-fixture" }
+# Mixed-minimal-width operand gate: mixed_width_operand_fixture.rs drives
+# every comparison operator, the mixed-width `+ - *`, the guarded
+# subtraction, and the impure inline equality with values whose product
+# crosses 2^32, so a truncating or wrongly-directed widening cast cannot
+# pass by merely compiling.
+compact-contract-mixed-width-operand-fixture = { path = "contracts/mixed-width-operand-fixture" }
+# Type-directed coercion gate: literal_coercion.rs drives every position a
+# bare literal / Uint value can occupy (const RHS, struct member, some/native
+# argument, vector element, return tail, scalar and wide Uint→Field, ledger
+# write) and byte-compares the constructor's seeded state against TS.
+compact-contract-literal-coercion-fixture = { path = "contracts/literal-coercion-fixture" }
+compact-contract-inline-type-scope-fixture = { path = "contracts/inline-type-scope-fixture" }
+# Registered in codegen_regression's FIXTURES table, so it MUST carry a
+# dev-dependency edge too: workspace membership alone does not make
+# `cargo build -p tests-e2e-rust --tests` compile it. The invariant test
+# `every_fixture_crate_is_a_dev_dependency` enforces this pairing.
+compact-contract-multi-pl-call-fixture = { path = "contracts/multi-pl-call-fixture" }
+# Conditional-expression coverage gate: ternary_cond_fixture.rs drives every
+# probe in the route x position x value-shape matrix (declared in the change's
+# tasks.md) and byte-compares each ledger-writing cell's serialised state
+# against the TS capture, so a missing laziness/width/route lowering cannot
+# hide behind a crate that merely compiles.
+compact-contract-ternary-cond-fixture = { path = "contracts/ternary-cond-fixture" }

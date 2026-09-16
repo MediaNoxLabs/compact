@@ -1,0 +1,283 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//  	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+//
+// Type-directed coercion fixture: the value positions where a bare
+// literal (or a `Uint`-ranged value) had to be materialised at the
+// destination Compact type rather than left as an untyped Rust integer.
+//
+// Each circuit below isolates one of the newly-covered positions from
+// `type-directed-expression-coercion`:
+//   - `retFieldLiteral`   — return-tail literal (`Field`)
+//   - `constThenCall`     — `const x: Field = 0;` plus a pure-call arg
+//                           literal (`idf(0)`)
+//   - `structLiteral`     — struct Field-member literal (`Box { f: 0 }`)
+//   - `someFieldLiteral`  — `some<Field>(0)`
+//   - `hashZeroLiteral`   — `persistentHash([0])` (vector element literal)
+//   - `hashUintVarRefElem` — var-ref element into a `Vector<2, Field>` native
+//                           argument (`Fr::from((x) as u64)`, Field-aligned)
+//   - `hashNestedUintVarRefElem` — nested aggregate native arg (leaves flatten)
+//   - `hashVarRefVectorArg` — a WHOLE vector argument (not a tuple literal):
+//                           bound once, leaves indexed and Field-coerced
+//   - `hashNestedVarRefVectorArg` — nested element that is not itself a
+//                           tuple literal (bound and flattened by index)
+//   - `hashSameTypeVectorArg` — a whole aggregate whose type ALREADY matches
+//                           the native target, so the typer emits no
+//                           `safe-cast`; the emitter recovers the argument's
+//                           own type to flatten it
+//   - `hashSameTypeNestedArg` — the same no-cast recovery for a nested
+//                           aggregate element of a same-typed vector
+//   - `hashConstVectorArg` — the recovered type comes from a `const`
+//                           binding's declared type
+//   - `hashCallVectorArg` — the recovered type comes from a pure-circuit
+//                           call's declared return type
+//   - `hashStructFieldVectorArg` — the recovered type comes from a struct
+//                           field projection (the field's declared type)
+//   - `hashDefaultVectorArg` — `default<Vector<2, Field>>` whole argument
+//   - `nativeArgLiteral`  — native-arg literal (`hashToCurve<Field>(0)`)
+//   - `uintToField`       — scalar `Uint<8>` → `Field` (`Fr::from((x) as u64)`)
+//   - `u128Rung`          — the wide `Uint<128>` rung
+//                           (`Fr::from((x) as u128)`, lossless)
+//   - `vectorEltWise`     — aggregate target: `[x, x]` into `Vector<2, Field>`
+//                           (element-wise coercion)
+//   - `addFieldLiteral`/`subFieldLiteral`/`mulHugeFieldLiteral`/`litLhsFieldLiteral`
+//                         — Field `+ - *` operands (`arith-binop-rust`'s
+//                           FIELD branch), incl. a literal above `u64::MAX`
+//   - `addUintFieldOperand` — `Uint` operand of a Field op (`Fr::from((u) as u64)`)
+//   - `nestedFieldArith`  — recursive operand materialisation
+// plus a constructor that writes Field / Uint<64> / `Vector<2, Field>`
+// ledger cells so the destination-typed write path is exercised and its
+// committed state can be compared byte-for-byte against the TS backend.
+
+import CompactStandardLibrary;
+
+struct Box {
+  f: Field;
+}
+
+struct VecBox {
+  v: Vector<2, Field>;
+}
+
+export ledger fieldCell: Field;
+export ledger uintCell: Uint<64>;
+export ledger fieldVec: Vector<2, Field>;
+export ledger hashCell: Bytes<32>;
+export ledger pointCell: JubjubPoint;
+
+export pure circuit idf(x: Field): Field {
+  return x;
+}
+
+// Return-tail literal in a Field circuit.
+export pure circuit retFieldLiteral(): Field {
+  return 0 as Field;
+}
+
+// Field const literal, and a pure-circuit call argument literal.
+export pure circuit constThenCall(): Field {
+  const x: Field = 0 as Field;
+  return idf(0 as Field);
+}
+
+// Struct Field-member literal.
+export pure circuit structLiteral(): Box {
+  return Box { f: 0 as Field };
+}
+
+// `some<Field>(0)`.
+export pure circuit someFieldLiteral(): Maybe<Field> {
+  return some<Field>(0 as Field);
+}
+
+// `persistentHash([0])` — a bare literal vector element feeding a native.
+export pure circuit hashZeroLiteral(): Bytes<32> {
+  return persistentHash<Vector<2, Field>>([0 as Field, 0 as Field]);
+}
+
+// Native-argument literal.
+export pure circuit nativeArgLiteral(): JubjubPoint {
+  return hashToCurve<Field>(0 as Field);
+}
+
+// Scalar Uint→Field coercion (u64 rung).
+export pure circuit uintToField(x: Uint<8>): Field {
+  return x as Field;
+}
+
+// The wide Uint<128> rung of the Uint→Field coercion.
+export pure circuit u128Rung(x: Uint<128>): Field {
+  return x as Field;
+}
+
+// Aggregate target: each Uint element is coerced to Field.
+export pure circuit vectorEltWise(x: Uint<32>): Vector<2, Field> {
+  return [x as Field, x as Field];
+}
+
+// Field literals above `u64::MAX`. Before type-directed coercion the
+// emitter hardcoded `Fr::from(<n>u64)`, so any Field literal past `u64::MAX`
+// emitted a `u64` literal that overflowed and failed `cargo build` while
+// `compactc` exited 0. The literal is now rendered at the Field width — the
+// `u128` rung up to `u128::MAX`, then the little-endian `Fr::from_le_bytes`
+// constructor for the `max-field` range above it. One circuit per
+// `field-literal-rust` call site (return tail reads both the u64 and the
+// larger rungs; the rest exercise the scalar and aggregate coercion sites).
+export pure circuit retU128FieldLiteral(): Field {
+  return (340282366920938463463374607431768211455 as Field);
+}
+
+export pure circuit retHugeFieldLiteral(): Field {
+  return (1606938044258990275541962092341162602522202993782792835301376 as Field);
+}
+
+export pure circuit constHugeFieldLiteral(): Field {
+  const x: Field = (1606938044258990275541962092341162602522202993782792835301376 as Field);
+  return x;
+}
+
+export pure circuit callArgHugeFieldLiteral(): Field {
+  return idf(1606938044258990275541962092341162602522202993782792835301376 as Field);
+}
+
+export pure circuit structMemberHugeFieldLiteral(): Box {
+  return Box { f: (1606938044258990275541962092341162602522202993782792835301376 as Field) };
+}
+
+export pure circuit vectorEltHugeFieldLiteral(): Vector<1, Field> {
+  return [(1606938044258990275541962092341162602522202993782792835301376 as Field)];
+}
+
+export pure circuit cmpHugeFieldLiteral(x: Field): Boolean {
+  return x == (1606938044258990275541962092341162602522202993782792835301376 as Field);
+}
+
+// Field arithmetic operands. `arith-binop-rust`'s FIELD branch (`mbits = #f`)
+// has no width cast to normalise its operands, so every operand the
+// typechecker coerced to Field must be materialised as an `Fr` there. Before
+// that, a bare integer literal operand stayed an untyped Rust integer
+// (`x + 1` -> `(x) + (1)`), which `Fr` cannot absorb (no `Add<{integer}>`) —
+// `compactc` exited 0 and `cargo build` failed with E0308; a literal above
+// `u64::MAX` additionally overflowed the literal (E0080). A `Uint` operand had
+// the same gap (`(x) + (u: u8)`). Each operator, both literal sides, the
+// `u64`/above-`u64` rungs, and a `Uint` operand are covered; `nested`
+// exercises recursive operand materialisation.
+export pure circuit addFieldLiteral(x: Field): Field {
+  return x + 1;
+}
+
+export pure circuit addHugeFieldLiteral(x: Field): Field {
+  return x + (1606938044258990275541962092341162602522202993782792835301376 as Field);
+}
+
+export pure circuit litLhsFieldLiteral(x: Field): Field {
+  return 1 + x;
+}
+
+export pure circuit subFieldLiteral(x: Field): Field {
+  return x - 1;
+}
+
+export pure circuit mulHugeFieldLiteral(x: Field): Field {
+  return x * (1606938044258990275541962092341162602522202993782792835301376 as Field);
+}
+
+export pure circuit addUintFieldOperand(x: Field, u: Uint<8>): Field {
+  return x + (u as Field);
+}
+
+export pure circuit nestedFieldArith(x: Field): Field {
+  return (x + 1) * (x + 2);
+}
+
+// Var-ref element into a `Vector<2, Field>` native argument: the element
+// is coerced element-wise to its Field destination (`Fr::from((x) as
+// u64)`), so the hash is Field-aligned rather than silently Byte-aligned.
+export pure circuit hashUintVarRefElem(x: Uint<8>): Bytes<32> {
+  return persistentHash<Vector<2, Field>>([x as Field, 0 as Field]);
+}
+
+// The same coercion through a NESTED aggregate: the leaves flatten to the
+// aligned hash's atom list instead of a nested (and un-`From`-able) array.
+export pure circuit hashNestedUintVarRefElem(x: Uint<8>): Bytes<32> {
+  return persistentHash<Vector<1, Vector<2, Field>>>([[x as Field, 0 as Field]]);
+}
+
+// A WHOLE aggregate passed to the native (not a tuple literal): the value is
+// bound once and its leaves are indexed out and Field-coerced, rather than
+// the coerced array being wrapped whole in `AlignedValue::from(<array>)`
+// (which has no `From` impl and fails `cargo build`).
+export pure circuit hashVarRefVectorArg(w: Vector<2, Uint<8>>): Bytes<32> {
+  return persistentHash<Vector<2, Uint<8>>>(w);
+}
+
+// The same one aggregate deeper: a nested element that is not itself a tuple
+// literal is bound and flattened by index.
+export pure circuit hashNestedVarRefVectorArg(w: Vector<2, Uint<8>>): Bytes<32> {
+  return persistentHash<Vector<1, Vector<2, Uint<8>>>>([w]);
+}
+
+// A whole aggregate whose type already matches the native target: the typer
+// emits no `safe-cast`, so `expr-expected-type` is #f and the emitter must
+// recover the argument's own type to recognise it as an aggregate. Without
+// that the value was wrapped whole in `AlignedValue::from([Fr; 2])` (no
+// `From` impl, so `cargo build` failed).
+export pure circuit hashSameTypeVectorArg(w: Vector<2, Field>): Bytes<32> {
+  return persistentHash<Vector<2, Field>>(w);
+}
+
+// The same gap one level down: elements of a same-typed nested vector are
+// not individually cast, so each `w` is flattened by recovering its own type
+// recursively rather than wrapped whole.
+export pure circuit hashSameTypeNestedArg(w: Vector<2, Field>): Bytes<32> {
+  return persistentHash<Vector<2, Vector<2, Field>>>([w, w]);
+}
+
+// The recovered type comes from a `const` binding's declared type (recorded
+// by the walker separately from the clone-decision table).
+export pure circuit hashConstVectorArg(): Bytes<32> {
+  const w: Vector<2, Field> = [5 as Field, 0 as Field];
+  return persistentHash<Vector<2, Field>>(w);
+}
+
+// The recovered type comes from a pure-circuit call's declared return type.
+export pure circuit sameTypeVec(): Vector<2, Field> {
+  return [5 as Field, 0 as Field];
+}
+export pure circuit hashCallVectorArg(): Bytes<32> {
+  return persistentHash<Vector<2, Field>>(sameTypeVec());
+}
+
+// The recovered type comes from a struct field projection (the field's
+// declared type, resolved from the base value's struct type).
+export pure circuit hashStructFieldVectorArg(b: VecBox): Bytes<32> {
+  return persistentHash<Vector<2, Field>>(b.v);
+}
+
+// The recovered type comes from the `default<T>` node itself.
+export pure circuit hashDefaultVectorArg(): Bytes<32> {
+  return persistentHash<Vector<2, Field>>(default<Vector<2, Field>>);
+}
+
+// Destination-typed ledger writes (the cell-write position). The hash and
+// curve-point writes put their coerced values into the committed state so
+// the executing test's byte-parity against the TS backend pins them too.
+constructor() {
+  fieldCell = 0 as Field;
+  uintCell = 0;
+  fieldVec = [0 as Field, 0 as Field];
+  hashCell = persistentHash<Vector<2, Field>>([0 as Field, 0 as Field]);
+  pointCell = hashToCurve<Field>(0 as Field);
+}

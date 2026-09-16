@@ -1,0 +1,114 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//  	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+//
+// Tuple-typed values (compact#83 / CPT-006).
+//
+// Compact spells tuple and vector literals the same way — `[a, b]` — and
+// the IR keeps one `tuple` node for both. The Rust backend declares a
+// `Tuple<...>` as a Rust tuple `(T, ...)` and a `Vector<N, T>` as `[T; N]`,
+// so the *value* must take the spelling of its declared type or the
+// emitted crate does not compile (`Ok([x, x])` against `-> Result<(Fr,
+// Fr), _>` is E0308). No fixture in the corpus returned a tuple type, so
+// the gate never saw the shape. This one does, in every position the
+// report listed:
+//
+//   - `as_vector`: the control — a Vector return stays `[x, x]`.
+//   - `as_tuple`: homogeneous tuple return → `(x, x)`.
+//   - `hetero`: heterogeneous tuple with element coercions → `(Fr, u16)`.
+//   - `one_tuple`: arity 1 → `(x,)`, the trailing comma Rust requires.
+//   - `empty_tuple`: arity 0 → `()`, unchanged.
+//   - `tuple_coerce`: every element coerced Uint<8> → Field.
+//   - `tuple_var_ref`: a declared tuple `const`, then returned through a
+//     coercion — the temp-binding path, which must index with `.0`/`.1`,
+//     not `[0]`/`[1]`.
+//   - `tuple_to_vector`: a tuple-typed const flowing into a Vector
+//     position — the kind conversion in the other direction.
+//   - `struct_vector_return`: a `Vector<2, Pair>` const returned at a tuple
+//     type, where `Pair` is a user struct (`Clone`, not `Copy`). Indexing an
+//     owned array moves a non-`Copy` element out through `[i]`, which Rust
+//     rejects (E0508 — PR #87 review, F-031); the bridge must destructure
+//     the array instead.
+//   - `struct_vector_to_tuple`: the same vector assigned to a tuple-typed
+//     const first. The assignment route rendered its RHS without the kind
+//     bridge at all (`let t = v;` → E0308), so this pins the second path.
+//
+// Plus a `ledger flag` and impure `ping()` so the initial-state
+// byte-parity assertion has structural state to compare against the TS
+// reference, as every fixture in this corpus does.
+//
+
+import CompactStandardLibrary;
+
+struct Pair {
+  a: Field;
+  b: Uint<8>;
+}
+
+export ledger flag: Boolean;
+
+export pure circuit as_vector(x: Field): Vector<2, Field> {
+  return [x, x];
+}
+
+export pure circuit as_tuple(x: Field): [Field, Field] {
+  return [x, x];
+}
+
+export pure circuit hetero(x: Uint<8>): [Field, Uint<16>] {
+  // Compiler 0.34 no longer widens tuple elements implicitly in return
+  // position; the casts are explicit so the fixture keeps its two
+  // heterogeneous element types.
+  return [x as Field, x as Uint<16>];
+}
+
+export pure circuit one_tuple(x: Field): [Field] {
+  return [x];
+}
+
+export pure circuit empty_tuple(): [] {
+  return [];
+}
+
+export pure circuit tuple_coerce(x: Uint<8>): [Field, Field] {
+  return [x as Field, x as Field];
+}
+
+export pure circuit tuple_var_ref(x: Uint<8>): [Field, Field] {
+  // 0.34: the elements are cast where the tuple is built; the return is
+  // still a bare var-ref of a tuple binding.
+  const w: [Field, Field] = [x as Field, x as Field];
+  return w;
+}
+
+export pure circuit tuple_to_vector(x: Field): Vector<2, Field> {
+  const t: [Field, Field] = [x, x];
+  return t;
+}
+
+export pure circuit struct_vector_return(x: Field): [Pair, Pair] {
+  const v: Vector<2, Pair> = [Pair { a: x, b: 1 }, Pair { a: x, b: 2 }];
+  return v;
+}
+
+export pure circuit struct_vector_to_tuple(x: Field): [Pair, Pair] {
+  const v: Vector<2, Pair> = [Pair { a: x, b: 1 }, Pair { a: x, b: 2 }];
+  const t: [Pair, Pair] = v;
+  return t;
+}
+
+export circuit ping(): [] {
+  flag.write(true);
+}

@@ -1,0 +1,55 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//  	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+//
+// A29 fixture: a ledger with MORE than 16 fields, so the front end chunks
+// the on-chain state into a nested StateValue shape (StateValue::Array caps
+// at 16 slots). The constructor writes fields in BOTH chunks; the e2e test
+// (tests-e2e-rust/tests/chunked_ledger_fixture.rs) executes initial_state()
+// and reads every field back through the generated ledger() accessors —
+// failing if the initial-state scaffold's array nesting ever diverges from
+// the chunked idx_at_index paths the read/write emitters derive from the
+// same pl-array IR.
+
+import CompactStandardLibrary;
+
+export ledger f00: Uint<64>;
+export ledger f01: Uint<64>;
+export ledger f02: Uint<64>;
+export ledger f03: Uint<64>;
+export ledger f04: Uint<64>;
+export ledger f05: Uint<64>;
+export ledger f06: Uint<64>;
+export ledger f07: Uint<64>;
+export ledger f08: Uint<64>;
+export ledger f09: Uint<64>;
+export ledger f10: Uint<64>;
+export ledger f11: Uint<64>;
+export ledger f12: Uint<64>;
+export ledger f13: Uint<64>;
+export ledger f14: Uint<64>;
+export ledger f15: Uint<64>;
+export ledger f16: Uint<64>;
+export ledger active: Boolean;
+
+constructor() {
+  f00 = 7;
+  f16 = 42;
+  active = true;
+}
+
+export pure circuit ping(b: Boolean): Boolean {
+  return b;
+}

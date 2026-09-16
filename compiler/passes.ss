@@ -221,17 +221,29 @@
                               ;; rather emit unformatted code than fail
                               ;; the build).
                               (let ([lib-rs (format "~a/contract/lib.rs"
-                                                    output-directory-pathname)])
+                                                    output-directory-pathname)]
+                                    ;; POSIX single-quoting of a whole word:
+                                    ;; wrap in `'…'` and spell every embedded
+                                    ;; apostrophe as `'\''` (close, escaped
+                                    ;; quote, reopen). Bare `'~a'` broke on a
+                                    ;; path containing an apostrophe — the
+                                    ;; remainder became shell syntax, so
+                                    ;; rustfmt silently did not run, or worse.
+                                    [shell-word
+                                     (lambda (s)
+                                       (string-append
+                                         "'"
+                                         (apply string-append
+                                                (map (lambda (c)
+                                                       (if (char=? c #\')
+                                                           "'\\''"
+                                                           (string c)))
+                                                     (string->list s)))
+                                         "'"))])
                                 (when (and (zero? (system "command -v rustfmt > /dev/null 2>&1"))
                                            (file-exists? lib-rs))
-                                  ;; Single-quote the path so target
-                                  ;; directories containing spaces or shell
-                                  ;; metacharacters don't break the call.
-                                  ;; (Matches the neighbouring zkir
-                                  ;; invocations; a full escape helper is
-                                  ;; still a TODO shared with those.)
-                                  (system (format "rustfmt --edition 2021 '~a' > /dev/null 2>&1"
-                                                  lib-rs)))))))
+                                  (system (format "rustfmt --edition 2021 ~a > /dev/null 2>&1"
+                                                  (shell-word lib-rs))))))))
                         (let ([manifest-pathname* created-file*])
                           (with-target-ports
                             '((contract-manifest.json . "compiler/contract-manifest.json"))

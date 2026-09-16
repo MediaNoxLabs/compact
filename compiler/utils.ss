@@ -25,7 +25,7 @@
           errorf internal-errorf external-errorf error-accessing-file pending-errorf source-errorf source-warningf
           assertf
           format-condition
-          maplr maplr2 compose shell sha256-file string-prefix? rm-rf mkdir-p
+          maplr maplr2 compose shell shell-quote-word sha256-file string-prefix? rm-rf mkdir-p
           to-camel-case
           source-error-condition?
           make-halt-condition halt-condition?
@@ -316,6 +316,20 @@
     (lambda (x)
       (fold-right (lambda (f x) (f x)) x f*)))
 
+  ;; shell-quote-word: quote `s` as one POSIX shell word — wrapped in single
+  ;; quotes, with every embedded apostrophe spelled `'\''` (close the quotes,
+  ;; an escaped apostrophe, reopen). Interpolating a pathname as a bare `'~a'`
+  ;; breaks the moment the path contains an apostrophe: the remainder becomes
+  ;; shell syntax, so the command silently does something else — or fails, as
+  ;; `sha256sum` did on an output directory named `it's here (and 'more')`.
+  (define (shell-quote-word s)
+    (string-append
+      "'"
+      (apply string-append
+             (map (lambda (c) (if (char=? c #\') "'\\''" (string c)))
+                  (string->list s)))
+      "'"))
+
   (define (shell command)
     (let-values ([(to-stdin from-stdout from-stderr pid)
                   (open-process-ports
@@ -430,7 +444,7 @@
             (external-errorf "failed to find working sha256 implementation:~{\n  ~a~}"
                              (reverse rfailure*))
             (let ([command (car command*)] [command* (cdr command*)])
-              (let-values ([(stdout stderr) (shell (format "exec ~a '~a'" command pathname))])
+              (let-values ([(stdout stderr) (shell (format "exec ~a ~a" command (shell-quote-word pathname)))])
                 (if (string=? stderr "")
                     (if (>= (string-length stdout) 64)
                         (let ([hash (substring stdout 0 64)])

@@ -9,6 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _No changes yet._
 
+## [Toolchain 0.34.118, language 0.26.0, runtime 0.19.101] — three review findings on the vehicle (2026-09-16)
+
+### Fixed
+
+- **A user pure-call renders each actual at the callee's declared formal type
+  (F-037).** When a tuple and a `Vector` share element types the typer inserts
+  no `safe-cast`, so the aggregate-kind bridge never ran at the call boundary
+  and generated Rust passed `(T, T)` to a `[T; 2]` parameter (E0308 at
+  `cargo build` from a compile that exited 0). `call-rust` now pairs the
+  actuals with `circuit-formal-arg-types` of the callee; six new
+  `tuple_fixture` circuits pin both directions and a non-`Copy` element.
+- **The generated `contract/Cargo.toml` depends on `midnight-compact-runtime`
+  (F-039)**, the runtime's actual package — it said `compact-runtime`, a
+  different package, hidden by the fixtures' hand-kept manifests. A new gate,
+  `rust_backend_generated_manifest_builds`, builds a freshly generated crate
+  through its unedited manifest (the build environment supplies where the
+  unpublished runtime lives via `--config` patches and the workspace lockfile).
+- **The rustfmt post-pass quotes the output path as a full POSIX word
+  (F-041).** A bare `'~a'` broke on a path containing an apostrophe: the rest
+  became shell syntax, so rustfmt silently did not run — or a crafted path
+  could run something else. A regression probe compiles into
+  `it's here (and 'more')/` and requires byte-identical output.
+
 ## [Toolchain 0.34.117, language 0.26.0, runtime 0.19.101] — upstream's `election` example is upstream's again (2026-09-16)
 
 ### Changed

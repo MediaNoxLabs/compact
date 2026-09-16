@@ -4007,9 +4007,14 @@
         (out "}\n"))
 
       ;; emit-cargo-toml: emits a Cargo.toml alongside lib.rs so users can
-      ;; `cargo build` the emitted contract directly. The compact-runtime
-      ;; dep is pinned to the same version the lib.rs embeds via
-      ;; check_runtime_version!.
+      ;; `cargo build` the emitted contract directly. The dependency names
+      ;; the runtime's actual package, `midnight-compact-runtime` (the crate
+      ;; `lib.rs` imports as `midnight_compact_runtime`), pinned to the same
+      ;; version `check_runtime_version!` embeds. It used to say
+      ;; `compact-runtime`, a different package; the checked-in fixtures hid
+      ;; it because their hand-kept manifests were already right. The
+      ;; `generated_manifest_builds` gate now builds a freshly generated
+      ;; crate through this manifest, unedited.
       (define (emit-cargo-toml)
         (let ([port (get-target-port 'contract-cargo.toml)])
           (display-string
@@ -4023,7 +4028,7 @@ edition = \"2021\"
 path = \"lib.rs\"
 
 [dependencies]
-compact-runtime = \"~a\"
+midnight-compact-runtime = \"~a\"
 "
               runtime-version-string)
             port)))

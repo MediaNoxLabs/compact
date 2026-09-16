@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _No changes yet._
 
+## [Toolchain 0.34.120, language 0.26.0, runtime 0.19.101] — one shell-quoting helper for every path handed to a shell (2026-09-16)
+
+### Fixed
+
+- **`utils.ss` gains `shell-quote-word`**, and both places the compiler hands
+  a pathname to a shell use it: the external `sha256sum` / `shasum` fallback
+  (`sha256-file/external`, reached wherever no native SHA-256 library is
+  found — Linux CI, for one) and the Rust backend's rustfmt post-pass. The
+  bare `'~a'` both used broke on a path with an apostrophe: the remainder
+  became shell syntax, and `compactc` failed with `/bin/sh: Syntax error` on
+  an output directory named `it's here (and 'more')`. The apostrophe-path
+  regression probe now exercises the hashing path too.
+
 ## [Toolchain 0.34.119, language 0.26.0, runtime 0.19.101] — bounded ledger reads check their Compact domain (2026-09-16)
 
 ### Fixed

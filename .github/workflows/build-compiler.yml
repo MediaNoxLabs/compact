@@ -312,3 +312,31 @@ jobs:
         with:
           name: event-file
           path: ${{ github.event_path }}
+
+  # NB: guard for issue #85 — the darwin Nix path (the chez toolchain behind
+  # .#compactc) had no macOS CI and rotted silently between nixpkgs bumps.
+  build-macos:
+    name: Build compiler (macOS, Nix)
+    runs-on: macos-latest
+    permissions:
+      contents: read
+    needs: license-check
+    timeout-minutes: 120
+    steps:
+      - name: Checkout compactc repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup Nix with cache
+        uses: ./.github/actions/setup-nix-cache
+        with:
+          # The Attic push cache is Linux-only for now; the IOG hydra cache is
+          # still configured via the composite action's extra_nix_config.
+          skip_cache: 'true'
+
+      - name: Build compiler
+        run: nix build .#compactc
+
+      - name: Smoke test
+        run: |
+          nix develop .#compiler --command compactc --version
+          nix develop .#compiler --command compactc ./examples/tiny.compact ./tiny-output/

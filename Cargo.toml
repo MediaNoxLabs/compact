@@ -16,6 +16,11 @@
 [workspace]
 resolver = "3"
 members = ["tools/*"]
+exclude = [
+    "runtime-rs",
+    "runtime-rs-macros",
+    "tests-e2e-rust",
+]
 
 [workspace.package]
 version = "0.5.2"

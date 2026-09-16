@@ -17,7 +17,7 @@
 // Witness execution context + a trivial `NoWitnesses` marker for contracts
 // that declare zero witnesses.
 
-//! Witness execution context for `compactc --target rust`-generated contracts.
+//! Witness execution context for `compactc --rust`-generated contracts.
 //!
 //! # Witness privacy model
 //!
@@ -35,12 +35,7 @@
 //! The witness *value* `T` is a normal Rust type. Whether it is safe
 //! to write to a public ledger field is the contract author's
 //! responsibility — the codegen has no way to tell which `T` values
-//! are private by intent. See the user-guide subsection
-//! [Witness privacy model][1].
-//! The operational guard is the regression test at
-//! `tests-e2e-rust/tests/witness_leak_check.rs` (Prod-11).
-//!
-//! [1]: ../../doc/rust-codegen-user-guide.md#witness-privacy-model
+//! are private by intent.
 
 use crate::{ContractAddress, DefaultDB, QueryContext, DB};
 

@@ -348,6 +348,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-contract-ec-ops-fixture"
+version = "0.1.0"
+dependencies = [
+ "midnight-compact-runtime",
+]
+
+[[package]]
 name = "compact-contract-election"
 version = "0.1.0"
 dependencies = [
@@ -1829,6 +1836,7 @@ name = "midnight-compact-runtime"
 version = "0.19.101"
 dependencies = [
  "midnight-base-crypto",
+ "midnight-circuits 7.2.4",
  "midnight-coin-structure",
  "midnight-compact-runtime-macros",
  "midnight-onchain-runtime",
@@ -3423,6 +3431,7 @@ dependencies = [
  "compact-contract-bug11-fixture",
  "compact-contract-chunked-ledger-fixture",
  "compact-contract-cross-circuit-fixture",
+ "compact-contract-ec-ops-fixture",
  "compact-contract-election",
  "compact-contract-fold-fixture",
  "compact-contract-for-iter-fixture",

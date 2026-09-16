@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _No changes yet._
 
+## [Toolchain 0.34.119, language 0.26.0, runtime 0.19.101] — bounded ledger reads check their Compact domain (2026-09-16)
+
+### Fixed
+
+- **A ledger read of a `Uint` declared narrower than its storage width goes
+  through `decode_bounded_uint(av, bytes, max)`.** The width ladder handed
+  contract code any value that fitted the storage — for a `Uint<0..100>`
+  cell, 101..=255 — where the normative TypeScript decoder
+  (`CompactTypeUnsignedInteger.fromValue`) rejects it. Full-width types
+  (`Uint<8>` … `Uint<128>`) keep their width-typed decoders and are
+  byte-identical; three fixture crates with narrow bounds change
+  (`bounded-uint`, `bug11`, `narrowing`). This closes the read-side half of
+  the domain checks that #758 brought to the runtime (the write side,
+  `new_cell_bounded_uint`, landed with the runtime).
+
 ## [Toolchain 0.34.118, language 0.26.0, runtime 0.19.101] — three review findings on the vehicle (2026-09-16)
 
 ### Fixed

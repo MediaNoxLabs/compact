@@ -1,0 +1,72 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// 	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+pragma language_version >= 0.16;
+
+// The embedded-curve builtins, one per pure circuit, so the emitted crate
+// exercises every runtime entry point they lower to:
+//
+//   ecAdd / ecMul / ecNeg        -> fallible in the runtime (`?` at the call)
+//   ecMulGenerator               -> total
+//   constructJubjubPoint         -> total (a `JubjubPoint` is the bare
+//                                   coordinate pair Compact says it is)
+//   jubjubPointX / jubjubPointY  -> projections
+//
+// Runtime-only unit tests cannot catch an emitter/runtime signature mismatch;
+// compiling this crate can, and the executing test in
+// tests-e2e-rust/tests/ec_ops_fixture.rs pins the values and the failure of
+// a curve operation on a pair outside the prime-order subgroup.
+
+import CompactStandardLibrary;
+
+export ledger acc: JubjubPoint;
+
+export pure circuit add(a: JubjubPoint, b: JubjubPoint): JubjubPoint {
+  return ecAdd(a, b);
+}
+
+export pure circuit mul(p: JubjubPoint, s: Field): JubjubPoint {
+  return ecMul(p, s as JubjubScalar);
+}
+
+export pure circuit neg(p: JubjubPoint): JubjubPoint {
+  return ecNeg(p);
+}
+
+export pure circuit gen(s: Field): JubjubPoint {
+  return ecMulGenerator(s as JubjubScalar);
+}
+
+export pure circuit construct(x: Field, y: Field): JubjubPoint {
+  return constructJubjubPoint(x, y);
+}
+
+export pure circuit coords(p: JubjubPoint): [Field, Field] {
+  return [jubjubPointX(p), jubjubPointY(p)];
+}
+
+// A curve operation nested inside another: the inner `?` must propagate
+// through the outer call.
+export pure circuit double_then_neg(p: JubjubPoint): JubjubPoint {
+  return ecNeg(ecAdd(p, p));
+}
+
+export circuit accumulate(p: JubjubPoint): [] {
+  acc = disclose(ecAdd(acc, p));
+}
+
+constructor() {
+  acc = ecMulGenerator(0 as JubjubScalar);
+}

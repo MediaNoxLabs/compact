@@ -57,7 +57,7 @@ impl Witnesses<()> for StubWitnesses {
     }
 
     fn local_attestor_key<'a>(&self, _ctx: &WitnessContext<Ledger<'a>, ()>) -> ((), JubjubPoint) {
-        ((), JubjubPoint::generator() * secret_key())
+        ((), ec_mul_generator(secret_key()))
     }
 }
 
@@ -114,14 +114,18 @@ fn fr_to_embedded(fr: Fr) -> EmbeddedFr {
 /// `H(ann_x, ann_y, pk_x, pk_y, ...msg)` reduced into the Jubjub scalar
 /// field — the challenge both the circuit and the verifier compute.
 fn challenge(ann: JubjubPoint, pk: JubjubPoint, msg: &[Fr]) -> EmbeddedFr {
-    let mut input = vec![
-        ann.x().expect("announcement x"),
-        ann.y().expect("announcement y"),
-        pk.x().expect("public key x"),
-        pk.y().expect("public key y"),
-    ];
+    let mut input = vec![ann.x, ann.y, pk.x, pk.y];
     input.extend_from_slice(msg);
-    fr_to_embedded(transient_hash(&input))
+    // The vendored circuit (and the runtime wrapper the emitter substitutes
+    // for it, `verify_truncated_challenge`) uses the LOW 248 BITS of the
+    // transient hash as the challenge — `c = cFull mod 2^248`, the
+    // `getSchnorrReduction` witness in the fixture — not the hash reduced
+    // modulo the scalar field order. A signer that reduced mod r produced
+    // signatures the circuit rejects, which is exactly the divergence
+    // compact#26 / compact#68 recorded.
+    let mut le = transient_hash(&input).as_le_bytes();
+    le[31] = 0; // clear bits 248..255
+    fr_to_embedded(Fr::from_le_bytes(&le).expect("248-bit value fits in Fr"))
 }
 
 /// Produce a valid Schnorr signature over `msg`: `R = k*G`,
@@ -129,9 +133,9 @@ fn challenge(ann: JubjubPoint, pk: JubjubPoint, msg: &[Fr]) -> EmbeddedFr {
 /// that is how Compact declares the field; the verifier reduces it back.
 fn sign(msg: &[Fr]) -> SchnorrSignature {
     let sk = secret_key();
-    let pk = JubjubPoint::generator() * sk;
+    let pk = ec_mul_generator(sk);
     let k = nonce();
-    let announcement = JubjubPoint::generator() * k;
+    let announcement = ec_mul_generator(k);
     let c = challenge(announcement, pk, msg);
     let s = k.0 + c.0 * sk.0;
     let response = Fr::from_le_bytes(&s.to_bytes()).expect("jubjub scalar fits in Fr");
@@ -156,7 +160,7 @@ fn initial_state_binds_the_attestor_key() {
 
     assert_eq!(
         view.attestor_key().expect("attestor_key"),
-        JubjubPoint::generator() * secret_key(),
+        ec_mul_generator(secret_key()),
     );
     assert!(view.open().expect("open"));
     assert_eq!(view.accepted_count().expect("accepted_count"), 0u64);
@@ -283,7 +287,7 @@ fn identity_public_key_is_rejected() {
     // The forgery: response = s, announcement = s*G, for an arbitrary s.
     let s = EmbeddedFr(embedded::Scalar::from(0xf0e_u64));
     let forged = SchnorrSignature {
-        announcement: JubjubPoint::generator() * s,
+        announcement: ec_mul_generator(s),
         response: Fr::from_le_bytes(&s.0.to_bytes()).expect("jubjub scalar fits in Fr"),
     };
 

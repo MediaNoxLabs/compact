@@ -125,3 +125,6 @@ compact-contract-multi-pl-call-fixture = { path = "contracts/multi-pl-call-fixtu
 # against the TS capture, so a missing laziness/width/route lowering cannot
 # hide behind a crate that merely compiles.
 compact-contract-ternary-cond-fixture = { path = "contracts/ternary-cond-fixture" }
+# Embedded-curve builtins: every runtime entry point they lower to, incl. the
+# fallible ec_add / ec_mul / ec_neg (executing gate: tests/ec_ops_fixture.rs).
+compact-contract-ec-ops-fixture = { path = "contracts/ec-ops-fixture" }

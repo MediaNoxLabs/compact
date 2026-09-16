@@ -64,8 +64,12 @@
                   (out (format "~anew_cell_array(~a),\n"
                                indent (default-value-rust read-type)))]
                  [(tunsigned-bounded? read-type)
-                  (out (format "~anew_cell_bounded_uint(0u128, ~a),\n"
-                               indent (tunsigned-byte-length read-type)))]
+                  ;; Fallible on the runtime side (range-checked against the
+                  ;; declared maximum); a zero seed is always in range, and
+                  ;; `initial_state` returns a `Result`, so `?` is well-formed.
+                  (out (format "~anew_cell_bounded_uint(0u128, ~a, ~a_u128)?,\n"
+                               indent (tunsigned-byte-length read-type)
+                               (type-peel-tunsigned read-type)))]
                  [else
                   (out (format "~anew_cell(~a),\n"
                                indent (default-value-rust read-type)))]))])))
@@ -3227,6 +3231,14 @@
              ;; jubjubPointX then jubjubPointY on the same public key
              ;; inside a `&&` expression; without the clone the first
              ;; call moves the field and the second fails to borrow.
+             ;;
+             ;; The curve operations `ec_add` / `ec_mul` / `ec_neg` are
+             ;; fallible in the runtime: a `JubjubPoint` is the bare
+             ;; coordinate pair Compact says it is, and only these
+             ;; operations need a validated group element, so they return
+             ;; `Result` and `?` propagates like a failed assert (every
+             ;; generated body returns `Result<_, CompactError>`).
+             ;; `ecMulGenerator` and `constructJubjubPoint` are total.
              (let ([rust-name (native-call-site-rust ne)]
                    [args
                     (map (lambda (e) (pure-call-arg-rust e native-id-ht)) expr*)])
@@ -3238,7 +3250,13 @@
                      [(null? xs) acc]
                      [(null? (cdr xs)) (string-append acc (car xs))]
                      [else (join (cdr xs) (string-append acc (car xs) ", "))]))
-                 ")"))]
+                 ")"
+                 (if (member (native-entry-rust-function ne)
+                             '("midnight_compact_runtime::ec_add"
+                               "midnight_compact_runtime::ec_mul"
+                               "midnight_compact_runtime::ec_neg"))
+                     "?"
+                     "")))]
             [else
              ;; A user-defined circuit call. Resolve via
              ;; current-circuit-id-ht (threaded by every body emitter —

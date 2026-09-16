@@ -176,6 +176,11 @@ const FIXTURES: &[(&str, &str)] = &[
     // gate: tests/ternary_cond_fixture.rs (state-byte parity + per-probe
     // assertions).
     ("ternary_cond_fixture.compact", "ternary-cond-fixture"),
+    // The embedded-curve builtins, one pure circuit each, so the emitted crate
+    // exercises every runtime entry point they lower to (the fallible
+    // `ec_add` / `ec_mul` / `ec_neg` get `?`; the rest are total). Executing
+    // gate: tests/ec_ops_fixture.rs.
+    ("ec_ops_fixture.compact", "ec-ops-fixture"),
 ];
 
 /// Walks up from `start` looking for the repository root: the nearest

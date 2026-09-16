@@ -3363,6 +3363,13 @@
                [bounded-uint-bytes
                 (and use-bounded-uint?
                      (guard (c [#t #f]) (tunsigned-byte-length dest-read-type)))]
+               ;; The declared Compact maximum: `new_cell_bounded_uint`
+               ;; range-checks the value against it (the encode-side twin of
+               ;; `decode_bounded_uint`, mirroring TypeScript's
+               ;; `CompactTypeUnsignedInteger.toValue`) and is therefore
+               ;; fallible — the `?` propagates like a failed assert.
+               [bounded-uint-max
+                (and use-bounded-uint? (type-peel-tunsigned dest-read-type))]
                [cell-builder
                 (cond
                   [use-cell-array? "new_cell_array"]
@@ -3371,8 +3378,8 @@
           (list
             (format "            .push(false, new_cell(~au8))\n" idx)
             (if use-bounded-uint?
-                (format "            .push(true, ~a(~a as u128, ~a))\n"
-                        cell-builder rust-val bounded-uint-bytes)
+                (format "            .push(true, ~a(~a as u128, ~a, ~a_u128)?)\n"
+                        cell-builder rust-val bounded-uint-bytes bounded-uint-max)
                 (format "            .push(true, ~a(~a))\n" cell-builder rust-val))
             "            .ins(false, 1)\n")))
 
@@ -3517,7 +3524,9 @@
                                 ;; destinations with non-power-of-2 byte
                                 ;; lengths route through
                                 ;; `new_cell_bounded_uint(value as u128,
-                                ;; byte_len)`.
+                                ;; byte_len, max)?` — the builder range-checks
+                                ;; against the declared Compact maximum and
+                                ;; is fallible.
                                 [use-bounded-uint?
                                  (and dest-read-type
                                       (not use-cell-array?)
@@ -3527,6 +3536,9 @@
                                  (and use-bounded-uint?
                                       (guard (c [#t #f])
                                         (tunsigned-byte-length dest-read-type)))]
+                                [bounded-uint-max
+                                 (and use-bounded-uint?
+                                      (type-peel-tunsigned dest-read-type))]
                                 [cell-builder
                                  (cond
                                    [use-cell-array? "new_cell_array"]
@@ -3535,8 +3547,9 @@
                                 [value-line
                                  (cond
                                    [use-bounded-uint?
-                                    (format "            .push(true, ~a(~a as u128, ~a))\n"
-                                            cell-builder rust-val bounded-uint-bytes)]
+                                    (format "            .push(true, ~a(~a as u128, ~a, ~a_u128)?)\n"
+                                            cell-builder rust-val bounded-uint-bytes
+                                            bounded-uint-max)]
                                    [else
                                     (format "            .push(true, ~a(~a))\n"
                                             cell-builder rust-val)])]

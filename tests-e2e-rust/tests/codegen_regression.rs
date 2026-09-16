@@ -411,3 +411,89 @@ fn tempdir(prefix: &str) -> PathBuf {
     std::fs::create_dir_all(&dir).unwrap_or_else(|e| panic!("mkdir {}: {}", dir.display(), e));
     dir
 }
+
+/// F-039: the emitted `contract/Cargo.toml` must name the runtime's actual
+/// package (`midnight-compact-runtime`, imported by `lib.rs` as
+/// `midnight_compact_runtime`). It used to say `compact-runtime` — a
+/// different package — and the checked-in fixtures hid it because their
+/// hand-kept manifests were already right. This gate builds a freshly
+/// generated crate **through its generated manifest, unedited**.
+///
+/// The runtime is not on crates.io, so the build environment (not the
+/// manifest) supplies where it lives: a `--config` file carrying
+/// `[patch.crates-io]` for the runtime (path) plus the same ledger-crate
+/// patches the runtime workspace itself declares, and the workspace lockfile
+/// copied beside the crate so dependency versions resolve identically. The
+/// target dir is shared with the workspace so nothing is rebuilt from scratch.
+///
+/// Named `rust_backend_*` so the bare CI runners (no compactc) skip it by name
+/// like the rest of the compiler-backed gates.
+#[test]
+fn rust_backend_generated_manifest_builds() {
+    let manifest = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let repo_root = find_repo_root(&manifest).expect("repo root");
+    let compactc = match std::env::var_os("COMPACTC") {
+        Some(p) => PathBuf::from(p),
+        None => repo_root.join("result/bin/compactc"),
+    };
+    assert!(compactc.exists(), "no compactc at {}", compactc.display());
+
+    let work =
+        std::env::temp_dir().join(format!("compact-generated-manifest-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&work);
+    let out = work.join("out");
+    let status = Command::new(&compactc)
+        .args(["--target", "rust", "--skip-zk"])
+        .arg(repo_root.join("examples/tiny.compact"))
+        .arg(&out)
+        .status()
+        .expect("run compactc");
+    assert!(status.success(), "compactc failed on tiny.compact");
+    let crate_dir = out.join("contract");
+    let generated =
+        std::fs::read_to_string(crate_dir.join("Cargo.toml")).expect("generated Cargo.toml");
+    assert!(
+        generated.contains("midnight-compact-runtime = "),
+        "the generated manifest must depend on `midnight-compact-runtime`; got:\n{generated}"
+    );
+
+    // Build environment: where the (unpublished) runtime lives, and the same
+    // crates.io patches the runtime workspace declares.
+    let runtime_dir = repo_root.join("runtime-rs");
+    let runtime_manifest =
+        std::fs::read_to_string(runtime_dir.join("Cargo.toml")).expect("runtime Cargo.toml");
+    let mut patches = String::from("[patch.crates-io]\n");
+    patches.push_str(&format!(
+        "midnight-compact-runtime = {{ path = {:?} }}\n",
+        runtime_dir.to_string_lossy()
+    ));
+    let mut in_patch = false;
+    for line in runtime_manifest.lines() {
+        if line.trim_start().starts_with('[') {
+            in_patch = line.trim() == "[patch.crates-io]";
+            continue;
+        }
+        if in_patch && !line.trim().is_empty() && !line.trim_start().starts_with('#') {
+            patches.push_str(line);
+            patches.push('\n');
+        }
+    }
+    let config = work.join("cargo-config.toml");
+    std::fs::write(&config, &patches).expect("write cargo config");
+    std::fs::copy(runtime_dir.join("Cargo.lock"), crate_dir.join("Cargo.lock"))
+        .expect("copy lockfile");
+
+    let result = Command::new("cargo")
+        .current_dir(&crate_dir)
+        .env("CARGO_TARGET_DIR", runtime_dir.join("target"))
+        .args(["check", "--config"])
+        .arg(&config)
+        .output()
+        .expect("run cargo check");
+    assert!(
+        result.status.success(),
+        "a freshly generated crate did not build through its own manifest:\n{}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+    let _ = std::fs::remove_dir_all(&work);
+}

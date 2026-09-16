@@ -3755,12 +3755,24 @@
       (define (decoder-for-type type)
         (nanopass-case (Ltypescript Type) type
           [(tunsigned ,src ,nat)
-           (cond
-             [(<= nat 255) "midnight_compact_runtime::std_lib::decode_u8"]
-             [(<= nat 65535) "midnight_compact_runtime::std_lib::decode_u16"]
-             [(<= nat 4294967295) "midnight_compact_runtime::std_lib::decode_u32"]
-             [(<= nat 18446744073709551615) "midnight_compact_runtime::std_lib::decode_u64"]
-             [else "midnight_compact_runtime::std_lib::decode_u128"])]
+           ;; A `Uint` declared at a full Rust width decodes through the
+           ;; width-typed helper. Any narrower declared bound — every
+           ;; `Uint<0..n>` a contract actually writes — goes through
+           ;; `decode_bounded_uint(av, bytes, max)`, which rejects a value
+           ;; above the Compact maximum the way the normative TypeScript
+           ;; decoder (`CompactTypeUnsignedInteger.fromValue`) does, and is
+           ;; rendered as a closure so the call sites' `<decoder>(av)` shape
+           ;; is unchanged. Before, the width ladder handed contract code a
+           ;; value its own type said could not exist.
+           (let ([w (uint-rust-width nat)]
+                 [bytes (tunsigned-byte-length type)])
+             (cond
+               [(memv nat '(255 65535 4294967295 18446744073709551615
+                            340282366920938463463374607431768211455))
+                (format "midnight_compact_runtime::std_lib::decode_~a" w)]
+               [else
+                (format "(|av| midnight_compact_runtime::std_lib::decode_bounded_uint(av, ~a, ~a_u128).map(|n| n as ~a))"
+                        bytes nat w)]))]
           [(tfield ,src ,ftype)
            ;; Native Field decodes via decode_fr. A JubjubScalar-typed
            ;; ledger read has no decoder yet (EmbeddedFr lacks

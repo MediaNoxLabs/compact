@@ -126,7 +126,9 @@ impl<'a, D: DB> Ledger<'a, D> {
                 ))
             }
         };
-        midnight_compact_runtime::std_lib::decode_u8(av)
+        (|av| {
+            midnight_compact_runtime::std_lib::decode_bounded_uint(av, 1, 99_u128).map(|n| n as u8)
+        })(av)
     }
 }
 

@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _No changes yet._
 
+## [Toolchain 0.34.117, language 0.26.0, runtime 0.19.101] — upstream's `election` example is upstream's again (2026-09-16)
+
+### Changed
+
+- **`examples/election.compact` and its golden in `compiler/test.ss` are
+  restored to upstream's exact content.** The Rust byte-parity harness needed
+  a constructor that seeds `authority`, and until now it added one to
+  upstream's own example — the kind of edit to a shared fixture that stalls a
+  review. The variant now lives in `examples/election_fixture.compact`
+  (upstream's example plus the one constructor); the generated crate keeps
+  its name, so the executing test and the TypeScript reference capture are
+  unchanged, and the committed output is byte-identical.
+
 ## [Toolchain 0.34.116, language 0.26.0, runtime 0.19.101] — no placeholder survives in type position (2026-09-16)
 
 ### Changed

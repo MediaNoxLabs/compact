@@ -9,6 +9,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _No changes yet._
 
+## [Toolchain 0.34.115, language 0.26.0, runtime 0.19.101] — the runtime of upstream PR #758, and the emitter follows it (2026-09-16)
+
+### Changed
+
+- **`midnight-compact-runtime` is the TypeScript-parity runtime from upstream
+  PR #758.** `JubjubPoint` is the bare coordinate pair Compact says it is
+  (`{ x: Fr, y: Fr }`); curve membership is checked only where arithmetic
+  needs it, so `ec_add` / `ec_mul` / `ec_neg` return `Result` and a pair
+  outside the prime-order subgroup is an error rather than a panic reachable
+  from ledger state. `construct_jubjub_point` and `ec_mul_generator` are
+  total. `new_cell_bounded_uint(value, byte_len, max)` range-checks against
+  the declared Compact maximum and is fallible; `hash_to_curve` hashes the
+  field-aligned representation (`Into<AlignedValue>`), as TypeScript does.
+  Decoders enforce their Compact domains (`decode_bounded_uint`). The
+  non-verifying `zswap` re-export is gone. `tests/typescript_parity.rs`
+  pins every place the two runtimes once disagreed.
+- **The emitter follows the new signatures**: `?` after `ecAdd` / `ecMul` /
+  `ecNeg` call sites (and nowhere else), the declared maximum as the third
+  argument of every `new_cell_bounded_uint` (initial-state seeds, the
+  constructor walker and the streaming route), `?` on those writes.
+- `schnorr_verify_jubjub` verifies the vendored circuit's 248-bit-truncated
+  challenge; the `schnorr_attest_fixture` test signs the same way.
+
+### Added
+
+- `ec_ops_fixture`: one pure circuit per embedded-curve builtin, so the
+  emitted crate exercises every runtime entry point they lower to; its
+  executing test pins the values against the runtime and the `Err` (not
+  panic) on a non-subgroup pair. 41 fixtures are now byte-parity gated.
+
+Closes MediaNoxLabs/compact#67.
+
 ## [Toolchain 0.34.114, language 0.26.0, runtime 0.19.101] — the Rust backend on upstream `c47230cc`, rebuilt (2026-09-16)
 
 This is the branch that carries `--target rust` to upstream. It is the

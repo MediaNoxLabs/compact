@@ -243,4 +243,52 @@ pub mod pure_circuits {
         };
         Ok(t)
     }
+
+    pub fn takes_vector(v: [Fr; 2]) -> Result<[Fr; 2], CompactError> {
+        Ok(v)
+    }
+
+    pub fn call_vector_with_tuple(x: Fr) -> Result<[Fr; 2], CompactError> {
+        let t = (x, x);
+        Ok(pure_circuits::takes_vector(
+            {
+                let __compact_materialize = t;
+                [__compact_materialize.0, __compact_materialize.1]
+            }
+            .clone(),
+        )?)
+    }
+
+    pub fn takes_tuple(t: (Fr, Fr)) -> Result<(Fr, Fr), CompactError> {
+        Ok(t)
+    }
+
+    pub fn call_tuple_with_vector(x: Fr) -> Result<(Fr, Fr), CompactError> {
+        let v = [x, x];
+        Ok(pure_circuits::takes_tuple(
+            {
+                let __compact_materialize = v;
+                {
+                    let [__compact_elt_0, __compact_elt_1] = __compact_materialize;
+                    (__compact_elt_0, __compact_elt_1)
+                }
+            }
+            .clone(),
+        )?)
+    }
+
+    pub fn takes_pair_vector(v: [Pair; 2]) -> Result<[Pair; 2], CompactError> {
+        Ok(v)
+    }
+
+    pub fn call_pair_vector_with_tuple(x: Fr) -> Result<[Pair; 2], CompactError> {
+        let t = (Pair { a: x, b: 1u8 }, Pair { a: x, b: 2u8 });
+        Ok(pure_circuits::takes_pair_vector(
+            {
+                let __compact_materialize = t;
+                [__compact_materialize.0, __compact_materialize.1]
+            }
+            .clone(),
+        )?)
+    }
 }

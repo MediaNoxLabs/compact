@@ -192,3 +192,31 @@ fn tuple_fixture_tuple_const_flows_into_a_vector_position() {
     let x = Fr::from(13u64);
     assert_eq!(tuple_to_vector(x).unwrap(), [x, x]);
 }
+
+#[test]
+fn tuple_fixture_tuple_actual_is_bridged_to_a_vector_formal() {
+    // F-037: no `safe-cast` on the actual (same element types), so the
+    // callee's formal type must supply the kind: `[t.0, t.1]` at the call.
+    use compact_contract_tuple_fixture::pure_circuits::call_vector_with_tuple;
+    let x = Fr::from(23u64);
+    assert_eq!(call_vector_with_tuple(x).unwrap(), [x, x]);
+}
+
+#[test]
+fn tuple_fixture_vector_actual_is_bridged_to_a_tuple_formal() {
+    use compact_contract_tuple_fixture::pure_circuits::call_tuple_with_vector;
+    let x = Fr::from(29u64);
+    assert_eq!(call_tuple_with_vector(x).unwrap(), (x, x));
+}
+
+#[test]
+fn tuple_fixture_non_copy_tuple_actual_moves_into_a_vector_formal() {
+    // `Pair` is `Clone`, not `Copy`: the bridge must destructure, not index.
+    use compact_contract_tuple_fixture::pure_circuits::call_pair_vector_with_tuple;
+    use compact_contract_tuple_fixture::Pair;
+    let x = Fr::from(31u64);
+    assert_eq!(
+        call_pair_vector_with_tuple(x).unwrap(),
+        [Pair { a: x, b: 1u8 }, Pair { a: x, b: 2u8 }]
+    );
+}

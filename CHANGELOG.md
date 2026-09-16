@@ -9,6 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _No changes yet._
 
+## [Toolchain 0.34.116, language 0.26.0, runtime 0.19.101] — no placeholder survives in type position (2026-09-16)
+
+### Changed
+
+- **Every `/* TODO */` the Rust backend could still write into generated
+  code is a named rejection.** A type with no Rust lowering — a ZKIR v3 curve
+  type, an `Opaque<"…">` other than `"string"` / `"Uint8Array"`, a generic
+  type variable, an exported generic struct, an unresolved enum reference,
+  an unhandled type or export-typedef variant — now fails the compile with
+  `rust-feature-error` (`zkir-v3-type`, `opaque-type`, `generic-type-variable`,
+  `generic-struct`, `enum-ref-unresolved`, `unknown-type`, `type-variant`,
+  `export-typedef-variant`) and a source location where one exists. Before,
+  it compiled to plausible-looking Rust that failed at `cargo build` with no
+  pointer back to the Compact source — the failure mode the backend's
+  contract forbids. 54 rejection sites across 40 kinds; 41 fixtures
+  byte-identical, so no accepted contract ever reached a placeholder.
+- `type-fingerprint` keys a type variable structurally instead of asking
+  `type-rust` for a spelling: the disambiguation table is built while generic
+  templates (`export {Maybe}`) are catalogued, before anything decides whether
+  they are lowered.
+
+### Added
+
+- Two rejection-corpus probes: an `Opaque<"blob">` ledger field and an
+  exported generic struct.
+
 ## [Toolchain 0.34.115, language 0.26.0, runtime 0.19.101] — the runtime of upstream PR #758, and the emitter follows it (2026-09-16)
 
 ### Changed

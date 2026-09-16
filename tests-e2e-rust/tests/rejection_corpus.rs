@@ -424,3 +424,46 @@ fn rust_backend_still_accepts_neighbouring_shapes() {
         assert!(emitted, "{case}: compactc exited 0 but emitted no lib.rs");
     }
 }
+
+/// F-041: the emitter's rustfmt post-pass used to interpolate the output
+/// path into a shell command inside bare single quotes, so an apostrophe in
+/// the target directory ended the quoted word and the rest became shell
+/// syntax — at best rustfmt silently did not run. The path is a fully
+/// quoted POSIX word now. Compile the same source into a plain directory and
+/// into one with an apostrophe; both must succeed and the emitted crates
+/// must be byte-identical (formatting applied to both).
+#[test]
+fn rust_backend_formats_output_in_an_apostrophe_bearing_directory() {
+    let root = find_repo_root(Path::new(env!("CARGO_MANIFEST_DIR")))
+        .expect("rejection corpus cannot run: no ancestor holds both examples/ and Cargo.toml");
+    let compactc = compiler();
+    let src = root.join("examples/tiny.compact");
+    let base = std::env::temp_dir().join(format!("compact-quoting-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&base);
+    let plain = base.join("plain");
+    let quoted = base.join("it's here (and 'more')");
+    for out in [&plain, &quoted] {
+        let result = Command::new(&compactc)
+            .args(["--target", "rust", "--skip-zk"])
+            .arg(&src)
+            .arg(out)
+            .output()
+            .expect("run compactc");
+        assert_eq!(
+            result.status.code(),
+            Some(0),
+            "compactc failed for output directory {}:\n{}{}",
+            out.display(),
+            String::from_utf8_lossy(&result.stderr),
+            String::from_utf8_lossy(&result.stdout)
+        );
+    }
+    let a = std::fs::read(plain.join("contract/lib.rs")).expect("plain lib.rs");
+    let b = std::fs::read(quoted.join("contract/lib.rs")).expect("quoted lib.rs");
+    assert!(
+        a == b,
+        "the crate emitted into an apostrophe-bearing directory differs from the plain one; \
+         rustfmt most likely did not run there because the path broke the shell word"
+    );
+    let _ = std::fs::remove_dir_all(&base);
+}

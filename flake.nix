@@ -462,7 +462,7 @@
             '';
             yarnOfflineCache = pkgs.fetchYarnDeps {
               yarnLock = ./editor-support/vsc/compact/yarn.lock;
-              hash = "sha256-Rdh9LGi1JxbTo4Zy3u7nDQih4m//39Sngeg+yeUnS9c=";
+              hash = "sha256-L2hhFEZphJTLzEFYVYNBHS+7oFVbMe822ybQgDuWmKo=";
             };
             # NB: nodejs is needed here so that patchShebangs (invoked by
             # yarnConfigHook) can rewrite `#!/usr/bin/env node` shebangs,

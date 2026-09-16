@@ -109,6 +109,40 @@ export pure circuit struct_vector_to_tuple(x: Field): [Pair, Pair] {
   return t;
 }
 
+// A tuple and a Vector with the same element types are the same value to the
+// typer, which inserts no cast when one is passed where the other is
+// declared. The callee's declared kind must still win at the call boundary
+// (F-037 / compact PR #87 review): `(T, T)` handed to a `[T; 2]` parameter, or
+// the reverse, is E0308 in Rust.
+export pure circuit takes_vector(v: Vector<2, Field>): Vector<2, Field> {
+  return v;
+}
+
+export pure circuit call_vector_with_tuple(x: Field): Vector<2, Field> {
+  const t: [Field, Field] = [x, x];
+  return takes_vector(t);
+}
+
+export pure circuit takes_tuple(t: [Field, Field]): [Field, Field] {
+  return t;
+}
+
+export pure circuit call_tuple_with_vector(x: Field): [Field, Field] {
+  const v: Vector<2, Field> = [x, x];
+  return takes_tuple(v);
+}
+
+// The non-`Copy` element case: `Pair` derives `Clone`, so the bridge must
+// move the elements, not index-copy them (the F-031 array pattern).
+export pure circuit takes_pair_vector(v: Vector<2, Pair>): Vector<2, Pair> {
+  return v;
+}
+
+export pure circuit call_pair_vector_with_tuple(x: Field): Vector<2, Pair> {
+  const t: [Pair, Pair] = [Pair { a: x, b: 1 }, Pair { a: x, b: 2 }];
+  return takes_pair_vector(t);
+}
+
 export circuit ping(): [] {
   flag.write(true);
 }

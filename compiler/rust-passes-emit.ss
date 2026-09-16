@@ -2884,11 +2884,23 @@
       ;; Copy check. Also used for by-value native args (jubjub_point_x
       ;; takes `JubjubPoint` by value and is invoked twice on the same
       ;; field in a && expression).
-      (define (pure-call-arg-rust e native-id-ht)
+      (define (pure-call-arg-rust e native-id-ht . maybe-formal)
         ;; Render at the argument's own `safe-cast` target (the callee's
         ;; declared formal type) so a bare literal / mixed-width / aggregate
         ;; argument is materialised; see task 2.5.
-        (let ([rendered (expr-rust-typed e (expr-expected-type e) native-id-ht)]
+        ;;
+        ;; When the typer inserted no `safe-cast` — a tuple passed where a
+        ;; `Vector` of the same element types is declared, or the reverse —
+        ;; the callee's formal type (supplied by the user-circuit branch of
+        ;; `call-rust`) is the expectation instead, so the aggregate-kind
+        ;; bridge runs at this boundary too. Without it the generated Rust
+        ;; passed `(T, T)` to a `[T; 2]` parameter: E0308 at `cargo build`
+        ;; from a compile that exited 0.
+        (let ([rendered (expr-rust-typed
+                          e
+                          (or (expr-expected-type e)
+                              (and (pair? maybe-formal) (car maybe-formal)))
+                          native-id-ht)]
               [stripped (expr-strip-cast e)])
           (nanopass-case (Ltypescript Expression) stripped
             [(var-ref ,src ,var-name)
@@ -3274,8 +3286,19 @@
              (let ([c (eq-hashtable-ref (current-circuit-id-ht) function-name #f)])
                (cond
                  [(and c (id-pure? function-name))
-                  (let ([rust-name (id->rust-name function-name)]
-                        [args (map (lambda (e) (pure-call-arg-rust e native-id-ht)) expr*)])
+                  (let* ([rust-name (id->rust-name function-name)]
+                         ;; The callee's formal types, paired with the
+                         ;; actuals, so an aggregate actual is rendered at
+                         ;; the kind the callee declares even when the typer
+                         ;; inserted no coercion (same element types).
+                         [formal* (circuit-formal-arg-types c)]
+                         [args (if (and (list? formal*)
+                                        (fx= (length formal*) (length expr*)))
+                                   (map (lambda (e t)
+                                          (pure-call-arg-rust e native-id-ht t))
+                                        expr* formal*)
+                                   (map (lambda (e) (pure-call-arg-rust e native-id-ht))
+                                        expr*))])
                     ;; Append `?` so the `Result<T, CompactError>` a pure
                     ;; circuit returns is unwrapped at the call site. Every
                     ;; generated position that calls a pure circuit (pure-

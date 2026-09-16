@@ -130,7 +130,9 @@ impl<'a, D: DB> Ledger<'a, D> {
                 ))
             }
         };
-        midnight_compact_runtime::std_lib::decode_u8(av)
+        (|av| {
+            midnight_compact_runtime::std_lib::decode_bounded_uint(av, 1, 99_u128).map(|n| n as u8)
+        })(av)
     }
     pub fn short(&self) -> Result<u16, CompactError> {
         let qctx = QueryContext::new(
@@ -152,7 +154,10 @@ impl<'a, D: DB> Ledger<'a, D> {
                 ))
             }
         };
-        midnight_compact_runtime::std_lib::decode_u16(av)
+        (|av| {
+            midnight_compact_runtime::std_lib::decode_bounded_uint(av, 2, 49999_u128)
+                .map(|n| n as u16)
+        })(av)
     }
     pub fn medium(&self) -> Result<u32, CompactError> {
         let qctx = QueryContext::new(
@@ -174,7 +179,10 @@ impl<'a, D: DB> Ledger<'a, D> {
                 ))
             }
         };
-        midnight_compact_runtime::std_lib::decode_u32(av)
+        (|av| {
+            midnight_compact_runtime::std_lib::decode_bounded_uint(av, 3, 69999_u128)
+                .map(|n| n as u32)
+        })(av)
     }
     pub fn huge(&self) -> Result<u64, CompactError> {
         let qctx = QueryContext::new(
@@ -196,7 +204,10 @@ impl<'a, D: DB> Ledger<'a, D> {
                 ))
             }
         };
-        midnight_compact_runtime::std_lib::decode_u64(av)
+        (|av| {
+            midnight_compact_runtime::std_lib::decode_bounded_uint(av, 5, 4999999999_u128)
+                .map(|n| n as u64)
+        })(av)
     }
 }
 

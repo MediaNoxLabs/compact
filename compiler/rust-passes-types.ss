@@ -27,28 +27,36 @@
       ;; (tfield, tboolean, tunsigned, tbytes), ttuple, and tvector.
       ;; Aggregate / nominal forms (talias, tenum, tstruct, tcontract,
       ;; tjubjub, topaque, tunknown, ...) emit a placeholder TODO string
-      ;; tagged with the variant name so later tasks (F2-F4) can locate
-      ;; missing cases. Never crashes on unknown variants.
+      ;; A type with no Rust lowering is a compile error with a named kind
+      ;; (`rust-feature-error`), never a placeholder: a `/* TODO */` in type
+      ;; position is plausible-looking output that fails at `cargo build`
+      ;; with no pointer back to the Compact source.
       ;; field-type-rust: map a Field-Type qualifier to the Rust scalar
       ;; type. `(tfield (field-native))` is Compact's `Field` (BLS12-381
       ;; scalar, upstream `Fr`); `(tfield (field-scalar (curve-jubjub)))`
       ;; is the 0.33 `JubjubScalar` builtin (the embedded curve's scalar
       ;; field, upstream `EmbeddedFr`, re-exported as
       ;; `midnight_compact_runtime::JubjubScalar`). The secp256k1 field/base
-      ;; variants only arise behind --feature-zkir-v3, which --rust
-      ;; rejects (see compactc.ss), so they surface as TODO placeholders
-      ;; rather than crashing the emitter.
+      ;; variants only arise behind --feature-zkir-v3, which --target rust
+      ;; rejects up front (passes.ss); reaching them here is refused with a
+      ;; named diagnostic all the same.
       (define (field-type-rust ftype)
         (nanopass-case (Ltypescript Field-Type) ftype
           [(field-native) "Fr"]
           [(field-scalar ,ctype)
            (nanopass-case (Ltypescript Curve-Type) ctype
              [(curve-jubjub) "JubjubScalar"]
-             [(curve-secp256k1) "/* TODO zkir-v3: Secp256k1Scalar */"])]
+             [(curve-secp256k1)
+              (rust-feature-error #f 'zkir-v3-type
+                "Secp256k1Scalar has no Rust lowering (a ZKIR v3 type)")])]
           [(field-base ,ctype)
            (nanopass-case (Ltypescript Curve-Type) ctype
-             [(curve-jubjub) "/* TODO zkir-v3: JubjubBase */"]
-             [(curve-secp256k1) "/* TODO zkir-v3: Secp256k1Base */"])]))
+             [(curve-jubjub)
+              (rust-feature-error #f 'zkir-v3-type
+                "JubjubBase has no Rust lowering (a ZKIR v3 type)")]
+             [(curve-secp256k1)
+              (rust-feature-error #f 'zkir-v3-type
+                "Secp256k1Base has no Rust lowering (a ZKIR v3 type)")])]))
 
       ;; field-type-native?: #t when the Field-Type is Compact's plain
       ;; `Field` (the native BLS12-381 scalar, Rust `Fr`).
@@ -77,7 +85,9 @@
            ;; point only arises behind --feature-zkir-v3.
            (nanopass-case (Ltypescript Curve-Type) ctype
              [(curve-jubjub) "JubjubPoint"]
-             [(curve-secp256k1) "/* TODO zkir-v3: Secp256k1Point */"])]
+             [(curve-secp256k1)
+              (rust-feature-error src 'zkir-v3-type
+                "Secp256k1Point has no Rust lowering (a ZKIR v3 type)")])]
           [(tboolean ,src) "bool"]
           [(tunsigned ,src ,nat) (uint-rust-width nat)]
           [(tbytes ,src ,len) (format "[u8; ~a]" len)]
@@ -115,7 +125,10 @@
              [(equal? opaque-type "string") "midnight_compact_runtime::std_lib::OpaqueString"]
              [(equal? opaque-type "Uint8Array") "Vec<u8>"]
              [(equal? opaque-type "JubjubPoint") "JubjubPoint"]
-             [else (format "/* TODO M3-F4: topaque ~a */" opaque-type)])]
+             [else
+              (rust-feature-error src 'opaque-type
+                "Opaque<~s> has no Rust lowering (only \"string\", \"Uint8Array\" and the JubjubPoint spelling do)"
+                opaque-type)])]
           [(tstruct ,src ,struct-name (,elt-name* ,type*) ...)
            ;; Stdlib structs (Maybe<T>, MerkleTreePath<#n, T>,
            ;; MerkleTreePathEntry) resolve to runtime-provided Rust types
@@ -146,8 +159,22 @@
            ;; the TS path: emit `ContractAddress`. F4 partial; refinements
            ;; (typed handles per external-contract-name) can come later.
            "ContractAddress"]
-          [(tunknown) "/* TODO M3-F4: tunknown */"]
-          [else "/* TODO M3-F4: unhandled type variant */"]))
+          [,tvar-name
+           ;; A generic declaration's type variable (a bare terminal in the
+           ;; Type grammar). Generics are lowered only at their
+           ;; instantiations (materialised on use), so a type variable in a
+           ;; lowered position is a template that was never instantiated —
+           ;; refuse rather than spell it.
+           (rust-feature-error #f 'generic-type-variable
+             "type variable ~a has no Rust lowering; generic declarations are lowered at their instantiations only"
+             tvar-name)]
+          [(tunknown)
+           (rust-feature-error #f 'unknown-type
+             "an unresolved (unknown) type reached the Rust backend")]
+          [else
+           (rust-feature-error #f 'type-variant
+             "unhandled type variant in the Rust backend: ~s"
+             (unparse-Ltypescript type))]))
 
       ;; type-fingerprint: a disambiguation-INDEPENDENT structural key for a
       ;; Type node. Unlike type-rust it never consults the struct rename
@@ -176,7 +203,13 @@
            ;; transparent alias expands (recurse so a struct underneath is
            ;; seen structurally).
            (if nominal? (list 'alias type-name) (type-fingerprint type))]
-          [else (type-rust type)]))
+          ;; A variant with no Rust spelling (a generic template's type
+          ;; variable, say) still needs a structural key here: this table is
+          ;; consulted while generic *templates* are being catalogued, before
+          ;; anything decides whether they are lowered. Keying on the unparsed
+          ;; node keeps distinct variables distinct without asking `type-rust`
+          ;; for a spelling it would rightly refuse.
+          [else (list 'other (unparse-Ltypescript type))]))
 
       ;; tstruct-fingerprint: a structural fingerprint of a tstruct/tenum
       ;; Type node, used to distinguish two `import M<...>` instantiations

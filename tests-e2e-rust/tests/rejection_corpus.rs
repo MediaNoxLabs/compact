@@ -150,6 +150,24 @@ const REJECTIONS: &[(&str, &str, &str)] = &[
     // Compiler 0.34 no longer coerces a `Uint` into a `Field` implicitly, so
     // the cast is spelled out; the typer still lowers it to the same
     // `safe-cast`, and the emitter's refusal is unchanged.
+    // Types with no Rust lowering refuse with a named kind instead of
+    // leaving a `/* TODO */` in type position (which compiled to plausible-
+    // looking Rust that failed at `cargo build` with no source location).
+    (
+        "opaque type with no Rust mapping",
+        "import CompactStandardLibrary;\n\
+         export ledger blob: Opaque<\"blob\">;\n\
+         export circuit setBlob(b: Opaque<\"blob\">): [] { blob = disclose(b); }\n",
+        "opaque-type",
+    ),
+    (
+        "exported generic struct",
+        "import CompactStandardLibrary;\n\
+         export struct Box<T> { v: T }\n\
+         export ledger n: Uint<8>;\n\
+         export pure circuit unbox(b: Box<Uint<8>>): Uint<8> { return b.v; }\n",
+        "generic-struct",
+    ),
     (
         "Uint range wider than u128 coerced to Field",
         "import CompactStandardLibrary;\n\

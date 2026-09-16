@@ -80,9 +80,10 @@ grep -rn "(rust-feature-error" compiler/rust-passes*.ss \
   | grep -v "define (rust-feature-error" | wc -l
 ```
 
-At the time of writing that is **38 call sites** across 4 passes
-(`rust-passes-emit.ss` 28, `rust-passes-walker.ss` 4,
-`rust-passes-helpers.ss` 5, `rust-passes-prelude.ss` 1), spanning **30
+At the time of writing that is **54 call sites** across 7 files
+(`rust-passes-emit.ss` 32, `rust-passes-walker.ss` 6,
+`rust-passes-helpers.ss` 5, `rust-passes-types.ss` 8, `rust-passes-decls.ss` 2,
+`rust-passes-streaming.ss` 0, `rust-passes-prelude.ss` 1), spanning **40
 distinct kinds**. (The `rust-passes-helpers.ss` count includes the
 post-emit `sentinel-splice` guard added by
 `type-directed-expression-coercion` — see below.)
@@ -280,6 +281,19 @@ output failure mode: field arithmetic fell through to `wrapping_*` on two
 as ordinary as `return a + b` on two `Field`s. No fixture covered the
 shape. It is now lowered correctly, and the residual unknown-type case
 refuses instead of guessing.
+
+### Types with no Rust lowering
+
+`zkir-v3-type`, `opaque-type`, `unknown-type`, `type-variant`,
+`generic-type-variable`, `generic-struct`, `export-typedef-variant`,
+`enum-ref-unresolved`. A type
+the backend cannot lower — a ZKIR v3 curve type (`Secp256k1Scalar`,
+`Secp256k1Point`, `JubjubBase`), an `Opaque<"…">` other than `"string"` /
+`"Uint8Array"`, an exported generic struct, an unresolved enum reference —
+refuses with the kind above. These used to be `/* TODO */` placeholders in
+type position: valid-looking Rust that failed at `cargo build` with no
+pointer back to the Compact source, the exact failure mode this page's
+contract forbids.
 
 ### `Map` MVP shape
 

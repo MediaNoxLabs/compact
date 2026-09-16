@@ -28,11 +28,6 @@ name: Rust runtime + e2e tests
 # follow-up (MediaNoxLabs/compact#23).
 
 on:
-  # fork-only: the maintained branch runs the lane on every push, not only
-  # through a pull request, so its head is always measured.
-  push:
-    branches:
-      - main-patched
   pull_request:
     paths:
       - "runtime-rs/**"
@@ -75,6 +70,8 @@ on:
   push:
     branches:
       - main
+      # fork-only: the maintained branch is measured on every push too.
+      - main-patched
     paths:
       - "runtime-rs/**"
       - "runtime-rs-macros/**"

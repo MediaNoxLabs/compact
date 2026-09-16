@@ -3,6 +3,10 @@ name: Compiler Build
 
 on:
   workflow_dispatch:
+  # fork-only: the maintained branch is measured on every push too.
+  push:
+    branches:
+      - main-patched
   pull_request:
   schedule:
     - cron: '0 1 * * *'

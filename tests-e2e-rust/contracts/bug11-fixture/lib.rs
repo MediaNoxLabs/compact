@@ -59,8 +59,8 @@ where
     ) -> Result<ConstructorResult<PS>, CompactError> {
         let sv = new_array(vec![
             new_cell(0u8),
-            new_cell_bounded_uint(0u128, 3),
-            new_cell_bounded_uint(0u128, 5),
+            new_cell_bounded_uint(0u128, 3, 69999_u128)?,
+            new_cell_bounded_uint(0u128, 5, 4999999999_u128)?,
         ]);
         let state = ChargedState::new(sv);
         let qctx = QueryContext::new(state, midnight_compact_runtime::ContractAddress::default());
@@ -106,7 +106,7 @@ where
     ) -> Result<CircuitResults<PS, ()>, CompactError> {
         let ops = OpProgramVerify::<DefaultDB>::new()
             .push(false, new_cell(1u8))
-            .push(true, new_cell_bounded_uint(v as u128, 3))
+            .push(true, new_cell_bounded_uint(v as u128, 3, 69999_u128)?)
             .ins(false, 1)
             .build();
 
@@ -134,7 +134,7 @@ where
     ) -> Result<CircuitResults<PS, ()>, CompactError> {
         let ops = OpProgramVerify::<DefaultDB>::new()
             .push(false, new_cell(2u8))
-            .push(true, new_cell_bounded_uint(v as u128, 5))
+            .push(true, new_cell_bounded_uint(v as u128, 5, 4999999999_u128)?)
             .ins(false, 1)
             .build();
 

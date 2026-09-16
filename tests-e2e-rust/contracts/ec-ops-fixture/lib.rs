@@ -57,29 +57,67 @@ where
         &self,
         ctx: ConstructorContext<PS>,
     ) -> Result<ConstructorResult<PS>, CompactError> {
-        let sv = new_array(vec![
-            new_cell(0u8),
-            new_cell(0u16),
-            new_cell_bounded_uint(0u128, 3, 69999_u128)?,
-            new_cell_bounded_uint(0u128, 5, 4999999999_u128)?,
-        ]);
+        let sv = new_array(vec![new_cell(
+            midnight_compact_runtime::JubjubPoint::default(),
+        )]);
         let state = ChargedState::new(sv);
         let qctx = QueryContext::new(state, midnight_compact_runtime::ContractAddress::default());
+        let tmp = midnight_compact_runtime::ec_mul_generator(
+            midnight_compact_runtime::jubjub_scalar_from_field(Fr::from((0) as u64)),
+        );
+        let ops = OpProgramVerify::<DefaultDB>::new()
+            .push(false, new_cell(0u8))
+            .push(true, new_cell(tmp.clone()))
+            .ins(false, 1)
+            .build();
+
+        let results = query_for_verify(&qctx, &ops, ctx.gas_limit.clone(), &ctx.cost_model)?;
+
         Ok(ConstructorResult {
-            current_contract_state: qctx.state,
+            current_contract_state: results.context.state,
             current_private_state: ctx.initial_private_state,
             current_zswap_local_state: ctx.empty_zswap_local_state,
         })
     }
 
-    pub fn set_small(
+    pub fn accumulate(
         &self,
         ctx: CircuitContext<PS>,
-        v: u8,
+        p: JubjubPoint,
     ) -> Result<CircuitResults<PS, ()>, CompactError> {
+        let tmp = midnight_compact_runtime::ec_add(
+            {
+                let _gather_ops = OpProgramGather::<DefaultDB>::new()
+                    .dup(0)
+                    .idx_at_index(0u8, false)
+                    .popeq(false)
+                    .build();
+                let _gather_results = query_for_read(
+                    &ctx.current_query_context,
+                    &_gather_ops,
+                    None,
+                    &initial_cost_model(),
+                )
+                .map_err(|e| {
+                    CompactError::AssertionFailed(format!("ledger query failed: {:?}", e))
+                })?;
+                let _av = match _gather_results.events.last() {
+                    Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(
+                        av,
+                    )) => av,
+                    _ => {
+                        return Err(CompactError::AssertionFailed(
+                            "ledger: expected Read event".into(),
+                        ))
+                    }
+                };
+                midnight_compact_runtime::std_lib::decode_jubjub_point(_av)?
+            },
+            p.clone(),
+        )?;
         let ops = OpProgramVerify::<DefaultDB>::new()
             .push(false, new_cell(0u8))
-            .push(true, new_cell(v))
+            .push(true, new_cell(tmp.clone()))
             .ins(false, 1)
             .build();
 
@@ -110,7 +148,7 @@ pub fn ledger<D: DB>(state: &ChargedState<D>) -> Ledger<'_, D> {
 }
 
 impl<'a, D: DB> Ledger<'a, D> {
-    pub fn small(&self) -> Result<u8, CompactError> {
+    pub fn acc(&self) -> Result<JubjubPoint, CompactError> {
         let qctx = QueryContext::new(
             self.state.clone(),
             midnight_compact_runtime::ContractAddress::default(),
@@ -130,74 +168,48 @@ impl<'a, D: DB> Ledger<'a, D> {
                 ))
             }
         };
-        midnight_compact_runtime::std_lib::decode_u8(av)
-    }
-    pub fn short(&self) -> Result<u16, CompactError> {
-        let qctx = QueryContext::new(
-            self.state.clone(),
-            midnight_compact_runtime::ContractAddress::default(),
-        );
-        let ops = OpProgramGather::<D>::new()
-            .dup(0)
-            .idx_at_index(1u8, false)
-            .popeq(true)
-            .build();
-        let results = query_for_read(&qctx, &ops, None, &initial_cost_model())
-            .map_err(|e| CompactError::AssertionFailed(format!("ledger query failed: {:?}", e)))?;
-        let av = match results.events.last() {
-            Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
-            _ => {
-                return Err(CompactError::AssertionFailed(
-                    "ledger: expected Read event".into(),
-                ))
-            }
-        };
-        midnight_compact_runtime::std_lib::decode_u16(av)
-    }
-    pub fn medium(&self) -> Result<u32, CompactError> {
-        let qctx = QueryContext::new(
-            self.state.clone(),
-            midnight_compact_runtime::ContractAddress::default(),
-        );
-        let ops = OpProgramGather::<D>::new()
-            .dup(0)
-            .idx_at_index(2u8, false)
-            .popeq(true)
-            .build();
-        let results = query_for_read(&qctx, &ops, None, &initial_cost_model())
-            .map_err(|e| CompactError::AssertionFailed(format!("ledger query failed: {:?}", e)))?;
-        let av = match results.events.last() {
-            Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
-            _ => {
-                return Err(CompactError::AssertionFailed(
-                    "ledger: expected Read event".into(),
-                ))
-            }
-        };
-        midnight_compact_runtime::std_lib::decode_u32(av)
-    }
-    pub fn huge(&self) -> Result<u64, CompactError> {
-        let qctx = QueryContext::new(
-            self.state.clone(),
-            midnight_compact_runtime::ContractAddress::default(),
-        );
-        let ops = OpProgramGather::<D>::new()
-            .dup(0)
-            .idx_at_index(3u8, false)
-            .popeq(true)
-            .build();
-        let results = query_for_read(&qctx, &ops, None, &initial_cost_model())
-            .map_err(|e| CompactError::AssertionFailed(format!("ledger query failed: {:?}", e)))?;
-        let av = match results.events.last() {
-            Some(midnight_compact_runtime::onchain_vm::result_mode::GatherEvent::Read(av)) => av,
-            _ => {
-                return Err(CompactError::AssertionFailed(
-                    "ledger: expected Read event".into(),
-                ))
-            }
-        };
-        midnight_compact_runtime::std_lib::decode_u64(av)
+        midnight_compact_runtime::std_lib::decode_jubjub_point(av)
     }
 }
 
-pub mod pure_circuits {}
+pub mod pure_circuits {
+    use super::*;
+
+    pub fn add(a: JubjubPoint, b: JubjubPoint) -> Result<JubjubPoint, CompactError> {
+        Ok(midnight_compact_runtime::ec_add(a.clone(), b.clone())?)
+    }
+
+    pub fn mul(p: JubjubPoint, s: Fr) -> Result<JubjubPoint, CompactError> {
+        Ok(midnight_compact_runtime::ec_mul(
+            p.clone(),
+            midnight_compact_runtime::jubjub_scalar_from_field(s),
+        )?)
+    }
+
+    pub fn neg(p: JubjubPoint) -> Result<JubjubPoint, CompactError> {
+        Ok(midnight_compact_runtime::ec_neg(p.clone())?)
+    }
+
+    pub fn gen(s: Fr) -> Result<JubjubPoint, CompactError> {
+        Ok(midnight_compact_runtime::ec_mul_generator(
+            midnight_compact_runtime::jubjub_scalar_from_field(s),
+        ))
+    }
+
+    pub fn construct(x: Fr, y: Fr) -> Result<JubjubPoint, CompactError> {
+        Ok(midnight_compact_runtime::construct_jubjub_point(x, y))
+    }
+
+    pub fn coords(p: JubjubPoint) -> Result<(Fr, Fr), CompactError> {
+        Ok((
+            midnight_compact_runtime::jubjub_point_x(p.clone()),
+            midnight_compact_runtime::jubjub_point_y(p.clone()),
+        ))
+    }
+
+    pub fn double_then_neg(p: JubjubPoint) -> Result<JubjubPoint, CompactError> {
+        Ok(midnight_compact_runtime::ec_neg(
+            midnight_compact_runtime::ec_add(p.clone(), p.clone())?,
+        )?)
+    }
+}

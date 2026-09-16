@@ -1,0 +1,304 @@
+name: Rust runtime + e2e tests
+
+# CI for the `compactc --rust` Rust side: `midnight-compact-runtime` (the runtime
+# crate generated contract code depends on) and `tests-e2e-rust` (the
+# cross-language byte-parity test crate). The compiler's own Scheme
+# tests live in build-compiler.yml.
+#
+# Three jobs:
+#  - pre-check:       fmt + clippy on the whole workspace (fast, ~3 min).
+#  - test:            cargo test -p midnight-compact-runtime -p tests-e2e-rust on Linux + macOS.
+#  - compiler-backed: the enforcement point. Builds compactc via Nix, then runs the
+#                     whole tests-e2e-rust suite with NO skip flags.
+#
+# The `codegen_regression` byte-parity test and the `rust_backend_*`
+# rejection corpus both require a built compactc and FAIL (do not skip)
+# when one is absent — a skip would report a green gate that regenerated
+# nothing. The `compiler-backed` job supplies a real compiler and runs
+# both with no skip path, so it is where those gates are enforced. The
+# bare Ubuntu/macOS `test` matrix has no Nix and no compactc, so it keeps
+# excluding them by name (`-- --skip rust_codegen_byte_parity --skip
+# rust_backend_`): the exclusion is visible in the step below and in
+# libtest's "filtered out" count, and it is honest only because that
+# matrix is not the enforcement point. Any run that does execute those
+# tests (i.e. `compiler-backed`) is guaranteed to have had a real compiler.
+#
+# The compiler-backed job rebuilds compactc from scratch each run. Sharing
+# the artifact that `build-compiler.yml` already builds is the planned
+# follow-up (MediaNoxLabs/compact#23).
+
+on:
+  pull_request:
+    paths:
+      - "runtime-rs/**"
+      - "runtime-rs-macros/**"
+      # `runtime/package.json`'s version is embedded into every generated
+      # fixture `lib.rs` via `check_runtime_version!` (see
+      # compiler/runtime-version.ss), so a runtime-only bump changes all 34
+      # fixtures' bytes without touching any other watched path. `flake.lock`
+      # similarly changes the Nix build environment of compactc.
+      - "runtime/**"
+      - "tests-e2e-rust/**"
+      # Any compiler change may alter Rust emit — not just the rust-passes
+      # tree. The previous `compiler/rust-passes*` / `compiler/rust-passes/**`
+      # patterns missed e.g. `compiler/analysis-passes.ss`, so a change there
+      # could skew the emitted Rust without running the gate. `compiler/**`
+      # subsumes those narrower patterns.
+      - "compiler/**"
+      # The compactc derivation is built from more than `compiler/**`, so the
+      # gate must run when any of those other inputs changes too:
+      #  - `_sources/generated.nix` / `nvfetcher.toml` supply the
+      #    nvfetcher-managed nanopass and rough-draft sources that `flake.nix`
+      #    puts on `CHEZSCHEMELIBDIRS`; `flake.lock` pins neither, so a source
+      #    bump can change the pass framework and the emitted Rust bytes.
+      #  - `third_party/compiler/**` supplies the lexer/parser libraries that
+      #    `compiler/lexer.ss` imports (`state-case`, `streams`) and
+      #    `compiler/parser.ss` includes (`ez-grammar`); the `compiler/**`
+      #    glob above does not match it.
+      - "_sources/**"
+      - "nvfetcher.toml"
+      - "third_party/compiler/**"
+      - "examples/**"
+      - "Cargo.toml"
+      - "runtime-rs/Cargo.lock"
+      - "flake.nix"
+      - "flake.lock"
+      # The compiler-backed job depends on this composite action; editing it
+      # must re-run the lane that uses it.
+      - ".github/actions/setup-nix-cache/**"
+      - ".github/workflows/rust-runtime-test.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "runtime-rs/**"
+      - "runtime-rs-macros/**"
+      - "runtime/**"
+      - "tests-e2e-rust/**"
+      - "compiler/**"
+      # Other inputs to the compactc derivation: nvfetcher-managed nanopass/
+      # rough-draft sources (see `_sources/generated.nix`, `nvfetcher.toml`)
+      # and the vendored compiler libraries under `third_party/compiler/**`.
+      # Kept in sync with the `pull_request` list above.
+      - "_sources/**"
+      - "nvfetcher.toml"
+      - "third_party/compiler/**"
+      - "examples/**"
+      - "Cargo.toml"
+      - "runtime-rs/Cargo.lock"
+      - "flake.nix"
+      - "flake.lock"
+      - ".github/actions/setup-nix-cache/**"
+      - ".github/workflows/rust-runtime-test.yml"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_RETRY: 10
+  RUST_BACKTRACE: short
+  RUSTUP_MAX_RETRIES: 10
+
+jobs:
+  # Fast pre-checks that can fail early — no Nix, no compactc.
+  pre-check:
+    name: Format + Clippy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # stable (branch)
+
+      - name: Install Rust components
+        run: rustup component add rustfmt clippy
+
+      - name: Cache Cargo registry and git trees
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('runtime-rs/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      # `cargo fmt --all --check` formats every workspace member — our
+      # crates AND each generated `tests-e2e-rust/contracts/*` fixture crate.
+      # The fixture coverage matters: registered fixtures are already fmt-
+      # gated by codegen_regression (it regenerates with the lane's stable
+      # rustfmt and asserts byte-identity), but any fixture crate that is NOT
+      # registered in the FIXTURES table is only caught here. Formatting is
+      # hermetic (no network), and this is the stable rustfmt that
+      # `pre-check`/`compiler-backed` install (`rustup component add
+      # rustfmt`), so it is the authoritative fmt gate for our crates. The
+      # Rust backend lives in its own workspace rooted at runtime-rs/, so
+      # `--all` covers exactly that workspace; tools/compact is gated by
+      # upstream's own compact-test.yml.
+      - name: Check formatting (whole workspace)
+        working-directory: runtime-rs
+        run: cargo fmt --all --check
+
+      # Clippy with -D warnings turns lints into errors. We scope it to
+      # our crates explicitly so changes to tools/compact don't
+      # accidentally start gating on this workflow.
+      - name: Run Clippy on midnight-compact-runtime
+        working-directory: runtime-rs
+        run: cargo clippy -p midnight-compact-runtime --all-targets --all-features -- -D warnings
+
+      - name: Run Clippy on midnight-compact-runtime-macros
+        working-directory: runtime-rs
+        run: cargo clippy -p midnight-compact-runtime-macros --all-targets --all-features -- -D warnings
+
+      - name: Run Clippy on tests-e2e-rust
+        working-directory: runtime-rs
+        run: cargo clippy -p tests-e2e-rust --all-targets --all-features -- -D warnings
+
+      # The fixture crates are workspace members but only ever consumed as
+      # dev-dependencies of tests-e2e-rust, and cargo builds dependency
+      # crates with `--cap-lints allow` — so unlike fmt above (which covers
+      # every member via --all), clippy never reaches them. The emitter also
+      # stamps `#![allow(clippy::all, ...)]` on every generated crate, so a
+      # per-crate clippy step would be dead-on-arrival; lint-cleanliness of
+      # the emitted code is an emitter concern, gated by the executing
+      # fixture tests rather than by clippy here.
+
+  # Test matrix — runs the byte-parity suite on Linux and macOS to catch
+  # platform-dependent encoding bugs.
+  test:
+    name: Test ${{ matrix.os }}
+    needs: pre-check
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # stable (branch)
+
+      - name: Cache Cargo registry and git trees
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('runtime-rs/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Cache target directory
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: runtime-rs/target
+          key: ${{ runner.os }}-target-rust-runtime-${{ hashFiles('runtime-rs/Cargo.lock', 'runtime-rs/**', 'runtime-rs-macros/**', 'tests-e2e-rust/**') }}
+          restore-keys: |
+            ${{ runner.os }}-target-rust-runtime-
+
+      - name: Build midnight-compact-runtime
+        working-directory: runtime-rs
+        run: cargo build -p midnight-compact-runtime --locked
+
+      - name: Build tests-e2e-rust (incl. fixture crates)
+        working-directory: runtime-rs
+        run: cargo build -p tests-e2e-rust --tests --locked
+
+      - name: Unit tests — midnight-compact-runtime
+        working-directory: runtime-rs
+        run: cargo test -p midnight-compact-runtime --locked
+
+      - name: Integration tests — tests-e2e-rust
+        # Two gates here drive compactc directly and so hard-fail without a
+        # compiler: `rust_codegen_byte_parity_against_committed_fixtures`
+        # regenerates every fixture and asserts byte-identity, and the
+        # `rust_backend_*` rejection corpus compiles probe contracts and
+        # asserts they are refused. These are bare Ubuntu/macOS runners with
+        # no nix build, so both are excluded by name; everything else in
+        # tests-e2e-rust still gates here.
+        #
+        # Excluding at the call site rather than skipping inside the tests
+        # keeps them impossible to pass vacuously: neither has a skip path of
+        # its own, so any run that does execute them had a real compiler.
+        working-directory: runtime-rs
+        run: cargo test -p tests-e2e-rust --locked -- --skip rust_codegen_byte_parity --skip rust_backend_
+
+  # Enforcement point for the compiler-backed gates. Unlike the `test`
+  # matrix, this job has both a real compactc (built via Nix) and a Rust
+  # toolchain, so `codegen_regression`'s byte-parity test and the
+  # `rust_backend_*` rejection corpus run with **no** skip flags. If this
+  # job is red, the gates are red; there is no path on which it reports a
+  # green byte-parity result having regenerated nothing.
+  compiler-backed:
+    name: Compiler-backed gates
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    # Cold Nix cache can push the compactc build past the ~11 min warm
+    # budget; 60 min is the ceiling from the change's tasks, raised if a
+    # cold run ever exceeds it.
+    timeout-minutes: 60
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup Nix with cache
+        uses: ./.github/actions/setup-nix-cache
+        with:
+          attic_token: ${{ secrets.ATTIC_CACHE_TOKEN }}
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # stable (branch)
+
+      - name: Install Rust components
+        run: rustup component add rustfmt
+
+      - name: Cache Cargo registry and git trees
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('runtime-rs/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Guard that rustfmt is present
+        # The emitter's rustfmt post-pass (compiler/passes.ss) is a deliberate
+        # soft-fail, so a missing/mismatched formatter would surface as
+        # format-only byte drift across every fixture — a confusing failure
+        # that looks like a codegen regression. Fail loudly here instead.
+        run: |
+          if ! command -v rustfmt >/dev/null 2>&1; then
+            echo "::error::rustfmt is not on PATH; the byte-parity gate would report false format drift. Install the stable toolchain with the rustfmt component."
+            exit 1
+          fi
+          rustfmt --version
+
+      - name: Build compactc
+        run: nix build .#compactc
+
+      - name: Compiler-backed gates (no skips)
+        # No `--skip` flags: `codegen_regression`'s byte-parity test and the
+        # `rust_backend_*` rejection corpus must actually execute here.
+        working-directory: runtime-rs
+        run: cargo test -p tests-e2e-rust --locked

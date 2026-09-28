@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Toolchain 0.31.121, language 0.23.103, runtime 0.16.100]
+
+### Fixed
+
+- **`--target rust` emitted a bare integer for a Field-only literal in a call
+  argument** — an `N as Field` literal above `max-unsigned` (2^248 - 1) passed
+  to a stdlib native or a user pure circuit was printed as raw digits, so
+  `compactc` exited 0 and `cargo build` failed with "integer literal is too
+  large" ([#90]). The typechecker admits such a literal only as `N as Field`
+  and lowers it with no `safe-cast`, and a call argument takes its expected
+  type only from that wrapper. The literal is now rendered as
+  `Fr::from_le_bytes(...)` whenever no expected type is bound. The threshold
+  is `max-unsigned`, not `u128::MAX`: literals in `(u128::MAX, max-unsigned]`
+  are admissible `Uint`s and keep their typed rendering. This unblocks
+  `@midnight-ntwrk/credential-compact@0.2.0`, whose Jubjub subgroup check
+  passes `(r + 1) / 8 as Field` to `ecMul`. `literal_coercion_fixture` gains
+  circuits for the literal in every position, the 2^248 boundary, and the
+  subgroup check; no other committed fixture changed. Rendering every
+  argument at the callee's declared parameter type is tracked in [#91].
+
 ## [Toolchain 0.31.120, language 0.23.103, runtime 0.16.100]
 
 ### Fixed

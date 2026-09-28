@@ -2113,6 +2113,15 @@
                    (field-literal-rust datum)]
                   [(and expected (type-peel-tunsigned expected)) =>
                    (lambda (nat) (format "~a~a" datum (uint-rust-width nat)))]
+                  ;; A literal above `max-unsigned` is Field by construction:
+                  ;; the typechecker admits it only as `N as Field`, which it
+                  ;; lowers to a bare `(quote N)` with no safe-cast
+                  ;; (analysis-passes.ss, the `cast` Field special case). A
+                  ;; position with no expected type of its own (a call
+                  ;; argument) would otherwise print digits no Rust integer
+                  ;; type can hold (#90). Literals at or below `max-unsigned`
+                  ;; are admissible `Uint`s and keep the bare rendering.
+                  [(> datum (max-unsigned)) (field-literal-rust datum)]
                   [else (format "~a" datum)]))]
              [else (rust-feature-error src 'quote-variant
                      "unsupported quote datum: ~s" datum)])]

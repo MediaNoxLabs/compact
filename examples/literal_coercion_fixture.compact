@@ -57,6 +57,17 @@
 //                           FIELD branch), incl. a literal above `u64::MAX`
 //   - `addUintFieldOperand` — `Uint` operand of a Field op (`Fr::from((u) as u64)`)
 //   - `nestedFieldArith`  — recursive operand materialisation
+//   - `nativeArgFieldOnlyLiteral`/`callArgFieldOnlyLiteral`/
+//     `constFieldOnlyLiteral`/`retFieldOnlyLiteral`/`addFieldOnlyLiteral`/
+//     `cmpFieldOnlyLiteral`
+//                         — a literal above `max-unsigned` (2^248 - 1), which
+//                           the typechecker admits only as `N as Field` and
+//                           leaves without a `safe-cast`: as an `ecMul`
+//                           argument, a pure-circuit argument, a `const`
+//                           initialiser, a return value, a Field operand and
+//                           an equality operand
+//   - `callArgMaxUnsignedPlusOne` — the boundary literal 2^248 as a call arg
+//   - `subgroupCheck`     — the Jubjub `(r + 1) / 8` constant through `ecMul`
 // plus a constructor that writes Field / Uint<64> / `Vector<2, Field>`
 // ledger cells so the destination-typed write path is exercised and its
 // committed state can be compared byte-for-byte against the TS backend.
@@ -269,6 +280,57 @@ export pure circuit hashStructFieldVectorArg(b: VecBox): Bytes<32> {
 // The recovered type comes from the `default<T>` node itself.
 export pure circuit hashDefaultVectorArg(): Bytes<32> {
   return persistentHash<Vector<2, Field>>(default<Vector<2, Field>>);
+}
+
+// Field-only literals: above `max-unsigned` (2^248 - 1) the typechecker
+// rejects a bare literal and lowers `N as Field` to the literal alone, with
+// no `safe-cast`. A call argument carries no expected type of its own, so it
+// took the type from that missing wrapper and the emitter printed digits no
+// Rust integer holds (`compactc` exited 0, `cargo build` failed). The 2^200
+// literals above are below `max-unsigned` and always reach the emitter
+// wrapped. The constant is the Jubjub `(r + 1) / 8` from credential-compact's
+// subgroup check; it is shared across the typed positions for comparison.
+export pure circuit nativeArgFieldOnlyLiteral(p: JubjubPoint): JubjubPoint {
+  return ecMul(p, 819310549611346726241370945440405716213240158234039660170669895299022906775 as Field);
+}
+
+export pure circuit callArgFieldOnlyLiteral(): Field {
+  return idf(819310549611346726241370945440405716213240158234039660170669895299022906775 as Field);
+}
+
+export pure circuit constFieldOnlyLiteral(): Field {
+  const c: Field = 819310549611346726241370945440405716213240158234039660170669895299022906775 as Field;
+  return c;
+}
+
+export pure circuit retFieldOnlyLiteral(): Field {
+  return 819310549611346726241370945440405716213240158234039660170669895299022906775 as Field;
+}
+
+export pure circuit addFieldOnlyLiteral(x: Field): Field {
+  return x + (819310549611346726241370945440405716213240158234039660170669895299022906775 as Field);
+}
+
+export pure circuit cmpFieldOnlyLiteral(x: Field): Boolean {
+  return x == (819310549611346726241370945440405716213240158234039660170669895299022906775 as Field);
+}
+
+// The boundary: `max-unsigned + 1` = 2^248, the smallest Field-only literal.
+export pure circuit callArgMaxUnsignedPlusOne(): Field {
+  return idf(452312848583266388373324160190187140051835877600158453279131187530910662656 as Field);
+}
+
+// `8 * ((r + 1) / 8) = 1 mod r`, so on the prime-order subgroup this is the
+// identity map. Exercised through group arithmetic, since `r` is not the
+// Field modulus.
+export pure circuit subgroupCheck(): JubjubPoint {
+  return ecMul(
+    ecMul(
+      ecMulGenerator(1),
+      819310549611346726241370945440405716213240158234039660170669895299022906775 as Field
+    ),
+    8
+  );
 }
 
 // Destination-typed ledger writes (the cell-write position). The hash and

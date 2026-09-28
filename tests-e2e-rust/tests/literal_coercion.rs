@@ -340,3 +340,72 @@ fn field_arithmetic_operands_are_materialised() {
         (x + Fr::from(1u64)) * (x + Fr::from(2u64))
     );
 }
+
+/// Field literals above `max-unsigned` (2^248 - 1) are materialised as `Fr`
+/// even where the position supplies no expected type. The typechecker admits
+/// such a literal only as `N as Field` and lowers it without a `safe-cast`, so
+/// a call argument (native or pure circuit) used to print bare digits no Rust
+/// integer holds: `compactc` exited 0 and `cargo build` failed (#90). The
+/// 2^200 literals above are below `max-unsigned` and never took that path.
+#[test]
+fn field_only_literals_materialise_without_an_expected_type() {
+    // The Jubjub prime-subgroup order `r`, as little-endian u64 limbs.
+    const JUBJUB_R: [u64; 4] = [
+        0xd097_0e5e_d6f7_2cb7,
+        0xa668_2093_ccc8_1082,
+        0x0667_3b01_0134_3b00,
+        0x0e7d_b4ea_6533_afa9,
+    ];
+    // `(r + 1) / 8` in plain integer arithmetic: `r` is not the Field
+    // modulus, so this cannot be computed with `Fr` operations.
+    let mut limbs = JUBJUB_R;
+    let mut carry = 1u64;
+    for limb in limbs.iter_mut() {
+        let (sum, overflow) = limb.overflowing_add(carry);
+        *limb = sum;
+        carry = overflow as u64;
+    }
+    assert_eq!(carry, 0);
+    assert_eq!(limbs[0] & 0b111, 0, "8 divides r + 1");
+    let mut shifted_in = 0u64;
+    for limb in limbs.iter_mut().rev() {
+        let low_bits = *limb << 61;
+        *limb = (*limb >> 3) | shifted_in;
+        shifted_in = low_bits;
+    }
+    let expected: Vec<u8> = limbs.iter().flat_map(|l| l.to_le_bytes()).collect();
+
+    // Every position carries exactly the literal.
+    let c = pure_circuits::ret_field_only_literal().expect("return");
+    assert_eq!(c.as_le_bytes(), expected);
+    assert_eq!(
+        pure_circuits::call_arg_field_only_literal().expect("call arg"),
+        c
+    );
+    assert_eq!(pure_circuits::const_field_only_literal().expect("const"), c);
+    assert_eq!(
+        pure_circuits::add_field_only_literal(Fr::from(0u64)).expect("add"),
+        c
+    );
+    assert!(pure_circuits::cmp_field_only_literal(c).expect("cmp c"));
+    assert!(!pure_circuits::cmp_field_only_literal(Fr::from(0u64)).expect("cmp zero"));
+    let g = midnight_compact_runtime::ec_mul_generator(Fr::from(1u64));
+    assert_eq!(
+        pure_circuits::native_arg_field_only_literal(g).expect("native arg"),
+        midnight_compact_runtime::ec_mul(g, c)
+    );
+
+    // The boundary: 2^248 = 0x01 << 248, the smallest Field-only literal.
+    let mut boundary = [0u8; 32];
+    boundary[31] = 1;
+    assert_eq!(
+        pure_circuits::call_arg_max_unsigned_plus_one()
+            .expect("boundary")
+            .as_le_bytes(),
+        boundary.to_vec()
+    );
+
+    // `8 * c = 1 mod r`, so scaling a subgroup point by `c` then 8 is the
+    // identity: the credential-compact subgroup check accepts the generator.
+    assert_eq!(pure_circuits::subgroup_check().expect("subgroup check"), g);
+}

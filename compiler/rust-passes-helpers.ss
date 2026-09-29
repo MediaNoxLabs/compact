@@ -239,6 +239,20 @@
       (define current-witness-id-ht
         (make-parameter (make-eq-hashtable)))
 
+      ;; current-callee-formal-types: eq-hashtable mapping a callee's
+      ;; function-name id (native, witness or circuit) to the list of its
+      ;; declared formal types, built once per program by
+      ;; `build-callee-formal-types`. The declarations are monomorphised by
+      ;; the time they reach Ltypescript, so a generic native
+      ;; (`persistentHash<A>`) maps to its instantiated types. Read by
+      ;; `call-args-rust` / `call-arg-formal-types` so every call argument
+      ;; is rendered at the callee's declared formal type, including an
+      ;; argument the typechecker left without a `safe-cast` because its
+      ;; type already was the formal type (#91). Defaults to an empty
+      ;; hashtable: an unknown callee keeps the wrapper-only rendering.
+      (define current-callee-formal-types
+        (make-parameter (make-eq-hashtable)))
+
       ;; current-id-rust-name-ht: eq-hashtable mapping a circuit
       ;; function-name id to its disambiguated Rust name (a symbol).
       ;; Populated once in the Program pass from the export-name alist

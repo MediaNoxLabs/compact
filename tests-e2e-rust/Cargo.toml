@@ -112,6 +112,10 @@ compact-contract-mixed-width-operand-fixture = { path = "contracts/mixed-width-o
 # write) and byte-compares the constructor's seeded state against TS.
 compact-contract-literal-coercion-fixture = { path = "contracts/literal-coercion-fixture" }
 compact-contract-inline-type-scope-fixture = { path = "contracts/inline-type-scope-fixture" }
+# Declared-formal-type gate (#91): call_arg_declared_type.rs compares the
+# state after each circuit against TS, so a call argument rendered at the
+# wrong Rust type fails even where it builds (`persistentCommit`'s `&0`).
+compact-contract-call-arg-declared-type-fixture = { path = "contracts/call-arg-declared-type-fixture" }
 # Registered in codegen_regression's FIXTURES table, so it MUST carry a
 # dev-dependency edge too: workspace membership alone does not make
 # `cargo build -p tests-e2e-rust --tests` compile it. The invariant test

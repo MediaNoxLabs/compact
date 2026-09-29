@@ -175,6 +175,16 @@ const FIXTURES: &[(&str, &str)] = &[
     // gate: tests/ternary_cond_fixture.rs (state-byte parity + per-probe
     // assertions).
     ("ternary_cond_fixture.compact", "ternary-cond-fixture"),
+    // Call arguments at the callee's declared formal type (#91): an argument
+    // the typechecker left without a `safe-cast` (its type already is the
+    // formal) must still render at that type, at every call kind — natives
+    // (`persistentCommit`, the hashes), pure circuits, witnesses, impure
+    // circuits and condition-inlined circuits. Executing gate:
+    // tests/call_arg_declared_type.rs (state-byte parity after every circuit).
+    (
+        "call_arg_declared_type_fixture.compact",
+        "call-arg-declared-type-fixture",
+    ),
     // Dogfood enclave: the whole vendored third-party digital-passport contract,
     // registered exactly like a first-class fixture so the committed crate is
     // byte-parity-gated. The source path is nested because the enclave preserves

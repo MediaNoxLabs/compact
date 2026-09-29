@@ -59,6 +59,7 @@ members = [
     "tests-e2e-rust/contracts/literal-coercion-fixture",
     "tests-e2e-rust/contracts/inline-type-scope-fixture",
     "tests-e2e-rust/contracts/ternary-cond-fixture",
+    "tests-e2e-rust/contracts/call-arg-declared-type-fixture",
     "tests-e2e-rust/contracts/digital-passport-credential",
 ]
 

@@ -82,6 +82,11 @@
        ;; their sigs (tiny.compact's `in_state(s: STATE)`) get a top-level
        ;; decl. The walkable check needs the id htables, so we build them
        ;; once up front and reuse them at the impure-emit site below.
+       ;; #91: every call site renders its arguments at the callee's
+       ;; declared formal types (`call-args-rust`); bound before anything
+       ;; renders, including the walkability scans below.
+       (parameterize ([current-callee-formal-types
+                        (build-callee-formal-types pelt*)])
        (let* ([all-tdefns (program-export-tdefns pelt*)]
               [native-id-ht (build-native-id-ht pelt*)]
               [witness-id-ht (build-witness-id-ht pelt*)]
@@ -186,7 +191,7 @@
          ;; here leaves no lib.rs (the target-port exception handler deletes
          ;; the still-empty file).
          (flush-rust-output! src)
-         (emit-cargo-toml))
+         (emit-cargo-toml)))
        ir]))
 
   (define-passes rust-passes

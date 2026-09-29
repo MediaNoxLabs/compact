@@ -58,12 +58,13 @@ Render each argument with expected type `(or (expr-expected-type e) formal)`.
 
 ### D2. A new entry point, `call-args-rust fn-id expr*`
 
-It looks up the formals and, for each argument, binds the expected type as in D1, then applies the existing clone decision of the site's renderer: `pure-call-arg-rust` logic on the `expr-rust` side, `arg-rust-clone-if-var` logic on the walker side. Every site in the inventory switches to it. `render-pure-circuit-arg`'s enum ledger-read decode is kept as a case inside the walker variant.
+It looks up the formals and, for each argument, binds the expected type as in D1, then applies the existing clone decision, on both the `expr-rust` side and the walker side. The two copies of that decision (`pure-call-arg-rust` and the body of `arg-rust-clone-if-var`) are merged into one shared `clone-if-var-rust`. Every site in the inventory switches to the entry point. `render-pure-circuit-arg`'s enum ledger-read decode is kept as a case inside the walker variant.
+- As implemented, `pure-call-arg-rust`, `render-pure-circuit-arg` and `circuit-formal-arg-types` lose their last callers and are removed. `arg-rust-clone-if-var` remains, for the non-call users only.
 - Alternative, rejected: add a `formal-type` parameter to `arg-rust-clone-if-var` / `pure-call-arg-rust`. That leaves the call sites free to omit it, and changes a helper shared with ADT and cell-write sites.
 
 ### D3. One `callee-formal-types` table
 
-id → list of formal types, built once next to the existing tables (`rust-passes-emit.ss` ~L151) from native, witness and circuit declarations, and exposed as a parameter like `current-circuit-id-ht`. Native declarations are monomorphised, so generic natives (`persistentHash<A>`, `hashToCurve<A>`) get concrete types with no instantiation logic.
+id → list of formal types, built once next to the existing tables (`build-callee-formal-types`, `rust-passes-prelude.ss`, bound in `rust-passes.ss` before anything renders) from native, witness and circuit declarations, and exposed as a parameter like `current-circuit-id-ht`. Native declarations are monomorphised, so generic natives (`persistentHash<A>`, `hashToCurve<A>`) get concrete types with no instantiation logic.
 - An id with no entry, or an arity mismatch, falls back to `expr-expected-type` alone (today's behaviour). It never refuses: a refusal at a TS-accepted position is a defect under the parity requirement.
 - Alternative, rejected: store the declaration in `native-id-ht` and add per-kind accessors. That means three lookups and touches `native-id-ht`'s existing users.
 
@@ -92,7 +93,8 @@ During implementation the `(> datum (max-unsigned))` branch is removed temporari
 
 ### D8. Drift is guarded structurally
 
-A Rust test reads `compiler/rust-passes-*.ss` and fails if `arg-rust-clone-if-var` or `pure-call-arg-rust` is called outside `call-args-rust` and a named allowlist of non-call users (ledger ADT operation arguments, cell-write values). A new call site that bypasses the entry point then fails `cargo test`, whatever literal it happens to receive.
+A Rust test reads `compiler/rust-passes-*.ss` and fails if `arg-rust-clone-if-var`, `clone-if-var-rust` or `pure-call-arg-rust` is called outside `call-args-rust` and a named allowlist (ledger ADT operation arguments and cell-write values for `arg-rust-clone-if-var`; `arg-rust-clone-if-var` itself for `clone-if-var-rust`). `pure-call-arg-rust` is removed, and it stays guarded so it cannot come back. A new call site that bypasses the entry point then fails `cargo test`, whatever literal it happens to receive.
+- Limit: the guard sees only these renderers. A site that renders arguments with `expr-rust-typed` / `ctor-expr-rust` directly, and does no clone decision, is not detected. Such a site is caught behaviourally instead, by the fixture's build and parity tests, when its call kind is covered.
 
 ### D9. Tests are behavioural, through TS state parity
 

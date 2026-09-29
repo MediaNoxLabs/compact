@@ -21,7 +21,7 @@ The Rust backend MUST render an expression using the Compact type required by it
 - **THEN** the element is coerced from the enclosing vector's element type
 
 #### Scenario: same-type aggregate argument at every call kind
-- **WHEN** `[0 as Field, 1 as Field]` is passed to a `Vector<2, Field>` parameter of a pure circuit, a witness, an impure circuit, an impure circuit inlined into an `if` or `assert` condition, and `persistentHash` / `transientHash`
+- **WHEN** `[0 as Field, 1 as Field]` is passed to a `Vector<2, Field>` parameter of a pure circuit, a witness, an impure circuit, an impure circuit inlined into a conditional expression (`c ? a : b`) or an `assert` condition, and `persistentHash` / `transientHash`
 - **THEN** every element is emitted as an `Fr` value, the generated crate builds, and the ledger state after each call equals the `compactc --target ts` reference
 
 #### Scenario: persistentCommit hashes the declared type

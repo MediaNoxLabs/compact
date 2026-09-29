@@ -8,7 +8,7 @@ The Rust code generation backend of the Compact compiler renders every expressio
 
 ### Requirement: Expressions are rendered against their expected type
 
-The Rust backend MUST render an expression using the Compact type required by its use position — the declared type of a `const` binding, the declared return type, the operand type of a comparison, the operand type of a `Field` binary `+`/`-`/`*`, the declared formal type of a call argument, the declared member type of a struct literal, the element type of a vector/array or native argument, and the destination field type of a ledger write. The typechecker's `(safe-cast <target> <src> expr)` wrapper MUST be materialised from `<target>`, not discarded.
+The Rust backend MUST render an expression using the Compact type required by its use position — the declared type of a `const` binding, the declared return type, the operand type of a comparison, the operand type of a `Field` binary `+`/`-`/`*`, the declared formal type of a call argument, the declared member type of a struct literal, the element type of a vector/array or native argument, and the destination field type of a ledger write. The typechecker's `(safe-cast <target> <src> expr)` wrapper MUST be materialised from `<target>`, not discarded. A call argument MUST be rendered at the callee's declared formal type even when the typechecker inserts no `safe-cast` because the argument's type is already the formal type. This applies to every kind of call: a native (including natives whose Rust signature differs from the Compact one), a user pure circuit, a witness, an impure or exported circuit, and an impure circuit inlined into a condition. For a generic native or circuit the declared formal type is the instantiated one.
 
 #### Scenario: Field-typed literal in a const binding
 - **WHEN** a circuit contains `const x: Field = 0;`
@@ -25,6 +25,26 @@ The Rust backend MUST render an expression using the Compact type required by it
 #### Scenario: vector element feeding a native
 - **WHEN** a bare literal is an element of an array passed to a native such as `persistentHash`
 - **THEN** the element is coerced from the enclosing vector's element type
+
+#### Scenario: same-type aggregate argument at every call kind
+- **WHEN** `[0 as Field, 1 as Field]` is passed to a `Vector<2, Field>` parameter of a pure circuit, a witness, an impure circuit, an impure circuit inlined into a conditional expression (`c ? a : b`) or an `assert` condition, and `persistentHash` / `transientHash`
+- **THEN** every element is emitted as an `Fr` value, the generated crate builds, and the ledger state after each call equals the `compactc --target ts` reference
+
+#### Scenario: persistentCommit hashes the declared type
+- **WHEN** `persistentCommit<Field>(v, opening)` is called with `v` written as a literal `N as Field` (for `N` both at or below and above `max-unsigned`)
+- **THEN** the value is hashed as a `Field`, and the resulting commitment equals the one the TS target produces for the same inputs
+
+#### Scenario: tuple/vector bridge at a call argument
+- **WHEN** a value declared as a tuple is passed to a parameter declared as a `Vector` with the same element types, or the reverse
+- **THEN** the argument is converted to the parameter's Rust type and the generated crate builds
+
+#### Scenario: argument that already renders correctly
+- **WHEN** a call argument either carries a `safe-cast` wrapper or has a Rust type fixed by its own declaration (a typed local or formal)
+- **THEN** its emitted Rust is byte-identical to the output before this change
+
+#### Scenario: Field-only literal argument without the fallback
+- **WHEN** a literal above `max-unsigned`, written `N as Field`, is passed as a call argument
+- **THEN** it renders as an `Fr` value through the callee's declared formal type, so the output does not depend on the Field-only-literal fallback
 
 ### Requirement: Uint-to-Field coercion is lossless
 
@@ -93,3 +113,35 @@ For expressions whose emitted Rust was already correct and unambiguous, this ren
 #### Scenario: neutral fixtures unchanged
 - **WHEN** the whole `FIXTURES` corpus is regenerated after the change
 - **THEN** every previously-correct fixture is byte-identical, and any changed fixture corresponds to a position that previously emitted wrong or ambiguous Rust
+
+### Requirement: Field-only literals materialise without an expected type
+
+An integer literal larger than the largest representable `Uint` (`max-unsigned`, 2^248 - 1) can only enter a program as an explicit `N as Field`, so it is `Field` by construction. The Rust backend MUST render such a literal as an `Fr` value holding exactly that integer, at every position where it can appear, including positions that supply no expected type of their own (a stdlib native argument, a user circuit argument). It MUST NOT emit the literal as a bare Rust integer. The threshold MUST be `max-unsigned`, not `u128::MAX`: a literal in `(u128::MAX, max-unsigned]` is admissible as a `Uint` and keeps its existing typed rendering.
+
+#### Scenario: literal above max-unsigned as a native argument
+- **WHEN** a circuit calls `ecMul(p, 819310549611346726241370945440405716213240158234039660170669895299022906775 as Field)`
+- **THEN** `compactc --target rust` emits an `Fr`-typed argument (`Fr::from_le_bytes(...)`), the generated crate builds, and the argument's little-endian bytes equal the literal's
+
+#### Scenario: literal above max-unsigned as a user circuit argument
+- **WHEN** a pure circuit `id(x: Field): Field` is called as `id(N as Field)` with `N > max-unsigned`
+- **THEN** the emitted argument is an `Fr` value equal to `N`, and the generated crate builds
+
+#### Scenario: literal above max-unsigned in typed positions
+- **WHEN** a literal `N > max-unsigned` written `N as Field` appears as a `const` initialiser, a return value, a `Field` arithmetic operand, or an equality operand
+- **THEN** each renders as the same `Fr` value equal to `N`
+
+#### Scenario: boundary literal
+- **WHEN** the literal `max-unsigned + 1` (2^248) is passed as `2^248 as Field` to a call argument
+- **THEN** it renders as an `Fr` value equal to 2^248 and the generated crate builds
+
+#### Scenario: Jubjub subgroup-check constant is exact
+- **WHEN** the `(r + 1) / 8` constant, for the Jubjub prime-subgroup order `r`, is used as `ecMul(ecMul(G, c as Field), 8)` on a point `G` of the prime-order subgroup
+- **THEN** the result equals `G`
+
+#### Scenario: literal below max-unsigned is unaffected
+- **WHEN** a literal `N` with `u128::MAX < N <= max-unsigned` is written `N as Field` at any of the positions above
+- **THEN** its emitted Rust is byte-identical to the output before this change
+
+#### Scenario: bare oversized literal is still rejected
+- **WHEN** a literal `N > max-unsigned` appears without `as Field`
+- **THEN** `compactc` rejects the program with a located error advising `N as Field`

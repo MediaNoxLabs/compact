@@ -302,10 +302,8 @@
                     [arg-exprs (cdr mc)]
                     [cname (symbol->string (camel->snake (id-sym fn-id)))]
                     [arg-strs
-                     (map (lambda (e)
-                            (arg-rust-clone-if-var
-                              e local-binds native-id-ht witness-id-ht circuit-id-ht))
-                          arg-exprs)]
+                     (call-args-rust fn-id arg-exprs local-binds
+                                     native-id-ht witness-id-ht circuit-id-ht)]
                     [arg-tail
                      (let join ([ys arg-strs] [acc ""])
                        (cond
@@ -455,11 +453,8 @@
                                 "current_private_state"
                                 "ctx.current_private_state")]
                            [arg-strs
-                            (map (lambda (e)
-                                   (arg-rust-clone-if-var
-                                     e local-binds
-                                     native-id-ht witness-id-ht circuit-id-ht))
-                                 wargs)])
+                            (call-args-rust (cadddr classified) wargs local-binds
+                                            native-id-ht witness-id-ht circuit-id-ht)])
                       (out (format "        let ~a = WitnessContext::new(ledger(~a), ~a, ~a);\n"
                                    ctx-name state-expr prev-priv ctx-expr))
                       (out (format "        let (current_private_state, ~a) = self.witnesses.~a(&~a~a);\n"
@@ -475,27 +470,12 @@
                    [(pure-circuit)
                     (let* ([pname (cadr classified)]
                            [pargs (caddr classified)]
-                           [callee
-                            (nanopass-case (Ltypescript Expression) (expr-strip-cast rhs)
-                              [(call ,src ,function-name ,expr* ...)
-                               (eq-hashtable-ref circuit-id-ht function-name #f)]
-                              [else #f])]
-                           [formal-types (circuit-formal-arg-types callee)]
+                           ;; F2.2: call-args-rust decodes a tenum ledger
+                           ;; read passed at a tenum formal to the enum
+                           ;; variant.
                            [arg-strs
-                            (let loop2 ([as pargs] [fs formal-types] [acc '()])
-                              (cond
-                                [(null? as) (reverse acc)]
-                                [else
-                                 (let* ([ft (and (pair? fs) (car fs))]
-                                        [s (if ft
-                                               (render-pure-circuit-arg
-                                                 (car as) ft local-binds
-                                                 native-id-ht witness-id-ht circuit-id-ht)
-                                               (arg-rust-clone-if-var (car as) local-binds
-                                                                      native-id-ht witness-id-ht circuit-id-ht))])
-                                   (loop2 (cdr as)
-                                          (if (pair? fs) (cdr fs) '())
-                                          (cons s acc)))]))])
+                            (call-args-rust (cadddr classified) pargs local-binds
+                                            native-id-ht witness-id-ht circuit-id-ht)])
                       (out (format "        let ~a = pure_circuits::~a(~a)?;\n"
                                    rust-name pname
                                    (let join ([xs arg-strs] [acc ""])
@@ -518,11 +498,8 @@
                            [cargs (caddr classified)]
                            [cr-name (format "_cr_~a" step)]
                            [arg-strs
-                            (map (lambda (e)
-                                   (arg-rust-clone-if-var
-                                     e local-binds
-                                     native-id-ht witness-id-ht circuit-id-ht))
-                                 cargs)]
+                            (call-args-rust (cadddr classified) cargs local-binds
+                                            native-id-ht witness-id-ht circuit-id-ht)]
                            [direct? (string=? ctx-expr "&ctx.current_query_context")]
                            [qc-src
                             (if (and (> (string-length ctx-expr) 0)
@@ -597,11 +574,8 @@
                                 "current_private_state"
                                 "ctx.current_private_state")]
                            [arg-strs
-                            (map (lambda (e)
-                                   (arg-rust-clone-if-var
-                                     e local-binds
-                                     native-id-ht witness-id-ht circuit-id-ht))
-                                 wargs)])
+                            (call-args-rust (cadddr classified) wargs local-binds
+                                            native-id-ht witness-id-ht circuit-id-ht)])
                       (out (format "        let ~a = WitnessContext::new(ledger(~a), ~a, ~a);\n"
                                    ctx-name state-expr prev-priv ctx-expr))
                       (out (format "        let (current_private_state, _) = self.witnesses.~a(&~a~a);\n"
@@ -616,11 +590,8 @@
                     (let* ([pname (cadr classified)]
                            [pargs (caddr classified)]
                            [arg-strs
-                            (map (lambda (e)
-                                   (arg-rust-clone-if-var
-                                     e local-binds
-                                     native-id-ht witness-id-ht circuit-id-ht))
-                                 pargs)])
+                            (call-args-rust (cadddr classified) pargs local-binds
+                                            native-id-ht witness-id-ht circuit-id-ht)])
                       (out (format "        let _ = pure_circuits::~a(~a)?;\n"
                                    pname
                                    (let join ([xs arg-strs] [acc ""])
@@ -635,11 +606,8 @@
                            [cargs (caddr classified)]
                            [cr-name (format "_cr_~a" step)]
                            [arg-strs
-                            (map (lambda (e)
-                                   (arg-rust-clone-if-var
-                                     e local-binds
-                                     native-id-ht witness-id-ht circuit-id-ht))
-                                 cargs)])
+                            (call-args-rust (cadddr classified) cargs local-binds
+                                            native-id-ht witness-id-ht circuit-id-ht)])
                       ;; A15: when ctx-expr is `&_results_N.context` (after
                       ;; a pl-call) or any non-default form, rebind ctx
                       ;; first so the inner `self.<name>(ctx, ...)` sees
@@ -989,12 +957,8 @@
                                               [cname (symbol->string
                                                        (camel->snake (id-sym fn-id)))]
                                               [arg-strs
-                                               (map (lambda (e)
-                                                      (arg-rust-clone-if-var
-                                                        e local-binds
-                                                        native-id-ht witness-id-ht
-                                                        circuit-id-ht))
-                                                    arg-exprs)]
+                                               (call-args-rust fn-id arg-exprs local-binds
+                                                               native-id-ht witness-id-ht circuit-id-ht)]
                                               [arg-tail
                                                (let join ([xs arg-strs] [acc ""])
                                                  (cond
@@ -1106,12 +1070,8 @@
                                             [cname (symbol->string
                                                      (camel->snake (id-sym fn-id)))]
                                             [arg-strs
-                                             (map (lambda (e)
-                                                    (arg-rust-clone-if-var
-                                                      e local-binds
-                                                      native-id-ht witness-id-ht
-                                                      circuit-id-ht))
-                                                  arg-exprs)]
+                                             (call-args-rust fn-id arg-exprs local-binds
+                                                             native-id-ht witness-id-ht circuit-id-ht)]
                                             [arg-tail
                                              (let join ([xs arg-strs] [acc ""])
                                                (cond

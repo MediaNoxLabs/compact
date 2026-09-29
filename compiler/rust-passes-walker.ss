@@ -549,42 +549,96 @@
           [(<= nat 340282366920938463463374607431768211455) "u128"]
           [else #f]))
 
-      ;; arg-rust-clone-if-var: render a call argument expression and
-      ;; suffix `.clone()` if the rendered form is a bare var-ref. Used
-      ;; by E4.4's bare-call emitter so passing the same Compact-level
-      ;; var as an argument twice (e.g. `private$add_coin(coin)` followed
-      ;; by `pure_circuits::commitment_from_coin_info(coin, pk)`) doesn't
-      ;; trip Rust's move semantics. Defensive: we don't have liveness
-      ;; analysis, so we clone every var-ref arg. User structs derive
-      ;; Clone (H5), so the clone is a no-op semantically and cheap for
-      ;; the small struct shapes Compact emits.
+      ;; arg-rust-clone-if-var: render a by-value operand that is NOT a
+      ;; call argument — a ledger ADT operation argument or a cell-write
+      ;; value — and suffix `.clone()` via `clone-if-var-rust`, so passing
+      ;; the same Compact-level var twice doesn't trip Rust's move
+      ;; semantics. Defensive: we don't have liveness analysis, so we clone
+      ;; every non-Copy var-ref. User structs derive Clone (H5), so the
+      ;; clone is a no-op semantically and cheap for the small struct
+      ;; shapes Compact emits. Call arguments use `call-args-rust` instead
+      ;; (#91); tests-e2e-rust/tests/call_args_guard.rs enforces that.
       (define (arg-rust-clone-if-var e local-binds
                                      native-id-ht witness-id-ht circuit-id-ht)
         ;; Render at the argument's own `safe-cast` target — its declared
         ;; formal / destination type — so a bare literal, mixed-width, or
         ;; aggregate argument is materialised (tasks 2.5/2.8). An argument
         ;; with no wrapper leaves the parameter at #f (no coercion needed).
-        (let ([rendered (parameterize ([current-expr-expected-type (expr-expected-type e)])
+        ;; Call arguments go through `call-args-rust`, which also supplies
+        ;; the callee's formal when there is no wrapper; this stays for the
+        ;; non-call users (ledger ADT operation arguments, cell writes).
+        (clone-if-var-rust e
+          (parameterize ([current-expr-expected-type (expr-expected-type e)])
+            (ctor-expr-rust e local-binds
+                            native-id-ht witness-id-ht circuit-id-ht))))
+
+      ;; clone-if-var-rust: the clone decision shared by every by-value
+      ;; argument renderer. Suffix `.clone()` to `rendered` (the Rust text of
+      ;; `e`) when `e` is a var-ref, or a field projection rooted in one,
+      ;; whose type is not known to be Rust `Copy` (per
+      ;; current-formal-arg-types). Pure circuits and by-value natives take
+      ;; their arguments by value, so a non-Copy struct passed as `foo(x)`
+      ;; would move `x` and break a later read of `x` in the same body (a
+      ;; validation circuit passing one record to several helpers, or
+      ;; jubjub_point_x then jubjub_point_y on the same key in a `&&`).
+      (define (clone-if-var-rust e rendered)
+        (let ([stripped (expr-strip-cast e)])
+          (nanopass-case (Ltypescript Expression) stripped
+            [(var-ref ,src ,var-name)
+             (if (var-ref-known-copy? var-name)
+                 rendered
+                 (string-append rendered ".clone()"))]
+            ;; elt-ref of a (chain of) var-ref(s): `path.value`,
+            ;; `dest_public_key.zk` etc. Borrow-of-moved-value errors
+            ;; surface when the same field is passed to one call then
+            ;; re-read after — defensive clone keeps the owner intact.
+            ;; We clone whenever the leaf field's type is unknown or
+            ;; non-Copy; for known-Copy field types we skip the clone.
+            [(elt-ref ,src ,expr ,elt-name ,nat)
+             (cond
+               [(not (elt-ref-rooted-in-var? stripped)) rendered]
+               [(elt-ref-known-copy? stripped) rendered]
+               [else (string-append rendered ".clone()")])]
+            [else rendered])))
+
+      ;; call-args-rust: THE renderer for the arguments of a call to
+      ;; `function-name` — natives, stdlib circuits, user pure and impure
+      ;; circuits, witnesses (#91). Each argument renders at its callee's
+      ;; declared formal type: its own `safe-cast` target when the
+      ;; typechecker wrapped it (that target is the formal, so wrapped
+      ;; arguments render as before), else the formal from
+      ;; `current-callee-formal-types` (the typechecker leaves an argument
+      ;; whose type already is the formal unwrapped, and it used to render
+      ;; with no expected type: `[0, 1]` for a `[Fr; 2]` parameter, `&0` for
+      ;; `persistentCommit<Field>`). Returns the list of rendered arguments.
+      ;;
+      ;; Two forms, one per renderer:
+      ;;   (call-args-rust f expr* native-id-ht)
+      ;;       `expr-rust` form (pure bodies, `call-rust`).
+      ;;   (call-args-rust f expr* local-binds native-id-ht witness-id-ht circuit-id-ht)
+      ;;       walker form (`ctor-expr-rust`), plus the enum ledger-read
+      ;;       decode of `enum-ledger-read-arg-rust`.
+      ;; Both forms apply the `clone-if-var-rust` decision. The source-level guard
+      ;; in tests-e2e-rust/tests/call_args_guard.rs keeps call sites on this
+      ;; entry point.
+      (define call-args-rust
+        (case-lambda
+          [(function-name expr* native-id-ht)
+           (map (lambda (e formal)
+                  (clone-if-var-rust e
+                    (expr-rust-typed e (call-arg-expected-type e formal) native-id-ht)))
+                expr*
+                (call-arg-formal-types function-name (length expr*)))]
+          [(function-name expr* local-binds native-id-ht witness-id-ht circuit-id-ht)
+           (map (lambda (e formal)
+                  (or (enum-ledger-read-arg-rust e formal)
+                      (clone-if-var-rust e
+                        (parameterize ([current-expr-expected-type
+                                         (call-arg-expected-type e formal)])
                           (ctor-expr-rust e local-binds
-                                          native-id-ht witness-id-ht circuit-id-ht))])
-          (let ([stripped (expr-strip-cast e)])
-            (nanopass-case (Ltypescript Expression) stripped
-              [(var-ref ,src ,var-name)
-               (if (var-ref-known-copy? var-name)
-                   rendered
-                   (string-append rendered ".clone()"))]
-              ;; elt-ref of a (chain of) var-ref(s): `path.value`,
-              ;; `dest_public_key.zk` etc. Borrow-of-moved-value errors
-              ;; surface when the same field is passed to one call then
-              ;; re-read after — defensive clone keeps the owner intact.
-              ;; We clone whenever the leaf field's type is unknown or
-              ;; non-Copy; for known-Copy field types we skip the clone.
-              [(elt-ref ,src ,expr ,elt-name ,nat)
-               (cond
-                 [(not (elt-ref-rooted-in-var? stripped)) rendered]
-                 [(elt-ref-known-copy? stripped) rendered]
-                 [else (string-append rendered ".clone()")])]
-              [else rendered]))))
+                                          native-id-ht witness-id-ht circuit-id-ht)))))
+                expr*
+                (call-arg-formal-types function-name (length expr*)))]))
 
       ;; var-ref-known-copy?: returns #t when the local has a declared
       ;; type recorded in `current-formal-arg-types` that lowers to a
@@ -683,11 +737,8 @@
             [stdlib
              ;; I3b/4: stdlib circuits (`some`, `none`) live in
              ;; midnight_compact_runtime::std_lib. Render with the runtime path.
-             (let ([args
-                    (map (lambda (e)
-                           (arg-rust-clone-if-var e local-binds
-                                                  native-id-ht witness-id-ht circuit-id-ht))
-                         expr*)])
+             (let ([args (call-args-rust function-name expr* local-binds
+                                         native-id-ht witness-id-ht circuit-id-ht)])
                (format "~a(~a)"
                        stdlib
                        (let join ([xs args] [acc ""])
@@ -698,11 +749,8 @@
                                        (string-append acc (car xs) ", "))]))))]
             [(and c (id-pure? function-name))
              (let ([rust-name (id->rust-name function-name)]
-                   [args
-                    (map (lambda (e)
-                           (arg-rust-clone-if-var e local-binds
-                                                  native-id-ht witness-id-ht circuit-id-ht))
-                         expr*)])
+                   [args (call-args-rust function-name expr* local-binds
+                                         native-id-ht witness-id-ht circuit-id-ht)])
                ;; Append `?` to unwrap the `Result<T, CompactError>` a
                ;; pure circuit returns. Every position reaching here
                ;; (cond-rust/assert-cond-rust conditions, if-branch
@@ -1138,32 +1186,16 @@
                [(tunknown) #f]
                [else #f])))
 
-      ;; circuit-formal-arg-types: pull the list of formal arg types from a
-      ;; circuit Program-Element. Returns '() if cdefn is #f or not a
-      ;; circuit. Used by F2.2 to align actual args with their declared
-      ;; types when emitting pure-circuit call args.
-      (define (circuit-formal-arg-types cdefn)
-        (cond
-          [(not cdefn) '()]
-          [else
-           (nanopass-case (Ltypescript Program-Element) cdefn
-             [(circuit ,src ,function-name (,arg* ...) ,type ,stmt)
-              (map (lambda (a)
-                     (nanopass-case (Ltypescript Argument) a
-                       [(,var-name ,type) type]))
-                   arg*)]
-             [else '()])]))
-
-      ;; render-pure-circuit-arg: render a single actual arg expression
-      ;; for a pure-circuit call. If the formal type is a tenum AND the
-      ;; actual is a `(public-ledger ... read)` returning the matching
-      ;; tenum, emit a gather block decoded via the enum's FromFieldRepr
-      ;; (decode_via_field_repr::<EnumName>) so the call receives the
-      ;; actual enum variant rather than the bare u8 discriminant. Other
-      ;; shapes fall through to ctor-expr-rust.
-      (define (render-pure-circuit-arg actual formal-type local-binds
-                                       native-id-ht witness-id-ht circuit-id-ht)
-        (let* ([enum-name (tenum-name-of-type formal-type)]
+      ;; enum-ledger-read-arg-rust: render a call argument declared at a
+      ;; tenum formal. If `formal-type` is a tenum AND `actual` is a
+      ;; `(public-ledger ... read)` returning the matching tenum, emit a
+      ;; gather block decoded via the enum's FromFieldRepr
+      ;; (decode_via_field_repr::<EnumName>) so the callee receives the
+      ;; actual enum variant rather than the bare u8 discriminant. Returns
+      ;; #f for every other shape (the caller renders it normally). Used by
+      ;; the walker form of `call-args-rust`.
+      (define (enum-ledger-read-arg-rust actual formal-type)
+        (let* ([enum-name (and formal-type (tenum-name-of-type formal-type))]
                [e (expr-strip-cast actual)])
           (cond
             [(and enum-name
@@ -1182,9 +1214,7 @@
                  path-elt*
                  (format "midnight_compact_runtime::std_lib::decode_via_field_repr::<~a>"
                          enum-name)))]
-            [else
-             (arg-rust-clone-if-var actual local-binds
-                                    native-id-ht witness-id-ht circuit-id-ht)])))
+            [else #f])))
 
       ;; elt-ref-of-struct-read?: predicate for the F2.2 narrow case
       ;; `(elt-ref (public-ledger ... read with tstruct return) field 0)`.
@@ -1358,11 +1388,8 @@
                     [cname (id->rust-name function-name)]
                     [rust-name (format "_cr_h~a" counter)]
                     [arg-strs
-                     (map (lambda (e)
-                            (arg-rust-clone-if-var
-                              e local-binds
-                              native-id-ht witness-id-ht circuit-id-ht))
-                          arg-exprs)]
+                     (call-args-rust function-name arg-exprs local-binds
+                                     native-id-ht witness-id-ht circuit-id-ht)]
                     [arg-tail
                      (let join ([xs arg-strs] [acc ""])
                        (cond
@@ -1483,11 +1510,8 @@
                        [(eq? mode 'ctor) "ctx.initial_private_state"]
                        [else "ctx.current_private_state"])]
                     [arg-strs
-                     (map (lambda (e)
-                            (arg-rust-clone-if-var
-                              e local-binds
-                              native-id-ht witness-id-ht circuit-id-ht))
-                          arg-exprs)]
+                     (call-args-rust function-name arg-exprs local-binds
+                                     native-id-ht witness-id-ht circuit-id-ht)]
                     [call-line
                      (format "        let ~a = WitnessContext::new(ledger(~a), ~a, ~a);\n"
                              ctx-name state-expr prev-priv qctx-ref)]
@@ -1925,9 +1949,18 @@
                                         ;; `decode_via_field_repr::<STATE>(_av)?
                                         ;; == STATE::unset`). Non-tenum formals
                                         ;; retain the existing untyped rendering.
+                                        ;;
+                                        ;; #91: the actual renders at the
+                                        ;; formal's declared type, as every
+                                        ;; call argument does (`call-args-rust`).
+                                        ;; The substituted text is spliced into
+                                        ;; the body wherever the formal is read,
+                                        ;; so it gets no `.clone()`.
                                         (let* ([formal-tenum? (tenum-name-of-type type)]
                                                [rendered
-                                                (parameterize ([current-enum-ref-typed? (if formal-tenum? #t (current-enum-ref-typed?))])
+                                                (parameterize ([current-enum-ref-typed? (if formal-tenum? #t (current-enum-ref-typed?))]
+                                                               [current-expr-expected-type
+                                                                 (call-arg-expected-type actual type)])
                                                   (ctor-expr-rust actual outer-local-binds
                                                                   native-id-ht witness-id-ht circuit-id-ht))])
                                           (cons var-name rendered))]))
@@ -2273,11 +2306,8 @@
                                 [(eq? mode 'ctor) "ctx.initial_private_state"]
                                 [else "ctx.current_private_state"])]
                              [arg-strs
-                              (map (lambda (e)
-                                     (arg-rust-clone-if-var
-                                       e local-binds
-                                       native-id-ht witness-id-ht circuit-id-ht))
-                                   wargs)]
+                              (call-args-rust (cadddr classified) wargs local-binds
+                                              native-id-ht witness-id-ht circuit-id-ht)]
                              [call-line
                               (format "        let ~a = WitnessContext::new(ledger(~a), ~a, ~a);\n"
                                       ctx-name state-expr prev-priv qctx-ref)]
@@ -2320,33 +2350,15 @@
                              [hoist-lines (car hoist)]
                              [hoist-binds (cadr hoist)]
                              [we2 (caddr hoist)]
-                             ;; F2.2: peek at the callee's formal types so
-                             ;; per-arg rendering can coerce tenum ledger
-                             ;; reads to the actual enum variant.
-                             [callee
-                              (nanopass-case (Ltypescript Expression) (expr-strip-cast rhs)
-                                [(call ,src ,function-name ,expr* ...)
-                                 (eq-hashtable-ref circuit-id-ht function-name #f)]
-                                [else #f])]
-                             [formal-types (circuit-formal-arg-types callee)]
+                             ;; F2.2: call-args-rust decodes a tenum ledger
+                             ;; read passed at a tenum formal to the enum
+                             ;; variant.
                              [arg-strs
                               (parameterize ([current-witness-call-binds
                                                (append hoist-binds
                                                        (current-witness-call-binds))])
-                                (let loop ([as pargs] [fs formal-types] [acc '()])
-                                  (cond
-                                    [(null? as) (reverse acc)]
-                                    [else
-                                     (let* ([ft (and (pair? fs) (car fs))]
-                                            [s (if ft
-                                                   (render-pure-circuit-arg
-                                                     (car as) ft local-binds
-                                                     native-id-ht witness-id-ht circuit-id-ht)
-                                                   (arg-rust-clone-if-var (car as) local-binds
-                                                                          native-id-ht witness-id-ht circuit-id-ht))])
-                                       (loop (cdr as)
-                                             (if (pair? fs) (cdr fs) '())
-                                             (cons s acc)))])))]
+                                (call-args-rust (cadddr classified) pargs local-binds
+                                                native-id-ht witness-id-ht circuit-id-ht))]
                              [bind-line
                               (format "        let ~a = pure_circuits::~a(~a)?;\n"
                                       rust-name pname
@@ -2375,11 +2387,8 @@
                              [counter (length pre-lines)]
                              [cr-name (format "_cr_~a" counter)]
                              [arg-strs
-                              (map (lambda (e)
-                                     (arg-rust-clone-if-var
-                                       e local-binds
-                                       native-id-ht witness-id-ht circuit-id-ht))
-                                   cargs)])
+                              (call-args-rust (cadddr classified) cargs local-binds
+                                              native-id-ht witness-id-ht circuit-id-ht)])
                         ;; A-05: hoist ctx-reading args (ledger reads) before
                         ;; the call moves `ctx` — see hoist-ctx-args.
                         (let-values ([(hoist-lines arg-tail)
@@ -2482,11 +2491,8 @@
                                 [(eq? mode 'ctor) "ctx.initial_private_state"]
                                 [else "ctx.current_private_state"])]
                              [arg-strs
-                              (map (lambda (e)
-                                     (arg-rust-clone-if-var
-                                       e local-binds
-                                       native-id-ht witness-id-ht circuit-id-ht))
-                                   wargs)]
+                              (call-args-rust (cadddr classified) wargs local-binds
+                                              native-id-ht witness-id-ht circuit-id-ht)]
                              [call-line
                               (format "        let ~a = WitnessContext::new(ledger(~a), ~a, ~a);\n"
                                       ctx-name state-expr prev-priv qctx-ref)]
@@ -2507,11 +2513,8 @@
                       (let* ([pname (cadr classified)]
                              [pargs (caddr classified)]
                              [arg-strs
-                              (map (lambda (e)
-                                     (arg-rust-clone-if-var
-                                       e local-binds
-                                       native-id-ht witness-id-ht circuit-id-ht))
-                                   pargs)]
+                              (call-args-rust (cadddr classified) pargs local-binds
+                                              native-id-ht witness-id-ht circuit-id-ht)]
                              [bind-line
                               (format "        let _ = pure_circuits::~a(~a)?;\n"
                                       pname
@@ -2536,11 +2539,8 @@
                              [counter (length pre-lines)]
                              [cr-name (format "_cr_~a" counter)]
                              [arg-strs
-                              (map (lambda (e)
-                                     (arg-rust-clone-if-var
-                                       e local-binds
-                                       native-id-ht witness-id-ht circuit-id-ht))
-                                   cargs)])
+                              (call-args-rust (cadddr classified) cargs local-binds
+                                              native-id-ht witness-id-ht circuit-id-ht)])
                         ;; A-05: hoist ctx-reading args before the moving call.
                         (let-values ([(hoist-lines arg-tail)
                                       (hoist-ctx-args arg-strs counter)])
@@ -2629,11 +2629,12 @@
 
       ;; classify-const-rhs: inspect a `const` binding's RHS expression and
       ;; classify the call (or return 'unknown). Returns
-      ;;   (list 'witness rust-name args)         for witness calls
-      ;;   (list 'pure-circuit rust-name args)    for pure circuit calls
-      ;;   (list 'impure-exported rust-name args) for exported impure circuit
-      ;;                                          method calls (`self.<name>`)
-      ;;   (list 'unknown)                        otherwise
+      ;;   (list 'witness rust-name args fn-id)         for witness calls
+      ;;   (list 'pure-circuit rust-name args fn-id)    for pure circuit calls
+      ;;   (list 'impure-exported rust-name args fn-id) for exported impure circuit
+      ;;                                                method calls (`self.<name>`)
+      ;;   (list 'unknown)                              otherwise
+      ;; `fn-id` is the callee's function-name id, for `call-args-rust`.
       (define (classify-const-rhs rhs witness-id-ht circuit-id-ht)
         (let ([e (expr-strip-cast rhs)])
           (nanopass-case (Ltypescript Expression) e
@@ -2642,12 +2643,14 @@
                [(eq-hashtable-ref witness-id-ht function-name #f)
                 (list 'witness
                       (id->rust-name function-name)
-                      expr*)]
+                      expr*
+                      function-name)]
                [(and (eq-hashtable-ref circuit-id-ht function-name #f)
                      (id-pure? function-name))
                 (list 'pure-circuit
                       (id->rust-name function-name)
-                      expr*)]
+                      expr*
+                      function-name)]
                ;; E5 / A17: impure circuit (exported or internal). The
                ;; callee is emitted as a method on the Contract impl
                ;; (visibility per emit-impure-circuit), so the call shape
@@ -2658,7 +2661,8 @@
                      (not (id-pure? function-name)))
                 (list 'impure-exported
                       (id->rust-name function-name)
-                      expr*)]
+                      expr*
+                      function-name)]
                [else (list 'unknown)])]
             [else (list 'unknown)])))
 
@@ -2719,17 +2723,17 @@
 
       ;; classify-call: same shape as classify-const-rhs but for a bare
       ;; (call <fn-id> args*) at statement position. Returns
-      ;;   (list 'witness rust-name args)
-      ;;   (list 'pure-circuit rust-name args)
-      ;;   (list 'impure-exported rust-name args)
+      ;;   (list 'witness rust-name args fn-id)
+      ;;   (list 'pure-circuit rust-name args fn-id)
+      ;;   (list 'impure-exported rust-name args fn-id)
       ;;   (list 'unknown)
       (define (classify-call fn-id arg* witness-id-ht circuit-id-ht)
         (cond
           [(eq-hashtable-ref witness-id-ht fn-id #f)
-           (list 'witness (id->rust-name fn-id) arg*)]
+           (list 'witness (id->rust-name fn-id) arg* fn-id)]
           [(and (eq-hashtable-ref circuit-id-ht fn-id #f)
                 (id-pure? fn-id))
-           (list 'pure-circuit (id->rust-name fn-id) arg*)]
+           (list 'pure-circuit (id->rust-name fn-id) arg* fn-id)]
           ;; E5 / Walker-A: bare-call to an impure circuit (exported
           ;; or not — both are emitted as methods on the contract impl,
           ;; with `pub` vs `pub(crate)` visibility per emit-impure-circuit).
@@ -2738,7 +2742,7 @@
           ;; to keep the downstream emit clauses unchanged.
           [(and (eq-hashtable-ref circuit-id-ht fn-id #f)
                 (not (id-pure? fn-id)))
-           (list 'impure-exported (id->rust-name fn-id) arg*)]
+           (list 'impure-exported (id->rust-name fn-id) arg* fn-id)]
           [else (list 'unknown)]))
 
       ;; stmt->if-then-else: detect a `(if cond then-stmt else-stmt)`

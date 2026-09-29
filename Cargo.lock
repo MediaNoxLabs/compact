@@ -740,6 +740,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-contract-call-arg-declared-type-fixture"
+version = "0.1.0"
+dependencies = [
+ "midnight-compact-runtime",
+]
+
+[[package]]
 name = "compact-contract-chunked-ledger-fixture"
 version = "0.1.0"
 dependencies = [
@@ -4838,6 +4845,7 @@ dependencies = [
  "compact-contract-asset-registry-fixture",
  "compact-contract-bounded-uint-fixture",
  "compact-contract-bug11-fixture",
+ "compact-contract-call-arg-declared-type-fixture",
  "compact-contract-chunked-ledger-fixture",
  "compact-contract-cross-circuit-fixture",
  "compact-contract-digital-passport-credential",

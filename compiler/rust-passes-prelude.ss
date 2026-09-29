@@ -190,6 +190,47 @@
             pelt*)
           ht))
 
+      ;; build-callee-formal-types: eq-hashtable from each native, witness
+      ;; and circuit function-name id to the list of its declared formal
+      ;; types (see `current-callee-formal-types`).
+      (define (build-callee-formal-types pelt*)
+        (let ([ht (make-eq-hashtable)])
+          (define (arg-types arg*)
+            (map (lambda (a)
+                   (nanopass-case (Ltypescript Argument) a
+                     [(,var-name ,type) type]))
+                 arg*))
+          (for-each
+            (lambda (pelt)
+              (nanopass-case (Ltypescript Program-Element) pelt
+                [(native ,src ,function-name ,native-entry (,arg* ...) ,type)
+                 (eq-hashtable-set! ht function-name (arg-types arg*))]
+                [(witness ,src ,function-name (,arg* ...) ,type)
+                 (eq-hashtable-set! ht function-name (arg-types arg*))]
+                [(circuit ,src ,function-name (,arg* ...) ,type ,stmt)
+                 (eq-hashtable-set! ht function-name (arg-types arg*))]
+                [else (void)]))
+            pelt*)
+          ht))
+
+      ;; call-arg-formal-types: the declared formal types of `function-name`
+      ;; paired positionally with `n` actual arguments, or a list of `n` #f
+      ;; when the callee is not in the table or the arity does not match.
+      ;; A missing entry never refuses: the argument then renders at its own
+      ;; `safe-cast` target alone, as before.
+      (define (call-arg-formal-types function-name n)
+        (let ([t* (eq-hashtable-ref (current-callee-formal-types) function-name #f)])
+          (if (and t* (fx= (length t*) n))
+              t*
+              (make-list n #f))))
+
+      ;; call-arg-expected-type: the type a call argument renders at — its
+      ;; own `safe-cast` target when the typechecker wrapped it (that target
+      ;; IS the declared formal, so wrapped arguments are unchanged), else
+      ;; the callee's declared `formal` (#91, design D1).
+      (define (call-arg-expected-type e formal)
+        (or (expr-expected-type e) formal))
+
       (define (native-call-site-rust ne)
         (or (native-entry-rust-function ne)
             (rust-feature-error #f 'native-binding-missing

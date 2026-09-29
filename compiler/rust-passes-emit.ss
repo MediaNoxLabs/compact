@@ -2113,6 +2113,15 @@
                    (field-literal-rust datum)]
                   [(and expected (type-peel-tunsigned expected)) =>
                    (lambda (nat) (format "~a~a" datum (uint-rust-width nat)))]
+                  ;; A literal above `max-unsigned` is Field by construction:
+                  ;; the typechecker admits it only as `N as Field`, which it
+                  ;; lowers to a bare `(quote N)` with no safe-cast
+                  ;; (analysis-passes.ss, the `cast` Field special case). A
+                  ;; position with no expected type of its own (a call
+                  ;; argument) would otherwise print digits no Rust integer
+                  ;; type can hold (#90). Literals at or below `max-unsigned`
+                  ;; are admissible `Uint`s and keep the bare rendering.
+                  [(> datum (max-unsigned)) (field-literal-rust datum)]
                   [else (format "~a" datum)]))]
              [else (rust-feature-error src 'quote-variant
                      "unsupported quote datum: ~s" datum)])]
@@ -2712,37 +2721,6 @@
       ;; non-native (user-defined) circuit calls, fall back to the
       ;; snake-cased local name — a follow-up wedge will resolve these
       ;; properly.
-      ;; pure-call-arg-rust: render a call argument via expr-rust, then
-      ;; suffix `.clone()` when the argument is a var-ref or a
-      ;; var-rooted field access whose type is not Rust `Copy`. Pure
-      ;; circuits are free functions taking args by value, so a non-Copy
-      ;; struct passed as `foo(x)` would move `x` and break later reads
-      ;; of `x` in the same body (a validation circuit that passes the
-      ;; same record to several helpers in sequence). `.clone()` borrows, so the owner
-      ;; stays usable. Mirrors arg-rust-clone-if-var's decision logic but
-      ;; renders via expr-rust (the pure walker's renderer) and consults
-      ;; current-formal-arg-types (seeded by emit-pure-circuit) for the
-      ;; Copy check. Also used for by-value native args (jubjub_point_x
-      ;; takes `JubjubPoint` by value and is invoked twice on the same
-      ;; field in a && expression).
-      (define (pure-call-arg-rust e native-id-ht)
-        ;; Render at the argument's own `safe-cast` target (the callee's
-        ;; declared formal type) so a bare literal / mixed-width / aggregate
-        ;; argument is materialised; see task 2.5.
-        (let ([rendered (expr-rust-typed e (expr-expected-type e) native-id-ht)]
-              [stripped (expr-strip-cast e)])
-          (nanopass-case (Ltypescript Expression) stripped
-            [(var-ref ,src ,var-name)
-             (if (var-ref-known-copy? var-name)
-                 rendered
-                 (string-append rendered ".clone()"))]
-            [(elt-ref ,src ,expr ,elt-name ,nat)
-             (cond
-               [(not (elt-ref-rooted-in-var? stripped)) rendered]
-               [(elt-ref-known-copy? stripped) rendered]
-               [else (string-append rendered ".clone()")])]
-            [else rendered])))
-
       ;; native-vector-aligned-slice: render a vector-typed native argument
       ;; (persistentHash / transientHash) as the Rust expression
       ;; `&[AlignedValue::from(<leaf>), ...]` — a FLAT list of leaf atoms.
@@ -2767,14 +2745,30 @@
       ;; literal) from being wrapped whole in `AlignedValue::from(<array>)`,
       ;; which has no `From` impl and fails `cargo build`. A non-aggregate
       ;; argument still renders whole as a single atom.
-      (define (native-vector-aligned-slice arg native-id-ht)
+      ;;
+      ;; `formal` is the native's declared (instantiated) formal type. An
+      ;; argument the typer left unwrapped already has that type, so it
+      ;; supplies the target the wrapper would have (#91): a tuple literal's
+      ;; elements are then coerced to the element type (`[0 as Field, ..]`
+      ;; used to lower to `AlignedValue::from(0)`, which does not build),
+      ;; and a value whose own type the emitter cannot recover is read at
+      ;; the formal. A value with a recoverable type keeps that type.
+      (define (native-vector-aligned-slice arg formal native-id-ht)
         (let ([counter 0])
           (define (fresh-temp)
             (let ([n counter])
               (set! counter (fx+ n 1))
               (format "__compact_hash_arg_~a" n)))
-          (let* ([result (native-vector-atoms arg
-                           (expr-expected-type arg) (expr-source-type arg)
+          (let* ([unwrapped-type
+                  (and formal
+                       (not (expr-expected-type arg))
+                       (nanopass-case (Ltypescript Expression) arg
+                         [(tuple ,src ,tuple-arg* ...) (cons formal #f)]
+                         [else (and (not (expr-value-type arg))
+                                    (cons formal formal))]))]
+                 [result (native-vector-atoms arg
+                           (if unwrapped-type (car unwrapped-type) (expr-expected-type arg))
+                           (if unwrapped-type (cdr unwrapped-type) (expr-source-type arg))
                            fresh-temp native-id-ht)]
                  [bindings (car result)]
                  [atoms (cdr result)])
@@ -2922,10 +2916,7 @@
              ;; reaches this through ctor-call-rust which does have the
              ;; pelt and ascribes the generic — this branch is a safety
              ;; net for any future ascription-free use site.
-             (let ([args
-                    (map (lambda (e)
-                           (expr-rust-typed e (expr-expected-type e) native-id-ht))
-                         expr*)])
+             (let ([args (call-args-rust function-name expr* native-id-ht)])
                (format "midnight_compact_runtime::std_lib::~a(~a)"
                        sym
                        (let join ([xs args] [acc ""])
@@ -2967,7 +2958,9 @@
                 (let ([arg (car expr*)])
                   (string-append
                     "midnight_compact_runtime::std_lib::persistent_hash_aligned("
-                    (native-vector-aligned-slice arg native-id-ht)
+                    (native-vector-aligned-slice arg
+                      (car (call-arg-formal-types function-name 1))
+                      native-id-ht)
                     ")"))]
                [else
                 (rust-feature-error src 'persistent-hash-arity
@@ -2993,7 +2986,9 @@
                 (let ([arg (car expr*)])
                   (string-append
                     "midnight_compact_runtime::std_lib::transient_hash_aligned("
-                    (native-vector-aligned-slice arg native-id-ht)
+                    (native-vector-aligned-slice arg
+                      (car (call-arg-formal-types function-name 1))
+                      native-id-ht)
                     ")"))]
                [else
                 (rust-feature-error src 'transient-hash-arity
@@ -3027,19 +3022,32 @@
                 ;; `midnight_compact_runtime::base_crypto::hash::HashOutput`
                 ;; (midnight-base-crypto re-exports the crate as
                 ;; `base_crypto` and `hash` is a pub module).
-                (string-append
-                  "midnight_compact_runtime::persistent_commit(&"
-                  (expr-rust (car expr*) native-id-ht)
-                  ", midnight_compact_runtime::base_crypto::hash::HashOutput("
-                  (expr-rust (cadr expr*) native-id-ht)
-                  ")).0")]
+                ;;
+                ;; Both operands render at their declared formal types (the
+                ;; instantiated `A`, then `Bytes<32>`), not at whatever the
+                ;; enclosing position expects. `persistent_commit` is generic
+                ;; over `T: BinaryHashRepr`, which every Rust integer
+                ;; implements, so a same-type `0 as Field` value left bare
+                ;; would infer `i32`, build, and hash 4 bytes instead of the
+                ;; `Fr` encoding (#91).
+                (let ([formal* (call-arg-formal-types function-name 2)])
+                  (string-append
+                    "midnight_compact_runtime::persistent_commit(&"
+                    (expr-rust-typed (car expr*)
+                                     (call-arg-expected-type (car expr*) (car formal*))
+                                     native-id-ht)
+                    ", midnight_compact_runtime::base_crypto::hash::HashOutput("
+                    (expr-rust-typed (cadr expr*)
+                                     (call-arg-expected-type (cadr expr*) (cadr formal*))
+                                     native-id-ht)
+                    ")).0"))]
                [else
                 (rust-feature-error src 'persistent-commit-arity
                   "persistentCommit arity ~a not yet supported (expected 2)"
                   (length expr*))])]
             [ne
              ;; A native with a 1:1 binding. Emit `<rust-name>(<arg>, ...)`.
-             ;; Args render via pure-call-arg-rust so by-value natives
+             ;; Args render via call-args-rust so by-value natives
              ;; that take a non-Copy struct / JubjubPoint (jubjub_point_x,
              ;; jubjub_point_y) get a defensive `.clone()` when the same
              ;; value is read again later in the body — a key-comparison
@@ -3048,8 +3056,7 @@
              ;; inside a `&&` expression; without the clone the first
              ;; call moves the field and the second fails to borrow.
              (let ([rust-name (native-call-site-rust ne)]
-                   [args
-                    (map (lambda (e) (pure-call-arg-rust e native-id-ht)) expr*)])
+                   [args (call-args-rust function-name expr* native-id-ht)])
                (string-append
                  rust-name
                  "("
@@ -3066,7 +3073,7 @@
              ;; if the callee is a user pure circuit, route to
              ;; `pure_circuits::<snake>(...)` — both exported (`pub fn`)
              ;; and non-exported (`pub(crate) fn`) pure circuits land in
-             ;; the `pure_circuits` module. Args use pure-call-arg-rust so
+             ;; the `pure_circuits` module. Args use call-args-rust so
              ;; non-Copy struct args are cloned (the callee takes them by
              ;; value). Impure circuits and unknown callees keep the
              ;; existing non-native-call error; on the impure route pure
@@ -3077,7 +3084,7 @@
                (cond
                  [(and c (id-pure? function-name))
                   (let ([rust-name (id->rust-name function-name)]
-                        [args (map (lambda (e) (pure-call-arg-rust e native-id-ht)) expr*)])
+                        [args (call-args-rust function-name expr* native-id-ht)])
                     ;; Append `?` so the `Result<T, CompactError>` a pure
                     ;; circuit returns is unwrapped at the call site. Every
                     ;; generated position that calls a pure circuit (pure-

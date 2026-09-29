@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Toolchain 0.31.122, language 0.23.103, runtime 0.16.100]
+
+### Fixed
+
+- **`--target rust` committed `persistentCommit` to the wrong value** —
+  `persistentCommit<Field>(0 as Field, o)` was emitted as
+  `persistent_commit(&0, …)`. It builds, because `persistent_commit` is
+  generic over `T: BinaryHashRepr` and every Rust integer implements that, so
+  Rust inferred `i32` and committed to its 4 little-endian bytes instead of
+  the `Fr` encoding. `compactc` exited 0, `cargo build` succeeded, and the
+  commitment differed from the TS target's. The value and the opening now
+  render at `persistentCommit`'s declared formal types (`&Fr::from(0u64)`).
+  The existing parity coverage used only typed locals, whose Rust type is
+  fixed, so it could not see this.
+- **`--target rust` rendered a call argument with no expected type when its
+  type already was the formal's** — the typechecker wraps a call argument in
+  `safe-cast` only when its type differs from the parameter's, and the
+  emitter took a call argument's expected type from that wrapper alone.
+  `[0 as Field, 1 as Field]` passed to a `Vector<2, Field>` parameter was
+  therefore emitted as `[0, 1]` for pure circuits, witnesses and impure
+  circuits ([#21]), and as `AlignedValue::from(0)` in `persistentHash` /
+  `transientHash`; none of those built. Every call argument now renders at the
+  callee's declared (monomorphised) formal type, at every call kind: natives,
+  stdlib circuits, user pure and impure circuits, witnesses, and impure
+  circuits inlined into a condition ([#91]). An argument with a `safe-cast`
+  renders exactly as before. The tuple/vector bridge of [#83] now also
+  applies to a call argument: a tuple-typed value passed to a `Vector`
+  parameter, or the reverse. All call sites go through one entry point,
+  `call-args-rust`, and a source-level test (`call_args_guard`) fails if a
+  call site bypasses it. The #90 fallback for Field-only literals stays as a
+  backstop, although the whole corpus now regenerates byte-identically without
+  it. New fixture `call_arg_declared_type_fixture`: sixteen circuits that
+  write their results to the ledger, compared byte-for-byte against the TS
+  target's state. No other committed fixture changed.
+
 ## [Toolchain 0.31.121, language 0.23.103, runtime 0.16.100]
 
 ### Fixed

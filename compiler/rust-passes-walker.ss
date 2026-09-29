@@ -549,15 +549,15 @@
           [(<= nat 340282366920938463463374607431768211455) "u128"]
           [else #f]))
 
-      ;; arg-rust-clone-if-var: render a call argument expression and
-      ;; suffix `.clone()` if the rendered form is a bare var-ref. Used
-      ;; by E4.4's bare-call emitter so passing the same Compact-level
-      ;; var as an argument twice (e.g. `private$add_coin(coin)` followed
-      ;; by `pure_circuits::commitment_from_coin_info(coin, pk)`) doesn't
-      ;; trip Rust's move semantics. Defensive: we don't have liveness
-      ;; analysis, so we clone every var-ref arg. User structs derive
-      ;; Clone (H5), so the clone is a no-op semantically and cheap for
-      ;; the small struct shapes Compact emits.
+      ;; arg-rust-clone-if-var: render a by-value operand that is NOT a
+      ;; call argument — a ledger ADT operation argument or a cell-write
+      ;; value — and suffix `.clone()` via `clone-if-var-rust`, so passing
+      ;; the same Compact-level var twice doesn't trip Rust's move
+      ;; semantics. Defensive: we don't have liveness analysis, so we clone
+      ;; every non-Copy var-ref. User structs derive Clone (H5), so the
+      ;; clone is a no-op semantically and cheap for the small struct
+      ;; shapes Compact emits. Call arguments use `call-args-rust` instead
+      ;; (#91); tests-e2e-rust/tests/call_args_guard.rs enforces that.
       (define (arg-rust-clone-if-var e local-binds
                                      native-id-ht witness-id-ht circuit-id-ht)
         ;; Render at the argument's own `safe-cast` target — its declared

@@ -19,28 +19,43 @@
 // Every call argument must render at the callee's declared formal type,
 // which the Rust backend does in one place: `call-args-rust`
 // (compiler/rust-passes-walker.ss). The per-argument renderers it replaced,
-// `arg-rust-clone-if-var` and `pure-call-arg-rust`, take the expected type
-// only from the argument's own `safe-cast`, which the typechecker omits when
-// the argument already has the formal's type. A call site that calls them
+// `arg-rust-clone-if-var` and `pure-call-arg-rust` (now removed), take the
+// expected type only from the argument's own `safe-cast`, which the
+// typechecker omits when the argument already has the formal's type. A call
+// site that calls them, or their shared clone decision `clone-if-var-rust`,
 // directly silently loses the formal again, whatever its arguments are, so
 // this test fails on any direct call outside `call-args-rust` and the
-// allowlisted non-call users below.
+// allowlisted users below.
+//
+// Limit: a site that renders arguments with `expr-rust-typed` /
+// `ctor-expr-rust` directly, with no clone decision, is not detected here.
+// The call_arg_declared_type fixture catches such a site behaviourally.
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
 /// The per-argument renderers only `call-args-rust` may use for calls.
-const GUARDED: &[&str] = &["arg-rust-clone-if-var", "pure-call-arg-rust"];
+/// `pure-call-arg-rust` no longer exists; it stays listed so it cannot come
+/// back as a direct call.
+const GUARDED: &[&str] = &[
+    "arg-rust-clone-if-var",
+    "clone-if-var-rust",
+    "pure-call-arg-rust",
+];
 
 /// The entry point every call site goes through.
 const ENTRY_POINT: &str = "call-args-rust";
 
-/// Non-call users, by enclosing top-level definition, with the number of
-/// direct calls each may contain. They render a ledger ADT operation's
-/// arguments or a cell write's value, which are not calls and keep their own
-/// expected type. Counted because `emit-streaming-body` holds both a cell
-/// write and call sites: a new direct call there must still fail.
+/// Allowed users, by enclosing top-level definition, with the number of
+/// direct calls to guarded renderers each may contain. Apart from
+/// `arg-rust-clone-if-var` (the other user of `clone-if-var-rust`), they
+/// render a ledger ADT operation's arguments or a cell write's value, which
+/// are not calls and keep their own expected type. Counted because
+/// `emit-streaming-body` holds both a cell write and call sites: a new direct
+/// call there must still fail.
 const ALLOWED: &[(&str, &str, usize)] = &[
+    // The non-call renderer, built on the shared clone decision.
+    ("rust-passes-walker.ss", "arg-rust-clone-if-var", 1),
     // Ledger ADT operation arguments.
     ("rust-passes-walker.ss", "compute-pl-builder-lines", 2),
     ("rust-passes-walker.ss", "pl-call-builder-lines", 1),
@@ -147,8 +162,8 @@ fn call_arguments_render_through_call_args_rust() {
         "call arguments must be rendered through `{ENTRY_POINT}` so they take the \
          callee's declared formal type (#91):\n{}\n\n\
          Route the call site through `{ENTRY_POINT}`. If the site is not a call \
-         (a ledger ADT operation argument or a cell-write value), add it to \
-         ALLOWED in this test.",
+         (a ledger ADT operation argument or a cell-write value), use \
+         `arg-rust-clone-if-var` and add the site to ALLOWED in this test.",
         violations.join("\n")
     );
 }

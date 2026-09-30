@@ -1,0 +1,11 @@
+import CompactStandardLibrary;
+
+export ledger seen: Set<Boolean>;
+
+export circuit add(value: Boolean): [] {
+  seen.insert(disclose(value));
+}
+
+export circuit contains(value: Boolean): Boolean {
+  return seen.member(disclose(value));
+}

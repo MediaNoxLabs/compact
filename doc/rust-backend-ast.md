@@ -66,6 +66,12 @@ after an increment. Counter increments and decrements accept checked
 VM. The parameterized fixture verifies increment, decrement, reset, and
 underflow behavior.
 
+The first Set slice supports `Set<Boolean>` construction, insert, and member.
+The runtime stores the ledger's Map value and executes the Set VM operations;
+member decodes a gathered Boolean read event. The generated fixture checks
+initial absence, membership after insertion, and uniqueness after a duplicate
+insert. The typed IR carries the Set element type for renderer validation.
+
 The user type slice emits native Rust structs from the typed Compact type
 shape and derives the ledger's `BinaryHashRepr`, `FieldRepr`, and
 `FromFieldRepr` macros. It emits closed enum ordinal conversions with the
@@ -94,7 +100,7 @@ cargo test -p compact-rust-backend -p midnight-compact-runtime \
   -p compact-rust-composite-struct-fixture -p compact-rust-enum-identity-fixture \
   -p compact-rust-cell-struct-fixture -p compact-rust-cell-enum-fixture \
   -p compact-rust-cell-parameter-fixture -p compact-rust-counter-parameter-fixture \
-  -p compact-rust-cell-read-fixture
+  -p compact-rust-cell-read-fixture -p compact-rust-set-boolean-fixture
 cargo build -p compact-rust-backend --bin compact-rustc
 ```
 

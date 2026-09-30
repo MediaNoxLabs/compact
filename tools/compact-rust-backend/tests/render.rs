@@ -438,6 +438,48 @@ fn counter_read_returns_uint64() {
 }
 
 #[test]
+fn set_actions_require_the_declared_element_type() {
+    let mut contract = Contract {
+        schema_version: 3,
+        ledger_fields: vec![LedgerField {
+            id: "seen".into(),
+            index: 0,
+            declaration: LedgerFieldKind::Set { ty: Type::Boolean },
+        }],
+        circuits: vec![],
+        stateful_circuits: vec![StatefulCircuit {
+            name: "add".into(),
+            parameters: vec![Parameter {
+                name: "value".into(),
+                ty: Type::Boolean,
+            }],
+            actions: vec![StateAction::SetInsert {
+                field: "seen".into(),
+                index: 0,
+                value: Expr::Parameter {
+                    name: "value".into(),
+                },
+            }],
+            result: Type::Unit,
+            return_value: StateReturn::Unit,
+        }],
+    };
+    assert!(
+        render(&contract)
+            .unwrap()
+            .contains("context.insert_set(0, __compact_param_0)?")
+    );
+    contract.stateful_circuits[0].parameters[0].ty = Type::Field;
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::TypeMismatch {
+            expected: Type::Boolean,
+            actual: Type::Field,
+        })
+    );
+}
+
+#[test]
 fn struct_definitions_are_shared_by_name_and_must_match() {
     let pair = Type::Struct {
         name: "Pair".into(),

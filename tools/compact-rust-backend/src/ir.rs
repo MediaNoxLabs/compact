@@ -32,6 +32,7 @@ pub struct LedgerField {
 pub enum LedgerFieldKind {
     Counter,
     Cell { ty: Type },
+    Set { ty: Type },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
@@ -60,6 +61,11 @@ pub enum StateReturn {
         field: String,
         index: u8,
     },
+    SetMember {
+        field: String,
+        index: u8,
+        value: Expr,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
@@ -80,6 +86,11 @@ pub enum StateAction {
         index: u8,
     },
     CellWrite {
+        field: String,
+        index: u8,
+        value: Expr,
+    },
+    SetInsert {
         field: String,
         index: u8,
         value: Expr,

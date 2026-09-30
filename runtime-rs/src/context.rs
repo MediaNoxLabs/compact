@@ -66,6 +66,47 @@ pub struct CircuitResult<Private, Output, D: DB = DefaultDB> {
 }
 
 impl<Private, D: DB> CircuitContext<Private, D> {
+    pub fn insert_set<T: CellValue>(
+        mut self,
+        field_index: u8,
+        value: T,
+    ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        let result = ledger::insert_set(
+            &self.query,
+            field_index,
+            value,
+            self.gas_limit.clone(),
+            &self.cost_model,
+        )
+        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+        self.query = result.context;
+        Ok(CircuitResult {
+            context: self,
+            result: (),
+            gas_cost: result.gas_cost,
+        })
+    }
+
+    pub fn member_set<T: CellValue>(
+        mut self,
+        field_index: u8,
+        value: T,
+    ) -> Result<CircuitResult<Private, bool, D>, CompactError> {
+        let (result, member) = ledger::member_set(
+            &self.query,
+            field_index,
+            value,
+            self.gas_limit.clone(),
+            &self.cost_model,
+        )?;
+        self.query = result.context;
+        Ok(CircuitResult {
+            context: self,
+            result: member,
+            gas_cost: result.gas_cost,
+        })
+    }
+
     pub fn read_cell<T: CellValue>(
         mut self,
         field_index: u8,

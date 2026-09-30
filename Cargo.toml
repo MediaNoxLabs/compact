@@ -15,7 +15,7 @@
 
 [workspace]
 resolver = "3"
-members = ["tools/*", "runtime-rs", "runtime-rs-macros", "tests-rust-backend/identity", "tests-rust-backend/truth", "tests-rust-backend/one-tuple", "tests-rust-backend/field-add", "tests-rust-backend/uint-identity", "tests-rust-backend/bytes-identity", "tests-rust-backend/counter", "tests-rust-backend/cell-boolean", "tests-rust-backend/struct-identity", "tests-rust-backend/nested-struct", "tests-rust-backend/enum-identity", "tests-rust-backend/composite-struct", "tests-rust-backend/cell-struct", "tests-rust-backend/cell-enum", "tests-rust-backend/cell-parameter", "tests-rust-backend/counter-parameter", "tests-rust-backend/cell-read"]
+members = ["tools/*", "runtime-rs", "runtime-rs-macros", "tests-rust-backend/identity", "tests-rust-backend/truth", "tests-rust-backend/one-tuple", "tests-rust-backend/field-add", "tests-rust-backend/uint-identity", "tests-rust-backend/bytes-identity", "tests-rust-backend/counter", "tests-rust-backend/cell-boolean", "tests-rust-backend/struct-identity", "tests-rust-backend/nested-struct", "tests-rust-backend/enum-identity", "tests-rust-backend/composite-struct", "tests-rust-backend/cell-struct", "tests-rust-backend/cell-enum", "tests-rust-backend/cell-parameter", "tests-rust-backend/counter-parameter", "tests-rust-backend/cell-read", "tests-rust-backend/set-boolean"]
 
 [workspace.package]
 version = "0.5.1"

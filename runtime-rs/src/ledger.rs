@@ -10,6 +10,7 @@ pub use midnight_onchain_runtime::error::TranscriptRejected;
 pub use midnight_onchain_state::state::{ChargedState, StateValue};
 pub use midnight_storage::DefaultDB;
 pub use midnight_storage::db::DB;
+pub use midnight_storage::storage::HashMap as LedgerHashMap;
 
 use crate::{BoundedUint, CompactError, Field, FixedBytes, FixedVector};
 use midnight_base_crypto::cost_model::RunningCost;
@@ -195,6 +196,83 @@ pub fn query_cell<T: CellValue, D: DB>(
 /// Compact Counter initializes as a ledger Cell of fixed-width Uint64.
 pub fn constructor_counter<D: DB>() -> StateValue<D> {
     constructor_cell::<u64, D>(0)
+}
+
+pub fn constructor_set<D: DB>() -> StateValue<D> {
+    StateValue::Map(LedgerHashMap::new())
+}
+
+/// Insert a typed element into a root Set through the ledger VM.
+pub fn insert_set<T: CellValue, D: DB>(
+    context: &QueryContext<D>,
+    field_index: u8,
+    value: T,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    let program = [
+        Op::Idx {
+            cached: false,
+            push_path: true,
+            path: vec![Key::Value(AlignedValue::from(field_index))].into(),
+        },
+        Op::Push {
+            storage: false,
+            value: constructor_cell(value),
+        },
+        Op::Push {
+            storage: true,
+            value: StateValue::Null,
+        },
+        Op::Ins {
+            cached: false,
+            n: 1,
+        },
+        Op::Ins { cached: true, n: 1 },
+    ];
+    context.query(&program, gas_limit, cost_model)
+}
+
+/// Test membership through a gather query and decode the ledger's Boolean Cell.
+pub fn member_set<T: CellValue, D: DB>(
+    context: &QueryContext<D>,
+    field_index: u8,
+    value: T,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<(QueryResults<ResultModeGather, D>, bool), CompactError> {
+    let program = [
+        Op::Dup { n: 0 },
+        Op::Idx {
+            cached: false,
+            push_path: false,
+            path: vec![Key::Value(AlignedValue::from(field_index))].into(),
+        },
+        Op::Push {
+            storage: false,
+            value: constructor_cell(value),
+        },
+        Op::Member,
+        Op::Popeq {
+            cached: true,
+            result: (),
+        },
+    ];
+    let result = context
+        .query(&program, gas_limit, cost_model)
+        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+    let Some(GatherEvent::Read(value)) = result.events.last() else {
+        return Err(CompactError::InvalidLedgerCell(
+            "missing ledger read event".into(),
+        ));
+    };
+    if value.alignment != bool::alignment() {
+        return Err(CompactError::InvalidLedgerCell(
+            "membership result is not Boolean".into(),
+        ));
+    }
+    let decoded = bool::decode_cell_value(&value.value)?;
+    Ok((result, decoded))
 }
 
 pub fn read_counter<D: DB>(state: &StateValue<D>) -> Result<u64, CompactError> {

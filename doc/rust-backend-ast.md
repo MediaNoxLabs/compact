@@ -52,7 +52,12 @@ from the same 8.0 line.
 The runtime can now construct and decode ledger Cells and Counters, and it
 runs Cell writes plus Counter increments/decrements through the ledger VM.
 The Counter test serializes the full post-increment `ContractState` and matches
-the TypeScript oracle fixture byte for byte. The typed IR includes ordered
+the TypeScript oracle fixture byte for byte.
+Set, Map, and List initial `ContractState` bytes also match the oracle's
+ledger-8 TypeScript fixtures, including operation metadata. Transition parity
+for those ADTs remains to be captured.
+
+The typed IR includes ordered
 ledger declarations and state actions. The compiler and renderer generate
 the minimal Counter increment and Boolean Cell write contracts end to end.
 Other ledger operations remain explicit compiler errors. Stateful circuits

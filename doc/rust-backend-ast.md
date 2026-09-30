@@ -24,16 +24,20 @@ The backend supports exported pure circuits with `Field`, `Boolean`,
 `Bytes<N>`, `Uint<N>`, unit, tuple, and vector types. Bodies currently support parameter references,
 Boolean, Field, and Uint literals, unit, tuple construction, typed conditionals, sequential
 local bindings, pure circuit calls, Field addition/subtraction/multiplication,
-and checked unsigned addition. The fixtures
+and checked unsigned addition, subtraction, and multiplication. The fixtures
 in `examples/rust_backend/` run from Compact source through the Scheme
 compiler, JSON bridge, `syn` renderer, native runtime, and executing Rust
 tests. The compiler supports the Cell, Counter, Set, Map, and List slices
-described below. Witnesses and the remaining bounded unsigned operations
-still require runtime semantics. `Uint<N>` uses a
+described below. Witnesses and further bounded unsigned operations still
+require runtime semantics. `Uint<N>` uses a
 bounded runtime type with a checked inclusive maximum and Compact's byte
 alignment. `Bytes<N>` uses a small fixed bytes wrapper: it delegates field
 encoding and FAB alignment to ledger-8's `[u8; N]` support, and calls the
 ledger's byte decoder to fill the `FromFieldRepr` gap for widths other than 32.
+The compiler's inserted Uint subtraction guard is recognized only when its
+comparison matches the subtraction operands; the Rust runtime enforces the
+same underflow check. Multiplication checks both host overflow and the
+result's declared Compact maximum.
 
 The runtime facade in `runtime-rs` reexports `Fr` from
 `midnight-transient-crypto` 2.0.1 as Compact `Field`. It also reexports the
@@ -128,6 +132,7 @@ cargo test -p compact-rust-backend -p midnight-compact-runtime \
   -p compact-rust-identity-fixture -p compact-rust-truth-fixture \
   -p compact-rust-one-tuple-fixture -p compact-rust-field-add-fixture \
   -p compact-rust-field-arithmetic-fixture \
+  -p compact-rust-uint-arithmetic-fixture \
   -p compact-rust-uint-identity-fixture -p compact-rust-bytes-identity-fixture \
   -p compact-rust-counter-fixture -p compact-rust-cell-boolean-fixture \
   -p compact-rust-struct-identity-fixture -p compact-rust-nested-struct-fixture \

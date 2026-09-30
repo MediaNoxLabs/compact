@@ -253,7 +253,9 @@ fn collect_expression_types(
             }
         }
         Expr::UnsignedCast { value, .. } => collect_expression_types(value, structs, enums)?,
-        Expr::UnsignedAdd { left, right, .. } => {
+        Expr::UnsignedAdd { left, right, .. }
+        | Expr::UnsignedSubtract { left, right, .. }
+        | Expr::UnsignedMultiply { left, right, .. } => {
             collect_expression_types(left, structs, enums)?;
             collect_expression_types(right, structs, enums)?;
         }
@@ -449,7 +451,9 @@ fn expression_with_calls(
                 Type::Unsigned { max: max.clone() },
             ))
         }
-        Expr::UnsignedAdd { max, left, right } => {
+        Expr::UnsignedAdd { max, left, right }
+        | Expr::UnsignedSubtract { max, left, right }
+        | Expr::UnsignedMultiply { max, left, right } => {
             let result_max = max
                 .parse::<u128>()
                 .map_err(|_| RenderError::InvalidUnsignedMaximum(max.clone()))?;
@@ -473,8 +477,18 @@ fn expression_with_calls(
             let left_max = syn::LitInt::new(&left_max, Span::call_site());
             let right_max = syn::LitInt::new(&right_max, Span::call_site());
             let result_max = syn::LitInt::new(max, Span::call_site());
+            let operation: syn::Path = match expr {
+                Expr::UnsignedAdd { .. } => syn::parse_quote!(runtime::add_unsigned),
+                Expr::UnsignedSubtract { .. } => {
+                    syn::parse_quote!(runtime::subtract_unsigned)
+                }
+                Expr::UnsignedMultiply { .. } => {
+                    syn::parse_quote!(runtime::multiply_unsigned)
+                }
+                _ => unreachable!(),
+            };
             Ok((
-                syn::parse_quote!(runtime::add_unsigned::<#left_max, #right_max, #result_max>(#left, #right)?),
+                syn::parse_quote!(#operation::<#left_max, #right_max, #result_max>(#left, #right)?),
                 Type::Unsigned { max: max.clone() },
             ))
         }

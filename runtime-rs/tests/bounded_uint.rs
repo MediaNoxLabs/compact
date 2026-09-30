@@ -3,7 +3,7 @@ use midnight_base_crypto::fab::{
 };
 use midnight_compact_runtime::{
     BinaryHashRepr, BoundedUint, CompactError, Field, FieldRepr, FromFieldRepr, add_unsigned,
-    cast_unsigned,
+    cast_unsigned, multiply_unsigned, subtract_unsigned,
 };
 
 #[test]
@@ -21,6 +21,44 @@ fn unsigned_cast_and_add_preserve_bounds() {
     let largest = BoundedUint::<{ u128::MAX }>::new(u128::MAX).unwrap();
     assert_eq!(
         add_unsigned::<{ u128::MAX }, 1, { u128::MAX }>(largest, BoundedUint::<1>::new(1).unwrap()),
+        Err(CompactError::UnsignedOverflow)
+    );
+}
+
+#[test]
+fn unsigned_subtraction_and_multiplication_check_arithmetic_and_result_bounds() {
+    let small = BoundedUint::<255>::new(3).unwrap();
+    let large = BoundedUint::<255>::new(5).unwrap();
+    assert_eq!(
+        subtract_unsigned::<255, 255, 255>(large, small)
+            .unwrap()
+            .value(),
+        2
+    );
+    assert_eq!(
+        subtract_unsigned::<255, 255, 255>(small, large),
+        Err(CompactError::UnsignedUnderflow)
+    );
+    assert_eq!(
+        multiply_unsigned::<255, 255, 255>(small, large)
+            .unwrap()
+            .value(),
+        15
+    );
+    let sixteen = BoundedUint::<255>::new(16).unwrap();
+    assert_eq!(
+        multiply_unsigned::<255, 255, 255>(sixteen, sixteen),
+        Err(CompactError::UnsignedOutOfRange {
+            value: 256,
+            max: 255,
+        })
+    );
+    let largest = BoundedUint::<{ u128::MAX }>::new(u128::MAX).unwrap();
+    assert_eq!(
+        multiply_unsigned::<{ u128::MAX }, 2, { u128::MAX }>(
+            largest,
+            BoundedUint::<2>::new(2).unwrap(),
+        ),
         Err(CompactError::UnsignedOverflow)
     );
 }

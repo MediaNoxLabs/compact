@@ -207,6 +207,28 @@ pub fn add_unsigned<const LEFT: u128, const RIGHT: u128, const RESULT: u128>(
     BoundedUint::<RESULT>::new(sum)
 }
 
+pub fn subtract_unsigned<const LEFT: u128, const RIGHT: u128, const RESULT: u128>(
+    left: BoundedUint<LEFT>,
+    right: BoundedUint<RIGHT>,
+) -> Result<BoundedUint<RESULT>, CompactError> {
+    let difference = left
+        .value()
+        .checked_sub(right.value())
+        .ok_or(CompactError::UnsignedUnderflow)?;
+    BoundedUint::<RESULT>::new(difference)
+}
+
+pub fn multiply_unsigned<const LEFT: u128, const RIGHT: u128, const RESULT: u128>(
+    left: BoundedUint<LEFT>,
+    right: BoundedUint<RIGHT>,
+) -> Result<BoundedUint<RESULT>, CompactError> {
+    let product = left
+        .value()
+        .checked_mul(right.value())
+        .ok_or(CompactError::UnsignedOverflow)?;
+    BoundedUint::<RESULT>::new(product)
+}
+
 impl<const MAX: u128> Aligned for BoundedUint<MAX> {
     fn alignment() -> Alignment {
         Alignment::singleton(AlignmentAtom::Bytes {

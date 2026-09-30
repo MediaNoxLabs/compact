@@ -86,6 +86,28 @@
                (source-errorf src "Rust backend supports nonnegative numeric literals only"))]
           [else #f]))
 
+      ;; Analysis inserts this guard for Uint subtraction. The native checked
+      ;; subtraction performs the same comparison, so only this exact guard
+      ;; may be folded into the arithmetic expression.
+      (define (checked-unsigned-subtraction? statements tail)
+        (and (= (length statements) 1)
+             (nanopass-case (Lnodisclose Expression) tail
+               [(- ,src ,mbits ,expr1 ,expr2)
+                (and mbits
+                     (nanopass-case (Lnodisclose Expression) (car statements)
+                       [(assert ,src1 ,expr5 ,mesg)
+                        (and (equal? mesg "result of subtraction would be negative")
+                             (nanopass-case (Lnodisclose Expression) expr5
+                               [(>= ,src2 ,bits ,expr3 ,expr4)
+                                (and (= bits mbits)
+                                     (equal? (expression-ir expr3 src)
+                                             (expression-ir expr1 src))
+                                     (equal? (expression-ir expr4 src)
+                                             (expression-ir expr2 src)))]
+                               [else #f]))]
+                       [else #f]))]
+               [else #f])))
+
       (define (expression-ir expr owner-src)
         (nanopass-case (Lnodisclose Expression) expr
           [(return ,src ,expr) (expression-ir expr owner-src)]
@@ -141,6 +163,10 @@
                                              (cons "value" (expression-ir value src)))]))
                                 local* expr*)))
                    (cons "body" (expression-ir expr src)))]
+          [(seq ,src ,expr* ... ,expr)
+           (if (checked-unsigned-subtraction? expr* expr)
+               (expression-ir expr src)
+               (source-errorf src "Rust backend does not yet support this circuit expression"))]
           [(call ,src ,function-name ,expr* ...)
            (object (cons "kind" "call")
                    (cons "name" (symbol->string (id-sym function-name)))
@@ -156,13 +182,19 @@
                        (cons "right" (expression-ir expr2 owner-src))))]
           [(- ,src ,mbits ,expr1 ,expr2)
            (if mbits
-               (source-errorf src "Rust backend does not yet support Uint subtraction")
+               (object (cons "kind" "unsigned_subtract")
+                       (cons "max" (number->string (- (expt 2 mbits) 1)))
+                       (cons "left" (expression-ir expr1 src))
+                       (cons "right" (expression-ir expr2 src)))
                (object (cons "kind" "subtract")
                        (cons "left" (expression-ir expr1 src))
                        (cons "right" (expression-ir expr2 src))))]
           [(* ,src ,mbits ,expr1 ,expr2)
            (if mbits
-               (source-errorf src "Rust backend does not yet support Uint multiplication")
+               (object (cons "kind" "unsigned_multiply")
+                       (cons "max" (number->string (- (expt 2 mbits) 1)))
+                       (cons "left" (expression-ir expr1 src))
+                       (cons "right" (expression-ir expr2 src)))
                (object (cons "kind" "multiply")
                        (cons "left" (expression-ir expr1 src))
                        (cons "right" (expression-ir expr2 src))))]
@@ -171,11 +203,35 @@
       (define (typed-expression-ir expr expected-type owner-src)
         (nanopass-case (Lnodisclose Expression) expr
           [(return ,src ,expr) (typed-expression-ir expr expected-type src)]
+          [(seq ,src ,expr* ... ,expr)
+           (if (checked-unsigned-subtraction? expr* expr)
+               (typed-expression-ir expr expected-type src)
+               (source-errorf src "Rust backend does not yet support this circuit expression"))]
           [(+ ,src ,mbits ,expr1 ,expr2)
            (if mbits
                (nanopass-case (Lnodisclose Type) expected-type
                  [(tunsigned ,src^ ,nat)
                   (object (cons "kind" "unsigned_add")
+                          (cons "max" (number->string nat))
+                          (cons "left" (expression-ir expr1 src))
+                          (cons "right" (expression-ir expr2 src)))]
+                 [else (expression-ir expr owner-src)])
+               (expression-ir expr owner-src))]
+          [(- ,src ,mbits ,expr1 ,expr2)
+           (if mbits
+               (nanopass-case (Lnodisclose Type) expected-type
+                 [(tunsigned ,src^ ,nat)
+                  (object (cons "kind" "unsigned_subtract")
+                          (cons "max" (number->string nat))
+                          (cons "left" (expression-ir expr1 src))
+                          (cons "right" (expression-ir expr2 src)))]
+                 [else (expression-ir expr owner-src)])
+               (expression-ir expr owner-src))]
+          [(* ,src ,mbits ,expr1 ,expr2)
+           (if mbits
+               (nanopass-case (Lnodisclose Type) expected-type
+                 [(tunsigned ,src^ ,nat)
+                  (object (cons "kind" "unsigned_multiply")
                           (cons "max" (number->string nat))
                           (cons "left" (expression-ir expr1 src))
                           (cons "right" (expression-ir expr2 src)))]

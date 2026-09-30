@@ -1,0 +1,7 @@
+import CompactStandardLibrary;
+export circuit subtract_uint(left: Uint<8>, right: Uint<8>): Uint<8> {
+  return left - right;
+}
+export circuit multiply_uint(left: Uint<8>, right: Uint<8>): Uint<16> {
+  return left * right;
+}

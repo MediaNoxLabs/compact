@@ -11,7 +11,10 @@ pub mod ledger;
 mod primitives;
 
 pub use midnight_compact_runtime_macros::CompactCellValue;
-pub use primitives::{BoundedUint, FixedBytes, FixedVector, add_unsigned, cast_unsigned};
+pub use primitives::{
+    BoundedUint, FixedBytes, FixedVector, add_unsigned, cast_unsigned, multiply_unsigned,
+    subtract_unsigned,
+};
 
 /// Ledger FAB types used by the generated user-type derive.
 pub mod fab {
@@ -42,6 +45,7 @@ pub enum CompactError {
     InvalidUnsignedValue,
     UnsignedOutOfRange { value: u128, max: u128 },
     UnsignedOverflow,
+    UnsignedUnderflow,
 }
 
 impl std::fmt::Display for CompactError {
@@ -55,6 +59,7 @@ impl std::fmt::Display for CompactError {
                 write!(f, "unsigned value {value} exceeds Compact maximum {max}")
             }
             Self::UnsignedOverflow => write!(f, "Compact unsigned arithmetic overflow"),
+            Self::UnsignedUnderflow => write!(f, "Compact unsigned arithmetic underflow"),
         }
     }
 }

@@ -306,4 +306,14 @@ pub enum Expr {
         left: Box<Expr>,
         right: Box<Expr>,
     },
+    UnsignedSubtract {
+        max: String,
+        left: Box<Expr>,
+        right: Box<Expr>,
+    },
+    UnsignedMultiply {
+        max: String,
+        left: Box<Expr>,
+        right: Box<Expr>,
+    },
 }

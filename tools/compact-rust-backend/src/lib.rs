@@ -257,7 +257,9 @@ fn collect_expression_types(
             collect_expression_types(left, structs, enums)?;
             collect_expression_types(right, structs, enums)?;
         }
-        Expr::Add { left, right } => {
+        Expr::Add { left, right }
+        | Expr::Subtract { left, right }
+        | Expr::Multiply { left, right } => {
             collect_expression_types(left, structs, enums)?;
             collect_expression_types(right, structs, enums)?;
         }
@@ -476,7 +478,9 @@ fn expression_with_calls(
                 Type::Unsigned { max: max.clone() },
             ))
         }
-        Expr::Add { left, right } => {
+        Expr::Add { left, right }
+        | Expr::Subtract { left, right }
+        | Expr::Multiply { left, right } => {
             let (left, left_type) = expression_with_calls(left, parameters, circuits)?;
             let (right, right_type) = expression_with_calls(right, parameters, circuits)?;
             if left_type != Type::Field {
@@ -491,11 +495,17 @@ fn expression_with_calls(
                     actual: right_type,
                 });
             }
+            let op = match expr {
+                Expr::Add { .. } => syn::BinOp::Add(syn::token::Plus::default()),
+                Expr::Subtract { .. } => syn::BinOp::Sub(syn::token::Minus::default()),
+                Expr::Multiply { .. } => syn::BinOp::Mul(syn::token::Star::default()),
+                _ => unreachable!(),
+            };
             Ok((
                 syn::Expr::Binary(syn::ExprBinary {
                     attrs: vec![],
                     left: Box::new(left),
-                    op: syn::BinOp::Add(syn::token::Plus::default()),
+                    op,
                     right: Box::new(right),
                 }),
                 Type::Field,

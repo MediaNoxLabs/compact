@@ -154,6 +154,18 @@
                (object (cons "kind" "add")
                        (cons "left" (expression-ir expr1 owner-src))
                        (cons "right" (expression-ir expr2 owner-src))))]
+          [(- ,src ,mbits ,expr1 ,expr2)
+           (if mbits
+               (source-errorf src "Rust backend does not yet support Uint subtraction")
+               (object (cons "kind" "subtract")
+                       (cons "left" (expression-ir expr1 src))
+                       (cons "right" (expression-ir expr2 src))))]
+          [(* ,src ,mbits ,expr1 ,expr2)
+           (if mbits
+               (source-errorf src "Rust backend does not yet support Uint multiplication")
+               (object (cons "kind" "multiply")
+                       (cons "left" (expression-ir expr1 src))
+                       (cons "right" (expression-ir expr2 src))))]
           [else (source-errorf owner-src "Rust backend does not yet support this circuit expression")]))
 
       (define (typed-expression-ir expr expected-type owner-src)

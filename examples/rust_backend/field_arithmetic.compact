@@ -1,0 +1,9 @@
+import CompactStandardLibrary;
+
+export circuit subtract(left: Field, right: Field): Field {
+  return left - right;
+}
+
+export circuit multiply(left: Field, right: Field): Field {
+  return left * right;
+}

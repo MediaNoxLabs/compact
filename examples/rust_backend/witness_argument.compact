@@ -1,0 +1,7 @@
+import CompactStandardLibrary;
+
+witness private_offset(value: Field): Field;
+
+export circuit apply_offset(value: Field): Field {
+  return disclose(private_offset(disclose(value)));
+}

@@ -1,0 +1,21 @@
+{
+  "result": "42",
+  "privateState": 8,
+  "privateTranscriptOutputs": [
+    {
+      "valueAtoms": [
+        [
+          42
+        ]
+      ],
+      "alignment": [
+        {
+          "tag": "atom",
+          "value": {
+            "tag": "field"
+          }
+        }
+      ]
+    }
+  ]
+}

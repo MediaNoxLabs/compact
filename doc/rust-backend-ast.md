@@ -59,9 +59,11 @@ generated `Witnesses<Private>` trait receives a borrowed context with the
 current ledger state, private state, and contract address. Its method returns
 the next private state and a typed value. The generated circuit records that
 value as a ledger `AlignedValue` in its own private transcript outputs. The
-minimal Field witness fixture executes end to end. Projected typed ledger
-views, witness calls inside expressions and state actions, and complete proof
-data remain future slices. This changed the generated runtime ABI to 2.
+minimal Field witness fixture executes end to end. A second fixture passes a
+typed Field circuit argument into the witness; both outputs match the pinned
+TypeScript runtime's private state and FAB transcript values. Projected typed
+ledger views, witness calls inside expressions and state actions, and complete
+proof data remain future slices. This changed the generated runtime ABI to 2.
 
 The runtime can now construct and decode ledger Cells and Counters, and it
 runs Cell writes plus Counter increments/decrements through the ledger VM.
@@ -144,6 +146,7 @@ cargo test -p compact-rust-backend -p midnight-compact-runtime \
   -p compact-rust-field-arithmetic-fixture \
   -p compact-rust-uint-arithmetic-fixture \
   -p compact-rust-witness-minimal-fixture \
+  -p compact-rust-witness-argument-fixture \
   -p compact-rust-uint-identity-fixture -p compact-rust-bytes-identity-fixture \
   -p compact-rust-counter-fixture -p compact-rust-cell-boolean-fixture \
   -p compact-rust-struct-identity-fixture -p compact-rust-nested-struct-fixture \

@@ -732,6 +732,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-cell-parameter-fixture"
+version = "0.1.0"
+dependencies = [
+ "midnight-compact-runtime",
+]
+
+[[package]]
 name = "compact-rust-cell-struct-fixture"
 version = "0.1.0"
 dependencies = [
@@ -747,6 +754,13 @@ dependencies = [
 
 [[package]]
 name = "compact-rust-counter-fixture"
+version = "0.1.0"
+dependencies = [
+ "midnight-compact-runtime",
+]
+
+[[package]]
+name = "compact-rust-counter-parameter-fixture"
 version = "0.1.0"
 dependencies = [
  "midnight-compact-runtime",

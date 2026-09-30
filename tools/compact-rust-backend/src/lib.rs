@@ -8,7 +8,9 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 use std::error::Error;
 use std::fmt;
 
-use ir::{Contract, Expr, LedgerFieldKind, SCHEMA_VERSION, StateAction, StructField, Type};
+use ir::{
+    Contract, CounterAmount, Expr, LedgerFieldKind, SCHEMA_VERSION, StateAction, StructField, Type,
+};
 use proc_macro2::Span;
 use quote::quote;
 
@@ -186,17 +188,16 @@ fn collect_named_types(
 
 fn expression(
     expr: &Expr,
-    parameters: &HashMap<&str, &Type>,
+    parameters: &HashMap<&str, (&Type, syn::Ident)>,
 ) -> Result<(syn::Expr, Type), RenderError> {
     match expr {
         Expr::Unit => Ok((syn::parse_quote!(()), Type::Unit)),
         Expr::Boolean { value } => Ok((syn::parse_quote!(#value), Type::Boolean)),
         Expr::Parameter { name } => {
-            let ty = parameters
+            let (ty, rust_name) = parameters
                 .get(name.as_str())
                 .ok_or_else(|| RenderError::UnknownParameter(name.clone()))?;
-            let name = ident(name)?;
-            Ok((syn::parse_quote!(#name), (*ty).clone()))
+            Ok((syn::parse_quote!(#rust_name), (*ty).clone()))
         }
         Expr::Tuple { elements } => {
             let (exprs, types): (Vec<_>, Vec<_>) = elements
@@ -269,6 +270,15 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
             &mut enum_definitions,
         )?;
     }
+    for circuit in &contract.stateful_circuits {
+        for parameter in &circuit.parameters {
+            collect_named_types(
+                &parameter.ty,
+                &mut struct_definitions,
+                &mut enum_definitions,
+            )?;
+        }
+    }
     for field in &contract.ledger_fields {
         if let LedgerFieldKind::Cell { ty } = &field.declaration {
             collect_named_types(ty, &mut struct_definitions, &mut enum_definitions)?;
@@ -292,11 +302,11 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
             return Err(RenderError::DuplicateCircuit(circuit.name.clone()));
         }
         let mut parameters = HashMap::new();
-        let mut args = Vec::new();
+        let mut args = Vec::<syn::FnArg>::new();
         for parameter in &circuit.parameters {
             let arg_name = ident(&parameter.name)?;
             if parameters
-                .insert(parameter.name.as_str(), &parameter.ty)
+                .insert(parameter.name.as_str(), (&parameter.ty, arg_name.clone()))
                 .is_some()
             {
                 return Err(RenderError::DuplicateParameter(parameter.name.clone()));
@@ -327,6 +337,20 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
         if !names.insert(circuit.name.as_str()) {
             return Err(RenderError::DuplicateCircuit(circuit.name.clone()));
         }
+        let mut parameters = HashMap::new();
+        let mut args = Vec::<syn::FnArg>::new();
+        for (index, parameter) in circuit.parameters.iter().enumerate() {
+            ident(&parameter.name)?;
+            let rust_name = syn::Ident::new(&format!("__compact_param_{index}"), Span::call_site());
+            if parameters
+                .insert(parameter.name.as_str(), (&parameter.ty, rust_name.clone()))
+                .is_some()
+            {
+                return Err(RenderError::DuplicateParameter(parameter.name.clone()));
+            }
+            let arg_ty = rust_type(&parameter.ty)?;
+            args.push(syn::parse_quote!(#rust_name: #arg_ty));
+        }
         let mut statements = Vec::<syn::Stmt>::new();
         for action in &circuit.actions {
             match action {
@@ -344,7 +368,27 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                         return Err(RenderError::UnknownLedgerField(field.clone()));
                     }
                     let index = syn::LitInt::new(&declaration.index.to_string(), Span::call_site());
-                    let amount = syn::LitInt::new(&amount.to_string(), Span::call_site());
+                    let amount: syn::Expr = match amount {
+                        CounterAmount::Literal { value } => {
+                            let value = syn::LitInt::new(&value.to_string(), Span::call_site());
+                            syn::parse_quote!(#value)
+                        }
+                        CounterAmount::Parameter { name } => {
+                            let (ty, rust_name) = parameters
+                                .get(name.as_str())
+                                .ok_or_else(|| RenderError::UnknownParameter(name.clone()))?;
+                            let expected = Type::Unsigned {
+                                max: "65535".into(),
+                            };
+                            if *ty != &expected {
+                                return Err(RenderError::TypeMismatch {
+                                    expected,
+                                    actual: (*ty).clone(),
+                                });
+                            }
+                            syn::parse_quote!(#rust_name.value() as u16)
+                        }
+                    };
                     statements.push(syn::parse_quote! {
                         let step = context.increment_counter(#index, #amount)?;
                     });
@@ -369,7 +413,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                     if declaration.index != *index {
                         return Err(RenderError::UnknownLedgerField(field.clone()));
                     }
-                    let (value, actual) = expression(value, &HashMap::new())?;
+                    let (value, actual) = expression(value, &parameters)?;
                     if &actual != ty {
                         return Err(RenderError::TypeMismatch {
                             expected: ty.clone(),
@@ -392,6 +436,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
         let item: syn::Item = syn::parse_quote! {
             pub fn #name<Private>(
                 context: runtime::context::CircuitContext<Private>,
+                #(#args),*
             ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
                 let mut total_cost = runtime::context::RunningCost::default();
                 #(#statements)*

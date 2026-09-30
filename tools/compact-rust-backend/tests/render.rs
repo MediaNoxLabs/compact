@@ -1,12 +1,12 @@
 use compact_rust_backend::ir::{
-    Contract, Expr, LedgerField, LedgerFieldKind, Parameter, PureCircuit, StateAction,
-    StatefulCircuit, StructField, Type,
+    Contract, CounterAmount, Expr, LedgerField, LedgerFieldKind, Parameter, PureCircuit,
+    StateAction, StatefulCircuit, StructField, Type,
 };
 use compact_rust_backend::{RenderError, render};
 
 fn identity(result: Type, body: Expr) -> Contract {
     Contract {
-        schema_version: 2,
+        schema_version: 3,
         ledger_fields: vec![],
         circuits: vec![PureCircuit {
             name: "identity".into(),
@@ -91,9 +91,9 @@ fn rejects_bad_schema_and_unknown_references() {
             name: "value".into(),
         },
     );
-    contract.schema_version = 3;
-    assert_eq!(render(&contract), Err(RenderError::SchemaVersion(3)));
     contract.schema_version = 2;
+    assert_eq!(render(&contract), Err(RenderError::SchemaVersion(2)));
+    contract.schema_version = 3;
     contract.circuits[0].body = Expr::Parameter {
         name: "missing".into(),
     };
@@ -146,7 +146,7 @@ fn refuses_to_add_a_boolean_to_a_field() {
 fn rejects_noncanonical_or_unsupported_unsigned_maxima() {
     for max in ["08", "-1", "340282366920938463463374607431768211456"] {
         let contract = Contract {
-            schema_version: 2,
+            schema_version: 3,
             ledger_fields: vec![],
             circuits: vec![PureCircuit {
                 name: "id_u".into(),
@@ -170,17 +170,17 @@ fn rejects_noncanonical_or_unsupported_unsigned_maxima() {
 
 #[test]
 fn unknown_json_fields_are_rejected() {
-    let json = r#"{"schema_version":2,"ledger_fields":[],"circuits":[],"stateful_circuits":[],"rust_source":"panic!()"}"#;
+    let json = r#"{"schema_version":3,"ledger_fields":[],"circuits":[],"stateful_circuits":[],"rust_source":"panic!()"}"#;
     assert!(serde_json::from_str::<Contract>(json).is_err());
 
-    let json = r#"{"schema_version":2,"ledger_fields":[{"id":"round","index":0,"declaration":{"kind":"counter"},"rust_source":"panic!()"}],"circuits":[],"stateful_circuits":[]}"#;
+    let json = r#"{"schema_version":3,"ledger_fields":[{"id":"round","index":0,"declaration":{"kind":"counter"},"rust_source":"panic!()"}],"circuits":[],"stateful_circuits":[]}"#;
     assert!(serde_json::from_str::<Contract>(json).is_err());
 }
 
 #[test]
 fn state_action_must_reference_the_declared_ledger_field_and_index() {
     let mut contract = Contract {
-        schema_version: 2,
+        schema_version: 3,
         ledger_fields: vec![LedgerField {
             id: "round".into(),
             index: 0,
@@ -189,10 +189,11 @@ fn state_action_must_reference_the_declared_ledger_field_and_index() {
         circuits: vec![],
         stateful_circuits: vec![StatefulCircuit {
             name: "increment".into(),
+            parameters: vec![],
             actions: vec![StateAction::CounterIncrement {
                 field: "round".into(),
                 index: 0,
-                amount: 1,
+                amount: CounterAmount::Literal { value: 1 },
             }],
         }],
     };
@@ -202,7 +203,7 @@ fn state_action_must_reference_the_declared_ledger_field_and_index() {
     contract.stateful_circuits[0].actions[0] = StateAction::CounterIncrement {
         field: "missing".into(),
         index: 0,
-        amount: 1,
+        amount: CounterAmount::Literal { value: 1 },
     };
     assert_eq!(
         render(&contract),
@@ -212,7 +213,7 @@ fn state_action_must_reference_the_declared_ledger_field_and_index() {
     contract.stateful_circuits[0].actions[0] = StateAction::CounterIncrement {
         field: "round".into(),
         index: 1,
-        amount: 1,
+        amount: CounterAmount::Literal { value: 1 },
     };
     assert_eq!(
         render(&contract),
@@ -221,6 +222,111 @@ fn state_action_must_reference_the_declared_ledger_field_and_index() {
 
     contract.ledger_fields[0].index = 1;
     assert_eq!(render(&contract), Err(RenderError::InvalidLedgerIndex(1)));
+}
+
+#[test]
+fn stateful_parameters_are_checked_before_cell_writes() {
+    let mut contract = Contract {
+        schema_version: 3,
+        ledger_fields: vec![LedgerField {
+            id: "flag".into(),
+            index: 0,
+            declaration: LedgerFieldKind::Cell { ty: Type::Boolean },
+        }],
+        circuits: vec![],
+        stateful_circuits: vec![StatefulCircuit {
+            name: "set_flag".into(),
+            parameters: vec![Parameter {
+                name: "value".into(),
+                ty: Type::Boolean,
+            }],
+            actions: vec![StateAction::CellWrite {
+                field: "flag".into(),
+                index: 0,
+                value: Expr::Parameter {
+                    name: "value".into(),
+                },
+            }],
+        }],
+    };
+    let source = render(&contract).unwrap();
+    syn::parse_file(&source).unwrap();
+    assert!(source.contains("__compact_param_0: bool"));
+    assert!(source.contains("context.write_cell(0, __compact_param_0)?"));
+
+    contract.stateful_circuits[0].parameters[0].ty = Type::Field;
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::TypeMismatch {
+            expected: Type::Boolean,
+            actual: Type::Field,
+        })
+    );
+
+    contract.stateful_circuits[0].parameters[0].ty = Type::Boolean;
+    let duplicate = contract.stateful_circuits[0].parameters[0].clone();
+    contract.stateful_circuits[0].parameters.push(duplicate);
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::DuplicateParameter("value".into()))
+    );
+}
+
+#[test]
+fn counter_parameter_requires_uint16_and_a_known_name() {
+    let mut contract = Contract {
+        schema_version: 3,
+        ledger_fields: vec![LedgerField {
+            id: "round".into(),
+            index: 0,
+            declaration: LedgerFieldKind::Counter,
+        }],
+        circuits: vec![],
+        stateful_circuits: vec![StatefulCircuit {
+            name: "increment_by".into(),
+            parameters: vec![Parameter {
+                name: "amount".into(),
+                ty: Type::Unsigned {
+                    max: "65535".into(),
+                },
+            }],
+            actions: vec![StateAction::CounterIncrement {
+                field: "round".into(),
+                index: 0,
+                amount: CounterAmount::Parameter {
+                    name: "amount".into(),
+                },
+            }],
+        }],
+    };
+    let source = render(&contract).unwrap();
+    assert!(source.contains("__compact_param_0.value() as u16"));
+
+    contract.stateful_circuits[0].parameters[0].ty = Type::Unsigned { max: "255".into() };
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::TypeMismatch {
+            expected: Type::Unsigned {
+                max: "65535".into()
+            },
+            actual: Type::Unsigned { max: "255".into() },
+        })
+    );
+
+    contract.stateful_circuits[0].parameters[0].ty = Type::Unsigned {
+        max: "65535".into(),
+    };
+    contract.stateful_circuits[0].actions[0] = StateAction::CounterIncrement {
+        field: "round".into(),
+        index: 0,
+        amount: CounterAmount::Parameter {
+            name: "missing".into(),
+        },
+    };
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::UnknownParameter("missing".into()))
+    );
 }
 
 #[test]
@@ -233,7 +339,7 @@ fn struct_definitions_are_shared_by_name_and_must_match() {
         }],
     };
     let mut contract = Contract {
-        schema_version: 2,
+        schema_version: 3,
         ledger_fields: vec![],
         circuits: vec![PureCircuit {
             name: "identity".into(),

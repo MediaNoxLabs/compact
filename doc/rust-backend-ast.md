@@ -8,7 +8,7 @@ constructs `syn` syntax, and formats the result with `prettyplease`.
 `compact-rustc` joins the two processes without a shell command: it invokes
 `compactc --skip-zk --emit-rust-ir` and writes `contract/lib.rs`.
 
-The JSON schema is defined in
+The version 3 JSON schema is defined in
 `tools/compact-rust-backend/src/ir.rs`. It has no Rust-source escape hatch.
 Adding an expression or type requires an explicit IR variant, conversion in
 the Scheme pass, type validation in the renderer, and an executing fixture.
@@ -50,7 +50,12 @@ The Counter test serializes the full post-increment `ContractState` and matches
 the TypeScript oracle fixture byte for byte. The typed IR includes ordered
 ledger declarations and state actions. The compiler and renderer generate
 the minimal Counter increment and Boolean Cell write contracts end to end.
-Other ledger operations remain explicit compiler errors.
+Other ledger operations remain explicit compiler errors. Stateful circuits
+can accept typed parameters for Cell writes and Counter increments. Counter
+amounts have a closed literal-or-parameter IR variant; a parameter must be
+`Uint<16>`. The frontend inserts Compact's required `disclose` boundary before
+public ledger operations, and the renderer checks parameter types before
+emitting Rust.
 
 The user type slice emits native Rust structs from the typed Compact type
 shape and derives the ledger's `BinaryHashRepr`, `FieldRepr`, and
@@ -78,7 +83,8 @@ cargo test -p compact-rust-backend -p midnight-compact-runtime \
   -p compact-rust-counter-fixture -p compact-rust-cell-boolean-fixture \
   -p compact-rust-struct-identity-fixture -p compact-rust-nested-struct-fixture \
   -p compact-rust-composite-struct-fixture -p compact-rust-enum-identity-fixture \
-  -p compact-rust-cell-struct-fixture -p compact-rust-cell-enum-fixture
+  -p compact-rust-cell-struct-fixture -p compact-rust-cell-enum-fixture \
+  -p compact-rust-cell-parameter-fixture -p compact-rust-counter-parameter-fixture
 cargo build -p compact-rust-backend --bin compact-rustc
 ```
 
@@ -97,8 +103,8 @@ JSON alongside the usual TypeScript artifacts.
 
 1. Add literals and typed primitive operations using ledger and ZK crate
    semantics, with checks for Compact field and bounded unsigned behavior.
-2. Expand the initial Cell and Counter path to typed read results, parameterized
-   updates, and additional ledger field types while preserving state byte parity.
+2. Expand the initial Cell and Counter path to typed read results and
+   additional ledger field types while preserving state byte parity.
 3. Extend witnesses, calls, control flow, ledger ADTs, and cryptographic
    natives in small executing fixtures until the oracle matrix is covered.
 

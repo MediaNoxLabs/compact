@@ -1,5 +1,5 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "ledger_fields": [
     {
       "id": "round",
@@ -19,7 +19,7 @@
           "kind": "counter_increment",
           "field": "round",
           "index": 0,
-          "amount": 1
+          "amount": {"kind": "literal", "value": 1}
         }
       ]
     }

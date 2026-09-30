@@ -7,7 +7,7 @@
 
 use serde::{Deserialize, Serialize};
 
-pub const SCHEMA_VERSION: u32 = 2;
+pub const SCHEMA_VERSION: u32 = 3;
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -38,6 +38,8 @@ pub enum LedgerFieldKind {
 #[serde(deny_unknown_fields)]
 pub struct StatefulCircuit {
     pub name: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub parameters: Vec<Parameter>,
     pub actions: Vec<StateAction>,
 }
 
@@ -47,13 +49,20 @@ pub enum StateAction {
     CounterIncrement {
         field: String,
         index: u8,
-        amount: u16,
+        amount: CounterAmount,
     },
     CellWrite {
         field: String,
         index: u8,
         value: Expr,
     },
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
+pub enum CounterAmount {
+    Literal { value: u16 },
+    Parameter { name: String },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]

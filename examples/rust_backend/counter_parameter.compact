@@ -1,0 +1,7 @@
+import CompactStandardLibrary;
+
+export ledger round: Counter;
+
+export circuit increment_by(amount: Uint<16>): [] {
+  round.increment(disclose(amount));
+}

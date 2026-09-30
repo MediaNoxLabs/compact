@@ -1,4 +1,4 @@
-use compact_rust_cell_struct_fixture::ledger_contract::initial_state;
+use compact_rust_cell_struct_fixture::ledger_contract::{initial_state, set_record};
 use compact_rust_cell_struct_fixture::types::Pair;
 use midnight_compact_runtime::Field;
 use midnight_compact_runtime::context::ConstructorContext;
@@ -36,7 +36,7 @@ fn generated_struct_cell_has_ledger_alignment_and_round_trips() {
     assert_eq!(read_cell::<Pair, _>(&cell).unwrap(), value);
 
     let context = constructor.into_circuit_context(ContractAddress::default());
-    let result = context.write_cell(0, value.clone()).unwrap();
+    let result = set_record(context, value.clone()).unwrap();
     let StateValue::Array(fields) = result.context.query.state.get_ref() else {
         panic!("expected ledger field array")
     };

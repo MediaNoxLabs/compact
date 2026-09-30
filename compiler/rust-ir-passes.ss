@@ -167,20 +167,20 @@
               (append (map (lambda (binding) (ledger-binding-ir binding owner-src)) pl-array-elt*) fields)])]
           [else fields]))
 
-      (define (literal-u16 expr environment owner-src)
+      (define (counter-amount-ir expr environment owner-src)
         (nanopass-case (Lnodisclose Expression) expr
           [(quote ,src ,datum)
            (unless (and (integer? datum) (<= 0 datum 65535))
              (source-errorf src "Counter increment amount must fit Uint<16>"))
-           datum]
+           (object (cons "kind" "literal") (cons "value" datum))]
           [(safe-cast ,src ,type ,type^ ,expr)
-           (literal-u16 expr environment owner-src)]
+           (counter-amount-ir expr environment owner-src)]
           [(var-ref ,src ,var-name)
            (let ([entry (assq (id-sym var-name) environment)])
              (if entry
                  (cdr entry)
                  (source-errorf src "Rust backend cannot resolve Counter increment amount")))]
-          [else (source-errorf owner-src "Rust backend currently supports literal Counter increments only")]))
+          [else (source-errorf owner-src "Rust backend supports literal or parameter Counter increments only")]))
 
       (define (state-action-ir expr owner-src environment)
         (nanopass-case (Lnodisclose Expression) expr
@@ -191,7 +191,7 @@
                        (nanopass-case (Lnodisclose Argument) local
                          [(,var-name ,type)
                           (cons (cons (id-sym var-name)
-                                      (literal-u16 value environment src))
+                                      (counter-amount-ir value environment src))
                                 environment)]))
                      environment local* expr*)])
              (state-action-ir expr owner-src environment^))]
@@ -208,7 +208,7 @@
                  (object (cons "kind" "counter_increment")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
-                         (cons "amount" (literal-u16 (car expr*) environment src)))]
+                         (cons "amount" (counter-amount-ir (car expr*) environment src)))]
                 [(and (eq? adt-name '__compact_Cell)
                       (eq? ledger-op 'write)
                       (= (length expr*) 1))
@@ -219,12 +219,12 @@
                 [else (source-errorf src "Rust backend does not yet support this ledger operation")])])]
           [else (source-errorf owner-src "Rust backend does not yet support this state action")]))
 
-      (define (stateful-body-ir expr src)
+      (define (stateful-body-ir expr src environment)
         (nanopass-case (Lnodisclose Expression) expr
           [(seq ,src1 ,expr* ... ,expr)
            (unless (equal? (expression-ir expr src1) (kind "unit"))
              (source-errorf src1 "Rust backend stateful circuit result must be unit"))
-           (list->vector (map (lambda (action) (state-action-ir action src '())) expr*))]
+           (list->vector (map (lambda (action) (state-action-ir action src environment)) expr*))]
           [else (source-errorf src "Rust backend does not yet support this stateful circuit body")]))
 
       (define (stateful-circuit-ir pelt export-alist circuits)
@@ -236,14 +236,21 @@
                  (if (null? names)
                      circuits
                      (begin
-                       (unless (null? arg*)
-                         (source-errorf src "Rust backend stateful circuit parameters are not yet supported"))
                        (unless (equal? (type-ir type src) (kind "unit"))
                          (source-errorf src "Rust backend stateful circuit result type must be unit"))
                        (append
                          (map (lambda (name)
                                 (object (cons "name" name)
-                                        (cons "actions" (stateful-body-ir expr src))))
+                                        (cons "parameters" (list->vector (map (lambda (arg) (argument-ir arg src)) arg*)))
+                                        (cons "actions"
+                                              (stateful-body-ir expr src
+                                                (map (lambda (arg)
+                                                       (nanopass-case (Lnodisclose Argument) arg
+                                                         [(,var-name ,type)
+                                                          (cons (id-sym var-name)
+                                                                (object (cons "kind" "parameter")
+                                                                        (cons "name" (symbol->string (id-sym var-name)))))]))
+                                                     arg*)))))
                               names)
                          circuits)))))]
           [else circuits]))
@@ -262,7 +269,7 @@
        (let ([export-alist (map cons export-name* name*)])
          (print-json
            (get-target-port 'rust.ir.json)
-           (object (cons "schema_version" 2)
+           (object (cons "schema_version" 3)
                    (cons "ledger_fields"
                          (list->vector
                            (fold-right (lambda (pelt fields) (ledger-fields-ir pelt fields src)) '() pelt*)))

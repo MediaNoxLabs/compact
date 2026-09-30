@@ -3,3 +3,7 @@ import CompactStandardLibrary;
 struct Pair { amount: Field; active: Boolean; }
 
 export ledger record: Pair;
+
+export circuit set_record(value: Pair): [] {
+  record = disclose(value);
+}

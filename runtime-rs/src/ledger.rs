@@ -10,6 +10,7 @@ pub use midnight_onchain_runtime::error::TranscriptRejected;
 pub use midnight_onchain_state::state::{ChargedState, StateValue};
 pub use midnight_storage::DefaultDB;
 pub use midnight_storage::db::DB;
+pub use midnight_storage::storage::Array as LedgerArray;
 pub use midnight_storage::storage::HashMap as LedgerHashMap;
 
 use crate::{BoundedUint, CompactError, Field, FixedBytes, FixedVector};
@@ -255,6 +256,51 @@ impl<K: CellValue, V: CellValue, D: DB> MapView<'_, K, V, D> {
 
     pub fn is_empty(&self) -> bool {
         self.map.size() == 0
+    }
+}
+
+/// Read-only witness projection of the ledger's head/tail/length List array.
+pub struct ListView<'a, T, D: DB> {
+    fields: &'a LedgerArray<StateValue<D>, D>,
+    marker: PhantomData<T>,
+}
+
+pub fn list_view<T: CellValue, D: DB>(
+    state: &StateValue<D>,
+    index: u8,
+) -> Result<ListView<'_, T, D>, CompactError> {
+    let StateValue::Array(fields) = root_field(state, index)? else {
+        return Err(CompactError::InvalidLedgerCell(
+            "expected List array".into(),
+        ));
+    };
+    if fields.len() != 3 {
+        return Err(CompactError::InvalidLedgerCell(
+            "expected List head, tail, and length".into(),
+        ));
+    }
+    Ok(ListView {
+        fields,
+        marker: PhantomData,
+    })
+}
+
+impl<T: CellValue, D: DB> ListView<'_, T, D> {
+    pub fn head(&self) -> Result<Option<T>, CompactError> {
+        match self.fields.get(0) {
+            Some(StateValue::Null) => Ok(None),
+            Some(value) => read_cell(&value).map(Some),
+            None => unreachable!("List shape checked at construction"),
+        }
+    }
+
+    pub fn length(&self) -> Result<BoundedUint<{ u64::MAX as u128 }>, CompactError> {
+        let length = read_cell::<u64, _>(&self.fields.get(2).expect("List shape checked"))?;
+        BoundedUint::new(length as u128)
+    }
+
+    pub fn is_empty(&self) -> bool {
+        matches!(self.fields.get(1), Some(StateValue::Null))
     }
 }
 

@@ -1,0 +1,86 @@
+{
+  "before": {
+    "result": false,
+    "privateState": 8,
+    "privateTranscriptOutputs": [
+      {
+        "valueAtoms": [
+          []
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "bytes",
+              "length": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "after": {
+    "result": true,
+    "privateState": 9,
+    "privateTranscriptOutputs": [
+      {
+        "valueAtoms": [
+          [
+            1
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "bytes",
+              "length": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "covered": {
+    "result": false,
+    "privateState": 10,
+    "privateTranscriptOutputs": [
+      {
+        "valueAtoms": [
+          []
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "bytes",
+              "length": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "restored": {
+    "result": true,
+    "privateState": 11,
+    "privateTranscriptOutputs": [
+      {
+        "valueAtoms": [
+          [
+            1
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "bytes",
+              "length": 1
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

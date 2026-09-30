@@ -1,0 +1,17 @@
+import CompactStandardLibrary;
+
+export ledger items: List<Field>;
+
+witness first_is_42(): Boolean;
+
+export circuit prepend(value: Field): [] {
+  items.pushFront(disclose(value));
+}
+
+export circuit drop_first(): [] {
+  items.popFront();
+}
+
+export circuit private_first_is_42(): Boolean {
+  return disclose(first_is_42());
+}

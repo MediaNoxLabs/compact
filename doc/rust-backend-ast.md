@@ -85,11 +85,11 @@ removal, and reset. The renderer checks both key and value types against the
 declaration.
 
 The first List slice supports `List<Field>` construction, pushFront,
-popFront, length, isEmpty, and reset. The runtime constructs the ledger's
+popFront, head, length, isEmpty, and reset. The runtime constructs the ledger's
 three-element head/tail/length array and executes its List VM programs. The
-generated fixture checks length and emptiness after two pushes, a pop, reset,
-and another push. `head(): Maybe<T>` and coin-specific List operations remain
-future work.
+generated fixture checks typed `Maybe<Field>` heads, length, and emptiness
+after two pushes, a pop, reset, and another push. Coin-specific List
+operations remain future work.
 
 The user type slice emits native Rust structs from the typed Compact type
 shape and derives the ledger's `BinaryHashRepr`, `FieldRepr`, and

@@ -4,7 +4,8 @@ use proc_macro2::Span;
 use std::collections::HashMap;
 
 use crate::ir::{
-    CounterAmount, LedgerField, LedgerFieldKind, StateAction, StateReturn, StatefulCircuit, Type,
+    CounterAmount, LedgerField, LedgerFieldKind, StateAction, StateReturn, StatefulCircuit,
+    StructField, Type,
 };
 use crate::{RenderError, expression, ident, rust_type};
 
@@ -502,6 +503,48 @@ pub(crate) fn render_stateful_circuit(
             let index = syn::LitInt::new(&index.to_string(), Span::call_site());
             statements.push(syn::parse_quote! {
                 let read_step = context.is_empty_list(#index)?;
+            });
+            statements.push(syn::parse_quote! {
+                let context = read_step.context;
+            });
+            statements.push(syn::parse_quote! {
+                total_cost += read_step.gas_cost;
+            });
+            syn::parse_quote!(read_step.result)
+        }
+        StateReturn::ListHead { field, index } => {
+            let declaration = ledger_fields
+                .get(field.as_str())
+                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+            let LedgerFieldKind::List { ty } = &declaration.declaration else {
+                return Err(RenderError::UnknownLedgerField(field.clone()));
+            };
+            if declaration.index != *index {
+                return Err(RenderError::UnknownLedgerField(field.clone()));
+            }
+            let expected = Type::Struct {
+                name: "Maybe".into(),
+                fields: vec![
+                    StructField {
+                        name: "is_some".into(),
+                        ty: Type::Boolean,
+                    },
+                    StructField {
+                        name: "value".into(),
+                        ty: ty.clone(),
+                    },
+                ],
+            };
+            if circuit.result != expected {
+                return Err(RenderError::TypeMismatch {
+                    expected,
+                    actual: circuit.result.clone(),
+                });
+            }
+            let value_ty = rust_type(ty)?;
+            let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+            statements.push(syn::parse_quote! {
+                let read_step = context.head_list::<#value_ty, #result_ty>(#index)?;
             });
             statements.push(syn::parse_quote! {
                 let context = read_step.context;

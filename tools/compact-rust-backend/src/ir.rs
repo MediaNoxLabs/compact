@@ -102,6 +102,10 @@ pub enum StateReturn {
         field: String,
         index: u8,
     },
+    ListHead {
+        field: String,
+        index: u8,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]

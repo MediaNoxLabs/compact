@@ -10,6 +10,10 @@ export circuit items_empty(): Boolean {
   return items.isEmpty();
 }
 
+export circuit first_item(): Maybe<Field> {
+  return items.head();
+}
+
 export circuit prepend(value: Field): [] {
   items.pushFront(disclose(value));
 }

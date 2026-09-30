@@ -66,6 +66,24 @@ pub struct CircuitResult<Private, Output, D: DB = DefaultDB> {
 }
 
 impl<Private, D: DB> CircuitContext<Private, D> {
+    pub fn head_list<T: CellValue + Default, M: CellValue>(
+        mut self,
+        field_index: u8,
+    ) -> Result<CircuitResult<Private, M, D>, CompactError> {
+        let (result, value) = ledger::head_list::<T, M, D>(
+            &self.query,
+            field_index,
+            self.gas_limit.clone(),
+            &self.cost_model,
+        )?;
+        self.query = result.context;
+        Ok(CircuitResult {
+            context: self,
+            result: value,
+            gas_cost: result.gas_cost,
+        })
+    }
+
     pub fn pop_front_list(
         mut self,
         field_index: u8,

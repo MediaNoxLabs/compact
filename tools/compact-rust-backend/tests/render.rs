@@ -667,6 +667,36 @@ fn list_push_front_and_length_validate_declared_types() {
             actual: Type::Unit,
         })
     );
+    let maybe_field = Type::Struct {
+        name: "Maybe".into(),
+        fields: vec![
+            StructField {
+                name: "is_some".into(),
+                ty: Type::Boolean,
+            },
+            StructField {
+                name: "value".into(),
+                ty: Type::Field,
+            },
+        ],
+    };
+    contract.stateful_circuits[0].return_value = StateReturn::ListHead {
+        field: "items".into(),
+        index: 0,
+    };
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::TypeMismatch {
+            expected: maybe_field.clone(),
+            actual: Type::Unit,
+        })
+    );
+    contract.stateful_circuits[0].result = maybe_field;
+    assert!(
+        render(&contract)
+            .unwrap()
+            .contains("head_list::<runtime::Field, crate::types::Maybe>(0)?")
+    );
 }
 
 #[test]

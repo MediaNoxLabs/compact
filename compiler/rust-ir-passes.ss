@@ -408,6 +408,12 @@
                  (object (cons "kind" "list_is_empty")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*)))]
+                [(and (eq? adt-name 'List)
+                      (eq? ledger-op 'head)
+                      (null? expr*))
+                 (object (cons "kind" "list_head")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*)))]
                 [else (source-errorf src "Rust backend does not yet support this ledger return operation")])])]
           [else (source-errorf owner-src "Rust backend does not yet support this stateful return value")]))
 

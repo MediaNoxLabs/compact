@@ -18,6 +18,7 @@ use midnight_base_crypto::fab::{Aligned, AlignedValue, Value, ValueSlice};
 use midnight_onchain_vm::cost_model::CostModel;
 use midnight_onchain_vm::ops::{Key, Op};
 use midnight_onchain_vm::result_mode::{GatherEvent, ResultModeGather, ResultModeVerify};
+use midnight_serialize::Serializable;
 
 /// Compact values that can be stored in a ledger Cell. Implementations use
 /// upstream FAB conversions while keeping each type's declared alignment.
@@ -280,6 +281,64 @@ pub fn is_empty_list<D: DB>(
         .query(&program, gas_limit, cost_model)
         .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
     let decoded = decode_last_read::<bool, D>(&result)?;
+    Ok((result, decoded))
+}
+
+pub fn head_list<T: CellValue + Default, M: CellValue, D: DB>(
+    context: &QueryContext<D>,
+    field_index: u8,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<(QueryResults<ResultModeGather, D>, M), CompactError> {
+    let default = AlignedValue::new(T::default().into(), T::alignment())
+        .expect("default CellValue must match its alignment");
+    let concat_bound = (Serializable::serialized_size(&AlignedValue::from(1_u8))
+        + Serializable::serialized_size(&default)) as u32;
+    let absent = AlignedValue::concat([AlignedValue::from(0_u8), default].iter());
+    let program = [
+        Op::Dup { n: 0 },
+        Op::Idx {
+            cached: false,
+            push_path: false,
+            path: vec![Key::Value(AlignedValue::from(field_index))].into(),
+        },
+        Op::Idx {
+            cached: false,
+            push_path: false,
+            path: vec![Key::Value(AlignedValue::from(0_u8))].into(),
+        },
+        Op::Dup { n: 0 },
+        Op::Type,
+        Op::Push {
+            storage: false,
+            value: constructor_cell::<u8, D>(1),
+        },
+        Op::Eq,
+        Op::Branch { skip: 4 },
+        Op::Push {
+            storage: false,
+            value: constructor_cell::<u8, D>(1),
+        },
+        Op::Swap { n: 0 },
+        Op::Concat {
+            cached: false,
+            n: concat_bound,
+        },
+        Op::Jmp { skip: 2 },
+        Op::Pop,
+        Op::Push {
+            storage: false,
+            value: StateValue::from(absent),
+        },
+        Op::Popeq {
+            cached: true,
+            result: (),
+        },
+    ];
+    let result = context
+        .query(&program, gas_limit, cost_model)
+        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+    let decoded = decode_last_read::<M, D>(&result)?;
     Ok((result, decoded))
 }
 

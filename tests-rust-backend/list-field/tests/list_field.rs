@@ -1,5 +1,5 @@
 use compact_rust_list_field_fixture::ledger_contract::{
-    clear_items, drop_first, initial_state, item_count, items_empty, prepend,
+    clear_items, drop_first, first_item, initial_state, item_count, items_empty, prepend,
 };
 use midnight_compact_runtime::Field;
 use midnight_compact_runtime::context::ConstructorContext;
@@ -22,22 +22,37 @@ fn generated_empty_list_has_upstream_shape_and_zero_length() {
     assert_eq!(result.result.value(), 0);
     let result = items_empty(result.context).unwrap();
     assert!(result.result);
+    let result = first_item(result.context).unwrap();
+    assert!(!result.result.is_some);
+    assert_eq!(result.result.value, Field::from(0_u64));
     let result = prepend(result.context, Field::from(11_u64)).unwrap();
     let result = item_count(result.context).unwrap();
     assert_eq!(result.result.value(), 1);
+    let result = first_item(result.context).unwrap();
+    assert!(result.result.is_some);
+    assert_eq!(result.result.value, Field::from(11_u64));
     let result = items_empty(result.context).unwrap();
     assert!(!result.result);
     let result = prepend(result.context, Field::from(22_u64)).unwrap();
     let result = item_count(result.context).unwrap();
     assert_eq!(result.result.value(), 2);
+    let result = first_item(result.context).unwrap();
+    assert!(result.result.is_some);
+    assert_eq!(result.result.value, Field::from(22_u64));
     let result = drop_first(result.context).unwrap();
     let result = item_count(result.context).unwrap();
     assert_eq!(result.result.value(), 1);
+    let result = first_item(result.context).unwrap();
+    assert!(result.result.is_some);
+    assert_eq!(result.result.value, Field::from(11_u64));
     let result = clear_items(result.context).unwrap();
     let result = item_count(result.context).unwrap();
     assert_eq!(result.result.value(), 0);
     let result = items_empty(result.context).unwrap();
     assert!(result.result);
+    let result = first_item(result.context).unwrap();
+    assert!(!result.result.is_some);
+    assert_eq!(result.result.value, Field::from(0_u64));
     let result = prepend(result.context, Field::from(33_u64)).unwrap();
     let result = item_count(result.context).unwrap();
     assert_eq!(result.result.value(), 1);

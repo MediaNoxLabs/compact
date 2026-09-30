@@ -1,0 +1,81 @@
+{
+  "schema_version": 2,
+  "ledger_fields": [
+  ],
+  "circuits": [
+    {
+      "name": "composite_identity",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "struct",
+            "name": "Composite",
+            "fields": [
+              {
+                "name": "vector",
+                "ty": {
+                  "kind": "vector",
+                  "length": 2,
+                  "element": {
+                    "kind": "field"
+                  }
+                }
+              },
+              {
+                "name": "pair",
+                "ty": {
+                  "kind": "tuple",
+                  "elements": [
+                    {
+                      "kind": "field"
+                    },
+                    {
+                      "kind": "boolean"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Composite",
+        "fields": [
+          {
+            "name": "vector",
+            "ty": {
+              "kind": "vector",
+              "length": 2,
+              "element": {
+                "kind": "field"
+              }
+            }
+          },
+          {
+            "name": "pair",
+            "ty": {
+              "kind": "tuple",
+              "elements": [
+                {
+                  "kind": "field"
+                },
+                {
+                  "kind": "boolean"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "body": {
+        "kind": "parameter",
+        "name": "value"
+      }
+    }
+  ],
+  "stateful_circuits": [
+  ]
+}

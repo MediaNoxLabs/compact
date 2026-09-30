@@ -1,0 +1,57 @@
+{
+  "schema_version": 2,
+  "ledger_fields": [
+  ],
+  "circuits": [
+    {
+      "name": "pair_identity",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "struct",
+            "name": "Pair",
+            "fields": [
+              {
+                "name": "amount",
+                "ty": {
+                  "kind": "field"
+                }
+              },
+              {
+                "name": "active",
+                "ty": {
+                  "kind": "boolean"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Pair",
+        "fields": [
+          {
+            "name": "amount",
+            "ty": {
+              "kind": "field"
+            }
+          },
+          {
+            "name": "active",
+            "ty": {
+              "kind": "boolean"
+            }
+          }
+        ]
+      },
+      "body": {
+        "kind": "parameter",
+        "name": "value"
+      }
+    }
+  ],
+  "stateful_circuits": [
+  ]
+}

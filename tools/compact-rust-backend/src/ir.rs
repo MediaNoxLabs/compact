@@ -78,10 +78,34 @@ pub enum Type {
     Unit,
     Boolean,
     Field,
-    Bytes { length: usize },
-    Unsigned { max: String },
-    Tuple { elements: Vec<Type> },
-    Vector { element: Box<Type>, length: usize },
+    Bytes {
+        length: usize,
+    },
+    Struct {
+        name: String,
+        fields: Vec<StructField>,
+    },
+    Enum {
+        name: String,
+        variants: Vec<String>,
+    },
+    Unsigned {
+        max: String,
+    },
+    Tuple {
+        elements: Vec<Type>,
+    },
+    Vector {
+        element: Box<Type>,
+        length: usize,
+    },
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct StructField {
+    pub name: String,
+    pub ty: Type,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]

@@ -4,11 +4,11 @@ pub mod ir;
 
 const RUNTIME_ABI_VERSION: u32 = 1;
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::error::Error;
 use std::fmt;
 
-use ir::{Contract, Expr, LedgerFieldKind, SCHEMA_VERSION, StateAction, Type};
+use ir::{Contract, Expr, LedgerFieldKind, SCHEMA_VERSION, StateAction, StructField, Type};
 use proc_macro2::Span;
 use quote::quote;
 
@@ -23,6 +23,11 @@ pub enum RenderError {
     InvalidLedgerIndex(u8),
     UnknownLedgerField(String),
     UnsupportedLedgerCellType(Type),
+    ConflictingStruct(String),
+    DuplicateStructField(String),
+    ConflictingEnum(String),
+    EmptyEnum(String),
+    DuplicateEnumVariant(String),
     UnknownParameter(String),
     TypeMismatch { expected: Type, actual: Type },
 }
@@ -48,6 +53,13 @@ impl fmt::Display for RenderError {
             }
             Self::UnknownLedgerField(name) => write!(f, "unknown ledger field {name:?}"),
             Self::UnsupportedLedgerCellType(ty) => write!(f, "unsupported ledger Cell type {ty:?}"),
+            Self::ConflictingStruct(name) => {
+                write!(f, "conflicting definitions for struct {name:?}")
+            }
+            Self::DuplicateStructField(name) => write!(f, "duplicate struct field {name:?}"),
+            Self::ConflictingEnum(name) => write!(f, "conflicting definitions for enum {name:?}"),
+            Self::EmptyEnum(name) => write!(f, "enum {name:?} has no variants"),
+            Self::DuplicateEnumVariant(name) => write!(f, "duplicate enum variant {name:?}"),
             Self::UnknownParameter(name) => write!(f, "unknown parameter {name:?}"),
             Self::TypeMismatch { expected, actual } => {
                 write!(f, "expression has type {actual:?}, expected {expected:?}")
@@ -69,7 +81,11 @@ fn rust_type(ty: &Type) -> Result<syn::Type, RenderError> {
         Type::Field => syn::parse_quote!(runtime::Field),
         Type::Bytes { length } => {
             let length = syn::LitInt::new(&length.to_string(), Span::call_site());
-            syn::parse_quote!([u8; #length])
+            syn::parse_quote!(runtime::FixedBytes<#length>)
+        }
+        Type::Struct { name, .. } | Type::Enum { name, .. } => {
+            let name = ident(name)?;
+            syn::parse_quote!(crate::types::#name)
         }
         Type::Unsigned { max } => {
             let parsed = max
@@ -100,9 +116,72 @@ fn rust_type(ty: &Type) -> Result<syn::Type, RenderError> {
         Type::Vector { element, length } => {
             let element = rust_type(element)?;
             let length = syn::LitInt::new(&length.to_string(), Span::call_site());
-            syn::parse_quote!([#element; #length])
+            syn::parse_quote!(runtime::FixedVector<#element, #length>)
         }
     })
+}
+
+fn collect_named_types(
+    ty: &Type,
+    structs: &mut BTreeMap<String, Vec<StructField>>,
+    enums: &mut BTreeMap<String, Vec<String>>,
+) -> Result<(), RenderError> {
+    match ty {
+        Type::Struct { name, fields } => {
+            ident(name)?;
+            if enums.contains_key(name) {
+                return Err(RenderError::ConflictingStruct(name.clone()));
+            }
+            if let Some(existing) = structs.get(name) {
+                if existing != fields {
+                    return Err(RenderError::ConflictingStruct(name.clone()));
+                }
+            } else {
+                let mut names = HashSet::new();
+                for field in fields {
+                    ident(&field.name)?;
+                    if !names.insert(field.name.as_str()) {
+                        return Err(RenderError::DuplicateStructField(field.name.clone()));
+                    }
+                }
+                structs.insert(name.clone(), fields.clone());
+            }
+            for field in fields {
+                collect_named_types(&field.ty, structs, enums)?;
+            }
+        }
+        Type::Enum { name, variants } => {
+            ident(name)?;
+            if structs.contains_key(name) {
+                return Err(RenderError::ConflictingEnum(name.clone()));
+            }
+            if variants.is_empty() {
+                return Err(RenderError::EmptyEnum(name.clone()));
+            }
+            let mut names = HashSet::new();
+            for variant in variants {
+                ident(variant)?;
+                if !names.insert(variant.as_str()) {
+                    return Err(RenderError::DuplicateEnumVariant(variant.clone()));
+                }
+            }
+            if let Some(existing) = enums.get(name) {
+                if existing != variants {
+                    return Err(RenderError::ConflictingEnum(name.clone()));
+                }
+            } else {
+                enums.insert(name.clone(), variants.clone());
+            }
+        }
+        Type::Tuple { elements } => {
+            for element in elements {
+                collect_named_types(element, structs, enums)?;
+            }
+        }
+        Type::Vector { element, .. } => collect_named_types(element, structs, enums)?,
+        _ => {}
+    }
+    Ok(())
 }
 
 fn expression(
@@ -174,6 +253,27 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
     }
 
     let mut names = HashSet::new();
+    let mut struct_definitions = BTreeMap::new();
+    let mut enum_definitions = BTreeMap::new();
+    for circuit in &contract.circuits {
+        for parameter in &circuit.parameters {
+            collect_named_types(
+                &parameter.ty,
+                &mut struct_definitions,
+                &mut enum_definitions,
+            )?;
+        }
+        collect_named_types(
+            &circuit.result,
+            &mut struct_definitions,
+            &mut enum_definitions,
+        )?;
+    }
+    for field in &contract.ledger_fields {
+        if let LedgerFieldKind::Cell { ty } = &field.declaration {
+            collect_named_types(ty, &mut struct_definitions, &mut enum_definitions)?;
+        }
+    }
     let mut ledger_fields = HashMap::new();
     let mut ordered_fields = contract.ledger_fields.iter().collect::<Vec<_>>();
     ordered_fields.sort_by_key(|field| field.index);
@@ -313,6 +413,91 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
     }).collect::<Result<Vec<syn::Expr>, RenderError>>()?;
 
     let runtime_abi = syn::LitInt::new(&RUNTIME_ABI_VERSION.to_string(), Span::call_site());
+    let mut struct_items = Vec::<syn::Item>::new();
+    for (name, fields) in &struct_definitions {
+        let name = ident(name)?;
+        let fields = fields
+            .iter()
+            .map(|field| {
+                let field_name = ident(&field.name)?;
+                let field_ty = rust_type(&field.ty)?;
+                Ok(syn::parse_quote!(pub #field_name: #field_ty))
+            })
+            .collect::<Result<Vec<syn::Field>, RenderError>>()?;
+        struct_items.push(syn::parse_quote! {
+            #[derive(Clone, Debug, PartialEq, Eq, BinaryHashRepr, FieldRepr, FromFieldRepr)]
+            pub struct #name { #(#fields),* }
+        });
+    }
+    for (name, variants) in &enum_definitions {
+        let name = ident(name)?;
+        let variants = variants
+            .iter()
+            .map(|variant| ident(variant))
+            .collect::<Result<Vec<_>, _>>()?;
+        let to_ordinal = variants
+            .iter()
+            .enumerate()
+            .map(|(number, variant)| {
+                let number = syn::LitInt::new(&number.to_string(), Span::call_site());
+                quote!(Self::#variant => #number,)
+            })
+            .collect::<Vec<_>>();
+        let from_ordinal = variants
+            .iter()
+            .enumerate()
+            .map(|(number, variant)| {
+                let number = syn::LitInt::new(&number.to_string(), Span::call_site());
+                quote!(#number => Some(Self::#variant),)
+            })
+            .collect::<Vec<_>>();
+        let max_ordinal = variants.len() - 1;
+        let byte_length = ((usize::BITS - max_ordinal.leading_zeros()) as usize).div_ceil(8);
+        let byte_length = syn::LitInt::new(&byte_length.to_string(), Span::call_site());
+        struct_items.push(syn::parse_quote! {
+            #[allow(non_camel_case_types)]
+            #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+            pub enum #name { #(#variants),* }
+        });
+        struct_items.push(syn::parse_quote! {
+            impl FieldRepr for #name {
+                fn field_repr<W: MemWrite<Fr>>(&self, writer: &mut W) {
+                    let ordinal: u128 = match self { #(#to_ordinal)* };
+                    ordinal.field_repr(writer);
+                }
+                fn field_size(&self) -> usize { 1 }
+            }
+        });
+        struct_items.push(syn::parse_quote! {
+            impl BinaryHashRepr for #name {
+                fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
+                    let ordinal: u128 = match self { #(#to_ordinal)* };
+                    writer.write(&ordinal.to_le_bytes()[..#byte_length]);
+                }
+                fn binary_len(&self) -> usize { #byte_length }
+            }
+        });
+        struct_items.push(syn::parse_quote! {
+            impl FromFieldRepr for #name {
+                const FIELD_SIZE: usize = 1;
+                fn from_field_repr(repr: &[Fr]) -> Option<Self> {
+                    let ordinal = <u128 as FromFieldRepr>::from_field_repr(repr)?;
+                    match ordinal { #(#from_ordinal)* _ => None }
+                }
+            }
+        });
+    }
+    let types_module: Option<syn::Item> = if struct_items.is_empty() {
+        None
+    } else {
+        Some(syn::parse_quote! {
+            pub mod types {
+                use midnight_compact_runtime as runtime;
+                use runtime::{BinaryHashRepr, FieldRepr, Fr, FromFieldRepr, MemWrite};
+                #(#struct_items)*
+            }
+        })
+    };
     let ledger_module: Option<syn::Item> =
         if contract.ledger_fields.is_empty() && contract.stateful_circuits.is_empty() {
             None
@@ -332,6 +517,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
             })
         };
     let file: syn::File = syn::parse2(quote! {
+        #types_module
         pub mod pure_circuits {
             use midnight_compact_runtime as runtime;
             const _: () = assert!(runtime::RUST_RUNTIME_ABI == #runtime_abi);

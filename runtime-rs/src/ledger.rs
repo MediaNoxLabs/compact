@@ -11,7 +11,7 @@ pub use midnight_onchain_state::state::{ChargedState, StateValue};
 pub use midnight_storage::DefaultDB;
 pub use midnight_storage::db::DB;
 
-use crate::{BoundedUint, CompactError, Field};
+use crate::{BoundedUint, CompactError, Field, FixedBytes, FixedVector};
 use midnight_base_crypto::cost_model::RunningCost;
 use midnight_base_crypto::fab::{Aligned, AlignedValue, Value, ValueSlice};
 use midnight_onchain_vm::cost_model::CostModel;
@@ -48,6 +48,82 @@ impl<const N: usize> CellValue for [u8; N] {
             .map_err(|error| CompactError::InvalidLedgerCell(error.to_string()))
     }
 }
+
+impl<const N: usize> CellValue for FixedBytes<N> {
+    fn decode_cell_value(value: &ValueSlice) -> Result<Self, CompactError> {
+        <[u8; N]>::try_from(Value(value.0.to_vec()))
+            .map(Self::new)
+            .map_err(|error| CompactError::InvalidLedgerCell(error.to_string()))
+    }
+}
+
+impl<T: CellValue, const N: usize> CellValue for FixedVector<T, N> {
+    fn decode_cell_value(value: &ValueSlice) -> Result<Self, CompactError> {
+        let atoms_per_element = T::alignment().0.len();
+        if value.0.len() != N * atoms_per_element {
+            return Err(CompactError::InvalidLedgerCell(
+                "vector atom count differs from declared type".into(),
+            ));
+        }
+        let elements = (0..N)
+            .map(|index| {
+                let start = index * atoms_per_element;
+                T::decode_cell_value(&value[start..start + atoms_per_element])
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(Self::new(elements.try_into().map_err(|_| {
+            CompactError::InvalidLedgerCell("invalid vector length".into())
+        })?))
+    }
+}
+
+impl CellValue for () {
+    fn decode_cell_value(value: &ValueSlice) -> Result<Self, CompactError> {
+        if value.0.is_empty() {
+            Ok(())
+        } else {
+            Err(CompactError::InvalidLedgerCell(
+                "expected empty tuple value".into(),
+            ))
+        }
+    }
+}
+
+macro_rules! tuple_cell_value {
+    ($($name:ident),+ $(,)?) => {
+        #[allow(non_snake_case)]
+        impl<$($name: CellValue),+> CellValue for ($($name,)+)
+        where
+            $(Value: From<$name>,)+
+        {
+            fn decode_cell_value(value: &ValueSlice) -> Result<Self, CompactError> {
+                let mut offset = 0;
+                $(let $name = {
+                    let length = $name::alignment().0.len();
+                    if offset + length > value.0.len() {
+                        return Err(CompactError::InvalidLedgerCell("tuple atom count differs from declared type".into()));
+                    }
+                    let decoded = $name::decode_cell_value(&value[offset..offset + length])?;
+                    offset += length;
+                    decoded
+                };)+
+                if offset != value.0.len() {
+                    return Err(CompactError::InvalidLedgerCell("tuple has trailing atoms".into()));
+                }
+                Ok(($($name,)+))
+            }
+        }
+    };
+}
+
+tuple_cell_value!(A);
+tuple_cell_value!(A, B);
+tuple_cell_value!(A, B, C);
+tuple_cell_value!(A, B, C, D);
+tuple_cell_value!(A, B, C, D, E);
+tuple_cell_value!(A, B, C, D, E, F);
+tuple_cell_value!(A, B, C, D, E, F, G);
+tuple_cell_value!(A, B, C, D, E, F, G, H);
 
 /// Construct the ledger's Cell shape using its FAB alignment and value rules.
 pub fn constructor_cell<T, D>(value: T) -> StateValue<D>

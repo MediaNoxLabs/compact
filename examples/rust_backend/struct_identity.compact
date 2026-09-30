@@ -1,0 +1,7 @@
+import CompactStandardLibrary;
+
+struct Pair { amount: Field; active: Boolean; }
+
+export circuit pair_identity(value: Pair): Pair {
+  return value;
+}

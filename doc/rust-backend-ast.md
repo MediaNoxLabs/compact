@@ -26,7 +26,9 @@ tests. The compiler supports the initial Counter and Boolean Cell state
 actions and rejects other ledger shapes, witnesses, and bounded unsigned
 arithmetic until their runtime semantics are implemented. `Uint<N>` uses a
 bounded runtime type with a checked inclusive maximum and Compact's byte
-alignment; `Bytes<N>` uses the ledger's fixed byte array representation.
+alignment. `Bytes<N>` uses a small fixed bytes wrapper: it delegates field
+encoding and FAB alignment to ledger-8's `[u8; N]` support, and calls the
+ledger's byte decoder to fill the `FromFieldRepr` gap for widths other than 32.
 
 The runtime facade in `runtime-rs` reexports `Fr` from
 `midnight-transient-crypto` 2.0.1 as Compact `Field`. It also reexports the
@@ -50,6 +52,15 @@ ledger declarations and state actions. The compiler and renderer generate
 the minimal Counter increment and Boolean Cell write contracts end to end.
 Other ledger operations remain explicit compiler errors.
 
+The user type slice emits native Rust structs from the typed Compact type
+shape and derives the ledger's `BinaryHashRepr`, `FieldRepr`, and
+`FromFieldRepr` macros. It emits closed enum ordinal conversions with the
+same field and declared byte width. Struct, nested struct, enum, and
+vector/tuple composite fixtures execute. `FixedVector<T, N>` delegates
+element encoding to ledger primitives and fills the missing generic array
+field decoder. Runtime tests cover recursive vector/tuple values in Cells.
+User structs and enums as ledger Cell values are still pending.
+
 ## Run locally
 
 With the base compiler's Chez and nanopass dependencies available, build the
@@ -60,7 +71,9 @@ cargo test -p compact-rust-backend -p midnight-compact-runtime \
   -p compact-rust-identity-fixture -p compact-rust-truth-fixture \
   -p compact-rust-one-tuple-fixture -p compact-rust-field-add-fixture \
   -p compact-rust-uint-identity-fixture -p compact-rust-bytes-identity-fixture \
-  -p compact-rust-counter-fixture -p compact-rust-cell-boolean-fixture
+  -p compact-rust-counter-fixture -p compact-rust-cell-boolean-fixture \
+  -p compact-rust-struct-identity-fixture -p compact-rust-nested-struct-fixture \
+  -p compact-rust-composite-struct-fixture -p compact-rust-enum-identity-fixture
 cargo build -p compact-rust-backend --bin compact-rustc
 ```
 

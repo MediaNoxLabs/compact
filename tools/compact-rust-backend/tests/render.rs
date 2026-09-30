@@ -1,6 +1,6 @@
 use compact_rust_backend::ir::{
     Contract, Expr, LedgerField, LedgerFieldKind, Parameter, PureCircuit, StateAction,
-    StatefulCircuit, Type,
+    StatefulCircuit, StructField, Type,
 };
 use compact_rust_backend::{RenderError, render};
 
@@ -221,4 +221,45 @@ fn state_action_must_reference_the_declared_ledger_field_and_index() {
 
     contract.ledger_fields[0].index = 1;
     assert_eq!(render(&contract), Err(RenderError::InvalidLedgerIndex(1)));
+}
+
+#[test]
+fn struct_definitions_are_shared_by_name_and_must_match() {
+    let pair = Type::Struct {
+        name: "Pair".into(),
+        fields: vec![StructField {
+            name: "amount".into(),
+            ty: Type::Field,
+        }],
+    };
+    let mut contract = Contract {
+        schema_version: 2,
+        ledger_fields: vec![],
+        circuits: vec![PureCircuit {
+            name: "identity".into(),
+            parameters: vec![Parameter {
+                name: "value".into(),
+                ty: pair.clone(),
+            }],
+            result: pair.clone(),
+            body: Expr::Parameter {
+                name: "value".into(),
+            },
+        }],
+        stateful_circuits: vec![],
+    };
+    let source = render(&contract).unwrap();
+    assert_eq!(source.matches("pub struct Pair").count(), 1);
+
+    contract.circuits[0].result = Type::Struct {
+        name: "Pair".into(),
+        fields: vec![StructField {
+            name: "active".into(),
+            ty: Type::Boolean,
+        }],
+    };
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::ConflictingStruct("Pair".into()))
+    );
 }

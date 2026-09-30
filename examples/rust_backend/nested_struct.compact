@@ -1,0 +1,8 @@
+import CompactStandardLibrary;
+
+struct Inner { value: Uint<8>; }
+struct Outer { tag: Bytes<4>; inner: Inner; }
+
+export circuit nested_identity(value: Outer): Outer {
+  return value;
+}

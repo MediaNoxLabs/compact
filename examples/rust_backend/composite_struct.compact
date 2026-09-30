@@ -1,0 +1,7 @@
+import CompactStandardLibrary;
+
+struct Composite { vector: Vector<2, Field>; pair: [Field, Boolean]; }
+
+export circuit composite_identity(value: Composite): Composite {
+  return value;
+}

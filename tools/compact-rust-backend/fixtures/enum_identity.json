@@ -1,0 +1,37 @@
+{
+  "schema_version": 2,
+  "ledger_fields": [
+  ],
+  "circuits": [
+    {
+      "name": "choice_identity",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "enum",
+            "name": "Choice",
+            "variants": [
+              "yes",
+              "no"
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "enum",
+        "name": "Choice",
+        "variants": [
+          "yes",
+          "no"
+        ]
+      },
+      "body": {
+        "kind": "parameter",
+        "name": "value"
+      }
+    }
+  ],
+  "stateful_circuits": [
+  ]
+}

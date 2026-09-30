@@ -10,7 +10,7 @@ pub mod context;
 pub mod ledger;
 mod primitives;
 
-pub use primitives::BoundedUint;
+pub use primitives::{BoundedUint, FixedBytes, FixedVector};
 
 /// Increment when generated Rust and the runtime's public contract change.
 pub const RUST_RUNTIME_ABI: u32 = 1;
@@ -21,6 +21,7 @@ pub const LEDGER_VERSION: &str = "ledger-8.0.2";
 pub use midnight_transient_crypto::curve::Fr;
 pub use midnight_transient_crypto::curve::Fr as Field;
 
+pub use midnight_base_crypto::repr::BinaryHashRepr;
 /// Required by the ledger derives in their generated implementation.
 pub use midnight_base_crypto::repr::MemWrite;
 /// Reuse ledger-8's field representation traits and derives for user structs.

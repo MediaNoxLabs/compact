@@ -42,6 +42,20 @@
           [(tbytes ,src ,len)
            (object (cons "kind" "bytes")
                    (cons "length" len))]
+          [(tstruct ,src ,struct-name (,elt-name* ,type*) ...)
+           (object (cons "kind" "struct")
+                   (cons "name" (symbol->string struct-name))
+                   (cons "fields"
+                         (list->vector
+                           (map (lambda (name ty)
+                                  (object (cons "name" (symbol->string name))
+                                          (cons "ty" (type-ir ty owner-src))))
+                                elt-name* type*))))]
+          [(tenum ,src ,enum-name ,elt-name ,elt-name* ...)
+           (object (cons "kind" "enum")
+                   (cons "name" (symbol->string enum-name))
+                   (cons "variants"
+                         (list->vector (map symbol->string (cons elt-name elt-name*)))))]
           [(tunsigned ,src ,nat)
            (object (cons "kind" "unsigned")
                    (cons "max" (number->string nat)))]

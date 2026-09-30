@@ -1,0 +1,79 @@
+{
+  "schema_version": 2,
+  "ledger_fields": [
+  ],
+  "circuits": [
+    {
+      "name": "nested_identity",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "struct",
+            "name": "Outer",
+            "fields": [
+              {
+                "name": "tag",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 4
+                }
+              },
+              {
+                "name": "inner",
+                "ty": {
+                  "kind": "struct",
+                  "name": "Inner",
+                  "fields": [
+                    {
+                      "name": "value",
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "255"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Outer",
+        "fields": [
+          {
+            "name": "tag",
+            "ty": {
+              "kind": "bytes",
+              "length": 4
+            }
+          },
+          {
+            "name": "inner",
+            "ty": {
+              "kind": "struct",
+              "name": "Inner",
+              "fields": [
+                {
+                  "name": "value",
+                  "ty": {
+                    "kind": "unsigned",
+                    "max": "255"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "body": {
+        "kind": "parameter",
+        "name": "value"
+      }
+    }
+  ],
+  "stateful_circuits": [
+  ]
+}

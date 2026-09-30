@@ -725,7 +725,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-composite-struct-fixture"
+version = "0.1.0"
+dependencies = [
+ "midnight-compact-runtime",
+]
+
+[[package]]
 name = "compact-rust-counter-fixture"
+version = "0.1.0"
+dependencies = [
+ "midnight-compact-runtime",
+]
+
+[[package]]
+name = "compact-rust-enum-identity-fixture"
 version = "0.1.0"
 dependencies = [
  "midnight-compact-runtime",
@@ -746,7 +760,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-nested-struct-fixture"
+version = "0.1.0"
+dependencies = [
+ "midnight-compact-runtime",
+]
+
+[[package]]
 name = "compact-rust-one-tuple-fixture"
+version = "0.1.0"
+dependencies = [
+ "midnight-compact-runtime",
+]
+
+[[package]]
+name = "compact-rust-struct-identity-fixture"
 version = "0.1.0"
 dependencies = [
  "midnight-compact-runtime",

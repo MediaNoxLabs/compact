@@ -1,0 +1,7 @@
+import CompactStandardLibrary;
+
+enum Choice { yes, no }
+
+export circuit choice_identity(value: Choice): Choice {
+  return value;
+}

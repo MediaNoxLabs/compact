@@ -1,7 +1,9 @@
 use midnight_base_crypto::fab::{
     Aligned, AlignedValue, Alignment, AlignmentAtom, Value, ValueAtom,
 };
-use midnight_compact_runtime::{BoundedUint, CompactError, Field, FieldRepr, FromFieldRepr};
+use midnight_compact_runtime::{
+    BinaryHashRepr, BoundedUint, CompactError, Field, FieldRepr, FromFieldRepr,
+};
 
 #[test]
 fn compact_uint_maximum_is_enforced_at_input_and_decode() {
@@ -41,4 +43,5 @@ fn compact_uint_uses_the_declared_byte_alignment_and_ledger_value() {
         })
     );
     assert_eq!(BoundedUint::<0>::BYTE_LENGTH, 0);
+    assert_eq!(value.binary_vec(), vec![254]);
 }

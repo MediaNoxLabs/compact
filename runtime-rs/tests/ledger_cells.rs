@@ -1,9 +1,9 @@
 use midnight_base_crypto::fab::{AlignedValue, Alignment, AlignmentAtom, Value, ValueAtom};
-use midnight_compact_runtime::BoundedUint;
 use midnight_compact_runtime::CompactError;
 use midnight_compact_runtime::ledger::{
     DefaultDB, StateValue, constructor_cell, constructor_counter, read_cell, read_counter,
 };
+use midnight_compact_runtime::{BoundedUint, Field, FixedBytes, FixedVector};
 
 #[test]
 fn constructor_cell_round_trips_and_checks_alignment() {
@@ -46,4 +46,35 @@ fn bounded_uint_cell_rejects_a_value_above_its_declared_maximum() {
         read_cell::<Small, _>(&wider),
         Err(CompactError::UnsignedOutOfRange { value: 9, max: 8 })
     ));
+}
+
+#[test]
+fn fixed_bytes_cell_preserves_compact_length_and_normalized_value() {
+    let bytes = FixedBytes::<4>::new([1, 2, 0, 0]);
+    let cell = constructor_cell::<_, DefaultDB>(bytes);
+    assert_eq!(read_cell::<FixedBytes<4>, _>(&cell).unwrap(), bytes);
+}
+
+#[test]
+fn fixed_vector_cell_round_trips_composite_alignment() {
+    let value = FixedVector::new([Field::from(3_u64), Field::from(5_u64)]);
+    let state = constructor_cell::<_, DefaultDB>(value.clone());
+    assert_eq!(
+        read_cell::<FixedVector<Field, 2>, _>(&state).unwrap(),
+        value
+    );
+}
+
+#[test]
+fn tuple_and_vector_of_tuples_decode_from_ledger_cells() {
+    let pair = (Field::from(9_u64), true);
+    let pair_state = constructor_cell::<_, DefaultDB>(pair);
+    assert_eq!(read_cell::<(Field, bool), _>(&pair_state).unwrap(), pair);
+
+    let vector = FixedVector::new([pair, (Field::from(10_u64), false)]);
+    let state = constructor_cell::<_, DefaultDB>(vector.clone());
+    assert_eq!(
+        read_cell::<FixedVector<(Field, bool), 2>, _>(&state).unwrap(),
+        vector
+    );
 }

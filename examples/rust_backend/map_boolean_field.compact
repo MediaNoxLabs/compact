@@ -6,6 +6,10 @@ export circuit put(key: Boolean, value: Field): [] {
   table.insert(disclose(key), disclose(value));
 }
 
+export circuit put_default(key: Boolean): [] {
+  table.insertDefault(disclose(key));
+}
+
 export circuit has(key: Boolean): Boolean {
   return table.member(disclose(key));
 }

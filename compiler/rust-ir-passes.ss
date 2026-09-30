@@ -271,6 +271,13 @@
                          (cons "key" (expression-ir (car expr*) src))
                          (cons "value" (expression-ir (cadr expr*) src)))]
                 [(and (eq? adt-name 'Map)
+                      (eq? ledger-op 'insertDefault)
+                      (= (length expr*) 1))
+                 (object (cons "kind" "map_insert_default")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*))
+                         (cons "key" (expression-ir (car expr*) src)))]
+                [(and (eq? adt-name 'Map)
                       (eq? ledger-op 'remove)
                       (= (length expr*) 1))
                  (object (cons "kind" "map_remove")

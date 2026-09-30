@@ -76,12 +76,13 @@ The generated fixture checks membership, uniqueness after a duplicate insert,
 size and emptiness around removal, reset, and independent roots at indices 0
 and 1. The typed IR carries the Set element type for renderer validation.
 
-The Map slice supports `Map<Boolean, Field>` construction, insertion, removal,
-membership, lookup, size, isEmpty, and reset. It shares the ledger Map
-representation and key FAB semantics with Set, while storing a typed Cell
-value. Direct VM and generated contract tests cover missing keys, insertion,
-replacement, Field decoding, removal, and reset. The renderer checks both key
-and value types against the declaration.
+The Map slice supports `Map<Boolean, Field>` construction, insertion,
+insertDefault, removal, membership, lookup, size, isEmpty, and reset. It
+shares the ledger Map representation and key FAB semantics with Set, while
+storing a typed Cell value. Direct VM and generated contract tests cover
+missing keys, insertion, replacement, default insertion, Field decoding,
+removal, and reset. The renderer checks both key and value types against the
+declaration.
 
 The user type slice emits native Rust structs from the typed Compact type
 shape and derives the ledger's `BinaryHashRepr`, `FieldRepr`, and

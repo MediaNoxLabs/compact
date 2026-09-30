@@ -243,6 +243,39 @@ pub(crate) fn render_stateful_circuit(
                     total_cost += step.gas_cost;
                 });
             }
+            StateAction::MapInsertDefault { field, index, key } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                let LedgerFieldKind::Map {
+                    key: key_ty,
+                    value: value_ty,
+                } = &declaration.declaration
+                else {
+                    return Err(RenderError::UnknownLedgerField(field.clone()));
+                };
+                if declaration.index != *index {
+                    return Err(RenderError::UnknownLedgerField(field.clone()));
+                }
+                let (key, actual_key) = expression(key, &parameters)?;
+                if &actual_key != key_ty {
+                    return Err(RenderError::TypeMismatch {
+                        expected: key_ty.clone(),
+                        actual: actual_key,
+                    });
+                }
+                let value_ty = rust_type(value_ty)?;
+                let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+                statements.push(syn::parse_quote! {
+                    let step = context.insert_map(#index, #key, <#value_ty as Default>::default())?;
+                });
+                statements.push(syn::parse_quote! {
+                    let context = step.context;
+                });
+                statements.push(syn::parse_quote! {
+                    total_cost += step.gas_cost;
+                });
+            }
             StateAction::MapRemove { field, index, key } => {
                 let declaration = ledger_fields
                     .get(field.as_str())

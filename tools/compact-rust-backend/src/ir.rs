@@ -137,6 +137,11 @@ pub enum StateAction {
         key: Expr,
         value: Expr,
     },
+    MapInsertDefault {
+        field: String,
+        index: u8,
+        key: Expr,
+    },
     MapRemove {
         field: String,
         index: u8,

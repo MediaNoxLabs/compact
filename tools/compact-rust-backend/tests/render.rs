@@ -573,6 +573,25 @@ fn map_insert_and_lookup_require_key_and_value_types() {
     );
     contract.stateful_circuits[0].result = Type::Unit;
     contract.stateful_circuits[0].return_value = StateReturn::Unit;
+    contract.stateful_circuits[0].actions = vec![StateAction::MapInsertDefault {
+        field: "table".into(),
+        index: 0,
+        key: Expr::Parameter { name: "key".into() },
+    }];
+    assert!(
+        render(&contract)
+            .unwrap()
+            .contains(".insert_map(0, __compact_param_0, <runtime::Field as Default>::default())?")
+    );
+    contract.stateful_circuits[0].parameters[0].ty = Type::Field;
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::TypeMismatch {
+            expected: Type::Boolean,
+            actual: Type::Field,
+        })
+    );
+    contract.stateful_circuits[0].parameters[0].ty = Type::Boolean;
     contract.stateful_circuits[0].actions = vec![StateAction::MapReset {
         field: "table".into(),
         index: 0,

@@ -28,6 +28,21 @@ pub mod ledger_contract {
             gas_cost: total_cost,
         })
     }
+    pub fn put_default<Private>(
+        context: runtime::context::CircuitContext<Private>,
+        __compact_param_0: bool,
+    ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
+        let mut total_cost = runtime::context::RunningCost::default();
+        let step =
+            context.insert_map(0, __compact_param_0, <runtime::Field as Default>::default())?;
+        let context = step.context;
+        total_cost += step.gas_cost;
+        Ok(runtime::context::CircuitResult {
+            context,
+            result: (),
+            gas_cost: total_cost,
+        })
+    }
     pub fn has<Private>(
         context: runtime::context::CircuitContext<Private>,
         __compact_param_0: bool,

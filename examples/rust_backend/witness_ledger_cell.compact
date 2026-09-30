@@ -1,0 +1,13 @@
+import CompactStandardLibrary;
+
+export ledger flag: Boolean;
+
+witness read_flag(): Boolean;
+
+export circuit set_flag(): [] {
+  flag = true;
+}
+
+export circuit private_check(): Boolean {
+  return disclose(read_flag());
+}

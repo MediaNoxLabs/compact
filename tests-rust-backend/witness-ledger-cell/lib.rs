@@ -11,34 +11,51 @@ pub mod ledger_contract {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
     }
-    impl<'a> LedgerView<'a> {}
+    impl<'a> LedgerView<'a> {
+        pub fn flag(&self) -> Result<bool, runtime::CompactError> {
+            runtime::ledger::read_root_cell::<bool, _>(self.state, 0)
+        }
+    }
     pub trait Witnesses<Private> {
-        fn private_offset(
+        fn read_flag(
             &self,
             context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-            __compact_param_0: runtime::Field,
-        ) -> (Private, runtime::Field);
+        ) -> (Private, bool);
     }
     pub fn initial_state<Private>(
         context: runtime::context::ConstructorContext<Private>,
     ) -> runtime::context::ConstructorResult<Private> {
-        let state = runtime::ledger::contract_state(vec![]);
+        let state = runtime::ledger::contract_state(vec![runtime::ledger::constructor_cell::<
+            bool,
+            runtime::ledger::DefaultDB,
+        >(Default::default())]);
         runtime::context::ConstructorResult::new(context, state)
     }
-    pub fn apply_offset<Private, W: Witnesses<Private>>(
+    pub fn set_flag<Private>(
+        context: runtime::context::CircuitContext<Private>,
+    ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
+        let mut total_cost = runtime::context::RunningCost::default();
+        let private_transcript_outputs = Vec::new();
+        let step = context.write_cell(0, true)?;
+        let context = step.context;
+        total_cost += step.gas_cost;
+        Ok(runtime::context::CircuitResult {
+            context,
+            result: (),
+            gas_cost: total_cost,
+            private_transcript_outputs,
+        })
+    }
+    pub fn private_check<Private, W: Witnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,
         witnesses: &W,
-        __compact_param_0: runtime::Field,
-    ) -> Result<runtime::context::CircuitResult<Private, runtime::Field>, runtime::CompactError>
-    {
+    ) -> Result<runtime::context::CircuitResult<Private, bool>, runtime::CompactError> {
         let total_cost = runtime::context::RunningCost::default();
         let mut context = context;
-        let (next_private_state, witness_result) = witnesses.private_offset(
-            context.witness_context_with(LedgerView {
+        let (next_private_state, witness_result) =
+            witnesses.read_flag(context.witness_context_with(LedgerView {
                 state: context.query.state.get_ref(),
-            }),
-            __compact_param_0,
-        );
+            }));
         context.private_state = next_private_state;
         let private_transcript_outputs =
             vec![runtime::fab::AlignedValue::from(witness_result.clone())];

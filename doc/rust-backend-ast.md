@@ -55,15 +55,17 @@ the ledger-8 implementations. The ledger-8.0.2 lock references
 from the same 8.0 line.
 
 A direct witness return now has a typed declaration and call in the IR. The
-generated `Witnesses<Private>` trait receives a borrowed context with the
-current ledger state, private state, and contract address. Its method returns
-the next private state and a typed value. The generated circuit records that
-value as a ledger `AlignedValue` in its own private transcript outputs. The
-minimal Field witness fixture executes end to end. A second fixture passes a
-typed Field circuit argument into the witness; both outputs match the pinned
-TypeScript runtime's private state and FAB transcript values. Projected typed
-ledger views, witness calls inside expressions and state actions, and complete
-proof data remain future slices. This changed the generated runtime ABI to 2.
+generated `Witnesses<Private>` trait receives a borrowed context with a
+contract-specific ledger view, private state, and contract address. Its method
+returns the next private state and a typed value. The generated circuit records
+that value as a ledger `AlignedValue` in its own private transcript outputs.
+The Field witness fixtures cover zero and one typed arguments; the Boolean
+Cell fixture reads current ledger state before and after a write. Their results,
+private states, and FAB transcript values match the pinned TypeScript runtime.
+The ledger view decodes Cell and Counter fields through the ledger's FAB types.
+Set, Map, and List projection, witness calls inside expressions and state
+actions, and complete proof data remain future slices. The generated runtime
+ABI is 3.
 
 The runtime can now construct and decode ledger Cells and Counters, and it
 runs Cell writes plus Counter increments/decrements through the ledger VM.
@@ -147,6 +149,7 @@ cargo test -p compact-rust-backend -p midnight-compact-runtime \
   -p compact-rust-uint-arithmetic-fixture \
   -p compact-rust-witness-minimal-fixture \
   -p compact-rust-witness-argument-fixture \
+  -p compact-rust-witness-ledger-cell-fixture \
   -p compact-rust-uint-identity-fixture -p compact-rust-bytes-identity-fixture \
   -p compact-rust-counter-fixture -p compact-rust-cell-boolean-fixture \
   -p compact-rust-struct-identity-fixture -p compact-rust-nested-struct-fixture \
@@ -172,8 +175,8 @@ JSON alongside the usual TypeScript artifacts.
 
 ## Next slices
 
-1. Expand witness calls into expressions and state actions, with typed ledger
-   projection and full proof data.
+1. Expand witness calls into expressions and state actions, with Set, Map, and
+   List ledger projection and full proof data.
 2. Extend remaining primitive operations and ledger ADTs using ledger and ZK
    crate semantics while preserving oracle parity.
 3. Cover control flow, cryptographic natives, and the oracle contract matrix

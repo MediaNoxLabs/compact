@@ -63,8 +63,8 @@ pub struct CircuitContext<Private, D: DB = DefaultDB> {
 }
 
 /// The ledger, private state, and address visible to a Compact witness.
-pub struct WitnessContext<'a, Private, D: DB = DefaultDB> {
-    pub ledger: &'a StateValue<D>,
+pub struct WitnessContext<'a, Private, Ledger = &'a StateValue<DefaultDB>> {
+    pub ledger: Ledger,
     pub private_state: &'a Private,
     pub contract_address: &'a ContractAddress,
 }
@@ -77,9 +77,20 @@ pub struct CircuitResult<Private, Output, D: DB = DefaultDB> {
 }
 
 impl<Private, D: DB> CircuitContext<Private, D> {
-    pub fn witness_context(&self) -> WitnessContext<'_, Private, D> {
+    pub fn witness_context(&self) -> WitnessContext<'_, Private, &StateValue<D>> {
         WitnessContext {
             ledger: self.query.state.get_ref(),
+            private_state: &self.private_state,
+            contract_address: &self.query.address,
+        }
+    }
+
+    pub fn witness_context_with<'a, Ledger>(
+        &'a self,
+        ledger: Ledger,
+    ) -> WitnessContext<'a, Private, Ledger> {
+        WitnessContext {
+            ledger,
             private_state: &self.private_state,
             contract_address: &self.query.address,
         }

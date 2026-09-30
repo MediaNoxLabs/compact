@@ -1,5 +1,5 @@
 use compact_rust_witness_argument_fixture::ledger_contract::{
-    Witnesses, apply_offset, initial_state,
+    LedgerView, Witnesses, apply_offset, initial_state,
 };
 use midnight_compact_runtime::Field;
 use midnight_compact_runtime::context::{ConstructorContext, WitnessContext};
@@ -8,7 +8,11 @@ use midnight_compact_runtime::ledger::ContractAddress;
 struct PrivateOffset;
 
 impl Witnesses<u64> for PrivateOffset {
-    fn private_offset(&self, context: WitnessContext<'_, u64>, value: Field) -> (u64, Field) {
+    fn private_offset(
+        &self,
+        context: WitnessContext<'_, u64, LedgerView<'_>>,
+        value: Field,
+    ) -> (u64, Field) {
         assert_eq!(*context.private_state, 7);
         assert_eq!(value, Field::from(2_u64));
         (*context.private_state + 1, value + Field::from(40_u64))

@@ -2,15 +2,20 @@
 
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 2);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 3);
 }
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 2);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 3);
+    pub struct LedgerView<'a> {
+        #[allow(dead_code)]
+        state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
+    }
+    impl<'a> LedgerView<'a> {}
     pub trait Witnesses<Private> {
         fn private_value(
             &self,
-            context: runtime::context::WitnessContext<'_, Private>,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
         ) -> (Private, runtime::Field);
     }
     pub fn initial_state<Private>(
@@ -27,7 +32,9 @@ pub mod ledger_contract {
         let total_cost = runtime::context::RunningCost::default();
         let mut context = context;
         let (next_private_state, witness_result) =
-            witnesses.private_value(context.witness_context());
+            witnesses.private_value(context.witness_context_with(LedgerView {
+                state: context.query.state.get_ref(),
+            }));
         context.private_state = next_private_state;
         let private_transcript_outputs =
             vec![runtime::fab::AlignedValue::from(witness_result.clone())];

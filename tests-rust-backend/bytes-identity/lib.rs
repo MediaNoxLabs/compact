@@ -2,7 +2,7 @@
 
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 2);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 3);
     pub fn bytes_identity(
         value: runtime::FixedBytes<4>,
     ) -> Result<runtime::FixedBytes<4>, runtime::CompactError> {

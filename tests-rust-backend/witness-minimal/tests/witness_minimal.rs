@@ -1,21 +1,18 @@
 use compact_rust_witness_minimal_fixture::ledger_contract::{
-    Witnesses, initial_state, read_private,
+    LedgerView, Witnesses, initial_state, read_private,
 };
 use midnight_compact_runtime::Field;
 use midnight_compact_runtime::context::{ConstructorContext, WitnessContext};
 use midnight_compact_runtime::fab::AlignedValue;
-use midnight_compact_runtime::ledger::{ContractAddress, StateValue};
+use midnight_compact_runtime::ledger::ContractAddress;
 
 struct PrivateValue;
 
 impl Witnesses<u64> for PrivateValue {
-    fn private_value(&self, context: WitnessContext<'_, u64>) -> (u64, Field) {
+    fn private_value(&self, context: WitnessContext<'_, u64, LedgerView<'_>>) -> (u64, Field) {
         assert_eq!(*context.private_state, 7);
         assert_eq!(*context.contract_address, ContractAddress::default());
-        let StateValue::Array(fields) = context.ledger else {
-            panic!("witness must see the current ledger state")
-        };
-        assert!(fields.is_empty());
+        let _ledger = context.ledger;
         (8, Field::from(42_u64))
     }
 }

@@ -158,6 +158,23 @@ where
     T::decode_cell_value(&cell.as_slice())
 }
 
+/// Decode one declared root Cell from a contract's current ledger state.
+pub fn read_root_cell<T, D>(state: &StateValue<D>, index: u8) -> Result<T, CompactError>
+where
+    T: CellValue,
+    D: DB,
+{
+    let StateValue::Array(fields) = state else {
+        return Err(CompactError::InvalidLedgerCell(
+            "expected root ledger field array".into(),
+        ));
+    };
+    let field = fields.get(index as usize).ok_or_else(|| {
+        CompactError::InvalidLedgerCell(format!("missing root ledger field {index}"))
+    })?;
+    read_cell(field)
+}
+
 /// Read a root Cell through the ledger VM and gather its typed read event.
 pub fn query_cell<T: CellValue, D: DB>(
     context: &QueryContext<D>,

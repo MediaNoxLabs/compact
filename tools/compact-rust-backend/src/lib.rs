@@ -2,17 +2,15 @@
 
 pub mod ir;
 mod stateful;
+mod witness;
 
-const RUNTIME_ABI_VERSION: u32 = 2;
+const RUNTIME_ABI_VERSION: u32 = 3;
 
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::error::Error;
 use std::fmt;
 
-use ir::{
-    Contract, Expr, LedgerFieldKind, PureCircuit, SCHEMA_VERSION, StructField, Type,
-    WitnessDeclaration,
-};
+use ir::{Contract, Expr, LedgerFieldKind, PureCircuit, SCHEMA_VERSION, StructField, Type};
 use proc_macro2::Span;
 use quote::quote;
 
@@ -620,37 +618,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
         .iter()
         .map(|circuit| (circuit.name.as_str(), circuit))
         .collect();
-    let mut witness_declarations = HashMap::<&str, &WitnessDeclaration>::new();
-    let mut witness_methods = Vec::<syn::TraitItemFn>::new();
-    for witness in &contract.witnesses {
-        let name = ident(&witness.name)?;
-        if witness_declarations
-            .insert(witness.name.as_str(), witness)
-            .is_some()
-        {
-            return Err(RenderError::DuplicateWitness(witness.name.clone()));
-        }
-        let mut args = Vec::<syn::FnArg>::new();
-        let mut parameter_names = HashSet::new();
-        for (index, parameter) in witness.parameters.iter().enumerate() {
-            ident(&parameter.name)?;
-            if !parameter_names.insert(parameter.name.as_str()) {
-                return Err(RenderError::DuplicateParameter(parameter.name.clone()));
-            }
-            let parameter_name =
-                syn::Ident::new(&format!("__compact_param_{index}"), Span::call_site());
-            let ty = rust_type(&parameter.ty)?;
-            args.push(syn::parse_quote!(#parameter_name: #ty));
-        }
-        let result = rust_type(&witness.result)?;
-        witness_methods.push(syn::parse_quote! {
-            fn #name(
-                &self,
-                context: runtime::context::WitnessContext<'_, Private>,
-                #(#args),*
-            ) -> (Private, #result);
-        });
-    }
+    let witness_syntax = witness::build(&contract.witnesses, &ordered_fields)?;
     let mut items = Vec::new();
     for circuit in &contract.circuits {
         let name = ident(&circuit.name)?;
@@ -695,7 +663,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
         stateful_items.push(stateful::render_stateful_circuit(
             circuit,
             &ledger_fields,
-            &witness_declarations,
+            &witness_syntax.declarations,
         )?);
     }
 
@@ -712,6 +680,9 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
             Ok(syn::parse_quote!(runtime::ledger::constructor_cell::<#ty, runtime::ledger::DefaultDB>(Default::default())))
         }
     }).collect::<Result<Vec<syn::Expr>, RenderError>>()?;
+
+    let ledger_view_methods = &witness_syntax.ledger_view_methods;
+    let witness_methods = &witness_syntax.trait_methods;
 
     let runtime_abi = syn::LitInt::new(&RUNTIME_ABI_VERSION.to_string(), Span::call_site());
     let mut struct_items = Vec::<syn::Item>::new();
@@ -813,9 +784,16 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
     } else {
         Some(syn::parse_quote! {
             pub mod ledger_contract {
-                use midnight_compact_runtime as runtime;
-                const _: () = assert!(runtime::RUST_RUNTIME_ABI == #runtime_abi);
-                pub trait Witnesses<Private> {
+                    use midnight_compact_runtime as runtime;
+                    const _: () = assert!(runtime::RUST_RUNTIME_ABI == #runtime_abi);
+                    pub struct LedgerView<'a> {
+                        #[allow(dead_code)]
+                        state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
+                    }
+                    impl<'a> LedgerView<'a> {
+                        #(#ledger_view_methods)*
+                    }
+                    pub trait Witnesses<Private> {
                     #(#witness_methods)*
                 }
                 pub fn initial_state<Private>(

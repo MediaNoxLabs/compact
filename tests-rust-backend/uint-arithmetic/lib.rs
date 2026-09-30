@@ -2,7 +2,7 @@
 
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 2);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 3);
     pub fn subtract_uint(
         left: runtime::BoundedUint<255>,
         right: runtime::BoundedUint<255>,

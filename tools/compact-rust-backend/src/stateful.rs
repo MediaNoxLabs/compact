@@ -742,7 +742,12 @@ pub(crate) fn render_stateful_circuit(
             });
             statements.push(syn::parse_quote! {
                 let (next_private_state, witness_result) =
-                    witnesses.#witness_name(context.witness_context(), #(#rendered_arguments),*);
+                    witnesses.#witness_name(
+                        context.witness_context_with(LedgerView {
+                            state: context.query.state.get_ref(),
+                        }),
+                        #(#rendered_arguments),*
+                    );
             });
             statements.push(syn::parse_quote! {
                 context.private_state = next_private_state;

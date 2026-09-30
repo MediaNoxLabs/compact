@@ -27,4 +27,31 @@ pub mod ledger_contract {
             gas_cost: total_cost,
         })
     }
+    pub fn decrement_by<Private>(
+        context: runtime::context::CircuitContext<Private>,
+        __compact_param_0: runtime::BoundedUint<65535>,
+    ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
+        let mut total_cost = runtime::context::RunningCost::default();
+        let step = context.decrement_counter(0, __compact_param_0.value() as u16)?;
+        let context = step.context;
+        total_cost += step.gas_cost;
+        Ok(runtime::context::CircuitResult {
+            context,
+            result: (),
+            gas_cost: total_cost,
+        })
+    }
+    pub fn reset_round<Private>(
+        context: runtime::context::CircuitContext<Private>,
+    ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
+        let mut total_cost = runtime::context::RunningCost::default();
+        let step = context.write_cell(0, 0_u64)?;
+        let context = step.context;
+        total_cost += step.gas_cost;
+        Ok(runtime::context::CircuitResult {
+            context,
+            result: (),
+            gas_cost: total_cost,
+        })
+    }
 }

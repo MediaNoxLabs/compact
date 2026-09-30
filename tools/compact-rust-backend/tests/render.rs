@@ -202,6 +202,26 @@ fn state_action_must_reference_the_declared_ledger_field_and_index() {
     let source = render(&contract).unwrap();
     assert!(source.contains("context.increment_counter(0, 1)?"));
 
+    contract.stateful_circuits[0].actions[0] = StateAction::CounterDecrement {
+        field: "round".into(),
+        index: 0,
+        amount: CounterAmount::Literal { value: 1 },
+    };
+    assert!(
+        render(&contract)
+            .unwrap()
+            .contains("context.decrement_counter(0, 1)?")
+    );
+    contract.stateful_circuits[0].actions[0] = StateAction::CounterReset {
+        field: "round".into(),
+        index: 0,
+    };
+    assert!(
+        render(&contract)
+            .unwrap()
+            .contains("context.write_cell(0, 0_u64)?")
+    );
+
     contract.stateful_circuits[0].actions[0] = StateAction::CounterIncrement {
         field: "missing".into(),
         index: 0,

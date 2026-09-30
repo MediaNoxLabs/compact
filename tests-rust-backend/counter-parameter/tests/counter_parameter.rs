@@ -1,4 +1,6 @@
-use compact_rust_counter_parameter_fixture::ledger_contract::{increment_by, initial_state};
+use compact_rust_counter_parameter_fixture::ledger_contract::{
+    decrement_by, increment_by, initial_state, reset_round,
+};
 use midnight_compact_runtime::BoundedUint;
 use midnight_compact_runtime::context::ConstructorContext;
 use midnight_compact_runtime::ledger::{ContractAddress, StateValue, read_counter};
@@ -19,4 +21,16 @@ fn generated_counter_uses_bounded_parameter() {
         panic!("expected ledger field array")
     };
     assert_eq!(read_counter(&fields.get(0).unwrap()).unwrap(), 9);
+
+    let result = decrement_by(result.context, BoundedUint::<65535>::new(5).unwrap()).unwrap();
+    let StateValue::Array(fields) = result.context.query.state.get_ref() else {
+        panic!("expected ledger field array")
+    };
+    assert_eq!(read_counter(&fields.get(0).unwrap()).unwrap(), 4);
+    let result = reset_round(result.context).unwrap();
+    let StateValue::Array(fields) = result.context.query.state.get_ref() else {
+        panic!("expected ledger field array")
+    };
+    assert_eq!(read_counter(&fields.get(0).unwrap()).unwrap(), 0);
+    assert!(decrement_by(result.context, BoundedUint::<65535>::new(1).unwrap()).is_err());
 }

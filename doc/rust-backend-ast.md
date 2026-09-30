@@ -61,7 +61,10 @@ fixtures execute after ledger writes; the renderer checks the requested field
 index and return type against the declaration. `Counter.read()` uses the same
 ledger query, then converts the ledger's `u64` Cell into Compact's checked
 `Uint<64>` representation. The generated Counter fixture reads before and
-after an increment.
+after an increment. Counter increments and decrements accept checked
+`Uint<16>` parameters; reset writes the ledger's zero-valued Cell through the
+VM. The parameterized fixture verifies increment, decrement, reset, and
+underflow behavior.
 
 The user type slice emits native Rust structs from the typed Compact type
 shape and derives the ledger's `BinaryHashRepr`, `FieldRepr`, and

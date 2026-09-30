@@ -125,4 +125,25 @@ impl<Private, D: DB> CircuitContext<Private, D> {
             gas_cost: result.gas_cost,
         })
     }
+
+    pub fn decrement_counter(
+        mut self,
+        field_index: u8,
+        amount: u16,
+    ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        let result = ledger::decrement_counter(
+            &self.query,
+            field_index,
+            amount,
+            self.gas_limit.clone(),
+            &self.cost_model,
+        )
+        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+        self.query = result.context;
+        Ok(CircuitResult {
+            context: self,
+            result: (),
+            gas_cost: result.gas_cost,
+        })
+    }
 }

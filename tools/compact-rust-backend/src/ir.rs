@@ -70,6 +70,15 @@ pub enum StateAction {
         index: u8,
         amount: CounterAmount,
     },
+    CounterDecrement {
+        field: String,
+        index: u8,
+        amount: CounterAmount,
+    },
+    CounterReset {
+        field: String,
+        index: u8,
+    },
     CellWrite {
         field: String,
         index: u8,

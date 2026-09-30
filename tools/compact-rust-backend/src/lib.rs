@@ -364,6 +364,11 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                     field,
                     index,
                     amount,
+                }
+                | StateAction::CounterDecrement {
+                    field,
+                    index,
+                    amount,
                 } => {
                     let declaration = ledger_fields
                         .get(field.as_str())
@@ -395,8 +400,33 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                             syn::parse_quote!(#rust_name.value() as u16)
                         }
                     };
+                    let method = if matches!(action, StateAction::CounterIncrement { .. }) {
+                        syn::Ident::new("increment_counter", Span::call_site())
+                    } else {
+                        syn::Ident::new("decrement_counter", Span::call_site())
+                    };
                     statements.push(syn::parse_quote! {
-                        let step = context.increment_counter(#index, #amount)?;
+                        let step = context.#method(#index, #amount)?;
+                    });
+                    statements.push(syn::parse_quote! {
+                        let context = step.context;
+                    });
+                    statements.push(syn::parse_quote! {
+                        total_cost += step.gas_cost;
+                    });
+                }
+                StateAction::CounterReset { field, index } => {
+                    let declaration = ledger_fields
+                        .get(field.as_str())
+                        .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                    if declaration.declaration != LedgerFieldKind::Counter
+                        || declaration.index != *index
+                    {
+                        return Err(RenderError::UnknownLedgerField(field.clone()));
+                    }
+                    let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+                    statements.push(syn::parse_quote! {
+                        let step = context.write_cell(#index, 0_u64)?;
                     });
                     statements.push(syn::parse_quote! {
                         let context = step.context;

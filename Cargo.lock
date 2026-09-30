@@ -753,6 +753,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-choose-field-fixture"
+version = "0.1.0"
+dependencies = [
+ "midnight-compact-runtime",
+]
+
+[[package]]
 name = "compact-rust-composite-struct-fixture"
 version = "0.1.0"
 dependencies = [

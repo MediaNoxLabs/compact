@@ -1,0 +1,9 @@
+import CompactStandardLibrary;
+
+export circuit choose(flag: Boolean, left: Field, right: Field): Field {
+  if (flag) {
+    return left;
+  } else {
+    return right;
+  }
+}

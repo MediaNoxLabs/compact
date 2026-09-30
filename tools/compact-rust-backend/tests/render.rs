@@ -123,6 +123,48 @@ fn rejects_type_mismatch_and_invalid_identifier() {
 }
 
 #[test]
+fn conditional_requires_boolean_condition_and_equal_branch_types() {
+    let mut contract = identity(
+        Type::Field,
+        Expr::If {
+            condition: Box::new(Expr::Parameter {
+                name: "value".into(),
+            }),
+            then: Box::new(Expr::Parameter {
+                name: "value".into(),
+            }),
+            otherwise: Box::new(Expr::Parameter {
+                name: "value".into(),
+            }),
+        },
+    );
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::TypeMismatch {
+            expected: Type::Boolean,
+            actual: Type::Field,
+        })
+    );
+    let Expr::If {
+        condition,
+        otherwise,
+        ..
+    } = &mut contract.circuits[0].body
+    else {
+        unreachable!()
+    };
+    *condition = Box::new(Expr::Boolean { value: true });
+    *otherwise = Box::new(Expr::Boolean { value: false });
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::TypeMismatch {
+            expected: Type::Field,
+            actual: Type::Boolean,
+        })
+    );
+}
+
+#[test]
 fn refuses_to_add_a_boolean_to_a_field() {
     let contract = identity(
         Type::Field,

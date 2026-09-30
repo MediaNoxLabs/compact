@@ -94,6 +94,11 @@
                        (cons "elements"
                              (list->vector
                                (map (lambda (arg) (tuple-argument-ir arg owner-src)) tuple-arg*)))))]
+          [(if ,src ,expr0 ,expr1 ,expr2)
+           (object (cons "kind" "if")
+                   (cons "condition" (expression-ir expr0 src))
+                   (cons "then" (expression-ir expr1 src))
+                   (cons "otherwise" (expression-ir expr2 src)))]
           [(+ ,src ,mbits ,expr1 ,expr2)
            (when mbits
              (source-errorf src "Rust backend does not yet support bounded unsigned arithmetic"))

@@ -248,8 +248,22 @@ pub struct StructField {
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Expr {
     Unit,
-    Boolean { value: bool },
-    Parameter { name: String },
-    Tuple { elements: Vec<Expr> },
-    Add { left: Box<Expr>, right: Box<Expr> },
+    Boolean {
+        value: bool,
+    },
+    Parameter {
+        name: String,
+    },
+    Tuple {
+        elements: Vec<Expr>,
+    },
+    If {
+        condition: Box<Expr>,
+        then: Box<Expr>,
+        otherwise: Box<Expr>,
+    },
+    Add {
+        left: Box<Expr>,
+        right: Box<Expr>,
+    },
 }

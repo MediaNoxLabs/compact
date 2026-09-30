@@ -219,6 +219,31 @@ fn expression(
             }
             Ok((syn::Expr::Tuple(tuple), Type::Tuple { elements: types }))
         }
+        Expr::If {
+            condition,
+            then,
+            otherwise,
+        } => {
+            let (condition, condition_ty) = expression(condition, parameters)?;
+            if condition_ty != Type::Boolean {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Boolean,
+                    actual: condition_ty,
+                });
+            }
+            let (then, then_ty) = expression(then, parameters)?;
+            let (otherwise, otherwise_ty) = expression(otherwise, parameters)?;
+            if then_ty != otherwise_ty {
+                return Err(RenderError::TypeMismatch {
+                    expected: then_ty,
+                    actual: otherwise_ty,
+                });
+            }
+            Ok((
+                syn::parse_quote!(if #condition { #then } else { #otherwise }),
+                then_ty,
+            ))
+        }
         Expr::Add { left, right } => {
             let (left, left_type) = expression(left, parameters)?;
             let (right, right_type) = expression(right, parameters)?;

@@ -22,12 +22,13 @@ placeholder Rust.
 
 The backend supports exported pure circuits with `Field`, `Boolean`,
 `Bytes<N>`, `Uint<N>`, unit, tuple, and vector types. Bodies currently support parameter references,
-Boolean literals, unit, tuple construction, and field addition. The fixtures
+Boolean literals, unit, tuple construction, typed conditionals, and field
+addition. The fixtures
 in `examples/rust_backend/` run from Compact source through the Scheme
 compiler, JSON bridge, `syn` renderer, native runtime, and executing Rust
-tests. The compiler supports the initial Counter and Boolean Cell state
-actions and rejects other ledger shapes, witnesses, and bounded unsigned
-arithmetic until their runtime semantics are implemented. `Uint<N>` uses a
+tests. The compiler supports the Cell, Counter, Set, Map, and List slices
+described below. Witnesses and bounded unsigned arithmetic still require
+runtime semantics. `Uint<N>` uses a
 bounded runtime type with a checked inclusive maximum and Compact's byte
 alignment. `Bytes<N>` uses a small fixed bytes wrapper: it delegates field
 encoding and FAB alignment to ledger-8's `[u8; N]` support, and calls the
@@ -120,7 +121,8 @@ cargo test -p compact-rust-backend -p midnight-compact-runtime \
   -p compact-rust-cell-struct-fixture -p compact-rust-cell-enum-fixture \
   -p compact-rust-cell-parameter-fixture -p compact-rust-counter-parameter-fixture \
   -p compact-rust-cell-read-fixture -p compact-rust-set-boolean-fixture \
-  -p compact-rust-map-boolean-field-fixture
+  -p compact-rust-map-boolean-field-fixture \
+  -p compact-rust-list-field-fixture -p compact-rust-choose-field-fixture
 cargo build -p compact-rust-backend --bin compact-rustc
 ```
 

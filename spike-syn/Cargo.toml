@@ -1,0 +1,19 @@
+[package]
+name = "spike-syn"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+# Detached from the compact workspace on purpose: this is a throwaway
+# experiment, not a member crate.
+[workspace]
+
+# Feasibility spike (compact#95): can a Chez-emitted IR be rendered as Rust by
+# syn + prettyplease at all? This crate is the experiment, not a component.
+[dependencies]
+syn = { version = "2", features = ["full", "parsing", "printing"] }
+quote = "1"
+proc-macro2 = "1"
+prettyplease = "0.2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

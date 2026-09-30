@@ -1,6 +1,7 @@
 import CompactStandardLibrary;
 
 export ledger seen: Set<Boolean>;
+export ledger fields: Set<Field>;
 
 export circuit add(value: Boolean): [] {
   seen.insert(disclose(value));
@@ -8,4 +9,28 @@ export circuit add(value: Boolean): [] {
 
 export circuit contains(value: Boolean): Boolean {
   return seen.member(disclose(value));
+}
+
+export circuit add_field(value: Field): [] {
+  fields.insert(disclose(value));
+}
+
+export circuit contains_field(value: Field): Boolean {
+  return fields.member(disclose(value));
+}
+
+export circuit remove(value: Boolean): [] {
+  seen.remove(disclose(value));
+}
+
+export circuit seen_size(): Uint<64> {
+  return seen.size();
+}
+
+export circuit seen_is_empty(): Boolean {
+  return seen.isEmpty();
+}
+
+export circuit reset_fields(): [] {
+  fields.resetToDefault();
 }

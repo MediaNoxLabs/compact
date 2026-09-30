@@ -107,6 +107,82 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         })
     }
 
+    pub fn remove_set<T: CellValue>(
+        mut self,
+        field_index: u8,
+        value: T,
+    ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        let result = ledger::remove_set(
+            &self.query,
+            field_index,
+            value,
+            self.gas_limit.clone(),
+            &self.cost_model,
+        )
+        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+        self.query = result.context;
+        Ok(CircuitResult {
+            context: self,
+            result: (),
+            gas_cost: result.gas_cost,
+        })
+    }
+
+    pub fn reset_set(
+        mut self,
+        field_index: u8,
+    ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        let result = ledger::reset_set(
+            &self.query,
+            field_index,
+            self.gas_limit.clone(),
+            &self.cost_model,
+        )
+        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+        self.query = result.context;
+        Ok(CircuitResult {
+            context: self,
+            result: (),
+            gas_cost: result.gas_cost,
+        })
+    }
+
+    pub fn size_set(
+        mut self,
+        field_index: u8,
+    ) -> Result<CircuitResult<Private, u64, D>, CompactError> {
+        let (result, size) = ledger::size_set(
+            &self.query,
+            field_index,
+            self.gas_limit.clone(),
+            &self.cost_model,
+        )?;
+        self.query = result.context;
+        Ok(CircuitResult {
+            context: self,
+            result: size,
+            gas_cost: result.gas_cost,
+        })
+    }
+
+    pub fn is_empty_set(
+        mut self,
+        field_index: u8,
+    ) -> Result<CircuitResult<Private, bool, D>, CompactError> {
+        let (result, empty) = ledger::is_empty_set(
+            &self.query,
+            field_index,
+            self.gas_limit.clone(),
+            &self.cost_model,
+        )?;
+        self.query = result.context;
+        Ok(CircuitResult {
+            context: self,
+            result: empty,
+            gas_cost: result.gas_cost,
+        })
+    }
+
     pub fn read_cell<T: CellValue>(
         mut self,
         field_index: u8,

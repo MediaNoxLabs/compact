@@ -477,6 +477,27 @@ fn set_actions_require_the_declared_element_type() {
             actual: Type::Field,
         })
     );
+
+    contract.stateful_circuits[0].parameters[0].ty = Type::Boolean;
+    contract.stateful_circuits[0].actions = vec![StateAction::SetReset {
+        field: "seen".into(),
+        index: 0,
+    }];
+    assert!(render(&contract).unwrap().contains("context.reset_set(0)?"));
+    contract.stateful_circuits[0].actions.clear();
+    contract.stateful_circuits[0].return_value = StateReturn::SetSize {
+        field: "seen".into(),
+        index: 0,
+    };
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::TypeMismatch {
+            expected: Type::Unsigned {
+                max: u64::MAX.to_string()
+            },
+            actual: Type::Unit,
+        })
+    );
 }
 
 #[test]

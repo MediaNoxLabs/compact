@@ -66,6 +66,14 @@ pub enum StateReturn {
         index: u8,
         value: Expr,
     },
+    SetSize {
+        field: String,
+        index: u8,
+    },
+    SetIsEmpty {
+        field: String,
+        index: u8,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
@@ -94,6 +102,15 @@ pub enum StateAction {
         field: String,
         index: u8,
         value: Expr,
+    },
+    SetRemove {
+        field: String,
+        index: u8,
+        value: Expr,
+    },
+    SetReset {
+        field: String,
+        index: u8,
     },
 }
 

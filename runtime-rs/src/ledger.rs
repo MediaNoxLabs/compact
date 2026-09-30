@@ -179,6 +179,13 @@ pub fn query_cell<T: CellValue, D: DB>(
     let result = context
         .query(&program, gas_limit, cost_model)
         .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+    let decoded = decode_last_read::<T, D>(&result)?;
+    Ok((result, decoded))
+}
+
+fn decode_last_read<T: CellValue, D: DB>(
+    result: &QueryResults<ResultModeGather, D>,
+) -> Result<T, CompactError> {
     let Some(GatherEvent::Read(value)) = result.events.last() else {
         return Err(CompactError::InvalidLedgerCell(
             "missing ledger read event".into(),
@@ -189,8 +196,7 @@ pub fn query_cell<T: CellValue, D: DB>(
             "alignment differs from declared type".into(),
         ));
     }
-    let decoded = T::decode_cell_value(&value.value)?;
-    Ok((result, decoded))
+    T::decode_cell_value(&value.value)
 }
 
 /// Compact Counter initializes as a ledger Cell of fixed-width Uint64.
@@ -261,17 +267,109 @@ pub fn member_set<T: CellValue, D: DB>(
     let result = context
         .query(&program, gas_limit, cost_model)
         .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
-    let Some(GatherEvent::Read(value)) = result.events.last() else {
-        return Err(CompactError::InvalidLedgerCell(
-            "missing ledger read event".into(),
-        ));
-    };
-    if value.alignment != bool::alignment() {
-        return Err(CompactError::InvalidLedgerCell(
-            "membership result is not Boolean".into(),
-        ));
-    }
-    let decoded = bool::decode_cell_value(&value.value)?;
+    let decoded = decode_last_read::<bool, D>(&result)?;
+    Ok((result, decoded))
+}
+
+pub fn remove_set<T: CellValue, D: DB>(
+    context: &QueryContext<D>,
+    field_index: u8,
+    value: T,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    let program = [
+        Op::Idx {
+            cached: false,
+            push_path: true,
+            path: vec![Key::Value(AlignedValue::from(field_index))].into(),
+        },
+        Op::Push {
+            storage: false,
+            value: constructor_cell(value),
+        },
+        Op::Rem { cached: false },
+        Op::Ins { cached: true, n: 1 },
+    ];
+    context.query(&program, gas_limit, cost_model)
+}
+
+pub fn reset_set<D: DB>(
+    context: &QueryContext<D>,
+    field_index: u8,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    let program = [
+        Op::Idx {
+            cached: false,
+            push_path: true,
+            path: vec![Key::Value(AlignedValue::from(field_index))].into(),
+        },
+        Op::Pop,
+        Op::Push {
+            storage: true,
+            value: constructor_set(),
+        },
+        Op::Ins { cached: true, n: 1 },
+    ];
+    context.query(&program, gas_limit, cost_model)
+}
+
+pub fn size_set<D: DB>(
+    context: &QueryContext<D>,
+    field_index: u8,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<(QueryResults<ResultModeGather, D>, u64), CompactError> {
+    let program = [
+        Op::Dup { n: 0 },
+        Op::Idx {
+            cached: false,
+            push_path: false,
+            path: vec![Key::Value(AlignedValue::from(field_index))].into(),
+        },
+        Op::Size,
+        Op::Popeq {
+            cached: true,
+            result: (),
+        },
+    ];
+    let result = context
+        .query(&program, gas_limit, cost_model)
+        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+    let decoded = decode_last_read::<u64, D>(&result)?;
+    Ok((result, decoded))
+}
+
+pub fn is_empty_set<D: DB>(
+    context: &QueryContext<D>,
+    field_index: u8,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<(QueryResults<ResultModeGather, D>, bool), CompactError> {
+    let program = [
+        Op::Dup { n: 0 },
+        Op::Idx {
+            cached: false,
+            push_path: false,
+            path: vec![Key::Value(AlignedValue::from(field_index))].into(),
+        },
+        Op::Size,
+        Op::Push {
+            storage: false,
+            value: constructor_cell::<u64, D>(0),
+        },
+        Op::Eq,
+        Op::Popeq {
+            cached: true,
+            result: (),
+        },
+    ];
+    let result = context
+        .query(&program, gas_limit, cost_model)
+        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+    let decoded = decode_last_read::<bool, D>(&result)?;
     Ok((result, decoded))
 }
 

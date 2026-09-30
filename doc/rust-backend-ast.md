@@ -66,11 +66,12 @@ after an increment. Counter increments and decrements accept checked
 VM. The parameterized fixture verifies increment, decrement, reset, and
 underflow behavior.
 
-The first Set slice supports `Set<Boolean>` construction, insert, and member.
-The runtime stores the ledger's Map value and executes the Set VM operations;
-member decodes a gathered Boolean read event. The generated fixture checks
-initial absence, membership after insertion, and uniqueness after a duplicate
-insert. The typed IR carries the Set element type for renderer validation.
+The Set slice supports `Set<Boolean>` and `Set<Field>` construction, insert,
+remove, member, size, isEmpty, and reset. The runtime stores the ledger's Map
+value and executes the Set VM operations; reads decode gathered events.
+The generated fixture checks membership, uniqueness after a duplicate insert,
+size and emptiness around removal, reset, and independent roots at indices 0
+and 1. The typed IR carries the Set element type for renderer validation.
 
 The user type slice emits native Rust structs from the typed Compact type
 shape and derives the ledger's `BinaryHashRepr`, `FieldRepr`, and

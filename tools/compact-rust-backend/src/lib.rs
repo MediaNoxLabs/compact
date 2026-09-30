@@ -471,6 +471,11 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                     field,
                     index,
                     value,
+                }
+                | StateAction::SetRemove {
+                    field,
+                    index,
+                    value,
                 } => {
                     let declaration = ledger_fields
                         .get(field.as_str())
@@ -489,8 +494,33 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                         });
                     }
                     let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+                    let method = if matches!(action, StateAction::SetInsert { .. }) {
+                        syn::Ident::new("insert_set", Span::call_site())
+                    } else {
+                        syn::Ident::new("remove_set", Span::call_site())
+                    };
                     statements.push(syn::parse_quote! {
-                        let step = context.insert_set(#index, #value)?;
+                        let step = context.#method(#index, #value)?;
+                    });
+                    statements.push(syn::parse_quote! {
+                        let context = step.context;
+                    });
+                    statements.push(syn::parse_quote! {
+                        total_cost += step.gas_cost;
+                    });
+                }
+                StateAction::SetReset { field, index } => {
+                    let declaration = ledger_fields
+                        .get(field.as_str())
+                        .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                    if !matches!(declaration.declaration, LedgerFieldKind::Set { .. })
+                        || declaration.index != *index
+                    {
+                        return Err(RenderError::UnknownLedgerField(field.clone()));
+                    }
+                    let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+                    statements.push(syn::parse_quote! {
+                        let step = context.reset_set(#index)?;
                     });
                     statements.push(syn::parse_quote! {
                         let context = step.context;
@@ -609,6 +639,51 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                     total_cost += read_step.gas_cost;
                 });
                 syn::parse_quote!(read_step.result)
+            }
+            StateReturn::SetSize { field, index } | StateReturn::SetIsEmpty { field, index } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                if !matches!(declaration.declaration, LedgerFieldKind::Set { .. })
+                    || declaration.index != *index
+                {
+                    return Err(RenderError::UnknownLedgerField(field.clone()));
+                }
+                let is_size = matches!(&circuit.return_value, StateReturn::SetSize { .. });
+                let expected = if is_size {
+                    Type::Unsigned {
+                        max: u64::MAX.to_string(),
+                    }
+                } else {
+                    Type::Boolean
+                };
+                if circuit.result != expected {
+                    return Err(RenderError::TypeMismatch {
+                        expected,
+                        actual: circuit.result.clone(),
+                    });
+                }
+                let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+                let method = if is_size {
+                    syn::Ident::new("size_set", Span::call_site())
+                } else {
+                    syn::Ident::new("is_empty_set", Span::call_site())
+                };
+                statements.push(syn::parse_quote! {
+                    let read_step = context.#method(#index)?;
+                });
+                statements.push(syn::parse_quote! {
+                    let context = read_step.context;
+                });
+                statements.push(syn::parse_quote! {
+                    total_cost += read_step.gas_cost;
+                });
+                if is_size {
+                    let max = syn::LitInt::new(&u64::MAX.to_string(), Span::call_site());
+                    syn::parse_quote!(runtime::BoundedUint::<#max>::new(read_step.result as u128).expect("ledger Set size fits Uint<64>"))
+                } else {
+                    syn::parse_quote!(read_step.result)
+                }
             }
         };
         let item: syn::Item = syn::parse_quote! {

@@ -1,0 +1,13 @@
+import CompactStandardLibrary;
+
+export ledger seen: Set<Boolean>;
+
+witness contains_true(): Boolean;
+
+export circuit add_true(): [] {
+  seen.insert(true);
+}
+
+export circuit private_contains(): Boolean {
+  return disclose(contains_true());
+}

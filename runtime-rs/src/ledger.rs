@@ -19,6 +19,7 @@ use midnight_onchain_vm::cost_model::CostModel;
 use midnight_onchain_vm::ops::{Key, Op};
 use midnight_onchain_vm::result_mode::{GatherEvent, ResultModeGather, ResultModeVerify};
 use midnight_serialize::Serializable;
+use std::marker::PhantomData;
 
 /// Compact values that can be stored in a ledger Cell. Implementations use
 /// upstream FAB conversions while keeping each type's declared alignment.
@@ -133,10 +134,11 @@ where
     T: CellValue,
     D: DB,
 {
-    StateValue::from(
-        AlignedValue::new(value.into(), T::alignment())
-            .expect("CellValue must match its alignment"),
-    )
+    StateValue::from(aligned_cell_value(value))
+}
+
+fn aligned_cell_value<T: CellValue>(value: T) -> AlignedValue {
+    AlignedValue::new(value.into(), T::alignment()).expect("CellValue must match its alignment")
 }
 
 /// Read a Compact Cell after checking the declared type's exact alignment.
@@ -164,15 +166,96 @@ where
     T: CellValue,
     D: DB,
 {
+    read_cell(root_field(state, index)?)
+}
+
+fn root_field<D: DB>(state: &StateValue<D>, index: u8) -> Result<&StateValue<D>, CompactError> {
     let StateValue::Array(fields) = state else {
         return Err(CompactError::InvalidLedgerCell(
             "expected root ledger field array".into(),
         ));
     };
-    let field = fields.get(index as usize).ok_or_else(|| {
+    fields.get(index as usize).ok_or_else(|| {
         CompactError::InvalidLedgerCell(format!("missing root ledger field {index}"))
-    })?;
-    read_cell(field)
+    })
+}
+
+/// Read-only witness projection of a Compact Set backed by the ledger Map.
+pub struct SetView<'a, T, D: DB> {
+    map: &'a LedgerHashMap<AlignedValue, StateValue<D>, D>,
+    marker: PhantomData<T>,
+}
+
+pub fn set_view<T: CellValue, D: DB>(
+    state: &StateValue<D>,
+    index: u8,
+) -> Result<SetView<'_, T, D>, CompactError> {
+    let StateValue::Map(map) = root_field(state, index)? else {
+        return Err(CompactError::InvalidLedgerCell("expected Set map".into()));
+    };
+    Ok(SetView {
+        map,
+        marker: PhantomData,
+    })
+}
+
+impl<T: CellValue, D: DB> SetView<'_, T, D> {
+    pub fn member(&self, value: T) -> bool {
+        self.map.contains_key(&aligned_cell_value(value))
+    }
+
+    pub fn size(&self) -> Result<BoundedUint<{ u64::MAX as u128 }>, CompactError> {
+        let size = u64::try_from(self.map.size())
+            .map_err(|_| CompactError::InvalidLedgerCell("Set size exceeds Uint<64>".into()))?;
+        BoundedUint::new(size as u128)
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.map.size() == 0
+    }
+}
+
+/// Read-only witness projection of a Compact Map backed by the ledger Map.
+pub struct MapView<'a, K, V, D: DB> {
+    map: &'a LedgerHashMap<AlignedValue, StateValue<D>, D>,
+    marker: PhantomData<(K, V)>,
+}
+
+pub fn map_view<K: CellValue, V: CellValue, D: DB>(
+    state: &StateValue<D>,
+    index: u8,
+) -> Result<MapView<'_, K, V, D>, CompactError> {
+    let StateValue::Map(map) = root_field(state, index)? else {
+        return Err(CompactError::InvalidLedgerCell("expected Map state".into()));
+    };
+    Ok(MapView {
+        map,
+        marker: PhantomData,
+    })
+}
+
+impl<K: CellValue, V: CellValue, D: DB> MapView<'_, K, V, D> {
+    pub fn member(&self, key: K) -> bool {
+        self.map.contains_key(&aligned_cell_value(key))
+    }
+
+    pub fn lookup(&self, key: K) -> Result<V, CompactError> {
+        let value = self
+            .map
+            .get(&aligned_cell_value(key))
+            .ok_or_else(|| CompactError::InvalidLedgerCell("Map key is absent".into()))?;
+        read_cell(&value)
+    }
+
+    pub fn size(&self) -> Result<BoundedUint<{ u64::MAX as u128 }>, CompactError> {
+        let size = u64::try_from(self.map.size())
+            .map_err(|_| CompactError::InvalidLedgerCell("Map size exceeds Uint<64>".into()))?;
+        BoundedUint::new(size as u128)
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.map.size() == 0
+    }
 }
 
 /// Read a root Cell through the ledger VM and gather its typed read event.

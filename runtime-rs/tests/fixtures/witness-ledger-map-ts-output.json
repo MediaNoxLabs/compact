@@ -1,0 +1,44 @@
+{
+  "before": {
+    "result": false,
+    "privateState": 8,
+    "privateTranscriptOutputs": [
+      {
+        "valueAtoms": [
+          []
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "bytes",
+              "length": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "after": {
+    "result": true,
+    "privateState": 9,
+    "privateTranscriptOutputs": [
+      {
+        "valueAtoms": [
+          [
+            1
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "bytes",
+              "length": 1
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

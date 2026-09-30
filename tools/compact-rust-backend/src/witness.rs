@@ -72,9 +72,24 @@ pub(crate) fn build<'a>(
                         }
                     });
                 }
-                LedgerFieldKind::Set { .. }
-                | LedgerFieldKind::List { .. }
-                | LedgerFieldKind::Map { .. } => {}
+                LedgerFieldKind::Set { ty } => {
+                    let ty = rust_type(ty)?;
+                    ledger_view_methods.push(syn::parse_quote! {
+                        pub fn #name(&self) -> Result<runtime::ledger::SetView<'a, #ty, runtime::ledger::DefaultDB>, runtime::CompactError> {
+                            runtime::ledger::set_view::<#ty, _>(self.state, #index)
+                        }
+                    });
+                }
+                LedgerFieldKind::Map { key, value } => {
+                    let key = rust_type(key)?;
+                    let value = rust_type(value)?;
+                    ledger_view_methods.push(syn::parse_quote! {
+                        pub fn #name(&self) -> Result<runtime::ledger::MapView<'a, #key, #value, runtime::ledger::DefaultDB>, runtime::CompactError> {
+                            runtime::ledger::map_view::<#key, #value, _>(self.state, #index)
+                        }
+                    });
+                }
+                LedgerFieldKind::List { .. } => {}
             }
         }
     }

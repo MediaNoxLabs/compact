@@ -1,0 +1,13 @@
+import CompactStandardLibrary;
+
+export ledger table: Map<Boolean, Field>;
+
+witness has_true(): Boolean;
+
+export circuit put_true(value: Field): [] {
+  table.insert(true, disclose(value));
+}
+
+export circuit private_has(): Boolean {
+  return disclose(has_true());
+}

@@ -896,6 +896,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-witness-ledger-map-fixture"
+version = "0.1.0"
+dependencies = [
+ "midnight-compact-runtime",
+ "serde_json",
+]
+
+[[package]]
+name = "compact-rust-witness-ledger-set-fixture"
+version = "0.1.0"
+dependencies = [
+ "midnight-compact-runtime",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-witness-minimal-fixture"
 version = "0.1.0"
 dependencies = [

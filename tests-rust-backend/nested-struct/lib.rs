@@ -2,12 +2,32 @@
 
 pub mod types {
     use midnight_compact_runtime as runtime;
-    use runtime::{BinaryHashRepr, FieldRepr, Fr, FromFieldRepr, MemWrite};
-    #[derive(Clone, Debug, PartialEq, Eq, BinaryHashRepr, FieldRepr, FromFieldRepr)]
+    use runtime::{BinaryHashRepr, CompactCellValue, FieldRepr, Fr, FromFieldRepr, MemWrite};
+    #[derive(
+        Clone,
+        Debug,
+        Default,
+        PartialEq,
+        Eq,
+        CompactCellValue,
+        BinaryHashRepr,
+        FieldRepr,
+        FromFieldRepr,
+    )]
     pub struct Inner {
         pub value: runtime::BoundedUint<255>,
     }
-    #[derive(Clone, Debug, PartialEq, Eq, BinaryHashRepr, FieldRepr, FromFieldRepr)]
+    #[derive(
+        Clone,
+        Debug,
+        Default,
+        PartialEq,
+        Eq,
+        CompactCellValue,
+        BinaryHashRepr,
+        FieldRepr,
+        FromFieldRepr,
+    )]
     pub struct Outer {
         pub tag: runtime::FixedBytes<4>,
         pub inner: crate::types::Inner,

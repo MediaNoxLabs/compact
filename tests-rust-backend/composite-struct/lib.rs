@@ -2,8 +2,18 @@
 
 pub mod types {
     use midnight_compact_runtime as runtime;
-    use runtime::{BinaryHashRepr, FieldRepr, Fr, FromFieldRepr, MemWrite};
-    #[derive(Clone, Debug, PartialEq, Eq, BinaryHashRepr, FieldRepr, FromFieldRepr)]
+    use runtime::{BinaryHashRepr, CompactCellValue, FieldRepr, Fr, FromFieldRepr, MemWrite};
+    #[derive(
+        Clone,
+        Debug,
+        Default,
+        PartialEq,
+        Eq,
+        CompactCellValue,
+        BinaryHashRepr,
+        FieldRepr,
+        FromFieldRepr,
+    )]
     pub struct Composite {
         pub vector: runtime::FixedVector<runtime::Field, 2>,
         pub pair: (runtime::Field, bool),

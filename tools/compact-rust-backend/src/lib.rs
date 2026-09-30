@@ -404,7 +404,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
     let constructor_fields = ordered_fields.iter().map(|field| match &field.declaration {
         LedgerFieldKind::Counter => Ok(syn::parse_quote!(runtime::ledger::constructor_counter())),
         LedgerFieldKind::Cell { ty } => {
-            if !matches!(ty, Type::Boolean | Type::Field | Type::Unsigned { .. } | Type::Bytes { .. }) {
+            if !matches!(ty, Type::Boolean | Type::Field | Type::Unsigned { .. } | Type::Bytes { .. } | Type::Struct { .. } | Type::Enum { .. }) {
                 return Err(RenderError::UnsupportedLedgerCellType(ty.clone()));
             }
             let ty = rust_type(ty)?;
@@ -425,7 +425,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
             })
             .collect::<Result<Vec<syn::Field>, RenderError>>()?;
         struct_items.push(syn::parse_quote! {
-            #[derive(Clone, Debug, PartialEq, Eq, BinaryHashRepr, FieldRepr, FromFieldRepr)]
+            #[derive(Clone, Debug, Default, PartialEq, Eq, CompactCellValue, BinaryHashRepr, FieldRepr, FromFieldRepr)]
             pub struct #name { #(#fields),* }
         });
     }
@@ -456,8 +456,14 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
         let byte_length = syn::LitInt::new(&byte_length.to_string(), Span::call_site());
         struct_items.push(syn::parse_quote! {
             #[allow(non_camel_case_types)]
-            #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+            #[derive(Clone, Copy, Debug, PartialEq, Eq, CompactCellValue)]
             pub enum #name { #(#variants),* }
+        });
+        let first = &variants[0];
+        struct_items.push(syn::parse_quote! {
+            impl Default for #name {
+                fn default() -> Self { Self::#first }
+            }
         });
         struct_items.push(syn::parse_quote! {
             impl FieldRepr for #name {
@@ -493,7 +499,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
         Some(syn::parse_quote! {
             pub mod types {
                 use midnight_compact_runtime as runtime;
-                use runtime::{BinaryHashRepr, FieldRepr, Fr, FromFieldRepr, MemWrite};
+                use runtime::{BinaryHashRepr, CompactCellValue, FieldRepr, Fr, FromFieldRepr, MemWrite};
                 #(#struct_items)*
             }
         })

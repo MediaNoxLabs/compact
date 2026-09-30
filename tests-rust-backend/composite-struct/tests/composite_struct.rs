@@ -1,5 +1,6 @@
 use compact_rust_composite_struct_fixture::pure_circuits::composite_identity;
 use compact_rust_composite_struct_fixture::types::Composite;
+use midnight_compact_runtime::ledger::{DefaultDB, constructor_cell, read_cell};
 use midnight_compact_runtime::{Field, FieldRepr, FixedVector, FromFieldRepr};
 
 #[test]
@@ -9,5 +10,10 @@ fn generated_vector_and_tuple_fields_round_trip() {
         pair: (Field::from(3_u64), true),
     };
     assert_eq!(composite_identity(value.clone()).unwrap(), value);
-    assert_eq!(Composite::from_field_repr(&value.field_vec()), Some(value));
+    assert_eq!(
+        Composite::from_field_repr(&value.field_vec()),
+        Some(value.clone())
+    );
+    let cell = constructor_cell::<Composite, DefaultDB>(value.clone());
+    assert_eq!(read_cell::<Composite, _>(&cell).unwrap(), value);
 }

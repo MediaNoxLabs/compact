@@ -725,6 +725,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-cell-enum-fixture"
+version = "0.1.0"
+dependencies = [
+ "midnight-compact-runtime",
+]
+
+[[package]]
+name = "compact-rust-cell-struct-fixture"
+version = "0.1.0"
+dependencies = [
+ "midnight-compact-runtime",
+]
+
+[[package]]
 name = "compact-rust-composite-struct-fixture"
 version = "0.1.0"
 dependencies = [
@@ -2473,6 +2487,7 @@ dependencies = [
  "midnight-base-crypto",
  "midnight-circuits",
  "midnight-coin-structure",
+ "midnight-compact-runtime-macros",
  "midnight-curves",
  "midnight-onchain-runtime",
  "midnight-onchain-state",
@@ -2485,6 +2500,15 @@ dependencies = [
  "midnight-zk-stdlib",
  "midnight-zswap",
  "serde_json",
+]
+
+[[package]]
+name = "midnight-compact-runtime-macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote 1.0.45",
+ "syn 2.0.117",
 ]
 
 [[package]]

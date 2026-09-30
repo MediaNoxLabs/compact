@@ -1,5 +1,6 @@
 use compact_rust_nested_struct_fixture::pure_circuits::nested_identity;
 use compact_rust_nested_struct_fixture::types::{Inner, Outer};
+use midnight_compact_runtime::ledger::{DefaultDB, constructor_cell, read_cell};
 use midnight_compact_runtime::{BinaryHashRepr, BoundedUint, FieldRepr, FixedBytes, FromFieldRepr};
 
 #[test]
@@ -16,4 +17,6 @@ fn generated_nested_struct_round_trips_through_ledger_field_repr() {
         Some(value.clone())
     );
     assert_eq!(value.binary_vec(), vec![1, 2, 0, 0, 200]);
+    let cell = constructor_cell::<Outer, DefaultDB>(value.clone());
+    assert_eq!(read_cell::<Outer, _>(&cell).unwrap(), value);
 }

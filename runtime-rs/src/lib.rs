@@ -10,7 +10,13 @@ pub mod context;
 pub mod ledger;
 mod primitives;
 
+pub use midnight_compact_runtime_macros::CompactCellValue;
 pub use primitives::{BoundedUint, FixedBytes, FixedVector};
+
+/// Ledger FAB types used by the generated user-type derive.
+pub mod fab {
+    pub use midnight_base_crypto::fab::{Aligned, Alignment, AlignmentAtom, Value, ValueSlice};
+}
 
 /// Increment when generated Rust and the runtime's public contract change.
 pub const RUST_RUNTIME_ABI: u32 = 1;

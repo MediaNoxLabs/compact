@@ -59,7 +59,11 @@ same field and declared byte width. Struct, nested struct, enum, and
 vector/tuple composite fixtures execute. `FixedVector<T, N>` delegates
 element encoding to ledger primitives and fills the missing generic array
 field decoder. Runtime tests cover recursive vector/tuple values in Cells.
-User structs and enums as ledger Cell values are still pending.
+The separate `runtime-rs-macros` crate derives FAB alignment, value encoding,
+and Cell decoding for generated structs and unit enums. Its input is the
+renderer-built Rust syntax, and its output composes the ledger's FAB types.
+Source-level `cell_struct` and `cell_enum` fixtures test constructors, exact
+Cell alignment, value round trips, and writes through the ledger VM.
 
 ## Run locally
 
@@ -73,7 +77,8 @@ cargo test -p compact-rust-backend -p midnight-compact-runtime \
   -p compact-rust-uint-identity-fixture -p compact-rust-bytes-identity-fixture \
   -p compact-rust-counter-fixture -p compact-rust-cell-boolean-fixture \
   -p compact-rust-struct-identity-fixture -p compact-rust-nested-struct-fixture \
-  -p compact-rust-composite-struct-fixture -p compact-rust-enum-identity-fixture
+  -p compact-rust-composite-struct-fixture -p compact-rust-enum-identity-fixture \
+  -p compact-rust-cell-struct-fixture -p compact-rust-cell-enum-fixture
 cargo build -p compact-rust-backend --bin compact-rustc
 ```
 
@@ -92,11 +97,9 @@ JSON alongside the usual TypeScript artifacts.
 
 1. Add literals and typed primitive operations using ledger and ZK crate
    semantics, with checks for Compact field and bounded unsigned behavior.
-2. Add user structs using the ledger derives, then enums and recursive
-   composite types with explicit encoding tests.
-3. Expand the initial Cell and Counter path to typed read results, parameterized
+2. Expand the initial Cell and Counter path to typed read results, parameterized
    updates, and additional ledger field types while preserving state byte parity.
-4. Extend witnesses, calls, control flow, ledger ADTs, and cryptographic
+3. Extend witnesses, calls, control flow, ledger ADTs, and cryptographic
    natives in small executing fixtures until the oracle matrix is covered.
 
 The detailed plan and research log are in the `midnight` Obsidian vault under

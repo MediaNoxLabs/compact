@@ -1,0 +1,5 @@
+import CompactStandardLibrary;
+
+enum Choice { yes, no }
+
+export ledger choice: Choice;

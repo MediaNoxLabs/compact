@@ -53,9 +53,17 @@ pub mod types {
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
     const _: () = assert!(runtime::RUST_RUNTIME_ABI == 1);
-    pub fn choice_identity(
-        value: crate::types::Choice,
-    ) -> Result<crate::types::Choice, runtime::CompactError> {
-        Ok(value)
+}
+pub mod ledger_contract {
+    use midnight_compact_runtime as runtime;
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 1);
+    pub fn initial_state<Private>(
+        context: runtime::context::ConstructorContext<Private>,
+    ) -> runtime::context::ConstructorResult<Private> {
+        let state = runtime::ledger::contract_state(vec![runtime::ledger::constructor_cell::<
+            crate::types::Choice,
+            runtime::ledger::DefaultDB,
+        >(Default::default())]);
+        runtime::context::ConstructorResult::new(context, state)
     }
 }

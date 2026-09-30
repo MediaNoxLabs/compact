@@ -166,7 +166,12 @@ fn update_counter<D: DB>(
 
 /// The root ledger state for a contract with no public ledger fields.
 pub fn empty_contract_state() -> ChargedState<DefaultDB> {
-    let root = StateValue::Array(Vec::<StateValue<DefaultDB>>::new().into());
+    contract_state(Vec::new())
+}
+
+/// Build a contract root from ordered ledger fields.
+pub fn contract_state<D: DB>(fields: Vec<StateValue<D>>) -> ChargedState<D> {
+    let root = StateValue::Array(fields.into());
     ChargedState::new(root)
 }
 

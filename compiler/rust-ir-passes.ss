@@ -109,9 +109,7 @@
            (let ([names (exported-names function-name export-alist)])
              (if (null? names)
                  circuits
-                 (begin
-                   (unless (id-pure? function-name)
-                     (source-errorf src "Rust backend currently supports pure circuits only"))
+                 (if (id-pure? function-name)
                    (append
                      (map
                        (lambda (name)
@@ -120,7 +118,120 @@
                                  (cons "result" (type-ir type src))
                                  (cons "body" (expression-ir expr src))))
                        names)
-                     circuits))))]
+                     circuits)
+                   circuits)))]
+          [else circuits]))
+
+      (define (ledger-binding-ir binding owner-src)
+        (nanopass-case (Lnodisclose Public-Ledger-Array-Element) binding
+          [(,src ,ledger-field-name (,path-index* ...) ,type)
+           (unless (and (= (length path-index*) 1)
+                        (< (car path-index*) 16))
+             (source-errorf src "Rust backend supports root ledger fields only"))
+           (nanopass-case (Lnodisclose Type) type
+             [(tadt ,src^ ,adt-name ([,adt-formal* ,adt-arg*] ...) ,vm-expr (,adt-op* ...) (,adt-rt-op* ...))
+              (cond
+                [(eq? adt-name 'Counter)
+                 (object (cons "id" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-index*))
+                         (cons "declaration" (kind "counter")))]
+                [(and (eq? adt-name '__compact_Cell) (= (length adt-arg*) 1))
+                 (object (cons "id" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-index*))
+                         (cons "declaration"
+                               (object (cons "kind" "cell")
+                                       (cons "ty" (type-ir (car adt-arg*) src)))))]
+                [else (source-errorf src "Rust backend does not yet support this ledger ADT")])]
+             [else (source-errorf src "Rust backend does not yet support this ledger field type")])]
+          [else (source-errorf owner-src "Rust backend does not yet support nested ledger fields")]))
+
+      (define (ledger-fields-ir pelt fields owner-src)
+        (nanopass-case (Lnodisclose Program-Element) pelt
+          [(public-ledger-declaration ,pl-array ,lconstructor)
+           (nanopass-case (Lnodisclose Public-Ledger-Array) pl-array
+             [(public-ledger-array ,pl-array-elt* ...)
+              (append (map (lambda (binding) (ledger-binding-ir binding owner-src)) pl-array-elt*) fields)])]
+          [else fields]))
+
+      (define (literal-u16 expr environment owner-src)
+        (nanopass-case (Lnodisclose Expression) expr
+          [(quote ,src ,datum)
+           (unless (and (integer? datum) (<= 0 datum 65535))
+             (source-errorf src "Counter increment amount must fit Uint<16>"))
+           datum]
+          [(safe-cast ,src ,type ,type^ ,expr)
+           (literal-u16 expr environment owner-src)]
+          [(var-ref ,src ,var-name)
+           (let ([entry (assq (id-sym var-name) environment)])
+             (if entry
+                 (cdr entry)
+                 (source-errorf src "Rust backend cannot resolve Counter increment amount")))]
+          [else (source-errorf owner-src "Rust backend currently supports literal Counter increments only")]))
+
+      (define (state-action-ir expr owner-src environment)
+        (nanopass-case (Lnodisclose Expression) expr
+          [(let* ,src ([,local* ,expr*] ...) ,expr)
+           (let ([environment^
+                   (fold-left
+                     (lambda (environment local value)
+                       (nanopass-case (Lnodisclose Argument) local
+                         [(,var-name ,type)
+                          (cons (cons (id-sym var-name)
+                                      (literal-u16 value environment src))
+                                environment)]))
+                     environment local* expr*)])
+             (state-action-ir expr owner-src environment^))]
+          [(public-ledger ,src ,ledger-field-name ,sugar? (,path-elt* ...) ,src^ ,adt-op ,expr* ...)
+           (unless (and (= (length path-elt*) 1)
+                        (integer? (car path-elt*)))
+             (source-errorf src "Rust backend supports root ledger paths only"))
+           (nanopass-case (Lnodisclose ADT-Op) adt-op
+             [(,ledger-op ,op-class (,adt-name (,adt-formal* ,adt-arg*) ...) ((,var-name* ,type*) ...) ,type ,vm-code)
+              (cond
+                [(and (eq? adt-name 'Counter)
+                      (eq? ledger-op 'increment)
+                      (= (length expr*) 1))
+                 (object (cons "kind" "counter_increment")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*))
+                         (cons "amount" (literal-u16 (car expr*) environment src)))]
+                [(and (eq? adt-name '__compact_Cell)
+                      (eq? ledger-op 'write)
+                      (= (length expr*) 1))
+                 (object (cons "kind" "cell_write")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*))
+                         (cons "value" (expression-ir (car expr*) src)))]
+                [else (source-errorf src "Rust backend does not yet support this ledger operation")])])]
+          [else (source-errorf owner-src "Rust backend does not yet support this state action")]))
+
+      (define (stateful-body-ir expr src)
+        (nanopass-case (Lnodisclose Expression) expr
+          [(seq ,src1 ,expr* ... ,expr)
+           (unless (equal? (expression-ir expr src1) (kind "unit"))
+             (source-errorf src1 "Rust backend stateful circuit result must be unit"))
+           (list->vector (map (lambda (action) (state-action-ir action src '())) expr*))]
+          [else (source-errorf src "Rust backend does not yet support this stateful circuit body")]))
+
+      (define (stateful-circuit-ir pelt export-alist circuits)
+        (nanopass-case (Lnodisclose Program-Element) pelt
+          [(circuit ,src ,function-name (,arg* ...) ,type ,expr)
+           (if (id-pure? function-name)
+               circuits
+               (let ([names (exported-names function-name export-alist)])
+                 (if (null? names)
+                     circuits
+                     (begin
+                       (unless (null? arg*)
+                         (source-errorf src "Rust backend stateful circuit parameters are not yet supported"))
+                       (unless (equal? (type-ir type src) (kind "unit"))
+                         (source-errorf src "Rust backend stateful circuit result type must be unit"))
+                       (append
+                         (map (lambda (name)
+                                (object (cons "name" name)
+                                        (cons "actions" (stateful-body-ir expr src))))
+                              names)
+                         circuits)))))]
           [else circuits]))
 
       (define (check-supported-declaration pelt owner-src)
@@ -128,11 +239,7 @@
           [(witness ,src ,function-name (,arg* ...) ,type)
            (source-errorf src "Rust backend does not yet support witnesses")]
           [(public-ledger-declaration ,pl-array ,lconstructor)
-           (nanopass-case (Lnodisclose Public-Ledger-Array) pl-array
-             [(public-ledger-array ,pl-array-elt* ...)
-              (unless (null? pl-array-elt*)
-                (source-errorf owner-src
-                               "Rust backend does not yet support ledger fields"))])]
+           (void)]
           [else (void)])))
 
     (Program : Program (ir) -> Program ()
@@ -141,11 +248,20 @@
        (let ([export-alist (map cons export-name* name*)])
          (print-json
            (get-target-port 'rust.ir.json)
-           (object (cons "schema_version" 1)
+           (object (cons "schema_version" 2)
+                   (cons "ledger_fields"
+                         (list->vector
+                           (fold-right (lambda (pelt fields) (ledger-fields-ir pelt fields src)) '() pelt*)))
                    (cons "circuits"
                          (list->vector
                            (fold-right
                              (lambda (pelt circuits) (circuit-ir pelt export-alist circuits))
+                             '()
+                             pelt*)))
+                   (cons "stateful_circuits"
+                         (list->vector
+                           (fold-right
+                             (lambda (pelt circuits) (stateful-circuit-ir pelt export-alist circuits))
                              '()
                              pelt*))))))
        ir]))

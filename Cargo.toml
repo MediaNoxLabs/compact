@@ -15,7 +15,7 @@
 
 [workspace]
 resolver = "3"
-members = ["tools/*", "runtime-rs", "tests-rust-backend/identity", "tests-rust-backend/truth", "tests-rust-backend/one-tuple", "tests-rust-backend/field-add", "tests-rust-backend/uint-identity", "tests-rust-backend/bytes-identity"]
+members = ["tools/*", "runtime-rs", "tests-rust-backend/identity", "tests-rust-backend/truth", "tests-rust-backend/one-tuple", "tests-rust-backend/field-add", "tests-rust-backend/uint-identity", "tests-rust-backend/bytes-identity", "tests-rust-backend/counter", "tests-rust-backend/cell-boolean"]
 
 [workspace.package]
 version = "0.5.1"

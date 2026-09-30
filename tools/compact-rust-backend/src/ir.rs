@@ -7,13 +7,53 @@
 
 use serde::{Deserialize, Serialize};
 
-pub const SCHEMA_VERSION: u32 = 1;
+pub const SCHEMA_VERSION: u32 = 2;
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Contract {
     pub schema_version: u32,
+    pub ledger_fields: Vec<LedgerField>,
     pub circuits: Vec<PureCircuit>,
+    pub stateful_circuits: Vec<StatefulCircuit>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct LedgerField {
+    /// Frontend identity, distinct from any Rust identifier.
+    pub id: String,
+    pub index: u8,
+    pub declaration: LedgerFieldKind,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
+pub enum LedgerFieldKind {
+    Counter,
+    Cell { ty: Type },
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct StatefulCircuit {
+    pub name: String,
+    pub actions: Vec<StateAction>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
+pub enum StateAction {
+    CounterIncrement {
+        field: String,
+        index: u8,
+        amount: u16,
+    },
+    CellWrite {
+        field: String,
+        index: u8,
+        value: Expr,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]

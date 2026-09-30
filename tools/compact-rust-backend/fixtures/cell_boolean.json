@@ -1,0 +1,33 @@
+{
+  "schema_version": 2,
+  "ledger_fields": [
+    {
+      "id": "flag",
+      "index": 0,
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "boolean"
+        }
+      }
+    }
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "set_flag",
+      "actions": [
+        {
+          "kind": "cell_write",
+          "field": "flag",
+          "index": 0,
+          "value": {
+            "kind": "boolean",
+            "value": true
+          }
+        }
+      ]
+    }
+  ]
+}

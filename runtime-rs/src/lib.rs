@@ -31,6 +31,7 @@ pub use midnight_transient_crypto::repr::{FieldRepr, FromFieldRepr};
 pub enum CompactError {
     AssertionFailed(String),
     InvalidLedgerCell(String),
+    LedgerQueryRejected(String),
     InvalidUnsignedValue,
     UnsignedOutOfRange { value: u128, max: u128 },
 }
@@ -40,6 +41,7 @@ impl std::fmt::Display for CompactError {
         match self {
             Self::AssertionFailed(message) => write!(f, "Compact assertion failed: {message}"),
             Self::InvalidLedgerCell(message) => write!(f, "invalid Compact ledger cell: {message}"),
+            Self::LedgerQueryRejected(message) => write!(f, "ledger query rejected: {message}"),
             Self::InvalidUnsignedValue => write!(f, "invalid Compact unsigned value"),
             Self::UnsignedOutOfRange { value, max } => {
                 write!(f, "unsigned value {value} exceeds Compact maximum {max}")

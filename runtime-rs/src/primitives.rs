@@ -6,6 +6,12 @@ use midnight_base_crypto::fab::{Aligned, Alignment, AlignmentAtom, Value, ValueS
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct BoundedUint<const MAX: u128>(u128);
 
+impl<const MAX: u128> Default for BoundedUint<MAX> {
+    fn default() -> Self {
+        Self(0)
+    }
+}
+
 impl<const MAX: u128> BoundedUint<MAX> {
     /// Matches Compact's `ceil(bit_length(MAX) / 8)` descriptor width.
     pub const BYTE_LENGTH: u32 = (128 - MAX.leading_zeros()).div_ceil(8);

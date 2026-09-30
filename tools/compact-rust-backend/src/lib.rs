@@ -8,7 +8,7 @@ use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::fmt;
 
-use ir::{Contract, Expr, SCHEMA_VERSION, Type};
+use ir::{Contract, Expr, LedgerFieldKind, SCHEMA_VERSION, StateAction, Type};
 use proc_macro2::Span;
 use quote::quote;
 
@@ -19,6 +19,10 @@ pub enum RenderError {
     InvalidUnsignedMaximum(String),
     DuplicateCircuit(String),
     DuplicateParameter(String),
+    DuplicateLedgerField(String),
+    InvalidLedgerIndex(u8),
+    UnknownLedgerField(String),
+    UnsupportedLedgerCellType(Type),
     UnknownParameter(String),
     TypeMismatch { expected: Type, actual: Type },
 }
@@ -38,6 +42,12 @@ impl fmt::Display for RenderError {
             }
             Self::DuplicateCircuit(name) => write!(f, "duplicate circuit {name:?}"),
             Self::DuplicateParameter(name) => write!(f, "duplicate parameter {name:?}"),
+            Self::DuplicateLedgerField(name) => write!(f, "duplicate ledger field {name:?}"),
+            Self::InvalidLedgerIndex(index) => {
+                write!(f, "invalid or noncontiguous ledger field index {index}")
+            }
+            Self::UnknownLedgerField(name) => write!(f, "unknown ledger field {name:?}"),
+            Self::UnsupportedLedgerCellType(ty) => write!(f, "unsupported ledger Cell type {ty:?}"),
             Self::UnknownParameter(name) => write!(f, "unknown parameter {name:?}"),
             Self::TypeMismatch { expected, actual } => {
                 write!(f, "expression has type {actual:?}, expected {expected:?}")
@@ -164,6 +174,17 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
     }
 
     let mut names = HashSet::new();
+    let mut ledger_fields = HashMap::new();
+    let mut ordered_fields = contract.ledger_fields.iter().collect::<Vec<_>>();
+    ordered_fields.sort_by_key(|field| field.index);
+    for (expected_index, field) in ordered_fields.iter().enumerate() {
+        if field.index as usize != expected_index || field.index >= 16 {
+            return Err(RenderError::InvalidLedgerIndex(field.index));
+        }
+        if ledger_fields.insert(field.id.as_str(), *field).is_some() {
+            return Err(RenderError::DuplicateLedgerField(field.id.clone()));
+        }
+    }
     let mut items = Vec::new();
     for circuit in &contract.circuits {
         let name = ident(&circuit.name)?;
@@ -200,13 +221,123 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
         items.push(item);
     }
 
+    let mut stateful_items = Vec::new();
+    for circuit in &contract.stateful_circuits {
+        let name = ident(&circuit.name)?;
+        if !names.insert(circuit.name.as_str()) {
+            return Err(RenderError::DuplicateCircuit(circuit.name.clone()));
+        }
+        let mut statements = Vec::<syn::Stmt>::new();
+        for action in &circuit.actions {
+            match action {
+                StateAction::CounterIncrement {
+                    field,
+                    index,
+                    amount,
+                } => {
+                    let declaration = ledger_fields
+                        .get(field.as_str())
+                        .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                    if declaration.declaration != LedgerFieldKind::Counter
+                        || declaration.index != *index
+                    {
+                        return Err(RenderError::UnknownLedgerField(field.clone()));
+                    }
+                    let index = syn::LitInt::new(&declaration.index.to_string(), Span::call_site());
+                    let amount = syn::LitInt::new(&amount.to_string(), Span::call_site());
+                    statements.push(syn::parse_quote! {
+                        let step = context.increment_counter(#index, #amount)?;
+                    });
+                    statements.push(syn::parse_quote! {
+                        let context = step.context;
+                    });
+                    statements.push(syn::parse_quote! {
+                        total_cost += step.gas_cost;
+                    });
+                }
+                StateAction::CellWrite {
+                    field,
+                    index,
+                    value,
+                } => {
+                    let declaration = ledger_fields
+                        .get(field.as_str())
+                        .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                    let LedgerFieldKind::Cell { ty } = &declaration.declaration else {
+                        return Err(RenderError::UnknownLedgerField(field.clone()));
+                    };
+                    if declaration.index != *index {
+                        return Err(RenderError::UnknownLedgerField(field.clone()));
+                    }
+                    let (value, actual) = expression(value, &HashMap::new())?;
+                    if &actual != ty {
+                        return Err(RenderError::TypeMismatch {
+                            expected: ty.clone(),
+                            actual,
+                        });
+                    }
+                    let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+                    statements.push(syn::parse_quote! {
+                        let step = context.write_cell(#index, #value)?;
+                    });
+                    statements.push(syn::parse_quote! {
+                        let context = step.context;
+                    });
+                    statements.push(syn::parse_quote! {
+                        total_cost += step.gas_cost;
+                    });
+                }
+            }
+        }
+        let item: syn::Item = syn::parse_quote! {
+            pub fn #name<Private>(
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
+                let mut total_cost = runtime::context::RunningCost::default();
+                #(#statements)*
+                Ok(runtime::context::CircuitResult { context, result: (), gas_cost: total_cost })
+            }
+        };
+        stateful_items.push(item);
+    }
+
+    let constructor_fields = ordered_fields.iter().map(|field| match &field.declaration {
+        LedgerFieldKind::Counter => Ok(syn::parse_quote!(runtime::ledger::constructor_counter())),
+        LedgerFieldKind::Cell { ty } => {
+            if !matches!(ty, Type::Boolean | Type::Field | Type::Unsigned { .. } | Type::Bytes { .. }) {
+                return Err(RenderError::UnsupportedLedgerCellType(ty.clone()));
+            }
+            let ty = rust_type(ty)?;
+            Ok(syn::parse_quote!(runtime::ledger::constructor_cell::<#ty, runtime::ledger::DefaultDB>(Default::default())))
+        }
+    }).collect::<Result<Vec<syn::Expr>, RenderError>>()?;
+
     let runtime_abi = syn::LitInt::new(&RUNTIME_ABI_VERSION.to_string(), Span::call_site());
+    let ledger_module: Option<syn::Item> =
+        if contract.ledger_fields.is_empty() && contract.stateful_circuits.is_empty() {
+            None
+        } else {
+            Some(syn::parse_quote! {
+                pub mod ledger_contract {
+                    use midnight_compact_runtime as runtime;
+                    const _: () = assert!(runtime::RUST_RUNTIME_ABI == #runtime_abi);
+                    pub fn initial_state<Private>(
+                        context: runtime::context::ConstructorContext<Private>,
+                    ) -> runtime::context::ConstructorResult<Private> {
+                        let state = runtime::ledger::contract_state(vec![#(#constructor_fields),*]);
+                        runtime::context::ConstructorResult::new(context, state)
+                    }
+                    #(#stateful_items)*
+                }
+            })
+        };
     let file: syn::File = syn::parse2(quote! {
         pub mod pure_circuits {
             use midnight_compact_runtime as runtime;
             const _: () = assert!(runtime::RUST_RUNTIME_ABI == #runtime_abi);
             #(#items)*
         }
+        #ledger_module
     })
     .expect("typed renderer constructed invalid Rust syntax");
     Ok(format!(

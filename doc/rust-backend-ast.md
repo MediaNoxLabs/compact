@@ -22,7 +22,8 @@ The backend supports exported pure circuits with `Field`, `Boolean`,
 Boolean literals, unit, tuple construction, and field addition. The fixtures
 in `examples/rust_backend/` run from Compact source through the Scheme
 compiler, JSON bridge, `syn` renderer, native runtime, and executing Rust
-tests. The compiler rejects ledger fields, witnesses, and bounded unsigned
+tests. The compiler supports the initial Counter and Boolean Cell state
+actions and rejects other ledger shapes, witnesses, and bounded unsigned
 arithmetic until their runtime semantics are implemented. `Uint<N>` uses a
 bounded runtime type with a checked inclusive maximum and Compact's byte
 alignment; `Bytes<N>` uses the ledger's fixed byte array representation.
@@ -44,8 +45,10 @@ from the same 8.0 line.
 The runtime can now construct and decode ledger Cells and Counters, and it
 runs Cell writes plus Counter increments/decrements through the ledger VM.
 The Counter test serializes the full post-increment `ContractState` and matches
-the TypeScript oracle fixture byte for byte. Compiler emission for these
-ledger operations is still pending.
+the TypeScript oracle fixture byte for byte. The typed IR includes ordered
+ledger declarations and state actions. The compiler and renderer generate
+the minimal Counter increment and Boolean Cell write contracts end to end.
+Other ledger operations remain explicit compiler errors.
 
 ## Run locally
 
@@ -56,7 +59,8 @@ Rust renderer and runtime:
 cargo test -p compact-rust-backend -p midnight-compact-runtime \
   -p compact-rust-identity-fixture -p compact-rust-truth-fixture \
   -p compact-rust-one-tuple-fixture -p compact-rust-field-add-fixture \
-  -p compact-rust-uint-identity-fixture -p compact-rust-bytes-identity-fixture
+  -p compact-rust-uint-identity-fixture -p compact-rust-bytes-identity-fixture \
+  -p compact-rust-counter-fixture -p compact-rust-cell-boolean-fixture
 cargo build -p compact-rust-backend --bin compact-rustc
 ```
 
@@ -77,8 +81,8 @@ JSON alongside the usual TypeScript artifacts.
    semantics, with checks for Compact field and bounded unsigned behavior.
 2. Add user structs using the ledger derives, then enums and recursive
    composite types with explicit encoding tests.
-3. Add the minimal ledger state envelope, Cell, and Counter. Compare state
-   bytes and behavior with TypeScript fixtures from the oracle branch.
+3. Expand the initial Cell and Counter path to typed read results, parameterized
+   updates, and additional ledger field types while preserving state byte parity.
 4. Extend witnesses, calls, control flow, ledger ADTs, and cryptographic
    natives in small executing fixtures until the oracle matrix is covered.
 

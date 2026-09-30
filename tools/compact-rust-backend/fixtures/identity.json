@@ -1,11 +1,27 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
+  "ledger_fields": [
+  ],
   "circuits": [
     {
       "name": "identity",
-      "parameters": [{ "name": "value", "ty": { "kind": "field" } }],
-      "result": { "kind": "field" },
-      "body": { "kind": "parameter", "name": "value" }
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "body": {
+        "kind": "parameter",
+        "name": "value"
+      }
     }
+  ],
+  "stateful_circuits": [
   ]
 }

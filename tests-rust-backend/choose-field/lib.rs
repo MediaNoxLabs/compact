@@ -28,4 +28,10 @@ pub mod pure_circuits {
     ) -> Result<runtime::Field, runtime::CompactError> {
         Ok(crate::pure_circuits::sum_with_local(left, right)?)
     }
+    pub fn answer() -> Result<runtime::Field, runtime::CompactError> {
+        Ok(runtime::Field::from(42u128))
+    }
+    pub fn wide_constant() -> Result<runtime::Field, runtime::CompactError> {
+        Ok(runtime::Field::from(18446744073709551616u128))
+    }
 }

@@ -77,6 +77,16 @@
           [(single ,src ,expr) (expression-ir expr owner-src)]
           [else (source-errorf owner-src "Rust backend does not yet support tuple spreads")]))
 
+      (define (field-literal-ir expr owner-src)
+        (nanopass-case (Lnodisclose Expression) expr
+          [(return ,src ,expr) (field-literal-ir expr src)]
+          [(quote ,src ,datum)
+           (if (and (integer? datum) (<= 0 datum))
+               (object (cons "kind" "field_literal")
+                       (cons "value" (number->string datum)))
+               (source-errorf src "Rust backend supports nonnegative Field literals only"))]
+          [else (source-errorf owner-src "Rust backend does not yet support this Field cast")]))
+
       (define (expression-ir expr owner-src)
         (nanopass-case (Lnodisclose Expression) expr
           [(return ,src ,expr) (expression-ir expr owner-src)]
@@ -87,6 +97,10 @@
            (if (boolean? datum)
                (object (cons "kind" "boolean") (cons "value" datum))
                (source-errorf src "Rust backend does not yet support this literal"))]
+          [(safe-cast ,src ,type ,type^ ,expr)
+           (nanopass-case (Lnodisclose Type) type
+             [(tfield ,src^) (field-literal-ir expr src)]
+             [else (source-errorf src "Rust backend does not yet support this cast")])]
           [(tuple ,src ,tuple-arg* ...)
            (if (null? tuple-arg*)
                (kind "unit")

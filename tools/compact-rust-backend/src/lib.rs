@@ -18,6 +18,7 @@ pub enum RenderError {
     SchemaVersion(u32),
     InvalidIdentifier(String),
     InvalidUnsignedMaximum(String),
+    InvalidFieldLiteral(String),
     DuplicateCircuit(String),
     DuplicateParameter(String),
     DuplicateLedgerField(String),
@@ -53,6 +54,12 @@ impl fmt::Display for RenderError {
                 write!(
                     f,
                     "unsupported Compact Uint maximum {max:?}; expected canonical u128"
+                )
+            }
+            Self::InvalidFieldLiteral(value) => {
+                write!(
+                    f,
+                    "unsupported Field literal {value:?}; expected canonical u128"
                 )
             }
             Self::DuplicateCircuit(name) => write!(f, "duplicate circuit {name:?}"),
@@ -239,7 +246,7 @@ fn collect_expression_types(
             collect_expression_types(left, structs, enums)?;
             collect_expression_types(right, structs, enums)?;
         }
-        Expr::Unit | Expr::Boolean { .. } | Expr::Parameter { .. } => {}
+        Expr::Unit | Expr::Boolean { .. } | Expr::FieldLiteral { .. } | Expr::Parameter { .. } => {}
     }
     Ok(())
 }
@@ -259,6 +266,16 @@ fn expression_with_calls(
     match expr {
         Expr::Unit => Ok((syn::parse_quote!(()), Type::Unit)),
         Expr::Boolean { value } => Ok((syn::parse_quote!(#value), Type::Boolean)),
+        Expr::FieldLiteral { value } => {
+            let parsed = value
+                .parse::<u128>()
+                .map_err(|_| RenderError::InvalidFieldLiteral(value.clone()))?;
+            if parsed.to_string() != *value {
+                return Err(RenderError::InvalidFieldLiteral(value.clone()));
+            }
+            let value = syn::LitInt::new(&format!("{value}u128"), Span::call_site());
+            Ok((syn::parse_quote!(runtime::Field::from(#value)), Type::Field))
+        }
         Expr::Parameter { name } => {
             let (ty, rust_name) = parameters
                 .get(name.as_str())

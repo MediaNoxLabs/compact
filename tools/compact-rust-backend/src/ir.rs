@@ -259,6 +259,9 @@ pub enum Expr {
     Boolean {
         value: bool,
     },
+    FieldLiteral {
+        value: String,
+    },
     Parameter {
         name: String,
     },

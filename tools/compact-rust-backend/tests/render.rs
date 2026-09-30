@@ -123,6 +123,32 @@ fn rejects_type_mismatch_and_invalid_identifier() {
 }
 
 #[test]
+fn field_literal_requires_canonical_u128() {
+    let mut contract = identity(Type::Field, Expr::FieldLiteral { value: "42".into() });
+    assert!(
+        render(&contract)
+            .unwrap()
+            .contains("runtime::Field::from(42u128)")
+    );
+    contract.circuits[0].body = Expr::FieldLiteral {
+        value: "042".into(),
+    };
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::InvalidFieldLiteral("042".into()))
+    );
+    contract.circuits[0].body = Expr::FieldLiteral {
+        value: "340282366920938463463374607431768211456".into(),
+    };
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::InvalidFieldLiteral(
+            "340282366920938463463374607431768211456".into()
+        ))
+    );
+}
+
+#[test]
 fn pure_call_checks_target_arity_and_argument_types() {
     let mut contract = identity(
         Type::Field,

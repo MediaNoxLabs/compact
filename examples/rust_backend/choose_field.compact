@@ -17,3 +17,11 @@ export circuit sum_with_local(left: Field, right: Field): Field {
 export circuit call_sum(left: Field, right: Field): Field {
   return sum_with_local(left, right);
 }
+
+export circuit answer(): Field {
+  return 42;
+}
+
+export circuit wide_constant(): Field {
+  return 18446744073709551616;
+}

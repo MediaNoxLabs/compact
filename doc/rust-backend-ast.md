@@ -22,7 +22,7 @@ placeholder Rust.
 
 The backend supports exported pure circuits with `Field`, `Boolean`,
 `Bytes<N>`, `Uint<N>`, unit, tuple, and vector types. Bodies currently support parameter references,
-Boolean literals, unit, tuple construction, typed conditionals, sequential
+Boolean and Field literals, unit, tuple construction, typed conditionals, sequential
 local bindings, pure circuit calls, and field addition. The fixtures
 in `examples/rust_backend/` run from Compact source through the Scheme
 compiler, JSON bridge, `syn` renderer, native runtime, and executing Rust

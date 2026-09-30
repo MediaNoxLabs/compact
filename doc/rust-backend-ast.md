@@ -60,9 +60,10 @@ contract-specific ledger view, private state, and contract address. Its method
 returns the next private state and a typed value. The generated circuit records
 that value as a ledger `AlignedValue` in its own private transcript outputs.
 The Field witness fixtures cover zero and one typed arguments; the Boolean
-Cell fixture reads current ledger state before and after a write. Their results,
-private states, and FAB transcript values match the pinned TypeScript runtime.
-The ledger view decodes Cell and Counter fields through the ledger's FAB types.
+Cell fixture reads current ledger state before and after a write. A Counter
+fixture reads `Uint<64>` before and after increment. Their results, private
+states, and FAB transcript values match the pinned TypeScript runtime. The
+ledger view decodes Cell and Counter fields through the ledger's FAB types.
 Set, Map, and List projection, witness calls inside expressions and state
 actions, and complete proof data remain future slices. The generated runtime
 ABI is 3.
@@ -150,6 +151,7 @@ cargo test -p compact-rust-backend -p midnight-compact-runtime \
   -p compact-rust-witness-minimal-fixture \
   -p compact-rust-witness-argument-fixture \
   -p compact-rust-witness-ledger-cell-fixture \
+  -p compact-rust-witness-ledger-counter-fixture \
   -p compact-rust-uint-identity-fixture -p compact-rust-bytes-identity-fixture \
   -p compact-rust-counter-fixture -p compact-rust-cell-boolean-fixture \
   -p compact-rust-struct-identity-fixture -p compact-rust-nested-struct-fixture \

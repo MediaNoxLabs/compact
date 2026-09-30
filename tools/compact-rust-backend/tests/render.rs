@@ -380,6 +380,44 @@ fn ledger_read_return_must_match_the_declared_cell() {
 }
 
 #[test]
+fn counter_read_returns_uint64() {
+    let mut contract = Contract {
+        schema_version: 3,
+        ledger_fields: vec![LedgerField {
+            id: "round".into(),
+            index: 0,
+            declaration: LedgerFieldKind::Counter,
+        }],
+        circuits: vec![],
+        stateful_circuits: vec![StatefulCircuit {
+            name: "read_round".into(),
+            parameters: vec![],
+            actions: vec![],
+            result: Type::Unsigned {
+                max: u64::MAX.to_string(),
+            },
+            return_value: StateReturn::CounterRead {
+                field: "round".into(),
+                index: 0,
+            },
+        }],
+    };
+    let source = render(&contract).unwrap();
+    assert!(source.contains("context.read_cell::<u64>(0)?"));
+
+    contract.stateful_circuits[0].result = Type::Boolean;
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::TypeMismatch {
+            expected: Type::Unsigned {
+                max: u64::MAX.to_string()
+            },
+            actual: Type::Boolean,
+        })
+    );
+}
+
+#[test]
 fn struct_definitions_are_shared_by_name_and_must_match() {
     let pair = Type::Struct {
         name: "Pair".into(),

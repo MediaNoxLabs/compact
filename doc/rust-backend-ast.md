@@ -58,7 +58,10 @@ public ledger operations, and the renderer checks parameter types before
 emitting Rust. Stateful `Cell.read()` returns a typed value through the ledger
 VM's gather mode and its read event. Generated Boolean and struct read
 fixtures execute after ledger writes; the renderer checks the requested field
-index and return type against the declaration.
+index and return type against the declaration. `Counter.read()` uses the same
+ledger query, then converts the ledger's `u64` Cell into Compact's checked
+`Uint<64>` representation. The generated Counter fixture reads before and
+after an increment.
 
 The user type slice emits native Rust structs from the typed Compact type
 shape and derives the ledger's `BinaryHashRepr`, `FieldRepr`, and

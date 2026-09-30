@@ -478,6 +478,37 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                 });
                 syn::parse_quote!(read_step.result)
             }
+            StateReturn::CounterRead { field, index } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                if declaration.declaration != LedgerFieldKind::Counter
+                    || declaration.index != *index
+                {
+                    return Err(RenderError::UnknownLedgerField(field.clone()));
+                }
+                let expected = Type::Unsigned {
+                    max: u64::MAX.to_string(),
+                };
+                if circuit.result != expected {
+                    return Err(RenderError::TypeMismatch {
+                        expected,
+                        actual: circuit.result.clone(),
+                    });
+                }
+                let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+                let max = syn::LitInt::new(&u64::MAX.to_string(), Span::call_site());
+                statements.push(syn::parse_quote! {
+                    let read_step = context.read_cell::<u64>(#index)?;
+                });
+                statements.push(syn::parse_quote! {
+                    let context = read_step.context;
+                });
+                statements.push(syn::parse_quote! {
+                    total_cost += read_step.gas_cost;
+                });
+                syn::parse_quote!(runtime::BoundedUint::<#max>::new(read_step.result as u128).expect("ledger Counter fits Uint<64>"))
+            }
         };
         let item: syn::Item = syn::parse_quote! {
             pub fn #name<Private>(

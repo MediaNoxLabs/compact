@@ -239,13 +239,20 @@
              (source-errorf src "Rust backend supports root ledger paths only"))
            (nanopass-case (Lnodisclose ADT-Op) adt-op
              [(,ledger-op ,op-class (,adt-name (,adt-formal* ,adt-arg*) ...) ((,var-name* ,type*) ...) ,type ,vm-code)
-              (if (and (eq? adt-name '__compact_Cell)
-                       (eq? ledger-op 'read)
-                       (null? expr*))
-                  (object (cons "kind" "cell_read")
-                          (cons "field" (symbol->string (id-sym ledger-field-name)))
-                          (cons "index" (car path-elt*)))
-                  (source-errorf src "Rust backend does not yet support this ledger return operation"))])]
+              (cond
+                [(and (eq? adt-name '__compact_Cell)
+                      (eq? ledger-op 'read)
+                      (null? expr*))
+                 (object (cons "kind" "cell_read")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*)))]
+                [(and (eq? adt-name 'Counter)
+                      (eq? ledger-op 'read)
+                      (null? expr*))
+                 (object (cons "kind" "counter_read")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*)))]
+                [else (source-errorf src "Rust backend does not yet support this ledger return operation")])])]
           [else (source-errorf owner-src "Rust backend does not yet support this stateful return value")]))
 
       (define (stateful-circuit-ir pelt export-alist circuits)

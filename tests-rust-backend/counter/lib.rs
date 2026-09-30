@@ -26,4 +26,21 @@ pub mod ledger_contract {
             gas_cost: total_cost,
         })
     }
+    pub fn read_round<Private>(
+        context: runtime::context::CircuitContext<Private>,
+    ) -> Result<
+        runtime::context::CircuitResult<Private, runtime::BoundedUint<18446744073709551615>>,
+        runtime::CompactError,
+    > {
+        let mut total_cost = runtime::context::RunningCost::default();
+        let read_step = context.read_cell::<u64>(0)?;
+        let context = read_step.context;
+        total_cost += read_step.gas_cost;
+        Ok(runtime::context::CircuitResult {
+            context,
+            result: runtime::BoundedUint::<18446744073709551615>::new(read_step.result as u128)
+                .expect("ledger Counter fits Uint<64>"),
+            gas_cost: total_cost,
+        })
+    }
 }

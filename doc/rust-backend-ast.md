@@ -7,6 +7,9 @@ versioned JSON domain model. `compact-rust-backend` validates that model,
 constructs `syn` syntax, and formats the result with `prettyplease`.
 `compact-rustc` joins the two processes without a shell command: it invokes
 `compactc --skip-zk --emit-rust-ir` and writes `contract/lib.rs`.
+Stateful circuit emission lives in `tools/compact-rust-backend/src/stateful.rs`
+so ledger action and return variants are handled away from the top-level
+contract assembly.
 
 The version 3 JSON schema is defined in
 `tools/compact-rust-backend/src/ir.rs`. It has no Rust-source escape hatch.

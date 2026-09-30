@@ -266,6 +266,10 @@ pub enum Expr {
         value: String,
         max: String,
     },
+    UnsignedCast {
+        max: String,
+        value: Box<Expr>,
+    },
     Parameter {
         name: String,
     },
@@ -286,6 +290,11 @@ pub enum Expr {
         arguments: Vec<Expr>,
     },
     Add {
+        left: Box<Expr>,
+        right: Box<Expr>,
+    },
+    UnsignedAdd {
+        max: String,
         left: Box<Expr>,
         right: Box<Expr>,
     },

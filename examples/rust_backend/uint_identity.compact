@@ -15,3 +15,7 @@ export circuit max_uint(): Uint<8> {
 export circuit zero(): Uint<8> {
   return 0;
 }
+
+export circuit add_uint(left: Uint<8>, right: Uint<8>): Uint<9> {
+  return left + right;
+}

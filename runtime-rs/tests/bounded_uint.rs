@@ -2,8 +2,28 @@ use midnight_base_crypto::fab::{
     Aligned, AlignedValue, Alignment, AlignmentAtom, Value, ValueAtom,
 };
 use midnight_compact_runtime::{
-    BinaryHashRepr, BoundedUint, CompactError, Field, FieldRepr, FromFieldRepr,
+    BinaryHashRepr, BoundedUint, CompactError, Field, FieldRepr, FromFieldRepr, add_unsigned,
+    cast_unsigned,
 };
+
+#[test]
+fn unsigned_cast_and_add_preserve_bounds() {
+    let left = BoundedUint::<255>::new(255).unwrap();
+    let right = BoundedUint::<255>::new(255).unwrap();
+    assert_eq!(
+        add_unsigned::<255, 255, 511>(left, right).unwrap().value(),
+        510
+    );
+    assert_eq!(
+        cast_unsigned::<255, 8>(left),
+        Err(CompactError::UnsignedOutOfRange { value: 255, max: 8 })
+    );
+    let largest = BoundedUint::<{ u128::MAX }>::new(u128::MAX).unwrap();
+    assert_eq!(
+        add_unsigned::<{ u128::MAX }, 1, { u128::MAX }>(largest, BoundedUint::<1>::new(1).unwrap()),
+        Err(CompactError::UnsignedOverflow)
+    );
+}
 
 #[test]
 fn compact_uint_maximum_is_enforced_at_input_and_decode() {

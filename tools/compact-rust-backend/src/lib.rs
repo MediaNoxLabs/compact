@@ -252,6 +252,11 @@ fn collect_expression_types(
                 collect_expression_types(argument, structs, enums)?;
             }
         }
+        Expr::UnsignedCast { value, .. } => collect_expression_types(value, structs, enums)?,
+        Expr::UnsignedAdd { left, right, .. } => {
+            collect_expression_types(left, structs, enums)?;
+            collect_expression_types(right, structs, enums)?;
+        }
         Expr::Add { left, right } => {
             collect_expression_types(left, structs, enums)?;
             collect_expression_types(right, structs, enums)?;
@@ -416,6 +421,59 @@ fn expression_with_calls(
             Ok((
                 syn::parse_quote!(crate::pure_circuits::#name(#(#rendered_arguments),*)?),
                 circuit.result.clone(),
+            ))
+        }
+        Expr::UnsignedCast { max, value } => {
+            let target_max = max
+                .parse::<u128>()
+                .map_err(|_| RenderError::InvalidUnsignedMaximum(max.clone()))?;
+            if target_max.to_string() != *max {
+                return Err(RenderError::InvalidUnsignedMaximum(max.clone()));
+            }
+            let (value, actual) = expression_with_calls(value, parameters, circuits)?;
+            let Type::Unsigned { max: source_max } = actual else {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Unsigned { max: max.clone() },
+                    actual,
+                });
+            };
+            let source_max = source_max
+                .parse::<u128>()
+                .map_err(|_| RenderError::InvalidUnsignedMaximum(source_max.clone()))?;
+            let source_lit = syn::LitInt::new(&source_max.to_string(), Span::call_site());
+            let target_lit = syn::LitInt::new(max, Span::call_site());
+            Ok((
+                syn::parse_quote!(runtime::cast_unsigned::<#source_lit, #target_lit>(#value)?),
+                Type::Unsigned { max: max.clone() },
+            ))
+        }
+        Expr::UnsignedAdd { max, left, right } => {
+            let result_max = max
+                .parse::<u128>()
+                .map_err(|_| RenderError::InvalidUnsignedMaximum(max.clone()))?;
+            if result_max.to_string() != *max {
+                return Err(RenderError::InvalidUnsignedMaximum(max.clone()));
+            }
+            let (left, left_type) = expression_with_calls(left, parameters, circuits)?;
+            let (right, right_type) = expression_with_calls(right, parameters, circuits)?;
+            let Type::Unsigned { max: left_max } = left_type else {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Unsigned { max: max.clone() },
+                    actual: left_type,
+                });
+            };
+            let Type::Unsigned { max: right_max } = right_type else {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Unsigned { max: max.clone() },
+                    actual: right_type,
+                });
+            };
+            let left_max = syn::LitInt::new(&left_max, Span::call_site());
+            let right_max = syn::LitInt::new(&right_max, Span::call_site());
+            let result_max = syn::LitInt::new(max, Span::call_site());
+            Ok((
+                syn::parse_quote!(runtime::add_unsigned::<#left_max, #right_max, #result_max>(#left, #right)?),
+                Type::Unsigned { max: max.clone() },
             ))
         }
         Expr::Add { left, right } => {

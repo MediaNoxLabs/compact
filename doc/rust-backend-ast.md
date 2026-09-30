@@ -23,12 +23,13 @@ placeholder Rust.
 The backend supports exported pure circuits with `Field`, `Boolean`,
 `Bytes<N>`, `Uint<N>`, unit, tuple, and vector types. Bodies currently support parameter references,
 Boolean, Field, and Uint literals, unit, tuple construction, typed conditionals, sequential
-local bindings, pure circuit calls, and field addition. The fixtures
+local bindings, pure circuit calls, field addition, and checked unsigned
+addition. The fixtures
 in `examples/rust_backend/` run from Compact source through the Scheme
 compiler, JSON bridge, `syn` renderer, native runtime, and executing Rust
 tests. The compiler supports the Cell, Counter, Set, Map, and List slices
-described below. Witnesses and bounded unsigned arithmetic still require
-runtime semantics. `Uint<N>` uses a
+described below. Witnesses and the remaining bounded unsigned operations
+still require runtime semantics. `Uint<N>` uses a
 bounded runtime type with a checked inclusive maximum and Compact's byte
 alignment. `Bytes<N>` uses a small fixed bytes wrapper: it delegates field
 encoding and FAB alignment to ledger-8's `[u8; N]` support, and calls the

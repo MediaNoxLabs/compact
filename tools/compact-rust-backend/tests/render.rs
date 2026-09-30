@@ -123,6 +123,43 @@ fn rejects_type_mismatch_and_invalid_identifier() {
 }
 
 #[test]
+fn unsigned_add_and_cast_reject_field_inputs() {
+    let mut contract = identity(
+        Type::Unsigned { max: "511".into() },
+        Expr::UnsignedAdd {
+            max: "511".into(),
+            left: Box::new(Expr::Parameter {
+                name: "value".into(),
+            }),
+            right: Box::new(Expr::UnsignedLiteral {
+                value: "1".into(),
+                max: "255".into(),
+            }),
+        },
+    );
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::TypeMismatch {
+            expected: Type::Unsigned { max: "511".into() },
+            actual: Type::Field,
+        })
+    );
+    contract.circuits[0].body = Expr::UnsignedCast {
+        max: "511".into(),
+        value: Box::new(Expr::Parameter {
+            name: "value".into(),
+        }),
+    };
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::TypeMismatch {
+            expected: Type::Unsigned { max: "511".into() },
+            actual: Type::Field,
+        })
+    );
+}
+
+#[test]
 fn unsigned_literal_checks_the_declared_maximum() {
     let mut contract = identity(
         Type::Unsigned { max: "255".into() },

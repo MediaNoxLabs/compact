@@ -77,14 +77,14 @@
           [(single ,src ,expr) (expression-ir expr owner-src)]
           [else (source-errorf owner-src "Rust backend does not yet support tuple spreads")]))
 
-      (define (nonnegative-integer-literal expr owner-src)
+      (define (maybe-nonnegative-integer-literal expr owner-src)
         (nanopass-case (Lnodisclose Expression) expr
-          [(return ,src ,expr) (nonnegative-integer-literal expr src)]
+          [(return ,src ,expr) (maybe-nonnegative-integer-literal expr src)]
           [(quote ,src ,datum)
            (if (and (integer? datum) (<= 0 datum))
                datum
                (source-errorf src "Rust backend supports nonnegative numeric literals only"))]
-          [else (source-errorf owner-src "Rust backend does not yet support this numeric cast")]))
+          [else #f]))
 
       (define (expression-ir expr owner-src)
         (nanopass-case (Lnodisclose Expression) expr
@@ -99,15 +99,23 @@
           [(safe-cast ,src ,type ,type^ ,expr)
            (nanopass-case (Lnodisclose Type) type
              [(tfield ,src^)
-              (object (cons "kind" "field_literal")
-                      (cons "value" (number->string (nonnegative-integer-literal expr src))))]
+              (let ([value (maybe-nonnegative-integer-literal expr src)])
+                (if value
+                    (object (cons "kind" "field_literal")
+                            (cons "value" (number->string value)))
+                    (source-errorf src "Rust backend does not yet support this Field cast")))]
              [(tunsigned ,src^ ,nat)
-              (let ([value (nonnegative-integer-literal expr src)])
-                (unless (<= value nat)
-                  (source-errorf src "Rust backend Uint literal exceeds its maximum"))
-                (object (cons "kind" "unsigned_literal")
-                        (cons "value" (number->string value))
-                        (cons "max" (number->string nat))))]
+              (let ([value (maybe-nonnegative-integer-literal expr src)])
+                (if value
+                    (begin
+                      (unless (<= value nat)
+                        (source-errorf src "Rust backend Uint literal exceeds its maximum"))
+                      (object (cons "kind" "unsigned_literal")
+                              (cons "value" (number->string value))
+                              (cons "max" (number->string nat))))
+                    (object (cons "kind" "unsigned_cast")
+                            (cons "max" (number->string nat))
+                            (cons "value" (typed-expression-ir expr type^ src)))))]
              [else (source-errorf src "Rust backend does not yet support this cast")])]
           [(tuple ,src ,tuple-arg* ...)
            (if (null? tuple-arg*)
@@ -138,16 +146,29 @@
                    (cons "name" (symbol->string (id-sym function-name)))
                    (cons "arguments" (list->vector (map (lambda (arg) (expression-ir arg src)) expr*))))]
           [(+ ,src ,mbits ,expr1 ,expr2)
-           (when mbits
-             (source-errorf src "Rust backend does not yet support bounded unsigned arithmetic"))
-           (object (cons "kind" "add")
-                   (cons "left" (expression-ir expr1 owner-src))
-                   (cons "right" (expression-ir expr2 owner-src)))]
+           (if mbits
+               (object (cons "kind" "unsigned_add")
+                       (cons "max" (number->string (- (expt 2 mbits) 1)))
+                       (cons "left" (expression-ir expr1 src))
+                       (cons "right" (expression-ir expr2 src)))
+               (object (cons "kind" "add")
+                       (cons "left" (expression-ir expr1 owner-src))
+                       (cons "right" (expression-ir expr2 owner-src))))]
           [else (source-errorf owner-src "Rust backend does not yet support this circuit expression")]))
 
       (define (typed-expression-ir expr expected-type owner-src)
         (nanopass-case (Lnodisclose Expression) expr
           [(return ,src ,expr) (typed-expression-ir expr expected-type src)]
+          [(+ ,src ,mbits ,expr1 ,expr2)
+           (if mbits
+               (nanopass-case (Lnodisclose Type) expected-type
+                 [(tunsigned ,src^ ,nat)
+                  (object (cons "kind" "unsigned_add")
+                          (cons "max" (number->string nat))
+                          (cons "left" (expression-ir expr1 src))
+                          (cons "right" (expression-ir expr2 src)))]
+                 [else (expression-ir expr owner-src)])
+               (expression-ir expr owner-src))]
           [(quote ,src ,datum)
            (if (and (integer? datum) (<= 0 datum))
                (nanopass-case (Lnodisclose Type) expected-type

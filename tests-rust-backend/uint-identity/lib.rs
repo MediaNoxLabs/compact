@@ -18,4 +18,15 @@ pub mod pure_circuits {
     pub fn zero() -> Result<runtime::BoundedUint<255>, runtime::CompactError> {
         Ok(runtime::BoundedUint::<255>::new(0u128).expect("Compact Uint literal fits its maximum"))
     }
+    pub fn add_uint(
+        left: runtime::BoundedUint<255>,
+        right: runtime::BoundedUint<255>,
+    ) -> Result<runtime::BoundedUint<511>, runtime::CompactError> {
+        Ok(runtime::cast_unsigned::<510, 511>(
+            runtime::add_unsigned::<510, 510, 510>(
+                runtime::cast_unsigned::<255, 510>(left)?,
+                runtime::cast_unsigned::<255, 510>(right)?,
+            )?,
+        )?)
+    }
 }

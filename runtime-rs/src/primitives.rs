@@ -190,6 +190,23 @@ impl<const MAX: u128> BoundedUint<MAX> {
     }
 }
 
+pub fn cast_unsigned<const FROM: u128, const TO: u128>(
+    value: BoundedUint<FROM>,
+) -> Result<BoundedUint<TO>, CompactError> {
+    BoundedUint::<TO>::new(value.value())
+}
+
+pub fn add_unsigned<const LEFT: u128, const RIGHT: u128, const RESULT: u128>(
+    left: BoundedUint<LEFT>,
+    right: BoundedUint<RIGHT>,
+) -> Result<BoundedUint<RESULT>, CompactError> {
+    let sum = left
+        .value()
+        .checked_add(right.value())
+        .ok_or(CompactError::UnsignedOverflow)?;
+    BoundedUint::<RESULT>::new(sum)
+}
+
 impl<const MAX: u128> Aligned for BoundedUint<MAX> {
     fn alignment() -> Alignment {
         Alignment::singleton(AlignmentAtom::Bytes {

@@ -3,10 +3,7 @@
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
     const _: () = assert!(runtime::RUST_RUNTIME_ABI == 1);
-    pub fn field_add(
-        left: runtime::Field,
-        right: runtime::Field,
-    ) -> Result<runtime::Field, runtime::CompactError> {
-        Ok(left + right)
+    pub fn bytes_identity(value: [u8; 4]) -> Result<[u8; 4], runtime::CompactError> {
+        Ok(value)
     }
 }

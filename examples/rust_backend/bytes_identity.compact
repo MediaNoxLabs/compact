@@ -1,0 +1,5 @@
+import CompactStandardLibrary;
+
+export circuit bytes_identity(value: Bytes<4>): Bytes<4> {
+  return value;
+}

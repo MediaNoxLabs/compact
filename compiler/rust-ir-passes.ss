@@ -39,6 +39,12 @@
         (nanopass-case (Lnodisclose Type) ty
           [(tboolean ,src) (kind "boolean")]
           [(tfield ,src) (kind "field")]
+          [(tbytes ,src ,len)
+           (object (cons "kind" "bytes")
+                   (cons "length" len))]
+          [(tunsigned ,src ,nat)
+           (object (cons "kind" "unsigned")
+                   (cons "max" (number->string nat)))]
           [(ttuple ,src ,type* ...)
            (if (null? type*)
                (kind "unit")

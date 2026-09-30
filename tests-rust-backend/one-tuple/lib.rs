@@ -2,6 +2,7 @@
 
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 1);
     pub fn one_tuple(value: runtime::Field) -> Result<(runtime::Field,), runtime::CompactError> {
         Ok((value,))
     }

@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "circuits": [
+    {
+      "name": "bytes_identity",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "bytes",
+            "length": 4
+          }
+        }
+      ],
+      "result": {
+        "kind": "bytes",
+        "length": 4
+      },
+      "body": {
+        "kind": "parameter",
+        "name": "value"
+      }
+    }
+  ]
+}

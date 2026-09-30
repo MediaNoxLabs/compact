@@ -6,6 +6,17 @@
 
 #![forbid(unsafe_code)]
 
+pub mod context;
+pub mod ledger;
+mod primitives;
+
+pub use primitives::BoundedUint;
+
+/// Increment when generated Rust and the runtime's public contract change.
+pub const RUST_RUNTIME_ABI: u32 = 1;
+/// The ledger line selected by this Compact branch's `flake.nix`.
+pub const LEDGER_VERSION: &str = "ledger-8.0.2";
+
 /// Compact `Field` is the scalar field used by the ledger-8 circuit runtime.
 pub use midnight_transient_crypto::curve::Fr;
 pub use midnight_transient_crypto::curve::Fr as Field;
@@ -19,12 +30,20 @@ pub use midnight_transient_crypto::repr::{FieldRepr, FromFieldRepr};
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CompactError {
     AssertionFailed(String),
+    InvalidLedgerCell(String),
+    InvalidUnsignedValue,
+    UnsignedOutOfRange { value: u128, max: u128 },
 }
 
 impl std::fmt::Display for CompactError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::AssertionFailed(message) => write!(f, "Compact assertion failed: {message}"),
+            Self::InvalidLedgerCell(message) => write!(f, "invalid Compact ledger cell: {message}"),
+            Self::InvalidUnsignedValue => write!(f, "invalid Compact unsigned value"),
+            Self::UnsignedOutOfRange { value, max } => {
+                write!(f, "unsigned value {value} exceeds Compact maximum {max}")
+            }
         }
     }
 }

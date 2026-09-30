@@ -6,7 +6,23 @@ license = "Apache-2.0"
 description = "Native Compact semantics on Midnight ledger primitives"
 
 [dependencies]
+# Exact crates published with midnight-ledger's ledger-8.0.2 tag. They share
+# representation and VM APIs; minor-version mixing has already broken the VM.
 midnight-base-crypto = "=1.0.0"
-# ledger-8.0.2 publishes transient-crypto 2.0.1. Keep the runtime on the
-# same API and encoding line as this Compact branch's flake input.
+midnight-coin-structure = "=2.0.1"
+midnight-onchain-runtime = "=3.0.0"
+midnight-onchain-state = "=3.0.0"
+midnight-onchain-vm = "=3.0.0"
+midnight-serialize = "=1.0.0"
+midnight-storage = "=2.0.1"
+midnight-storage-core = "=1.0.2"
 midnight-transient-crypto = "=2.0.1"
+
+# The matching midnight-zk graph from ledger-8.0.2's Cargo.lock.
+midnight-circuits = "=6.0.0"
+midnight-curves = "=0.2.0"
+midnight-proofs = "=0.7.0"
+midnight-zk-stdlib = "=1.0.0"
+# The ledger-8.0.2 lock names 8.0.1, which is no longer available on
+# crates.io. 8.0.0 is the published 8.0 line used for the context envelope.
+midnight-zswap = "=8.0.0"

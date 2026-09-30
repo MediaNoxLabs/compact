@@ -138,6 +138,30 @@ fn refuses_to_add_a_boolean_to_a_field() {
 }
 
 #[test]
+fn rejects_noncanonical_or_unsupported_unsigned_maxima() {
+    for max in ["08", "-1", "340282366920938463463374607431768211456"] {
+        let contract = Contract {
+            schema_version: 1,
+            circuits: vec![PureCircuit {
+                name: "id_u".into(),
+                parameters: vec![Parameter {
+                    name: "value".into(),
+                    ty: Type::Unsigned { max: max.into() },
+                }],
+                result: Type::Unsigned { max: max.into() },
+                body: Expr::Parameter {
+                    name: "value".into(),
+                },
+            }],
+        };
+        assert_eq!(
+            render(&contract),
+            Err(RenderError::InvalidUnsignedMaximum(max.into()))
+        );
+    }
+}
+
+#[test]
 fn unknown_json_fields_are_rejected() {
     let json = r#"{"schema_version":1,"circuits":[],"rust_source":"panic!()"}"#;
     assert!(serde_json::from_str::<Contract>(json).is_err());

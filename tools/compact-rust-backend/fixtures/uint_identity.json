@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "circuits": [
+    {
+      "name": "uint_identity",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "unsigned",
+            "max": "255"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unsigned",
+        "max": "255"
+      },
+      "body": {
+        "kind": "parameter",
+        "name": "value"
+      }
+    }
+  ]
+}

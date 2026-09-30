@@ -17,13 +17,15 @@ placeholder Rust.
 
 ## Current slice
 
-The backend supports exported pure circuits with `Field`, `Boolean`, unit,
-tuple, and vector types. Bodies currently support parameter references,
+The backend supports exported pure circuits with `Field`, `Boolean`,
+`Bytes<N>`, `Uint<N>`, unit, tuple, and vector types. Bodies currently support parameter references,
 Boolean literals, unit, tuple construction, and field addition. The fixtures
 in `examples/rust_backend/` run from Compact source through the Scheme
 compiler, JSON bridge, `syn` renderer, native runtime, and executing Rust
 tests. The compiler rejects ledger fields, witnesses, and bounded unsigned
-arithmetic until their runtime semantics are implemented.
+arithmetic until their runtime semantics are implemented. `Uint<N>` uses a
+bounded runtime type with a checked inclusive maximum and Compact's byte
+alignment; `Bytes<N>` uses the ledger's fixed byte array representation.
 
 The runtime facade in `runtime-rs` reexports `Fr` from
 `midnight-transient-crypto` 2.0.1 as Compact `Field`. It also reexports the
@@ -31,6 +33,13 @@ ledger's `FieldRepr` and `FromFieldRepr` traits and derive macros, and the
 `MemWrite` trait they use. This preserves the ledger-8.0.2 field and encoding
 line instead of introducing another field implementation. The transitive
 midnight-zk crates supply curves and proof primitives.
+
+The runtime also exposes ledger-owned `ChargedState`, `QueryContext`, and
+Zswap state through constructor and circuit context envelopes. Its FAB tests
+compare Field, Boolean, Bytes, and Uint alignment and normalized values with
+the ledger-8 implementations. The ledger-8.0.2 lock references
+`midnight-zswap` 8.0.1, which is no longer published; the runtime pins 8.0.0
+from the same 8.0 line. Ledger state operations are the next slice.
 
 ## Run locally
 
@@ -40,7 +49,8 @@ Rust renderer and runtime:
 ```sh
 cargo test -p compact-rust-backend -p midnight-compact-runtime \
   -p compact-rust-identity-fixture -p compact-rust-truth-fixture \
-  -p compact-rust-one-tuple-fixture -p compact-rust-field-add-fixture
+  -p compact-rust-one-tuple-fixture -p compact-rust-field-add-fixture \
+  -p compact-rust-uint-identity-fixture -p compact-rust-bytes-identity-fixture
 cargo build -p compact-rust-backend --bin compact-rustc
 ```
 

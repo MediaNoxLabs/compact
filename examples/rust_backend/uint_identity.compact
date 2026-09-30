@@ -1,0 +1,5 @@
+import CompactStandardLibrary;
+
+export circuit uint_identity(value: Uint<8>): Uint<8> {
+  return value;
+}

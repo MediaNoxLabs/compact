@@ -38,6 +38,8 @@ pub enum Type {
     Unit,
     Boolean,
     Field,
+    Bytes { length: usize },
+    Unsigned { max: String },
     Tuple { elements: Vec<Type> },
     Vector { element: Box<Type>, length: usize },
 }

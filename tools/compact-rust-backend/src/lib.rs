@@ -2,6 +2,8 @@
 
 pub mod ir;
 
+const RUNTIME_ABI_VERSION: u32 = 1;
+
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::fmt;
@@ -14,6 +16,7 @@ use quote::quote;
 pub enum RenderError {
     SchemaVersion(u32),
     InvalidIdentifier(String),
+    InvalidUnsignedMaximum(String),
     DuplicateCircuit(String),
     DuplicateParameter(String),
     UnknownParameter(String),
@@ -27,6 +30,12 @@ impl fmt::Display for RenderError {
                 write!(f, "unsupported Rust backend IR schema {version}")
             }
             Self::InvalidIdentifier(name) => write!(f, "invalid Rust identifier {name:?}"),
+            Self::InvalidUnsignedMaximum(max) => {
+                write!(
+                    f,
+                    "unsupported Compact Uint maximum {max:?}; expected canonical u128"
+                )
+            }
             Self::DuplicateCircuit(name) => write!(f, "duplicate circuit {name:?}"),
             Self::DuplicateParameter(name) => write!(f, "duplicate parameter {name:?}"),
             Self::UnknownParameter(name) => write!(f, "unknown parameter {name:?}"),
@@ -43,13 +52,28 @@ fn ident(name: &str) -> Result<syn::Ident, RenderError> {
     syn::parse_str::<syn::Ident>(name).map_err(|_| RenderError::InvalidIdentifier(name.to_owned()))
 }
 
-fn rust_type(ty: &Type) -> syn::Type {
-    match ty {
+fn rust_type(ty: &Type) -> Result<syn::Type, RenderError> {
+    Ok(match ty {
         Type::Unit => syn::parse_quote!(()),
         Type::Boolean => syn::parse_quote!(bool),
         Type::Field => syn::parse_quote!(runtime::Field),
+        Type::Bytes { length } => {
+            let length = syn::LitInt::new(&length.to_string(), Span::call_site());
+            syn::parse_quote!([u8; #length])
+        }
+        Type::Unsigned { max } => {
+            let parsed = max
+                .parse::<u128>()
+                .map_err(|_| RenderError::InvalidUnsignedMaximum(max.clone()))?;
+            if parsed.to_string() != *max {
+                return Err(RenderError::InvalidUnsignedMaximum(max.clone()));
+            }
+            let max = syn::LitInt::new(max, Span::call_site());
+            syn::parse_quote!(runtime::BoundedUint<#max>)
+        }
         Type::Tuple { elements } => {
-            let elements: Vec<syn::Type> = elements.iter().map(rust_type).collect();
+            let elements: Vec<syn::Type> =
+                elements.iter().map(rust_type).collect::<Result<_, _>>()?;
             let mut tuple = syn::TypeTuple {
                 paren_token: syn::token::Paren::default(),
                 elems: syn::punctuated::Punctuated::new(),
@@ -64,11 +88,11 @@ fn rust_type(ty: &Type) -> syn::Type {
             syn::Type::Tuple(tuple)
         }
         Type::Vector { element, length } => {
-            let element = rust_type(element);
+            let element = rust_type(element)?;
             let length = syn::LitInt::new(&length.to_string(), Span::call_site());
             syn::parse_quote!([#element; #length])
         }
-    }
+    })
 }
 
 fn expression(
@@ -156,7 +180,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
             {
                 return Err(RenderError::DuplicateParameter(parameter.name.clone()));
             }
-            let arg_ty = rust_type(&parameter.ty);
+            let arg_ty = rust_type(&parameter.ty)?;
             let arg: syn::FnArg = syn::parse_quote!(#arg_name: #arg_ty);
             args.push(arg);
         }
@@ -167,7 +191,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                 actual,
             });
         }
-        let result = rust_type(&circuit.result);
+        let result = rust_type(&circuit.result)?;
         let item: syn::Item = syn::parse_quote! {
             pub fn #name(#(#args),*) -> Result<#result, runtime::CompactError> {
                 Ok(#body)
@@ -176,9 +200,11 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
         items.push(item);
     }
 
+    let runtime_abi = syn::LitInt::new(&RUNTIME_ABI_VERSION.to_string(), Span::call_site());
     let file: syn::File = syn::parse2(quote! {
         pub mod pure_circuits {
             use midnight_compact_runtime as runtime;
+            const _: () = assert!(runtime::RUST_RUNTIME_ABI == #runtime_abi);
             #(#items)*
         }
     })

@@ -270,6 +270,19 @@
                          (cons "index" (car path-elt*))
                          (cons "key" (expression-ir (car expr*) src))
                          (cons "value" (expression-ir (cadr expr*) src)))]
+                [(and (eq? adt-name 'Map)
+                      (eq? ledger-op 'remove)
+                      (= (length expr*) 1))
+                 (object (cons "kind" "map_remove")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*))
+                         (cons "key" (expression-ir (car expr*) src)))]
+                [(and (eq? adt-name 'Map)
+                      (eq? ledger-op 'resetToDefault)
+                      (null? expr*))
+                 (object (cons "kind" "map_reset")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*)))]
                 [else (source-errorf src "Rust backend does not yet support this ledger operation")])])]
           [else (source-errorf owner-src "Rust backend does not yet support this state action")]))
 
@@ -339,6 +352,18 @@
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
                          (cons "key" (expression-ir (car expr*) src)))]
+                [(and (eq? adt-name 'Map)
+                      (eq? ledger-op 'size)
+                      (null? expr*))
+                 (object (cons "kind" "map_size")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*)))]
+                [(and (eq? adt-name 'Map)
+                      (eq? ledger-op 'isEmpty)
+                      (null? expr*))
+                 (object (cons "kind" "map_is_empty")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*)))]
                 [else (source-errorf src "Rust backend does not yet support this ledger return operation")])])]
           [else (source-errorf owner-src "Rust backend does not yet support this stateful return value")]))
 

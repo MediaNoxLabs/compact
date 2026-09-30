@@ -286,6 +286,43 @@ pub fn lookup_map<K: CellValue, V: CellValue, D: DB>(
     Ok((result, decoded))
 }
 
+pub fn remove_map<K: CellValue, D: DB>(
+    context: &QueryContext<D>,
+    field_index: u8,
+    key: K,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    remove_set(context, field_index, key, gas_limit, cost_model)
+}
+
+pub fn size_map<D: DB>(
+    context: &QueryContext<D>,
+    field_index: u8,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<(QueryResults<ResultModeGather, D>, u64), CompactError> {
+    size_set(context, field_index, gas_limit, cost_model)
+}
+
+pub fn is_empty_map<D: DB>(
+    context: &QueryContext<D>,
+    field_index: u8,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<(QueryResults<ResultModeGather, D>, bool), CompactError> {
+    is_empty_set(context, field_index, gas_limit, cost_model)
+}
+
+pub fn reset_map<D: DB>(
+    context: &QueryContext<D>,
+    field_index: u8,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    reset_set(context, field_index, gas_limit, cost_model)
+}
+
 /// Insert a typed element into a root Set through the ledger VM.
 pub fn insert_set<T: CellValue, D: DB>(
     context: &QueryContext<D>,

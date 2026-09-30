@@ -13,3 +13,19 @@ export circuit has(key: Boolean): Boolean {
 export circuit get(key: Boolean): Field {
   return table.lookup(disclose(key));
 }
+
+export circuit remove_key(key: Boolean): [] {
+  table.remove(disclose(key));
+}
+
+export circuit table_size(): Uint<64> {
+  return table.size();
+}
+
+export circuit table_is_empty(): Boolean {
+  return table.isEmpty();
+}
+
+export circuit reset_table(): [] {
+  table.resetToDefault();
+}

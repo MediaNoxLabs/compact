@@ -243,6 +243,54 @@ pub(crate) fn render_stateful_circuit(
                     total_cost += step.gas_cost;
                 });
             }
+            StateAction::MapRemove { field, index, key } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                let LedgerFieldKind::Map { key: key_ty, .. } = &declaration.declaration else {
+                    return Err(RenderError::UnknownLedgerField(field.clone()));
+                };
+                if declaration.index != *index {
+                    return Err(RenderError::UnknownLedgerField(field.clone()));
+                }
+                let (key, actual_key) = expression(key, &parameters)?;
+                if &actual_key != key_ty {
+                    return Err(RenderError::TypeMismatch {
+                        expected: key_ty.clone(),
+                        actual: actual_key,
+                    });
+                }
+                let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+                statements.push(syn::parse_quote! {
+                    let step = context.remove_map(#index, #key)?;
+                });
+                statements.push(syn::parse_quote! {
+                    let context = step.context;
+                });
+                statements.push(syn::parse_quote! {
+                    total_cost += step.gas_cost;
+                });
+            }
+            StateAction::MapReset { field, index } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                if !matches!(declaration.declaration, LedgerFieldKind::Map { .. })
+                    || declaration.index != *index
+                {
+                    return Err(RenderError::UnknownLedgerField(field.clone()));
+                }
+                let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+                statements.push(syn::parse_quote! {
+                    let step = context.reset_map(#index)?;
+                });
+                statements.push(syn::parse_quote! {
+                    let context = step.context;
+                });
+                statements.push(syn::parse_quote! {
+                    total_cost += step.gas_cost;
+                });
+            }
         }
     }
     let result_ty = rust_type(&circuit.result)?;
@@ -352,16 +400,29 @@ pub(crate) fn render_stateful_circuit(
             });
             syn::parse_quote!(read_step.result)
         }
-        StateReturn::SetSize { field, index } | StateReturn::SetIsEmpty { field, index } => {
+        StateReturn::SetSize { field, index }
+        | StateReturn::SetIsEmpty { field, index }
+        | StateReturn::MapSize { field, index }
+        | StateReturn::MapIsEmpty { field, index } => {
             let declaration = ledger_fields
                 .get(field.as_str())
                 .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
-            if !matches!(declaration.declaration, LedgerFieldKind::Set { .. })
-                || declaration.index != *index
-            {
+            let is_map = matches!(
+                &circuit.return_value,
+                StateReturn::MapSize { .. } | StateReturn::MapIsEmpty { .. }
+            );
+            let declaration_matches = if is_map {
+                matches!(declaration.declaration, LedgerFieldKind::Map { .. })
+            } else {
+                matches!(declaration.declaration, LedgerFieldKind::Set { .. })
+            };
+            if !declaration_matches || declaration.index != *index {
                 return Err(RenderError::UnknownLedgerField(field.clone()));
             }
-            let is_size = matches!(&circuit.return_value, StateReturn::SetSize { .. });
+            let is_size = matches!(
+                &circuit.return_value,
+                StateReturn::SetSize { .. } | StateReturn::MapSize { .. }
+            );
             let expected = if is_size {
                 Type::Unsigned {
                     max: u64::MAX.to_string(),
@@ -376,11 +437,13 @@ pub(crate) fn render_stateful_circuit(
                 });
             }
             let index = syn::LitInt::new(&index.to_string(), Span::call_site());
-            let method = if is_size {
-                syn::Ident::new("size_set", Span::call_site())
-            } else {
-                syn::Ident::new("is_empty_set", Span::call_site())
+            let method = match (is_map, is_size) {
+                (false, true) => "size_set",
+                (false, false) => "is_empty_set",
+                (true, true) => "size_map",
+                (true, false) => "is_empty_map",
             };
+            let method = syn::Ident::new(method, Span::call_site());
             statements.push(syn::parse_quote! {
                 let read_step = context.#method(#index)?;
             });
@@ -392,7 +455,7 @@ pub(crate) fn render_stateful_circuit(
             });
             if is_size {
                 let max = syn::LitInt::new(&u64::MAX.to_string(), Span::call_site());
-                syn::parse_quote!(runtime::BoundedUint::<#max>::new(read_step.result as u128).expect("ledger Set size fits Uint<64>"))
+                syn::parse_quote!(runtime::BoundedUint::<#max>::new(read_step.result as u128).expect("ledger collection size fits Uint<64>"))
             } else {
                 syn::parse_quote!(read_step.result)
             }

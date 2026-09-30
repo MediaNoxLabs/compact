@@ -1,4 +1,6 @@
-use compact_rust_map_boolean_field_fixture::ledger_contract::{get, has, initial_state, put};
+use compact_rust_map_boolean_field_fixture::ledger_contract::{
+    get, has, initial_state, put, remove_key, reset_table, table_is_empty, table_size,
+};
 use midnight_compact_runtime::Field;
 use midnight_compact_runtime::context::ConstructorContext;
 use midnight_compact_runtime::ledger::{ContractAddress, StateValue};
@@ -15,9 +17,17 @@ fn generated_map_contract_inserts_and_looks_up_field_values() {
     assert_eq!(map.size(), 0);
 
     let context = constructor.into_circuit_context(ContractAddress::default());
-    let result = has(context, true).unwrap();
+    let result = table_is_empty(context).unwrap();
+    assert!(result.result);
+    let result = table_size(result.context).unwrap();
+    assert_eq!(result.result.value(), 0);
+    let result = has(result.context, true).unwrap();
     assert!(!result.result);
     let result = put(result.context, true, Field::from(42_u64)).unwrap();
+    let result = table_size(result.context).unwrap();
+    assert_eq!(result.result.value(), 1);
+    let result = table_is_empty(result.context).unwrap();
+    assert!(!result.result);
     let result = has(result.context, true).unwrap();
     assert!(result.result);
     let result = get(result.context, true).unwrap();
@@ -34,4 +44,16 @@ fn generated_map_contract_inserts_and_looks_up_field_values() {
         panic!("expected Map")
     };
     assert_eq!(map.size(), 1);
+
+    let result = remove_key(result.context, true).unwrap();
+    let result = table_size(result.context).unwrap();
+    assert_eq!(result.result.value(), 0);
+    let result = table_is_empty(result.context).unwrap();
+    assert!(result.result);
+    let result = put(result.context, false, Field::from(11_u64)).unwrap();
+    let result = reset_table(result.context).unwrap();
+    let result = table_size(result.context).unwrap();
+    assert_eq!(result.result.value(), 0);
+    let result = table_is_empty(result.context).unwrap();
+    assert!(result.result);
 }

@@ -57,4 +57,61 @@ pub mod ledger_contract {
             gas_cost: total_cost,
         })
     }
+    pub fn remove_key<Private>(
+        context: runtime::context::CircuitContext<Private>,
+        __compact_param_0: bool,
+    ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
+        let mut total_cost = runtime::context::RunningCost::default();
+        let step = context.remove_map(0, __compact_param_0)?;
+        let context = step.context;
+        total_cost += step.gas_cost;
+        Ok(runtime::context::CircuitResult {
+            context,
+            result: (),
+            gas_cost: total_cost,
+        })
+    }
+    pub fn table_size<Private>(
+        context: runtime::context::CircuitContext<Private>,
+    ) -> Result<
+        runtime::context::CircuitResult<Private, runtime::BoundedUint<18446744073709551615>>,
+        runtime::CompactError,
+    > {
+        let mut total_cost = runtime::context::RunningCost::default();
+        let read_step = context.size_map(0)?;
+        let context = read_step.context;
+        total_cost += read_step.gas_cost;
+        Ok(runtime::context::CircuitResult {
+            context,
+            result: runtime::BoundedUint::<18446744073709551615>::new(read_step.result as u128)
+                .expect("ledger collection size fits Uint<64>"),
+            gas_cost: total_cost,
+        })
+    }
+    pub fn table_is_empty<Private>(
+        context: runtime::context::CircuitContext<Private>,
+    ) -> Result<runtime::context::CircuitResult<Private, bool>, runtime::CompactError> {
+        let mut total_cost = runtime::context::RunningCost::default();
+        let read_step = context.is_empty_map(0)?;
+        let context = read_step.context;
+        total_cost += read_step.gas_cost;
+        Ok(runtime::context::CircuitResult {
+            context,
+            result: read_step.result,
+            gas_cost: total_cost,
+        })
+    }
+    pub fn reset_table<Private>(
+        context: runtime::context::CircuitContext<Private>,
+    ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
+        let mut total_cost = runtime::context::RunningCost::default();
+        let step = context.reset_map(0)?;
+        let context = step.context;
+        total_cost += step.gas_cost;
+        Ok(runtime::context::CircuitResult {
+            context,
+            result: (),
+            gas_cost: total_cost,
+        })
+    }
 }

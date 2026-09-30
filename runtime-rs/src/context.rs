@@ -128,6 +128,29 @@ impl<Private, D: DB> CircuitContext<Private, D> {
             gas_cost: result.gas_cost,
         })
     }
+
+    pub fn remove_map<K: CellValue>(
+        self,
+        field_index: u8,
+        key: K,
+    ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        self.remove_set(field_index, key)
+    }
+
+    pub fn size_map(self, field_index: u8) -> Result<CircuitResult<Private, u64, D>, CompactError> {
+        self.size_set(field_index)
+    }
+
+    pub fn is_empty_map(
+        self,
+        field_index: u8,
+    ) -> Result<CircuitResult<Private, bool, D>, CompactError> {
+        self.is_empty_set(field_index)
+    }
+
+    pub fn reset_map(self, field_index: u8) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        self.reset_set(field_index)
+    }
     pub fn insert_set<T: CellValue>(
         mut self,
         field_index: u8,

@@ -85,6 +85,14 @@ pub enum StateReturn {
         index: u8,
         key: Expr,
     },
+    MapSize {
+        field: String,
+        index: u8,
+    },
+    MapIsEmpty {
+        field: String,
+        index: u8,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
@@ -128,6 +136,15 @@ pub enum StateAction {
         index: u8,
         key: Expr,
         value: Expr,
+    },
+    MapRemove {
+        field: String,
+        index: u8,
+        key: Expr,
+    },
+    MapReset {
+        field: String,
+        index: u8,
     },
 }
 

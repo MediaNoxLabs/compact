@@ -571,6 +571,27 @@ fn map_insert_and_lookup_require_key_and_value_types() {
             actual: Type::Boolean,
         })
     );
+    contract.stateful_circuits[0].result = Type::Unit;
+    contract.stateful_circuits[0].return_value = StateReturn::Unit;
+    contract.stateful_circuits[0].actions = vec![StateAction::MapReset {
+        field: "table".into(),
+        index: 0,
+    }];
+    assert!(render(&contract).unwrap().contains("context.reset_map(0)?"));
+    contract.stateful_circuits[0].actions.clear();
+    contract.stateful_circuits[0].return_value = StateReturn::MapSize {
+        field: "table".into(),
+        index: 0,
+    };
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::TypeMismatch {
+            expected: Type::Unsigned {
+                max: u64::MAX.to_string()
+            },
+            actual: Type::Unit,
+        })
+    );
 }
 
 #[test]

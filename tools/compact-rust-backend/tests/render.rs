@@ -123,6 +123,33 @@ fn rejects_type_mismatch_and_invalid_identifier() {
 }
 
 #[test]
+fn unsigned_literal_checks_the_declared_maximum() {
+    let mut contract = identity(
+        Type::Unsigned { max: "255".into() },
+        Expr::UnsignedLiteral {
+            value: "255".into(),
+            max: "255".into(),
+        },
+    );
+    assert!(
+        render(&contract)
+            .unwrap()
+            .contains("BoundedUint::<255>::new(255u128)")
+    );
+    contract.circuits[0].body = Expr::UnsignedLiteral {
+        value: "256".into(),
+        max: "255".into(),
+    };
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::InvalidUnsignedLiteral {
+            value: "256".into(),
+            max: "255".into(),
+        })
+    );
+}
+
+#[test]
 fn field_literal_requires_canonical_u128() {
     let mut contract = identity(Type::Field, Expr::FieldLiteral { value: "42".into() });
     assert!(

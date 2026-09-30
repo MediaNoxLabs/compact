@@ -19,6 +19,10 @@ pub enum RenderError {
     InvalidIdentifier(String),
     InvalidUnsignedMaximum(String),
     InvalidFieldLiteral(String),
+    InvalidUnsignedLiteral {
+        value: String,
+        max: String,
+    },
     DuplicateCircuit(String),
     DuplicateParameter(String),
     DuplicateLedgerField(String),
@@ -60,6 +64,12 @@ impl fmt::Display for RenderError {
                 write!(
                     f,
                     "unsupported Field literal {value:?}; expected canonical u128"
+                )
+            }
+            Self::InvalidUnsignedLiteral { value, max } => {
+                write!(
+                    f,
+                    "Uint literal {value:?} does not fit declared maximum {max:?}"
                 )
             }
             Self::DuplicateCircuit(name) => write!(f, "duplicate circuit {name:?}"),
@@ -246,7 +256,11 @@ fn collect_expression_types(
             collect_expression_types(left, structs, enums)?;
             collect_expression_types(right, structs, enums)?;
         }
-        Expr::Unit | Expr::Boolean { .. } | Expr::FieldLiteral { .. } | Expr::Parameter { .. } => {}
+        Expr::Unit
+        | Expr::Boolean { .. }
+        | Expr::FieldLiteral { .. }
+        | Expr::UnsignedLiteral { .. }
+        | Expr::Parameter { .. } => {}
     }
     Ok(())
 }
@@ -275,6 +289,33 @@ fn expression_with_calls(
             }
             let value = syn::LitInt::new(&format!("{value}u128"), Span::call_site());
             Ok((syn::parse_quote!(runtime::Field::from(#value)), Type::Field))
+        }
+        Expr::UnsignedLiteral { value, max } => {
+            let parsed_max = max
+                .parse::<u128>()
+                .map_err(|_| RenderError::InvalidUnsignedMaximum(max.clone()))?;
+            if parsed_max.to_string() != *max {
+                return Err(RenderError::InvalidUnsignedMaximum(max.clone()));
+            }
+            let parsed_value =
+                value
+                    .parse::<u128>()
+                    .map_err(|_| RenderError::InvalidUnsignedLiteral {
+                        value: value.clone(),
+                        max: max.clone(),
+                    })?;
+            if parsed_value.to_string() != *value || parsed_value > parsed_max {
+                return Err(RenderError::InvalidUnsignedLiteral {
+                    value: value.clone(),
+                    max: max.clone(),
+                });
+            }
+            let max_lit = syn::LitInt::new(max, Span::call_site());
+            let value_lit = syn::LitInt::new(&format!("{value}u128"), Span::call_site());
+            Ok((
+                syn::parse_quote!(runtime::BoundedUint::<#max_lit>::new(#value_lit).expect("Compact Uint literal fits its maximum")),
+                Type::Unsigned { max: max.clone() },
+            ))
         }
         Expr::Parameter { name } => {
             let (ty, rust_name) = parameters

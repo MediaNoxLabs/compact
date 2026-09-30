@@ -1,4 +1,4 @@
-use compact_rust_uint_identity_fixture::pure_circuits::uint_identity;
+use compact_rust_uint_identity_fixture::pure_circuits::{max_uint, seven, uint_identity, zero};
 use midnight_compact_runtime::BoundedUint;
 
 #[test]
@@ -7,4 +7,7 @@ fn generated_signature_preserves_the_compact_maximum() {
     let value = BoundedUint::<255>::new(255).unwrap();
     assert_eq!(uint_identity(value).unwrap(), value);
     assert!(BoundedUint::<255>::new(256).is_err());
+    assert_eq!(seven().unwrap().value(), 7);
+    assert_eq!(max_uint().unwrap().value(), 255);
+    assert_eq!(zero().unwrap().value(), 0);
 }

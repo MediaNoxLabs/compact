@@ -77,15 +77,14 @@
           [(single ,src ,expr) (expression-ir expr owner-src)]
           [else (source-errorf owner-src "Rust backend does not yet support tuple spreads")]))
 
-      (define (field-literal-ir expr owner-src)
+      (define (nonnegative-integer-literal expr owner-src)
         (nanopass-case (Lnodisclose Expression) expr
-          [(return ,src ,expr) (field-literal-ir expr src)]
+          [(return ,src ,expr) (nonnegative-integer-literal expr src)]
           [(quote ,src ,datum)
            (if (and (integer? datum) (<= 0 datum))
-               (object (cons "kind" "field_literal")
-                       (cons "value" (number->string datum)))
-               (source-errorf src "Rust backend supports nonnegative Field literals only"))]
-          [else (source-errorf owner-src "Rust backend does not yet support this Field cast")]))
+               datum
+               (source-errorf src "Rust backend supports nonnegative numeric literals only"))]
+          [else (source-errorf owner-src "Rust backend does not yet support this numeric cast")]))
 
       (define (expression-ir expr owner-src)
         (nanopass-case (Lnodisclose Expression) expr
@@ -99,7 +98,16 @@
                (source-errorf src "Rust backend does not yet support this literal"))]
           [(safe-cast ,src ,type ,type^ ,expr)
            (nanopass-case (Lnodisclose Type) type
-             [(tfield ,src^) (field-literal-ir expr src)]
+             [(tfield ,src^)
+              (object (cons "kind" "field_literal")
+                      (cons "value" (number->string (nonnegative-integer-literal expr src))))]
+             [(tunsigned ,src^ ,nat)
+              (let ([value (nonnegative-integer-literal expr src)])
+                (unless (<= value nat)
+                  (source-errorf src "Rust backend Uint literal exceeds its maximum"))
+                (object (cons "kind" "unsigned_literal")
+                        (cons "value" (number->string value))
+                        (cons "max" (number->string nat))))]
              [else (source-errorf src "Rust backend does not yet support this cast")])]
           [(tuple ,src ,tuple-arg* ...)
            (if (null? tuple-arg*)
@@ -137,6 +145,25 @@
                    (cons "right" (expression-ir expr2 owner-src)))]
           [else (source-errorf owner-src "Rust backend does not yet support this circuit expression")]))
 
+      (define (typed-expression-ir expr expected-type owner-src)
+        (nanopass-case (Lnodisclose Expression) expr
+          [(return ,src ,expr) (typed-expression-ir expr expected-type src)]
+          [(quote ,src ,datum)
+           (if (and (integer? datum) (<= 0 datum))
+               (nanopass-case (Lnodisclose Type) expected-type
+                 [(tunsigned ,src^ ,nat)
+                  (unless (<= datum nat)
+                    (source-errorf src "Rust backend Uint literal exceeds its maximum"))
+                  (object (cons "kind" "unsigned_literal")
+                          (cons "value" (number->string datum))
+                          (cons "max" (number->string nat)))]
+                 [(tfield ,src^)
+                  (object (cons "kind" "field_literal")
+                          (cons "value" (number->string datum)))]
+                 [else (expression-ir expr owner-src)])
+               (expression-ir expr owner-src))]
+          [else (expression-ir expr owner-src)]))
+
       (define (argument-ir arg owner-src)
         (nanopass-case (Lnodisclose Argument) arg
           [(,var-name ,type)
@@ -165,7 +192,7 @@
                          (object (cons "name" name)
                                  (cons "parameters" (list->vector (map (lambda (arg) (argument-ir arg src)) arg*)))
                                  (cons "result" (type-ir type src))
-                                 (cons "body" (expression-ir expr src))))
+                                 (cons "body" (typed-expression-ir expr type src))))
                        names)
                      circuits)
                    circuits)))]

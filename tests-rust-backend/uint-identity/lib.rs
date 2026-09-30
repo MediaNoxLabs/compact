@@ -8,4 +8,14 @@ pub mod pure_circuits {
     ) -> Result<runtime::BoundedUint<255>, runtime::CompactError> {
         Ok(value)
     }
+    pub fn seven() -> Result<runtime::BoundedUint<255>, runtime::CompactError> {
+        Ok(runtime::BoundedUint::<255>::new(7u128).expect("Compact Uint literal fits its maximum"))
+    }
+    pub fn max_uint() -> Result<runtime::BoundedUint<255>, runtime::CompactError> {
+        Ok(runtime::BoundedUint::<255>::new(255u128)
+            .expect("Compact Uint literal fits its maximum"))
+    }
+    pub fn zero() -> Result<runtime::BoundedUint<255>, runtime::CompactError> {
+        Ok(runtime::BoundedUint::<255>::new(0u128).expect("Compact Uint literal fits its maximum"))
+    }
 }

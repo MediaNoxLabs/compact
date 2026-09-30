@@ -3,3 +3,15 @@ import CompactStandardLibrary;
 export circuit uint_identity(value: Uint<8>): Uint<8> {
   return value;
 }
+
+export circuit seven(): Uint<8> {
+  return 7;
+}
+
+export circuit max_uint(): Uint<8> {
+  return 255;
+}
+
+export circuit zero(): Uint<8> {
+  return 0;
+}

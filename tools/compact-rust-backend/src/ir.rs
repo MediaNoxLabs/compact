@@ -262,6 +262,10 @@ pub enum Expr {
     FieldLiteral {
         value: String,
     },
+    UnsignedLiteral {
+        value: String,
+        max: String,
+    },
     Parameter {
         name: String,
     },

@@ -84,15 +84,72 @@
                i]
               [else (loop (fx+ i 1) #f #f 0)]))))
 
-      ;; flush-rust-output!: scan the buffered lib.rs for a spliced sentinel
-      ;; and either refuse (located at `src`) or write it out. Called once,
-      ;; after every `out`.
+      ;; rust-todo-marker-index: the index of a `/* TODO` marker in `s`, or #f.
+      ;;
+      ;; `rust-false-sentinel-index` above cannot find these, and the reason is
+      ;; worth stating: it skips block comments by design, so that a `#f`
+      ;; appearing inside one is not a false positive. A TODO marker *is* a
+      ;; block comment, so the existing backstop steps over precisely the
+      ;; placeholders that shipped defects on this line.
+      ;;
+      ;; Both of them emitted a marker followed by a plausible value —
+      ;; `/* TODO M3-J2: unresolved enum-ref */ 0u8` is the clearest: the crate
+      ;; compiles, runs, and uses discriminant zero. The comment is skipped and
+      ;; `0u8` is a legitimate token, so nothing downstream had anything to
+      ;; object to.
+      ;;
+      ;; A marker in a *string literal* is ignored, so a contract that legitimately
+      ;; contains the text "/* TODO" in a string does not trip the guard.
+      (define (rust-todo-marker-index s)
+        (let ([n (string-length s)])
+          (define (at? i lit)
+            (let ([m (string-length lit)])
+              (and (fx<= (fx+ i m) n)
+                   (let loop ([k 0])
+                     (cond
+                       [(fx= k m) #t]
+                       [(char=? (string-ref s (fx+ i k)) (string-ref lit k))
+                        (loop (fx+ k 1))]
+                       [else #f])))))
+          (let loop ([i 0] [in-str? #f])
+            (cond
+              [(fx>= i n) #f]
+              [in-str?
+               (cond
+                 [(char=? (string-ref s i) #\\) (loop (fx+ i 2) #t)]
+                 [(char=? (string-ref s i) #\") (loop (fx+ i 1) #f)]
+                 [else (loop (fx+ i 1) #t)])]
+              [(char=? (string-ref s i) #\") (loop (fx+ i 1) #t)]
+              [(at? i "/* TODO") i]
+              [(at? i "// TODO") i]
+              [else (loop (fx+ i 1) #f)]))))
+
+      ;; flush-rust-output!: scan the buffered lib.rs and either refuse
+      ;; (located at `src`) or write it out. Called once, after every `out`.
+      ;;
+      ;; Two scans, because the two failure modes look nothing alike:
+      ;;
+      ;;   * a spliced `#f` — a renderer returned the sentinel and an unchecked
+      ;;     caller fed it to `format`. Usually does not compile.
+      ;;   * a `/* TODO` marker — a renderer *chose* to emit a placeholder
+      ;;     rather than refuse. Often compiles, and runs wrong.
+      ;;
+      ;; The second is the more dangerous and was the unguarded one. Every site
+      ;; that produced a marker is now a `rust-feature-error`, which reports at
+      ;; the Compact source with a kind; this scan is the backstop for the site
+      ;; nobody remembered, and it is what makes "we got them all" checkable by
+      ;; the build rather than by reading.
       (define (flush-rust-output! src)
         (let ([text (apply string-append (reverse (current-rust-output)))])
           (let ([i (rust-false-sentinel-index text)])
             (when i
               (rust-feature-error src 'sentinel-splice
                 "an expression reached a position the renderer could not lower; refused rather than emit a `#f` sentinel (near byte ~a)"
+                i)))
+          (let ([i (rust-todo-marker-index text)])
+            (when i
+              (rust-feature-error src 'todo-placeholder
+                "a renderer emitted a TODO placeholder instead of refusing; the generated crate would compile and behave incorrectly (near byte ~a)"
                 i)))
           (display-string text (get-target-port 'contract.rs))))
 

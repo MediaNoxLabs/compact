@@ -1,4 +1,4 @@
-use compact_rust_cell_struct_fixture::ledger_contract::{initial_state, set_record};
+use compact_rust_cell_struct_fixture::ledger_contract::{initial_state, read_record, set_record};
 use compact_rust_cell_struct_fixture::types::Pair;
 use midnight_compact_runtime::Field;
 use midnight_compact_runtime::context::ConstructorContext;
@@ -44,4 +44,6 @@ fn generated_struct_cell_has_ledger_alignment_and_round_trips() {
         read_cell::<Pair, _>(&fields.get(0).unwrap()).unwrap(),
         value
     );
+    let read = read_record(result.context).unwrap();
+    assert_eq!(read.result, value);
 }

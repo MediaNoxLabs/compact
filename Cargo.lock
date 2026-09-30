@@ -739,6 +739,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-cell-read-fixture"
+version = "0.1.0"
+dependencies = [
+ "midnight-compact-runtime",
+]
+
+[[package]]
 name = "compact-rust-cell-struct-fixture"
 version = "0.1.0"
 dependencies = [

@@ -16,7 +16,7 @@ use midnight_base_crypto::cost_model::RunningCost;
 use midnight_base_crypto::fab::{Aligned, AlignedValue, Value, ValueSlice};
 use midnight_onchain_vm::cost_model::CostModel;
 use midnight_onchain_vm::ops::{Key, Op};
-use midnight_onchain_vm::result_mode::ResultModeVerify;
+use midnight_onchain_vm::result_mode::{GatherEvent, ResultModeGather, ResultModeVerify};
 
 /// Compact values that can be stored in a ledger Cell. Implementations use
 /// upstream FAB conversions while keeping each type's declared alignment.
@@ -154,6 +154,42 @@ where
         ));
     }
     T::decode_cell_value(&cell.as_slice())
+}
+
+/// Read a root Cell through the ledger VM and gather its typed read event.
+pub fn query_cell<T: CellValue, D: DB>(
+    context: &QueryContext<D>,
+    field_index: u8,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<(QueryResults<ResultModeGather, D>, T), CompactError> {
+    let program = [
+        Op::Dup { n: 0 },
+        Op::Idx {
+            cached: false,
+            push_path: false,
+            path: vec![Key::Value(AlignedValue::from(field_index))].into(),
+        },
+        Op::Popeq {
+            cached: true,
+            result: (),
+        },
+    ];
+    let result = context
+        .query(&program, gas_limit, cost_model)
+        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+    let Some(GatherEvent::Read(value)) = result.events.last() else {
+        return Err(CompactError::InvalidLedgerCell(
+            "missing ledger read event".into(),
+        ));
+    };
+    if value.alignment != T::alignment() {
+        return Err(CompactError::InvalidLedgerCell(
+            "alignment differs from declared type".into(),
+        ));
+    }
+    let decoded = T::decode_cell_value(&value.value)?;
+    Ok((result, decoded))
 }
 
 /// Compact Counter initializes as a ledger Cell of fixed-width Uint64.

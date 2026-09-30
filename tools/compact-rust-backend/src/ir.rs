@@ -41,6 +41,21 @@ pub struct StatefulCircuit {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub parameters: Vec<Parameter>,
     pub actions: Vec<StateAction>,
+    #[serde(default)]
+    pub result: Type,
+    #[serde(default)]
+    pub return_value: StateReturn,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Default, Deserialize, Serialize)]
+#[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
+pub enum StateReturn {
+    #[default]
+    Unit,
+    CellRead {
+        field: String,
+        index: u8,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
@@ -108,6 +123,12 @@ pub enum Type {
         element: Box<Type>,
         length: usize,
     },
+}
+
+impl Default for Type {
+    fn default() -> Self {
+        Self::Unit
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]

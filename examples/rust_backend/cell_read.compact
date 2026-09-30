@@ -1,0 +1,7 @@
+import CompactStandardLibrary;
+
+export ledger flag: Boolean;
+
+export circuit read_flag(): Boolean {
+  return flag.read();
+}

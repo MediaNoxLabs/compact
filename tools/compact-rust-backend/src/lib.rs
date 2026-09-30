@@ -9,7 +9,8 @@ use std::error::Error;
 use std::fmt;
 
 use ir::{
-    Contract, CounterAmount, Expr, LedgerFieldKind, SCHEMA_VERSION, StateAction, StructField, Type,
+    Contract, CounterAmount, Expr, LedgerFieldKind, SCHEMA_VERSION, StateAction, StateReturn,
+    StructField, Type,
 };
 use proc_macro2::Span;
 use quote::quote;
@@ -278,6 +279,11 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                 &mut enum_definitions,
             )?;
         }
+        collect_named_types(
+            &circuit.result,
+            &mut struct_definitions,
+            &mut enum_definitions,
+        )?;
     }
     for field in &contract.ledger_fields {
         if let LedgerFieldKind::Cell { ty } = &field.declaration {
@@ -433,14 +439,54 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                 }
             }
         }
+        let result_ty = rust_type(&circuit.result)?;
+        let return_expr: syn::Expr = match &circuit.return_value {
+            StateReturn::Unit => {
+                if circuit.result != Type::Unit {
+                    return Err(RenderError::TypeMismatch {
+                        expected: circuit.result.clone(),
+                        actual: Type::Unit,
+                    });
+                }
+                syn::parse_quote!(())
+            }
+            StateReturn::CellRead { field, index } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                let LedgerFieldKind::Cell { ty } = &declaration.declaration else {
+                    return Err(RenderError::UnknownLedgerField(field.clone()));
+                };
+                if declaration.index != *index {
+                    return Err(RenderError::UnknownLedgerField(field.clone()));
+                }
+                if ty != &circuit.result {
+                    return Err(RenderError::TypeMismatch {
+                        expected: circuit.result.clone(),
+                        actual: ty.clone(),
+                    });
+                }
+                let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+                statements.push(syn::parse_quote! {
+                    let read_step = context.read_cell::<#result_ty>(#index)?;
+                });
+                statements.push(syn::parse_quote! {
+                    let context = read_step.context;
+                });
+                statements.push(syn::parse_quote! {
+                    total_cost += read_step.gas_cost;
+                });
+                syn::parse_quote!(read_step.result)
+            }
+        };
         let item: syn::Item = syn::parse_quote! {
             pub fn #name<Private>(
                 context: runtime::context::CircuitContext<Private>,
                 #(#args),*
-            ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
+            ) -> Result<runtime::context::CircuitResult<Private, #result_ty>, runtime::CompactError> {
                 let mut total_cost = runtime::context::RunningCost::default();
                 #(#statements)*
-                Ok(runtime::context::CircuitResult { context, result: (), gas_cost: total_cost })
+                Ok(runtime::context::CircuitResult { context, result: #return_expr, gas_cost: total_cost })
             }
         };
         stateful_items.push(item);

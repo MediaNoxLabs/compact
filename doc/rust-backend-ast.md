@@ -55,7 +55,10 @@ can accept typed parameters for Cell writes and Counter increments. Counter
 amounts have a closed literal-or-parameter IR variant; a parameter must be
 `Uint<16>`. The frontend inserts Compact's required `disclose` boundary before
 public ledger operations, and the renderer checks parameter types before
-emitting Rust.
+emitting Rust. Stateful `Cell.read()` returns a typed value through the ledger
+VM's gather mode and its read event. Generated Boolean and struct read
+fixtures execute after ledger writes; the renderer checks the requested field
+index and return type against the declaration.
 
 The user type slice emits native Rust structs from the typed Compact type
 shape and derives the ledger's `BinaryHashRepr`, `FieldRepr`, and
@@ -84,7 +87,8 @@ cargo test -p compact-rust-backend -p midnight-compact-runtime \
   -p compact-rust-struct-identity-fixture -p compact-rust-nested-struct-fixture \
   -p compact-rust-composite-struct-fixture -p compact-rust-enum-identity-fixture \
   -p compact-rust-cell-struct-fixture -p compact-rust-cell-enum-fixture \
-  -p compact-rust-cell-parameter-fixture -p compact-rust-counter-parameter-fixture
+  -p compact-rust-cell-parameter-fixture -p compact-rust-counter-parameter-fixture \
+  -p compact-rust-cell-read-fixture
 cargo build -p compact-rust-backend --bin compact-rustc
 ```
 
@@ -103,8 +107,8 @@ JSON alongside the usual TypeScript artifacts.
 
 1. Add literals and typed primitive operations using ledger and ZK crate
    semantics, with checks for Compact field and bounded unsigned behavior.
-2. Expand the initial Cell and Counter path to typed read results and
-   additional ledger field types while preserving state byte parity.
+2. Expand the initial Cell and Counter path to additional ledger field types
+   while preserving state byte parity.
 3. Extend witnesses, calls, control flow, ledger ADTs, and cryptographic
    natives in small executing fixtures until the oracle matrix is covered.
 

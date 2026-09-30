@@ -7,3 +7,7 @@ export ledger record: Pair;
 export circuit set_record(value: Pair): [] {
   record = disclose(value);
 }
+
+export circuit read_record(): Pair {
+  return record.read();
+}

@@ -66,6 +66,24 @@ pub struct CircuitResult<Private, Output, D: DB = DefaultDB> {
 }
 
 impl<Private, D: DB> CircuitContext<Private, D> {
+    pub fn read_cell<T: CellValue>(
+        mut self,
+        field_index: u8,
+    ) -> Result<CircuitResult<Private, T, D>, CompactError> {
+        let (result, value) = ledger::query_cell::<T, D>(
+            &self.query,
+            field_index,
+            self.gas_limit.clone(),
+            &self.cost_model,
+        )?;
+        self.query = result.context;
+        Ok(CircuitResult {
+            context: self,
+            result: value,
+            gas_cost: result.gas_cost,
+        })
+    }
+
     pub fn write_cell<T: CellValue>(
         mut self,
         field_index: u8,

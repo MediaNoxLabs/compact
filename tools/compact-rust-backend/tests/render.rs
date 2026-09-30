@@ -1,6 +1,6 @@
 use compact_rust_backend::ir::{
     Contract, CounterAmount, Expr, LedgerField, LedgerFieldKind, Parameter, PureCircuit,
-    StateAction, StatefulCircuit, StructField, Type,
+    StateAction, StateReturn, StatefulCircuit, StructField, Type,
 };
 use compact_rust_backend::{RenderError, render};
 
@@ -190,6 +190,8 @@ fn state_action_must_reference_the_declared_ledger_field_and_index() {
         stateful_circuits: vec![StatefulCircuit {
             name: "increment".into(),
             parameters: vec![],
+            result: Type::Unit,
+            return_value: StateReturn::Unit,
             actions: vec![StateAction::CounterIncrement {
                 field: "round".into(),
                 index: 0,
@@ -240,6 +242,8 @@ fn stateful_parameters_are_checked_before_cell_writes() {
                 name: "value".into(),
                 ty: Type::Boolean,
             }],
+            result: Type::Unit,
+            return_value: StateReturn::Unit,
             actions: vec![StateAction::CellWrite {
                 field: "flag".into(),
                 index: 0,
@@ -290,6 +294,8 @@ fn counter_parameter_requires_uint16_and_a_known_name() {
                     max: "65535".into(),
                 },
             }],
+            result: Type::Unit,
+            return_value: StateReturn::Unit,
             actions: vec![StateAction::CounterIncrement {
                 field: "round".into(),
                 index: 0,
@@ -326,6 +332,50 @@ fn counter_parameter_requires_uint16_and_a_known_name() {
     assert_eq!(
         render(&contract),
         Err(RenderError::UnknownParameter("missing".into()))
+    );
+}
+
+#[test]
+fn ledger_read_return_must_match_the_declared_cell() {
+    let mut contract = Contract {
+        schema_version: 3,
+        ledger_fields: vec![LedgerField {
+            id: "flag".into(),
+            index: 0,
+            declaration: LedgerFieldKind::Cell { ty: Type::Boolean },
+        }],
+        circuits: vec![],
+        stateful_circuits: vec![StatefulCircuit {
+            name: "read_flag".into(),
+            parameters: vec![],
+            actions: vec![],
+            result: Type::Boolean,
+            return_value: StateReturn::CellRead {
+                field: "flag".into(),
+                index: 0,
+            },
+        }],
+    };
+    let source = render(&contract).unwrap();
+    assert!(source.contains("context.read_cell::<bool>(0)?"));
+    assert!(source.contains("result: read_step.result"));
+
+    contract.stateful_circuits[0].result = Type::Field;
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::TypeMismatch {
+            expected: Type::Field,
+            actual: Type::Boolean,
+        })
+    );
+    contract.stateful_circuits[0].result = Type::Boolean;
+    contract.stateful_circuits[0].return_value = StateReturn::CellRead {
+        field: "flag".into(),
+        index: 1,
+    };
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::UnknownLedgerField("flag".into()))
     );
 }
 

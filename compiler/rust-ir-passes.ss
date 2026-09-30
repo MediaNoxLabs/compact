@@ -222,10 +222,31 @@
       (define (stateful-body-ir expr src environment)
         (nanopass-case (Lnodisclose Expression) expr
           [(seq ,src1 ,expr* ... ,expr)
-           (unless (equal? (expression-ir expr src1) (kind "unit"))
-             (source-errorf src1 "Rust backend stateful circuit result must be unit"))
            (list->vector (map (lambda (action) (state-action-ir action src environment)) expr*))]
-          [else (source-errorf src "Rust backend does not yet support this stateful circuit body")]))
+          [else (vector)]))
+
+      (define (stateful-return-ir expr owner-src)
+        (nanopass-case (Lnodisclose Expression) expr
+          [(return ,src ,expr) (stateful-return-ir expr src)]
+          [(seq ,src ,expr* ... ,expr) (stateful-return-ir expr src)]
+          [(tuple ,src ,tuple-arg* ...)
+           (if (null? tuple-arg*)
+               (kind "unit")
+               (source-errorf src "Rust backend does not yet support this stateful return value"))]
+          [(public-ledger ,src ,ledger-field-name ,sugar? (,path-elt* ...) ,src^ ,adt-op ,expr* ...)
+           (unless (and (= (length path-elt*) 1)
+                        (integer? (car path-elt*)))
+             (source-errorf src "Rust backend supports root ledger paths only"))
+           (nanopass-case (Lnodisclose ADT-Op) adt-op
+             [(,ledger-op ,op-class (,adt-name (,adt-formal* ,adt-arg*) ...) ((,var-name* ,type*) ...) ,type ,vm-code)
+              (if (and (eq? adt-name '__compact_Cell)
+                       (eq? ledger-op 'read)
+                       (null? expr*))
+                  (object (cons "kind" "cell_read")
+                          (cons "field" (symbol->string (id-sym ledger-field-name)))
+                          (cons "index" (car path-elt*)))
+                  (source-errorf src "Rust backend does not yet support this ledger return operation"))])]
+          [else (source-errorf owner-src "Rust backend does not yet support this stateful return value")]))
 
       (define (stateful-circuit-ir pelt export-alist circuits)
         (nanopass-case (Lnodisclose Program-Element) pelt
@@ -236,12 +257,12 @@
                  (if (null? names)
                      circuits
                      (begin
-                       (unless (equal? (type-ir type src) (kind "unit"))
-                         (source-errorf src "Rust backend stateful circuit result type must be unit"))
                        (append
                          (map (lambda (name)
                                 (object (cons "name" name)
                                         (cons "parameters" (list->vector (map (lambda (arg) (argument-ir arg src)) arg*)))
+                                        (cons "result" (type-ir type src))
+                                        (cons "return_value" (stateful-return-ir expr src))
                                         (cons "actions"
                                               (stateful-body-ir expr src
                                                 (map (lambda (arg)

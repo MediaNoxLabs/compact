@@ -49,4 +49,18 @@ pub mod ledger_contract {
             gas_cost: total_cost,
         })
     }
+    pub fn read_record<Private>(
+        context: runtime::context::CircuitContext<Private>,
+    ) -> Result<runtime::context::CircuitResult<Private, crate::types::Pair>, runtime::CompactError>
+    {
+        let mut total_cost = runtime::context::RunningCost::default();
+        let read_step = context.read_cell::<crate::types::Pair>(0)?;
+        let context = read_step.context;
+        total_cost += read_step.gas_cost;
+        Ok(runtime::context::CircuitResult {
+            context,
+            result: read_step.result,
+            gas_cost: total_cost,
+        })
+    }
 }

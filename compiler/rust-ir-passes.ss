@@ -99,6 +99,22 @@
                    (cons "condition" (expression-ir expr0 src))
                    (cons "then" (expression-ir expr1 src))
                    (cons "otherwise" (expression-ir expr2 src)))]
+          [(let* ,src ([,local* ,expr*] ...) ,expr)
+           (object (cons "kind" "let")
+                   (cons "bindings"
+                         (list->vector
+                           (map (lambda (local value)
+                                  (nanopass-case (Lnodisclose Argument) local
+                                    [(,var-name ,type)
+                                     (object (cons "name" (symbol->string (id-sym var-name)))
+                                             (cons "ty" (type-ir type src))
+                                             (cons "value" (expression-ir value src)))]))
+                                local* expr*)))
+                   (cons "body" (expression-ir expr src)))]
+          [(call ,src ,function-name ,expr* ...)
+           (object (cons "kind" "call")
+                   (cons "name" (symbol->string (id-sym function-name)))
+                   (cons "arguments" (list->vector (map (lambda (arg) (expression-ir arg src)) expr*))))]
           [(+ ,src ,mbits ,expr1 ,expr2)
            (when mbits
              (source-errorf src "Rust backend does not yet support bounded unsigned arithmetic"))

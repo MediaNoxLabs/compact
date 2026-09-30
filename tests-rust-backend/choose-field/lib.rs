@@ -10,4 +10,22 @@ pub mod pure_circuits {
     ) -> Result<runtime::Field, runtime::CompactError> {
         Ok(if flag { left } else { right })
     }
+    pub fn sum_with_local(
+        left: runtime::Field,
+        right: runtime::Field,
+    ) -> Result<runtime::Field, runtime::CompactError> {
+        Ok({
+            let __compact_local_0: runtime::Field = left + right;
+            {
+                let __compact_local_0: runtime::Field = __compact_local_0 + __compact_local_0;
+                __compact_local_0
+            }
+        })
+    }
+    pub fn call_sum(
+        left: runtime::Field,
+        right: runtime::Field,
+    ) -> Result<runtime::Field, runtime::CompactError> {
+        Ok(crate::pure_circuits::sum_with_local(left, right)?)
+    }
 }

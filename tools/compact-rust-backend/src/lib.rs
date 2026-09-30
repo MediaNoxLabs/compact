@@ -9,7 +9,7 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 use std::error::Error;
 use std::fmt;
 
-use ir::{Contract, Expr, LedgerFieldKind, SCHEMA_VERSION, StructField, Type};
+use ir::{Contract, Expr, LedgerFieldKind, PureCircuit, SCHEMA_VERSION, StructField, Type};
 use proc_macro2::Span;
 use quote::quote;
 
@@ -30,7 +30,16 @@ pub enum RenderError {
     EmptyEnum(String),
     DuplicateEnumVariant(String),
     UnknownParameter(String),
-    TypeMismatch { expected: Type, actual: Type },
+    UnknownCircuit(String),
+    ArgumentCount {
+        circuit: String,
+        expected: usize,
+        actual: usize,
+    },
+    TypeMismatch {
+        expected: Type,
+        actual: Type,
+    },
 }
 
 impl fmt::Display for RenderError {
@@ -62,6 +71,15 @@ impl fmt::Display for RenderError {
             Self::EmptyEnum(name) => write!(f, "enum {name:?} has no variants"),
             Self::DuplicateEnumVariant(name) => write!(f, "duplicate enum variant {name:?}"),
             Self::UnknownParameter(name) => write!(f, "unknown parameter {name:?}"),
+            Self::UnknownCircuit(name) => write!(f, "unknown pure circuit {name:?}"),
+            Self::ArgumentCount {
+                circuit,
+                expected,
+                actual,
+            } => write!(
+                f,
+                "circuit {circuit:?} takes {expected} arguments, received {actual}"
+            ),
             Self::TypeMismatch { expected, actual } => {
                 write!(f, "expression has type {actual:?}, expected {expected:?}")
             }
@@ -185,9 +203,58 @@ fn collect_named_types(
     Ok(())
 }
 
+fn collect_expression_types(
+    expr: &Expr,
+    structs: &mut BTreeMap<String, Vec<StructField>>,
+    enums: &mut BTreeMap<String, Vec<String>>,
+) -> Result<(), RenderError> {
+    match expr {
+        Expr::Tuple { elements } => {
+            for element in elements {
+                collect_expression_types(element, structs, enums)?;
+            }
+        }
+        Expr::If {
+            condition,
+            then,
+            otherwise,
+        } => {
+            collect_expression_types(condition, structs, enums)?;
+            collect_expression_types(then, structs, enums)?;
+            collect_expression_types(otherwise, structs, enums)?;
+        }
+        Expr::Let { bindings, body } => {
+            for binding in bindings {
+                collect_named_types(&binding.ty, structs, enums)?;
+                collect_expression_types(&binding.value, structs, enums)?;
+            }
+            collect_expression_types(body, structs, enums)?;
+        }
+        Expr::Call { arguments, .. } => {
+            for argument in arguments {
+                collect_expression_types(argument, structs, enums)?;
+            }
+        }
+        Expr::Add { left, right } => {
+            collect_expression_types(left, structs, enums)?;
+            collect_expression_types(right, structs, enums)?;
+        }
+        Expr::Unit | Expr::Boolean { .. } | Expr::Parameter { .. } => {}
+    }
+    Ok(())
+}
+
 fn expression(
     expr: &Expr,
     parameters: &HashMap<&str, (&Type, syn::Ident)>,
+) -> Result<(syn::Expr, Type), RenderError> {
+    expression_with_calls(expr, parameters, &HashMap::new())
+}
+
+fn expression_with_calls(
+    expr: &Expr,
+    parameters: &HashMap<&str, (&Type, syn::Ident)>,
+    circuits: &HashMap<&str, &PureCircuit>,
 ) -> Result<(syn::Expr, Type), RenderError> {
     match expr {
         Expr::Unit => Ok((syn::parse_quote!(()), Type::Unit)),
@@ -201,7 +268,7 @@ fn expression(
         Expr::Tuple { elements } => {
             let (exprs, types): (Vec<_>, Vec<_>) = elements
                 .iter()
-                .map(|element| expression(element, parameters))
+                .map(|element| expression_with_calls(element, parameters, circuits))
                 .collect::<Result<Vec<_>, _>>()?
                 .into_iter()
                 .unzip();
@@ -224,15 +291,15 @@ fn expression(
             then,
             otherwise,
         } => {
-            let (condition, condition_ty) = expression(condition, parameters)?;
+            let (condition, condition_ty) = expression_with_calls(condition, parameters, circuits)?;
             if condition_ty != Type::Boolean {
                 return Err(RenderError::TypeMismatch {
                     expected: Type::Boolean,
                     actual: condition_ty,
                 });
             }
-            let (then, then_ty) = expression(then, parameters)?;
-            let (otherwise, otherwise_ty) = expression(otherwise, parameters)?;
+            let (then, then_ty) = expression_with_calls(then, parameters, circuits)?;
+            let (otherwise, otherwise_ty) = expression_with_calls(otherwise, parameters, circuits)?;
             if then_ty != otherwise_ty {
                 return Err(RenderError::TypeMismatch {
                     expected: then_ty,
@@ -244,9 +311,58 @@ fn expression(
                 then_ty,
             ))
         }
+        Expr::Let { bindings, body } => {
+            let mut locals = parameters.clone();
+            let mut statements = Vec::<syn::Stmt>::new();
+            for (index, binding) in bindings.iter().enumerate() {
+                ident(&binding.name)?;
+                let (value, actual) = expression_with_calls(&binding.value, &locals, circuits)?;
+                if actual != binding.ty {
+                    return Err(RenderError::TypeMismatch {
+                        expected: binding.ty.clone(),
+                        actual,
+                    });
+                }
+                let local_ty = rust_type(&binding.ty)?;
+                let local_name =
+                    syn::Ident::new(&format!("__compact_local_{index}"), Span::call_site());
+                statements.push(syn::parse_quote!(let #local_name: #local_ty = #value;));
+                locals.insert(binding.name.as_str(), (&binding.ty, local_name));
+            }
+            let (body, body_ty) = expression_with_calls(body, &locals, circuits)?;
+            Ok((syn::parse_quote!({ #(#statements)* #body }), body_ty))
+        }
+        Expr::Call { name, arguments } => {
+            let circuit = circuits
+                .get(name.as_str())
+                .ok_or_else(|| RenderError::UnknownCircuit(name.clone()))?;
+            if arguments.len() != circuit.parameters.len() {
+                return Err(RenderError::ArgumentCount {
+                    circuit: name.clone(),
+                    expected: circuit.parameters.len(),
+                    actual: arguments.len(),
+                });
+            }
+            let mut rendered_arguments = Vec::with_capacity(arguments.len());
+            for (argument, parameter) in arguments.iter().zip(&circuit.parameters) {
+                let (value, actual) = expression_with_calls(argument, parameters, circuits)?;
+                if actual != parameter.ty {
+                    return Err(RenderError::TypeMismatch {
+                        expected: parameter.ty.clone(),
+                        actual,
+                    });
+                }
+                rendered_arguments.push(value);
+            }
+            let name = ident(name)?;
+            Ok((
+                syn::parse_quote!(crate::pure_circuits::#name(#(#rendered_arguments),*)?),
+                circuit.result.clone(),
+            ))
+        }
         Expr::Add { left, right } => {
-            let (left, left_type) = expression(left, parameters)?;
-            let (right, right_type) = expression(right, parameters)?;
+            let (left, left_type) = expression_with_calls(left, parameters, circuits)?;
+            let (right, right_type) = expression_with_calls(right, parameters, circuits)?;
             if left_type != Type::Field {
                 return Err(RenderError::TypeMismatch {
                     expected: Type::Field,
@@ -293,6 +409,11 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
             &mut struct_definitions,
             &mut enum_definitions,
         )?;
+        collect_expression_types(
+            &circuit.body,
+            &mut struct_definitions,
+            &mut enum_definitions,
+        )?;
     }
     for circuit in &contract.stateful_circuits {
         for parameter in &circuit.parameters {
@@ -333,6 +454,11 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
             return Err(RenderError::DuplicateLedgerField(field.id.clone()));
         }
     }
+    let callable_circuits: HashMap<&str, &PureCircuit> = contract
+        .circuits
+        .iter()
+        .map(|circuit| (circuit.name.as_str(), circuit))
+        .collect();
     let mut items = Vec::new();
     for circuit in &contract.circuits {
         let name = ident(&circuit.name)?;
@@ -353,7 +479,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
             let arg: syn::FnArg = syn::parse_quote!(#arg_name: #arg_ty);
             args.push(arg);
         }
-        let (body, actual) = expression(&circuit.body, &parameters)?;
+        let (body, actual) = expression_with_calls(&circuit.body, &parameters, &callable_circuits)?;
         if actual != circuit.result {
             return Err(RenderError::TypeMismatch {
                 expected: circuit.result.clone(),

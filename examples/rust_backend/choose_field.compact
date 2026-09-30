@@ -7,3 +7,13 @@ export circuit choose(flag: Boolean, left: Field, right: Field): Field {
     return right;
   }
 }
+
+export circuit sum_with_local(left: Field, right: Field): Field {
+  const total = left + right;
+  const doubled = total + total;
+  return doubled;
+}
+
+export circuit call_sum(left: Field, right: Field): Field {
+  return sum_with_local(left, right);
+}

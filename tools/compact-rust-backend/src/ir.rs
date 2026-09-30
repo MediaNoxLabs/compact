@@ -203,6 +203,14 @@ pub struct Parameter {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct LocalBinding {
+    pub name: String,
+    pub ty: Type,
+    pub value: Expr,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Type {
     Unit,
@@ -261,6 +269,14 @@ pub enum Expr {
         condition: Box<Expr>,
         then: Box<Expr>,
         otherwise: Box<Expr>,
+    },
+    Let {
+        bindings: Vec<LocalBinding>,
+        body: Box<Expr>,
+    },
+    Call {
+        name: String,
+        arguments: Vec<Expr>,
     },
     Add {
         left: Box<Expr>,

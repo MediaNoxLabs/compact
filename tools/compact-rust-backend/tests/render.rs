@@ -1,6 +1,6 @@
 use compact_rust_backend::ir::{
-    Contract, CounterAmount, Expr, LedgerField, LedgerFieldKind, Parameter, PureCircuit,
-    StateAction, StateReturn, StatefulCircuit, StructField, Type,
+    Contract, CounterAmount, Expr, LedgerField, LedgerFieldKind, LocalBinding, Parameter,
+    PureCircuit, StateAction, StateReturn, StatefulCircuit, StructField, Type,
 };
 use compact_rust_backend::{RenderError, render};
 
@@ -120,6 +120,96 @@ fn rejects_type_mismatch_and_invalid_identifier() {
         render(&contract),
         Err(RenderError::InvalidIdentifier("fn".into()))
     );
+}
+
+#[test]
+fn pure_call_checks_target_arity_and_argument_types() {
+    let mut contract = identity(
+        Type::Field,
+        Expr::Call {
+            name: "target".into(),
+            arguments: vec![Expr::Parameter {
+                name: "value".into(),
+            }],
+        },
+    );
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::UnknownCircuit("target".into()))
+    );
+    contract.circuits.push(PureCircuit {
+        name: "target".into(),
+        parameters: vec![Parameter {
+            name: "flag".into(),
+            ty: Type::Boolean,
+        }],
+        result: Type::Field,
+        body: Expr::Parameter {
+            name: "flag".into(),
+        },
+    });
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::TypeMismatch {
+            expected: Type::Boolean,
+            actual: Type::Field,
+        })
+    );
+    contract.circuits[1].parameters[0].ty = Type::Field;
+    if let Expr::Call { arguments, .. } = &mut contract.circuits[0].body {
+        arguments.clear();
+    }
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::ArgumentCount {
+            circuit: "target".into(),
+            expected: 1,
+            actual: 0,
+        })
+    );
+    if let Expr::Call { arguments, .. } = &mut contract.circuits[0].body {
+        arguments.push(Expr::Parameter {
+            name: "value".into(),
+        });
+    }
+    assert!(
+        render(&contract)
+            .unwrap()
+            .contains("crate::pure_circuits::target(value)?")
+    );
+}
+
+#[test]
+fn local_binding_checks_declared_type_and_scope() {
+    let mut contract = identity(
+        Type::Field,
+        Expr::Let {
+            bindings: vec![LocalBinding {
+                name: "saved".into(),
+                ty: Type::Boolean,
+                value: Expr::Parameter {
+                    name: "value".into(),
+                },
+            }],
+            body: Box::new(Expr::Parameter {
+                name: "saved".into(),
+            }),
+        },
+    );
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::TypeMismatch {
+            expected: Type::Boolean,
+            actual: Type::Field,
+        })
+    );
+    let Expr::Let { bindings, .. } = &mut contract.circuits[0].body else {
+        unreachable!()
+    };
+    bindings[0].ty = Type::Field;
+    let source = render(&contract).unwrap();
+    assert!(source.contains("let __compact_local_0: runtime::Field = value;"));
+    assert!(source.contains("Ok({"));
 }
 
 #[test]

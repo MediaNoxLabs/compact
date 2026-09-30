@@ -5,12 +5,18 @@
 
 pub use midnight_coin_structure::contract::ContractAddress;
 pub use midnight_onchain_runtime::context::QueryContext;
+pub use midnight_onchain_runtime::context::QueryResults;
+pub use midnight_onchain_runtime::error::TranscriptRejected;
 pub use midnight_onchain_state::state::{ChargedState, StateValue};
 pub use midnight_storage::DefaultDB;
 pub use midnight_storage::db::DB;
 
 use crate::{BoundedUint, CompactError, Field};
+use midnight_base_crypto::cost_model::RunningCost;
 use midnight_base_crypto::fab::{Aligned, AlignedValue, Value, ValueSlice};
+use midnight_onchain_vm::cost_model::CostModel;
+use midnight_onchain_vm::ops::{Key, Op};
+use midnight_onchain_vm::result_mode::ResultModeVerify;
 
 /// Compact values that can be stored in a ledger Cell. Implementations use
 /// upstream FAB conversions while keeping each type's declared alignment.
@@ -81,6 +87,81 @@ pub fn constructor_counter<D: DB>() -> StateValue<D> {
 
 pub fn read_counter<D: DB>(state: &StateValue<D>) -> Result<u64, CompactError> {
     read_cell::<u64, D>(state)
+}
+
+/// Replace an existing root Cell through ledger VM execution.
+pub fn write_cell<T: CellValue, D: DB>(
+    context: &QueryContext<D>,
+    field_index: u8,
+    value: T,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    let program = [
+        Op::Idx {
+            cached: false,
+            push_path: true,
+            path: vec![Key::Value(AlignedValue::from(field_index))].into(),
+        },
+        Op::Pop,
+        Op::Push {
+            storage: true,
+            value: constructor_cell(value),
+        },
+        Op::Ins { cached: true, n: 1 },
+    ];
+    context.query(&program, gas_limit, cost_model)
+}
+
+/// Run Compact Counter's increment program through ledger query execution.
+pub fn increment_counter<D: DB>(
+    context: &QueryContext<D>,
+    field_index: u8,
+    amount: u16,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    update_counter(context, field_index, amount, false, gas_limit, cost_model)
+}
+
+/// Run Compact Counter's decrement program through ledger query execution.
+pub fn decrement_counter<D: DB>(
+    context: &QueryContext<D>,
+    field_index: u8,
+    amount: u16,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    update_counter(context, field_index, amount, true, gas_limit, cost_model)
+}
+
+fn update_counter<D: DB>(
+    context: &QueryContext<D>,
+    field_index: u8,
+    amount: u16,
+    subtract: bool,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    let arithmetic = if subtract {
+        Op::Subi {
+            immediate: amount.into(),
+        }
+    } else {
+        Op::Addi {
+            immediate: amount.into(),
+        }
+    };
+    let program = [
+        Op::Idx {
+            cached: false,
+            push_path: true,
+            path: vec![Key::Value(AlignedValue::from(field_index))].into(),
+        },
+        arithmetic,
+        Op::Ins { cached: true, n: 1 },
+    ];
+    context.query(&program, gas_limit, cost_model)
 }
 
 /// The root ledger state for a contract with no public ledger fields.

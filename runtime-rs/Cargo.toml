@@ -26,3 +26,7 @@ midnight-zk-stdlib = "=1.0.0"
 # The ledger-8.0.2 lock names 8.0.1, which is no longer available on
 # crates.io. 8.0.0 is the published 8.0 line used for the context envelope.
 midnight-zswap = "=8.0.0"
+
+[dev-dependencies]
+hex = "0.4"
+serde_json = "1"

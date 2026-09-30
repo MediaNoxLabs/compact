@@ -2427,6 +2427,7 @@ dependencies = [
 name = "midnight-compact-runtime"
 version = "0.1.0"
 dependencies = [
+ "hex",
  "midnight-base-crypto",
  "midnight-circuits",
  "midnight-coin-structure",
@@ -2441,6 +2442,7 @@ dependencies = [
  "midnight-transient-crypto",
  "midnight-zk-stdlib",
  "midnight-zswap",
+ "serde_json",
 ]
 
 [[package]]

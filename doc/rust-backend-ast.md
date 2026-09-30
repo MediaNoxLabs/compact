@@ -39,7 +39,13 @@ Zswap state through constructor and circuit context envelopes. Its FAB tests
 compare Field, Boolean, Bytes, and Uint alignment and normalized values with
 the ledger-8 implementations. The ledger-8.0.2 lock references
 `midnight-zswap` 8.0.1, which is no longer published; the runtime pins 8.0.0
-from the same 8.0 line. Ledger state operations are the next slice.
+from the same 8.0 line.
+
+The runtime can now construct and decode ledger Cells and Counters, and it
+runs Cell writes plus Counter increments/decrements through the ledger VM.
+The Counter test serializes the full post-increment `ContractState` and matches
+the TypeScript oracle fixture byte for byte. Compiler emission for these
+ledger operations is still pending.
 
 ## Run locally
 

@@ -212,6 +212,172 @@ pub fn constructor_map<D: DB>() -> StateValue<D> {
     StateValue::Map(LedgerHashMap::new())
 }
 
+/// Compact List stores the head, tail, and fixed-width length in an array.
+pub fn constructor_list<D: DB>() -> StateValue<D> {
+    StateValue::Array(vec![StateValue::Null, StateValue::Null, constructor_cell(0_u64)].into())
+}
+
+pub fn length_list<D: DB>(
+    context: &QueryContext<D>,
+    field_index: u8,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<(QueryResults<ResultModeGather, D>, u64), CompactError> {
+    let program = [
+        Op::Dup { n: 0 },
+        Op::Idx {
+            cached: false,
+            push_path: false,
+            path: vec![Key::Value(AlignedValue::from(field_index))].into(),
+        },
+        Op::Idx {
+            cached: false,
+            push_path: false,
+            path: vec![Key::Value(AlignedValue::from(2_u8))].into(),
+        },
+        Op::Popeq {
+            cached: true,
+            result: (),
+        },
+    ];
+    let result = context
+        .query(&program, gas_limit, cost_model)
+        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+    let decoded = decode_last_read::<u64, D>(&result)?;
+    Ok((result, decoded))
+}
+
+pub fn is_empty_list<D: DB>(
+    context: &QueryContext<D>,
+    field_index: u8,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<(QueryResults<ResultModeGather, D>, bool), CompactError> {
+    let program = [
+        Op::Dup { n: 0 },
+        Op::Idx {
+            cached: false,
+            push_path: false,
+            path: vec![Key::Value(AlignedValue::from(field_index))].into(),
+        },
+        Op::Idx {
+            cached: false,
+            push_path: false,
+            path: vec![Key::Value(AlignedValue::from(1_u8))].into(),
+        },
+        Op::Type,
+        Op::Push {
+            storage: false,
+            value: constructor_cell::<u8, D>(1),
+        },
+        Op::Eq,
+        Op::Popeq {
+            cached: true,
+            result: (),
+        },
+    ];
+    let result = context
+        .query(&program, gas_limit, cost_model)
+        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+    let decoded = decode_last_read::<bool, D>(&result)?;
+    Ok((result, decoded))
+}
+
+pub fn push_front_list<T: CellValue, D: DB>(
+    context: &QueryContext<D>,
+    field_index: u8,
+    value: T,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    let program = [
+        Op::Idx {
+            cached: false,
+            push_path: true,
+            path: vec![Key::Value(AlignedValue::from(field_index))].into(),
+        },
+        Op::Dup { n: 0 },
+        Op::Idx {
+            cached: false,
+            push_path: false,
+            path: vec![Key::Value(AlignedValue::from(2_u8))].into(),
+        },
+        Op::Addi { immediate: 1 },
+        Op::Push {
+            storage: true,
+            value: StateValue::Array(
+                vec![constructor_cell(value), StateValue::Null, StateValue::Null].into(),
+            ),
+        },
+        Op::Swap { n: 0 },
+        Op::Push {
+            storage: false,
+            value: constructor_cell(2_u8),
+        },
+        Op::Swap { n: 0 },
+        Op::Ins { cached: true, n: 1 },
+        Op::Swap { n: 0 },
+        Op::Push {
+            storage: false,
+            value: constructor_cell(1_u8),
+        },
+        Op::Swap { n: 0 },
+        Op::Ins { cached: true, n: 2 },
+    ];
+    context.query(&program, gas_limit, cost_model)
+}
+
+pub fn pop_front_list<D: DB>(
+    context: &QueryContext<D>,
+    field_index: u8,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    let program = [
+        Op::Idx {
+            cached: false,
+            push_path: true,
+            path: vec![Key::Value(AlignedValue::from(field_index))].into(),
+        },
+        Op::Idx {
+            cached: false,
+            push_path: false,
+            path: vec![Key::Value(AlignedValue::from(1_u8))].into(),
+        },
+        Op::Ins { cached: true, n: 1 },
+    ];
+    context.query(&program, gas_limit, cost_model)
+}
+
+pub fn reset_list<D: DB>(
+    context: &QueryContext<D>,
+    field_index: u8,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    let program = [
+        Op::Idx {
+            cached: false,
+            push_path: true,
+            path: vec![].into(),
+        },
+        Op::Push {
+            storage: false,
+            value: constructor_cell(field_index),
+        },
+        Op::Push {
+            storage: true,
+            value: constructor_list(),
+        },
+        Op::Ins {
+            cached: false,
+            n: 1,
+        },
+        Op::Ins { cached: true, n: 0 },
+    ];
+    context.query(&program, gas_limit, cost_model)
+}
+
 pub fn insert_map<K: CellValue, V: CellValue, D: DB>(
     context: &QueryContext<D>,
     field_index: u8,

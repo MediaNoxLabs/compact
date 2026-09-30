@@ -161,6 +161,12 @@
                          (cons "declaration"
                                (object (cons "kind" "set")
                                        (cons "ty" (type-ir (car adt-arg*) src)))))]
+                [(and (eq? adt-name 'List) (= (length adt-arg*) 1))
+                 (object (cons "id" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-index*))
+                         (cons "declaration"
+                               (object (cons "kind" "list")
+                                       (cons "ty" (type-ir (car adt-arg*) src)))))]
                 [(and (eq? adt-name 'Map) (= (length adt-arg*) 2))
                  (object (cons "id" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-index*))
@@ -260,6 +266,25 @@
                       (eq? ledger-op 'resetToDefault)
                       (null? expr*))
                  (object (cons "kind" "set_reset")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*)))]
+                [(and (eq? adt-name 'List)
+                      (eq? ledger-op 'pushFront)
+                      (= (length expr*) 1))
+                 (object (cons "kind" "list_push_front")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*))
+                         (cons "value" (expression-ir (car expr*) src)))]
+                [(and (eq? adt-name 'List)
+                      (eq? ledger-op 'popFront)
+                      (null? expr*))
+                 (object (cons "kind" "list_pop_front")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*)))]
+                [(and (eq? adt-name 'List)
+                      (eq? ledger-op 'resetToDefault)
+                      (null? expr*))
+                 (object (cons "kind" "list_reset")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*)))]
                 [(and (eq? adt-name 'Map)
@@ -369,6 +394,18 @@
                       (eq? ledger-op 'isEmpty)
                       (null? expr*))
                  (object (cons "kind" "map_is_empty")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*)))]
+                [(and (eq? adt-name 'List)
+                      (eq? ledger-op 'length)
+                      (null? expr*))
+                 (object (cons "kind" "list_length")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*)))]
+                [(and (eq? adt-name 'List)
+                      (eq? ledger-op 'isEmpty)
+                      (null? expr*))
+                 (object (cons "kind" "list_is_empty")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*)))]
                 [else (source-errorf src "Rust backend does not yet support this ledger return operation")])])]

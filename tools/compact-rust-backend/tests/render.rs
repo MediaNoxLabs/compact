@@ -614,6 +614,62 @@ fn map_insert_and_lookup_require_key_and_value_types() {
 }
 
 #[test]
+fn list_push_front_and_length_validate_declared_types() {
+    let mut contract = Contract {
+        schema_version: 3,
+        ledger_fields: vec![LedgerField {
+            id: "items".into(),
+            index: 0,
+            declaration: LedgerFieldKind::List { ty: Type::Field },
+        }],
+        circuits: vec![],
+        stateful_circuits: vec![StatefulCircuit {
+            name: "prepend".into(),
+            parameters: vec![Parameter {
+                name: "value".into(),
+                ty: Type::Field,
+            }],
+            actions: vec![StateAction::ListPushFront {
+                field: "items".into(),
+                index: 0,
+                value: Expr::Parameter {
+                    name: "value".into(),
+                },
+            }],
+            result: Type::Unit,
+            return_value: StateReturn::Unit,
+        }],
+    };
+    assert!(
+        render(&contract)
+            .unwrap()
+            .contains("context.push_front_list(0, __compact_param_0)?")
+    );
+    contract.stateful_circuits[0].parameters[0].ty = Type::Boolean;
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::TypeMismatch {
+            expected: Type::Field,
+            actual: Type::Boolean,
+        })
+    );
+    contract.stateful_circuits[0].actions.clear();
+    contract.stateful_circuits[0].return_value = StateReturn::ListLength {
+        field: "items".into(),
+        index: 0,
+    };
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::TypeMismatch {
+            expected: Type::Unsigned {
+                max: u64::MAX.to_string()
+            },
+            actual: Type::Unit,
+        })
+    );
+}
+
+#[test]
 fn struct_definitions_are_shared_by_name_and_must_match() {
     let pair = Type::Struct {
         name: "Pair".into(),

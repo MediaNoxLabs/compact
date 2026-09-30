@@ -1,0 +1,23 @@
+import CompactStandardLibrary;
+
+export ledger items: List<Field>;
+
+export circuit item_count(): Uint<64> {
+  return items.length();
+}
+
+export circuit items_empty(): Boolean {
+  return items.isEmpty();
+}
+
+export circuit prepend(value: Field): [] {
+  items.pushFront(disclose(value));
+}
+
+export circuit drop_first(): [] {
+  items.popFront();
+}
+
+export circuit clear_items(): [] {
+  items.resetToDefault();
+}

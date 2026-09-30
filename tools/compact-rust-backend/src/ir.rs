@@ -33,6 +33,7 @@ pub enum LedgerFieldKind {
     Counter,
     Cell { ty: Type },
     Set { ty: Type },
+    List { ty: Type },
     Map { key: Type, value: Type },
 }
 
@@ -93,6 +94,14 @@ pub enum StateReturn {
         field: String,
         index: u8,
     },
+    ListLength {
+        field: String,
+        index: u8,
+    },
+    ListIsEmpty {
+        field: String,
+        index: u8,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
@@ -128,6 +137,19 @@ pub enum StateAction {
         value: Expr,
     },
     SetReset {
+        field: String,
+        index: u8,
+    },
+    ListPushFront {
+        field: String,
+        index: u8,
+        value: Expr,
+    },
+    ListPopFront {
+        field: String,
+        index: u8,
+    },
+    ListReset {
         field: String,
         index: u8,
     },

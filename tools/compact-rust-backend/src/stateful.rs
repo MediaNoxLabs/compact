@@ -199,6 +199,50 @@ pub(crate) fn render_stateful_circuit(
                     total_cost += step.gas_cost;
                 });
             }
+            StateAction::MapInsert {
+                field,
+                index,
+                key,
+                value,
+            } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                let LedgerFieldKind::Map {
+                    key: key_ty,
+                    value: value_ty,
+                } = &declaration.declaration
+                else {
+                    return Err(RenderError::UnknownLedgerField(field.clone()));
+                };
+                if declaration.index != *index {
+                    return Err(RenderError::UnknownLedgerField(field.clone()));
+                }
+                let (key, actual_key) = expression(key, &parameters)?;
+                if &actual_key != key_ty {
+                    return Err(RenderError::TypeMismatch {
+                        expected: key_ty.clone(),
+                        actual: actual_key,
+                    });
+                }
+                let (value, actual_value) = expression(value, &parameters)?;
+                if &actual_value != value_ty {
+                    return Err(RenderError::TypeMismatch {
+                        expected: value_ty.clone(),
+                        actual: actual_value,
+                    });
+                }
+                let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+                statements.push(syn::parse_quote! {
+                    let step = context.insert_map(#index, #key, #value)?;
+                });
+                statements.push(syn::parse_quote! {
+                    let context = step.context;
+                });
+                statements.push(syn::parse_quote! {
+                    total_cost += step.gas_cost;
+                });
+            }
         }
     }
     let result_ty = rust_type(&circuit.result)?;
@@ -352,6 +396,58 @@ pub(crate) fn render_stateful_circuit(
             } else {
                 syn::parse_quote!(read_step.result)
             }
+        }
+        StateReturn::MapMember { field, index, key }
+        | StateReturn::MapLookup { field, index, key } => {
+            let declaration = ledger_fields
+                .get(field.as_str())
+                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+            let LedgerFieldKind::Map {
+                key: key_ty,
+                value: value_ty,
+            } = &declaration.declaration
+            else {
+                return Err(RenderError::UnknownLedgerField(field.clone()));
+            };
+            if declaration.index != *index {
+                return Err(RenderError::UnknownLedgerField(field.clone()));
+            }
+            let (key, actual_key) = expression(key, &parameters)?;
+            if &actual_key != key_ty {
+                return Err(RenderError::TypeMismatch {
+                    expected: key_ty.clone(),
+                    actual: actual_key,
+                });
+            }
+            let is_member = matches!(&circuit.return_value, StateReturn::MapMember { .. });
+            let expected = if is_member {
+                Type::Boolean
+            } else {
+                value_ty.clone()
+            };
+            if circuit.result != expected {
+                return Err(RenderError::TypeMismatch {
+                    expected,
+                    actual: circuit.result.clone(),
+                });
+            }
+            let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+            if is_member {
+                statements.push(syn::parse_quote! {
+                    let read_step = context.member_map(#index, #key)?;
+                });
+            } else {
+                statements.push(syn::parse_quote! {
+                    let read_step = context.lookup_map::<_, #result_ty>(#index, #key)?;
+                });
+            }
+            statements.push(syn::parse_quote! {
+                let context = read_step.context;
+            });
+            statements.push(syn::parse_quote! {
+                total_cost += read_step.gas_cost;
+            });
+            syn::parse_quote!(read_step.result)
         }
     };
     let item: syn::Item = syn::parse_quote! {

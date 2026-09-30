@@ -76,6 +76,12 @@ The generated fixture checks membership, uniqueness after a duplicate insert,
 size and emptiness around removal, reset, and independent roots at indices 0
 and 1. The typed IR carries the Set element type for renderer validation.
 
+The first Map slice supports `Map<Boolean, Field>` construction, insertion,
+membership, and lookup. It shares the ledger Map representation and key FAB
+semantics with Set, while storing a typed Cell value. Direct VM and generated
+contract tests cover missing keys, insertion, replacement, and Field decoding.
+The renderer checks both key and value types against the declaration.
+
 The user type slice emits native Rust structs from the typed Compact type
 shape and derives the ledger's `BinaryHashRepr`, `FieldRepr`, and
 `FromFieldRepr` macros. It emits closed enum ordinal conversions with the
@@ -104,7 +110,8 @@ cargo test -p compact-rust-backend -p midnight-compact-runtime \
   -p compact-rust-composite-struct-fixture -p compact-rust-enum-identity-fixture \
   -p compact-rust-cell-struct-fixture -p compact-rust-cell-enum-fixture \
   -p compact-rust-cell-parameter-fixture -p compact-rust-counter-parameter-fixture \
-  -p compact-rust-cell-read-fixture -p compact-rust-set-boolean-fixture
+  -p compact-rust-cell-read-fixture -p compact-rust-set-boolean-fixture \
+  -p compact-rust-map-boolean-field-fixture
 cargo build -p compact-rust-backend --bin compact-rustc
 ```
 

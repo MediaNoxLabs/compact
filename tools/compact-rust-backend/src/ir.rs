@@ -33,6 +33,7 @@ pub enum LedgerFieldKind {
     Counter,
     Cell { ty: Type },
     Set { ty: Type },
+    Map { key: Type, value: Type },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
@@ -74,6 +75,16 @@ pub enum StateReturn {
         field: String,
         index: u8,
     },
+    MapMember {
+        field: String,
+        index: u8,
+        key: Expr,
+    },
+    MapLookup {
+        field: String,
+        index: u8,
+        key: Expr,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
@@ -111,6 +122,12 @@ pub enum StateAction {
     SetReset {
         field: String,
         index: u8,
+    },
+    MapInsert {
+        field: String,
+        index: u8,
+        key: Expr,
+        value: Expr,
     },
 }
 

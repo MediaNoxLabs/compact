@@ -161,6 +161,13 @@
                          (cons "declaration"
                                (object (cons "kind" "set")
                                        (cons "ty" (type-ir (car adt-arg*) src)))))]
+                [(and (eq? adt-name 'Map) (= (length adt-arg*) 2))
+                 (object (cons "id" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-index*))
+                         (cons "declaration"
+                               (object (cons "kind" "map")
+                                       (cons "key" (type-ir (car adt-arg*) src))
+                                       (cons "value" (type-ir (cadr adt-arg*) src)))))]
                 [else (source-errorf src "Rust backend does not yet support this ledger ADT")])]
              [else (source-errorf src "Rust backend does not yet support this ledger field type")])]
           [else (source-errorf owner-src "Rust backend does not yet support nested ledger fields")]))
@@ -255,6 +262,14 @@
                  (object (cons "kind" "set_reset")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*)))]
+                [(and (eq? adt-name 'Map)
+                      (eq? ledger-op 'insert)
+                      (= (length expr*) 2))
+                 (object (cons "kind" "map_insert")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*))
+                         (cons "key" (expression-ir (car expr*) src))
+                         (cons "value" (expression-ir (cadr expr*) src)))]
                 [else (source-errorf src "Rust backend does not yet support this ledger operation")])])]
           [else (source-errorf owner-src "Rust backend does not yet support this state action")]))
 
@@ -310,6 +325,20 @@
                  (object (cons "kind" "set_is_empty")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*)))]
+                [(and (eq? adt-name 'Map)
+                      (eq? ledger-op 'member)
+                      (= (length expr*) 1))
+                 (object (cons "kind" "map_member")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*))
+                         (cons "key" (expression-ir (car expr*) src)))]
+                [(and (eq? adt-name 'Map)
+                      (eq? ledger-op 'lookup)
+                      (= (length expr*) 1))
+                 (object (cons "kind" "map_lookup")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*))
+                         (cons "key" (expression-ir (car expr*) src)))]
                 [else (source-errorf src "Rust backend does not yet support this ledger return operation")])])]
           [else (source-errorf owner-src "Rust backend does not yet support this stateful return value")]))
 

@@ -1,0 +1,15 @@
+import CompactStandardLibrary;
+
+export ledger table: Map<Boolean, Field>;
+
+export circuit put(key: Boolean, value: Field): [] {
+  table.insert(disclose(key), disclose(value));
+}
+
+export circuit has(key: Boolean): Boolean {
+  return table.member(disclose(key));
+}
+
+export circuit get(key: Boolean): Field {
+  return table.lookup(disclose(key));
+}

@@ -501,6 +501,79 @@ fn set_actions_require_the_declared_element_type() {
 }
 
 #[test]
+fn map_insert_and_lookup_require_key_and_value_types() {
+    let mut contract = Contract {
+        schema_version: 3,
+        ledger_fields: vec![LedgerField {
+            id: "table".into(),
+            index: 0,
+            declaration: LedgerFieldKind::Map {
+                key: Type::Boolean,
+                value: Type::Field,
+            },
+        }],
+        circuits: vec![],
+        stateful_circuits: vec![StatefulCircuit {
+            name: "put".into(),
+            parameters: vec![
+                Parameter {
+                    name: "key".into(),
+                    ty: Type::Boolean,
+                },
+                Parameter {
+                    name: "value".into(),
+                    ty: Type::Field,
+                },
+            ],
+            actions: vec![StateAction::MapInsert {
+                field: "table".into(),
+                index: 0,
+                key: Expr::Parameter { name: "key".into() },
+                value: Expr::Parameter {
+                    name: "value".into(),
+                },
+            }],
+            result: Type::Unit,
+            return_value: StateReturn::Unit,
+        }],
+    };
+    assert!(
+        render(&contract)
+            .unwrap()
+            .contains("context.insert_map(0, __compact_param_0, __compact_param_1)?")
+    );
+    contract.stateful_circuits[0].parameters[1].ty = Type::Boolean;
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::TypeMismatch {
+            expected: Type::Field,
+            actual: Type::Boolean,
+        })
+    );
+    contract.stateful_circuits[0].parameters[1].ty = Type::Field;
+    contract.stateful_circuits[0].actions.clear();
+    contract.stateful_circuits[0].result = Type::Field;
+    contract.stateful_circuits[0].return_value = StateReturn::MapLookup {
+        field: "table".into(),
+        index: 0,
+        key: Expr::Parameter { name: "key".into() },
+    };
+    assert!(
+        render(&contract)
+            .unwrap()
+            .contains("context.lookup_map::<_, runtime::Field>(0, __compact_param_0)?")
+    );
+    contract.stateful_circuits[0].result = Type::Boolean;
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::TypeMismatch {
+            expected: Type::Field,
+            actual: Type::Boolean,
+        })
+    );
+}
+
+#[test]
 fn struct_definitions_are_shared_by_name_and_must_match() {
     let pair = Type::Struct {
         name: "Pair".into(),

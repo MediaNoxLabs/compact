@@ -284,8 +284,15 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
         )?;
     }
     for field in &contract.ledger_fields {
-        if let LedgerFieldKind::Cell { ty } | LedgerFieldKind::Set { ty } = &field.declaration {
-            collect_named_types(ty, &mut struct_definitions, &mut enum_definitions)?;
+        match &field.declaration {
+            LedgerFieldKind::Cell { ty } | LedgerFieldKind::Set { ty } => {
+                collect_named_types(ty, &mut struct_definitions, &mut enum_definitions)?;
+            }
+            LedgerFieldKind::Map { key, value } => {
+                collect_named_types(key, &mut struct_definitions, &mut enum_definitions)?;
+                collect_named_types(value, &mut struct_definitions, &mut enum_definitions)?;
+            }
+            LedgerFieldKind::Counter => {}
         }
     }
     let mut ledger_fields = HashMap::new();
@@ -346,6 +353,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
     let constructor_fields = ordered_fields.iter().map(|field| match &field.declaration {
         LedgerFieldKind::Counter => Ok(syn::parse_quote!(runtime::ledger::constructor_counter())),
         LedgerFieldKind::Set { .. } => Ok(syn::parse_quote!(runtime::ledger::constructor_set())),
+        LedgerFieldKind::Map { .. } => Ok(syn::parse_quote!(runtime::ledger::constructor_map())),
         LedgerFieldKind::Cell { ty } => {
             if !matches!(ty, Type::Boolean | Type::Field | Type::Unsigned { .. } | Type::Bytes { .. } | Type::Struct { .. } | Type::Enum { .. }) {
                 return Err(RenderError::UnsupportedLedgerCellType(ty.clone()));

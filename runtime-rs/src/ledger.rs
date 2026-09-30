@@ -205,7 +205,85 @@ pub fn constructor_counter<D: DB>() -> StateValue<D> {
 }
 
 pub fn constructor_set<D: DB>() -> StateValue<D> {
+    constructor_map()
+}
+
+pub fn constructor_map<D: DB>() -> StateValue<D> {
     StateValue::Map(LedgerHashMap::new())
+}
+
+pub fn insert_map<K: CellValue, V: CellValue, D: DB>(
+    context: &QueryContext<D>,
+    field_index: u8,
+    key: K,
+    value: V,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    let program = [
+        Op::Idx {
+            cached: false,
+            push_path: true,
+            path: vec![Key::Value(AlignedValue::from(field_index))].into(),
+        },
+        Op::Push {
+            storage: false,
+            value: constructor_cell(key),
+        },
+        Op::Push {
+            storage: true,
+            value: constructor_cell(value),
+        },
+        Op::Ins {
+            cached: false,
+            n: 1,
+        },
+        Op::Ins { cached: true, n: 1 },
+    ];
+    context.query(&program, gas_limit, cost_model)
+}
+
+pub fn member_map<K: CellValue, D: DB>(
+    context: &QueryContext<D>,
+    field_index: u8,
+    key: K,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<(QueryResults<ResultModeGather, D>, bool), CompactError> {
+    member_set(context, field_index, key, gas_limit, cost_model)
+}
+
+pub fn lookup_map<K: CellValue, V: CellValue, D: DB>(
+    context: &QueryContext<D>,
+    field_index: u8,
+    key: K,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<(QueryResults<ResultModeGather, D>, V), CompactError> {
+    let key =
+        AlignedValue::new(key.into(), K::alignment()).expect("CellValue must match its alignment");
+    let program = [
+        Op::Dup { n: 0 },
+        Op::Idx {
+            cached: false,
+            push_path: false,
+            path: vec![Key::Value(AlignedValue::from(field_index))].into(),
+        },
+        Op::Idx {
+            cached: false,
+            push_path: false,
+            path: vec![Key::Value(key)].into(),
+        },
+        Op::Popeq {
+            cached: false,
+            result: (),
+        },
+    ];
+    let result = context
+        .query(&program, gas_limit, cost_model)
+        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+    let decoded = decode_last_read::<V, D>(&result)?;
+    Ok((result, decoded))
 }
 
 /// Insert a typed element into a root Set through the ledger VM.

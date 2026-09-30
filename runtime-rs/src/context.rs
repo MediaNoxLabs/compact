@@ -66,6 +66,68 @@ pub struct CircuitResult<Private, Output, D: DB = DefaultDB> {
 }
 
 impl<Private, D: DB> CircuitContext<Private, D> {
+    pub fn insert_map<K: CellValue, V: CellValue>(
+        mut self,
+        field_index: u8,
+        key: K,
+        value: V,
+    ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        let result = ledger::insert_map(
+            &self.query,
+            field_index,
+            key,
+            value,
+            self.gas_limit.clone(),
+            &self.cost_model,
+        )
+        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+        self.query = result.context;
+        Ok(CircuitResult {
+            context: self,
+            result: (),
+            gas_cost: result.gas_cost,
+        })
+    }
+
+    pub fn member_map<K: CellValue>(
+        mut self,
+        field_index: u8,
+        key: K,
+    ) -> Result<CircuitResult<Private, bool, D>, CompactError> {
+        let (result, present) = ledger::member_map(
+            &self.query,
+            field_index,
+            key,
+            self.gas_limit.clone(),
+            &self.cost_model,
+        )?;
+        self.query = result.context;
+        Ok(CircuitResult {
+            context: self,
+            result: present,
+            gas_cost: result.gas_cost,
+        })
+    }
+
+    pub fn lookup_map<K: CellValue, V: CellValue>(
+        mut self,
+        field_index: u8,
+        key: K,
+    ) -> Result<CircuitResult<Private, V, D>, CompactError> {
+        let (result, value) = ledger::lookup_map(
+            &self.query,
+            field_index,
+            key,
+            self.gas_limit.clone(),
+            &self.cost_model,
+        )?;
+        self.query = result.context;
+        Ok(CircuitResult {
+            context: self,
+            result: value,
+            gas_cost: result.gas_cost,
+        })
+    }
     pub fn insert_set<T: CellValue>(
         mut self,
         field_index: u8,

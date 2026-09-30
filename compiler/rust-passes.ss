@@ -51,6 +51,7 @@
   (define-pass print-rust : Ltypescript (ir) -> Ltypescript ()
     (definitions
       (include "rust-passes-helpers.ss")
+      (include "rust-type-ir.ss")
       (include "rust-passes-types.ss")
 
       (include "rust-passes-prelude.ss")

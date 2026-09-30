@@ -22,86 +22,76 @@
 ;;;
 ;;; See compiler/README-rust-passes.md for the module map.
 
-      ;; type-rust: walk an Ltypescript Type IR node and produce the
-      ;; corresponding Rust type string. Covers M3-F1 scope: primitives
-      ;; (tfield, tboolean, tunsigned, tbytes), ttuple, and tvector.
-      ;; Aggregate / nominal forms (talias, tenum, tstruct, tcontract,
-      ;; tjubjub, topaque, tunknown, ...) emit a placeholder TODO string
-      ;; tagged with the variant name so later tasks (F2-F4) can locate
-      ;; missing cases. Never crashes on unknown variants.
+      ;; type-rust: the Rust type for an Ltypescript Type node.
+      ;;
+      ;; PROTOTYPE (compact#95): this used to build the string directly. It
+      ;; now builds a `rust-type-ir` value and prints it. The output is
+      ;; byte-identical — that is the point of the first step; what changes is
+      ;; what the code is *able* to say.
       (define (type-rust type)
+        (rust-type->string (type->rust-type type)))
+
+      ;; type->rust-type: Ltypescript Type -> rust-type-ir.
+      ;;
+      ;; Three arms below used to produce `/* TODO M3-F4: ... */` strings.
+      ;; That text is valid-looking Rust in type position: `compactc` exits 0,
+      ;; the fixture regenerates and agrees with itself, and the failure
+      ;; surfaces at `cargo build` with nothing pointing back at the Compact
+      ;; source. They now raise at the lowering site, because the
+      ;; representation has no way to carry them: there is no constructor that
+      ;; takes arbitrary Rust text.
+      (define (type->rust-type type)
         (nanopass-case (Ltypescript Type) type
-          [(tfield ,src) "Fr"]
-          [(tboolean ,src) "bool"]
-          [(tunsigned ,src ,nat) (uint-rust-width nat)]
-          [(tbytes ,src ,len) (format "[u8; ~a]" len)]
+          [(tfield ,src) (make-rt-prim "Fr")]
+          [(tboolean ,src) (make-rt-prim "bool")]
+          [(tunsigned ,src ,nat) (make-rt-prim (uint-rust-width nat))]
+          [(tbytes ,src ,len) (make-rt-array (make-rt-prim "u8") len)]
           [(ttuple ,src ,type* ...)
-           (let ([parts (map type-rust type*)])
-             (cond
-               [(null? parts) "()"]
-               ;; Rust 1-tuples need a trailing comma: (T,)
-               [(null? (cdr parts)) (format "(~a,)" (car parts))]
-               [else
-                (format "(~a)"
-                  (let loop ([xs parts] [acc ""])
-                    (cond
-                      [(null? (cdr xs)) (string-append acc (car xs))]
-                      [else (loop (cdr xs)
-                                  (string-append acc (car xs) ", "))])))]))]
+           (make-rt-tuple (map type->rust-type type*))]
           [(tvector ,src ,len ,type)
-           (format "[~a; ~a]" (type-rust type) len)]
+           (make-rt-array (type->rust-type type) len)]
           [(talias ,src ,nominal? ,type-name ,type)
-           ;; Nominal aliases emit the alias name (the user expects to see
-           ;; `MyId` in signatures, not the expanded underlying form);
-           ;; transparent aliases expand. Compact's `type X = ...` is a
-           ;; transparent alias by default; `nominal type X = ...` is the
-           ;; nominal form. F2 of M3.
-           (if nominal? (symbol->string type-name) (type-rust type))]
+           ;; A nominal alias is an opaque name by design — the user expects
+           ;; `MyId` in a signature, not the expanded form. A transparent
+           ;; alias expands.
+           (if nominal?
+               (make-rt-path (list (symbol->string type-name)))
+               (type->rust-type type))]
           [(topaque ,src ,opaque-type)
-           ;; Compact's opaque types lower to runtime-defined Rust types.
-           ;; "string" uses an OpaqueString newtype (midnight_compact_runtime::std_lib)
-           ;; that carries the Aligned/FieldRepr impls bare String can't have
-           ;; under orphan rules. "Uint8Array" maps to Vec<u8> since Vec<u8>
-           ;; has the needed impls upstream. "JubjubPoint" maps to the
-           ;; upstream alias (orphan-safe repr helpers live in
-           ;; midnight_compact_runtime::jubjub_point_*). Other opaque tags stay flagged.
            (cond
-             [(equal? opaque-type "string") "midnight_compact_runtime::std_lib::OpaqueString"]
-             [(equal? opaque-type "Uint8Array") "Vec<u8>"]
-             [(equal? opaque-type "JubjubPoint") "JubjubPoint"]
-             [else (format "/* TODO M3-F4: topaque ~a */" opaque-type)])]
+             [(equal? opaque-type "string")
+              (make-rt-path (list "midnight_compact_runtime" "std_lib" "OpaqueString"))]
+             [(equal? opaque-type "Uint8Array")
+              (make-rt-generic (make-rt-path (list "Vec")) (list (make-rt-prim "u8")))]
+             [(equal? opaque-type "JubjubPoint")
+              (make-rt-path (list "JubjubPoint"))]
+             [else
+              ;; was: "/* TODO M3-F4: topaque ~a */"
+              (rust-type-unlowerable src 'opaque-type
+                "Opaque<~s> has no Rust lowering" opaque-type)])]
           [(tstruct ,src ,struct-name (,elt-name* ,type*) ...)
-           ;; Stdlib structs (Maybe<T>, MerkleTreePath<#n, T>,
-           ;; MerkleTreePathEntry) resolve to runtime-provided Rust types
-           ;; via stdlib-struct-mappings. Other named structs lower to
-           ;; their bare name; their definitions are emitted by
-           ;; emit-type-decls (H5 / future tasks). For structs whose
-           ;; struct-name collides across `import M<...>` instantiations,
-           ;; struct-rust-name returns the disambiguated name from
-           ;; current-struct-rust-name-ht (keyed by eq? on this type
-           ;; node); otherwise it falls back to the bare struct-name.
            (let ([entry (lookup-stdlib-struct struct-name)])
              (if entry
-                 ((car entry) elt-name* type*)
-                 (symbol->string (struct-rust-name type))))]
+                 ;; The stdlib mappings render their own text (Maybe<T>,
+                 ;; MerkleTreePath<#n, T>). Modelling them properly means
+                 ;; giving each a generic shape; until then they are the
+                 ;; measured remainder, not a hidden one.
+                 (make-rt-foreign ((car entry) elt-name* type*) 'stdlib-struct)
+                 (make-rt-path (list (symbol->string (struct-rust-name type))))))]
           [(tenum ,src ,enum-name ,elt-name ,elt-name* ...)
-           ;; Enum references in type position emit the bare name. The
-           ;; definition (with #[repr(u8)] + variant discriminants) is
-           ;; emitted by emit-type-decls when the enum is exported.
-           ;; Non-exported enum references in circuit bodies are lowered
-           ;; to numeric literals before this pass (see typescript-passes.ss
-           ;; enum-ref handling), so a tenum here implies the enum *is*
-           ;; in scope as a Rust type.
-           (symbol->string enum-name)]
+           (make-rt-path (list (symbol->string enum-name)))]
           [(tcontract ,src ,contract-name (,elt-name* ,pure-dcl* (,type** ...) ,type*) ...)
-           ;; External contract types appear when a contract calls into
-           ;; another. The Compact reference for one contract from another
-           ;; lowers to a `ContractAddress` at runtime (32-byte hash). Mirror
-           ;; the TS path: emit `ContractAddress`. F4 partial; refinements
-           ;; (typed handles per external-contract-name) can come later.
-           "ContractAddress"]
-          [(tunknown) "/* TODO M3-F4: tunknown */"]
-          [else "/* TODO M3-F4: unhandled type variant */"]))
+           ;; A reference to another contract lowers to its address, as the
+           ;; TypeScript path does.
+           (make-rt-prim "ContractAddress")]
+          ;; was: "/* TODO M3-F4: tunknown */"
+          [(tunknown)
+           (rust-type-unlowerable #f 'unknown-type
+             "a value reached the Rust backend with no type information")]
+          ;; was: "/* TODO M3-F4: unhandled type variant */"
+          [else
+           (rust-type-unlowerable #f 'type-variant
+             "no Rust lowering for the type ~a" (unparse-Ltypescript type))]))
 
       ;; type-fingerprint: a disambiguation-INDEPENDENT structural key for a
       ;; Type node. Unlike type-rust it never consults the struct rename
@@ -130,7 +120,15 @@
            ;; transparent alias expands (recurse so a struct underneath is
            ;; seen structurally).
            (if nominal? (list 'alias type-name) (type-fingerprint type))]
-          [else (type-rust type)]))
+          ;; PROTOTYPE (compact#95): was `(type-rust type)`. A fingerprint is a
+          ;; structural *key*, not emitted Rust, so it must stay total over
+          ;; every Type node — including the ones that have no Rust lowering.
+          ;; Delegating to `type-rust` was harmless only while unlowerable
+          ;; types produced a placeholder string; once they refuse, computing
+          ;; a key for `export {Maybe}` fails on its type variable `T`.
+          ;; The vehicle hit the identical interaction during CPT-008 and
+          ;; resolved it the same way.
+          [else (list 'other (unparse-Ltypescript type))]))
 
       ;; tstruct-fingerprint: a structural fingerprint of a tstruct/tenum
       ;; Type node, used to distinguish two `import M<...>` instantiations

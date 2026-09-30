@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "circuits": [
+    {
+      "name": "field_add",
+      "parameters": [
+        {
+          "name": "left",
+          "ty": {
+            "kind": "field"
+          }
+        },
+        {
+          "name": "right",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "body": {
+        "kind": "add",
+        "left": {
+          "kind": "parameter",
+          "name": "left"
+        },
+        "right": {
+          "kind": "parameter",
+          "name": "right"
+        }
+      }
+    }
+  ]
+}

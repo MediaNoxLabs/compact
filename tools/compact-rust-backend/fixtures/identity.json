@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "circuits": [
+    {
+      "name": "identity",
+      "parameters": [{ "name": "value", "ty": { "kind": "field" } }],
+      "result": { "kind": "field" },
+      "body": { "kind": "parameter", "name": "value" }
+    }
+  ]
+}

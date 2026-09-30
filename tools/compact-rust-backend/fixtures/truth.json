@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "circuits": [
+    {
+      "name": "truth",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "body": {
+        "kind": "boolean",
+        "value": true
+      }
+    }
+  ]
+}

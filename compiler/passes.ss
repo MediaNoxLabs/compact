@@ -34,6 +34,7 @@
           (analysis-passes)
           (save-contract-info-passes)
           (typescript-passes)
+          (rust-ir-passes)
           (circuit-passes)
           (zkir-passes)
           (zkir-v3-passes)
@@ -146,6 +147,10 @@
                           (with-target-ports
                             '((contract-info.json . "compiler/contract-info.json"))
                             (run-passes save-contract-info-passes analyzed-ir proof-circuit-name*))
+                          (when (emit-rust-ir)
+                            (with-target-ports
+                              '((rust.ir.json . "contract/compact-rust-ir.json"))
+                              (run-passes rust-ir-passes analyzed-ir)))
                           (with-target-ports
                             (map (lambda (sym) (cons sym (format "zkir/~a.zkir" sym)))
                                  proof-circuit-name*)

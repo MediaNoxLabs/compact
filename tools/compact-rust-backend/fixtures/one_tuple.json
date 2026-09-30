@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "circuits": [
+    {
+      "name": "one_tuple",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "tuple",
+        "elements": [
+          {
+            "kind": "field"
+          }
+        ]
+      },
+      "body": {
+        "kind": "tuple",
+        "elements": [
+          {
+            "kind": "parameter",
+            "name": "value"
+          }
+        ]
+      }
+    }
+  ]
+}

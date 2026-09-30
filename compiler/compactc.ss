@@ -56,6 +56,10 @@ The following flags, if present, affect the compiler's behavior as follows:
     printing a warning message, the generation of proving keys when it cannot
     find zkir.
 
+  --emit-rust-ir writes contract/compact-rust-ir.json for the independent
+    Rust backend. The current slice supports pure circuits with Field,
+    Boolean, unit, tuple, and vector types; unsupported constructs fail.
+
   --no-communications-commitment omits the contract communications commitment
     that enables data integrity for contract-to-contract calls.
 
@@ -92,6 +96,7 @@ The following flags, if present, affect the compiler's behavior as follows:
              [(--runtime-version) $ (begin (print-runtime-version) (exit))]
              [(--vscode)]
              [(--skip-zk)]
+             [(--emit-rust-ir)]
              [(--no-communications-commitment)]
              [(--sourceRoot) (string source-root)]
              [(--compact-path) (string search-list)]
@@ -104,6 +109,7 @@ The following flags, if present, affect the compiler's behavior as follows:
      (check-pathname target-directory-pathname)
      (parameterize ([trace-passes ?--trace-passes]
                     [skip-zk ?--skip-zk]
+                    [emit-rust-ir ?--emit-rust-ir]
                     [no-communications-commitment ?--no-communications-commitment]
                     [feature-zkir-v3 ?--feature-zkir-v3]
                     [compact-path (if ?--compact-path (split-search-path search-list) (compact-path))]

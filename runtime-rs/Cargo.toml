@@ -1,0 +1,12 @@
+[package]
+name = "midnight-compact-runtime"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+description = "Native Compact semantics on Midnight ledger primitives"
+
+[dependencies]
+midnight-base-crypto = "=1.0.0"
+# ledger-8.0.2 publishes transient-crypto 2.0.1. Keep the runtime on the
+# same API and encoding line as this Compact branch's flake input.
+midnight-transient-crypto = "=2.0.1"

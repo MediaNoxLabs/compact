@@ -1,0 +1,5 @@
+import CompactStandardLibrary;
+
+export circuit one_tuple(value: Field): [Field] {
+  return [value];
+}

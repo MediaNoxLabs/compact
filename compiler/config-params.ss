@@ -28,6 +28,10 @@
 
   (export-parameter skip-zk #t)
 
+  ; Emit a versioned, typed Compact-to-Rust interchange file. The Rust
+  ; renderer is a separate executable so Scheme never constructs Rust text.
+  (export-parameter emit-rust-ir #f)
+
   ; default source path
   (export-parameter compact-path (split-search-path (or (getenv "COMPACT_PATH") "")))
 

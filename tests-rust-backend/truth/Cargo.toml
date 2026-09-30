@@ -1,0 +1,11 @@
+[package]
+name = "compact-rust-truth-fixture"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+
+[lib]
+path = "lib.rs"
+
+[dependencies]
+midnight-compact-runtime = { path = "../../runtime-rs" }

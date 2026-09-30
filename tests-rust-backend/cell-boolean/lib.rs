@@ -2,11 +2,12 @@
 
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 1);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 2);
 }
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 1);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 2);
+    pub trait Witnesses<Private> {}
     pub fn initial_state<Private>(
         context: runtime::context::ConstructorContext<Private>,
     ) -> runtime::context::ConstructorResult<Private> {
@@ -20,6 +21,7 @@ pub mod ledger_contract {
         context: runtime::context::CircuitContext<Private>,
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
+        let private_transcript_outputs = Vec::new();
         let step = context.write_cell(0, true)?;
         let context = step.context;
         total_cost += step.gas_cost;
@@ -27,6 +29,7 @@ pub mod ledger_contract {
             context,
             result: (),
             gas_cost: total_cost,
+            private_transcript_outputs,
         })
     }
 }

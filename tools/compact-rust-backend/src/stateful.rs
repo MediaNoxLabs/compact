@@ -5,13 +5,14 @@ use std::collections::HashMap;
 
 use crate::ir::{
     CounterAmount, LedgerField, LedgerFieldKind, StateAction, StateReturn, StatefulCircuit,
-    StructField, Type,
+    StructField, Type, WitnessDeclaration,
 };
 use crate::{RenderError, expression, ident, rust_type};
 
 pub(crate) fn render_stateful_circuit(
     circuit: &StatefulCircuit,
     ledger_fields: &HashMap<&str, &LedgerField>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
 ) -> Result<syn::Item, RenderError> {
     let name = ident(&circuit.name)?;
     let mut parameters = HashMap::new();
@@ -387,6 +388,7 @@ pub(crate) fn render_stateful_circuit(
         }
     }
     let result_ty = rust_type(&circuit.result)?;
+    let mut uses_witness = false;
     let return_expr: syn::Expr = match &circuit.return_value {
         StateReturn::Unit => {
             if circuit.result != Type::Unit {
@@ -705,15 +707,97 @@ pub(crate) fn render_stateful_circuit(
             });
             syn::parse_quote!(read_step.result)
         }
+        StateReturn::WitnessCall { name, arguments } => {
+            uses_witness = true;
+            let declaration = witnesses
+                .get(name.as_str())
+                .ok_or_else(|| RenderError::UnknownWitness(name.clone()))?;
+            if arguments.len() != declaration.parameters.len() {
+                return Err(RenderError::ArgumentCount {
+                    circuit: name.clone(),
+                    expected: declaration.parameters.len(),
+                    actual: arguments.len(),
+                });
+            }
+            if circuit.result != declaration.result {
+                return Err(RenderError::TypeMismatch {
+                    expected: declaration.result.clone(),
+                    actual: circuit.result.clone(),
+                });
+            }
+            let mut rendered_arguments = Vec::<syn::Expr>::new();
+            for (argument, parameter) in arguments.iter().zip(&declaration.parameters) {
+                let (rendered, actual) = expression(argument, &parameters)?;
+                if actual != parameter.ty {
+                    return Err(RenderError::TypeMismatch {
+                        expected: parameter.ty.clone(),
+                        actual,
+                    });
+                }
+                rendered_arguments.push(rendered);
+            }
+            let witness_name = ident(name)?;
+            statements.push(syn::parse_quote! {
+                let mut context = context;
+            });
+            statements.push(syn::parse_quote! {
+                let (next_private_state, witness_result) =
+                    witnesses.#witness_name(context.witness_context(), #(#rendered_arguments),*);
+            });
+            statements.push(syn::parse_quote! {
+                context.private_state = next_private_state;
+            });
+            statements.push(syn::parse_quote! {
+                let private_transcript_outputs =
+                    vec![runtime::fab::AlignedValue::from(witness_result.clone())];
+            });
+            syn::parse_quote!(witness_result)
+        }
     };
-    let item: syn::Item = syn::parse_quote! {
-        pub fn #name<Private>(
-            context: runtime::context::CircuitContext<Private>,
-            #(#args),*
-        ) -> Result<runtime::context::CircuitResult<Private, #result_ty>, runtime::CompactError> {
-            let mut total_cost = runtime::context::RunningCost::default();
-            #(#statements)*
-            Ok(runtime::context::CircuitResult { context, result: #return_expr, gas_cost: total_cost })
+    let transcript_init: Option<syn::Stmt> = if uses_witness {
+        None
+    } else {
+        Some(syn::parse_quote!(let private_transcript_outputs = Vec::new();))
+    };
+    let cost_init: syn::Stmt = if uses_witness && circuit.actions.is_empty() {
+        syn::parse_quote!(let total_cost = runtime::context::RunningCost::default();)
+    } else {
+        syn::parse_quote!(let mut total_cost = runtime::context::RunningCost::default();)
+    };
+    let item: syn::Item = if uses_witness {
+        syn::parse_quote! {
+            pub fn #name<Private, W: Witnesses<Private>>(
+                context: runtime::context::CircuitContext<Private>,
+                witnesses: &W,
+                #(#args),*
+            ) -> Result<runtime::context::CircuitResult<Private, #result_ty>, runtime::CompactError> {
+                #cost_init
+                #transcript_init
+                #(#statements)*
+                Ok(runtime::context::CircuitResult {
+                    context,
+                    result: #return_expr,
+                    gas_cost: total_cost,
+                    private_transcript_outputs,
+                })
+            }
+        }
+    } else {
+        syn::parse_quote! {
+            pub fn #name<Private>(
+                context: runtime::context::CircuitContext<Private>,
+                #(#args),*
+            ) -> Result<runtime::context::CircuitResult<Private, #result_ty>, runtime::CompactError> {
+                #cost_init
+                #transcript_init
+                #(#statements)*
+                Ok(runtime::context::CircuitResult {
+                    context,
+                    result: #return_expr,
+                    gas_cost: total_cost,
+                    private_transcript_outputs,
+                })
+            }
         }
     };
     Ok(item)

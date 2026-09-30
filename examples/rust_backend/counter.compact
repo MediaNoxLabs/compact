@@ -1,0 +1,11 @@
+import CompactStandardLibrary;
+
+export ledger round: Counter;
+
+export circuit increment(): [] {
+  round.increment(1);
+}
+
+export circuit read_round(): Uint<64> {
+  return round.read();
+}

@@ -3,13 +3,16 @@
 pub mod ir;
 mod stateful;
 
-const RUNTIME_ABI_VERSION: u32 = 1;
+const RUNTIME_ABI_VERSION: u32 = 2;
 
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::error::Error;
 use std::fmt;
 
-use ir::{Contract, Expr, LedgerFieldKind, PureCircuit, SCHEMA_VERSION, StructField, Type};
+use ir::{
+    Contract, Expr, LedgerFieldKind, PureCircuit, SCHEMA_VERSION, StructField, Type,
+    WitnessDeclaration,
+};
 use proc_macro2::Span;
 use quote::quote;
 
@@ -24,6 +27,8 @@ pub enum RenderError {
         max: String,
     },
     DuplicateCircuit(String),
+    DuplicateWitness(String),
+    UnknownWitness(String),
     DuplicateParameter(String),
     DuplicateLedgerField(String),
     InvalidLedgerIndex(u8),
@@ -73,6 +78,8 @@ impl fmt::Display for RenderError {
                 )
             }
             Self::DuplicateCircuit(name) => write!(f, "duplicate circuit {name:?}"),
+            Self::DuplicateWitness(name) => write!(f, "duplicate witness {name:?}"),
+            Self::UnknownWitness(name) => write!(f, "unknown witness {name:?}"),
             Self::DuplicateParameter(name) => write!(f, "duplicate parameter {name:?}"),
             Self::DuplicateLedgerField(name) => write!(f, "duplicate ledger field {name:?}"),
             Self::InvalidLedgerIndex(index) => {
@@ -555,6 +562,20 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
             &mut enum_definitions,
         )?;
     }
+    for witness in &contract.witnesses {
+        for parameter in &witness.parameters {
+            collect_named_types(
+                &parameter.ty,
+                &mut struct_definitions,
+                &mut enum_definitions,
+            )?;
+        }
+        collect_named_types(
+            &witness.result,
+            &mut struct_definitions,
+            &mut enum_definitions,
+        )?;
+    }
     for circuit in &contract.stateful_circuits {
         for parameter in &circuit.parameters {
             collect_named_types(
@@ -599,6 +620,37 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
         .iter()
         .map(|circuit| (circuit.name.as_str(), circuit))
         .collect();
+    let mut witness_declarations = HashMap::<&str, &WitnessDeclaration>::new();
+    let mut witness_methods = Vec::<syn::TraitItemFn>::new();
+    for witness in &contract.witnesses {
+        let name = ident(&witness.name)?;
+        if witness_declarations
+            .insert(witness.name.as_str(), witness)
+            .is_some()
+        {
+            return Err(RenderError::DuplicateWitness(witness.name.clone()));
+        }
+        let mut args = Vec::<syn::FnArg>::new();
+        let mut parameter_names = HashSet::new();
+        for (index, parameter) in witness.parameters.iter().enumerate() {
+            ident(&parameter.name)?;
+            if !parameter_names.insert(parameter.name.as_str()) {
+                return Err(RenderError::DuplicateParameter(parameter.name.clone()));
+            }
+            let parameter_name =
+                syn::Ident::new(&format!("__compact_param_{index}"), Span::call_site());
+            let ty = rust_type(&parameter.ty)?;
+            args.push(syn::parse_quote!(#parameter_name: #ty));
+        }
+        let result = rust_type(&witness.result)?;
+        witness_methods.push(syn::parse_quote! {
+            fn #name(
+                &self,
+                context: runtime::context::WitnessContext<'_, Private>,
+                #(#args),*
+            ) -> (Private, #result);
+        });
+    }
     let mut items = Vec::new();
     for circuit in &contract.circuits {
         let name = ident(&circuit.name)?;
@@ -640,7 +692,11 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
         if !names.insert(circuit.name.as_str()) {
             return Err(RenderError::DuplicateCircuit(circuit.name.clone()));
         }
-        stateful_items.push(stateful::render_stateful_circuit(circuit, &ledger_fields)?);
+        stateful_items.push(stateful::render_stateful_circuit(
+            circuit,
+            &ledger_fields,
+            &witness_declarations,
+        )?);
     }
 
     let constructor_fields = ordered_fields.iter().map(|field| match &field.declaration {
@@ -749,24 +805,29 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
             }
         })
     };
-    let ledger_module: Option<syn::Item> =
-        if contract.ledger_fields.is_empty() && contract.stateful_circuits.is_empty() {
-            None
-        } else {
-            Some(syn::parse_quote! {
-                pub mod ledger_contract {
-                    use midnight_compact_runtime as runtime;
-                    const _: () = assert!(runtime::RUST_RUNTIME_ABI == #runtime_abi);
-                    pub fn initial_state<Private>(
-                        context: runtime::context::ConstructorContext<Private>,
-                    ) -> runtime::context::ConstructorResult<Private> {
-                        let state = runtime::ledger::contract_state(vec![#(#constructor_fields),*]);
-                        runtime::context::ConstructorResult::new(context, state)
-                    }
-                    #(#stateful_items)*
+    let ledger_module: Option<syn::Item> = if contract.ledger_fields.is_empty()
+        && contract.stateful_circuits.is_empty()
+        && contract.witnesses.is_empty()
+    {
+        None
+    } else {
+        Some(syn::parse_quote! {
+            pub mod ledger_contract {
+                use midnight_compact_runtime as runtime;
+                const _: () = assert!(runtime::RUST_RUNTIME_ABI == #runtime_abi);
+                pub trait Witnesses<Private> {
+                    #(#witness_methods)*
                 }
-            })
-        };
+                pub fn initial_state<Private>(
+                    context: runtime::context::ConstructorContext<Private>,
+                ) -> runtime::context::ConstructorResult<Private> {
+                    let state = runtime::ledger::contract_state(vec![#(#constructor_fields),*]);
+                    runtime::context::ConstructorResult::new(context, state)
+                }
+                #(#stateful_items)*
+            }
+        })
+    };
     let file: syn::File = syn::parse2(quote! {
         #types_module
         pub mod pure_circuits {

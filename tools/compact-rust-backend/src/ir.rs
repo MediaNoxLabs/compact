@@ -7,15 +7,25 @@
 
 use serde::{Deserialize, Serialize};
 
-pub const SCHEMA_VERSION: u32 = 3;
+pub const SCHEMA_VERSION: u32 = 4;
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Contract {
     pub schema_version: u32,
     pub ledger_fields: Vec<LedgerField>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub witnesses: Vec<WitnessDeclaration>,
     pub circuits: Vec<PureCircuit>,
     pub stateful_circuits: Vec<StatefulCircuit>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct WitnessDeclaration {
+    pub name: String,
+    pub parameters: Vec<Parameter>,
+    pub result: Type,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
@@ -105,6 +115,10 @@ pub enum StateReturn {
     ListHead {
         field: String,
         index: u8,
+    },
+    WitnessCall {
+        name: String,
+        arguments: Vec<Expr>,
     },
 }
 

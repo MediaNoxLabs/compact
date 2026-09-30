@@ -21,11 +21,12 @@ pub mod types {
 }
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 1);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 2);
 }
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 1);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 2);
+    pub trait Witnesses<Private> {}
     pub fn initial_state<Private>(
         context: runtime::context::ConstructorContext<Private>,
     ) -> runtime::context::ConstructorResult<Private> {
@@ -39,6 +40,7 @@ pub mod ledger_contract {
         runtime::CompactError,
     > {
         let mut total_cost = runtime::context::RunningCost::default();
+        let private_transcript_outputs = Vec::new();
         let read_step = context.length_list(0)?;
         let context = read_step.context;
         total_cost += read_step.gas_cost;
@@ -47,12 +49,14 @@ pub mod ledger_contract {
             result: runtime::BoundedUint::<18446744073709551615>::new(read_step.result as u128)
                 .expect("ledger List length fits Uint<64>"),
             gas_cost: total_cost,
+            private_transcript_outputs,
         })
     }
     pub fn items_empty<Private>(
         context: runtime::context::CircuitContext<Private>,
     ) -> Result<runtime::context::CircuitResult<Private, bool>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
+        let private_transcript_outputs = Vec::new();
         let read_step = context.is_empty_list(0)?;
         let context = read_step.context;
         total_cost += read_step.gas_cost;
@@ -60,6 +64,7 @@ pub mod ledger_contract {
             context,
             result: read_step.result,
             gas_cost: total_cost,
+            private_transcript_outputs,
         })
     }
     pub fn first_item<Private>(
@@ -67,6 +72,7 @@ pub mod ledger_contract {
     ) -> Result<runtime::context::CircuitResult<Private, crate::types::Maybe>, runtime::CompactError>
     {
         let mut total_cost = runtime::context::RunningCost::default();
+        let private_transcript_outputs = Vec::new();
         let read_step = context.head_list::<runtime::Field, crate::types::Maybe>(0)?;
         let context = read_step.context;
         total_cost += read_step.gas_cost;
@@ -74,6 +80,7 @@ pub mod ledger_contract {
             context,
             result: read_step.result,
             gas_cost: total_cost,
+            private_transcript_outputs,
         })
     }
     pub fn prepend<Private>(
@@ -81,6 +88,7 @@ pub mod ledger_contract {
         __compact_param_0: runtime::Field,
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
+        let private_transcript_outputs = Vec::new();
         let step = context.push_front_list(0, __compact_param_0)?;
         let context = step.context;
         total_cost += step.gas_cost;
@@ -88,12 +96,14 @@ pub mod ledger_contract {
             context,
             result: (),
             gas_cost: total_cost,
+            private_transcript_outputs,
         })
     }
     pub fn drop_first<Private>(
         context: runtime::context::CircuitContext<Private>,
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
+        let private_transcript_outputs = Vec::new();
         let step = context.pop_front_list(0)?;
         let context = step.context;
         total_cost += step.gas_cost;
@@ -101,12 +111,14 @@ pub mod ledger_contract {
             context,
             result: (),
             gas_cost: total_cost,
+            private_transcript_outputs,
         })
     }
     pub fn clear_items<Private>(
         context: runtime::context::CircuitContext<Private>,
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
+        let private_transcript_outputs = Vec::new();
         let step = context.reset_list(0)?;
         let context = step.context;
         total_cost += step.gas_cost;
@@ -114,6 +126,7 @@ pub mod ledger_contract {
             context,
             result: (),
             gas_cost: total_cost,
+            private_transcript_outputs,
         })
     }
 }

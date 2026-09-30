@@ -1,12 +1,13 @@
 use compact_rust_backend::ir::{
     Contract, CounterAmount, Expr, LedgerField, LedgerFieldKind, LocalBinding, Parameter,
-    PureCircuit, StateAction, StateReturn, StatefulCircuit, StructField, Type,
+    PureCircuit, StateAction, StateReturn, StatefulCircuit, StructField, Type, WitnessDeclaration,
 };
 use compact_rust_backend::{RenderError, render};
 
 fn identity(result: Type, body: Expr) -> Contract {
     Contract {
-        schema_version: 3,
+        schema_version: 4,
+        witnesses: vec![],
         ledger_fields: vec![],
         circuits: vec![PureCircuit {
             name: "identity".into(),
@@ -93,7 +94,7 @@ fn rejects_bad_schema_and_unknown_references() {
     );
     contract.schema_version = 2;
     assert_eq!(render(&contract), Err(RenderError::SchemaVersion(2)));
-    contract.schema_version = 3;
+    contract.schema_version = 4;
     contract.circuits[0].body = Expr::Parameter {
         name: "missing".into(),
     };
@@ -368,7 +369,8 @@ fn refuses_to_add_a_boolean_to_a_field() {
 fn rejects_noncanonical_or_unsupported_unsigned_maxima() {
     for max in ["08", "-1", "340282366920938463463374607431768211456"] {
         let contract = Contract {
-            schema_version: 3,
+            schema_version: 4,
+            witnesses: vec![],
             ledger_fields: vec![],
             circuits: vec![PureCircuit {
                 name: "id_u".into(),
@@ -392,17 +394,73 @@ fn rejects_noncanonical_or_unsupported_unsigned_maxima() {
 
 #[test]
 fn unknown_json_fields_are_rejected() {
-    let json = r#"{"schema_version":3,"ledger_fields":[],"circuits":[],"stateful_circuits":[],"rust_source":"panic!()"}"#;
+    let json = r#"{"schema_version":4,"ledger_fields":[],"circuits":[],"stateful_circuits":[],"rust_source":"panic!()"}"#;
     assert!(serde_json::from_str::<Contract>(json).is_err());
 
-    let json = r#"{"schema_version":3,"ledger_fields":[{"id":"round","index":0,"declaration":{"kind":"counter"},"rust_source":"panic!()"}],"circuits":[],"stateful_circuits":[]}"#;
+    let json = r#"{"schema_version":4,"ledger_fields":[{"id":"round","index":0,"declaration":{"kind":"counter"},"rust_source":"panic!()"}],"circuits":[],"stateful_circuits":[]}"#;
     assert!(serde_json::from_str::<Contract>(json).is_err());
+}
+
+#[test]
+fn witness_calls_require_a_declared_witness_and_matching_signature() {
+    let mut contract = Contract {
+        schema_version: 4,
+        ledger_fields: vec![],
+        witnesses: vec![WitnessDeclaration {
+            name: "secret".into(),
+            parameters: vec![Parameter {
+                name: "value".into(),
+                ty: Type::Boolean,
+            }],
+            result: Type::Field,
+        }],
+        circuits: vec![],
+        stateful_circuits: vec![StatefulCircuit {
+            name: "read_secret".into(),
+            parameters: vec![Parameter {
+                name: "flag".into(),
+                ty: Type::Boolean,
+            }],
+            actions: vec![],
+            result: Type::Field,
+            return_value: StateReturn::WitnessCall {
+                name: "secret".into(),
+                arguments: vec![Expr::Parameter {
+                    name: "flag".into(),
+                }],
+            },
+        }],
+    };
+    let source = render(&contract).unwrap();
+    syn::parse_file(&source).unwrap();
+    assert!(source.contains("pub trait Witnesses<Private>"));
+    assert!(source.contains("private_transcript_outputs"));
+
+    contract.witnesses.clear();
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::UnknownWitness("secret".into()))
+    );
+    contract.witnesses.push(WitnessDeclaration {
+        name: "secret".into(),
+        parameters: vec![],
+        result: Type::Field,
+    });
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::ArgumentCount {
+            circuit: "secret".into(),
+            expected: 0,
+            actual: 1,
+        })
+    );
 }
 
 #[test]
 fn state_action_must_reference_the_declared_ledger_field_and_index() {
     let mut contract = Contract {
-        schema_version: 3,
+        schema_version: 4,
+        witnesses: vec![],
         ledger_fields: vec![LedgerField {
             id: "round".into(),
             index: 0,
@@ -471,7 +529,8 @@ fn state_action_must_reference_the_declared_ledger_field_and_index() {
 #[test]
 fn stateful_parameters_are_checked_before_cell_writes() {
     let mut contract = Contract {
-        schema_version: 3,
+        schema_version: 4,
+        witnesses: vec![],
         ledger_fields: vec![LedgerField {
             id: "flag".into(),
             index: 0,
@@ -521,7 +580,8 @@ fn stateful_parameters_are_checked_before_cell_writes() {
 #[test]
 fn counter_parameter_requires_uint16_and_a_known_name() {
     let mut contract = Contract {
-        schema_version: 3,
+        schema_version: 4,
+        witnesses: vec![],
         ledger_fields: vec![LedgerField {
             id: "round".into(),
             index: 0,
@@ -580,7 +640,8 @@ fn counter_parameter_requires_uint16_and_a_known_name() {
 #[test]
 fn ledger_read_return_must_match_the_declared_cell() {
     let mut contract = Contract {
-        schema_version: 3,
+        schema_version: 4,
+        witnesses: vec![],
         ledger_fields: vec![LedgerField {
             id: "flag".into(),
             index: 0,
@@ -624,7 +685,8 @@ fn ledger_read_return_must_match_the_declared_cell() {
 #[test]
 fn counter_read_returns_uint64() {
     let mut contract = Contract {
-        schema_version: 3,
+        schema_version: 4,
+        witnesses: vec![],
         ledger_fields: vec![LedgerField {
             id: "round".into(),
             index: 0,
@@ -662,7 +724,8 @@ fn counter_read_returns_uint64() {
 #[test]
 fn set_actions_require_the_declared_element_type() {
     let mut contract = Contract {
-        schema_version: 3,
+        schema_version: 4,
+        witnesses: vec![],
         ledger_fields: vec![LedgerField {
             id: "seen".into(),
             index: 0,
@@ -725,7 +788,8 @@ fn set_actions_require_the_declared_element_type() {
 #[test]
 fn map_insert_and_lookup_require_key_and_value_types() {
     let mut contract = Contract {
-        schema_version: 3,
+        schema_version: 4,
+        witnesses: vec![],
         ledger_fields: vec![LedgerField {
             id: "table".into(),
             index: 0,
@@ -838,7 +902,8 @@ fn map_insert_and_lookup_require_key_and_value_types() {
 #[test]
 fn list_push_front_and_length_validate_declared_types() {
     let mut contract = Contract {
-        schema_version: 3,
+        schema_version: 4,
+        witnesses: vec![],
         ledger_fields: vec![LedgerField {
             id: "items".into(),
             index: 0,
@@ -931,7 +996,8 @@ fn struct_definitions_are_shared_by_name_and_must_match() {
         }],
     };
     let mut contract = Contract {
-        schema_version: 3,
+        schema_version: 4,
+        witnesses: vec![],
         ledger_fields: vec![],
         circuits: vec![PureCircuit {
             name: "identity".into(),

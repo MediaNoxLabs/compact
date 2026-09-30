@@ -2,11 +2,12 @@
 
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 1);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 2);
 }
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 1);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 2);
+    pub trait Witnesses<Private> {}
     pub fn initial_state<Private>(
         context: runtime::context::ConstructorContext<Private>,
     ) -> runtime::context::ConstructorResult<Private> {
@@ -21,6 +22,7 @@ pub mod ledger_contract {
         __compact_param_0: bool,
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
+        let private_transcript_outputs = Vec::new();
         let step = context.insert_set(0, __compact_param_0)?;
         let context = step.context;
         total_cost += step.gas_cost;
@@ -28,6 +30,7 @@ pub mod ledger_contract {
             context,
             result: (),
             gas_cost: total_cost,
+            private_transcript_outputs,
         })
     }
     pub fn contains<Private>(
@@ -35,6 +38,7 @@ pub mod ledger_contract {
         __compact_param_0: bool,
     ) -> Result<runtime::context::CircuitResult<Private, bool>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
+        let private_transcript_outputs = Vec::new();
         let read_step = context.member_set(0, __compact_param_0)?;
         let context = read_step.context;
         total_cost += read_step.gas_cost;
@@ -42,6 +46,7 @@ pub mod ledger_contract {
             context,
             result: read_step.result,
             gas_cost: total_cost,
+            private_transcript_outputs,
         })
     }
     pub fn add_field<Private>(
@@ -49,6 +54,7 @@ pub mod ledger_contract {
         __compact_param_0: runtime::Field,
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
+        let private_transcript_outputs = Vec::new();
         let step = context.insert_set(1, __compact_param_0)?;
         let context = step.context;
         total_cost += step.gas_cost;
@@ -56,6 +62,7 @@ pub mod ledger_contract {
             context,
             result: (),
             gas_cost: total_cost,
+            private_transcript_outputs,
         })
     }
     pub fn contains_field<Private>(
@@ -63,6 +70,7 @@ pub mod ledger_contract {
         __compact_param_0: runtime::Field,
     ) -> Result<runtime::context::CircuitResult<Private, bool>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
+        let private_transcript_outputs = Vec::new();
         let read_step = context.member_set(1, __compact_param_0)?;
         let context = read_step.context;
         total_cost += read_step.gas_cost;
@@ -70,6 +78,7 @@ pub mod ledger_contract {
             context,
             result: read_step.result,
             gas_cost: total_cost,
+            private_transcript_outputs,
         })
     }
     pub fn remove<Private>(
@@ -77,6 +86,7 @@ pub mod ledger_contract {
         __compact_param_0: bool,
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
+        let private_transcript_outputs = Vec::new();
         let step = context.remove_set(0, __compact_param_0)?;
         let context = step.context;
         total_cost += step.gas_cost;
@@ -84,6 +94,7 @@ pub mod ledger_contract {
             context,
             result: (),
             gas_cost: total_cost,
+            private_transcript_outputs,
         })
     }
     pub fn seen_size<Private>(
@@ -93,20 +104,23 @@ pub mod ledger_contract {
         runtime::CompactError,
     > {
         let mut total_cost = runtime::context::RunningCost::default();
+        let private_transcript_outputs = Vec::new();
         let read_step = context.size_set(0)?;
         let context = read_step.context;
         total_cost += read_step.gas_cost;
         Ok(runtime::context::CircuitResult {
             context,
             result: runtime::BoundedUint::<18446744073709551615>::new(read_step.result as u128)
-                .expect("ledger Set size fits Uint<64>"),
+                .expect("ledger collection size fits Uint<64>"),
             gas_cost: total_cost,
+            private_transcript_outputs,
         })
     }
     pub fn seen_is_empty<Private>(
         context: runtime::context::CircuitContext<Private>,
     ) -> Result<runtime::context::CircuitResult<Private, bool>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
+        let private_transcript_outputs = Vec::new();
         let read_step = context.is_empty_set(0)?;
         let context = read_step.context;
         total_cost += read_step.gas_cost;
@@ -114,12 +128,14 @@ pub mod ledger_contract {
             context,
             result: read_step.result,
             gas_cost: total_cost,
+            private_transcript_outputs,
         })
     }
     pub fn reset_fields<Private>(
         context: runtime::context::CircuitContext<Private>,
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
+        let private_transcript_outputs = Vec::new();
         let step = context.reset_set(1)?;
         let context = step.context;
         total_cost += step.gas_cost;
@@ -127,6 +143,7 @@ pub mod ledger_contract {
             context,
             result: (),
             gas_cost: total_cost,
+            private_transcript_outputs,
         })
     }
 }

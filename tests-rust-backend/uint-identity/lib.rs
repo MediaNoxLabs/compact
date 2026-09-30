@@ -2,7 +2,7 @@
 
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 1);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 2);
     pub fn uint_identity(
         value: runtime::BoundedUint<255>,
     ) -> Result<runtime::BoundedUint<255>, runtime::CompactError> {

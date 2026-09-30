@@ -268,6 +268,26 @@
           '()
           export-alist))
 
+      (define (witness-declaration-ir pelt declarations)
+        (nanopass-case (Lnodisclose Program-Element) pelt
+          [(witness ,src ,function-name (,arg* ...) ,type)
+           (cons (object (cons "name" (symbol->string (id-sym function-name)))
+                         (cons "parameters" (list->vector (map (lambda (arg) (argument-ir arg src)) arg*)))
+                         (cons "result" (type-ir type src)))
+                 declarations)]
+          [else declarations]))
+
+      (define (witness-id-table pelt*)
+        (let ([table (make-eq-hashtable)])
+          (for-each
+            (lambda (pelt)
+              (nanopass-case (Lnodisclose Program-Element) pelt
+                [(witness ,src ,function-name (,arg* ...) ,type)
+                 (eq-hashtable-set! table function-name #t)]
+                [else (void)]))
+            pelt*)
+          table))
+
       (define (circuit-ir pelt export-alist circuits)
         (nanopass-case (Lnodisclose Program-Element) pelt
           [(circuit ,src ,function-name (,arg* ...) ,type ,expr)
@@ -475,10 +495,16 @@
            (list->vector (map (lambda (action) (state-action-ir action src environment)) expr*))]
           [else (vector)]))
 
-      (define (stateful-return-ir expr owner-src)
+      (define (stateful-return-ir expr owner-src witness-ids)
         (nanopass-case (Lnodisclose Expression) expr
-          [(return ,src ,expr) (stateful-return-ir expr src)]
-          [(seq ,src ,expr* ... ,expr) (stateful-return-ir expr src)]
+          [(return ,src ,expr) (stateful-return-ir expr src witness-ids)]
+          [(seq ,src ,expr* ... ,expr) (stateful-return-ir expr src witness-ids)]
+          [(call ,src ,function-name ,expr* ...)
+           (if (eq-hashtable-ref witness-ids function-name #f)
+               (object (cons "kind" "witness_call")
+                       (cons "name" (symbol->string (id-sym function-name)))
+                       (cons "arguments" (list->vector (map (lambda (arg) (expression-ir arg src)) expr*))))
+               (source-errorf src "Rust backend does not yet support this stateful call"))]
           [(tuple ,src ,tuple-arg* ...)
            (if (null? tuple-arg*)
                (kind "unit")
@@ -568,7 +594,7 @@
                 [else (source-errorf src "Rust backend does not yet support this ledger return operation")])])]
           [else (source-errorf owner-src "Rust backend does not yet support this stateful return value")]))
 
-      (define (stateful-circuit-ir pelt export-alist circuits)
+      (define (stateful-circuit-ir pelt export-alist witness-ids circuits)
         (nanopass-case (Lnodisclose Program-Element) pelt
           [(circuit ,src ,function-name (,arg* ...) ,type ,expr)
            (if (id-pure? function-name)
@@ -582,7 +608,7 @@
                                 (object (cons "name" name)
                                         (cons "parameters" (list->vector (map (lambda (arg) (argument-ir arg src)) arg*)))
                                         (cons "result" (type-ir type src))
-                                        (cons "return_value" (stateful-return-ir expr src))
+                                        (cons "return_value" (stateful-return-ir expr src witness-ids))
                                         (cons "actions"
                                               (stateful-body-ir expr src
                                                 (map (lambda (arg)
@@ -599,7 +625,7 @@
       (define (check-supported-declaration pelt owner-src)
         (nanopass-case (Lnodisclose Program-Element) pelt
           [(witness ,src ,function-name (,arg* ...) ,type)
-           (source-errorf src "Rust backend does not yet support witnesses")]
+           (void)]
           [(public-ledger-declaration ,pl-array ,lconstructor)
            (void)]
           [else (void)])))
@@ -607,13 +633,17 @@
     (Program : Program (ir) -> Program ()
       [(program ,src (,contract-name* ...) ((,export-name* ,name*) ...) ,pelt* ...)
        (for-each (lambda (pelt) (check-supported-declaration pelt src)) pelt*)
-       (let ([export-alist (map cons export-name* name*)])
+       (let ([export-alist (map cons export-name* name*)]
+             [witness-ids (witness-id-table pelt*)])
          (print-json
            (get-target-port 'rust.ir.json)
-           (object (cons "schema_version" 3)
+           (object (cons "schema_version" 4)
                    (cons "ledger_fields"
                          (list->vector
                            (fold-right (lambda (pelt fields) (ledger-fields-ir pelt fields src)) '() pelt*)))
+                   (cons "witnesses"
+                         (list->vector
+                           (fold-right witness-declaration-ir '() pelt*)))
                    (cons "circuits"
                          (list->vector
                            (fold-right
@@ -623,7 +653,7 @@
                    (cons "stateful_circuits"
                          (list->vector
                            (fold-right
-                             (lambda (pelt circuits) (stateful-circuit-ir pelt export-alist circuits))
+                             (lambda (pelt circuits) (stateful-circuit-ir pelt export-alist witness-ids circuits))
                              '()
                              pelt*))))))
        ir]))

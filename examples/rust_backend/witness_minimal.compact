@@ -1,0 +1,5 @@
+import CompactStandardLibrary;
+witness private_value(): Field;
+export circuit read_private(): Field {
+  return disclose(private_value());
+}

@@ -57,8 +57,8 @@ The following flags, if present, affect the compiler's behavior as follows:
     find zkir.
 
   --emit-rust-ir writes contract/compact-rust-ir.json for the independent
-    Rust backend. The current slice supports pure circuits with Field,
-    Boolean, unit, tuple, and vector types; unsupported constructs fail.
+    Rust backend. Supported typed expressions, ledger operations, and direct
+    witness returns are emitted; unsupported constructs fail explicitly.
 
   --no-communications-commitment omits the contract communications commitment
     that enables data integrity for contract-to-contract calls.

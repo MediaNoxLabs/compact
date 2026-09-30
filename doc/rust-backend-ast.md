@@ -11,7 +11,7 @@ Stateful circuit emission lives in `tools/compact-rust-backend/src/stateful.rs`
 so ledger action and return variants are handled away from the top-level
 contract assembly.
 
-The version 3 JSON schema is defined in
+The version 4 JSON schema is defined in
 `tools/compact-rust-backend/src/ir.rs`. It has no Rust-source escape hatch.
 Adding an expression or type requires an explicit IR variant, conversion in
 the Scheme pass, type validation in the renderer, and an executing fixture.
@@ -28,8 +28,9 @@ and checked unsigned addition, subtraction, and multiplication. The fixtures
 in `examples/rust_backend/` run from Compact source through the Scheme
 compiler, JSON bridge, `syn` renderer, native runtime, and executing Rust
 tests. The compiler supports the Cell, Counter, Set, Map, and List slices
-described below. Witnesses and further bounded unsigned operations still
-require runtime semantics. `Uint<N>` uses a
+described below. The first witness path handles a direct stateful return;
+other witness placement and further bounded unsigned operations still require
+runtime semantics. `Uint<N>` uses a
 bounded runtime type with a checked inclusive maximum and Compact's byte
 alignment. `Bytes<N>` uses a small fixed bytes wrapper: it delegates field
 encoding and FAB alignment to ledger-8's `[u8; N]` support, and calls the
@@ -52,6 +53,15 @@ compare Field, Boolean, Bytes, and Uint alignment and normalized values with
 the ledger-8 implementations. The ledger-8.0.2 lock references
 `midnight-zswap` 8.0.1, which is no longer published; the runtime pins 8.0.0
 from the same 8.0 line.
+
+A direct witness return now has a typed declaration and call in the IR. The
+generated `Witnesses<Private>` trait receives a borrowed context with the
+current ledger state, private state, and contract address. Its method returns
+the next private state and a typed value. The generated circuit records that
+value as a ledger `AlignedValue` in its own private transcript outputs. The
+minimal Field witness fixture executes end to end. Projected typed ledger
+views, witness calls inside expressions and state actions, and complete proof
+data remain future slices. This changed the generated runtime ABI to 2.
 
 The runtime can now construct and decode ledger Cells and Counters, and it
 runs Cell writes plus Counter increments/decrements through the ledger VM.
@@ -133,6 +143,7 @@ cargo test -p compact-rust-backend -p midnight-compact-runtime \
   -p compact-rust-one-tuple-fixture -p compact-rust-field-add-fixture \
   -p compact-rust-field-arithmetic-fixture \
   -p compact-rust-uint-arithmetic-fixture \
+  -p compact-rust-witness-minimal-fixture \
   -p compact-rust-uint-identity-fixture -p compact-rust-bytes-identity-fixture \
   -p compact-rust-counter-fixture -p compact-rust-cell-boolean-fixture \
   -p compact-rust-struct-identity-fixture -p compact-rust-nested-struct-fixture \
@@ -158,12 +169,12 @@ JSON alongside the usual TypeScript artifacts.
 
 ## Next slices
 
-1. Add literals and typed primitive operations using ledger and ZK crate
-   semantics, with checks for Compact field and bounded unsigned behavior.
-2. Expand the initial Cell and Counter path to additional ledger field types
-   while preserving state byte parity.
-3. Extend witnesses, calls, control flow, ledger ADTs, and cryptographic
-   natives in small executing fixtures until the oracle matrix is covered.
+1. Expand witness calls into expressions and state actions, with typed ledger
+   projection and full proof data.
+2. Extend remaining primitive operations and ledger ADTs using ledger and ZK
+   crate semantics while preserving oracle parity.
+3. Cover control flow, cryptographic natives, and the oracle contract matrix
+   in small executing fixtures.
 
 The detailed plan and research log are in the `midnight` Obsidian vault under
 `Initiatives/02 Compact Rust emission/AST backend rebuild — 2026-10-01.md`.

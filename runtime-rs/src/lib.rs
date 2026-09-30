@@ -18,11 +18,13 @@ pub use primitives::{
 
 /// Ledger FAB types used by the generated user-type derive.
 pub mod fab {
-    pub use midnight_base_crypto::fab::{Aligned, Alignment, AlignmentAtom, Value, ValueSlice};
+    pub use midnight_base_crypto::fab::{
+        Aligned, AlignedValue, Alignment, AlignmentAtom, Value, ValueSlice,
+    };
 }
 
 /// Increment when generated Rust and the runtime's public contract change.
-pub const RUST_RUNTIME_ABI: u32 = 1;
+pub const RUST_RUNTIME_ABI: u32 = 2;
 /// The ledger line selected by this Compact branch's `flake.nix`.
 pub const LEDGER_VERSION: &str = "ledger-8.0.2";
 

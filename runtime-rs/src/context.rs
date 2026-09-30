@@ -5,10 +5,13 @@
 //! transitions between constructor and circuit calls.
 
 pub use midnight_base_crypto::cost_model::RunningCost;
+use midnight_base_crypto::fab::AlignedValue;
 use midnight_onchain_vm::cost_model::{CostModel, INITIAL_COST_MODEL};
 use midnight_zswap::local::State as ZswapLocalState;
 
-use crate::ledger::{CellValue, ChargedState, ContractAddress, DB, DefaultDB, QueryContext};
+use crate::ledger::{
+    CellValue, ChargedState, ContractAddress, DB, DefaultDB, QueryContext, StateValue,
+};
 use crate::{CompactError, ledger};
 
 pub struct ConstructorContext<Private, D: DB = DefaultDB> {
@@ -59,13 +62,29 @@ pub struct CircuitContext<Private, D: DB = DefaultDB> {
     pub gas_limit: Option<RunningCost>,
 }
 
+/// The ledger, private state, and address visible to a Compact witness.
+pub struct WitnessContext<'a, Private, D: DB = DefaultDB> {
+    pub ledger: &'a StateValue<D>,
+    pub private_state: &'a Private,
+    pub contract_address: &'a ContractAddress,
+}
+
 pub struct CircuitResult<Private, Output, D: DB = DefaultDB> {
     pub context: CircuitContext<Private, D>,
     pub result: Output,
     pub gas_cost: RunningCost,
+    pub private_transcript_outputs: Vec<AlignedValue>,
 }
 
 impl<Private, D: DB> CircuitContext<Private, D> {
+    pub fn witness_context(&self) -> WitnessContext<'_, Private, D> {
+        WitnessContext {
+            ledger: self.query.state.get_ref(),
+            private_state: &self.private_state,
+            contract_address: &self.query.address,
+        }
+    }
+
     pub fn head_list<T: CellValue + Default, M: CellValue>(
         mut self,
         field_index: u8,
@@ -81,6 +100,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
             context: self,
             result: value,
             gas_cost: result.gas_cost,
+            private_transcript_outputs: Vec::new(),
         })
     }
 
@@ -100,6 +120,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
             context: self,
             result: (),
             gas_cost: result.gas_cost,
+            private_transcript_outputs: Vec::new(),
         })
     }
 
@@ -119,6 +140,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
             context: self,
             result: (),
             gas_cost: result.gas_cost,
+            private_transcript_outputs: Vec::new(),
         })
     }
 
@@ -140,6 +162,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
             context: self,
             result: (),
             gas_cost: result.gas_cost,
+            private_transcript_outputs: Vec::new(),
         })
     }
 
@@ -158,6 +181,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
             context: self,
             result: value,
             gas_cost: result.gas_cost,
+            private_transcript_outputs: Vec::new(),
         })
     }
 
@@ -176,6 +200,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
             context: self,
             result: value,
             gas_cost: result.gas_cost,
+            private_transcript_outputs: Vec::new(),
         })
     }
 
@@ -199,6 +224,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
             context: self,
             result: (),
             gas_cost: result.gas_cost,
+            private_transcript_outputs: Vec::new(),
         })
     }
 
@@ -219,6 +245,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
             context: self,
             result: present,
             gas_cost: result.gas_cost,
+            private_transcript_outputs: Vec::new(),
         })
     }
 
@@ -239,6 +266,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
             context: self,
             result: value,
             gas_cost: result.gas_cost,
+            private_transcript_outputs: Vec::new(),
         })
     }
 
@@ -282,6 +310,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
             context: self,
             result: (),
             gas_cost: result.gas_cost,
+            private_transcript_outputs: Vec::new(),
         })
     }
 
@@ -302,6 +331,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
             context: self,
             result: member,
             gas_cost: result.gas_cost,
+            private_transcript_outputs: Vec::new(),
         })
     }
 
@@ -323,6 +353,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
             context: self,
             result: (),
             gas_cost: result.gas_cost,
+            private_transcript_outputs: Vec::new(),
         })
     }
 
@@ -342,6 +373,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
             context: self,
             result: (),
             gas_cost: result.gas_cost,
+            private_transcript_outputs: Vec::new(),
         })
     }
 
@@ -360,6 +392,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
             context: self,
             result: size,
             gas_cost: result.gas_cost,
+            private_transcript_outputs: Vec::new(),
         })
     }
 
@@ -378,6 +411,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
             context: self,
             result: empty,
             gas_cost: result.gas_cost,
+            private_transcript_outputs: Vec::new(),
         })
     }
 
@@ -396,6 +430,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
             context: self,
             result: value,
             gas_cost: result.gas_cost,
+            private_transcript_outputs: Vec::new(),
         })
     }
 
@@ -417,6 +452,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
             context: self,
             result: (),
             gas_cost: result.gas_cost,
+            private_transcript_outputs: Vec::new(),
         })
     }
 
@@ -438,6 +474,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
             context: self,
             result: (),
             gas_cost: result.gas_cost,
+            private_transcript_outputs: Vec::new(),
         })
     }
 
@@ -459,6 +496,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
             context: self,
             result: (),
             gas_cost: result.gas_cost,
+            private_transcript_outputs: Vec::new(),
         })
     }
 }

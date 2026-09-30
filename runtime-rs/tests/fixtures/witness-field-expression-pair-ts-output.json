@@ -1,0 +1,36 @@
+{
+  "result": "19",
+  "privateState": 9,
+  "privateTranscriptOutputs": [
+    {
+      "valueAtoms": [
+        [
+          9
+        ]
+      ],
+      "alignment": [
+        {
+          "tag": "atom",
+          "value": {
+            "tag": "field"
+          }
+        }
+      ]
+    },
+    {
+      "valueAtoms": [
+        [
+          10
+        ]
+      ],
+      "alignment": [
+        {
+          "tag": "atom",
+          "value": {
+            "tag": "field"
+          }
+        }
+      ]
+    }
+  ]
+}

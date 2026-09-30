@@ -1,0 +1,11 @@
+import CompactStandardLibrary;
+
+witness secret(seed: Field): Field;
+
+export circuit add_secret(seed: Field): Field {
+  return disclose(secret(seed)) + 1;
+}
+
+export circuit sum_secrets(seed: Field): Field {
+  return disclose(secret(seed)) + disclose(secret(seed));
+}

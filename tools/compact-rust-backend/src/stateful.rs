@@ -4,10 +4,110 @@ use proc_macro2::Span;
 use std::collections::HashMap;
 
 use crate::ir::{
-    CounterAmount, LedgerField, LedgerFieldKind, StateAction, StateReturn, StatefulCircuit,
+    CounterAmount, Expr, LedgerField, LedgerFieldKind, StateAction, StateReturn, StatefulCircuit,
     StructField, Type, WitnessDeclaration,
 };
 use crate::{RenderError, expression, ident, rust_type};
+
+fn render_state_expression(
+    value: &Expr,
+    parameters: &HashMap<&str, (&Type, syn::Ident)>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    statements: &mut Vec<syn::Stmt>,
+    next_temp: &mut usize,
+) -> Result<(syn::Expr, Type, bool), RenderError> {
+    match value {
+        Expr::WitnessCall { name, arguments } => {
+            let declaration = witnesses
+                .get(name.as_str())
+                .ok_or_else(|| RenderError::UnknownWitness(name.clone()))?;
+            if arguments.len() != declaration.parameters.len() {
+                return Err(RenderError::ArgumentCount {
+                    circuit: name.clone(),
+                    expected: declaration.parameters.len(),
+                    actual: arguments.len(),
+                });
+            }
+            let mut rendered_arguments = Vec::with_capacity(arguments.len());
+            for (argument, parameter) in arguments.iter().zip(&declaration.parameters) {
+                let (rendered, actual) = expression(argument, parameters)?;
+                if actual != parameter.ty {
+                    return Err(RenderError::TypeMismatch {
+                        expected: parameter.ty.clone(),
+                        actual,
+                    });
+                }
+                rendered_arguments.push(rendered);
+            }
+            let index = *next_temp;
+            *next_temp += 1;
+            let witness_name = ident(name)?;
+            let private_name = syn::Ident::new(
+                &format!("__compact_next_private_{index}"),
+                Span::call_site(),
+            );
+            let value_name =
+                syn::Ident::new(&format!("__compact_witness_{index}"), Span::call_site());
+            statements.push(syn::parse_quote! {
+                let (#private_name, #value_name) = witnesses.#witness_name(
+                    context.witness_context_with(LedgerView {
+                        state: context.query.state.get_ref(),
+                    }),
+                    #(#rendered_arguments),*
+                );
+            });
+            statements.push(syn::parse_quote!(context.private_state = #private_name;));
+            statements.push(syn::parse_quote! {
+                private_transcript_outputs.push(runtime::fab::AlignedValue::from(#value_name.clone()));
+            });
+            Ok((
+                syn::parse_quote!(#value_name),
+                declaration.result.clone(),
+                true,
+            ))
+        }
+        Expr::Add { left, right }
+        | Expr::Subtract { left, right }
+        | Expr::Multiply { left, right } => {
+            let (left, left_ty, left_effect) =
+                render_state_expression(left, parameters, witnesses, statements, next_temp)?;
+            if left_ty != Type::Field {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Field,
+                    actual: left_ty,
+                });
+            }
+            let left_name = syn::Ident::new(
+                &format!("__compact_value_{}", *next_temp),
+                Span::call_site(),
+            );
+            *next_temp += 1;
+            statements.push(syn::parse_quote!(let #left_name = #left;));
+            let (right, right_ty, right_effect) =
+                render_state_expression(right, parameters, witnesses, statements, next_temp)?;
+            if right_ty != Type::Field {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Field,
+                    actual: right_ty,
+                });
+            }
+            let right_name = syn::Ident::new(
+                &format!("__compact_value_{}", *next_temp),
+                Span::call_site(),
+            );
+            *next_temp += 1;
+            statements.push(syn::parse_quote!(let #right_name = #right;));
+            let rendered = match value {
+                Expr::Add { .. } => syn::parse_quote!(#left_name + #right_name),
+                Expr::Subtract { .. } => syn::parse_quote!(#left_name - #right_name),
+                Expr::Multiply { .. } => syn::parse_quote!(#left_name * #right_name),
+                _ => unreachable!(),
+            };
+            Ok((rendered, Type::Field, left_effect || right_effect))
+        }
+        _ => expression(value, parameters).map(|(rendered, ty)| (rendered, ty, false)),
+    }
+}
 
 pub(crate) fn render_stateful_circuit(
     circuit: &StatefulCircuit,
@@ -390,6 +490,31 @@ pub(crate) fn render_stateful_circuit(
     let result_ty = rust_type(&circuit.result)?;
     let mut uses_witness = false;
     let return_expr: syn::Expr = match &circuit.return_value {
+        StateReturn::Expression { value } => {
+            let mut effect_statements = Vec::new();
+            let mut next_temp = 0;
+            let (rendered, actual, effect) = render_state_expression(
+                value,
+                &parameters,
+                witnesses,
+                &mut effect_statements,
+                &mut next_temp,
+            )?;
+            if actual != circuit.result {
+                return Err(RenderError::TypeMismatch {
+                    expected: circuit.result.clone(),
+                    actual,
+                });
+            }
+            if effect {
+                uses_witness = true;
+                statements.push(syn::parse_quote!(let mut context = context;));
+                statements
+                    .push(syn::parse_quote!(let mut private_transcript_outputs = Vec::new();));
+            }
+            statements.extend(effect_statements);
+            rendered
+        }
         StateReturn::Unit => {
             if circuit.result != Type::Unit {
                 return Err(RenderError::TypeMismatch {

@@ -495,6 +495,37 @@
            (list->vector (map (lambda (action) (state-action-ir action src environment)) expr*))]
           [else (vector)]))
 
+      ;; Stateful expressions keep witness calls explicit so Rust can evaluate
+      ;; them in order and append each private transcript value exactly once.
+      (define (stateful-expression-ir expr owner-src witness-ids)
+        (nanopass-case (Lnodisclose Expression) expr
+          [(return ,src ,expr) (stateful-expression-ir expr src witness-ids)]
+          [(call ,src ,function-name ,expr* ...)
+           (if (eq-hashtable-ref witness-ids function-name #f)
+               (object (cons "kind" "witness_call")
+                       (cons "name" (symbol->string (id-sym function-name)))
+                       (cons "arguments" (list->vector (map (lambda (arg) (expression-ir arg src)) expr*))))
+               (expression-ir expr owner-src))]
+          [(+ ,src ,mbits ,expr1 ,expr2)
+           (if mbits
+               (expression-ir expr owner-src)
+               (object (cons "kind" "add")
+                       (cons "left" (stateful-expression-ir expr1 src witness-ids))
+                       (cons "right" (stateful-expression-ir expr2 src witness-ids))))]
+          [(- ,src ,mbits ,expr1 ,expr2)
+           (if mbits
+               (expression-ir expr owner-src)
+               (object (cons "kind" "subtract")
+                       (cons "left" (stateful-expression-ir expr1 src witness-ids))
+                       (cons "right" (stateful-expression-ir expr2 src witness-ids))))]
+          [(* ,src ,mbits ,expr1 ,expr2)
+           (if mbits
+               (expression-ir expr owner-src)
+               (object (cons "kind" "multiply")
+                       (cons "left" (stateful-expression-ir expr1 src witness-ids))
+                       (cons "right" (stateful-expression-ir expr2 src witness-ids))))]
+          [else (expression-ir expr owner-src)]))
+
       (define (stateful-return-ir expr owner-src witness-ids)
         (nanopass-case (Lnodisclose Expression) expr
           [(return ,src ,expr) (stateful-return-ir expr src witness-ids)]
@@ -509,6 +540,15 @@
            (if (null? tuple-arg*)
                (kind "unit")
                (source-errorf src "Rust backend does not yet support this stateful return value"))]
+          [(+ ,src ,mbits ,expr1 ,expr2)
+           (object (cons "kind" "expression")
+                   (cons "value" (stateful-expression-ir expr src witness-ids)))]
+          [(- ,src ,mbits ,expr1 ,expr2)
+           (object (cons "kind" "expression")
+                   (cons "value" (stateful-expression-ir expr src witness-ids)))]
+          [(* ,src ,mbits ,expr1 ,expr2)
+           (object (cons "kind" "expression")
+                   (cons "value" (stateful-expression-ir expr src witness-ids)))]
           [(public-ledger ,src ,ledger-field-name ,sugar? (,path-elt* ...) ,src^ ,adt-op ,expr* ...)
            (unless (and (= (length path-elt*) 1)
                         (integer? (car path-elt*)))

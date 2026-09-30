@@ -65,6 +65,9 @@ pub struct StatefulCircuit {
 pub enum StateReturn {
     #[default]
     Unit,
+    Expression {
+        value: Expr,
+    },
     CellRead {
         field: String,
         index: u8,
@@ -300,6 +303,10 @@ pub enum Expr {
         body: Box<Expr>,
     },
     Call {
+        name: String,
+        arguments: Vec<Expr>,
+    },
+    WitnessCall {
         name: String,
         arguments: Vec<Expr>,
     },

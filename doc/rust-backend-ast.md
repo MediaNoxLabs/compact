@@ -69,8 +69,12 @@ Their results, private states, and FAB transcript values match the pinned
 TypeScript runtime. The ledger view decodes Cell and Counter fields through
 the ledger's FAB types and exposes Set and Map through typed, read-only views
 of the ledger's own Map storage. List projection reads the ledger's
-head/tail/length array. Witness calls inside expressions and state actions,
-and complete proof data remain future slices.
+head/tail/length array. The first composable witness expression supports
+Field addition, subtraction, and multiplication in a stateful return. Each
+witness call updates private state and appends its own FAB transcript value in
+source order; a two-call fixture compares both outputs with TypeScript.
+Witness calls in other expression forms and state actions, and complete proof
+data remain future slices.
 The generated runtime ABI is 3.
 
 The runtime can now construct and decode ledger Cells and Counters, and it
@@ -160,6 +164,7 @@ cargo test -p compact-rust-backend -p midnight-compact-runtime \
   -p compact-rust-witness-ledger-set-fixture \
   -p compact-rust-witness-ledger-map-fixture \
   -p compact-rust-witness-ledger-list-fixture \
+  -p compact-rust-witness-field-expression-fixture \
   -p compact-rust-uint-identity-fixture -p compact-rust-bytes-identity-fixture \
   -p compact-rust-counter-fixture -p compact-rust-cell-boolean-fixture \
   -p compact-rust-struct-identity-fixture -p compact-rust-nested-struct-fixture \
@@ -185,8 +190,8 @@ JSON alongside the usual TypeScript artifacts.
 
 ## Next slices
 
-1. Expand witness calls into expressions and state actions, including full
-   proof data.
+1. Expand witness calls through the remaining expression forms and state
+   actions, including full proof data.
 2. Extend remaining primitive operations and ledger ADTs using ledger and ZK
    crate semantics while preserving oracle parity.
 3. Cover control flow, cryptographic natives, and the oracle contract matrix

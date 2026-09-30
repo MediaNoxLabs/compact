@@ -48,6 +48,7 @@ pub enum RenderError {
         expected: Type,
         actual: Type,
     },
+    EffectfulExpression,
 }
 
 impl fmt::Display for RenderError {
@@ -105,6 +106,7 @@ impl fmt::Display for RenderError {
             Self::TypeMismatch { expected, actual } => {
                 write!(f, "expression has type {actual:?}, expected {expected:?}")
             }
+            Self::EffectfulExpression => write!(f, "witness call requires stateful evaluation"),
         }
     }
 }
@@ -252,7 +254,7 @@ fn collect_expression_types(
             }
             collect_expression_types(body, structs, enums)?;
         }
-        Expr::Call { arguments, .. } => {
+        Expr::Call { arguments, .. } | Expr::WitnessCall { arguments, .. } => {
             for argument in arguments {
                 collect_expression_types(argument, structs, enums)?;
             }
@@ -432,6 +434,7 @@ fn expression_with_calls(
                 circuit.result.clone(),
             ))
         }
+        Expr::WitnessCall { .. } => Err(RenderError::EffectfulExpression),
         Expr::UnsignedCast { max, value } => {
             let target_max = max
                 .parse::<u128>()
@@ -587,6 +590,9 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
             &mut struct_definitions,
             &mut enum_definitions,
         )?;
+        if let ir::StateReturn::Expression { value } = &circuit.return_value {
+            collect_expression_types(value, &mut struct_definitions, &mut enum_definitions)?;
+        }
     }
     for field in &contract.ledger_fields {
         match &field.declaration {

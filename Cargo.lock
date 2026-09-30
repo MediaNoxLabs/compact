@@ -880,6 +880,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-witness-field-expression-fixture"
+version = "0.1.0"
+dependencies = [
+ "midnight-compact-runtime",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-witness-ledger-cell-fixture"
 version = "0.1.0"
 dependencies = [

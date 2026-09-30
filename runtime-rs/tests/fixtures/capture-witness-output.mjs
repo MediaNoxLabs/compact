@@ -1,6 +1,6 @@
 // Compile examples/rust_backend/witness_minimal.compact with compactc --skip-zk,
 // link its contract's @midnight-ntwrk/compact-runtime to this branch's runtime,
-// then run: node capture-witness-output.mjs <contract/index.js> [minimal|argument].
+// then run: node capture-witness-output.mjs <contract/index.js> [minimal|argument|expression|expression_pair].
 import { pathToFileURL } from 'node:url';
 import * as runtime from '../../../runtime/dist/index.js';
 
@@ -8,16 +8,19 @@ const [contractPath, kind = 'minimal'] = process.argv.slice(2);
 if (!contractPath) {
   throw new Error('expected contract/index.js');
 }
-if (!['minimal', 'argument'].includes(kind)) {
-  throw new Error('expected minimal or argument');
+if (!['minimal', 'argument', 'expression', 'expression_pair'].includes(kind)) {
+  throw new Error('expected minimal, argument, expression, or expression_pair');
 }
 
 const { Contract } = await import(pathToFileURL(contractPath).href);
 const witnesses = kind === 'minimal'
   ? { private_value: ({ privateState }) => [privateState + 1, 42n] }
-  : { private_offset: ({ privateState }, value) => {
+  : kind === 'argument' ? { private_offset: ({ privateState }, value) => {
     if (value !== 2n) throw new Error('unexpected witness argument');
     return [privateState + 1, value + 40n];
+  } } : { secret: ({ privateState }, seed) => {
+    if (seed !== 2n) throw new Error('unexpected witness argument');
+    return [privateState + 1, seed + BigInt(privateState)];
   } };
 const contract = new Contract(witnesses);
 const coinPublicKey = { bytes: new Uint8Array(32) };
@@ -33,7 +36,11 @@ const context = runtime.createCircuitContext(
 );
 const result = kind === 'minimal'
   ? contract.circuits.read_private(context)
-  : contract.circuits.apply_offset(context, 2n);
+  : kind === 'argument'
+    ? contract.circuits.apply_offset(context, 2n)
+    : kind === 'expression'
+      ? contract.circuits.add_secret(context, 2n)
+      : contract.circuits.sum_secrets(context, 2n);
 process.stdout.write(JSON.stringify({
   result: result.result.toString(),
   privateState: result.context.currentPrivateState,

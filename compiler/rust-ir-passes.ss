@@ -182,6 +182,10 @@
                    (cons "value" (expression-ir expr src))
                    (cons "field" (symbol->string elt-name))
                    (cons "index" nat))]
+          [(enum-ref ,src ,type ,elt-name^)
+           (object (cons "kind" "enum_variant")
+                   (cons "ty" (type-ir type src))
+                   (cons "variant" (symbol->string elt-name^)))]
           [(new ,src ,type ,expr* ...)
            (nanopass-case (Lnodisclose Type) type
              [(tstruct ,src^ ,struct-name (,elt-name* ,type*) ...)

@@ -1059,6 +1059,7 @@ fn expression_contains(expression: &Expr, predicate: &impl Fn(&Expr) -> bool) ->
         | Expr::FieldLiteral { .. }
         | Expr::BytesLiteral { .. }
         | Expr::UnsignedLiteral { .. }
+        | Expr::EnumVariant { .. }
         | Expr::Parameter { .. }
         | Expr::CellRead { .. }
         | Expr::SetIsEmpty { .. }

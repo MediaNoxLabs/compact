@@ -58,4 +58,11 @@ pub mod pure_circuits {
     ) -> Result<crate::types::Choice, runtime::CompactError> {
         Ok(value)
     }
+    pub fn choose(c: bool) -> Result<crate::types::Choice, runtime::CompactError> {
+        Ok(if c {
+            crate::types::Choice::yes
+        } else {
+            crate::types::Choice::no
+        })
+    }
 }

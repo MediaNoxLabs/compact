@@ -1,4 +1,4 @@
-use compact_rust_enum_identity_fixture::pure_circuits::choice_identity;
+use compact_rust_enum_identity_fixture::pure_circuits::{choice_identity, choose};
 use compact_rust_enum_identity_fixture::types::Choice;
 use midnight_compact_runtime::{BinaryHashRepr, Field, FieldRepr, FromFieldRepr};
 
@@ -12,4 +12,6 @@ fn generated_enum_identity_and_ordinal_field_repr_round_trip() {
     );
     assert_eq!(Choice::from_field_repr(&[Field::from(2_u64)]), None);
     assert_eq!(Choice::no.binary_vec(), vec![1]);
+    assert_eq!(choose(true).unwrap(), Choice::yes);
+    assert_eq!(choose(false).unwrap(), Choice::no);
 }

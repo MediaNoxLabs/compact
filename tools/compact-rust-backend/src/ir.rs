@@ -415,6 +415,10 @@ pub enum Expr {
     Parameter {
         name: String,
     },
+    EnumVariant {
+        ty: Type,
+        variant: String,
+    },
     StructField {
         value: Box<Expr>,
         field: String,

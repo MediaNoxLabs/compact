@@ -42,6 +42,7 @@ pub enum RenderError {
     ConflictingEnum(String),
     EmptyEnum(String),
     DuplicateEnumVariant(String),
+    InvalidEnumVariant(String),
     UnknownParameter(String),
     UnknownCircuit(String),
     UnsupportedStatefulCall(String),
@@ -105,6 +106,7 @@ impl fmt::Display for RenderError {
             Self::ConflictingEnum(name) => write!(f, "conflicting definitions for enum {name:?}"),
             Self::EmptyEnum(name) => write!(f, "enum {name:?} has no variants"),
             Self::DuplicateEnumVariant(name) => write!(f, "duplicate enum variant {name:?}"),
+            Self::InvalidEnumVariant(name) => write!(f, "invalid enum variant {name:?}"),
             Self::UnknownParameter(name) => write!(f, "unknown parameter {name:?}"),
             Self::UnknownCircuit(name) => write!(f, "unknown circuit {name:?}"),
             Self::UnsupportedStatefulCall(name) => {
@@ -280,7 +282,9 @@ fn collect_expression_types(
     enums: &mut BTreeMap<String, Vec<String>>,
 ) -> Result<(), RenderError> {
     match expr {
-        Expr::Default { ty } => collect_named_types(ty, structs, enums)?,
+        Expr::Default { ty } | Expr::EnumVariant { ty, .. } => {
+            collect_named_types(ty, structs, enums)?
+        }
         Expr::StructField { value, .. } => collect_expression_types(value, structs, enums)?,
         Expr::StructLiteral { ty, fields } => {
             collect_named_types(ty, structs, enums)?;
@@ -661,6 +665,17 @@ fn expression_with_calls(
                 syn::parse_quote!(#rust_name.clone())
             };
             Ok((value, (*ty).clone()))
+        }
+        Expr::EnumVariant { ty, variant } => {
+            let Type::Enum { variants, .. } = ty else {
+                return Err(RenderError::InvalidEnumVariant(variant.clone()));
+            };
+            if !variants.contains(variant) {
+                return Err(RenderError::InvalidEnumVariant(variant.clone()));
+            }
+            let rust_ty = rust_type(ty)?;
+            let rust_variant = ident(variant)?;
+            Ok((syn::parse_quote!(#rust_ty::#rust_variant), ty.clone()))
         }
         Expr::StructField {
             value,
@@ -1213,6 +1228,7 @@ fn infallible_constructor_expr(value: &Expr) -> bool {
         | Expr::FieldLiteral { .. }
         | Expr::BytesLiteral { .. }
         | Expr::UnsignedLiteral { .. }
+        | Expr::EnumVariant { .. }
         | Expr::Parameter { .. } => true,
         Expr::Vector { elements, .. } | Expr::Tuple { elements } => {
             elements.iter().all(infallible_constructor_expr)

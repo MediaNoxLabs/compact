@@ -5,3 +5,7 @@ enum Choice { yes, no }
 export circuit choice_identity(value: Choice): Choice {
   return value;
 }
+
+export pure circuit choose(c: Boolean): Choice {
+  return c ? Choice.yes : Choice.no;
+}

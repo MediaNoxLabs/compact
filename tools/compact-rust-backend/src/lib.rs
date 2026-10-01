@@ -261,6 +261,11 @@ fn collect_expression_types(
                 collect_expression_types(argument, structs, enums)?;
             }
         }
+        Expr::TransientHash { value } => collect_expression_types(value, structs, enums)?,
+        Expr::TransientCommit { value, opening } => {
+            collect_expression_types(value, structs, enums)?;
+            collect_expression_types(opening, structs, enums)?;
+        }
         Expr::UnsignedCast { value, .. } => collect_expression_types(value, structs, enums)?,
         Expr::UnsignedAdd { left, right, .. }
         | Expr::UnsignedSubtract { left, right, .. }
@@ -471,6 +476,27 @@ fn expression_with_calls(
             Ok((
                 syn::parse_quote!(crate::pure_circuits::#name(#(#rendered_arguments),*)?),
                 circuit.result.clone(),
+            ))
+        }
+        Expr::TransientHash { value } => {
+            let (value, _) = expression_with_calls(value, parameters, circuits)?;
+            Ok((
+                syn::parse_quote!(runtime::transient_hash(#value)),
+                Type::Field,
+            ))
+        }
+        Expr::TransientCommit { value, opening } => {
+            let (value, _) = expression_with_calls(value, parameters, circuits)?;
+            let (opening, actual) = expression_with_calls(opening, parameters, circuits)?;
+            if actual != Type::Field {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Field,
+                    actual,
+                });
+            }
+            Ok((
+                syn::parse_quote!(runtime::transient_commit(#value, #opening)),
+                Type::Field,
             ))
         }
         Expr::WitnessCall { .. } => Err(RenderError::EffectfulExpression),

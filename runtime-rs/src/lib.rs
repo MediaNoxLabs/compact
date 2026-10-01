@@ -8,9 +8,11 @@
 
 pub mod context;
 pub mod ledger;
+mod natives;
 mod primitives;
 
 pub use midnight_compact_runtime_macros::CompactCellValue;
+pub use natives::{transient_commit, transient_hash};
 pub use primitives::{
     BoundedUint, FixedBytes, FixedVector, add_unsigned, cast_unsigned, multiply_unsigned,
     subtract_unsigned,

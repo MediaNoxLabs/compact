@@ -168,9 +168,23 @@
                (expression-ir expr src)
                (source-errorf src "Rust backend does not yet support this circuit expression"))]
           [(call ,src ,function-name ,expr* ...)
-           (object (cons "kind" "call")
-                   (cons "name" (symbol->string (id-sym function-name)))
-                   (cons "arguments" (list->vector (map (lambda (arg) (expression-ir arg src)) expr*))))]
+           (let ([name (id-sym function-name)])
+             (cond
+               [(eq? name 'transientHash)
+                (unless (= (length expr*) 1)
+                  (source-errorf src "transientHash expects one argument"))
+                (object (cons "kind" "transient_hash")
+                        (cons "value" (expression-ir (car expr*) src)))]
+               [(eq? name 'transientCommit)
+                (unless (= (length expr*) 2)
+                  (source-errorf src "transientCommit expects two arguments"))
+                (object (cons "kind" "transient_commit")
+                        (cons "value" (expression-ir (car expr*) src))
+                        (cons "opening" (expression-ir (cadr expr*) src)))]
+               [else
+                (object (cons "kind" "call")
+                        (cons "name" (symbol->string name))
+                        (cons "arguments" (list->vector (map (lambda (arg) (expression-ir arg src)) expr*))))]))]
           [(+ ,src ,mbits ,expr1 ,expr2)
            (if mbits
                (object (cons "kind" "unsigned_add")

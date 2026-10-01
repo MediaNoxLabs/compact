@@ -858,6 +858,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-transient-hash-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-compact-runtime",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-truth-fixture"
 version = "0.1.0"
 dependencies = [

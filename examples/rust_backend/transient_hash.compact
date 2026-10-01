@@ -1,0 +1,21 @@
+import CompactStandardLibrary;
+
+export circuit hash_field(value: Field): Field {
+  return transientHash<Field>(disclose(value));
+}
+
+export circuit commit_field(value: Field, opening: Field): Field {
+  return transientCommit<Field>(value, opening);
+}
+
+export circuit hash_pair(value: Vector<2, Field>): Field {
+  return transientHash<Vector<2, Field>>(disclose(value));
+}
+
+export circuit commit_pair(value: Vector<2, Field>, opening: Field): Field {
+  return transientCommit<Vector<2, Field>>(value, opening);
+}
+
+export circuit hash_bytes(value: Bytes<4>): Field {
+  return transientHash<Bytes<4>>(disclose(value));
+}

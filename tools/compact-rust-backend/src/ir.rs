@@ -306,6 +306,13 @@ pub enum Expr {
         name: String,
         arguments: Vec<Expr>,
     },
+    TransientHash {
+        value: Box<Expr>,
+    },
+    TransientCommit {
+        value: Box<Expr>,
+        opening: Box<Expr>,
+    },
     WitnessCall {
         name: String,
         arguments: Vec<Expr>,

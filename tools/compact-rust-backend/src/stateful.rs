@@ -1361,6 +1361,168 @@ pub(crate) fn render_contract_method(
     Ok(Some(method))
 }
 
+/// Emit a replayable public VM trace only for the stateful subset whose
+/// ordered operations are represented by RecordingFrame. Unsupported circuits
+/// deliberately have no recorded entry point.
+pub(crate) fn render_recorded_counter_circuit(
+    circuit: &StatefulCircuit,
+    ledger_fields: &HashMap<&str, &LedgerField>,
+) -> Result<Option<syn::Item>, RenderError> {
+    if circuit.internal || circuit.result != Type::Unit || circuit.return_value != StateReturn::Unit
+    {
+        return Ok(None);
+    }
+
+    let name = ident(&circuit.name)?;
+    let mut parameters = HashMap::new();
+    let mut args = Vec::<syn::FnArg>::new();
+    for (index, parameter) in circuit.parameters.iter().enumerate() {
+        ident(&parameter.name)?;
+        let rust_name = syn::Ident::new(&format!("__compact_param_{index}"), Span::call_site());
+        if parameters
+            .insert(parameter.name.as_str(), (&parameter.ty, rust_name.clone()))
+            .is_some()
+        {
+            return Err(RenderError::DuplicateParameter(parameter.name.clone()));
+        }
+        let arg_ty = rust_type(&parameter.ty)?;
+        args.push(syn::parse_quote!(#rust_name: #arg_ty));
+    }
+
+    fn amount_source(
+        value: &Expr,
+        locals: &HashMap<String, syn::Expr>,
+        parameters: &HashMap<&str, (&Type, syn::Ident)>,
+    ) -> Option<syn::Expr> {
+        match value {
+            Expr::UnsignedLiteral { value, max } if max == "65535" => {
+                let value = value.parse::<u16>().ok()?;
+                let literal = syn::LitInt::new(&format!("{value}u16"), Span::call_site());
+                Some(syn::parse_quote!(#literal))
+            }
+            Expr::Parameter { name } => locals.get(name).cloned().or_else(|| {
+                let (ty, rust_name) = parameters.get(name.as_str())?;
+                if **ty
+                    != (Type::Unsigned {
+                        max: "65535".into(),
+                    })
+                {
+                    return None;
+                }
+                Some(syn::parse_quote!(#rust_name.value() as u16))
+            }),
+            _ => None,
+        }
+    }
+
+    fn append_steps(
+        action: &StateAction,
+        locals: &HashMap<String, syn::Expr>,
+        parameters: &HashMap<&str, (&Type, syn::Ident)>,
+        ledger_fields: &HashMap<&str, &LedgerField>,
+        steps: &mut Vec<syn::Stmt>,
+    ) -> Result<bool, RenderError> {
+        match action {
+            StateAction::Sequence { actions } => {
+                for action in actions {
+                    if !append_steps(action, locals, parameters, ledger_fields, steps)? {
+                        return Ok(false);
+                    }
+                }
+                Ok(true)
+            }
+            StateAction::Let { bindings, action } => {
+                let mut scoped = locals.clone();
+                for binding in bindings {
+                    if binding.ty
+                        != (Type::Unsigned {
+                            max: "65535".into(),
+                        })
+                    {
+                        return Ok(false);
+                    }
+                    let Some(value) = amount_source(&binding.value, &scoped, parameters) else {
+                        return Ok(false);
+                    };
+                    scoped.insert(binding.name.clone(), value);
+                }
+                append_steps(action, &scoped, parameters, ledger_fields, steps)
+            }
+            StateAction::CounterIncrement {
+                field,
+                index,
+                amount,
+            }
+            | StateAction::CounterDecrement {
+                field,
+                index,
+                amount,
+            } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                if declaration.declaration != LedgerFieldKind::Counter
+                    || declaration.index != *index
+                {
+                    return Err(RenderError::UnknownLedgerField(field.clone()));
+                }
+                let path = ledger_path_expr(declaration);
+                let amount: syn::Expr = match amount {
+                    CounterAmount::Literal { value } => {
+                        let literal = syn::LitInt::new(&format!("{value}u16"), Span::call_site());
+                        syn::parse_quote!(#literal)
+                    }
+                    CounterAmount::Parameter { name } => {
+                        let Some(value) = amount_source(
+                            &Expr::Parameter { name: name.clone() },
+                            locals,
+                            parameters,
+                        ) else {
+                            return Ok(false);
+                        };
+                        value
+                    }
+                };
+                let method = if matches!(action, StateAction::CounterIncrement { .. }) {
+                    syn::Ident::new("increment_counter", Span::call_site())
+                } else {
+                    syn::Ident::new("decrement_counter", Span::call_site())
+                };
+                steps.push(syn::parse_quote!(let frame = frame.#method(#path, #amount)?;));
+                Ok(true)
+            }
+            _ => Ok(false),
+        }
+    }
+
+    let mut steps = Vec::<syn::Stmt>::new();
+    for action in &circuit.actions {
+        if !append_steps(
+            action,
+            &HashMap::new(),
+            &parameters,
+            ledger_fields,
+            &mut steps,
+        )? {
+            return Ok(None);
+        }
+    }
+    if steps.is_empty() {
+        return Ok(None);
+    }
+
+    Ok(Some(syn::parse_quote! {
+        pub fn #name<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            #(#args),*
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError> {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            #(#steps)*
+            Ok(frame.finish(()))
+        }
+    }))
+}
+
 fn expression_contains(expression: &Expr, predicate: &impl Fn(&Expr) -> bool) -> bool {
     if predicate(expression) {
         return true;

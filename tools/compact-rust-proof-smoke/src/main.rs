@@ -15,10 +15,12 @@
 
 //! Prove emitted counter artifacts and validate an offline ledger-8 deployment.
 //!
-//! The transcript is the fixture's deterministic ZKIR statement. This checks
-//! artifact compatibility, while the generated Rust runtime's transcript-to-
-//! transaction bridge remains a separate integration gate. The deployment
-//! combines the generated Rust constructor state with the emitted verifier key.
+//! The proof uses the fixture's deterministic ZKIR statement and checks
+//! artifact compatibility. Separately, the generated counter call's recorded
+//! VM program is replayed and partitioned into a ledger PreTranscript. Binding
+//! those partitioned transcript inputs to a call proof remains an integration
+//! gap. Deployment combines the generated constructor state with the emitted
+//! verifier key.
 
 use std::borrow::Cow;
 use std::env;
@@ -27,13 +29,14 @@ use std::fs::{self, File};
 use std::io::{self, BufReader};
 use std::path::{Path, PathBuf};
 
-use compact_rust_counter_fixture::ledger_contract::initial_state;
+use compact_rust_counter_fixture::ledger_contract::{initial_state, recorded};
 use midnight_base_crypto::data_provider::{FetchMode, MidnightDataProvider, OutputMode};
 use midnight_base_crypto::time::Timestamp;
 use midnight_compact_runtime::context::ConstructorContext;
-use midnight_compact_runtime::ledger::DefaultDB;
+use midnight_compact_runtime::ledger::{ContractAddress, DefaultDB};
+use midnight_ledger::construct::{PreTranscript, partition_transcripts};
 use midnight_ledger::structure::{
-    ContractDeploy, Intent, LedgerState, ProofPreimageMarker, Transaction,
+    ContractDeploy, INITIAL_PARAMETERS, Intent, LedgerState, ProofPreimageMarker, Transaction,
 };
 use midnight_ledger::verify::WellFormedStrictness;
 use midnight_onchain_state::state::{
@@ -129,6 +132,41 @@ fn prove_counter(root: &Path) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+fn check_generated_counter_trace() -> Result<(), Box<dyn Error>> {
+    let constructor = initial_state(ConstructorContext::new(()))?;
+    let context = constructor.into_circuit_context(ContractAddress::default());
+    let recorded = recorded::increment(context)?;
+    let replay = recorded.public.initial().query(
+        recorded.public.verify_ops(),
+        None,
+        &recorded.execution.context.cost_model,
+    )?;
+    if replay.context.effects != recorded.execution.context.query.effects {
+        return Err("generated counter replay effects differ from native execution".into());
+    }
+    let (context, program) = recorded.public.into_parts();
+    let transcripts = partition_transcripts(
+        &[PreTranscript {
+            context,
+            program,
+            comm_comm: None,
+        }],
+        &INITIAL_PARAMETERS,
+    )?;
+    let (guaranteed, fallible) = transcripts
+        .first()
+        .ok_or("counter trace did not partition")?;
+    let transcript = guaranteed
+        .as_ref()
+        .or(fallible.as_ref())
+        .ok_or("counter trace has no partitioned transcript")?;
+    if transcript.effects != replay.context.effects {
+        return Err("partitioned counter effects differ from replay".into());
+    }
+    println!("generated counter trace replayed and partitioned");
+    Ok(())
+}
+
 fn check_counter_deploy(root: &Path) -> Result<(), Box<dyn Error>> {
     let verifier: VerifierKey = tagged_deserialize(&mut BufReader::new(File::open(
         root.join("keys/increment.verifier"),
@@ -162,6 +200,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .nth(1)
         .ok_or("usage: compact-rust-proof-smoke <compiler-output-directory>")?;
     let root = Path::new(&root);
+    check_generated_counter_trace()?;
     prove_counter(root)?;
     check_counter_deploy(root)
 }

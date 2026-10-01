@@ -1295,6 +1295,9 @@ fn state_action_must_reference_the_declared_ledger_field_and_index() {
     };
     let source = render(&contract).unwrap();
     assert!(source.contains("context.increment_counter(0, 1)?"));
+    assert!(source.contains("pub mod recorded"));
+    assert!(source.contains("frame.increment_counter(0, 1u16)?"));
+    assert!(source.contains("Ok(frame.finish(()))"));
 
     contract.stateful_circuits[0].actions[0] = StateAction::CounterDecrement {
         field: "round".into(),
@@ -1306,6 +1309,11 @@ fn state_action_must_reference_the_declared_ledger_field_and_index() {
             .unwrap()
             .contains("context.decrement_counter(0, 1)?")
     );
+    assert!(
+        render(&contract)
+            .unwrap()
+            .contains("frame.decrement_counter(0, 1u16)?")
+    );
     contract.stateful_circuits[0].actions[0] = StateAction::CounterReset {
         field: "round".into(),
         index: 0,
@@ -1315,6 +1323,7 @@ fn state_action_must_reference_the_declared_ledger_field_and_index() {
             .unwrap()
             .contains("context.write_cell(0, 0_u64)?")
     );
+    assert!(!render(&contract).unwrap().contains("pub mod recorded"));
 
     contract.stateful_circuits[0].actions[0] = StateAction::CounterIncrement {
         field: "missing".into(),

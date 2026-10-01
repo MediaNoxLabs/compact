@@ -14,7 +14,7 @@
 // limitations under the License.
 
 use compact_rust_counter_parameter_fixture::ledger_contract::{
-    decrement_by, increment_by, initial_state, reset_round,
+    decrement_by, increment_by, initial_state, recorded, reset_round,
 };
 use midnight_compact_runtime::BoundedUint;
 use midnight_compact_runtime::context::ConstructorContext;
@@ -48,4 +48,30 @@ fn generated_counter_uses_bounded_parameter() {
     };
     assert_eq!(read_counter(&fields.get(0).unwrap()).unwrap(), 0);
     assert!(decrement_by(result.context, BoundedUint::<65535>::new(1).unwrap()).is_err());
+}
+
+#[test]
+fn recorded_counter_parameter_replays_the_generated_amount() {
+    let constructor = initial_state(ConstructorContext::new(())).unwrap();
+    let context = constructor.into_circuit_context(ContractAddress::default());
+    let recorded = recorded::increment_by(context, BoundedUint::<65535>::new(7).unwrap()).unwrap();
+    let replay = recorded
+        .public
+        .initial()
+        .query(
+            recorded.public.verify_ops(),
+            None,
+            &recorded.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(recorded.public.verify_ops().len(), 3);
+    for state in [
+        recorded.execution.context.query.state.get_ref(),
+        replay.context.state.get_ref(),
+    ] {
+        let StateValue::Array(fields) = state else {
+            panic!("expected ledger field array")
+        };
+        assert_eq!(read_counter(&fields.get(0).unwrap()).unwrap(), 7);
+    }
 }

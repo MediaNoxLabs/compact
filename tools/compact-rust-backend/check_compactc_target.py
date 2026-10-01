@@ -38,44 +38,45 @@ def run(*arguments: str, cwd: Path = ROOT) -> None:
 
 def check_manifest(output: Path) -> None:
     manifest = json.loads((output / "compiler/contract-manifest.json").read_text())
+    def check_tree(path: Path, entries: dict) -> None:
+        for name, entry in entries.items():
+            if name == "type":
+                continue
+            child = path / name
+            if entry["type"] == "directory":
+                assert child.is_dir(), child
+                check_tree(child, entry)
+            else:
+                assert entry["type"] == "file", child
+                content = child.read_bytes()
+                assert entry["size"] == len(content), child
+                assert entry["hash"] == hashlib.sha256(content).hexdigest(), child
     directories = ["compiler", "contract", "zkir"]
     if (output / "keys").is_dir():
         directories.append("keys")
     for directory in directories:
         assert directory in manifest, f"missing {directory} in contract manifest"
-        for name, entry in manifest[directory].items():
-            if name == "type":
-                continue
-            path = output / directory / name
-            assert entry["type"] == "file", path
-            content = path.read_bytes()
-            assert entry["size"] == len(content), path
-            assert entry["hash"] == hashlib.sha256(content).hexdigest(), path
+        check_tree(output / directory, manifest[directory])
 
 
 def check_consumer(contract: Path, pure_contract: Path, consumer: Path) -> None:
     package = tomllib.loads((contract / "Cargo.toml").read_text())
-    pure_package = tomllib.loads((pure_contract / "Cargo.toml").read_text())
     runtime = package["dependencies"]["midnight-compact-runtime"]
+    assert runtime["path"] == "runtime-rs"
+    assert (contract / "runtime-rs/Cargo.toml").is_file()
+    assert (contract / "runtime-rs-macros/Cargo.toml").is_file()
     consumer.mkdir()
     (consumer / "tests").mkdir()
     (consumer / "Cargo.toml").write_text(
         "[package]\nname = \"compactc-target-smoke\"\nversion = \"0.1.0\"\n"
         "edition = \"2024\"\n\n[dependencies]\n"
         f'{package["package"]["name"]} = {{ path = {json.dumps(str(contract))} }}\n'
-        f'{pure_package["package"]["name"]} = {{ path = {json.dumps(str(pure_contract))} }}\n'
-        "midnight-compact-runtime = { "
-        f'git = {json.dumps(runtime["git"])}, '
-        f'rev = {json.dumps(runtime["rev"])} }}\n'
+        f'midnight-compact-runtime = {{ path = {json.dumps(str(contract / runtime["path"]))} }}\n'
     )
     (consumer / "tests/counter.rs").write_text(
-        "use compact_contract_counter::ledger_contract::{initial_state, Contract};\n"
-        "use compact_contract_field_add::pure_circuits::field_add;\n"
+        "use compact_contract_counter::ledger_contract::{initial_state, recorded, Contract};\n"
         "use midnight_compact_runtime::context::ConstructorContext;\n"
         "use midnight_compact_runtime::ledger::ContractAddress;\n\n"
-        "#[test]\nfn pure_circuit_runs_outside_the_compiler_workspace() {\n"
-        "    let sum = field_add(2u64.into(), 3u64.into()).unwrap();\n"
-        "    assert_eq!(sum, 5u64.into());\n}\n\n"
         "#[test]\nfn generated_contract_runs_outside_the_compiler_workspace() {\n"
         "    let state = initial_state(ConstructorContext::new(())).unwrap();\n"
         "    let context = state.into_circuit_context(ContractAddress::default());\n"
@@ -83,10 +84,35 @@ def check_consumer(contract: Path, pure_contract: Path, consumer: Path) -> None:
         "    let step = contract.increment(context).unwrap();\n"
         "    let read = contract.read_round(step.context).unwrap();\n"
         "    assert_eq!(read.result.value(), 1);\n}\n"
+        "\n#[test]\nfn generated_counter_trace_replays_outside_the_compiler_workspace() {\n"
+        "    let state = initial_state(ConstructorContext::new(())).unwrap();\n"
+        "    let context = state.into_circuit_context(ContractAddress::default());\n"
+        "    let call = recorded::increment(context).unwrap();\n"
+        "    let replay = call.public.initial().query(\n"
+        "        call.public.verify_ops(), None, &call.execution.context.cost_model,\n"
+        "    ).unwrap();\n"
+        "    assert_eq!(replay.context.effects, call.execution.context.query.effects);\n}\n"
     )
     environment = os.environ.copy()
     environment.setdefault("CARGO_TARGET_DIR", str(ROOT / "target/compactc-consumer"))
     subprocess.run(["cargo", "test", "--quiet"], cwd=consumer, env=environment, check=True)
+
+    pure_package = tomllib.loads((pure_contract / "Cargo.toml").read_text())
+    pure_consumer = consumer.parent / "pure-consumer"
+    pure_consumer.mkdir()
+    (pure_consumer / "tests").mkdir()
+    (pure_consumer / "Cargo.toml").write_text(
+        "[package]\nname = \"compactc-pure-target-smoke\"\nversion = \"0.1.0\"\n"
+        "edition = \"2024\"\n\n[dependencies]\n"
+        f'{pure_package["package"]["name"]} = {{ path = {json.dumps(str(pure_contract))} }}\n'
+    )
+    (pure_consumer / "tests/pure.rs").write_text(
+        "use compact_contract_field_add::pure_circuits::field_add;\n"
+        "#[test]\nfn pure_circuit_runs_outside_the_compiler_workspace() {\n"
+        "    let sum = field_add(2u64.into(), 3u64.into()).unwrap();\n"
+        "    assert_eq!(sum, 5u64.into());\n}\n"
+    )
+    subprocess.run(["cargo", "test", "--quiet"], cwd=pure_consumer, env=environment, check=True)
 
 
 def main() -> None:

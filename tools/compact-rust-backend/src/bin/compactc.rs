@@ -29,10 +29,7 @@ use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
 use toml_edit::{DocumentMut, InlineTable, Item, Table, Value as TomlValue, value};
 
-const RUNTIME_GIT: &str = "https://github.com/MediaNoxLabs/compact";
-// The runtime ABI in this revision matches the renderer's schema-6 output.
-const RUNTIME_REV: &str = "a5ee30f171322f07c06e3846117f20c9e075ef95";
-const TARGET_HELP: &str = "\n  --target <ts|rust> selects contract code. Repeat to emit both.\n    With no --target, TypeScript remains the default. Rust emits a standalone\n    contract/Cargo.toml and contract/lib.rs; ZKIR and keys are independent.\n";
+const TARGET_HELP: &str = "\n  --target <ts|rust> selects contract code. Repeat to emit both.\n    With no --target, TypeScript remains the default. Rust emits a standalone\n    contract/Cargo.toml, source, and matching runtime crates; ZKIR and keys are independent.\n";
 
 #[derive(Default)]
 struct Targets {
@@ -126,13 +123,70 @@ fn crate_manifest(source: &Path) -> String {
     document["lib"] = Item::Table(library);
 
     let mut dependency = InlineTable::new();
-    dependency.insert("git", TomlValue::from(RUNTIME_GIT));
-    dependency.insert("rev", TomlValue::from(RUNTIME_REV));
+    dependency.insert("path", TomlValue::from("runtime-rs"));
     dependency.insert("package", TomlValue::from("midnight-compact-runtime"));
     let mut dependencies = Table::new();
     dependencies["midnight-compact-runtime"] = Item::Value(TomlValue::InlineTable(dependency));
     document["dependencies"] = Item::Table(dependencies);
     document.to_string()
+}
+
+fn runtime_source_root() -> Result<PathBuf, Box<dyn Error>> {
+    if let Some(path) = env::var_os("COMPACT_RUST_RUNTIME_DIR") {
+        let path = PathBuf::from(path);
+        if path.join("runtime-rs/Cargo.toml").is_file() {
+            return Ok(path);
+        }
+        return Err(format!("runtime source directory is invalid: {}", path.display()).into());
+    }
+    let installed = env::current_exe()?
+        .parent()
+        .and_then(Path::parent)
+        .ok_or("cannot locate installed compactc runtime sources")?
+        .join("share/compactc");
+    if installed.join("runtime-rs/Cargo.toml").is_file() {
+        return Ok(installed);
+    }
+    let checkout = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    if checkout.join("runtime-rs/Cargo.toml").is_file() {
+        return Ok(checkout);
+    }
+    Err("compactc cannot locate its Rust runtime sources; set COMPACT_RUST_RUNTIME_DIR".into())
+}
+
+fn copy_source_tree(source: &Path, destination: &Path) -> Result<(), Box<dyn Error>> {
+    fs::create_dir_all(destination)?;
+    for entry in fs::read_dir(source)? {
+        let entry = entry?;
+        let kind = entry.file_type()?;
+        let target = destination.join(entry.file_name());
+        if kind.is_dir() {
+            copy_source_tree(&entry.path(), &target)?;
+        } else if kind.is_file() {
+            fs::copy(entry.path(), target)?;
+        } else {
+            return Err(format!(
+                "unsupported runtime source entry: {}",
+                entry.path().display()
+            )
+            .into());
+        }
+    }
+    Ok(())
+}
+
+fn copy_runtime_sources(contract_dir: &Path) -> Result<(), Box<dyn Error>> {
+    let root = runtime_source_root()?;
+    for package in ["runtime-rs", "runtime-rs-macros"] {
+        let source = root.join(package);
+        let destination = contract_dir.join(package);
+        fs::create_dir_all(&destination)?;
+        for file in ["Cargo.toml", "README.md"] {
+            fs::copy(source.join(file), destination.join(file))?;
+        }
+        copy_source_tree(&source.join("src"), &destination.join("src"))?;
+    }
+    Ok(())
 }
 
 fn manifest_tree(path: &Path, is_root: bool) -> Result<Value, Box<dyn Error>> {
@@ -243,6 +297,7 @@ fn run() -> Result<i32, Box<dyn Error>> {
     let source_code = render(&ir)?;
     fs::write(contract_dir.join("lib.rs"), source_code)?;
     fs::write(contract_dir.join("Cargo.toml"), crate_manifest(&source))?;
+    copy_runtime_sources(&contract_dir)?;
     refresh_manifest(&output)?;
     Ok(0)
 }

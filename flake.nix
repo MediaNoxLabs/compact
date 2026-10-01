@@ -225,11 +225,16 @@
             # Compiler-backed gates run in build-compiler.yml against the full
             # workspace; this derivation packages just the public command.
             doCheck = false;
+            postInstall = ''
+              mkdir -p $out/share/compactc
+              cp -R ${./runtime-rs} $out/share/compactc/runtime-rs
+              cp -R ${./runtime-rs-macros} $out/share/compactc/runtime-rs-macros
+            '';
           };
 
           packages.compactc = pkgs.stdenv.mkDerivation {
             name = "compactc";
-            version = "0.31.114"; # NB: also update compiler-version in compiler/compiler-version.ss
+            version = "0.31.115"; # NB: also update compiler-version in compiler/compiler-version.ss
             src = inclusive.lib.inclusive ./. [
               ./compiler
               ./examples
@@ -289,6 +294,8 @@
               mkdir -p $out/bin
               cp obj/compactc $out/bin/compactc-scheme
               cp ${packages.compact-rust-cli}/bin/compactc $out/bin/compactc
+              mkdir -p $out/share
+              cp -R ${packages.compact-rust-cli}/share/compactc $out/share/compactc
               cp obj/format-compact $out/bin
               cp obj/fixup-compact $out/bin
               chmod +x $out/bin/compactc $out/bin/compactc-scheme

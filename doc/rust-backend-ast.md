@@ -23,18 +23,29 @@ shapes receive a source diagnostic.
 
 ## Milestone 2 checkpoint
 
-The packaged `compactc --target rust` emits a Cargo library alongside the
-compiler's ZKIR, proving keys, and hashed manifest. An external consumer
+The packaged `compactc --target rust` emits a Cargo library and the matching
+runtime and derive-macro crate sources alongside the compiler's ZKIR, proving
+keys, and hashed manifest. The generated Cargo dependency uses a local path
+to the bundled runtime. An external consumer
 builds the generated crate. The ledger-8 gate verifies a counter proof and
 validates an offline deployment transaction built from the generated initial
 state and emitted verifier key. Generated stateful functions are also exposed
 through `ledger_contract::Contract<W>`, with the same typed arguments and
 witness contract as the free functions.
 
+The bundled runtime makes each generated contract independently buildable.
+Multiple separately generated contracts cannot yet share one Cargo lockfile:
+each contains a path package named `midnight-compact-runtime` at the same
+version. A shared versioned runtime distribution is still required for
+multi-contract Rust applications.
+
 The Rust runtime has an opt-in `RecordingFrame` for Cell, Counter, and witness
 operations. It preserves the initial ledger query context, ordered verifying
 VM operations, and private witness outputs. Replay and `PreTranscript`
-partitioning pass for the supported slice. Generated circuit methods still
+partitioning pass for the supported slice. The compiler now emits
+`ledger_contract::recorded` functions for exported unit circuits consisting
+only of Counter increments and decrements. These functions return native
+execution and an ordered public program. Other generated circuit methods
 return native `CircuitResult`; complete operation recording, call proof inputs,
 and wallet submission remain Milestone 2 work.
 

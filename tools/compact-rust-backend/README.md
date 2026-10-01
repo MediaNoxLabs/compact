@@ -16,10 +16,11 @@ compactc --target rust \
   examples/rust_backend/counter.compact /tmp/compact-rust-output
 ```
 
-The output contains `contract/Cargo.toml`, `contract/lib.rs`, and
-`contract/compact-rust-ir.json`, along with the compiler metadata, ZKIR, and
-proof artifacts produced by the Scheme compiler. The Cargo library pins
-`midnight-compact-runtime` to the matching Git revision. A separate Rust
+The output contains `contract/Cargo.toml`, `contract/lib.rs`,
+`contract/compact-rust-ir.json`, and source copies of the matching runtime and
+derive-macro crates, along with the compiler metadata, ZKIR, and proof
+artifacts produced by the Scheme compiler. The Cargo library uses the bundled
+runtime as a path dependency. A separate Rust
 project can depend on `contract/` by path without copying generated source or
 editing its manifest. Run with `--target ts --target rust` to emit both contract
 languages. `--skip-zk` skips proving keys for a quicker local build.
@@ -49,7 +50,7 @@ Compact spelling without warning in consumer builds.
 
 | Boundary | Current contract | Failure behavior |
 |---|---|---|
-| Compact compiler | Toolchain 0.31.114, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
+| Compact compiler | Toolchain 0.31.115, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
 | Rust IR | Schema 6, private to this backend | The renderer rejects any other schema before writing `lib.rs`. |
 | Generated code and Rust runtime | ABI 3 | Generated modules assert the ABI at Rust compile time. |
 | Rust runtime source | Exact Git revision in generated `Cargo.toml` | Cargo resolves the matching runtime and its pinned Midnight crates. |

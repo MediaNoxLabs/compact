@@ -2351,6 +2351,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
         .collect();
     let mut stateful_items = Vec::new();
     let mut contract_methods = Vec::new();
+    let mut recorded_items = Vec::new();
     for circuit in &contract.stateful_circuits {
         if !names.insert(circuit.name.as_str()) {
             return Err(RenderError::DuplicateCircuit(circuit.name.clone()));
@@ -2366,6 +2367,9 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
             stateful::render_contract_method(circuit, &callable_stateful_circuits)?
         {
             contract_methods.push(method);
+        }
+        if let Some(item) = stateful::render_recorded_counter_circuit(circuit, &ledger_fields)? {
+            recorded_items.push(item);
         }
     }
 
@@ -2716,6 +2720,17 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
             }
         }
     };
+    let recorded_module: Option<syn::Item> = if recorded_items.is_empty() {
+        None
+    } else {
+        Some(syn::parse_quote! {
+            /// Circuits with a replayable ordered ledger program.
+            pub mod recorded {
+                use midnight_compact_runtime as runtime;
+                #(#recorded_items)*
+            }
+        })
+    };
     let ledger_module: Option<syn::Item> = if contract.ledger_fields.is_empty()
         && contract.constructor.is_none()
         && contract.stateful_circuits.is_empty()
@@ -2740,6 +2755,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                 }
                 #initial_state
                 #(#stateful_items)*
+                #recorded_module
                 /// Groups the contract's exported circuits for Rust consumers.
                 pub struct Contract<W> {
                     #[allow(dead_code)]

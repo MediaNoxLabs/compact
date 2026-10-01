@@ -89,6 +89,28 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
+    /// Circuits with a replayable ordered ledger program.
+    pub mod recorded {
+        use midnight_compact_runtime as runtime;
+        pub fn increment_by<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::BoundedUint<65535>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let frame = frame.increment_counter(0, __compact_param_0.value() as u16)?;
+            Ok(frame.finish(()))
+        }
+        pub fn decrement_by<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::BoundedUint<65535>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let frame = frame.decrement_counter(0, __compact_param_0.value() as u16)?;
+            Ok(frame.finish(()))
+        }
+    }
     /// Groups the contract's exported circuits for Rust consumers.
     pub struct Contract<W> {
         #[allow(dead_code)]

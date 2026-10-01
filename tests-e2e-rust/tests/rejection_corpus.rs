@@ -191,7 +191,8 @@ const ACCEPTIONS: &[(&str, &str)] = &[
         // and `assert(x, "/* TODO fix this")` is ordinary Compact a user
         // could plausibly write.
         "assert message containing a TODO marker",
-        "export ledger n: Counter;\n\
+        "import CompactStandardLibrary;\n\
+         export ledger n: Counter;\n\
          constructor() { n.increment(1); }\n\
          export circuit bump(): [] {\n\
            assert(n.read() == 1, \"/* TODO not a marker\");\n\

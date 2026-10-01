@@ -158,6 +158,7 @@ pub enum LedgerFieldKind {
     Set { ty: Type },
     List { ty: Type },
     Map { key: Type, value: Type },
+    MerkleTree { depth: u8, ty: Type },
     HistoricMerkleTree { depth: u8, ty: Type },
 }
 
@@ -240,6 +241,15 @@ pub enum StateReturn {
         index: u8,
     },
     HistoricMerkleCheckRoot {
+        field: String,
+        index: u8,
+        root: Expr,
+    },
+    MerkleIsFull {
+        field: String,
+        index: u8,
+    },
+    MerkleCheckRoot {
         field: String,
         index: u8,
         root: Expr,
@@ -374,6 +384,37 @@ pub enum StateAction {
         index: u8,
     },
     HistoricMerkleResetToDefault {
+        field: String,
+        index: u8,
+    },
+    MerkleInsertIndexDefault {
+        field: String,
+        index: u8,
+        position: Expr,
+    },
+    MerkleInsert {
+        field: String,
+        index: u8,
+        value: Expr,
+    },
+    MerkleInsertIndex {
+        field: String,
+        index: u8,
+        value: Expr,
+        position: Expr,
+    },
+    MerkleInsertHash {
+        field: String,
+        index: u8,
+        hash: Expr,
+    },
+    MerkleInsertHashIndex {
+        field: String,
+        index: u8,
+        hash: Expr,
+        position: Expr,
+    },
+    MerkleResetToDefault {
         field: String,
         index: u8,
     },

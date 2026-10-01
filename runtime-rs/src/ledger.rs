@@ -473,6 +473,48 @@ pub fn constructor_list<D: DB>() -> StateValue<D> {
     StateValue::Array(vec![StateValue::Null, StateValue::Null, constructor_cell(0_u64)].into())
 }
 
+/// Compact's plain MerkleTree stores the bounded tree and first free index.
+pub fn constructor_merkle_tree<D: DB>(depth: u8) -> StateValue<D> {
+    let tree: MerkleTree<(), D> = MerkleTree::blank(depth).rehash();
+    StateValue::Array(vec![StateValue::BoundedMerkleTree(tree), constructor_cell(0_u64)].into())
+}
+
+/// Read-only witness projection of a plain MerkleTree.
+pub struct MerkleTreeView<'a, D: DB> {
+    fields: &'a LedgerArray<StateValue<D>, D>,
+}
+
+pub fn merkle_tree_view_at_path<'a, D: DB>(
+    state: &'a StateValue<D>,
+    path: &[u8],
+) -> Result<MerkleTreeView<'a, D>, CompactError> {
+    let StateValue::Array(fields) = field_at_path(state, path)? else {
+        return Err(CompactError::InvalidLedgerCell(
+            "expected MerkleTree array".into(),
+        ));
+    };
+    if fields.len() != 2 || !matches!(fields.get(0), Some(StateValue::BoundedMerkleTree(_))) {
+        return Err(CompactError::InvalidLedgerCell(
+            "invalid MerkleTree layout".into(),
+        ));
+    }
+    Ok(MerkleTreeView { fields })
+}
+
+impl<D: DB> MerkleTreeView<'_, D> {
+    pub fn first_free(&self) -> Result<BoundedUint<{ u64::MAX as u128 }>, CompactError> {
+        let value = read_cell::<u64, _>(&self.fields.get(1).expect("tree shape checked"))?;
+        BoundedUint::new(value as u128)
+    }
+
+    pub fn root(&self) -> Option<midnight_transient_crypto::merkle_tree::MerkleTreeDigest> {
+        let Some(StateValue::BoundedMerkleTree(tree)) = self.fields.get(0) else {
+            unreachable!("tree shape checked")
+        };
+        tree.root()
+    }
+}
+
 /// Compact's HistoricMerkleTree seed includes the blank root in its history.
 pub fn constructor_historic_merkle_tree<D: DB>(depth: u8) -> StateValue<D> {
     let tree: MerkleTree<(), D> = MerkleTree::blank(depth).rehash();
@@ -539,6 +581,96 @@ impl<D: DB> HistoricMerkleTreeView<'_, D> {
     }
 }
 
+pub fn merkle_insert_index_default<T: CellValue + Default, D: DB>(
+    context: &QueryContext<D>,
+    path: impl Into<LedgerPath>,
+    position: u64,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    merkle_insert_index_hashed(
+        context,
+        path,
+        AlignedValue::from(leaf_hash_for(T::default())),
+        position,
+        MerkleHistory::CurrentOnly,
+        gas_limit,
+        cost_model,
+    )
+}
+
+pub fn merkle_insert_index<T: CellValue, D: DB>(
+    context: &QueryContext<D>,
+    path: impl Into<LedgerPath>,
+    item: T,
+    position: u64,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    merkle_insert_index_hashed(
+        context,
+        path,
+        AlignedValue::from(leaf_hash_for(item)),
+        position,
+        MerkleHistory::CurrentOnly,
+        gas_limit,
+        cost_model,
+    )
+}
+
+pub fn merkle_insert_hash_index<D: DB>(
+    context: &QueryContext<D>,
+    path: impl Into<LedgerPath>,
+    hash: FixedBytes<32>,
+    position: u64,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    merkle_insert_index_hashed(
+        context,
+        path,
+        aligned_cell_value(hash),
+        position,
+        MerkleHistory::CurrentOnly,
+        gas_limit,
+        cost_model,
+    )
+}
+
+pub fn merkle_insert<T: CellValue, D: DB>(
+    context: &QueryContext<D>,
+    path: impl Into<LedgerPath>,
+    item: T,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    merkle_insert_hashed(
+        context,
+        path,
+        AlignedValue::from(leaf_hash_for(item)),
+        MerkleHistory::CurrentOnly,
+        gas_limit,
+        cost_model,
+    )
+}
+
+pub fn merkle_insert_hash<D: DB>(
+    context: &QueryContext<D>,
+    path: impl Into<LedgerPath>,
+    hash: FixedBytes<32>,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    merkle_insert_hashed(
+        context,
+        path,
+        aligned_cell_value(hash),
+        MerkleHistory::CurrentOnly,
+        gas_limit,
+        cost_model,
+    )
+}
+
 /// Execute ledger-8's HistoricMerkleTree.insertIndexDefault VM program.
 pub fn historic_insert_index_default<T: CellValue + Default, D: DB>(
     context: &QueryContext<D>,
@@ -547,11 +679,12 @@ pub fn historic_insert_index_default<T: CellValue + Default, D: DB>(
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
-    historic_insert_index_hashed(
+    merkle_insert_index_hashed(
         context,
         path,
         AlignedValue::from(leaf_hash_for(T::default())),
         position,
+        MerkleHistory::Historic,
         gas_limit,
         cost_model,
     )
@@ -572,11 +705,12 @@ pub fn historic_insert_index<T: CellValue, D: DB>(
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
-    historic_insert_index_hashed(
+    merkle_insert_index_hashed(
         context,
         path,
         AlignedValue::from(leaf_hash_for(item)),
         position,
+        MerkleHistory::Historic,
         gas_limit,
         cost_model,
     )
@@ -591,28 +725,36 @@ pub fn historic_insert_hash_index<D: DB>(
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
-    historic_insert_index_hashed(
+    merkle_insert_index_hashed(
         context,
         path,
         aligned_cell_value(hash),
         position,
+        MerkleHistory::Historic,
         gas_limit,
         cost_model,
     )
 }
 
-fn historic_insert_index_hashed<D: DB>(
+#[derive(Clone, Copy)]
+enum MerkleHistory {
+    CurrentOnly,
+    Historic,
+}
+
+fn merkle_insert_index_hashed<D: DB>(
     context: &QueryContext<D>,
     path: impl Into<LedgerPath>,
     hash: AlignedValue,
     position: u64,
+    history: MerkleHistory,
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
     let path = path.into();
     let keys = path_keys(path.as_slice());
     let index_key = |index| vec![Key::Value(AlignedValue::from(index))].into();
-    let program = [
+    let mut program = vec![
         Op::Idx {
             cached: false,
             push_path: true,
@@ -657,31 +799,40 @@ fn historic_insert_index_hashed<D: DB>(
             cached: false,
             n: 1,
         },
-        Op::Idx {
-            cached: false,
-            push_path: true,
-            path: index_key(2_u8),
-        },
-        Op::Dup { n: 2 },
-        Op::Idx {
-            cached: false,
-            push_path: false,
-            path: index_key(0_u8),
-        },
-        Op::Root,
-        Op::Push {
-            storage: true,
-            value: StateValue::Null,
-        },
-        Op::Ins {
-            cached: false,
-            n: 1,
-        },
-        Op::Ins {
-            cached: true,
-            n: path.as_slice().len() as u8 + 1,
-        },
     ];
+    if matches!(history, MerkleHistory::Historic) {
+        program.extend([
+            Op::Idx {
+                cached: false,
+                push_path: true,
+                path: index_key(2_u8),
+            },
+            Op::Dup { n: 2 },
+            Op::Idx {
+                cached: false,
+                push_path: false,
+                path: index_key(0_u8),
+            },
+            Op::Root,
+            Op::Push {
+                storage: true,
+                value: StateValue::Null,
+            },
+            Op::Ins {
+                cached: false,
+                n: 1,
+            },
+            Op::Ins {
+                cached: true,
+                n: path.as_slice().len() as u8 + 1,
+            },
+        ]);
+    } else {
+        program.push(Op::Ins {
+            cached: true,
+            n: path.as_slice().len() as u8,
+        });
+    }
     context.query(&program, gas_limit, cost_model)
 }
 
@@ -693,10 +844,11 @@ pub fn historic_insert<T: CellValue, D: DB>(
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
-    historic_insert_hashed(
+    merkle_insert_hashed(
         context,
         path,
         AlignedValue::from(leaf_hash_for(item)),
+        MerkleHistory::Historic,
         gas_limit,
         cost_model,
     )
@@ -710,26 +862,28 @@ pub fn historic_insert_hash<D: DB>(
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
-    historic_insert_hashed(
+    merkle_insert_hashed(
         context,
         path,
         aligned_cell_value(hash),
+        MerkleHistory::Historic,
         gas_limit,
         cost_model,
     )
 }
 
-fn historic_insert_hashed<D: DB>(
+fn merkle_insert_hashed<D: DB>(
     context: &QueryContext<D>,
     path: impl Into<LedgerPath>,
     hash: AlignedValue,
+    history: MerkleHistory,
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
     let path = path.into();
     let keys = path_keys(path.as_slice());
     let index_key = |index| vec![Key::Value(AlignedValue::from(index))].into();
-    let program = [
+    let mut program = vec![
         Op::Idx {
             cached: false,
             push_path: true,
@@ -761,32 +915,41 @@ fn historic_insert_hashed<D: DB>(
             path: index_key(1_u8),
         },
         Op::Addi { immediate: 1 },
-        Op::Ins { cached: true, n: 1 },
-        Op::Idx {
-            cached: false,
-            push_path: true,
-            path: index_key(2_u8),
-        },
-        Op::Dup { n: 2 },
-        Op::Idx {
-            cached: false,
-            push_path: false,
-            path: index_key(0_u8),
-        },
-        Op::Root,
-        Op::Push {
-            storage: true,
-            value: StateValue::Null,
-        },
-        Op::Ins {
-            cached: false,
-            n: 1,
-        },
-        Op::Ins {
+    ];
+    if matches!(history, MerkleHistory::Historic) {
+        program.extend([
+            Op::Ins { cached: true, n: 1 },
+            Op::Idx {
+                cached: false,
+                push_path: true,
+                path: index_key(2_u8),
+            },
+            Op::Dup { n: 2 },
+            Op::Idx {
+                cached: false,
+                push_path: false,
+                path: index_key(0_u8),
+            },
+            Op::Root,
+            Op::Push {
+                storage: true,
+                value: StateValue::Null,
+            },
+            Op::Ins {
+                cached: false,
+                n: 1,
+            },
+            Op::Ins {
+                cached: true,
+                n: path.as_slice().len() as u8 + 1,
+            },
+        ]);
+    } else {
+        program.push(Op::Ins {
             cached: true,
             n: path.as_slice().len() as u8 + 1,
-        },
-    ];
+        });
+    }
     context.query(&program, gas_limit, cost_model)
 }
 
@@ -895,6 +1058,50 @@ pub fn historic_reset_to_default<D: DB>(
     context.query(&program, gas_limit, cost_model)
 }
 
+/// Reset a plain MerkleTree through the canonical ledger VM sequence.
+pub fn merkle_reset_to_default<D: DB>(
+    context: &QueryContext<D>,
+    path: impl Into<LedgerPath>,
+    depth: u8,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    let path = path.into();
+    let (&field_index, parent) = path
+        .as_slice()
+        .split_last()
+        .expect("ledger path contains a field index");
+    let mut program = Vec::new();
+    if !parent.is_empty() {
+        program.push(Op::Idx {
+            cached: false,
+            push_path: true,
+            path: path_keys(parent).into(),
+        });
+    }
+    program.extend([
+        Op::Push {
+            storage: false,
+            value: constructor_cell(field_index),
+        },
+        Op::Push {
+            storage: true,
+            value: constructor_merkle_tree(depth),
+        },
+        Op::Ins {
+            cached: false,
+            n: 1,
+        },
+    ]);
+    if !parent.is_empty() {
+        program.push(Op::Ins {
+            cached: true,
+            n: parent.len() as u8,
+        });
+    }
+    context.query(&program, gas_limit, cost_model)
+}
+
 /// Ask the ledger VM whether the next free index has reached tree capacity.
 pub fn historic_is_full<D: DB>(
     context: &QueryContext<D>,
@@ -926,6 +1133,56 @@ pub fn historic_is_full<D: DB>(
         },
         Op::Lt,
         Op::Neg,
+        Op::Popeq {
+            cached: true,
+            result: (),
+        },
+    ];
+    let result = context
+        .query(&program, gas_limit, cost_model)
+        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+    let decoded = decode_last_read::<bool, D>(&result)?;
+    Ok((result, decoded))
+}
+
+pub fn merkle_is_full<D: DB>(
+    context: &QueryContext<D>,
+    path: impl Into<LedgerPath>,
+    depth: u8,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<(QueryResults<ResultModeGather, D>, bool), CompactError> {
+    historic_is_full(context, path, depth, gas_limit, cost_model)
+}
+
+/// Compare a supplied digest to the current root of a plain MerkleTree.
+pub fn merkle_check_root<T: CellValue, D: DB>(
+    context: &QueryContext<D>,
+    path: impl Into<LedgerPath>,
+    root: T,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<(QueryResults<ResultModeGather, D>, bool), CompactError> {
+    let path = path.into();
+    let index_key = vec![Key::Value(AlignedValue::from(0_u8))].into();
+    let program = [
+        Op::Dup { n: 0 },
+        Op::Idx {
+            cached: false,
+            push_path: false,
+            path: path_keys(path.as_slice()).into(),
+        },
+        Op::Idx {
+            cached: false,
+            push_path: false,
+            path: index_key,
+        },
+        Op::Root,
+        Op::Push {
+            storage: false,
+            value: constructor_cell(root),
+        },
+        Op::Eq,
         Op::Popeq {
             cached: true,
             result: (),

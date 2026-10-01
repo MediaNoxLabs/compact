@@ -1,0 +1,81 @@
+// Capture ledger-8 TypeScript state for merkle_tree_oracle.compact.
+// Pass a compiled contract directory with @midnight-ntwrk/compact-runtime linked.
+import { createRequire } from 'node:module';
+import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+
+if (process.argv.length !== 3) throw new Error('usage: node merkle_tree_capture.mjs <compiled-contract-dir>');
+const contractIndex = resolve(process.argv[2], 'index.js');
+const requireFromContract = createRequire(contractIndex);
+const runtime = await import(pathToFileURL(requireFromContract.resolve('@midnight-ntwrk/compact-runtime')));
+const { Contract, ledger } = await import(pathToFileURL(contractIndex));
+const contract = new Contract({});
+const coinPublicKey = { bytes: new Uint8Array(32) };
+const initial = contract.initialState({
+  initialPrivateState: null,
+  initialZswapLocalState: runtime.emptyZswapLocalState(coinPublicKey),
+});
+let context = runtime.createCircuitContext(
+  runtime.dummyContractAddress(), coinPublicKey,
+  initial.currentContractState.data, initial.currentPrivateState,
+);
+function snapshot() {
+  const state = new runtime.ContractState();
+  state.data = new runtime.ChargedState(context.currentQueryContext.state.state);
+  for (const key of initial.currentContractState.operations()) {
+    state.setOperation(key, initial.currentContractState.operation(key));
+  }
+  state.maintenanceAuthority = initial.currentContractState.maintenanceAuthority;
+  state.balance = initial.currentContractState.balance;
+  return Buffer.from(state.serialize()).toString('hex');
+}
+function full() {
+  const out = contract.circuits.full(context);
+  context = out.context;
+  return out.result;
+}
+function known(root) {
+  const out = contract.circuits.known(context, root);
+  context = out.context;
+  return out.result;
+}
+function currentRoot() {
+  return ledger(new runtime.ChargedState(context.currentQueryContext.state.state)).t.root();
+}
+const afterInit = Buffer.from(initial.currentContractState.serialize()).toString('hex');
+const rootAtInit = ledger(initial.currentContractState.data).t.root();
+const fullAtInit = full();
+const knownAtInit = known(rootAtInit);
+context = contract.circuits.append(context, 7n).context;
+const afterAppend7 = snapshot();
+const knownInitialAfterAppend = known(rootAtInit);
+context = contract.circuits.place(context, 9n, 3n).context;
+const afterPlace9At3 = snapshot();
+context = contract.circuits.append(context, 11n).context;
+const afterAppend11 = snapshot();
+context = contract.circuits.place(context, 13n, 1n).context;
+const afterPlace13At1 = snapshot();
+context = contract.circuits.place_default(context, 6n).context;
+const afterDefaultAt6 = snapshot();
+const fullBeforeCapacity = full();
+context = contract.circuits.append_hash(context, new Uint8Array(32).fill(1)).context;
+const afterAppendHash = snapshot();
+const fullAtCapacity = full();
+context = contract.circuits.place_hash(context, new Uint8Array(32).fill(2), 1n).context;
+const afterReplaceHashAt1 = snapshot();
+const fullAfterReplacement = full();
+const rootBeforeTreeReset = currentRoot();
+const knownCurrent = known(rootBeforeTreeReset);
+const knownInitialBeforeReset = known(rootAtInit);
+context = contract.circuits.reset_tree(context).context;
+const afterResetTree = snapshot();
+const fullAfterTreeReset = full();
+const knownOldAfterTreeReset = known(rootBeforeTreeReset);
+const knownBlankAfterTreeReset = known(rootAtInit);
+process.stdout.write(JSON.stringify({
+  afterInit, fullAtInit, knownAtInit, afterAppend7, knownInitialAfterAppend,
+  afterPlace9At3, afterAppend11, afterPlace13At1, afterDefaultAt6,
+  fullBeforeCapacity, afterAppendHash, fullAtCapacity, afterReplaceHashAt1,
+  fullAfterReplacement, knownCurrent, knownInitialBeforeReset, afterResetTree,
+  fullAfterTreeReset, knownOldAfterTreeReset, knownBlankAfterTreeReset,
+}, null, 2) + '\n');

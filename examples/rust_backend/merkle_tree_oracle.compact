@@ -1,0 +1,35 @@
+import CompactStandardLibrary;
+
+export ledger t: MerkleTree<3, Uint<8>>;
+
+export circuit append(value: Uint<8>): [] {
+  t.insert(disclose(value));
+}
+
+export circuit place(value: Uint<8>, index: Uint<64>): [] {
+  t.insertIndex(disclose(value), disclose(index));
+}
+
+export circuit append_hash(hash: Bytes<32>): [] {
+  t.insertHash(disclose(hash));
+}
+
+export circuit place_hash(hash: Bytes<32>, index: Uint<64>): [] {
+  t.insertHashIndex(disclose(hash), disclose(index));
+}
+
+export circuit place_default(index: Uint<64>): [] {
+  t.insertIndexDefault(disclose(index));
+}
+
+export circuit reset_tree(): [] {
+  t.resetToDefault();
+}
+
+export circuit full(): Boolean {
+  return t.isFull();
+}
+
+export circuit known(root: MerkleTreeDigest): Boolean {
+  return t.checkRoot(disclose(root));
+}

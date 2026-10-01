@@ -773,12 +773,14 @@
                                (object (cons "kind" "map")
                                        (cons "key" (type-ir (car adt-arg*) src))
                                        (cons "value" (type-ir (cadr adt-arg*) src)))))]
-                [(and (eq? adt-name 'HistoricMerkleTree) (= (length adt-arg*) 2))
+                [(and (memq adt-name '(MerkleTree HistoricMerkleTree)) (= (length adt-arg*) 2))
                  (object (cons "id" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-index*))
                          (cons "path" (list->vector path-index*))
                          (cons "declaration"
-                               (object (cons "kind" "historic_merkle_tree")
+                               (object (cons "kind" (if (eq? adt-name 'MerkleTree)
+                                                        "merkle_tree"
+                                                        "historic_merkle_tree"))
                                        (cons "depth" (car adt-arg*))
                                        (cons "ty" (type-ir (cadr adt-arg*) src)))))]
                 [else (source-errorf src "Rust backend does not yet support this ledger ADT")])]
@@ -971,10 +973,12 @@
                  (object (cons "kind" "map_reset")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*)))]
-                [(and (eq? adt-name 'HistoricMerkleTree)
+                [(and (memq adt-name '(MerkleTree HistoricMerkleTree))
                       (eq? ledger-op 'resetToDefault)
                       (null? expr*))
-                 (object (cons "kind" "historic_merkle_reset_to_default")
+                 (object (cons "kind" (if (eq? adt-name 'MerkleTree)
+                                          "merkle_reset_to_default"
+                                          "historic_merkle_reset_to_default"))
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*)))]
                 [(and (eq? adt-name 'HistoricMerkleTree)
@@ -983,40 +987,50 @@
                  (object (cons "kind" "historic_merkle_reset_history")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*)))]
-                [(and (eq? adt-name 'HistoricMerkleTree)
+                [(and (memq adt-name '(MerkleTree HistoricMerkleTree))
                       (eq? ledger-op 'insert)
                       (= (length expr*) 1))
-                 (object (cons "kind" "historic_merkle_insert")
+                 (object (cons "kind" (if (eq? adt-name 'MerkleTree)
+                                          "merkle_insert"
+                                          "historic_merkle_insert"))
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
                          (cons "value" (stateful-expression-ir (car expr*) src witness-ids)))]
-                [(and (eq? adt-name 'HistoricMerkleTree)
+                [(and (memq adt-name '(MerkleTree HistoricMerkleTree))
                       (eq? ledger-op 'insertIndex)
                       (= (length expr*) 2))
-                 (object (cons "kind" "historic_merkle_insert_index")
+                 (object (cons "kind" (if (eq? adt-name 'MerkleTree)
+                                          "merkle_insert_index"
+                                          "historic_merkle_insert_index"))
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
                          (cons "value" (stateful-expression-ir (car expr*) src witness-ids))
                          (cons "position" (stateful-expression-ir (cadr expr*) src witness-ids)))]
-                [(and (eq? adt-name 'HistoricMerkleTree)
+                [(and (memq adt-name '(MerkleTree HistoricMerkleTree))
                       (eq? ledger-op 'insertHash)
                       (= (length expr*) 1))
-                 (object (cons "kind" "historic_merkle_insert_hash")
+                 (object (cons "kind" (if (eq? adt-name 'MerkleTree)
+                                          "merkle_insert_hash"
+                                          "historic_merkle_insert_hash"))
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
                          (cons "hash" (stateful-expression-ir (car expr*) src witness-ids)))]
-                [(and (eq? adt-name 'HistoricMerkleTree)
+                [(and (memq adt-name '(MerkleTree HistoricMerkleTree))
                       (eq? ledger-op 'insertHashIndex)
                       (= (length expr*) 2))
-                 (object (cons "kind" "historic_merkle_insert_hash_index")
+                 (object (cons "kind" (if (eq? adt-name 'MerkleTree)
+                                          "merkle_insert_hash_index"
+                                          "historic_merkle_insert_hash_index"))
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
                          (cons "hash" (stateful-expression-ir (car expr*) src witness-ids))
                          (cons "position" (stateful-expression-ir (cadr expr*) src witness-ids)))]
-                [(and (eq? adt-name 'HistoricMerkleTree)
+                [(and (memq adt-name '(MerkleTree HistoricMerkleTree))
                       (eq? ledger-op 'insertIndexDefault)
                       (= (length expr*) 1))
-                 (object (cons "kind" "historic_merkle_insert_index_default")
+                 (object (cons "kind" (if (eq? adt-name 'MerkleTree)
+                                          "merkle_insert_index_default"
+                                          "historic_merkle_insert_index_default"))
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
                          (cons "position" (stateful-expression-ir (car expr*) src witness-ids)))]
@@ -1412,16 +1426,20 @@
                  (object (cons "kind" "list_head")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*)))]
-                [(and (eq? adt-name 'HistoricMerkleTree)
+                [(and (memq adt-name '(MerkleTree HistoricMerkleTree))
                       (eq? ledger-op 'isFull)
                       (null? expr*))
-                 (object (cons "kind" "historic_merkle_is_full")
+                 (object (cons "kind" (if (eq? adt-name 'MerkleTree)
+                                          "merkle_is_full"
+                                          "historic_merkle_is_full"))
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*)))]
-                [(and (eq? adt-name 'HistoricMerkleTree)
+                [(and (memq adt-name '(MerkleTree HistoricMerkleTree))
                       (eq? ledger-op 'checkRoot)
                       (= (length expr*) 1))
-                 (object (cons "kind" "historic_merkle_check_root")
+                 (object (cons "kind" (if (eq? adt-name 'MerkleTree)
+                                          "merkle_check_root"
+                                          "historic_merkle_check_root"))
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
                          (cons "root" (expression-ir (car expr*) src)))]

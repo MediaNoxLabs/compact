@@ -113,10 +113,9 @@ impl fmt::Display for RenderError {
                 write!(f, "invalid or noncontiguous ledger field index {index}")
             }
             Self::InvalidLedgerPath(path) => write!(f, "invalid ledger field path {path:?}"),
-            Self::InvalidMerkleTreeDepth(depth) => write!(
-                f,
-                "invalid HistoricMerkleTree depth {depth}; expected 2..=32"
-            ),
+            Self::InvalidMerkleTreeDepth(depth) => {
+                write!(f, "invalid Merkle tree depth {depth}; expected 2..=32")
+            }
             Self::UnsupportedLedgerPath(path) => {
                 write!(f, "unsupported ledger field kind at chunked path {path:?}")
             }
@@ -549,11 +548,21 @@ fn collect_action_types(
         | StateAction::SetInsert { value, .. }
         | StateAction::SetRemove { value, .. }
         | StateAction::ListPushFront { value, .. }
+        | StateAction::MerkleInsert { value, .. }
+        | StateAction::MerkleInsertHash { hash: value, .. }
         | StateAction::HistoricMerkleInsert { value, .. }
         | StateAction::HistoricMerkleInsertHash { hash: value, .. } => {
             collect_expression_types(value, structs, enums)?;
         }
-        StateAction::HistoricMerkleInsertIndex {
+        StateAction::MerkleInsertIndex {
+            value, position, ..
+        }
+        | StateAction::MerkleInsertHashIndex {
+            hash: value,
+            position,
+            ..
+        }
+        | StateAction::HistoricMerkleInsertIndex {
             value, position, ..
         }
         | StateAction::HistoricMerkleInsertHashIndex {
@@ -571,7 +580,8 @@ fn collect_action_types(
         StateAction::MapInsertDefault { key, .. } | StateAction::MapRemove { key, .. } => {
             collect_expression_types(key, structs, enums)?;
         }
-        StateAction::HistoricMerkleInsertIndexDefault { position, .. } => {
+        StateAction::MerkleInsertIndexDefault { position, .. }
+        | StateAction::HistoricMerkleInsertIndexDefault { position, .. } => {
             collect_expression_types(position, structs, enums)?;
         }
         StateAction::CounterIncrement { .. }
@@ -582,7 +592,8 @@ fn collect_action_types(
         | StateAction::ListReset { .. }
         | StateAction::MapReset { .. }
         | StateAction::HistoricMerkleResetHistory { .. }
-        | StateAction::HistoricMerkleResetToDefault { .. } => {}
+        | StateAction::HistoricMerkleResetToDefault { .. }
+        | StateAction::MerkleResetToDefault { .. } => {}
     }
     Ok(())
 }
@@ -2125,7 +2136,8 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
             &mut enum_definitions,
         )?;
         if let ir::StateReturn::Expression { value }
-        | ir::StateReturn::HistoricMerkleCheckRoot { root: value, .. } = &circuit.return_value
+        | ir::StateReturn::HistoricMerkleCheckRoot { root: value, .. }
+        | ir::StateReturn::MerkleCheckRoot { root: value, .. } = &circuit.return_value
         {
             collect_expression_types(value, &mut struct_definitions, &mut enum_definitions)?;
         }
@@ -2144,7 +2156,8 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                 collect_named_types(key, &mut struct_definitions, &mut enum_definitions)?;
                 collect_named_types(value, &mut struct_definitions, &mut enum_definitions)?;
             }
-            LedgerFieldKind::HistoricMerkleTree { ty, .. } => {
+            LedgerFieldKind::MerkleTree { ty, .. }
+            | LedgerFieldKind::HistoricMerkleTree { ty, .. } => {
                 collect_named_types(ty, &mut struct_definitions, &mut enum_definitions)?;
             }
             LedgerFieldKind::Counter => {}
@@ -2169,7 +2182,9 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
         {
             return Err(RenderError::UnsupportedLedgerPath(path));
         }
-        if let LedgerFieldKind::HistoricMerkleTree { depth, .. } = field.declaration {
+        if let LedgerFieldKind::MerkleTree { depth, .. }
+        | LedgerFieldKind::HistoricMerkleTree { depth, .. } = field.declaration
+        {
             if !(2..=32).contains(&depth) {
                 return Err(RenderError::InvalidMerkleTreeDepth(depth));
             }
@@ -2363,6 +2378,10 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
         LedgerFieldKind::Set { .. } => Ok(syn::parse_quote!(runtime::ledger::constructor_set())),
         LedgerFieldKind::List { .. } => Ok(syn::parse_quote!(runtime::ledger::constructor_list())),
         LedgerFieldKind::Map { .. } => Ok(syn::parse_quote!(runtime::ledger::constructor_map())),
+        LedgerFieldKind::MerkleTree { depth, .. } => {
+            let depth = syn::LitInt::new(&format!("{depth}u8"), Span::call_site());
+            Ok(syn::parse_quote!(runtime::ledger::constructor_merkle_tree(#depth)))
+        }
         LedgerFieldKind::HistoricMerkleTree { depth, .. } => {
             let depth = syn::LitInt::new(&format!("{depth}u8"), Span::call_site());
             Ok(syn::parse_quote!(runtime::ledger::constructor_historic_merkle_tree(#depth)))

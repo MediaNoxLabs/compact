@@ -4065,5 +4065,7 @@ path = \"lib.rs\"
 [dependencies]
 midnight-compact-runtime = \"~a\"
 "
-              runtime-version-string)
+              ;; The Rust crate's version, matching the `check_runtime_version!`
+              ;; pin the prelude stamps; the npm package versions separately.
+              rust-runtime-version-string)
             port)))

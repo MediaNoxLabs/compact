@@ -232,11 +232,13 @@
 
           packages.compactc = pkgs.stdenv.mkDerivation {
             name = "compactc";
-            version = "0.34.120"; # NB: also update compiler-version in compiler/compiler-version.ss
+            version = "0.34.121"; # NB: also update compiler-version in compiler/compiler-version.ss
             src = inclusive.lib.inclusive ./. [
               ./compiler
               ./examples
               ./flake.nix
+              ./runtime-rs/Cargo.toml
+              ./runtime-rs/extract-version.ss
               ./runtime/extract-version.ss
               ./runtime/package.json
               ./srcMaps
@@ -316,6 +318,8 @@
               ./compiler
               ./examples
               ./flake.nix
+              ./runtime-rs/Cargo.toml
+              ./runtime-rs/extract-version.ss
               ./runtime/extract-version.ss
               ./runtime/package.json
               ./srcMaps

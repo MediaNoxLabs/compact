@@ -211,6 +211,8 @@ pub enum CounterAmount {
 #[serde(deny_unknown_fields)]
 pub struct PureCircuit {
     pub name: String,
+    #[serde(default)]
+    pub internal: bool,
     pub parameters: Vec<Parameter>,
     pub result: Type,
     pub body: Expr,

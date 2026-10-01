@@ -412,20 +412,26 @@
       (define (circuit-ir pelt export-alist circuits)
         (nanopass-case (Lnodisclose Program-Element) pelt
           [(circuit ,src ,function-name (,arg* ...) ,type ,expr)
-           (let ([names (exported-names function-name export-alist)])
-             (if (null? names)
-                 circuits
-                 (if (id-pure? function-name)
-                   (append
-                     (map
-                       (lambda (name)
-                         (object (cons "name" name)
-                                 (cons "parameters" (list->vector (map (lambda (arg) (argument-ir arg src)) arg*)))
-                                 (cons "result" (type-ir type src))
-                                 (cons "body" (typed-expression-ir expr type src))))
-                       names)
-                     circuits)
-                   circuits)))]
+           (let* ([names (exported-names function-name export-alist)]
+                  [internal-name (symbol->string (id-sym function-name))])
+             (if (id-pure? function-name)
+                 (append
+                   (map
+                     (lambda (name)
+                       (object (cons "name" name)
+                               (cons "parameters" (list->vector (map (lambda (arg) (argument-ir arg src)) arg*)))
+                               (cons "result" (type-ir type src))
+                               (cons "body" (typed-expression-ir expr type src))))
+                     names)
+                   (if (member internal-name names)
+                       '()
+                       (list (object (cons "name" internal-name)
+                                     (cons "internal" #t)
+                                     (cons "parameters" (list->vector (map (lambda (arg) (argument-ir arg src)) arg*)))
+                                     (cons "result" (type-ir type src))
+                                     (cons "body" (typed-expression-ir expr type src)))))
+                   circuits)
+                 circuits))]
           [else circuits]))
 
       (define (ledger-binding-ir binding owner-src)

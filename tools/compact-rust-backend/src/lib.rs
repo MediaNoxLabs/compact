@@ -993,9 +993,17 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
             });
         }
         let result = rust_type(&circuit.result)?;
-        let item: syn::Item = syn::parse_quote! {
-            pub fn #name(#(#args),*) -> Result<#result, runtime::CompactError> {
-                Ok(#body)
+        let item: syn::Item = if circuit.internal {
+            syn::parse_quote! {
+                pub(crate) fn #name(#(#args),*) -> Result<#result, runtime::CompactError> {
+                    Ok(#body)
+                }
+            }
+        } else {
+            syn::parse_quote! {
+                pub fn #name(#(#args),*) -> Result<#result, runtime::CompactError> {
+                    Ok(#body)
+                }
             }
         };
         items.push(item);

@@ -1,0 +1,19 @@
+import CompactStandardLibrary;
+
+export ledger stored: Field;
+
+pure circuit increment(value: Field): Field {
+  return value + 1;
+}
+
+export pure circuit double_increment(value: Field): Field {
+  return increment(increment(value));
+}
+
+export circuit save(value: Field): [] {
+  stored = disclose(increment(value));
+}
+
+export circuit read_stored(): Field {
+  return stored.read();
+}

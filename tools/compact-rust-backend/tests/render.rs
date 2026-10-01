@@ -10,6 +10,7 @@ fn identity(result: Type, body: Expr) -> Contract {
         witnesses: vec![],
         ledger_fields: vec![],
         circuits: vec![PureCircuit {
+            internal: false,
             name: "identity".into(),
             parameters: vec![Parameter {
                 name: "value".into(),
@@ -283,6 +284,7 @@ fn pure_call_checks_target_arity_and_argument_types() {
         Err(RenderError::UnknownCircuit("target".into()))
     );
     contract.circuits.push(PureCircuit {
+        internal: false,
         name: "target".into(),
         parameters: vec![Parameter {
             name: "flag".into(),
@@ -427,6 +429,7 @@ fn rejects_noncanonical_or_unsupported_unsigned_maxima() {
             witnesses: vec![],
             ledger_fields: vec![],
             circuits: vec![PureCircuit {
+                internal: false,
                 name: "id_u".into(),
                 parameters: vec![Parameter {
                     name: "value".into(),
@@ -1056,6 +1059,7 @@ fn struct_definitions_are_shared_by_name_and_must_match() {
         witnesses: vec![],
         ledger_fields: vec![],
         circuits: vec![PureCircuit {
+            internal: false,
             name: "identity".into(),
             parameters: vec![Parameter {
                 name: "value".into(),

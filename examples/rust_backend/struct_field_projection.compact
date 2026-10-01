@@ -1,0 +1,13 @@
+import CompactStandardLibrary;
+
+struct VecBox {
+  values: Vector<2, Field>;
+}
+
+export pure circuit project(item: VecBox): Vector<2, Field> {
+  return item.values;
+}
+
+export pure circuit hash_projected(item: VecBox): Bytes<32> {
+  return persistentHash<Vector<2, Field>>(item.values);
+}

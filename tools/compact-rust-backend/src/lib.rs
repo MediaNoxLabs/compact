@@ -38,6 +38,7 @@ pub enum RenderError {
     UnsupportedLedgerCellType(Type),
     ConflictingStruct(String),
     DuplicateStructField(String),
+    InvalidStructField(String),
     ConflictingEnum(String),
     EmptyEnum(String),
     DuplicateEnumVariant(String),
@@ -100,6 +101,7 @@ impl fmt::Display for RenderError {
                 write!(f, "conflicting definitions for struct {name:?}")
             }
             Self::DuplicateStructField(name) => write!(f, "duplicate struct field {name:?}"),
+            Self::InvalidStructField(name) => write!(f, "invalid struct field {name:?}"),
             Self::ConflictingEnum(name) => write!(f, "conflicting definitions for enum {name:?}"),
             Self::EmptyEnum(name) => write!(f, "enum {name:?} has no variants"),
             Self::DuplicateEnumVariant(name) => write!(f, "duplicate enum variant {name:?}"),
@@ -277,6 +279,7 @@ fn collect_expression_types(
 ) -> Result<(), RenderError> {
     match expr {
         Expr::Default { ty } => collect_named_types(ty, structs, enums)?,
+        Expr::StructField { value, .. } => collect_expression_types(value, structs, enums)?,
         Expr::Tuple { elements } => {
             for element in elements {
                 collect_expression_types(element, structs, enums)?;
@@ -493,6 +496,25 @@ fn expression_with_calls(
                 .get(name.as_str())
                 .ok_or_else(|| RenderError::UnknownParameter(name.clone()))?;
             Ok((syn::parse_quote!(#rust_name), (*ty).clone()))
+        }
+        Expr::StructField {
+            value,
+            field,
+            index,
+        } => {
+            let (value, ty) = expression_with_calls(value, parameters, circuits)?;
+            let Type::Struct { fields, .. } = ty else {
+                return Err(RenderError::InvalidStructField(field.clone()));
+            };
+            let declaration = fields
+                .get(*index)
+                .filter(|declaration| declaration.name == *field)
+                .ok_or_else(|| RenderError::InvalidStructField(field.clone()))?;
+            let name = ident(field)?;
+            Ok((
+                syn::parse_quote!((#value).#name.clone()),
+                declaration.ty.clone(),
+            ))
         }
         Expr::Assert { condition, message } => {
             let (condition, actual) = expression_with_calls(condition, parameters, circuits)?;

@@ -399,6 +399,11 @@ pub enum Expr {
     Parameter {
         name: String,
     },
+    StructField {
+        value: Box<Expr>,
+        field: String,
+        index: usize,
+    },
     SetMember {
         field: String,
         index: u8,

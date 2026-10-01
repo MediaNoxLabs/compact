@@ -26,6 +26,40 @@ fn identity(result: Type, body: Expr) -> Contract {
 }
 
 #[test]
+fn struct_field_projection_checks_declared_name_and_position() {
+    let mut contract = identity(
+        Type::Field,
+        Expr::StructField {
+            value: Box::new(Expr::Parameter {
+                name: "value".into(),
+            }),
+            field: "amount".into(),
+            index: 0,
+        },
+    );
+    contract.circuits[0].parameters[0].ty = Type::Struct {
+        name: "Record".into(),
+        fields: vec![StructField {
+            name: "amount".into(),
+            ty: Type::Field,
+        }],
+    };
+    assert!(
+        render(&contract)
+            .unwrap()
+            .contains("(value).amount.clone()")
+    );
+    let Expr::StructField { index, .. } = &mut contract.circuits[0].body else {
+        unreachable!()
+    };
+    *index = 1;
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::InvalidStructField("amount".into()))
+    );
+}
+
+#[test]
 fn constructor_cell_parameters_are_typed_and_validated() {
     let mut contract = identity(
         Type::Field,

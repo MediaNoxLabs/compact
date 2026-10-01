@@ -1166,6 +1166,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-struct-field-projection-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-compact-runtime",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-struct-identity-fixture"
 version = "0.1.0"
 dependencies = [

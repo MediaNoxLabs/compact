@@ -129,6 +129,11 @@
           [(var-ref ,src ,var-name)
            (object (cons "kind" "parameter")
                    (cons "name" (symbol->string (id-sym var-name))))]
+          [(elt-ref ,src ,expr ,elt-name ,nat)
+           (object (cons "kind" "struct_field")
+                   (cons "value" (expression-ir expr src))
+                   (cons "field" (symbol->string elt-name))
+                   (cons "index" nat))]
           [(quote ,src ,datum)
            (cond
              [(boolean? datum)

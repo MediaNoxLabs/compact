@@ -102,6 +102,15 @@ fn features() -> CredentialProtocolFeatures {
     }
 }
 
+fn capabilities() -> SchemaCapabilities {
+    SchemaCapabilities {
+        supportsSelectiveDisclosure: true,
+        supportsPredicateProofs: true,
+        supportsVerifierScopedPseudonym: false,
+        supportsSameHolderProof: false,
+    }
+}
+
 fn issuer_pk() -> JubjubPoint {
     ec_mul_generator(Field::from(0x1234u64)).unwrap()
 }
@@ -482,4 +491,106 @@ fn passport_round_trip_matches_typescript_roots_and_validators() {
         ),
         steps,
     );
+}
+
+#[test]
+fn proof_signatures_are_separated_by_issuance_and_presentation_context() {
+    let values = build_round_trip();
+    let credential_root =
+        pure_circuits::digitalPassportCredentialBodyRoot(values.credential.clone()).unwrap();
+    let presentation_root =
+        pure_circuits::digitalPassportPresentationBodyRoot(values.presentation.clone()).unwrap();
+    let issuance_proof = values.issuance_result.body.credentialProof;
+    let presentation_proof = values.verification_submission.body.presentationProof;
+
+    assert!(
+        pure_circuits::assertValidIssuanceContextProof(
+            credential_root.clone(),
+            issuance_proof.clone(),
+        )
+        .is_ok()
+    );
+    assert!(matches!(
+        pure_circuits::assertValidPresentationContextProof(credential_root, issuance_proof),
+        Err(CompactError::AssertionFailed(_))
+    ));
+    assert!(
+        pure_circuits::assertValidPresentationContextProof(
+            presentation_root.clone(),
+            presentation_proof.clone(),
+        )
+        .is_ok()
+    );
+    assert!(matches!(
+        pure_circuits::assertValidIssuanceContextProof(presentation_root, presentation_proof),
+        Err(CompactError::AssertionFailed(_))
+    ));
+}
+
+#[test]
+fn protocol_features_must_match_schema_capabilities() {
+    let expected = capabilities();
+    assert!(
+        pure_circuits::assertMatchingSchemaCapabilities(expected.clone(), expected.clone(),)
+            .is_ok()
+    );
+    assert!(
+        pure_circuits::assertProtocolFeaturesMatchSchemaCapabilities(features(), expected.clone(),)
+            .is_ok()
+    );
+
+    let mismatches = [
+        SchemaCapabilities {
+            supportsSelectiveDisclosure: false,
+            ..expected.clone()
+        },
+        SchemaCapabilities {
+            supportsPredicateProofs: false,
+            ..expected.clone()
+        },
+        SchemaCapabilities {
+            supportsVerifierScopedPseudonym: true,
+            ..expected.clone()
+        },
+        SchemaCapabilities {
+            supportsSameHolderProof: true,
+            ..expected
+        },
+    ];
+    for mismatched in mismatches {
+        assert!(matches!(
+            pure_circuits::assertMatchingSchemaCapabilities(capabilities(), mismatched.clone()),
+            Err(CompactError::AssertionFailed(_))
+        ));
+        assert!(matches!(
+            pure_circuits::assertProtocolFeaturesMatchSchemaCapabilities(features(), mismatched),
+            Err(CompactError::AssertionFailed(_))
+        ));
+    }
+}
+
+#[test]
+fn schema_descriptor_requires_the_no_hint_sentinel_when_hint_is_absent() {
+    let mut descriptor = SchemaDescriptor {
+        schema: schema(),
+        capabilities: capabilities(),
+        familyResolutionHint: SchemaFamilyResolutionHint {
+            hasResolverHint: false,
+            resolverHint: pure_circuits::noSchemaFamilyResolverHint().unwrap(),
+        },
+    };
+    assert!(pure_circuits::assertValidSchemaDescriptor(descriptor.clone()).is_ok());
+
+    descriptor.familyResolutionHint.resolverHint = bytes32(0);
+    assert!(matches!(
+        pure_circuits::assertValidSchemaDescriptor(descriptor.clone()),
+        Err(CompactError::AssertionFailed(_))
+    ));
+    descriptor.familyResolutionHint.hasResolverHint = true;
+    descriptor.familyResolutionHint.resolverHint =
+        pure_circuits::noSchemaFamilyResolverHint().unwrap();
+    assert!(matches!(
+        pure_circuits::assertValidSchemaDescriptor(descriptor),
+        Err(CompactError::AssertionFailed(_))
+    ));
 }

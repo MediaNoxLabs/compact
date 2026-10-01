@@ -57,4 +57,41 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
+    pub fn add<Private>(
+        context: runtime::context::CircuitContext<Private>,
+        __compact_param_0: runtime::BoundedUint<65535>,
+    ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
+        let mut total_cost = runtime::context::RunningCost::default();
+        let private_transcript_outputs = Vec::new();
+        let step = context.increment_counter(0, __compact_param_0.value() as u16)?;
+        let context = step.context;
+        total_cost += step.gas_cost;
+        let result = ();
+        Ok(runtime::context::CircuitResult {
+            context,
+            result,
+            gas_cost: total_cost,
+            private_transcript_outputs,
+        })
+    }
+    pub fn add_twice<Private>(
+        context: runtime::context::CircuitContext<Private>,
+        __compact_param_0: runtime::BoundedUint<65535>,
+    ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
+        let mut total_cost = runtime::context::RunningCost::default();
+        let private_transcript_outputs = Vec::new();
+        let call_step = add(context, __compact_param_0)?;
+        let context = call_step.context;
+        total_cost += call_step.gas_cost;
+        let call_step = add(context, __compact_param_0)?;
+        let context = call_step.context;
+        total_cost += call_step.gas_cost;
+        let result = ();
+        Ok(runtime::context::CircuitResult {
+            context,
+            result,
+            gas_cost: total_cost,
+            private_transcript_outputs,
+        })
+    }
 }

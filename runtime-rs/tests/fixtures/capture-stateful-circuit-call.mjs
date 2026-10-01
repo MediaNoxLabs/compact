@@ -17,7 +17,12 @@ const context = runtime.createCircuitContext(
   initial.currentContractState.data, initial.currentPrivateState,
 );
 const called = contract.circuits.bump_twice(context);
-initial.currentContractState.data = new runtime.ChargedState(called.context.currentQueryContext.state.state);
+const afterBump = new runtime.ChargedState(called.context.currentQueryContext.state.state);
+initial.currentContractState.data = afterBump;
+const afterBumpHex = Buffer.from(initial.currentContractState.serialize()).toString('hex');
+const added = contract.circuits.add_twice(called.context, 3n);
+initial.currentContractState.data = new runtime.ChargedState(added.context.currentQueryContext.state.state);
 process.stdout.write(JSON.stringify({
+  afterBumpHex,
   afterHex: Buffer.from(initial.currentContractState.serialize()).toString('hex'),
 }, null, 2) + '\n');

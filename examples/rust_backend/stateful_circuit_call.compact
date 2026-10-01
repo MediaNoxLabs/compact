@@ -10,3 +10,12 @@ export circuit bump_twice(): [] {
   bump();
   bump();
 }
+
+export circuit add(amount: Uint<16>): [] {
+  count.increment(disclose(amount));
+}
+
+export circuit add_twice(amount: Uint<16>): [] {
+  add(disclose(amount));
+  add(disclose(amount));
+}

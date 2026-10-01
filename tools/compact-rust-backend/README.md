@@ -52,6 +52,10 @@ recording frame is opt-in. When a circuit has a complete recorded trace, the
 generated `contract.recording` handle exposes it as a typed method; other
 methods continue to return native execution results. This distinction remains
 explicit until full transcript coverage is proven.
+Enable the runtime's `ledger-transaction` feature in a consuming Cargo graph
+to use `transaction::prepare_call` with a recorded result and a `CallSpec`.
+That adapter builds a ledger-8 call prototype from the trace and emitted
+verifier artifact.
 Generated modules suppress Rust's naming lint so public names retain their
 Compact spelling without warning in consumer builds.
 

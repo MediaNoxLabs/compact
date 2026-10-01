@@ -26,7 +26,7 @@ description = "Ledger-8 proof compatibility gate for Rust Compact output"
 compact-rust-counter-fixture = { path = "../../tests-rust-backend/counter" }
 compact-rust-cell-boolean-fixture = { path = "../../tests-rust-backend/cell-boolean" }
 compact-rust-cell-read-fixture = { path = "../../tests-rust-backend/cell-read" }
-midnight-compact-runtime = { path = "../../runtime-rs" }
+midnight-compact-runtime = { path = "../../runtime-rs", features = ["ledger-transaction"] }
 midnight-ledger = "=8.0.2"
 midnight-onchain-state = "=3.0.0"
 midnight-onchain-runtime = "=3.0.0"

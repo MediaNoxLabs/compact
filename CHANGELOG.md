@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Align root Cell write and read VM operations with Compact proof programs.
   Prove, validate, and apply generated Cell write and read calls in the offline
   ledger-8 gate.
+- Add an opt-in runtime adapter that replays and partitions a recorded result
+  into a ledger-8 call prototype, keeping transaction construction out of the
+  generated circuit body.
 
 ## [Toolchain 0.31.118, language 0.23.105, runtime 0.16.101]
 

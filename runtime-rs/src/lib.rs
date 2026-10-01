@@ -27,6 +27,8 @@ mod natives;
 mod opaque;
 mod primitives;
 pub mod recording;
+#[cfg(feature = "ledger-transaction")]
+pub mod transaction;
 
 pub use midnight_compact_runtime_macros::{
     CompactCellValue, CompactMerklePath, CompactMerklePathEntry, CompactMerkleTreeDigest,

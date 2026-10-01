@@ -25,6 +25,9 @@ homepage = "https://github.com/MediaNoxLabs/compact"
 readme = "README.md"
 include = ["Cargo.toml", "README.md", "src/**", "tests/**"]
 
+[features]
+ledger-transaction = ["dep:midnight-ledger"]
+
 [dependencies]
 midnight-compact-runtime-macros = { version = "=0.1.0", path = "../runtime-rs-macros" }
 # Exact crates published with midnight-ledger's ledger-8.0.2 tag. They share
@@ -47,6 +50,7 @@ midnight-zk-stdlib = "=1.0.0"
 # The ledger-8.0.2 lock names 8.0.1, which is no longer available on
 # crates.io. 8.0.0 is the published 8.0 line used for the context envelope.
 midnight-zswap = "=8.0.0"
+midnight-ledger = { version = "=8.0.2", optional = true }
 sha3 = "=0.10.8"
 
 [dev-dependencies]

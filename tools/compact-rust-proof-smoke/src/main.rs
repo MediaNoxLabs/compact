@@ -20,7 +20,6 @@
 //! commitment uses the value-field encoding from ledger-8's Intent::add_call.
 //! Deployment combines the generated constructor state with the emitted key.
 
-use std::borrow::Cow;
 use std::env;
 use std::error::Error;
 use std::fs::{self, File};
@@ -34,13 +33,10 @@ use midnight_base_crypto::data_provider::{FetchMode, MidnightDataProvider, Outpu
 use midnight_base_crypto::time::Timestamp;
 use midnight_compact_runtime::context::ConstructorContext;
 use midnight_compact_runtime::fab::AlignedValue;
-use midnight_compact_runtime::ledger::{
-    ContractAddress, DefaultDB, StateValue, read_cell, read_counter,
-};
+use midnight_compact_runtime::ledger::{DefaultDB, StateValue, read_cell, read_counter};
 use midnight_compact_runtime::recording::RecordedCircuitResult;
-use midnight_ledger::construct::{
-    ContractCallExt, ContractCallPrototype, PreTranscript, partition_transcripts,
-};
+use midnight_compact_runtime::transaction::{CallSpec, prepare_call};
+use midnight_ledger::construct::{ContractCallExt, ContractCallPrototype};
 use midnight_ledger::semantics::{TransactionContext, TransactionResult};
 use midnight_ledger::structure::{
     ContractDeploy, INITIAL_PARAMETERS, Intent, LedgerState, ProofPreimageMarker,
@@ -161,55 +157,18 @@ fn prove_counter(
 
 fn check_generated_trace<Output: Into<AlignedValue>>(
     root: &Path,
-    address: ContractAddress,
     circuit: &'static str,
     recorded: RecordedCircuitResult<(), Output>,
 ) -> Result<ContractCallPrototype<DefaultDB>, Box<dyn Error>> {
-    let replay = recorded.public.initial().query(
-        recorded.public.verify_ops(),
-        None,
-        &recorded.execution.context.cost_model,
-    )?;
-    if replay.context.effects != recorded.execution.context.query.effects {
-        return Err(
-            format!("generated {circuit} replay effects differ from native execution").into(),
-        );
-    }
-    let (context, program) = recorded.public.into_parts();
-    let transcripts = partition_transcripts(
-        &[PreTranscript {
-            context,
-            program,
-            comm_comm: None,
-        }],
-        &INITIAL_PARAMETERS,
-    )?;
-    let (guaranteed, fallible) = transcripts
-        .first()
-        .ok_or("generated trace did not partition")?;
-    let transcript = guaranteed
-        .as_ref()
-        .or(fallible.as_ref())
-        .ok_or("generated trace has no partitioned transcript")?;
-    if transcript.effects != replay.context.effects {
-        return Err(format!("partitioned {circuit} effects differ from replay").into());
-    }
     let verifier: VerifierKey = tagged_deserialize(&mut BufReader::new(File::open(
         root.join(format!("keys/{circuit}.verifier")),
     )?))?;
+    let call = prepare_call(
+        recorded,
+        CallSpec::new(circuit, verifier, (), Fr::from(0u64)),
+    )?;
     println!("generated {circuit} trace replayed and partitioned");
-    Ok(ContractCallPrototype {
-        address,
-        entry_point: EntryPointBuf(circuit.as_bytes().to_vec()),
-        op: ContractOperation::new(Some(verifier)),
-        guaranteed_public_transcript: guaranteed.clone(),
-        fallible_public_transcript: fallible.clone(),
-        private_transcript_outputs: recorded.execution.private_transcript_outputs,
-        input: ().into(),
-        output: recorded.execution.result.into(),
-        communication_commitment_rand: Fr::from(0u64),
-        key_location: KeyLocation(Cow::Borrowed(circuit)),
-    })
+    Ok(call)
 }
 
 fn make_deploy(
@@ -323,12 +282,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let counter_recorded = counter_contract::Contract::default()
         .recording
         .increment(counter_context)?;
-    let counter_call = check_generated_trace(
-        counter_root,
-        counter_deploy.address(),
-        "increment",
-        counter_recorded,
-    )?;
+    let counter_call = check_generated_trace(counter_root, "increment", counter_recorded)?;
     prove_counter(counter_root, &counter_call)?;
     check_transaction(
         counter_root,
@@ -358,8 +312,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let cell_recorded = cell_contract::Contract::default()
         .recording
         .set_flag(cell_context)?;
-    let cell_call =
-        check_generated_trace(cell_root, cell_deploy.address(), "set_flag", cell_recorded)?;
+    let cell_call = check_generated_trace(cell_root, "set_flag", cell_recorded)?;
     check_transaction(
         cell_root,
         "set_flag",
@@ -391,12 +344,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     if cell_read_recorded.execution.result {
         return Err("new Cell contract unexpectedly read true".into());
     }
-    let cell_read_call = check_generated_trace(
-        cell_read_root,
-        cell_read_deploy.address(),
-        "read_flag",
-        cell_read_recorded,
-    )?;
+    let cell_read_call = check_generated_trace(cell_read_root, "read_flag", cell_read_recorded)?;
     check_transaction(
         cell_read_root,
         "read_flag",

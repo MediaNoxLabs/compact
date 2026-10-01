@@ -52,6 +52,13 @@ through `contract.recording` with typed methods. Other generated circuit
 methods return native `CircuitResult`; broader operation recording and wallet
 submission remain Milestone 2 work.
 
+The runtime's opt-in `ledger-transaction` feature exposes
+`transaction::prepare_call`. It replays a recorded result, checks the effects,
+partitions the Verify program, and constructs a ledger-8
+`ContractCallPrototype`. A `CallSpec` supplies the verifier artifact, public
+input, and commitment randomness. The proof gate uses this adapter for its
+Counter and Cell calls instead of assembling transcripts in the test harness.
+
 The counter proof smoke now builds its public statement from ledger-8's
 `ContractCallPrototype` and confirms it matches the emitted ZKIR. It uses
 the value-field communication commitment calculated by `Intent::add_call`,

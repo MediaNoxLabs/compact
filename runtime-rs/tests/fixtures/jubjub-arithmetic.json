@@ -1,0 +1,26 @@
+{
+  "add": {
+    "x": "d57177766c82fbbefd188949486d94feda4d64393f23e18f8ef263b55990445a",
+    "y": "be49cc618875a3bcb32e7c71fd3a0575de6c547aa1fd53c68a99de87f14a7003"
+  },
+  "negate": {
+    "x": "eb8f4ecb48c40c75fdadb62081f5206c6732fbb1c4b06b77887ec4a9d4481e1a",
+    "y": "202fa736b570509f32678bcec0857197bdfecc013ff95cedc5daa5cbf87dce5d"
+  },
+  "multiply": {
+    "x": "01e7b22c0cd96efea4ba96ac4339485e74d98a31c8b84beb6d9d3a458245cb5d",
+    "y": "d87842495c42e149bac8f21fe719163428d5eda6ed42f61423e6b3c10ff86967"
+  },
+  "generator": {
+    "x": "d8b6b11fd5179b86e5e15ff573059744c8666738c1b59d8566a0018c63fbb069",
+    "y": "26c69cc492e137a38ab29d807387ccd70021ab143c208ed121e97d92cf0c1018"
+  },
+  "generatorReduced": {
+    "x": "7b93952bdc10e48ac451598a65182bf71e0de912f2f2f96a3ab6e1deca25116c",
+    "y": "94b4e03ac556254786faca105066353de0a0279b655d01667527e27f3e489319"
+  },
+  "reduced": "489a4648088d477be8d7bd99649f7c2000000000000000000000000000000000",
+  "highScalar": "00000000fffffffffe5bfeff02a4bd5305d8a10908d83933487d9d2953a7ed73",
+  "highScalarRejected": true,
+  "highMultiplyRejected": true
+}

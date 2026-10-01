@@ -268,7 +268,16 @@ fn collect_expression_types(
         | Expr::UpgradeFromTransient { value }
         | Expr::HashToCurve { value }
         | Expr::JubjubPointX { value }
-        | Expr::JubjubPointY { value } => collect_expression_types(value, structs, enums)?,
+        | Expr::JubjubPointY { value }
+        | Expr::EcNeg { value }
+        | Expr::JubjubScalarFromNative { value } => {
+            collect_expression_types(value, structs, enums)?
+        }
+        Expr::EcMulGenerator { scalar } => collect_expression_types(scalar, structs, enums)?,
+        Expr::EcMul { point, scalar } => {
+            collect_expression_types(point, structs, enums)?;
+            collect_expression_types(scalar, structs, enums)?;
+        }
         Expr::TransientCommit { value, opening } | Expr::PersistentCommit { value, opening } => {
             collect_expression_types(value, structs, enums)?;
             collect_expression_types(opening, structs, enums)?;
@@ -282,7 +291,8 @@ fn collect_expression_types(
         }
         Expr::Add { left, right }
         | Expr::Subtract { left, right }
-        | Expr::Multiply { left, right } => {
+        | Expr::Multiply { left, right }
+        | Expr::EcAdd { left, right } => {
             collect_expression_types(left, structs, enums)?;
             collect_expression_types(right, structs, enums)?;
         }
@@ -574,6 +584,81 @@ fn expression_with_calls(
                 _ => unreachable!(),
             };
             Ok((syn::parse_quote!(#operation(#value)), Type::Field))
+        }
+        Expr::EcAdd { left, right } => {
+            let (left, left_ty) = expression_with_calls(left, parameters, circuits)?;
+            let (right, right_ty) = expression_with_calls(right, parameters, circuits)?;
+            for actual in [left_ty, right_ty] {
+                if actual != Type::JubjubPoint {
+                    return Err(RenderError::TypeMismatch {
+                        expected: Type::JubjubPoint,
+                        actual,
+                    });
+                }
+            }
+            Ok((
+                syn::parse_quote!(runtime::ec_add(#left, #right)),
+                Type::JubjubPoint,
+            ))
+        }
+        Expr::EcNeg { value } => {
+            let (value, actual) = expression_with_calls(value, parameters, circuits)?;
+            if actual != Type::JubjubPoint {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::JubjubPoint,
+                    actual,
+                });
+            }
+            Ok((
+                syn::parse_quote!(runtime::ec_neg(#value)),
+                Type::JubjubPoint,
+            ))
+        }
+        Expr::EcMul { point, scalar } => {
+            let (point, point_ty) = expression_with_calls(point, parameters, circuits)?;
+            let (scalar, scalar_ty) = expression_with_calls(scalar, parameters, circuits)?;
+            if point_ty != Type::JubjubPoint {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::JubjubPoint,
+                    actual: point_ty,
+                });
+            }
+            if scalar_ty != Type::Field {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Field,
+                    actual: scalar_ty,
+                });
+            }
+            Ok((
+                syn::parse_quote!(runtime::ec_mul(#point, #scalar)?),
+                Type::JubjubPoint,
+            ))
+        }
+        Expr::EcMulGenerator { scalar } => {
+            let (scalar, actual) = expression_with_calls(scalar, parameters, circuits)?;
+            if actual != Type::Field {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Field,
+                    actual,
+                });
+            }
+            Ok((
+                syn::parse_quote!(runtime::ec_mul_generator(#scalar)?),
+                Type::JubjubPoint,
+            ))
+        }
+        Expr::JubjubScalarFromNative { value } => {
+            let (value, actual) = expression_with_calls(value, parameters, circuits)?;
+            if actual != Type::Field {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Field,
+                    actual,
+                });
+            }
+            Ok((
+                syn::parse_quote!(runtime::jubjub_scalar_from_native(#value)),
+                Type::Field,
+            ))
         }
         Expr::WitnessCall { .. } => Err(RenderError::EffectfulExpression),
         Expr::UnsignedCast { max, value } => {

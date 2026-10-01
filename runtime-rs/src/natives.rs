@@ -1,8 +1,10 @@
 //! Compact native operations backed by the ledger-8 cryptography crates.
 
+use crate::CompactError;
 use crate::{BinaryHashRepr, Field, FieldRepr, FixedBytes, JubjubPoint};
 use midnight_base_crypto::fab::{Aligned, AlignedValue, Value};
 use midnight_base_crypto::hash::{self as persistent, HashOutput, PersistentHashWriter};
+use midnight_transient_crypto::curve::{EmbeddedFr, embedded};
 use midnight_transient_crypto::fab::ValueReprAlignedValue;
 use midnight_transient_crypto::hash;
 
@@ -62,4 +64,36 @@ pub fn jubjub_point_x(point: JubjubPoint) -> Field {
 /// Read the affine Y coordinate; the identity has Compact's zero coordinate.
 pub fn jubjub_point_y(point: JubjubPoint) -> Field {
     point.y().unwrap_or_else(|| Field::from(0_u64))
+}
+
+/// Add two ledger embedded-curve points.
+pub fn ec_add(left: JubjubPoint, right: JubjubPoint) -> JubjubPoint {
+    left + right
+}
+
+/// Negate a ledger embedded-curve point.
+pub fn ec_neg(point: JubjubPoint) -> JubjubPoint {
+    -point
+}
+
+fn canonical_jubjub_scalar(value: Field) -> Result<EmbeddedFr, CompactError> {
+    EmbeddedFr::from_le_bytes(&value.as_le_bytes()).ok_or(CompactError::InvalidJubjubScalar)
+}
+
+/// Multiply by a canonical Jubjub scalar, matching the ledger WASM check.
+pub fn ec_mul(point: JubjubPoint, scalar: Field) -> Result<JubjubPoint, CompactError> {
+    Ok(point * canonical_jubjub_scalar(scalar)?)
+}
+
+/// Multiply the embedded group generator by a canonical Jubjub scalar.
+pub fn ec_mul_generator(scalar: Field) -> Result<JubjubPoint, CompactError> {
+    Ok(JubjubPoint::generator() * canonical_jubjub_scalar(scalar)?)
+}
+
+/// Reduce a native field value into the embedded scalar field.
+pub fn jubjub_scalar_from_native(value: Field) -> Field {
+    let mut wide = [0u8; 64];
+    wide[..32].copy_from_slice(&value.as_le_bytes());
+    let scalar = EmbeddedFr(embedded::Scalar::from_bytes_wide(&wide));
+    Field::from_le_bytes(&scalar.as_le_bytes()).expect("embedded scalar fits the native field")
 }

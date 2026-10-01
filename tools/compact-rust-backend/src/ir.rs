@@ -336,6 +336,23 @@ pub enum Expr {
     JubjubPointY {
         value: Box<Expr>,
     },
+    EcAdd {
+        left: Box<Expr>,
+        right: Box<Expr>,
+    },
+    EcNeg {
+        value: Box<Expr>,
+    },
+    EcMul {
+        point: Box<Expr>,
+        scalar: Box<Expr>,
+    },
+    EcMulGenerator {
+        scalar: Box<Expr>,
+    },
+    JubjubScalarFromNative {
+        value: Box<Expr>,
+    },
     WitnessCall {
         name: String,
         arguments: Vec<Expr>,

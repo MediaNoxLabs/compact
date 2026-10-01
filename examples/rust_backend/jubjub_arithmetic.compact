@@ -1,0 +1,25 @@
+import CompactStandardLibrary;
+
+export circuit add_points(left: Field, right: Field): JubjubPoint {
+  return ecAdd(hashToCurve<Field>(disclose(left)), hashToCurve<Field>(disclose(right)));
+}
+
+export circuit negate_point(value: Field): JubjubPoint {
+  return ecNeg(hashToCurve<Field>(disclose(value)));
+}
+
+export circuit multiply_point(value: Field, scalar: Field): JubjubPoint {
+  return ecMul(hashToCurve<Field>(disclose(value)), disclose(scalar));
+}
+
+export circuit generator_point(scalar: Field): JubjubPoint {
+  return ecMulGenerator(disclose(scalar));
+}
+
+export circuit reduce_scalar(value: Field): Field {
+  return jubjubScalarFromNative(disclose(value));
+}
+
+export circuit generator_reduced(value: Field): JubjubPoint {
+  return ecMulGenerator(jubjubScalarFromNative(disclose(value)));
+}

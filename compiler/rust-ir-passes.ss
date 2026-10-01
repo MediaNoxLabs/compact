@@ -218,6 +218,33 @@
                                           "jubjub_point_x"
                                           "jubjub_point_y"))
                         (cons "value" (expression-ir (car expr*) src)))]
+               [(eq? name 'ecAdd)
+                (unless (= (length expr*) 2)
+                  (source-errorf src "ecAdd expects two arguments"))
+                (object (cons "kind" "ec_add")
+                        (cons "left" (expression-ir (car expr*) src))
+                        (cons "right" (expression-ir (cadr expr*) src)))]
+               [(eq? name 'ecNeg)
+                (unless (= (length expr*) 1)
+                  (source-errorf src "ecNeg expects one argument"))
+                (object (cons "kind" "ec_neg")
+                        (cons "value" (expression-ir (car expr*) src)))]
+               [(eq? name 'ecMul)
+                (unless (= (length expr*) 2)
+                  (source-errorf src "ecMul expects two arguments"))
+                (object (cons "kind" "ec_mul")
+                        (cons "point" (expression-ir (car expr*) src))
+                        (cons "scalar" (expression-ir (cadr expr*) src)))]
+               [(eq? name 'ecMulGenerator)
+                (unless (= (length expr*) 1)
+                  (source-errorf src "ecMulGenerator expects one argument"))
+                (object (cons "kind" "ec_mul_generator")
+                        (cons "scalar" (expression-ir (car expr*) src)))]
+               [(eq? name 'jubjubScalarFromNative)
+                (unless (= (length expr*) 1)
+                  (source-errorf src "jubjubScalarFromNative expects one argument"))
+                (object (cons "kind" "jubjub_scalar_from_native")
+                        (cons "value" (expression-ir (car expr*) src)))]
                [else
                 (object (cons "kind" "call")
                         (cons "name" (symbol->string name))

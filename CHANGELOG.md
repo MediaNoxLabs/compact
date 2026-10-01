@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Toolchain 0.34.121, language 0.26.105, runtime 0.19.105] — the Rust backend pins the Rust runtime, not the npm package (2026-10-01)
+
+### Fixed
+
+- The Rust backend stamped the **TypeScript** runtime's version into every
+  generated crate — both the `check_runtime_version!` pin in `lib.rs` and the
+  `midnight-compact-runtime` dependency in the generated `Cargo.toml`. It read
+  `runtime/package.json` (npm, `0.19.105`) while generated code links the Rust
+  crate declared in `runtime-rs/Cargo.toml` (`0.19.101`). The two runtimes
+  version independently and had already diverged.
+
+  The pin is `const`-evaluated, so this is a hard build failure, not a
+  cosmetic mismatch — every generated crate failed to compile:
+
+  ```
+  error[E0080]: evaluation panicked: midnight-compact-runtime version mismatch
+    --> tests-e2e-rust/contracts/election/lib.rs:32:1
+     |
+  32 | midnight_compact_runtime::check_runtime_version!("0.19.105");
+  ```
+
+  and the generated manifest could not resolve, because a `[patch.crates-io]`
+  pointing at the `0.19.101` path crate cannot satisfy a `"0.19.105"`
+  requirement. Both `rust_codegen_byte_parity_against_committed_fixtures` and
+  `rust_backend_generated_manifest_builds` were red, as were the two
+  `print-rust` snapshot cases in the compiler's own suite.
+
+  The committed fixtures were correct throughout; the compiler's output was
+  wrong. `compiler/rust-runtime-version.ss` now reads `runtime-rs/Cargo.toml`,
+  leaving `(runtime-version)` to the TypeScript backend that needs it.
+
+  Regenerating the fixtures to match the compiler would have been the wrong
+  repair: it makes the byte-parity gate green while leaving every generated
+  crate uncompilable. All 41 fixture diffs were version-only, which is exactly
+  what makes that mistake easy to reach for.
+
 ## [Toolchain 0.34.110, language 0.26.105, runtime 0.19.105]
 
 ### Added

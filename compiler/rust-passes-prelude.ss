@@ -56,7 +56,11 @@
         (out "use midnight_compact_runtime::*;\n")
         (out "use std::marker::PhantomData;\n")
         (out "\n")
-        (out (format "midnight_compact_runtime::check_runtime_version!(\"~a\");\n" runtime-version-string))
+        ;; The Rust crate's own version, not the npm package's: this pin is
+        ;; const-evaluated against the `midnight-compact-runtime` the crate
+        ;; links, so stamping the TypeScript version makes every generated
+        ;; crate fail to compile as soon as the two diverge.
+        (out (format "midnight_compact_runtime::check_runtime_version!(\"~a\");\n" rust-runtime-version-string))
         (out "\n"))
 
       ;; emit-witnesses: emits the per-contract Witnesses<PS> trait.

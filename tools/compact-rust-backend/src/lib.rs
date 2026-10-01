@@ -124,6 +124,7 @@ fn rust_type(ty: &Type) -> Result<syn::Type, RenderError> {
         Type::Unit => syn::parse_quote!(()),
         Type::Boolean => syn::parse_quote!(bool),
         Type::Field => syn::parse_quote!(runtime::Field),
+        Type::JubjubPoint => syn::parse_quote!(runtime::JubjubPoint),
         Type::Bytes { length } => {
             let length = syn::LitInt::new(&length.to_string(), Span::call_site());
             syn::parse_quote!(runtime::FixedBytes<#length>)
@@ -264,7 +265,10 @@ fn collect_expression_types(
         Expr::TransientHash { value }
         | Expr::PersistentHash { value }
         | Expr::DegradeToTransient { value }
-        | Expr::UpgradeFromTransient { value } => collect_expression_types(value, structs, enums)?,
+        | Expr::UpgradeFromTransient { value }
+        | Expr::HashToCurve { value }
+        | Expr::JubjubPointX { value }
+        | Expr::JubjubPointY { value } => collect_expression_types(value, structs, enums)?,
         Expr::TransientCommit { value, opening } | Expr::PersistentCommit { value, opening } => {
             collect_expression_types(value, structs, enums)?;
             collect_expression_types(opening, structs, enums)?;
@@ -548,6 +552,28 @@ fn expression_with_calls(
                 syn::parse_quote!(runtime::upgrade_from_transient(#value)),
                 Type::Bytes { length: 32 },
             ))
+        }
+        Expr::HashToCurve { value } => {
+            let (value, _) = expression_with_calls(value, parameters, circuits)?;
+            Ok((
+                syn::parse_quote!(runtime::hash_to_curve(#value)),
+                Type::JubjubPoint,
+            ))
+        }
+        Expr::JubjubPointX { value } | Expr::JubjubPointY { value } => {
+            let (value, actual) = expression_with_calls(value, parameters, circuits)?;
+            if actual != Type::JubjubPoint {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::JubjubPoint,
+                    actual,
+                });
+            }
+            let operation: syn::Path = match expr {
+                Expr::JubjubPointX { .. } => syn::parse_quote!(runtime::jubjub_point_x),
+                Expr::JubjubPointY { .. } => syn::parse_quote!(runtime::jubjub_point_y),
+                _ => unreachable!(),
+            };
+            Ok((syn::parse_quote!(#operation(#value)), Type::Field))
         }
         Expr::WitnessCall { .. } => Err(RenderError::EffectfulExpression),
         Expr::UnsignedCast { max, value } => {

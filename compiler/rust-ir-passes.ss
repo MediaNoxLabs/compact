@@ -39,6 +39,10 @@
         (nanopass-case (Lnodisclose Type) ty
           [(tboolean ,src) (kind "boolean")]
           [(tfield ,src) (kind "field")]
+          [(topaque ,src ,opaque-type)
+           (if (string=? opaque-type "JubjubPoint")
+               (kind "jubjub_point")
+               (source-errorf src "Rust backend does not yet support this opaque type"))]
           [(tbytes ,src ,len)
            (object (cons "kind" "bytes")
                    (cons "length" len))]
@@ -201,6 +205,18 @@
                 (unless (= (length expr*) 1)
                   (source-errorf src "upgradeFromTransient expects one argument"))
                 (object (cons "kind" "upgrade_from_transient")
+                        (cons "value" (expression-ir (car expr*) src)))]
+               [(eq? name 'hashToCurve)
+                (unless (= (length expr*) 1)
+                  (source-errorf src "hashToCurve expects one argument"))
+                (object (cons "kind" "hash_to_curve")
+                        (cons "value" (expression-ir (car expr*) src)))]
+               [(memq name '(jubjubPointX jubjubPointY))
+                (unless (= (length expr*) 1)
+                  (source-errorf src "Jubjub coordinate function expects one argument"))
+                (object (cons "kind" (if (eq? name 'jubjubPointX)
+                                          "jubjub_point_x"
+                                          "jubjub_point_y"))
                         (cons "value" (expression-ir (car expr*) src)))]
                [else
                 (object (cons "kind" "call")

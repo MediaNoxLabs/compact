@@ -1,6 +1,6 @@
 //! Compact native operations backed by the ledger-8 cryptography crates.
 
-use crate::{BinaryHashRepr, Field, FieldRepr, FixedBytes};
+use crate::{BinaryHashRepr, Field, FieldRepr, FixedBytes, JubjubPoint};
 use midnight_base_crypto::fab::{Aligned, AlignedValue, Value};
 use midnight_base_crypto::hash::{self as persistent, HashOutput, PersistentHashWriter};
 use midnight_transient_crypto::fab::ValueReprAlignedValue;
@@ -47,4 +47,19 @@ pub fn degrade_to_transient(value: FixedBytes<32>) -> Field {
 /// Convert a transient field output into a 32-byte persistent digest shape.
 pub fn upgrade_from_transient(value: Field) -> FixedBytes<32> {
     FixedBytes(hash::upgrade_from_transient(value).0)
+}
+
+/// Map Compact FAB fields to the ledger's embedded curve.
+pub fn hash_to_curve<T: Aligned + Into<Value>>(value: T) -> JubjubPoint {
+    hash::hash_to_curve(&value_repr(value))
+}
+
+/// Read the affine X coordinate; the identity has Compact's zero coordinate.
+pub fn jubjub_point_x(point: JubjubPoint) -> Field {
+    point.x().unwrap_or_else(|| Field::from(0_u64))
+}
+
+/// Read the affine Y coordinate; the identity has Compact's zero coordinate.
+pub fn jubjub_point_y(point: JubjubPoint) -> Field {
+    point.y().unwrap_or_else(|| Field::from(0_u64))
 }

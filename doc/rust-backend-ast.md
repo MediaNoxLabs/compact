@@ -26,7 +26,8 @@ Boolean, Field, and Uint literals, unit, tuple construction, typed conditionals,
 local bindings, pure circuit calls, Field addition/subtraction/multiplication,
 checked unsigned addition, subtraction, and multiplication, and the
 `transientHash`, `transientCommit`, `persistentHash`, `persistentCommit`,
-`degradeToTransient`, and `upgradeFromTransient` natives. The fixtures
+`degradeToTransient`, `upgradeFromTransient`, `hashToCurve`, and Jubjub
+coordinate natives. The fixtures
 in `examples/rust_backend/` run from Compact source through the Scheme
 compiler, JSON bridge, `syn` renderer, native runtime, and executing Rust
 tests. The compiler supports the Cell, Counter, Set, Map, and List slices
@@ -55,6 +56,12 @@ writer and persistent commitment over the value-only FAB binary encoding.
 Field, vector, and bytes fixtures compare generated Rust results to generated
 TypeScript circuits and the TypeScript native calls, including nested
 hash-to-field conversion.
+The first curve slice adds `JubjubPoint` as a distinct IR type backed by
+ledger-8's `EmbeddedGroupAffine`, with `hashToCurve` and affine X/Y accessors.
+The Field and vector curve-hash fixture compares both coordinates with the
+ledger WASM runtime through generated TypeScript. Curve points in user
+structs, ledger Cells, and witnessed values require a later representation
+slice.
 
 The runtime also exposes ledger-owned `ChargedState`, `QueryContext`, and
 Zswap state through constructor and circuit context envelopes. Its FAB tests
@@ -184,6 +191,7 @@ cargo test -p compact-rust-backend -p midnight-compact-runtime \
   -p compact-rust-one-tuple-fixture -p compact-rust-field-add-fixture \
   -p compact-rust-field-arithmetic-fixture -p compact-rust-transient-hash-fixture \
   -p compact-rust-persistent-hash-fixture \
+  -p compact-rust-jubjub-hash-fixture \
   -p compact-rust-uint-arithmetic-fixture \
   -p compact-rust-witness-minimal-fixture \
   -p compact-rust-witness-argument-fixture \

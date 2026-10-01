@@ -1,0 +1,17 @@
+import CompactStandardLibrary;
+
+export circuit point(value: Field): JubjubPoint {
+  return hashToCurve<Field>(disclose(value));
+}
+
+export circuit point_x(value: Field): Field {
+  return jubjubPointX(hashToCurve<Field>(disclose(value)));
+}
+
+export circuit point_y(value: Field): Field {
+  return jubjubPointY(hashToCurve<Field>(disclose(value)));
+}
+
+export circuit pair_point(value: Vector<2, Field>): JubjubPoint {
+  return hashToCurve<Vector<2, Field>>(disclose(value));
+}

@@ -233,6 +233,7 @@ pub enum Type {
     Unit,
     Boolean,
     Field,
+    JubjubPoint,
     Bytes {
         length: usize,
     },
@@ -324,6 +325,15 @@ pub enum Expr {
         value: Box<Expr>,
     },
     UpgradeFromTransient {
+        value: Box<Expr>,
+    },
+    HashToCurve {
+        value: Box<Expr>,
+    },
+    JubjubPointX {
+        value: Box<Expr>,
+    },
+    JubjubPointY {
         value: Box<Expr>,
     },
     WitnessCall {

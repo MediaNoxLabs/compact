@@ -140,6 +140,25 @@ fn rejects_wrong_native_hash_opening_and_conversion_types() {
 }
 
 #[test]
+fn rejects_field_as_jubjub_point_coordinate_input() {
+    let contract = identity(
+        Type::Field,
+        Expr::JubjubPointX {
+            value: Box::new(Expr::Parameter {
+                name: "value".into(),
+            }),
+        },
+    );
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::TypeMismatch {
+            expected: Type::JubjubPoint,
+            actual: Type::Field,
+        })
+    );
+}
+
+#[test]
 fn rejects_type_mismatch_and_invalid_identifier() {
     let mut contract = identity(
         Type::Boolean,

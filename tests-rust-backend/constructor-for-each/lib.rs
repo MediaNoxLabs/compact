@@ -20,6 +20,7 @@ pub mod ledger_contract {
         {
             let mut context = runtime::context::ConstructorResult::new(__compact_context, state)
                 .into_circuit_context(runtime::ledger::ContractAddress::default());
+            let mut total_cost = runtime::context::RunningCost::default();
             let __compact_constructor_values_0: [runtime::BoundedUint<9>; 10] = [
                 (runtime::BoundedUint::<9>::new(0u128)
                     .expect("Compact Uint literal fits its maximum"))
@@ -72,6 +73,7 @@ pub mod ledger_contract {
                     context.increment_counter(0, __compact_constructor_item_1.value() as u16)?;
                 context = step.context;
             }
+            let _ = total_cost;
             Ok(context.into_constructor_result())
         }
     }

@@ -23,6 +23,7 @@ pub mod ledger_contract {
         {
             let mut context = runtime::context::ConstructorResult::new(__compact_context, state)
                 .into_circuit_context(runtime::ledger::ContractAddress::default());
+            let mut total_cost = runtime::context::RunningCost::default();
             let step =
                 context.insert_map(0, (true).clone(), (runtime::Field::from(1u128)).clone())?;
             context = step.context;
@@ -39,6 +40,7 @@ pub mod ledger_contract {
             let step =
                 context.insert_map(1, (false).clone(), <runtime::Field as Default>::default())?;
             context = step.context;
+            let _ = total_cost;
             Ok(context.into_constructor_result())
         }
     }

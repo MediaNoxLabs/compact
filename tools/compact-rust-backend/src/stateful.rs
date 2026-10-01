@@ -9,7 +9,7 @@ use crate::ir::{
 };
 use crate::{RenderError, coerce_expression, expression_with_calls, ident, rust_type};
 
-fn render_state_expression(
+pub(crate) fn render_state_expression(
     value: &Expr,
     parameters: &HashMap<&str, (&Type, syn::Ident)>,
     witnesses: &HashMap<&str, &WitnessDeclaration>,
@@ -126,7 +126,9 @@ fn render_state_expression(
         Expr::Call { name, arguments } => {
             let (formal_parameters, result, stateful) =
                 if let Some(callee) = stateful_circuits.get(name.as_str()) {
-                    if !witnesses.is_empty() || callee.actions.iter().any(action_contains_call) {
+                    if circuit_contains_witness(callee)
+                        || callee.actions.iter().any(action_contains_call)
+                    {
                         return Err(RenderError::UnsupportedStatefulCall(name.clone()));
                     }
                     (&callee.parameters, &callee.result, true)
@@ -534,6 +536,36 @@ fn render_state_expression(
                 Type::Tuple { elements: types },
                 effect,
             ))
+        }
+        Expr::Sequence { steps, value } => {
+            let mut witness_effect = false;
+            for step in steps {
+                let (rendered, _, effect) = render_state_expression(
+                    step,
+                    parameters,
+                    witnesses,
+                    statements,
+                    next_temp,
+                    circuits,
+                    stateful_circuits,
+                    ledger_fields,
+                    query_effect,
+                )?;
+                statements.push(syn::parse_quote!(let _ = #rendered;));
+                witness_effect |= effect;
+            }
+            let (rendered, ty, effect) = render_state_expression(
+                value,
+                parameters,
+                witnesses,
+                statements,
+                next_temp,
+                circuits,
+                stateful_circuits,
+                ledger_fields,
+                query_effect,
+            )?;
+            Ok((rendered, ty, witness_effect || effect))
         }
         Expr::If {
             condition,
@@ -956,6 +988,145 @@ fn action_contains_call(action: &StateAction) -> bool {
     }
 }
 
+fn expression_contains(expression: &Expr, predicate: &impl Fn(&Expr) -> bool) -> bool {
+    if predicate(expression) {
+        return true;
+    }
+    let visit = |child: &Expr| expression_contains(child, predicate);
+    match expression {
+        Expr::WitnessCall { arguments, .. } | Expr::Call { arguments, .. } => {
+            arguments.iter().any(visit)
+        }
+        Expr::Tuple { elements }
+        | Expr::Vector { elements, .. }
+        | Expr::StructLiteral {
+            fields: elements, ..
+        } => elements.iter().any(visit),
+        Expr::If {
+            condition,
+            then,
+            otherwise,
+        } => visit(condition) || visit(then) || visit(otherwise),
+        Expr::Let { bindings, body } => {
+            bindings.iter().any(|binding| visit(&binding.value)) || visit(body)
+        }
+        Expr::Sequence { steps, value } => steps.iter().any(visit) || visit(value),
+        Expr::UnsignedCast { value, .. }
+        | Expr::FieldCast { value }
+        | Expr::Coerce { value, .. }
+        | Expr::StructField { value, .. }
+        | Expr::SetMember { value, .. }
+        | Expr::Assert {
+            condition: value, ..
+        }
+        | Expr::TransientHash { value }
+        | Expr::PersistentHash { value }
+        | Expr::Keccak256 { value }
+        | Expr::DegradeToTransient { value }
+        | Expr::UpgradeFromTransient { value }
+        | Expr::HashToCurve { value }
+        | Expr::JubjubPointX { value }
+        | Expr::JubjubPointY { value }
+        | Expr::EcNeg { value }
+        | Expr::EcMulGenerator { scalar: value }
+        | Expr::JubjubScalarFromNative { value } => visit(value),
+        Expr::Equal { left, right }
+        | Expr::NotEqual { left, right }
+        | Expr::Compare { left, right, .. }
+        | Expr::TransientCommit {
+            value: left,
+            opening: right,
+        }
+        | Expr::PersistentCommit {
+            value: left,
+            opening: right,
+        }
+        | Expr::EcAdd { left, right }
+        | Expr::ConstructJubjubPoint { x: left, y: right }
+        | Expr::EcMul {
+            point: left,
+            scalar: right,
+        }
+        | Expr::Add { left, right }
+        | Expr::Subtract { left, right }
+        | Expr::Multiply { left, right }
+        | Expr::UnsignedAdd { left, right, .. }
+        | Expr::UnsignedSubtract { left, right, .. }
+        | Expr::UnsignedMultiply { left, right, .. } => visit(left) || visit(right),
+        Expr::Unit
+        | Expr::Default { .. }
+        | Expr::Boolean { .. }
+        | Expr::FieldLiteral { .. }
+        | Expr::BytesLiteral { .. }
+        | Expr::UnsignedLiteral { .. }
+        | Expr::Parameter { .. }
+        | Expr::CellRead { .. }
+        | Expr::SetIsEmpty { .. }
+        | Expr::MapIsEmpty { .. } => false,
+    }
+}
+
+fn expression_contains_witness(expression: &Expr) -> bool {
+    expression_contains(expression, &|value| {
+        matches!(value, Expr::WitnessCall { .. })
+    })
+}
+
+pub(crate) fn expression_contains_stateful_call(
+    expression: &Expr,
+    stateful_circuits: &HashMap<&str, &StatefulCircuit>,
+) -> bool {
+    expression_contains(
+        expression,
+        &|value| matches!(value, Expr::Call { name, .. } if stateful_circuits.contains_key(name.as_str())),
+    )
+}
+
+fn action_contains_witness(action: &StateAction) -> bool {
+    match action {
+        StateAction::Expression { value }
+        | StateAction::CellWrite { value, .. }
+        | StateAction::SetInsert { value, .. }
+        | StateAction::SetRemove { value, .. }
+        | StateAction::ListPushFront { value, .. }
+        | StateAction::MapInsertDefault { key: value, .. }
+        | StateAction::MapRemove { key: value, .. } => expression_contains_witness(value),
+        StateAction::PureCall { arguments, .. } | StateAction::CircuitCall { arguments, .. } => {
+            arguments.iter().any(expression_contains_witness)
+        }
+        StateAction::Assert { condition, .. } => expression_contains_witness(condition),
+        StateAction::Let { bindings, action } => {
+            bindings
+                .iter()
+                .any(|binding| expression_contains_witness(&binding.value))
+                || action_contains_witness(action)
+        }
+        StateAction::MapInsert { key, value, .. } => {
+            expression_contains_witness(key) || expression_contains_witness(value)
+        }
+        StateAction::CounterIncrement { .. }
+        | StateAction::CounterDecrement { .. }
+        | StateAction::CounterReset { .. }
+        | StateAction::SetReset { .. }
+        | StateAction::ListPopFront { .. }
+        | StateAction::ListReset { .. }
+        | StateAction::MapReset { .. } => false,
+    }
+}
+
+fn circuit_contains_witness(circuit: &StatefulCircuit) -> bool {
+    circuit.actions.iter().any(action_contains_witness)
+        || match &circuit.return_value {
+            StateReturn::Expression { value } | StateReturn::SetMember { value, .. } => {
+                expression_contains_witness(value)
+            }
+            StateReturn::MapMember { key, .. } | StateReturn::MapLookup { key, .. } => {
+                expression_contains_witness(key)
+            }
+            _ => false,
+        }
+}
+
 pub(crate) fn render_stateful_circuit(
     circuit: &StatefulCircuit,
     ledger_fields: &HashMap<&str, &LedgerField>,
@@ -1069,10 +1240,10 @@ pub(crate) fn render_stateful_circuit(
                 let callee = stateful_circuits
                     .get(callee_name.as_str())
                     .ok_or_else(|| RenderError::UnknownCircuit(callee_name.clone()))?;
-                // The first call slice keeps transcript handling local to each
-                // generated function. Witness and nested calls need an explicit
-                // composition model before they can safely share a context.
-                if !witnesses.is_empty()
+                // Transcript handling is local to each generated function.
+                // A witnessful callee needs explicit transcript composition.
+                // Nested standalone calls still need a separate call model.
+                if circuit_contains_witness(callee)
                     || callee_name == &circuit.name
                     || callee.actions.iter().any(action_contains_call)
                 {

@@ -208,6 +208,9 @@
                                     (reverse bytes)
                                     (loop (+ index 1)
                                           (cons (bytevector-u8-ref datum index) bytes)))))))]
+             [(and (integer? datum) (> datum (max-unsigned)) (field? datum))
+              (object (cons "kind" "field_literal")
+                      (cons "value" (number->string datum)))]
              [else (source-errorf src "Rust backend does not yet support this literal")])]
           [(default ,src ,type)
            (nanopass-case (Lnodisclose Type) type
@@ -611,6 +614,21 @@
                   arg*))]
           [else (void)]))
 
+      (define (stateful-call-arguments-ir function-name expr* src witness-ids)
+        (let ([formal-types (eq-hashtable-ref call-argument-types function-name #f)])
+          (if formal-types
+              (begin
+                (unless (= (length expr*) (length formal-types))
+                  (source-errorf src "Rust call argument count differs from its declaration"))
+                (list->vector
+                  (map (lambda (arg formal-type)
+                         (object (cons "kind" "coerce")
+                                 (cons "value" (stateful-expression-ir arg src witness-ids))
+                                 (cons "ty" (type-ir formal-type src))))
+                       expr* formal-types)))
+              (list->vector
+                (map (lambda (arg) (stateful-expression-ir arg src witness-ids)) expr*)))))
+
       (define (circuit-ir pelt export-alist circuits)
         (nanopass-case (Lnodisclose Program-Element) pelt
           [(circuit ,src ,function-name (,arg* ...) ,type ,expr)
@@ -716,11 +734,14 @@
                        (cons "value" (stateful-expression-ir expr src witness-ids)))
                (object (cons "kind" (if (id-pure? function-name) "pure_call" "circuit_call"))
                        (cons "name" (symbol->string (id-sym function-name)))
-                       (cons "arguments" (list->vector (map (lambda (arg) (stateful-expression-ir arg src witness-ids)) expr*)))))]
+                       (cons "arguments" (stateful-call-arguments-ir function-name expr* src witness-ids))))]
           [(assert ,src ,expr ,mesg)
            (object (cons "kind" "assert")
                    (cons "condition" (stateful-expression-ir expr src witness-ids))
                    (cons "message" mesg))]
+          [(if ,src ,expr0 ,expr1 ,expr2)
+           (object (cons "kind" "expression")
+                   (cons "value" (stateful-expression-ir expr src witness-ids)))]
           [(let* ,src ([,local* ,expr*] ...) ,expr)
            (let ([environment^
                    (fold-left
@@ -1002,7 +1023,9 @@
           [(seq ,src ,expr* ... ,expr)
            (if (checked-unsigned-subtraction? expr* expr)
                (stateful-expression-ir expr src witness-ids)
-               (source-errorf src "Rust backend does not yet support this stateful expression sequence"))]
+               (object (cons "kind" "sequence")
+                       (cons "steps" (list->vector (map (lambda (step) (stateful-expression-ir step src witness-ids)) expr*)))
+                       (cons "value" (stateful-expression-ir expr src witness-ids))))]
           [(tuple ,src ,tuple-arg* ...)
            (if (null? tuple-arg*)
                (kind "unit")

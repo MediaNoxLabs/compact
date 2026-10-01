@@ -1,0 +1,184 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//  	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+//
+// Call arguments rendered at the callee's declared formal type (#91).
+//
+// The typechecker wraps a call argument in `safe-cast` only when its type
+// differs from the formal; an argument whose type already IS the formal
+// reaches the emitter bare. The Rust backend used to take a call
+// argument's expected type from that wrapper alone, so a bare argument
+// rendered with no expected type at all:
+//   - `persistentCommit<Field>(N as Field, o)` emitted `&N`, which BUILDS
+//     (Rust infers `i32`, and every integer is `BinaryHashRepr`) but
+//     commits to 4 little-endian bytes instead of the `Fr` encoding — a
+//     silently wrong commitment;
+//   - `[0 as Field, 1 as Field]` passed to a `Vector<2, Field>` formal
+//     emitted `[0, 1]` (#21) and failed `cargo build`.
+// Every circuit here writes its result to the ledger, so the executing
+// test (tests/call_arg_declared_type.rs) compares the state bytes after
+// each circuit against the TS target: a wrong value fails even when it
+// builds.
+
+import CompactStandardLibrary;
+
+export ledger opening: Bytes<32>;
+export ledger commitCell: Bytes<32>;
+export ledger hashCell: Bytes<32>;
+export ledger fieldCell: Field;
+export ledger armCell: Field;
+export ledger condCell: Field;
+export ledger flag: Boolean;
+export ledger asserts: Counter;
+
+// Echoes `v[0] + v[1]`, so the witness argument's value reaches the ledger.
+witness sumWitness(v: Vector<2, Field>): Field;
+
+export pure circuit idf(x: Field): Field {
+  return x;
+}
+
+// Consumers of a `Vector<2, Field>` and a `[Field, Field]` (the Rust backend
+// has no vector indexing, so they hash the whole value).
+export pure circuit sumVec(v: Vector<2, Field>): Field {
+  return transientHash<Vector<2, Field>>(v);
+}
+
+export pure circuit sumTup(t: [Field, Field]): Field {
+  return transientHash<[Field, Field]>(t);
+}
+
+// `persistentCommit<Field>` of a bare `N as Field` value: a small `N`, a
+// `N` in the `u128` range, and a Field-only `N` above `max-unsigned`.
+export circuit commitSmall(): [] {
+  commitCell = persistentCommit<Field>(5 as Field, opening);
+}
+
+export circuit commitU128(): [] {
+  commitCell = persistentCommit<Field>(1267650600228229401496703205376 as Field, opening);
+}
+
+export circuit commitFieldOnly(): [] {
+  commitCell = persistentCommit<Field>(819310549611346726241370945440405716213240158234039660170669895299022906775 as Field, opening);
+}
+
+// Pure-circuit call from a pure body: the #21 vector, and the Field-only
+// literal of #90 (no `safe-cast` either way).
+export pure circuit vecFromPureBody(): Field {
+  return sumVec([0 as Field, 1 as Field]);
+}
+
+export pure circuit fieldOnlyFromPureBody(): Field {
+  return idf(819310549611346726241370945440405716213240158234039660170669895299022906775 as Field);
+}
+
+// The tuple/vector bridge at a call argument (compact#83): the declared
+// kinds differ but the typer counts them as the same type.
+export pure circuit tupleIntoVec(): Field {
+  const t: [Field, Field] = [3, 4];
+  return sumVec(t);
+}
+
+export pure circuit vecIntoTuple(): Field {
+  const v: Vector<2, Field> = [3, 4];
+  return sumTup(v);
+}
+
+export circuit pureBodyVec(): [] {
+  fieldCell = vecFromPureBody();
+}
+
+export circuit pureBodyFieldOnly(): [] {
+  fieldCell = fieldOnlyFromPureBody();
+}
+
+export circuit bridgeTupleIntoVec(): [] {
+  fieldCell = tupleIntoVec();
+}
+
+export circuit bridgeVecIntoTuple(): [] {
+  fieldCell = vecIntoTuple();
+}
+
+// Impure callees: a writing one (bare calls), a ledger-reading one that
+// returns a value (`const` binding), and a Boolean one simple enough to be
+// inlined into a condition.
+circuit storeVec(v: Vector<2, Field>): [] {
+  fieldCell = sumVec(v);
+}
+
+circuit sumVecPlusCell(v: Vector<2, Field>): Field {
+  return sumVec(v) + armCell;
+}
+
+circuit vecDiffers(v: Vector<2, Field>): Boolean {
+  return transientHash<Vector<2, Field>>(v) != fieldCell;
+}
+
+// The #21 vector into a witness (`const` and bare).
+export circuit witnessConst(): [] {
+  const w = sumWitness([0 as Field, 1 as Field]);
+  fieldCell = disclose(w);
+}
+
+export circuit witnessBare(): [] {
+  sumWitness([0 as Field, 1 as Field]);
+  fieldCell = 7;
+}
+
+// ... into a pure circuit from an impure body.
+export circuit pureFromImpure(): [] {
+  const p = sumVec([0 as Field, 1 as Field]);
+  fieldCell = p;
+}
+
+// ... into an impure circuit: `const`, bare, and bare in an `if` arm.
+export circuit impureConst(): [] {
+  const r = sumVecPlusCell([0 as Field, 1 as Field]);
+  fieldCell = r;
+}
+
+export circuit impureBare(): [] {
+  storeVec([0 as Field, 1 as Field]);
+}
+
+export circuit impureInIfArm(): [] {
+  if (flag) {
+    storeVec([0 as Field, 1 as Field]);
+  }
+}
+
+// ... into an impure circuit inlined into an `assert` condition. (The
+// conditional-expression condition is in the constructor below; the Rust
+// backend does not lower an impure call as an `if` statement's condition.)
+export circuit inlinedAssert(): [] {
+  assert(vecDiffers([0 as Field, 1 as Field]), "vector hash is not zero");
+  asserts.increment(1);
+}
+
+// The #21 vector into the hash natives.
+export circuit hashPersistentVec(): [] {
+  hashCell = persistentHash<Vector<2, Field>>([0 as Field, 1 as Field]);
+}
+
+export circuit hashTransientVec(): [] {
+  fieldCell = transientHash<Vector<2, Field>>([0 as Field, 1 as Field]);
+}
+
+constructor() {
+  opening = pad(32, "call-arg-declared-type");
+  flag = true;
+  condCell = vecDiffers([0 as Field, 1 as Field]) ? 1 : 2;
+}

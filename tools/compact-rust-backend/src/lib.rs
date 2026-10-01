@@ -1275,7 +1275,11 @@ fn render_constructor_vm_steps<'a>(
     steps: &'a [ConstructorStep],
     ledger_fields: &HashMap<&str, &ir::LedgerField>,
     parameters: &HashMap<&'a str, (&'a Type, syn::Ident)>,
+    witnesses: &HashMap<&str, &ir::WitnessDeclaration>,
+    circuits: &HashMap<&str, &PureCircuit>,
+    stateful_circuits: &HashMap<&str, &StatefulCircuit>,
     next_loop: &mut usize,
+    next_temp: &mut usize,
 ) -> Result<Vec<syn::Stmt>, RenderError> {
     let mut actions = Vec::new();
     for step in steps {
@@ -1294,7 +1298,22 @@ fn render_constructor_vm_steps<'a>(
                 let LedgerFieldKind::Cell { ty } = &declaration.declaration else {
                     return Err(RenderError::InvalidConstructorInitializer(field.clone()));
                 };
-                let (value, actual) = expression_with_calls(value, parameters, &HashMap::new())?;
+                let mut expression_steps = Vec::new();
+                let mut query_effect = false;
+                let (value, actual, witness_effect) = stateful::render_state_expression(
+                    value,
+                    parameters,
+                    witnesses,
+                    &mut expression_steps,
+                    next_temp,
+                    circuits,
+                    stateful_circuits,
+                    ledger_fields,
+                    &mut query_effect,
+                )?;
+                if witness_effect {
+                    return Err(RenderError::InvalidConstructorInitializer(field.clone()));
+                }
                 if actual != *ty {
                     return Err(RenderError::TypeMismatch {
                         expected: ty.clone(),
@@ -1302,6 +1321,7 @@ fn render_constructor_vm_steps<'a>(
                     });
                 }
                 let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+                actions.extend(expression_steps);
                 actions.push(
                     syn::parse_quote!(let step = context.write_cell(#index, (#value).clone())?;),
                 );
@@ -1592,8 +1612,16 @@ fn render_constructor_vm_steps<'a>(
                 }
                 let mut body_parameters = parameters.clone();
                 body_parameters.insert(binding.name.as_str(), (&binding.ty, item.clone()));
-                let body =
-                    render_constructor_vm_steps(steps, ledger_fields, &body_parameters, next_loop)?;
+                let body = render_constructor_vm_steps(
+                    steps,
+                    ledger_fields,
+                    &body_parameters,
+                    witnesses,
+                    circuits,
+                    stateful_circuits,
+                    next_loop,
+                    next_temp,
+                )?;
                 let ty = rust_type(&binding.ty)?;
                 let len = syn::LitInt::new(&values.len().to_string(), Span::call_site());
                 actions.push(syn::parse_quote!(let #iterable: [#ty; #len] = [#((#rendered_values).clone()),*];));
@@ -1777,7 +1805,13 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
     let constructor_uses_vm = contract.constructor.as_ref().is_some_and(|constructor| {
         let mut seen_cells = HashSet::new();
         constructor.steps.iter().any(|step| match step {
-            ConstructorStep::CellWrite { field, .. } => !seen_cells.insert(field.as_str()),
+            ConstructorStep::CellWrite { field, value, .. } => {
+                !seen_cells.insert(field.as_str())
+                    || stateful::expression_contains_stateful_call(
+                        value,
+                        &callable_stateful_circuits,
+                    )
+            }
             ConstructorStep::CounterIncrement { .. }
             | ConstructorStep::CounterDecrement { .. }
             | ConstructorStep::CounterReset { .. }
@@ -1817,6 +1851,10 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                 &constructor.steps,
                 &ledger_fields,
                 &constructor_parameters,
+                &witness_syntax.declarations,
+                &callable_circuits,
+                &callable_stateful_circuits,
+                &mut 0,
                 &mut 0,
             )?;
         } else {
@@ -1839,7 +1877,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                     return Err(RenderError::InvalidConstructorInitializer(field.clone()));
                 };
                 let (value, actual) =
-                    expression_with_calls(value, &constructor_parameters, &HashMap::new())?;
+                    expression_with_calls(value, &constructor_parameters, &callable_circuits)?;
                 if actual != *ty {
                     return Err(RenderError::TypeMismatch {
                         expected: ty.clone(),
@@ -1881,7 +1919,9 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
         syn::parse_quote!({
             let mut context = runtime::context::ConstructorResult::new(__compact_context, state)
                 .into_circuit_context(runtime::ledger::ContractAddress::default());
+            let mut total_cost = runtime::context::RunningCost::default();
             #(#constructor_actions)*
+            let _ = total_cost;
             Ok(context.into_constructor_result())
         })
     } else {

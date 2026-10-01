@@ -38,7 +38,10 @@ def run(*arguments: str, cwd: Path = ROOT) -> None:
 
 def check_manifest(output: Path) -> None:
     manifest = json.loads((output / "compiler/contract-manifest.json").read_text())
-    for directory in ("compiler", "contract", "zkir"):
+    directories = ["compiler", "contract", "zkir"]
+    if (output / "keys").is_dir():
+        directories.append("keys")
+    for directory in directories:
         assert directory in manifest, f"missing {directory} in contract manifest"
         for name, entry in manifest[directory].items():
             if name == "type":
@@ -88,6 +91,7 @@ def check_consumer(contract: Path, pure_contract: Path, consumer: Path) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--consumer", action="store_true", help="build and run a separate consumer")
+    parser.add_argument("--proof", action="store_true", help="generate ZKIR and proving keys")
     args = parser.parse_args()
     compiler = os.environ.get("COMPACTC", "compactc")
     with tempfile.TemporaryDirectory(prefix="compactc-target-") as temporary:
@@ -111,6 +115,15 @@ def main() -> None:
         if args.consumer:
             run(compiler, "--target", "rust", "--skip-zk", str(PURE_SOURCE), str(pure))
             check_consumer(rust / "contract", pure / "contract", base / "consumer")
+        if args.proof:
+            proof = base / "proof"
+            run(compiler, "--target", "rust", str(SOURCE), str(proof))
+            check_manifest(proof)
+            for circuit in ("increment", "read_round"):
+                for extension in ("prover", "verifier"):
+                    assert (proof / "keys" / f"{circuit}.{extension}").is_file()
+                for extension in ("zkir", "bzkir"):
+                    assert (proof / "zkir" / f"{circuit}.{extension}").is_file()
     print("compactc target boundary and manifest: passed")
 
 

@@ -82,7 +82,8 @@ pinned in [`runtime-rs/Cargo.toml`](../../runtime-rs/Cargo.toml).
 
 ```sh
 cargo fmt --all -- --check
-COMPACTC=compactc python3 tools/compact-rust-backend/check_compactc_target.py --consumer
+nix develop .#compiler --command env COMPACTC=compactc \
+  python3 tools/compact-rust-backend/check_compactc_target.py --consumer --proof
 COMPACTC=/path/to/ledger-8/compactc \
   python3 tools/compact-rust-backend/check_fixture_outputs.py
 COMPACTC=/path/to/ledger-8/compactc \

@@ -300,7 +300,7 @@ jobs:
       - name: Check and test native Rust backend
         run: |
           cargo fmt --all -- --check
-          nix develop .#compiler --command env COMPACTC=compactc python3 tools/compact-rust-backend/check_compactc_target.py --consumer
+          nix develop .#compiler --command env COMPACTC=compactc python3 tools/compact-rust-backend/check_compactc_target.py --consumer --proof
           nix develop .#compiler --command env COMPACTC=compactc python3 tools/compact-rust-backend/check_fixture_outputs.py
           nix develop .#compiler --command env COMPACTC=compactc python3 tools/compact-rust-backend/check_rejections.py
           cargo test --workspace --exclude compact

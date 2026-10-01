@@ -307,6 +307,9 @@ pub enum Expr {
     FieldLiteral {
         value: String,
     },
+    BytesLiteral {
+        bytes: Vec<u8>,
+    },
     UnsignedLiteral {
         value: String,
         max: String,

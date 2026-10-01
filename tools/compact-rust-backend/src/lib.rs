@@ -340,6 +340,7 @@ fn collect_expression_types(
         Expr::Unit
         | Expr::Boolean { .. }
         | Expr::FieldLiteral { .. }
+        | Expr::BytesLiteral { .. }
         | Expr::UnsignedLiteral { .. }
         | Expr::Parameter { .. } => {}
     }
@@ -408,6 +409,18 @@ fn expression_with_calls(
             }
             let value = syn::LitInt::new(&format!("{value}u128"), Span::call_site());
             Ok((syn::parse_quote!(runtime::Field::from(#value)), Type::Field))
+        }
+        Expr::BytesLiteral { bytes } => {
+            let values = bytes
+                .iter()
+                .map(|value| syn::LitInt::new(&format!("{value}u8"), Span::call_site()))
+                .collect::<Vec<_>>();
+            Ok((
+                syn::parse_quote!(runtime::FixedBytes::new([#(#values),*])),
+                Type::Bytes {
+                    length: bytes.len(),
+                },
+            ))
         }
         Expr::UnsignedLiteral { value, max } => {
             let parsed_max = max
@@ -923,6 +936,7 @@ fn infallible_constructor_expr(value: &Expr) -> bool {
         Expr::Unit
         | Expr::Boolean { .. }
         | Expr::FieldLiteral { .. }
+        | Expr::BytesLiteral { .. }
         | Expr::UnsignedLiteral { .. }
         | Expr::Parameter { .. } => true,
         Expr::Vector { elements, .. } | Expr::Tuple { elements } => {

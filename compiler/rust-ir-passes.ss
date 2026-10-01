@@ -119,9 +119,19 @@
            (object (cons "kind" "parameter")
                    (cons "name" (symbol->string (id-sym var-name))))]
           [(quote ,src ,datum)
-           (if (boolean? datum)
-               (object (cons "kind" "boolean") (cons "value" datum))
-               (source-errorf src "Rust backend does not yet support this literal"))]
+           (cond
+             [(boolean? datum)
+              (object (cons "kind" "boolean") (cons "value" datum))]
+             [(bytevector? datum)
+              (object (cons "kind" "bytes_literal")
+                      (cons "bytes"
+                            (list->vector
+                              (let loop ([index 0] [bytes '()])
+                                (if (= index (bytevector-length datum))
+                                    (reverse bytes)
+                                    (loop (+ index 1)
+                                          (cons (bytevector-u8-ref datum index) bytes)))))))]
+             [else (source-errorf src "Rust backend does not yet support this literal")])]
           [(default ,src ,type)
            (nanopass-case (Lnodisclose Type) type
              [(tboolean ,src^) (object (cons "kind" "boolean") (cons "value" #f))]

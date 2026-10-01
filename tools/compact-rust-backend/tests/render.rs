@@ -120,6 +120,29 @@ fn vector_expression_preserves_element_type() {
 }
 
 #[test]
+fn byte_literals_keep_their_exact_length() {
+    let mut contract = identity(
+        Type::Bytes { length: 3 },
+        Expr::BytesLiteral {
+            bytes: vec![1, 2, 0],
+        },
+    );
+    assert!(
+        render(&contract)
+            .unwrap()
+            .contains("runtime::FixedBytes::new([1u8, 2u8, 0u8])")
+    );
+    contract.circuits[0].result = Type::Bytes { length: 2 };
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::TypeMismatch {
+            expected: Type::Bytes { length: 2 },
+            actual: Type::Bytes { length: 3 },
+        })
+    );
+}
+
+#[test]
 fn emits_a_pure_field_circuit_as_parseable_rust() {
     let contract = identity(
         Type::Field,

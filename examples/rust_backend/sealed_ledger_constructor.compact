@@ -1,0 +1,16 @@
+import CompactStandardLibrary;
+
+export sealed ledger admin: Field;
+export sealed ledger contract_id: Bytes<32>;
+export sealed ledger created_at: Uint<64>;
+export ledger flag: Boolean;
+
+constructor() {
+  admin = 42;
+  contract_id = pad(32, "lares:sealed:demo");
+  created_at = 12345;
+}
+
+export circuit ping(): [] {
+  flag.write(true);
+}

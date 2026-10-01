@@ -765,7 +765,7 @@
                                       [(,var-name ,type)
                                        (object (cons "name" (symbol->string (id-sym var-name)))
                                                (cons "ty" (type-ir type src))
-                                               (cons "value" (stateful-expression-ir value src witness-ids)))]))
+                                               (cons "value" (stateful-typed-expression-ir value type src witness-ids)))]))
                                   local* expr*)))
                      (cons "action" (state-action-ir expr owner-src environment^ witness-ids))))]
           [(public-ledger ,src ,ledger-field-name ,sugar? (,path-elt* ...) ,src^ ,adt-op ,expr* ...)
@@ -880,6 +880,32 @@
 
       ;; Stateful expressions keep witness calls explicit so Rust can evaluate
       ;; them in order and append each private transcript value exactly once.
+      (define (stateful-typed-expression-ir value-expr expected-type owner-src witness-ids)
+        (nanopass-case (Lnodisclose Expression) value-expr
+          [(if ,src ,expr0 ,expr1 ,expr2)
+           (object (cons "kind" "if")
+                   (cons "condition" (stateful-expression-ir expr0 src witness-ids))
+                   (cons "then" (stateful-typed-expression-ir expr1 expected-type src witness-ids))
+                   (cons "otherwise" (stateful-typed-expression-ir expr2 expected-type src witness-ids)))]
+          [(quote ,src ,datum)
+           (typed-expression-ir value-expr expected-type src)]
+          [(safe-cast ,src ,type ,type^ ,expr)
+           (nanopass-case (Lnodisclose Type) type
+             [(tunsigned ,src^ ,nat)
+              (let ([literal (maybe-nonnegative-integer-literal expr src)])
+                (if literal
+                    (begin
+                      (unless (<= literal nat)
+                        (source-errorf src "Rust backend Uint literal exceeds its maximum"))
+                      (object (cons "kind" "unsigned_literal")
+                              (cons "value" (number->string literal))
+                              (cons "max" (number->string nat))))
+                    (object (cons "kind" "unsigned_cast")
+                            (cons "max" (number->string nat))
+                            (cons "value" (stateful-typed-expression-ir expr type^ src witness-ids)))))]
+             [else (stateful-expression-ir value-expr owner-src witness-ids)])]
+          [else (stateful-expression-ir value-expr owner-src witness-ids)]))
+
       (define (stateful-expression-ir value-expr owner-src witness-ids)
         (nanopass-case (Lnodisclose Expression) value-expr
           [(return ,src ,expr) (stateful-expression-ir expr src witness-ids)]
@@ -1021,7 +1047,7 @@
                                     [(,var-name ,type)
                                      (object (cons "name" (symbol->string (id-sym var-name)))
                                              (cons "ty" (type-ir type src))
-                                             (cons "value" (stateful-expression-ir value src witness-ids)))]))
+                                             (cons "value" (stateful-typed-expression-ir value type src witness-ids)))]))
                                 local* expr*)))
                    (cons "body" (stateful-expression-ir expr src witness-ids)))]
           [(seq ,src ,expr* ... ,expr)

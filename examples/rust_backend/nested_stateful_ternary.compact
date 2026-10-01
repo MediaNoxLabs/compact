@@ -1,0 +1,7 @@
+import CompactStandardLibrary;
+export ledger stored: Uint<64>;
+constructor() { stored = 0; }
+export circuit run(c: Boolean): [] {
+  const x = c ? (c ? 1 : 2) : (c ? 3 : 4);
+  stored = disclose(x);
+}

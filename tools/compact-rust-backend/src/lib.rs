@@ -453,6 +453,9 @@ fn collect_expression_types(
         Expr::MapMember { key, .. } | Expr::MapLookup { key, .. } => {
             collect_expression_types(key, structs, enums)?
         }
+        Expr::MerkleCheckRoot { root, .. } | Expr::HistoricMerkleCheckRoot { root, .. } => {
+            collect_expression_types(root, structs, enums)?
+        }
         Expr::Call { arguments, .. } | Expr::WitnessCall { arguments, .. } => {
             for argument in arguments {
                 collect_expression_types(argument, structs, enums)?;
@@ -1345,6 +1348,8 @@ fn expression_with_calls(
         | Expr::SetMember { .. }
         | Expr::MapMember { .. }
         | Expr::MapLookup { .. }
+        | Expr::MerkleCheckRoot { .. }
+        | Expr::HistoricMerkleCheckRoot { .. }
         | Expr::SetIsEmpty { .. }
         | Expr::MapIsEmpty { .. }
         | Expr::CellRead { .. }

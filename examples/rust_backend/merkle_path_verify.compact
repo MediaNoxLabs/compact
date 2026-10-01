@@ -1,0 +1,17 @@
+import CompactStandardLibrary;
+
+export ledger t: MerkleTree<3, Uint<8>>;
+
+witness leaf_path(): MerkleTreePath<3, Uint<8>>;
+
+export circuit append(value: Uint<8>): [] {
+  t.insert(disclose(value));
+}
+
+export circuit replace(value: Uint<8>): [] {
+  t.insertIndex(disclose(value), 0);
+}
+
+export circuit verify(): Boolean {
+  return t.checkRoot(disclose(merkleTreePathRoot<3, Uint<8>>(leaf_path())));
+}

@@ -1,0 +1,40 @@
+// Capture a witness Merkle path folded into ledger.checkRoot with ledger-8 TypeScript.
+import { createRequire } from 'node:module';
+import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+
+if (process.argv.length !== 3) throw new Error('usage: node merkle_path_verify_capture.mjs <compiled-contract-dir>');
+const contractIndex = resolve(process.argv[2], 'index.js');
+const requireFromContract = createRequire(contractIndex);
+const runtime = await import(pathToFileURL(requireFromContract.resolve('@midnight-ntwrk/compact-runtime')));
+const { Contract } = await import(pathToFileURL(contractIndex));
+const contract = new Contract({
+  leaf_path: ({ ledger, privateState }) => [privateState, ledger.t.pathForLeaf(0n, 7n)],
+});
+const coinPublicKey = { bytes: new Uint8Array(32) };
+const initial = contract.initialState({
+  initialPrivateState: null,
+  initialZswapLocalState: runtime.emptyZswapLocalState(coinPublicKey),
+});
+let context = runtime.createCircuitContext(
+  runtime.dummyContractAddress(), coinPublicKey,
+  initial.currentContractState.data, initial.currentPrivateState,
+);
+function verify() {
+  const output = contract.circuits.verify(context);
+  context = output.context;
+  return {
+    result: output.result,
+    privateTranscriptOutputs: output.proofData.privateTranscriptOutputs.map(
+      ({ value, alignment }) => ({
+        valueAtoms: value.map(atom => Array.from(atom)),
+        alignment,
+      }),
+    ),
+  };
+}
+context = contract.circuits.append(context, 7n).context;
+const afterAppend = verify();
+context = contract.circuits.replace(context, 8n).context;
+const afterReplace = verify();
+process.stdout.write(JSON.stringify({ afterAppend, afterReplace }, null, 2) + '\n');

@@ -569,6 +569,16 @@ pub enum Expr {
         index: u8,
         key: Box<Expr>,
     },
+    MerkleCheckRoot {
+        field: String,
+        index: u8,
+        root: Box<Expr>,
+    },
+    HistoricMerkleCheckRoot {
+        field: String,
+        index: u8,
+        root: Box<Expr>,
+    },
     CellRead {
         field: String,
         index: u8,

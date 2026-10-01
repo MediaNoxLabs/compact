@@ -1153,7 +1153,10 @@
                     (object (cons "kind" "ec_mul")
                             (cons "point" (stateful-expression-ir (car expr*) src witness-ids))
                             (cons "scalar" (stateful-expression-ir (cadr expr*) src witness-ids)))))]
-               [else (expression-ir value-expr owner-src)]))]
+               [else
+                (object (cons "kind" "call")
+                        (cons "name" (symbol->string name))
+                        (cons "arguments" (stateful-call-arguments-ir function-name expr* src witness-ids)))]))]
           [(public-ledger ,src ,ledger-field-name ,sugar? (,path-elt* ...) ,src^ ,adt-op ,expr* ...)
            (nanopass-case (Lnodisclose ADT-Op) adt-op
              [(,ledger-op ,op-class (,adt-name (,adt-formal* ,adt-arg*) ...) ((,var-name* ,type*) ...) ,type ,vm-code)
@@ -1184,6 +1187,15 @@
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
                          (cons "key" (stateful-expression-ir (car expr*) src witness-ids)))]
+                [(and (memq adt-name '(MerkleTree HistoricMerkleTree))
+                      (eq? ledger-op 'checkRoot)
+                      (= (length expr*) 1))
+                 (object (cons "kind" (if (eq? adt-name 'MerkleTree)
+                                          "merkle_check_root"
+                                          "historic_merkle_check_root"))
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*))
+                         (cons "root" (stateful-expression-ir (car expr*) src witness-ids)))]
                 [(and (eq? adt-name 'Set) (eq? ledger-op 'isEmpty) (null? expr*))
                  (object (cons "kind" "set_is_empty")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))

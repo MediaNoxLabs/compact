@@ -1,0 +1,146 @@
+{
+  "afterAppend": {
+    "result": true,
+    "privateTranscriptOutputs": [
+      {
+        "valueAtoms": [
+          [
+            7
+          ],
+          [],
+          [
+            1
+          ],
+          [],
+          [
+            1
+          ],
+          [],
+          [
+            1
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "bytes",
+              "length": 1
+            }
+          },
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          },
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "bytes",
+              "length": 1
+            }
+          },
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          },
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "bytes",
+              "length": 1
+            }
+          },
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          },
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "bytes",
+              "length": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "afterReplace": {
+    "result": false,
+    "privateTranscriptOutputs": [
+      {
+        "valueAtoms": [
+          [
+            7
+          ],
+          [],
+          [
+            1
+          ],
+          [],
+          [
+            1
+          ],
+          [],
+          [
+            1
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "bytes",
+              "length": 1
+            }
+          },
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          },
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "bytes",
+              "length": 1
+            }
+          },
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          },
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "bytes",
+              "length": 1
+            }
+          },
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          },
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "bytes",
+              "length": 1
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -450,10 +450,15 @@ pub mod ledger_contract {
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let __compact_call_argument_0 =
-            runtime::FixedVector::new([runtime::Field::from(0u128), runtime::Field::from(1u128)]);
+        let __compact_element_0 = runtime::Field::from(0u128);
+        let __compact_element_1 = runtime::Field::from(1u128);
+        let __compact_call_argument_2 = {
+            let __compact_cast_source_0 = (__compact_element_0, __compact_element_1);
+            let (__compact_cast_item_0_0, __compact_cast_item_0_1) = __compact_cast_source_0;
+            runtime::FixedVector::new([__compact_cast_item_0_0, __compact_cast_item_0_1])
+        };
         let __compact_action_local_0: runtime::Field =
-            crate::pure_circuits::sumVec(__compact_call_argument_0)?;
+            crate::pure_circuits::sumVec(__compact_call_argument_2)?;
         let step = context.write_cell(3, __compact_action_local_0)?;
         let context = step.context;
         total_cost += step.gas_cost;
@@ -471,12 +476,17 @@ pub mod ledger_contract {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
         let mut context = context;
-        let __compact_call_argument_0 =
-            runtime::FixedVector::new([runtime::Field::from(0u128), runtime::Field::from(1u128)]);
-        let __compact_call_1 = sumVecPlusCell(context, __compact_call_argument_0)?;
-        context = __compact_call_1.context;
-        total_cost += __compact_call_1.gas_cost;
-        let __compact_action_local_0: runtime::Field = __compact_call_1.result;
+        let __compact_element_0 = runtime::Field::from(0u128);
+        let __compact_element_1 = runtime::Field::from(1u128);
+        let __compact_call_argument_2 = {
+            let __compact_cast_source_0 = (__compact_element_0, __compact_element_1);
+            let (__compact_cast_item_0_0, __compact_cast_item_0_1) = __compact_cast_source_0;
+            runtime::FixedVector::new([__compact_cast_item_0_0, __compact_cast_item_0_1])
+        };
+        let __compact_call_3 = sumVecPlusCell(context, __compact_call_argument_2)?;
+        context = __compact_call_3.context;
+        total_cost += __compact_call_3.gas_cost;
+        let __compact_action_local_0: runtime::Field = __compact_call_3.result;
         let step = context.write_cell(3, __compact_action_local_0)?;
         let context = step.context;
         total_cost += step.gas_cost;
@@ -553,12 +563,17 @@ pub mod ledger_contract {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
         let mut context = context;
-        let __compact_call_argument_0 =
-            runtime::FixedVector::new([runtime::Field::from(0u128), runtime::Field::from(1u128)]);
-        let __compact_call_1 = vecDiffers(context, __compact_call_argument_0)?;
-        context = __compact_call_1.context;
-        total_cost += __compact_call_1.gas_cost;
-        if !(__compact_call_1.result) {
+        let __compact_element_0 = runtime::Field::from(0u128);
+        let __compact_element_1 = runtime::Field::from(1u128);
+        let __compact_call_argument_2 = {
+            let __compact_cast_source_0 = (__compact_element_0, __compact_element_1);
+            let (__compact_cast_item_0_0, __compact_cast_item_0_1) = __compact_cast_source_0;
+            runtime::FixedVector::new([__compact_cast_item_0_0, __compact_cast_item_0_1])
+        };
+        let __compact_call_3 = vecDiffers(context, __compact_call_argument_2)?;
+        context = __compact_call_3.context;
+        total_cost += __compact_call_3.gas_cost;
+        if !(__compact_call_3.result) {
             return Err(runtime::CompactError::AssertionFailed(
                 "vector hash is not zero".to_owned(),
             ));

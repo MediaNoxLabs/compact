@@ -182,6 +182,64 @@ pub(crate) fn render_state_expression(
             *query_effect = true;
             Ok((syn::parse_quote!(#step.result), result_ty, witness_effect))
         }
+        Expr::MerkleCheckRoot { field, index, root }
+        | Expr::HistoricMerkleCheckRoot { field, index, root } => {
+            let declaration = ledger_fields
+                .get(field.as_str())
+                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+            let historic = match declaration.declaration {
+                LedgerFieldKind::MerkleTree { .. } => false,
+                LedgerFieldKind::HistoricMerkleTree { .. } => true,
+                _ => return Err(RenderError::UnknownLedgerField(field.clone())),
+            };
+            if declaration.index != *index
+                || historic != matches!(value, Expr::HistoricMerkleCheckRoot { .. })
+            {
+                return Err(RenderError::UnknownLedgerField(field.clone()));
+            }
+            let (root, actual, witness_effect) = render_state_expression(
+                root,
+                parameters,
+                witnesses,
+                statements,
+                next_temp,
+                circuits,
+                stateful_circuits,
+                ledger_fields,
+                query_effect,
+            )?;
+            let expected = Type::Struct {
+                name: "MerkleTreeDigest".into(),
+                fields: vec![StructField {
+                    name: "field".into(),
+                    ty: Type::Field,
+                }],
+            };
+            if actual != expected {
+                return Err(RenderError::TypeMismatch { expected, actual });
+            }
+            let step = syn::Ident::new(
+                &format!("__compact_query_{}", *next_temp),
+                Span::call_site(),
+            );
+            *next_temp += 1;
+            let path = ledger_path_expr(declaration);
+            let method = if historic {
+                "historic_check_root"
+            } else {
+                "merkle_check_root"
+            };
+            let method = syn::Ident::new(method, Span::call_site());
+            statements.push(syn::parse_quote!(let #step = context.#method(#path, #root)?;));
+            statements.push(syn::parse_quote!(context = #step.context;));
+            statements.push(syn::parse_quote!(total_cost += #step.gas_cost;));
+            *query_effect = true;
+            Ok((
+                syn::parse_quote!(#step.result),
+                Type::Boolean,
+                witness_effect,
+            ))
+        }
         Expr::SetIsEmpty { field, index } | Expr::MapIsEmpty { field, index } => {
             let declaration = ledger_fields
                 .get(field.as_str())
@@ -1224,6 +1282,8 @@ fn expression_contains(expression: &Expr, predicate: &impl Fn(&Expr) -> bool) ->
         | Expr::SetMember { value, .. }
         | Expr::MapMember { key: value, .. }
         | Expr::MapLookup { key: value, .. }
+        | Expr::MerkleCheckRoot { root: value, .. }
+        | Expr::HistoricMerkleCheckRoot { root: value, .. }
         | Expr::Assert {
             condition: value, ..
         }
@@ -2350,6 +2410,7 @@ pub(crate) fn render_stateful_circuit(
         }
     }
     let result_ty = rust_type(&circuit.result)?;
+    let mut return_query_effect = false;
     let return_expr: syn::Expr = match &circuit.return_value {
         StateReturn::Expression { value } => {
             let mut effect_statements = Vec::new();
@@ -2374,6 +2435,7 @@ pub(crate) fn render_stateful_circuit(
             if effect {
                 uses_witness = true;
             }
+            return_query_effect = query_effect;
             if effect || query_effect {
                 statements.push(syn::parse_quote!(let mut context = context;));
             }
@@ -2798,6 +2860,7 @@ pub(crate) fn render_stateful_circuit(
         syn::parse_quote!(let private_transcript_outputs = Vec::new();)
     };
     let cost_init: syn::Stmt = if uses_witness
+        && !return_query_effect
         && circuit
             .actions
             .iter()

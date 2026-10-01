@@ -804,6 +804,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-equality-fixture"
+version = "0.1.0"
+dependencies = [
+ "midnight-compact-runtime",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-field-add-fixture"
 version = "0.1.0"
 dependencies = [

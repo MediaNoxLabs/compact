@@ -484,6 +484,30 @@ fn render_state_expression(
             };
             Ok((rendered, Type::Field, left_effect || right_effect))
         }
+        Expr::Equal { left, right } | Expr::NotEqual { left, right } => {
+            let (left, left_ty, left_effect) =
+                render_state_expression(left, parameters, witnesses, statements, next_temp)?;
+            let left_name = syn::Ident::new(
+                &format!("__compact_value_{}", *next_temp),
+                Span::call_site(),
+            );
+            *next_temp += 1;
+            statements.push(syn::parse_quote!(let #left_name = #left;));
+            let (right, right_ty, right_effect) =
+                render_state_expression(right, parameters, witnesses, statements, next_temp)?;
+            if right_ty != left_ty {
+                return Err(RenderError::TypeMismatch {
+                    expected: left_ty,
+                    actual: right_ty,
+                });
+            }
+            let rendered = if matches!(value, Expr::Equal { .. }) {
+                syn::parse_quote!(#left_name == #right)
+            } else {
+                syn::parse_quote!(#left_name != #right)
+            };
+            Ok((rendered, Type::Boolean, left_effect || right_effect))
+        }
         _ => expression(value, parameters).map(|(rendered, ty)| (rendered, ty, false)),
     }
 }

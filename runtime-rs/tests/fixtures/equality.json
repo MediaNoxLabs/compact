@@ -1,0 +1,81 @@
+{
+  "fieldEqual": true,
+  "fieldDifferent": false,
+  "notEqual": true,
+  "bytesEqual": true,
+  "bytesDifferent": false,
+  "pairEqual": true,
+  "pairDifferent": false,
+  "witnessEqual": {
+    "result": true,
+    "privateState": 9,
+    "privateTranscriptOutputs": [
+      {
+        "valueAtoms": [
+          [
+            9
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          }
+        ]
+      },
+      {
+        "valueAtoms": [
+          [
+            9
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "witnessDifferent": {
+    "result": false,
+    "privateState": 9,
+    "privateTranscriptOutputs": [
+      {
+        "valueAtoms": [
+          [
+            9
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          }
+        ]
+      },
+      {
+        "valueAtoms": [
+          [
+            10
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

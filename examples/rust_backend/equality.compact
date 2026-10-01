@@ -1,0 +1,23 @@
+import CompactStandardLibrary;
+
+witness echo(value: Field): Field;
+
+export circuit equal_field(left: Field, right: Field): Boolean {
+  return left == right;
+}
+
+export circuit not_equal_field(left: Field, right: Field): Boolean {
+  return left != right;
+}
+
+export circuit equal_bytes(left: Bytes<4>, right: Bytes<4>): Boolean {
+  return left == right;
+}
+
+export circuit equal_pair(left: Vector<2, Field>, right: Vector<2, Field>): Boolean {
+  return left == right;
+}
+
+export circuit equal_echo(left: Field, right: Field): Boolean {
+  return disclose(echo(left) == echo(right));
+}

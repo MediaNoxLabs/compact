@@ -306,6 +306,8 @@ fn collect_expression_types(
         Expr::Add { left, right }
         | Expr::Subtract { left, right }
         | Expr::Multiply { left, right }
+        | Expr::Equal { left, right }
+        | Expr::NotEqual { left, right }
         | Expr::EcAdd { left, right } => {
             collect_expression_types(left, structs, enums)?;
             collect_expression_types(right, structs, enums)?;
@@ -830,6 +832,22 @@ fn expression_with_calls(
                 }),
                 Type::Field,
             ))
+        }
+        Expr::Equal { left, right } | Expr::NotEqual { left, right } => {
+            let (left, left_ty) = expression_with_calls(left, parameters, circuits)?;
+            let (right, right_ty) = expression_with_calls(right, parameters, circuits)?;
+            if right_ty != left_ty {
+                return Err(RenderError::TypeMismatch {
+                    expected: left_ty,
+                    actual: right_ty,
+                });
+            }
+            let rendered = if matches!(expr, Expr::Equal { .. }) {
+                syn::parse_quote!(#left == #right)
+            } else {
+                syn::parse_quote!(#left != #right)
+            };
+            Ok((rendered, Type::Boolean))
         }
     }
 }

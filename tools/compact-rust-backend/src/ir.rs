@@ -315,6 +315,14 @@ pub enum Expr {
         condition: Box<Expr>,
         message: String,
     },
+    Equal {
+        left: Box<Expr>,
+        right: Box<Expr>,
+    },
+    NotEqual {
+        left: Box<Expr>,
+        right: Box<Expr>,
+    },
     Call {
         name: String,
         arguments: Vec<Expr>,

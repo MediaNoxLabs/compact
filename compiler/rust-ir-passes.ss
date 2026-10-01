@@ -155,6 +155,14 @@
                    (cons "condition" (expression-ir expr0 src))
                    (cons "then" (expression-ir expr1 src))
                    (cons "otherwise" (expression-ir expr2 src)))]
+          [(== ,src ,type ,expr1 ,expr2)
+           (object (cons "kind" "equal")
+                   (cons "left" (expression-ir expr1 src))
+                   (cons "right" (expression-ir expr2 src)))]
+          [(!= ,src ,type ,expr1 ,expr2)
+           (object (cons "kind" "not_equal")
+                   (cons "left" (expression-ir expr1 src))
+                   (cons "right" (expression-ir expr2 src)))]
           [(let* ,src ([,local* ,expr*] ...) ,expr)
            (object (cons "kind" "let")
                    (cons "bindings"
@@ -683,6 +691,14 @@
                    (cons "condition" (stateful-expression-ir expr0 src witness-ids))
                    (cons "then" (stateful-expression-ir expr1 src witness-ids))
                    (cons "otherwise" (stateful-expression-ir expr2 src witness-ids)))]
+          [(== ,src ,type ,expr1 ,expr2)
+           (object (cons "kind" "equal")
+                   (cons "left" (stateful-expression-ir expr1 src witness-ids))
+                   (cons "right" (stateful-expression-ir expr2 src witness-ids)))]
+          [(!= ,src ,type ,expr1 ,expr2)
+           (object (cons "kind" "not_equal")
+                   (cons "left" (stateful-expression-ir expr1 src witness-ids))
+                   (cons "right" (stateful-expression-ir expr2 src witness-ids)))]
           [(let* ,src ([,local* ,expr*] ...) ,expr)
            (object (cons "kind" "let")
                    (cons "bindings"
@@ -763,6 +779,12 @@
                (object (cons "kind" "expression")
                        (cons "value" (stateful-expression-ir return-expr src witness-ids))))]
           [(if ,src ,expr0 ,expr1 ,expr2)
+           (object (cons "kind" "expression")
+                   (cons "value" (stateful-expression-ir return-expr src witness-ids)))]
+          [(== ,src ,type ,expr1 ,expr2)
+           (object (cons "kind" "expression")
+                   (cons "value" (stateful-expression-ir return-expr src witness-ids)))]
+          [(!= ,src ,type ,expr1 ,expr2)
            (object (cons "kind" "expression")
                    (cons "value" (stateful-expression-ir return-expr src witness-ids)))]
           [(let* ,src ([,local* ,expr*] ...) ,expr)

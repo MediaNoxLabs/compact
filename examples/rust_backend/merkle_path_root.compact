@@ -1,0 +1,5 @@
+import CompactStandardLibrary;
+
+export pure circuit root_of(path: MerkleTreePath<3, Uint<8>>): MerkleTreeDigest {
+  return merkleTreePathRoot<3, Uint<8>>(path);
+}

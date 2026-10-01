@@ -598,6 +598,14 @@ pub enum Expr {
         result: Type,
         length: usize,
     },
+    VectorFoldCall {
+        name: String,
+        initial: Box<Expr>,
+        source: Box<Expr>,
+        accumulator: Type,
+        element: Type,
+        length: usize,
+    },
     If {
         condition: Box<Expr>,
         then: Box<Expr>,

@@ -1204,6 +1204,9 @@ fn expression_contains(expression: &Expr, predicate: &impl Fn(&Expr) -> bool) ->
             fields: elements, ..
         } => elements.iter().any(visit),
         Expr::VectorMap { source, body, .. } => visit(source) || visit(body),
+        Expr::VectorFoldCall {
+            initial, source, ..
+        } => visit(initial) || visit(source),
         Expr::If {
             condition,
             then,

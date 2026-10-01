@@ -1221,6 +1221,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-merkle-path-root-fixture"
+version = "0.1.0"
+dependencies = [
+ "midnight-compact-runtime",
+ "num-bigint",
+ "serde_json",
+]
+
+[[package]]
+name = "compact-rust-merkle-path-root-no-leaf-hash-fixture"
+version = "0.1.0"
+dependencies = [
+ "midnight-compact-runtime",
+ "num-bigint",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-merkle-path-witness-fixture"
 version = "0.1.0"
 dependencies = [

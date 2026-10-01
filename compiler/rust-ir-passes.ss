@@ -301,6 +301,21 @@
                             (cons "result" (type-ir type src))
                             (cons "length" len))])])]
              [else (source-errorf src "Rust backend supports inline Vector map functions only")])]
+          [(fold ,src ,len ,fun (,expr0 ,type0) ,map-arg ,map-arg* ...)
+           (unless (null? map-arg*)
+             (source-errorf src "Rust backend supports one iterable in Vector fold"))
+           (nanopass-case (Lnodisclose Function) fun
+             [(fref ,src^ ,function-name)
+              (nanopass-case (Lnodisclose Map-Argument) map-arg
+                [(,expr1 ,type1 ,type2)
+                 (object (cons "kind" "vector_fold_call")
+                         (cons "name" (symbol->string (id-sym function-name)))
+                         (cons "initial" (typed-expression-ir expr0 type0 src))
+                         (cons "source" (typed-expression-ir expr1 type1 src))
+                         (cons "accumulator" (type-ir type0 src))
+                         (cons "element" (type-ir type2 src))
+                         (cons "length" len))])]
+             [else (source-errorf src "Rust backend supports named Vector fold functions only")])]
           [(if ,src ,expr0 ,expr1 ,expr2)
            (object (cons "kind" "if")
                    (cons "condition" (expression-ir expr0 src))

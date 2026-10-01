@@ -412,6 +412,18 @@ fn collect_expression_types(
             collect_expression_types(source, structs, enums)?;
             collect_expression_types(body, structs, enums)?;
         }
+        Expr::VectorFoldCall {
+            initial,
+            source,
+            accumulator,
+            element,
+            ..
+        } => {
+            collect_named_types(accumulator, structs, enums)?;
+            collect_named_types(element, structs, enums)?;
+            collect_expression_types(initial, structs, enums)?;
+            collect_expression_types(source, structs, enums)?;
+        }
         Expr::If {
             condition,
             then,
@@ -1018,6 +1030,51 @@ fn expression_with_calls(
                     element: Box::new(result.clone()),
                     length: *length,
                 },
+            ))
+        }
+        Expr::VectorFoldCall {
+            name,
+            initial,
+            source,
+            accumulator,
+            element,
+            length,
+        } => {
+            let circuit = circuits
+                .get(name.as_str())
+                .ok_or_else(|| RenderError::UnknownCircuit(name.clone()))?;
+            if circuit.parameters.len() != 2
+                || circuit.parameters[0].ty != *accumulator
+                || circuit.parameters[1].ty != *element
+                || circuit.result != *accumulator
+            {
+                return Err(RenderError::TypeMismatch {
+                    expected: accumulator.clone(),
+                    actual: circuit.result.clone(),
+                });
+            }
+            let (initial, initial_ty) = expression_with_calls(initial, parameters, circuits)?;
+            let initial = coerce_expression(initial, &initial_ty, accumulator, 0)?;
+            let (source, source_ty) = expression_with_calls(source, parameters, circuits)?;
+            let expected_source = Type::Vector {
+                element: Box::new(element.clone()),
+                length: *length,
+            };
+            let source = coerce_expression(source, &source_ty, &expected_source, 0)?;
+            let function = ident(name)?;
+            let acc = syn::Ident::new("__compact_fold_accumulator", Span::call_site());
+            let item = syn::Ident::new("__compact_fold_item", Span::call_site());
+            let source_name = syn::Ident::new("__compact_fold_source", Span::call_site());
+            Ok((
+                syn::parse_quote!({
+                    let #source_name = #source;
+                    let mut #acc = #initial;
+                    for #item in #source_name.into_array() {
+                        #acc = crate::pure_circuits::#function(#acc, #item)?;
+                    }
+                    #acc
+                }),
+                accumulator.clone(),
             ))
         }
         Expr::If {

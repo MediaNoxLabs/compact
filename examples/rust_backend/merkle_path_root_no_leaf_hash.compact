@@ -1,0 +1,5 @@
+import CompactStandardLibrary;
+
+export pure circuit root_of_hash(path: MerkleTreePath<3, Bytes<32>>): MerkleTreeDigest {
+  return merkleTreePathRootNoLeafHash<3>(path);
+}

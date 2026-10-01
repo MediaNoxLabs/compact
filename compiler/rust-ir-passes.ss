@@ -372,7 +372,7 @@
                  (source-errorf src "Rust backend cannot resolve Counter increment amount")))]
           [else (source-errorf owner-src "Rust backend supports literal or parameter Counter increments only")]))
 
-      (define (state-action-ir expr owner-src environment)
+      (define (state-action-ir expr owner-src environment witness-ids)
         (nanopass-case (Lnodisclose Expression) expr
           [(let* ,src ([,local* ,expr*] ...) ,expr)
            (let ([environment^
@@ -381,10 +381,21 @@
                        (nanopass-case (Lnodisclose Argument) local
                          [(,var-name ,type)
                           (cons (cons (id-sym var-name)
-                                      (counter-amount-ir value environment src))
+                                      (object (cons "kind" "parameter")
+                                              (cons "name" (symbol->string (id-sym var-name)))))
                                 environment)]))
                      environment local* expr*)])
-             (state-action-ir expr owner-src environment^))]
+             (object (cons "kind" "let")
+                     (cons "bindings"
+                           (list->vector
+                             (map (lambda (local value)
+                                    (nanopass-case (Lnodisclose Argument) local
+                                      [(,var-name ,type)
+                                       (object (cons "name" (symbol->string (id-sym var-name)))
+                                               (cons "ty" (type-ir type src))
+                                               (cons "value" (stateful-expression-ir value src witness-ids)))]))
+                                  local* expr*)))
+                     (cons "action" (state-action-ir expr owner-src environment^ witness-ids))))]
           [(public-ledger ,src ,ledger-field-name ,sugar? (,path-elt* ...) ,src^ ,adt-op ,expr* ...)
            (unless (and (= (length path-elt*) 1)
                         (integer? (car path-elt*)))
@@ -489,10 +500,10 @@
                 [else (source-errorf src "Rust backend does not yet support this ledger operation")])])]
           [else (source-errorf owner-src "Rust backend does not yet support this state action")]))
 
-      (define (stateful-body-ir expr src environment)
+      (define (stateful-body-ir expr src environment witness-ids)
         (nanopass-case (Lnodisclose Expression) expr
           [(seq ,src1 ,expr* ... ,expr)
-           (list->vector (map (lambda (action) (state-action-ir action src environment)) expr*))]
+           (list->vector (map (lambda (action) (state-action-ir action src environment witness-ids)) expr*))]
           [else (vector)]))
 
       ;; Stateful expressions keep witness calls explicit so Rust can evaluate
@@ -657,7 +668,7 @@
                                                           (cons (id-sym var-name)
                                                                 (object (cons "kind" "parameter")
                                                                         (cons "name" (symbol->string (id-sym var-name)))))]))
-                                                     arg*)))))
+                                                     arg*) witness-ids))))
                               names)
                          circuits)))))]
           [else circuits]))

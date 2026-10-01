@@ -73,8 +73,14 @@ head/tail/length array. The first composable witness expression supports
 Field addition, subtraction, and multiplication in a stateful return. Each
 witness call updates private state and appends its own FAB transcript value in
 source order; a two-call fixture compares both outputs with TypeScript.
-Witness calls in other expression forms and state actions, and complete proof
-data remain future slices.
+The action IR also carries typed sequential local bindings. A witnessed Cell
+write evaluates its witness before the ledger VM write; two writes in one
+circuit preserve the intervening ledger state, private state, and transcript
+order against TypeScript. The same typed binding IR also carries a literal
+Field into `Map.insert`, covering the compiler's generated temporary rather
+than treating it as an undeclared circuit parameter. Witness calls in the
+remaining expression forms and other ledger action values, and complete
+proof data remain future slices.
 The generated runtime ABI is 3.
 
 The runtime can now construct and decode ledger Cells and Counters, and it
@@ -165,6 +171,7 @@ cargo test -p compact-rust-backend -p midnight-compact-runtime \
   -p compact-rust-witness-ledger-map-fixture \
   -p compact-rust-witness-ledger-list-fixture \
   -p compact-rust-witness-field-expression-fixture \
+  -p compact-rust-witness-cell-write-fixture \
   -p compact-rust-uint-identity-fixture -p compact-rust-bytes-identity-fixture \
   -p compact-rust-counter-fixture -p compact-rust-cell-boolean-fixture \
   -p compact-rust-struct-identity-fixture -p compact-rust-nested-struct-fixture \
@@ -173,6 +180,7 @@ cargo test -p compact-rust-backend -p midnight-compact-runtime \
   -p compact-rust-cell-parameter-fixture -p compact-rust-counter-parameter-fixture \
   -p compact-rust-cell-read-fixture -p compact-rust-set-boolean-fixture \
   -p compact-rust-map-boolean-field-fixture \
+  -p compact-rust-map-literal-fixture \
   -p compact-rust-list-field-fixture -p compact-rust-choose-field-fixture
 cargo build -p compact-rust-backend --bin compact-rustc
 ```

@@ -130,8 +130,52 @@ pub(crate) fn render_stateful_circuit(
         args.push(syn::parse_quote!(#rust_name: #arg_ty));
     }
     let mut statements = Vec::<syn::Stmt>::new();
+    let mut uses_witness = false;
+    let mut next_temp = 0;
+    let mut next_local = 0;
     for action in &circuit.actions {
+        let mut local_parameters = parameters.clone();
+        let mut action = action;
+        while let StateAction::Let {
+            bindings,
+            action: inner,
+        } = action
+        {
+            for binding in bindings {
+                ident(&binding.name)?;
+                let mut binding_statements = Vec::new();
+                let (value, actual, effect) = render_state_expression(
+                    &binding.value,
+                    &local_parameters,
+                    witnesses,
+                    &mut binding_statements,
+                    &mut next_temp,
+                )?;
+                if actual != binding.ty {
+                    return Err(RenderError::TypeMismatch {
+                        expected: binding.ty.clone(),
+                        actual,
+                    });
+                }
+                if effect {
+                    uses_witness = true;
+                    statements.push(syn::parse_quote!(let mut context = context;));
+                }
+                statements.extend(binding_statements);
+                let local_name = syn::Ident::new(
+                    &format!("__compact_action_local_{next_local}"),
+                    Span::call_site(),
+                );
+                next_local += 1;
+                let ty = rust_type(&binding.ty)?;
+                statements.push(syn::parse_quote!(let #local_name: #ty = #value;));
+                local_parameters.insert(binding.name.as_str(), (&binding.ty, local_name));
+            }
+            action = inner;
+        }
+        let parameters = local_parameters;
         match action {
+            StateAction::Let { .. } => unreachable!("action Let wrappers were unwrapped"),
             StateAction::CounterIncrement {
                 field,
                 index,
@@ -488,11 +532,9 @@ pub(crate) fn render_stateful_circuit(
         }
     }
     let result_ty = rust_type(&circuit.result)?;
-    let mut uses_witness = false;
     let return_expr: syn::Expr = match &circuit.return_value {
         StateReturn::Expression { value } => {
             let mut effect_statements = Vec::new();
-            let mut next_temp = 0;
             let (rendered, actual, effect) = render_state_expression(
                 value,
                 &parameters,
@@ -509,8 +551,6 @@ pub(crate) fn render_stateful_circuit(
             if effect {
                 uses_witness = true;
                 statements.push(syn::parse_quote!(let mut context = context;));
-                statements
-                    .push(syn::parse_quote!(let mut private_transcript_outputs = Vec::new();));
             }
             statements.extend(effect_statements);
             rendered
@@ -878,16 +918,15 @@ pub(crate) fn render_stateful_circuit(
                 context.private_state = next_private_state;
             });
             statements.push(syn::parse_quote! {
-                let private_transcript_outputs =
-                    vec![runtime::fab::AlignedValue::from(witness_result.clone())];
+                private_transcript_outputs.push(runtime::fab::AlignedValue::from(witness_result.clone()));
             });
             syn::parse_quote!(witness_result)
         }
     };
-    let transcript_init: Option<syn::Stmt> = if uses_witness {
-        None
+    let transcript_init: syn::Stmt = if uses_witness {
+        syn::parse_quote!(let mut private_transcript_outputs = Vec::new();)
     } else {
-        Some(syn::parse_quote!(let private_transcript_outputs = Vec::new();))
+        syn::parse_quote!(let private_transcript_outputs = Vec::new();)
     };
     let cost_init: syn::Stmt = if uses_witness && circuit.actions.is_empty() {
         syn::parse_quote!(let total_cost = runtime::context::RunningCost::default();)

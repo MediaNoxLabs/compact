@@ -10,7 +10,9 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 use std::error::Error;
 use std::fmt;
 
-use ir::{Contract, Expr, LedgerFieldKind, PureCircuit, SCHEMA_VERSION, StructField, Type};
+use ir::{
+    Contract, Expr, LedgerFieldKind, PureCircuit, SCHEMA_VERSION, StateAction, StructField, Type,
+};
 use proc_macro2::Span;
 use quote::quote;
 
@@ -277,6 +279,43 @@ fn collect_expression_types(
         | Expr::FieldLiteral { .. }
         | Expr::UnsignedLiteral { .. }
         | Expr::Parameter { .. } => {}
+    }
+    Ok(())
+}
+
+fn collect_action_types(
+    action: &StateAction,
+    structs: &mut BTreeMap<String, Vec<StructField>>,
+    enums: &mut BTreeMap<String, Vec<String>>,
+) -> Result<(), RenderError> {
+    match action {
+        StateAction::Let { bindings, action } => {
+            for binding in bindings {
+                collect_named_types(&binding.ty, structs, enums)?;
+                collect_expression_types(&binding.value, structs, enums)?;
+            }
+            collect_action_types(action, structs, enums)?;
+        }
+        StateAction::CellWrite { value, .. }
+        | StateAction::SetInsert { value, .. }
+        | StateAction::SetRemove { value, .. }
+        | StateAction::ListPushFront { value, .. } => {
+            collect_expression_types(value, structs, enums)?;
+        }
+        StateAction::MapInsert { key, value, .. } => {
+            collect_expression_types(key, structs, enums)?;
+            collect_expression_types(value, structs, enums)?;
+        }
+        StateAction::MapInsertDefault { key, .. } | StateAction::MapRemove { key, .. } => {
+            collect_expression_types(key, structs, enums)?;
+        }
+        StateAction::CounterIncrement { .. }
+        | StateAction::CounterDecrement { .. }
+        | StateAction::CounterReset { .. }
+        | StateAction::SetReset { .. }
+        | StateAction::ListPopFront { .. }
+        | StateAction::ListReset { .. }
+        | StateAction::MapReset { .. } => {}
     }
     Ok(())
 }
@@ -592,6 +631,9 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
         )?;
         if let ir::StateReturn::Expression { value } = &circuit.return_value {
             collect_expression_types(value, &mut struct_definitions, &mut enum_definitions)?;
+        }
+        for action in &circuit.actions {
+            collect_action_types(action, &mut struct_definitions, &mut enum_definitions)?;
         }
     }
     for field in &contract.ledger_fields {

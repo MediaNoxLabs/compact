@@ -1,0 +1,11 @@
+import CompactStandardLibrary;
+
+export ledger table: Map<Boolean, Field>;
+
+export circuit put_literal(): [] {
+  table.insert(true, disclose(42));
+}
+
+export circuit lookup_true(): Field {
+  return table.lookup(true);
+}

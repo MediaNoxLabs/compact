@@ -823,6 +823,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-map-literal-fixture"
+version = "0.1.0"
+dependencies = [
+ "midnight-compact-runtime",
+]
+
+[[package]]
 name = "compact-rust-nested-struct-fixture"
 version = "0.1.0"
 dependencies = [
@@ -873,6 +880,14 @@ dependencies = [
 
 [[package]]
 name = "compact-rust-witness-argument-fixture"
+version = "0.1.0"
+dependencies = [
+ "midnight-compact-runtime",
+ "serde_json",
+]
+
+[[package]]
+name = "compact-rust-witness-cell-write-fixture"
 version = "0.1.0"
 dependencies = [
  "midnight-compact-runtime",

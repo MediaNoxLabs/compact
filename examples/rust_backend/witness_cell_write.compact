@@ -1,0 +1,18 @@
+import CompactStandardLibrary;
+
+export ledger cell: Field;
+
+witness secret(seed: Field): Field;
+
+export circuit write_secret(seed: Field): [] {
+  cell = disclose(secret(seed));
+}
+
+export circuit write_twice(seed: Field): [] {
+  cell = disclose(secret(seed));
+  cell = disclose(secret(seed));
+}
+
+export circuit read_cell(): Field {
+  return cell.read();
+}

@@ -278,6 +278,7 @@ jobs:
         run: |
           cargo fmt --all -- --check
           nix develop .#compiler --command env COMPACTC=compactc python3 tools/compact-rust-backend/check_fixture_outputs.py
+          nix develop .#compiler --command env COMPACTC=compactc python3 tools/compact-rust-backend/check_rejections.py
           cargo test --workspace --exclude compact
 
       - name: Merge report as ZIP

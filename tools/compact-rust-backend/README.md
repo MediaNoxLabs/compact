@@ -46,6 +46,8 @@ pinned in [`runtime-rs/Cargo.toml`](../../runtime-rs/Cargo.toml).
 cargo fmt --all -- --check
 COMPACTC=/path/to/ledger-8/compactc \
   python3 tools/compact-rust-backend/check_fixture_outputs.py
+COMPACTC=/path/to/ledger-8/compactc \
+  python3 tools/compact-rust-backend/check_rejections.py
 cargo test --workspace --exclude compact
 ```
 
@@ -55,9 +57,27 @@ and compares it with the checked-in generated Rust. Use `--update` after an
 intentional renderer change, then inspect the diff. The fixture crates also
 compare native results and serialized state with captures from the ledger-8
 TypeScript runtime. Capture programs are in [`oracles`](oracles).
+The rejection checker verifies source-located failures for unsupported
+constructs and that no generated Rust library survives a rejected compile.
 
 The fixture suite covers all 37 top-level `*_fixture.compact` contracts from
 the `codegen-rust` oracle branch, alongside smaller source contracts used to
 exercise individual operations. This is source and execution coverage for
 those fixtures, not a claim that every valid Compact program or proving path
 is supported.
+
+## Current boundary
+
+The backend executes constructors, pure and stateful circuits, typed witnesses,
+ledger Cells and collections, user structs and enums, bounded arithmetic,
+control flow, hashing, and the curve operations used by the oracle fixtures.
+The oracle `tiny`, `election`, `zerocash`, and digital passport contracts also
+run with TypeScript result or serialized state comparisons. New Compact shapes
+must be added to the typed IR and renderer before they can be emitted.
+
+The command uses `--skip-zk`: it generates a native execution library, not
+proving keys or a deployable ZK artifact. Unsupported language operations
+produce a Compact source diagnostic; examples include unknown `Opaque` tags
+and Field-to-Uint narrowing. The rejection gate checks that a failed compile
+does not leave a generated Rust library. The Rust API and IR schema are local
+to this branch and may change as support expands.

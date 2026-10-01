@@ -51,6 +51,17 @@ fn state_hex(state: StateValue<DefaultDB>) -> String {
     hex::encode(bytes)
 }
 
+fn assert_no_witness_secret(label: &str, state_hex: &str) {
+    assert!(
+        state_hex.len() > 64,
+        "{label}: serialized state is too small for the witness leak check"
+    );
+    assert!(
+        !state_hex.contains(&"07".repeat(16)),
+        "{label}: witness secret appears in serialized public state"
+    );
+}
+
 #[test]
 fn tiny_constructor_clear_set_and_get_match_typescript() {
     let oracle: serde_json::Value = serde_json::from_str(include_str!(
@@ -64,26 +75,22 @@ fn tiny_constructor_clear_set_and_get_match_typescript() {
         runtime::Field::from(42u64),
     )
     .unwrap();
-    assert_eq!(
-        state_hex(initial.ledger_state.get_ref().clone()),
-        oracle["afterInit"]["stateHex"]
-    );
+    let initial_hex = state_hex(initial.ledger_state.get_ref().clone());
+    assert_no_witness_secret("initial", &initial_hex);
+    assert_eq!(initial_hex, oracle["afterInit"]["stateHex"]);
     let context = initial.into_circuit_context(ContractAddress::default());
     let cleared = clear(context, &witness).unwrap();
-    assert_eq!(
-        state_hex(cleared.context.query.state.get_ref().clone()),
-        oracle["afterClear"]["stateHex"]
-    );
+    let cleared_hex = state_hex(cleared.context.query.state.get_ref().clone());
+    assert_no_witness_secret("clear", &cleared_hex);
+    assert_eq!(cleared_hex, oracle["afterClear"]["stateHex"]);
     let set99 = set(cleared.context, &witness, runtime::Field::from(99u64)).unwrap();
-    assert_eq!(
-        state_hex(set99.context.query.state.get_ref().clone()),
-        oracle["afterSet99"]["stateHex"]
-    );
+    let set_hex = state_hex(set99.context.query.state.get_ref().clone());
+    assert_no_witness_secret("set", &set_hex);
+    assert_eq!(set_hex, oracle["afterSet99"]["stateHex"]);
     let got = get(set99.context).unwrap();
     assert_eq!(got.result.is_some, oracle["getResult"]["isSome"]);
     assert_eq!(got.result.value, runtime::Field::from(99u64));
-    assert_eq!(
-        state_hex(got.context.query.state.get_ref().clone()),
-        oracle["afterSet99"]["stateHex"]
-    );
+    let got_hex = state_hex(got.context.query.state.get_ref().clone());
+    assert_no_witness_secret("get", &got_hex);
+    assert_eq!(got_hex, oracle["afterSet99"]["stateHex"]);
 }

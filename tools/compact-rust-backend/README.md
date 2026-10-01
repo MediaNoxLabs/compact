@@ -44,7 +44,7 @@ replacing this interface.
 
 | Boundary | Current contract | Failure behavior |
 |---|---|---|
-| Compact compiler | Toolchain 0.31.110, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
+| Compact compiler | Toolchain 0.31.111, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
 | Rust IR | Schema 6, private to this backend | The renderer rejects any other schema before writing `lib.rs`. |
 | Generated code and Rust runtime | ABI 3 | Generated modules assert the ABI at Rust compile time. |
 | Rust runtime source | Exact Git revision in generated `Cargo.toml` | Cargo resolves the matching runtime and its pinned Midnight crates. |
@@ -94,6 +94,9 @@ and compares it with the checked-in generated Rust. Use `--update` after an
 intentional renderer change, then inspect the diff. The fixture crates also
 compare native results and serialized state with captures from the ledger-8
 TypeScript runtime. Capture programs are in [`oracles`](oracles).
+When capturing from a local runtime package, copy generated `index.js` into a
+separate temporary harness before adding a `node_modules` link. The compiler
+cleans its output directories on each run, so links must stay outside them.
 The rejection checker verifies source-located failures for unsupported
 constructs and that no generated Rust library survives a rejected compile.
 

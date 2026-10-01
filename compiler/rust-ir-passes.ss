@@ -383,12 +383,12 @@
                  (object (cons "kind" "set_member")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
-                         (cons "value" (expression-ir (car expr*) src)))]
+                         (cons "value" (typed-expression-ir (car expr*) (car adt-arg*) src)))]
                 [(and (eq? adt-name 'Map) (memq ledger-op '(member lookup)) (= (length expr*) 1))
                  (object (cons "kind" (if (eq? ledger-op 'member) "map_member" "map_lookup"))
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
-                         (cons "key" (expression-ir (car expr*) src)))]
+                         (cons "key" (typed-expression-ir (car expr*) (car adt-arg*) src)))]
                 [else (source-errorf src "Rust backend does not yet support this nested ledger query")])])]
           [(call ,src ,function-name ,expr* ...)
            (let ([name (id-sym function-name)])
@@ -964,14 +964,14 @@
                  (object (cons "kind" "set_insert")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
-                         (cons "value" (expression-ir (car expr*) src)))]
+                         (cons "value" (typed-expression-ir (car expr*) (car adt-arg*) src)))]
                 [(and (eq? adt-name 'Set)
                       (eq? ledger-op 'remove)
                       (= (length expr*) 1))
                  (object (cons "kind" "set_remove")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
-                         (cons "value" (expression-ir (car expr*) src)))]
+                         (cons "value" (typed-expression-ir (car expr*) (car adt-arg*) src)))]
                 [(and (eq? adt-name 'Set)
                       (eq? ledger-op 'resetToDefault)
                       (null? expr*))
@@ -1003,22 +1003,22 @@
                  (object (cons "kind" "map_insert")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
-                         (cons "key" (expression-ir (car expr*) src))
-                         (cons "value" (expression-ir (cadr expr*) src)))]
+                         (cons "key" (typed-expression-ir (car expr*) (car adt-arg*) src))
+                         (cons "value" (typed-expression-ir (cadr expr*) (cadr adt-arg*) src)))]
                 [(and (eq? adt-name 'Map)
                       (eq? ledger-op 'insertDefault)
                       (= (length expr*) 1))
                  (object (cons "kind" "map_insert_default")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
-                         (cons "key" (expression-ir (car expr*) src)))]
+                         (cons "key" (typed-expression-ir (car expr*) (car adt-arg*) src)))]
                 [(and (eq? adt-name 'Map)
                       (eq? ledger-op 'remove)
                       (= (length expr*) 1))
                  (object (cons "kind" "map_remove")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
-                         (cons "key" (expression-ir (car expr*) src)))]
+                         (cons "key" (typed-expression-ir (car expr*) (car adt-arg*) src)))]
                 [(and (eq? adt-name 'Map)
                       (eq? ledger-op 'resetToDefault)
                       (null? expr*))
@@ -1099,6 +1099,38 @@
       ;; them in order and append each private transcript value exactly once.
       (define (stateful-typed-expression-ir value-expr expected-type owner-src witness-ids)
         (nanopass-case (Lnodisclose Expression) value-expr
+          [(var-ref ,src ,var-name)
+           (typed-expression-ir value-expr expected-type owner-src)]
+          [(tuple ,src ,tuple-arg* ...)
+           (nanopass-case (Lnodisclose Type) expected-type
+             [(tvector ,src^ ,len ,type)
+              (unless (= (length tuple-arg*) len)
+                (source-errorf src "Rust vector literal length does not match its type"))
+              (object (cons "kind" "vector")
+                      (cons "element" (type-ir type src))
+                      (cons "elements"
+                            (list->vector
+                              (map (lambda (arg)
+                                     (nanopass-case (Lnodisclose Tuple-Argument) arg
+                                       [(single ,src1 ,expr)
+                                        (stateful-typed-expression-ir expr type src1 witness-ids)]
+                                       [else (source-errorf src "Rust backend does not yet support vector spreads")]))
+                                   tuple-arg*))))]
+             [(ttuple ,src^ ,type* ...)
+              (unless (= (length tuple-arg*) (length type*))
+                (source-errorf src "Rust tuple literal length does not match its type"))
+              (if (null? type*)
+                  (kind "unit")
+                  (object (cons "kind" "tuple")
+                          (cons "elements"
+                                (list->vector
+                                  (map (lambda (arg ty)
+                                         (nanopass-case (Lnodisclose Tuple-Argument) arg
+                                           [(single ,src1 ,expr)
+                                            (stateful-typed-expression-ir expr ty src1 witness-ids)]
+                                           [else (source-errorf src "Rust backend does not yet support tuple spreads")]))
+                                       tuple-arg* type*)))))]
+             [else (stateful-expression-ir value-expr owner-src witness-ids)])]
           [(if ,src ,expr0 ,expr1 ,expr2)
            (object (cons "kind" "if")
                    (cons "condition" (stateful-expression-ir expr0 src witness-ids))
@@ -1222,17 +1254,17 @@
                  (object (cons "kind" "set_member")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
-                         (cons "value" (stateful-expression-ir (car expr*) src witness-ids)))]
+                         (cons "value" (stateful-typed-expression-ir (car expr*) (car adt-arg*) src witness-ids)))]
                 [(and (eq? adt-name 'Map) (eq? ledger-op 'member) (= (length expr*) 1))
                  (object (cons "kind" "map_member")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
-                         (cons "key" (stateful-expression-ir (car expr*) src witness-ids)))]
+                         (cons "key" (stateful-typed-expression-ir (car expr*) (car adt-arg*) src witness-ids)))]
                 [(and (eq? adt-name 'Map) (eq? ledger-op 'lookup) (= (length expr*) 1))
                  (object (cons "kind" "map_lookup")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
-                         (cons "key" (stateful-expression-ir (car expr*) src witness-ids)))]
+                         (cons "key" (stateful-typed-expression-ir (car expr*) (car adt-arg*) src witness-ids)))]
                 [(and (memq adt-name '(MerkleTree HistoricMerkleTree))
                       (eq? ledger-op 'checkRoot)
                       (= (length expr*) 1))
@@ -1442,7 +1474,7 @@
                  (object (cons "kind" "set_member")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
-                         (cons "value" (expression-ir (car expr*) src)))]
+                         (cons "value" (typed-expression-ir (car expr*) (car adt-arg*) src)))]
                 [(and (eq? adt-name 'Set)
                       (eq? ledger-op 'size)
                       (null? expr*))
@@ -1461,14 +1493,14 @@
                  (object (cons "kind" "map_member")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
-                         (cons "key" (expression-ir (car expr*) src)))]
+                         (cons "key" (typed-expression-ir (car expr*) (car adt-arg*) src)))]
                 [(and (eq? adt-name 'Map)
                       (eq? ledger-op 'lookup)
                       (= (length expr*) 1))
                  (object (cons "kind" "map_lookup")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
-                         (cons "key" (expression-ir (car expr*) src)))]
+                         (cons "key" (typed-expression-ir (car expr*) (car adt-arg*) src)))]
                 [(and (eq? adt-name 'Map)
                       (eq? ledger-op 'size)
                       (null? expr*))

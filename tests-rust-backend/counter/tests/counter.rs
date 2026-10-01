@@ -14,7 +14,7 @@
 // limitations under the License.
 
 use compact_rust_counter_fixture::ledger_contract::{
-    increment, initial_state, read_round, recorded,
+    Contract, increment, initial_state, read_round, recorded,
 };
 use midnight_compact_runtime::context::ConstructorContext;
 use midnight_compact_runtime::ledger::{ContractAddress, StateValue, read_counter};
@@ -42,7 +42,7 @@ fn generated_counter_state_can_enter_a_replayable_ledger_trace() {
 
     let constructor = initial_state(ConstructorContext::new(())).unwrap();
     let context = constructor.into_circuit_context(ContractAddress::default());
-    let recorded = recorded::increment(context).unwrap();
+    let recorded = Contract::default().recording.increment(context).unwrap();
     let replay = recorded
         .public
         .initial()

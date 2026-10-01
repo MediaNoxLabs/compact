@@ -2352,6 +2352,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
     let mut stateful_items = Vec::new();
     let mut contract_methods = Vec::new();
     let mut recorded_items = Vec::new();
+    let mut recorded_methods = Vec::new();
     for circuit in &contract.stateful_circuits {
         if !names.insert(circuit.name.as_str()) {
             return Err(RenderError::DuplicateCircuit(circuit.name.clone()));
@@ -2370,6 +2371,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
         }
         if let Some(item) = stateful::render_recorded_counter_circuit(circuit, &ledger_fields)? {
             recorded_items.push(item);
+            recorded_methods.push(stateful::render_recorded_contract_method(circuit)?);
         }
     }
 
@@ -2728,9 +2730,18 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
             pub mod recorded {
                 use midnight_compact_runtime as runtime;
                 #(#recorded_items)*
+                /// Typed handle for circuits with a complete recorded trace.
+                pub struct Contract;
+                impl Contract {
+                    #(#recorded_methods)*
+                }
             }
         })
     };
+    let recording_field =
+        (!recorded_items.is_empty()).then(|| quote!(pub recording: recorded::Contract,));
+    let recording_init =
+        (!recorded_items.is_empty()).then(|| quote!(recording: recorded::Contract,));
     let ledger_module: Option<syn::Item> = if contract.ledger_fields.is_empty()
         && contract.constructor.is_none()
         && contract.stateful_circuits.is_empty()
@@ -2760,15 +2771,16 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                 pub struct Contract<W> {
                     #[allow(dead_code)]
                     witnesses: W,
+                    #recording_field
                 }
                 impl<W> From<W> for Contract<W> {
                     fn from(witnesses: W) -> Self {
-                        Self { witnesses }
+                        Self { witnesses, #recording_init }
                     }
                 }
                 impl Default for Contract<()> {
                     fn default() -> Self {
-                        Self { witnesses: () }
+                        Self { witnesses: (), #recording_init }
                     }
                 }
                 impl<W> Contract<W> {

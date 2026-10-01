@@ -1554,6 +1554,32 @@ pub(crate) fn render_recorded_counter_circuit(
     }))
 }
 
+/// A typed method on the generated recording handle. The ledger program is
+/// still produced by the corresponding `recorded` module function.
+pub(crate) fn render_recorded_contract_method(
+    circuit: &StatefulCircuit,
+) -> Result<syn::ImplItemFn, RenderError> {
+    let name = ident(&circuit.name)?;
+    let mut args = Vec::<syn::FnArg>::new();
+    let mut call_args = Vec::<syn::Ident>::new();
+    for (index, parameter) in circuit.parameters.iter().enumerate() {
+        let arg = syn::Ident::new(&format!("__compact_param_{index}"), Span::call_site());
+        let ty = rust_type(&parameter.ty)?;
+        args.push(syn::parse_quote!(#arg: #ty));
+        call_args.push(arg);
+    }
+    let result = rust_type(&circuit.result)?;
+    Ok(syn::parse_quote! {
+        pub fn #name<Private>(
+            &self,
+            context: runtime::context::CircuitContext<Private>,
+            #(#args),*
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, #result>, runtime::CompactError> {
+            crate::ledger_contract::recorded::#name(context, #(#call_args),*)
+        }
+    })
+}
+
 fn expression_contains(expression: &Expr, predicate: &impl Fn(&Expr) -> bool) -> bool {
     if predicate(expression) {
         return true;

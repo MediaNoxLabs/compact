@@ -89,7 +89,7 @@ def check_consumer(contract: Path, pure_contract: Path, consumer: Path) -> None:
         "\n#[test]\nfn generated_counter_trace_replays_outside_the_compiler_workspace() {\n"
         "    let state = initial_state(ConstructorContext::new(())).unwrap();\n"
         "    let context = state.into_circuit_context(ContractAddress::default());\n"
-        "    let call = recorded::increment(context).unwrap();\n"
+        "    let call = Contract::default().recording.increment(context).unwrap();\n"
         "    let replay = call.public.initial().query(\n"
         "        call.public.verify_ops(), None, &call.execution.context.cost_model,\n"
         "    ).unwrap();\n"

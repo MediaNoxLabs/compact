@@ -28,3 +28,4 @@ midnight-compact-runtime = { path = "../../runtime-rs" }
 [dev-dependencies]
 hex = "0.4"
 serde_json = "1"
+midnight-transient-crypto = "=2.0.1"

@@ -1,0 +1,190 @@
+{
+  "hash": {
+    "result": "48991e757a425a59409d7c834f9e418a5b34bb286a2490128b696678cebb0d15",
+    "privateState": 8,
+    "privateTranscriptOutputs": [
+      {
+        "valueAtoms": [
+          [
+            9
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "commit": {
+    "result": "c8101ca068acb64020dbf1f6d44085dde1934950b00c538b48476b61380a4525",
+    "privateState": 9,
+    "privateTranscriptOutputs": [
+      {
+        "valueAtoms": [
+          [
+            9
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          }
+        ]
+      },
+      {
+        "valueAtoms": [
+          [
+            10
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "persistentHash": {
+    "result": "34ec81dbdaf9148567dc4254f93852d34f96e78ddd4bd04c1c8a1641a0883b2b",
+    "privateState": 8,
+    "privateTranscriptOutputs": [
+      {
+        "valueAtoms": [
+          [
+            9
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "degradeHash": {
+    "result": "34ec81dbdaf9148567dc4254f93852d34f96e78ddd4bd04c1c8a1641a0883b00",
+    "privateState": 8,
+    "privateTranscriptOutputs": [
+      {
+        "valueAtoms": [
+          [
+            9
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "upgrade": {
+    "result": "0900000000000000000000000000000000000000000000000000000000000000",
+    "privateState": 8,
+    "privateTranscriptOutputs": [
+      {
+        "valueAtoms": [
+          [
+            9
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "persistentCommit": {
+    "result": "4fde1d3a59b163721fe5f31945b5ed32809f4f93ef14993c4dc1497d4c795deb",
+    "privateState": 9,
+    "privateTranscriptOutputs": [
+      {
+        "valueAtoms": [
+          [
+            9
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          }
+        ]
+      },
+      {
+        "valueAtoms": [
+          [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "bytes",
+              "length": 32
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

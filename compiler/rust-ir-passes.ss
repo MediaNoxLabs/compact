@@ -547,11 +547,30 @@
         (nanopass-case (Lnodisclose Expression) value-expr
           [(return ,src ,expr) (stateful-expression-ir expr src witness-ids)]
           [(call ,src ,function-name ,expr* ...)
-           (if (eq-hashtable-ref witness-ids function-name #f)
-               (object (cons "kind" "witness_call")
-                       (cons "name" (symbol->string (id-sym function-name)))
-                       (cons "arguments" (list->vector (map (lambda (arg) (stateful-expression-ir arg src witness-ids)) expr*))))
-               (expression-ir value-expr owner-src))]
+           (let ([name (id-sym function-name)])
+             (cond
+               [(eq-hashtable-ref witness-ids function-name #f)
+                (object (cons "kind" "witness_call")
+                        (cons "name" (symbol->string name))
+                        (cons "arguments" (list->vector (map (lambda (arg) (stateful-expression-ir arg src witness-ids)) expr*))))]
+               [(memq name '(transientHash persistentHash degradeToTransient upgradeFromTransient))
+                (unless (= (length expr*) 1)
+                  (source-errorf src "Rust backend native expects one argument"))
+                (object (cons "kind" (case name
+                                        [(transientHash) "transient_hash"]
+                                        [(persistentHash) "persistent_hash"]
+                                        [(degradeToTransient) "degrade_to_transient"]
+                                        [else "upgrade_from_transient"]))
+                        (cons "value" (stateful-expression-ir (car expr*) src witness-ids)))]
+               [(memq name '(transientCommit persistentCommit))
+                (unless (= (length expr*) 2)
+                  (source-errorf src "Rust backend native expects two arguments"))
+                (object (cons "kind" (if (eq? name 'transientCommit)
+                                          "transient_commit"
+                                          "persistent_commit"))
+                        (cons "value" (stateful-expression-ir (car expr*) src witness-ids))
+                        (cons "opening" (stateful-expression-ir (cadr expr*) src witness-ids)))]
+               [else (expression-ir value-expr owner-src)]))]
           [(safe-cast ,src ,type ,type^ ,expr)
            (nanopass-case (Lnodisclose Type) type
              [(tunsigned ,src^ ,nat)
@@ -634,7 +653,10 @@
           [(return ,src ,expr) (stateful-return-ir expr src witness-ids)]
           [(seq ,src ,expr* ... ,expr) (stateful-return-ir expr src witness-ids)]
           [(call ,src ,function-name ,expr* ...)
-           (if (eq-hashtable-ref witness-ids function-name #f)
+           (if (or (eq-hashtable-ref witness-ids function-name #f)
+                   (memq (id-sym function-name)
+                         '(transientHash transientCommit persistentHash persistentCommit
+                           degradeToTransient upgradeFromTransient)))
                (object (cons "kind" "expression")
                        (cons "value" (stateful-expression-ir return-expr src witness-ids)))
                (source-errorf src "Rust backend does not yet support this stateful call"))]

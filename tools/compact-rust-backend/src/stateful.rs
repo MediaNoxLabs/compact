@@ -74,6 +74,88 @@ fn render_state_expression(
                 true,
             ))
         }
+        Expr::TransientHash { value: input }
+        | Expr::PersistentHash { value: input }
+        | Expr::DegradeToTransient { value: input }
+        | Expr::UpgradeFromTransient { value: input } => {
+            let (rendered, actual, effect) =
+                render_state_expression(input, parameters, witnesses, statements, next_temp)?;
+            let (operation, result): (syn::Path, Type) = match value {
+                Expr::TransientHash { .. } => {
+                    (syn::parse_quote!(runtime::transient_hash), Type::Field)
+                }
+                Expr::PersistentHash { .. } => (
+                    syn::parse_quote!(runtime::persistent_hash),
+                    Type::Bytes { length: 32 },
+                ),
+                Expr::DegradeToTransient { .. } => {
+                    if actual != (Type::Bytes { length: 32 }) {
+                        return Err(RenderError::TypeMismatch {
+                            expected: Type::Bytes { length: 32 },
+                            actual,
+                        });
+                    }
+                    (
+                        syn::parse_quote!(runtime::degrade_to_transient),
+                        Type::Field,
+                    )
+                }
+                Expr::UpgradeFromTransient { .. } => {
+                    if actual != Type::Field {
+                        return Err(RenderError::TypeMismatch {
+                            expected: Type::Field,
+                            actual,
+                        });
+                    }
+                    (
+                        syn::parse_quote!(runtime::upgrade_from_transient),
+                        Type::Bytes { length: 32 },
+                    )
+                }
+                _ => unreachable!(),
+            };
+            Ok((syn::parse_quote!(#operation(#rendered)), result, effect))
+        }
+        Expr::TransientCommit {
+            value: input,
+            opening,
+        }
+        | Expr::PersistentCommit {
+            value: input,
+            opening,
+        } => {
+            let (input, _, input_effect) =
+                render_state_expression(input, parameters, witnesses, statements, next_temp)?;
+            let input_name = syn::Ident::new(
+                &format!("__compact_value_{}", *next_temp),
+                Span::call_site(),
+            );
+            *next_temp += 1;
+            statements.push(syn::parse_quote!(let #input_name = #input;));
+            let (opening, actual, opening_effect) =
+                render_state_expression(opening, parameters, witnesses, statements, next_temp)?;
+            let (expected, operation, result): (Type, syn::Path, Type) = match value {
+                Expr::TransientCommit { .. } => (
+                    Type::Field,
+                    syn::parse_quote!(runtime::transient_commit),
+                    Type::Field,
+                ),
+                Expr::PersistentCommit { .. } => (
+                    Type::Bytes { length: 32 },
+                    syn::parse_quote!(runtime::persistent_commit),
+                    Type::Bytes { length: 32 },
+                ),
+                _ => unreachable!(),
+            };
+            if actual != expected {
+                return Err(RenderError::TypeMismatch { expected, actual });
+            }
+            Ok((
+                syn::parse_quote!(#operation(#input_name, #opening)),
+                result,
+                input_effect || opening_effect,
+            ))
+        }
         Expr::Tuple { elements } => {
             let mut rendered_elements = Vec::<syn::Expr>::new();
             let mut types = Vec::new();

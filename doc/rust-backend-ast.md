@@ -89,6 +89,11 @@ returns use this same expression path. Witnessed `Uint<16>` addition,
 subtraction, multiplication, and explicit downcasts use the runtime's checked
 bounded types. Their results, FAB transcript values, and overflow or underflow
 behavior match the TypeScript oracle fixture.
+Witness calls also compose through the six supported crypto natives. Hashes
+and conversions evaluate their input witness before the native call;
+commitments evaluate the value before the opening. The witness crypto fixture
+checks private state and FAB transcript order against TypeScript, including a
+commitment with two different witnesses and nested persistent hash conversion.
 The action IR also carries typed sequential local bindings. A witnessed Cell
 write evaluates its witness before the ledger VM write; two writes in one
 circuit preserve the intervening ledger state, private state, and transcript
@@ -191,6 +196,7 @@ cargo test -p compact-rust-backend -p midnight-compact-runtime \
   -p compact-rust-witness-cell-write-fixture \
   -p compact-rust-witness-conditional-fixture \
   -p compact-rust-witness-uint-arithmetic-fixture \
+  -p compact-rust-witness-hash-fixture \
   -p compact-rust-uint-identity-fixture -p compact-rust-bytes-identity-fixture \
   -p compact-rust-counter-fixture -p compact-rust-cell-boolean-fixture \
   -p compact-rust-struct-identity-fixture -p compact-rust-nested-struct-fixture \

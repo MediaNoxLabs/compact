@@ -1,0 +1,28 @@
+import CompactStandardLibrary;
+
+witness echo(value: Field): Field;
+witness echo_bytes(value: Bytes<32>): Bytes<32>;
+
+export circuit hash_echo(value: Field): Field {
+  return transientHash<Field>(disclose(echo(value)));
+}
+
+export circuit commit_echo(value: Field): Field {
+  return transientCommit<Field>(disclose(echo(value)), disclose(echo(value)));
+}
+
+export circuit persistent_hash_echo(value: Field): Bytes<32> {
+  return persistentHash<Field>(disclose(echo(value)));
+}
+
+export circuit degrade_hash_echo(value: Field): Field {
+  return degradeToTransient(disclose(persistentHash<Field>(disclose(echo(value)))));
+}
+
+export circuit upgrade_echo(value: Field): Bytes<32> {
+  return upgradeFromTransient(disclose(echo(value)));
+}
+
+export circuit persistent_commit_echo(value: Field, opening: Bytes<32>): Bytes<32> {
+  return persistentCommit<Field>(disclose(echo(value)), disclose(echo_bytes(opening)));
+}

@@ -119,10 +119,6 @@ pub enum StateReturn {
         field: String,
         index: u8,
     },
-    WitnessCall {
-        name: String,
-        arguments: Vec<Expr>,
-    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]

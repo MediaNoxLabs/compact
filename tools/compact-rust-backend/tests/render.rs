@@ -423,11 +423,13 @@ fn witness_calls_require_a_declared_witness_and_matching_signature() {
             }],
             actions: vec![],
             result: Type::Field,
-            return_value: StateReturn::WitnessCall {
-                name: "secret".into(),
-                arguments: vec![Expr::Parameter {
-                    name: "flag".into(),
-                }],
+            return_value: StateReturn::Expression {
+                value: Expr::WitnessCall {
+                    name: "secret".into(),
+                    arguments: vec![Expr::Parameter {
+                        name: "flag".into(),
+                    }],
+                },
             },
         }],
     };
@@ -661,7 +663,7 @@ fn ledger_read_return_must_match_the_declared_cell() {
     };
     let source = render(&contract).unwrap();
     assert!(source.contains("context.read_cell::<bool>(0)?"));
-    assert!(source.contains("result: read_step.result"));
+    assert!(source.contains("let result = read_step.result"));
 
     contract.stateful_circuits[0].result = Type::Field;
     assert_eq!(

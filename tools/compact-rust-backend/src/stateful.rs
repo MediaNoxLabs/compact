@@ -28,16 +28,24 @@ fn render_state_expression(
                     actual: arguments.len(),
                 });
             }
-            let mut rendered_arguments = Vec::with_capacity(arguments.len());
+            let mut rendered_arguments = Vec::<syn::Expr>::with_capacity(arguments.len());
             for (argument, parameter) in arguments.iter().zip(&declaration.parameters) {
-                let (rendered, actual) = expression(argument, parameters)?;
+                let (rendered, actual, _) = render_state_expression(
+                    argument, parameters, witnesses, statements, next_temp,
+                )?;
                 if actual != parameter.ty {
                     return Err(RenderError::TypeMismatch {
                         expected: parameter.ty.clone(),
                         actual,
                     });
                 }
-                rendered_arguments.push(rendered);
+                let argument_name = syn::Ident::new(
+                    &format!("__compact_argument_{}", *next_temp),
+                    Span::call_site(),
+                );
+                *next_temp += 1;
+                statements.push(syn::parse_quote!(let #argument_name = #rendered;));
+                rendered_arguments.push(syn::parse_quote!(#argument_name));
             }
             let index = *next_temp;
             *next_temp += 1;
@@ -65,6 +73,108 @@ fn render_state_expression(
                 declaration.result.clone(),
                 true,
             ))
+        }
+        Expr::Tuple { elements } => {
+            let mut rendered_elements = Vec::<syn::Expr>::new();
+            let mut types = Vec::new();
+            let mut effect = false;
+            for element in elements {
+                let (rendered, ty, element_effect) =
+                    render_state_expression(element, parameters, witnesses, statements, next_temp)?;
+                let element_name = syn::Ident::new(
+                    &format!("__compact_element_{}", *next_temp),
+                    Span::call_site(),
+                );
+                *next_temp += 1;
+                statements.push(syn::parse_quote!(let #element_name = #rendered;));
+                rendered_elements.push(syn::parse_quote!(#element_name));
+                types.push(ty);
+                effect |= element_effect;
+            }
+            Ok((
+                syn::parse_quote!((#(#rendered_elements,)*)),
+                Type::Tuple { elements: types },
+                effect,
+            ))
+        }
+        Expr::If {
+            condition,
+            then,
+            otherwise,
+        } => {
+            let (condition, condition_ty, condition_effect) =
+                render_state_expression(condition, parameters, witnesses, statements, next_temp)?;
+            if condition_ty != Type::Boolean {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Boolean,
+                    actual: condition_ty,
+                });
+            }
+            let mut then_statements = Vec::new();
+            let (then_value, then_ty, then_effect) = render_state_expression(
+                then,
+                parameters,
+                witnesses,
+                &mut then_statements,
+                next_temp,
+            )?;
+            let mut else_statements = Vec::new();
+            let (else_value, else_ty, else_effect) = render_state_expression(
+                otherwise,
+                parameters,
+                witnesses,
+                &mut else_statements,
+                next_temp,
+            )?;
+            if then_ty != else_ty {
+                return Err(RenderError::TypeMismatch {
+                    expected: then_ty,
+                    actual: else_ty,
+                });
+            }
+            Ok((
+                syn::parse_quote!(if #condition {
+                    #(#then_statements)*
+                    #then_value
+                } else {
+                    #(#else_statements)*
+                    #else_value
+                }),
+                then_ty,
+                condition_effect || then_effect || else_effect,
+            ))
+        }
+        Expr::Let { bindings, body } => {
+            let mut locals = parameters.clone();
+            let mut effect = false;
+            for binding in bindings {
+                ident(&binding.name)?;
+                let (rendered, actual, binding_effect) = render_state_expression(
+                    &binding.value,
+                    &locals,
+                    witnesses,
+                    statements,
+                    next_temp,
+                )?;
+                if actual != binding.ty {
+                    return Err(RenderError::TypeMismatch {
+                        expected: binding.ty.clone(),
+                        actual,
+                    });
+                }
+                let local_name = syn::Ident::new(
+                    &format!("__compact_expression_local_{}", *next_temp),
+                    Span::call_site(),
+                );
+                *next_temp += 1;
+                let ty = rust_type(&binding.ty)?;
+                statements.push(syn::parse_quote!(let #local_name: #ty = #rendered;));
+                locals.insert(binding.name.as_str(), (&binding.ty, local_name));
+                effect |= binding_effect;
+            }
+            let (rendered, ty, body_effect) =
+                render_state_expression(body, &locals, witnesses, statements, next_temp)?;
+            Ok((rendered, ty, effect || body_effect))
         }
         Expr::Add { left, right }
         | Expr::Subtract { left, right }
@@ -872,56 +982,6 @@ pub(crate) fn render_stateful_circuit(
             });
             syn::parse_quote!(read_step.result)
         }
-        StateReturn::WitnessCall { name, arguments } => {
-            uses_witness = true;
-            let declaration = witnesses
-                .get(name.as_str())
-                .ok_or_else(|| RenderError::UnknownWitness(name.clone()))?;
-            if arguments.len() != declaration.parameters.len() {
-                return Err(RenderError::ArgumentCount {
-                    circuit: name.clone(),
-                    expected: declaration.parameters.len(),
-                    actual: arguments.len(),
-                });
-            }
-            if circuit.result != declaration.result {
-                return Err(RenderError::TypeMismatch {
-                    expected: declaration.result.clone(),
-                    actual: circuit.result.clone(),
-                });
-            }
-            let mut rendered_arguments = Vec::<syn::Expr>::new();
-            for (argument, parameter) in arguments.iter().zip(&declaration.parameters) {
-                let (rendered, actual) = expression(argument, &parameters)?;
-                if actual != parameter.ty {
-                    return Err(RenderError::TypeMismatch {
-                        expected: parameter.ty.clone(),
-                        actual,
-                    });
-                }
-                rendered_arguments.push(rendered);
-            }
-            let witness_name = ident(name)?;
-            statements.push(syn::parse_quote! {
-                let mut context = context;
-            });
-            statements.push(syn::parse_quote! {
-                let (next_private_state, witness_result) =
-                    witnesses.#witness_name(
-                        context.witness_context_with(LedgerView {
-                            state: context.query.state.get_ref(),
-                        }),
-                        #(#rendered_arguments),*
-                    );
-            });
-            statements.push(syn::parse_quote! {
-                context.private_state = next_private_state;
-            });
-            statements.push(syn::parse_quote! {
-                private_transcript_outputs.push(runtime::fab::AlignedValue::from(witness_result.clone()));
-            });
-            syn::parse_quote!(witness_result)
-        }
     };
     let transcript_init: syn::Stmt = if uses_witness {
         syn::parse_quote!(let mut private_transcript_outputs = Vec::new();)
@@ -943,9 +1003,10 @@ pub(crate) fn render_stateful_circuit(
                 #cost_init
                 #transcript_init
                 #(#statements)*
+                let result = #return_expr;
                 Ok(runtime::context::CircuitResult {
                     context,
-                    result: #return_expr,
+                    result,
                     gas_cost: total_cost,
                     private_transcript_outputs,
                 })
@@ -960,9 +1021,10 @@ pub(crate) fn render_stateful_circuit(
                 #cost_init
                 #transcript_init
                 #(#statements)*
+                let result = #return_expr;
                 Ok(runtime::context::CircuitResult {
                     context,
-                    result: #return_expr,
+                    result,
                     gas_cost: total_cost,
                     private_transcript_outputs,
                 })

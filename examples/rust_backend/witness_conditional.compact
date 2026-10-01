@@ -1,0 +1,21 @@
+import CompactStandardLibrary;
+witness secret(seed: Field): Field;
+export circuit choose_secret(flag: Boolean, left: Field, right: Field): Field {
+  if (flag) {
+    return disclose(secret(left));
+  } else {
+    return disclose(secret(right));
+  }
+}
+export circuit pair_secret(seed: Field): [Field, Field] {
+  return [disclose(secret(seed)), disclose(secret(seed))];
+}
+
+export circuit nested_secret(seed: Field): Field {
+  return disclose(secret(disclose(secret(seed))));
+}
+
+export circuit local_secret(seed: Field): Field {
+  const value = disclose(secret(seed));
+  return value + 1;
+}

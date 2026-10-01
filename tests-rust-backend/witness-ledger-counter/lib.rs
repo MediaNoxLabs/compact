@@ -36,12 +36,16 @@ pub mod ledger_contract {
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let step = context.increment_counter(0, 1)?;
+        let __compact_action_local_0: runtime::BoundedUint<65535> =
+            runtime::BoundedUint::<65535>::new(1u128)
+                .expect("Compact Uint literal fits its maximum");
+        let step = context.increment_counter(0, __compact_action_local_0.value() as u16)?;
         let context = step.context;
         total_cost += step.gas_cost;
+        let result = ();
         Ok(runtime::context::CircuitResult {
             context,
-            result: (),
+            result,
             gas_cost: total_cost,
             private_transcript_outputs,
         })
@@ -54,17 +58,20 @@ pub mod ledger_contract {
         runtime::CompactError,
     > {
         let total_cost = runtime::context::RunningCost::default();
+        let mut private_transcript_outputs = Vec::new();
         let mut context = context;
-        let (next_private_state, witness_result) =
+        let (__compact_next_private_0, __compact_witness_0) =
             witnesses.read_round(context.witness_context_with(LedgerView {
                 state: context.query.state.get_ref(),
             }));
-        context.private_state = next_private_state;
-        let private_transcript_outputs =
-            vec![runtime::fab::AlignedValue::from(witness_result.clone())];
+        context.private_state = __compact_next_private_0;
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
+            __compact_witness_0.clone(),
+        ));
+        let result = __compact_witness_0;
         Ok(runtime::context::CircuitResult {
             context,
-            result: witness_result,
+            result,
             gas_cost: total_cost,
             private_transcript_outputs,
         })

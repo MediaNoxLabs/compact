@@ -41,9 +41,10 @@ pub mod ledger_contract {
         let step = context.insert_set(0, true)?;
         let context = step.context;
         total_cost += step.gas_cost;
+        let result = ();
         Ok(runtime::context::CircuitResult {
             context,
-            result: (),
+            result,
             gas_cost: total_cost,
             private_transcript_outputs,
         })
@@ -53,17 +54,20 @@ pub mod ledger_contract {
         witnesses: &W,
     ) -> Result<runtime::context::CircuitResult<Private, bool>, runtime::CompactError> {
         let total_cost = runtime::context::RunningCost::default();
+        let mut private_transcript_outputs = Vec::new();
         let mut context = context;
-        let (next_private_state, witness_result) =
+        let (__compact_next_private_0, __compact_witness_0) =
             witnesses.contains_true(context.witness_context_with(LedgerView {
                 state: context.query.state.get_ref(),
             }));
-        context.private_state = next_private_state;
-        let private_transcript_outputs =
-            vec![runtime::fab::AlignedValue::from(witness_result.clone())];
+        context.private_state = __compact_next_private_0;
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
+            __compact_witness_0.clone(),
+        ));
+        let result = __compact_witness_0;
         Ok(runtime::context::CircuitResult {
             context,
-            result: witness_result,
+            result,
             gas_cost: total_cost,
             private_transcript_outputs,
         })

@@ -1,0 +1,140 @@
+{
+  "selected": {
+    "result": "9",
+    "privateState": 8,
+    "privateTranscriptOutputs": [
+      {
+        "valueAtoms": [
+          [
+            9
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "unselected": {
+    "result": "27",
+    "privateState": 8,
+    "privateTranscriptOutputs": [
+      {
+        "valueAtoms": [
+          [
+            27
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "pair": {
+    "result": [
+      "9",
+      "10"
+    ],
+    "privateState": 9,
+    "privateTranscriptOutputs": [
+      {
+        "valueAtoms": [
+          [
+            9
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          }
+        ]
+      },
+      {
+        "valueAtoms": [
+          [
+            10
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "nested": {
+    "result": "17",
+    "privateState": 9,
+    "privateTranscriptOutputs": [
+      {
+        "valueAtoms": [
+          [
+            9
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          }
+        ]
+      },
+      {
+        "valueAtoms": [
+          [
+            17
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "local": {
+    "result": "10",
+    "privateState": 8,
+    "privateTranscriptOutputs": [
+      {
+        "valueAtoms": [
+          [
+            9
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

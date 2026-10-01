@@ -515,8 +515,37 @@
            (if (eq-hashtable-ref witness-ids function-name #f)
                (object (cons "kind" "witness_call")
                        (cons "name" (symbol->string (id-sym function-name)))
-                       (cons "arguments" (list->vector (map (lambda (arg) (expression-ir arg src)) expr*))))
+                       (cons "arguments" (list->vector (map (lambda (arg) (stateful-expression-ir arg src witness-ids)) expr*))))
                (expression-ir expr owner-src))]
+          [(if ,src ,expr0 ,expr1 ,expr2)
+           (object (cons "kind" "if")
+                   (cons "condition" (stateful-expression-ir expr0 src witness-ids))
+                   (cons "then" (stateful-expression-ir expr1 src witness-ids))
+                   (cons "otherwise" (stateful-expression-ir expr2 src witness-ids)))]
+          [(let* ,src ([,local* ,expr*] ...) ,expr)
+           (object (cons "kind" "let")
+                   (cons "bindings"
+                         (list->vector
+                           (map (lambda (local value)
+                                  (nanopass-case (Lnodisclose Argument) local
+                                    [(,var-name ,type)
+                                     (object (cons "name" (symbol->string (id-sym var-name)))
+                                             (cons "ty" (type-ir type src))
+                                             (cons "value" (stateful-expression-ir value src witness-ids)))]))
+                                local* expr*)))
+                   (cons "body" (stateful-expression-ir expr src witness-ids)))]
+          [(tuple ,src ,tuple-arg* ...)
+           (if (null? tuple-arg*)
+               (kind "unit")
+               (object (cons "kind" "tuple")
+                       (cons "elements"
+                             (list->vector
+                               (map (lambda (arg)
+                                      (nanopass-case (Lnodisclose Tuple-Argument) arg
+                                        [(single ,src ,expr)
+                                         (stateful-expression-ir expr src witness-ids)]
+                                        [else (source-errorf src "Rust backend does not yet support tuple spreads")]))
+                                    tuple-arg*)))))]
           [(+ ,src ,mbits ,expr1 ,expr2)
            (if mbits
                (expression-ir expr owner-src)
@@ -537,29 +566,35 @@
                        (cons "right" (stateful-expression-ir expr2 src witness-ids))))]
           [else (expression-ir expr owner-src)]))
 
-      (define (stateful-return-ir expr owner-src witness-ids)
-        (nanopass-case (Lnodisclose Expression) expr
+      (define (stateful-return-ir return-expr owner-src witness-ids)
+        (nanopass-case (Lnodisclose Expression) return-expr
           [(return ,src ,expr) (stateful-return-ir expr src witness-ids)]
           [(seq ,src ,expr* ... ,expr) (stateful-return-ir expr src witness-ids)]
           [(call ,src ,function-name ,expr* ...)
            (if (eq-hashtable-ref witness-ids function-name #f)
-               (object (cons "kind" "witness_call")
-                       (cons "name" (symbol->string (id-sym function-name)))
-                       (cons "arguments" (list->vector (map (lambda (arg) (expression-ir arg src)) expr*))))
+               (object (cons "kind" "expression")
+                       (cons "value" (stateful-expression-ir return-expr src witness-ids)))
                (source-errorf src "Rust backend does not yet support this stateful call"))]
           [(tuple ,src ,tuple-arg* ...)
            (if (null? tuple-arg*)
                (kind "unit")
-               (source-errorf src "Rust backend does not yet support this stateful return value"))]
+               (object (cons "kind" "expression")
+                       (cons "value" (stateful-expression-ir return-expr src witness-ids))))]
+          [(if ,src ,expr0 ,expr1 ,expr2)
+           (object (cons "kind" "expression")
+                   (cons "value" (stateful-expression-ir return-expr src witness-ids)))]
+          [(let* ,src ([,local* ,expr*] ...) ,expr)
+           (object (cons "kind" "expression")
+                   (cons "value" (stateful-expression-ir return-expr src witness-ids)))]
           [(+ ,src ,mbits ,expr1 ,expr2)
            (object (cons "kind" "expression")
-                   (cons "value" (stateful-expression-ir expr src witness-ids)))]
+                   (cons "value" (stateful-expression-ir return-expr src witness-ids)))]
           [(- ,src ,mbits ,expr1 ,expr2)
            (object (cons "kind" "expression")
-                   (cons "value" (stateful-expression-ir expr src witness-ids)))]
+                   (cons "value" (stateful-expression-ir return-expr src witness-ids)))]
           [(* ,src ,mbits ,expr1 ,expr2)
            (object (cons "kind" "expression")
-                   (cons "value" (stateful-expression-ir expr src witness-ids)))]
+                   (cons "value" (stateful-expression-ir return-expr src witness-ids)))]
           [(public-ledger ,src ,ledger-field-name ,sugar? (,path-elt* ...) ,src^ ,adt-op ,expr* ...)
            (unless (and (= (length path-elt*) 1)
                         (integer? (car path-elt*)))

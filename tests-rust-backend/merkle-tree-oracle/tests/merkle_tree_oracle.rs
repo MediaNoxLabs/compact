@@ -84,6 +84,47 @@ fn merkle_tree_operations_match_typescript_state_bytes() {
         "afterAppend7",
         1,
     );
+    let tree = runtime::ledger::merkle_tree_view_at_path(
+        after_append7.context.query.state.get_ref(),
+        &[0],
+    )
+    .unwrap();
+    let path = tree.path_for_leaf(0, bounded::<255>(7)).unwrap();
+    assert_eq!(Some(path.root()), tree.root());
+    let path_oracle = &oracle["pathFor7At0"];
+    assert_eq!(path.leaf.value().to_string(), path_oracle["leaf"]);
+    assert_eq!(
+        path.path.len(),
+        path_oracle["path"].as_array().unwrap().len()
+    );
+    for (entry, expected) in path
+        .path
+        .iter()
+        .zip(path_oracle["path"].as_array().unwrap())
+    {
+        let sibling = num_bigint::BigUint::from_bytes_le(&entry.sibling.0.as_le_bytes());
+        assert_eq!(sibling.to_string(), expected["sibling"]);
+        assert_eq!(entry.goes_left, expected["goesLeft"]);
+    }
+    let found = tree.find_path_for_leaf(bounded::<255>(7)).unwrap();
+    assert_eq!(
+        found.path.len(),
+        oracle["foundPathFor7"]["path"].as_array().unwrap().len()
+    );
+    assert_eq!(found.root(), path.root());
+    let wrong = tree.path_for_leaf(0, bounded::<255>(8)).unwrap();
+    assert_eq!(
+        wrong.leaf.value().to_string(),
+        oracle["wrongPathFor8At0"]["leaf"]
+    );
+    assert_eq!(
+        wrong.path.len(),
+        oracle["wrongPathFor8At0"]["path"].as_array().unwrap().len()
+    );
+    assert_ne!(Some(wrong.root()), tree.root());
+    assert!(tree.path_for_leaf(8, bounded::<255>(7)).is_err());
+    assert!(tree.find_path_for_leaf(bounded::<255>(8)).is_none());
+    assert!(oracle["missingPathFor8"].is_null());
     let known_old = known(after_append7.context, initial_root.clone()).unwrap();
     assert_eq!(known_old.result, oracle["knownInitialAfterAppend"]);
     let after_place9 = place(
@@ -98,6 +139,18 @@ fn merkle_tree_operations_match_typescript_state_bytes() {
         "afterPlace9At3",
         4,
     );
+    let tree =
+        runtime::ledger::merkle_tree_view_at_path(after_place9.context.query.state.get_ref(), &[0])
+            .unwrap();
+    let path = tree.path_for_leaf(3, bounded::<255>(9)).unwrap();
+    assert_eq!(Some(path.root()), tree.root());
+    let expected = &oracle["pathFor9At3"];
+    assert_eq!(path.leaf.value().to_string(), expected["leaf"]);
+    for (entry, expected) in path.path.iter().zip(expected["path"].as_array().unwrap()) {
+        let sibling = num_bigint::BigUint::from_bytes_le(&entry.sibling.0.as_le_bytes());
+        assert_eq!(sibling.to_string(), expected["sibling"]);
+        assert_eq!(entry.goes_left, expected["goesLeft"]);
+    }
     let after_append11 = append(after_place9.context, bounded::<255>(11)).unwrap();
     assert_state(
         after_append11.context.query.state.get_ref(),

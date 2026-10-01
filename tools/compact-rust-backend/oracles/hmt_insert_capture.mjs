@@ -44,13 +44,36 @@ function known(root) {
 function currentRoot() {
   return ledger(new runtime.ChargedState(context.currentQueryContext.state.state)).t.root();
 }
+function currentTree() {
+  return ledger(new runtime.ChargedState(context.currentQueryContext.state.state)).t;
+}
+function history() {
+  return Array.from(currentTree().history(), root => root.field.toString());
+}
+function pathData(path) {
+  if (!path) return null;
+  return {
+    leaf: path.leaf.toString(),
+    path: path.path.map(entry => ({
+      sibling: entry.sibling.field.toString(),
+      goesLeft: entry.goes_left,
+    })),
+  };
+}
+const historyAtInit = history();
 const fullAtInit = full();
 const knownAtInit = known(rootAtInit);
 context = contract.circuits.append(context, 7n).context;
 const afterAppend7 = snapshot();
+const historyAfterAppend7 = history();
+const pathFor7At0 = pathData(currentTree().pathForLeaf(0n, 7n));
+const wrongPathFor8At0 = pathData(currentTree().pathForLeaf(0n, 8n));
+const foundPathFor7 = pathData(currentTree().findPathForLeaf(7n));
+const missingPathFor8 = pathData(currentTree().findPathForLeaf(8n));
 const knownInitialAfterAppend = known(rootAtInit);
 context = contract.circuits.place(context, 9n, 3n).context;
 const afterPlace9At3 = snapshot();
+const pathFor9At3 = pathData(currentTree().pathForLeaf(3n, 9n));
 context = contract.circuits.append(context, 11n).context;
 const afterAppend11 = snapshot();
 context = contract.circuits.place(context, 13n, 1n).context;
@@ -58,6 +81,7 @@ const afterPlace13At1 = snapshot();
 const rootBeforeReset = currentRoot();
 context = contract.circuits.forget_history(context).context;
 const afterForgetHistory = snapshot();
+const historyAfterForget = history();
 const knownInitialAfterReset = known(rootAtInit);
 const knownCurrentAfterReset = known(rootBeforeReset);
 const fullBeforeCapacity = full();
@@ -75,4 +99,4 @@ const afterResetTree = snapshot();
 const fullAfterTreeReset = full();
 const knownOldAfterTreeReset = known(rootBeforeTreeReset);
 const knownBlankAfterTreeReset = known(rootAtInit);
-process.stdout.write(JSON.stringify({ afterInit, afterAppend7, afterPlace9At3, afterAppend11, afterPlace13At1, afterForgetHistory, fullAtInit, fullBeforeCapacity, afterAppendHash, afterPlaceHashAt7, fullAtCapacity, afterReplaceHashAt1, fullAfterReplacement, afterResetTree, fullAfterTreeReset, knownOldAfterTreeReset, knownBlankAfterTreeReset, knownAtInit, knownInitialAfterAppend, knownInitialAfterReset, knownCurrentAfterReset }, null, 2) + '\n');
+process.stdout.write(JSON.stringify({ afterInit, historyAtInit, afterAppend7, historyAfterAppend7, pathFor7At0, wrongPathFor8At0, foundPathFor7, missingPathFor8, afterPlace9At3, pathFor9At3, afterAppend11, afterPlace13At1, afterForgetHistory, historyAfterForget, fullAtInit, fullBeforeCapacity, afterAppendHash, afterPlaceHashAt7, fullAtCapacity, afterReplaceHashAt1, fullAfterReplacement, afterResetTree, fullAfterTreeReset, knownOldAfterTreeReset, knownBlankAfterTreeReset, knownAtInit, knownInitialAfterAppend, knownInitialAfterReset, knownCurrentAfterReset }, null, 2) + '\n');

@@ -12,10 +12,12 @@ pub use midnight_storage::DefaultDB;
 pub use midnight_storage::db::DB;
 pub use midnight_storage::storage::Array as LedgerArray;
 pub use midnight_storage::storage::HashMap as LedgerHashMap;
+pub use midnight_transient_crypto::merkle_tree::MerkleTreeDigest;
 
 use crate::{BoundedUint, CompactError, Field, FixedBytes, FixedVector, JubjubPoint};
 use midnight_base_crypto::cost_model::RunningCost;
 use midnight_base_crypto::fab::{Aligned, AlignedValue, Value, ValueSlice};
+use midnight_base_crypto::repr::BinaryHashRepr;
 use midnight_onchain_vm::cost_model::CostModel;
 use midnight_onchain_vm::ops::{Key, Op};
 use midnight_onchain_vm::result_mode::{GatherEvent, ResultModeGather, ResultModeVerify};
@@ -23,7 +25,7 @@ use midnight_serialize::Serializable;
 use midnight_storage::arena::Sp;
 use midnight_transient_crypto::fab::ValueReprAlignedValue;
 use midnight_transient_crypto::hash::HashOutput;
-use midnight_transient_crypto::merkle_tree::{MerkleTree, leaf_hash};
+use midnight_transient_crypto::merkle_tree::{MerklePath, MerkleTree, leaf_hash};
 use std::marker::PhantomData;
 
 /// A physical path through Compact's chunked ledger root. A single field
@@ -508,11 +510,39 @@ impl<D: DB> MerkleTreeView<'_, D> {
     }
 
     pub fn root(&self) -> Option<midnight_transient_crypto::merkle_tree::MerkleTreeDigest> {
-        let Some(StateValue::BoundedMerkleTree(tree)) = self.fields.get(0) else {
-            unreachable!("tree shape checked")
-        };
-        tree.root()
+        bounded_tree(self.fields).root()
     }
+
+    pub fn path_for_leaf<T: BinaryHashRepr>(
+        &self,
+        index: u64,
+        leaf: T,
+    ) -> Result<MerklePath<T>, CompactError> {
+        path_for_leaf(self.fields, index, leaf)
+    }
+
+    pub fn find_path_for_leaf<T: BinaryHashRepr>(&self, leaf: T) -> Option<MerklePath<T>> {
+        bounded_tree(self.fields).find_path_for_leaf(leaf)
+    }
+}
+
+fn bounded_tree<D: DB>(fields: &LedgerArray<StateValue<D>, D>) -> &MerkleTree<(), D> {
+    let Some(StateValue::BoundedMerkleTree(tree)) = fields.get(0) else {
+        unreachable!("tree shape checked")
+    };
+    tree
+}
+
+// Match ledger-8 pathForLeaf: the caller supplies the leaf, and only the index
+// is checked. A mismatched leaf yields a path whose computed root differs.
+fn path_for_leaf<T: BinaryHashRepr, D: DB>(
+    fields: &LedgerArray<StateValue<D>, D>,
+    index: u64,
+    leaf: T,
+) -> Result<MerklePath<T>, CompactError> {
+    bounded_tree(fields)
+        .path_for_leaf(index, leaf)
+        .map_err(|error| CompactError::InvalidLedgerCell(error.to_string()))
 }
 
 /// Compact's HistoricMerkleTree seed includes the blank root in its history.
@@ -574,10 +604,44 @@ impl<D: DB> HistoricMerkleTreeView<'_, D> {
     }
 
     pub fn root(&self) -> Option<midnight_transient_crypto::merkle_tree::MerkleTreeDigest> {
-        let Some(StateValue::BoundedMerkleTree(tree)) = self.fields.get(0) else {
+        bounded_tree(self.fields).root()
+    }
+
+    pub fn path_for_leaf<T: BinaryHashRepr>(
+        &self,
+        index: u64,
+        leaf: T,
+    ) -> Result<MerklePath<T>, CompactError> {
+        path_for_leaf(self.fields, index, leaf)
+    }
+
+    pub fn find_path_for_leaf<T: BinaryHashRepr>(&self, leaf: T) -> Option<MerklePath<T>> {
+        bounded_tree(self.fields).find_path_for_leaf(leaf)
+    }
+
+    pub fn history(
+        &self,
+    ) -> Result<Vec<midnight_transient_crypto::merkle_tree::MerkleTreeDigest>, CompactError> {
+        let Some(StateValue::Map(history)) = self.fields.get(2) else {
             unreachable!("tree shape checked")
         };
-        tree.root()
+        history
+            .iter()
+            .map(|entry| {
+                midnight_transient_crypto::merkle_tree::MerkleTreeDigest::try_from(&*entry.0.value)
+                    .map_err(|error| CompactError::InvalidLedgerCell(error.to_string()))
+            })
+            .collect()
+    }
+
+    pub fn contains_root(
+        &self,
+        root: midnight_transient_crypto::merkle_tree::MerkleTreeDigest,
+    ) -> bool {
+        let Some(StateValue::Map(history)) = self.fields.get(2) else {
+            unreachable!("tree shape checked")
+        };
+        history.contains_key(&AlignedValue::from(root))
     }
 }
 

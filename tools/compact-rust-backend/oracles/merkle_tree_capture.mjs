@@ -42,15 +42,33 @@ function known(root) {
 function currentRoot() {
   return ledger(new runtime.ChargedState(context.currentQueryContext.state.state)).t.root();
 }
+function currentTree() {
+  return ledger(new runtime.ChargedState(context.currentQueryContext.state.state)).t;
+}
+function pathData(path) {
+  if (!path) return null;
+  return {
+    leaf: path.leaf.toString(),
+    path: path.path.map(entry => ({
+      sibling: entry.sibling.field.toString(),
+      goesLeft: entry.goes_left,
+    })),
+  };
+}
 const afterInit = Buffer.from(initial.currentContractState.serialize()).toString('hex');
 const rootAtInit = ledger(initial.currentContractState.data).t.root();
 const fullAtInit = full();
 const knownAtInit = known(rootAtInit);
 context = contract.circuits.append(context, 7n).context;
 const afterAppend7 = snapshot();
+const pathFor7At0 = pathData(currentTree().pathForLeaf(0n, 7n));
+const wrongPathFor8At0 = pathData(currentTree().pathForLeaf(0n, 8n));
+const foundPathFor7 = pathData(currentTree().findPathForLeaf(7n));
+const missingPathFor8 = pathData(currentTree().findPathForLeaf(8n));
 const knownInitialAfterAppend = known(rootAtInit);
 context = contract.circuits.place(context, 9n, 3n).context;
 const afterPlace9At3 = snapshot();
+const pathFor9At3 = pathData(currentTree().pathForLeaf(3n, 9n));
 context = contract.circuits.append(context, 11n).context;
 const afterAppend11 = snapshot();
 context = contract.circuits.place(context, 13n, 1n).context;
@@ -73,8 +91,9 @@ const fullAfterTreeReset = full();
 const knownOldAfterTreeReset = known(rootBeforeTreeReset);
 const knownBlankAfterTreeReset = known(rootAtInit);
 process.stdout.write(JSON.stringify({
-  afterInit, fullAtInit, knownAtInit, afterAppend7, knownInitialAfterAppend,
-  afterPlace9At3, afterAppend11, afterPlace13At1, afterDefaultAt6,
+  afterInit, fullAtInit, knownAtInit, afterAppend7, pathFor7At0, wrongPathFor8At0, foundPathFor7,
+  missingPathFor8, knownInitialAfterAppend,
+  afterPlace9At3, pathFor9At3, afterAppend11, afterPlace13At1, afterDefaultAt6,
   fullBeforeCapacity, afterAppendHash, fullAtCapacity, afterReplaceHashAt1,
   fullAfterReplacement, knownCurrent, knownInitialBeforeReset, afterResetTree,
   fullAfterTreeReset, knownOldAfterTreeReset, knownBlankAfterTreeReset,

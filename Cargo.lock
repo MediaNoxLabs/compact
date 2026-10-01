@@ -1245,6 +1245,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-merkle-multi-path-fixture"
+version = "0.1.0"
+dependencies = [
+ "midnight-compact-runtime",
+]
+
+[[package]]
 name = "compact-rust-merkle-path-root-fixture"
 version = "0.1.0"
 dependencies = [

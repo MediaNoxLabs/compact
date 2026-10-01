@@ -1,0 +1,9 @@
+import CompactStandardLibrary;
+
+export pure circuit root_u8(path: MerkleTreePath<3, Uint<8>>): MerkleTreeDigest {
+  return merkleTreePathRoot<3, Uint<8>>(path);
+}
+
+export pure circuit root_hash(path: MerkleTreePath<3, Bytes<32>>): MerkleTreeDigest {
+  return merkleTreePathRootNoLeafHash<3>(path);
+}

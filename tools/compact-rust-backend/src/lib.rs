@@ -2131,6 +2131,18 @@ fn expected_ledger_paths(field_count: usize) -> Vec<Vec<u8>> {
         .collect()
 }
 
+/// The compiler gives distinct instantiations of a Compact struct names such
+/// as `MerkleTreePath` and `MerkleTreePathCompact1`.
+fn is_compact_struct_instantiation(name: &str, source_name: &str) -> bool {
+    name == source_name
+        || name
+            .strip_prefix(source_name)
+            .and_then(|suffix| suffix.strip_prefix("Compact"))
+            .is_some_and(|index| {
+                !index.is_empty() && index.bytes().all(|byte| byte.is_ascii_digit())
+            })
+}
+
 pub fn render(contract: &Contract) -> Result<String, RenderError> {
     if contract.schema_version != SCHEMA_VERSION {
         return Err(RenderError::SchemaVersion(contract.schema_version));
@@ -2486,14 +2498,19 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
 
     let runtime_abi = syn::LitInt::new(&RUNTIME_ABI_VERSION.to_string(), Span::call_site());
     let mut struct_items = Vec::<syn::Item>::new();
-    let has_merkle_path = struct_definitions.contains_key("MerkleTreePath");
+    let has_merkle_path = struct_definitions
+        .keys()
+        .any(|name| is_compact_struct_instantiation(name, "MerkleTreePath"));
     for (name, fields) in &struct_definitions {
         let conversion = if has_merkle_path {
-            match name.as_str() {
-                "MerkleTreeDigest" => Some("CompactMerkleTreeDigest"),
-                "MerkleTreePathEntry" => Some("CompactMerklePathEntry"),
-                "MerkleTreePath" => Some("CompactMerklePath"),
-                _ => None,
+            if is_compact_struct_instantiation(name, "MerkleTreeDigest") {
+                Some("CompactMerkleTreeDigest")
+            } else if is_compact_struct_instantiation(name, "MerkleTreePathEntry") {
+                Some("CompactMerklePathEntry")
+            } else if is_compact_struct_instantiation(name, "MerkleTreePath") {
+                Some("CompactMerklePath")
+            } else {
+                None
             }
         } else {
             None

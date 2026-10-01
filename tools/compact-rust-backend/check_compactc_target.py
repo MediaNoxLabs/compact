@@ -105,6 +105,19 @@ def main() -> None:
         assert (rust / "contract/Cargo.toml").is_file()
         assert not (rust / "contract/index.js").exists()
         check_manifest(rust)
+        protected = base / "protected"
+        protected.mkdir()
+        marker = protected / "keep.txt"
+        marker.write_text("compiler output cleanup must not follow symlinks\n")
+        nested_link = rust / "contract/linked"
+        top_level_link = rust / "keys"
+        nested_link.symlink_to(protected, target_is_directory=True)
+        top_level_link.symlink_to(protected, target_is_directory=True)
+        run(compiler, "--target", "rust", "--skip-zk", str(SOURCE), str(rust))
+        assert marker.is_file(), "compiler output cleanup followed a directory symlink"
+        assert not nested_link.is_symlink()
+        assert not top_level_link.is_symlink()
+        check_manifest(rust)
         run(
             compiler, "--target=ts", "--target=rust", "--skip-zk",
             str(SOURCE), str(both),

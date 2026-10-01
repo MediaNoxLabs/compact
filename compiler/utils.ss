@@ -337,14 +337,17 @@
   ; Copyright 1984-2017 Cisco Systems Inc. and licensed under Apache Version 2.0
   (define rm-rf
     (lambda (path)
-      (when (file-exists? path)
+      (when (or (file-exists? path) (file-symbolic-link? path))
         (let f ([path path])
-          (chmod path #o770)
-          (if (file-directory? path)
+          (if (file-symbolic-link? path)
+              (delete-file path)
               (begin
-                (for-each (lambda (x) (f (format "~a/~a" path x))) (directory-list path))
-                (delete-directory path))
-              (delete-file path))))))
+                (chmod path #o770)
+                (if (file-directory? path)
+                    (begin
+                      (for-each (lambda (x) (f (format "~a/~a" path x))) (directory-list path))
+                      (delete-directory path))
+                    (delete-file path))))))))
 
   (define mkdir-p
     (lambda (path)

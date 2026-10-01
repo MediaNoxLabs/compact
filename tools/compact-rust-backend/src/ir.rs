@@ -387,6 +387,12 @@ pub enum Type {
         element: Box<Type>,
         length: usize,
     },
+    /// A ledger Map value nested inside another collection, rather than a
+    /// Compact value that can be encoded in a Cell.
+    LedgerMap {
+        key: Box<Type>,
+        value: Box<Type>,
+    },
 }
 
 impl Default for Type {

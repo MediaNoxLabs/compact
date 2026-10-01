@@ -100,6 +100,12 @@
            (object (cons "kind" "vector")
                    (cons "length" len)
                    (cons "element" (type-ir type owner-src)))]
+          [(tadt ,src ,adt-name ([,adt-formal* ,adt-arg*] ...) ,vm-expr (,adt-op* ...) (,adt-rt-op* ...))
+           (if (and (eq? adt-name 'Map) (= (length adt-arg*) 2))
+               (object (cons "kind" "ledger_map")
+                       (cons "key" (type-ir (car adt-arg*) src))
+                       (cons "value" (type-ir (cadr adt-arg*) src)))
+               (source-errorf src "Rust backend does not yet support this ledger ADT type"))]
           [(talias ,src ,nominal? ,type-name ,type)
            (type-ir type owner-src)]
           [else (source-errorf owner-src "Rust backend does not yet support this Compact type")]))

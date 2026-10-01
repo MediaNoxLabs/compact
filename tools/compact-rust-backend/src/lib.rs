@@ -38,6 +38,7 @@ pub enum RenderError {
     UnknownLedgerField(String),
     InvalidConstructorInitializer(String),
     UnsupportedLedgerCellType(Type),
+    UnsupportedLedgerValueType(Type),
     ConflictingStruct(String),
     DuplicateStructField(String),
     InvalidStructField(String),
@@ -104,6 +105,12 @@ impl fmt::Display for RenderError {
                 "constructor can initialize root Cells from parameters only: {name:?}"
             ),
             Self::UnsupportedLedgerCellType(ty) => write!(f, "unsupported ledger Cell type {ty:?}"),
+            Self::UnsupportedLedgerValueType(ty) => {
+                write!(
+                    f,
+                    "ledger collection type cannot be used as a Cell value: {ty:?}"
+                )
+            }
             Self::ConflictingStruct(name) => {
                 write!(f, "conflicting definitions for struct {name:?}")
             }
@@ -216,6 +223,7 @@ fn rust_type(ty: &Type) -> Result<syn::Type, RenderError> {
             let length = syn::LitInt::new(&length.to_string(), Span::call_site());
             syn::parse_quote!(runtime::FixedVector<#element, #length>)
         }
+        Type::LedgerMap { .. } => return Err(RenderError::UnsupportedLedgerValueType(ty.clone())),
     })
 }
 
@@ -277,6 +285,10 @@ fn collect_named_types(
             }
         }
         Type::Vector { element, .. } => collect_named_types(element, structs, enums)?,
+        Type::LedgerMap { key, value } => {
+            collect_named_types(key, structs, enums)?;
+            collect_named_types(value, structs, enums)?;
+        }
         _ => {}
     }
     Ok(())
@@ -597,7 +609,7 @@ pub(crate) fn coerce_expression(
 
 fn copy_type(ty: &Type) -> bool {
     match ty {
-        Type::Struct { .. } | Type::Vector { .. } => false,
+        Type::Struct { .. } | Type::Vector { .. } | Type::LedgerMap { .. } => false,
         Type::Tuple { elements } => elements.iter().all(copy_type),
         Type::Unit
         | Type::Boolean

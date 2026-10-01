@@ -271,6 +271,56 @@ fn constructor_set_steps_validate_values_and_use_vm_methods() {
 }
 
 #[test]
+fn constructor_list_steps_validate_values_and_use_vm_methods() {
+    let mut contract = identity(
+        Type::Field,
+        Expr::Parameter {
+            name: "value".into(),
+        },
+    );
+    contract.ledger_fields = vec![LedgerField {
+        id: "items".into(),
+        index: 0,
+        declaration: LedgerFieldKind::List { ty: Type::Field },
+    }];
+    contract.constructor = Some(Constructor {
+        parameters: vec![],
+        steps: vec![
+            ConstructorStep::ListPushFront {
+                field: "items".into(),
+                index: 0,
+                value: Expr::FieldLiteral { value: "3".into() },
+            },
+            ConstructorStep::ListPopFront {
+                field: "items".into(),
+                index: 0,
+            },
+            ConstructorStep::ListReset {
+                field: "items".into(),
+                index: 0,
+            },
+        ],
+    });
+    let source = render(&contract).unwrap();
+    assert!(source.contains("push_front_list(0,"));
+    assert!(source.contains("context.pop_front_list(0)?"));
+    assert!(source.contains("context.reset_list(0)?"));
+    let ConstructorStep::ListPushFront { value, .. } =
+        &mut contract.constructor.as_mut().unwrap().steps[0]
+    else {
+        unreachable!()
+    };
+    *value = Expr::Boolean { value: true };
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::TypeMismatch {
+            expected: Type::Field,
+            actual: Type::Boolean,
+        })
+    );
+}
+
+#[test]
 fn vector_expression_preserves_element_type() {
     let mut contract = identity(
         Type::Vector {

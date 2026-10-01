@@ -1040,6 +1040,16 @@
                                     (cons "name" (symbol->string name)))))
                parameters)))
 
+      (define (constructor-value-ir expr expected-type parameters bindings owner-src)
+        (nanopass-case (Lnodisclose Expression) expr
+          [(var-ref ,src ,var-name)
+           (let ([binding (assq (id-sym var-name) bindings)])
+             (cond
+               [binding (cdr binding)]
+               [(memq (id-sym var-name) parameters) (expression-ir expr src)]
+               [else (source-errorf src "Rust constructor value must be a parameter or typed literal")]))]
+          [else (typed-expression-ir expr expected-type owner-src)]))
+
       (define (constructor-fold-body-ir expr accumulator parameters owner-src)
         (nanopass-case (Lnodisclose Expression) expr
           [(seq ,src ,expr* ... ,expr)
@@ -1137,18 +1147,30 @@
                  (object (cons "kind" "set_insert")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
-                         (cons "value" (if (null? adt-arg*)
-                                           (expression-ir (car expr*) src)
-                                           (typed-expression-ir (car expr*) (car adt-arg*) src))))]
+                         (cons "value" (constructor-value-ir (car expr*) (car adt-arg*)
+                                                             parameters bindings src)))]
                 [(and (eq? adt-name 'Set) (eq? ledger-op 'remove) (= (length expr*) 1))
                  (object (cons "kind" "set_remove")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
-                         (cons "value" (if (null? adt-arg*)
-                                           (expression-ir (car expr*) src)
-                                           (typed-expression-ir (car expr*) (car adt-arg*) src))))]
+                         (cons "value" (constructor-value-ir (car expr*) (car adt-arg*)
+                                                             parameters bindings src)))]
                 [(and (eq? adt-name 'Set) (eq? ledger-op 'resetToDefault) (null? expr*))
                  (object (cons "kind" "set_reset")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*)))]
+                [(and (eq? adt-name 'List) (eq? ledger-op 'pushFront) (= (length expr*) 1))
+                 (object (cons "kind" "list_push_front")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*))
+                         (cons "value" (constructor-value-ir (car expr*) (car adt-arg*)
+                                                             parameters bindings src)))]
+                [(and (eq? adt-name 'List) (eq? ledger-op 'popFront) (null? expr*))
+                 (object (cons "kind" "list_pop_front")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*)))]
+                [(and (eq? adt-name 'List) (eq? ledger-op 'resetToDefault) (null? expr*))
+                 (object (cons "kind" "list_reset")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*)))]
                 [(and (eq? adt-name '__compact_Cell) (eq? ledger-op 'write) (= (length expr*) 1))

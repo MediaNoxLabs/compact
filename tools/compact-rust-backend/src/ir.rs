@@ -65,6 +65,19 @@ pub enum ConstructorStep {
         field: String,
         index: u8,
     },
+    ListPushFront {
+        field: String,
+        index: u8,
+        value: Expr,
+    },
+    ListPopFront {
+        field: String,
+        index: u8,
+    },
+    ListReset {
+        field: String,
+        index: u8,
+    },
     ForEach {
         binding: Parameter,
         values: Vec<Expr>,

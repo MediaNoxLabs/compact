@@ -1,0 +1,21 @@
+import CompactStandardLibrary;
+
+export ledger items: List<Field>;
+export ledger history: List<Field>;
+
+constructor() {
+  items.pushFront(1 as Field);
+  items.pushFront(2 as Field);
+  items.popFront();
+  history.pushFront(3 as Field);
+  history.resetToDefault();
+  history.pushFront(4 as Field);
+}
+
+export circuit item_count(): Uint<64> {
+  return items.length();
+}
+
+export circuit history_count(): Uint<64> {
+  return history.length();
+}

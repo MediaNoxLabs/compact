@@ -1,0 +1,9 @@
+import CompactStandardLibrary;
+export ledger stored: Field;
+export pure circuit require_positive(value: Field): [] {
+  assert(value != 0 as Field, "value must be positive");
+}
+export circuit save(value: Field): [] {
+  require_positive(value);
+  stored.write(disclose(value));
+}

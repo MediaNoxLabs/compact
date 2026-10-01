@@ -537,10 +537,9 @@
       (define (state-action-ir expr owner-src environment witness-ids)
         (nanopass-case (Lnodisclose Expression) expr
           [(call ,src ,function-name ,expr* ...)
-           (when (or (id-pure? function-name)
-                     (eq-hashtable-ref witness-ids function-name #f))
-             (source-errorf src "Rust backend supports stateful circuit calls in action position only"))
-           (object (cons "kind" "circuit_call")
+           (when (eq-hashtable-ref witness-ids function-name #f)
+             (source-errorf src "Rust backend does not yet support bare witness calls"))
+           (object (cons "kind" (if (id-pure? function-name) "pure_call" "circuit_call"))
                    (cons "name" (symbol->string (id-sym function-name)))
                    (cons "arguments" (list->vector (map (lambda (arg) (stateful-expression-ir arg src witness-ids)) expr*))))]
           [(assert ,src ,expr ,mesg)

@@ -646,6 +646,14 @@ pub(crate) fn render_stateful_circuit(
         }
         let parameters = local_parameters;
         match action {
+            StateAction::PureCall { name, arguments } => {
+                let call = Expr::Call {
+                    name: name.clone(),
+                    arguments: arguments.clone(),
+                };
+                let (rendered, _) = expression_with_calls(&call, &parameters, circuits)?;
+                statements.push(syn::parse_quote!(#rendered;));
+            }
             StateAction::CircuitCall {
                 name: callee_name,
                 arguments,
@@ -710,7 +718,7 @@ pub(crate) fn render_stateful_circuit(
                 }
                 statements.extend(effect_statements);
                 statements.push(syn::parse_quote! {
-                    if !#condition {
+                    if !(#condition) {
                         return Err(runtime::CompactError::AssertionFailed(#message.to_owned()));
                     }
                 });

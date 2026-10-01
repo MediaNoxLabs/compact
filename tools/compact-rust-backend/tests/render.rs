@@ -1280,3 +1280,45 @@ fn stateful_call_checks_target_and_arguments() {
         Err(RenderError::UnknownCircuit("missing".into()))
     );
 }
+
+#[test]
+fn pure_call_action_checks_arguments_and_discards_result() {
+    let mut contract = identity(
+        Type::Field,
+        Expr::Parameter {
+            name: "value".into(),
+        },
+    );
+    contract.stateful_circuits = vec![StatefulCircuit {
+        name: "caller".into(),
+        parameters: vec![Parameter {
+            name: "seed".into(),
+            ty: Type::Field,
+        }],
+        actions: vec![StateAction::PureCall {
+            name: "identity".into(),
+            arguments: vec![Expr::Parameter {
+                name: "seed".into(),
+            }],
+        }],
+        result: Type::Unit,
+        return_value: StateReturn::Unit,
+    }];
+    assert!(
+        render(&contract)
+            .unwrap()
+            .contains("crate::pure_circuits::identity(__compact_param_0)?;")
+    );
+    contract.stateful_circuits[0].actions = vec![StateAction::PureCall {
+        name: "identity".into(),
+        arguments: vec![],
+    }];
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::ArgumentCount {
+            circuit: "identity".into(),
+            expected: 1,
+            actual: 0
+        })
+    );
+}

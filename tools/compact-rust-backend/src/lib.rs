@@ -353,7 +353,7 @@ fn collect_action_types(
     enums: &mut BTreeMap<String, Vec<String>>,
 ) -> Result<(), RenderError> {
     match action {
-        StateAction::CircuitCall { arguments, .. } => {
+        StateAction::PureCall { arguments, .. } | StateAction::CircuitCall { arguments, .. } => {
             for argument in arguments {
                 collect_expression_types(argument, structs, enums)?;
             }
@@ -465,7 +465,7 @@ fn expression_with_calls(
             }
             Ok((
                 syn::parse_quote!({
-                    if !#condition {
+                    if !(#condition) {
                         return Err(runtime::CompactError::AssertionFailed(#message.to_owned()));
                     }
                 }),

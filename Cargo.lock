@@ -710,6 +710,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-assert-parity-oracle-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-assert-pure-fixture"
 version = "0.1.0"
 dependencies = [
@@ -760,6 +772,18 @@ dependencies = [
 
 [[package]]
 name = "compact-rust-bounded-uint-oracle-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde_json",
+]
+
+[[package]]
+name = "compact-rust-bug11-oracle-fixture"
 version = "0.1.0"
 dependencies = [
  "hex",
@@ -1517,6 +1541,18 @@ dependencies = [
 
 [[package]]
 name = "compact-rust-pure-call-action-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde_json",
+]
+
+[[package]]
+name = "compact-rust-pure-circuit-oracle-fixture"
 version = "0.1.0"
 dependencies = [
  "hex",

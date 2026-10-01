@@ -34,6 +34,30 @@
 
       (define circuit-argument-types (make-eq-hashtable))
       (define current-variable-types (make-parameter #f))
+      (define struct-shape-names '())
+      (define used-struct-names '())
+
+      ;; Module expansion can leave distinct structs with the same source
+      ;; name. Use the complete field structure, including nested structs,
+      ;; to choose one stable Rust name at every type and value site.
+      (define (struct-rust-name source-name fields)
+        (let* ([source-name (symbol->string source-name)]
+               [fingerprint (cons source-name fields)]
+               [existing (assoc fingerprint struct-shape-names)])
+          (if existing
+              (cdr existing)
+              (let ([assigned
+                      (if (member source-name used-struct-names)
+                          (let loop ([suffix 1])
+                            (let ([candidate (format "~aCompact~a" source-name suffix)])
+                              (if (member candidate used-struct-names)
+                                  (loop (+ suffix 1))
+                                  candidate)))
+                          source-name)])
+                (set! struct-shape-names
+                      (cons (cons fingerprint assigned) struct-shape-names))
+                (set! used-struct-names (cons assigned used-struct-names))
+                assigned))))
 
       (define (kind name)
         (object (cons "kind" name)))
@@ -50,14 +74,15 @@
            (object (cons "kind" "bytes")
                    (cons "length" len))]
           [(tstruct ,src ,struct-name (,elt-name* ,type*) ...)
-           (object (cons "kind" "struct")
-                   (cons "name" (symbol->string struct-name))
-                   (cons "fields"
-                         (list->vector
-                           (map (lambda (name ty)
-                                  (object (cons "name" (symbol->string name))
-                                          (cons "ty" (type-ir ty owner-src))))
-                                elt-name* type*))))]
+           (let ([fields
+                   (list->vector
+                     (map (lambda (name ty)
+                            (object (cons "name" (symbol->string name))
+                                    (cons "ty" (type-ir ty owner-src))))
+                          elt-name* type*))])
+             (object (cons "kind" "struct")
+                     (cons "name" (struct-rust-name struct-name fields))
+                     (cons "fields" fields)))]
           [(tenum ,src ,enum-name ,elt-name ,elt-name* ...)
            (object (cons "kind" "enum")
                    (cons "name" (symbol->string enum-name))
@@ -1410,6 +1435,8 @@
     (Program : Program (ir) -> Program ()
       [(program ,src (,contract-name* ...) ((,export-name* ,name*) ...) ,pelt* ...)
        (hashtable-clear! circuit-argument-types)
+       (set! struct-shape-names '())
+       (set! used-struct-names '())
        (for-each index-circuit-argument-types pelt*)
        (let ([constructor* (filter (lambda (value) value) (map constructor-ir pelt*))]
              [export-alist (map cons export-name* name*)]

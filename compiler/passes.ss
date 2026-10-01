@@ -55,6 +55,8 @@
        (unless (string? output-directory-pathname) (internal-errorf 'generate-everything "invalid pathname ~s" output-directory-pathname))
        (when final-pass (unless (symbol? final-pass) (internal-errorf 'generate-everything "invalid final-pass ~s" final-pass)))
        (when test-hook (unless (procedure? test-hook) (internal-errorf 'generate-everything "invalid test-hook ~s" test-hook)))
+       (when (and (skip-ts) (not (emit-rust-ir)))
+         (external-errorf "--skip-ts requires --emit-rust-ir"))
        (parameterize ([source-directory (path-parent pathname)]
                       [source-file-name (path-last (path-root pathname))]
                       [target-directory output-directory-pathname]
@@ -172,12 +174,13 @@
                                   (zkir-warning-issued #t)
                                   (fprintf (console-error-port)
                                     "Warning: ZKIR not found; skipping final circuit compilation.\n"))))
-                          (with-target-ports
-                           '((contract.js . "contract/index.js")
-                             (contract.d.ts . "contract/index.d.ts")
-                             (contract.js.map . "contract/index.js.map"))
-                           (parameterize ([proof-circuit-names proof-circuit-name*])
-                             (run-passes typescript-passes analyzed-ir)))
+                          (unless (skip-ts)
+                            (with-target-ports
+                             '((contract.js . "contract/index.js")
+                               (contract.d.ts . "contract/index.d.ts")
+                               (contract.js.map . "contract/index.js.map"))
+                             (parameterize ([proof-circuit-names proof-circuit-name*])
+                               (run-passes typescript-passes analyzed-ir))))
                           (let ([manifest-pathname* created-file*])
                             (with-target-ports
                               '((contract-manifest.json . "compiler/contract-manifest.json"))

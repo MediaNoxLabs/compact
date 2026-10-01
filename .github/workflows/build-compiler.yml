@@ -14,6 +14,29 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  build-macos:
+    name: Build Rust target on Apple Silicon
+    runs-on: macos-latest
+    permissions:
+      contents: read
+    timeout-minutes: 180
+    steps:
+      - name: Checkout compactc repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup Nix
+        uses: ./.github/actions/setup-nix-cache
+        with:
+          skip_cache: 'true'
+
+      - name: Build compactc and compile a Rust contract
+        run: |
+          compiler=$(nix build .#compactc --no-link --print-out-paths)
+          "$compiler/bin/compactc" --target rust --skip-zk \
+            examples/rust_backend/counter.compact "$RUNNER_TEMP/compact-counter"
+          test -f "$RUNNER_TEMP/compact-counter/contract/Cargo.toml"
+          test -f "$RUNNER_TEMP/compact-counter/contract/lib.rs"
+
   license-check:
     name: Check if all files got headers
     runs-on: ubuntu-latest
@@ -277,6 +300,7 @@ jobs:
       - name: Check and test native Rust backend
         run: |
           cargo fmt --all -- --check
+          nix develop .#compiler --command env COMPACTC=compactc python3 tools/compact-rust-backend/check_compactc_target.py --consumer
           nix develop .#compiler --command env COMPACTC=compactc python3 tools/compact-rust-backend/check_fixture_outputs.py
           nix develop .#compiler --command env COMPACTC=compactc python3 tools/compact-rust-backend/check_rejections.py
           cargo test --workspace --exclude compact

@@ -60,6 +60,9 @@ The following flags, if present, affect the compiler's behavior as follows:
     Rust backend. Supported typed expressions, ledger operations, and direct
     witness returns are emitted; unsupported constructs fail explicitly.
 
+  --skip-ts omits TypeScript contract files. This is used by the Rust target
+    launcher together with --emit-rust-ir.
+
   --no-communications-commitment omits the contract communications commitment
     that enables data integrity for contract-to-contract calls.
 
@@ -97,6 +100,7 @@ The following flags, if present, affect the compiler's behavior as follows:
              [(--vscode)]
              [(--skip-zk)]
              [(--emit-rust-ir)]
+             [(--skip-ts)]
              [(--no-communications-commitment)]
              [(--sourceRoot) (string source-root)]
              [(--compact-path) (string search-list)]
@@ -110,6 +114,7 @@ The following flags, if present, affect the compiler's behavior as follows:
      (parameterize ([trace-passes ?--trace-passes]
                     [skip-zk ?--skip-zk]
                     [emit-rust-ir ?--emit-rust-ir]
+                    [skip-ts ?--skip-ts]
                     [no-communications-commitment ?--no-communications-commitment]
                     [feature-zkir-v3 ?--feature-zkir-v3]
                     [compact-path (if ?--compact-path (split-search-path search-list) (compact-path))]

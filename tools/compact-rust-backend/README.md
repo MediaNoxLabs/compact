@@ -8,20 +8,56 @@ ledger-8 Midnight crates.
 
 ## Compile a contract
 
-From the repository root, make a ledger-8 `compactc` available on `PATH`, or
-set `COMPACTC` to its executable path. Then run:
+The packaged `compactc` accepts a repeatable `--target` option. TypeScript is
+the default; select Rust to generate a directly usable Cargo library:
 
 ```sh
-cargo run -p compact-rust-backend --bin compact-rustc -- \
+compactc --target rust \
   examples/rust_backend/counter.compact /tmp/compact-rust-output
 ```
 
-The output directory contains `contract/compact-rust-ir.json` and
-`contract/lib.rs`. The command invokes `compactc --skip-zk --emit-rust-ir`;
-it does not build proof artifacts. To use the generated source, place `lib.rs`
-in a Rust crate that depends on `midnight-compact-runtime` at the same source
-revision. The crates in [`tests-rust-backend`](../../tests-rust-backend) show
-this layout and how to execute constructors and circuits.
+The output contains `contract/Cargo.toml`, `contract/lib.rs`, and
+`contract/compact-rust-ir.json`, along with the compiler metadata, ZKIR, and
+proof artifacts produced by the Scheme compiler. The Cargo library pins
+`midnight-compact-runtime` to the matching Git revision. A separate Rust
+project can depend on `contract/` by path without copying generated source or
+editing its manifest. Run with `--target ts --target rust` to emit both contract
+languages. `--skip-zk` skips proving keys for a quicker local build.
+
+The packaged command keeps the ledger-8 Scheme compiler as a sibling named
+`compactc-scheme`. For compiler development, set `COMPACTC_SCHEME` to a local
+Scheme executable and run `cargo run -p compact-rust-backend --bin compactc --`.
+The older `compact-rustc` command remains available for fixture generation; it
+always uses `--skip-zk` and does not create a Cargo manifest. The crates in
+[`tests-rust-backend`](../../tests-rust-backend) show the generated API and
+how to execute constructors and circuits.
+
+The public API currently uses `pure_circuits` and `ledger_contract` modules
+with free functions. Stateful calls take an explicit `CircuitContext<Private>`
+and, when needed, an implementation of the generated `Witnesses<Private>`
+trait. This keeps state transitions and witness ownership visible at the call
+site. A `Contract` facade and typed ledger descriptors are being evaluated
+separately; they must preserve state bytes, gas, and witness ordering before
+replacing this interface.
+
+## Version compatibility
+
+| Boundary | Current contract | Failure behavior |
+|---|---|---|
+| Compact compiler | Toolchain 0.31.110, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
+| Rust IR | Schema 6, private to this backend | The renderer rejects any other schema before writing `lib.rs`. |
+| Generated code and Rust runtime | ABI 3 | Generated modules assert the ABI at Rust compile time. |
+| Rust runtime source | Exact Git revision in generated `Cargo.toml` | Cargo resolves the matching runtime and its pinned Midnight crates. |
+
+`--runtime-version` reports the TypeScript runtime version; the Rust runtime
+compatibility contract is the ABI assertion and exact Git revision. The
+generated `Cargo.toml` has `publish = false` because it is a contract-specific
+artifact. Change the runtime pin only alongside an ABI and consumer test review.
+
+The backend directory has its own `Cargo.lock` for the isolated Nix
+`compact-rust-cli` package. The repository root lockfile governs workspace
+tests. A dependency change to this package must update both lockfiles and pass
+the Nix package build and workspace tests.
 
 ## Source model
 
@@ -44,6 +80,7 @@ pinned in [`runtime-rs/Cargo.toml`](../../runtime-rs/Cargo.toml).
 
 ```sh
 cargo fmt --all -- --check
+COMPACTC=compactc python3 tools/compact-rust-backend/check_compactc_target.py --consumer
 COMPACTC=/path/to/ledger-8/compactc \
   python3 tools/compact-rust-backend/check_fixture_outputs.py
 COMPACTC=/path/to/ledger-8/compactc \
@@ -75,9 +112,9 @@ The oracle `tiny`, `election`, `zerocash`, and digital passport contracts also
 run with TypeScript result or serialized state comparisons. New Compact shapes
 must be added to the typed IR and renderer before they can be emitted.
 
-The command uses `--skip-zk`: it generates a native execution library, not
-proving keys or a deployable ZK artifact. Unsupported language operations
-produce a Compact source diagnostic; examples include unknown `Opaque` tags
-and Field-to-Uint narrowing. The rejection gate checks that a failed compile
-does not leave a generated Rust library. The Rust API and IR schema are local
-to this branch and may change as support expands.
+The public command preserves the Scheme compiler's ZKIR and proving-key
+behavior; the legacy fixture command uses `--skip-zk`. Unsupported language
+operations produce a Compact source diagnostic; examples include unknown
+`Opaque` tags and Field-to-Uint narrowing. The rejection gate checks that a
+failed compile does not leave a generated Rust library. The Rust API and IR
+schema are local to this branch and may change as support expands.

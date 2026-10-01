@@ -32,6 +32,10 @@
   ; renderer is a separate executable so Scheme never constructs Rust text.
   (export-parameter emit-rust-ir #f)
 
+  ; The Rust-facing compactc command selects Rust without incidental
+  ; TypeScript artifacts. The Scheme frontend still owns analysis and ZKIR.
+  (export-parameter skip-ts #f)
+
   ; default source path
   (export-parameter compact-path (split-search-path (or (getenv "COMPACT_PATH") "")))
 

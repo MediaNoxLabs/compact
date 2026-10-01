@@ -90,9 +90,7 @@
           nodejs = final.nodejs_latest;
         });
         isDarwin = pkgs.lib.hasSuffix "-darwin" system;
-        chez = if isDarwin then pkgs.chez.override {
-          stdenv = pkgs.llvmPackages_18.stdenv;
-        } else pkgs.chez;
+        chez = pkgs.chez;
         sources = (import ./_sources/generated.nix) {inherit (pkgs) fetchgit fetchurl fetchFromGitHub;};
         nanopass = sources.nanopass.src;
         rough-draft = sources.rough-draft.src;
@@ -218,9 +216,20 @@
             checkPhase = "";
           });
 
+          packages.compact-rust-cli = pkgs.rustPlatform.buildRustPackage {
+            pname = "compact-rust-cli";
+            version = "0.1.0";
+            src = ./tools/compact-rust-backend;
+            cargoLock.lockFile = ./tools/compact-rust-backend/Cargo.lock;
+            cargoBuildFlags = [ "--bin" "compactc" ];
+            # Compiler-backed gates run in build-compiler.yml against the full
+            # workspace; this derivation packages just the public command.
+            doCheck = false;
+          };
+
           packages.compactc = pkgs.stdenv.mkDerivation {
             name = "compactc";
-            version = "0.31.109"; # NB: also update compiler-version in compiler/compiler-version.ss
+            version = "0.31.110"; # NB: also update compiler-version in compiler/compiler-version.ss
             src = inclusive.lib.inclusive ./. [
               ./compiler
               ./examples
@@ -278,10 +287,11 @@
 
             installPhase = ''
               mkdir -p $out/bin
-              cp obj/compactc $out/bin
+              cp obj/compactc $out/bin/compactc-scheme
+              cp ${packages.compact-rust-cli}/bin/compactc $out/bin/compactc
               cp obj/format-compact $out/bin
               cp obj/fixup-compact $out/bin
-              chmod +x $out/bin/compactc
+              chmod +x $out/bin/compactc $out/bin/compactc-scheme
               chmod +x $out/bin/format-compact
               chmod +x $out/bin/fixup-compact
             '';
@@ -330,12 +340,16 @@
             installPhase = ''
               mkdir -p $out/bin
 
-              for exe in compactc format-compact fixup-compact; do
+              cp obj/compiler/compactc $out/bin/compactc-scheme
+              cp ${packages.compact-rust-cli}/bin/compactc $out/bin/compactc
+              chmod +x $out/bin/compactc $out/bin/compactc-scheme
+
+              for exe in format-compact fixup-compact; do
                 cp "obj/compiler/$exe" $out/bin
                 chmod +x "$out/bin/$exe"
               done
             '' + (if isDarwin then ''
-              for exe in compactc format-compact fixup-compact; do
+              for exe in compactc-scheme format-compact fixup-compact; do
                 install_name_tool -change ${pkgs.darwin.libiconv}/lib/libiconv.2.dylib /usr/lib/libiconv.2.dylib "$out/bin/$exe"
               done
             '' else "");
@@ -351,7 +365,7 @@
 
           packages.compactc-binaryWrapperScript-nixos = pkgs.writeShellScriptBin "run-compactc" ''
             PATH=${pkgs.lib.makeBinPath [ packages.compactc-binary-nixos zkir.packages.${system}.zkir packages.zkir-v3-bin ]} \
-            compactc $@
+            compactc "$@"
           '';
 
           packages.compactc-binary = pkgs.stdenv.mkDerivation {
@@ -363,6 +377,7 @@
               mkdir -p $out/bin $out/lib
               cp bin/compactc $out/bin
               mv $out/bin/compactc $out/bin/compactc.bin
+              cp bin/compactc-scheme $out/bin/compactc-scheme
               cp ${zkir.packages.${system}.zkir}/bin/zkir $out/lib/zkir
               cp ${zkir-v3.packages.${system}.zkir-v3}/bin/zkir $out/lib/zkir-v3
 
@@ -375,7 +390,7 @@
               cat <<EOF > $out/bin/compactc
               #!/usr/bin/env bash
               thisdir="\$(cd \$(dirname \$0) ; pwd -P)"
-              PATH="\$thisdir:\$PATH"
+              PATH="\$thisdir/../lib:\$thisdir:\$PATH"
               exec "\$thisdir/compactc.bin" "\$@"
               EOF
 

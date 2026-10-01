@@ -759,7 +759,9 @@ dependencies = [
  "quote 1.0.45",
  "serde",
  "serde_json",
+ "sha2",
  "syn 2.0.117",
+ "toml_edit 0.22.27",
 ]
 
 [[package]]

@@ -32,13 +32,16 @@ always uses `--skip-zk` and does not create a Cargo manifest. The crates in
 [`tests-rust-backend`](../../tests-rust-backend) show the generated API and
 how to execute constructors and circuits.
 
-The public API currently uses `pure_circuits` and `ledger_contract` modules
-with free functions. Stateful calls take an explicit `CircuitContext<Private>`
-and, when needed, an implementation of the generated `Witnesses<Private>`
-trait. This keeps state transitions and witness ownership visible at the call
-site. A `Contract` facade and typed ledger descriptors are being evaluated
-separately; they must preserve state bytes, gas, and witness ordering before
-replacing this interface.
+The public API uses `pure_circuits` and `ledger_contract` modules. Exported
+stateful circuits are available as free functions and as methods on
+`ledger_contract::Contract<W>`. Use `Contract::default()` without witnesses or
+`Contract::from(MyWitnesses)` with an implementation of the generated
+`Witnesses<Private>` trait. Methods take an explicit `CircuitContext<Private>`
+and typed circuit arguments; witness bounds apply only to methods that need
+them. The facade delegates to the existing functions, preserving state and
+witness behavior. Typed ledger descriptors remain design work. The runtime's
+recording frame is opt-in; generated methods still return native execution
+results until full transcript coverage is proven.
 Generated modules suppress Rust's naming lint so public names retain their
 Compact spelling without warning in consumer builds.
 
@@ -46,7 +49,7 @@ Compact spelling without warning in consumer builds.
 
 | Boundary | Current contract | Failure behavior |
 |---|---|---|
-| Compact compiler | Toolchain 0.31.113, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
+| Compact compiler | Toolchain 0.31.114, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
 | Rust IR | Schema 6, private to this backend | The renderer rejects any other schema before writing `lib.rs`. |
 | Generated code and Rust runtime | ABI 3 | Generated modules assert the ABI at Rust compile time. |
 | Rust runtime source | Exact Git revision in generated `Cargo.toml` | Cargo resolves the matching runtime and its pinned Midnight crates. |

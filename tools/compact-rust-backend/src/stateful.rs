@@ -1291,7 +1291,7 @@ fn return_calls_named(value: &StateReturn, name: &str) -> bool {
     }
 }
 
-fn circuit_uses_witness(
+pub(crate) fn circuit_uses_witness(
     circuit: &StatefulCircuit,
     circuits: &HashMap<&str, &StatefulCircuit>,
     visiting: &mut HashSet<String>,
@@ -1312,6 +1312,53 @@ fn circuit_uses_witness(
     }
     visiting.remove(&circuit.name);
     Ok(effect)
+}
+
+/// A discoverable public method over the already-rendered circuit function.
+/// This layer contains no VM operations or Compact semantics.
+pub(crate) fn render_contract_method(
+    circuit: &StatefulCircuit,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+) -> Result<Option<syn::ImplItemFn>, RenderError> {
+    if circuit.internal {
+        return Ok(None);
+    }
+    let name = ident(&circuit.name)?;
+    let uses_witness = circuit_uses_witness(circuit, circuits, &mut HashSet::new())?;
+    let mut args = Vec::<syn::FnArg>::new();
+    let mut call_args = Vec::<syn::Ident>::new();
+    for (index, parameter) in circuit.parameters.iter().enumerate() {
+        let arg = syn::Ident::new(&format!("__compact_param_{index}"), Span::call_site());
+        let ty = rust_type(&parameter.ty)?;
+        args.push(syn::parse_quote!(#arg: #ty));
+        call_args.push(arg);
+    }
+    let result_ty = rust_type(&circuit.result)?;
+    let method = if uses_witness {
+        syn::parse_quote! {
+            pub fn #name<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                #(#args),*
+            ) -> Result<runtime::context::CircuitResult<Private, #result_ty>, runtime::CompactError>
+            where
+                W: Witnesses<Private>,
+            {
+                crate::ledger_contract::#name(context, &self.witnesses, #(#call_args),*)
+            }
+        }
+    } else {
+        syn::parse_quote! {
+            pub fn #name<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                #(#args),*
+            ) -> Result<runtime::context::CircuitResult<Private, #result_ty>, runtime::CompactError> {
+                crate::ledger_contract::#name(context, #(#call_args),*)
+            }
+        }
+    };
+    Ok(Some(method))
 }
 
 fn expression_contains(expression: &Expr, predicate: &impl Fn(&Expr) -> bool) -> bool {

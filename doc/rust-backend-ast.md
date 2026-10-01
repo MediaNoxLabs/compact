@@ -11,17 +11,34 @@ Stateful circuit emission lives in `tools/compact-rust-backend/src/stateful.rs`
 so ledger action and return variants are handled away from the top-level
 contract assembly.
 
-The version 4 JSON schema is defined in
+The version 6 JSON schema is defined in
 `tools/compact-rust-backend/src/ir.rs`. It has no Rust-source escape hatch.
 Adding an expression or type requires an explicit IR variant, conversion in
 the Scheme pass, type validation in the renderer, and an executing fixture.
 Unsupported Compact constructs fail with a compiler error; they never become
 placeholder Rust.
-Nonempty or parameterized ledger constructors currently receive a source
-diagnostic. The backend must preserve their initialization actions before
-allowing them to emit a default Rust state.
+Constructors with parameters and ledger actions are represented explicitly in
+the typed IR and covered by executing fixtures. Unsupported constructor
+shapes receive a source diagnostic.
 
-## Current slice
+## Milestone 2 checkpoint
+
+The packaged `compactc --target rust` emits a Cargo library alongside the
+compiler's ZKIR, proving keys, and hashed manifest. An external consumer
+builds the generated crate. The ledger-8 gate verifies a counter proof and
+validates an offline deployment transaction built from the generated initial
+state and emitted verifier key. Generated stateful functions are also exposed
+through `ledger_contract::Contract<W>`, with the same typed arguments and
+witness contract as the free functions.
+
+The Rust runtime has an opt-in `RecordingFrame` for Cell, Counter, and witness
+operations. It preserves the initial ledger query context, ordered verifying
+VM operations, and private witness outputs. Replay and `PreTranscript`
+partitioning pass for the supported slice. Generated circuit methods still
+return native `CircuitResult`; complete operation recording, call proof inputs,
+and wallet submission remain Milestone 2 work.
+
+## Implemented slices
 
 The backend supports exported pure circuits with `Field`, `Boolean`,
 `Bytes<N>`, `Uint<N>`, unit, tuple, and vector types. Bodies currently support parameter references,
@@ -189,8 +206,7 @@ put/remove/default/reset, and List prepend/pop/reset operations.
 
 The typed IR includes ordered
 ledger declarations and state actions. The compiler and renderer generate
-the minimal Counter increment and Boolean Cell write contracts end to end.
-Other ledger operations remain explicit compiler errors. Stateful circuits
+Counter increment and Boolean Cell write contracts end to end. Stateful circuits
 can accept typed parameters for Cell writes and Counter increments. Counter
 amounts have a closed literal-or-parameter IR variant; a parameter must be
 `Uint<16>`. The frontend inserts Compact's required `disclose` boundary before

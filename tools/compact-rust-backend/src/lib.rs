@@ -2350,6 +2350,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
         .map(|circuit| (circuit.name.as_str(), circuit))
         .collect();
     let mut stateful_items = Vec::new();
+    let mut contract_methods = Vec::new();
     for circuit in &contract.stateful_circuits {
         if !names.insert(circuit.name.as_str()) {
             return Err(RenderError::DuplicateCircuit(circuit.name.clone()));
@@ -2361,6 +2362,11 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
             &callable_circuits,
             &callable_stateful_circuits,
         )?);
+        if let Some(method) =
+            stateful::render_contract_method(circuit, &callable_stateful_circuits)?
+        {
+            contract_methods.push(method);
+        }
     }
 
     let mut constructor_args = Vec::<syn::FnArg>::new();
@@ -2673,7 +2679,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
         None
     } else {
         Some(syn::parse_quote! {
-            #[allow(non_snake_case)]
+            #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
             pub mod types {
                 use midnight_compact_runtime as runtime;
                 #derive_imports
@@ -2718,7 +2724,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
         None
     } else {
         Some(syn::parse_quote! {
-            #[allow(non_snake_case)]
+            #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
             pub mod ledger_contract {
                     use midnight_compact_runtime as runtime;
                     const _: () = assert!(runtime::RUST_RUNTIME_ABI == #runtime_abi);
@@ -2734,13 +2740,31 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                 }
                 #initial_state
                 #(#stateful_items)*
+                /// Groups the contract's exported circuits for Rust consumers.
+                pub struct Contract<W> {
+                    #[allow(dead_code)]
+                    witnesses: W,
+                }
+                impl<W> From<W> for Contract<W> {
+                    fn from(witnesses: W) -> Self {
+                        Self { witnesses }
+                    }
+                }
+                impl Default for Contract<()> {
+                    fn default() -> Self {
+                        Self { witnesses: () }
+                    }
+                }
+                impl<W> Contract<W> {
+                    #(#contract_methods)*
+                }
             }
         })
     };
     let file: syn::File = syn::parse2(quote! {
         #types_module
         #alias_exports
-        #[allow(non_snake_case)]
+        #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
         pub mod pure_circuits {
             use midnight_compact_runtime as runtime;
             const _: () = assert!(runtime::RUST_RUNTIME_ABI == #runtime_abi);

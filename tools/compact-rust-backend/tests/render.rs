@@ -1241,6 +1241,10 @@ fn witness_calls_require_a_declared_witness_and_matching_signature() {
     syn::parse_file(&source).unwrap();
     assert!(source.contains("pub trait Witnesses<Private>"));
     assert!(source.contains("private_transcript_outputs"));
+    assert!(source.contains("pub struct Contract<W>"));
+    assert!(source.contains("W: Witnesses<Private>"));
+    assert!(source.contains("crate::ledger_contract::read_secret("));
+    assert!(source.contains("&self.witnesses"));
 
     contract.witnesses.clear();
     assert_eq!(
@@ -1534,6 +1538,8 @@ fn counter_read_returns_uint64() {
     };
     let source = render(&contract).unwrap();
     assert!(source.contains("context.read_cell::<u64>(0)?"));
+    assert!(source.contains("pub struct Contract<W>"));
+    assert!(source.contains("crate::ledger_contract::read_round(context"));
 
     contract.stateful_circuits[0].result = Type::Boolean;
     assert_eq!(

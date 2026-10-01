@@ -69,7 +69,7 @@ def check_consumer(contract: Path, pure_contract: Path, consumer: Path) -> None:
         f'rev = {json.dumps(runtime["rev"])} }}\n'
     )
     (consumer / "tests/counter.rs").write_text(
-        "use compact_contract_counter::ledger_contract::{initial_state, increment, read_round};\n"
+        "use compact_contract_counter::ledger_contract::{initial_state, Contract};\n"
         "use compact_contract_field_add::pure_circuits::field_add;\n"
         "use midnight_compact_runtime::context::ConstructorContext;\n"
         "use midnight_compact_runtime::ledger::ContractAddress;\n\n"
@@ -79,8 +79,9 @@ def check_consumer(contract: Path, pure_contract: Path, consumer: Path) -> None:
         "#[test]\nfn generated_contract_runs_outside_the_compiler_workspace() {\n"
         "    let state = initial_state(ConstructorContext::new(())).unwrap();\n"
         "    let context = state.into_circuit_context(ContractAddress::default());\n"
-        "    let step = increment(context).unwrap();\n"
-        "    let read = read_round(step.context).unwrap();\n"
+        "    let contract = Contract::default();\n"
+        "    let step = contract.increment(context).unwrap();\n"
+        "    let read = contract.read_round(step.context).unwrap();\n"
         "    assert_eq!(read.result.value(), 1);\n}\n"
     )
     environment = os.environ.copy()

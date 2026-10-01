@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Toolchain 0.31.114, language 0.23.105, runtime 0.16.101]
+
+### Added
+
+- Expose exported Rust circuits through a typed `Contract<W>` facade while
+  retaining the existing module functions and witness signatures.
+
+### Fixed
+
+- Keep compiler-generated temporary bindings and Compact type names from
+  warning in Rust consumer builds; lint allowances stay within generated
+  modules.
+
 ## [Toolchain 0.31.113, language 0.23.105, runtime 0.16.101]
 
 ### Fixed

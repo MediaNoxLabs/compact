@@ -14,7 +14,7 @@
 // limitations under the License.
 
 use compact_rust_witness_cell_write_fixture::ledger_contract::{
-    LedgerView, Witnesses, initial_state, read_cell, write_secret, write_twice,
+    Contract, LedgerView, Witnesses, initial_state, read_cell, write_secret, write_twice,
 };
 use midnight_compact_runtime::Field;
 use midnight_compact_runtime::context::{CircuitResult, ConstructorContext, WitnessContext};
@@ -144,4 +144,18 @@ fn witnessed_writes_record_private_values_and_public_operations_in_order() {
         recorded.execution.context.query.effects,
         replay.context.effects
     );
+}
+
+#[test]
+fn contract_facade_exposes_witnessed_circuits_with_typed_arguments() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/witness-cell-write-ts-output.json"
+    ))
+    .unwrap();
+    let contract = Contract::from(Secret);
+    let context = initial_state(ConstructorContext::new(7_u64))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let result = contract.write_secret(context, Field::from(2_u64)).unwrap();
+    assert_oracle_output(result, &oracle["single"]);
 }

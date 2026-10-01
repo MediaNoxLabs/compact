@@ -17,6 +17,9 @@ Adding an expression or type requires an explicit IR variant, conversion in
 the Scheme pass, type validation in the renderer, and an executing fixture.
 Unsupported Compact constructs fail with a compiler error; they never become
 placeholder Rust.
+Nonempty or parameterized ledger constructors currently receive a source
+diagnostic. The backend must preserve their initialization actions before
+allowing them to emit a default Rust state.
 
 ## Current slice
 

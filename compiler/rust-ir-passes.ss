@@ -969,12 +969,22 @@
                          circuits)))))]
           [else circuits]))
 
+      (define (empty-constructor-expression? expr)
+        (nanopass-case (Lnodisclose Expression) expr
+          [(return ,src ,expr) (empty-constructor-expression? expr)]
+          [(tuple ,src ,tuple-arg* ...) (null? tuple-arg*)]
+          [else #f]))
+
       (define (check-supported-declaration pelt owner-src)
         (nanopass-case (Lnodisclose Program-Element) pelt
           [(witness ,src ,function-name (,arg* ...) ,type)
            (void)]
           [(public-ledger-declaration ,pl-array ,lconstructor)
-           (void)]
+           (nanopass-case (Lnodisclose Ledger-Constructor) lconstructor
+             [(constructor ,src ((,var-name* ,type*) ...) ,expr)
+              (unless (and (null? var-name*)
+                           (empty-constructor-expression? expr))
+                (source-errorf src "Rust backend does not yet support constructor bodies or parameters"))])]
           [else (void)])))
 
     (Program : Program (ir) -> Program ()

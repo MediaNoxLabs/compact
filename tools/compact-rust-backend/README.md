@@ -59,7 +59,7 @@ Compact spelling without warning in consumer builds.
 
 | Boundary | Current contract | Failure behavior |
 |---|---|---|
-| Compact compiler | Toolchain 0.31.118, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
+| Compact compiler | Toolchain 0.31.119, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
 | Rust IR | Schema 6, private to this backend | The renderer rejects any other schema before writing `lib.rs`. |
 | Generated code and Rust runtime | ABI 3 | Generated modules assert the ABI at Rust compile time. |
 | Rust runtime source | Bundled runtime crates or an explicit shared source root | Cargo resolves the matching runtime and its pinned Midnight crates. |
@@ -117,9 +117,10 @@ The rejection checker verifies source-located failures for unsupported
 constructs and that no generated Rust library survives a rejected compile.
 The `--proof` target check derives the Counter increment statement from the
 generated recorded trace, proves it against emitted ZKIR and keys, and rejects
-a changed binding input. It validates an offline ledger-8 deployment, then
-proves, validates, and applies a Counter call transaction. Other circuit
-operations still need recording coverage before wallet submission.
+a changed binding input. It validates offline ledger-8 deployments, then
+proves, validates, and applies Counter increment, Boolean Cell write, and
+Boolean Cell read calls.
+Other circuit operations still need recording coverage before wallet submission.
 
 The fixture suite covers all 37 top-level `*_fixture.compact` contracts from
 the `codegen-rust` oracle branch, alongside smaller source contracts used to

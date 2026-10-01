@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use compact_rust_cell_boolean_fixture::ledger_contract::{initial_state, set_flag};
+use compact_rust_cell_boolean_fixture::ledger_contract::{Contract, initial_state, set_flag};
 use midnight_compact_runtime::context::ConstructorContext;
 use midnight_compact_runtime::ledger::{ContractAddress, StateValue, read_cell};
 
@@ -31,4 +31,28 @@ fn generated_cell_contract_writes_through_ledger_vm() {
         panic!("expected ledger field array")
     };
     assert!(read_cell::<bool, _>(&fields.get(0).unwrap()).unwrap());
+}
+
+#[test]
+fn generated_cell_write_records_a_replayable_ledger_program() {
+    let constructor = initial_state(ConstructorContext::new(())).unwrap();
+    let context = constructor.into_circuit_context(ContractAddress::default());
+    let recorded = Contract::default().recording.set_flag(context).unwrap();
+    let replay = recorded
+        .public
+        .initial()
+        .query(
+            recorded.public.verify_ops(),
+            None,
+            &recorded.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(
+        replay.context.effects,
+        recorded.execution.context.query.effects
+    );
+    let StateValue::Array(fields) = replay.context.state.get_ref() else {
+        panic!("expected ledger field array")
+    };
+    assert!(read_cell::<bool, _>(fields.get(0).unwrap()).unwrap());
 }

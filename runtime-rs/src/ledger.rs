@@ -459,7 +459,7 @@ pub(crate) fn cell_read_program<M: ResultMode<D>, D: DB>(
                 .into(),
         },
         Op::Popeq {
-            cached: true,
+            cached: false,
             result: read_result,
         },
     ]
@@ -1874,6 +1874,25 @@ pub(crate) fn cell_write_program<T: CellValue, D: DB>(
     path: &[u8],
     value: T,
 ) -> Vec<Op<ResultModeVerify, D>> {
+    if path.len() == 1 {
+        // Compact emits a root Cell replacement as an insertion keyed by a
+        // temporary Cell containing the ledger index. Preserve that program
+        // so the ledger transcript matches the circuit's ZKIR public inputs.
+        return vec![
+            Op::Push {
+                storage: false,
+                value: constructor_cell(path[0]),
+            },
+            Op::Push {
+                storage: true,
+                value: constructor_cell(value),
+            },
+            Op::Ins {
+                cached: false,
+                n: 1,
+            },
+        ];
+    }
     if path.len() == 2 {
         // Compact indexes the containing array, then inserts at its final
         // key and inserts the updated array back into the root.

@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Prove emitted counter artifacts and validate an offline ledger-8 deployment.
+//! Prove emitted Counter and Cell artifacts in offline ledger-8 transactions.
 //!
 //! The proof uses the ledger-derived statement from a generated counter VM
 //! program and checks it against the fixture's known ZKIR encoding. The call
@@ -27,11 +27,17 @@ use std::fs::{self, File};
 use std::io::{self, BufReader};
 use std::path::{Path, PathBuf};
 
-use compact_rust_counter_fixture::ledger_contract::{initial_state, recorded};
+use compact_rust_cell_boolean_fixture::ledger_contract as cell_contract;
+use compact_rust_cell_read_fixture::ledger_contract as cell_read_contract;
+use compact_rust_counter_fixture::ledger_contract as counter_contract;
 use midnight_base_crypto::data_provider::{FetchMode, MidnightDataProvider, OutputMode};
 use midnight_base_crypto::time::Timestamp;
 use midnight_compact_runtime::context::ConstructorContext;
-use midnight_compact_runtime::ledger::{ContractAddress, DefaultDB, StateValue, read_counter};
+use midnight_compact_runtime::fab::AlignedValue;
+use midnight_compact_runtime::ledger::{
+    ContractAddress, DefaultDB, StateValue, read_cell, read_counter,
+};
+use midnight_compact_runtime::recording::RecordedCircuitResult;
 use midnight_ledger::construct::{
     ContractCallExt, ContractCallPrototype, PreTranscript, partition_transcripts,
 };
@@ -60,17 +66,18 @@ use rand_chacha::ChaCha20Rng;
 
 struct ArtifactResolver {
     root: PathBuf,
+    circuit: &'static str,
 }
 
 impl Resolver for ArtifactResolver {
     async fn resolve_key(&self, location: KeyLocation) -> io::Result<Option<ProvingKeyMaterial>> {
-        if location.0.as_ref() != "increment" {
+        if location.0.as_ref() != self.circuit {
             return Ok(None);
         }
         Ok(Some(ProvingKeyMaterial {
-            prover_key: fs::read(self.root.join("keys/increment.prover"))?,
-            verifier_key: fs::read(self.root.join("keys/increment.verifier"))?,
-            ir_source: fs::read(self.root.join("zkir/increment.bzkir"))?,
+            prover_key: fs::read(self.root.join(format!("keys/{}.prover", self.circuit)))?,
+            verifier_key: fs::read(self.root.join(format!("keys/{}.verifier", self.circuit)))?,
+            ir_source: fs::read(self.root.join(format!("zkir/{}.bzkir", self.circuit)))?,
         }))
     }
 }
@@ -119,6 +126,7 @@ fn prove_counter(
         &params,
         &ArtifactResolver {
             root: root.to_owned(),
+            circuit: "increment",
         },
     ))?;
     if proof_skips != skips {
@@ -151,20 +159,21 @@ fn prove_counter(
     Ok(())
 }
 
-fn check_generated_counter_trace(
+fn check_generated_trace<Output: Into<AlignedValue>>(
     root: &Path,
     address: ContractAddress,
+    circuit: &'static str,
+    recorded: RecordedCircuitResult<(), Output>,
 ) -> Result<ContractCallPrototype<DefaultDB>, Box<dyn Error>> {
-    let constructor = initial_state(ConstructorContext::new(()))?;
-    let context = constructor.into_circuit_context(address);
-    let recorded = recorded::increment(context)?;
     let replay = recorded.public.initial().query(
         recorded.public.verify_ops(),
         None,
         &recorded.execution.context.cost_model,
     )?;
     if replay.context.effects != recorded.execution.context.query.effects {
-        return Err("generated counter replay effects differ from native execution".into());
+        return Err(
+            format!("generated {circuit} replay effects differ from native execution").into(),
+        );
     }
     let (context, program) = recorded.public.into_parts();
     let transcripts = partition_transcripts(
@@ -177,58 +186,61 @@ fn check_generated_counter_trace(
     )?;
     let (guaranteed, fallible) = transcripts
         .first()
-        .ok_or("counter trace did not partition")?;
+        .ok_or("generated trace did not partition")?;
     let transcript = guaranteed
         .as_ref()
         .or(fallible.as_ref())
-        .ok_or("counter trace has no partitioned transcript")?;
+        .ok_or("generated trace has no partitioned transcript")?;
     if transcript.effects != replay.context.effects {
-        return Err("partitioned counter effects differ from replay".into());
+        return Err(format!("partitioned {circuit} effects differ from replay").into());
     }
     let verifier: VerifierKey = tagged_deserialize(&mut BufReader::new(File::open(
-        root.join("keys/increment.verifier"),
+        root.join(format!("keys/{circuit}.verifier")),
     )?))?;
-    println!("generated counter trace replayed and partitioned");
+    println!("generated {circuit} trace replayed and partitioned");
     Ok(ContractCallPrototype {
         address,
-        entry_point: EntryPointBuf(b"increment".to_vec()),
+        entry_point: EntryPointBuf(circuit.as_bytes().to_vec()),
         op: ContractOperation::new(Some(verifier)),
         guaranteed_public_transcript: guaranteed.clone(),
         fallible_public_transcript: fallible.clone(),
         private_transcript_outputs: recorded.execution.private_transcript_outputs,
         input: ().into(),
-        output: ().into(),
+        output: recorded.execution.result.into(),
         communication_commitment_rand: Fr::from(0u64),
-        key_location: KeyLocation(Cow::Borrowed("increment")),
+        key_location: KeyLocation(Cow::Borrowed(circuit)),
     })
 }
 
-fn make_counter_deploy(
+fn make_deploy(
     root: &Path,
+    circuit: &'static str,
+    state: StateValue<DefaultDB>,
     rng: &mut StdRng,
 ) -> Result<ContractDeploy<DefaultDB>, Box<dyn Error>> {
     let verifier: VerifierKey = tagged_deserialize(&mut BufReader::new(File::open(
-        root.join("keys/increment.verifier"),
+        root.join(format!("keys/{circuit}.verifier")),
     )?))?;
-    let initial = initial_state(ConstructorContext::new(()))?;
     let operations = HashMap::new().insert(
-        EntryPointBuf(b"increment".to_vec()),
+        EntryPointBuf(circuit.as_bytes().to_vec()),
         ContractOperation::new(Some(verifier)),
     );
-    let contract: ContractState<DefaultDB> = ContractState::new(
-        initial.ledger_state.get_ref().clone(),
-        operations,
-        ContractMaintenanceAuthority::default(),
-    );
+    let contract: ContractState<DefaultDB> =
+        ContractState::new(state, operations, ContractMaintenanceAuthority::default());
     Ok(ContractDeploy::new(rng, contract))
 }
 
-fn check_counter_transaction(
+fn check_transaction<F>(
     root: &Path,
+    circuit: &'static str,
     deploy: ContractDeploy<DefaultDB>,
     call: ContractCallPrototype<DefaultDB>,
     rng: &mut StdRng,
-) -> Result<(), Box<dyn Error>> {
+    check_state: F,
+) -> Result<(), Box<dyn Error>>
+where
+    F: FnOnce(&ContractState<DefaultDB>) -> Result<(), Box<dyn Error>>,
+{
     let address = deploy.address();
     let deploy_intent: Intent<(), ProofPreimageMarker, PedersenRandomness, DefaultDB> =
         Intent::empty(rng, Timestamp::from_secs(0)).add_deploy(deploy.clone());
@@ -249,6 +261,7 @@ fn check_counter_transaction(
     call_tx.well_formed(&ledger, strictness, Timestamp::from_secs(0))?;
     let resolver = ArtifactResolver {
         root: root.to_owned(),
+        circuit,
     };
     let params = MidnightDataProvider::new(FetchMode::OnDemand, OutputMode::Log, vec![])?;
     let provider = LocalProvingProvider {
@@ -267,30 +280,137 @@ fn check_counter_transaction(
     };
     let (updated, outcome) = ledger.apply(&verified, &context);
     if !matches!(outcome, TransactionResult::Success(_)) {
-        return Err(format!("counter call application failed: {outcome:?}").into());
+        return Err(format!("{circuit} call application failed: {outcome:?}").into());
     }
     let contract = updated
         .contract
         .get(&address)
         .ok_or("deployed contract disappeared")?;
-    let StateValue::Array(fields) = contract.data.get_ref() else {
-        return Err("counter contract state is not an array".into());
-    };
-    if read_counter(fields.get(0).ok_or("counter field missing")?)? != 1 {
-        return Err("proven counter call did not increment ledger state".into());
-    }
-    println!("counter deployment and proven call validated and applied at address {address:?}");
+    check_state(&contract)?;
+    println!("{circuit} deployment and proven call validated and applied at address {address:?}");
     Ok(())
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let root = env::args_os()
-        .nth(1)
-        .ok_or("usage: compact-rust-proof-smoke <compiler-output-directory>")?;
-    let root = Path::new(&root);
+    let mut arguments = env::args_os().skip(1);
+    let counter_root = arguments.next().ok_or(
+        "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output>",
+    )?;
+    let cell_root = arguments.next().ok_or(
+        "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output>",
+    )?;
+    let cell_read_root = arguments.next().ok_or(
+        "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output>",
+    )?;
+    if arguments.next().is_some() {
+        return Err(
+            "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output>"
+                .into(),
+        );
+    }
+    let counter_root = Path::new(&counter_root);
+    let cell_root = Path::new(&cell_root);
+    let cell_read_root = Path::new(&cell_read_root);
     let mut rng = StdRng::seed_from_u64(0x434f4d50414354);
-    let deploy = make_counter_deploy(root, &mut rng)?;
-    let call = check_generated_counter_trace(root, deploy.address())?;
-    prove_counter(root, &call)?;
-    check_counter_transaction(root, deploy, call, &mut rng)
+    let counter_initial = counter_contract::initial_state(ConstructorContext::new(()))?;
+    let counter_deploy = make_deploy(
+        counter_root,
+        "increment",
+        counter_initial.ledger_state.get_ref().clone(),
+        &mut rng,
+    )?;
+    let counter_context = counter_initial.into_circuit_context(counter_deploy.address());
+    let counter_recorded = counter_contract::Contract::default()
+        .recording
+        .increment(counter_context)?;
+    let counter_call = check_generated_trace(
+        counter_root,
+        counter_deploy.address(),
+        "increment",
+        counter_recorded,
+    )?;
+    prove_counter(counter_root, &counter_call)?;
+    check_transaction(
+        counter_root,
+        "increment",
+        counter_deploy,
+        counter_call,
+        &mut rng,
+        |contract| {
+            let StateValue::Array(fields) = contract.data.get_ref() else {
+                return Err("counter contract state is not an array".into());
+            };
+            if read_counter(fields.get(0).ok_or("counter field missing")?)? != 1 {
+                return Err("proven counter call did not increment ledger state".into());
+            }
+            Ok(())
+        },
+    )?;
+
+    let cell_initial = cell_contract::initial_state(ConstructorContext::new(()))?;
+    let cell_deploy = make_deploy(
+        cell_root,
+        "set_flag",
+        cell_initial.ledger_state.get_ref().clone(),
+        &mut rng,
+    )?;
+    let cell_context = cell_initial.into_circuit_context(cell_deploy.address());
+    let cell_recorded = cell_contract::Contract::default()
+        .recording
+        .set_flag(cell_context)?;
+    let cell_call =
+        check_generated_trace(cell_root, cell_deploy.address(), "set_flag", cell_recorded)?;
+    check_transaction(
+        cell_root,
+        "set_flag",
+        cell_deploy,
+        cell_call,
+        &mut rng,
+        |contract| {
+            let StateValue::Array(fields) = contract.data.get_ref() else {
+                return Err("cell contract state is not an array".into());
+            };
+            if !read_cell::<bool, _>(fields.get(0).ok_or("cell field missing")?)? {
+                return Err("proven Cell call did not set the ledger flag".into());
+            }
+            Ok(())
+        },
+    )?;
+
+    let cell_read_initial = cell_read_contract::initial_state(ConstructorContext::new(()))?;
+    let cell_read_deploy = make_deploy(
+        cell_read_root,
+        "read_flag",
+        cell_read_initial.ledger_state.get_ref().clone(),
+        &mut rng,
+    )?;
+    let cell_read_context = cell_read_initial.into_circuit_context(cell_read_deploy.address());
+    let cell_read_recorded = cell_read_contract::Contract::default()
+        .recording
+        .read_flag(cell_read_context)?;
+    if cell_read_recorded.execution.result {
+        return Err("new Cell contract unexpectedly read true".into());
+    }
+    let cell_read_call = check_generated_trace(
+        cell_read_root,
+        cell_read_deploy.address(),
+        "read_flag",
+        cell_read_recorded,
+    )?;
+    check_transaction(
+        cell_read_root,
+        "read_flag",
+        cell_read_deploy,
+        cell_read_call,
+        &mut rng,
+        |contract| {
+            let StateValue::Array(fields) = contract.data.get_ref() else {
+                return Err("Cell read contract state is not an array".into());
+            };
+            if read_cell::<bool, _>(fields.get(0).ok_or("cell read field missing")?)? {
+                return Err("proven Cell read unexpectedly changed ledger state".into());
+            }
+            Ok(())
+        },
+    )
 }

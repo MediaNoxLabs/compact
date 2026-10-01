@@ -26,7 +26,7 @@ fn boolean_cell_write_then_read_replays_as_one_verifying_program() {
     assert!(observed);
     let recorded = frame.finish(observed);
     assert!(recorded.execution.result);
-    assert_eq!(recorded.public.verify_ops().len(), 7);
+    assert_eq!(recorded.public.verify_ops().len(), 6);
 
     let replay = recorded
         .public
@@ -59,7 +59,7 @@ fn boolean_cell_write_then_read_replays_as_one_verifying_program() {
 
     let mut mismatched_read = recorded.public.verify_ops().to_vec();
     *mismatched_read.last_mut().unwrap() = Op::Popeq {
-        cached: true,
+        cached: false,
         result: AlignedValue::from(false),
     };
     assert!(
@@ -83,6 +83,6 @@ fn boolean_cell_write_then_read_replays_as_one_verifying_program() {
     assert_eq!(partitioned.len(), 1);
     let (guaranteed, fallible) = &partitioned[0];
     let transcript = guaranteed.as_ref().or(fallible.as_ref()).unwrap();
-    assert_eq!(transcript.program.len(), 7);
+    assert_eq!(transcript.program.len(), 6);
     assert_eq!(transcript.effects, replay.context.effects);
 }

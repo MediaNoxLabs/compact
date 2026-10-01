@@ -45,20 +45,22 @@ operations. It preserves the initial ledger query context, ordered verifying
 VM operations, and private witness outputs. Replay and `PreTranscript`
 partitioning pass for the supported slice. The compiler now emits
 `ledger_contract::recorded` functions for exported circuits consisting of
-Counter increments, decrements, and optional Counter reads. These functions return native
-execution and an ordered public program. The generated `Contract` facade also
-exposes these supported calls through `contract.recording` with typed methods.
-Other generated circuit methods
-return native `CircuitResult`; complete operation recording, call proof inputs,
-and wallet submission remain Milestone 2 work.
+Counter increments, decrements, and optional Counter reads, or simple root
+Boolean Cell writes and reads. These functions return native execution and an
+ordered public program. The generated `Contract` facade exposes these calls
+through `contract.recording` with typed methods. Other generated circuit
+methods return native `CircuitResult`; broader operation recording and wallet
+submission remain Milestone 2 work.
 
 The counter proof smoke now builds its public statement from ledger-8's
 `ContractCallPrototype` and confirms it matches the emitted ZKIR. It uses
 the value-field communication commitment calculated by `Intent::add_call`,
 proves the resulting call transaction, and validates the proven transaction
 against a ledger containing the generated contract. The smoke applies the
-proven call and checks the resulting Counter value. This covers the Counter
-increment slice offline. Other operations and a wallet or node submission
+proven call and checks the resulting Counter value. The same gate proves,
+validates, and applies generated Boolean Cell write and read calls, then checks
+the flag and the read output.
+These are offline slices; other operations and a wallet or node submission
 path remain Milestone 2 work.
 
 ## Implemented slices

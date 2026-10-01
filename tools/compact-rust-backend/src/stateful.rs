@@ -1361,10 +1361,10 @@ pub(crate) fn render_contract_method(
     Ok(Some(method))
 }
 
-/// Emit a replayable public VM trace only for the stateful subset whose
-/// ordered operations are represented by RecordingFrame. Unsupported circuits
+/// Emit a replayable public VM trace for the Counter and Boolean Cell subset
+/// whose ordered operations are represented by RecordingFrame. Unsupported circuits
 /// deliberately have no recorded entry point.
-pub(crate) fn render_recorded_counter_circuit(
+pub(crate) fn render_recorded_circuit(
     circuit: &StatefulCircuit,
     ledger_fields: &HashMap<&str, &LedgerField>,
 ) -> Result<Option<syn::Item>, RenderError> {
@@ -1410,6 +1410,23 @@ pub(crate) fn render_recorded_counter_circuit(
                 }
                 Some(syn::parse_quote!(#rust_name.value() as u16))
             }),
+            _ => None,
+        }
+    }
+
+    fn boolean_source(
+        value: &Expr,
+        parameters: &HashMap<&str, (&Type, syn::Ident)>,
+    ) -> Option<syn::Expr> {
+        match value {
+            Expr::Boolean { value } => Some(syn::parse_quote!(#value)),
+            Expr::Parameter { name } => {
+                let (ty, rust_name) = parameters.get(name.as_str())?;
+                if **ty != Type::Boolean {
+                    return None;
+                }
+                Some(syn::parse_quote!(#rust_name))
+            }
             _ => None,
         }
     }
@@ -1490,6 +1507,27 @@ pub(crate) fn render_recorded_counter_circuit(
                 steps.push(syn::parse_quote!(let frame = frame.#method(#path, #amount)?;));
                 Ok(true)
             }
+            StateAction::CellWrite {
+                field,
+                index,
+                value,
+            } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                if declaration.declaration != (LedgerFieldKind::Cell { ty: Type::Boolean })
+                    || declaration.index != *index
+                    || declaration.physical_path().len() != 1
+                {
+                    return Ok(false);
+                }
+                let Some(value) = boolean_source(value, parameters) else {
+                    return Ok(false);
+                };
+                let path = ledger_path_expr(declaration);
+                steps.push(syn::parse_quote!(let frame = frame.write_cell(#path, #value)?;));
+                Ok(true)
+            }
             _ => Ok(false),
         }
     }
@@ -1533,6 +1571,24 @@ pub(crate) fn render_recorded_counter_circuit(
                     runtime::BoundedUint::<18446744073709551615>::new(observed as u128)
                         .expect("ledger Counter fits Uint<64>")
                 ),
+            )
+        }
+        StateReturn::CellRead { field, index } if circuit.result == Type::Boolean => {
+            let declaration = ledger_fields
+                .get(field.as_str())
+                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+            if declaration.declaration != (LedgerFieldKind::Cell { ty: Type::Boolean })
+                || declaration.index != *index
+                || declaration.physical_path().len() != 1
+            {
+                return Ok(None);
+            }
+            let path = ledger_path_expr(declaration);
+            (
+                vec![
+                    syn::parse_quote!(let (frame, observed): (_, bool) = frame.read_cell(#path)?;),
+                ],
+                syn::parse_quote!(observed),
             )
         }
         _ => return Ok(None),

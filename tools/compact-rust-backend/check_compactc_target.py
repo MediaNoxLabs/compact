@@ -30,6 +30,8 @@ import tomllib
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "examples/rust_backend/counter.compact"
 PURE_SOURCE = ROOT / "examples/rust_backend/field_add.compact"
+CELL_SOURCE = ROOT / "examples/rust_backend/cell_boolean.compact"
+CELL_READ_SOURCE = ROOT / "examples/rust_backend/cell_read.compact"
 
 
 def run(*arguments: str, cwd: Path = ROOT) -> None:
@@ -125,7 +127,7 @@ def check_consumer(contract: Path, pure_contract: Path, consumer: Path) -> None:
 
 def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
     contracts = []
-    for name, source in (("counter", SOURCE), ("field_add", PURE_SOURCE)):
+    for name, source in (("counter", SOURCE), ("field_add", PURE_SOURCE), ("cell_boolean", CELL_SOURCE)):
         output = base / f"shared-{name}"
         run(
             compiler, "--target", "rust", "--rust-runtime-root", str(ROOT),
@@ -152,6 +154,7 @@ def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
     )
     (consumer / "tests/both.rs").write_text(
         "use compact_contract_counter::ledger_contract::{Contract, initial_state};\n"
+        "use compact_contract_cell_boolean::ledger_contract::{Contract as CellContract, initial_state as initial_cell_state};\n"
         "use compact_contract_field_add::pure_circuits::field_add;\n"
         "use midnight_compact_runtime::context::ConstructorContext;\n"
         "use midnight_compact_runtime::ledger::ContractAddress;\n"
@@ -161,6 +164,13 @@ def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
         "    let result = Contract::default().increment(context).unwrap();\n"
         "    let read = Contract::default().read_round(result.context).unwrap();\n"
         "    assert_eq!(read.result.value(), 1);\n"
+        "    let cell = initial_cell_state(ConstructorContext::new(())).unwrap();\n"
+        "    let cell_context = cell.into_circuit_context(ContractAddress::default());\n"
+        "    let cell_call = CellContract::default().recording.set_flag(cell_context).unwrap();\n"
+        "    let cell_replay = cell_call.public.initial().query(\n"
+        "        cell_call.public.verify_ops(), None, &cell_call.execution.context.cost_model,\n"
+        "    ).unwrap();\n"
+        "    assert_eq!(cell_replay.context.effects, cell_call.execution.context.query.effects);\n"
         "    assert_eq!(field_add(2u64.into(), 3u64.into()).unwrap(), 5u64.into());\n"
         "}\n"
     )
@@ -219,7 +229,24 @@ def main() -> None:
                     assert (proof / "keys" / f"{circuit}.{extension}").is_file()
                 for extension in ("zkir", "bzkir"):
                     assert (proof / "zkir" / f"{circuit}.{extension}").is_file()
-            run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--", str(proof))
+            cell_proof = base / "cell-proof"
+            run(compiler, "--target", "rust", str(CELL_SOURCE), str(cell_proof))
+            check_manifest(cell_proof)
+            for extension in ("prover", "verifier"):
+                assert (cell_proof / "keys" / f"set_flag.{extension}").is_file()
+            for extension in ("zkir", "bzkir"):
+                assert (cell_proof / "zkir" / f"set_flag.{extension}").is_file()
+            cell_read_proof = base / "cell-read-proof"
+            run(compiler, "--target", "rust", str(CELL_READ_SOURCE), str(cell_read_proof))
+            check_manifest(cell_read_proof)
+            for extension in ("prover", "verifier"):
+                assert (cell_read_proof / "keys" / f"read_flag.{extension}").is_file()
+            for extension in ("zkir", "bzkir"):
+                assert (cell_read_proof / "zkir" / f"read_flag.{extension}").is_file()
+            run(
+                "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                str(proof), str(cell_proof), str(cell_read_proof),
+            )
     print("compactc target boundary and manifest: passed")
 
 

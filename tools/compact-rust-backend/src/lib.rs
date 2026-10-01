@@ -2369,7 +2369,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
         {
             contract_methods.push(method);
         }
-        if let Some(item) = stateful::render_recorded_counter_circuit(circuit, &ledger_fields)? {
+        if let Some(item) = stateful::render_recorded_circuit(circuit, &ledger_fields)? {
             recorded_items.push(item);
             recorded_methods.push(stateful::render_recorded_contract_method(circuit)?);
         }

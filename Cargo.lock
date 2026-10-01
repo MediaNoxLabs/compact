@@ -1579,6 +1579,8 @@ dependencies = [
 name = "compact-rust-proof-smoke"
 version = "0.1.0"
 dependencies = [
+ "compact-rust-cell-boolean-fixture",
+ "compact-rust-cell-read-fixture",
  "compact-rust-counter-fixture",
  "futures-executor",
  "midnight-base-crypto",

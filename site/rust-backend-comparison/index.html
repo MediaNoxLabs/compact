@@ -165,7 +165,7 @@
               <span class="chapter-index">04 / EXECUTION</span>
               <div>
                 <h2 id="runtime-title">Same ledger. Different ownership.</h2>
-                <p>The <code>tiny</code> constructor illustrates where ledger op construction lives.</p>
+                <p>The <code>tiny</code> constructor illustrates which layer turns a Compact Cell write into ledger VM instructions.</p>
               </div>
             </div>
             <div class="runtime-compare">
@@ -178,7 +178,7 @@
     .build();
 
 let result = query_for_verify(&amp;qctx, &amp;ops, ...)?;</code></pre>
-                <p>Generated functions assemble the VM instruction chain. The runtime supplies fluent builders and query helpers.</p>
+                <p>Generated functions choose the VM stack operations and assemble a program. The runtime supplies builders, Cell constructors, and the query helper.</p>
               </article>
               <article class="runtime-pattern local-pattern">
                 <div class="pattern-heading"><span class="side-indicator"></span><span>LOCAL GENERATED CODE</span><strong>Typed context calls</strong></div>
@@ -188,9 +188,22 @@ let step = context.write_cell(1, value)?;
 context = step.context;
 
 Ok(context.into_constructor_result())</code></pre>
-                <p>Generated functions express Compact actions. The runtime owns Cell codecs, collection views, and VM sequences.</p>
+                <p>Generated functions name a typed Cell action and pass along the updated context. The runtime encodes the value, constructs the VM operations, and runs the query.</p>
               </article>
             </div>
+            <div class="ownership-detail" aria-labelledby="ownership-detail-title">
+              <div class="ownership-intro">
+                <span class="aside-label">FOLLOW ONE WRITE</span>
+                <h3 id="ownership-detail-title">Who knows the VM stack?</h3>
+                <p>Both end at the ledger-8 <code>QueryContext::query</code>. The boundary between generated code and runtime moves.</p>
+              </div>
+              <div class="ownership-rows">
+                <div class="ownership-row"><strong>Generated Rust</strong><p><span>Oracle</span> selects <code>Push</code>/<code>Ins</code> and builds an <code>OpProgramVerify</code>.</p><p><span>Local</span> selects <code>write_cell</code>, the field path, and the typed value.</p></div>
+                <div class="ownership-row"><strong>Runtime</strong><p><span>Oracle</span> offers builders, value constructors, and a thin query wrapper.</p><p><span>Local</span> handles <code>CellValue</code> encoding, builds the <code>Op</code> array, and calls the ledger query.</p></div>
+                <div class="ownership-row"><strong>Query granularity</strong><p><span>Oracle</span> batches the three <code>tiny</code> constructor writes into one VM program and query.</p><p><span>Local</span> makes three <code>write_cell</code> calls; each queries and returns an updated context.</p></div>
+              </div>
+            </div>
+            <p class="runtime-caveat"><strong>Consequence.</strong> Moving op construction into the runtime gives the compiler a smaller, typed vocabulary and one place to fix Cell behavior. It also makes the runtime adapter more substantial. Final-state behavior has parity tests; identical gas costs and VM transcripts for these two query shapes have not been established.</p>
             <div class="runtime-note"><strong>Shared foundation</strong><span>Both delegate actual state transitions to the ledger-8 on-chain VM and reuse upstream FAB, field, and curve implementations.</span></div>
             <div class="runtime-note"><strong>Macro model</strong><span>The oracle provides a <code>#[witnesses]</code> forwarding attribute. The local renderer derives upstream field and hash representations plus local Cell and Merkle codecs; witnesses remain an explicit generated trait.</span></div>
             <div class="runtime-note"><strong>Generated API</strong><span>The oracle emits a <code>Contract&lt;PS, W&gt;</code> with methods and a crate manifest. The local output exposes free functions with explicit contexts and witnesses; consumers currently supply the manifest.</span></div>

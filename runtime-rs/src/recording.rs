@@ -10,6 +10,7 @@
 //! its corresponding verifying VM instruction.
 
 use midnight_base_crypto::cost_model::RunningCost;
+use midnight_base_crypto::fab::AlignedValue;
 use midnight_onchain_vm::ops::Op;
 use midnight_onchain_vm::result_mode::{GatherEvent, ResultModeVerify};
 
@@ -49,6 +50,7 @@ pub struct RecordingFrame<Private, D: DB = DefaultDB> {
     context: CircuitContext<Private, D>,
     initial: QueryContext<D>,
     verify_ops: Vec<Op<ResultModeVerify, D>>,
+    private_outputs: Vec<AlignedValue>,
     observed_gas: RunningCost,
 }
 
@@ -59,12 +61,27 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
             context,
             initial,
             verify_ops: Vec::new(),
+            private_outputs: Vec::new(),
             observed_gas: RunningCost::ZERO,
         }
     }
 
     pub fn context(&self) -> &CircuitContext<Private, D> {
         &self.context
+    }
+
+    /// Invoke a witness against the current context and record its FAB result.
+    /// The closure may project a generated ledger view from the context.
+    pub fn witness<T, F>(mut self, call: F) -> (Self, T)
+    where
+        T: Clone,
+        AlignedValue: From<T>,
+        F: FnOnce(&CircuitContext<Private, D>) -> (Private, T),
+    {
+        let (next_private, value) = call(&self.context);
+        self.context.private_state = next_private;
+        self.private_outputs.push(AlignedValue::from(value.clone()));
+        (self, value)
     }
 
     pub fn write_cell<T: CellValue>(
@@ -151,7 +168,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
                 context: self.context,
                 result: output,
                 gas_cost: self.observed_gas,
-                private_transcript_outputs: Vec::new(),
+                private_transcript_outputs: self.private_outputs,
             },
             public: PublicTrace {
                 initial: self.initial,

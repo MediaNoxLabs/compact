@@ -17,8 +17,10 @@ must be packaged and published first if crates.io distribution is chosen.
 `recording::RecordingFrame` is an opt-in bridge for Cell reads, writes, and
 Counter updates. It executes each operation and retains the initial ledger
 query context plus the ordered ledger-8 Verify instructions.
-`PublicTrace::into_parts` supplies the
-two inputs needed to build a ledger `PreTranscript`; the ledger partitioner
+`RecordingFrame::witness` updates private state and preserves each witness FAB
+result in call order.
+`PublicTrace::into_parts` supplies the two inputs needed to build a ledger
+`PreTranscript`; the ledger partitioner
 computes the actual transaction transcript, including its gas and effects.
 The frame's observed gas is only a native execution diagnostic.
 

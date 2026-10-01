@@ -18,7 +18,8 @@ use compact_rust_witness_cell_write_fixture::ledger_contract::{
 };
 use midnight_compact_runtime::Field;
 use midnight_compact_runtime::context::{CircuitResult, ConstructorContext, WitnessContext};
-use midnight_compact_runtime::ledger::ContractAddress;
+use midnight_compact_runtime::ledger::{ContractAddress, read_root_cell};
+use midnight_compact_runtime::recording::RecordingFrame;
 
 struct Secret;
 
@@ -29,13 +30,14 @@ impl Witnesses<u64> for Secret {
         seed: Field,
     ) -> (u64, Field) {
         assert_eq!(seed, Field::from(2_u64));
-        let expected_cell = if *context.private_state == 7 { 0 } else { 9 };
-        assert_eq!(context.ledger.cell().unwrap(), Field::from(expected_cell));
-        (
-            *context.private_state + 1,
-            seed + Field::from(*context.private_state),
-        )
+        secret_logic(*context.private_state, context.ledger.cell().unwrap(), seed)
     }
+}
+
+fn secret_logic(private_state: u64, current_cell: Field, seed: Field) -> (u64, Field) {
+    let expected_cell = if private_state == 7 { 0 } else { 9 };
+    assert_eq!(current_cell, Field::from(expected_cell));
+    (private_state + 1, seed + Field::from(private_state))
 }
 
 fn assert_oracle_output(write: CircuitResult<u64, ()>, oracle: &serde_json::Value) {
@@ -87,4 +89,59 @@ fn witnessed_cell_writes_keep_ledger_and_private_effects_in_order() {
         .into_circuit_context(ContractAddress::default());
     let twice = write_twice(context, &Secret, Field::from(2_u64)).unwrap();
     assert_oracle_output(twice, &oracle["twice"]);
+}
+
+#[test]
+fn witnessed_writes_record_private_values_and_public_operations_in_order() {
+    let seed = Field::from(2_u64);
+    let native = write_twice(
+        initial_state(ConstructorContext::new(7_u64))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default()),
+        &Secret,
+        seed,
+    )
+    .unwrap();
+    let context = initial_state(ConstructorContext::new(7_u64))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let frame = RecordingFrame::new(context);
+    let (frame, first) = frame.witness(|context| {
+        let cell = read_root_cell::<Field, _>(context.query.state.get_ref(), 0).unwrap();
+        secret_logic(context.private_state, cell, seed)
+    });
+    let frame = frame.write_cell(0_u8, first).unwrap();
+    let (frame, second) = frame.witness(|context| {
+        let cell = read_root_cell::<Field, _>(context.query.state.get_ref(), 0).unwrap();
+        secret_logic(context.private_state, cell, seed)
+    });
+    let recorded = frame.write_cell(0_u8, second).unwrap().finish(());
+
+    assert_eq!(
+        recorded.execution.context.private_state,
+        native.context.private_state
+    );
+    assert_eq!(
+        recorded.execution.private_transcript_outputs,
+        native.private_transcript_outputs
+    );
+    assert_eq!(recorded.execution.private_transcript_outputs.len(), 2);
+    assert_eq!(recorded.public.verify_ops().len(), 8);
+    let replay = recorded
+        .public
+        .initial()
+        .query(
+            recorded.public.verify_ops(),
+            None,
+            &recorded.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(
+        read_root_cell::<Field, _>(native.context.query.state.get_ref(), 0).unwrap(),
+        read_root_cell::<Field, _>(replay.context.state.get_ref(), 0).unwrap()
+    );
+    assert_eq!(
+        recorded.execution.context.query.effects,
+        replay.context.effects
+    );
 }

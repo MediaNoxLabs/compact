@@ -760,6 +760,7 @@ fn emits_a_pure_field_circuit_as_parseable_rust() {
     );
     let source = render(&contract).unwrap();
     syn::parse_file(&source).unwrap();
+    assert!(source.contains("pub use midnight_compact_runtime as runtime;"));
     assert!(source.contains("pub fn identity("));
     assert!(source.contains("value: runtime::Field"));
     assert!(source.contains("Ok(value)"));
@@ -779,9 +780,14 @@ fn single_element_tuple_is_a_tuple_in_type_and_expression() {
     );
     let source = render(&contract).unwrap();
     let file = syn::parse_file(&source).unwrap();
-    let syn::Item::Mod(module) = &file.items[0] else {
-        panic!("expected module")
-    };
+    let module = file
+        .items
+        .iter()
+        .find_map(|item| match item {
+            syn::Item::Mod(module) if module.ident == "pure_circuits" => Some(module),
+            _ => None,
+        })
+        .expect("expected pure circuits module");
     let function = module
         .content
         .as_ref()

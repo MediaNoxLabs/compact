@@ -56,6 +56,9 @@ Enable the runtime's `ledger-transaction` feature in a consuming Cargo graph
 to use `transaction::prepare_call` with a recorded result and a `CallSpec`.
 That adapter builds a ledger-8 call prototype from the trace and emitted
 verifier artifact.
+The generated crate forwards the feature as `ledger-transaction` and reexports
+its exact runtime as `contract_crate::runtime`, so a consumer can depend only on
+the generated crate for these types.
 Generated modules suppress Rust's naming lint so public names retain their
 Compact spelling without warning in consumer builds.
 
@@ -63,7 +66,7 @@ Compact spelling without warning in consumer builds.
 
 | Boundary | Current contract | Failure behavior |
 |---|---|---|
-| Compact compiler | Toolchain 0.31.119, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
+| Compact compiler | Toolchain 0.31.120, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
 | Rust IR | Schema 6, private to this backend | The renderer rejects any other schema before writing `lib.rs`. |
 | Generated code and Rust runtime | ABI 3 | Generated modules assert the ABI at Rust compile time. |
 | Rust runtime source | Bundled runtime crates or an explicit shared source root | Cargo resolves the matching runtime and its pinned Midnight crates. |

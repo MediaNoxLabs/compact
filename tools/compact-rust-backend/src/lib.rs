@@ -2790,6 +2790,8 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
         })
     };
     let file: syn::File = syn::parse2(quote! {
+        /// The matching Midnight Compact Rust runtime used by this generated crate.
+        pub use midnight_compact_runtime as runtime;
         #types_module
         #alias_exports
         #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]

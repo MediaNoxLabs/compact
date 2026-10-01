@@ -27,7 +27,7 @@ use std::process::{self, Command};
 use compact_rust_backend::{ir::Contract, render};
 use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
-use toml_edit::{DocumentMut, InlineTable, Item, Table, Value as TomlValue, value};
+use toml_edit::{Array, DocumentMut, InlineTable, Item, Table, Value as TomlValue, value};
 
 const TARGET_HELP: &str = "\n  --target <ts|rust> selects contract code. Repeat to emit both.\n    With no --target, TypeScript remains the default. Rust emits a standalone\n    contract/Cargo.toml, source, and matching runtime crates; ZKIR and keys are independent.\n  --rust-runtime-root <path> uses one shared runtime source root for generated\n    Rust crates. The root must contain runtime-rs/ and runtime-rs-macros/.\n";
 
@@ -160,6 +160,12 @@ fn crate_manifest(source: &Path, runtime: &Path) -> Result<String, Box<dyn Error
     let mut dependencies = Table::new();
     dependencies["midnight-compact-runtime"] = Item::Value(TomlValue::InlineTable(dependency));
     document["dependencies"] = Item::Table(dependencies);
+
+    let mut features = Table::new();
+    let mut transaction_feature = Array::new();
+    transaction_feature.push("midnight-compact-runtime/ledger-transaction");
+    features["ledger-transaction"] = Item::Value(TomlValue::Array(transaction_feature));
+    document["features"] = Item::Table(features);
     Ok(document.to_string())
 }
 

@@ -67,6 +67,7 @@ def check_consumer(contract: Path, pure_contract: Path, consumer: Path) -> None:
     package = tomllib.loads((contract / "Cargo.toml").read_text())
     runtime = package["dependencies"]["midnight-compact-runtime"]
     assert runtime["path"] == "runtime-rs"
+    assert package["features"]["ledger-transaction"] == ["midnight-compact-runtime/ledger-transaction"]
     assert (contract / "runtime-rs/Cargo.toml").is_file()
     assert (contract / "runtime-rs-macros/Cargo.toml").is_file()
     consumer.mkdir()
@@ -74,17 +75,18 @@ def check_consumer(contract: Path, pure_contract: Path, consumer: Path) -> None:
     (consumer / "Cargo.toml").write_text(
         "[package]\nname = \"compactc-target-smoke\"\nversion = \"0.1.0\"\n"
         "edition = \"2024\"\n\n[dependencies]\n"
-        f'{package["package"]["name"]} = {{ path = {json.dumps(str(contract))} }}\n'
-        f'midnight-compact-runtime = {{ path = {json.dumps(str(contract / runtime["path"]))} }}\n'
+        f'{package["package"]["name"]} = {{ path = {json.dumps(str(contract))}, features = ["ledger-transaction"] }}\n'
     )
     (consumer / "tests/counter.rs").write_text(
         "use compact_contract_counter::ledger_contract::{initial_state, recorded, Contract};\n"
-        "use midnight_compact_runtime::context::ConstructorContext;\n"
-        "use midnight_compact_runtime::ledger::ContractAddress;\n\n"
+        "use compact_contract_counter::runtime::context::ConstructorContext;\n"
+        "use compact_contract_counter::runtime::ledger::ContractAddress;\n"
+        "use compact_contract_counter::runtime::transaction::CallSpec;\n\n"
         "#[test]\nfn generated_contract_runs_outside_the_compiler_workspace() {\n"
         "    let state = initial_state(ConstructorContext::new(())).unwrap();\n"
         "    let context = state.into_circuit_context(ContractAddress::default());\n"
         "    let contract = Contract::default();\n"
+        "    let _call_spec_type = core::mem::size_of::<CallSpec>();\n"
         "    let step = contract.increment(context).unwrap();\n"
         "    let read = contract.read_round(step.context).unwrap();\n"
         "    assert_eq!(read.result.value(), 1);\n}\n"

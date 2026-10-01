@@ -224,7 +224,8 @@ fn constructor_cell_parameters_are_typed_and_validated() {
     });
     let source = render(&contract).unwrap();
     assert!(source.contains("__compact_constructor_param_0: runtime::Field"));
-    assert!(source.contains("__compact_constructor_param_0.clone()"));
+    assert!(source.contains("let __compact_constructor_value_0 = __compact_constructor_param_0;"));
+    assert!(source.contains("__compact_constructor_value_0.clone()"));
     assert!(
         source.contains(
             "Result<runtime::context::ConstructorResult<Private>, runtime::CompactError>"

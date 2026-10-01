@@ -1288,9 +1288,6 @@ fn render_constructor_vm_steps<'a>(
                 let LedgerFieldKind::Cell { ty } = &declaration.declaration else {
                     return Err(RenderError::InvalidConstructorInitializer(field.clone()));
                 };
-                if !infallible_constructor_expr(value) {
-                    return Err(RenderError::InvalidConstructorInitializer(field.clone()));
-                }
                 let (value, actual) = expression_with_calls(value, parameters, &HashMap::new())?;
                 if actual != *ty {
                     return Err(RenderError::TypeMismatch {
@@ -1770,7 +1767,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
 
     let mut constructor_args = Vec::<syn::FnArg>::new();
     let mut constructor_parameters = HashMap::new();
-    let mut constructor_values = HashMap::new();
+    let mut constructor_values = HashMap::<&str, syn::Expr>::new();
     let constructor_uses_vm = contract.constructor.as_ref().is_some_and(|constructor| {
         let mut seen_cells = HashSet::new();
         constructor.steps.iter().any(|step| match step {
@@ -1792,6 +1789,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
         })
     });
     let mut constructor_actions = Vec::<syn::Stmt>::new();
+    let mut constructor_preparations = Vec::<syn::Stmt>::new();
     if let Some(constructor) = &contract.constructor {
         for (index, parameter) in constructor.parameters.iter().enumerate() {
             ident(&parameter.name)?;
@@ -1834,9 +1832,6 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                 let LedgerFieldKind::Cell { ty } = &declaration.declaration else {
                     return Err(RenderError::InvalidConstructorInitializer(field.clone()));
                 };
-                if !infallible_constructor_expr(value) {
-                    return Err(RenderError::InvalidConstructorInitializer(field.clone()));
-                }
                 let (value, actual) =
                     expression_with_calls(value, &constructor_parameters, &HashMap::new())?;
                 if actual != *ty {
@@ -1845,7 +1840,15 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                         actual,
                     });
                 }
-                constructor_values.insert(field.as_str(), value);
+                let name = syn::Ident::new(
+                    &format!(
+                        "__compact_constructor_value_{}",
+                        constructor_preparations.len()
+                    ),
+                    Span::call_site(),
+                );
+                constructor_preparations.push(syn::parse_quote!(let #name = #value;));
+                constructor_values.insert(field.as_str(), syn::parse_quote!(#name));
             }
         }
     }
@@ -1999,6 +2002,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                     __compact_context: runtime::context::ConstructorContext<Private>,
                     #(#constructor_args),*
                 ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
+                    #(#constructor_preparations)*
                     let state = runtime::ledger::contract_state(vec![#(#constructor_fields),*]);
                     #constructor_return
                 }

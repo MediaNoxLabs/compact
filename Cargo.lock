@@ -1088,6 +1088,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-mixed-width-operand-oracle-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-module-boolean-constructor-fixture"
 version = "0.1.0"
 dependencies = [

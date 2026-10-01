@@ -16,26 +16,26 @@ pub mod ledger_contract {
     pub fn initial_state<Private>(
         __compact_context: runtime::context::ConstructorContext<Private>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
+        let __compact_constructor_value_0 = runtime::Field::from(42u128);
+        let __compact_constructor_value_1 = runtime::FixedBytes::new([
+            108u8, 97u8, 114u8, 101u8, 115u8, 58u8, 115u8, 101u8, 97u8, 108u8, 101u8, 100u8, 58u8,
+            100u8, 101u8, 109u8, 111u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            0u8, 0u8, 0u8,
+        ]);
+        let __compact_constructor_value_2 =
+            runtime::BoundedUint::<18446744073709551615>::new(12345u128)
+                .expect("Compact Uint literal fits its maximum");
         let state = runtime::ledger::contract_state(vec![
             runtime::ledger::constructor_cell::<runtime::Field, runtime::ledger::DefaultDB>(
-                runtime::Field::from(42u128).clone(),
+                __compact_constructor_value_0.clone(),
             ),
             runtime::ledger::constructor_cell::<runtime::FixedBytes<32>, runtime::ledger::DefaultDB>(
-                runtime::FixedBytes::new([
-                    108u8, 97u8, 114u8, 101u8, 115u8, 58u8, 115u8, 101u8, 97u8, 108u8, 101u8,
-                    100u8, 58u8, 100u8, 101u8, 109u8, 111u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
-                    0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
-                ])
-                .clone(),
+                __compact_constructor_value_1.clone(),
             ),
             runtime::ledger::constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(
-                runtime::BoundedUint::<18446744073709551615>::new(12345u128)
-                    .expect("Compact Uint literal fits its maximum")
-                    .clone(),
-            ),
+            >(__compact_constructor_value_2.clone()),
             runtime::ledger::constructor_cell::<bool, runtime::ledger::DefaultDB>(
                 Default::default(),
             ),

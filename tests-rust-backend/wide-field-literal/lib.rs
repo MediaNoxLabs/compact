@@ -24,17 +24,17 @@ pub mod ledger_contract {
     pub fn initial_state<Private>(
         __compact_context: runtime::context::ConstructorContext<Private>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
+        let __compact_constructor_value_0 = runtime::Field::from_le_bytes(&[
+            151u8, 229u8, 222u8, 218u8, 203u8, 225u8, 18u8, 90u8, 16u8, 2u8, 153u8, 121u8, 18u8,
+            4u8, 205u8, 20u8, 96u8, 135u8, 38u8, 32u8, 96u8, 231u8, 204u8, 32u8, 245u8, 117u8,
+            166u8, 76u8, 157u8, 182u8, 207u8, 1u8,
+        ])
+        .expect("validated Compact Field literal");
         let state = runtime::ledger::contract_state(vec![runtime::ledger::constructor_cell::<
             runtime::Field,
             runtime::ledger::DefaultDB,
         >(
-            runtime::Field::from_le_bytes(&[
-                151u8, 229u8, 222u8, 218u8, 203u8, 225u8, 18u8, 90u8, 16u8, 2u8, 153u8, 121u8,
-                18u8, 4u8, 205u8, 20u8, 96u8, 135u8, 38u8, 32u8, 96u8, 231u8, 204u8, 32u8, 245u8,
-                117u8, 166u8, 76u8, 157u8, 182u8, 207u8, 1u8,
-            ])
-            .expect("validated Compact Field literal")
-            .clone(),
+            __compact_constructor_value_0.clone()
         )]);
         Ok(runtime::context::ConstructorResult::new(
             __compact_context,

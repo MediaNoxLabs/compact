@@ -376,37 +376,34 @@ pub mod ledger_contract {
     pub fn initial_state<Private>(
         __compact_context: runtime::context::ConstructorContext<Private>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
+        let __compact_constructor_value_0 = runtime::Field::from(0u128);
+        let __compact_constructor_value_1 =
+            runtime::BoundedUint::<18446744073709551615>::new(0u128)
+                .expect("Compact Uint literal fits its maximum");
+        let __compact_constructor_value_2 =
+            runtime::FixedVector::new([runtime::Field::from(0u128), runtime::Field::from(0u128)]);
+        let __compact_constructor_value_3 = runtime::persistent_hash(runtime::FixedVector::new([
+            runtime::Field::from(0u128),
+            runtime::Field::from(0u128),
+        ]));
+        let __compact_constructor_value_4 = runtime::hash_to_curve(runtime::Field::from(0u128));
         let state = runtime::ledger::contract_state(vec![
             runtime::ledger::constructor_cell::<runtime::Field, runtime::ledger::DefaultDB>(
-                runtime::Field::from(0u128).clone(),
+                __compact_constructor_value_0.clone(),
             ),
             runtime::ledger::constructor_cell::<
                 runtime::BoundedUint<18446744073709551615>,
                 runtime::ledger::DefaultDB,
-            >(
-                runtime::BoundedUint::<18446744073709551615>::new(0u128)
-                    .expect("Compact Uint literal fits its maximum")
-                    .clone(),
-            ),
+            >(__compact_constructor_value_1.clone()),
             runtime::ledger::constructor_cell::<
                 runtime::FixedVector<runtime::Field, 2>,
                 runtime::ledger::DefaultDB,
-            >(
-                runtime::FixedVector::new([
-                    runtime::Field::from(0u128),
-                    runtime::Field::from(0u128),
-                ])
-                .clone(),
-            ),
+            >(__compact_constructor_value_2.clone()),
             runtime::ledger::constructor_cell::<runtime::FixedBytes<32>, runtime::ledger::DefaultDB>(
-                runtime::persistent_hash(runtime::FixedVector::new([
-                    runtime::Field::from(0u128),
-                    runtime::Field::from(0u128),
-                ]))
-                .clone(),
+                __compact_constructor_value_3.clone(),
             ),
             runtime::ledger::constructor_cell::<runtime::JubjubPoint, runtime::ledger::DefaultDB>(
-                runtime::hash_to_curve(runtime::Field::from(0u128)).clone(),
+                __compact_constructor_value_4.clone(),
             ),
         ]);
         Ok(runtime::context::ConstructorResult::new(

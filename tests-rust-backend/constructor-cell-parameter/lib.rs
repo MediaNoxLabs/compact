@@ -17,11 +17,12 @@ pub mod ledger_contract {
         __compact_context: runtime::context::ConstructorContext<Private>,
         __compact_constructor_param_0: runtime::Field,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
+        let __compact_constructor_value_0 = __compact_constructor_param_0;
         let state = runtime::ledger::contract_state(vec![runtime::ledger::constructor_cell::<
             runtime::Field,
             runtime::ledger::DefaultDB,
         >(
-            __compact_constructor_param_0.clone()
+            __compact_constructor_value_0.clone()
         )]);
         Ok(runtime::context::ConstructorResult::new(
             __compact_context,

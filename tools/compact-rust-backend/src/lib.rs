@@ -320,7 +320,9 @@ fn collect_expression_types(
             collect_expression_types(value, structs, enums)?;
             collect_expression_types(opening, structs, enums)?;
         }
-        Expr::UnsignedCast { value, .. } => collect_expression_types(value, structs, enums)?,
+        Expr::UnsignedCast { value, .. } | Expr::FieldCast { value } => {
+            collect_expression_types(value, structs, enums)?
+        }
         Expr::UnsignedAdd { left, right, .. }
         | Expr::UnsignedSubtract { left, right, .. }
         | Expr::UnsignedMultiply { left, right, .. } => {
@@ -792,6 +794,16 @@ fn expression_with_calls(
             ))
         }
         Expr::WitnessCall { .. } => Err(RenderError::EffectfulExpression),
+        Expr::FieldCast { value } => {
+            let (value, actual) = expression_with_calls(value, parameters, circuits)?;
+            if !matches!(actual, Type::Unsigned { .. }) {
+                return Err(RenderError::ExpectedUnsigned(actual));
+            }
+            Ok((
+                syn::parse_quote!(runtime::Field::from((#value).value())),
+                Type::Field,
+            ))
+        }
         Expr::UnsignedCast { max, value } => {
             let target_max = max
                 .parse::<u128>()
@@ -944,7 +956,8 @@ fn infallible_constructor_expr(value: &Expr) -> bool {
         }
         Expr::HashToCurve { value }
         | Expr::JubjubPointX { value }
-        | Expr::JubjubPointY { value } => infallible_constructor_expr(value),
+        | Expr::JubjubPointY { value }
+        | Expr::FieldCast { value } => infallible_constructor_expr(value),
         _ => false,
     }
 }

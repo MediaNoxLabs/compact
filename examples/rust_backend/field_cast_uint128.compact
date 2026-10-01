@@ -1,0 +1,9 @@
+import CompactStandardLibrary;
+export ledger stored: Field;
+export pure circuit as_field(value: Uint<128>): Field {
+  return value as Field;
+}
+export circuit save(value: Uint<128>): Field {
+  stored.write(disclose(value as Field));
+  return stored.read();
+}

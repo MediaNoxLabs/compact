@@ -376,6 +376,19 @@ fn render_state_expression(
                 render_state_expression(body, &locals, witnesses, statements, next_temp, circuits)?;
             Ok((rendered, ty, effect || body_effect))
         }
+        Expr::FieldCast { value } => {
+            let (value, actual, effect) = render_state_expression(
+                value, parameters, witnesses, statements, next_temp, circuits,
+            )?;
+            if !matches!(actual, Type::Unsigned { .. }) {
+                return Err(RenderError::ExpectedUnsigned(actual));
+            }
+            Ok((
+                syn::parse_quote!(runtime::Field::from((#value).value())),
+                Type::Field,
+                effect,
+            ))
+        }
         Expr::UnsignedCast { max, value } => {
             let target_max = max
                 .parse::<u128>()

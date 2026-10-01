@@ -322,6 +322,9 @@ pub enum Expr {
         max: String,
         value: Box<Expr>,
     },
+    FieldCast {
+        value: Box<Expr>,
+    },
     Parameter {
         name: String,
     },

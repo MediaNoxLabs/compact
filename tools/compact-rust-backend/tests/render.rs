@@ -143,6 +143,22 @@ fn byte_literals_keep_their_exact_length() {
 }
 
 #[test]
+fn field_cast_requires_an_unsigned_operand() {
+    let contract = identity(
+        Type::Field,
+        Expr::FieldCast {
+            value: Box::new(Expr::Parameter {
+                name: "value".into(),
+            }),
+        },
+    );
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::ExpectedUnsigned(Type::Field))
+    );
+}
+
+#[test]
 fn emits_a_pure_field_circuit_as_parseable_rust() {
     let contract = identity(
         Type::Field,

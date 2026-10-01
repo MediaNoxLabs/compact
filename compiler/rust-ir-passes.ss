@@ -148,7 +148,11 @@
                 (if value
                     (object (cons "kind" "field_literal")
                             (cons "value" (number->string value)))
-                    (source-errorf src "Rust backend does not yet support this Field cast")))]
+                    (nanopass-case (Lnodisclose Type) type^
+                      [(tunsigned ,src1 ,nat)
+                       (object (cons "kind" "field_cast")
+                               (cons "value" (typed-expression-ir expr type^ src)))]
+                      [else (source-errorf src "Rust backend does not yet support this Field cast")])))]
              [(tunsigned ,src^ ,nat)
               (let ([value (maybe-nonnegative-integer-literal expr src)])
                 (if value

@@ -1,0 +1,11 @@
+import CompactStandardLibrary;
+
+export ledger values: Vector<2, Field>;
+
+constructor() {
+  values = [0, 0];
+}
+
+export circuit read_values(): Vector<2, Field> {
+  return values.read();
+}

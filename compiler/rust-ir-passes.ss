@@ -165,6 +165,8 @@
                     (object (cons "kind" "unsigned_cast")
                             (cons "max" (number->string nat))
                             (cons "value" (typed-expression-ir expr type^ src)))))]
+             [(tvector ,src^ ,len ,type^)
+              (typed-expression-ir expr type src)]
              [else (source-errorf src "Rust backend does not yet support this cast")])]
           [(tuple ,src ,tuple-arg* ...)
            (if (null? tuple-arg*)

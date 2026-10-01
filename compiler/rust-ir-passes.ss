@@ -1173,6 +1173,30 @@
                  (object (cons "kind" "list_reset")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*)))]
+                [(and (eq? adt-name 'Map) (eq? ledger-op 'insert) (= (length expr*) 2))
+                 (object (cons "kind" "map_insert")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*))
+                         (cons "key" (constructor-value-ir (car expr*) (car adt-arg*)
+                                                           parameters bindings src))
+                         (cons "value" (constructor-value-ir (cadr expr*) (cadr adt-arg*)
+                                                             parameters bindings src)))]
+                [(and (eq? adt-name 'Map) (eq? ledger-op 'insertDefault) (= (length expr*) 1))
+                 (object (cons "kind" "map_insert_default")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*))
+                         (cons "key" (constructor-value-ir (car expr*) (car adt-arg*)
+                                                           parameters bindings src)))]
+                [(and (eq? adt-name 'Map) (eq? ledger-op 'remove) (= (length expr*) 1))
+                 (object (cons "kind" "map_remove")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*))
+                         (cons "key" (constructor-value-ir (car expr*) (car adt-arg*)
+                                                           parameters bindings src)))]
+                [(and (eq? adt-name 'Map) (eq? ledger-op 'resetToDefault) (null? expr*))
+                 (object (cons "kind" "map_reset")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*)))]
                 [(and (eq? adt-name '__compact_Cell) (eq? ledger-op 'write) (= (length expr*) 1))
                  (nanopass-case (Lnodisclose Expression) (car expr*)
                    [(var-ref ,src1 ,var-name)

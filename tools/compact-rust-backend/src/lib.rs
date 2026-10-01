@@ -970,12 +970,20 @@ fn collect_constructor_step_types(
         | ConstructorStep::ListPushFront { value, .. } => {
             collect_expression_types(value, structs, enums)?
         }
+        ConstructorStep::MapInsert { key, value, .. } => {
+            collect_expression_types(key, structs, enums)?;
+            collect_expression_types(value, structs, enums)?;
+        }
+        ConstructorStep::MapInsertDefault { key, .. } | ConstructorStep::MapRemove { key, .. } => {
+            collect_expression_types(key, structs, enums)?
+        }
         ConstructorStep::CounterIncrement { .. }
         | ConstructorStep::CounterDecrement { .. }
         | ConstructorStep::CounterReset { .. }
         | ConstructorStep::SetReset { .. }
         | ConstructorStep::ListPopFront { .. }
-        | ConstructorStep::ListReset { .. } => {}
+        | ConstructorStep::ListReset { .. }
+        | ConstructorStep::MapReset { .. } => {}
         ConstructorStep::ForEach {
             binding,
             values,
@@ -1191,6 +1199,96 @@ fn render_constructor_vm_steps<'a>(
                 };
                 let index = syn::LitInt::new(&index.to_string(), Span::call_site());
                 actions.push(syn::parse_quote!(let step = context.#method(#index)?;));
+                actions.push(syn::parse_quote!(context = step.context;));
+            }
+            ConstructorStep::MapInsert {
+                field,
+                index,
+                key,
+                value,
+            } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                if declaration.index != *index {
+                    return Err(RenderError::InvalidLedgerIndex(*index));
+                }
+                let LedgerFieldKind::Map {
+                    key: key_ty,
+                    value: value_ty,
+                } = &declaration.declaration
+                else {
+                    return Err(RenderError::UnknownLedgerField(field.clone()));
+                };
+                if !infallible_constructor_expr(key) || !infallible_constructor_expr(value) {
+                    return Err(RenderError::InvalidConstructorInitializer(field.clone()));
+                }
+                let (key, actual_key) = expression_with_calls(key, parameters, &HashMap::new())?;
+                if actual_key != *key_ty {
+                    return Err(RenderError::TypeMismatch {
+                        expected: key_ty.clone(),
+                        actual: actual_key,
+                    });
+                }
+                let (value, actual_value) =
+                    expression_with_calls(value, parameters, &HashMap::new())?;
+                if actual_value != *value_ty {
+                    return Err(RenderError::TypeMismatch {
+                        expected: value_ty.clone(),
+                        actual: actual_value,
+                    });
+                }
+                let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+                actions.push(syn::parse_quote!(let step = context.insert_map(#index, (#key).clone(), (#value).clone())?;));
+                actions.push(syn::parse_quote!(context = step.context;));
+            }
+            ConstructorStep::MapInsertDefault { field, index, key }
+            | ConstructorStep::MapRemove { field, index, key } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                if declaration.index != *index {
+                    return Err(RenderError::InvalidLedgerIndex(*index));
+                }
+                let LedgerFieldKind::Map {
+                    key: key_ty,
+                    value: value_ty,
+                } = &declaration.declaration
+                else {
+                    return Err(RenderError::UnknownLedgerField(field.clone()));
+                };
+                if !infallible_constructor_expr(key) {
+                    return Err(RenderError::InvalidConstructorInitializer(field.clone()));
+                }
+                let (key, actual_key) = expression_with_calls(key, parameters, &HashMap::new())?;
+                if actual_key != *key_ty {
+                    return Err(RenderError::TypeMismatch {
+                        expected: key_ty.clone(),
+                        actual: actual_key,
+                    });
+                }
+                let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+                if matches!(step, ConstructorStep::MapInsertDefault { .. }) {
+                    let value_ty = rust_type(value_ty)?;
+                    actions.push(syn::parse_quote!(let step = context.insert_map(#index, (#key).clone(), <#value_ty as Default>::default())?;));
+                } else {
+                    actions.push(
+                        syn::parse_quote!(let step = context.remove_map(#index, (#key).clone())?;),
+                    );
+                }
+                actions.push(syn::parse_quote!(context = step.context;));
+            }
+            ConstructorStep::MapReset { field, index } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                if !matches!(declaration.declaration, LedgerFieldKind::Map { .. })
+                    || declaration.index != *index
+                {
+                    return Err(RenderError::UnknownLedgerField(field.clone()));
+                }
+                let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+                actions.push(syn::parse_quote!(let step = context.reset_map(#index)?;));
                 actions.push(syn::parse_quote!(context = step.context;));
             }
             ConstructorStep::ForEach {
@@ -1422,6 +1520,10 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
             | ConstructorStep::ListPushFront { .. }
             | ConstructorStep::ListPopFront { .. }
             | ConstructorStep::ListReset { .. }
+            | ConstructorStep::MapInsert { .. }
+            | ConstructorStep::MapInsertDefault { .. }
+            | ConstructorStep::MapRemove { .. }
+            | ConstructorStep::MapReset { .. }
             | ConstructorStep::ForEach { .. } => true,
         })
     });

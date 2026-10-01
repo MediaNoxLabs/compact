@@ -321,6 +321,66 @@ fn constructor_list_steps_validate_values_and_use_vm_methods() {
 }
 
 #[test]
+fn constructor_map_steps_validate_keys_values_and_use_vm_methods() {
+    let mut contract = identity(
+        Type::Field,
+        Expr::Parameter {
+            name: "value".into(),
+        },
+    );
+    contract.ledger_fields = vec![LedgerField {
+        id: "table".into(),
+        index: 0,
+        declaration: LedgerFieldKind::Map {
+            key: Type::Boolean,
+            value: Type::Field,
+        },
+    }];
+    contract.constructor = Some(Constructor {
+        parameters: vec![],
+        steps: vec![
+            ConstructorStep::MapInsert {
+                field: "table".into(),
+                index: 0,
+                key: Expr::Boolean { value: true },
+                value: Expr::FieldLiteral { value: "7".into() },
+            },
+            ConstructorStep::MapRemove {
+                field: "table".into(),
+                index: 0,
+                key: Expr::Boolean { value: false },
+            },
+            ConstructorStep::MapReset {
+                field: "table".into(),
+                index: 0,
+            },
+            ConstructorStep::MapInsertDefault {
+                field: "table".into(),
+                index: 0,
+                key: Expr::Boolean { value: false },
+            },
+        ],
+    });
+    let source = render(&contract).unwrap();
+    for method in ["insert_map(0,", "remove_map(0,", "reset_map(0)?"] {
+        assert!(source.contains(method), "missing {method}");
+    }
+    let ConstructorStep::MapInsert { value, .. } =
+        &mut contract.constructor.as_mut().unwrap().steps[0]
+    else {
+        unreachable!()
+    };
+    *value = Expr::Boolean { value: true };
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::TypeMismatch {
+            expected: Type::Field,
+            actual: Type::Boolean,
+        })
+    );
+}
+
+#[test]
 fn vector_expression_preserves_element_type() {
     let mut contract = identity(
         Type::Vector {

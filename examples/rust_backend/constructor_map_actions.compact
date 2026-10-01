@@ -1,0 +1,29 @@
+import CompactStandardLibrary;
+
+export ledger table: Map<Boolean, Field>;
+export ledger history: Map<Boolean, Field>;
+
+constructor() {
+  table.insert(true, 1 as Field);
+  table.insert(false, 2 as Field);
+  table.remove(false);
+  history.insert(true, 3 as Field);
+  history.resetToDefault();
+  history.insertDefault(false);
+}
+
+export circuit table_size(): Uint<64> {
+  return table.size();
+}
+
+export circuit history_size(): Uint<64> {
+  return history.size();
+}
+
+export circuit get_true(): Field {
+  return table.lookup(true);
+}
+
+export circuit get_false_history(): Field {
+  return history.lookup(false);
+}

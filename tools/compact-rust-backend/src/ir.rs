@@ -78,6 +78,26 @@ pub enum ConstructorStep {
         field: String,
         index: u8,
     },
+    MapInsert {
+        field: String,
+        index: u8,
+        key: Expr,
+        value: Expr,
+    },
+    MapInsertDefault {
+        field: String,
+        index: u8,
+        key: Expr,
+    },
+    MapRemove {
+        field: String,
+        index: u8,
+        key: Expr,
+    },
+    MapReset {
+        field: String,
+        index: u8,
+    },
     ForEach {
         binding: Parameter,
         values: Vec<Expr>,

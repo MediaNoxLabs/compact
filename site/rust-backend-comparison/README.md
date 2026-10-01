@@ -17,9 +17,17 @@ python3 -m http.server 4173
 ```
 
 Open `http://localhost:4173/`. The site uses relative assets and no runtime
-dependencies. Upload this directory unchanged to a static host such as GitHub
-Pages, Netlify, or any ordinary web server. Set the host's publish directory to
-`site/rust-backend-comparison` when deploying from this repository.
+dependencies. Package it as below, then serve the generated `dist/` directory
+from a static host such as GitHub Pages, Netlify, or an ordinary web server.
+
+## Publication bundle
+
+Run `python3 package.py` from this directory. It creates a clean `dist/` folder
+and a deterministic `artifacts/compact-rust-atlas-m1.zip` at the repository
+root, with a SHA-256 checksum beside it. Upload the contents of `dist/` or
+extract the ZIP at a static host's document root. The archive contains only
+`index.html`, `styles.css`, and `app.js`; it has no local URLs or build-time
+dependencies. Packaging does not publish or push the site.
 
 ## Content and evidence
 

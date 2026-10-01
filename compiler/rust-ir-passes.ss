@@ -331,6 +331,22 @@
       (define (typed-expression-ir expr expected-type owner-src)
         (nanopass-case (Lnodisclose Expression) expr
           [(return ,src ,expr) (typed-expression-ir expr expected-type src)]
+          [(tuple ,src ,tuple-arg* ...)
+           (nanopass-case (Lnodisclose Type) expected-type
+             [(tvector ,src^ ,len ,type)
+              (unless (= (length tuple-arg*) len)
+                (source-errorf src "Rust vector literal length does not match its type"))
+              (object (cons "kind" "vector")
+                      (cons "element" (type-ir type src))
+                      (cons "elements"
+                            (list->vector
+                              (map (lambda (arg)
+                                     (nanopass-case (Lnodisclose Tuple-Argument) arg
+                                       [(single ,src1 ,expr)
+                                        (typed-expression-ir expr type src1)]
+                                       [else (source-errorf src "Rust backend does not yet support vector spreads")]))
+                                   tuple-arg*))))]
+             [else (expression-ir expr owner-src)])]
           [(seq ,src ,expr* ... ,expr)
            (if (checked-unsigned-subtraction? expr* expr)
                (typed-expression-ir expr expected-type src)
@@ -999,7 +1015,7 @@
                      (lambda (bindings local value)
                        (nanopass-case (Lnodisclose Argument) local
                          [(,var-name ,type)
-                          (cons (cons (id-sym var-name) (expression-ir value src)) bindings)]))
+                          (cons (cons (id-sym var-name) (typed-expression-ir value type src)) bindings)]))
                      bindings local* expr*)])
              (constructor-initializer-ir expr parameters bindings^ src))]
           [(public-ledger ,src ,ledger-field-name ,sugar? (,path-elt* ...) ,src^ ,adt-op ,expr* ...)
@@ -1022,7 +1038,9 @@
                 [else
                  (object (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
-                         (cons "value" (expression-ir (car expr*) src)))])])]
+                         (cons "value" (if (null? adt-arg*)
+                                           (expression-ir (car expr*) src)
+                                           (typed-expression-ir (car expr*) (car adt-arg*) src))))])])]
           [else (source-errorf owner-src "Rust backend does not yet support this constructor action")]))
 
       (define (constructor-initializers-ir expr parameters owner-src)

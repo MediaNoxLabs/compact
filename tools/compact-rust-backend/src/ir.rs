@@ -321,6 +321,10 @@ pub enum Expr {
     Tuple {
         elements: Vec<Expr>,
     },
+    Vector {
+        element: Type,
+        elements: Vec<Expr>,
+    },
     If {
         condition: Box<Expr>,
         then: Box<Expr>,

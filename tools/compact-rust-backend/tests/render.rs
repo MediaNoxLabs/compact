@@ -84,6 +84,42 @@ fn constructor_cell_parameters_are_typed_and_validated() {
 }
 
 #[test]
+fn vector_expression_preserves_element_type() {
+    let mut contract = identity(
+        Type::Vector {
+            element: Box::new(Type::Field),
+            length: 2,
+        },
+        Expr::Vector {
+            element: Type::Field,
+            elements: vec![
+                Expr::FieldLiteral { value: "3".into() },
+                Expr::FieldLiteral { value: "5".into() },
+            ],
+        },
+    );
+    assert!(
+        render(&contract)
+            .unwrap()
+            .contains("runtime::FixedVector::new")
+    );
+    contract.circuits[0].body = Expr::Vector {
+        element: Type::Field,
+        elements: vec![
+            Expr::Boolean { value: true },
+            Expr::FieldLiteral { value: "5".into() },
+        ],
+    };
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::TypeMismatch {
+            expected: Type::Field,
+            actual: Type::Boolean
+        })
+    );
+}
+
+#[test]
 fn emits_a_pure_field_circuit_as_parseable_rust() {
     let contract = identity(
         Type::Field,

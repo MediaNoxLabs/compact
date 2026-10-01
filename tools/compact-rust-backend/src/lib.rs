@@ -259,6 +259,12 @@ fn collect_expression_types(
                 collect_expression_types(element, structs, enums)?;
             }
         }
+        Expr::Vector { element, elements } => {
+            collect_named_types(element, structs, enums)?;
+            for value in elements {
+                collect_expression_types(value, structs, enums)?;
+            }
+        }
         Expr::If {
             condition,
             then,
@@ -488,6 +494,27 @@ fn expression_with_calls(
                 tuple.elems.pop_punct();
             }
             Ok((syn::Expr::Tuple(tuple), Type::Tuple { elements: types }))
+        }
+        Expr::Vector { element, elements } => {
+            let mut values = Vec::new();
+            for value in elements {
+                let (rendered, actual) = expression_with_calls(value, parameters, circuits)?;
+                if actual != *element {
+                    return Err(RenderError::TypeMismatch {
+                        expected: element.clone(),
+                        actual,
+                    });
+                }
+                values.push(rendered);
+            }
+            let length = elements.len();
+            Ok((
+                syn::parse_quote!(runtime::FixedVector::new([#(#values),*])),
+                Type::Vector {
+                    element: Box::new(element.clone()),
+                    length,
+                },
+            ))
         }
         Expr::If {
             condition,
@@ -891,6 +918,23 @@ fn expression_with_calls(
     }
 }
 
+fn infallible_constructor_expr(value: &Expr) -> bool {
+    match value {
+        Expr::Unit
+        | Expr::Boolean { .. }
+        | Expr::FieldLiteral { .. }
+        | Expr::UnsignedLiteral { .. }
+        | Expr::Parameter { .. } => true,
+        Expr::Vector { elements, .. } | Expr::Tuple { elements } => {
+            elements.iter().all(infallible_constructor_expr)
+        }
+        Expr::HashToCurve { value }
+        | Expr::JubjubPointX { value }
+        | Expr::JubjubPointY { value } => infallible_constructor_expr(value),
+        _ => false,
+    }
+}
+
 pub fn render(contract: &Contract) -> Result<String, RenderError> {
     if contract.schema_version != SCHEMA_VERSION {
         return Err(RenderError::SchemaVersion(contract.schema_version));
@@ -1082,14 +1126,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                     initializer.field.clone(),
                 ));
             };
-            if !matches!(
-                initializer.value,
-                Expr::Parameter { .. }
-                    | Expr::Boolean { .. }
-                    | Expr::FieldLiteral { .. }
-                    | Expr::UnsignedLiteral { .. }
-                    | Expr::Unit
-            ) {
+            if !infallible_constructor_expr(&initializer.value) {
                 return Err(RenderError::InvalidConstructorInitializer(
                     initializer.field.clone(),
                 ));

@@ -33,6 +33,7 @@
       (define (object . fields) fields)
 
       (define circuit-argument-types (make-eq-hashtable))
+      (define current-variable-types (make-parameter #f))
 
       (define (kind name)
         (object (cons "kind" name)))
@@ -237,6 +238,12 @@
                    (cons "left" (typed-expression-ir expr1 type src))
                    (cons "right" (typed-expression-ir expr2 type src)))]
           [(let* ,src ([,local* ,expr*] ...) ,expr)
+           (when (current-variable-types)
+             (for-each (lambda (local)
+                         (nanopass-case (Lnodisclose Argument) local
+                           [(,var-name ,type)
+                            (eq-hashtable-set! (current-variable-types) var-name type)]))
+                       local*))
            (object (cons "kind" "let")
                    (cons "bindings"
                          (list->vector
@@ -389,6 +396,26 @@
       (define (typed-expression-ir expr expected-type owner-src)
         (nanopass-case (Lnodisclose Expression) expr
           [(return ,src ,expr) (typed-expression-ir expr expected-type src)]
+          [(var-ref ,src ,var-name)
+           (let ([actual-type (and (current-variable-types)
+                                   (eq-hashtable-ref (current-variable-types) var-name #f))])
+             (if actual-type
+                 (nanopass-case (Lnodisclose Type) expected-type
+                   [(tfield ,src^)
+                    (nanopass-case (Lnodisclose Type) actual-type
+                      [(tunsigned ,src1 ,nat)
+                       (object (cons "kind" "field_cast")
+                               (cons "value" (expression-ir expr src)))]
+                      [else (expression-ir expr owner-src)])]
+                   [(tvector ,src^ ,len ,type)
+                    (nanopass-case (Lnodisclose Type) actual-type
+                      [(tvector ,src1 ,len1 ,type1)
+                       (object (cons "kind" "coerce")
+                               (cons "value" (expression-ir expr src))
+                               (cons "ty" (type-ir expected-type src)))]
+                      [else (expression-ir expr owner-src)])]
+                   [else (expression-ir expr owner-src)])
+                 (expression-ir expr owner-src)))]
           [(tuple ,src ,tuple-arg* ...)
            (nanopass-case (Lnodisclose Type) expected-type
              [(tvector ,src^ ,len ,type)
@@ -525,7 +552,14 @@
            (let* ([names (exported-names function-name export-alist)]
                   [internal-name (symbol->string (id-sym function-name))])
              (if (id-pure? function-name)
-                 (append
+                 (let ([variable-types (make-eq-hashtable)])
+                   (for-each (lambda (arg)
+                               (nanopass-case (Lnodisclose Argument) arg
+                                 [(,var-name ,type)
+                                  (eq-hashtable-set! variable-types var-name type)]))
+                             arg*)
+                   (parameterize ([current-variable-types variable-types])
+                     (append
                    (map
                      (lambda (name)
                        (object (cons "name" name)
@@ -540,7 +574,7 @@
                                      (cons "parameters" (list->vector (map (lambda (arg) (argument-ir arg src)) arg*)))
                                      (cons "result" (type-ir type src))
                                      (cons "body" (typed-expression-ir expr type src)))))
-                   circuits)
+                   circuits)))
                  circuits))]
           [else circuits]))
 

@@ -90,6 +90,44 @@ fn struct_literal_checks_field_value_types() {
 }
 
 #[test]
+fn vector_coercion_rejects_length_changes() {
+    let target = Type::Vector {
+        element: Box::new(Type::Field),
+        length: 2,
+    };
+    let mut contract = identity(
+        target.clone(),
+        Expr::Coerce {
+            value: Box::new(Expr::Parameter {
+                name: "value".into(),
+            }),
+            ty: target,
+        },
+    );
+    let source = Type::Vector {
+        element: Box::new(Type::Unsigned { max: "255".into() }),
+        length: 2,
+    };
+    contract.circuits[0].parameters[0].ty = source.clone();
+    assert!(render(&contract).unwrap().contains("into_array()"));
+    let Expr::Coerce { ty, .. } = &mut contract.circuits[0].body else {
+        unreachable!()
+    };
+    *ty = Type::Vector {
+        element: Box::new(Type::Field),
+        length: 3,
+    };
+    let expected = ty.clone();
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::TypeMismatch {
+            expected,
+            actual: source,
+        })
+    );
+}
+
+#[test]
 fn constructor_cell_parameters_are_typed_and_validated() {
     let mut contract = identity(
         Type::Field,

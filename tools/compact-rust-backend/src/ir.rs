@@ -396,6 +396,10 @@ pub enum Expr {
     FieldCast {
         value: Box<Expr>,
     },
+    Coerce {
+        value: Box<Expr>,
+        ty: Type,
+    },
     Parameter {
         name: String,
     },

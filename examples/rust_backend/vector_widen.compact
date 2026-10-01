@@ -1,0 +1,17 @@
+import CompactStandardLibrary;
+
+export pure circuit widen(values: Vector<2, Uint<8>>): Vector<2, Field> {
+  return values;
+}
+
+export pure circuit widen_elements(value: Uint<32>): Vector<2, Field> {
+  return [value, value];
+}
+
+export pure circuit hash_widened(values: Vector<2, Uint<8>>): Bytes<32> {
+  return persistentHash<Vector<2, Field>>(values);
+}
+
+export pure circuit hash_nested(values: Vector<2, Uint<8>>): Bytes<32> {
+  return persistentHash<Vector<1, Vector<2, Field>>>([values]);
+}

@@ -1232,6 +1232,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-vector-widen-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-compact-runtime",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-wide-field-literal-fixture"
 version = "0.1.0"
 dependencies = [

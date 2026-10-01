@@ -356,6 +356,10 @@ fn collect_expression_types(
         Expr::UnsignedCast { value, .. } | Expr::FieldCast { value } => {
             collect_expression_types(value, structs, enums)?
         }
+        Expr::Coerce { value, ty } => {
+            collect_expression_types(value, structs, enums)?;
+            collect_named_types(ty, structs, enums)?;
+        }
         Expr::UnsignedAdd { left, right, .. }
         | Expr::UnsignedSubtract { left, right, .. }
         | Expr::UnsignedMultiply { left, right, .. } => {
@@ -426,6 +430,50 @@ fn collect_action_types(
         | StateAction::MapReset { .. } => {}
     }
     Ok(())
+}
+
+fn coerce_expression(
+    value: syn::Expr,
+    actual: &Type,
+    target: &Type,
+    depth: usize,
+) -> Result<syn::Expr, RenderError> {
+    if actual == target {
+        return Ok(value);
+    }
+    match (actual, target) {
+        (Type::Unsigned { .. }, Type::Field) => {
+            Ok(syn::parse_quote!(runtime::Field::from((#value).value())))
+        }
+        (
+            Type::Vector {
+                element: source_element,
+                length: source_length,
+            },
+            Type::Vector {
+                element: target_element,
+                length: target_length,
+            },
+        ) if source_length == target_length => {
+            let source =
+                syn::Ident::new(&format!("__compact_cast_source_{depth}"), Span::call_site());
+            let item = syn::Ident::new(&format!("__compact_cast_item_{depth}"), Span::call_site());
+            let mapped = coerce_expression(
+                syn::parse_quote!(#item),
+                source_element,
+                target_element,
+                depth + 1,
+            )?;
+            Ok(syn::parse_quote!({
+                let #source = (#value).clone();
+                runtime::FixedVector::new(#source.into_array().map(|#item| #mapped))
+            }))
+        }
+        _ => Err(RenderError::TypeMismatch {
+            expected: target.clone(),
+            actual: actual.clone(),
+        }),
+    }
 }
 
 fn expression_with_calls(
@@ -902,6 +950,10 @@ fn expression_with_calls(
                 Type::Field,
             ))
         }
+        Expr::Coerce { value, ty } => {
+            let (value, actual) = expression_with_calls(value, parameters, circuits)?;
+            Ok((coerce_expression(value, &actual, ty, 0)?, ty.clone()))
+        }
         Expr::UnsignedCast { max, value } => {
             let target_max = max
                 .parse::<u128>()
@@ -1057,6 +1109,7 @@ fn infallible_constructor_expr(value: &Expr) -> bool {
         Expr::HashToCurve { value }
         | Expr::JubjubPointX { value }
         | Expr::JubjubPointY { value }
+        | Expr::Coerce { value, .. }
         | Expr::FieldCast { value } => infallible_constructor_expr(value),
         _ => false,
     }

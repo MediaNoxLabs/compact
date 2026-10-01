@@ -55,6 +55,11 @@ Typed equality and inequality reuse the Rust value types' structural
 `PartialEq`, after the renderer checks both operand types. The source fixture
 covers Field, Bytes<4>, Vector<2, Field>, and two witnessed Field comparisons;
 generated Rust matches TypeScript results and witnessed FAB transcript order.
+The compiler normalizes Boolean `!`, `&&`, and `||` to typed conditionals
+before Rust lowering. A source fixture checks pure results and witnessed
+short circuit behavior: the unused right branch makes no witness call and
+adds no transcript value. Rust and TypeScript agree on result, private state,
+and each emitted Boolean FAB value.
 
 The runtime facade in `runtime-rs` reexports `Fr` from
 `midnight-transient-crypto` 2.0.1 as Compact `Field`. It also reexports the
@@ -253,6 +258,7 @@ cargo test -p compact-rust-backend -p midnight-compact-runtime \
   -p compact-rust-witness-hash-fixture \
   -p compact-rust-assert-witness-fixture \
   -p compact-rust-equality-fixture \
+  -p compact-rust-boolean-logic-fixture \
   -p compact-rust-uint-identity-fixture -p compact-rust-bytes-identity-fixture \
   -p compact-rust-counter-fixture -p compact-rust-cell-boolean-fixture \
   -p compact-rust-struct-identity-fixture -p compact-rust-nested-struct-fixture \

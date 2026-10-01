@@ -726,6 +726,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-boolean-logic-fixture"
+version = "0.1.0"
+dependencies = [
+ "midnight-compact-runtime",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-bytes-identity-fixture"
 version = "0.1.0"
 dependencies = [

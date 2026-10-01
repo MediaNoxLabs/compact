@@ -1,0 +1,27 @@
+import CompactStandardLibrary;
+
+witness echo(value: Boolean): Boolean;
+
+export circuit invert(value: Boolean): Boolean {
+  return !value;
+}
+
+export circuit both(left: Boolean, right: Boolean): Boolean {
+  return left && right;
+}
+
+export circuit either(left: Boolean, right: Boolean): Boolean {
+  return left || right;
+}
+
+export circuit witnessed_both(left: Boolean, right: Boolean): Boolean {
+  return disclose(echo(left) && echo(right));
+}
+
+export circuit witnessed_either(left: Boolean, right: Boolean): Boolean {
+  return disclose(echo(left) || echo(right));
+}
+
+export circuit witnessed_not(value: Boolean): Boolean {
+  return disclose(!echo(value));
+}

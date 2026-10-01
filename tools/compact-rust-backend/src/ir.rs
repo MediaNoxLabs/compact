@@ -158,6 +158,7 @@ pub enum LedgerFieldKind {
     Set { ty: Type },
     List { ty: Type },
     Map { key: Type, value: Type },
+    HistoricMerkleTree { depth: u8, ty: Type },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
@@ -331,6 +332,11 @@ pub enum StateAction {
     MapReset {
         field: String,
         index: u8,
+    },
+    HistoricMerkleInsertIndexDefault {
+        field: String,
+        index: u8,
+        position: Expr,
     },
 }
 

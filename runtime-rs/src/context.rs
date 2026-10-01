@@ -427,6 +427,28 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         })
     }
 
+    pub fn historic_insert_index_default<T: CellValue + Default>(
+        mut self,
+        path: impl Into<ledger::LedgerPath>,
+        position: crate::BoundedUint<{ u64::MAX as u128 }>,
+    ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        let result = ledger::historic_insert_index_default::<T, D>(
+            &self.query,
+            path,
+            position.value() as u64,
+            self.gas_limit.clone(),
+            &self.cost_model,
+        )
+        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+        self.query = result.context;
+        Ok(CircuitResult {
+            context: self,
+            result: (),
+            gas_cost: result.gas_cost,
+            private_transcript_outputs: Vec::new(),
+        })
+    }
+
     pub fn read_cell<T: CellValue>(
         self,
         path: impl Into<ledger::LedgerPath>,

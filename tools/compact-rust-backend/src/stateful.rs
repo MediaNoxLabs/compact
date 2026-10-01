@@ -1101,6 +1101,9 @@ fn action_calls_named(action: &StateAction, name: &str) -> bool {
         | StateAction::SetInsert { value, .. }
         | StateAction::SetRemove { value, .. }
         | StateAction::ListPushFront { value, .. }
+        | StateAction::HistoricMerkleInsertIndexDefault {
+            position: value, ..
+        }
         | StateAction::MapInsertDefault { key: value, .. }
         | StateAction::MapRemove { key: value, .. } => expression_calls_named(value, name),
         StateAction::Assert { condition, .. } => expression_calls_named(condition, name),
@@ -1293,6 +1296,9 @@ fn action_contains_witness(action: &StateAction) -> bool {
         | StateAction::SetInsert { value, .. }
         | StateAction::SetRemove { value, .. }
         | StateAction::ListPushFront { value, .. }
+        | StateAction::HistoricMerkleInsertIndexDefault {
+            position: value, ..
+        }
         | StateAction::MapInsertDefault { key: value, .. }
         | StateAction::MapRemove { key: value, .. } => expression_contains_witness(value),
         StateAction::PureCall { arguments, .. } | StateAction::CircuitCall { arguments, .. } => {
@@ -2024,6 +2030,55 @@ pub(crate) fn render_stateful_circuit(
                 statements.push(syn::parse_quote! {
                     total_cost += step.gas_cost;
                 });
+            }
+            StateAction::HistoricMerkleInsertIndexDefault {
+                field,
+                index,
+                position,
+            } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                let LedgerFieldKind::HistoricMerkleTree { ty, .. } = &declaration.declaration
+                else {
+                    return Err(RenderError::UnknownLedgerField(field.clone()));
+                };
+                if declaration.index != *index {
+                    return Err(RenderError::UnknownLedgerField(field.clone()));
+                }
+                let mut value_statements = Vec::new();
+                let mut query_effect = false;
+                let (position, actual, witness_effect) = render_state_expression(
+                    position,
+                    &parameters,
+                    witnesses,
+                    &mut value_statements,
+                    &mut next_temp,
+                    circuits,
+                    stateful_circuits,
+                    ledger_fields,
+                    &mut query_effect,
+                )?;
+                let expected = Type::Unsigned {
+                    max: u64::MAX.to_string(),
+                };
+                if actual != expected {
+                    return Err(RenderError::TypeMismatch { expected, actual });
+                }
+                if witness_effect {
+                    uses_witness = true;
+                }
+                if witness_effect || query_effect {
+                    statements.push(syn::parse_quote!(let mut context = context;));
+                }
+                statements.extend(value_statements);
+                let path = ledger_path_expr(declaration);
+                let leaf_ty = rust_type(ty)?;
+                statements.push(syn::parse_quote! {
+                    let step = context.historic_insert_index_default::<#leaf_ty>(#path, #position)?;
+                });
+                statements.push(syn::parse_quote!(let context = step.context;));
+                statements.push(syn::parse_quote!(total_cost += step.gas_cost;));
             }
         }
     }

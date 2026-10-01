@@ -20,6 +20,9 @@ use midnight_onchain_vm::cost_model::CostModel;
 use midnight_onchain_vm::ops::{Key, Op};
 use midnight_onchain_vm::result_mode::{GatherEvent, ResultModeGather, ResultModeVerify};
 use midnight_serialize::Serializable;
+use midnight_storage::arena::Sp;
+use midnight_transient_crypto::fab::ValueReprAlignedValue;
+use midnight_transient_crypto::merkle_tree::{MerkleTree, leaf_hash};
 use std::marker::PhantomData;
 
 /// A physical path through Compact's chunked ledger root. A single field
@@ -467,6 +470,147 @@ pub fn constructor_map<D: DB>() -> StateValue<D> {
 /// Compact List stores the head, tail, and fixed-width length in an array.
 pub fn constructor_list<D: DB>() -> StateValue<D> {
     StateValue::Array(vec![StateValue::Null, StateValue::Null, constructor_cell(0_u64)].into())
+}
+
+/// Compact's HistoricMerkleTree seed includes the blank root in its history.
+pub fn constructor_historic_merkle_tree<D: DB>(depth: u8) -> StateValue<D> {
+    let tree: MerkleTree<(), D> = MerkleTree::blank(depth).rehash();
+    let root = tree.root().expect("a rehashed blank tree has a root");
+    let history = LedgerHashMap::new().insert(AlignedValue::from(root), StateValue::Null);
+    StateValue::Array(
+        vec![
+            StateValue::BoundedMerkleTree(tree),
+            constructor_cell(0_u64),
+            StateValue::Map(history),
+        ]
+        .into(),
+    )
+}
+
+/// Read-only witness projection of the ledger's tree, next index, and root history.
+pub struct HistoricMerkleTreeView<'a, D: DB> {
+    fields: &'a LedgerArray<StateValue<D>, D>,
+}
+
+pub fn historic_merkle_tree_view_at_path<'a, D: DB>(
+    state: &'a StateValue<D>,
+    path: &[u8],
+) -> Result<HistoricMerkleTreeView<'a, D>, CompactError> {
+    let StateValue::Array(fields) = field_at_path(state, path)? else {
+        return Err(CompactError::InvalidLedgerCell(
+            "expected HistoricMerkleTree array".into(),
+        ));
+    };
+    if fields.len() != 3
+        || !matches!(fields.get(0), Some(StateValue::BoundedMerkleTree(_)))
+        || !matches!(fields.get(2), Some(StateValue::Map(_)))
+    {
+        return Err(CompactError::InvalidLedgerCell(
+            "invalid HistoricMerkleTree layout".into(),
+        ));
+    }
+    Ok(HistoricMerkleTreeView { fields })
+}
+
+impl<D: DB> HistoricMerkleTreeView<'_, D> {
+    pub fn first_free(&self) -> Result<BoundedUint<{ u64::MAX as u128 }>, CompactError> {
+        let value = read_cell::<u64, _>(&self.fields.get(1).expect("tree shape checked"))?;
+        BoundedUint::new(value as u128)
+    }
+
+    pub fn root(&self) -> Option<midnight_transient_crypto::merkle_tree::MerkleTreeDigest> {
+        let Some(StateValue::BoundedMerkleTree(tree)) = self.fields.get(0) else {
+            unreachable!("tree shape checked")
+        };
+        tree.root()
+    }
+}
+
+/// Execute ledger-8's HistoricMerkleTree.insertIndexDefault VM program.
+pub fn historic_insert_index_default<T: CellValue + Default, D: DB>(
+    context: &QueryContext<D>,
+    path: impl Into<LedgerPath>,
+    position: u64,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    let path = path.into();
+    let keys = path_keys(path.as_slice());
+    let default = AlignedValue::new(T::default().into(), T::alignment())
+        .expect("a typed Compact value must fit its alignment");
+    let default_leaf_hash = leaf_hash(&ValueReprAlignedValue(default));
+    let index_key = |index| vec![Key::Value(AlignedValue::from(index))].into();
+    let program = [
+        Op::Idx {
+            cached: false,
+            push_path: true,
+            path: keys.into(),
+        },
+        Op::Idx {
+            cached: false,
+            push_path: true,
+            path: index_key(0_u8),
+        },
+        Op::Push {
+            storage: false,
+            value: constructor_cell(position),
+        },
+        Op::Push {
+            storage: true,
+            value: StateValue::Cell(Sp::new(AlignedValue::from(default_leaf_hash))),
+        },
+        Op::Ins {
+            cached: false,
+            n: 2,
+        },
+        Op::Idx {
+            cached: false,
+            push_path: true,
+            path: index_key(1_u8),
+        },
+        Op::Push {
+            storage: false,
+            value: constructor_cell(position),
+        },
+        Op::Addi { immediate: 1 },
+        Op::Dup { n: 1 },
+        Op::Dup { n: 1 },
+        Op::Lt,
+        Op::Branch { skip: 2 },
+        Op::Pop,
+        Op::Jmp { skip: 2 },
+        Op::Swap { n: 0 },
+        Op::Pop,
+        Op::Ins {
+            cached: false,
+            n: 1,
+        },
+        Op::Idx {
+            cached: false,
+            push_path: true,
+            path: index_key(2_u8),
+        },
+        Op::Dup { n: 2 },
+        Op::Idx {
+            cached: false,
+            push_path: false,
+            path: index_key(0_u8),
+        },
+        Op::Root,
+        Op::Push {
+            storage: true,
+            value: StateValue::Null,
+        },
+        Op::Ins {
+            cached: false,
+            n: 1,
+        },
+        Op::Ins {
+            cached: true,
+            n: path.as_slice().len() as u8 + 1,
+        },
+    ];
+    context.query(&program, gas_limit, cost_model)
 }
 
 pub fn length_list<D: DB>(

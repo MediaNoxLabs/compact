@@ -131,6 +131,13 @@ pub(crate) fn build<'a>(
                         }
                     });
                 }
+                LedgerFieldKind::HistoricMerkleTree { .. } => {
+                    ledger_view_methods.push(syn::parse_quote! {
+                        pub fn #name(&self) -> Result<runtime::ledger::HistoricMerkleTreeView<'a, runtime::ledger::DefaultDB>, runtime::CompactError> {
+                            runtime::ledger::historic_merkle_tree_view_at_path(self.state, &[#(#path),*])
+                        }
+                    });
+                }
             }
         }
     }

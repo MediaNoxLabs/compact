@@ -773,6 +773,14 @@
                                (object (cons "kind" "map")
                                        (cons "key" (type-ir (car adt-arg*) src))
                                        (cons "value" (type-ir (cadr adt-arg*) src)))))]
+                [(and (eq? adt-name 'HistoricMerkleTree) (= (length adt-arg*) 2))
+                 (object (cons "id" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-index*))
+                         (cons "path" (list->vector path-index*))
+                         (cons "declaration"
+                               (object (cons "kind" "historic_merkle_tree")
+                                       (cons "depth" (car adt-arg*))
+                                       (cons "ty" (type-ir (cadr adt-arg*) src)))))]
                 [else (source-errorf src "Rust backend does not yet support this ledger ADT")])]
              [else (source-errorf src "Rust backend does not yet support this ledger field type")])]
           [else (source-errorf owner-src "Rust backend does not yet support this ledger field shape")]))
@@ -963,6 +971,13 @@
                  (object (cons "kind" "map_reset")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*)))]
+                [(and (eq? adt-name 'HistoricMerkleTree)
+                      (eq? ledger-op 'insertIndexDefault)
+                      (= (length expr*) 1))
+                 (object (cons "kind" "historic_merkle_insert_index_default")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*))
+                         (cons "position" (stateful-expression-ir (car expr*) src witness-ids)))]
                 [else (source-errorf src "Rust backend does not yet support this ledger operation")])])]
           [else (source-errorf owner-src "Rust backend does not yet support this state action")]))
 

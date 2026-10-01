@@ -48,6 +48,7 @@ pub enum RenderError {
     DuplicateLedgerField(String),
     InvalidLedgerIndex(u8),
     InvalidLedgerPath(Vec<u8>),
+    InvalidMerkleTreeDepth(u8),
     UnsupportedLedgerPath(Vec<u8>),
     UnknownLedgerField(String),
     InvalidConstructorInitializer(String),
@@ -112,6 +113,10 @@ impl fmt::Display for RenderError {
                 write!(f, "invalid or noncontiguous ledger field index {index}")
             }
             Self::InvalidLedgerPath(path) => write!(f, "invalid ledger field path {path:?}"),
+            Self::InvalidMerkleTreeDepth(depth) => write!(
+                f,
+                "invalid HistoricMerkleTree depth {depth}; expected 2..=32"
+            ),
             Self::UnsupportedLedgerPath(path) => {
                 write!(f, "unsupported ledger field kind at chunked path {path:?}")
             }
@@ -552,6 +557,9 @@ fn collect_action_types(
         }
         StateAction::MapInsertDefault { key, .. } | StateAction::MapRemove { key, .. } => {
             collect_expression_types(key, structs, enums)?;
+        }
+        StateAction::HistoricMerkleInsertIndexDefault { position, .. } => {
+            collect_expression_types(position, structs, enums)?;
         }
         StateAction::CounterIncrement { .. }
         | StateAction::CounterDecrement { .. }
@@ -2119,6 +2127,9 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                 collect_named_types(key, &mut struct_definitions, &mut enum_definitions)?;
                 collect_named_types(value, &mut struct_definitions, &mut enum_definitions)?;
             }
+            LedgerFieldKind::HistoricMerkleTree { ty, .. } => {
+                collect_named_types(ty, &mut struct_definitions, &mut enum_definitions)?;
+            }
             LedgerFieldKind::Counter => {}
         }
     }
@@ -2140,6 +2151,11 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
             || (path.len() > 1 && matches!(field.declaration, LedgerFieldKind::List { .. }))
         {
             return Err(RenderError::UnsupportedLedgerPath(path));
+        }
+        if let LedgerFieldKind::HistoricMerkleTree { depth, .. } = field.declaration {
+            if !(2..=32).contains(&depth) {
+                return Err(RenderError::InvalidMerkleTreeDepth(depth));
+            }
         }
         if ledger_fields.insert(field.id.as_str(), *field).is_some() {
             return Err(RenderError::DuplicateLedgerField(field.id.clone()));
@@ -2330,6 +2346,10 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
         LedgerFieldKind::Set { .. } => Ok(syn::parse_quote!(runtime::ledger::constructor_set())),
         LedgerFieldKind::List { .. } => Ok(syn::parse_quote!(runtime::ledger::constructor_list())),
         LedgerFieldKind::Map { .. } => Ok(syn::parse_quote!(runtime::ledger::constructor_map())),
+        LedgerFieldKind::HistoricMerkleTree { depth, .. } => {
+            let depth = syn::LitInt::new(&format!("{depth}u8"), Span::call_site());
+            Ok(syn::parse_quote!(runtime::ledger::constructor_historic_merkle_tree(#depth)))
+        }
         LedgerFieldKind::Cell { ty } => {
             if !matches!(ty, Type::Boolean | Type::Field | Type::JubjubPoint | Type::OpaqueString | Type::Unsigned { .. } | Type::Bytes { .. } | Type::Struct { .. } | Type::Enum { .. } | Type::Vector { .. } | Type::Tuple { .. } | Type::Unit) {
                 return Err(RenderError::UnsupportedLedgerCellType(ty.clone()));

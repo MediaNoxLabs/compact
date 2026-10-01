@@ -1,0 +1,43 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//  	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+//
+// A21: HistoricMerkleTree.insertIndexDefault fixture. Exercises the
+// bounded-index `insert*Index*` vm-code shape — `(dup 1)(dup 1)(lt)
+// (branch 2)(pop)(jmp 2)(swap 0)(pop)` for the
+// `max(old_first_free, index + 1)` first-free update, plus
+// `(push true (state-value 'cell (rt-leaf-hash (rt-null value_type))))`
+// for the default leaf — so a divergence between the Rust and TS sides
+// surfaces as a byte-parity failure rather than a silent miscompile.
+//
+// Before A21, `compactc --rust` rejected any circuit body that called
+// `t.insertIndexDefault(idx)` with `circuit-body-emission: no walker
+// shape matched`. A21 widened `vminstr->builder-call` to render the
+// bounded-index branch sequence + `vm-cell-elem->rust` to render
+// `VMnull T` via `default-value-rust`, mirroring the TS reference's
+// `default(value_type)` lowering.
+//
+// Two exported circuits — one mutating, one reading — let the test
+// fixture capture three TS reference snapshots (init → after
+// add_default(0) → after add_default(2)) and assert each Rust step
+// serialises to the same bytes.
+
+import CompactStandardLibrary;
+
+export ledger t: HistoricMerkleTree<3, Uint<8>>;
+
+export circuit add_default(idx: Uint<64>): [] {
+  t.insertIndexDefault(disclose(idx));
+}

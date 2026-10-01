@@ -99,8 +99,8 @@
                 <article class="stage-column local-side" aria-labelledby="local-stage-title">
                   <div class="side-label"><span class="side-indicator"></span> TYPED BACKEND / LOCAL</div>
                   <h3 id="local-stage-title">Pre-TypeScript boundary</h3>
-                  <p id="local-stage-description">The Rust IR pass starts at <code>Lnodisclose</code>, before TypeScript-specific preparation. A separate Rust process validates and renders its output.</p>
-                  <div class="stage-code" id="local-stage-code"><span>Compact</span><i>→</i><span>Lnodisclose</span><i>→</i><span>schema-6 IR</span></div>
+                  <p id="local-stage-description">The Rust IR pass starts at <code>Lnodisclose</code>, before TypeScript-specific preparation. It exports an internal, versioned JSON format; the Rust renderer validates and renders it.</p>
+                  <div class="stage-code" id="local-stage-code"><span>Compact</span><i>→</i><span>Lnodisclose</span><i>→</i><span>local Rust IR (v6)</span></div>
                 </article>
               </div>
               <p class="stage-insight" id="stage-insight"><span>THE TRADEOFF</span> Cleaner target separation, with a second process and a JSON compatibility boundary.</p>

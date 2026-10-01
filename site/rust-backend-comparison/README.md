@@ -4,6 +4,10 @@ A self-contained static site comparing the local typed Rust backend at
 `2f93774e` with the unmodified `codegen-rust` oracle at `589c92ef`. Both
 descend from `ledger-8` at `eb72a5ab`.
 
+The diagram's **local Rust IR (v6)** is this implementation's internal JSON
+contract between the Scheme compiler and Rust renderer. Its `schema_version`
+is not a public Compact language or ledger schema version.
+
 ## Preview
 
 From this directory:

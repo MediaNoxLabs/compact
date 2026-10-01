@@ -23,8 +23,8 @@ const stages = {
     oracleRoute: ["Compact", "Ltypescript", "Scheme emitter"],
     localTitle: "Pre-TypeScript boundary",
     localDescription:
-      "The Rust IR pass starts at Lnodisclose, before TypeScript-specific preparation. A separate Rust process validates and renders its output.",
-    localRoute: ["Compact", "Lnodisclose", "schema-6 IR"],
+      "The Rust IR pass starts at Lnodisclose, before TypeScript-specific preparation. It exports an internal, versioned JSON format; the Rust renderer validates and renders it.",
+    localRoute: ["Compact", "Lnodisclose", "local Rust IR (v6)"],
     insight: "Cleaner target separation, with a second process and a JSON compatibility boundary.",
   },
   model: {

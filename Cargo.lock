@@ -864,6 +864,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-constructor-persistent-hash-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-constructor-set-actions-fixture"
 version = "0.1.0"
 dependencies = [
@@ -1047,6 +1059,18 @@ name = "compact-rust-list-field-fixture"
 version = "0.1.0"
 dependencies = [
  "midnight-compact-runtime",
+]
+
+[[package]]
+name = "compact-rust-literal-coercion-oracle-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde_json",
 ]
 
 [[package]]

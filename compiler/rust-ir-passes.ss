@@ -434,15 +434,17 @@
              [(ttuple ,src^ ,type* ...)
               (unless (= (length tuple-arg*) (length type*))
                 (source-errorf src "Rust tuple literal length does not match its type"))
-              (object (cons "kind" "tuple")
-                      (cons "elements"
-                            (list->vector
-                              (map (lambda (arg ty)
-                                     (nanopass-case (Lnodisclose Tuple-Argument) arg
-                                       [(single ,src1 ,expr)
-                                        (typed-expression-ir expr ty src1)]
-                                       [else (source-errorf src "Rust backend does not yet support tuple spreads")]))
-                                   tuple-arg* type*))))]
+              (if (null? type*)
+                  (kind "unit")
+                  (object (cons "kind" "tuple")
+                          (cons "elements"
+                                (list->vector
+                                  (map (lambda (arg ty)
+                                         (nanopass-case (Lnodisclose Tuple-Argument) arg
+                                           [(single ,src1 ,expr)
+                                            (typed-expression-ir expr ty src1)]
+                                           [else (source-errorf src "Rust backend does not yet support tuple spreads")]))
+                                       tuple-arg* type*)))))]
              [else (expression-ir expr owner-src)])]
           [(if ,src ,expr0 ,expr1 ,expr2)
            (object (cons "kind" "if")

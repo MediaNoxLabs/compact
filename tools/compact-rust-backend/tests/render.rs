@@ -44,11 +44,7 @@ fn struct_field_projection_checks_declared_name_and_position() {
             ty: Type::Field,
         }],
     };
-    assert!(
-        render(&contract)
-            .unwrap()
-            .contains("(value).amount.clone()")
-    );
+    assert!(render(&contract).unwrap().contains("amount.clone()"));
     let Expr::StructField { index, .. } = &mut contract.circuits[0].body else {
         unreachable!()
     };
@@ -87,6 +83,32 @@ fn struct_literal_checks_field_value_types() {
             actual: Type::Boolean,
         })
     );
+}
+
+#[test]
+fn repeated_vector_parameters_keep_value_semantics() {
+    let vector = Type::Vector {
+        element: Box::new(Type::Field),
+        length: 2,
+    };
+    let mut contract = identity(
+        Type::Tuple {
+            elements: vec![vector.clone(), vector.clone()],
+        },
+        Expr::Tuple {
+            elements: vec![
+                Expr::Parameter {
+                    name: "value".into(),
+                },
+                Expr::Parameter {
+                    name: "value".into(),
+                },
+            ],
+        },
+    );
+    contract.circuits[0].parameters[0].ty = vector;
+    let source = render(&contract).unwrap();
+    assert_eq!(source.matches("value.clone()").count(), 2);
 }
 
 #[test]

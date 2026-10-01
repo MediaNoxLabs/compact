@@ -1,0 +1,11 @@
+import CompactStandardLibrary;
+
+export ledger digest: Bytes<32>;
+
+constructor() {
+  digest = persistentHash<Vector<2, Field>>([1, 2]);
+}
+
+export circuit read_digest(): Bytes<32> {
+  return digest.read();
+}

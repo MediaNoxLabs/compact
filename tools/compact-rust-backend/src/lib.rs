@@ -476,6 +476,20 @@ fn coerce_expression(
     }
 }
 
+fn copy_type(ty: &Type) -> bool {
+    match ty {
+        Type::Struct { .. } | Type::Vector { .. } => false,
+        Type::Tuple { elements } => elements.iter().all(copy_type),
+        Type::Unit
+        | Type::Boolean
+        | Type::Field
+        | Type::JubjubPoint
+        | Type::Bytes { .. }
+        | Type::Enum { .. }
+        | Type::Unsigned { .. } => true,
+    }
+}
+
 fn expression_with_calls(
     expr: &Expr,
     parameters: &HashMap<&str, (&Type, syn::Ident)>,
@@ -549,7 +563,12 @@ fn expression_with_calls(
             let (ty, rust_name) = parameters
                 .get(name.as_str())
                 .ok_or_else(|| RenderError::UnknownParameter(name.clone()))?;
-            Ok((syn::parse_quote!(#rust_name), (*ty).clone()))
+            let value = if copy_type(ty) {
+                syn::parse_quote!(#rust_name)
+            } else {
+                syn::parse_quote!(#rust_name.clone())
+            };
+            Ok((value, (*ty).clone()))
         }
         Expr::StructField {
             value,
@@ -1106,7 +1125,8 @@ fn infallible_constructor_expr(value: &Expr) -> bool {
             elements.iter().all(infallible_constructor_expr)
         }
         Expr::StructLiteral { fields, .. } => fields.iter().all(infallible_constructor_expr),
-        Expr::HashToCurve { value }
+        Expr::PersistentHash { value }
+        | Expr::HashToCurve { value }
         | Expr::JubjubPointX { value }
         | Expr::JubjubPointY { value }
         | Expr::Coerce { value, .. }

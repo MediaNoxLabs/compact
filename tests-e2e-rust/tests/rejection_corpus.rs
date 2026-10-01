@@ -85,6 +85,28 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 /// (case name, Compact source, expected `rust-feature-error` kind)
+// Kinds deliberately absent from this table, and why — so the gaps read as
+// decisions rather than oversights.
+//
+//   `unknown-type`, `type-variant`, `enum-ref-unresolved`
+//       Defensive. Each guards an IR state a well-typed program should not
+//       reach: a value with no type, a Type variant the pass does not know,
+//       an enum-ref whose discriminant is not in its own enum's variant list.
+//       I could not construct Compact source that reaches any of them, which
+//       is the point of them existing — they catch a front-end or pass bug,
+//       not a user mistake. A probe here would have to fabricate broken IR,
+//       which this harness has no way to do and which would test the
+//       fabrication rather than the compiler.
+//
+//   `todo-placeholder`, `sentinel-splice`
+//       Backstops over the finished output, for the site nobody remembered.
+//       By construction no contract triggers them while every renderer is
+//       behaving — that is what makes them backstops. They were verified by
+//       injecting a marker into the prelude so it reached the output, which
+//       is a compiler-source edit rather than a contract, so it belongs in a
+//       commit's evidence rather than in this table. Their false-positive
+//       side *is* reachable and is pinned in ACCEPTIONS below.
+//
 const REJECTIONS: &[(&str, &str, &str)] = &[
     (
         // A type with no Rust lowering. Before the fix this emitted
@@ -156,6 +178,27 @@ const REJECTIONS: &[(&str, &str, &str)] = &[
 /// world. These pin the boundary from the accepting side.
 const ACCEPTIONS: &[(&str, &str)] = &[
     ("no constructor at all", "export ledger n: Uint<64>;\n"),
+    (
+        // The `todo-placeholder` guard scans the finished lib.rs for a
+        // `/* TODO` marker, because the older `#f`-sentinel scan skips
+        // comments and a marker *is* a comment — so it could never see the
+        // placeholders that shipped. The guard therefore has to ignore
+        // markers inside Rust *string* literals, and this is the reachable
+        // route to one: an assert message is user text that survives into the
+        // generated crate verbatim.
+        //
+        // Verified: without the exclusion this contract would be refused,
+        // and `assert(x, "/* TODO fix this")` is ordinary Compact a user
+        // could plausibly write.
+        "assert message containing a TODO marker",
+        "import CompactStandardLibrary;\n\
+         export ledger n: Counter;\n\
+         constructor() { n.increment(1); }\n\
+         export circuit bump(): [] {\n\
+           assert(n.read() == 1, \"/* TODO not a marker\");\n\
+           n.increment(1);\n\
+         }\n",
+    ),
     (
         "explicitly empty constructor",
         "export ledger n: Uint<64>;\nconstructor() { }\n",

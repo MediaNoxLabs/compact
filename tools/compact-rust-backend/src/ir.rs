@@ -313,6 +313,19 @@ pub enum Expr {
         value: Box<Expr>,
         opening: Box<Expr>,
     },
+    PersistentHash {
+        value: Box<Expr>,
+    },
+    PersistentCommit {
+        value: Box<Expr>,
+        opening: Box<Expr>,
+    },
+    DegradeToTransient {
+        value: Box<Expr>,
+    },
+    UpgradeFromTransient {
+        value: Box<Expr>,
+    },
     WitnessCall {
         name: String,
         arguments: Vec<Expr>,

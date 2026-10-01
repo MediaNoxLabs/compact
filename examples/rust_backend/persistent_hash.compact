@@ -1,0 +1,25 @@
+import CompactStandardLibrary;
+
+export circuit hash_field(value: Field): Bytes<32> {
+  return persistentHash<Field>(disclose(value));
+}
+
+export circuit commit_field(value: Field, opening: Bytes<32>): Bytes<32> {
+  return persistentCommit<Field>(value, opening);
+}
+
+export circuit hash_pair(value: Vector<2, Field>): Bytes<32> {
+  return persistentHash<Vector<2, Field>>(disclose(value));
+}
+
+export circuit degrade_digest(value: Bytes<32>): Field {
+  return degradeToTransient(disclose(value));
+}
+
+export circuit upgrade_field(value: Field): Bytes<32> {
+  return upgradeFromTransient(disclose(value));
+}
+
+export circuit degrade_hash(value: Field): Field {
+  return degradeToTransient(disclose(persistentHash<Field>(disclose(value))));
+}

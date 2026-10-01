@@ -261,8 +261,11 @@ fn collect_expression_types(
                 collect_expression_types(argument, structs, enums)?;
             }
         }
-        Expr::TransientHash { value } => collect_expression_types(value, structs, enums)?,
-        Expr::TransientCommit { value, opening } => {
+        Expr::TransientHash { value }
+        | Expr::PersistentHash { value }
+        | Expr::DegradeToTransient { value }
+        | Expr::UpgradeFromTransient { value } => collect_expression_types(value, structs, enums)?,
+        Expr::TransientCommit { value, opening } | Expr::PersistentCommit { value, opening } => {
             collect_expression_types(value, structs, enums)?;
             collect_expression_types(opening, structs, enums)?;
         }
@@ -497,6 +500,53 @@ fn expression_with_calls(
             Ok((
                 syn::parse_quote!(runtime::transient_commit(#value, #opening)),
                 Type::Field,
+            ))
+        }
+        Expr::PersistentHash { value } => {
+            let (value, _) = expression_with_calls(value, parameters, circuits)?;
+            Ok((
+                syn::parse_quote!(runtime::persistent_hash(#value)),
+                Type::Bytes { length: 32 },
+            ))
+        }
+        Expr::PersistentCommit { value, opening } => {
+            let (value, _) = expression_with_calls(value, parameters, circuits)?;
+            let (opening, actual) = expression_with_calls(opening, parameters, circuits)?;
+            if actual != (Type::Bytes { length: 32 }) {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Bytes { length: 32 },
+                    actual,
+                });
+            }
+            Ok((
+                syn::parse_quote!(runtime::persistent_commit(#value, #opening)),
+                Type::Bytes { length: 32 },
+            ))
+        }
+        Expr::DegradeToTransient { value } => {
+            let (value, actual) = expression_with_calls(value, parameters, circuits)?;
+            if actual != (Type::Bytes { length: 32 }) {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Bytes { length: 32 },
+                    actual,
+                });
+            }
+            Ok((
+                syn::parse_quote!(runtime::degrade_to_transient(#value)),
+                Type::Field,
+            ))
+        }
+        Expr::UpgradeFromTransient { value } => {
+            let (value, actual) = expression_with_calls(value, parameters, circuits)?;
+            if actual != Type::Field {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Field,
+                    actual,
+                });
+            }
+            Ok((
+                syn::parse_quote!(runtime::upgrade_from_transient(#value)),
+                Type::Bytes { length: 32 },
             ))
         }
         Expr::WitnessCall { .. } => Err(RenderError::EffectfulExpression),

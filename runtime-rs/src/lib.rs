@@ -12,7 +12,10 @@ mod natives;
 mod primitives;
 
 pub use midnight_compact_runtime_macros::CompactCellValue;
-pub use natives::{transient_commit, transient_hash};
+pub use natives::{
+    degrade_to_transient, persistent_commit, persistent_hash, transient_commit, transient_hash,
+    upgrade_from_transient,
+};
 pub use primitives::{
     BoundedUint, FixedBytes, FixedVector, add_unsigned, cast_unsigned, multiply_unsigned,
     subtract_unsigned,

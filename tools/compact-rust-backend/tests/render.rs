@@ -105,6 +105,41 @@ fn rejects_bad_schema_and_unknown_references() {
 }
 
 #[test]
+fn rejects_wrong_native_hash_opening_and_conversion_types() {
+    let field = Expr::Parameter {
+        name: "value".into(),
+    };
+    let contract = identity(
+        Type::Bytes { length: 32 },
+        Expr::PersistentCommit {
+            value: Box::new(field.clone()),
+            opening: Box::new(field.clone()),
+        },
+    );
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::TypeMismatch {
+            expected: Type::Bytes { length: 32 },
+            actual: Type::Field,
+        })
+    );
+
+    let contract = identity(
+        Type::Field,
+        Expr::DegradeToTransient {
+            value: Box::new(field),
+        },
+    );
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::TypeMismatch {
+            expected: Type::Bytes { length: 32 },
+            actual: Type::Field,
+        })
+    );
+}
+
+#[test]
 fn rejects_type_mismatch_and_invalid_identifier() {
     let mut contract = identity(
         Type::Boolean,

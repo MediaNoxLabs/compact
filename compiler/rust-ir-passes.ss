@@ -178,9 +178,30 @@
                [(eq? name 'transientCommit)
                 (unless (= (length expr*) 2)
                   (source-errorf src "transientCommit expects two arguments"))
-                (object (cons "kind" "transient_commit")
+               (object (cons "kind" "transient_commit")
                         (cons "value" (expression-ir (car expr*) src))
                         (cons "opening" (expression-ir (cadr expr*) src)))]
+               [(eq? name 'persistentHash)
+                (unless (= (length expr*) 1)
+                  (source-errorf src "persistentHash expects one argument"))
+                (object (cons "kind" "persistent_hash")
+                        (cons "value" (expression-ir (car expr*) src)))]
+               [(eq? name 'persistentCommit)
+                (unless (= (length expr*) 2)
+                  (source-errorf src "persistentCommit expects two arguments"))
+                (object (cons "kind" "persistent_commit")
+                        (cons "value" (expression-ir (car expr*) src))
+                        (cons "opening" (expression-ir (cadr expr*) src)))]
+               [(eq? name 'degradeToTransient)
+                (unless (= (length expr*) 1)
+                  (source-errorf src "degradeToTransient expects one argument"))
+                (object (cons "kind" "degrade_to_transient")
+                        (cons "value" (expression-ir (car expr*) src)))]
+               [(eq? name 'upgradeFromTransient)
+                (unless (= (length expr*) 1)
+                  (source-errorf src "upgradeFromTransient expects one argument"))
+                (object (cons "kind" "upgrade_from_transient")
+                        (cons "value" (expression-ir (car expr*) src)))]
                [else
                 (object (cons "kind" "call")
                         (cons "name" (symbol->string name))

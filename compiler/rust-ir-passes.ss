@@ -810,6 +810,10 @@
 
       (define (state-action-ir expr owner-src environment witness-ids)
         (nanopass-case (Lnodisclose Expression) expr
+          [(tuple ,src ,tuple-arg* ...)
+           (if (null? tuple-arg*)
+               (object (cons "kind" "sequence") (cons "actions" (vector)))
+               (source-errorf src "Rust backend does not support tuple values as state actions"))]
           [(seq ,src ,expr* ... ,expr)
            (object (cons "kind" "sequence")
                    (cons "actions"
@@ -832,8 +836,10 @@
                    (cons "condition" (stateful-expression-ir expr src witness-ids))
                    (cons "message" mesg))]
           [(if ,src ,expr0 ,expr1 ,expr2)
-           (object (cons "kind" "expression")
-                   (cons "value" (stateful-expression-ir expr src witness-ids)))]
+           (object (cons "kind" "if")
+                   (cons "condition" (stateful-expression-ir expr0 src witness-ids))
+                   (cons "then" (state-action-ir expr1 src environment witness-ids))
+                   (cons "otherwise" (state-action-ir expr2 src environment witness-ids)))]
           [(let* ,src ([,local* ,expr*] ...) ,expr)
            (let ([environment^
                    (fold-left

@@ -1,10 +1,40 @@
 use compact_rust_set_boolean_fixture::ledger_contract::{
-    add, add_field, contains, contains_field, initial_state, remove, reset_fields, seen_is_empty,
-    seen_size,
+    add, add_field, choose, contains, contains_field, initial_state, remove, reset_fields,
+    seen_is_empty, seen_size,
 };
 use midnight_compact_runtime::Field;
 use midnight_compact_runtime::context::ConstructorContext;
-use midnight_compact_runtime::ledger::{ContractAddress, StateValue};
+use midnight_compact_runtime::ledger::{ContractAddress, DefaultDB, StateValue};
+use midnight_onchain_state::state::{
+    ContractMaintenanceAuthority, ContractOperation, ContractState, EntryPointBuf,
+};
+use midnight_serialize::tagged_serialize;
+use midnight_storage::storage::HashMap;
+
+fn state_hex(state: StateValue<DefaultDB>) -> String {
+    let mut operations: HashMap<EntryPointBuf, ContractOperation, DefaultDB> = HashMap::new();
+    for name in [
+        "add",
+        "contains",
+        "add_field",
+        "contains_field",
+        "remove",
+        "seen_size",
+        "seen_is_empty",
+        "reset_fields",
+        "choose",
+    ] {
+        operations = operations.insert(
+            EntryPointBuf(name.as_bytes().to_vec()),
+            ContractOperation::new(None),
+        );
+    }
+    let contract_state =
+        ContractState::new(state, operations, ContractMaintenanceAuthority::default());
+    let mut bytes = Vec::new();
+    tagged_serialize(&contract_state, &mut bytes).unwrap();
+    hex::encode(bytes)
+}
 
 #[test]
 fn generated_set_contract_inserts_and_checks_membership() {
@@ -78,4 +108,35 @@ fn generated_set_contract_inserts_and_checks_membership() {
         panic!("expected Field Set map")
     };
     assert_eq!(set.size(), 0);
+}
+
+#[test]
+fn conditional_set_actions_keep_the_selected_branch_and_following_query() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/conditional-set-actions.json"
+    ))
+    .unwrap();
+    let context = initial_state(ConstructorContext::new(()))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let inserted = choose(context, true, true).unwrap();
+    assert!(inserted.result);
+    assert_eq!(
+        state_hex(inserted.context.query.state.get_ref().clone()),
+        oracle[0]["stateHex"]
+    );
+    let removed = choose(inserted.context, true, false).unwrap();
+    assert!(!removed.result);
+    assert_eq!(
+        state_hex(removed.context.query.state.get_ref().clone()),
+        oracle[1]["stateHex"]
+    );
+    let other = choose(removed.context, false, true).unwrap();
+    assert!(other.result);
+    assert_eq!(
+        state_hex(other.context.query.state.get_ref().clone()),
+        oracle[2]["stateHex"]
+    );
+    let present = contains(other.context, false).unwrap();
+    assert!(present.result);
 }

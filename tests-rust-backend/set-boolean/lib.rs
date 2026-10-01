@@ -162,4 +162,51 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
+    pub fn choose<Private>(
+        context: runtime::context::CircuitContext<Private>,
+        __compact_param_0: bool,
+        __compact_param_1: bool,
+    ) -> Result<runtime::context::CircuitResult<Private, bool>, runtime::CompactError> {
+        let mut total_cost = runtime::context::RunningCost::default();
+        let private_transcript_outputs = Vec::new();
+        let mut context = context;
+        context = if __compact_param_1 {
+            #[allow(unused_mut)]
+            let mut context = context;
+            let mut context = context;
+            context = if __compact_param_0 {
+                #[allow(unused_mut)]
+                let mut context = context;
+                let step = context.insert_set(0, true)?;
+                let context = step.context;
+                total_cost += step.gas_cost;
+                context
+            } else {
+                #[allow(unused_mut)]
+                let mut context = context;
+                let step = context.insert_set(0, false)?;
+                let context = step.context;
+                total_cost += step.gas_cost;
+                context
+            };
+            context
+        } else {
+            #[allow(unused_mut)]
+            let mut context = context;
+            let step = context.remove_set(0, __compact_param_0)?;
+            let context = step.context;
+            total_cost += step.gas_cost;
+            context
+        };
+        let read_step = context.member_set(0, __compact_param_0)?;
+        let context = read_step.context;
+        total_cost += read_step.gas_cost;
+        let result = read_step.result;
+        Ok(runtime::context::CircuitResult {
+            context,
+            result,
+            gas_cost: total_cost,
+            private_transcript_outputs,
+        })
+    }
 }

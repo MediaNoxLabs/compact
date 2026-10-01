@@ -499,6 +499,15 @@ fn collect_action_types(
                 collect_action_types(action, structs, enums)?;
             }
         }
+        StateAction::If {
+            condition,
+            then,
+            otherwise,
+        } => {
+            collect_expression_types(condition, structs, enums)?;
+            collect_action_types(then, structs, enums)?;
+            collect_action_types(otherwise, structs, enums)?;
+        }
         StateAction::PureCall { arguments, .. } | StateAction::CircuitCall { arguments, .. } => {
             for argument in arguments {
                 collect_expression_types(argument, structs, enums)?;

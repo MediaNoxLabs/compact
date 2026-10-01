@@ -520,17 +520,24 @@ pub mod ledger_contract {
         let __compact_query_0 = context.read_cell::<bool>(6)?;
         context = __compact_query_0.context;
         total_cost += __compact_query_0.gas_cost;
-        let _ = if __compact_query_0.result {
-            let __compact_call_argument_1 = runtime::FixedVector::new([
-                runtime::Field::from(0u128),
-                runtime::Field::from(1u128),
-            ]);
-            let __compact_call_2 = storeVec(context, __compact_call_argument_1)?;
-            context = __compact_call_2.context;
-            total_cost += __compact_call_2.gas_cost;
-            __compact_call_2.result
+        context = if __compact_query_0.result {
+            #[allow(unused_mut)]
+            let mut context = context;
+            let __compact_element_1 = runtime::Field::from(0u128);
+            let __compact_element_2 = runtime::Field::from(1u128);
+            let __compact_call_argument_3 = {
+                let __compact_cast_source_0 = (__compact_element_1, __compact_element_2);
+                let (__compact_cast_item_0_0, __compact_cast_item_0_1) = __compact_cast_source_0;
+                runtime::FixedVector::new([__compact_cast_item_0_0, __compact_cast_item_0_1])
+            };
+            let call_step = storeVec(context, __compact_call_argument_3)?;
+            let context = call_step.context;
+            total_cost += call_step.gas_cost;
+            context
         } else {
-            ()
+            #[allow(unused_mut)]
+            let mut context = context;
+            context
         };
         let result = ();
         Ok(runtime::context::CircuitResult {

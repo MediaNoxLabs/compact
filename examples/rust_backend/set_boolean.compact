@@ -34,3 +34,16 @@ export circuit seen_is_empty(): Boolean {
 export circuit reset_fields(): [] {
   fields.resetToDefault();
 }
+
+export circuit choose(value: Boolean, insert: Boolean): Boolean {
+  if (disclose(insert)) {
+    if (disclose(value)) {
+      seen.insert(true);
+    } else {
+      seen.insert(false);
+    }
+  } else {
+    seen.remove(disclose(value));
+  }
+  return seen.member(disclose(value));
+}

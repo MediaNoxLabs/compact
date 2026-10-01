@@ -1087,6 +1087,15 @@ fn action_calls_named(action: &StateAction, name: &str) -> bool {
         StateAction::Sequence { actions } => actions
             .iter()
             .any(|action| action_calls_named(action, name)),
+        StateAction::If {
+            condition,
+            then,
+            otherwise,
+        } => {
+            expression_calls_named(condition, name)
+                || action_calls_named(then, name)
+                || action_calls_named(otherwise, name)
+        }
         StateAction::Expression { value }
         | StateAction::CellWrite { value, .. }
         | StateAction::SetInsert { value, .. }
@@ -1270,6 +1279,15 @@ pub(crate) fn expression_contains_stateful_call(
 fn action_contains_witness(action: &StateAction) -> bool {
     match action {
         StateAction::Sequence { actions } => actions.iter().any(action_contains_witness),
+        StateAction::If {
+            condition,
+            then,
+            otherwise,
+        } => {
+            expression_contains_witness(condition)
+                || action_contains_witness(then)
+                || action_contains_witness(otherwise)
+        }
         StateAction::Expression { value }
         | StateAction::CellWrite { value, .. }
         | StateAction::SetInsert { value, .. }
@@ -1342,6 +1360,14 @@ pub(crate) fn render_stateful_circuit(
     enum Pending<'a> {
         Action(&'a StateAction),
         RestoreScope,
+        EndThen(usize, &'a StateAction),
+        EndElse(usize),
+    }
+    struct BranchFrame<'a> {
+        condition: syn::Expr,
+        parent_statements: Vec<syn::Stmt>,
+        then_statements: Vec<syn::Stmt>,
+        parameters: HashMap<&'a str, (&'a Type, syn::Ident)>,
     }
     let mut pending = circuit
         .actions
@@ -1350,12 +1376,43 @@ pub(crate) fn render_stateful_circuit(
         .map(Pending::Action)
         .collect::<Vec<_>>();
     let mut scopes = Vec::new();
+    let mut branches = Vec::<Option<BranchFrame>>::new();
     let mut local_parameters = parameters.clone();
     while let Some(pending_action) = pending.pop() {
         let action = match pending_action {
             Pending::Action(action) => action,
             Pending::RestoreScope => {
                 local_parameters = scopes.pop().expect("scope marker has a matching scope");
+                continue;
+            }
+            Pending::EndThen(index, otherwise) => {
+                let frame = branches[index].as_mut().expect("open conditional branch");
+                frame.then_statements = std::mem::take(&mut statements);
+                local_parameters = frame.parameters.clone();
+                pending.push(Pending::EndElse(index));
+                pending.push(Pending::Action(otherwise));
+                continue;
+            }
+            Pending::EndElse(index) => {
+                let frame = branches[index].take().expect("open conditional branch");
+                let else_statements = std::mem::take(&mut statements);
+                local_parameters = frame.parameters;
+                statements = frame.parent_statements;
+                let condition = frame.condition;
+                let then_statements = frame.then_statements;
+                statements.push(syn::parse_quote! {
+                    context = if #condition {
+                        #[allow(unused_mut)]
+                        let mut context = context;
+                        #(#then_statements)*
+                        context
+                    } else {
+                        #[allow(unused_mut)]
+                        let mut context = context;
+                        #(#else_statements)*
+                        context
+                    };
+                });
                 continue;
             }
         };
@@ -1408,6 +1465,44 @@ pub(crate) fn render_stateful_circuit(
                 }
                 pending.push(Pending::RestoreScope);
                 pending.push(Pending::Action(inner));
+                continue;
+            }
+            StateAction::If {
+                condition,
+                then,
+                otherwise,
+            } => {
+                let mut condition_statements = Vec::new();
+                let mut query_effect = false;
+                let (rendered, actual, effect) = render_state_expression(
+                    condition,
+                    &local_parameters,
+                    witnesses,
+                    &mut condition_statements,
+                    &mut next_temp,
+                    circuits,
+                    stateful_circuits,
+                    ledger_fields,
+                    &mut query_effect,
+                )?;
+                if actual != Type::Boolean {
+                    return Err(RenderError::TypeMismatch {
+                        expected: Type::Boolean,
+                        actual,
+                    });
+                }
+                uses_witness |= effect;
+                statements.push(syn::parse_quote!(let mut context = context;));
+                statements.extend(condition_statements);
+                let index = branches.len();
+                branches.push(Some(BranchFrame {
+                    condition: rendered,
+                    parent_statements: std::mem::take(&mut statements),
+                    then_statements: Vec::new(),
+                    parameters: local_parameters.clone(),
+                }));
+                pending.push(Pending::EndThen(index, otherwise));
+                pending.push(Pending::Action(then));
                 continue;
             }
             _ => {}
@@ -1547,7 +1642,7 @@ pub(crate) fn render_stateful_circuit(
                     }
                 });
             }
-            StateAction::Let { .. } | StateAction::Sequence { .. } => {
+            StateAction::Let { .. } | StateAction::Sequence { .. } | StateAction::If { .. } => {
                 unreachable!("control actions were expanded before rendering")
             }
             StateAction::CounterIncrement {

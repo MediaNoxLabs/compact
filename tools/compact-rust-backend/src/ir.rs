@@ -242,6 +242,11 @@ pub enum StateAction {
     Sequence {
         actions: Vec<StateAction>,
     },
+    If {
+        condition: Expr,
+        then: Box<StateAction>,
+        otherwise: Box<StateAction>,
+    },
     Expression {
         value: Expr,
     },

@@ -596,15 +596,26 @@
                 (object (cons "kind" "witness_call")
                         (cons "name" (symbol->string name))
                         (cons "arguments" (list->vector (map (lambda (arg) (stateful-expression-ir arg src witness-ids)) expr*))))]
-               [(memq name '(transientHash persistentHash degradeToTransient upgradeFromTransient))
+               [(memq name '(transientHash persistentHash degradeToTransient upgradeFromTransient
+                              hashToCurve jubjubPointX jubjubPointY ecNeg jubjubScalarFromNative))
                 (unless (= (length expr*) 1)
                   (source-errorf src "Rust backend native expects one argument"))
                 (object (cons "kind" (case name
                                         [(transientHash) "transient_hash"]
                                         [(persistentHash) "persistent_hash"]
                                         [(degradeToTransient) "degrade_to_transient"]
-                                        [else "upgrade_from_transient"]))
+                                        [(upgradeFromTransient) "upgrade_from_transient"]
+                                        [(hashToCurve) "hash_to_curve"]
+                                        [(jubjubPointX) "jubjub_point_x"]
+                                        [(jubjubPointY) "jubjub_point_y"]
+                                        [(ecNeg) "ec_neg"]
+                                        [else "jubjub_scalar_from_native"]))
                         (cons "value" (stateful-expression-ir (car expr*) src witness-ids)))]
+               [(eq? name 'ecMulGenerator)
+                (unless (= (length expr*) 1)
+                  (source-errorf src "ecMulGenerator expects one argument"))
+                (object (cons "kind" "ec_mul_generator")
+                        (cons "scalar" (stateful-expression-ir (car expr*) src witness-ids)))]
                [(memq name '(transientCommit persistentCommit))
                 (unless (= (length expr*) 2)
                   (source-errorf src "Rust backend native expects two arguments"))
@@ -613,6 +624,16 @@
                                           "persistent_commit"))
                         (cons "value" (stateful-expression-ir (car expr*) src witness-ids))
                         (cons "opening" (stateful-expression-ir (cadr expr*) src witness-ids)))]
+               [(memq name '(ecAdd ecMul))
+                (unless (= (length expr*) 2)
+                  (source-errorf src "Rust backend curve native expects two arguments"))
+                (if (eq? name 'ecAdd)
+                    (object (cons "kind" "ec_add")
+                            (cons "left" (stateful-expression-ir (car expr*) src witness-ids))
+                            (cons "right" (stateful-expression-ir (cadr expr*) src witness-ids)))
+                    (object (cons "kind" "ec_mul")
+                            (cons "point" (stateful-expression-ir (car expr*) src witness-ids))
+                            (cons "scalar" (stateful-expression-ir (cadr expr*) src witness-ids))))]
                [else (expression-ir value-expr owner-src)]))]
           [(safe-cast ,src ,type ,type^ ,expr)
            (nanopass-case (Lnodisclose Type) type
@@ -699,7 +720,9 @@
            (if (or (eq-hashtable-ref witness-ids function-name #f)
                    (memq (id-sym function-name)
                          '(transientHash transientCommit persistentHash persistentCommit
-                           degradeToTransient upgradeFromTransient)))
+                           degradeToTransient upgradeFromTransient hashToCurve
+                           jubjubPointX jubjubPointY ecAdd ecNeg ecMul ecMulGenerator
+                           jubjubScalarFromNative)))
                (object (cons "kind" "expression")
                        (cons "value" (stateful-expression-ir return-expr src witness-ids)))
                (source-errorf src "Rust backend does not yet support this stateful call"))]

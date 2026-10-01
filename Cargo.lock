@@ -965,6 +965,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-witness-jubjub-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-compact-runtime",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-witness-ledger-cell-fixture"
 version = "0.1.0"
 dependencies = [

@@ -68,8 +68,10 @@ and normalizes it to `(0, 1)`. A generated point and struct
 Cell fixture compares the default and post-write reads with TypeScript and
 round-trips the derived representations. The wrapper checks compressed
 coordinates before calling the pinned ledger constructor, avoiding its panic
-on malformed points. Witnessed curve values remain a
-future expression slice.
+on malformed points. Witnessed points also compose through the supported
+curve natives. Their typed FAB transcript values and source order match the
+generated TypeScript fixture for direct returns, coordinates, point arithmetic,
+and curve hashing.
 The group arithmetic fixture compares addition, negation, point and generator
 multiplication, and scalar reduction with the generated TypeScript and ledger
 WASM runtime. `ecMul` and `ecMulGenerator` require a canonical embedded scalar
@@ -207,6 +209,7 @@ cargo test -p compact-rust-backend -p midnight-compact-runtime \
   -p compact-rust-jubjub-hash-fixture \
   -p compact-rust-jubjub-arithmetic-fixture \
   -p compact-rust-jubjub-cell-fixture \
+  -p compact-rust-witness-jubjub-fixture \
   -p compact-rust-uint-arithmetic-fixture \
   -p compact-rust-witness-minimal-fixture \
   -p compact-rust-witness-argument-fixture \

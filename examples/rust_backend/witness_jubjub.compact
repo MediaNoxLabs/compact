@@ -1,0 +1,36 @@
+import CompactStandardLibrary;
+
+witness secret_point(seed: Field): JubjubPoint;
+witness secret_scalar(seed: Field): Field;
+
+export circuit combine(seed: Field): JubjubPoint {
+  return ecAdd(disclose(secret_point(seed)), disclose(secret_point(seed)));
+}
+
+export circuit scale(seed: Field): JubjubPoint {
+  return ecMul(disclose(secret_point(seed)), disclose(secret_scalar(seed)));
+}
+
+export circuit point_x(seed: Field): Field {
+  return jubjubPointX(disclose(secret_point(seed)));
+}
+
+export circuit point_y(seed: Field): Field {
+  return jubjubPointY(disclose(secret_point(seed)));
+}
+
+export circuit negate(seed: Field): JubjubPoint {
+  return ecNeg(disclose(secret_point(seed)));
+}
+
+export circuit reveal(seed: Field): JubjubPoint {
+  return disclose(secret_point(seed));
+}
+
+export circuit hash_scalar(seed: Field): JubjubPoint {
+  return hashToCurve<Field>(disclose(secret_scalar(seed)));
+}
+
+export circuit generator(seed: Field): JubjubPoint {
+  return ecMulGenerator(jubjubScalarFromNative(disclose(secret_scalar(seed))));
+}

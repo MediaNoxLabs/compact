@@ -77,7 +77,12 @@ fn render_state_expression(
         Expr::TransientHash { value: input }
         | Expr::PersistentHash { value: input }
         | Expr::DegradeToTransient { value: input }
-        | Expr::UpgradeFromTransient { value: input } => {
+        | Expr::UpgradeFromTransient { value: input }
+        | Expr::HashToCurve { value: input }
+        | Expr::JubjubPointX { value: input }
+        | Expr::JubjubPointY { value: input }
+        | Expr::EcNeg { value: input }
+        | Expr::JubjubScalarFromNative { value: input } => {
             let (rendered, actual, effect) =
                 render_state_expression(input, parameters, witnesses, statements, next_temp)?;
             let (operation, result): (syn::Path, Type) = match value {
@@ -110,6 +115,38 @@ fn render_state_expression(
                     (
                         syn::parse_quote!(runtime::upgrade_from_transient),
                         Type::Bytes { length: 32 },
+                    )
+                }
+                Expr::HashToCurve { .. } => {
+                    (syn::parse_quote!(runtime::hash_to_curve), Type::JubjubPoint)
+                }
+                Expr::JubjubPointX { .. } | Expr::JubjubPointY { .. } | Expr::EcNeg { .. } => {
+                    if actual != Type::JubjubPoint {
+                        return Err(RenderError::TypeMismatch {
+                            expected: Type::JubjubPoint,
+                            actual,
+                        });
+                    }
+                    match value {
+                        Expr::JubjubPointX { .. } => {
+                            (syn::parse_quote!(runtime::jubjub_point_x), Type::Field)
+                        }
+                        Expr::JubjubPointY { .. } => {
+                            (syn::parse_quote!(runtime::jubjub_point_y), Type::Field)
+                        }
+                        _ => (syn::parse_quote!(runtime::ec_neg), Type::JubjubPoint),
+                    }
+                }
+                Expr::JubjubScalarFromNative { .. } => {
+                    if actual != Type::Field {
+                        return Err(RenderError::TypeMismatch {
+                            expected: Type::Field,
+                            actual,
+                        });
+                    }
+                    (
+                        syn::parse_quote!(runtime::jubjub_scalar_from_native),
+                        Type::Field,
                     )
                 }
                 _ => unreachable!(),
@@ -155,6 +192,59 @@ fn render_state_expression(
                 result,
                 input_effect || opening_effect,
             ))
+        }
+        Expr::EcMulGenerator { scalar } => {
+            let (scalar, actual, effect) =
+                render_state_expression(scalar, parameters, witnesses, statements, next_temp)?;
+            if actual != Type::Field {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Field,
+                    actual,
+                });
+            }
+            Ok((
+                syn::parse_quote!(runtime::ec_mul_generator(#scalar)?),
+                Type::JubjubPoint,
+                effect,
+            ))
+        }
+        Expr::EcAdd { left, right }
+        | Expr::EcMul {
+            point: left,
+            scalar: right,
+        } => {
+            let (left, actual, left_effect) =
+                render_state_expression(left, parameters, witnesses, statements, next_temp)?;
+            if actual != Type::JubjubPoint {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::JubjubPoint,
+                    actual,
+                });
+            }
+            let left_name = syn::Ident::new(
+                &format!("__compact_value_{}", *next_temp),
+                Span::call_site(),
+            );
+            *next_temp += 1;
+            statements.push(syn::parse_quote!(let #left_name = #left;));
+            let (right, actual, right_effect) =
+                render_state_expression(right, parameters, witnesses, statements, next_temp)?;
+            let (expected, operation, fallible): (Type, syn::Path, bool) = match value {
+                Expr::EcAdd { .. } => {
+                    (Type::JubjubPoint, syn::parse_quote!(runtime::ec_add), false)
+                }
+                Expr::EcMul { .. } => (Type::Field, syn::parse_quote!(runtime::ec_mul), true),
+                _ => unreachable!(),
+            };
+            if actual != expected {
+                return Err(RenderError::TypeMismatch { expected, actual });
+            }
+            let rendered = if fallible {
+                syn::parse_quote!(#operation(#left_name, #right)?)
+            } else {
+                syn::parse_quote!(#operation(#left_name, #right))
+            };
+            Ok((rendered, Type::JubjubPoint, left_effect || right_effect))
         }
         Expr::Tuple { elements } => {
             let mut rendered_elements = Vec::<syn::Expr>::new();

@@ -29,13 +29,19 @@ jobs:
         with:
           skip_cache: 'true'
 
-      - name: Build compactc and compile a Rust contract
+      - name: Setup Rust toolchain for generated consumers
+        uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # stable (branch)
+
+      - name: Setup Python for target gate
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: 3.13
+
+      - name: Build compactc and run Rust consumers
         run: |
           compiler=$(nix build .#compactc --no-link --print-out-paths)
-          "$compiler/bin/compactc" --target rust --skip-zk \
-            examples/rust_backend/counter.compact "$RUNNER_TEMP/compact-counter"
-          test -f "$RUNNER_TEMP/compact-counter/contract/Cargo.toml"
-          test -f "$RUNNER_TEMP/compact-counter/contract/lib.rs"
+          COMPACTC="$compiler/bin/compactc" \
+            python3 tools/compact-rust-backend/check_compactc_target.py --consumer
 
   license-check:
     name: Check if all files got headers

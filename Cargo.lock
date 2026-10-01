@@ -937,6 +937,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-stateful-pure-call-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-struct-identity-fixture"
 version = "0.1.0"
 dependencies = [

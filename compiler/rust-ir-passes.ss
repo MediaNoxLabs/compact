@@ -804,7 +804,8 @@
                            jubjubScalarFromNative)))
                (object (cons "kind" "expression")
                        (cons "value" (stateful-expression-ir return-expr src witness-ids)))
-               (source-errorf src "Rust backend does not yet support this stateful call"))]
+               (object (cons "kind" "expression")
+                       (cons "value" (stateful-expression-ir return-expr src witness-ids))))]
           [(tuple ,src ,tuple-arg* ...)
            (if (null? tuple-arg*)
                (kind "unit")

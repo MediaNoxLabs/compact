@@ -367,13 +367,6 @@ fn collect_action_types(
     Ok(())
 }
 
-fn expression(
-    expr: &Expr,
-    parameters: &HashMap<&str, (&Type, syn::Ident)>,
-) -> Result<(syn::Expr, Type), RenderError> {
-    expression_with_calls(expr, parameters, &HashMap::new())
-}
-
 fn expression_with_calls(
     expr: &Expr,
     parameters: &HashMap<&str, (&Type, syn::Ident)>,
@@ -1017,6 +1010,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
             circuit,
             &ledger_fields,
             &witness_syntax.declarations,
+            &callable_circuits,
         )?);
     }
 

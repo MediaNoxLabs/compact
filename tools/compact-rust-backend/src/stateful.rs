@@ -4,10 +4,10 @@ use proc_macro2::Span;
 use std::collections::HashMap;
 
 use crate::ir::{
-    ComparisonOperator, CounterAmount, Expr, LedgerField, LedgerFieldKind, StateAction,
-    StateReturn, StatefulCircuit, StructField, Type, WitnessDeclaration,
+    ComparisonOperator, CounterAmount, Expr, LedgerField, LedgerFieldKind, PureCircuit,
+    StateAction, StateReturn, StatefulCircuit, StructField, Type, WitnessDeclaration,
 };
-use crate::{RenderError, expression, ident, rust_type};
+use crate::{RenderError, expression_with_calls, ident, rust_type};
 
 fn render_state_expression(
     value: &Expr,
@@ -15,6 +15,7 @@ fn render_state_expression(
     witnesses: &HashMap<&str, &WitnessDeclaration>,
     statements: &mut Vec<syn::Stmt>,
     next_temp: &mut usize,
+    circuits: &HashMap<&str, &PureCircuit>,
 ) -> Result<(syn::Expr, Type, bool), RenderError> {
     match value {
         Expr::WitnessCall { name, arguments } => {
@@ -31,7 +32,7 @@ fn render_state_expression(
             let mut rendered_arguments = Vec::<syn::Expr>::with_capacity(arguments.len());
             for (argument, parameter) in arguments.iter().zip(&declaration.parameters) {
                 let (rendered, actual, _) = render_state_expression(
-                    argument, parameters, witnesses, statements, next_temp,
+                    argument, parameters, witnesses, statements, next_temp, circuits,
                 )?;
                 if actual != parameter.ty {
                     return Err(RenderError::TypeMismatch {
@@ -84,8 +85,9 @@ fn render_state_expression(
         | Expr::JubjubPointY { value: input }
         | Expr::EcNeg { value: input }
         | Expr::JubjubScalarFromNative { value: input } => {
-            let (rendered, actual, effect) =
-                render_state_expression(input, parameters, witnesses, statements, next_temp)?;
+            let (rendered, actual, effect) = render_state_expression(
+                input, parameters, witnesses, statements, next_temp, circuits,
+            )?;
             let (operation, result): (syn::Path, Type) = match value {
                 Expr::TransientHash { .. } => {
                     (syn::parse_quote!(runtime::transient_hash), Type::Field)
@@ -166,16 +168,18 @@ fn render_state_expression(
             value: input,
             opening,
         } => {
-            let (input, _, input_effect) =
-                render_state_expression(input, parameters, witnesses, statements, next_temp)?;
+            let (input, _, input_effect) = render_state_expression(
+                input, parameters, witnesses, statements, next_temp, circuits,
+            )?;
             let input_name = syn::Ident::new(
                 &format!("__compact_value_{}", *next_temp),
                 Span::call_site(),
             );
             *next_temp += 1;
             statements.push(syn::parse_quote!(let #input_name = #input;));
-            let (opening, actual, opening_effect) =
-                render_state_expression(opening, parameters, witnesses, statements, next_temp)?;
+            let (opening, actual, opening_effect) = render_state_expression(
+                opening, parameters, witnesses, statements, next_temp, circuits,
+            )?;
             let (expected, operation, result): (Type, syn::Path, Type) = match value {
                 Expr::TransientCommit { .. } => (
                     Type::Field,
@@ -199,8 +203,9 @@ fn render_state_expression(
             ))
         }
         Expr::EcMulGenerator { scalar } => {
-            let (scalar, actual, effect) =
-                render_state_expression(scalar, parameters, witnesses, statements, next_temp)?;
+            let (scalar, actual, effect) = render_state_expression(
+                scalar, parameters, witnesses, statements, next_temp, circuits,
+            )?;
             if actual != Type::Field {
                 return Err(RenderError::TypeMismatch {
                     expected: Type::Field,
@@ -219,8 +224,9 @@ fn render_state_expression(
             point: left,
             scalar: right,
         } => {
-            let (left, actual, left_effect) =
-                render_state_expression(left, parameters, witnesses, statements, next_temp)?;
+            let (left, actual, left_effect) = render_state_expression(
+                left, parameters, witnesses, statements, next_temp, circuits,
+            )?;
             let expected_left = if matches!(value, Expr::ConstructJubjubPoint { .. }) {
                 Type::Field
             } else {
@@ -238,8 +244,9 @@ fn render_state_expression(
             );
             *next_temp += 1;
             statements.push(syn::parse_quote!(let #left_name = #left;));
-            let (right, actual, right_effect) =
-                render_state_expression(right, parameters, witnesses, statements, next_temp)?;
+            let (right, actual, right_effect) = render_state_expression(
+                right, parameters, witnesses, statements, next_temp, circuits,
+            )?;
             let (expected, operation, fallible): (Type, syn::Path, bool) = match value {
                 Expr::ConstructJubjubPoint { .. } => (
                     Type::Field,
@@ -267,8 +274,9 @@ fn render_state_expression(
             let mut types = Vec::new();
             let mut effect = false;
             for element in elements {
-                let (rendered, ty, element_effect) =
-                    render_state_expression(element, parameters, witnesses, statements, next_temp)?;
+                let (rendered, ty, element_effect) = render_state_expression(
+                    element, parameters, witnesses, statements, next_temp, circuits,
+                )?;
                 let element_name = syn::Ident::new(
                     &format!("__compact_element_{}", *next_temp),
                     Span::call_site(),
@@ -290,8 +298,9 @@ fn render_state_expression(
             then,
             otherwise,
         } => {
-            let (condition, condition_ty, condition_effect) =
-                render_state_expression(condition, parameters, witnesses, statements, next_temp)?;
+            let (condition, condition_ty, condition_effect) = render_state_expression(
+                condition, parameters, witnesses, statements, next_temp, circuits,
+            )?;
             if condition_ty != Type::Boolean {
                 return Err(RenderError::TypeMismatch {
                     expected: Type::Boolean,
@@ -305,6 +314,7 @@ fn render_state_expression(
                 witnesses,
                 &mut then_statements,
                 next_temp,
+                circuits,
             )?;
             let mut else_statements = Vec::new();
             let (else_value, else_ty, else_effect) = render_state_expression(
@@ -313,6 +323,7 @@ fn render_state_expression(
                 witnesses,
                 &mut else_statements,
                 next_temp,
+                circuits,
             )?;
             if then_ty != else_ty {
                 return Err(RenderError::TypeMismatch {
@@ -343,6 +354,7 @@ fn render_state_expression(
                     witnesses,
                     statements,
                     next_temp,
+                    circuits,
                 )?;
                 if actual != binding.ty {
                     return Err(RenderError::TypeMismatch {
@@ -361,7 +373,7 @@ fn render_state_expression(
                 effect |= binding_effect;
             }
             let (rendered, ty, body_effect) =
-                render_state_expression(body, &locals, witnesses, statements, next_temp)?;
+                render_state_expression(body, &locals, witnesses, statements, next_temp, circuits)?;
             Ok((rendered, ty, effect || body_effect))
         }
         Expr::UnsignedCast { max, value } => {
@@ -371,8 +383,9 @@ fn render_state_expression(
             if target_max.to_string() != *max {
                 return Err(RenderError::InvalidUnsignedMaximum(max.clone()));
             }
-            let (rendered, actual, effect) =
-                render_state_expression(value, parameters, witnesses, statements, next_temp)?;
+            let (rendered, actual, effect) = render_state_expression(
+                value, parameters, witnesses, statements, next_temp, circuits,
+            )?;
             let Type::Unsigned { max: source_max } = actual else {
                 return Err(RenderError::TypeMismatch {
                     expected: Type::Unsigned { max: max.clone() },
@@ -402,8 +415,9 @@ fn render_state_expression(
             if result_max.to_string() != *max {
                 return Err(RenderError::InvalidUnsignedMaximum(max.clone()));
             }
-            let (left, left_ty, left_effect) =
-                render_state_expression(left, parameters, witnesses, statements, next_temp)?;
+            let (left, left_ty, left_effect) = render_state_expression(
+                left, parameters, witnesses, statements, next_temp, circuits,
+            )?;
             let Type::Unsigned { max: left_max } = left_ty else {
                 return Err(RenderError::TypeMismatch {
                     expected: Type::Unsigned { max: max.clone() },
@@ -416,8 +430,9 @@ fn render_state_expression(
             );
             *next_temp += 1;
             statements.push(syn::parse_quote!(let #left_name = #left;));
-            let (right, right_ty, right_effect) =
-                render_state_expression(right, parameters, witnesses, statements, next_temp)?;
+            let (right, right_ty, right_effect) = render_state_expression(
+                right, parameters, witnesses, statements, next_temp, circuits,
+            )?;
             let Type::Unsigned { max: right_max } = right_ty else {
                 return Err(RenderError::TypeMismatch {
                     expected: Type::Unsigned { max: max.clone() },
@@ -448,8 +463,9 @@ fn render_state_expression(
         Expr::Add { left, right }
         | Expr::Subtract { left, right }
         | Expr::Multiply { left, right } => {
-            let (left, left_ty, left_effect) =
-                render_state_expression(left, parameters, witnesses, statements, next_temp)?;
+            let (left, left_ty, left_effect) = render_state_expression(
+                left, parameters, witnesses, statements, next_temp, circuits,
+            )?;
             if left_ty != Type::Field {
                 return Err(RenderError::TypeMismatch {
                     expected: Type::Field,
@@ -462,8 +478,9 @@ fn render_state_expression(
             );
             *next_temp += 1;
             statements.push(syn::parse_quote!(let #left_name = #left;));
-            let (right, right_ty, right_effect) =
-                render_state_expression(right, parameters, witnesses, statements, next_temp)?;
+            let (right, right_ty, right_effect) = render_state_expression(
+                right, parameters, witnesses, statements, next_temp, circuits,
+            )?;
             if right_ty != Type::Field {
                 return Err(RenderError::TypeMismatch {
                     expected: Type::Field,
@@ -485,16 +502,18 @@ fn render_state_expression(
             Ok((rendered, Type::Field, left_effect || right_effect))
         }
         Expr::Equal { left, right } | Expr::NotEqual { left, right } => {
-            let (left, left_ty, left_effect) =
-                render_state_expression(left, parameters, witnesses, statements, next_temp)?;
+            let (left, left_ty, left_effect) = render_state_expression(
+                left, parameters, witnesses, statements, next_temp, circuits,
+            )?;
             let left_name = syn::Ident::new(
                 &format!("__compact_value_{}", *next_temp),
                 Span::call_site(),
             );
             *next_temp += 1;
             statements.push(syn::parse_quote!(let #left_name = #left;));
-            let (right, right_ty, right_effect) =
-                render_state_expression(right, parameters, witnesses, statements, next_temp)?;
+            let (right, right_ty, right_effect) = render_state_expression(
+                right, parameters, witnesses, statements, next_temp, circuits,
+            )?;
             if right_ty != left_ty {
                 return Err(RenderError::TypeMismatch {
                     expected: left_ty,
@@ -513,8 +532,9 @@ fn render_state_expression(
             left,
             right,
         } => {
-            let (left, left_ty, left_effect) =
-                render_state_expression(left, parameters, witnesses, statements, next_temp)?;
+            let (left, left_ty, left_effect) = render_state_expression(
+                left, parameters, witnesses, statements, next_temp, circuits,
+            )?;
             if !matches!(left_ty, Type::Unsigned { .. }) {
                 return Err(RenderError::ExpectedUnsigned(left_ty));
             }
@@ -524,8 +544,9 @@ fn render_state_expression(
             );
             *next_temp += 1;
             statements.push(syn::parse_quote!(let #left_name = #left;));
-            let (right, right_ty, right_effect) =
-                render_state_expression(right, parameters, witnesses, statements, next_temp)?;
+            let (right, right_ty, right_effect) = render_state_expression(
+                right, parameters, witnesses, statements, next_temp, circuits,
+            )?;
             if !matches!(right_ty, Type::Unsigned { .. }) {
                 return Err(RenderError::ExpectedUnsigned(right_ty));
             }
@@ -543,7 +564,8 @@ fn render_state_expression(
             };
             Ok((rendered, Type::Boolean, left_effect || right_effect))
         }
-        _ => expression(value, parameters).map(|(rendered, ty)| (rendered, ty, false)),
+        _ => expression_with_calls(value, parameters, circuits)
+            .map(|(rendered, ty)| (rendered, ty, false)),
     }
 }
 
@@ -551,6 +573,7 @@ pub(crate) fn render_stateful_circuit(
     circuit: &StatefulCircuit,
     ledger_fields: &HashMap<&str, &LedgerField>,
     witnesses: &HashMap<&str, &WitnessDeclaration>,
+    circuits: &HashMap<&str, &PureCircuit>,
 ) -> Result<syn::Item, RenderError> {
     let name = ident(&circuit.name)?;
     let mut parameters = HashMap::new();
@@ -588,6 +611,7 @@ pub(crate) fn render_stateful_circuit(
                     witnesses,
                     &mut binding_statements,
                     &mut next_temp,
+                    circuits,
                 )?;
                 if actual != binding.ty {
                     return Err(RenderError::TypeMismatch {
@@ -621,6 +645,7 @@ pub(crate) fn render_stateful_circuit(
                     witnesses,
                     &mut effect_statements,
                     &mut next_temp,
+                    circuits,
                 )?;
                 if actual != Type::Boolean {
                     return Err(RenderError::TypeMismatch {
@@ -729,7 +754,7 @@ pub(crate) fn render_stateful_circuit(
                 if declaration.index != *index {
                     return Err(RenderError::UnknownLedgerField(field.clone()));
                 }
-                let (value, actual) = expression(value, &parameters)?;
+                let (value, actual) = expression_with_calls(value, &parameters, circuits)?;
                 if &actual != ty {
                     return Err(RenderError::TypeMismatch {
                         expected: ty.clone(),
@@ -761,7 +786,7 @@ pub(crate) fn render_stateful_circuit(
                 if declaration.index != *index {
                     return Err(RenderError::UnknownLedgerField(field.clone()));
                 }
-                let (value, actual) = expression(value, &parameters)?;
+                let (value, actual) = expression_with_calls(value, &parameters, circuits)?;
                 if &actual != ty {
                     return Err(RenderError::TypeMismatch {
                         expected: ty.clone(),
@@ -825,7 +850,7 @@ pub(crate) fn render_stateful_circuit(
                 if declaration.index != *index {
                     return Err(RenderError::UnknownLedgerField(field.clone()));
                 }
-                let (value, actual) = expression(value, &parameters)?;
+                let (value, actual) = expression_with_calls(value, &parameters, circuits)?;
                 if &actual != ty {
                     return Err(RenderError::TypeMismatch {
                         expected: ty.clone(),
@@ -887,14 +912,14 @@ pub(crate) fn render_stateful_circuit(
                 if declaration.index != *index {
                     return Err(RenderError::UnknownLedgerField(field.clone()));
                 }
-                let (key, actual_key) = expression(key, &parameters)?;
+                let (key, actual_key) = expression_with_calls(key, &parameters, circuits)?;
                 if &actual_key != key_ty {
                     return Err(RenderError::TypeMismatch {
                         expected: key_ty.clone(),
                         actual: actual_key,
                     });
                 }
-                let (value, actual_value) = expression(value, &parameters)?;
+                let (value, actual_value) = expression_with_calls(value, &parameters, circuits)?;
                 if &actual_value != value_ty {
                     return Err(RenderError::TypeMismatch {
                         expected: value_ty.clone(),
@@ -926,7 +951,7 @@ pub(crate) fn render_stateful_circuit(
                 if declaration.index != *index {
                     return Err(RenderError::UnknownLedgerField(field.clone()));
                 }
-                let (key, actual_key) = expression(key, &parameters)?;
+                let (key, actual_key) = expression_with_calls(key, &parameters, circuits)?;
                 if &actual_key != key_ty {
                     return Err(RenderError::TypeMismatch {
                         expected: key_ty.clone(),
@@ -955,7 +980,7 @@ pub(crate) fn render_stateful_circuit(
                 if declaration.index != *index {
                     return Err(RenderError::UnknownLedgerField(field.clone()));
                 }
-                let (key, actual_key) = expression(key, &parameters)?;
+                let (key, actual_key) = expression_with_calls(key, &parameters, circuits)?;
                 if &actual_key != key_ty {
                     return Err(RenderError::TypeMismatch {
                         expected: key_ty.clone(),
@@ -1005,6 +1030,7 @@ pub(crate) fn render_stateful_circuit(
                 witnesses,
                 &mut effect_statements,
                 &mut next_temp,
+                circuits,
             )?;
             if actual != circuit.result {
                 return Err(RenderError::TypeMismatch {
@@ -1205,7 +1231,7 @@ pub(crate) fn render_stateful_circuit(
                     actual: circuit.result.clone(),
                 });
             }
-            let (value, actual) = expression(value, &parameters)?;
+            let (value, actual) = expression_with_calls(value, &parameters, circuits)?;
             if &actual != ty {
                 return Err(RenderError::TypeMismatch {
                     expected: ty.clone(),
@@ -1299,7 +1325,7 @@ pub(crate) fn render_stateful_circuit(
             if declaration.index != *index {
                 return Err(RenderError::UnknownLedgerField(field.clone()));
             }
-            let (key, actual_key) = expression(key, &parameters)?;
+            let (key, actual_key) = expression_with_calls(key, &parameters, circuits)?;
             if &actual_key != key_ty {
                 return Err(RenderError::TypeMismatch {
                     expected: key_ty.clone(),

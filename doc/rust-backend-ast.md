@@ -152,6 +152,10 @@ and conversions evaluate their input witness before the native call;
 commitments evaluate the value before the opening. The witness crypto fixture
 checks private state and FAB transcript order against TypeScript, including a
 commitment with two different witnesses and nested persistent hash conversion.
+Stateful emission now resolves calls to exported pure circuits through the same
+typed signature table as pure emission. The fixture calls a pure helper in a
+ledger Cell write and in the stateful return, then compares the returned value,
+Cell read, and serialized ledger state with generated TypeScript.
 The action IR also carries typed sequential local bindings. A witnessed Cell
 write evaluates its witness before the ledger VM write; two writes in one
 circuit preserve the intervening ledger state, private state, and transcript
@@ -271,6 +275,7 @@ cargo test -p compact-rust-backend -p midnight-compact-runtime \
   -p compact-rust-boolean-logic-fixture \
   -p compact-rust-uint-compare-fixture \
   -p compact-rust-vector-tuple-cell-fixture \
+  -p compact-rust-stateful-pure-call-fixture \
   -p compact-rust-uint-identity-fixture -p compact-rust-bytes-identity-fixture \
   -p compact-rust-counter-fixture -p compact-rust-cell-boolean-fixture \
   -p compact-rust-struct-identity-fixture -p compact-rust-nested-struct-fixture \

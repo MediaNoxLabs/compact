@@ -1,0 +1,16 @@
+import CompactStandardLibrary;
+
+export ledger stored: Field;
+
+export pure circuit square(value: Field): Field {
+  return value * value;
+}
+
+export circuit save(value: Field): Field {
+  stored = disclose(square(value));
+  return square(value);
+}
+
+export circuit read_stored(): Field {
+  return stored.read();
+}

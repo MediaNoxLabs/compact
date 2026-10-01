@@ -87,6 +87,17 @@ use std::process::Command;
 /// (case name, Compact source, expected `rust-feature-error` kind)
 const REJECTIONS: &[(&str, &str, &str)] = &[
     (
+        // A type with no Rust lowering. Before the fix this emitted
+        // `/* TODO M3-F4: topaque … */` into type position — valid-looking
+        // Rust, so compactc exited 0 and `cargo build` failed later with
+        // nothing pointing back at the Compact source.
+        "opaque type with no mapping",
+        "import CompactStandardLibrary;\n\
+         export ledger thing: Opaque<\"NotAThing\">;\n\
+         constructor() {}\n",
+        "opaque-type",
+    ),
+    (
         // The miscompiler. `names.insert` + a `for` writing a ledger cell
         // is past what the constructor walker matches, so before #45 this
         // emitted a constructor containing only the bare scaffold seed.

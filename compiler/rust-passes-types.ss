@@ -25,10 +25,9 @@
       ;; type-rust: walk an Ltypescript Type IR node and produce the
       ;; corresponding Rust type string. Covers M3-F1 scope: primitives
       ;; (tfield, tboolean, tunsigned, tbytes), ttuple, and tvector.
-      ;; Aggregate / nominal forms (talias, tenum, tstruct, tcontract,
-      ;; tjubjub, topaque, tunknown, ...) emit a placeholder TODO string
-      ;; tagged with the variant name so later tasks (F2-F4) can locate
-      ;; missing cases. Never crashes on unknown variants.
+      ;; A type with no Rust lowering raises `rust-feature-error`: a located
+      ;; diagnostic naming the kind, rather than a placeholder string that
+      ;; reaches the generated crate and fails later at `cargo build`.
       (define (type-rust type)
         (nanopass-case (Ltypescript Type) type
           [(tfield ,src) "Fr"]
@@ -69,7 +68,16 @@
              [(equal? opaque-type "string") "midnight_compact_runtime::std_lib::OpaqueString"]
              [(equal? opaque-type "Uint8Array") "Vec<u8>"]
              [(equal? opaque-type "JubjubPoint") "JubjubPoint"]
-             [else (format "/* TODO M3-F4: topaque ~a */" opaque-type)])]
+             [else
+              ;; Was a `/* TODO ... */` string. That is valid-looking Rust in
+              ;; type position, so `compactc` exited 0, the fixture
+              ;; regenerated and agreed with itself, and the failure surfaced
+              ;; at `cargo build` with nothing pointing back at the Compact
+              ;; source. `rust-feature-error` has been available in
+              ;; rust-passes-helpers.ss all along; this pass just never
+              ;; called it.
+              (rust-feature-error src 'opaque-type
+                "Opaque<~s> has no Rust lowering" opaque-type)])]
           [(tstruct ,src ,struct-name (,elt-name* ,type*) ...)
            ;; Stdlib structs (Maybe<T>, MerkleTreePath<#n, T>,
            ;; MerkleTreePathEntry) resolve to runtime-provided Rust types
@@ -100,8 +108,12 @@
            ;; the TS path: emit `ContractAddress`. F4 partial; refinements
            ;; (typed handles per external-contract-name) can come later.
            "ContractAddress"]
-          [(tunknown) "/* TODO M3-F4: tunknown */"]
-          [else "/* TODO M3-F4: unhandled type variant */"]))
+          [(tunknown)
+           (rust-feature-error #f 'unknown-type
+             "a value reached the Rust backend with no type information")]
+          [else
+           (rust-feature-error #f 'type-variant
+             "no Rust lowering for the type ~a" (unparse-Ltypescript type))]))
 
       ;; type-fingerprint: a disambiguation-INDEPENDENT structural key for a
       ;; Type node. Unlike type-rust it never consults the struct rename
@@ -130,7 +142,13 @@
            ;; transparent alias expands (recurse so a struct underneath is
            ;; seen structurally).
            (if nominal? (list 'alias type-name) (type-fingerprint type))]
-          [else (type-rust type)]))
+          ;; A fingerprint is a structural *key*, not emitted Rust, so it has
+          ;; to stay total over every Type node — including the ones with no
+          ;; Rust lowering. Delegating to `type-rust` was harmless only while
+          ;; those produced a placeholder string; now that they refuse,
+          ;; computing a key for `export {Maybe}` would die on its type
+          ;; variable `T`.
+          [else (list 'other (unparse-Ltypescript type))]))
 
       ;; tstruct-fingerprint: a structural fingerprint of a tstruct/tenum
       ;; Type node, used to distinguish two `import M<...>` instantiations

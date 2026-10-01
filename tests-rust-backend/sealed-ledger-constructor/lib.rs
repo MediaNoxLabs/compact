@@ -112,7 +112,7 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let frame = frame.write_cell(3, true)?;
+            let frame = crate::ledger_slots::flag.record_write(frame, true)?;
             Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.

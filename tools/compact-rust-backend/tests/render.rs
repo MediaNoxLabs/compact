@@ -1318,7 +1318,7 @@ fn state_action_must_reference_the_declared_ledger_field_and_index() {
     let source = render(&contract).unwrap();
     assert!(source.contains("context.increment_counter(0, 1)?"));
     assert!(source.contains("pub mod recorded"));
-    assert!(source.contains("frame.increment_counter(0, 1u16)?"));
+    assert!(source.contains("crate::ledger_slots::round.record_increment(frame, 1u16)?"));
     assert!(source.contains("Ok(frame.finish(()))"));
 
     contract.stateful_circuits[0].actions[0] = StateAction::CounterDecrement {
@@ -1334,7 +1334,7 @@ fn state_action_must_reference_the_declared_ledger_field_and_index() {
     assert!(
         render(&contract)
             .unwrap()
-            .contains("frame.decrement_counter(0, 1u16)?")
+            .contains("crate::ledger_slots::round.record_decrement(frame, 1u16)?")
     );
     contract.stateful_circuits[0].actions[0] = StateAction::CounterReset {
         field: "round".into(),
@@ -1569,8 +1569,8 @@ fn counter_read_returns_uint64() {
     };
     let source = render(&contract).unwrap();
     assert!(source.contains("context.read_cell::<u64>(0)?"));
-    assert!(source.contains("frame.read_cell(0)?"));
-    assert!(source.contains("let (frame, observed): (_, u64) = frame.read_cell(0)?;"));
+    assert!(source.contains("crate::ledger_slots::round"));
+    assert!(source.contains(".record_read(frame)?"));
     assert!(source.contains("pub struct Contract<W>"));
     assert!(source.contains("crate::ledger_contract::read_round(context"));
 

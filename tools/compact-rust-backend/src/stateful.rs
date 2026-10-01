@@ -1482,7 +1482,7 @@ pub(crate) fn render_recorded_circuit(
                 {
                     return Err(RenderError::UnknownLedgerField(field.clone()));
                 }
-                let path = ledger_path_expr(declaration);
+                let slot = ident(field)?;
                 let amount: syn::Expr = match amount {
                     CounterAmount::Literal { value } => {
                         let literal = syn::LitInt::new(&format!("{value}u16"), Span::call_site());
@@ -1500,11 +1500,13 @@ pub(crate) fn render_recorded_circuit(
                     }
                 };
                 let method = if matches!(action, StateAction::CounterIncrement { .. }) {
-                    syn::Ident::new("increment_counter", Span::call_site())
+                    syn::Ident::new("record_increment", Span::call_site())
                 } else {
-                    syn::Ident::new("decrement_counter", Span::call_site())
+                    syn::Ident::new("record_decrement", Span::call_site())
                 };
-                steps.push(syn::parse_quote!(let frame = frame.#method(#path, #amount)?;));
+                steps.push(syn::parse_quote!(
+                    let frame = crate::ledger_slots::#slot.#method(frame, #amount)?;
+                ));
                 Ok(true)
             }
             StateAction::CellWrite {
@@ -1524,8 +1526,10 @@ pub(crate) fn render_recorded_circuit(
                 let Some(value) = boolean_source(value, parameters) else {
                     return Ok(false);
                 };
-                let path = ledger_path_expr(declaration);
-                steps.push(syn::parse_quote!(let frame = frame.write_cell(#path, #value)?;));
+                let slot = ident(field)?;
+                steps.push(syn::parse_quote!(
+                    let frame = crate::ledger_slots::#slot.record_write(frame, #value)?;
+                ));
                 Ok(true)
             }
             _ => Ok(false),
@@ -1564,9 +1568,12 @@ pub(crate) fn render_recorded_circuit(
             if declaration.declaration != LedgerFieldKind::Counter || declaration.index != *index {
                 return Err(RenderError::UnknownLedgerField(field.clone()));
             }
-            let path = ledger_path_expr(declaration);
+            let slot = ident(field)?;
             (
-                vec![syn::parse_quote!(let (frame, observed): (_, u64) = frame.read_cell(#path)?;)],
+                vec![syn::parse_quote!(
+                    let (frame, observed): (_, u64) =
+                        crate::ledger_slots::#slot.record_read(frame)?;
+                )],
                 syn::parse_quote!(
                     runtime::BoundedUint::<18446744073709551615>::new(observed as u128)
                         .expect("ledger Counter fits Uint<64>")
@@ -1583,11 +1590,12 @@ pub(crate) fn render_recorded_circuit(
             {
                 return Ok(None);
             }
-            let path = ledger_path_expr(declaration);
+            let slot = ident(field)?;
             (
-                vec![
-                    syn::parse_quote!(let (frame, observed): (_, bool) = frame.read_cell(#path)?;),
-                ],
+                vec![syn::parse_quote!(
+                    let (frame, observed): (_, bool) =
+                        crate::ledger_slots::#slot.record_read(frame)?;
+                )],
                 syn::parse_quote!(observed),
             )
         }

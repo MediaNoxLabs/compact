@@ -138,7 +138,7 @@ pub mod ledger_contract {
             runtime::CompactError,
         > {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, observed): (_, u64) = frame.read_cell(0)?;
+            let (frame, observed): (_, u64) = crate::ledger_slots::c.record_read(frame)?;
             Ok(frame.finish(
                 runtime::BoundedUint::<18446744073709551615>::new(observed as u128)
                     .expect("ledger Counter fits Uint<64>"),

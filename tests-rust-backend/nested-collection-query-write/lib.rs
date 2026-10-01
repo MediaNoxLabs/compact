@@ -201,7 +201,8 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, observed): (_, bool) = frame.read_cell(0)?;
+            let (frame, observed): (_, bool) =
+                crate::ledger_slots::memberFlag.record_read(frame)?;
             Ok(frame.finish(observed))
         }
         pub fn set_empty_flag<Private>(
@@ -209,7 +210,8 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, observed): (_, bool) = frame.read_cell(1)?;
+            let (frame, observed): (_, bool) =
+                crate::ledger_slots::setEmptyFlag.record_read(frame)?;
             Ok(frame.finish(observed))
         }
         pub fn map_empty_flag<Private>(
@@ -217,7 +219,8 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, observed): (_, bool) = frame.read_cell(2)?;
+            let (frame, observed): (_, bool) =
+                crate::ledger_slots::mapEmptyFlag.record_read(frame)?;
             Ok(frame.finish(observed))
         }
         /// Typed handle for circuits with a complete recorded trace.

@@ -280,6 +280,12 @@ fn collect_expression_types(
     match expr {
         Expr::Default { ty } => collect_named_types(ty, structs, enums)?,
         Expr::StructField { value, .. } => collect_expression_types(value, structs, enums)?,
+        Expr::StructLiteral { ty, fields } => {
+            collect_named_types(ty, structs, enums)?;
+            for field in fields {
+                collect_expression_types(field, structs, enums)?;
+            }
+        }
         Expr::Tuple { elements } => {
             for element in elements {
                 collect_expression_types(element, structs, enums)?;
@@ -514,6 +520,36 @@ fn expression_with_calls(
             Ok((
                 syn::parse_quote!((#value).#name.clone()),
                 declaration.ty.clone(),
+            ))
+        }
+        Expr::StructLiteral { ty, fields } => {
+            let Type::Struct {
+                name,
+                fields: declarations,
+            } = ty
+            else {
+                return Err(RenderError::InvalidStructField("<literal>".into()));
+            };
+            if fields.len() != declarations.len() {
+                return Err(RenderError::InvalidStructField(name.clone()));
+            }
+            let mut field_names = Vec::with_capacity(fields.len());
+            let mut field_values = Vec::with_capacity(fields.len());
+            for (value, declaration) in fields.iter().zip(declarations) {
+                let (rendered, actual) = expression_with_calls(value, parameters, circuits)?;
+                if actual != declaration.ty {
+                    return Err(RenderError::TypeMismatch {
+                        expected: declaration.ty.clone(),
+                        actual,
+                    });
+                }
+                field_names.push(ident(&declaration.name)?);
+                field_values.push(rendered);
+            }
+            let name = ident(name)?;
+            Ok((
+                syn::parse_quote!(crate::types::#name { #(#field_names: #field_values),* }),
+                ty.clone(),
             ))
         }
         Expr::Assert { condition, message } => {
@@ -1017,6 +1053,7 @@ fn infallible_constructor_expr(value: &Expr) -> bool {
         Expr::Vector { elements, .. } | Expr::Tuple { elements } => {
             elements.iter().all(infallible_constructor_expr)
         }
+        Expr::StructLiteral { fields, .. } => fields.iter().all(infallible_constructor_expr),
         Expr::HashToCurve { value }
         | Expr::JubjubPointX { value }
         | Expr::JubjubPointY { value }

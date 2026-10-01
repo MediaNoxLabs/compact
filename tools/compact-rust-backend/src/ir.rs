@@ -404,6 +404,10 @@ pub enum Expr {
         field: String,
         index: usize,
     },
+    StructLiteral {
+        ty: Type,
+        fields: Vec<Expr>,
+    },
     SetMember {
         field: String,
         index: u8,

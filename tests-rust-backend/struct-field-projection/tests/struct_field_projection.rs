@@ -1,4 +1,4 @@
-use compact_rust_struct_field_projection_fixture::pure_circuits::{hash_projected, project};
+use compact_rust_struct_field_projection_fixture::pure_circuits::{hash_projected, make, project};
 use compact_rust_struct_field_projection_fixture::types::VecBox;
 use midnight_compact_runtime::{Field, FixedVector};
 
@@ -11,6 +11,8 @@ fn typed_struct_field_projection_matches_typescript_values_and_hash() {
     let input = VecBox {
         values: FixedVector::new([Field::from(1_u64), Field::from(2_u64)]),
     };
+    assert_eq!(make().unwrap(), input);
+    assert_eq!(oracle["made"], serde_json::json!(["1", "2"]));
     assert_eq!(project(input.clone()).unwrap(), input.values);
     assert_eq!(oracle["projected"], serde_json::json!(["1", "2"]));
     assert_eq!(

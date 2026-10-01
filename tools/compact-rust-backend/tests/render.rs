@@ -60,6 +60,36 @@ fn struct_field_projection_checks_declared_name_and_position() {
 }
 
 #[test]
+fn struct_literal_checks_field_value_types() {
+    let ty = Type::Struct {
+        name: "Record".into(),
+        fields: vec![StructField {
+            name: "amount".into(),
+            ty: Type::Field,
+        }],
+    };
+    let mut contract = identity(
+        ty.clone(),
+        Expr::StructLiteral {
+            ty,
+            fields: vec![Expr::FieldLiteral { value: "7".into() }],
+        },
+    );
+    assert!(render(&contract).is_ok());
+    let Expr::StructLiteral { fields, .. } = &mut contract.circuits[0].body else {
+        unreachable!()
+    };
+    fields[0] = Expr::Boolean { value: true };
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::TypeMismatch {
+            expected: Type::Field,
+            actual: Type::Boolean,
+        })
+    );
+}
+
+#[test]
 fn constructor_cell_parameters_are_typed_and_validated() {
     let mut contract = identity(
         Type::Field,

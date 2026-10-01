@@ -21,6 +21,14 @@ pub mod types {
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
     const _: () = assert!(runtime::RUST_RUNTIME_ABI == 3);
+    pub fn make() -> Result<crate::types::VecBox, runtime::CompactError> {
+        Ok(crate::types::VecBox {
+            values: runtime::FixedVector::new([
+                runtime::Field::from(1u128),
+                runtime::Field::from(2u128),
+            ]),
+        })
+    }
     pub fn project(
         item: crate::types::VecBox,
     ) -> Result<runtime::FixedVector<runtime::Field, 2>, runtime::CompactError> {

@@ -4,6 +4,10 @@ struct VecBox {
   values: Vector<2, Field>;
 }
 
+export pure circuit make(): VecBox {
+  return VecBox { values: [1, 2] };
+}
+
 export pure circuit project(item: VecBox): Vector<2, Field> {
   return item.values;
 }

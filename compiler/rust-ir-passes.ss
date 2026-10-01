@@ -134,6 +134,19 @@
                    (cons "value" (expression-ir expr src))
                    (cons "field" (symbol->string elt-name))
                    (cons "index" nat))]
+          [(new ,src ,type ,expr* ...)
+           (nanopass-case (Lnodisclose Type) type
+             [(tstruct ,src^ ,struct-name (,elt-name* ,type*) ...)
+              (unless (= (length expr*) (length type*))
+                (source-errorf src "Rust struct literal field count does not match its type"))
+              (object (cons "kind" "struct_literal")
+                      (cons "ty" (type-ir type src))
+                      (cons "fields"
+                            (list->vector
+                              (map (lambda (value field-type)
+                                     (typed-expression-ir value field-type src))
+                                   expr* type*))))]
+             [else (source-errorf src "Rust backend does not yet support this struct literal")])]
           [(quote ,src ,datum)
            (cond
              [(boolean? datum)

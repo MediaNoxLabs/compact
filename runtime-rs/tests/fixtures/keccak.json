@@ -1,0 +1,26 @@
+{
+  "field": "04994f67dc55b09e814ab7ffc8df3686b4afb2bb53e60eae97ef043fe03fb829",
+  "bytes": "a6885b3731702da62e8e4a8f584ac46a7f6822f4e2ba50fba902f67b1588d23b",
+  "pair": "e35b53a8915da53b3917ee7d54614f4c735211905c0ea06237268b7fcf7d6e42",
+  "witness": {
+    "result": "b2e7b7a21d986ae84d62a7de4a916f006c4e42a596358b93bad65492d174c4ff",
+    "privateState": 8,
+    "privateTranscriptOutputs": [
+      {
+        "valueAtoms": [
+          [
+            9
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

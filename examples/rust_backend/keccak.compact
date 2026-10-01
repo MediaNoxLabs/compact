@@ -1,0 +1,19 @@
+import CompactStandardLibrary;
+
+witness echo(value: Field): Field;
+
+export circuit hash_field(value: Field): Bytes<32> {
+  return keccak256<Field>(disclose(value));
+}
+
+export circuit hash_bytes(value: Bytes<4>): Bytes<32> {
+  return keccak256<Bytes<4>>(disclose(value));
+}
+
+export circuit hash_pair(value: Vector<2, Field>): Bytes<32> {
+  return keccak256<Vector<2, Field>>(disclose(value));
+}
+
+export circuit hash_echo(value: Field): Bytes<32> {
+  return keccak256<Field>(disclose(echo(value)));
+}

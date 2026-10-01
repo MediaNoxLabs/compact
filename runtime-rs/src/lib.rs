@@ -14,7 +14,7 @@ mod primitives;
 pub use midnight_compact_runtime_macros::CompactCellValue;
 pub use natives::{
     degrade_to_transient, ec_add, ec_mul, ec_mul_generator, ec_neg, hash_to_curve, jubjub_point_x,
-    jubjub_point_y, jubjub_scalar_from_native, persistent_commit, persistent_hash,
+    jubjub_point_y, jubjub_scalar_from_native, keccak256, persistent_commit, persistent_hash,
     transient_commit, transient_hash, upgrade_from_transient,
 };
 pub use primitives::{

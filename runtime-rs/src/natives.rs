@@ -7,6 +7,7 @@ use midnight_base_crypto::hash::{self as persistent, HashOutput, PersistentHashW
 use midnight_transient_crypto::curve::{EmbeddedFr, EmbeddedGroupAffine, embedded};
 use midnight_transient_crypto::fab::ValueReprAlignedValue;
 use midnight_transient_crypto::hash;
+use sha3::{Digest, Keccak256};
 
 fn value_repr<T: Aligned + Into<Value>>(value: T) -> ValueReprAlignedValue {
     ValueReprAlignedValue(
@@ -31,6 +32,15 @@ pub fn persistent_hash<T: Aligned + Into<Value>>(value: T) -> FixedBytes<32> {
     let mut writer = PersistentHashWriter::default();
     value_repr(value).binary_repr(&mut writer);
     FixedBytes(writer.finalize().0)
+}
+
+/// Hash the concatenated FAB atoms using Compact's Keccak-256 encoding.
+pub fn keccak256<T: Into<Value>>(value: T) -> FixedBytes<32> {
+    let mut hasher = Keccak256::new();
+    for atom in value.into().0 {
+        hasher.update(atom.0);
+    }
+    FixedBytes(hasher.finalize().into())
 }
 
 /// Commit to the FAB binary value using ledger-8's persistent commitment.

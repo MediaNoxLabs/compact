@@ -25,7 +25,7 @@ The backend supports exported pure circuits with `Field`, `Boolean`,
 Boolean, Field, and Uint literals, unit, tuple construction, typed conditionals, sequential
 local bindings, pure circuit calls, Field addition/subtraction/multiplication,
 checked unsigned addition, subtraction, and multiplication, and the
-`transientHash`, `transientCommit`, `persistentHash`, `persistentCommit`,
+`transientHash`, `transientCommit`, `persistentHash`, `persistentCommit`, `keccak256`,
 `degradeToTransient`, `upgradeFromTransient`, `hashToCurve`, Jubjub
 coordinate natives, point addition/negation/multiplication, and native-to-Jubjub
 scalar reduction. The fixtures
@@ -54,6 +54,11 @@ ledger-8's `ValueReprAlignedValue`, and call the ledger's Poseidon hash or
 commitment primitive. This matches the ledger WASM entry points used by the
 TypeScript runtime. The persistent natives similarly reuse ledger-8's SHA-256
 writer and persistent commitment over the value-only FAB binary encoding.
+`keccak256` uses Compact's separate byte encoding: it concatenates normalized
+FAB value atoms and hashes those bytes with Keccak-256. The Field, Bytes<4>,
+and vector fixture compares generated Rust with generated TypeScript circuits
+and direct TypeScript native calls. A witnessed case checks private state and
+FAB transcript output.
 Field, vector, and bytes fixtures compare generated Rust results to generated
 TypeScript circuits and the TypeScript native calls, including nested
 hash-to-field conversion.
@@ -206,6 +211,7 @@ cargo test -p compact-rust-backend -p midnight-compact-runtime \
   -p compact-rust-one-tuple-fixture -p compact-rust-field-add-fixture \
   -p compact-rust-field-arithmetic-fixture -p compact-rust-transient-hash-fixture \
   -p compact-rust-persistent-hash-fixture \
+  -p compact-rust-keccak-fixture \
   -p compact-rust-jubjub-hash-fixture \
   -p compact-rust-jubjub-arithmetic-fixture \
   -p compact-rust-jubjub-cell-fixture \

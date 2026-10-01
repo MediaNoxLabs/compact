@@ -76,6 +76,7 @@ fn render_state_expression(
         }
         Expr::TransientHash { value: input }
         | Expr::PersistentHash { value: input }
+        | Expr::Keccak256 { value: input }
         | Expr::DegradeToTransient { value: input }
         | Expr::UpgradeFromTransient { value: input }
         | Expr::HashToCurve { value: input }
@@ -91,6 +92,10 @@ fn render_state_expression(
                 }
                 Expr::PersistentHash { .. } => (
                     syn::parse_quote!(runtime::persistent_hash),
+                    Type::Bytes { length: 32 },
+                ),
+                Expr::Keccak256 { .. } => (
+                    syn::parse_quote!(runtime::keccak256),
                     Type::Bytes { length: 32 },
                 ),
                 Expr::DegradeToTransient { .. } => {

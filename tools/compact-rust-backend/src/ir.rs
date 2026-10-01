@@ -317,6 +317,9 @@ pub enum Expr {
     PersistentHash {
         value: Box<Expr>,
     },
+    Keccak256 {
+        value: Box<Expr>,
+    },
     PersistentCommit {
         value: Box<Expr>,
         opening: Box<Expr>,

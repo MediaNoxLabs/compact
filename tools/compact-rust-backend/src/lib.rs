@@ -264,6 +264,7 @@ fn collect_expression_types(
         }
         Expr::TransientHash { value }
         | Expr::PersistentHash { value }
+        | Expr::Keccak256 { value }
         | Expr::DegradeToTransient { value }
         | Expr::UpgradeFromTransient { value }
         | Expr::HashToCurve { value }
@@ -520,6 +521,13 @@ fn expression_with_calls(
             let (value, _) = expression_with_calls(value, parameters, circuits)?;
             Ok((
                 syn::parse_quote!(runtime::persistent_hash(#value)),
+                Type::Bytes { length: 32 },
+            ))
+        }
+        Expr::Keccak256 { value } => {
+            let (value, _) = expression_with_calls(value, parameters, circuits)?;
+            Ok((
+                syn::parse_quote!(runtime::keccak256(#value)),
                 Type::Bytes { length: 32 },
             ))
         }

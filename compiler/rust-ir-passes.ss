@@ -188,7 +188,12 @@
                [(eq? name 'persistentHash)
                 (unless (= (length expr*) 1)
                   (source-errorf src "persistentHash expects one argument"))
-                (object (cons "kind" "persistent_hash")
+               (object (cons "kind" "persistent_hash")
+                        (cons "value" (expression-ir (car expr*) src)))]
+               [(eq? name 'keccak256)
+                (unless (= (length expr*) 1)
+                  (source-errorf src "keccak256 expects one argument"))
+                (object (cons "kind" "keccak256")
                         (cons "value" (expression-ir (car expr*) src)))]
                [(eq? name 'persistentCommit)
                 (unless (= (length expr*) 2)
@@ -596,13 +601,14 @@
                 (object (cons "kind" "witness_call")
                         (cons "name" (symbol->string name))
                         (cons "arguments" (list->vector (map (lambda (arg) (stateful-expression-ir arg src witness-ids)) expr*))))]
-               [(memq name '(transientHash persistentHash degradeToTransient upgradeFromTransient
+               [(memq name '(transientHash persistentHash keccak256 degradeToTransient upgradeFromTransient
                               hashToCurve jubjubPointX jubjubPointY ecNeg jubjubScalarFromNative))
                 (unless (= (length expr*) 1)
                   (source-errorf src "Rust backend native expects one argument"))
                 (object (cons "kind" (case name
                                         [(transientHash) "transient_hash"]
                                         [(persistentHash) "persistent_hash"]
+                                        [(keccak256) "keccak256"]
                                         [(degradeToTransient) "degrade_to_transient"]
                                         [(upgradeFromTransient) "upgrade_from_transient"]
                                         [(hashToCurve) "hash_to_curve"]
@@ -719,7 +725,7 @@
           [(call ,src ,function-name ,expr* ...)
            (if (or (eq-hashtable-ref witness-ids function-name #f)
                    (memq (id-sym function-name)
-                         '(transientHash transientCommit persistentHash persistentCommit
+                         '(transientHash transientCommit persistentHash persistentCommit keccak256
                            degradeToTransient upgradeFromTransient hashToCurve
                            jubjubPointX jubjubPointY ecAdd ecNeg ecMul ecMulGenerator
                            jubjubScalarFromNative)))

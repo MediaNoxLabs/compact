@@ -54,6 +54,11 @@ pub(crate) fn build<'a>(
         for field in ledger_fields {
             let name = ident(&field.id)?;
             let index = syn::LitInt::new(&field.index.to_string(), Span::call_site());
+            let path = field
+                .physical_path()
+                .iter()
+                .map(|part| syn::LitInt::new(&part.to_string(), Span::call_site()))
+                .collect::<Vec<_>>();
             match &field.declaration {
                 LedgerFieldKind::Cell { ty } => {
                     let ty = rust_type(ty)?;
@@ -79,27 +84,42 @@ pub(crate) fn build<'a>(
                 }
                 LedgerFieldKind::Counter => {
                     let max = syn::LitInt::new(&u64::MAX.to_string(), Span::call_site());
+                    let read: syn::Expr = if path.len() == 1 {
+                        syn::parse_quote!(runtime::ledger::read_root_cell::<u64, _>(self.state, #index)?)
+                    } else {
+                        syn::parse_quote!(runtime::ledger::read_cell_at_path::<u64, _>(self.state, &[#(#path),*])?)
+                    };
                     ledger_view_methods.push(syn::parse_quote! {
                         pub fn #name(&self) -> Result<runtime::BoundedUint<#max>, runtime::CompactError> {
-                            let value = runtime::ledger::read_root_cell::<u64, _>(self.state, #index)?;
+                            let value = #read;
                             runtime::BoundedUint::<#max>::new(value as u128)
                         }
                     });
                 }
                 LedgerFieldKind::Set { ty } => {
                     let ty = rust_type(ty)?;
+                    let view: syn::Expr = if path.len() == 1 {
+                        syn::parse_quote!(runtime::ledger::set_view::<#ty, _>(self.state, #index))
+                    } else {
+                        syn::parse_quote!(runtime::ledger::set_view_at_path::<#ty, _>(self.state, &[#(#path),*]))
+                    };
                     ledger_view_methods.push(syn::parse_quote! {
                         pub fn #name(&self) -> Result<runtime::ledger::SetView<'a, #ty, runtime::ledger::DefaultDB>, runtime::CompactError> {
-                            runtime::ledger::set_view::<#ty, _>(self.state, #index)
+                            #view
                         }
                     });
                 }
                 LedgerFieldKind::Map { key, value } => {
                     let key = rust_type(key)?;
                     let value = rust_type(value)?;
+                    let view: syn::Expr = if path.len() == 1 {
+                        syn::parse_quote!(runtime::ledger::map_view::<#key, #value, _>(self.state, #index))
+                    } else {
+                        syn::parse_quote!(runtime::ledger::map_view_at_path::<#key, #value, _>(self.state, &[#(#path),*]))
+                    };
                     ledger_view_methods.push(syn::parse_quote! {
                         pub fn #name(&self) -> Result<runtime::ledger::MapView<'a, #key, #value, runtime::ledger::DefaultDB>, runtime::CompactError> {
-                            runtime::ledger::map_view::<#key, #value, _>(self.state, #index)
+                            #view
                         }
                     });
                 }

@@ -29,7 +29,7 @@ pub mod ledger_contract {
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let step = context.insert_map(0, __compact_param_0, __compact_param_1)?;
+        let step = context.insert_map(0, __compact_param_0.clone(), __compact_param_1)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();
@@ -48,7 +48,7 @@ pub mod ledger_contract {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
         let mut context = context;
-        let __compact_query_0 = context.member_map(0, (__compact_param_0).clone())?;
+        let __compact_query_0 = context.member_map(0, (__compact_param_0.clone()).clone())?;
         context = __compact_query_0.context;
         total_cost += __compact_query_0.gas_cost;
         if !(__compact_query_0.result) {
@@ -58,7 +58,7 @@ pub mod ledger_contract {
         }
         let mut context = context;
         let __compact_query_1 =
-            context.lookup_map::<_, runtime::Field>(0, (__compact_param_0).clone())?;
+            context.lookup_map::<_, runtime::Field>(0, (__compact_param_0.clone()).clone())?;
         context = __compact_query_1.context;
         total_cost += __compact_query_1.gas_cost;
         let __compact_expression_local_2: runtime::Field = __compact_query_1.result;

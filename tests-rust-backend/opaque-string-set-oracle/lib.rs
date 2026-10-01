@@ -28,7 +28,7 @@ pub mod ledger_contract {
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let step = context.insert_set(0, __compact_param_0)?;
+        let step = context.insert_set(0, __compact_param_0.clone())?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();
@@ -45,7 +45,7 @@ pub mod ledger_contract {
     ) -> Result<runtime::context::CircuitResult<Private, bool>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let read_step = context.member_set(0, __compact_param_0)?;
+        let read_step = context.member_set(0, __compact_param_0.clone())?;
         let context = read_step.context;
         total_cost += read_step.gas_cost;
         let result = read_step.result;

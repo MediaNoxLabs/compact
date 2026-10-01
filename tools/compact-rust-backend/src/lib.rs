@@ -17,6 +17,20 @@ use ir::{
 use proc_macro2::Span;
 use quote::quote;
 
+pub(crate) fn ledger_path_expr(field: &ir::LedgerField) -> syn::Expr {
+    let path = field.physical_path();
+    if path.len() == 1 {
+        let index = syn::LitInt::new(&path[0].to_string(), Span::call_site());
+        syn::parse_quote!(#index)
+    } else {
+        let indices = path
+            .iter()
+            .map(|part| syn::LitInt::new(&part.to_string(), Span::call_site()))
+            .collect::<Vec<_>>();
+        syn::parse_quote!(&[#(#indices),*])
+    }
+}
+
 #[derive(Debug, PartialEq, Eq)]
 pub enum RenderError {
     SchemaVersion(u32),
@@ -682,13 +696,14 @@ pub(crate) fn coerce_expression(
 
 fn copy_type(ty: &Type) -> bool {
     match ty {
-        Type::Struct { .. } | Type::Vector { .. } | Type::LedgerMap { .. } => false,
+        Type::Struct { .. } | Type::Vector { .. } | Type::LedgerMap { .. } | Type::OpaqueString => {
+            false
+        }
         Type::Tuple { elements } => elements.iter().all(copy_type),
         Type::Unit
         | Type::Boolean
         | Type::Field
         | Type::JubjubPoint
-        | Type::OpaqueString
         | Type::Bytes { .. }
         | Type::Enum { .. }
         | Type::Unsigned { .. } => true,
@@ -1728,7 +1743,7 @@ fn render_constructor_vm_steps<'a>(
                         syn::parse_quote!(#rust_name.value() as u16)
                     }
                 };
-                let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+                let index = ledger_path_expr(declaration);
                 let method = if matches!(step, ConstructorStep::CounterIncrement { .. }) {
                     syn::Ident::new("increment_counter", Span::call_site())
                 } else {
@@ -1746,7 +1761,7 @@ fn render_constructor_vm_steps<'a>(
                 {
                     return Err(RenderError::UnknownLedgerField(field.clone()));
                 }
-                let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+                let index = ledger_path_expr(declaration);
                 actions.push(syn::parse_quote!(let step = context.write_cell(#index, 0_u64)?;));
                 actions.push(syn::parse_quote!(context = step.context;));
             }
@@ -1784,7 +1799,7 @@ fn render_constructor_vm_steps<'a>(
                 } else {
                     syn::Ident::new("remove_set", Span::call_site())
                 };
-                let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+                let index = ledger_path_expr(declaration);
                 actions.push(
                     syn::parse_quote!(let step = context.#method(#index, (#value).clone())?;),
                 );
@@ -1799,7 +1814,7 @@ fn render_constructor_vm_steps<'a>(
                 {
                     return Err(RenderError::UnknownLedgerField(field.clone()));
                 }
-                let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+                let index = ledger_path_expr(declaration);
                 actions.push(syn::parse_quote!(let step = context.reset_set(#index)?;));
                 actions.push(syn::parse_quote!(context = step.context;));
             }
@@ -1887,7 +1902,7 @@ fn render_constructor_vm_steps<'a>(
                         actual: actual_value,
                     });
                 }
-                let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+                let index = ledger_path_expr(declaration);
                 actions.push(syn::parse_quote!(let step = context.insert_map(#index, (#key).clone(), (#value).clone())?;));
                 actions.push(syn::parse_quote!(context = step.context;));
             }
@@ -1916,7 +1931,7 @@ fn render_constructor_vm_steps<'a>(
                         actual: actual_key,
                     });
                 }
-                let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+                let index = ledger_path_expr(declaration);
                 if matches!(step, ConstructorStep::MapInsertDefault { .. }) {
                     let value_ty = rust_type(value_ty)?;
                     actions.push(syn::parse_quote!(let step = context.insert_map(#index, (#key).clone(), <#value_ty as Default>::default())?;));
@@ -1936,7 +1951,7 @@ fn render_constructor_vm_steps<'a>(
                 {
                     return Err(RenderError::UnknownLedgerField(field.clone()));
                 }
-                let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+                let index = ledger_path_expr(declaration);
                 actions.push(syn::parse_quote!(let step = context.reset_map(#index)?;));
                 actions.push(syn::parse_quote!(context = step.context;));
             }
@@ -2122,7 +2137,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
             return Err(RenderError::InvalidLedgerPath(path));
         }
         if path.len() > 2
-            || (path.len() > 1 && !matches!(field.declaration, LedgerFieldKind::Cell { .. }))
+            || (path.len() > 1 && matches!(field.declaration, LedgerFieldKind::List { .. }))
         {
             return Err(RenderError::UnsupportedLedgerPath(path));
         }

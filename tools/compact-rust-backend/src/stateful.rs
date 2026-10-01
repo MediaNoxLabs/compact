@@ -8,8 +8,8 @@ use crate::ir::{
     StateAction, StateReturn, StatefulCircuit, StructField, Type, WitnessDeclaration,
 };
 use crate::{
-    RenderError, UnsignedMaximum, coerce_expression, expression_with_calls, ident, rust_type,
-    unsigned_cast_syntax, unsigned_maximum,
+    RenderError, UnsignedMaximum, coerce_expression, expression_with_calls, ident,
+    ledger_path_expr, rust_type, unsigned_cast_syntax, unsigned_maximum,
 };
 
 pub(crate) fn render_state_expression(
@@ -116,7 +116,7 @@ pub(crate) fn render_state_expression(
                 Span::call_site(),
             );
             *next_temp += 1;
-            let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+            let index = ledger_path_expr(declaration);
             statements
                 .push(syn::parse_quote!(let #step = context.member_set(#index, (#item).clone())?;));
             statements.push(syn::parse_quote!(context = #step.context;));
@@ -164,7 +164,7 @@ pub(crate) fn render_state_expression(
                 Span::call_site(),
             );
             *next_temp += 1;
-            let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+            let index = ledger_path_expr(declaration);
             let result_ty = if matches!(value, Expr::MapMember { .. }) {
                 statements.push(syn::parse_quote!(
                     let #step = context.member_map(#index, (#key).clone())?;
@@ -205,7 +205,7 @@ pub(crate) fn render_state_expression(
                 Span::call_site(),
             );
             *next_temp += 1;
-            let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+            let index = ledger_path_expr(declaration);
             statements.push(syn::parse_quote!(let #step = context.#method(#index)?;));
             statements.push(syn::parse_quote!(context = #step.context;));
             statements.push(syn::parse_quote!(total_cost += #step.gas_cost;));
@@ -1663,7 +1663,7 @@ pub(crate) fn render_stateful_circuit(
                 {
                     return Err(RenderError::UnknownLedgerField(field.clone()));
                 }
-                let index = syn::LitInt::new(&declaration.index.to_string(), Span::call_site());
+                let index = ledger_path_expr(declaration);
                 let amount: syn::Expr = match amount {
                     CounterAmount::Literal { value } => {
                         let value = syn::LitInt::new(&value.to_string(), Span::call_site());
@@ -1709,7 +1709,7 @@ pub(crate) fn render_stateful_circuit(
                 {
                     return Err(RenderError::UnknownLedgerField(field.clone()));
                 }
-                let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+                let index = ledger_path_expr(declaration);
                 statements.push(syn::parse_quote! {
                     let step = context.write_cell(#index, 0_u64)?;
                 });
@@ -1864,7 +1864,7 @@ pub(crate) fn render_stateful_circuit(
                         actual,
                     });
                 }
-                let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+                let index = ledger_path_expr(declaration);
                 let method = if matches!(action, StateAction::SetInsert { .. }) {
                     syn::Ident::new("insert_set", Span::call_site())
                 } else {
@@ -1889,7 +1889,7 @@ pub(crate) fn render_stateful_circuit(
                 {
                     return Err(RenderError::UnknownLedgerField(field.clone()));
                 }
-                let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+                let index = ledger_path_expr(declaration);
                 statements.push(syn::parse_quote! {
                     let step = context.reset_set(#index)?;
                 });
@@ -1933,7 +1933,7 @@ pub(crate) fn render_stateful_circuit(
                         actual: actual_value,
                     });
                 }
-                let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+                let index = ledger_path_expr(declaration);
                 statements.push(syn::parse_quote! {
                     let step = context.insert_map(#index, #key, #value)?;
                 });
@@ -1966,7 +1966,7 @@ pub(crate) fn render_stateful_circuit(
                     });
                 }
                 let value_ty = rust_type(value_ty)?;
-                let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+                let index = ledger_path_expr(declaration);
                 statements.push(syn::parse_quote! {
                     let step = context.insert_map(#index, #key, <#value_ty as Default>::default())?;
                 });
@@ -1994,7 +1994,7 @@ pub(crate) fn render_stateful_circuit(
                         actual: actual_key,
                     });
                 }
-                let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+                let index = ledger_path_expr(declaration);
                 statements.push(syn::parse_quote! {
                     let step = context.remove_map(#index, #key)?;
                 });
@@ -2014,7 +2014,7 @@ pub(crate) fn render_stateful_circuit(
                 {
                     return Err(RenderError::UnknownLedgerField(field.clone()));
                 }
-                let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+                let index = ledger_path_expr(declaration);
                 statements.push(syn::parse_quote! {
                     let step = context.reset_map(#index)?;
                 });
@@ -2119,7 +2119,7 @@ pub(crate) fn render_stateful_circuit(
                     actual: circuit.result.clone(),
                 });
             }
-            let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+            let index = ledger_path_expr(declaration);
             let max = syn::LitInt::new(&u64::MAX.to_string(), Span::call_site());
             statements.push(syn::parse_quote! {
                 let read_step = context.read_cell::<u64>(#index)?;
@@ -2259,7 +2259,7 @@ pub(crate) fn render_stateful_circuit(
                     actual,
                 });
             }
-            let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+            let index = ledger_path_expr(declaration);
             statements.push(syn::parse_quote! {
                 let read_step = context.member_set(#index, #value)?;
             });
@@ -2307,7 +2307,7 @@ pub(crate) fn render_stateful_circuit(
                     actual: circuit.result.clone(),
                 });
             }
-            let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+            let index = ledger_path_expr(declaration);
             let method = match (is_map, is_size) {
                 (false, true) => "size_set",
                 (false, false) => "is_empty_set",
@@ -2365,7 +2365,7 @@ pub(crate) fn render_stateful_circuit(
                     actual: circuit.result.clone(),
                 });
             }
-            let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+            let index = ledger_path_expr(declaration);
             if is_member {
                 statements.push(syn::parse_quote! {
                     let read_step = context.member_map(#index, #key)?;

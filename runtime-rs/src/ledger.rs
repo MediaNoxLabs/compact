@@ -22,6 +22,40 @@ use midnight_onchain_vm::result_mode::{GatherEvent, ResultModeGather, ResultMode
 use midnight_serialize::Serializable;
 use std::marker::PhantomData;
 
+/// A physical path through Compact's chunked ledger root. A single field
+/// index and a nested array path use the same query operations.
+pub struct LedgerPath(Vec<u8>);
+
+impl LedgerPath {
+    pub fn as_slice(&self) -> &[u8] {
+        &self.0
+    }
+}
+
+impl From<u8> for LedgerPath {
+    fn from(index: u8) -> Self {
+        Self(vec![index])
+    }
+}
+
+impl From<&[u8]> for LedgerPath {
+    fn from(path: &[u8]) -> Self {
+        Self(path.to_vec())
+    }
+}
+
+impl<const N: usize> From<&[u8; N]> for LedgerPath {
+    fn from(path: &[u8; N]) -> Self {
+        Self(path.to_vec())
+    }
+}
+
+fn path_keys(path: &[u8]) -> Vec<Key> {
+    path.iter()
+        .map(|index| Key::Value(AlignedValue::from(*index)))
+        .collect()
+}
+
 /// Compact values that can be stored in a ledger Cell. Implementations use
 /// upstream FAB conversions while keeping each type's declared alignment.
 pub trait CellValue: Aligned + Into<Value> + Sized {
@@ -187,6 +221,13 @@ where
     T: CellValue,
     D: DB,
 {
+    read_cell(field_at_path(state, path)?)
+}
+
+fn field_at_path<'a, D: DB>(
+    state: &'a StateValue<D>,
+    path: &[u8],
+) -> Result<&'a StateValue<D>, CompactError> {
     if path.is_empty() {
         return Err(CompactError::InvalidLedgerCell("empty ledger path".into()));
     }
@@ -201,7 +242,7 @@ where
             CompactError::InvalidLedgerCell(format!("missing ledger path index {index}"))
         })?;
     }
-    read_cell(current)
+    Ok(current)
 }
 
 fn root_field<D: DB>(state: &StateValue<D>, index: u8) -> Result<&StateValue<D>, CompactError> {
@@ -225,7 +266,14 @@ pub fn set_view<T: CellValue, D: DB>(
     state: &StateValue<D>,
     index: u8,
 ) -> Result<SetView<'_, T, D>, CompactError> {
-    let StateValue::Map(map) = root_field(state, index)? else {
+    set_view_at_path(state, &[index])
+}
+
+pub fn set_view_at_path<'a, T: CellValue, D: DB>(
+    state: &'a StateValue<D>,
+    path: &[u8],
+) -> Result<SetView<'a, T, D>, CompactError> {
+    let StateValue::Map(map) = field_at_path(state, path)? else {
         return Err(CompactError::InvalidLedgerCell("expected Set map".into()));
     };
     Ok(SetView {
@@ -260,7 +308,14 @@ pub fn map_view<K: CellValue, V: CellValue, D: DB>(
     state: &StateValue<D>,
     index: u8,
 ) -> Result<MapView<'_, K, V, D>, CompactError> {
-    let StateValue::Map(map) = root_field(state, index)? else {
+    map_view_at_path(state, &[index])
+}
+
+pub fn map_view_at_path<'a, K: CellValue, V: CellValue, D: DB>(
+    state: &'a StateValue<D>,
+    path: &[u8],
+) -> Result<MapView<'a, K, V, D>, CompactError> {
+    let StateValue::Map(map) = field_at_path(state, path)? else {
         return Err(CompactError::InvalidLedgerCell("expected Map state".into()));
     };
     Ok(MapView {
@@ -635,17 +690,19 @@ pub fn reset_list<D: DB>(
 
 pub fn insert_map<K: CellValue, V: CellValue, D: DB>(
     context: &QueryContext<D>,
-    field_index: u8,
+    path: impl Into<LedgerPath>,
     key: K,
     value: V,
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    let path = path.into();
+    let path = path.as_slice();
     let program = [
         Op::Idx {
             cached: false,
             push_path: true,
-            path: vec![Key::Value(AlignedValue::from(field_index))].into(),
+            path: path_keys(path).into(),
         },
         Op::Push {
             storage: false,
@@ -659,28 +716,33 @@ pub fn insert_map<K: CellValue, V: CellValue, D: DB>(
             cached: false,
             n: 1,
         },
-        Op::Ins { cached: true, n: 1 },
+        Op::Ins {
+            cached: true,
+            n: path.len() as u8,
+        },
     ];
     context.query(&program, gas_limit, cost_model)
 }
 
 pub fn member_map<K: CellValue, D: DB>(
     context: &QueryContext<D>,
-    field_index: u8,
+    path: impl Into<LedgerPath>,
     key: K,
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<(QueryResults<ResultModeGather, D>, bool), CompactError> {
-    member_set(context, field_index, key, gas_limit, cost_model)
+    member_set(context, path, key, gas_limit, cost_model)
 }
 
 pub fn lookup_map<K: CellValue, V: CellValue, D: DB>(
     context: &QueryContext<D>,
-    field_index: u8,
+    path: impl Into<LedgerPath>,
     key: K,
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<(QueryResults<ResultModeGather, D>, V), CompactError> {
+    let path = path.into();
+    let path = path.as_slice();
     let key =
         AlignedValue::new(key.into(), K::alignment()).expect("CellValue must match its alignment");
     let program = [
@@ -688,7 +750,7 @@ pub fn lookup_map<K: CellValue, V: CellValue, D: DB>(
         Op::Idx {
             cached: false,
             push_path: false,
-            path: vec![Key::Value(AlignedValue::from(field_index))].into(),
+            path: path_keys(path).into(),
         },
         Op::Idx {
             cached: false,
@@ -709,54 +771,56 @@ pub fn lookup_map<K: CellValue, V: CellValue, D: DB>(
 
 pub fn remove_map<K: CellValue, D: DB>(
     context: &QueryContext<D>,
-    field_index: u8,
+    path: impl Into<LedgerPath>,
     key: K,
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
-    remove_set(context, field_index, key, gas_limit, cost_model)
+    remove_set(context, path, key, gas_limit, cost_model)
 }
 
 pub fn size_map<D: DB>(
     context: &QueryContext<D>,
-    field_index: u8,
+    path: impl Into<LedgerPath>,
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<(QueryResults<ResultModeGather, D>, u64), CompactError> {
-    size_set(context, field_index, gas_limit, cost_model)
+    size_set(context, path, gas_limit, cost_model)
 }
 
 pub fn is_empty_map<D: DB>(
     context: &QueryContext<D>,
-    field_index: u8,
+    path: impl Into<LedgerPath>,
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<(QueryResults<ResultModeGather, D>, bool), CompactError> {
-    is_empty_set(context, field_index, gas_limit, cost_model)
+    is_empty_set(context, path, gas_limit, cost_model)
 }
 
 pub fn reset_map<D: DB>(
     context: &QueryContext<D>,
-    field_index: u8,
+    path: impl Into<LedgerPath>,
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
-    reset_set(context, field_index, gas_limit, cost_model)
+    reset_set(context, path, gas_limit, cost_model)
 }
 
-/// Insert a typed element into a root Set through the ledger VM.
+/// Insert a typed element into a Set through the ledger VM.
 pub fn insert_set<T: CellValue, D: DB>(
     context: &QueryContext<D>,
-    field_index: u8,
+    path: impl Into<LedgerPath>,
     value: T,
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    let path = path.into();
+    let path = path.as_slice();
     let program = [
         Op::Idx {
             cached: false,
             push_path: true,
-            path: vec![Key::Value(AlignedValue::from(field_index))].into(),
+            path: path_keys(path).into(),
         },
         Op::Push {
             storage: false,
@@ -770,7 +834,10 @@ pub fn insert_set<T: CellValue, D: DB>(
             cached: false,
             n: 1,
         },
-        Op::Ins { cached: true, n: 1 },
+        Op::Ins {
+            cached: true,
+            n: path.len() as u8,
+        },
     ];
     context.query(&program, gas_limit, cost_model)
 }
@@ -778,17 +845,19 @@ pub fn insert_set<T: CellValue, D: DB>(
 /// Test membership through a gather query and decode the ledger's Boolean Cell.
 pub fn member_set<T: CellValue, D: DB>(
     context: &QueryContext<D>,
-    field_index: u8,
+    path: impl Into<LedgerPath>,
     value: T,
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<(QueryResults<ResultModeGather, D>, bool), CompactError> {
+    let path = path.into();
+    let path = path.as_slice();
     let program = [
         Op::Dup { n: 0 },
         Op::Idx {
             cached: false,
             push_path: false,
-            path: vec![Key::Value(AlignedValue::from(field_index))].into(),
+            path: path_keys(path).into(),
         },
         Op::Push {
             storage: false,
@@ -809,61 +878,73 @@ pub fn member_set<T: CellValue, D: DB>(
 
 pub fn remove_set<T: CellValue, D: DB>(
     context: &QueryContext<D>,
-    field_index: u8,
+    path: impl Into<LedgerPath>,
     value: T,
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    let path = path.into();
+    let path = path.as_slice();
     let program = [
         Op::Idx {
             cached: false,
             push_path: true,
-            path: vec![Key::Value(AlignedValue::from(field_index))].into(),
+            path: path_keys(path).into(),
         },
         Op::Push {
             storage: false,
             value: constructor_cell(value),
         },
         Op::Rem { cached: false },
-        Op::Ins { cached: true, n: 1 },
+        Op::Ins {
+            cached: true,
+            n: path.len() as u8,
+        },
     ];
     context.query(&program, gas_limit, cost_model)
 }
 
 pub fn reset_set<D: DB>(
     context: &QueryContext<D>,
-    field_index: u8,
+    path: impl Into<LedgerPath>,
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    let path = path.into();
+    let path = path.as_slice();
     let program = [
         Op::Idx {
             cached: false,
             push_path: true,
-            path: vec![Key::Value(AlignedValue::from(field_index))].into(),
+            path: path_keys(path).into(),
         },
         Op::Pop,
         Op::Push {
             storage: true,
             value: constructor_set(),
         },
-        Op::Ins { cached: true, n: 1 },
+        Op::Ins {
+            cached: true,
+            n: path.len() as u8,
+        },
     ];
     context.query(&program, gas_limit, cost_model)
 }
 
 pub fn size_set<D: DB>(
     context: &QueryContext<D>,
-    field_index: u8,
+    path: impl Into<LedgerPath>,
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<(QueryResults<ResultModeGather, D>, u64), CompactError> {
+    let path = path.into();
+    let path = path.as_slice();
     let program = [
         Op::Dup { n: 0 },
         Op::Idx {
             cached: false,
             push_path: false,
-            path: vec![Key::Value(AlignedValue::from(field_index))].into(),
+            path: path_keys(path).into(),
         },
         Op::Size,
         Op::Popeq {
@@ -880,16 +961,18 @@ pub fn size_set<D: DB>(
 
 pub fn is_empty_set<D: DB>(
     context: &QueryContext<D>,
-    field_index: u8,
+    path: impl Into<LedgerPath>,
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<(QueryResults<ResultModeGather, D>, bool), CompactError> {
+    let path = path.into();
+    let path = path.as_slice();
     let program = [
         Op::Dup { n: 0 },
         Op::Idx {
             cached: false,
             push_path: false,
-            path: vec![Key::Value(AlignedValue::from(field_index))].into(),
+            path: path_keys(path).into(),
         },
         Op::Size,
         Op::Push {
@@ -979,28 +1062,44 @@ pub fn write_cell_at_path<T: CellValue, D: DB>(
 /// Run Compact Counter's increment program through ledger query execution.
 pub fn increment_counter<D: DB>(
     context: &QueryContext<D>,
-    field_index: u8,
+    path: impl Into<LedgerPath>,
     amount: u16,
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
-    update_counter(context, field_index, amount, false, gas_limit, cost_model)
+    let path = path.into();
+    update_counter(
+        context,
+        path.as_slice(),
+        amount,
+        false,
+        gas_limit,
+        cost_model,
+    )
 }
 
 /// Run Compact Counter's decrement program through ledger query execution.
 pub fn decrement_counter<D: DB>(
     context: &QueryContext<D>,
-    field_index: u8,
+    path: impl Into<LedgerPath>,
     amount: u16,
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
-    update_counter(context, field_index, amount, true, gas_limit, cost_model)
+    let path = path.into();
+    update_counter(
+        context,
+        path.as_slice(),
+        amount,
+        true,
+        gas_limit,
+        cost_model,
+    )
 }
 
 fn update_counter<D: DB>(
     context: &QueryContext<D>,
-    field_index: u8,
+    path: &[u8],
     amount: u16,
     subtract: bool,
     gas_limit: Option<RunningCost>,
@@ -1019,10 +1118,13 @@ fn update_counter<D: DB>(
         Op::Idx {
             cached: false,
             push_path: true,
-            path: vec![Key::Value(AlignedValue::from(field_index))].into(),
+            path: path_keys(path).into(),
         },
         arithmetic,
-        Op::Ins { cached: true, n: 1 },
+        Op::Ins {
+            cached: true,
+            n: path.len() as u8,
+        },
     ];
     context.query(&program, gas_limit, cost_model)
 }

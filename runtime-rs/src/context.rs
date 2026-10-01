@@ -225,13 +225,13 @@ impl<Private, D: DB> CircuitContext<Private, D> {
 
     pub fn insert_map<K: CellValue, V: CellValue>(
         mut self,
-        field_index: u8,
+        path: impl Into<ledger::LedgerPath>,
         key: K,
         value: V,
     ) -> Result<CircuitResult<Private, (), D>, CompactError> {
         let result = ledger::insert_map(
             &self.query,
-            field_index,
+            path,
             key,
             value,
             self.gas_limit.clone(),
@@ -249,12 +249,12 @@ impl<Private, D: DB> CircuitContext<Private, D> {
 
     pub fn member_map<K: CellValue>(
         mut self,
-        field_index: u8,
+        path: impl Into<ledger::LedgerPath>,
         key: K,
     ) -> Result<CircuitResult<Private, bool, D>, CompactError> {
         let (result, present) = ledger::member_map(
             &self.query,
-            field_index,
+            path,
             key,
             self.gas_limit.clone(),
             &self.cost_model,
@@ -270,12 +270,12 @@ impl<Private, D: DB> CircuitContext<Private, D> {
 
     pub fn lookup_map<K: CellValue, V: CellValue>(
         mut self,
-        field_index: u8,
+        path: impl Into<ledger::LedgerPath>,
         key: K,
     ) -> Result<CircuitResult<Private, V, D>, CompactError> {
         let (result, value) = ledger::lookup_map(
             &self.query,
-            field_index,
+            path,
             key,
             self.gas_limit.clone(),
             &self.cost_model,
@@ -291,34 +291,40 @@ impl<Private, D: DB> CircuitContext<Private, D> {
 
     pub fn remove_map<K: CellValue>(
         self,
-        field_index: u8,
+        path: impl Into<ledger::LedgerPath>,
         key: K,
     ) -> Result<CircuitResult<Private, (), D>, CompactError> {
-        self.remove_set(field_index, key)
+        self.remove_set(path, key)
     }
 
-    pub fn size_map(self, field_index: u8) -> Result<CircuitResult<Private, u64, D>, CompactError> {
-        self.size_set(field_index)
+    pub fn size_map(
+        self,
+        path: impl Into<ledger::LedgerPath>,
+    ) -> Result<CircuitResult<Private, u64, D>, CompactError> {
+        self.size_set(path)
     }
 
     pub fn is_empty_map(
         self,
-        field_index: u8,
+        path: impl Into<ledger::LedgerPath>,
     ) -> Result<CircuitResult<Private, bool, D>, CompactError> {
-        self.is_empty_set(field_index)
+        self.is_empty_set(path)
     }
 
-    pub fn reset_map(self, field_index: u8) -> Result<CircuitResult<Private, (), D>, CompactError> {
-        self.reset_set(field_index)
+    pub fn reset_map(
+        self,
+        path: impl Into<ledger::LedgerPath>,
+    ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        self.reset_set(path)
     }
     pub fn insert_set<T: CellValue>(
         mut self,
-        field_index: u8,
+        path: impl Into<ledger::LedgerPath>,
         value: T,
     ) -> Result<CircuitResult<Private, (), D>, CompactError> {
         let result = ledger::insert_set(
             &self.query,
-            field_index,
+            path,
             value,
             self.gas_limit.clone(),
             &self.cost_model,
@@ -335,12 +341,12 @@ impl<Private, D: DB> CircuitContext<Private, D> {
 
     pub fn member_set<T: CellValue>(
         mut self,
-        field_index: u8,
+        path: impl Into<ledger::LedgerPath>,
         value: T,
     ) -> Result<CircuitResult<Private, bool, D>, CompactError> {
         let (result, member) = ledger::member_set(
             &self.query,
-            field_index,
+            path,
             value,
             self.gas_limit.clone(),
             &self.cost_model,
@@ -356,12 +362,12 @@ impl<Private, D: DB> CircuitContext<Private, D> {
 
     pub fn remove_set<T: CellValue>(
         mut self,
-        field_index: u8,
+        path: impl Into<ledger::LedgerPath>,
         value: T,
     ) -> Result<CircuitResult<Private, (), D>, CompactError> {
         let result = ledger::remove_set(
             &self.query,
-            field_index,
+            path,
             value,
             self.gas_limit.clone(),
             &self.cost_model,
@@ -378,15 +384,10 @@ impl<Private, D: DB> CircuitContext<Private, D> {
 
     pub fn reset_set(
         mut self,
-        field_index: u8,
+        path: impl Into<ledger::LedgerPath>,
     ) -> Result<CircuitResult<Private, (), D>, CompactError> {
-        let result = ledger::reset_set(
-            &self.query,
-            field_index,
-            self.gas_limit.clone(),
-            &self.cost_model,
-        )
-        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+        let result = ledger::reset_set(&self.query, path, self.gas_limit.clone(), &self.cost_model)
+            .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
         self.query = result.context;
         Ok(CircuitResult {
             context: self,
@@ -398,14 +399,10 @@ impl<Private, D: DB> CircuitContext<Private, D> {
 
     pub fn size_set(
         mut self,
-        field_index: u8,
+        path: impl Into<ledger::LedgerPath>,
     ) -> Result<CircuitResult<Private, u64, D>, CompactError> {
-        let (result, size) = ledger::size_set(
-            &self.query,
-            field_index,
-            self.gas_limit.clone(),
-            &self.cost_model,
-        )?;
+        let (result, size) =
+            ledger::size_set(&self.query, path, self.gas_limit.clone(), &self.cost_model)?;
         self.query = result.context;
         Ok(CircuitResult {
             context: self,
@@ -417,14 +414,10 @@ impl<Private, D: DB> CircuitContext<Private, D> {
 
     pub fn is_empty_set(
         mut self,
-        field_index: u8,
+        path: impl Into<ledger::LedgerPath>,
     ) -> Result<CircuitResult<Private, bool, D>, CompactError> {
-        let (result, empty) = ledger::is_empty_set(
-            &self.query,
-            field_index,
-            self.gas_limit.clone(),
-            &self.cost_model,
-        )?;
+        let (result, empty) =
+            ledger::is_empty_set(&self.query, path, self.gas_limit.clone(), &self.cost_model)?;
         self.query = result.context;
         Ok(CircuitResult {
             context: self,
@@ -436,9 +429,9 @@ impl<Private, D: DB> CircuitContext<Private, D> {
 
     pub fn read_cell<T: CellValue>(
         self,
-        field_index: u8,
+        path: impl Into<ledger::LedgerPath>,
     ) -> Result<CircuitResult<Private, T, D>, CompactError> {
-        self.read_cell_at_path(&[field_index])
+        self.read_cell_at_path(path.into().as_slice())
     }
 
     pub fn read_cell_at_path<T: CellValue>(
@@ -462,10 +455,10 @@ impl<Private, D: DB> CircuitContext<Private, D> {
 
     pub fn write_cell<T: CellValue>(
         self,
-        field_index: u8,
+        path: impl Into<ledger::LedgerPath>,
         value: T,
     ) -> Result<CircuitResult<Private, (), D>, CompactError> {
-        self.write_cell_at_path(&[field_index], value)
+        self.write_cell_at_path(path.into().as_slice(), value)
     }
 
     pub fn write_cell_at_path<T: CellValue>(
@@ -492,12 +485,12 @@ impl<Private, D: DB> CircuitContext<Private, D> {
 
     pub fn increment_counter(
         mut self,
-        field_index: u8,
+        path: impl Into<ledger::LedgerPath>,
         amount: u16,
     ) -> Result<CircuitResult<Private, (), D>, CompactError> {
         let result = ledger::increment_counter(
             &self.query,
-            field_index,
+            path,
             amount,
             self.gas_limit.clone(),
             &self.cost_model,
@@ -514,12 +507,12 @@ impl<Private, D: DB> CircuitContext<Private, D> {
 
     pub fn decrement_counter(
         mut self,
-        field_index: u8,
+        path: impl Into<ledger::LedgerPath>,
         amount: u16,
     ) -> Result<CircuitResult<Private, (), D>, CompactError> {
         let result = ledger::decrement_counter(
             &self.query,
-            field_index,
+            path,
             amount,
             self.gas_limit.clone(),
             &self.cost_model,

@@ -32,8 +32,10 @@ pub enum RenderError {
     UnknownWitness(String),
     DuplicateParameter(String),
     DuplicateLedgerField(String),
+    DuplicateConstructorInitializer(String),
     InvalidLedgerIndex(u8),
     UnknownLedgerField(String),
+    InvalidConstructorInitializer(String),
     UnsupportedLedgerCellType(Type),
     ConflictingStruct(String),
     DuplicateStructField(String),
@@ -85,10 +87,17 @@ impl fmt::Display for RenderError {
             Self::UnknownWitness(name) => write!(f, "unknown witness {name:?}"),
             Self::DuplicateParameter(name) => write!(f, "duplicate parameter {name:?}"),
             Self::DuplicateLedgerField(name) => write!(f, "duplicate ledger field {name:?}"),
+            Self::DuplicateConstructorInitializer(name) => {
+                write!(f, "duplicate constructor Cell initializer {name:?}")
+            }
             Self::InvalidLedgerIndex(index) => {
                 write!(f, "invalid or noncontiguous ledger field index {index}")
             }
             Self::UnknownLedgerField(name) => write!(f, "unknown ledger field {name:?}"),
+            Self::InvalidConstructorInitializer(name) => write!(
+                f,
+                "constructor can initialize root Cells from parameters only: {name:?}"
+            ),
             Self::UnsupportedLedgerCellType(ty) => write!(f, "unsupported ledger Cell type {ty:?}"),
             Self::ConflictingStruct(name) => {
                 write!(f, "conflicting definitions for struct {name:?}")
@@ -881,6 +890,15 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
     let mut names = HashSet::new();
     let mut struct_definitions = BTreeMap::new();
     let mut enum_definitions = BTreeMap::new();
+    if let Some(constructor) = &contract.constructor {
+        for parameter in &constructor.parameters {
+            collect_named_types(
+                &parameter.ty,
+                &mut struct_definitions,
+                &mut enum_definitions,
+            )?;
+        }
+    }
     for circuit in &contract.circuits {
         for parameter in &circuit.parameters {
             collect_named_types(
@@ -1022,6 +1040,59 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
         )?);
     }
 
+    let mut constructor_args = Vec::<syn::FnArg>::new();
+    let mut constructor_parameters = HashMap::new();
+    let mut constructor_values = HashMap::new();
+    if let Some(constructor) = &contract.constructor {
+        for parameter in &constructor.parameters {
+            let name = ident(&parameter.name)?;
+            if constructor_parameters
+                .insert(parameter.name.as_str(), (&parameter.ty, name.clone()))
+                .is_some()
+            {
+                return Err(RenderError::DuplicateParameter(parameter.name.clone()));
+            }
+            let ty = rust_type(&parameter.ty)?;
+            constructor_args.push(syn::parse_quote!(#name: #ty));
+        }
+        for initializer in &constructor.initializers {
+            let field = ledger_fields
+                .get(initializer.field.as_str())
+                .ok_or_else(|| RenderError::UnknownLedgerField(initializer.field.clone()))?;
+            if field.index != initializer.index {
+                return Err(RenderError::InvalidLedgerIndex(initializer.index));
+            }
+            let LedgerFieldKind::Cell { ty } = &field.declaration else {
+                return Err(RenderError::InvalidConstructorInitializer(
+                    initializer.field.clone(),
+                ));
+            };
+            if !matches!(initializer.value, Expr::Parameter { .. }) {
+                return Err(RenderError::InvalidConstructorInitializer(
+                    initializer.field.clone(),
+                ));
+            }
+            let (value, actual) = expression_with_calls(
+                &initializer.value,
+                &constructor_parameters,
+                &HashMap::new(),
+            )?;
+            if actual != *ty {
+                return Err(RenderError::TypeMismatch {
+                    expected: ty.clone(),
+                    actual,
+                });
+            }
+            if constructor_values
+                .insert(initializer.field.as_str(), value)
+                .is_some()
+            {
+                return Err(RenderError::DuplicateConstructorInitializer(
+                    initializer.field.clone(),
+                ));
+            }
+        }
+    }
     let constructor_fields = ordered_fields.iter().map(|field| match &field.declaration {
         LedgerFieldKind::Counter => Ok(syn::parse_quote!(runtime::ledger::constructor_counter())),
         LedgerFieldKind::Set { .. } => Ok(syn::parse_quote!(runtime::ledger::constructor_set())),
@@ -1032,7 +1103,10 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                 return Err(RenderError::UnsupportedLedgerCellType(ty.clone()));
             }
             let ty = rust_type(ty)?;
-            Ok(syn::parse_quote!(runtime::ledger::constructor_cell::<#ty, runtime::ledger::DefaultDB>(Default::default())))
+            let value: syn::Expr = constructor_values.get(field.id.as_str())
+                .map(|value| syn::parse_quote!(#value.clone()))
+                .unwrap_or_else(|| syn::parse_quote!(Default::default()));
+            Ok(syn::parse_quote!(runtime::ledger::constructor_cell::<#ty, runtime::ledger::DefaultDB>(#value)))
         }
     }).collect::<Result<Vec<syn::Expr>, RenderError>>()?;
 
@@ -1132,6 +1206,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
         })
     };
     let ledger_module: Option<syn::Item> = if contract.ledger_fields.is_empty()
+        && contract.constructor.is_none()
         && contract.stateful_circuits.is_empty()
         && contract.witnesses.is_empty()
     {
@@ -1152,10 +1227,11 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                     #(#witness_methods)*
                 }
                 pub fn initial_state<Private>(
-                    context: runtime::context::ConstructorContext<Private>,
+                    __compact_context: runtime::context::ConstructorContext<Private>,
+                    #(#constructor_args),*
                 ) -> runtime::context::ConstructorResult<Private> {
                     let state = runtime::ledger::contract_state(vec![#(#constructor_fields),*]);
-                    runtime::context::ConstructorResult::new(context, state)
+                    runtime::context::ConstructorResult::new(__compact_context, state)
                 }
                 #(#stateful_items)*
             }

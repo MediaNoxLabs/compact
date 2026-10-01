@@ -14,10 +14,27 @@ pub const SCHEMA_VERSION: u32 = 4;
 pub struct Contract {
     pub schema_version: u32,
     pub ledger_fields: Vec<LedgerField>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub constructor: Option<Constructor>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub witnesses: Vec<WitnessDeclaration>,
     pub circuits: Vec<PureCircuit>,
     pub stateful_circuits: Vec<StatefulCircuit>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct Constructor {
+    pub parameters: Vec<Parameter>,
+    pub initializers: Vec<CellInitializer>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct CellInitializer {
+    pub field: String,
+    pub index: u8,
+    pub value: Expr,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]

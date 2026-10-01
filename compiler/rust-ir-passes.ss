@@ -975,26 +975,67 @@
           [(tuple ,src ,tuple-arg* ...) (null? tuple-arg*)]
           [else #f]))
 
-      (define (check-supported-declaration pelt owner-src)
+      (define (constructor-initializer-ir expr parameters owner-src)
+        (nanopass-case (Lnodisclose Expression) expr
+          [(public-ledger ,src ,ledger-field-name ,sugar? (,path-elt* ...) ,src^ ,adt-op ,expr* ...)
+           (unless (and (= (length path-elt*) 1)
+                        (integer? (car path-elt*))
+                        (= (length expr*) 1))
+             (source-errorf src "Rust backend supports root Cell constructor writes only"))
+           (nanopass-case (Lnodisclose ADT-Op) adt-op
+             [(,ledger-op ,op-class (,adt-name (,adt-formal* ,adt-arg*) ...) ((,var-name* ,type*) ...) ,type ,vm-code)
+              (unless (and (eq? adt-name '__compact_Cell) (eq? ledger-op 'write))
+                (source-errorf src "Rust backend supports Cell constructor writes only"))
+              (nanopass-case (Lnodisclose Expression) (car expr*)
+                [(var-ref ,src1 ,var-name)
+                 (unless (memq (id-sym var-name) parameters)
+                   (source-errorf src1 "Rust constructor Cell initializer must be a constructor parameter"))
+                 (object (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*))
+                         (cons "value" (expression-ir (car expr*) src)))]
+                [else (source-errorf src "Rust constructor Cell initializer must be a constructor parameter")])])]
+          [else (source-errorf owner-src "Rust backend does not yet support this constructor action")]))
+
+      (define (constructor-initializers-ir expr parameters owner-src)
+        (nanopass-case (Lnodisclose Expression) expr
+          [(return ,src ,expr) (constructor-initializers-ir expr parameters src)]
+          [(seq ,src ,expr* ... ,expr)
+           (unless (empty-constructor-expression? expr)
+             (source-errorf src "Rust backend does not yet support constructor return values"))
+           (map (lambda (action) (constructor-initializer-ir action parameters src)) expr*)]
+          [(tuple ,src ,tuple-arg* ...)
+           (if (null? tuple-arg*)
+               '()
+               (source-errorf src "Rust backend does not yet support constructor return values"))]
+          [else (source-errorf owner-src "Rust backend does not yet support this constructor body")]))
+
+      (define (constructor-ir pelt)
         (nanopass-case (Lnodisclose Program-Element) pelt
-          [(witness ,src ,function-name (,arg* ...) ,type)
-           (void)]
           [(public-ledger-declaration ,pl-array ,lconstructor)
            (nanopass-case (Lnodisclose Ledger-Constructor) lconstructor
              [(constructor ,src ((,var-name* ,type*) ...) ,expr)
-              (unless (and (null? var-name*)
-                           (empty-constructor-expression? expr))
-                (source-errorf src "Rust backend does not yet support constructor bodies or parameters"))])]
-          [else (void)])))
+              (let ([initializers (constructor-initializers-ir expr (map id-sym var-name*) src)])
+                (if (and (null? var-name*) (null? initializers))
+                    #f
+                    (object (cons "parameters"
+                                  (list->vector
+                                    (map (lambda (name ty)
+                                           (object (cons "name" (symbol->string (id-sym name)))
+                                                   (cons "ty" (type-ir ty src))))
+                                         var-name* type*)))
+                            (cons "initializers" (list->vector initializers)))))])]
+          [else #f])))
 
     (Program : Program (ir) -> Program ()
       [(program ,src (,contract-name* ...) ((,export-name* ,name*) ...) ,pelt* ...)
-       (for-each (lambda (pelt) (check-supported-declaration pelt src)) pelt*)
-       (let ([export-alist (map cons export-name* name*)]
+       (let ([constructor* (filter (lambda (value) value) (map constructor-ir pelt*))]
+             [export-alist (map cons export-name* name*)]
              [witness-ids (witness-id-table pelt*)])
+         (when (> (length constructor*) 1)
+           (source-errorf src "Rust backend found multiple constructors"))
          (print-json
            (get-target-port 'rust.ir.json)
-           (object (cons "schema_version" 4)
+           (append (object (cons "schema_version" 4)
                    (cons "ledger_fields"
                          (list->vector
                            (fold-right (lambda (pelt fields) (ledger-fields-ir pelt fields src)) '() pelt*)))
@@ -1012,7 +1053,8 @@
                            (fold-right
                              (lambda (pelt circuits) (stateful-circuit-ir pelt export-alist witness-ids circuits))
                              '()
-                             pelt*))))))
+                             pelt*))))
+                   (if (null? constructor*) '() (list (cons "constructor" (car constructor*)))))))
        ir]))
 
   (define-passes rust-ir-passes

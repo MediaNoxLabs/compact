@@ -1,0 +1,4 @@
+import CompactStandardLibrary;
+export ledger value: Field;
+constructor(seed: Field) { value = disclose(seed); }
+export circuit read_value(): Field { return value.read(); }

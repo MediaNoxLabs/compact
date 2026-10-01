@@ -11,3 +11,17 @@ see the [Rust backend guide](https://github.com/MediaNoxLabs/compact/blob/codex/
 
 This crate is currently consumed from a pinned Git revision. The macro crate
 must be packaged and published first if crates.io distribution is chosen.
+
+## Recording ledger programs
+
+`recording::RecordingFrame` is an opt-in bridge for Cell reads, writes, and
+Counter updates. It executes each operation and retains the initial ledger
+query context plus the ordered ledger-8 Verify instructions.
+`PublicTrace::into_parts` supplies the
+two inputs needed to build a ledger `PreTranscript`; the ledger partitioner
+computes the actual transaction transcript, including its gas and effects.
+The frame's observed gas is only a native execution diagnostic.
+
+Generated circuits still use the native execution path. Do not treat their
+`CircuitResult` as a transaction transcript until all operations used by that
+circuit are recorded and replay-tested.

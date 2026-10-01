@@ -26,6 +26,7 @@ pub mod ledger;
 mod natives;
 mod opaque;
 mod primitives;
+pub mod recording;
 
 pub use midnight_compact_runtime_macros::{
     CompactCellValue, CompactMerklePath, CompactMerklePathEntry, CompactMerkleTreeDigest,

@@ -35,7 +35,9 @@ use midnight_base_crypto::fab::{Aligned, AlignedValue, Value, ValueSlice};
 use midnight_base_crypto::repr::BinaryHashRepr;
 use midnight_onchain_vm::cost_model::CostModel;
 use midnight_onchain_vm::ops::{Key, Op};
-use midnight_onchain_vm::result_mode::{GatherEvent, ResultModeGather, ResultModeVerify};
+use midnight_onchain_vm::result_mode::{
+    GatherEvent, ResultMode, ResultModeGather, ResultModeVerify,
+};
 use midnight_serialize::Serializable;
 use midnight_storage::arena::Sp;
 use midnight_transient_crypto::fab::ValueReprAlignedValue;
@@ -433,7 +435,19 @@ pub fn query_cell_at_path<T: CellValue, D: DB>(
     if path.is_empty() {
         return Err(CompactError::InvalidLedgerCell("empty ledger path".into()));
     }
-    let program = [
+    let program = cell_read_program::<ResultModeGather, D>(path, ());
+    let result = context
+        .query(&program, gas_limit, cost_model)
+        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+    let decoded = decode_last_read::<T, D>(&result)?;
+    Ok((result, decoded))
+}
+
+pub(crate) fn cell_read_program<M: ResultMode<D>, D: DB>(
+    path: &[u8],
+    read_result: M::ReadResult,
+) -> Vec<Op<M, D>> {
+    vec![
         Op::Dup { n: 0 },
         Op::Idx {
             cached: false,
@@ -446,14 +460,9 @@ pub fn query_cell_at_path<T: CellValue, D: DB>(
         },
         Op::Popeq {
             cached: true,
-            result: (),
+            result: read_result,
         },
-    ];
-    let result = context
-        .query(&program, gas_limit, cost_model)
-        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
-    let decoded = decode_last_read::<T, D>(&result)?;
-    Ok((result, decoded))
+    ]
 }
 
 fn decode_last_read<T: CellValue, D: DB>(
@@ -1858,10 +1867,17 @@ pub fn write_cell_at_path<T: CellValue, D: DB>(
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    context.query(&cell_write_program(path, value), gas_limit, cost_model)
+}
+
+pub(crate) fn cell_write_program<T: CellValue, D: DB>(
+    path: &[u8],
+    value: T,
+) -> Vec<Op<ResultModeVerify, D>> {
     if path.len() == 2 {
         // Compact indexes the containing array, then inserts at its final
         // key and inserts the updated array back into the root.
-        let program = [
+        return vec![
             Op::Idx {
                 cached: false,
                 push_path: true,
@@ -1881,9 +1897,8 @@ pub fn write_cell_at_path<T: CellValue, D: DB>(
             },
             Op::Ins { cached: true, n: 1 },
         ];
-        return context.query(&program, gas_limit, cost_model);
     }
-    let program = [
+    vec![
         Op::Idx {
             cached: false,
             push_path: true,
@@ -1899,8 +1914,7 @@ pub fn write_cell_at_path<T: CellValue, D: DB>(
             value: constructor_cell(value),
         },
         Op::Ins { cached: true, n: 1 },
-    ];
-    context.query(&program, gas_limit, cost_model)
+    ]
 }
 
 /// Run Compact Counter's increment program through ledger query execution.
@@ -1949,6 +1963,18 @@ fn update_counter<D: DB>(
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    context.query(
+        &counter_program(path, amount, subtract),
+        gas_limit,
+        cost_model,
+    )
+}
+
+pub(crate) fn counter_program<D: DB>(
+    path: &[u8],
+    amount: u16,
+    subtract: bool,
+) -> Vec<Op<ResultModeVerify, D>> {
     let arithmetic = if subtract {
         Op::Subi {
             immediate: amount.into(),
@@ -1958,7 +1984,7 @@ fn update_counter<D: DB>(
             immediate: amount.into(),
         }
     };
-    let program = [
+    vec![
         Op::Idx {
             cached: false,
             push_path: true,
@@ -1969,8 +1995,7 @@ fn update_counter<D: DB>(
             cached: true,
             n: path.len() as u8,
         },
-    ];
-    context.query(&program, gas_limit, cost_model)
+    ]
 }
 
 /// The root ledger state for a contract with no public ledger fields.

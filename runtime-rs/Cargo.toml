@@ -51,4 +51,5 @@ sha3 = "=0.10.8"
 
 [dev-dependencies]
 hex = "0.4"
+midnight-ledger = "=8.0.2"
 serde_json = "1"

@@ -16,6 +16,7 @@
 use compact_rust_counter_fixture::ledger_contract::{increment, initial_state, read_round};
 use midnight_compact_runtime::context::ConstructorContext;
 use midnight_compact_runtime::ledger::{ContractAddress, StateValue, read_counter};
+use midnight_compact_runtime::recording::RecordingFrame;
 
 #[test]
 fn generated_counter_contract_runs_through_ledger_vm() {
@@ -30,4 +31,39 @@ fn generated_counter_contract_runs_through_ledger_vm() {
     assert_eq!(read_counter(&fields.get(0).unwrap()).unwrap(), 1);
     let read = read_round(result.context).unwrap();
     assert_eq!(read.result.value(), 1);
+}
+
+#[test]
+fn generated_counter_state_can_enter_a_replayable_ledger_trace() {
+    let constructor = initial_state(ConstructorContext::new(())).unwrap();
+    let context = constructor.into_circuit_context(ContractAddress::default());
+    let native = increment(context).unwrap();
+
+    let constructor = initial_state(ConstructorContext::new(())).unwrap();
+    let context = constructor.into_circuit_context(ContractAddress::default());
+    let recorded = RecordingFrame::new(context)
+        .increment_counter(0_u8, 1)
+        .unwrap()
+        .finish(());
+    let replay = recorded
+        .public
+        .initial()
+        .query(
+            recorded.public.verify_ops(),
+            None,
+            &recorded.execution.context.cost_model,
+        )
+        .unwrap();
+
+    for state in [
+        native.context.query.state.get_ref(),
+        recorded.execution.context.query.state.get_ref(),
+        replay.context.state.get_ref(),
+    ] {
+        let StateValue::Array(fields) = state else {
+            panic!("expected ledger field array")
+        };
+        assert_eq!(read_counter(&fields.get(0).unwrap()).unwrap(), 1);
+    }
+    assert_eq!(recorded.public.verify_ops().len(), 3);
 }

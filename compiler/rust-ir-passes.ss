@@ -159,6 +159,22 @@
            (object (cons "kind" "equal")
                    (cons "left" (expression-ir expr1 src))
                    (cons "right" (expression-ir expr2 src)))]
+          [(< ,src ,bits ,expr1 ,expr2)
+           (object (cons "kind" "compare") (cons "operator" "less")
+                   (cons "left" (expression-ir expr1 src))
+                   (cons "right" (expression-ir expr2 src)))]
+          [(<= ,src ,bits ,expr1 ,expr2)
+           (object (cons "kind" "compare") (cons "operator" "less_equal")
+                   (cons "left" (expression-ir expr1 src))
+                   (cons "right" (expression-ir expr2 src)))]
+          [(> ,src ,bits ,expr1 ,expr2)
+           (object (cons "kind" "compare") (cons "operator" "greater")
+                   (cons "left" (expression-ir expr1 src))
+                   (cons "right" (expression-ir expr2 src)))]
+          [(>= ,src ,bits ,expr1 ,expr2)
+           (object (cons "kind" "compare") (cons "operator" "greater_equal")
+                   (cons "left" (expression-ir expr1 src))
+                   (cons "right" (expression-ir expr2 src)))]
           [(!= ,src ,type ,expr1 ,expr2)
            (object (cons "kind" "not_equal")
                    (cons "left" (expression-ir expr1 src))
@@ -695,6 +711,22 @@
            (object (cons "kind" "equal")
                    (cons "left" (stateful-expression-ir expr1 src witness-ids))
                    (cons "right" (stateful-expression-ir expr2 src witness-ids)))]
+          [(< ,src ,bits ,expr1 ,expr2)
+           (object (cons "kind" "compare") (cons "operator" "less")
+                   (cons "left" (stateful-expression-ir expr1 src witness-ids))
+                   (cons "right" (stateful-expression-ir expr2 src witness-ids)))]
+          [(<= ,src ,bits ,expr1 ,expr2)
+           (object (cons "kind" "compare") (cons "operator" "less_equal")
+                   (cons "left" (stateful-expression-ir expr1 src witness-ids))
+                   (cons "right" (stateful-expression-ir expr2 src witness-ids)))]
+          [(> ,src ,bits ,expr1 ,expr2)
+           (object (cons "kind" "compare") (cons "operator" "greater")
+                   (cons "left" (stateful-expression-ir expr1 src witness-ids))
+                   (cons "right" (stateful-expression-ir expr2 src witness-ids)))]
+          [(>= ,src ,bits ,expr1 ,expr2)
+           (object (cons "kind" "compare") (cons "operator" "greater_equal")
+                   (cons "left" (stateful-expression-ir expr1 src witness-ids))
+                   (cons "right" (stateful-expression-ir expr2 src witness-ids)))]
           [(!= ,src ,type ,expr1 ,expr2)
            (object (cons "kind" "not_equal")
                    (cons "left" (stateful-expression-ir expr1 src witness-ids))
@@ -782,6 +814,18 @@
            (object (cons "kind" "expression")
                    (cons "value" (stateful-expression-ir return-expr src witness-ids)))]
           [(== ,src ,type ,expr1 ,expr2)
+           (object (cons "kind" "expression")
+                   (cons "value" (stateful-expression-ir return-expr src witness-ids)))]
+          [(< ,src ,bits ,expr1 ,expr2)
+           (object (cons "kind" "expression")
+                   (cons "value" (stateful-expression-ir return-expr src witness-ids)))]
+          [(<= ,src ,bits ,expr1 ,expr2)
+           (object (cons "kind" "expression")
+                   (cons "value" (stateful-expression-ir return-expr src witness-ids)))]
+          [(> ,src ,bits ,expr1 ,expr2)
+           (object (cons "kind" "expression")
+                   (cons "value" (stateful-expression-ir return-expr src witness-ids)))]
+          [(>= ,src ,bits ,expr1 ,expr2)
            (object (cons "kind" "expression")
                    (cons "value" (stateful-expression-ir return-expr src witness-ids)))]
           [(!= ,src ,type ,expr1 ,expr2)

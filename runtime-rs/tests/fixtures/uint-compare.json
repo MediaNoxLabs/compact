@@ -1,0 +1,85 @@
+{
+  "less": true,
+  "lessEqualSame": true,
+  "lessEqualDifferent": false,
+  "greater": true,
+  "greaterEqualSame": true,
+  "greaterEqualDifferent": false,
+  "mixedWidth": true,
+  "witnessTrue": {
+    "result": true,
+    "privateState": 9,
+    "privateTranscriptOutputs": [
+      {
+        "valueAtoms": [
+          [
+            9
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "bytes",
+              "length": 2
+            }
+          }
+        ]
+      },
+      {
+        "valueAtoms": [
+          [
+            11
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "bytes",
+              "length": 2
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "witnessFalse": {
+    "result": false,
+    "privateState": 9,
+    "privateTranscriptOutputs": [
+      {
+        "valueAtoms": [
+          [
+            10
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "bytes",
+              "length": 2
+            }
+          }
+        ]
+      },
+      {
+        "valueAtoms": [
+          [
+            10
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "bytes",
+              "length": 2
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

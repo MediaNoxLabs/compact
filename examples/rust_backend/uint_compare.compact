@@ -1,0 +1,27 @@
+import CompactStandardLibrary;
+
+witness echo(value: Uint<16>): Uint<16>;
+
+export circuit less(left: Uint<16>, right: Uint<16>): Boolean {
+  return left < right;
+}
+
+export circuit less_equal(left: Uint<16>, right: Uint<16>): Boolean {
+  return left <= right;
+}
+
+export circuit greater(left: Uint<16>, right: Uint<16>): Boolean {
+  return left > right;
+}
+
+export circuit greater_equal(left: Uint<16>, right: Uint<16>): Boolean {
+  return left >= right;
+}
+
+export circuit mixed_width(left: Uint<8>, right: Uint<16>): Boolean {
+  return left < right;
+}
+
+export circuit witnessed_less(left: Uint<16>, right: Uint<16>): Boolean {
+  return disclose(echo(left) < echo(right));
+}

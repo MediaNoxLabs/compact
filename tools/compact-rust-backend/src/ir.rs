@@ -323,6 +323,11 @@ pub enum Expr {
         left: Box<Expr>,
         right: Box<Expr>,
     },
+    Compare {
+        operator: ComparisonOperator,
+        left: Box<Expr>,
+        right: Box<Expr>,
+    },
     Call {
         name: String,
         arguments: Vec<Expr>,
@@ -411,4 +416,13 @@ pub enum Expr {
         left: Box<Expr>,
         right: Box<Expr>,
     },
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ComparisonOperator {
+    Less,
+    LessEqual,
+    Greater,
+    GreaterEqual,
 }

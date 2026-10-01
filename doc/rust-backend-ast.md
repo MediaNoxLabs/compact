@@ -25,6 +25,7 @@ The backend supports exported pure circuits with `Field`, `Boolean`,
 Boolean, Field, and Uint literals, unit, tuple construction, typed conditionals, sequential
 local bindings and assertion statements, pure circuit calls, Field addition/subtraction/multiplication,
 typed equality and inequality,
+ordered `Uint` comparisons,
 checked unsigned addition, subtraction, and multiplication, and the
 `transientHash`, `transientCommit`, `persistentHash`, `persistentCommit`, `keccak256`,
 `degradeToTransient`, `upgradeFromTransient`, `hashToCurve`, Jubjub
@@ -60,6 +61,11 @@ before Rust lowering. A source fixture checks pure results and witnessed
 short circuit behavior: the unused right branch makes no witness call and
 adds no transcript value. Rust and TypeScript agree on result, private state,
 and each emitted Boolean FAB value.
+The comparison IR carries one closed operator for `<`, `<=`, `>`, and `>=`.
+The renderer requires Uint operands and compares their checked numeric values,
+including an upstream widening cast for mixed widths. The fixture compares
+all four operators, equal boundaries, mixed widths, and two witnessed operands
+with generated TypeScript, including private state and transcript order.
 
 The runtime facade in `runtime-rs` reexports `Fr` from
 `midnight-transient-crypto` 2.0.1 as Compact `Field`. It also reexports the
@@ -259,6 +265,7 @@ cargo test -p compact-rust-backend -p midnight-compact-runtime \
   -p compact-rust-assert-witness-fixture \
   -p compact-rust-equality-fixture \
   -p compact-rust-boolean-logic-fixture \
+  -p compact-rust-uint-compare-fixture \
   -p compact-rust-uint-identity-fixture -p compact-rust-bytes-identity-fixture \
   -p compact-rust-counter-fixture -p compact-rust-cell-boolean-fixture \
   -p compact-rust-struct-identity-fixture -p compact-rust-nested-struct-fixture \

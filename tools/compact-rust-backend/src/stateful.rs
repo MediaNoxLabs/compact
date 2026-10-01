@@ -4,8 +4,8 @@ use proc_macro2::Span;
 use std::collections::HashMap;
 
 use crate::ir::{
-    CounterAmount, Expr, LedgerField, LedgerFieldKind, StateAction, StateReturn, StatefulCircuit,
-    StructField, Type, WitnessDeclaration,
+    ComparisonOperator, CounterAmount, Expr, LedgerField, LedgerFieldKind, StateAction,
+    StateReturn, StatefulCircuit, StructField, Type, WitnessDeclaration,
 };
 use crate::{RenderError, expression, ident, rust_type};
 
@@ -505,6 +505,41 @@ fn render_state_expression(
                 syn::parse_quote!(#left_name == #right)
             } else {
                 syn::parse_quote!(#left_name != #right)
+            };
+            Ok((rendered, Type::Boolean, left_effect || right_effect))
+        }
+        Expr::Compare {
+            operator,
+            left,
+            right,
+        } => {
+            let (left, left_ty, left_effect) =
+                render_state_expression(left, parameters, witnesses, statements, next_temp)?;
+            if !matches!(left_ty, Type::Unsigned { .. }) {
+                return Err(RenderError::ExpectedUnsigned(left_ty));
+            }
+            let left_name = syn::Ident::new(
+                &format!("__compact_value_{}", *next_temp),
+                Span::call_site(),
+            );
+            *next_temp += 1;
+            statements.push(syn::parse_quote!(let #left_name = #left;));
+            let (right, right_ty, right_effect) =
+                render_state_expression(right, parameters, witnesses, statements, next_temp)?;
+            if !matches!(right_ty, Type::Unsigned { .. }) {
+                return Err(RenderError::ExpectedUnsigned(right_ty));
+            }
+            let rendered = match operator {
+                ComparisonOperator::Less => syn::parse_quote!(#left_name.value() < #right.value()),
+                ComparisonOperator::LessEqual => {
+                    syn::parse_quote!(#left_name.value() <= #right.value())
+                }
+                ComparisonOperator::Greater => {
+                    syn::parse_quote!(#left_name.value() > #right.value())
+                }
+                ComparisonOperator::GreaterEqual => {
+                    syn::parse_quote!(#left_name.value() >= #right.value())
+                }
             };
             Ok((rendered, Type::Boolean, left_effect || right_effect))
         }

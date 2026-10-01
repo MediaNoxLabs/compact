@@ -11,7 +11,8 @@ use std::error::Error;
 use std::fmt;
 
 use ir::{
-    Contract, Expr, LedgerFieldKind, PureCircuit, SCHEMA_VERSION, StateAction, StructField, Type,
+    ComparisonOperator, Contract, Expr, LedgerFieldKind, PureCircuit, SCHEMA_VERSION, StateAction,
+    StructField, Type,
 };
 use proc_macro2::Span;
 use quote::quote;
@@ -50,6 +51,7 @@ pub enum RenderError {
         expected: Type,
         actual: Type,
     },
+    ExpectedUnsigned(Type),
     EffectfulExpression,
 }
 
@@ -107,6 +109,9 @@ impl fmt::Display for RenderError {
             ),
             Self::TypeMismatch { expected, actual } => {
                 write!(f, "expression has type {actual:?}, expected {expected:?}")
+            }
+            Self::ExpectedUnsigned(actual) => {
+                write!(f, "expression has type {actual:?}, expected Compact Uint")
             }
             Self::EffectfulExpression => write!(f, "witness call requires stateful evaluation"),
         }
@@ -308,6 +313,7 @@ fn collect_expression_types(
         | Expr::Multiply { left, right }
         | Expr::Equal { left, right }
         | Expr::NotEqual { left, right }
+        | Expr::Compare { left, right, .. }
         | Expr::EcAdd { left, right } => {
             collect_expression_types(left, structs, enums)?;
             collect_expression_types(right, structs, enums)?;
@@ -846,6 +852,28 @@ fn expression_with_calls(
                 syn::parse_quote!(#left == #right)
             } else {
                 syn::parse_quote!(#left != #right)
+            };
+            Ok((rendered, Type::Boolean))
+        }
+        Expr::Compare {
+            operator,
+            left,
+            right,
+        } => {
+            let (left, left_ty) = expression_with_calls(left, parameters, circuits)?;
+            let (right, right_ty) = expression_with_calls(right, parameters, circuits)?;
+            for actual in [left_ty, right_ty] {
+                if !matches!(actual, Type::Unsigned { .. }) {
+                    return Err(RenderError::ExpectedUnsigned(actual));
+                }
+            }
+            let rendered = match operator {
+                ComparisonOperator::Less => syn::parse_quote!(#left.value() < #right.value()),
+                ComparisonOperator::LessEqual => syn::parse_quote!(#left.value() <= #right.value()),
+                ComparisonOperator::Greater => syn::parse_quote!(#left.value() > #right.value()),
+                ComparisonOperator::GreaterEqual => {
+                    syn::parse_quote!(#left.value() >= #right.value())
+                }
             };
             Ok((rendered, Type::Boolean))
         }

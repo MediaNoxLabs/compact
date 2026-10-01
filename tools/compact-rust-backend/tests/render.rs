@@ -120,11 +120,22 @@ fn constructor_counter_steps_use_typed_vm_calls() {
                 index: 0,
                 amount: CounterAmount::Literal { value: 3 },
             },
+            ConstructorStep::CounterReset {
+                field: "count".into(),
+                index: 0,
+            },
+            ConstructorStep::CounterDecrement {
+                field: "count".into(),
+                index: 0,
+                amount: CounterAmount::Literal { value: 1 },
+            },
         ],
     });
     let source = render(&contract).unwrap();
     assert!(source.contains("increment_counter(0, __compact_constructor_param_0.value() as u16)?"));
     assert!(source.contains("context.increment_counter(0, 3u16)?"));
+    assert!(source.contains("context.write_cell(0, 0_u64)?"));
+    assert!(source.contains("context.decrement_counter(0, 1u16)?"));
     assert!(source.contains("context.into_constructor_result()"));
     contract.constructor.as_mut().unwrap().parameters[0].ty = Type::Field;
     assert_eq!(

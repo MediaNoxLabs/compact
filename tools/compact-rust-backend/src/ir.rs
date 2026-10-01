@@ -42,6 +42,15 @@ pub enum ConstructorStep {
         index: u8,
         amount: CounterAmount,
     },
+    CounterDecrement {
+        field: String,
+        index: u8,
+        amount: CounterAmount,
+    },
+    CounterReset {
+        field: String,
+        index: u8,
+    },
     ForEach {
         binding: Parameter,
         values: Vec<Expr>,

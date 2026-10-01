@@ -1122,6 +1122,17 @@
                          (cons "amount" (counter-amount-ir (car expr*)
                                                            (constructor-counter-environment parameters bindings)
                                                            src)))]
+                [(and (eq? adt-name 'Counter) (eq? ledger-op 'decrement) (= (length expr*) 1))
+                 (object (cons "kind" "counter_decrement")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*))
+                         (cons "amount" (counter-amount-ir (car expr*)
+                                                           (constructor-counter-environment parameters bindings)
+                                                           src)))]
+                [(and (eq? adt-name 'Counter) (eq? ledger-op 'resetToDefault) (null? expr*))
+                 (object (cons "kind" "counter_reset")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*)))]
                 [(and (eq? adt-name '__compact_Cell) (eq? ledger-op 'write) (= (length expr*) 1))
                  (nanopass-case (Lnodisclose Expression) (car expr*)
                    [(var-ref ,src1 ,var-name)

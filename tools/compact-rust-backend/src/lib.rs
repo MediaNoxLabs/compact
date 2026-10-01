@@ -967,7 +967,9 @@ fn collect_constructor_step_types(
         ConstructorStep::CellWrite { value, .. } => {
             collect_expression_types(value, structs, enums)?
         }
-        ConstructorStep::CounterIncrement { .. } => {}
+        ConstructorStep::CounterIncrement { .. }
+        | ConstructorStep::CounterDecrement { .. }
+        | ConstructorStep::CounterReset { .. } => {}
         ConstructorStep::ForEach {
             binding,
             values,
@@ -1028,6 +1030,11 @@ fn render_constructor_vm_steps<'a>(
                 field,
                 index,
                 amount,
+            }
+            | ConstructorStep::CounterDecrement {
+                field,
+                index,
+                amount,
             } => {
                 let declaration = ledger_fields
                     .get(field.as_str())
@@ -1059,9 +1066,25 @@ fn render_constructor_vm_steps<'a>(
                     }
                 };
                 let index = syn::LitInt::new(&index.to_string(), Span::call_site());
-                actions.push(
-                    syn::parse_quote!(let step = context.increment_counter(#index, #amount)?;),
-                );
+                let method = if matches!(step, ConstructorStep::CounterIncrement { .. }) {
+                    syn::Ident::new("increment_counter", Span::call_site())
+                } else {
+                    syn::Ident::new("decrement_counter", Span::call_site())
+                };
+                actions.push(syn::parse_quote!(let step = context.#method(#index, #amount)?;));
+                actions.push(syn::parse_quote!(context = step.context;));
+            }
+            ConstructorStep::CounterReset { field, index } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                if declaration.declaration != LedgerFieldKind::Counter
+                    || declaration.index != *index
+                {
+                    return Err(RenderError::UnknownLedgerField(field.clone()));
+                }
+                let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+                actions.push(syn::parse_quote!(let step = context.write_cell(#index, 0_u64)?;));
                 actions.push(syn::parse_quote!(context = step.context;));
             }
             ConstructorStep::ForEach {
@@ -1284,7 +1307,10 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
         let mut seen_cells = HashSet::new();
         constructor.steps.iter().any(|step| match step {
             ConstructorStep::CellWrite { field, .. } => !seen_cells.insert(field.as_str()),
-            ConstructorStep::CounterIncrement { .. } | ConstructorStep::ForEach { .. } => true,
+            ConstructorStep::CounterIncrement { .. }
+            | ConstructorStep::CounterDecrement { .. }
+            | ConstructorStep::CounterReset { .. }
+            | ConstructorStep::ForEach { .. } => true,
         })
     });
     let mut constructor_actions = Vec::<syn::Stmt>::new();

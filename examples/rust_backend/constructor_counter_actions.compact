@@ -8,6 +8,9 @@ constructor(seed: Uint<16>) {
   c.increment(disclose(seed));
   value = 2 as Field;
   c.increment(2);
+  c.resetToDefault();
+  c.increment(5);
+  c.decrement(1);
 }
 
 export circuit read_count(): Uint<64> {

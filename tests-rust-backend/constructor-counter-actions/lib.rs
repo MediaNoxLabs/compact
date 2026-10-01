@@ -24,17 +24,23 @@ pub mod ledger_contract {
             runtime::ledger::constructor_counter(),
         ]);
         {
-            let context = runtime::context::ConstructorResult::new(__compact_context, state)
+            let mut context = runtime::context::ConstructorResult::new(__compact_context, state)
                 .into_circuit_context(runtime::ledger::ContractAddress::default());
             let step = context.write_cell(0, (runtime::Field::from(1u128)).clone())?;
-            let context = step.context;
+            context = step.context;
             let step =
                 context.increment_counter(1, __compact_constructor_param_0.value() as u16)?;
-            let context = step.context;
+            context = step.context;
             let step = context.write_cell(0, (runtime::Field::from(2u128)).clone())?;
-            let context = step.context;
+            context = step.context;
             let step = context.increment_counter(1, 2u16)?;
-            let context = step.context;
+            context = step.context;
+            let step = context.write_cell(1, 0_u64)?;
+            context = step.context;
+            let step = context.increment_counter(1, 5u16)?;
+            context = step.context;
+            let step = context.decrement_counter(1, 1u16)?;
+            context = step.context;
             Ok(context.into_constructor_result())
         }
     }

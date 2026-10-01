@@ -1,5 +1,5 @@
 use compact_rust_witness_vector_action_fixture::ledger_contract::{
-    LedgerView, Witnesses, discardResult, initial_state, keepResult,
+    LedgerView, Witnesses, discardResult, initial_state, keepResult, reuseResult,
 };
 use midnight_compact_runtime::context::{CircuitResult, ConstructorContext, WitnessContext};
 use midnight_compact_runtime::ledger::{ContractAddress, DefaultDB, StateValue};
@@ -34,7 +34,7 @@ impl Witnesses<u64> for SumWitness {
 
 fn state_hex(state: StateValue<DefaultDB>) -> String {
     let mut operations: HashMap<EntryPointBuf, ContractOperation, DefaultDB> = HashMap::new();
-    for name in ["keepResult", "discardResult"] {
+    for name in ["keepResult", "discardResult", "reuseResult"] {
         operations = operations.insert(
             EntryPointBuf(name.as_bytes().to_vec()),
             ContractOperation::new(None),
@@ -99,4 +99,13 @@ fn witness_vector_actions_evaluate_once_and_preserve_transcript() {
         discard_witness.calls.get(),
         &oracle["discardResult"],
     );
+
+    let reuse_witness = SumWitness {
+        calls: Cell::new(0),
+    };
+    let reuse_context = initial_state(ConstructorContext::new(7_u64))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let reused = reuseResult(reuse_context, &reuse_witness).unwrap();
+    assert_oracle(reused, reuse_witness.calls.get(), &oracle["reuseResult"]);
 }

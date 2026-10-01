@@ -111,4 +111,46 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
+    pub fn reuseResult<Private, W: Witnesses<Private>>(
+        context: runtime::context::CircuitContext<Private>,
+        witnesses: &W,
+    ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
+        let mut total_cost = runtime::context::RunningCost::default();
+        let mut private_transcript_outputs = Vec::new();
+        let mut context = context;
+        let __compact_element_0 = runtime::Field::from(0u128);
+        let __compact_element_1 = runtime::Field::from(1u128);
+        let __compact_argument_2 = {
+            let __compact_cast_source_0 = (__compact_element_0, __compact_element_1);
+            let (__compact_cast_item_0_0, __compact_cast_item_0_1) = __compact_cast_source_0;
+            runtime::FixedVector::new([__compact_cast_item_0_0, __compact_cast_item_0_1])
+        };
+        let (__compact_next_private_3, __compact_witness_3) = witnesses.sumWitness(
+            context.witness_context_with(LedgerView {
+                state: context.query.state.get_ref(),
+            }),
+            __compact_argument_2,
+        );
+        context.private_state = __compact_next_private_3;
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
+            __compact_witness_3.clone(),
+        ));
+        let __compact_action_local_0: runtime::Field = __compact_witness_3;
+        let step = context.write_cell(0, __compact_action_local_0)?;
+        let context = step.context;
+        total_cost += step.gas_cost;
+        let __compact_value_4 = __compact_action_local_0;
+        let __compact_value_5 = runtime::Field::from(1u128);
+        let __compact_action_local_1: runtime::Field = __compact_value_4 + __compact_value_5;
+        let step = context.write_cell(0, __compact_action_local_1)?;
+        let context = step.context;
+        total_cost += step.gas_cost;
+        let result = ();
+        Ok(runtime::context::CircuitResult {
+            context,
+            result,
+            gas_cost: total_cost,
+            private_transcript_outputs,
+        })
+    }
 }

@@ -19,12 +19,13 @@ pub mod ledger_contract {
         let __compact_constructor_value_0 =
             runtime::BoundedUint::<18446744073709551615>::new(0u128)
                 .expect("Compact Uint literal fits its maximum");
-        let state = runtime::ledger::contract_state(vec![runtime::ledger::constructor_cell::<
-            runtime::BoundedUint<18446744073709551615>,
-            runtime::ledger::DefaultDB,
-        >(
-            __compact_constructor_value_0.clone()
-        )]);
+        let state = runtime::ledger::contract_state(vec![
+            runtime::ledger::constructor_cell::<
+                runtime::BoundedUint<18446744073709551615>,
+                runtime::ledger::DefaultDB,
+            >(__compact_constructor_value_0.clone()),
+            runtime::ledger::constructor_counter(),
+        ]);
         Ok(runtime::context::ConstructorResult::new(
             __compact_context,
             state,
@@ -56,6 +57,12 @@ pub mod ledger_contract {
         let __compact_action_local_1: runtime::BoundedUint<18446744073709551615> =
             runtime::cast_unsigned::<4, 18446744073709551615>(__compact_action_local_0)?;
         let step = context.write_cell(0, __compact_action_local_1)?;
+        let context = step.context;
+        total_cost += step.gas_cost;
+        let __compact_action_local_2: runtime::BoundedUint<65535> =
+            runtime::BoundedUint::<65535>::new(1u128)
+                .expect("Compact Uint literal fits its maximum");
+        let step = context.increment_counter(1, __compact_action_local_2.value() as u16)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();

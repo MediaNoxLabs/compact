@@ -984,6 +984,7 @@ fn action_contains_call(action: &StateAction) -> bool {
     match action {
         StateAction::CircuitCall { .. } => true,
         StateAction::Let { action, .. } => action_contains_call(action),
+        StateAction::Sequence { actions } => actions.iter().any(action_contains_call),
         _ => false,
     }
 }
@@ -1085,6 +1086,7 @@ pub(crate) fn expression_contains_stateful_call(
 
 fn action_contains_witness(action: &StateAction) -> bool {
     match action {
+        StateAction::Sequence { actions } => actions.iter().any(action_contains_witness),
         StateAction::Expression { value }
         | StateAction::CellWrite { value, .. }
         | StateAction::SetInsert { value, .. }
@@ -1154,54 +1156,80 @@ pub(crate) fn render_stateful_circuit(
     let mut uses_witness = false;
     let mut next_temp = 0;
     let mut next_local = 0;
-    for action in &circuit.actions {
-        let mut local_parameters = parameters.clone();
-        let mut action = action;
-        while let StateAction::Let {
-            bindings,
-            action: inner,
-        } = action
-        {
-            for binding in bindings {
-                ident(&binding.name)?;
-                let mut binding_statements = Vec::new();
-                let mut query_effect = false;
-                let (value, actual, effect) = render_state_expression(
-                    &binding.value,
-                    &local_parameters,
-                    witnesses,
-                    &mut binding_statements,
-                    &mut next_temp,
-                    circuits,
-                    stateful_circuits,
-                    ledger_fields,
-                    &mut query_effect,
-                )?;
-                if actual != binding.ty {
-                    return Err(RenderError::TypeMismatch {
-                        expected: binding.ty.clone(),
-                        actual,
-                    });
-                }
-                if effect {
-                    uses_witness = true;
-                }
-                if effect || query_effect {
-                    statements.push(syn::parse_quote!(let mut context = context;));
-                }
-                statements.extend(binding_statements);
-                let local_name = syn::Ident::new(
-                    &format!("__compact_action_local_{next_local}"),
-                    Span::call_site(),
-                );
-                next_local += 1;
-                let ty = rust_type(&binding.ty)?;
-                statements.push(syn::parse_quote!(let #local_name: #ty = #value;));
-                local_parameters.insert(binding.name.as_str(), (&binding.ty, local_name));
+    enum Pending<'a> {
+        Action(&'a StateAction),
+        RestoreScope,
+    }
+    let mut pending = circuit
+        .actions
+        .iter()
+        .rev()
+        .map(Pending::Action)
+        .collect::<Vec<_>>();
+    let mut scopes = Vec::new();
+    let mut local_parameters = parameters.clone();
+    while let Some(pending_action) = pending.pop() {
+        let action = match pending_action {
+            Pending::Action(action) => action,
+            Pending::RestoreScope => {
+                local_parameters = scopes.pop().expect("scope marker has a matching scope");
+                continue;
             }
-            action = inner;
+        };
+        match action {
+            StateAction::Sequence { actions } => {
+                pending.extend(actions.iter().rev().map(Pending::Action));
+                continue;
+            }
+            StateAction::Let {
+                bindings,
+                action: inner,
+            } => {
+                scopes.push(local_parameters.clone());
+                for binding in bindings {
+                    ident(&binding.name)?;
+                    let mut binding_statements = Vec::new();
+                    let mut query_effect = false;
+                    let (value, actual, effect) = render_state_expression(
+                        &binding.value,
+                        &local_parameters,
+                        witnesses,
+                        &mut binding_statements,
+                        &mut next_temp,
+                        circuits,
+                        stateful_circuits,
+                        ledger_fields,
+                        &mut query_effect,
+                    )?;
+                    if actual != binding.ty {
+                        return Err(RenderError::TypeMismatch {
+                            expected: binding.ty.clone(),
+                            actual,
+                        });
+                    }
+                    if effect {
+                        uses_witness = true;
+                    }
+                    if effect || query_effect {
+                        statements.push(syn::parse_quote!(let mut context = context;));
+                    }
+                    statements.extend(binding_statements);
+                    let local_name = syn::Ident::new(
+                        &format!("__compact_action_local_{next_local}"),
+                        Span::call_site(),
+                    );
+                    next_local += 1;
+                    let ty = rust_type(&binding.ty)?;
+                    statements.push(syn::parse_quote!(let #local_name: #ty = #value;));
+                    local_parameters.insert(binding.name.as_str(), (&binding.ty, local_name));
+                }
+                pending.push(Pending::RestoreScope);
+                pending.push(Pending::Action(inner));
+                continue;
+            }
+            _ => {}
         }
-        let parameters = local_parameters;
+        let parameters = local_parameters.clone();
         match action {
             StateAction::Expression { value } => {
                 let mut effect_statements = Vec::new();
@@ -1309,7 +1337,9 @@ pub(crate) fn render_stateful_circuit(
                     }
                 });
             }
-            StateAction::Let { .. } => unreachable!("action Let wrappers were unwrapped"),
+            StateAction::Let { .. } | StateAction::Sequence { .. } => {
+                unreachable!("control actions were expanded before rendering")
+            }
             StateAction::CounterIncrement {
                 field,
                 index,

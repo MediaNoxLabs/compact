@@ -399,6 +399,11 @@ fn collect_action_types(
     enums: &mut BTreeMap<String, Vec<String>>,
 ) -> Result<(), RenderError> {
     match action {
+        StateAction::Sequence { actions } => {
+            for action in actions {
+                collect_action_types(action, structs, enums)?;
+            }
+        }
         StateAction::PureCall { arguments, .. } | StateAction::CircuitCall { arguments, .. } => {
             for argument in arguments {
                 collect_expression_types(argument, structs, enums)?;

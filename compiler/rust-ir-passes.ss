@@ -732,6 +732,16 @@
 
       (define (state-action-ir expr owner-src environment witness-ids)
         (nanopass-case (Lnodisclose Expression) expr
+          [(seq ,src ,expr* ... ,expr)
+           (object (cons "kind" "sequence")
+                   (cons "actions"
+                         (list->vector
+                           (append (map (lambda (step)
+                                          (state-action-ir step src environment witness-ids))
+                                        expr*)
+                                   (if (empty-constructor-expression? expr)
+                                       '()
+                                       (list (state-action-ir expr src environment witness-ids)))))))]
           [(call ,src ,function-name ,expr* ...)
            (if (eq-hashtable-ref witness-ids function-name #f)
                (object (cons "kind" "expression")

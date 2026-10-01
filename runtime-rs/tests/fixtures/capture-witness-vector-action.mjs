@@ -48,4 +48,5 @@ function scenario(name) {
 process.stdout.write(JSON.stringify({
   keepResult: scenario('keepResult'),
   discardResult: scenario('discardResult'),
+  reuseResult: scenario('reuseResult'),
 }, null, 2) + '\n');

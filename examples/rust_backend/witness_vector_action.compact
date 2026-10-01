@@ -17,3 +17,9 @@ export circuit discardResult(): [] {
   sumWitness([0 as Field, 1 as Field]);
   stored = 7;
 }
+
+export circuit reuseResult(): [] {
+  const value = sumWitness([0 as Field, 1 as Field]);
+  stored = disclose(value);
+  stored = disclose(value + 1 as Field);
+}

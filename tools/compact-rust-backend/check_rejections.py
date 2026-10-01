@@ -15,11 +15,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Ensure unsupported Compact programs fail with source diagnostics.
+"""Ensure the public Rust compiler target rejects unsupported programs.
 
 The positive fixture checker cannot detect an unsupported construct that
 quietly emits a plausible Rust library. This gate pins two source-level
-refusals and verifies that the renderer leaves no generated library behind.
+refusals and verifies that no generated Cargo library survives.
 """
 
 import os
@@ -29,9 +29,6 @@ import subprocess
 import sys
 import tempfile
 
-
-ROOT = Path(__file__).resolve().parents[2]
-BACKEND = ROOT / "target" / "debug" / "compact-rustc"
 
 CASES = {
     "unknown-opaque": (
@@ -53,14 +50,6 @@ def main() -> int:
     if not compactc or shutil.which(compactc) is None:
         print("Set COMPACTC to a ledger-8 compiler before running this gate", file=sys.stderr)
         return 1
-    build = subprocess.run(
-        ["cargo", "build", "-q", "-p", "compact-rust-backend", "--bin", "compact-rustc"],
-        cwd=ROOT,
-        check=False,
-    )
-    if build.returncode:
-        return build.returncode
-
     failures = []
     with tempfile.TemporaryDirectory(prefix="compact-rust-rejections-") as temp:
         directory = Path(temp)
@@ -69,8 +58,7 @@ def main() -> int:
             output_path = directory / name
             source_path.write_text(source)
             result = subprocess.run(
-                [str(BACKEND), str(source_path), str(output_path)],
-                cwd=ROOT,
+                [compactc, "--target", "rust", "--skip-zk", str(source_path), str(output_path)],
                 capture_output=True,
                 text=True,
                 env=os.environ.copy(),
@@ -83,6 +71,8 @@ def main() -> int:
                 failures.append(f"{name}: missing source diagnostic:\n{message}")
             if (output_path / "contract" / "lib.rs").exists():
                 failures.append(f"{name}: rejected source left a generated Rust library")
+            if (output_path / "contract" / "Cargo.toml").exists():
+                failures.append(f"{name}: rejected source left a generated Cargo manifest")
 
     for failure in failures:
         print(f"FAIL {failure}", file=sys.stderr)

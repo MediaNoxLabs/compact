@@ -284,6 +284,15 @@ mod tests {
     }
 
     #[test]
+    fn target_selection_rejects_missing_and_unknown_targets() {
+        let missing = select_targets(vec![OsString::from("--target")]);
+        assert!(matches!(missing, Err(message) if message.contains("needs ts or rust")));
+
+        let unknown = select_targets(vec![OsString::from("--target=wasm")]);
+        assert!(matches!(unknown, Err(message) if message.contains("valid targets are ts, rust")));
+    }
+
+    #[test]
     fn crate_name_is_stable_for_source_filename() {
         assert_eq!(
             package_name(Path::new("Passport_2.compact")),

@@ -381,6 +381,66 @@ fn constructor_map_steps_validate_keys_values_and_use_vm_methods() {
 }
 
 #[test]
+fn nested_set_query_in_cell_write_checks_field_and_item_types() {
+    let mut contract = identity(
+        Type::Field,
+        Expr::Parameter {
+            name: "value".into(),
+        },
+    );
+    contract.ledger_fields = vec![
+        LedgerField {
+            id: "flag".into(),
+            index: 0,
+            declaration: LedgerFieldKind::Cell { ty: Type::Boolean },
+        },
+        LedgerField {
+            id: "seen".into(),
+            index: 1,
+            declaration: LedgerFieldKind::Set { ty: Type::Field },
+        },
+    ];
+    contract.stateful_circuits = vec![StatefulCircuit {
+        name: "check".into(),
+        parameters: vec![],
+        actions: vec![StateAction::CellWrite {
+            field: "flag".into(),
+            index: 0,
+            value: Expr::SetMember {
+                field: "seen".into(),
+                index: 1,
+                value: Box::new(Expr::FieldLiteral { value: "1".into() }),
+            },
+        }],
+        result: Type::Unit,
+        return_value: StateReturn::Unit,
+    }];
+    let source = render(&contract).unwrap();
+    assert!(source.contains("member_set(1,"));
+    assert!(source.contains("total_cost += __compact_query_0.gas_cost"));
+    let effectful_value = {
+        let StateAction::CellWrite { value, .. } = &mut contract.stateful_circuits[0].actions[0]
+        else {
+            unreachable!()
+        };
+        let Expr::SetMember { value: item, .. } = value else {
+            unreachable!()
+        };
+        *item = Box::new(Expr::Boolean { value: true });
+        value.clone()
+    };
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::TypeMismatch {
+            expected: Type::Field,
+            actual: Type::Boolean,
+        })
+    );
+    contract.circuits[0].body = effectful_value;
+    assert_eq!(render(&contract), Err(RenderError::EffectfulExpression));
+}
+
+#[test]
 fn vector_expression_preserves_element_type() {
     let mut contract = identity(
         Type::Vector {

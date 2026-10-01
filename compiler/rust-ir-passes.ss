@@ -605,7 +605,7 @@
                  (object (cons "kind" "cell_write")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
-                         (cons "value" (expression-ir (car expr*) src)))]
+                         (cons "value" (stateful-expression-ir (car expr*) src witness-ids)))]
                 [(and (eq? adt-name 'Set)
                       (eq? ledger-op 'insert)
                       (= (length expr*) 1))
@@ -738,6 +738,27 @@
                             (cons "point" (stateful-expression-ir (car expr*) src witness-ids))
                             (cons "scalar" (stateful-expression-ir (cadr expr*) src witness-ids)))))]
                [else (expression-ir value-expr owner-src)]))]
+          [(public-ledger ,src ,ledger-field-name ,sugar? (,path-elt* ...) ,src^ ,adt-op ,expr* ...)
+           (unless (and (= (length path-elt*) 1)
+                        (integer? (car path-elt*)))
+             (source-errorf src "Rust backend supports root ledger query paths only"))
+           (nanopass-case (Lnodisclose ADT-Op) adt-op
+             [(,ledger-op ,op-class (,adt-name (,adt-formal* ,adt-arg*) ...) ((,var-name* ,type*) ...) ,type ,vm-code)
+              (cond
+                [(and (eq? adt-name 'Set) (eq? ledger-op 'member) (= (length expr*) 1))
+                 (object (cons "kind" "set_member")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*))
+                         (cons "value" (stateful-expression-ir (car expr*) src witness-ids)))]
+                [(and (eq? adt-name 'Set) (eq? ledger-op 'isEmpty) (null? expr*))
+                 (object (cons "kind" "set_is_empty")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*)))]
+                [(and (eq? adt-name 'Map) (eq? ledger-op 'isEmpty) (null? expr*))
+                 (object (cons "kind" "map_is_empty")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*)))]
+                [else (source-errorf src "Rust backend does not yet support this nested ledger query")])])]
           [(safe-cast ,src ,type ,type^ ,expr)
            (nanopass-case (Lnodisclose Type) type
              [(tunsigned ,src^ ,nat)

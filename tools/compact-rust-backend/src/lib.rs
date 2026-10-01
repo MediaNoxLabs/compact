@@ -286,6 +286,7 @@ fn collect_expression_types(
         Expr::Assert { condition, .. } => {
             collect_expression_types(condition, structs, enums)?;
         }
+        Expr::SetMember { value, .. } => collect_expression_types(value, structs, enums)?,
         Expr::Call { arguments, .. } | Expr::WitnessCall { arguments, .. } => {
             for argument in arguments {
                 collect_expression_types(argument, structs, enums)?;
@@ -341,6 +342,7 @@ fn collect_expression_types(
         | Expr::BytesLiteral { .. }
         | Expr::UnsignedLiteral { .. }
         | Expr::Parameter { .. } => {}
+        Expr::SetIsEmpty { .. } | Expr::MapIsEmpty { .. } => {}
     }
     Ok(())
 }
@@ -789,7 +791,10 @@ fn expression_with_calls(
                 Type::Field,
             ))
         }
-        Expr::WitnessCall { .. } => Err(RenderError::EffectfulExpression),
+        Expr::WitnessCall { .. }
+        | Expr::SetMember { .. }
+        | Expr::SetIsEmpty { .. }
+        | Expr::MapIsEmpty { .. } => Err(RenderError::EffectfulExpression),
         Expr::FieldCast { value } => {
             let (value, actual) = expression_with_calls(value, parameters, circuits)?;
             if !matches!(actual, Type::Unsigned { .. }) {

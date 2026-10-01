@@ -1,0 +1,28 @@
+import CompactStandardLibrary;
+
+export ledger memberFlag: Boolean;
+export ledger setEmptyFlag: Boolean;
+export ledger mapEmptyFlag: Boolean;
+export ledger seen: Set<Field>;
+export ledger table: Map<Field, Field>;
+
+export circuit seed(value: Field): [] {
+  seen.insert(disclose(value));
+  table.insert(disclose(value), disclose(value));
+}
+
+export circuit check_member(value: Field): [] {
+  memberFlag.write(seen.member(disclose(value)));
+}
+
+export circuit check_set_empty(): [] {
+  setEmptyFlag.write(disclose(seen.isEmpty()));
+}
+
+export circuit check_map_empty(): [] {
+  mapEmptyFlag.write(disclose(table.isEmpty()));
+}
+
+export circuit member_flag(): Boolean { return memberFlag.read(); }
+export circuit set_empty_flag(): Boolean { return setEmptyFlag.read(); }
+export circuit map_empty_flag(): Boolean { return mapEmptyFlag.read(); }

@@ -396,6 +396,19 @@ pub enum Expr {
     Parameter {
         name: String,
     },
+    SetMember {
+        field: String,
+        index: u8,
+        value: Box<Expr>,
+    },
+    SetIsEmpty {
+        field: String,
+        index: u8,
+    },
+    MapIsEmpty {
+        field: String,
+        index: u8,
+    },
     Tuple {
         elements: Vec<Expr>,
     },

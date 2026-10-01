@@ -54,6 +54,7 @@ pub enum RenderError {
     InvalidConstructorInitializer(String),
     UnsupportedLedgerCellType(Type),
     UnsupportedLedgerValueType(Type),
+    ConflictingTypeAlias(String),
     ConflictingStruct(String),
     DuplicateStructField(String),
     InvalidStructField(String),
@@ -130,6 +131,9 @@ impl fmt::Display for RenderError {
                     f,
                     "ledger collection type cannot be used as a Cell value: {ty:?}"
                 )
+            }
+            Self::ConflictingTypeAlias(name) => {
+                write!(f, "conflicting exported type alias {name:?}")
             }
             Self::ConflictingStruct(name) => {
                 write!(f, "conflicting definitions for struct {name:?}")
@@ -2599,16 +2603,45 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
             }
         });
     }
+    let has_derived_types = !struct_items.is_empty();
+    let mut alias_names = HashSet::new();
+    let mut alias_reexports = Vec::new();
+    for alias in &contract.type_aliases {
+        if !alias_names.insert(alias.name.as_str())
+            || struct_definitions.contains_key(&alias.name)
+            || enum_definitions.contains_key(&alias.name)
+            || matches!(
+                alias.name.as_str(),
+                "runtime" | "types" | "pure_circuits" | "ledger_contract"
+            )
+        {
+            return Err(RenderError::ConflictingTypeAlias(alias.name.clone()));
+        }
+        let name = ident(&alias.name)?;
+        let ty = rust_type(&alias.ty)?;
+        struct_items.push(syn::parse_quote!(#[allow(non_camel_case_types)] pub type #name = #ty;));
+        alias_reexports.push(name);
+    }
+    let derive_imports: Option<syn::Item> = has_derived_types.then(|| {
+        syn::parse_quote!(
+            use runtime::{BinaryHashRepr, CompactCellValue, FieldRepr, Fr, FromFieldRepr, MemWrite};
+        )
+    });
     let types_module: Option<syn::Item> = if struct_items.is_empty() {
         None
     } else {
         Some(syn::parse_quote! {
             pub mod types {
                 use midnight_compact_runtime as runtime;
-                use runtime::{BinaryHashRepr, CompactCellValue, FieldRepr, Fr, FromFieldRepr, MemWrite};
+                #derive_imports
                 #(#struct_items)*
             }
         })
+    };
+    let alias_exports: Option<syn::Item> = if alias_reexports.is_empty() {
+        None
+    } else {
+        Some(syn::parse_quote!(pub use types::{#(#alias_reexports),*};))
     };
     let initial_state: syn::Item = if constructor_uses_witness {
         syn::parse_quote! {
@@ -2662,6 +2695,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
     };
     let file: syn::File = syn::parse2(quote! {
         #types_module
+        #alias_exports
         pub mod pure_circuits {
             use midnight_compact_runtime as runtime;
             const _: () = assert!(runtime::RUST_RUNTIME_ABI == #runtime_abi);

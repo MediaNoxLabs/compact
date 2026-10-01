@@ -9,6 +9,7 @@ use midnight_storage::storage::HashMap;
 
 #[test]
 fn exact_aliases_oracle_initial_state_matches_typescript() {
+    let _: compact_rust_aliases_oracle_fixture::Tag = Default::default();
     let oracle: serde_json::Value = serde_json::from_str(include_str!(
         "../../../runtime-rs/tests/fixtures/aliases-oracle.json"
     ))

@@ -79,7 +79,10 @@ pub mod types {
         pub announcement: runtime::JubjubPoint,
         pub response: runtime::Field,
     }
+    #[allow(non_camel_case_types)]
+    pub type Schnorr_SchnorrSignature = crate::types::SchnorrSignature;
 }
+pub use types::Schnorr_SchnorrSignature;
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
     const _: () = assert!(runtime::RUST_RUNTIME_ABI == 3);

@@ -1766,6 +1766,25 @@
                (source-errorf src "Rust backend does not yet support constructor return values"))]
           [else (source-errorf owner-src "Rust backend does not yet support this constructor body")]))
 
+      (define (type-alias-ir pelt aliases)
+        (nanopass-case (Lnodisclose Program-Element) pelt
+          [(export-typedef ,src ,type-name (,tvar-name* ...) ,type)
+           (unless (null? tvar-name*)
+             (source-errorf src "Rust backend does not yet support parameterized exported type aliases"))
+           (let* ([name (symbol->string type-name)]
+                  [ty (type-ir type src)]
+                  [kind (cdr (assoc "kind" ty))]
+                  [defined-name (assoc "name" ty)])
+             ;; Exported struct and enum definitions also appear as
+             ;; export-typedef nodes. Their concrete types are emitted by
+             ;; the normal named-type collector, so only retain real aliases.
+             (if (and defined-name
+                      (or (string=? kind "struct") (string=? kind "enum"))
+                      (string=? name (cdr defined-name)))
+                 aliases
+                 (cons (object (cons "name" name) (cons "ty" ty)) aliases)))]
+          [else aliases]))
+
       (define (constructor-ir pelt witness-ids)
         (nanopass-case (Lnodisclose Program-Element) pelt
           [(public-ledger-declaration ,pl-array ,lconstructor)
@@ -1797,7 +1816,9 @@
            (source-errorf src "Rust backend found multiple constructors"))
          (print-json
            (get-target-port 'rust.ir.json)
-           (append (object (cons "schema_version" 5)
+           (append (object (cons "schema_version" 6)
+                   (cons "type_aliases"
+                         (list->vector (fold-right type-alias-ir '() pelt*)))
                    (cons "ledger_fields"
                          (list->vector
                            (fold-right (lambda (pelt fields) (ledger-fields-ir pelt fields src)) '() pelt*)))

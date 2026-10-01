@@ -7,12 +7,14 @@
 
 use serde::{Deserialize, Serialize};
 
-pub const SCHEMA_VERSION: u32 = 5;
+pub const SCHEMA_VERSION: u32 = 6;
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Contract {
     pub schema_version: u32,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub type_aliases: Vec<TypeAlias>,
     pub ledger_fields: Vec<LedgerField>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub constructor: Option<Constructor>,
@@ -20,6 +22,13 @@ pub struct Contract {
     pub witnesses: Vec<WitnessDeclaration>,
     pub circuits: Vec<PureCircuit>,
     pub stateful_circuits: Vec<StatefulCircuit>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct TypeAlias {
+    pub name: String,
+    pub ty: Type,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]

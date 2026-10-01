@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="An evidence-based, interactive comparison of two Rust backends for Midnight Compact on ledger-8."
+    />
+    <meta name="theme-color" content="#0c121c" />
+    <title>Compact Rust backend atlas · Architecture comparison</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230c121c'/%3E%3Cpath d='M16 18h32M16 32h24M16 46h32' stroke='%238de6cf' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="./styles.css" />
+    <script defer src="./app.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div class="site-shell">
+      <header class="site-header">
+        <a class="wordmark" href="#top" aria-label="Compact Rust backend atlas, top of page">
+          <span class="wordmark-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+          <span>COMPACT <strong>RUST ATLAS</strong></span>
+        </a>
+        <nav class="site-nav" aria-label="Main navigation">
+          <a href="#architecture">Architecture</a>
+          <a href="#domain">Types</a>
+          <a href="#runtime">Runtime</a>
+          <a href="#evidence">Evidence</a>
+        </nav>
+        <a class="header-cta" href="#assessment">Read the assessment <span aria-hidden="true">↗</span></a>
+      </header>
+
+      <main id="main">
+        <section class="hero section-wrap" id="top" aria-labelledby="hero-title">
+          <div class="hero-copy">
+            <div class="eyebrow"><span class="eyebrow-rule"></span> ARCHITECTURE REVIEW <span class="eyebrow-dot">·</span> LEDGER-8</div>
+            <h1 id="hero-title">From text emission to <em>a typed backend.</em></h1>
+            <p class="hero-intro">
+              Two working Rust paths for Midnight Compact. One emits Rust text inside the Scheme
+              compiler. The other sends a closed Compact model to a Rust syntax renderer.
+              Explore what changed, what it buys, and what still needs work.
+            </p>
+            <div class="hero-actions">
+              <a class="button button-primary" href="#architecture">Explore the two paths <span aria-hidden="true">↘</span></a>
+              <a class="text-link" href="#assessment">Jump to the judgment <span aria-hidden="true">→</span></a>
+            </div>
+          </div>
+          <div class="hero-visual" aria-label="Two compilation paths from Compact to Rust">
+            <div class="hero-visual-top"><span>ONE LANGUAGE</span><span>TWO BACKENDS</span></div>
+            <div class="hero-source">COMPACT<span class="hero-source-pulse" aria-hidden="true"></span></div>
+            <div class="hero-fork" aria-hidden="true"><span></span><span></span></div>
+            <div class="hero-routes">
+              <div class="hero-route hero-route-oracle">
+                <span class="route-index">01 / ORACLE</span>
+                <strong>Ltypescript</strong>
+                <span class="route-arrow" aria-hidden="true">↓</span>
+                <span>Scheme text emitter</span>
+              </div>
+              <div class="hero-route hero-route-local">
+                <span class="route-index">02 / INDEPENDENT</span>
+                <strong>Typed JSON IR</strong>
+                <span class="route-arrow" aria-hidden="true">↓</span>
+                <span>syn + quote renderer</span>
+              </div>
+            </div>
+            <div class="hero-output">RUST EXECUTION LIBRARY <span aria-hidden="true">↗</span></div>
+          </div>
+          <div class="hero-footer">
+            <span><b>ORACLE</b> <code>589c92ef</code></span>
+            <span><b>INDEPENDENT</b> <code>2f93774e</code></span>
+            <span><b>COMMON BASE</b> <code>eb72a5ab · ledger-8</code></span>
+          </div>
+        </section>
+
+        <section class="chapter section-wrap" id="architecture" aria-labelledby="architecture-title">
+          <div class="section-heading">
+            <span class="chapter-index">01 / SYSTEM SHAPE</span>
+            <div>
+              <h2 id="architecture-title">Where the paths divide</h2>
+              <p>Choose a stage to follow the same contract through both implementations.</p>
+            </div>
+          </div>
+          <div class="architecture-layout">
+            <div class="stage-nav" role="group" aria-label="Architecture stage">
+              <button class="stage-button is-active" type="button" data-stage="boundary" aria-pressed="true"><span>01</span> Compiler boundary</button>
+              <button class="stage-button" type="button" data-stage="model" aria-pressed="false"><span>02</span> Domain model</button>
+              <button class="stage-button" type="button" data-stage="emission" aria-pressed="false"><span>03</span> Rust emission</button>
+              <button class="stage-button" type="button" data-stage="runtime" aria-pressed="false"><span>04</span> Runtime handoff</button>
+            </div>
+            <div class="stage-view" aria-live="polite">
+              <div class="stage-view-top"><span id="stage-kicker">COMPILER BOUNDARY</span><span class="stage-count" id="stage-number">01 / 04</span></div>
+              <div class="stage-columns">
+                <article class="stage-column oracle-side" aria-labelledby="oracle-stage-title">
+                  <div class="side-label"><span class="side-indicator"></span> CODEGEN-RUST / ORACLE</div>
+                  <h3 id="oracle-stage-title">Shared TypeScript IR</h3>
+                  <p id="oracle-stage-description">The Rust pass reads <code>Ltypescript</code>, the same prepared IR consumed by the TypeScript backend. The compiler directly emits a Rust crate with <code>--target rust</code>.</p>
+                  <div class="stage-code" id="oracle-stage-code"><span>Compact</span><i>→</i><span>Ltypescript</span><i>→</i><span>Scheme emitter</span></div>
+                </article>
+                <article class="stage-column local-side" aria-labelledby="local-stage-title">
+                  <div class="side-label"><span class="side-indicator"></span> TYPED BACKEND / LOCAL</div>
+                  <h3 id="local-stage-title">Pre-TypeScript boundary</h3>
+                  <p id="local-stage-description">The Rust IR pass starts at <code>Lnodisclose</code>, before TypeScript-specific preparation. A separate Rust process validates and renders its output.</p>
+                  <div class="stage-code" id="local-stage-code"><span>Compact</span><i>→</i><span>Lnodisclose</span><i>→</i><span>schema-6 IR</span></div>
+                </article>
+              </div>
+              <p class="stage-insight" id="stage-insight"><span>THE TRADEOFF</span> Cleaner target separation, with a second process and a JSON compatibility boundary.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="chapter chapter-alt" id="domain" aria-labelledby="domain-title">
+          <div class="section-wrap">
+            <div class="section-heading">
+              <span class="chapter-index">02 / DOMAIN MODEL</span>
+              <div>
+                <h2 id="domain-title">The type is part of the contract</h2>
+                <p>Source types that look similar on paper produce meaningfully different Rust APIs.</p>
+              </div>
+            </div>
+            <div class="type-explorer">
+              <div class="type-choices" role="group" aria-label="Select Compact type">
+                <button type="button" class="type-choice is-active" data-type="uint" aria-pressed="true"><code>Uint&lt;8&gt;</code><span>Bounded integer</span></button>
+                <button type="button" class="type-choice" data-type="bytes" aria-pressed="false"><code>Bytes&lt;32&gt;</code><span>Fixed bytes</span></button>
+                <button type="button" class="type-choice" data-type="vector" aria-pressed="false"><code>Vector&lt;3, Field&gt;</code><span>Fixed vector</span></button>
+                <button type="button" class="type-choice" data-type="opaque" aria-pressed="false"><code>Opaque&lt;"Uint8Array"&gt;</code><span>Opaque bytes</span></button>
+              </div>
+              <div class="type-detail" aria-live="polite">
+                <div class="type-detail-head"><span id="type-source">COMPACT / Uint&lt;8&gt;</span><span id="type-category">PRIMITIVE 01</span></div>
+                <div class="mapping-row"><span class="mapping-label">ORACLE</span><code id="oracle-type">u8</code><p id="oracle-type-detail">The width maps to a native Rust integer; Compact's maximum is enforced by emitted operations and runtime behavior.</p></div>
+                <div class="mapping-row"><span class="mapping-label">INDEPENDENT</span><code id="local-type">BoundedUint&lt;255&gt;</code><p id="local-type-detail">The exact inclusive maximum is carried by the Rust type and checked at construction and decoding.</p></div>
+                <p class="mapping-takeaway"><span aria-hidden="true">↗</span> <span id="type-takeaway">The local API makes the bound visible to Rust callers.</span></p>
+              </div>
+            </div>
+            <p class="section-footnote">Both backends reuse Midnight ledger-8 field, FAB, serialization, VM, and crypto primitives. The difference shown here is the Compact-facing Rust representation.</p>
+          </div>
+        </section>
+
+        <section class="chapter section-wrap" id="codebase" aria-labelledby="codebase-title">
+          <div class="section-heading">
+            <span class="chapter-index">03 / CODEBASE</span>
+            <div>
+              <h2 id="codebase-title">The work moved across the boundary</h2>
+              <p>Source shape, not a quality score. Lines include comments and exclude generated fixture output.</p>
+            </div>
+          </div>
+          <div class="codebase-layout">
+            <div class="codebase-chart" role="img" aria-label="Oracle has 11,694 Scheme backend lines and no Rust renderer. Independent backend has 1,904 Scheme backend lines and 6,767 Rust renderer lines.">
+              <div class="chart-scale"><span>0</span><span>3k</span><span>6k</span><span>9k</span><span>12k LOC</span></div>
+              <div class="chart-row"><div class="chart-row-title"><span class="chart-dot oracle-dot"></span> ORACLE <small>Scheme emitter</small></div><div class="chart-track"><div class="chart-segment chart-oracle" style="--bar-width: 97.45%"><b>11,694</b></div></div></div>
+              <div class="chart-row"><div class="chart-row-title"><span class="chart-dot local-dot"></span> INDEPENDENT <small>Scheme + Rust renderer</small></div><div class="chart-track"><div class="chart-segment chart-local-scheme" style="--bar-width: 15.87%"><b>1,904</b></div><div class="chart-segment chart-local-rust" style="--bar-width: 56.39%"><b>6,767</b></div></div></div>
+              <div class="chart-key"><span><i class="key-scheme"></i> Scheme backend</span><span><i class="key-renderer"></i> Rust renderer</span></div>
+            </div>
+            <aside class="codebase-aside">
+              <span class="aside-label">WHAT THE NUMBERS MEAN</span>
+              <p>The Scheme surface shrinks, but the new renderer remains a substantial body of code. Its gain is a <strong>closed model and structured syntax</strong>, not fewer lines by itself.</p>
+              <div class="aside-rule"></div>
+              <p><code>runtime-rs/src</code> also grows from <strong>2,889</strong> to <strong>3,848</strong> lines as typed ledger operations move behind the runtime boundary.</p>
+            </aside>
+          </div>
+        </section>
+
+        <section class="chapter chapter-alt" id="runtime" aria-labelledby="runtime-title">
+          <div class="section-wrap">
+            <div class="section-heading">
+              <span class="chapter-index">04 / EXECUTION</span>
+              <div>
+                <h2 id="runtime-title">Same ledger. Different ownership.</h2>
+                <p>The <code>tiny</code> constructor illustrates where ledger op construction lives.</p>
+              </div>
+            </div>
+            <div class="runtime-compare">
+              <article class="runtime-pattern oracle-pattern">
+                <div class="pattern-heading"><span class="side-indicator"></span><span>ORACLE GENERATED CODE</span><strong>Explicit VM program</strong></div>
+                <pre><code>let ops = OpProgramVerify::new()
+    .push(false, new_cell(0u8))
+    .push(true, new_cell(value))
+    .ins(false, 1)
+    .build();
+
+let result = query_for_verify(&amp;qctx, &amp;ops, ...)?;</code></pre>
+                <p>Generated functions assemble the VM instruction chain. The runtime supplies fluent builders and query helpers.</p>
+              </article>
+              <article class="runtime-pattern local-pattern">
+                <div class="pattern-heading"><span class="side-indicator"></span><span>LOCAL GENERATED CODE</span><strong>Typed context calls</strong></div>
+                <pre><code>let step = context.write_cell(0, authority)?;
+context = step.context;
+let step = context.write_cell(1, value)?;
+context = step.context;
+
+Ok(context.into_constructor_result())</code></pre>
+                <p>Generated functions express Compact actions. The runtime owns Cell codecs, collection views, and VM sequences.</p>
+              </article>
+            </div>
+            <div class="runtime-note"><strong>Shared foundation</strong><span>Both delegate actual state transitions to the ledger-8 on-chain VM and reuse upstream FAB, field, and curve implementations.</span></div>
+            <div class="runtime-note"><strong>Macro model</strong><span>The oracle provides a <code>#[witnesses]</code> forwarding attribute. The local renderer derives upstream field and hash representations plus local Cell and Merkle codecs; witnesses remain an explicit generated trait.</span></div>
+            <div class="runtime-note"><strong>Generated API</strong><span>The oracle emits a <code>Contract&lt;PS, W&gt;</code> with methods and a crate manifest. The local output exposes free functions with explicit contexts and witnesses; consumers currently supply the manifest.</span></div>
+          </div>
+        </section>
+
+        <section class="chapter section-wrap" id="evidence" aria-labelledby="evidence-title">
+          <div class="section-heading">
+            <span class="chapter-index">05 / EVIDENCE</span>
+            <div>
+              <h2 id="evidence-title">What is verified—and what is not</h2>
+              <p>Fixture volume matters, but rejection and target-parity gates catch different classes of failure.</p>
+            </div>
+          </div>
+          <div class="evidence-table-wrap">
+            <table class="evidence-table">
+              <thead><tr><th scope="col">Gate</th><th scope="col">Codegen-rust oracle</th><th scope="col">Independent local</th></tr></thead>
+              <tbody>
+                <tr><th scope="row">Fixture crates</th><td><strong>41</strong> manifests</td><td><strong>128</strong> manifests</td></tr>
+                <tr><th scope="row">Generated output</th><td>Compiler byte-regeneration guard</td><td>128-source regeneration checker</td></tr>
+                <tr><th scope="row">Behavior parity</th><td>TypeScript ↔ Rust state and result captures</td><td>37 exact top-level oracle sources execute; tiny, election, zerocash, passport parity</td></tr>
+                <tr><th scope="row">Refusal coverage</th><td>Broader negative corpus and TS target acceptance gate</td><td>Two compiler-backed rejection probes; no target acceptance gate yet</td></tr>
+                <tr><th scope="row">Witness secrecy</th><td>Serialized-state sentinel regression</td><td>Tiny constructor, clear, set, get sentinel checks</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="evidence-caption">The local workspace last passed 410 test/doc-test groups and 128 regeneration checks. The oracle suite was inspected for this comparison, not re-run. Counts do not establish whole-language parity.</p>
+        </section>
+
+        <section class="chapter closing" id="assessment" aria-labelledby="assessment-title">
+          <div class="section-wrap">
+            <div class="section-heading">
+              <span class="chapter-index">06 / ASSESSMENT</span>
+              <div>
+                <h2 id="assessment-title">Keep the architecture. Close the product gap.</h2>
+                <p>The typed model is a stronger maintenance boundary; the oracle still provides a smoother generated-crate experience.</p>
+              </div>
+            </div>
+            <div class="assessment-grid">
+              <div><span class="assessment-number">01</span><h3>Architectural gain</h3><p>Scheme exports a versioned Compact model. Rust validates it, constructs syntax nodes, and preserves bounds in API types. New shapes require deliberate variants rather than text interpolation.</p></div>
+              <div><span class="assessment-number">02</span><h3>Integration debt</h3><p>The local wrapper is a second process, still produces TS side output, and leaves <code>Cargo.toml</code> to consumers. Renderer errors need original Compact source spans; release metadata is still local.</p></div>
+              <div><span class="assessment-number">03</span><h3>Next gates</h3><p>Make Rust a first-class compiler target, emit a manifest, carry source spans through IR, expand the negative/acceptance matrix, and add focused gas and transcript parity tests.</p></div>
+            </div>
+            <div class="scope-banner"><span>SCOPE BOUNDARY</span><p><code>compact-rustc</code> forces <code>--skip-zk</code>. This site compares the native execution backend and runtime; deployable proving artifacts are outside the verified scope.</p></div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="site-footer section-wrap">
+        <div><span class="footer-brand">COMPACT / RUST ATLAS</span><p>A pinned architectural comparison, prepared from local source inspection.</p></div>
+        <div class="footer-links"><a href="https://github.com/MediaNoxLabs/compact/tree/589c92ef961ce89ac730140e81b76d4c08222a70" target="_blank" rel="noopener noreferrer">Oracle source ↗</a><a href="#top">Back to top ↑</a></div>
+        <p class="footer-footnote">Oracle <code>589c92ef</code> · Independent <code>2f93774e</code> · 2026-10-01 · All local work remains unpushed.</p>
+      </footer>
+    </div>
+  </body>
+</html>

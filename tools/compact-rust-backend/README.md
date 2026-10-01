@@ -39,12 +39,14 @@ trait. This keeps state transitions and witness ownership visible at the call
 site. A `Contract` facade and typed ledger descriptors are being evaluated
 separately; they must preserve state bytes, gas, and witness ordering before
 replacing this interface.
+Generated modules suppress Rust's naming lint so public names retain their
+Compact spelling without warning in consumer builds.
 
 ## Version compatibility
 
 | Boundary | Current contract | Failure behavior |
 |---|---|---|
-| Compact compiler | Toolchain 0.31.111, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
+| Compact compiler | Toolchain 0.31.112, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
 | Rust IR | Schema 6, private to this backend | The renderer rejects any other schema before writing `lib.rs`. |
 | Generated code and Rust runtime | ABI 3 | Generated modules assert the ABI at Rust compile time. |
 | Rust runtime source | Exact Git revision in generated `Cargo.toml` | Cargo resolves the matching runtime and its pinned Midnight crates. |

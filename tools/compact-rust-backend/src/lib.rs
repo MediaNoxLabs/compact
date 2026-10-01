@@ -2673,6 +2673,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
         None
     } else {
         Some(syn::parse_quote! {
+            #[allow(non_snake_case)]
             pub mod types {
                 use midnight_compact_runtime as runtime;
                 #derive_imports
@@ -2717,6 +2718,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
         None
     } else {
         Some(syn::parse_quote! {
+            #[allow(non_snake_case)]
             pub mod ledger_contract {
                     use midnight_compact_runtime as runtime;
                     const _: () = assert!(runtime::RUST_RUNTIME_ABI == #runtime_abi);
@@ -2738,6 +2740,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
     let file: syn::File = syn::parse2(quote! {
         #types_module
         #alias_exports
+        #[allow(non_snake_case)]
         pub mod pure_circuits {
             use midnight_compact_runtime as runtime;
             const _: () = assert!(runtime::RUST_RUNTIME_ABI == #runtime_abi);

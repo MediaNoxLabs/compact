@@ -508,15 +508,30 @@
 
       ;; Stateful expressions keep witness calls explicit so Rust can evaluate
       ;; them in order and append each private transcript value exactly once.
-      (define (stateful-expression-ir expr owner-src witness-ids)
-        (nanopass-case (Lnodisclose Expression) expr
+      (define (stateful-expression-ir value-expr owner-src witness-ids)
+        (nanopass-case (Lnodisclose Expression) value-expr
           [(return ,src ,expr) (stateful-expression-ir expr src witness-ids)]
           [(call ,src ,function-name ,expr* ...)
            (if (eq-hashtable-ref witness-ids function-name #f)
                (object (cons "kind" "witness_call")
                        (cons "name" (symbol->string (id-sym function-name)))
                        (cons "arguments" (list->vector (map (lambda (arg) (stateful-expression-ir arg src witness-ids)) expr*))))
-               (expression-ir expr owner-src))]
+               (expression-ir value-expr owner-src))]
+          [(safe-cast ,src ,type ,type^ ,expr)
+           (nanopass-case (Lnodisclose Type) type
+             [(tunsigned ,src^ ,nat)
+              (if (maybe-nonnegative-integer-literal expr src)
+                  (expression-ir value-expr owner-src)
+                  (object (cons "kind" "unsigned_cast")
+                          (cons "max" (number->string nat))
+                          (cons "value" (stateful-expression-ir expr src witness-ids))))]
+             [else (expression-ir value-expr owner-src)])]
+          [(downcast-unsigned ,src ,nat? ,nat ,expr)
+           (unless nat?
+             (source-errorf src "Rust backend does not yet support Field-to-Uint downcasts"))
+           (object (cons "kind" "unsigned_cast")
+                   (cons "max" (number->string nat))
+                   (cons "value" (stateful-expression-ir expr src witness-ids)))]
           [(if ,src ,expr0 ,expr1 ,expr2)
            (object (cons "kind" "if")
                    (cons "condition" (stateful-expression-ir expr0 src witness-ids))
@@ -534,6 +549,10 @@
                                              (cons "value" (stateful-expression-ir value src witness-ids)))]))
                                 local* expr*)))
                    (cons "body" (stateful-expression-ir expr src witness-ids)))]
+          [(seq ,src ,expr* ... ,expr)
+           (if (checked-unsigned-subtraction? expr* expr)
+               (stateful-expression-ir expr src witness-ids)
+               (source-errorf src "Rust backend does not yet support this stateful expression sequence"))]
           [(tuple ,src ,tuple-arg* ...)
            (if (null? tuple-arg*)
                (kind "unit")
@@ -548,23 +567,32 @@
                                     tuple-arg*)))))]
           [(+ ,src ,mbits ,expr1 ,expr2)
            (if mbits
-               (expression-ir expr owner-src)
+               (object (cons "kind" "unsigned_add")
+                       (cons "max" (number->string (- (expt 2 mbits) 1)))
+                       (cons "left" (stateful-expression-ir expr1 src witness-ids))
+                       (cons "right" (stateful-expression-ir expr2 src witness-ids)))
                (object (cons "kind" "add")
                        (cons "left" (stateful-expression-ir expr1 src witness-ids))
                        (cons "right" (stateful-expression-ir expr2 src witness-ids))))]
           [(- ,src ,mbits ,expr1 ,expr2)
            (if mbits
-               (expression-ir expr owner-src)
+               (object (cons "kind" "unsigned_subtract")
+                       (cons "max" (number->string (- (expt 2 mbits) 1)))
+                       (cons "left" (stateful-expression-ir expr1 src witness-ids))
+                       (cons "right" (stateful-expression-ir expr2 src witness-ids)))
                (object (cons "kind" "subtract")
                        (cons "left" (stateful-expression-ir expr1 src witness-ids))
                        (cons "right" (stateful-expression-ir expr2 src witness-ids))))]
           [(* ,src ,mbits ,expr1 ,expr2)
            (if mbits
-               (expression-ir expr owner-src)
+               (object (cons "kind" "unsigned_multiply")
+                       (cons "max" (number->string (- (expt 2 mbits) 1)))
+                       (cons "left" (stateful-expression-ir expr1 src witness-ids))
+                       (cons "right" (stateful-expression-ir expr2 src witness-ids)))
                (object (cons "kind" "multiply")
                        (cons "left" (stateful-expression-ir expr1 src witness-ids))
                        (cons "right" (stateful-expression-ir expr2 src witness-ids))))]
-          [else (expression-ir expr owner-src)]))
+          [else (expression-ir value-expr owner-src)]))
 
       (define (stateful-return-ir return-expr owner-src witness-ids)
         (nanopass-case (Lnodisclose Expression) return-expr
@@ -584,6 +612,12 @@
            (object (cons "kind" "expression")
                    (cons "value" (stateful-expression-ir return-expr src witness-ids)))]
           [(let* ,src ([,local* ,expr*] ...) ,expr)
+           (object (cons "kind" "expression")
+                   (cons "value" (stateful-expression-ir return-expr src witness-ids)))]
+          [(safe-cast ,src ,type ,type^ ,expr)
+           (object (cons "kind" "expression")
+                   (cons "value" (stateful-expression-ir return-expr src witness-ids)))]
+          [(downcast-unsigned ,src ,nat? ,nat ,expr)
            (object (cons "kind" "expression")
                    (cons "value" (stateful-expression-ir return-expr src witness-ids)))]
           [(+ ,src ,mbits ,expr1 ,expr2)

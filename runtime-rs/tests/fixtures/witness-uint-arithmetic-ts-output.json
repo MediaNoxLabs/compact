@@ -1,0 +1,71 @@
+{
+  "add": {
+    "result": "3",
+    "privateState": 8,
+    "privateTranscriptOutputs": [
+      {
+        "valueAtoms": [
+          [
+            2
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "bytes",
+              "length": 2
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "subtract": {
+    "result": "1",
+    "privateState": 8,
+    "privateTranscriptOutputs": [
+      {
+        "valueAtoms": [
+          [
+            2
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "bytes",
+              "length": 2
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "multiply": {
+    "result": "4",
+    "privateState": 8,
+    "privateTranscriptOutputs": [
+      {
+        "valueAtoms": [
+          [
+            2
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "bytes",
+              "length": 2
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "addOverflowRejected": true,
+  "subtractUnderflowRejected": true,
+  "multiplyOverflowRejected": true
+}

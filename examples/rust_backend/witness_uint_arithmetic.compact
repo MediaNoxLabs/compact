@@ -1,0 +1,11 @@
+import CompactStandardLibrary;
+witness echo(value: Uint<16>): Uint<16>;
+export circuit add_echo(value: Uint<16>): Uint<16> {
+  return (disclose(echo(value)) + 1) as Uint<16>;
+}
+export circuit subtract_echo(value: Uint<16>): Uint<16> {
+  return disclose(echo(value)) - 1;
+}
+export circuit multiply_echo(value: Uint<16>): Uint<16> {
+  return (disclose(echo(value)) * 2) as Uint<16>;
+}

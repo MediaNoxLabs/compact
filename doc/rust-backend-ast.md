@@ -28,9 +28,8 @@ and checked unsigned addition, subtraction, and multiplication. The fixtures
 in `examples/rust_backend/` run from Compact source through the Scheme
 compiler, JSON bridge, `syn` renderer, native runtime, and executing Rust
 tests. The compiler supports the Cell, Counter, Set, Map, and List slices
-described below. The first witness path handles a direct stateful return;
-other witness placement and further bounded unsigned operations still require
-runtime semantics. `Uint<N>` uses a
+described below. Witness calls can compose with the supported stateful
+expressions and typed action bindings described below. `Uint<N>` uses a
 bounded runtime type with a checked inclusive maximum and Compact's byte
 alignment. `Bytes<N>` uses a small fixed bytes wrapper: it delegates field
 encoding and FAB alignment to ledger-8's `[u8; N]` support, and calls the
@@ -76,7 +75,10 @@ source order; a two-call fixture compares both outputs with TypeScript.
 Conditional returns execute only the selected witness branch. Tuple elements,
 nested witness arguments, and sequential local bindings preserve evaluation
 and transcript order in their TypeScript parity fixtures. Direct witness
-returns use this same expression path.
+returns use this same expression path. Witnessed `Uint<16>` addition,
+subtraction, multiplication, and explicit downcasts use the runtime's checked
+bounded types. Their results, FAB transcript values, and overflow or underflow
+behavior match the TypeScript oracle fixture.
 The action IR also carries typed sequential local bindings. A witnessed Cell
 write evaluates its witness before the ledger VM write; two writes in one
 circuit preserve the intervening ledger state, private state, and transcript
@@ -177,6 +179,7 @@ cargo test -p compact-rust-backend -p midnight-compact-runtime \
   -p compact-rust-witness-field-expression-fixture \
   -p compact-rust-witness-cell-write-fixture \
   -p compact-rust-witness-conditional-fixture \
+  -p compact-rust-witness-uint-arithmetic-fixture \
   -p compact-rust-uint-identity-fixture -p compact-rust-bytes-identity-fixture \
   -p compact-rust-counter-fixture -p compact-rust-cell-boolean-fixture \
   -p compact-rust-struct-identity-fixture -p compact-rust-nested-struct-fixture \

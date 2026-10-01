@@ -176,6 +176,87 @@ fn render_state_expression(
                 render_state_expression(body, &locals, witnesses, statements, next_temp)?;
             Ok((rendered, ty, effect || body_effect))
         }
+        Expr::UnsignedCast { max, value } => {
+            let target_max = max
+                .parse::<u128>()
+                .map_err(|_| RenderError::InvalidUnsignedMaximum(max.clone()))?;
+            if target_max.to_string() != *max {
+                return Err(RenderError::InvalidUnsignedMaximum(max.clone()));
+            }
+            let (rendered, actual, effect) =
+                render_state_expression(value, parameters, witnesses, statements, next_temp)?;
+            let Type::Unsigned { max: source_max } = actual else {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Unsigned { max: max.clone() },
+                    actual,
+                });
+            };
+            let parsed_source = source_max
+                .parse::<u128>()
+                .map_err(|_| RenderError::InvalidUnsignedMaximum(source_max.clone()))?;
+            if parsed_source.to_string() != source_max {
+                return Err(RenderError::InvalidUnsignedMaximum(source_max));
+            }
+            let source_max = syn::LitInt::new(&source_max, Span::call_site());
+            let target_max = syn::LitInt::new(max, Span::call_site());
+            Ok((
+                syn::parse_quote!(runtime::cast_unsigned::<#source_max, #target_max>(#rendered)?),
+                Type::Unsigned { max: max.clone() },
+                effect,
+            ))
+        }
+        Expr::UnsignedAdd { max, left, right }
+        | Expr::UnsignedSubtract { max, left, right }
+        | Expr::UnsignedMultiply { max, left, right } => {
+            let result_max = max
+                .parse::<u128>()
+                .map_err(|_| RenderError::InvalidUnsignedMaximum(max.clone()))?;
+            if result_max.to_string() != *max {
+                return Err(RenderError::InvalidUnsignedMaximum(max.clone()));
+            }
+            let (left, left_ty, left_effect) =
+                render_state_expression(left, parameters, witnesses, statements, next_temp)?;
+            let Type::Unsigned { max: left_max } = left_ty else {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Unsigned { max: max.clone() },
+                    actual: left_ty,
+                });
+            };
+            let left_name = syn::Ident::new(
+                &format!("__compact_value_{}", *next_temp),
+                Span::call_site(),
+            );
+            *next_temp += 1;
+            statements.push(syn::parse_quote!(let #left_name = #left;));
+            let (right, right_ty, right_effect) =
+                render_state_expression(right, parameters, witnesses, statements, next_temp)?;
+            let Type::Unsigned { max: right_max } = right_ty else {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Unsigned { max: max.clone() },
+                    actual: right_ty,
+                });
+            };
+            let right_name = syn::Ident::new(
+                &format!("__compact_value_{}", *next_temp),
+                Span::call_site(),
+            );
+            *next_temp += 1;
+            statements.push(syn::parse_quote!(let #right_name = #right;));
+            let left_max = syn::LitInt::new(&left_max, Span::call_site());
+            let right_max = syn::LitInt::new(&right_max, Span::call_site());
+            let result_max = syn::LitInt::new(max, Span::call_site());
+            let operation: syn::Path = match value {
+                Expr::UnsignedAdd { .. } => syn::parse_quote!(runtime::add_unsigned),
+                Expr::UnsignedSubtract { .. } => syn::parse_quote!(runtime::subtract_unsigned),
+                Expr::UnsignedMultiply { .. } => syn::parse_quote!(runtime::multiply_unsigned),
+                _ => unreachable!(),
+            };
+            Ok((
+                syn::parse_quote!(#operation::<#left_max, #right_max, #result_max>(#left_name, #right_name)?),
+                Type::Unsigned { max: max.clone() },
+                left_effect || right_effect,
+            ))
+        }
         Expr::Add { left, right }
         | Expr::Subtract { left, right }
         | Expr::Multiply { left, right } => {

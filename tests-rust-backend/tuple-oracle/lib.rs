@@ -58,9 +58,9 @@ pub mod pure_circuits {
         x: runtime::BoundedUint<255>,
     ) -> Result<(runtime::Field, runtime::Field), runtime::CompactError> {
         Ok({
-            let __compact_local_0: (runtime::BoundedUint<255>, runtime::BoundedUint<255>) = (x, x);
+            let __compact_local_w: (runtime::BoundedUint<255>, runtime::BoundedUint<255>) = (x, x);
             {
-                let __compact_cast_source_0 = __compact_local_0;
+                let __compact_cast_source_0 = __compact_local_w;
                 let (__compact_cast_item_0_0, __compact_cast_item_0_1) = __compact_cast_source_0;
                 (
                     runtime::Field::from((__compact_cast_item_0_0).value()),
@@ -73,9 +73,9 @@ pub mod pure_circuits {
         x: runtime::Field,
     ) -> Result<runtime::FixedVector<runtime::Field, 2>, runtime::CompactError> {
         Ok({
-            let __compact_local_0: (runtime::Field, runtime::Field) = (x, x);
+            let __compact_local_t: (runtime::Field, runtime::Field) = (x, x);
             {
-                let __compact_cast_source_0 = __compact_local_0;
+                let __compact_cast_source_0 = __compact_local_t;
                 let (__compact_cast_item_0_0, __compact_cast_item_0_1) = __compact_cast_source_0;
                 runtime::FixedVector::new([__compact_cast_item_0_0, __compact_cast_item_0_1])
             }
@@ -85,7 +85,7 @@ pub mod pure_circuits {
         x: runtime::Field,
     ) -> Result<(crate::types::Pair, crate::types::Pair), runtime::CompactError> {
         Ok({
-            let __compact_local_0: runtime::FixedVector<crate::types::Pair, 2> =
+            let __compact_local_v: runtime::FixedVector<crate::types::Pair, 2> =
                 runtime::FixedVector::new([
                     crate::types::Pair {
                         a: x,
@@ -99,7 +99,7 @@ pub mod pure_circuits {
                     },
                 ]);
             {
-                let __compact_cast_source_0 = __compact_local_0.clone();
+                let __compact_cast_source_0 = __compact_local_v.clone();
                 let [__compact_cast_item_0_0, __compact_cast_item_0_1] =
                     __compact_cast_source_0.into_array();
                 (__compact_cast_item_0_0, __compact_cast_item_0_1)
@@ -110,7 +110,7 @@ pub mod pure_circuits {
         x: runtime::Field,
     ) -> Result<(crate::types::Pair, crate::types::Pair), runtime::CompactError> {
         Ok({
-            let __compact_local_0: runtime::FixedVector<crate::types::Pair, 2> =
+            let __compact_local_v: runtime::FixedVector<crate::types::Pair, 2> =
                 runtime::FixedVector::new([
                     crate::types::Pair {
                         a: x,
@@ -124,13 +124,52 @@ pub mod pure_circuits {
                     },
                 ]);
             {
-                let __compact_local_0: (crate::types::Pair, crate::types::Pair) = {
-                    let __compact_cast_source_0 = __compact_local_0.clone();
+                let __compact_local_t: (crate::types::Pair, crate::types::Pair) = {
+                    let __compact_cast_source_0 = __compact_local_v.clone();
                     let [__compact_cast_item_0_0, __compact_cast_item_0_1] =
                         __compact_cast_source_0.into_array();
                     (__compact_cast_item_0_0, __compact_cast_item_0_1)
                 };
-                __compact_local_0.clone()
+                __compact_local_t.clone()
+            }
+        })
+    }
+    pub fn tuple_first(
+        x: runtime::Field,
+        flag: bool,
+    ) -> Result<runtime::Field, runtime::CompactError> {
+        Ok({
+            let __compact_local_pair: (runtime::Field, bool) = (x, flag);
+            {
+                let __compact_local___compact_pattern_tmp2: (runtime::Field, bool) =
+                    __compact_local_pair;
+                {
+                    let __compact_local_first: runtime::Field =
+                        (__compact_local___compact_pattern_tmp2).0;
+                    {
+                        let __compact_local_second: bool =
+                            (__compact_local___compact_pattern_tmp2).1;
+                        __compact_local_first
+                    }
+                }
+            }
+        })
+    }
+    pub fn tuple_second(x: runtime::Field, flag: bool) -> Result<bool, runtime::CompactError> {
+        Ok({
+            let __compact_local_pair: (runtime::Field, bool) = (x, flag);
+            {
+                let __compact_local___compact_pattern_tmp1: (runtime::Field, bool) =
+                    __compact_local_pair;
+                {
+                    let __compact_local_first: runtime::Field =
+                        (__compact_local___compact_pattern_tmp1).0;
+                    {
+                        let __compact_local_second: bool =
+                            (__compact_local___compact_pattern_tmp1).1;
+                        __compact_local_second
+                    }
+                }
             }
         })
     }

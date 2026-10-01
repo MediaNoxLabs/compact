@@ -34,10 +34,10 @@ pub mod pure_circuits {
     }
     pub fn tupleIntoVec() -> Result<runtime::Field, runtime::CompactError> {
         Ok({
-            let __compact_local_0: (runtime::Field, runtime::Field) =
+            let __compact_local_t: (runtime::Field, runtime::Field) =
                 (runtime::Field::from(3u128), runtime::Field::from(4u128));
             crate::pure_circuits::sumVec({
-                let __compact_cast_source_0 = __compact_local_0;
+                let __compact_cast_source_0 = __compact_local_t;
                 let (__compact_cast_item_0_0, __compact_cast_item_0_1) = __compact_cast_source_0;
                 runtime::FixedVector::new([__compact_cast_item_0_0, __compact_cast_item_0_1])
             })?
@@ -45,13 +45,13 @@ pub mod pure_circuits {
     }
     pub fn vecIntoTuple() -> Result<runtime::Field, runtime::CompactError> {
         Ok({
-            let __compact_local_0: runtime::FixedVector<runtime::Field, 2> =
+            let __compact_local_v: runtime::FixedVector<runtime::Field, 2> =
                 runtime::FixedVector::new([
                     runtime::Field::from(3u128),
                     runtime::Field::from(4u128),
                 ]);
             crate::pure_circuits::sumTup({
-                let __compact_cast_source_0 = __compact_local_0.clone();
+                let __compact_cast_source_0 = __compact_local_v.clone();
                 let [__compact_cast_item_0_0, __compact_cast_item_0_1] =
                     __compact_cast_source_0.into_array();
                 (__compact_cast_item_0_0, __compact_cast_item_0_1)

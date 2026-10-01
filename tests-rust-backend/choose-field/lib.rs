@@ -15,10 +15,11 @@ pub mod pure_circuits {
         right: runtime::Field,
     ) -> Result<runtime::Field, runtime::CompactError> {
         Ok({
-            let __compact_local_0: runtime::Field = left + right;
+            let __compact_local_total: runtime::Field = left + right;
             {
-                let __compact_local_0: runtime::Field = __compact_local_0 + __compact_local_0;
-                __compact_local_0
+                let __compact_local_doubled: runtime::Field =
+                    __compact_local_total + __compact_local_total;
+                __compact_local_doubled
             }
         })
     }

@@ -1,7 +1,8 @@
 use compact_rust_tuple_oracle_fixture::ledger_contract::initial_state;
 use compact_rust_tuple_oracle_fixture::pure_circuits::{
     as_tuple, as_vector, empty_tuple, hetero, one_tuple, struct_vector_return,
-    struct_vector_to_tuple, tuple_coerce, tuple_to_vector, tuple_var_ref,
+    struct_vector_to_tuple, tuple_coerce, tuple_first, tuple_second, tuple_to_vector,
+    tuple_var_ref,
 };
 use compact_rust_tuple_oracle_fixture::types::Pair;
 use midnight_compact_runtime::context::ConstructorContext;
@@ -77,6 +78,10 @@ fn tuple_shapes_and_coercions_match_typescript() {
     );
     assert_eq!(struct_vector_return(field).unwrap(), expected_structs);
     assert_eq!(struct_vector_to_tuple(field).unwrap(), expected_structs);
+    assert_eq!(tuple_first(field, true).unwrap(), field);
+    assert!(tuple_second(field, true).unwrap());
+    assert_eq!(oracle["tupleFirst"], "7");
+    assert_eq!(oracle["tupleSecond"], true);
 
     for key in ["asVector", "asTuple", "tupleToVector"] {
         assert_eq!(oracle[key], serde_json::json!(["7", "7"]));

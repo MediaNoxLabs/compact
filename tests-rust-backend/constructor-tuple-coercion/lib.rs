@@ -5,9 +5,9 @@ pub mod pure_circuits {
     const _: () = assert!(runtime::RUST_RUNTIME_ABI == 3);
     pub fn constant() -> Result<(runtime::Field, runtime::Field), runtime::CompactError> {
         Ok({
-            let __compact_local_0: (runtime::Field, runtime::Field) =
+            let __compact_local_value: (runtime::Field, runtime::Field) =
                 (runtime::Field::from(3u128), runtime::Field::from(4u128));
-            __compact_local_0
+            __compact_local_value
         })
     }
 }

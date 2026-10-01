@@ -451,6 +451,10 @@ pub enum Expr {
         field: String,
         index: usize,
     },
+    TupleIndex {
+        value: Box<Expr>,
+        index: usize,
+    },
     StructLiteral {
         ty: Type,
         fields: Vec<Expr>,

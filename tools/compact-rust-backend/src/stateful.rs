@@ -1026,6 +1026,7 @@ fn expression_contains(expression: &Expr, predicate: &impl Fn(&Expr) -> bool) ->
         | Expr::FieldCast { value }
         | Expr::Coerce { value, .. }
         | Expr::StructField { value, .. }
+        | Expr::TupleIndex { value, .. }
         | Expr::SetMember { value, .. }
         | Expr::Assert {
             condition: value, ..

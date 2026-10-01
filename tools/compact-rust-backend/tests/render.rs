@@ -1039,7 +1039,7 @@ fn local_binding_checks_declared_type_and_scope() {
     };
     bindings[0].ty = Type::Field;
     let source = render(&contract).unwrap();
-    assert!(source.contains("let __compact_local_0: runtime::Field = value;"));
+    assert!(source.contains("let __compact_local_saved: runtime::Field = value;"));
     assert!(source.contains("Ok({"));
 }
 

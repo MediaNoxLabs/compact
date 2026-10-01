@@ -66,7 +66,7 @@ pub mod pure_circuits {
     }
     pub fn constThenCall() -> Result<runtime::Field, runtime::CompactError> {
         Ok({
-            let __compact_local_0: runtime::Field = runtime::Field::from(0u128);
+            let __compact_local_x: runtime::Field = runtime::Field::from(0u128);
             crate::pure_circuits::idf(runtime::Field::from(0u128))?
         })
     }
@@ -119,12 +119,12 @@ pub mod pure_circuits {
     }
     pub fn constHugeFieldLiteral() -> Result<runtime::Field, runtime::CompactError> {
         Ok({
-            let __compact_local_0: runtime::Field = runtime::Field::from_le_bytes(&[
+            let __compact_local_x: runtime::Field = runtime::Field::from_le_bytes(&[
                 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
                 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 1u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
             ])
             .expect("validated Compact Field literal");
-            __compact_local_0
+            __compact_local_x
         })
     }
     pub fn callArgHugeFieldLiteral() -> Result<runtime::Field, runtime::CompactError> {
@@ -252,12 +252,12 @@ pub mod pure_circuits {
     }
     pub fn hashConstVectorArg() -> Result<runtime::FixedBytes<32>, runtime::CompactError> {
         Ok({
-            let __compact_local_0: runtime::FixedVector<runtime::Field, 2> =
+            let __compact_local_w: runtime::FixedVector<runtime::Field, 2> =
                 runtime::FixedVector::new([
                     runtime::Field::from(5u128),
                     runtime::Field::from(0u128),
                 ]);
-            runtime::persistent_hash(__compact_local_0.clone())
+            runtime::persistent_hash(__compact_local_w.clone())
         })
     }
     pub fn sameTypeVec() -> Result<runtime::FixedVector<runtime::Field, 2>, runtime::CompactError> {
@@ -307,13 +307,13 @@ pub mod pure_circuits {
     }
     pub fn constFieldOnlyLiteral() -> Result<runtime::Field, runtime::CompactError> {
         Ok({
-            let __compact_local_0: runtime::Field = runtime::Field::from_le_bytes(&[
+            let __compact_local_c: runtime::Field = runtime::Field::from_le_bytes(&[
                 151u8, 229u8, 222u8, 218u8, 203u8, 225u8, 18u8, 90u8, 16u8, 2u8, 153u8, 121u8,
                 18u8, 4u8, 205u8, 20u8, 96u8, 135u8, 38u8, 32u8, 96u8, 231u8, 204u8, 32u8, 245u8,
                 117u8, 166u8, 76u8, 157u8, 182u8, 207u8, 1u8,
             ])
             .expect("validated Compact Field literal");
-            __compact_local_0
+            __compact_local_c
         })
     }
     pub fn retFieldOnlyLiteral() -> Result<runtime::Field, runtime::CompactError> {

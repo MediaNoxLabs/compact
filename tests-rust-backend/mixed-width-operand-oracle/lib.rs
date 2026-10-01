@@ -10,13 +10,13 @@ pub mod pure_circuits {
         Ok({
             {
                 if !({
-                    let __compact_local_0: runtime::BoundedUint<17179869180> =
+                    let __compact_local_t: runtime::BoundedUint<17179869180> =
                         runtime::multiply_unsigned::<17179869180, 17179869180, 17179869180>(
                             runtime::cast_unsigned::<4294967295, 17179869180>(q)?,
                             runtime::BoundedUint::<17179869180>::new(4u128)
                                 .expect("Compact Uint literal fits its maximum"),
                         )?;
-                    __compact_local_0.value()
+                    __compact_local_t.value()
                         <= runtime::cast_unsigned::<4294967295, 17179869180>(y)?.value()
                 }) {
                     return Err(runtime::CompactError::AssertionFailed(
@@ -34,13 +34,13 @@ pub mod pure_circuits {
         Ok({
             {
                 if !({
-                    let __compact_local_0: runtime::BoundedUint<17179869180> =
+                    let __compact_local_t: runtime::BoundedUint<17179869180> =
                         runtime::multiply_unsigned::<17179869180, 17179869180, 17179869180>(
                             runtime::cast_unsigned::<4294967295, 17179869180>(q)?,
                             runtime::BoundedUint::<17179869180>::new(4u128)
                                 .expect("Compact Uint literal fits its maximum"),
                         )?;
-                    __compact_local_0.value()
+                    __compact_local_t.value()
                         < runtime::cast_unsigned::<4294967295, 17179869180>(y)?.value()
                 }) {
                     return Err(runtime::CompactError::AssertionFailed(
@@ -58,13 +58,13 @@ pub mod pure_circuits {
         Ok({
             {
                 if !({
-                    let __compact_local_0: runtime::BoundedUint<17179869180> =
+                    let __compact_local_t: runtime::BoundedUint<17179869180> =
                         runtime::multiply_unsigned::<17179869180, 17179869180, 17179869180>(
                             runtime::cast_unsigned::<4294967295, 17179869180>(q)?,
                             runtime::BoundedUint::<17179869180>::new(4u128)
                                 .expect("Compact Uint literal fits its maximum"),
                         )?;
-                    __compact_local_0.value()
+                    __compact_local_t.value()
                         > runtime::cast_unsigned::<4294967295, 17179869180>(y)?.value()
                 }) {
                     return Err(runtime::CompactError::AssertionFailed(
@@ -82,13 +82,13 @@ pub mod pure_circuits {
         Ok({
             {
                 if !({
-                    let __compact_local_0: runtime::BoundedUint<17179869180> =
+                    let __compact_local_t: runtime::BoundedUint<17179869180> =
                         runtime::multiply_unsigned::<17179869180, 17179869180, 17179869180>(
                             runtime::cast_unsigned::<4294967295, 17179869180>(q)?,
                             runtime::BoundedUint::<17179869180>::new(4u128)
                                 .expect("Compact Uint literal fits its maximum"),
                         )?;
-                    __compact_local_0.value()
+                    __compact_local_t.value()
                         >= runtime::cast_unsigned::<4294967295, 17179869180>(y)?.value()
                 }) {
                     return Err(runtime::CompactError::AssertionFailed(
@@ -168,7 +168,7 @@ pub mod pure_circuits {
         q: runtime::BoundedUint<4294967295>,
     ) -> Result<runtime::BoundedUint<4294967295>, runtime::CompactError> {
         Ok({
-            let __compact_local_0: runtime::BoundedUint<17179869180> =
+            let __compact_local_t: runtime::BoundedUint<17179869180> =
                 runtime::multiply_unsigned::<17179869180, 17179869180, 17179869180>(
                     runtime::cast_unsigned::<4294967295, 17179869180>(q)?,
                     runtime::BoundedUint::<17179869180>::new(4u128)
@@ -177,7 +177,7 @@ pub mod pure_circuits {
             {
                 {
                     if !(runtime::cast_unsigned::<4294967295, 17179869180>(y)?.value()
-                        >= __compact_local_0.value())
+                        >= __compact_local_t.value())
                     {
                         return Err(runtime::CompactError::AssertionFailed(
                             "result of subtraction would be negative".to_owned(),
@@ -186,7 +186,7 @@ pub mod pure_circuits {
                 };
                 runtime::subtract_unsigned::<4294967295, 4294967295, 4294967295>(
                     y,
-                    runtime::cast_unsigned::<17179869180, 4294967295>(__compact_local_0)?,
+                    runtime::cast_unsigned::<17179869180, 4294967295>(__compact_local_t)?,
                 )?
             }
         })

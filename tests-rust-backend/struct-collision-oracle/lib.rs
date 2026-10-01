@@ -113,14 +113,14 @@ pub mod pure_circuits {
     }
     pub fn runWrapAlpha(x: runtime::Field) -> Result<runtime::Field, runtime::CompactError> {
         Ok({
-            let __compact_local_0: crate::types::WrapCompact1 = crate::pure_circuits::wrapAlpha(x)?;
-            ((__compact_local_0.clone()).inner.clone()).a.clone()
+            let __compact_local_w: crate::types::WrapCompact1 = crate::pure_circuits::wrapAlpha(x)?;
+            ((__compact_local_w.clone()).inner.clone()).a.clone()
         })
     }
     pub fn runWrapBeta(y: bool) -> Result<bool, runtime::CompactError> {
         Ok({
-            let __compact_local_0: crate::types::Wrap = crate::pure_circuits::wrapBeta(y)?;
-            ((__compact_local_0.clone()).inner.clone()).b.clone()
+            let __compact_local_w: crate::types::Wrap = crate::pure_circuits::wrapBeta(y)?;
+            ((__compact_local_w.clone()).inner.clone()).b.clone()
         })
     }
 }

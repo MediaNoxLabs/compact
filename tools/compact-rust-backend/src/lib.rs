@@ -42,6 +42,8 @@ pub enum RenderError {
     ConflictingStruct(String),
     DuplicateStructField(String),
     InvalidStructField(String),
+    InvalidTupleIndex(usize),
+    ExpectedTuple(Type),
     ConflictingEnum(String),
     EmptyEnum(String),
     DuplicateEnumVariant(String),
@@ -116,6 +118,8 @@ impl fmt::Display for RenderError {
             }
             Self::DuplicateStructField(name) => write!(f, "duplicate struct field {name:?}"),
             Self::InvalidStructField(name) => write!(f, "invalid struct field {name:?}"),
+            Self::InvalidTupleIndex(index) => write!(f, "invalid tuple index {index}"),
+            Self::ExpectedTuple(ty) => write!(f, "expected tuple value, got {ty:?}"),
             Self::ConflictingEnum(name) => write!(f, "conflicting definitions for enum {name:?}"),
             Self::EmptyEnum(name) => write!(f, "enum {name:?} has no variants"),
             Self::DuplicateEnumVariant(name) => write!(f, "duplicate enum variant {name:?}"),
@@ -303,7 +307,9 @@ fn collect_expression_types(
         Expr::Default { ty } | Expr::EnumVariant { ty, .. } => {
             collect_named_types(ty, structs, enums)?
         }
-        Expr::StructField { value, .. } => collect_expression_types(value, structs, enums)?,
+        Expr::StructField { value, .. } | Expr::TupleIndex { value, .. } => {
+            collect_expression_types(value, structs, enums)?
+        }
         Expr::StructLiteral { ty, fields } => {
             collect_named_types(ty, structs, enums)?;
             for field in fields {
@@ -731,6 +737,18 @@ fn expression_with_calls(
                 declaration.ty.clone(),
             ))
         }
+        Expr::TupleIndex { value, index } => {
+            let (value, ty) = expression_with_calls(value, parameters, circuits)?;
+            let Type::Tuple { elements } = ty else {
+                return Err(RenderError::ExpectedTuple(ty));
+            };
+            let result = elements
+                .get(*index)
+                .ok_or_else(|| RenderError::InvalidTupleIndex(*index))?
+                .clone();
+            let index = syn::Index::from(*index);
+            Ok((syn::parse_quote!((#value).#index), result))
+        }
         Expr::StructLiteral { ty, fields } => {
             let Type::Struct {
                 name,
@@ -904,7 +922,7 @@ fn expression_with_calls(
         Expr::Let { bindings, body } => {
             let mut locals = parameters.clone();
             let mut statements = Vec::<syn::Stmt>::new();
-            for (index, binding) in bindings.iter().enumerate() {
+            for binding in bindings {
                 ident(&binding.name)?;
                 let (value, actual) = expression_with_calls(&binding.value, &locals, circuits)?;
                 if actual != binding.ty {
@@ -914,8 +932,10 @@ fn expression_with_calls(
                     });
                 }
                 let local_ty = rust_type(&binding.ty)?;
-                let local_name =
-                    syn::Ident::new(&format!("__compact_local_{index}"), Span::call_site());
+                let local_name = syn::Ident::new(
+                    &format!("__compact_local_{}", binding.name),
+                    Span::call_site(),
+                );
                 statements.push(syn::parse_quote!(let #local_name: #local_ty = #value;));
                 locals.insert(binding.name.as_str(), (&binding.ty, local_name));
             }

@@ -31,4 +31,6 @@ process.stdout.write(JSON.stringify({
   tupleToVector: normalize(pureCircuits.tuple_to_vector(7n)),
   structVectorReturn: normalize(pureCircuits.struct_vector_return(7n)),
   structVectorToTuple: normalize(pureCircuits.struct_vector_to_tuple(7n)),
+  tupleFirst: normalize(pureCircuits.tuple_first(7n, true)),
+  tupleSecond: normalize(pureCircuits.tuple_second(7n, true)),
 }, null, 2) + '\n');

@@ -47,5 +47,7 @@
       "a": "7",
       "b": "2"
     }
-  ]
+  ],
+  "tupleFirst": "7",
+  "tupleSecond": true
 }

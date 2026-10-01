@@ -188,6 +188,10 @@
                    (cons "value" (expression-ir expr src))
                    (cons "field" (symbol->string elt-name))
                    (cons "index" nat))]
+          [(tuple-ref ,src ,expr ,kindex)
+           (object (cons "kind" "tuple_index")
+                   (cons "value" (expression-ir expr src))
+                   (cons "index" kindex))]
           [(enum-ref ,src ,type ,elt-name^)
            (object (cons "kind" "enum_variant")
                    (cons "ty" (type-ir type src))

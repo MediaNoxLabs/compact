@@ -101,7 +101,7 @@ pub mod pure_circuits {
         c: bool,
     ) -> Result<runtime::BoundedUint<255>, runtime::CompactError> {
         Ok({
-            let __compact_local_0: runtime::BoundedUint<255> =
+            let __compact_local_x: runtime::BoundedUint<255> =
                 runtime::cast_unsigned::<2, 255>(if c {
                     runtime::BoundedUint::<2>::new(1u128)
                         .expect("Compact Uint literal fits its maximum")
@@ -109,7 +109,7 @@ pub mod pure_circuits {
                     runtime::BoundedUint::<2>::new(2u128)
                         .expect("Compact Uint literal fits its maximum")
                 })?;
-            __compact_local_0
+            __compact_local_x
         })
     }
     pub fn constUnannotatedSeqLifted(
@@ -117,7 +117,7 @@ pub mod pure_circuits {
         a: runtime::BoundedUint<255>,
     ) -> Result<runtime::BoundedUint<255>, runtime::CompactError> {
         Ok({
-            let __compact_local_0: runtime::BoundedUint<255> = if c {
+            let __compact_local_x: runtime::BoundedUint<255> = if c {
                 runtime::subtract_unsigned::<255, 255, 255>(
                     a,
                     runtime::BoundedUint::<255>::new(1u128)
@@ -126,7 +126,7 @@ pub mod pure_circuits {
             } else {
                 a
             };
-            __compact_local_0
+            __compact_local_x
         })
     }
     pub fn returnTailMixed(
@@ -294,7 +294,7 @@ pub mod pure_circuits {
         c: bool,
     ) -> Result<runtime::BoundedUint<18446744073709551615>, runtime::CompactError> {
         Ok({
-            let __compact_local_0: runtime::BoundedUint<18446744073709551615> =
+            let __compact_local_x: runtime::BoundedUint<18446744073709551615> =
                 runtime::cast_unsigned::<3000000000, 18446744073709551615>(if c {
                     runtime::BoundedUint::<3000000000>::new(3000000000u128)
                         .expect("Compact Uint literal fits its maximum")
@@ -302,7 +302,7 @@ pub mod pure_circuits {
                     runtime::BoundedUint::<3000000000>::new(0u128)
                         .expect("Compact Uint literal fits its maximum")
                 })?;
-            __compact_local_0
+            __compact_local_x
         })
     }
     pub fn literalAboveU64(
@@ -310,7 +310,7 @@ pub mod pure_circuits {
     ) -> Result<runtime::BoundedUint<340282366920938463463374607431768211455>, runtime::CompactError>
     {
         Ok({
-            let __compact_local_0: runtime::BoundedUint<340282366920938463463374607431768211455> =
+            let __compact_local_x: runtime::BoundedUint<340282366920938463463374607431768211455> =
                 if c {
                     runtime::BoundedUint::<340282366920938463463374607431768211455>::new(
                         340282366920938463463374607431768211455u128,
@@ -320,7 +320,7 @@ pub mod pure_circuits {
                     runtime::BoundedUint::<340282366920938463463374607431768211455>::new(0u128)
                         .expect("Compact Uint literal fits its maximum")
                 };
-            __compact_local_0
+            __compact_local_x
         })
     }
     pub fn differingUintWidths(

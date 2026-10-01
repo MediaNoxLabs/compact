@@ -80,13 +80,32 @@ grep -rn "(rust-feature-error" compiler/rust-passes*.ss \
   | grep -v "define (rust-feature-error" | wc -l
 ```
 
-At the time of writing that is **54 call sites** across 7 files
-(`rust-passes-emit.ss` 32, `rust-passes-walker.ss` 6,
+At the time of writing that is **55 call sites** across 7 files
+(`rust-passes-emit.ss` 33, `rust-passes-walker.ss` 6,
 `rust-passes-helpers.ss` 5, `rust-passes-types.ss` 8, `rust-passes-decls.ss` 2,
 `rust-passes-streaming.ss` 0, `rust-passes-prelude.ss` 1), spanning **40
 distinct kinds**. (The `rust-passes-helpers.ss` count includes the
 post-emit `sentinel-splice` guard added by
 `type-directed-expression-coercion` — see below.)
+
+### Dispatches that must stay total
+
+`Curve-Type` and `Field-Type` are small closed sets that upstream grows —
+`Curve-Type` went from two variants to four when curve25519 and secp256r1
+landed. A `nanopass-case` over one of them with no `else` is total today and
+partial tomorrow: the day a variant is added, the missing clause raises a
+nanopass **internal compiler error**, not the named diagnostic this page
+promises. `tests-e2e-rust/tests/emitter_exhaustiveness.rs` fails if any
+match on either nonterminal loses its `else`.
+
+Those `else` arms are unreachable from Compact source and deliberately have
+no rejection-corpus entry. Three barriers sit above them: the non-jubjub
+curve types are declared only in `zkir-v3-natives.ss`, so they are `unbound
+identifier` under `--target rust`; `analysis-passes/infer-types.ss` asserts
+such a type requires `--feature-zkir-v3`; and `passes.ss` refuses `--target
+rust` together with `--feature-zkir-v3` outright. A corpus probe could not
+reach the guard, so it would pass for an unrelated reason and report
+coverage that does not exist.
 
 One caveat when reading a diagnostic: several emitters probe alternative
 shapes under a catch-all `(guard (c [#t #f]) …)`, which swallows a specific

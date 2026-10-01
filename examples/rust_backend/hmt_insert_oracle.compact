@@ -13,3 +13,11 @@ export circuit place(value: Uint<8>, index: Uint<64>): [] {
 export circuit forget_history(): [] {
   t.resetHistory();
 }
+
+export circuit full(): Boolean {
+  return t.isFull();
+}
+
+export circuit known(root: MerkleTreeDigest): Boolean {
+  return t.checkRoot(disclose(root));
+}

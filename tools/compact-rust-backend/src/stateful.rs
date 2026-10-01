@@ -1134,7 +1134,9 @@ fn expression_calls_named(expression: &Expr, name: &str) -> bool {
 
 fn return_calls_named(value: &StateReturn, name: &str) -> bool {
     match value {
-        StateReturn::Expression { value } | StateReturn::SetMember { value, .. } => {
+        StateReturn::Expression { value }
+        | StateReturn::SetMember { value, .. }
+        | StateReturn::HistoricMerkleCheckRoot { root: value, .. } => {
             expression_calls_named(value, name)
         }
         StateReturn::MapMember { key, .. } | StateReturn::MapLookup { key, .. } => {
@@ -1337,7 +1339,9 @@ fn action_contains_witness(action: &StateAction) -> bool {
 fn circuit_contains_witness(circuit: &StatefulCircuit) -> bool {
     circuit.actions.iter().any(action_contains_witness)
         || match &circuit.return_value {
-            StateReturn::Expression { value } | StateReturn::SetMember { value, .. } => {
+            StateReturn::Expression { value }
+            | StateReturn::SetMember { value, .. }
+            | StateReturn::HistoricMerkleCheckRoot { root: value, .. } => {
                 expression_contains_witness(value)
             }
             StateReturn::MapMember { key, .. } | StateReturn::MapLookup { key, .. } => {
@@ -2396,6 +2400,67 @@ pub(crate) fn render_stateful_circuit(
             statements.push(syn::parse_quote! {
                 total_cost += read_step.gas_cost;
             });
+            syn::parse_quote!(read_step.result)
+        }
+        StateReturn::HistoricMerkleIsFull { field, index } => {
+            let declaration = ledger_fields
+                .get(field.as_str())
+                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+            let LedgerFieldKind::HistoricMerkleTree { depth, .. } = declaration.declaration else {
+                return Err(RenderError::UnknownLedgerField(field.clone()));
+            };
+            if declaration.index != *index {
+                return Err(RenderError::UnknownLedgerField(field.clone()));
+            }
+            if circuit.result != Type::Boolean {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Boolean,
+                    actual: circuit.result.clone(),
+                });
+            }
+            let path = ledger_path_expr(declaration);
+            let depth = syn::LitInt::new(&depth.to_string(), Span::call_site());
+            statements.push(syn::parse_quote! {
+                let read_step = context.historic_is_full(#path, #depth)?;
+            });
+            statements.push(syn::parse_quote!(let context = read_step.context;));
+            statements.push(syn::parse_quote!(total_cost += read_step.gas_cost;));
+            syn::parse_quote!(read_step.result)
+        }
+        StateReturn::HistoricMerkleCheckRoot { field, index, root } => {
+            let declaration = ledger_fields
+                .get(field.as_str())
+                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+            if !matches!(
+                declaration.declaration,
+                LedgerFieldKind::HistoricMerkleTree { .. }
+            ) || declaration.index != *index
+            {
+                return Err(RenderError::UnknownLedgerField(field.clone()));
+            }
+            if circuit.result != Type::Boolean {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Boolean,
+                    actual: circuit.result.clone(),
+                });
+            }
+            let expected = Type::Struct {
+                name: "MerkleTreeDigest".into(),
+                fields: vec![StructField {
+                    name: "field".into(),
+                    ty: Type::Field,
+                }],
+            };
+            let (root, actual) = expression_with_calls(root, &parameters, circuits)?;
+            if actual != expected {
+                return Err(RenderError::TypeMismatch { expected, actual });
+            }
+            let path = ledger_path_expr(declaration);
+            statements.push(syn::parse_quote! {
+                let read_step = context.historic_check_root(#path, #root)?;
+            });
+            statements.push(syn::parse_quote!(let context = read_step.context;));
+            statements.push(syn::parse_quote!(total_cost += read_step.gas_cost;));
             syn::parse_quote!(read_step.result)
         }
         StateReturn::SetMember {

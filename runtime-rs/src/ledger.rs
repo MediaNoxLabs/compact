@@ -770,6 +770,88 @@ pub fn historic_reset_history<D: DB>(
     context.query(&program, gas_limit, cost_model)
 }
 
+/// Ask the ledger VM whether the next free index has reached tree capacity.
+pub fn historic_is_full<D: DB>(
+    context: &QueryContext<D>,
+    path: impl Into<LedgerPath>,
+    depth: u8,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<(QueryResults<ResultModeGather, D>, bool), CompactError> {
+    let capacity = 1_u64.checked_shl(depth as u32).ok_or_else(|| {
+        CompactError::InvalidLedgerCell(format!("invalid HistoricMerkleTree depth {depth}"))
+    })?;
+    let path = path.into();
+    let index_key = vec![Key::Value(AlignedValue::from(1_u8))].into();
+    let program = [
+        Op::Dup { n: 0 },
+        Op::Idx {
+            cached: false,
+            push_path: false,
+            path: path_keys(path.as_slice()).into(),
+        },
+        Op::Idx {
+            cached: false,
+            push_path: false,
+            path: index_key,
+        },
+        Op::Push {
+            storage: false,
+            value: constructor_cell(capacity),
+        },
+        Op::Lt,
+        Op::Neg,
+        Op::Popeq {
+            cached: true,
+            result: (),
+        },
+    ];
+    let result = context
+        .query(&program, gas_limit, cost_model)
+        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+    let decoded = decode_last_read::<bool, D>(&result)?;
+    Ok((result, decoded))
+}
+
+/// Query membership in a HistoricMerkleTree's root history.
+pub fn historic_check_root<T: CellValue, D: DB>(
+    context: &QueryContext<D>,
+    path: impl Into<LedgerPath>,
+    root: T,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<(QueryResults<ResultModeGather, D>, bool), CompactError> {
+    let path = path.into();
+    let index_key = vec![Key::Value(AlignedValue::from(2_u8))].into();
+    let program = [
+        Op::Dup { n: 0 },
+        Op::Idx {
+            cached: false,
+            push_path: false,
+            path: path_keys(path.as_slice()).into(),
+        },
+        Op::Idx {
+            cached: false,
+            push_path: false,
+            path: index_key,
+        },
+        Op::Push {
+            storage: false,
+            value: constructor_cell(root),
+        },
+        Op::Member,
+        Op::Popeq {
+            cached: true,
+            result: (),
+        },
+    ];
+    let result = context
+        .query(&program, gas_limit, cost_model)
+        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+    let decoded = decode_last_read::<bool, D>(&result)?;
+    Ok((result, decoded))
+}
+
 pub fn length_list<D: DB>(
     context: &QueryContext<D>,
     field_index: u8,

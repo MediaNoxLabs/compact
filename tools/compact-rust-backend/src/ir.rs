@@ -235,6 +235,15 @@ pub enum StateReturn {
         field: String,
         index: u8,
     },
+    HistoricMerkleIsFull {
+        field: String,
+        index: u8,
+    },
+    HistoricMerkleCheckRoot {
+        field: String,
+        index: u8,
+        root: Expr,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]

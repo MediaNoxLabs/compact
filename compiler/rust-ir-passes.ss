@@ -1391,6 +1391,19 @@
                  (object (cons "kind" "list_head")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*)))]
+                [(and (eq? adt-name 'HistoricMerkleTree)
+                      (eq? ledger-op 'isFull)
+                      (null? expr*))
+                 (object (cons "kind" "historic_merkle_is_full")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*)))]
+                [(and (eq? adt-name 'HistoricMerkleTree)
+                      (eq? ledger-op 'checkRoot)
+                      (= (length expr*) 1))
+                 (object (cons "kind" "historic_merkle_check_root")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*))
+                         (cons "root" (expression-ir (car expr*) src)))]
                 [else (source-errorf src "Rust backend does not yet support this ledger return operation")])])]
           [else (source-errorf owner-src "Rust backend does not yet support this stateful return value")]))
 

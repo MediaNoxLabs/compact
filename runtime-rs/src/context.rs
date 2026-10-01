@@ -515,6 +515,48 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         })
     }
 
+    pub fn historic_is_full(
+        mut self,
+        path: impl Into<ledger::LedgerPath>,
+        depth: u8,
+    ) -> Result<CircuitResult<Private, bool, D>, CompactError> {
+        let (result, full) = ledger::historic_is_full(
+            &self.query,
+            path,
+            depth,
+            self.gas_limit.clone(),
+            &self.cost_model,
+        )?;
+        self.query = result.context;
+        Ok(CircuitResult {
+            context: self,
+            result: full,
+            gas_cost: result.gas_cost,
+            private_transcript_outputs: Vec::new(),
+        })
+    }
+
+    pub fn historic_check_root<T: CellValue>(
+        mut self,
+        path: impl Into<ledger::LedgerPath>,
+        root: T,
+    ) -> Result<CircuitResult<Private, bool, D>, CompactError> {
+        let (result, found) = ledger::historic_check_root(
+            &self.query,
+            path,
+            root,
+            self.gas_limit.clone(),
+            &self.cost_model,
+        )?;
+        self.query = result.context;
+        Ok(CircuitResult {
+            context: self,
+            result: found,
+            gas_cost: result.gas_cost,
+            private_transcript_outputs: Vec::new(),
+        })
+    }
+
     pub fn read_cell<T: CellValue>(
         self,
         path: impl Into<ledger::LedgerPath>,

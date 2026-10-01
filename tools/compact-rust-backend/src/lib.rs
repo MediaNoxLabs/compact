@@ -2117,7 +2117,9 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
             &mut struct_definitions,
             &mut enum_definitions,
         )?;
-        if let ir::StateReturn::Expression { value } = &circuit.return_value {
+        if let ir::StateReturn::Expression { value }
+        | ir::StateReturn::HistoricMerkleCheckRoot { root: value, .. } = &circuit.return_value
+        {
             collect_expression_types(value, &mut struct_definitions, &mut enum_definitions)?;
         }
         for action in &circuit.actions {

@@ -83,10 +83,12 @@ pub mod ledger_contract {
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let call_step = add(context, __compact_param_0)?;
+        let __compact_call_argument_0 = __compact_param_0;
+        let call_step = add(context, __compact_call_argument_0)?;
         let context = call_step.context;
         total_cost += call_step.gas_cost;
-        let call_step = add(context, __compact_param_0)?;
+        let __compact_call_argument_1 = __compact_param_0;
+        let call_step = add(context, __compact_call_argument_1)?;
         let context = call_step.context;
         total_cost += call_step.gas_cost;
         let result = ();

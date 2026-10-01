@@ -1,6 +1,6 @@
 use crate::{BinaryHashRepr, CompactError, FieldRepr, Fr, FromFieldRepr, MemWrite};
 use midnight_base_crypto::fab::{
-    Aligned, Alignment, AlignmentAtom, InvalidBuiltinDecode, Value, ValueSlice,
+    Aligned, Alignment, AlignmentAtom, InvalidBuiltinDecode, Value, ValueAtom, ValueSlice,
 };
 use midnight_transient_crypto::curve::{EmbeddedGroupAffine, FR_BYTES_STORED};
 use midnight_transient_crypto::repr::bytes_from_field_repr;
@@ -397,5 +397,114 @@ impl<const MAX: u128> FromFieldRepr for BoundedUint<MAX> {
     fn from_field_repr(repr: &[Fr]) -> Option<Self> {
         let value = <u128 as FromFieldRepr>::from_field_repr(repr)?;
         Self::new(value).ok()
+    }
+}
+
+/// A Compact Uint with a bound above u128 and within the ledger's 31-byte
+/// unsigned domain. The two const limbs preserve arbitrary declared maxima.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub struct WideUint<const MAX_HIGH: u128, const MAX_LOW: u128>([u8; 32]);
+
+pub fn narrow_wide_uint<const TARGET_MAX: u128, const SOURCE_HIGH: u128, const SOURCE_LOW: u128>(
+    value: WideUint<SOURCE_HIGH, SOURCE_LOW>,
+) -> Result<BoundedUint<TARGET_MAX>, CompactError> {
+    if value.0[16..].iter().any(|byte| *byte != 0) {
+        return Err(CompactError::InvalidUnsignedValue);
+    }
+    let low = u128::from_le_bytes(value.0[..16].try_into().expect("low limb has 16 bytes"));
+    BoundedUint::<TARGET_MAX>::new(low)
+}
+
+impl<const MAX_HIGH: u128, const MAX_LOW: u128> WideUint<MAX_HIGH, MAX_LOW> {
+    pub const BYTE_LENGTH: u32 = if MAX_HIGH == 0 {
+        (128 - MAX_LOW.leading_zeros()).div_ceil(8)
+    } else {
+        16 + (128 - MAX_HIGH.leading_zeros()).div_ceil(8)
+    };
+
+    pub fn from_le_bytes(value: &[u8]) -> Result<Self, CompactError> {
+        if MAX_HIGH == 0
+            || Self::BYTE_LENGTH > 31
+            || value.len() > 32
+            || value
+                .get(Self::BYTE_LENGTH as usize..)
+                .is_some_and(|excess| excess.iter().any(|byte| *byte != 0))
+        {
+            return Err(CompactError::InvalidUnsignedValue);
+        }
+        let mut bytes = [0_u8; 32];
+        bytes[..value.len()].copy_from_slice(value);
+        let low = u128::from_le_bytes(bytes[..16].try_into().expect("low limb has 16 bytes"));
+        let high = u128::from_le_bytes(bytes[16..].try_into().expect("high limb has 16 bytes"));
+        if (high, low) > (MAX_HIGH, MAX_LOW) || Fr::from_le_bytes(&bytes).is_none() {
+            return Err(CompactError::InvalidUnsignedValue);
+        }
+        Ok(Self(bytes))
+    }
+
+    pub fn as_le_bytes(&self) -> &[u8] {
+        &self.0[..Self::BYTE_LENGTH as usize]
+    }
+
+    pub fn as_field(self) -> Fr {
+        Fr::from_le_bytes(&self.0).expect("checked wide Uint fits ledger field")
+    }
+}
+
+impl<const MAX_HIGH: u128, const MAX_LOW: u128> Aligned for WideUint<MAX_HIGH, MAX_LOW> {
+    fn alignment() -> Alignment {
+        Alignment::singleton(AlignmentAtom::Bytes {
+            length: Self::BYTE_LENGTH,
+        })
+    }
+}
+
+impl<const MAX_HIGH: u128, const MAX_LOW: u128> From<WideUint<MAX_HIGH, MAX_LOW>> for Value {
+    fn from(value: WideUint<MAX_HIGH, MAX_LOW>) -> Self {
+        Value(vec![ValueAtom::from(value.as_le_bytes())])
+    }
+}
+
+impl<const MAX_HIGH: u128, const MAX_LOW: u128> TryFrom<&ValueSlice>
+    for WideUint<MAX_HIGH, MAX_LOW>
+{
+    type Error = CompactError;
+
+    fn try_from(value: &ValueSlice) -> Result<Self, Self::Error> {
+        if value.0.len() != 1 || value.0[0].0.len() > Self::BYTE_LENGTH as usize {
+            return Err(CompactError::InvalidUnsignedValue);
+        }
+        Self::from_le_bytes(&value.0[0].0)
+    }
+}
+
+impl<const MAX_HIGH: u128, const MAX_LOW: u128> FieldRepr for WideUint<MAX_HIGH, MAX_LOW> {
+    fn field_repr<W: MemWrite<Fr>>(&self, writer: &mut W) {
+        writer.write(&[self.as_field()]);
+    }
+
+    fn field_size(&self) -> usize {
+        1
+    }
+}
+
+impl<const MAX_HIGH: u128, const MAX_LOW: u128> FromFieldRepr for WideUint<MAX_HIGH, MAX_LOW> {
+    const FIELD_SIZE: usize = 1;
+
+    fn from_field_repr(repr: &[Fr]) -> Option<Self> {
+        if repr.len() != 1 {
+            return None;
+        }
+        Self::from_le_bytes(&repr[0].as_le_bytes()).ok()
+    }
+}
+
+impl<const MAX_HIGH: u128, const MAX_LOW: u128> BinaryHashRepr for WideUint<MAX_HIGH, MAX_LOW> {
+    fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
+        writer.write(self.as_le_bytes());
+    }
+
+    fn binary_len(&self) -> usize {
+        Self::BYTE_LENGTH as usize
     }
 }

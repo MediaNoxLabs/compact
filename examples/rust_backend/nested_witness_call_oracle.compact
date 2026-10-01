@@ -1,0 +1,24 @@
+import CompactStandardLibrary;
+
+witness secret(): Field;
+export ledger value: Field;
+
+circuit inner(next: Field): [] {
+  value = disclose(secret()) + next;
+}
+
+circuit middle(next: Field): [] {
+  inner(next);
+}
+
+export circuit outer(): [] {
+  middle(value);
+}
+
+circuit innerValue(): Field {
+  return disclose(secret());
+}
+
+export circuit outerValue(): [] {
+  value = innerValue();
+}

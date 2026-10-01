@@ -1107,7 +1107,11 @@ fn refuses_to_add_a_boolean_to_a_field() {
 
 #[test]
 fn rejects_noncanonical_or_unsupported_unsigned_maxima() {
-    for max in ["08", "-1", "340282366920938463463374607431768211456"] {
+    for max in [
+        "08",
+        "-1",
+        "452312848583266388373324160190187140051835877600158453279131187530910662656",
+    ] {
         let contract = Contract {
             schema_version: 5,
             constructor: None,
@@ -1841,7 +1845,7 @@ fn stateful_call_checks_target_and_arguments() {
     assert!(
         render(&contract)
             .unwrap()
-            .contains("let call_step = target(context, __compact_param_0)?")
+            .contains("let call_step = target(context, __compact_call_argument_0)?")
     );
     contract.stateful_circuits[1].actions = vec![StateAction::CircuitCall {
         name: "target".into(),
@@ -1863,6 +1867,22 @@ fn stateful_call_checks_target_and_arguments() {
         render(&contract),
         Err(RenderError::UnknownCircuit("missing".into()))
     );
+    contract.stateful_circuits[0].actions = vec![StateAction::CircuitCall {
+        name: "caller".into(),
+        arguments: vec![Expr::Parameter {
+            name: "value".into(),
+        }],
+    }];
+    contract.stateful_circuits[1].actions = vec![StateAction::CircuitCall {
+        name: "target".into(),
+        arguments: vec![Expr::Parameter {
+            name: "seed".into(),
+        }],
+    }];
+    assert!(matches!(
+        render(&contract),
+        Err(RenderError::UnsupportedStatefulCall(_))
+    ));
 }
 
 #[test]

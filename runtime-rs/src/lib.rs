@@ -18,8 +18,8 @@ pub use natives::{
     persistent_commit, persistent_hash, transient_commit, transient_hash, upgrade_from_transient,
 };
 pub use primitives::{
-    BoundedUint, FixedBytes, FixedVector, JubjubPoint, add_unsigned, cast_unsigned,
-    multiply_unsigned, subtract_unsigned,
+    BoundedUint, FixedBytes, FixedVector, JubjubPoint, WideUint, add_unsigned, cast_unsigned,
+    multiply_unsigned, narrow_wide_uint, subtract_unsigned,
 };
 
 /// Ledger FAB types used by the generated user-type derive.

@@ -182,6 +182,63 @@ fn field_literal_bytes(value: &str) -> Result<[u8; 32], RenderError> {
     Ok(bytes)
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum UnsignedMaximum {
+    Small(u128),
+    Wide { high: u128, low: u128 },
+}
+
+pub(crate) fn unsigned_maximum(value: &str) -> Result<UnsignedMaximum, RenderError> {
+    let bytes = field_literal_bytes(value)
+        .map_err(|_| RenderError::InvalidUnsignedMaximum(value.to_owned()))?;
+    if bytes[31] != 0 {
+        return Err(RenderError::InvalidUnsignedMaximum(value.to_owned()));
+    }
+    let low = u128::from_le_bytes(bytes[..16].try_into().expect("low limb"));
+    let high = u128::from_le_bytes(bytes[16..].try_into().expect("high limb"));
+    if high == 0 {
+        Ok(UnsignedMaximum::Small(low))
+    } else {
+        Ok(UnsignedMaximum::Wide { high, low })
+    }
+}
+
+fn wide_uint_type(high: u128, low: u128) -> syn::Type {
+    let high = syn::LitInt::new(&format!("{high}u128"), Span::call_site());
+    let low = syn::LitInt::new(&format!("{low}u128"), Span::call_site());
+    syn::parse_quote!(runtime::WideUint<#high, #low>)
+}
+
+pub(crate) fn unsigned_cast_syntax(
+    value: syn::Expr,
+    source_max: &str,
+    target_max: &str,
+) -> Result<syn::Expr, RenderError> {
+    let source = unsigned_maximum(source_max)?;
+    let target = unsigned_maximum(target_max)?;
+    Ok(match (source, target) {
+        (UnsignedMaximum::Small(source), UnsignedMaximum::Small(target)) => {
+            let source = syn::LitInt::new(&source.to_string(), Span::call_site());
+            let target = syn::LitInt::new(&target.to_string(), Span::call_site());
+            syn::parse_quote!(runtime::cast_unsigned::<#source, #target>(#value)?)
+        }
+        (UnsignedMaximum::Small(_), UnsignedMaximum::Wide { high, low }) => {
+            let target = wide_uint_type(high, low);
+            syn::parse_quote!(<#target>::from_le_bytes(&(#value).value().to_le_bytes())?)
+        }
+        (UnsignedMaximum::Wide { high, low }, UnsignedMaximum::Small(target)) => {
+            let target = syn::LitInt::new(&target.to_string(), Span::call_site());
+            let high = syn::LitInt::new(&high.to_string(), Span::call_site());
+            let low = syn::LitInt::new(&low.to_string(), Span::call_site());
+            syn::parse_quote!(runtime::narrow_wide_uint::<#target, #high, #low>(#value)?)
+        }
+        (UnsignedMaximum::Wide { .. }, UnsignedMaximum::Wide { high, low }) => {
+            let target = wide_uint_type(high, low);
+            syn::parse_quote!(<#target>::from_le_bytes((#value).as_le_bytes())?)
+        }
+    })
+}
+
 fn rust_type(ty: &Type) -> Result<syn::Type, RenderError> {
     Ok(match ty {
         Type::Unit => syn::parse_quote!(()),
@@ -196,16 +253,13 @@ fn rust_type(ty: &Type) -> Result<syn::Type, RenderError> {
             let name = ident(name)?;
             syn::parse_quote!(crate::types::#name)
         }
-        Type::Unsigned { max } => {
-            let parsed = max
-                .parse::<u128>()
-                .map_err(|_| RenderError::InvalidUnsignedMaximum(max.clone()))?;
-            if parsed.to_string() != *max {
-                return Err(RenderError::InvalidUnsignedMaximum(max.clone()));
+        Type::Unsigned { max } => match unsigned_maximum(max)? {
+            UnsignedMaximum::Small(_) => {
+                let max = syn::LitInt::new(max, Span::call_site());
+                syn::parse_quote!(runtime::BoundedUint<#max>)
             }
-            let max = syn::LitInt::new(max, Span::call_site());
-            syn::parse_quote!(runtime::BoundedUint<#max>)
-        }
+            UnsignedMaximum::Wide { high, low } => wide_uint_type(high, low),
+        },
         Type::Tuple { elements } => {
             let elements: Vec<syn::Type> =
                 elements.iter().map(rust_type).collect::<Result<_, _>>()?;
@@ -516,25 +570,24 @@ pub(crate) fn coerce_expression(
         return Ok(value);
     }
     match (actual, target) {
-        (Type::Unsigned { .. }, Type::Field) => {
-            Ok(syn::parse_quote!(runtime::Field::from((#value).value())))
-        }
+        (Type::Unsigned { max }, Type::Field) => match unsigned_maximum(max)? {
+            UnsignedMaximum::Small(_) => {
+                Ok(syn::parse_quote!(runtime::Field::from((#value).value())))
+            }
+            UnsignedMaximum::Wide { .. } => Ok(syn::parse_quote!((#value).as_field())),
+        },
         (Type::Unsigned { max: source_max }, Type::Unsigned { max: target_max }) => {
-            let source_maximum = source_max
-                .parse::<u128>()
-                .map_err(|_| RenderError::InvalidUnsignedMaximum(source_max.clone()))?;
-            let target_maximum = target_max
-                .parse::<u128>()
-                .map_err(|_| RenderError::InvalidUnsignedMaximum(target_max.clone()))?;
-            if source_maximum > target_maximum {
+            let bounds = |value: UnsignedMaximum| match value {
+                UnsignedMaximum::Small(low) => (0, low),
+                UnsignedMaximum::Wide { high, low } => (high, low),
+            };
+            if bounds(unsigned_maximum(source_max)?) > bounds(unsigned_maximum(target_max)?) {
                 return Err(RenderError::TypeMismatch {
                     expected: target.clone(),
                     actual: actual.clone(),
                 });
             }
-            let source_lit = syn::LitInt::new(source_max, Span::call_site());
-            let target_lit = syn::LitInt::new(target_max, Span::call_site());
-            Ok(syn::parse_quote!(runtime::cast_unsigned::<#source_lit, #target_lit>(#value)?))
+            unsigned_cast_syntax(value, source_max, target_max)
         }
         (
             Type::Vector {
@@ -670,31 +723,40 @@ fn expression_with_calls(
             ))
         }
         Expr::UnsignedLiteral { value, max } => {
-            let parsed_max = max
-                .parse::<u128>()
-                .map_err(|_| RenderError::InvalidUnsignedMaximum(max.clone()))?;
-            if parsed_max.to_string() != *max {
-                return Err(RenderError::InvalidUnsignedMaximum(max.clone()));
-            }
-            let parsed_value =
-                value
-                    .parse::<u128>()
-                    .map_err(|_| RenderError::InvalidUnsignedLiteral {
-                        value: value.clone(),
-                        max: max.clone(),
-                    })?;
-            if parsed_value.to_string() != *value || parsed_value > parsed_max {
+            let maximum = unsigned_maximum(max)?;
+            let bytes =
+                field_literal_bytes(value).map_err(|_| RenderError::InvalidUnsignedLiteral {
+                    value: value.clone(),
+                    max: max.clone(),
+                })?;
+            let low = u128::from_le_bytes(bytes[..16].try_into().expect("low limb"));
+            let high = u128::from_le_bytes(bytes[16..].try_into().expect("high limb"));
+            let maximum_limbs = match maximum {
+                UnsignedMaximum::Small(maximum) => (0, maximum),
+                UnsignedMaximum::Wide { high, low } => (high, low),
+            };
+            if (high, low) > maximum_limbs {
                 return Err(RenderError::InvalidUnsignedLiteral {
                     value: value.clone(),
                     max: max.clone(),
                 });
             }
-            let max_lit = syn::LitInt::new(max, Span::call_site());
-            let value_lit = syn::LitInt::new(&format!("{value}u128"), Span::call_site());
-            Ok((
-                syn::parse_quote!(runtime::BoundedUint::<#max_lit>::new(#value_lit).expect("Compact Uint literal fits its maximum")),
-                Type::Unsigned { max: max.clone() },
-            ))
+            let rendered: syn::Expr = match maximum {
+                UnsignedMaximum::Small(_) => {
+                    let max_lit = syn::LitInt::new(max, Span::call_site());
+                    let value_lit = syn::LitInt::new(&format!("{value}u128"), Span::call_site());
+                    syn::parse_quote!(runtime::BoundedUint::<#max_lit>::new(#value_lit).expect("Compact Uint literal fits its maximum"))
+                }
+                UnsignedMaximum::Wide { high, low } => {
+                    let ty = wide_uint_type(high, low);
+                    let bytes = bytes[..31]
+                        .iter()
+                        .map(|byte| syn::LitInt::new(&format!("{byte}u8"), Span::call_site()))
+                        .collect::<Vec<_>>();
+                    syn::parse_quote!(<#ty>::from_le_bytes(&[#(#bytes),*]).expect("Compact Uint literal fits its maximum"))
+                }
+            };
+            Ok((rendered, Type::Unsigned { max: max.clone() }))
         }
         Expr::Parameter { name } => {
             let (ty, rust_name) = parameters
@@ -1165,25 +1227,23 @@ fn expression_with_calls(
         | Expr::CellRead { .. } => Err(RenderError::EffectfulExpression),
         Expr::FieldCast { value } => {
             let (value, actual) = expression_with_calls(value, parameters, circuits)?;
-            if !matches!(actual, Type::Unsigned { .. }) {
+            let Type::Unsigned { max } = &actual else {
                 return Err(RenderError::ExpectedUnsigned(actual));
-            }
-            Ok((
-                syn::parse_quote!(runtime::Field::from((#value).value())),
-                Type::Field,
-            ))
+            };
+            let rendered = match unsigned_maximum(max)? {
+                UnsignedMaximum::Small(_) => {
+                    syn::parse_quote!(runtime::Field::from((#value).value()))
+                }
+                UnsignedMaximum::Wide { .. } => syn::parse_quote!((#value).as_field()),
+            };
+            Ok((rendered, Type::Field))
         }
         Expr::Coerce { value, ty } => {
             let (value, actual) = expression_with_calls(value, parameters, circuits)?;
             Ok((coerce_expression(value, &actual, ty, 0)?, ty.clone()))
         }
         Expr::UnsignedCast { max, value } => {
-            let target_max = max
-                .parse::<u128>()
-                .map_err(|_| RenderError::InvalidUnsignedMaximum(max.clone()))?;
-            if target_max.to_string() != *max {
-                return Err(RenderError::InvalidUnsignedMaximum(max.clone()));
-            }
+            unsigned_maximum(max)?;
             let (value, actual) = expression_with_calls(value, parameters, circuits)?;
             let Type::Unsigned { max: source_max } = actual else {
                 return Err(RenderError::TypeMismatch {
@@ -1191,13 +1251,8 @@ fn expression_with_calls(
                     actual,
                 });
             };
-            let source_max = source_max
-                .parse::<u128>()
-                .map_err(|_| RenderError::InvalidUnsignedMaximum(source_max.clone()))?;
-            let source_lit = syn::LitInt::new(&source_max.to_string(), Span::call_site());
-            let target_lit = syn::LitInt::new(max, Span::call_site());
             Ok((
-                syn::parse_quote!(runtime::cast_unsigned::<#source_lit, #target_lit>(#value)?),
+                unsigned_cast_syntax(value, &source_max, max)?,
                 Type::Unsigned { max: max.clone() },
             ))
         }
@@ -1398,6 +1453,59 @@ fn collect_constructor_step_types(
     Ok(())
 }
 
+fn constructor_step_uses_witness(
+    step: &ConstructorStep,
+    stateful_circuits: &HashMap<&str, &StatefulCircuit>,
+) -> Result<bool, RenderError> {
+    let requires = |value: &Expr| stateful::expression_requires_witness(value, stateful_circuits);
+    match step {
+        ConstructorStep::Let { bindings, step } => {
+            for binding in bindings {
+                if requires(&binding.value)? {
+                    return Ok(true);
+                }
+            }
+            constructor_step_uses_witness(step, stateful_circuits)
+        }
+        ConstructorStep::Sequence { steps } => {
+            for step in steps {
+                if constructor_step_uses_witness(step, stateful_circuits)? {
+                    return Ok(true);
+                }
+            }
+            Ok(false)
+        }
+        ConstructorStep::Assert { condition, .. } => requires(condition),
+        ConstructorStep::CellWrite { value, .. }
+        | ConstructorStep::SetInsert { value, .. }
+        | ConstructorStep::SetRemove { value, .. }
+        | ConstructorStep::ListPushFront { value, .. }
+        | ConstructorStep::MapInsertDefault { key: value, .. }
+        | ConstructorStep::MapRemove { key: value, .. } => requires(value),
+        ConstructorStep::MapInsert { key, value, .. } => Ok(requires(key)? || requires(value)?),
+        ConstructorStep::ForEach { values, steps, .. } => {
+            for value in values {
+                if requires(value)? {
+                    return Ok(true);
+                }
+            }
+            for step in steps {
+                if constructor_step_uses_witness(step, stateful_circuits)? {
+                    return Ok(true);
+                }
+            }
+            Ok(false)
+        }
+        ConstructorStep::CounterIncrement { .. }
+        | ConstructorStep::CounterDecrement { .. }
+        | ConstructorStep::CounterReset { .. }
+        | ConstructorStep::SetReset { .. }
+        | ConstructorStep::ListPopFront { .. }
+        | ConstructorStep::ListReset { .. }
+        | ConstructorStep::MapReset { .. } => Ok(false),
+    }
+}
+
 fn render_constructor_vm_steps<'a>(
     steps: &'a [ConstructorStep],
     ledger_fields: &HashMap<&str, &ir::LedgerField>,
@@ -1417,7 +1525,7 @@ fn render_constructor_vm_steps<'a>(
                     ident(&binding.name)?;
                     let mut expression_steps = Vec::new();
                     let mut query_effect = false;
-                    let (value, actual, witness_effect) = stateful::render_state_expression(
+                    let (value, actual, _witness_effect) = stateful::render_state_expression(
                         &binding.value,
                         &locals,
                         witnesses,
@@ -1428,11 +1536,6 @@ fn render_constructor_vm_steps<'a>(
                         ledger_fields,
                         &mut query_effect,
                     )?;
-                    if witness_effect {
-                        return Err(RenderError::InvalidConstructorInitializer(
-                            binding.name.clone(),
-                        ));
-                    }
                     if actual != binding.ty {
                         return Err(RenderError::TypeMismatch {
                             expected: binding.ty.clone(),
@@ -1475,7 +1578,7 @@ fn render_constructor_vm_steps<'a>(
             ConstructorStep::Assert { condition, message } => {
                 let mut expression_steps = Vec::new();
                 let mut query_effect = false;
-                let (condition, actual, witness_effect) = stateful::render_state_expression(
+                let (condition, actual, _witness_effect) = stateful::render_state_expression(
                     condition,
                     parameters,
                     witnesses,
@@ -1486,9 +1589,6 @@ fn render_constructor_vm_steps<'a>(
                     ledger_fields,
                     &mut query_effect,
                 )?;
-                if witness_effect {
-                    return Err(RenderError::InvalidConstructorInitializer(message.clone()));
-                }
                 if actual != Type::Boolean {
                     return Err(RenderError::TypeMismatch {
                         expected: Type::Boolean,
@@ -1518,7 +1618,7 @@ fn render_constructor_vm_steps<'a>(
                 };
                 let mut expression_steps = Vec::new();
                 let mut query_effect = false;
-                let (value, actual, witness_effect) = stateful::render_state_expression(
+                let (value, actual, _witness_effect) = stateful::render_state_expression(
                     value,
                     parameters,
                     witnesses,
@@ -1529,9 +1629,6 @@ fn render_constructor_vm_steps<'a>(
                     ledger_fields,
                     &mut query_effect,
                 )?;
-                if witness_effect {
-                    return Err(RenderError::InvalidConstructorInitializer(field.clone()));
-                }
                 if actual != *ty {
                     return Err(RenderError::TypeMismatch {
                         expected: ty.clone(),
@@ -2066,35 +2163,45 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
     let mut constructor_args = Vec::<syn::FnArg>::new();
     let mut constructor_parameters = HashMap::new();
     let mut constructor_values = HashMap::<&str, syn::Expr>::new();
-    let constructor_uses_vm = contract.constructor.as_ref().is_some_and(|constructor| {
-        let mut seen_cells = HashSet::new();
-        constructor.steps.iter().any(|step| match step {
-            ConstructorStep::CellWrite { field, value, .. } => {
-                !seen_cells.insert(field.as_str())
-                    || stateful::expression_contains_stateful_call(
-                        value,
-                        &callable_stateful_circuits,
-                    )
-            }
-            ConstructorStep::Let { .. }
-            | ConstructorStep::Sequence { .. }
-            | ConstructorStep::Assert { .. }
-            | ConstructorStep::CounterIncrement { .. }
-            | ConstructorStep::CounterDecrement { .. }
-            | ConstructorStep::CounterReset { .. }
-            | ConstructorStep::SetInsert { .. }
-            | ConstructorStep::SetRemove { .. }
-            | ConstructorStep::SetReset { .. }
-            | ConstructorStep::ListPushFront { .. }
-            | ConstructorStep::ListPopFront { .. }
-            | ConstructorStep::ListReset { .. }
-            | ConstructorStep::MapInsert { .. }
-            | ConstructorStep::MapInsertDefault { .. }
-            | ConstructorStep::MapRemove { .. }
-            | ConstructorStep::MapReset { .. }
-            | ConstructorStep::ForEach { .. } => true,
-        })
-    });
+    let constructor_uses_witness = if let Some(constructor) = &contract.constructor {
+        let mut uses_witness = false;
+        for step in &constructor.steps {
+            uses_witness |= constructor_step_uses_witness(step, &callable_stateful_circuits)?;
+        }
+        uses_witness
+    } else {
+        false
+    };
+    let constructor_uses_vm = constructor_uses_witness
+        || contract.constructor.as_ref().is_some_and(|constructor| {
+            let mut seen_cells = HashSet::new();
+            constructor.steps.iter().any(|step| match step {
+                ConstructorStep::CellWrite { field, value, .. } => {
+                    !seen_cells.insert(field.as_str())
+                        || stateful::expression_contains_stateful_call(
+                            value,
+                            &callable_stateful_circuits,
+                        )
+                }
+                ConstructorStep::Let { .. }
+                | ConstructorStep::Sequence { .. }
+                | ConstructorStep::Assert { .. }
+                | ConstructorStep::CounterIncrement { .. }
+                | ConstructorStep::CounterDecrement { .. }
+                | ConstructorStep::CounterReset { .. }
+                | ConstructorStep::SetInsert { .. }
+                | ConstructorStep::SetRemove { .. }
+                | ConstructorStep::SetReset { .. }
+                | ConstructorStep::ListPushFront { .. }
+                | ConstructorStep::ListPopFront { .. }
+                | ConstructorStep::ListReset { .. }
+                | ConstructorStep::MapInsert { .. }
+                | ConstructorStep::MapInsertDefault { .. }
+                | ConstructorStep::MapRemove { .. }
+                | ConstructorStep::MapReset { .. }
+                | ConstructorStep::ForEach { .. } => true,
+            })
+        });
     let mut constructor_actions = Vec::<syn::Stmt>::new();
     let mut constructor_preparations = Vec::<syn::Stmt>::new();
     if let Some(constructor) = &contract.constructor {
@@ -2183,12 +2290,18 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
     let ledger_view_methods = &witness_syntax.ledger_view_methods;
     let witness_methods = &witness_syntax.trait_methods;
     let constructor_return: syn::Expr = if constructor_uses_vm {
+        let transcript_init: Option<syn::Stmt> = constructor_uses_witness
+            .then(|| syn::parse_quote!(let mut private_transcript_outputs = Vec::new();));
+        let transcript_finish: Option<syn::Stmt> = constructor_uses_witness
+            .then(|| syn::parse_quote!(let _ = private_transcript_outputs;));
         syn::parse_quote!({
             let mut context = runtime::context::ConstructorResult::new(__compact_context, state)
                 .into_circuit_context(runtime::ledger::ContractAddress::default());
             let mut total_cost = runtime::context::RunningCost::default();
+            #transcript_init
             #(#constructor_actions)*
             let _ = total_cost;
+            #transcript_finish
             Ok(context.into_constructor_result())
         })
     } else {
@@ -2290,6 +2403,30 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
             }
         })
     };
+    let initial_state: syn::Item = if constructor_uses_witness {
+        syn::parse_quote! {
+            pub fn initial_state<Private, W: Witnesses<Private>>(
+                __compact_context: runtime::context::ConstructorContext<Private>,
+                witnesses: &W,
+                #(#constructor_args),*
+            ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
+                #(#constructor_preparations)*
+                let state = runtime::ledger::contract_state(vec![#(#constructor_fields),*]);
+                #constructor_return
+            }
+        }
+    } else {
+        syn::parse_quote! {
+            pub fn initial_state<Private>(
+                __compact_context: runtime::context::ConstructorContext<Private>,
+                #(#constructor_args),*
+            ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
+                #(#constructor_preparations)*
+                let state = runtime::ledger::contract_state(vec![#(#constructor_fields),*]);
+                #constructor_return
+            }
+        }
+    };
     let ledger_module: Option<syn::Item> = if contract.ledger_fields.is_empty()
         && contract.constructor.is_none()
         && contract.stateful_circuits.is_empty()
@@ -2311,14 +2448,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                     pub trait Witnesses<Private> {
                     #(#witness_methods)*
                 }
-                pub fn initial_state<Private>(
-                    __compact_context: runtime::context::ConstructorContext<Private>,
-                    #(#constructor_args),*
-                ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
-                    #(#constructor_preparations)*
-                    let state = runtime::ledger::contract_state(vec![#(#constructor_fields),*]);
-                    #constructor_return
-                }
+                #initial_state
                 #(#stateful_items)*
             }
         })

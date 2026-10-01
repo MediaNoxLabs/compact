@@ -1,0 +1,17 @@
+import CompactStandardLibrary;
+
+witness nextWide(): Uint<248>;
+
+export ledger wide: Uint<248>;
+
+export pure circuit maxWide(): Uint<248> {
+  return 452312848583266388373324160190187140051835877600158453279131187530910662655 as Uint<248>;
+}
+
+export circuit writeWide(): [] {
+  wide = disclose(nextWide());
+}
+
+export circuit readWide(): Uint<248> {
+  return wide.read();
+}

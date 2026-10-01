@@ -46,6 +46,12 @@ impl<const MAX: u128> CellValue for BoundedUint<MAX> {
     }
 }
 
+impl<const HIGH: u128, const LOW: u128> CellValue for crate::WideUint<HIGH, LOW> {
+    fn decode_cell_value(value: &ValueSlice) -> Result<Self, CompactError> {
+        Self::try_from(value)
+    }
+}
+
 impl<const N: usize> CellValue for [u8; N] {
     fn decode_cell_value(value: &ValueSlice) -> Result<Self, CompactError> {
         Self::try_from(Value(value.0.to_vec()))

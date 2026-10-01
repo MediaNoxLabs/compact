@@ -1227,6 +1227,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-nested-witness-call-oracle-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-one-tuple-fixture"
 version = "0.1.0"
 dependencies = [
@@ -1244,6 +1256,18 @@ dependencies = [
 
 [[package]]
 name = "compact-rust-pure-call-action-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde_json",
+]
+
+[[package]]
+name = "compact-rust-schnorr-attest-oracle-fixture"
 version = "0.1.0"
 dependencies = [
  "hex",
@@ -1410,6 +1434,18 @@ dependencies = [
 
 [[package]]
 name = "compact-rust-wide-field-literal-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde_json",
+]
+
+[[package]]
+name = "compact-rust-wide-uint-oracle-fixture"
 version = "0.1.0"
 dependencies = [
  "hex",

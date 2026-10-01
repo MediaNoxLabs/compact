@@ -1370,7 +1370,18 @@
                                     (cons "name" (symbol->string name)))))
                parameters)))
 
-      (define (constructor-value-ir expr expected-type parameters bindings owner-src)
+      ;; Constructor literals retain the same expected-type inference as pure
+      ;; expressions. A direct witness call instead needs an explicit effect
+      ;; node so the Rust constructor can thread private state.
+      (define (constructor-typed-expression-ir expr expected-type owner-src witness-ids)
+        (nanopass-case (Lnodisclose Expression) expr
+          [(call ,src ,function-name ,expr* ...)
+           (if (eq-hashtable-ref witness-ids function-name #f)
+               (stateful-typed-expression-ir expr expected-type owner-src witness-ids)
+               (typed-expression-ir expr expected-type owner-src))]
+          [else (typed-expression-ir expr expected-type owner-src)]))
+
+      (define (constructor-value-ir expr expected-type parameters bindings owner-src witness-ids)
         (nanopass-case (Lnodisclose Expression) expr
           [(var-ref ,src ,var-name)
            (let ([binding (assq (id-sym var-name) bindings)])
@@ -1378,15 +1389,15 @@
                [binding (expression-ir expr src)]
                [(memq (id-sym var-name) parameters) (expression-ir expr src)]
                [else (source-errorf src "Rust constructor value must be a parameter or typed literal")]))]
-          [else (typed-expression-ir expr expected-type owner-src)]))
+          [else (constructor-typed-expression-ir expr expected-type owner-src witness-ids)]))
 
-      (define (constructor-fold-body-ir expr accumulator parameters owner-src)
+      (define (constructor-fold-body-ir expr accumulator parameters owner-src witness-ids)
         (nanopass-case (Lnodisclose Expression) expr
           [(seq ,src ,expr* ... ,expr)
            (append
              (apply append
-               (map (lambda (step) (constructor-fold-body-ir step accumulator parameters src)) expr*))
-             (constructor-fold-body-ir expr accumulator parameters src))]
+               (map (lambda (step) (constructor-fold-body-ir step accumulator parameters src witness-ids)) expr*))
+             (constructor-fold-body-ir expr accumulator parameters src witness-ids))]
           [(tuple ,src ,tuple-arg* ...)
            (if (null? tuple-arg*)
                '()
@@ -1395,25 +1406,25 @@
            (if (eq? (id-sym var-name) accumulator)
                '()
                (source-errorf src "Rust constructor fold must return its accumulator"))]
-          [else (list (constructor-step-ir expr parameters '() owner-src))]))
+          [else (list (constructor-step-ir expr parameters '() owner-src witness-ids))]))
 
       ;; Both literal ranges and array iteration arrive here as a unit-accumulator fold.
       ;; Preserve its item binding and ordered effects instead of emitting Rust syntax.
-      (define (constructor-step-ir expr parameters bindings owner-src)
+      (define (constructor-step-ir expr parameters bindings owner-src witness-ids)
         (nanopass-case (Lnodisclose Expression) expr
           [(seq ,src ,expr* ... ,expr)
            (object (cons "kind" "sequence")
                    (cons "steps"
                          (list->vector
                            (append (map (lambda (step)
-                                          (constructor-step-ir step parameters bindings src))
+                                          (constructor-step-ir step parameters bindings src witness-ids))
                                         expr*)
                                    (if (empty-constructor-expression? expr)
                                        '()
-                                       (list (constructor-step-ir expr parameters bindings src)))))))]
+                                       (list (constructor-step-ir expr parameters bindings src witness-ids)))))))]
           [(assert ,src ,expr ,mesg)
            (object (cons "kind" "assert")
-                   (cons "condition" (stateful-expression-ir expr src '()))
+                   (cons "condition" (stateful-expression-ir expr src witness-ids))
                    (cons "message" mesg))]
           [(fold ,src ,len ,fun (,expr0 ,type0) ,map-arg ,map-arg* ...)
            (unless (and (null? map-arg*) (empty-constructor-expression? expr0))
@@ -1450,7 +1461,7 @@
                                         (list->vector
                                           (constructor-fold-body-ir expr1 (id-sym acc-name)
                                                                     (cons (id-sym item-name) parameters)
-                                                                    src1))))]
+                                                                    src1 witness-ids))))]
                          [else (source-errorf src "Rust constructor fold needs a literal iterable")])]))]))])]
              [else (source-errorf src "Rust constructor fold needs an inline circuit body")])]
           [(let* ,src ([,local* ,expr*] ...) ,expr)
@@ -1459,7 +1470,7 @@
                      (lambda (bindings local value)
                        (nanopass-case (Lnodisclose Argument) local
                          [(,var-name ,type)
-                          (cons (cons (id-sym var-name) (typed-expression-ir value type src)) bindings)]))
+                          (cons (cons (id-sym var-name) (constructor-typed-expression-ir value type src witness-ids)) bindings)]))
                      bindings local* expr*)])
              (object (cons "kind" "let")
                      (cons "bindings"
@@ -1469,9 +1480,9 @@
                                       [(,var-name ,type)
                                        (object (cons "name" (symbol->string (id-sym var-name)))
                                                (cons "ty" (type-ir type src))
-                                               (cons "value" (typed-expression-ir value type src)))]))
+                                               (cons "value" (constructor-typed-expression-ir value type src witness-ids)))]))
                                   local* expr*)))
-                     (cons "step" (constructor-step-ir expr parameters bindings^ src))))]
+                     (cons "step" (constructor-step-ir expr parameters bindings^ src witness-ids))))]
           [(public-ledger ,src ,ledger-field-name ,sugar? (,path-elt* ...) ,src^ ,adt-op ,expr* ...)
            (unless (and (pair? path-elt*)
                         (for-all (lambda (index) (and (integer? index) (<= 0 index 14))) path-elt*))
@@ -1502,13 +1513,13 @@
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
                          (cons "value" (constructor-value-ir (car expr*) (car adt-arg*)
-                                                             parameters bindings src)))]
+                                                             parameters bindings src witness-ids)))]
                 [(and (eq? adt-name 'Set) (eq? ledger-op 'remove) (= (length expr*) 1))
                  (object (cons "kind" "set_remove")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
                          (cons "value" (constructor-value-ir (car expr*) (car adt-arg*)
-                                                             parameters bindings src)))]
+                                                             parameters bindings src witness-ids)))]
                 [(and (eq? adt-name 'Set) (eq? ledger-op 'resetToDefault) (null? expr*))
                  (object (cons "kind" "set_reset")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
@@ -1518,7 +1529,7 @@
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
                          (cons "value" (constructor-value-ir (car expr*) (car adt-arg*)
-                                                             parameters bindings src)))]
+                                                             parameters bindings src witness-ids)))]
                 [(and (eq? adt-name 'List) (eq? ledger-op 'popFront) (null? expr*))
                  (object (cons "kind" "list_pop_front")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
@@ -1532,21 +1543,21 @@
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
                          (cons "key" (constructor-value-ir (car expr*) (car adt-arg*)
-                                                           parameters bindings src))
+                                                           parameters bindings src witness-ids))
                          (cons "value" (constructor-value-ir (cadr expr*) (cadr adt-arg*)
-                                                             parameters bindings src)))]
+                                                             parameters bindings src witness-ids)))]
                 [(and (eq? adt-name 'Map) (eq? ledger-op 'insertDefault) (= (length expr*) 1))
                  (object (cons "kind" "map_insert_default")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
                          (cons "key" (constructor-value-ir (car expr*) (car adt-arg*)
-                                                           parameters bindings src)))]
+                                                           parameters bindings src witness-ids)))]
                 [(and (eq? adt-name 'Map) (eq? ledger-op 'remove) (= (length expr*) 1))
                  (object (cons "kind" "map_remove")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
                          (cons "key" (constructor-value-ir (car expr*) (car adt-arg*)
-                                                           parameters bindings src)))]
+                                                           parameters bindings src witness-ids)))]
                 [(and (eq? adt-name 'Map) (eq? ledger-op 'resetToDefault) (null? expr*))
                  (object (cons "kind" "map_reset")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
@@ -1567,29 +1578,29 @@
                             (cons "index" (car path-elt*))
                             (cons "value" (if (null? adt-arg*)
                                               (expression-ir (car expr*) src)
-                                              (typed-expression-ir (car expr*) (car adt-arg*) src))))])]
+                                              (constructor-typed-expression-ir (car expr*) (car adt-arg*) src witness-ids))))])]
                 [else (source-errorf src "Rust backend does not yet support this constructor ledger operation")])])]
           [else (source-errorf owner-src "Rust backend does not yet support this constructor action")]))
 
-      (define (constructor-steps-ir expr parameters owner-src)
+      (define (constructor-steps-ir expr parameters owner-src witness-ids)
         (nanopass-case (Lnodisclose Expression) expr
-          [(return ,src ,expr) (constructor-steps-ir expr parameters src)]
+          [(return ,src ,expr) (constructor-steps-ir expr parameters src witness-ids)]
           [(seq ,src ,expr* ... ,expr)
            (unless (empty-constructor-expression? expr)
              (source-errorf src "Rust backend does not yet support constructor return values"))
-           (map (lambda (action) (constructor-step-ir action parameters '() src)) expr*)]
+           (map (lambda (action) (constructor-step-ir action parameters '() src witness-ids)) expr*)]
           [(tuple ,src ,tuple-arg* ...)
            (if (null? tuple-arg*)
                '()
                (source-errorf src "Rust backend does not yet support constructor return values"))]
           [else (source-errorf owner-src "Rust backend does not yet support this constructor body")]))
 
-      (define (constructor-ir pelt)
+      (define (constructor-ir pelt witness-ids)
         (nanopass-case (Lnodisclose Program-Element) pelt
           [(public-ledger-declaration ,pl-array ,lconstructor)
            (nanopass-case (Lnodisclose Ledger-Constructor) lconstructor
              [(constructor ,src ((,var-name* ,type*) ...) ,expr)
-              (let ([steps (constructor-steps-ir expr (map id-sym var-name*) src)])
+              (let ([steps (constructor-steps-ir expr (map id-sym var-name*) src witness-ids)])
                 (if (and (null? var-name*) (null? steps))
                     #f
                     (object (cons "parameters"
@@ -1607,9 +1618,10 @@
        (set! struct-shape-names '())
        (set! used-struct-names '())
        (for-each index-call-argument-types pelt*)
-       (let ([constructor* (filter (lambda (value) value) (map constructor-ir pelt*))]
-             [export-alist (map cons export-name* name*)]
-             [witness-ids (witness-id-table pelt*)])
+       (let* ([witness-ids (witness-id-table pelt*)]
+              [constructor* (filter (lambda (value) value)
+                                    (map (lambda (pelt) (constructor-ir pelt witness-ids)) pelt*))]
+              [export-alist (map cons export-name* name*)])
          (when (> (length constructor*) 1)
            (source-errorf src "Rust backend found multiple constructors"))
          (print-json

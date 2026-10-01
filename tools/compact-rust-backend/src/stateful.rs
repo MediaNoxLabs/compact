@@ -1,13 +1,16 @@
 //! Typed stateful circuit syntax emission.
 
 use proc_macro2::Span;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use crate::ir::{
     ComparisonOperator, CounterAmount, Expr, LedgerField, LedgerFieldKind, PureCircuit,
     StateAction, StateReturn, StatefulCircuit, StructField, Type, WitnessDeclaration,
 };
-use crate::{RenderError, coerce_expression, expression_with_calls, ident, rust_type};
+use crate::{
+    RenderError, UnsignedMaximum, coerce_expression, expression_with_calls, ident, rust_type,
+    unsigned_cast_syntax, unsigned_maximum,
+};
 
 pub(crate) fn render_state_expression(
     value: &Expr,
@@ -133,20 +136,17 @@ pub(crate) fn render_state_expression(
             Ok((syn::parse_quote!(#step.result), Type::Boolean, false))
         }
         Expr::Call { name, arguments } => {
-            let (formal_parameters, result, stateful) =
-                if let Some(callee) = stateful_circuits.get(name.as_str()) {
-                    if circuit_contains_witness(callee)
-                        || callee.actions.iter().any(action_contains_call)
-                    {
-                        return Err(RenderError::UnsupportedStatefulCall(name.clone()));
-                    }
-                    (&callee.parameters, &callee.result, true)
-                } else {
-                    let callee = circuits
-                        .get(name.as_str())
-                        .ok_or_else(|| RenderError::UnknownCircuit(name.clone()))?;
-                    (&callee.parameters, &callee.result, false)
-                };
+            let (formal_parameters, result, stateful, callee_uses_witness) = if let Some(callee) =
+                stateful_circuits.get(name.as_str())
+            {
+                let effect = circuit_uses_witness(callee, stateful_circuits, &mut HashSet::new())?;
+                (&callee.parameters, &callee.result, true, effect)
+            } else {
+                let callee = circuits
+                    .get(name.as_str())
+                    .ok_or_else(|| RenderError::UnknownCircuit(name.clone()))?;
+                (&callee.parameters, &callee.result, false, false)
+            };
             if arguments.len() != formal_parameters.len() {
                 return Err(RenderError::ArgumentCount {
                     circuit: name.clone(),
@@ -188,16 +188,25 @@ pub(crate) fn render_state_expression(
                 let step =
                     syn::Ident::new(&format!("__compact_call_{}", *next_temp), Span::call_site());
                 *next_temp += 1;
-                statements.push(
-                    syn::parse_quote!(let #step = #name(context, #(#rendered_arguments),*)?;),
-                );
+                if callee_uses_witness {
+                    statements.push(syn::parse_quote!(
+                        let #step = #name(context, witnesses, #(#rendered_arguments),*)?;
+                    ));
+                    statements.push(syn::parse_quote!(
+                        private_transcript_outputs.extend(#step.private_transcript_outputs);
+                    ));
+                } else {
+                    statements.push(syn::parse_quote!(
+                        let #step = #name(context, #(#rendered_arguments),*)?;
+                    ));
+                }
                 statements.push(syn::parse_quote!(context = #step.context;));
                 statements.push(syn::parse_quote!(total_cost += #step.gas_cost;));
                 *query_effect = true;
                 Ok((
                     syn::parse_quote!(#step.result),
                     result.clone(),
-                    witness_effect,
+                    witness_effect || callee_uses_witness,
                 ))
             } else {
                 Ok((
@@ -715,22 +724,19 @@ pub(crate) fn render_state_expression(
                 ledger_fields,
                 query_effect,
             )?;
-            if !matches!(actual, Type::Unsigned { .. }) {
+            let Type::Unsigned { max } = &actual else {
                 return Err(RenderError::ExpectedUnsigned(actual));
-            }
-            Ok((
-                syn::parse_quote!(runtime::Field::from((#value).value())),
-                Type::Field,
-                effect,
-            ))
+            };
+            let rendered = match unsigned_maximum(max)? {
+                UnsignedMaximum::Small(_) => {
+                    syn::parse_quote!(runtime::Field::from((#value).value()))
+                }
+                UnsignedMaximum::Wide { .. } => syn::parse_quote!((#value).as_field()),
+            };
+            Ok((rendered, Type::Field, effect))
         }
         Expr::UnsignedCast { max, value } => {
-            let target_max = max
-                .parse::<u128>()
-                .map_err(|_| RenderError::InvalidUnsignedMaximum(max.clone()))?;
-            if target_max.to_string() != *max {
-                return Err(RenderError::InvalidUnsignedMaximum(max.clone()));
-            }
+            unsigned_maximum(max)?;
             let (rendered, actual, effect) = render_state_expression(
                 value,
                 parameters,
@@ -748,16 +754,8 @@ pub(crate) fn render_state_expression(
                     actual,
                 });
             };
-            let parsed_source = source_max
-                .parse::<u128>()
-                .map_err(|_| RenderError::InvalidUnsignedMaximum(source_max.clone()))?;
-            if parsed_source.to_string() != source_max {
-                return Err(RenderError::InvalidUnsignedMaximum(source_max));
-            }
-            let source_max = syn::LitInt::new(&source_max, Span::call_site());
-            let target_max = syn::LitInt::new(max, Span::call_site());
             Ok((
-                syn::parse_quote!(runtime::cast_unsigned::<#source_max, #target_max>(#rendered)?),
+                unsigned_cast_syntax(rendered, &source_max, max)?,
                 Type::Unsigned { max: max.clone() },
                 effect,
             ))
@@ -989,13 +987,90 @@ pub(crate) fn render_state_expression(
     }
 }
 
-fn action_contains_call(action: &StateAction) -> bool {
+fn action_calls_named(action: &StateAction, name: &str) -> bool {
     match action {
-        StateAction::CircuitCall { .. } => true,
-        StateAction::Let { action, .. } => action_contains_call(action),
-        StateAction::Sequence { actions } => actions.iter().any(action_contains_call),
+        StateAction::CircuitCall {
+            name: callee,
+            arguments,
+        } => {
+            callee == name
+                || arguments
+                    .iter()
+                    .any(|arg| expression_calls_named(arg, name))
+        }
+        StateAction::PureCall { arguments, .. } => arguments
+            .iter()
+            .any(|arg| expression_calls_named(arg, name)),
+        StateAction::Let { bindings, action } => {
+            bindings
+                .iter()
+                .any(|binding| expression_calls_named(&binding.value, name))
+                || action_calls_named(action, name)
+        }
+        StateAction::Sequence { actions } => actions
+            .iter()
+            .any(|action| action_calls_named(action, name)),
+        StateAction::Expression { value }
+        | StateAction::CellWrite { value, .. }
+        | StateAction::SetInsert { value, .. }
+        | StateAction::SetRemove { value, .. }
+        | StateAction::ListPushFront { value, .. }
+        | StateAction::MapInsertDefault { key: value, .. }
+        | StateAction::MapRemove { key: value, .. } => expression_calls_named(value, name),
+        StateAction::Assert { condition, .. } => expression_calls_named(condition, name),
+        StateAction::MapInsert { key, value, .. } => {
+            expression_calls_named(key, name) || expression_calls_named(value, name)
+        }
+        StateAction::CounterIncrement { .. }
+        | StateAction::CounterDecrement { .. }
+        | StateAction::CounterReset { .. }
+        | StateAction::SetReset { .. }
+        | StateAction::ListPopFront { .. }
+        | StateAction::ListReset { .. }
+        | StateAction::MapReset { .. } => false,
+    }
+}
+
+fn expression_calls_named(expression: &Expr, name: &str) -> bool {
+    expression_contains(
+        expression,
+        &|value| matches!(value, Expr::Call { name: callee, .. } if callee == name),
+    )
+}
+
+fn return_calls_named(value: &StateReturn, name: &str) -> bool {
+    match value {
+        StateReturn::Expression { value } | StateReturn::SetMember { value, .. } => {
+            expression_calls_named(value, name)
+        }
+        StateReturn::MapMember { key, .. } | StateReturn::MapLookup { key, .. } => {
+            expression_calls_named(key, name)
+        }
         _ => false,
     }
+}
+
+fn circuit_uses_witness(
+    circuit: &StatefulCircuit,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+    visiting: &mut HashSet<String>,
+) -> Result<bool, RenderError> {
+    if !visiting.insert(circuit.name.clone()) {
+        return Err(RenderError::UnsupportedStatefulCall(circuit.name.clone()));
+    }
+    let mut effect = circuit_contains_witness(circuit);
+    for (name, callee) in circuits {
+        if circuit
+            .actions
+            .iter()
+            .any(|action| action_calls_named(action, name))
+            || return_calls_named(&circuit.return_value, name)
+        {
+            effect |= circuit_uses_witness(callee, circuits, visiting)?;
+        }
+    }
+    visiting.remove(&circuit.name);
+    Ok(effect)
 }
 
 fn expression_contains(expression: &Expr, predicate: &impl Fn(&Expr) -> bool) -> bool {
@@ -1085,6 +1160,23 @@ fn expression_contains_witness(expression: &Expr) -> bool {
     })
 }
 
+pub(crate) fn expression_requires_witness(
+    expression: &Expr,
+    stateful_circuits: &HashMap<&str, &StatefulCircuit>,
+) -> Result<bool, RenderError> {
+    if expression_contains_witness(expression) {
+        return Ok(true);
+    }
+    for (name, callee) in stateful_circuits {
+        if expression_calls_named(expression, name)
+            && circuit_uses_witness(callee, stateful_circuits, &mut HashSet::new())?
+        {
+            return Ok(true);
+        }
+    }
+    Ok(false)
+}
+
 pub(crate) fn expression_contains_stateful_call(
     expression: &Expr,
     stateful_circuits: &HashMap<&str, &StatefulCircuit>,
@@ -1164,7 +1256,7 @@ pub(crate) fn render_stateful_circuit(
         args.push(syn::parse_quote!(#rust_name: #arg_ty));
     }
     let mut statements = Vec::<syn::Stmt>::new();
-    let mut uses_witness = false;
+    let mut uses_witness = circuit_uses_witness(circuit, stateful_circuits, &mut HashSet::new())?;
     let mut next_temp = 0;
     let mut next_local = 0;
     enum Pending<'a> {
@@ -1280,15 +1372,8 @@ pub(crate) fn render_stateful_circuit(
                 let callee = stateful_circuits
                     .get(callee_name.as_str())
                     .ok_or_else(|| RenderError::UnknownCircuit(callee_name.clone()))?;
-                // Transcript handling is local to each generated function.
-                // A witnessful callee needs explicit transcript composition.
-                // Nested standalone calls still need a separate call model.
-                if circuit_contains_witness(callee)
-                    || callee_name == &circuit.name
-                    || callee.actions.iter().any(action_contains_call)
-                {
-                    return Err(RenderError::UnsupportedStatefulCall(callee_name.clone()));
-                }
+                let callee_uses_witness =
+                    circuit_uses_witness(callee, stateful_circuits, &mut HashSet::new())?;
                 if arguments.len() != callee.parameters.len() {
                     return Err(RenderError::ArgumentCount {
                         circuit: callee_name.clone(),
@@ -1296,22 +1381,56 @@ pub(crate) fn render_stateful_circuit(
                         actual: arguments.len(),
                     });
                 }
-                let mut args = Vec::new();
+                let mut args = Vec::<syn::Expr>::new();
+                let mut argument_statements = Vec::new();
+                let mut argument_query_effect = false;
+                let mut argument_witness_effect = false;
                 for (argument, parameter) in arguments.iter().zip(&callee.parameters) {
-                    let (rendered, actual) =
-                        expression_with_calls(argument, &parameters, circuits)?;
+                    let (rendered, actual, effect) = render_state_expression(
+                        argument,
+                        &parameters,
+                        witnesses,
+                        &mut argument_statements,
+                        &mut next_temp,
+                        circuits,
+                        stateful_circuits,
+                        ledger_fields,
+                        &mut argument_query_effect,
+                    )?;
                     if actual != parameter.ty {
                         return Err(RenderError::TypeMismatch {
                             expected: parameter.ty.clone(),
                             actual,
                         });
                     }
-                    args.push(rendered);
+                    let argument_name = syn::Ident::new(
+                        &format!("__compact_call_argument_{}", next_temp),
+                        Span::call_site(),
+                    );
+                    next_temp += 1;
+                    argument_statements.push(syn::parse_quote!(let #argument_name = #rendered;));
+                    args.push(syn::parse_quote!(#argument_name));
+                    argument_witness_effect |= effect;
                 }
+                if argument_query_effect || argument_witness_effect {
+                    statements.push(syn::parse_quote!(let mut context = context;));
+                }
+                statements.extend(argument_statements);
+                uses_witness |= argument_witness_effect;
                 let callee_name = ident(callee_name)?;
-                statements.push(syn::parse_quote! {
-                    let call_step = #callee_name(context, #(#args),*)?;
-                });
+                if callee_uses_witness {
+                    statements.push(syn::parse_quote! {
+                        let call_step = #callee_name(context, witnesses, #(#args),*)?;
+                    });
+                    statements.push(syn::parse_quote! {
+                        private_transcript_outputs.extend(call_step.private_transcript_outputs);
+                    });
+                    uses_witness = true;
+                } else {
+                    statements.push(syn::parse_quote! {
+                        let call_step = #callee_name(context, #(#args),*)?;
+                    });
+                }
                 statements.push(syn::parse_quote!(let context = call_step.context;));
                 statements.push(syn::parse_quote!(total_cost += call_step.gas_cost;));
             }

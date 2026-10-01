@@ -1,0 +1,19 @@
+import CompactStandardLibrary;
+
+export ledger values: Vector<2, Field>;
+
+constructor() {
+  values = default<Vector<2, Field>>;
+}
+
+export pure circuit empty_vector(): Vector<2, Field> {
+  return default<Vector<2, Field>>;
+}
+
+export pure circuit empty_hash(): Bytes<32> {
+  return persistentHash<Vector<2, Field>>(default<Vector<2, Field>>);
+}
+
+export circuit read_values(): Vector<2, Field> {
+  return values.read();
+}

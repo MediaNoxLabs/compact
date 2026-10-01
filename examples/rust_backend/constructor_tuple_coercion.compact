@@ -1,0 +1,16 @@
+import CompactStandardLibrary;
+
+export ledger pair: [Field, Field];
+
+constructor() {
+  pair = [3, 4];
+}
+
+export pure circuit constant(): [Field, Field] {
+  const value: [Field, Field] = [3, 4];
+  return value;
+}
+
+export circuit read_pair(): [Field, Field] {
+  return pair.read();
+}

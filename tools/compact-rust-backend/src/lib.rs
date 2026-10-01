@@ -73,7 +73,7 @@ impl fmt::Display for RenderError {
             Self::InvalidFieldLiteral(value) => {
                 write!(
                     f,
-                    "unsupported Field literal {value:?}; expected canonical u128"
+                    "invalid Field literal {value:?}; expected a canonical decimal ledger8 field element"
                 )
             }
             Self::InvalidUnsignedLiteral { value, max } => {
@@ -131,6 +131,32 @@ impl Error for RenderError {}
 
 fn ident(name: &str) -> Result<syn::Ident, RenderError> {
     syn::parse_str::<syn::Ident>(name).map_err(|_| RenderError::InvalidIdentifier(name.to_owned()))
+}
+
+fn field_literal_bytes(value: &str) -> Result<[u8; 32], RenderError> {
+    let invalid = || RenderError::InvalidFieldLiteral(value.to_owned());
+    if value.is_empty()
+        || (value.len() > 1 && value.starts_with('0'))
+        || !value.bytes().all(|byte| byte.is_ascii_digit())
+    {
+        return Err(invalid());
+    }
+    let mut bytes = [0_u8; 32];
+    for digit in value.bytes() {
+        let mut carry = u16::from(digit - b'0');
+        for byte in &mut bytes {
+            let expanded = u16::from(*byte) * 10 + carry;
+            *byte = expanded as u8;
+            carry = expanded >> 8;
+        }
+        if carry != 0 {
+            return Err(invalid());
+        }
+    }
+    if midnight_transient_crypto::curve::Fr::from_le_bytes(&bytes).is_none() {
+        return Err(invalid());
+    }
+    Ok(bytes)
 }
 
 fn rust_type(ty: &Type) -> Result<syn::Type, RenderError> {
@@ -250,6 +276,7 @@ fn collect_expression_types(
     enums: &mut BTreeMap<String, Vec<String>>,
 ) -> Result<(), RenderError> {
     match expr {
+        Expr::Default { ty } => collect_named_types(ty, structs, enums)?,
         Expr::Tuple { elements } => {
             for element in elements {
                 collect_expression_types(element, structs, enums)?;
@@ -399,16 +426,28 @@ fn expression_with_calls(
 ) -> Result<(syn::Expr, Type), RenderError> {
     match expr {
         Expr::Unit => Ok((syn::parse_quote!(()), Type::Unit)),
+        Expr::Default { ty } => {
+            let rendered_type = rust_type(ty)?;
+            Ok((
+                syn::parse_quote!(<#rendered_type as Default>::default()),
+                ty.clone(),
+            ))
+        }
         Expr::Boolean { value } => Ok((syn::parse_quote!(#value), Type::Boolean)),
         Expr::FieldLiteral { value } => {
-            let parsed = value
-                .parse::<u128>()
-                .map_err(|_| RenderError::InvalidFieldLiteral(value.clone()))?;
-            if parsed.to_string() != *value {
-                return Err(RenderError::InvalidFieldLiteral(value.clone()));
+            let bytes = field_literal_bytes(value)?;
+            if let Ok(parsed) = value.parse::<u128>() {
+                let value = syn::LitInt::new(&format!("{parsed}u128"), Span::call_site());
+                return Ok((syn::parse_quote!(runtime::Field::from(#value)), Type::Field));
             }
-            let value = syn::LitInt::new(&format!("{value}u128"), Span::call_site());
-            Ok((syn::parse_quote!(runtime::Field::from(#value)), Type::Field))
+            let bytes = bytes
+                .iter()
+                .map(|byte| syn::LitInt::new(&format!("{byte}u8"), Span::call_site()))
+                .collect::<Vec<_>>();
+            Ok((
+                syn::parse_quote!(runtime::Field::from_le_bytes(&[#(#bytes),*]).expect("validated Compact Field literal")),
+                Type::Field,
+            ))
         }
         Expr::BytesLiteral { bytes } => {
             let values = bytes
@@ -947,6 +986,7 @@ fn expression_with_calls(
 fn infallible_constructor_expr(value: &Expr) -> bool {
     match value {
         Expr::Unit
+        | Expr::Default { .. }
         | Expr::Boolean { .. }
         | Expr::FieldLiteral { .. }
         | Expr::BytesLiteral { .. }

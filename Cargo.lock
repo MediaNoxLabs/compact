@@ -717,6 +717,7 @@ dependencies = [
 name = "compact-rust-backend"
 version = "0.1.0"
 dependencies = [
+ "midnight-transient-crypto",
  "prettyplease",
  "proc-macro2",
  "quote 1.0.45",
@@ -875,6 +876,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-constructor-tuple-coercion-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-constructor-vector-coercion-fixture"
 version = "0.1.0"
 dependencies = [
@@ -898,6 +911,18 @@ name = "compact-rust-counter-parameter-fixture"
 version = "0.1.0"
 dependencies = [
  "midnight-compact-runtime",
+]
+
+[[package]]
+name = "compact-rust-default-vector-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde_json",
 ]
 
 [[package]]
@@ -1187,6 +1212,18 @@ dependencies = [
 
 [[package]]
 name = "compact-rust-vector-tuple-cell-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde_json",
+]
+
+[[package]]
+name = "compact-rust-wide-field-literal-fixture"
 version = "0.1.0"
 dependencies = [
  "hex",

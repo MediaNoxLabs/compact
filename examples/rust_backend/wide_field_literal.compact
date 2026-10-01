@@ -1,0 +1,15 @@
+import CompactStandardLibrary;
+
+export ledger large: Field;
+
+constructor() {
+  large = 819310549611346726241370945440405716213240158234039660170669895299022906775 as Field;
+}
+
+export pure circuit constant(): Field {
+  return 819310549611346726241370945440405716213240158234039660170669895299022906775 as Field;
+}
+
+export circuit read_large(): Field {
+  return large.read();
+}

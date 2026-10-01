@@ -737,7 +737,7 @@ fn unsigned_literal_checks_the_declared_maximum() {
 }
 
 #[test]
-fn field_literal_requires_canonical_u128() {
+fn field_literal_requires_canonical_ledger_field_value() {
     let mut contract = identity(Type::Field, Expr::FieldLiteral { value: "42".into() });
     assert!(
         render(&contract)
@@ -754,10 +754,19 @@ fn field_literal_requires_canonical_u128() {
     contract.circuits[0].body = Expr::FieldLiteral {
         value: "340282366920938463463374607431768211456".into(),
     };
+    assert!(
+        render(&contract)
+            .unwrap()
+            .contains("runtime::Field::from_le_bytes")
+    );
+    contract.circuits[0].body = Expr::FieldLiteral {
+        value: "115792089237316195423570985008687907853269984665640564039457584007913129639935"
+            .into(),
+    };
     assert_eq!(
         render(&contract),
         Err(RenderError::InvalidFieldLiteral(
-            "340282366920938463463374607431768211456".into()
+            "115792089237316195423570985008687907853269984665640564039457584007913129639935".into()
         ))
     );
 }

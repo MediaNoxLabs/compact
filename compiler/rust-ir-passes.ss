@@ -32,6 +32,8 @@
     (definitions
       (define (object . fields) fields)
 
+      (define circuit-argument-types (make-eq-hashtable))
+
       (define (kind name)
         (object (cons "kind" name)))
 
@@ -90,6 +92,15 @@
                (source-errorf src "Rust backend supports nonnegative numeric literals only"))]
           [else #f]))
 
+      (define (field-argument-ir expr owner-src)
+        (nanopass-case (Lnodisclose Expression) expr
+          [(quote ,src ,datum)
+           (if (and (integer? datum) (<= 0 datum))
+               (object (cons "kind" "field_literal")
+                       (cons "value" (number->string datum)))
+               (source-errorf src "Rust backend Field literal must be nonnegative"))]
+          [else (expression-ir expr owner-src)]))
+
       ;; Analysis inserts this guard for Uint subtraction. The native checked
       ;; subtraction performs the same comparison, so only this exact guard
       ;; may be folded into the arithmetic expression.
@@ -140,7 +151,8 @@
               (object (cons "kind" "unsigned_literal")
                       (cons "value" "0")
                       (cons "max" (number->string nat)))]
-             [else (source-errorf src "Rust backend does not yet support this default expression")])]
+             [else (object (cons "kind" "default")
+                           (cons "ty" (type-ir type src)))])]
           [(safe-cast ,src ,type ,type^ ,expr)
            (nanopass-case (Lnodisclose Type) type
              [(tfield ,src^)
@@ -167,6 +179,8 @@
                             (cons "value" (typed-expression-ir expr type^ src)))))]
              [(tvector ,src^ ,len ,type^)
               (typed-expression-ir expr type src)]
+             [(ttuple ,src^ ,type* ...)
+              (typed-expression-ir expr type src)]
              [else (source-errorf src "Rust backend does not yet support this cast")])]
           [(tuple ,src ,tuple-arg* ...)
            (if (null? tuple-arg*)
@@ -182,8 +196,8 @@
                    (cons "otherwise" (expression-ir expr2 src)))]
           [(== ,src ,type ,expr1 ,expr2)
            (object (cons "kind" "equal")
-                   (cons "left" (expression-ir expr1 src))
-                   (cons "right" (expression-ir expr2 src)))]
+                   (cons "left" (typed-expression-ir expr1 type src))
+                   (cons "right" (typed-expression-ir expr2 type src)))]
           [(< ,src ,bits ,expr1 ,expr2)
            (object (cons "kind" "compare") (cons "operator" "less")
                    (cons "left" (expression-ir expr1 src))
@@ -202,8 +216,8 @@
                    (cons "right" (expression-ir expr2 src)))]
           [(!= ,src ,type ,expr1 ,expr2)
            (object (cons "kind" "not_equal")
-                   (cons "left" (expression-ir expr1 src))
-                   (cons "right" (expression-ir expr2 src)))]
+                   (cons "left" (typed-expression-ir expr1 type src))
+                   (cons "right" (typed-expression-ir expr2 type src)))]
           [(let* ,src ([,local* ,expr*] ...) ,expr)
            (object (cons "kind" "let")
                    (cons "bindings"
@@ -213,7 +227,7 @@
                                     [(,var-name ,type)
                                      (object (cons "name" (symbol->string (id-sym var-name)))
                                              (cons "ty" (type-ir type src))
-                                             (cons "value" (expression-ir value src)))]))
+                                             (cons "value" (typed-expression-ir value type src)))]))
                                 local* expr*)))
                    (cons "body" (expression-ir expr src)))]
           [(seq ,src ,expr* ... ,expr)
@@ -300,21 +314,31 @@
                   (source-errorf src "ecMul expects two arguments"))
                 (object (cons "kind" "ec_mul")
                         (cons "point" (expression-ir (car expr*) src))
-                        (cons "scalar" (expression-ir (cadr expr*) src)))]
+                        (cons "scalar" (field-argument-ir (cadr expr*) src)))]
                [(eq? name 'ecMulGenerator)
                 (unless (= (length expr*) 1)
                   (source-errorf src "ecMulGenerator expects one argument"))
                 (object (cons "kind" "ec_mul_generator")
-                        (cons "scalar" (expression-ir (car expr*) src)))]
+                        (cons "scalar" (field-argument-ir (car expr*) src)))]
                [(eq? name 'jubjubScalarFromNative)
                 (unless (= (length expr*) 1)
                   (source-errorf src "jubjubScalarFromNative expects one argument"))
                 (object (cons "kind" "jubjub_scalar_from_native")
                         (cons "value" (expression-ir (car expr*) src)))]
                [else
-                (object (cons "kind" "call")
-                        (cons "name" (symbol->string name))
-                        (cons "arguments" (list->vector (map (lambda (arg) (expression-ir arg src)) expr*))))]))]
+                (let ([formal-types (eq-hashtable-ref circuit-argument-types function-name #f)])
+                  (object (cons "kind" "call")
+                          (cons "name" (symbol->string name))
+                          (cons "arguments"
+                                (list->vector
+                                  (if formal-types
+                                      (begin
+                                        (unless (= (length expr*) (length formal-types))
+                                          (source-errorf src "Rust call argument count differs from its declaration"))
+                                        (map (lambda (arg formal-type)
+                                               (typed-expression-ir arg formal-type src))
+                                             expr* formal-types))
+                                      (map (lambda (arg) (expression-ir arg src)) expr*))))))]))]
           [(+ ,src ,mbits ,expr1 ,expr2)
            (if mbits
                (object (cons "kind" "unsigned_add")
@@ -322,8 +346,8 @@
                        (cons "left" (expression-ir expr1 src))
                        (cons "right" (expression-ir expr2 src)))
                (object (cons "kind" "add")
-                       (cons "left" (expression-ir expr1 owner-src))
-                       (cons "right" (expression-ir expr2 owner-src))))]
+                       (cons "left" (field-argument-ir expr1 owner-src))
+                       (cons "right" (field-argument-ir expr2 owner-src))))]
           [(- ,src ,mbits ,expr1 ,expr2)
            (if mbits
                (object (cons "kind" "unsigned_subtract")
@@ -331,8 +355,8 @@
                        (cons "left" (expression-ir expr1 src))
                        (cons "right" (expression-ir expr2 src)))
                (object (cons "kind" "subtract")
-                       (cons "left" (expression-ir expr1 src))
-                       (cons "right" (expression-ir expr2 src))))]
+                       (cons "left" (field-argument-ir expr1 src))
+                       (cons "right" (field-argument-ir expr2 src))))]
           [(* ,src ,mbits ,expr1 ,expr2)
            (if mbits
                (object (cons "kind" "unsigned_multiply")
@@ -340,8 +364,8 @@
                        (cons "left" (expression-ir expr1 src))
                        (cons "right" (expression-ir expr2 src)))
                (object (cons "kind" "multiply")
-                       (cons "left" (expression-ir expr1 src))
-                       (cons "right" (expression-ir expr2 src))))]
+                       (cons "left" (field-argument-ir expr1 src))
+                       (cons "right" (field-argument-ir expr2 src))))]
           [else (source-errorf owner-src "Rust backend does not yet support this circuit expression")]))
 
       (define (typed-expression-ir expr expected-type owner-src)
@@ -362,7 +386,24 @@
                                         (typed-expression-ir expr type src1)]
                                        [else (source-errorf src "Rust backend does not yet support vector spreads")]))
                                    tuple-arg*))))]
+             [(ttuple ,src^ ,type* ...)
+              (unless (= (length tuple-arg*) (length type*))
+                (source-errorf src "Rust tuple literal length does not match its type"))
+              (object (cons "kind" "tuple")
+                      (cons "elements"
+                            (list->vector
+                              (map (lambda (arg ty)
+                                     (nanopass-case (Lnodisclose Tuple-Argument) arg
+                                       [(single ,src1 ,expr)
+                                        (typed-expression-ir expr ty src1)]
+                                       [else (source-errorf src "Rust backend does not yet support tuple spreads")]))
+                                   tuple-arg* type*))))]
              [else (expression-ir expr owner-src)])]
+          [(if ,src ,expr0 ,expr1 ,expr2)
+           (object (cons "kind" "if")
+                   (cons "condition" (expression-ir expr0 src))
+                   (cons "then" (typed-expression-ir expr1 expected-type src))
+                   (cons "otherwise" (typed-expression-ir expr2 expected-type src)))]
           [(seq ,src ,expr* ... ,expr)
            (if (checked-unsigned-subtraction? expr* expr)
                (typed-expression-ir expr expected-type src)
@@ -449,6 +490,16 @@
                 [else (void)]))
             pelt*)
           table))
+
+      (define (index-circuit-argument-types pelt)
+        (nanopass-case (Lnodisclose Program-Element) pelt
+          [(circuit ,src ,function-name (,arg* ...) ,type ,expr)
+           (eq-hashtable-set! circuit-argument-types function-name
+             (map (lambda (arg)
+                    (nanopass-case (Lnodisclose Argument) arg
+                      [(,var-name ,type) type]))
+                  arg*))]
+          [else (void)]))
 
       (define (circuit-ir pelt export-alist circuits)
         (nanopass-case (Lnodisclose Program-Element) pelt
@@ -1272,6 +1323,8 @@
 
     (Program : Program (ir) -> Program ()
       [(program ,src (,contract-name* ...) ((,export-name* ,name*) ...) ,pelt* ...)
+       (hashtable-clear! circuit-argument-types)
+       (for-each index-circuit-argument-types pelt*)
        (let ([constructor* (filter (lambda (value) value) (map constructor-ir pelt*))]
              [export-alist (map cons export-name* name*)]
              [witness-ids (witness-id-table pelt*)])

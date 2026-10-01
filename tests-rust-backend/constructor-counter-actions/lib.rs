@@ -140,6 +140,17 @@ pub mod ledger_contract {
                     .expect("ledger Counter fits Uint<64>"),
             ))
         }
+        pub fn read_value<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<
+            runtime::recording::RecordedCircuitResult<Private, runtime::Field>,
+            runtime::CompactError,
+        > {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, observed): (_, runtime::Field) =
+                crate::ledger_slots::value.record_read(frame)?;
+            Ok(frame.finish(observed))
+        }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
         impl Contract {
@@ -154,6 +165,15 @@ pub mod ledger_contract {
                 runtime::CompactError,
             > {
                 crate::ledger_contract::recorded::read_count(context)
+            }
+            pub fn read_value<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, runtime::Field>,
+                runtime::CompactError,
+            > {
+                crate::ledger_contract::recorded::read_value(context)
             }
         }
     }

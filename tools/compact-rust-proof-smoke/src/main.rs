@@ -29,9 +29,11 @@ use std::path::{Path, PathBuf};
 use compact_rust_cell_boolean_fixture::ledger_contract as cell_contract;
 use compact_rust_cell_read_fixture::ledger_contract as cell_read_contract;
 use compact_rust_counter_fixture::ledger_contract as counter_contract;
+use compact_rust_witness_cell_write_fixture::ledger_contract as witness_contract;
 use midnight_base_crypto::data_provider::{FetchMode, MidnightDataProvider, OutputMode};
 use midnight_base_crypto::time::Timestamp;
-use midnight_compact_runtime::context::ConstructorContext;
+use midnight_compact_runtime::Field;
+use midnight_compact_runtime::context::{ConstructorContext, WitnessContext};
 use midnight_compact_runtime::fab::AlignedValue;
 use midnight_compact_runtime::ledger::{DefaultDB, StateValue, read_cell, read_counter};
 use midnight_compact_runtime::recording::RecordedCircuitResult;
@@ -155,17 +157,18 @@ fn prove_counter(
     Ok(())
 }
 
-fn check_generated_trace<Output: Into<AlignedValue>>(
+fn check_generated_trace<Private, Output: Into<AlignedValue>, Input: Into<AlignedValue>>(
     root: &Path,
     circuit: &'static str,
-    recorded: RecordedCircuitResult<(), Output>,
+    recorded: RecordedCircuitResult<Private, Output>,
+    input: Input,
 ) -> Result<ContractCallPrototype<DefaultDB>, Box<dyn Error>> {
     let verifier: VerifierKey = tagged_deserialize(&mut BufReader::new(File::open(
         root.join(format!("keys/{circuit}.verifier")),
     )?))?;
     let call = prepare_call(
         recorded,
-        CallSpec::new(circuit, verifier, (), Fr::from(0u64)),
+        CallSpec::new(circuit, verifier, input, Fr::from(0u64)),
     )?;
     println!("generated {circuit} trace replayed and partitioned");
     Ok(call)
@@ -250,6 +253,21 @@ where
     Ok(())
 }
 
+struct Secret;
+
+impl witness_contract::Witnesses<u64> for Secret {
+    fn secret(
+        &self,
+        context: WitnessContext<'_, u64, witness_contract::LedgerView<'_>>,
+        seed: Field,
+    ) -> (u64, Field) {
+        let private = *context.private_state;
+        let cell = context.ledger.cell().expect("witness Cell read");
+        assert_eq!(cell, Field::from(if private == 7 { 0_u64 } else { 9_u64 }));
+        (private + 1, seed + Field::from(private))
+    }
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     let mut arguments = env::args_os().skip(1);
     let counter_root = arguments.next().ok_or(
@@ -261,9 +279,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     let cell_read_root = arguments.next().ok_or(
         "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output>",
     )?;
+    let witness_root = arguments.next();
     if arguments.next().is_some() {
         return Err(
-            "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output>"
+            "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output> [witness-output]"
                 .into(),
         );
     }
@@ -282,7 +301,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let counter_recorded = counter_contract::Contract::default()
         .recording
         .increment(counter_context)?;
-    let counter_call = check_generated_trace(counter_root, "increment", counter_recorded)?;
+    let counter_call = check_generated_trace(counter_root, "increment", counter_recorded, ())?;
     prove_counter(counter_root, &counter_call)?;
     check_transaction(
         counter_root,
@@ -312,7 +331,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let cell_recorded = cell_contract::Contract::default()
         .recording
         .set_flag(cell_context)?;
-    let cell_call = check_generated_trace(cell_root, "set_flag", cell_recorded)?;
+    let cell_call = check_generated_trace(cell_root, "set_flag", cell_recorded, ())?;
     check_transaction(
         cell_root,
         "set_flag",
@@ -344,7 +363,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     if cell_read_recorded.execution.result {
         return Err("new Cell contract unexpectedly read true".into());
     }
-    let cell_read_call = check_generated_trace(cell_read_root, "read_flag", cell_read_recorded)?;
+    let cell_read_call =
+        check_generated_trace(cell_read_root, "read_flag", cell_read_recorded, ())?;
     check_transaction(
         cell_read_root,
         "read_flag",
@@ -360,5 +380,44 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
             Ok(())
         },
-    )
+    )?;
+
+    if let Some(witness_root) = witness_root {
+        let witness_root = Path::new(&witness_root);
+        let witness_initial = witness_contract::initial_state(ConstructorContext::new(7_u64))?;
+        let witness_deploy = make_deploy(
+            witness_root,
+            "write_twice",
+            witness_initial.ledger_state.get_ref().clone(),
+            &mut rng,
+        )?;
+        let context = witness_initial.into_circuit_context(witness_deploy.address());
+        let seed = Field::from(2_u64);
+        let recorded = witness_contract::Contract::from(Secret)
+            .recording()
+            .write_twice(context, seed)?;
+        if recorded.execution.private_transcript_outputs.len() != 2 {
+            return Err("witnessed call did not record two private values".into());
+        }
+        let witness_call = check_generated_trace(witness_root, "write_twice", recorded, seed)?;
+        check_transaction(
+            witness_root,
+            "write_twice",
+            witness_deploy,
+            witness_call,
+            &mut rng,
+            |contract| {
+                let StateValue::Array(fields) = contract.data.get_ref() else {
+                    return Err("witnessed contract state is not an array".into());
+                };
+                if read_cell::<Field, _>(fields.get(0).ok_or("witness Cell missing")?)?
+                    != Field::from(10_u64)
+                {
+                    return Err("proven witness call did not write the final Cell value".into());
+                }
+                Ok(())
+            },
+        )?;
+    }
+    Ok(())
 }

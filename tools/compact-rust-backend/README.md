@@ -53,9 +53,11 @@ stateful circuits are available as free functions and as methods on
 `Witnesses<Private>` trait. Methods take an explicit `CircuitContext<Private>`
 and typed circuit arguments; witness bounds apply only to methods that need
 them. The facade delegates to the existing functions, preserving state and
-witness behavior. Typed ledger descriptors remain design work. The runtime's
-recording frame is opt-in. When a circuit has a complete recorded trace, the
-generated `contract.recording` handle exposes it as a typed method; other
+witness behavior. `ledger_slots` exposes typed Cell and Counter descriptors.
+The runtime's recording frame is opt-in. When a circuit has a complete recorded
+trace, the generated `contract.recording` handle exposes it as a typed method.
+For witnessed root Cell circuits, `contract.recording()` borrows the contract's
+witness implementation and records private outputs in execution order. Other
 methods continue to return native execution results. This distinction remains
 explicit until full transcript coverage is proven.
 Enable the runtime's `ledger-transaction` feature in a consuming Cargo graph
@@ -72,7 +74,7 @@ Compact spelling without warning in consumer builds.
 
 | Boundary | Current contract | Failure behavior |
 |---|---|---|
-| Compact compiler | Toolchain 0.31.122, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
+| Compact compiler | Toolchain 0.31.123, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
 | Rust IR | Schema 6, private to this backend | The renderer rejects any other schema before writing `lib.rs`. |
 | Generated code and Rust runtime | ABI 3 | Generated modules assert the ABI at Rust compile time. |
 | Rust runtime source | Bundled runtime crates or an explicit shared source root | Cargo resolves the matching runtime and its pinned Midnight crates. |

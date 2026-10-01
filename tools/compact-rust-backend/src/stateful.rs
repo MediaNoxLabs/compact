@@ -1361,12 +1361,13 @@ pub(crate) fn render_contract_method(
     Ok(Some(method))
 }
 
-/// Emit a replayable public VM trace for the Counter and Boolean Cell subset
-/// whose ordered operations are represented by RecordingFrame. Unsupported circuits
-/// deliberately have no recorded entry point.
+/// Emit a replayable public VM trace for the supported root Cell and Counter
+/// operations, including witnessed Cell values. Unsupported circuits have no
+/// recorded entry point.
 pub(crate) fn render_recorded_circuit(
     circuit: &StatefulCircuit,
     ledger_fields: &HashMap<&str, &LedgerField>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
 ) -> Result<Option<syn::Item>, RenderError> {
     if circuit.internal {
         return Ok(None);
@@ -1414,19 +1415,24 @@ pub(crate) fn render_recorded_circuit(
         }
     }
 
-    fn boolean_source(
+    fn cell_source(
         value: &Expr,
+        ty: &Type,
+        locals: &HashMap<String, syn::Expr>,
         parameters: &HashMap<&str, (&Type, syn::Ident)>,
     ) -> Option<syn::Expr> {
+        if !matches!(ty, Type::Boolean | Type::Field) {
+            return None;
+        }
         match value {
-            Expr::Boolean { value } => Some(syn::parse_quote!(#value)),
-            Expr::Parameter { name } => {
-                let (ty, rust_name) = parameters.get(name.as_str())?;
-                if **ty != Type::Boolean {
-                    return None;
-                }
-                Some(syn::parse_quote!(#rust_name))
+            Expr::Coerce { value, ty: target } if target == ty => {
+                cell_source(value, ty, locals, parameters)
             }
+            Expr::Boolean { value } if *ty == Type::Boolean => Some(syn::parse_quote!(#value)),
+            Expr::Parameter { name } => locals.get(name).cloned().or_else(|| {
+                let (actual, rust_name) = parameters.get(name.as_str())?;
+                (actual == &ty).then(|| syn::parse_quote!(#rust_name))
+            }),
             _ => None,
         }
     }
@@ -1436,12 +1442,22 @@ pub(crate) fn render_recorded_circuit(
         locals: &HashMap<String, syn::Expr>,
         parameters: &HashMap<&str, (&Type, syn::Ident)>,
         ledger_fields: &HashMap<&str, &LedgerField>,
+        witnesses: &HashMap<&str, &WitnessDeclaration>,
         steps: &mut Vec<syn::Stmt>,
+        next_witness: &mut usize,
     ) -> Result<bool, RenderError> {
         match action {
             StateAction::Sequence { actions } => {
                 for action in actions {
-                    if !append_steps(action, locals, parameters, ledger_fields, steps)? {
+                    if !append_steps(
+                        action,
+                        locals,
+                        parameters,
+                        ledger_fields,
+                        witnesses,
+                        steps,
+                        next_witness,
+                    )? {
                         return Ok(false);
                     }
                 }
@@ -1451,18 +1467,73 @@ pub(crate) fn render_recorded_circuit(
                 let mut scoped = locals.clone();
                 for binding in bindings {
                     if binding.ty
-                        != (Type::Unsigned {
+                        == (Type::Unsigned {
                             max: "65535".into(),
                         })
                     {
+                        let Some(value) = amount_source(&binding.value, &scoped, parameters) else {
+                            return Ok(false);
+                        };
+                        scoped.insert(binding.name.clone(), value);
+                    } else if let Expr::WitnessCall { name, arguments } = &binding.value {
+                        if !matches!(binding.ty, Type::Boolean | Type::Field) {
+                            return Ok(false);
+                        }
+                        let declaration = witnesses
+                            .get(name.as_str())
+                            .ok_or_else(|| RenderError::UnknownWitness(name.clone()))?;
+                        if arguments.len() != declaration.parameters.len() {
+                            return Err(RenderError::ArgumentCount {
+                                circuit: name.clone(),
+                                expected: declaration.parameters.len(),
+                                actual: arguments.len(),
+                            });
+                        }
+                        if binding.ty != declaration.result {
+                            return Err(RenderError::TypeMismatch {
+                                expected: binding.ty.clone(),
+                                actual: declaration.result.clone(),
+                            });
+                        }
+                        let mut args = Vec::new();
+                        for (argument, parameter) in arguments.iter().zip(&declaration.parameters) {
+                            let Some(arg) =
+                                cell_source(argument, &parameter.ty, &scoped, parameters)
+                            else {
+                                return Ok(false);
+                            };
+                            args.push(arg);
+                        }
+                        let method = ident(name)?;
+                        let value = syn::Ident::new(
+                            &format!("__compact_witness_{}", *next_witness),
+                            Span::call_site(),
+                        );
+                        *next_witness += 1;
+                        steps.push(syn::parse_quote! {
+                            let (frame, #value) = frame.witness(|context| {
+                                witnesses.#method(
+                                    context.witness_context_with(super::LedgerView {
+                                        state: context.query.state.get_ref(),
+                                    }),
+                                    #(#args),*
+                                )
+                            });
+                        });
+                        scoped.insert(binding.name.clone(), syn::parse_quote!(#value));
+                    } else {
                         return Ok(false);
                     }
-                    let Some(value) = amount_source(&binding.value, &scoped, parameters) else {
-                        return Ok(false);
-                    };
-                    scoped.insert(binding.name.clone(), value);
                 }
-                append_steps(action, &scoped, parameters, ledger_fields, steps)
+                append_steps(
+                    action,
+                    &scoped,
+                    parameters,
+                    ledger_fields,
+                    witnesses,
+                    steps,
+                    next_witness,
+                )
             }
             StateAction::CounterIncrement {
                 field,
@@ -1517,13 +1588,16 @@ pub(crate) fn render_recorded_circuit(
                 let declaration = ledger_fields
                     .get(field.as_str())
                     .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
-                if declaration.declaration != (LedgerFieldKind::Cell { ty: Type::Boolean })
-                    || declaration.index != *index
-                    || declaration.physical_path().len() != 1
-                {
+                let LedgerFieldKind::Cell { ty } = &declaration.declaration else {
+                    return Ok(false);
+                };
+                if !matches!(ty, Type::Boolean | Type::Field) {
                     return Ok(false);
                 }
-                let Some(value) = boolean_source(value, parameters) else {
+                if declaration.index != *index || declaration.physical_path().len() != 1 {
+                    return Ok(false);
+                }
+                let Some(value) = cell_source(value, ty, locals, parameters) else {
                     return Ok(false);
                 };
                 let slot = ident(field)?;
@@ -1537,13 +1611,16 @@ pub(crate) fn render_recorded_circuit(
     }
 
     let mut steps = Vec::<syn::Stmt>::new();
+    let mut next_witness = 0;
     for action in &circuit.actions {
         if !append_steps(
             action,
             &HashMap::new(),
             &parameters,
             ledger_fields,
+            witnesses,
             &mut steps,
+            &mut next_witness,
         )? {
             return Ok(None);
         }
@@ -1580,11 +1657,16 @@ pub(crate) fn render_recorded_circuit(
                 ),
             )
         }
-        StateReturn::CellRead { field, index } if circuit.result == Type::Boolean => {
+        StateReturn::CellRead { field, index }
+            if matches!(circuit.result, Type::Boolean | Type::Field) =>
+        {
             let declaration = ledger_fields
                 .get(field.as_str())
                 .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
-            if declaration.declaration != (LedgerFieldKind::Cell { ty: Type::Boolean })
+            if declaration.declaration
+                != (LedgerFieldKind::Cell {
+                    ty: circuit.result.clone(),
+                })
                 || declaration.index != *index
                 || declaration.physical_path().len() != 1
             {
@@ -1593,7 +1675,7 @@ pub(crate) fn render_recorded_circuit(
             let slot = ident(field)?;
             (
                 vec![syn::parse_quote!(
-                    let (frame, observed): (_, bool) =
+                    let (frame, observed): (_, #result_ty) =
                         crate::ledger_slots::#slot.record_read(frame)?;
                 )],
                 syn::parse_quote!(observed),
@@ -1605,7 +1687,21 @@ pub(crate) fn render_recorded_circuit(
         return Ok(None);
     }
 
-    Ok(Some(syn::parse_quote! {
+    let item = if circuit_contains_witness(circuit) {
+        syn::parse_quote! {
+            pub fn #name<Private, W: super::Witnesses<Private>>(
+                context: runtime::context::CircuitContext<Private>,
+                witnesses: &W,
+                #(#args),*
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, #result_ty>, runtime::CompactError> {
+                let frame = runtime::recording::RecordingFrame::new(context);
+                #(#steps)*
+                #(#return_steps)*
+                Ok(frame.finish(#result))
+            }
+        }
+    } else {
+        syn::parse_quote! {
         pub fn #name<Private>(
             context: runtime::context::CircuitContext<Private>,
             #(#args),*
@@ -1615,7 +1711,48 @@ pub(crate) fn render_recorded_circuit(
             #(#return_steps)*
             Ok(frame.finish(#result))
         }
-    }))
+        }
+    };
+    Ok(Some(item))
+}
+
+/// A recording handle that borrows the user-supplied witness implementation.
+pub(crate) fn render_borrowed_recorded_contract_method(
+    circuit: &StatefulCircuit,
+) -> Result<syn::ImplItemFn, RenderError> {
+    let name = ident(&circuit.name)?;
+    let mut args = Vec::<syn::FnArg>::new();
+    let mut call_args = Vec::<syn::Ident>::new();
+    for (index, parameter) in circuit.parameters.iter().enumerate() {
+        let arg = syn::Ident::new(&format!("__compact_param_{index}"), Span::call_site());
+        let ty = rust_type(&parameter.ty)?;
+        args.push(syn::parse_quote!(#arg: #ty));
+        call_args.push(arg);
+    }
+    let result = rust_type(&circuit.result)?;
+    let method = if circuit_contains_witness(circuit) {
+        syn::parse_quote! {
+            pub fn #name<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                #(#args),*
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, #result>, runtime::CompactError>
+            where W: super::Witnesses<Private> {
+                #name(context, self.witnesses, #(#call_args),*)
+            }
+        }
+    } else {
+        syn::parse_quote! {
+            pub fn #name<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                #(#args),*
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, #result>, runtime::CompactError> {
+                #name(context, #(#call_args),*)
+            }
+        }
+    };
+    Ok(method)
 }
 
 /// A typed method on the generated recording handle. The ledger program is
@@ -1837,7 +1974,7 @@ fn action_contains_witness(action: &StateAction) -> bool {
     }
 }
 
-fn circuit_contains_witness(circuit: &StatefulCircuit) -> bool {
+pub(crate) fn circuit_contains_witness(circuit: &StatefulCircuit) -> bool {
     circuit.actions.iter().any(action_contains_witness)
         || match &circuit.return_value {
             StateReturn::Expression { value }

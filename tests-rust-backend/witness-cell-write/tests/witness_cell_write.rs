@@ -19,7 +19,6 @@ use compact_rust_witness_cell_write_fixture::ledger_contract::{
 use midnight_compact_runtime::Field;
 use midnight_compact_runtime::context::{CircuitResult, ConstructorContext, WitnessContext};
 use midnight_compact_runtime::ledger::{ContractAddress, read_root_cell};
-use midnight_compact_runtime::recording::RecordingFrame;
 
 struct Secret;
 
@@ -105,17 +104,10 @@ fn witnessed_writes_record_private_values_and_public_operations_in_order() {
     let context = initial_state(ConstructorContext::new(7_u64))
         .unwrap()
         .into_circuit_context(ContractAddress::default());
-    let frame = RecordingFrame::new(context);
-    let (frame, first) = frame.witness(|context| {
-        let cell = read_root_cell::<Field, _>(context.query.state.get_ref(), 0).unwrap();
-        secret_logic(context.private_state, cell, seed)
-    });
-    let frame = frame.write_cell(0_u8, first).unwrap();
-    let (frame, second) = frame.witness(|context| {
-        let cell = read_root_cell::<Field, _>(context.query.state.get_ref(), 0).unwrap();
-        secret_logic(context.private_state, cell, seed)
-    });
-    let recorded = frame.write_cell(0_u8, second).unwrap().finish(());
+    let recorded = Contract::from(Secret)
+        .recording()
+        .write_twice(context, seed)
+        .unwrap();
 
     assert_eq!(
         recorded.execution.context.private_state,
@@ -126,7 +118,7 @@ fn witnessed_writes_record_private_values_and_public_operations_in_order() {
         native.private_transcript_outputs
     );
     assert_eq!(recorded.execution.private_transcript_outputs.len(), 2);
-    assert_eq!(recorded.public.verify_ops().len(), 8);
+    assert_eq!(recorded.public.verify_ops().len(), 6);
     let replay = recorded
         .public
         .initial()

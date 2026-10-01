@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Toolchain 0.31.123, language 0.23.105, runtime 0.16.101]
+
+### Added
+
+- Emit complete recorded traces for witnessed root Field Cell writes and Field
+  reads. A borrowed `Contract<W>::recording()` handle uses the contract's
+  witnesses while preserving the existing `contract.recording` API for calls
+  without witnesses.
+- Prove, verify, and apply a generated two-witness Field Cell call in the
+  offline ledger-8 gate, checking private output order and final state.
+
 ## [Toolchain 0.31.122, language 0.23.105, runtime 0.16.101]
 
 ### Changed

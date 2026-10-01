@@ -156,19 +156,134 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
+    /// Circuits with a replayable ordered ledger program.
+    pub mod recorded {
+        use midnight_compact_runtime as runtime;
+        pub fn write_secret<Private, W: super::Witnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: runtime::Field,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_witness_0) = frame.witness(|context| {
+                witnesses.secret(
+                    context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                    }),
+                    __compact_param_0,
+                )
+            });
+            let frame = crate::ledger_slots::cell.record_write(frame, __compact_witness_0)?;
+            Ok(frame.finish(()))
+        }
+        pub fn write_twice<Private, W: super::Witnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: runtime::Field,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_witness_0) = frame.witness(|context| {
+                witnesses.secret(
+                    context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                    }),
+                    __compact_param_0,
+                )
+            });
+            let frame = crate::ledger_slots::cell.record_write(frame, __compact_witness_0)?;
+            let (frame, __compact_witness_1) = frame.witness(|context| {
+                witnesses.secret(
+                    context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                    }),
+                    __compact_param_0,
+                )
+            });
+            let frame = crate::ledger_slots::cell.record_write(frame, __compact_witness_1)?;
+            Ok(frame.finish(()))
+        }
+        pub fn read_cell<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<
+            runtime::recording::RecordedCircuitResult<Private, runtime::Field>,
+            runtime::CompactError,
+        > {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, observed): (_, runtime::Field) =
+                crate::ledger_slots::cell.record_read(frame)?;
+            Ok(frame.finish(observed))
+        }
+        /// Typed handle for circuits with a complete recorded trace.
+        pub struct Contract;
+        impl Contract {
+            pub fn read_cell<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, runtime::Field>,
+                runtime::CompactError,
+            > {
+                crate::ledger_contract::recorded::read_cell(context)
+            }
+        }
+        /// A recording handle with access to the contract's witnesses.
+        pub struct BorrowedContract<'a, W> {
+            pub(super) witnesses: &'a W,
+        }
+        impl<W> BorrowedContract<'_, W> {
+            pub fn write_secret<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                __compact_param_0: runtime::Field,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            where
+                W: super::Witnesses<Private>,
+            {
+                write_secret(context, self.witnesses, __compact_param_0)
+            }
+            pub fn write_twice<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                __compact_param_0: runtime::Field,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            where
+                W: super::Witnesses<Private>,
+            {
+                write_twice(context, self.witnesses, __compact_param_0)
+            }
+            pub fn read_cell<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, runtime::Field>,
+                runtime::CompactError,
+            > {
+                read_cell(context)
+            }
+        }
+    }
     /// Groups the contract's exported circuits for Rust consumers.
     pub struct Contract<W> {
         #[allow(dead_code)]
         witnesses: W,
+        pub recording: recorded::Contract,
     }
     impl<W> From<W> for Contract<W> {
         fn from(witnesses: W) -> Self {
-            Self { witnesses }
+            Self {
+                witnesses,
+                recording: recorded::Contract,
+            }
         }
     }
     impl Default for Contract<()> {
         fn default() -> Self {
-            Self { witnesses: () }
+            Self {
+                witnesses: (),
+                recording: recorded::Contract,
+            }
         }
     }
     impl<W> Contract<W> {
@@ -198,6 +313,12 @@ pub mod ledger_contract {
         ) -> Result<runtime::context::CircuitResult<Private, runtime::Field>, runtime::CompactError>
         {
             crate::ledger_contract::read_cell(context)
+        }
+        /// Borrow the contract's witnesses for a replayable circuit call.
+        pub fn recording(&self) -> recorded::BorrowedContract<'_, W> {
+            recorded::BorrowedContract {
+                witnesses: &self.witnesses,
+            }
         }
     }
 }

@@ -32,6 +32,7 @@ SOURCE = ROOT / "examples/rust_backend/counter.compact"
 PURE_SOURCE = ROOT / "examples/rust_backend/field_add.compact"
 CELL_SOURCE = ROOT / "examples/rust_backend/cell_boolean.compact"
 CELL_READ_SOURCE = ROOT / "examples/rust_backend/cell_read.compact"
+WITNESS_CELL_SOURCE = ROOT / "examples/rust_backend/witness_cell_write.compact"
 
 
 def run(*arguments: str, cwd: Path = ROOT) -> None:
@@ -260,9 +261,16 @@ def main() -> None:
                 assert (cell_read_proof / "keys" / f"read_flag.{extension}").is_file()
             for extension in ("zkir", "bzkir"):
                 assert (cell_read_proof / "zkir" / f"read_flag.{extension}").is_file()
+            witness_proof = base / "witness-proof"
+            run(compiler, "--target", "rust", str(WITNESS_CELL_SOURCE), str(witness_proof))
+            check_manifest(witness_proof)
+            for extension in ("prover", "verifier"):
+                assert (witness_proof / "keys" / f"write_twice.{extension}").is_file()
+            for extension in ("zkir", "bzkir"):
+                assert (witness_proof / "zkir" / f"write_twice.{extension}").is_file()
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
-                str(proof), str(cell_proof), str(cell_read_proof),
+                str(proof), str(cell_proof), str(cell_read_proof), str(witness_proof),
             )
     print("compactc target boundary and manifest: passed")
 

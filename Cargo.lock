@@ -1582,6 +1582,7 @@ dependencies = [
  "compact-rust-cell-boolean-fixture",
  "compact-rust-cell-read-fixture",
  "compact-rust-counter-fixture",
+ "compact-rust-witness-cell-write-fixture",
  "futures-executor",
  "midnight-base-crypto",
  "midnight-circuits",

@@ -573,6 +573,7 @@ fn nested_set_query_in_cell_write_checks_field_and_item_types() {
         },
     ];
     contract.stateful_circuits = vec![StatefulCircuit {
+        internal: false,
         name: "check".into(),
         parameters: vec![],
         actions: vec![StateAction::CellWrite {
@@ -1150,6 +1151,7 @@ fn witness_calls_require_a_declared_witness_and_matching_signature() {
         }],
         circuits: vec![],
         stateful_circuits: vec![StatefulCircuit {
+            internal: false,
             name: "read_secret".into(),
             parameters: vec![Parameter {
                 name: "flag".into(),
@@ -1205,6 +1207,7 @@ fn state_action_must_reference_the_declared_ledger_field_and_index() {
         }],
         circuits: vec![],
         stateful_circuits: vec![StatefulCircuit {
+            internal: false,
             name: "increment".into(),
             parameters: vec![],
             result: Type::Unit,
@@ -1276,6 +1279,7 @@ fn stateful_parameters_are_checked_before_cell_writes() {
         }],
         circuits: vec![],
         stateful_circuits: vec![StatefulCircuit {
+            internal: false,
             name: "set_flag".into(),
             parameters: vec![Parameter {
                 name: "value".into(),
@@ -1328,6 +1332,7 @@ fn counter_parameter_requires_uint16_and_a_known_name() {
         }],
         circuits: vec![],
         stateful_circuits: vec![StatefulCircuit {
+            internal: false,
             name: "increment_by".into(),
             parameters: vec![Parameter {
                 name: "amount".into(),
@@ -1389,6 +1394,7 @@ fn ledger_read_return_must_match_the_declared_cell() {
         }],
         circuits: vec![],
         stateful_circuits: vec![StatefulCircuit {
+            internal: false,
             name: "read_flag".into(),
             parameters: vec![],
             actions: vec![],
@@ -1435,6 +1441,7 @@ fn counter_read_returns_uint64() {
         }],
         circuits: vec![],
         stateful_circuits: vec![StatefulCircuit {
+            internal: false,
             name: "read_round".into(),
             parameters: vec![],
             actions: vec![],
@@ -1475,6 +1482,7 @@ fn set_actions_require_the_declared_element_type() {
         }],
         circuits: vec![],
         stateful_circuits: vec![StatefulCircuit {
+            internal: false,
             name: "add".into(),
             parameters: vec![Parameter {
                 name: "value".into(),
@@ -1543,6 +1551,7 @@ fn map_insert_and_lookup_require_key_and_value_types() {
         }],
         circuits: vec![],
         stateful_circuits: vec![StatefulCircuit {
+            internal: false,
             name: "put".into(),
             parameters: vec![
                 Parameter {
@@ -1655,6 +1664,7 @@ fn list_push_front_and_length_validate_declared_types() {
         }],
         circuits: vec![],
         stateful_circuits: vec![StatefulCircuit {
+            internal: false,
             name: "prepend".into(),
             parameters: vec![Parameter {
                 name: "value".into(),
@@ -1784,6 +1794,7 @@ fn stateful_call_checks_target_and_arguments() {
         circuits: vec![],
         stateful_circuits: vec![
             StatefulCircuit {
+                internal: false,
                 name: "target".into(),
                 parameters: vec![Parameter {
                     name: "value".into(),
@@ -1794,6 +1805,7 @@ fn stateful_call_checks_target_and_arguments() {
                 return_value: StateReturn::Unit,
             },
             StatefulCircuit {
+                internal: false,
                 name: "caller".into(),
                 parameters: vec![Parameter {
                     name: "seed".into(),
@@ -1846,6 +1858,7 @@ fn pure_call_action_checks_arguments_and_discards_result() {
         },
     );
     contract.stateful_circuits = vec![StatefulCircuit {
+        internal: false,
         name: "caller".into(),
         parameters: vec![Parameter {
             name: "seed".into(),

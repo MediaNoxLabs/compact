@@ -1,0 +1,90 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//  	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+//
+// Inline-call type-scope fixture.
+//
+// `inline-circuit-call` renders a NON-exported impure helper's body in its
+// caller's body, but the helper has its own formal scope. Before the fix the
+// helper's var-refs still resolved against the caller's
+// `current-formal-arg-types` / `current-value-types`, so a helper formal whose
+// name collided with a caller binding of a different type was rendered as the
+// caller's shape. Two failure modes followed:
+//
+//   - `checkScalarScope`: the helper's `v: Field` collided with the caller's
+//     `v: Vector<2, Field>`, so the scalar actual was flattened as a vector
+//     (`x[0]`) — Rust E0608, `compactc` exited 0 but `cargo build` failed.
+//   - `checkAggScope`: the helper's `w: Vector<4, Field>` collided with the
+//     caller's shorter `w: Vector<2, Field>`, so only two of the four leaves
+//     were hashed — code that COMPILES but silently computes the wrong hash.
+//
+//   - `checkNoCollisionScope`: even with no caller binding of the helper's
+//     formal name, `expr-value-type` returned #f and the whole `[Fr; 2]` was
+//     wrapped in `AlignedValue::from` (no `From` impl) — also non-compiling.
+//
+// The fix establishes the helper's own formal type scope for the inlined
+// render. `setHash` seeds the `hashCell` each check compares against, so the
+// executing test pins the actual hash (not just that the crate compiles).
+//
+// `codegen_regression` locks the generated text; `inline_type_scope_fixture.rs`
+// is the semantic gate that would catch a compiling-but-wrong flatten.
+
+import CompactStandardLibrary;
+
+export ledger fieldVec: Vector<2, Field>;
+export ledger hashCell: Bytes<32>;
+
+// Scalar helper formal colliding with the caller's `Vector<2, Field>` `v`.
+// Reads `hashCell` so it is impure and therefore inlined into the caller.
+circuit scalarHelper(v: Field): Boolean {
+  return persistentHash<Field>(v) == hashCell;
+}
+
+// Aggregate helper formal colliding with the caller's SHORTER `Vector<2,
+// Field>` `w`: all four leaves must be hashed, not two.
+circuit aggHelper(w: Vector<4, Field>): Boolean {
+  return persistentHash<Vector<4, Field>>(w) == hashCell;
+}
+
+// Aggregate helper formal with NO caller binding of that name.
+circuit noCollisionHelper(w: Vector<2, Field>): Boolean {
+  return persistentHash<Vector<2, Field>>(w) == hashCell;
+}
+
+// Seeds `hashCell` so the checks below can compare their helper's hash against
+// the expected value of the argument they are invoked with.
+export circuit setHash(h: Bytes<32>): [] {
+  hashCell = disclose(h);
+}
+
+export circuit checkScalarScope(v: Vector<2, Field>, x: Field): [] {
+  assert(scalarHelper(x), "scalar helper formal took the caller's vector type");
+  fieldVec = disclose(v);
+}
+
+export circuit checkAggScope(w: Vector<2, Field>, z: Vector<4, Field>): [] {
+  assert(aggHelper(z), "aggregate helper formal took the caller's shorter vector type");
+  fieldVec = disclose(w);
+}
+
+export circuit checkNoCollisionScope(v: Vector<2, Field>): [] {
+  assert(noCollisionHelper(v), "aggregate helper formal was not recovered");
+  fieldVec = disclose(v);
+}
+
+constructor() {
+  fieldVec = [0, 0];
+  hashCell = persistentHash<Vector<2, Field>>([0, 0]);
+}

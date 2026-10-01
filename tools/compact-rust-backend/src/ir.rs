@@ -136,6 +136,8 @@ pub enum LedgerFieldKind {
 #[serde(deny_unknown_fields)]
 pub struct StatefulCircuit {
     pub name: String,
+    #[serde(default)]
+    pub internal: bool,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub parameters: Vec<Parameter>,
     pub actions: Vec<StateAction>,
@@ -416,6 +418,10 @@ pub enum Expr {
         field: String,
         index: u8,
         value: Box<Expr>,
+    },
+    CellRead {
+        field: String,
+        index: u8,
     },
     SetIsEmpty {
         field: String,

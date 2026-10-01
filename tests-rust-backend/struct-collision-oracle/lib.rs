@@ -157,8 +157,9 @@ pub mod ledger_contract {
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
+        let __compact_call_argument_0 = __compact_param_0;
         let __compact_action_local_0: crate::types::RecCompact1 =
-            crate::pure_circuits::makeAlpha(__compact_param_0)?;
+            crate::pure_circuits::makeAlpha(__compact_call_argument_0)?;
         let __compact_action_local_1: runtime::Field =
             (__compact_action_local_0.clone()).alpha.clone();
         let step = context.write_cell(0, __compact_action_local_1)?;
@@ -178,8 +179,9 @@ pub mod ledger_contract {
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
+        let __compact_call_argument_0 = __compact_param_0;
         let __compact_action_local_0: crate::types::Rec =
-            crate::pure_circuits::makeBeta(__compact_param_0)?;
+            crate::pure_circuits::makeBeta(__compact_call_argument_0)?;
         let __compact_action_local_1: runtime::Field =
             (__compact_action_local_0.clone()).beta.clone();
         let step = context.write_cell(1, __compact_action_local_1)?;

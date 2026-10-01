@@ -124,7 +124,9 @@ impl fmt::Display for RenderError {
             Self::ExpectedUnsigned(actual) => {
                 write!(f, "expression has type {actual:?}, expected Compact Uint")
             }
-            Self::EffectfulExpression => write!(f, "witness call requires stateful evaluation"),
+            Self::EffectfulExpression => {
+                write!(f, "stateful expression requires stateful evaluation")
+            }
         }
     }
 }
@@ -382,7 +384,7 @@ fn collect_expression_types(
         | Expr::BytesLiteral { .. }
         | Expr::UnsignedLiteral { .. }
         | Expr::Parameter { .. } => {}
-        Expr::SetIsEmpty { .. } | Expr::MapIsEmpty { .. } => {}
+        Expr::SetIsEmpty { .. } | Expr::MapIsEmpty { .. } | Expr::CellRead { .. } => {}
     }
     Ok(())
 }
@@ -1045,7 +1047,8 @@ fn expression_with_calls(
         Expr::WitnessCall { .. }
         | Expr::SetMember { .. }
         | Expr::SetIsEmpty { .. }
-        | Expr::MapIsEmpty { .. } => Err(RenderError::EffectfulExpression),
+        | Expr::MapIsEmpty { .. }
+        | Expr::CellRead { .. } => Err(RenderError::EffectfulExpression),
         Expr::FieldCast { value } => {
             let (value, actual) = expression_with_calls(value, parameters, circuits)?;
             if !matches!(actual, Type::Unsigned { .. }) {

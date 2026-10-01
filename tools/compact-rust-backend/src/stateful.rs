@@ -16,10 +16,35 @@ fn render_state_expression(
     statements: &mut Vec<syn::Stmt>,
     next_temp: &mut usize,
     circuits: &HashMap<&str, &PureCircuit>,
+    stateful_circuits: &HashMap<&str, &StatefulCircuit>,
     ledger_fields: &HashMap<&str, &LedgerField>,
     query_effect: &mut bool,
 ) -> Result<(syn::Expr, Type, bool), RenderError> {
     match value {
+        Expr::CellRead { field, index } => {
+            let declaration = ledger_fields
+                .get(field.as_str())
+                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+            if declaration.index != *index {
+                return Err(RenderError::InvalidLedgerIndex(*index));
+            }
+            let LedgerFieldKind::Cell { ty } = &declaration.declaration else {
+                return Err(RenderError::UnknownLedgerField(field.clone()));
+            };
+            let value_ty = rust_type(ty)?;
+            let step = syn::Ident::new(
+                &format!("__compact_query_{}", *next_temp),
+                Span::call_site(),
+            );
+            *next_temp += 1;
+            let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+            statements
+                .push(syn::parse_quote!(let #step = context.read_cell::<#value_ty>(#index)?;));
+            statements.push(syn::parse_quote!(context = #step.context;));
+            statements.push(syn::parse_quote!(total_cost += #step.gas_cost;));
+            *query_effect = true;
+            Ok((syn::parse_quote!(#step.result), ty.clone(), false))
+        }
         Expr::SetMember {
             field,
             index,
@@ -41,6 +66,7 @@ fn render_state_expression(
                 statements,
                 next_temp,
                 circuits,
+                stateful_circuits,
                 ledger_fields,
                 query_effect,
             )?;
@@ -97,6 +123,79 @@ fn render_state_expression(
             *query_effect = true;
             Ok((syn::parse_quote!(#step.result), Type::Boolean, false))
         }
+        Expr::Call { name, arguments } => {
+            let (formal_parameters, result, stateful) =
+                if let Some(callee) = stateful_circuits.get(name.as_str()) {
+                    if !witnesses.is_empty() || callee.actions.iter().any(action_contains_call) {
+                        return Err(RenderError::UnsupportedStatefulCall(name.clone()));
+                    }
+                    (&callee.parameters, &callee.result, true)
+                } else {
+                    let callee = circuits
+                        .get(name.as_str())
+                        .ok_or_else(|| RenderError::UnknownCircuit(name.clone()))?;
+                    (&callee.parameters, &callee.result, false)
+                };
+            if arguments.len() != formal_parameters.len() {
+                return Err(RenderError::ArgumentCount {
+                    circuit: name.clone(),
+                    expected: formal_parameters.len(),
+                    actual: arguments.len(),
+                });
+            }
+            let mut rendered_arguments = Vec::<syn::Expr>::with_capacity(arguments.len());
+            let mut witness_effect = false;
+            for (argument, parameter) in arguments.iter().zip(formal_parameters) {
+                let (rendered, actual, effect) = render_state_expression(
+                    argument,
+                    parameters,
+                    witnesses,
+                    statements,
+                    next_temp,
+                    circuits,
+                    stateful_circuits,
+                    ledger_fields,
+                    query_effect,
+                )?;
+                if actual != parameter.ty {
+                    return Err(RenderError::TypeMismatch {
+                        expected: parameter.ty.clone(),
+                        actual,
+                    });
+                }
+                let argument_name = syn::Ident::new(
+                    &format!("__compact_call_argument_{}", *next_temp),
+                    Span::call_site(),
+                );
+                *next_temp += 1;
+                statements.push(syn::parse_quote!(let #argument_name = #rendered;));
+                rendered_arguments.push(syn::parse_quote!(#argument_name));
+                witness_effect |= effect;
+            }
+            let name = ident(name)?;
+            if stateful {
+                let step =
+                    syn::Ident::new(&format!("__compact_call_{}", *next_temp), Span::call_site());
+                *next_temp += 1;
+                statements.push(
+                    syn::parse_quote!(let #step = #name(context, #(#rendered_arguments),*)?;),
+                );
+                statements.push(syn::parse_quote!(context = #step.context;));
+                statements.push(syn::parse_quote!(total_cost += #step.gas_cost;));
+                *query_effect = true;
+                Ok((
+                    syn::parse_quote!(#step.result),
+                    result.clone(),
+                    witness_effect,
+                ))
+            } else {
+                Ok((
+                    syn::parse_quote!(crate::pure_circuits::#name(#(#rendered_arguments),*)?),
+                    result.clone(),
+                    witness_effect,
+                ))
+            }
+        }
         Expr::WitnessCall { name, arguments } => {
             let declaration = witnesses
                 .get(name.as_str())
@@ -117,6 +216,7 @@ fn render_state_expression(
                     statements,
                     next_temp,
                     circuits,
+                    stateful_circuits,
                     ledger_fields,
                     query_effect,
                 )?;
@@ -178,6 +278,7 @@ fn render_state_expression(
                 statements,
                 next_temp,
                 circuits,
+                stateful_circuits,
                 ledger_fields,
                 query_effect,
             )?;
@@ -268,6 +369,7 @@ fn render_state_expression(
                 statements,
                 next_temp,
                 circuits,
+                stateful_circuits,
                 ledger_fields,
                 query_effect,
             )?;
@@ -284,6 +386,7 @@ fn render_state_expression(
                 statements,
                 next_temp,
                 circuits,
+                stateful_circuits,
                 ledger_fields,
                 query_effect,
             )?;
@@ -317,6 +420,7 @@ fn render_state_expression(
                 statements,
                 next_temp,
                 circuits,
+                stateful_circuits,
                 ledger_fields,
                 query_effect,
             )?;
@@ -345,6 +449,7 @@ fn render_state_expression(
                 statements,
                 next_temp,
                 circuits,
+                stateful_circuits,
                 ledger_fields,
                 query_effect,
             )?;
@@ -372,6 +477,7 @@ fn render_state_expression(
                 statements,
                 next_temp,
                 circuits,
+                stateful_circuits,
                 ledger_fields,
                 query_effect,
             )?;
@@ -409,6 +515,7 @@ fn render_state_expression(
                     statements,
                     next_temp,
                     circuits,
+                    stateful_circuits,
                     ledger_fields,
                     query_effect,
                 )?;
@@ -440,6 +547,7 @@ fn render_state_expression(
                 statements,
                 next_temp,
                 circuits,
+                stateful_circuits,
                 ledger_fields,
                 query_effect,
             )?;
@@ -457,6 +565,7 @@ fn render_state_expression(
                 &mut then_statements,
                 next_temp,
                 circuits,
+                stateful_circuits,
                 ledger_fields,
                 query_effect,
             )?;
@@ -468,6 +577,7 @@ fn render_state_expression(
                 &mut else_statements,
                 next_temp,
                 circuits,
+                stateful_circuits,
                 ledger_fields,
                 query_effect,
             )?;
@@ -501,6 +611,7 @@ fn render_state_expression(
                     statements,
                     next_temp,
                     circuits,
+                    stateful_circuits,
                     ledger_fields,
                     query_effect,
                 )?;
@@ -527,6 +638,7 @@ fn render_state_expression(
                 statements,
                 next_temp,
                 circuits,
+                stateful_circuits,
                 ledger_fields,
                 query_effect,
             )?;
@@ -540,6 +652,7 @@ fn render_state_expression(
                 statements,
                 next_temp,
                 circuits,
+                stateful_circuits,
                 ledger_fields,
                 query_effect,
             )?;
@@ -566,6 +679,7 @@ fn render_state_expression(
                 statements,
                 next_temp,
                 circuits,
+                stateful_circuits,
                 ledger_fields,
                 query_effect,
             )?;
@@ -605,6 +719,7 @@ fn render_state_expression(
                 statements,
                 next_temp,
                 circuits,
+                stateful_circuits,
                 ledger_fields,
                 query_effect,
             )?;
@@ -627,6 +742,7 @@ fn render_state_expression(
                 statements,
                 next_temp,
                 circuits,
+                stateful_circuits,
                 ledger_fields,
                 query_effect,
             )?;
@@ -667,6 +783,7 @@ fn render_state_expression(
                 statements,
                 next_temp,
                 circuits,
+                stateful_circuits,
                 ledger_fields,
                 query_effect,
             )?;
@@ -689,6 +806,7 @@ fn render_state_expression(
                 statements,
                 next_temp,
                 circuits,
+                stateful_circuits,
                 ledger_fields,
                 query_effect,
             )?;
@@ -720,6 +838,7 @@ fn render_state_expression(
                 statements,
                 next_temp,
                 circuits,
+                stateful_circuits,
                 ledger_fields,
                 query_effect,
             )?;
@@ -736,6 +855,7 @@ fn render_state_expression(
                 statements,
                 next_temp,
                 circuits,
+                stateful_circuits,
                 ledger_fields,
                 query_effect,
             )?;
@@ -764,6 +884,7 @@ fn render_state_expression(
                 statements,
                 next_temp,
                 circuits,
+                stateful_circuits,
                 ledger_fields,
                 query_effect,
             )?;
@@ -783,6 +904,7 @@ fn render_state_expression(
                 statements,
                 next_temp,
                 circuits,
+                stateful_circuits,
                 ledger_fields,
                 query_effect,
             )?;
@@ -861,6 +983,7 @@ pub(crate) fn render_stateful_circuit(
                     &mut binding_statements,
                     &mut next_temp,
                     circuits,
+                    stateful_circuits,
                     ledger_fields,
                     &mut query_effect,
                 )?;
@@ -950,6 +1073,7 @@ pub(crate) fn render_stateful_circuit(
                     &mut effect_statements,
                     &mut next_temp,
                     circuits,
+                    stateful_circuits,
                     ledger_fields,
                     &mut query_effect,
                 )?;
@@ -1071,6 +1195,7 @@ pub(crate) fn render_stateful_circuit(
                     &mut value_statements,
                     &mut next_temp,
                     circuits,
+                    stateful_circuits,
                     ledger_fields,
                     &mut query_effect,
                 )?;
@@ -1358,6 +1483,7 @@ pub(crate) fn render_stateful_circuit(
                 &mut effect_statements,
                 &mut next_temp,
                 circuits,
+                stateful_circuits,
                 ledger_fields,
                 &mut query_effect,
             )?;
@@ -1709,9 +1835,14 @@ pub(crate) fn render_stateful_circuit(
     } else {
         syn::parse_quote!(let mut total_cost = runtime::context::RunningCost::default();)
     };
+    let visibility: syn::Visibility = if circuit.internal {
+        syn::parse_quote!(pub(crate))
+    } else {
+        syn::parse_quote!(pub)
+    };
     let item: syn::Item = if uses_witness {
         syn::parse_quote! {
-            pub fn #name<Private, W: Witnesses<Private>>(
+            #visibility fn #name<Private, W: Witnesses<Private>>(
                 context: runtime::context::CircuitContext<Private>,
                 witnesses: &W,
                 #(#args),*
@@ -1730,7 +1861,7 @@ pub(crate) fn render_stateful_circuit(
         }
     } else {
         syn::parse_quote! {
-            pub fn #name<Private>(
+            #visibility fn #name<Private>(
                 context: runtime::context::CircuitContext<Private>,
                 #(#args),*
             ) -> Result<runtime::context::CircuitResult<Private, #result_ty>, runtime::CompactError> {

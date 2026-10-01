@@ -909,6 +909,10 @@
            (nanopass-case (Lnodisclose ADT-Op) adt-op
              [(,ledger-op ,op-class (,adt-name (,adt-formal* ,adt-arg*) ...) ((,var-name* ,type*) ...) ,type ,vm-code)
               (cond
+                [(and (eq? adt-name '__compact_Cell) (eq? ledger-op 'read) (null? expr*))
+                 (object (cons "kind" "cell_read")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*)))]
                 [(and (eq? adt-name 'Set) (eq? ledger-op 'member) (= (length expr*) 1))
                  (object (cons "kind" "set_member")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
@@ -1176,27 +1180,30 @@
           [(circuit ,src ,function-name (,arg* ...) ,type ,expr)
            (if (id-pure? function-name)
                circuits
-               (let ([names (exported-names function-name export-alist)])
-                 (if (null? names)
-                     circuits
-                     (begin
-                       (append
-                         (map (lambda (name)
-                                (object (cons "name" name)
-                                        (cons "parameters" (list->vector (map (lambda (arg) (argument-ir arg src)) arg*)))
-                                        (cons "result" (type-ir type src))
-                                        (cons "return_value" (stateful-return-ir expr src witness-ids))
-                                        (cons "actions"
-                                              (stateful-body-ir expr src
-                                                (map (lambda (arg)
-                                                       (nanopass-case (Lnodisclose Argument) arg
-                                                         [(,var-name ,type)
-                                                          (cons (id-sym var-name)
-                                                                (object (cons "kind" "parameter")
-                                                                        (cons "name" (symbol->string (id-sym var-name)))))]))
-                                                     arg*) witness-ids))))
-                              names)
-                         circuits)))))]
+               (let* ([names (exported-names function-name export-alist)]
+                      [internal-name (symbol->string (id-sym function-name))]
+                      [all-names (if (member internal-name names)
+                                     names
+                                     (append names (list internal-name)))])
+                 (append
+                   (map (lambda (name)
+                          (append
+                            (object (cons "name" name)
+                                    (cons "parameters" (list->vector (map (lambda (arg) (argument-ir arg src)) arg*)))
+                                    (cons "result" (type-ir type src))
+                                    (cons "return_value" (stateful-return-ir expr src witness-ids))
+                                    (cons "actions"
+                                          (stateful-body-ir expr src
+                                            (map (lambda (arg)
+                                                   (nanopass-case (Lnodisclose Argument) arg
+                                                     [(,var-name ,type)
+                                                      (cons (id-sym var-name)
+                                                            (object (cons "kind" "parameter")
+                                                                    (cons "name" (symbol->string (id-sym var-name)))))]))
+                                                 arg*) witness-ids)))
+                            (if (member name names) '() (list (cons "internal" #t)))))
+                        all-names)
+                   circuits)))]
           [else circuits]))
 
       (define (empty-constructor-expression? expr)

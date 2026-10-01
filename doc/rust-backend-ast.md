@@ -27,7 +27,7 @@ local bindings, pure circuit calls, Field addition/subtraction/multiplication,
 checked unsigned addition, subtraction, and multiplication, and the
 `transientHash`, `transientCommit`, `persistentHash`, `persistentCommit`, `keccak256`,
 `degradeToTransient`, `upgradeFromTransient`, `hashToCurve`, Jubjub
-coordinate natives, point addition/negation/multiplication, and native-to-Jubjub
+coordinate natives, checked point construction, point addition/negation/multiplication, and native-to-Jubjub
 scalar reduction. The fixtures
 in `examples/rust_backend/` run from Compact source through the Scheme
 compiler, JSON bridge, `syn` renderer, native runtime, and executing Rust
@@ -82,6 +82,13 @@ multiplication, and scalar reduction with the generated TypeScript and ledger
 WASM runtime. `ecMul` and `ecMulGenerator` require a canonical embedded scalar
 in Rust, matching WASM rejection at the native Field maximum. The separate
 `jubjubScalarFromNative` operation reduces that value before multiplication.
+`constructJubjubPoint` checks coordinates with the midnight-zk curve decoder
+before using the pinned ledger point constructor. This prevents an upstream
+panic for malformed points. Valid and identity points, a nested Y accessor,
+and two witnessed coordinates match generated TypeScript. The canonical
+identity is `(0, 1)` in FAB, field, binary, and coordinate representations.
+The TypeScript pure helper can return unchecked coordinate pairs; Rust rejects
+those because its point type represents a valid ledger point.
 
 The runtime also exposes ledger-owned `ChargedState`, `QueryContext`, and
 Zswap state through constructor and circuit context envelopes. Its FAB tests
@@ -214,6 +221,7 @@ cargo test -p compact-rust-backend -p midnight-compact-runtime \
   -p compact-rust-keccak-fixture \
   -p compact-rust-jubjub-hash-fixture \
   -p compact-rust-jubjub-arithmetic-fixture \
+  -p compact-rust-jubjub-construct-fixture \
   -p compact-rust-jubjub-cell-fixture \
   -p compact-rust-witness-jubjub-fixture \
   -p compact-rust-uint-arithmetic-fixture \

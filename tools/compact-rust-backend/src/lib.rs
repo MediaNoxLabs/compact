@@ -279,6 +279,10 @@ fn collect_expression_types(
             collect_expression_types(point, structs, enums)?;
             collect_expression_types(scalar, structs, enums)?;
         }
+        Expr::ConstructJubjubPoint { x, y } => {
+            collect_expression_types(x, structs, enums)?;
+            collect_expression_types(y, structs, enums)?;
+        }
         Expr::TransientCommit { value, opening } | Expr::PersistentCommit { value, opening } => {
             collect_expression_types(value, structs, enums)?;
             collect_expression_types(opening, structs, enums)?;
@@ -606,6 +610,22 @@ fn expression_with_calls(
             }
             Ok((
                 syn::parse_quote!(runtime::ec_add(#left, #right)),
+                Type::JubjubPoint,
+            ))
+        }
+        Expr::ConstructJubjubPoint { x, y } => {
+            let (x, x_ty) = expression_with_calls(x, parameters, circuits)?;
+            let (y, y_ty) = expression_with_calls(y, parameters, circuits)?;
+            for actual in [x_ty, y_ty] {
+                if actual != Type::Field {
+                    return Err(RenderError::TypeMismatch {
+                        expected: Type::Field,
+                        actual,
+                    });
+                }
+            }
+            Ok((
+                syn::parse_quote!(runtime::construct_jubjub_point(#x, #y)?),
                 Type::JubjubPoint,
             ))
         }

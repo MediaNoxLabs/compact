@@ -343,6 +343,10 @@ pub enum Expr {
         left: Box<Expr>,
         right: Box<Expr>,
     },
+    ConstructJubjubPoint {
+        x: Box<Expr>,
+        y: Box<Expr>,
+    },
     EcNeg {
         value: Box<Expr>,
     },

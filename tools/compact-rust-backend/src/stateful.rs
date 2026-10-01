@@ -213,16 +213,22 @@ fn render_state_expression(
                 effect,
             ))
         }
-        Expr::EcAdd { left, right }
+        Expr::ConstructJubjubPoint { x: left, y: right }
+        | Expr::EcAdd { left, right }
         | Expr::EcMul {
             point: left,
             scalar: right,
         } => {
             let (left, actual, left_effect) =
                 render_state_expression(left, parameters, witnesses, statements, next_temp)?;
-            if actual != Type::JubjubPoint {
+            let expected_left = if matches!(value, Expr::ConstructJubjubPoint { .. }) {
+                Type::Field
+            } else {
+                Type::JubjubPoint
+            };
+            if actual != expected_left {
                 return Err(RenderError::TypeMismatch {
-                    expected: Type::JubjubPoint,
+                    expected: expected_left,
                     actual,
                 });
             }
@@ -235,6 +241,11 @@ fn render_state_expression(
             let (right, actual, right_effect) =
                 render_state_expression(right, parameters, witnesses, statements, next_temp)?;
             let (expected, operation, fallible): (Type, syn::Path, bool) = match value {
+                Expr::ConstructJubjubPoint { .. } => (
+                    Type::Field,
+                    syn::parse_quote!(runtime::construct_jubjub_point),
+                    true,
+                ),
                 Expr::EcAdd { .. } => {
                     (Type::JubjubPoint, syn::parse_quote!(runtime::ec_add), false)
                 }

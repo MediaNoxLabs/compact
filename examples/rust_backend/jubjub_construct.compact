@@ -1,0 +1,15 @@
+import CompactStandardLibrary;
+
+witness echo(value: Field): Field;
+
+export circuit construct_point(x: Field, y: Field): JubjubPoint {
+  return constructJubjubPoint(disclose(x), disclose(y));
+}
+
+export circuit construct_y(x: Field, y: Field): Field {
+  return jubjubPointY(constructJubjubPoint(disclose(x), disclose(y)));
+}
+
+export circuit construct_echo(x: Field, y: Field): JubjubPoint {
+  return constructJubjubPoint(disclose(echo(x)), disclose(echo(y)));
+}

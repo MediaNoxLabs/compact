@@ -48,7 +48,7 @@ impl From<JubjubPoint> for Value {
     }
 }
 
-fn checked_jubjub_coordinates(x: Fr, y: Fr) -> Option<EmbeddedGroupAffine> {
+pub(crate) fn checked_jubjub_coordinates(x: Fr, y: Fr) -> Option<EmbeddedGroupAffine> {
     if x == Fr::from(0_u64) && y == Fr::from(0_u64) {
         return Some(EmbeddedGroupAffine::identity());
     }
@@ -83,7 +83,7 @@ impl FieldRepr for JubjubPoint {
     fn field_repr<W: MemWrite<Fr>>(&self, writer: &mut W) {
         writer.write(&[
             self.x().unwrap_or_else(|| Fr::from(0_u64)),
-            self.y().unwrap_or_else(|| Fr::from(0_u64)),
+            self.y().unwrap_or_else(|| Fr::from(1_u64)),
         ]);
     }
 
@@ -106,7 +106,7 @@ impl FromFieldRepr for JubjubPoint {
 impl BinaryHashRepr for JubjubPoint {
     fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
         writer.write(&self.x().unwrap_or_else(|| Fr::from(0_u64)).as_le_bytes());
-        writer.write(&self.y().unwrap_or_else(|| Fr::from(0_u64)).as_le_bytes());
+        writer.write(&self.y().unwrap_or_else(|| Fr::from(1_u64)).as_le_bytes());
     }
 
     fn binary_len(&self) -> usize {

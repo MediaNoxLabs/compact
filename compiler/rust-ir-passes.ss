@@ -229,6 +229,12 @@
                 (object (cons "kind" "ec_add")
                         (cons "left" (expression-ir (car expr*) src))
                         (cons "right" (expression-ir (cadr expr*) src)))]
+               [(eq? name 'constructJubjubPoint)
+                (unless (= (length expr*) 2)
+                  (source-errorf src "constructJubjubPoint expects two arguments"))
+                (object (cons "kind" "construct_jubjub_point")
+                        (cons "x" (expression-ir (car expr*) src))
+                        (cons "y" (expression-ir (cadr expr*) src)))]
                [(eq? name 'ecNeg)
                 (unless (= (length expr*) 1)
                   (source-errorf src "ecNeg expects one argument"))
@@ -630,16 +636,20 @@
                                           "persistent_commit"))
                         (cons "value" (stateful-expression-ir (car expr*) src witness-ids))
                         (cons "opening" (stateful-expression-ir (cadr expr*) src witness-ids)))]
-               [(memq name '(ecAdd ecMul))
+               [(memq name '(ecAdd ecMul constructJubjubPoint))
                 (unless (= (length expr*) 2)
                   (source-errorf src "Rust backend curve native expects two arguments"))
+                (if (eq? name 'constructJubjubPoint)
+                    (object (cons "kind" "construct_jubjub_point")
+                            (cons "x" (stateful-expression-ir (car expr*) src witness-ids))
+                            (cons "y" (stateful-expression-ir (cadr expr*) src witness-ids)))
                 (if (eq? name 'ecAdd)
                     (object (cons "kind" "ec_add")
                             (cons "left" (stateful-expression-ir (car expr*) src witness-ids))
                             (cons "right" (stateful-expression-ir (cadr expr*) src witness-ids)))
                     (object (cons "kind" "ec_mul")
                             (cons "point" (stateful-expression-ir (car expr*) src witness-ids))
-                            (cons "scalar" (stateful-expression-ir (cadr expr*) src witness-ids))))]
+                            (cons "scalar" (stateful-expression-ir (cadr expr*) src witness-ids)))))]
                [else (expression-ir value-expr owner-src)]))]
           [(safe-cast ,src ,type ,type^ ,expr)
            (nanopass-case (Lnodisclose Type) type
@@ -727,7 +737,7 @@
                    (memq (id-sym function-name)
                          '(transientHash transientCommit persistentHash persistentCommit keccak256
                            degradeToTransient upgradeFromTransient hashToCurve
-                           jubjubPointX jubjubPointY ecAdd ecNeg ecMul ecMulGenerator
+                           jubjubPointX jubjubPointY ecAdd ecNeg ecMul ecMulGenerator constructJubjubPoint
                            jubjubScalarFromNative)))
                (object (cons "kind" "expression")
                        (cons "value" (stateful-expression-ir return-expr src witness-ids)))

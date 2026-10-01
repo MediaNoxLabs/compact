@@ -1,6 +1,7 @@
 //! Compact native operations backed by the ledger-8 cryptography crates.
 
 use crate::CompactError;
+use crate::primitives::checked_jubjub_coordinates;
 use crate::{BinaryHashRepr, Field, FieldRepr, FixedBytes, JubjubPoint};
 use midnight_base_crypto::fab::{Aligned, AlignedValue, Value};
 use midnight_base_crypto::hash::{self as persistent, HashOutput, PersistentHashWriter};
@@ -66,14 +67,21 @@ pub fn hash_to_curve<T: Aligned + Into<Value>>(value: T) -> JubjubPoint {
     hash::hash_to_curve(&value_repr(value)).into()
 }
 
+/// Construct a curve point after checking the affine coordinates.
+pub fn construct_jubjub_point(x: Field, y: Field) -> Result<JubjubPoint, CompactError> {
+    checked_jubjub_coordinates(x, y)
+        .map(JubjubPoint::from)
+        .ok_or(CompactError::InvalidJubjubPoint)
+}
+
 /// Read the affine X coordinate; the identity has Compact's zero coordinate.
 pub fn jubjub_point_x(point: JubjubPoint) -> Field {
     point.x().unwrap_or_else(|| Field::from(0_u64))
 }
 
-/// Read the affine Y coordinate; the identity has Compact's zero coordinate.
+/// Read the affine Y coordinate; Compact represents the identity as (0, 1).
 pub fn jubjub_point_y(point: JubjubPoint) -> Field {
-    point.y().unwrap_or_else(|| Field::from(0_u64))
+    point.y().unwrap_or_else(|| Field::from(1_u64))
 }
 
 /// Add two ledger embedded-curve points.

@@ -15,6 +15,12 @@ fn jubjub_identity_uses_ledger_fab_and_normalizes_legacy_zero_sentinel() {
         vec![Field::from(0_u64), Field::from(1_u64)]
     );
     assert_eq!(native.field_vec(), default.field_vec());
+    let mut repr = Vec::new();
+    default.field_repr(&mut repr);
+    assert_eq!(repr, default.field_vec());
+    let mut expected_binary = vec![0_u8; 64];
+    expected_binary[32] = 1;
+    assert_eq!(default.binary_vec(), expected_binary);
     assert_eq!(
         JubjubPoint::from_field_repr(&default.field_vec()),
         Some(default)

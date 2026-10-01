@@ -13,9 +13,9 @@ mod primitives;
 
 pub use midnight_compact_runtime_macros::CompactCellValue;
 pub use natives::{
-    degrade_to_transient, ec_add, ec_mul, ec_mul_generator, ec_neg, hash_to_curve, jubjub_point_x,
-    jubjub_point_y, jubjub_scalar_from_native, keccak256, persistent_commit, persistent_hash,
-    transient_commit, transient_hash, upgrade_from_transient,
+    construct_jubjub_point, degrade_to_transient, ec_add, ec_mul, ec_mul_generator, ec_neg,
+    hash_to_curve, jubjub_point_x, jubjub_point_y, jubjub_scalar_from_native, keccak256,
+    persistent_commit, persistent_hash, transient_commit, transient_hash, upgrade_from_transient,
 };
 pub use primitives::{
     BoundedUint, FixedBytes, FixedVector, JubjubPoint, add_unsigned, cast_unsigned,
@@ -52,6 +52,7 @@ pub enum CompactError {
     LedgerQueryRejected(String),
     InvalidUnsignedValue,
     InvalidJubjubScalar,
+    InvalidJubjubPoint,
     UnsignedOutOfRange { value: u128, max: u128 },
     UnsignedOverflow,
     UnsignedUnderflow,
@@ -65,6 +66,7 @@ impl std::fmt::Display for CompactError {
             Self::LedgerQueryRejected(message) => write!(f, "ledger query rejected: {message}"),
             Self::InvalidUnsignedValue => write!(f, "invalid Compact unsigned value"),
             Self::InvalidJubjubScalar => write!(f, "invalid Jubjub scalar"),
+            Self::InvalidJubjubPoint => write!(f, "invalid Jubjub point"),
             Self::UnsignedOutOfRange { value, max } => {
                 write!(f, "unsigned value {value} exceeds Compact maximum {max}")
             }

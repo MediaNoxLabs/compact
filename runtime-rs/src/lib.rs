@@ -12,7 +12,9 @@ mod natives;
 mod opaque;
 mod primitives;
 
-pub use midnight_compact_runtime_macros::CompactCellValue;
+pub use midnight_compact_runtime_macros::{
+    CompactCellValue, CompactMerklePath, CompactMerklePathEntry, CompactMerkleTreeDigest,
+};
 pub use natives::{
     construct_jubjub_point, degrade_to_transient, ec_add, ec_mul, ec_mul_generator, ec_neg,
     hash_to_curve, jubjub_point_x, jubjub_point_y, jubjub_scalar_from_native, keccak256,

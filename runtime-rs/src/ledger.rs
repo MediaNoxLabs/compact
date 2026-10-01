@@ -12,7 +12,7 @@ pub use midnight_storage::DefaultDB;
 pub use midnight_storage::db::DB;
 pub use midnight_storage::storage::Array as LedgerArray;
 pub use midnight_storage::storage::HashMap as LedgerHashMap;
-pub use midnight_transient_crypto::merkle_tree::MerkleTreeDigest;
+pub use midnight_transient_crypto::merkle_tree::{MerklePath, MerklePathEntry, MerkleTreeDigest};
 
 use crate::{BoundedUint, CompactError, Field, FixedBytes, FixedVector, JubjubPoint};
 use midnight_base_crypto::cost_model::RunningCost;
@@ -25,7 +25,7 @@ use midnight_serialize::Serializable;
 use midnight_storage::arena::Sp;
 use midnight_transient_crypto::fab::ValueReprAlignedValue;
 use midnight_transient_crypto::hash::HashOutput;
-use midnight_transient_crypto::merkle_tree::{MerklePath, MerkleTree, leaf_hash};
+use midnight_transient_crypto::merkle_tree::{MerkleTree, leaf_hash};
 use std::marker::PhantomData;
 
 /// A physical path through Compact's chunked ledger root. A single field

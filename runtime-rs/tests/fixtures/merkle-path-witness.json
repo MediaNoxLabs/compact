@@ -1,0 +1,86 @@
+{
+  "leaf": "7",
+  "path": [
+    {
+      "sibling": "0",
+      "goesLeft": true
+    },
+    {
+      "sibling": "0",
+      "goesLeft": true
+    },
+    {
+      "sibling": "0",
+      "goesLeft": true
+    }
+  ],
+  "privateTranscriptOutputs": [
+    {
+      "valueAtoms": [
+        [
+          7
+        ],
+        [],
+        [
+          1
+        ],
+        [],
+        [
+          1
+        ],
+        [],
+        [
+          1
+        ]
+      ],
+      "alignment": [
+        {
+          "tag": "atom",
+          "value": {
+            "tag": "bytes",
+            "length": 1
+          }
+        },
+        {
+          "tag": "atom",
+          "value": {
+            "tag": "field"
+          }
+        },
+        {
+          "tag": "atom",
+          "value": {
+            "tag": "bytes",
+            "length": 1
+          }
+        },
+        {
+          "tag": "atom",
+          "value": {
+            "tag": "field"
+          }
+        },
+        {
+          "tag": "atom",
+          "value": {
+            "tag": "bytes",
+            "length": 1
+          }
+        },
+        {
+          "tag": "atom",
+          "value": {
+            "tag": "field"
+          }
+        },
+        {
+          "tag": "atom",
+          "value": {
+            "tag": "bytes",
+            "length": 1
+          }
+        }
+      ]
+    }
+  ]
+}

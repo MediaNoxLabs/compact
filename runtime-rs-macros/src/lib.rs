@@ -5,6 +5,32 @@ use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::quote;
 use syn::{Data, DeriveInput, Fields, LitInt, parse_macro_input};
 
+mod merkle;
+
+#[proc_macro_derive(CompactMerkleTreeDigest)]
+pub fn compact_merkle_tree_digest(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    merkle::digest(input)
+        .unwrap_or_else(syn::Error::into_compile_error)
+        .into()
+}
+
+#[proc_macro_derive(CompactMerklePathEntry)]
+pub fn compact_merkle_path_entry(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    merkle::entry(input)
+        .unwrap_or_else(syn::Error::into_compile_error)
+        .into()
+}
+
+#[proc_macro_derive(CompactMerklePath)]
+pub fn compact_merkle_path(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    merkle::path(input)
+        .unwrap_or_else(syn::Error::into_compile_error)
+        .into()
+}
+
 #[proc_macro_derive(CompactCellValue)]
 pub fn compact_cell_value(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);

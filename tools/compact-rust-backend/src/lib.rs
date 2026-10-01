@@ -2424,7 +2424,18 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
 
     let runtime_abi = syn::LitInt::new(&RUNTIME_ABI_VERSION.to_string(), Span::call_site());
     let mut struct_items = Vec::<syn::Item>::new();
+    let has_merkle_path = struct_definitions.contains_key("MerkleTreePath");
     for (name, fields) in &struct_definitions {
+        let conversion = if has_merkle_path {
+            match name.as_str() {
+                "MerkleTreeDigest" => Some("CompactMerkleTreeDigest"),
+                "MerkleTreePathEntry" => Some("CompactMerklePathEntry"),
+                "MerkleTreePath" => Some("CompactMerklePath"),
+                _ => None,
+            }
+        } else {
+            None
+        };
         let name = ident(name)?;
         let fields = fields
             .iter()
@@ -2434,10 +2445,16 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                 Ok(syn::parse_quote!(pub #field_name: #field_ty))
             })
             .collect::<Result<Vec<syn::Field>, RenderError>>()?;
-        struct_items.push(syn::parse_quote! {
+        let mut item: syn::ItemStruct = syn::parse_quote! {
             #[derive(Clone, Debug, Default, PartialEq, Eq, CompactCellValue, BinaryHashRepr, FieldRepr, FromFieldRepr)]
             pub struct #name { #(#fields),* }
-        });
+        };
+        if let Some(conversion) = conversion {
+            let conversion = syn::Ident::new(conversion, Span::call_site());
+            item.attrs
+                .push(syn::parse_quote!(#[derive(runtime::#conversion)]));
+        }
+        struct_items.push(syn::Item::Struct(item));
     }
     for (name, variants) in &enum_definitions {
         let name = ident(name)?;

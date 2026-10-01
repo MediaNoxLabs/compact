@@ -104,9 +104,11 @@ The rejection checker verifies source-located failures for unsupported
 constructs and that no generated Rust library survives a rejected compile.
 The `--proof` target check uses the ledger-8 proof crate to load the emitted
 counter ZKIR and keys, prove the increment statement, verify the proof, and
-reject a changed binding input. Its statement is a fixed test transcript; the
-generated Rust runtime still needs a transaction bridge that records the
-actual circuit transcript for wallet submission.
+reject a changed binding input. It also combines the generated counter
+constructor state with the emitted verifier key and validates an offline
+ledger-8 deployment transaction. The proof statement is a fixed test
+transcript; generated circuit calls still need a recording path that captures
+their actual public and private transcripts for wallet submission.
 
 The fixture suite covers all 37 top-level `*_fixture.compact` contracts from
 the `codegen-rust` oracle branch, alongside smaller source contracts used to

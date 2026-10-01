@@ -13,11 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Prove and verify the emitted counter increment circuit using ledger-8.
+//! Prove emitted counter artifacts and validate an offline ledger-8 deployment.
 //!
 //! The transcript is the fixture's deterministic ZKIR statement. This checks
 //! artifact compatibility, while the generated Rust runtime's transcript-to-
-//! transaction bridge remains a separate integration gate.
+//! transaction bridge remains a separate integration gate. The deployment
+//! combines the generated Rust constructor state with the emitted verifier key.
 
 use std::borrow::Cow;
 use std::env;
@@ -26,15 +27,28 @@ use std::fs::{self, File};
 use std::io::{self, BufReader};
 use std::path::{Path, PathBuf};
 
+use compact_rust_counter_fixture::ledger_contract::initial_state;
 use midnight_base_crypto::data_provider::{FetchMode, MidnightDataProvider, OutputMode};
+use midnight_base_crypto::time::Timestamp;
+use midnight_compact_runtime::context::ConstructorContext;
+use midnight_compact_runtime::ledger::DefaultDB;
+use midnight_ledger::structure::{
+    ContractDeploy, Intent, LedgerState, ProofPreimageMarker, Transaction,
+};
+use midnight_ledger::verify::WellFormedStrictness;
+use midnight_onchain_state::state::{
+    ContractMaintenanceAuthority, ContractOperation, ContractState, EntryPointBuf,
+};
 use midnight_serialize::tagged_deserialize;
+use midnight_storage::storage::HashMap;
+use midnight_transient_crypto::commitment::PedersenRandomness;
 use midnight_transient_crypto::curve::Fr;
 use midnight_transient_crypto::hash::transient_commit;
 use midnight_transient_crypto::proofs::{
     KeyLocation, PARAMS_VERIFIER, ProofPreimage, ProvingKeyMaterial, Resolver, VerifierKey,
 };
 use midnight_zkir::IrSource;
-use rand::SeedableRng;
+use rand::{SeedableRng, rngs::StdRng};
 use rand_chacha::ChaCha20Rng;
 
 struct ArtifactResolver {
@@ -115,9 +129,39 @@ fn prove_counter(root: &Path) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+fn check_counter_deploy(root: &Path) -> Result<(), Box<dyn Error>> {
+    let verifier: VerifierKey = tagged_deserialize(&mut BufReader::new(File::open(
+        root.join("keys/increment.verifier"),
+    )?))?;
+    let initial = initial_state(ConstructorContext::new(()))?;
+    let operations = HashMap::new().insert(
+        EntryPointBuf(b"increment".to_vec()),
+        ContractOperation::new(Some(verifier)),
+    );
+    let contract: ContractState<DefaultDB> = ContractState::new(
+        initial.ledger_state.get_ref().clone(),
+        operations,
+        ContractMaintenanceAuthority::default(),
+    );
+    let mut rng = StdRng::seed_from_u64(0x434f4d50414354);
+    let deploy = ContractDeploy::new(&mut rng, contract);
+    let address = deploy.address();
+    let intent: Intent<(), ProofPreimageMarker, PedersenRandomness, DefaultDB> =
+        Intent::empty(&mut rng, Timestamp::from_secs(0)).add_deploy(deploy);
+    let transaction = Transaction::from_intents("local-test", HashMap::new().insert(1_u16, intent));
+    let ledger = LedgerState::<DefaultDB>::new("local-test");
+    let mut strictness = WellFormedStrictness::default();
+    strictness.enforce_balancing = false;
+    transaction.well_formed(&ledger, strictness, Timestamp::from_secs(0))?;
+    println!("counter deployment validated at address {address:?}");
+    Ok(())
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     let root = env::args_os()
         .nth(1)
         .ok_or("usage: compact-rust-proof-smoke <compiler-output-directory>")?;
-    prove_counter(Path::new(&root))
+    let root = Path::new(&root);
+    prove_counter(root)?;
+    check_counter_deploy(root)
 }

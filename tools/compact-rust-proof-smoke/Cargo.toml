@@ -23,6 +23,11 @@ description = "Ledger-8 proof compatibility gate for Rust Compact output"
 
 [dependencies]
 # Match midnight-ledger ledger-8.0.2's ZKIR and crypto graph.
+compact-rust-counter-fixture = { path = "../../tests-rust-backend/counter" }
+midnight-compact-runtime = { path = "../../runtime-rs" }
+midnight-ledger = "=8.0.2"
+midnight-onchain-state = "=3.0.0"
+midnight-storage = "=2.0.1"
 midnight-zkir = "=2.1.0"
 midnight-serialize = "=1.0.0"
 midnight-transient-crypto = "=2.0.1"

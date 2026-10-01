@@ -1579,12 +1579,17 @@ dependencies = [
 name = "compact-rust-proof-smoke"
 version = "0.1.0"
 dependencies = [
+ "compact-rust-counter-fixture",
  "futures-executor",
  "midnight-base-crypto",
  "midnight-circuits",
+ "midnight-compact-runtime",
  "midnight-curves",
+ "midnight-ledger",
+ "midnight-onchain-state",
  "midnight-proofs",
  "midnight-serialize",
+ "midnight-storage",
  "midnight-storage-core",
  "midnight-transient-crypto",
  "midnight-zk-stdlib",

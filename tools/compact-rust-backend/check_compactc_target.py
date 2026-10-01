@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Exercise the public compactc target boundary and a separate Rust consumer."""
+"""Exercise compactc targets, a separate Rust consumer, proof, and deployment."""
 
 import argparse
 import hashlib

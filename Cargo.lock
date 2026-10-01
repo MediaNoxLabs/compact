@@ -986,6 +986,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-cross-circuit-oracle-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-default-vector-fixture"
 version = "0.1.0"
 dependencies = [
@@ -1028,6 +1040,18 @@ dependencies = [
 
 [[package]]
 name = "compact-rust-field-cast-uint128-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde_json",
+]
+
+[[package]]
+name = "compact-rust-fold-oracle-fixture"
 version = "0.1.0"
 dependencies = [
  "hex",

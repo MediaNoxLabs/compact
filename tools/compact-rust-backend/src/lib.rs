@@ -1026,7 +1026,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
         LedgerFieldKind::List { .. } => Ok(syn::parse_quote!(runtime::ledger::constructor_list())),
         LedgerFieldKind::Map { .. } => Ok(syn::parse_quote!(runtime::ledger::constructor_map())),
         LedgerFieldKind::Cell { ty } => {
-            if !matches!(ty, Type::Boolean | Type::Field | Type::JubjubPoint | Type::Unsigned { .. } | Type::Bytes { .. } | Type::Struct { .. } | Type::Enum { .. }) {
+            if !matches!(ty, Type::Boolean | Type::Field | Type::JubjubPoint | Type::Unsigned { .. } | Type::Bytes { .. } | Type::Struct { .. } | Type::Enum { .. } | Type::Vector { .. } | Type::Tuple { .. } | Type::Unit) {
                 return Err(RenderError::UnsupportedLedgerCellType(ty.clone()));
             }
             let ty = rust_type(ty)?;

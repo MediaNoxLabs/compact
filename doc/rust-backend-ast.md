@@ -166,6 +166,10 @@ The runtime can now construct and decode ledger Cells and Counters, and it
 runs Cell writes plus Counter increments/decrements through the ledger VM.
 The Counter test serializes the full post-increment `ContractState` and matches
 the TypeScript oracle fixture byte for byte.
+Vector and tuple Cells now pass constructor validation because the runtime
+already provides recursive `CellValue` implementations for both. A source
+fixture writes and reads `Vector<3, Field>` and `[Field, Boolean]`; initial
+and post-write full `ContractState` bytes match generated TypeScript.
 Set, Map, and List initial `ContractState` bytes also match the oracle's
 ledger-8 TypeScript fixtures, including operation metadata. The mutation
 sequence test compares full serialized state after Set add/remove/reset, Map
@@ -266,6 +270,7 @@ cargo test -p compact-rust-backend -p midnight-compact-runtime \
   -p compact-rust-equality-fixture \
   -p compact-rust-boolean-logic-fixture \
   -p compact-rust-uint-compare-fixture \
+  -p compact-rust-vector-tuple-cell-fixture \
   -p compact-rust-uint-identity-fixture -p compact-rust-bytes-identity-fixture \
   -p compact-rust-counter-fixture -p compact-rust-cell-boolean-fixture \
   -p compact-rust-struct-identity-fixture -p compact-rust-nested-struct-fixture \

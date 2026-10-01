@@ -767,6 +767,22 @@ fn emits_a_pure_field_circuit_as_parseable_rust() {
 }
 
 #[test]
+fn cell_and_counter_declarations_emit_typed_slots() {
+    let cell: Contract = serde_json::from_str(include_str!("../fixtures/cell_boolean.json"))
+        .expect("Cell fixture parses");
+    let source = render(&cell).unwrap();
+    assert!(source.contains("pub mod ledger_slots"));
+    assert!(source.contains("pub const flag: runtime::slots::CellSlot<bool>"));
+    assert!(source.contains("&[0u8]"));
+
+    let counter: Contract = serde_json::from_str(include_str!("../fixtures/counter.json"))
+        .expect("Counter fixture parses");
+    let source = render(&counter).unwrap();
+    assert!(source.contains("pub const round: runtime::slots::CounterSlot"));
+    assert!(source.contains("&[0u8]"));
+}
+
+#[test]
 fn single_element_tuple_is_a_tuple_in_type_and_expression() {
     let contract = identity(
         Type::Tuple {

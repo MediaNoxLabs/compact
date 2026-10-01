@@ -24,6 +24,11 @@ runtime as a path dependency. A separate Rust
 project can depend on `contract/` by path without copying generated source or
 editing its manifest. Run with `--target ts --target rust` to emit both contract
 languages. `--skip-zk` skips proving keys for a quicker local build.
+For declared Cells and Counters, the generated `ledger_slots` module exposes
+typed constants such as `ledger_slots::flag` and `ledger_slots::round`. Their
+methods run the matching runtime VM operations or add them to a recording
+frame; a Cell write accepts only the declared Rust value type. This first
+descriptor slice covers Cells and Counters, including chunked ledger paths.
 
 For applications that use several generated contracts, pass the same
 `--rust-runtime-root /path/to/compact` for each compilation. The root must
@@ -66,7 +71,7 @@ Compact spelling without warning in consumer builds.
 
 | Boundary | Current contract | Failure behavior |
 |---|---|---|
-| Compact compiler | Toolchain 0.31.120, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
+| Compact compiler | Toolchain 0.31.121, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
 | Rust IR | Schema 6, private to this backend | The renderer rejects any other schema before writing `lib.rs`. |
 | Generated code and Rust runtime | ABI 3 | Generated modules assert the ABI at Rust compile time. |
 | Rust runtime source | Bundled runtime crates or an explicit shared source root | Cargo resolves the matching runtime and its pinned Midnight crates. |

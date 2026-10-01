@@ -384,6 +384,19 @@ pub mod pure_circuits {
         Ok(runtime::persistent_hash((ballot, sk)))
     }
 }
+/// Typed descriptors for Compact Cell and Counter declarations.
+#[allow(non_upper_case_globals)]
+pub mod ledger_slots {
+    use midnight_compact_runtime as runtime;
+    pub const authority: runtime::slots::CellSlot<runtime::FixedBytes<32>> =
+        runtime::slots::CellSlot::new(&[0u8]);
+    pub const state: runtime::slots::CellSlot<crate::types::PublicState> =
+        runtime::slots::CellSlot::new(&[1u8]);
+    pub const topic: runtime::slots::CellSlot<crate::types::Maybe> =
+        runtime::slots::CellSlot::new(&[2u8]);
+    pub const tally_yes: runtime::slots::CounterSlot = runtime::slots::CounterSlot::new(&[3u8]);
+    pub const tally_no: runtime::slots::CounterSlot = runtime::slots::CounterSlot::new(&[4u8]);
+}
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;

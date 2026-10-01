@@ -25,6 +25,46 @@ pub mod pure_circuits {
         Ok(b)
     }
 }
+/// Typed descriptors for Compact Cell and Counter declarations.
+#[allow(non_upper_case_globals)]
+pub mod ledger_slots {
+    use midnight_compact_runtime as runtime;
+    pub const f00: runtime::slots::CellSlot<runtime::BoundedUint<18446744073709551615>> =
+        runtime::slots::CellSlot::new(&[0u8, 0u8]);
+    pub const f01: runtime::slots::CellSlot<runtime::BoundedUint<18446744073709551615>> =
+        runtime::slots::CellSlot::new(&[0u8, 1u8]);
+    pub const f02: runtime::slots::CellSlot<runtime::BoundedUint<18446744073709551615>> =
+        runtime::slots::CellSlot::new(&[0u8, 2u8]);
+    pub const f03: runtime::slots::CellSlot<runtime::BoundedUint<18446744073709551615>> =
+        runtime::slots::CellSlot::new(&[1u8, 0u8]);
+    pub const f04: runtime::slots::CellSlot<runtime::BoundedUint<18446744073709551615>> =
+        runtime::slots::CellSlot::new(&[1u8, 1u8]);
+    pub const f05: runtime::slots::CellSlot<runtime::BoundedUint<18446744073709551615>> =
+        runtime::slots::CellSlot::new(&[1u8, 2u8]);
+    pub const f06: runtime::slots::CellSlot<runtime::BoundedUint<18446744073709551615>> =
+        runtime::slots::CellSlot::new(&[1u8, 3u8]);
+    pub const f07: runtime::slots::CellSlot<runtime::BoundedUint<18446744073709551615>> =
+        runtime::slots::CellSlot::new(&[1u8, 4u8]);
+    pub const f08: runtime::slots::CellSlot<runtime::BoundedUint<18446744073709551615>> =
+        runtime::slots::CellSlot::new(&[1u8, 5u8]);
+    pub const f09: runtime::slots::CellSlot<runtime::BoundedUint<18446744073709551615>> =
+        runtime::slots::CellSlot::new(&[1u8, 6u8]);
+    pub const f10: runtime::slots::CellSlot<runtime::BoundedUint<18446744073709551615>> =
+        runtime::slots::CellSlot::new(&[1u8, 7u8]);
+    pub const f11: runtime::slots::CellSlot<runtime::BoundedUint<18446744073709551615>> =
+        runtime::slots::CellSlot::new(&[1u8, 8u8]);
+    pub const f12: runtime::slots::CellSlot<runtime::BoundedUint<18446744073709551615>> =
+        runtime::slots::CellSlot::new(&[1u8, 9u8]);
+    pub const f13: runtime::slots::CellSlot<runtime::BoundedUint<18446744073709551615>> =
+        runtime::slots::CellSlot::new(&[1u8, 10u8]);
+    pub const f14: runtime::slots::CellSlot<runtime::BoundedUint<18446744073709551615>> =
+        runtime::slots::CellSlot::new(&[1u8, 11u8]);
+    pub const f15: runtime::slots::CellSlot<runtime::BoundedUint<18446744073709551615>> =
+        runtime::slots::CellSlot::new(&[1u8, 12u8]);
+    pub const f16: runtime::slots::CellSlot<runtime::BoundedUint<18446744073709551615>> =
+        runtime::slots::CellSlot::new(&[1u8, 13u8]);
+    pub const active: runtime::slots::CellSlot<bool> = runtime::slots::CellSlot::new(&[1u8, 14u8]);
+}
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;

@@ -39,6 +39,17 @@ pub mod pure_circuits {
         .expect("Compact Uint literal fits its maximum"))
     }
 }
+/// Typed descriptors for Compact Cell and Counter declarations.
+#[allow(non_upper_case_globals)]
+pub mod ledger_slots {
+    use midnight_compact_runtime as runtime;
+    pub const wide: runtime::slots::CellSlot<
+        runtime::WideUint<
+            1329227995784915872903807060280344575u128,
+            340282366920938463463374607431768211455u128,
+        >,
+    > = runtime::slots::CellSlot::new(&[0u8]);
+}
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;

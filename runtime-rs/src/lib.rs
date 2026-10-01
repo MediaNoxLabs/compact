@@ -27,6 +27,7 @@ mod natives;
 mod opaque;
 mod primitives;
 pub mod recording;
+pub mod slots;
 #[cfg(feature = "ledger-transaction")]
 pub mod transaction;
 

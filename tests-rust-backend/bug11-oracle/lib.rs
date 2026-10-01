@@ -22,6 +22,17 @@ pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
     const _: () = assert!(runtime::RUST_RUNTIME_ABI == 3);
 }
+/// Typed descriptors for Compact Cell and Counter declarations.
+#[allow(non_upper_case_globals)]
+pub mod ledger_slots {
+    use midnight_compact_runtime as runtime;
+    pub const tiny: runtime::slots::CellSlot<runtime::BoundedUint<99>> =
+        runtime::slots::CellSlot::new(&[0u8]);
+    pub const medium: runtime::slots::CellSlot<runtime::BoundedUint<69999>> =
+        runtime::slots::CellSlot::new(&[1u8]);
+    pub const wide: runtime::slots::CellSlot<runtime::BoundedUint<4999999999>> =
+        runtime::slots::CellSlot::new(&[2u8]);
+}
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;

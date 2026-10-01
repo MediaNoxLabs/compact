@@ -370,6 +370,38 @@ pub mod pure_circuits {
         })
     }
 }
+/// Typed descriptors for Compact Cell and Counter declarations.
+#[allow(non_upper_case_globals)]
+pub mod ledger_slots {
+    use midnight_compact_runtime as runtime;
+    pub const schemaVersion: runtime::slots::CellSlot<runtime::BoundedUint<4294967295>> =
+        runtime::slots::CellSlot::new(&[0u8, 0u8]);
+    pub const registryId: runtime::slots::CellSlot<crate::types::ContractAddress> =
+        runtime::slots::CellSlot::new(&[0u8, 1u8]);
+    pub const custodian: runtime::slots::CellSlot<crate::types::ContractAddress> =
+        runtime::slots::CellSlot::new(&[0u8, 2u8]);
+    pub const operatorKey: runtime::slots::CellSlot<runtime::JubjubPoint> =
+        runtime::slots::CellSlot::new(&[0u8, 3u8]);
+    pub const auditorKey: runtime::slots::CellSlot<runtime::JubjubPoint> =
+        runtime::slots::CellSlot::new(&[0u8, 4u8]);
+    pub const salt: runtime::slots::CellSlot<runtime::FixedBytes<32>> =
+        runtime::slots::CellSlot::new(&[1u8, 0u8]);
+    pub const label: runtime::slots::CellSlot<runtime::FixedBytes<32>> =
+        runtime::slots::CellSlot::new(&[1u8, 1u8]);
+    pub const createdAt: runtime::slots::CellSlot<runtime::BoundedUint<18446744073709551615>> =
+        runtime::slots::CellSlot::new(&[1u8, 2u8]);
+    pub const updatedAt: runtime::slots::CellSlot<runtime::BoundedUint<18446744073709551615>> =
+        runtime::slots::CellSlot::new(&[1u8, 3u8]);
+    pub const maxAgeSeconds: runtime::slots::CellSlot<runtime::BoundedUint<18446744073709551615>> =
+        runtime::slots::CellSlot::new(&[1u8, 4u8]);
+    pub const recordCount: runtime::slots::CounterSlot =
+        runtime::slots::CounterSlot::new(&[1u8, 5u8]);
+    pub const open: runtime::slots::CellSlot<bool> = runtime::slots::CellSlot::new(&[1u8, 6u8]);
+    pub const frozen: runtime::slots::CellSlot<bool> = runtime::slots::CellSlot::new(&[1u8, 7u8]);
+    pub const revision: runtime::slots::CounterSlot = runtime::slots::CounterSlot::new(&[1u8, 8u8]);
+    pub const writeCount: runtime::slots::CounterSlot =
+        runtime::slots::CounterSlot::new(&[1u8, 9u8]);
+}
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;

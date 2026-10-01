@@ -2742,6 +2742,35 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
         (!recorded_items.is_empty()).then(|| quote!(pub recording: recorded::Contract,));
     let recording_init =
         (!recorded_items.is_empty()).then(|| quote!(recording: recorded::Contract,));
+    let mut slot_items = Vec::<syn::Item>::new();
+    for field in &contract.ledger_fields {
+        let name = ident(&field.id)?;
+        let path = field.physical_path();
+        match &field.declaration {
+            LedgerFieldKind::Cell { ty } => {
+                let ty = rust_type(ty)?;
+                slot_items.push(syn::parse_quote! {
+                    pub const #name: runtime::slots::CellSlot<#ty> =
+                        runtime::slots::CellSlot::new(&[#(#path),*]);
+                });
+            }
+            LedgerFieldKind::Counter => slot_items.push(syn::parse_quote! {
+                pub const #name: runtime::slots::CounterSlot =
+                    runtime::slots::CounterSlot::new(&[#(#path),*]);
+            }),
+            _ => {}
+        }
+    }
+    let slots_module: Option<syn::Item> = (!slot_items.is_empty()).then(|| {
+        syn::parse_quote! {
+            /// Typed descriptors for Compact Cell and Counter declarations.
+            #[allow(non_upper_case_globals)]
+            pub mod ledger_slots {
+                use midnight_compact_runtime as runtime;
+                #(#slot_items)*
+            }
+        }
+    });
     let ledger_module: Option<syn::Item> = if contract.ledger_fields.is_empty()
         && contract.constructor.is_none()
         && contract.stateful_circuits.is_empty()
@@ -2800,6 +2829,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
             const _: () = assert!(runtime::RUST_RUNTIME_ABI == #runtime_abi);
             #(#items)*
         }
+        #slots_module
         #ledger_module
     })
     .expect("typed renderer constructed invalid Rust syntax");

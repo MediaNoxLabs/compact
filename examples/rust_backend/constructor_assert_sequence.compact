@@ -1,0 +1,8 @@
+import CompactStandardLibrary;
+export ledger stored: Field;
+constructor(ok: Boolean) {
+  const value: Field = ok ? 1 : 2;
+  assert(ok, "constructor rejected");
+  stored = disclose(value);
+}
+export circuit read(): Field { return stored; }

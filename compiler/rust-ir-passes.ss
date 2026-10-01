@@ -1302,6 +1302,20 @@
       ;; Preserve its item binding and ordered effects instead of emitting Rust syntax.
       (define (constructor-step-ir expr parameters bindings owner-src)
         (nanopass-case (Lnodisclose Expression) expr
+          [(seq ,src ,expr* ... ,expr)
+           (object (cons "kind" "sequence")
+                   (cons "steps"
+                         (list->vector
+                           (append (map (lambda (step)
+                                          (constructor-step-ir step parameters bindings src))
+                                        expr*)
+                                   (if (empty-constructor-expression? expr)
+                                       '()
+                                       (list (constructor-step-ir expr parameters bindings src)))))))]
+          [(assert ,src ,expr ,mesg)
+           (object (cons "kind" "assert")
+                   (cons "condition" (stateful-expression-ir expr src '()))
+                   (cons "message" mesg))]
           [(fold ,src ,len ,fun (,expr0 ,type0) ,map-arg ,map-arg* ...)
            (unless (and (null? map-arg*) (empty-constructor-expression? expr0))
              (source-errorf src "Rust backend supports one iterable with a unit fold accumulator"))

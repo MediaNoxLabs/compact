@@ -32,6 +32,13 @@ pub struct Constructor {
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum ConstructorStep {
+    Sequence {
+        steps: Vec<ConstructorStep>,
+    },
+    Assert {
+        condition: Expr,
+        message: String,
+    },
     CellWrite {
         field: String,
         index: u8,

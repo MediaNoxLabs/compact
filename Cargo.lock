@@ -804,6 +804,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-constructor-assert-sequence-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-constructor-cell-literal-fixture"
 version = "0.1.0"
 dependencies = [

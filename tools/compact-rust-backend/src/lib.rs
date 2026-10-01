@@ -1234,6 +1234,14 @@ fn collect_constructor_step_types(
     enums: &mut BTreeMap<String, Vec<String>>,
 ) -> Result<(), RenderError> {
     match step {
+        ConstructorStep::Sequence { steps } => {
+            for step in steps {
+                collect_constructor_step_types(step, structs, enums)?;
+            }
+        }
+        ConstructorStep::Assert { condition, .. } => {
+            collect_expression_types(condition, structs, enums)?
+        }
         ConstructorStep::CellWrite { value, .. }
         | ConstructorStep::SetInsert { value, .. }
         | ConstructorStep::SetRemove { value, .. }
@@ -1284,6 +1292,48 @@ fn render_constructor_vm_steps<'a>(
     let mut actions = Vec::new();
     for step in steps {
         match step {
+            ConstructorStep::Sequence { steps } => {
+                actions.extend(render_constructor_vm_steps(
+                    steps,
+                    ledger_fields,
+                    parameters,
+                    witnesses,
+                    circuits,
+                    stateful_circuits,
+                    next_loop,
+                    next_temp,
+                )?);
+            }
+            ConstructorStep::Assert { condition, message } => {
+                let mut expression_steps = Vec::new();
+                let mut query_effect = false;
+                let (condition, actual, witness_effect) = stateful::render_state_expression(
+                    condition,
+                    parameters,
+                    witnesses,
+                    &mut expression_steps,
+                    next_temp,
+                    circuits,
+                    stateful_circuits,
+                    ledger_fields,
+                    &mut query_effect,
+                )?;
+                if witness_effect {
+                    return Err(RenderError::InvalidConstructorInitializer(message.clone()));
+                }
+                if actual != Type::Boolean {
+                    return Err(RenderError::TypeMismatch {
+                        expected: Type::Boolean,
+                        actual,
+                    });
+                }
+                actions.extend(expression_steps);
+                actions.push(syn::parse_quote! {
+                    if !(#condition) {
+                        return Err(runtime::CompactError::AssertionFailed(#message.to_owned()));
+                    }
+                });
+            }
             ConstructorStep::CellWrite {
                 field,
                 index,
@@ -1812,7 +1862,9 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                         &callable_stateful_circuits,
                     )
             }
-            ConstructorStep::CounterIncrement { .. }
+            ConstructorStep::Sequence { .. }
+            | ConstructorStep::Assert { .. }
+            | ConstructorStep::CounterIncrement { .. }
             | ConstructorStep::CounterDecrement { .. }
             | ConstructorStep::CounterReset { .. }
             | ConstructorStep::SetInsert { .. }

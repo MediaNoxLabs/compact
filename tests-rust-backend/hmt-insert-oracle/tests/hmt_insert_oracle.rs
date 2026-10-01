@@ -1,5 +1,5 @@
 use compact_rust_hmt_insert_oracle_fixture::ledger_contract::{
-    append, forget_history, full, initial_state, known, place,
+    append, append_hash, forget_history, full, initial_state, known, place, place_hash, reset_tree,
 };
 use compact_rust_hmt_insert_oracle_fixture::types::MerkleTreeDigest;
 use midnight_compact_runtime as runtime;
@@ -13,7 +13,16 @@ use runtime::ledger::{ContractAddress, DefaultDB, StateValue};
 
 fn state_hex(state: StateValue<DefaultDB>) -> String {
     let mut operations: HashMap<EntryPointBuf, ContractOperation, DefaultDB> = HashMap::new();
-    for name in ["append", "place", "forget_history", "full", "known"] {
+    for name in [
+        "append",
+        "place",
+        "append_hash",
+        "place_hash",
+        "forget_history",
+        "reset_tree",
+        "full",
+        "known",
+    ] {
         operations = operations.insert(
             EntryPointBuf(name.as_bytes().to_vec()),
             ContractOperation::new(None),
@@ -120,21 +129,64 @@ fn historic_merkle_insert_modes_match_typescript_state_bytes() {
         "afterForgetHistory",
         5,
     );
-    let forgotten_old = known(after_forget.context, initial_root).unwrap();
+    let forgotten_old = known(after_forget.context, initial_root.clone()).unwrap();
     assert_eq!(forgotten_old.result, oracle["knownInitialAfterReset"]);
     let retained_current = known(forgotten_old.context, root_before_reset).unwrap();
     assert_eq!(retained_current.result, oracle["knownCurrentAfterReset"]);
     let before_capacity = full(retained_current.context).unwrap();
     assert_eq!(before_capacity.result, oracle["fullBeforeCapacity"]);
-    let after_21 = append(before_capacity.context, bounded::<255>(21)).unwrap();
-    let after_22 = append(after_21.context, bounded::<255>(22)).unwrap();
-    let after_23 = append(after_22.context, bounded::<255>(23)).unwrap();
+    let after_hash =
+        append_hash(before_capacity.context, runtime::FixedBytes::new([1; 32])).unwrap();
     assert_state(
-        after_23.context.query.state.get_ref(),
+        after_hash.context.query.state.get_ref(),
         &oracle,
-        "afterCapacity",
+        "afterAppendHash",
+        6,
+    );
+    let at7 = place_hash(
+        after_hash.context,
+        runtime::FixedBytes::new([2; 32]),
+        bounded::<{ u64::MAX as u128 }>(7),
+    )
+    .unwrap();
+    assert_state(
+        at7.context.query.state.get_ref(),
+        &oracle,
+        "afterPlaceHashAt7",
         8,
     );
-    let at_capacity = full(after_23.context).unwrap();
+    let at_capacity = full(at7.context).unwrap();
     assert_eq!(at_capacity.result, oracle["fullAtCapacity"]);
+    let at1 = place_hash(
+        at_capacity.context,
+        runtime::FixedBytes::new([3; 32]),
+        bounded::<{ u64::MAX as u128 }>(1),
+    )
+    .unwrap();
+    assert_state(
+        at1.context.query.state.get_ref(),
+        &oracle,
+        "afterReplaceHashAt1",
+        8,
+    );
+    let after_replacement = full(at1.context).unwrap();
+    assert_eq!(after_replacement.result, oracle["fullAfterReplacement"]);
+    let root_before_tree_reset = current_root(after_replacement.context.query.state.get_ref());
+    let reset = reset_tree(after_replacement.context).unwrap();
+    assert_state(
+        reset.context.query.state.get_ref(),
+        &oracle,
+        "afterResetTree",
+        0,
+    );
+    assert_eq!(
+        state_hex(reset.context.query.state.get_ref().clone()),
+        oracle["afterInit"]
+    );
+    let after_reset_full = full(reset.context).unwrap();
+    assert_eq!(after_reset_full.result, oracle["fullAfterTreeReset"]);
+    let old_root = known(after_reset_full.context, root_before_tree_reset).unwrap();
+    assert_eq!(old_root.result, oracle["knownOldAfterTreeReset"]);
+    let blank_root = known(old_root.context, initial_root).unwrap();
+    assert_eq!(blank_root.result, oracle["knownBlankAfterTreeReset"]);
 }

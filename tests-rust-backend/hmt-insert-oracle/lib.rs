@@ -77,12 +77,63 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
+    pub fn append_hash<Private>(
+        context: runtime::context::CircuitContext<Private>,
+        __compact_param_0: runtime::FixedBytes<32>,
+    ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
+        let mut total_cost = runtime::context::RunningCost::default();
+        let private_transcript_outputs = Vec::new();
+        let step = context.historic_insert_hash(0, __compact_param_0)?;
+        let context = step.context;
+        total_cost += step.gas_cost;
+        let result = ();
+        Ok(runtime::context::CircuitResult {
+            context,
+            result,
+            gas_cost: total_cost,
+            private_transcript_outputs,
+        })
+    }
+    pub fn place_hash<Private>(
+        context: runtime::context::CircuitContext<Private>,
+        __compact_param_0: runtime::FixedBytes<32>,
+        __compact_param_1: runtime::BoundedUint<18446744073709551615>,
+    ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
+        let mut total_cost = runtime::context::RunningCost::default();
+        let private_transcript_outputs = Vec::new();
+        let step = context.historic_insert_hash_index(0, __compact_param_0, __compact_param_1)?;
+        let context = step.context;
+        total_cost += step.gas_cost;
+        let result = ();
+        Ok(runtime::context::CircuitResult {
+            context,
+            result,
+            gas_cost: total_cost,
+            private_transcript_outputs,
+        })
+    }
     pub fn forget_history<Private>(
         context: runtime::context::CircuitContext<Private>,
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
         let step = context.historic_reset_history(0)?;
+        let context = step.context;
+        total_cost += step.gas_cost;
+        let result = ();
+        Ok(runtime::context::CircuitResult {
+            context,
+            result,
+            gas_cost: total_cost,
+            private_transcript_outputs,
+        })
+    }
+    pub fn reset_tree<Private>(
+        context: runtime::context::CircuitContext<Private>,
+    ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
+        let mut total_cost = runtime::context::RunningCost::default();
+        let private_transcript_outputs = Vec::new();
+        let step = context.historic_reset_to_default(0, 3)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();

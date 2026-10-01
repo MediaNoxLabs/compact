@@ -549,11 +549,17 @@ fn collect_action_types(
         | StateAction::SetInsert { value, .. }
         | StateAction::SetRemove { value, .. }
         | StateAction::ListPushFront { value, .. }
-        | StateAction::HistoricMerkleInsert { value, .. } => {
+        | StateAction::HistoricMerkleInsert { value, .. }
+        | StateAction::HistoricMerkleInsertHash { hash: value, .. } => {
             collect_expression_types(value, structs, enums)?;
         }
         StateAction::HistoricMerkleInsertIndex {
             value, position, ..
+        }
+        | StateAction::HistoricMerkleInsertHashIndex {
+            hash: value,
+            position,
+            ..
         } => {
             collect_expression_types(value, structs, enums)?;
             collect_expression_types(position, structs, enums)?;
@@ -575,7 +581,8 @@ fn collect_action_types(
         | StateAction::ListPopFront { .. }
         | StateAction::ListReset { .. }
         | StateAction::MapReset { .. }
-        | StateAction::HistoricMerkleResetHistory { .. } => {}
+        | StateAction::HistoricMerkleResetHistory { .. }
+        | StateAction::HistoricMerkleResetToDefault { .. } => {}
     }
     Ok(())
 }

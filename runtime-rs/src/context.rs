@@ -473,6 +473,30 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         })
     }
 
+    pub fn historic_insert_hash_index(
+        mut self,
+        path: impl Into<ledger::LedgerPath>,
+        hash: crate::FixedBytes<32>,
+        position: crate::BoundedUint<{ u64::MAX as u128 }>,
+    ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        let result = ledger::historic_insert_hash_index(
+            &self.query,
+            path,
+            hash,
+            position.value() as u64,
+            self.gas_limit.clone(),
+            &self.cost_model,
+        )
+        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+        self.query = result.context;
+        Ok(CircuitResult {
+            context: self,
+            result: (),
+            gas_cost: result.gas_cost,
+            private_transcript_outputs: Vec::new(),
+        })
+    }
+
     pub fn historic_insert<T: CellValue>(
         mut self,
         path: impl Into<ledger::LedgerPath>,
@@ -495,6 +519,28 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         })
     }
 
+    pub fn historic_insert_hash(
+        mut self,
+        path: impl Into<ledger::LedgerPath>,
+        hash: crate::FixedBytes<32>,
+    ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        let result = ledger::historic_insert_hash(
+            &self.query,
+            path,
+            hash,
+            self.gas_limit.clone(),
+            &self.cost_model,
+        )
+        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+        self.query = result.context;
+        Ok(CircuitResult {
+            context: self,
+            result: (),
+            gas_cost: result.gas_cost,
+            private_transcript_outputs: Vec::new(),
+        })
+    }
+
     pub fn historic_reset_history(
         mut self,
         path: impl Into<ledger::LedgerPath>,
@@ -502,6 +548,28 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         let result = ledger::historic_reset_history(
             &self.query,
             path,
+            self.gas_limit.clone(),
+            &self.cost_model,
+        )
+        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+        self.query = result.context;
+        Ok(CircuitResult {
+            context: self,
+            result: (),
+            gas_cost: result.gas_cost,
+            private_transcript_outputs: Vec::new(),
+        })
+    }
+
+    pub fn historic_reset_to_default(
+        mut self,
+        path: impl Into<ledger::LedgerPath>,
+        depth: u8,
+    ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        let result = ledger::historic_reset_to_default(
+            &self.query,
+            path,
+            depth,
             self.gas_limit.clone(),
             &self.cost_model,
         )

@@ -488,6 +488,18 @@ pub fn constructor_historic_merkle_tree<D: DB>(depth: u8) -> StateValue<D> {
     )
 }
 
+fn blank_historic_merkle_tree<D: DB>(depth: u8) -> StateValue<D> {
+    let tree: MerkleTree<(), D> = MerkleTree::blank(depth).rehash();
+    StateValue::Array(
+        vec![
+            StateValue::BoundedMerkleTree(tree),
+            constructor_cell(0_u64),
+            StateValue::Map(LedgerHashMap::new()),
+        ]
+        .into(),
+    )
+}
+
 /// Read-only witness projection of the ledger's tree, next index, and root history.
 pub struct HistoricMerkleTreeView<'a, D: DB> {
     fields: &'a LedgerArray<StateValue<D>, D>,
@@ -538,7 +550,7 @@ pub fn historic_insert_index_default<T: CellValue + Default, D: DB>(
     historic_insert_index_hashed(
         context,
         path,
-        leaf_hash_for(T::default()),
+        AlignedValue::from(leaf_hash_for(T::default())),
         position,
         gas_limit,
         cost_model,
@@ -563,7 +575,26 @@ pub fn historic_insert_index<T: CellValue, D: DB>(
     historic_insert_index_hashed(
         context,
         path,
-        leaf_hash_for(item),
+        AlignedValue::from(leaf_hash_for(item)),
+        position,
+        gas_limit,
+        cost_model,
+    )
+}
+
+/// Insert a supplied 32-byte leaf hash at a given index.
+pub fn historic_insert_hash_index<D: DB>(
+    context: &QueryContext<D>,
+    path: impl Into<LedgerPath>,
+    hash: FixedBytes<32>,
+    position: u64,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    historic_insert_index_hashed(
+        context,
+        path,
+        aligned_cell_value(hash),
         position,
         gas_limit,
         cost_model,
@@ -573,7 +604,7 @@ pub fn historic_insert_index<T: CellValue, D: DB>(
 fn historic_insert_index_hashed<D: DB>(
     context: &QueryContext<D>,
     path: impl Into<LedgerPath>,
-    hash: HashOutput,
+    hash: AlignedValue,
     position: u64,
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
@@ -598,7 +629,7 @@ fn historic_insert_index_hashed<D: DB>(
         },
         Op::Push {
             storage: true,
-            value: StateValue::Cell(Sp::new(AlignedValue::from(hash))),
+            value: StateValue::Cell(Sp::new(hash)),
         },
         Op::Ins {
             cached: false,
@@ -662,10 +693,42 @@ pub fn historic_insert<T: CellValue, D: DB>(
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    historic_insert_hashed(
+        context,
+        path,
+        AlignedValue::from(leaf_hash_for(item)),
+        gas_limit,
+        cost_model,
+    )
+}
+
+/// Insert a supplied 32-byte leaf hash at the first free index.
+pub fn historic_insert_hash<D: DB>(
+    context: &QueryContext<D>,
+    path: impl Into<LedgerPath>,
+    hash: FixedBytes<32>,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    historic_insert_hashed(
+        context,
+        path,
+        aligned_cell_value(hash),
+        gas_limit,
+        cost_model,
+    )
+}
+
+fn historic_insert_hashed<D: DB>(
+    context: &QueryContext<D>,
+    path: impl Into<LedgerPath>,
+    hash: AlignedValue,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
     let path = path.into();
     let keys = path_keys(path.as_slice());
     let index_key = |index| vec![Key::Value(AlignedValue::from(index))].into();
-    let hash = leaf_hash_for(item);
     let program = [
         Op::Idx {
             cached: false,
@@ -685,7 +748,7 @@ pub fn historic_insert<T: CellValue, D: DB>(
         },
         Op::Push {
             storage: true,
-            value: StateValue::Cell(Sp::new(AlignedValue::from(hash))),
+            value: StateValue::Cell(Sp::new(hash)),
         },
         Op::Ins {
             cached: false,
@@ -767,6 +830,68 @@ pub fn historic_reset_history<D: DB>(
             n: path.as_slice().len() as u8 + 2,
         },
     ];
+    context.query(&program, gas_limit, cost_model)
+}
+
+/// Reset a HistoricMerkleTree and seed its new blank root through the VM.
+pub fn historic_reset_to_default<D: DB>(
+    context: &QueryContext<D>,
+    path: impl Into<LedgerPath>,
+    depth: u8,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    let path = path.into();
+    let parts = path.as_slice();
+    let (&field_index, parent) = parts
+        .split_last()
+        .expect("ledger path contains a field index");
+    let index_key = |index| vec![Key::Value(AlignedValue::from(index))].into();
+    let mut program = Vec::new();
+    if !parent.is_empty() {
+        program.push(Op::Idx {
+            cached: false,
+            push_path: true,
+            path: path_keys(parent).into(),
+        });
+    }
+    program.extend([
+        Op::Push {
+            storage: false,
+            value: constructor_cell(field_index),
+        },
+        Op::Push {
+            storage: true,
+            value: blank_historic_merkle_tree(depth),
+        },
+        Op::Idx {
+            cached: false,
+            push_path: true,
+            path: index_key(2_u8),
+        },
+        Op::Dup { n: 2 },
+        Op::Idx {
+            cached: false,
+            push_path: false,
+            path: index_key(0_u8),
+        },
+        Op::Root,
+        Op::Push {
+            storage: true,
+            value: StateValue::Null,
+        },
+        Op::Ins { cached: true, n: 2 },
+        Op::Ins {
+            cached: false,
+            n: 1,
+        },
+    ]);
+    if !parent.is_empty() {
+        program.push(Op::Ins {
+            cached: true,
+            n: parent.len() as u8,
+        });
+    }
     context.query(&program, gas_limit, cost_model)
 }
 

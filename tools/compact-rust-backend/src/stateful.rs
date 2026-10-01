@@ -1102,6 +1102,7 @@ fn action_calls_named(action: &StateAction, name: &str) -> bool {
         | StateAction::SetRemove { value, .. }
         | StateAction::ListPushFront { value, .. }
         | StateAction::HistoricMerkleInsert { value, .. }
+        | StateAction::HistoricMerkleInsertHash { hash: value, .. }
         | StateAction::HistoricMerkleInsertIndexDefault {
             position: value, ..
         }
@@ -1113,6 +1114,11 @@ fn action_calls_named(action: &StateAction, name: &str) -> bool {
         }
         StateAction::HistoricMerkleInsertIndex {
             value, position, ..
+        }
+        | StateAction::HistoricMerkleInsertHashIndex {
+            hash: value,
+            position,
+            ..
         } => expression_calls_named(value, name) || expression_calls_named(position, name),
         StateAction::CounterIncrement { .. }
         | StateAction::CounterDecrement { .. }
@@ -1121,7 +1127,8 @@ fn action_calls_named(action: &StateAction, name: &str) -> bool {
         | StateAction::ListPopFront { .. }
         | StateAction::ListReset { .. }
         | StateAction::MapReset { .. }
-        | StateAction::HistoricMerkleResetHistory { .. } => false,
+        | StateAction::HistoricMerkleResetHistory { .. }
+        | StateAction::HistoricMerkleResetToDefault { .. } => false,
     }
 }
 
@@ -1304,6 +1311,7 @@ fn action_contains_witness(action: &StateAction) -> bool {
         | StateAction::SetRemove { value, .. }
         | StateAction::ListPushFront { value, .. }
         | StateAction::HistoricMerkleInsert { value, .. }
+        | StateAction::HistoricMerkleInsertHash { hash: value, .. }
         | StateAction::HistoricMerkleInsertIndexDefault {
             position: value, ..
         }
@@ -1324,6 +1332,11 @@ fn action_contains_witness(action: &StateAction) -> bool {
         }
         StateAction::HistoricMerkleInsertIndex {
             value, position, ..
+        }
+        | StateAction::HistoricMerkleInsertHashIndex {
+            hash: value,
+            position,
+            ..
         } => expression_contains_witness(value) || expression_contains_witness(position),
         StateAction::CounterIncrement { .. }
         | StateAction::CounterDecrement { .. }
@@ -1332,7 +1345,8 @@ fn action_contains_witness(action: &StateAction) -> bool {
         | StateAction::ListPopFront { .. }
         | StateAction::ListReset { .. }
         | StateAction::MapReset { .. }
-        | StateAction::HistoricMerkleResetHistory { .. } => false,
+        | StateAction::HistoricMerkleResetHistory { .. }
+        | StateAction::HistoricMerkleResetToDefault { .. } => false,
     }
 }
 
@@ -2063,6 +2077,25 @@ pub(crate) fn render_stateful_circuit(
                 statements.push(syn::parse_quote!(let context = step.context;));
                 statements.push(syn::parse_quote!(total_cost += step.gas_cost;));
             }
+            StateAction::HistoricMerkleResetToDefault { field, index } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                let LedgerFieldKind::HistoricMerkleTree { depth, .. } = declaration.declaration
+                else {
+                    return Err(RenderError::UnknownLedgerField(field.clone()));
+                };
+                if declaration.index != *index {
+                    return Err(RenderError::UnknownLedgerField(field.clone()));
+                }
+                let path = ledger_path_expr(declaration);
+                let depth = syn::LitInt::new(&depth.to_string(), Span::call_site());
+                statements.push(syn::parse_quote! {
+                    let step = context.historic_reset_to_default(#path, #depth)?;
+                });
+                statements.push(syn::parse_quote!(let context = step.context;));
+                statements.push(syn::parse_quote!(total_cost += step.gas_cost;));
+            }
             StateAction::HistoricMerkleInsert {
                 field,
                 index,
@@ -2072,6 +2105,17 @@ pub(crate) fn render_stateful_circuit(
                 field,
                 index,
                 value,
+                ..
+            }
+            | StateAction::HistoricMerkleInsertHash {
+                field,
+                index,
+                hash: value,
+            }
+            | StateAction::HistoricMerkleInsertHashIndex {
+                field,
+                index,
+                hash: value,
                 ..
             } => {
                 let declaration = ledger_fields
@@ -2097,15 +2141,23 @@ pub(crate) fn render_stateful_circuit(
                     ledger_fields,
                     &mut query_effect,
                 )?;
-                if &actual != ty {
-                    return Err(RenderError::TypeMismatch {
-                        expected: ty.clone(),
-                        actual,
-                    });
+                let is_hash = matches!(
+                    action,
+                    StateAction::HistoricMerkleInsertHash { .. }
+                        | StateAction::HistoricMerkleInsertHashIndex { .. }
+                );
+                let expected = if is_hash {
+                    Type::Bytes { length: 32 }
+                } else {
+                    ty.clone()
+                };
+                if actual != expected {
+                    return Err(RenderError::TypeMismatch { expected, actual });
                 }
                 let mut witness_effect = value_witness_effect;
-                let position =
-                    if let StateAction::HistoricMerkleInsertIndex { position, .. } = action {
+                let position = match action {
+                    StateAction::HistoricMerkleInsertIndex { position, .. }
+                    | StateAction::HistoricMerkleInsertHashIndex { position, .. } => {
                         let (rendered, actual, effect) = render_state_expression(
                             position,
                             &parameters,
@@ -2125,22 +2177,29 @@ pub(crate) fn render_stateful_circuit(
                         }
                         witness_effect |= effect;
                         Some(rendered)
-                    } else {
-                        None
-                    };
+                    }
+                    _ => None,
+                };
                 uses_witness |= witness_effect;
                 if witness_effect || query_effect {
                     statements.push(syn::parse_quote!(let mut context = context;));
                 }
                 statements.extend(value_statements);
                 let path = ledger_path_expr(declaration);
+                let method = match (is_hash, position.is_some()) {
+                    (false, false) => "historic_insert",
+                    (false, true) => "historic_insert_index",
+                    (true, false) => "historic_insert_hash",
+                    (true, true) => "historic_insert_hash_index",
+                };
+                let method = syn::Ident::new(method, Span::call_site());
                 if let Some(position) = position {
                     statements.push(syn::parse_quote! {
-                        let step = context.historic_insert_index(#path, #value, #position)?;
+                        let step = context.#method(#path, #value, #position)?;
                     });
                 } else {
                     statements.push(syn::parse_quote! {
-                        let step = context.historic_insert(#path, #value)?;
+                        let step = context.#method(#path, #value)?;
                     });
                 }
                 statements.push(syn::parse_quote!(let context = step.context;));

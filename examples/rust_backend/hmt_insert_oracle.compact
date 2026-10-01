@@ -10,8 +10,20 @@ export circuit place(value: Uint<8>, index: Uint<64>): [] {
   t.insertIndex(disclose(value), disclose(index));
 }
 
+export circuit append_hash(hash: Bytes<32>): [] {
+  t.insertHash(disclose(hash));
+}
+
+export circuit place_hash(hash: Bytes<32>, index: Uint<64>): [] {
+  t.insertHashIndex(disclose(hash), disclose(index));
+}
+
 export circuit forget_history(): [] {
   t.resetHistory();
+}
+
+export circuit reset_tree(): [] {
+  t.resetToDefault();
 }
 
 export circuit full(): Boolean {

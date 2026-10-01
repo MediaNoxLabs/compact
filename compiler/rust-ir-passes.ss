@@ -972,6 +972,12 @@
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*)))]
                 [(and (eq? adt-name 'HistoricMerkleTree)
+                      (eq? ledger-op 'resetToDefault)
+                      (null? expr*))
+                 (object (cons "kind" "historic_merkle_reset_to_default")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*)))]
+                [(and (eq? adt-name 'HistoricMerkleTree)
                       (eq? ledger-op 'resetHistory)
                       (null? expr*))
                  (object (cons "kind" "historic_merkle_reset_history")
@@ -991,6 +997,21 @@
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
                          (cons "value" (stateful-expression-ir (car expr*) src witness-ids))
+                         (cons "position" (stateful-expression-ir (cadr expr*) src witness-ids)))]
+                [(and (eq? adt-name 'HistoricMerkleTree)
+                      (eq? ledger-op 'insertHash)
+                      (= (length expr*) 1))
+                 (object (cons "kind" "historic_merkle_insert_hash")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*))
+                         (cons "hash" (stateful-expression-ir (car expr*) src witness-ids)))]
+                [(and (eq? adt-name 'HistoricMerkleTree)
+                      (eq? ledger-op 'insertHashIndex)
+                      (= (length expr*) 2))
+                 (object (cons "kind" "historic_merkle_insert_hash_index")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*))
+                         (cons "hash" (stateful-expression-ir (car expr*) src witness-ids))
                          (cons "position" (stateful-expression-ir (cadr expr*) src witness-ids)))]
                 [(and (eq? adt-name 'HistoricMerkleTree)
                       (eq? ledger-op 'insertIndexDefault)

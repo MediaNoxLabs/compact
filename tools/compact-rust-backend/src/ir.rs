@@ -358,7 +358,22 @@ pub enum StateAction {
         value: Expr,
         position: Expr,
     },
+    HistoricMerkleInsertHash {
+        field: String,
+        index: u8,
+        hash: Expr,
+    },
+    HistoricMerkleInsertHashIndex {
+        field: String,
+        index: u8,
+        hash: Expr,
+        position: Expr,
+    },
     HistoricMerkleResetHistory {
+        field: String,
+        index: u8,
+    },
+    HistoricMerkleResetToDefault {
         field: String,
         index: u8,
     },

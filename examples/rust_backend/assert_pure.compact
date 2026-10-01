@@ -1,0 +1,7 @@
+import CompactStandardLibrary;
+
+export circuit checked_value(first: Boolean, second: Boolean, value: Field): Field {
+  assert(disclose(first), "first condition failed");
+  assert(disclose(second), "second condition failed");
+  return value;
+}

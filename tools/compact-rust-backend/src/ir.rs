@@ -303,6 +303,14 @@ pub enum Expr {
         bindings: Vec<LocalBinding>,
         body: Box<Expr>,
     },
+    Sequence {
+        steps: Vec<Expr>,
+        value: Box<Expr>,
+    },
+    Assert {
+        condition: Box<Expr>,
+        message: String,
+    },
     Call {
         name: String,
         arguments: Vec<Expr>,

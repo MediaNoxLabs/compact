@@ -23,7 +23,7 @@ placeholder Rust.
 The backend supports exported pure circuits with `Field`, `Boolean`,
 `Bytes<N>`, `Uint<N>`, unit, tuple, and vector types. Bodies currently support parameter references,
 Boolean, Field, and Uint literals, unit, tuple construction, typed conditionals, sequential
-local bindings, pure circuit calls, Field addition/subtraction/multiplication,
+local bindings and assertion statements, pure circuit calls, Field addition/subtraction/multiplication,
 checked unsigned addition, subtraction, and multiplication, and the
 `transientHash`, `transientCommit`, `persistentHash`, `persistentCommit`, `keccak256`,
 `degradeToTransient`, `upgradeFromTransient`, `hashToCurve`, Jubjub
@@ -42,6 +42,9 @@ The compiler's inserted Uint subtraction guard is recognized only when its
 comparison matches the subtraction operands; the Rust runtime enforces the
 same underflow check. Multiplication checks both host overflow and the
 result's declared Compact maximum.
+Pure assertion sequences are typed IR nodes. The fixture checks that two
+assertions run in source order, that a successful circuit returns its value,
+and that both failure messages match generated TypeScript.
 
 The runtime facade in `runtime-rs` reexports `Fr` from
 `midnight-transient-crypto` 2.0.1 as Compact `Field`. It also reexports the
@@ -219,6 +222,7 @@ cargo test -p compact-rust-backend -p midnight-compact-runtime \
   -p compact-rust-field-arithmetic-fixture -p compact-rust-transient-hash-fixture \
   -p compact-rust-persistent-hash-fixture \
   -p compact-rust-keccak-fixture \
+  -p compact-rust-assert-pure-fixture \
   -p compact-rust-jubjub-hash-fixture \
   -p compact-rust-jubjub-arithmetic-fixture \
   -p compact-rust-jubjub-construct-fixture \

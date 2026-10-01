@@ -61,7 +61,7 @@ pub enum CompactError {
 impl std::fmt::Display for CompactError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::AssertionFailed(message) => write!(f, "Compact assertion failed: {message}"),
+            Self::AssertionFailed(message) => write!(f, "failed assert: {message}"),
             Self::InvalidLedgerCell(message) => write!(f, "invalid Compact ledger cell: {message}"),
             Self::LedgerQueryRejected(message) => write!(f, "ledger query rejected: {message}"),
             Self::InvalidUnsignedValue => write!(f, "invalid Compact unsigned value"),

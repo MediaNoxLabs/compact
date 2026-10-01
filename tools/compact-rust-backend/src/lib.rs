@@ -257,6 +257,15 @@ fn collect_expression_types(
             }
             collect_expression_types(body, structs, enums)?;
         }
+        Expr::Sequence { steps, value } => {
+            for step in steps {
+                collect_expression_types(step, structs, enums)?;
+            }
+            collect_expression_types(value, structs, enums)?;
+        }
+        Expr::Assert { condition, .. } => {
+            collect_expression_types(condition, structs, enums)?;
+        }
         Expr::Call { arguments, .. } | Expr::WitnessCall { arguments, .. } => {
             for argument in arguments {
                 collect_expression_types(argument, structs, enums)?;
@@ -404,6 +413,38 @@ fn expression_with_calls(
                 .get(name.as_str())
                 .ok_or_else(|| RenderError::UnknownParameter(name.clone()))?;
             Ok((syn::parse_quote!(#rust_name), (*ty).clone()))
+        }
+        Expr::Assert { condition, message } => {
+            let (condition, actual) = expression_with_calls(condition, parameters, circuits)?;
+            if actual != Type::Boolean {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Boolean,
+                    actual,
+                });
+            }
+            Ok((
+                syn::parse_quote!({
+                    if !#condition {
+                        return Err(runtime::CompactError::AssertionFailed(#message.to_owned()));
+                    }
+                }),
+                Type::Unit,
+            ))
+        }
+        Expr::Sequence { steps, value } => {
+            let mut statements = Vec::<syn::Stmt>::new();
+            for step in steps {
+                let (rendered, actual) = expression_with_calls(step, parameters, circuits)?;
+                if actual != Type::Unit {
+                    return Err(RenderError::TypeMismatch {
+                        expected: Type::Unit,
+                        actual,
+                    });
+                }
+                statements.push(syn::parse_quote!(#rendered;));
+            }
+            let (value, ty) = expression_with_calls(value, parameters, circuits)?;
+            Ok((syn::parse_quote!({ #(#statements)* #value }), ty))
         }
         Expr::Tuple { elements } => {
             let (exprs, types): (Vec<_>, Vec<_>) = elements

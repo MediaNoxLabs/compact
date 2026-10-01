@@ -170,7 +170,13 @@
           [(seq ,src ,expr* ... ,expr)
            (if (checked-unsigned-subtraction? expr* expr)
                (expression-ir expr src)
-               (source-errorf src "Rust backend does not yet support this circuit expression"))]
+               (object (cons "kind" "sequence")
+                       (cons "steps" (list->vector (map (lambda (step) (expression-ir step src)) expr*)))
+                       (cons "value" (expression-ir expr src))))]
+          [(assert ,src ,expr ,mesg)
+           (object (cons "kind" "assert")
+                   (cons "condition" (expression-ir expr src))
+                   (cons "message" mesg))]
           [(call ,src ,function-name ,expr* ...)
            (let ([name (id-sym function-name)])
              (cond
@@ -295,7 +301,9 @@
           [(seq ,src ,expr* ... ,expr)
            (if (checked-unsigned-subtraction? expr* expr)
                (typed-expression-ir expr expected-type src)
-               (source-errorf src "Rust backend does not yet support this circuit expression"))]
+               (object (cons "kind" "sequence")
+                       (cons "steps" (list->vector (map (lambda (step) (expression-ir step src)) expr*)))
+                       (cons "value" (typed-expression-ir expr expected-type src))))]
           [(+ ,src ,mbits ,expr1 ,expr2)
            (if mbits
                (nanopass-case (Lnodisclose Type) expected-type

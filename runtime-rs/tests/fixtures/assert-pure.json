@@ -1,0 +1,11 @@
+{
+  "pass": {
+    "ok": "42"
+  },
+  "firstFails": {
+    "error": "failed assert: first condition failed"
+  },
+  "secondFails": {
+    "error": "failed assert: second condition failed"
+  }
+}

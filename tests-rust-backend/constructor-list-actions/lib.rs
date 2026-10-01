@@ -24,17 +24,21 @@ pub mod ledger_contract {
             let mut context = runtime::context::ConstructorResult::new(__compact_context, state)
                 .into_circuit_context(runtime::ledger::ContractAddress::default());
             let mut total_cost = runtime::context::RunningCost::default();
-            let step = context.push_front_list(0, (runtime::Field::from(1u128)).clone())?;
+            let __compact_constructor_local_0: runtime::Field = runtime::Field::from(1u128);
+            let step = context.push_front_list(0, (__compact_constructor_local_0).clone())?;
             context = step.context;
-            let step = context.push_front_list(0, (runtime::Field::from(2u128)).clone())?;
+            let __compact_constructor_local_1: runtime::Field = runtime::Field::from(2u128);
+            let step = context.push_front_list(0, (__compact_constructor_local_1).clone())?;
             context = step.context;
             let step = context.pop_front_list(0)?;
             context = step.context;
-            let step = context.push_front_list(1, (runtime::Field::from(3u128)).clone())?;
+            let __compact_constructor_local_2: runtime::Field = runtime::Field::from(3u128);
+            let step = context.push_front_list(1, (__compact_constructor_local_2).clone())?;
             context = step.context;
             let step = context.reset_list(1)?;
             context = step.context;
-            let step = context.push_front_list(1, (runtime::Field::from(4u128)).clone())?;
+            let __compact_constructor_local_3: runtime::Field = runtime::Field::from(4u128);
+            let step = context.push_front_list(1, (__compact_constructor_local_3).clone())?;
             context = step.context;
             let _ = total_cost;
             Ok(context.into_constructor_result())

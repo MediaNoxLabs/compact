@@ -54,6 +54,9 @@ pub mod ledger_contract {
                 .clone(),
             ];
             for __compact_constructor_item_0 in __compact_constructor_values_0 {
+                let __compact_constructor_local_0: runtime::BoundedUint<65535> =
+                    runtime::BoundedUint::<65535>::new(1u128)
+                        .expect("Compact Uint literal fits its maximum");
                 let step = context.increment_counter(0, 1u16)?;
                 context = step.context;
             }

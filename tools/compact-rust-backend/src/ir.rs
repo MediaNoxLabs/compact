@@ -32,6 +32,10 @@ pub struct Constructor {
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum ConstructorStep {
+    Let {
+        bindings: Vec<LocalBinding>,
+        step: Box<ConstructorStep>,
+    },
     Sequence {
         steps: Vec<ConstructorStep>,
     },

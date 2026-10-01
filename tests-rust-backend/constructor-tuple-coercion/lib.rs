@@ -23,18 +23,23 @@ pub mod ledger_contract {
     pub fn initial_state<Private>(
         __compact_context: runtime::context::ConstructorContext<Private>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
-        let __compact_constructor_value_0 =
-            (runtime::Field::from(3u128), runtime::Field::from(4u128));
         let state = runtime::ledger::contract_state(vec![runtime::ledger::constructor_cell::<
             (runtime::Field, runtime::Field),
             runtime::ledger::DefaultDB,
-        >(
-            __compact_constructor_value_0.clone()
-        )]);
-        Ok(runtime::context::ConstructorResult::new(
-            __compact_context,
-            state,
-        ))
+        >(Default::default())]);
+        {
+            let mut context = runtime::context::ConstructorResult::new(__compact_context, state)
+                .into_circuit_context(runtime::ledger::ContractAddress::default());
+            let mut total_cost = runtime::context::RunningCost::default();
+            let __compact_element_0 = runtime::Field::from(3u128);
+            let __compact_element_1 = runtime::Field::from(4u128);
+            let __compact_constructor_local_2: (runtime::Field, runtime::Field) =
+                (__compact_element_0, __compact_element_1);
+            let step = context.write_cell(0, (__compact_constructor_local_2).clone())?;
+            context = step.context;
+            let _ = total_cost;
+            Ok(context.into_constructor_result())
+        }
     }
     pub fn read_pair<Private>(
         context: runtime::context::CircuitContext<Private>,

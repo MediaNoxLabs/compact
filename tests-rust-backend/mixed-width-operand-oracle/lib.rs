@@ -206,45 +206,51 @@ pub mod ledger_contract {
         __compact_constructor_param_0: runtime::BoundedUint<4294967295>,
         __compact_constructor_param_1: runtime::BoundedUint<4294967295>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
-        let __compact_constructor_value_0 = {
-            let __compact_local_0: runtime::BoundedUint<17179869180> =
-                runtime::multiply_unsigned::<17179869180, 17179869180, 17179869180>(
-                    runtime::cast_unsigned::<4294967295, 17179869180>(
-                        __compact_constructor_param_1,
-                    )?,
-                    runtime::BoundedUint::<17179869180>::new(4u128)
-                        .expect("Compact Uint literal fits its maximum"),
-                )?;
-            {
-                {
-                    if !(runtime::cast_unsigned::<4294967295, 17179869180>(
-                        __compact_constructor_param_0,
-                    )?
-                    .value()
-                        >= __compact_local_0.value())
-                    {
-                        return Err(runtime::CompactError::AssertionFailed(
-                            "result of subtraction would be negative".to_owned(),
-                        ));
-                    }
-                };
-                runtime::subtract_unsigned::<4294967295, 4294967295, 4294967295>(
-                    __compact_constructor_param_0,
-                    runtime::cast_unsigned::<17179869180, 4294967295>(__compact_local_0)?,
-                )?
-            }
-        };
         let state = runtime::ledger::contract_state(vec![
             runtime::ledger::constructor_cell::<
                 runtime::BoundedUint<4294967295>,
                 runtime::ledger::DefaultDB,
-            >(__compact_constructor_value_0.clone()),
+            >(Default::default()),
             runtime::ledger::constructor_counter(),
         ]);
-        Ok(runtime::context::ConstructorResult::new(
-            __compact_context,
-            state,
-        ))
+        {
+            let mut context = runtime::context::ConstructorResult::new(__compact_context, state)
+                .into_circuit_context(runtime::ledger::ContractAddress::default());
+            let mut total_cost = runtime::context::RunningCost::default();
+            let __compact_value_0 =
+                runtime::cast_unsigned::<4294967295, 17179869180>(__compact_constructor_param_1)?;
+            let __compact_value_1 = runtime::BoundedUint::<17179869180>::new(4u128)
+                .expect("Compact Uint literal fits its maximum");
+            let __compact_expression_local_2: runtime::BoundedUint<17179869180> =
+                runtime::multiply_unsigned::<17179869180, 17179869180, 17179869180>(
+                    __compact_value_0,
+                    __compact_value_1,
+                )?;
+            let _ = {
+                if !(runtime::cast_unsigned::<4294967295, 17179869180>(
+                    __compact_constructor_param_0,
+                )?
+                .value()
+                    >= __compact_expression_local_2.value())
+                {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "result of subtraction would be negative".to_owned(),
+                    ));
+                }
+            };
+            let __compact_value_3 = __compact_constructor_param_0;
+            let __compact_value_4 =
+                runtime::cast_unsigned::<17179869180, 4294967295>(__compact_expression_local_2)?;
+            let __compact_constructor_local_5: runtime::BoundedUint<4294967295> =
+                runtime::subtract_unsigned::<4294967295, 4294967295, 4294967295>(
+                    __compact_value_3,
+                    __compact_value_4,
+                )?;
+            let step = context.write_cell(0, (__compact_constructor_local_5).clone())?;
+            context = step.context;
+            let _ = total_cost;
+            Ok(context.into_constructor_result())
+        }
     }
     pub fn recordPinned<Private>(
         context: runtime::context::CircuitContext<Private>,

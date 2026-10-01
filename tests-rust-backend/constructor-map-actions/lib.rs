@@ -24,16 +24,19 @@ pub mod ledger_contract {
             let mut context = runtime::context::ConstructorResult::new(__compact_context, state)
                 .into_circuit_context(runtime::ledger::ContractAddress::default());
             let mut total_cost = runtime::context::RunningCost::default();
+            let __compact_constructor_local_0: runtime::Field = runtime::Field::from(1u128);
             let step =
-                context.insert_map(0, (true).clone(), (runtime::Field::from(1u128)).clone())?;
+                context.insert_map(0, (true).clone(), (__compact_constructor_local_0).clone())?;
             context = step.context;
+            let __compact_constructor_local_1: runtime::Field = runtime::Field::from(2u128);
             let step =
-                context.insert_map(0, (false).clone(), (runtime::Field::from(2u128)).clone())?;
+                context.insert_map(0, (false).clone(), (__compact_constructor_local_1).clone())?;
             context = step.context;
             let step = context.remove_map(0, (false).clone())?;
             context = step.context;
+            let __compact_constructor_local_2: runtime::Field = runtime::Field::from(3u128);
             let step =
-                context.insert_map(1, (true).clone(), (runtime::Field::from(3u128)).clone())?;
+                context.insert_map(1, (true).clone(), (__compact_constructor_local_2).clone())?;
             context = step.context;
             let step = context.reset_map(1)?;
             context = step.context;

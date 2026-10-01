@@ -25,25 +25,22 @@ pub mod ledger_contract {
             let mut context = runtime::context::ConstructorResult::new(__compact_context, state)
                 .into_circuit_context(runtime::ledger::ContractAddress::default());
             let mut total_cost = runtime::context::RunningCost::default();
+            let __compact_constructor_local_0: runtime::Field = runtime::Field::from(
+                (if __compact_constructor_param_0 {
+                    runtime::BoundedUint::<2>::new(1u128)
+                        .expect("Compact Uint literal fits its maximum")
+                } else {
+                    runtime::BoundedUint::<2>::new(2u128)
+                        .expect("Compact Uint literal fits its maximum")
+                })
+                .value(),
+            );
             if !(__compact_constructor_param_0) {
                 return Err(runtime::CompactError::AssertionFailed(
                     "constructor rejected".to_owned(),
                 ));
             }
-            let step = context.write_cell(
-                0,
-                (runtime::Field::from(
-                    (if __compact_constructor_param_0 {
-                        runtime::BoundedUint::<2>::new(1u128)
-                            .expect("Compact Uint literal fits its maximum")
-                    } else {
-                        runtime::BoundedUint::<2>::new(2u128)
-                            .expect("Compact Uint literal fits its maximum")
-                    })
-                    .value(),
-                ))
-                .clone(),
-            )?;
+            let step = context.write_cell(0, (__compact_constructor_local_0).clone())?;
             context = step.context;
             let _ = total_cost;
             Ok(context.into_constructor_result())

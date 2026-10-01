@@ -1255,6 +1255,13 @@ fn collect_constructor_step_types(
     enums: &mut BTreeMap<String, Vec<String>>,
 ) -> Result<(), RenderError> {
     match step {
+        ConstructorStep::Let { bindings, step } => {
+            for binding in bindings {
+                collect_named_types(&binding.ty, structs, enums)?;
+                collect_expression_types(&binding.value, structs, enums)?;
+            }
+            collect_constructor_step_types(step, structs, enums)?;
+        }
         ConstructorStep::Sequence { steps } => {
             for step in steps {
                 collect_constructor_step_types(step, structs, enums)?;
@@ -1313,6 +1320,55 @@ fn render_constructor_vm_steps<'a>(
     let mut actions = Vec::new();
     for step in steps {
         match step {
+            ConstructorStep::Let { bindings, step } => {
+                let mut locals = parameters.clone();
+                for binding in bindings {
+                    ident(&binding.name)?;
+                    let mut expression_steps = Vec::new();
+                    let mut query_effect = false;
+                    let (value, actual, witness_effect) = stateful::render_state_expression(
+                        &binding.value,
+                        &locals,
+                        witnesses,
+                        &mut expression_steps,
+                        next_temp,
+                        circuits,
+                        stateful_circuits,
+                        ledger_fields,
+                        &mut query_effect,
+                    )?;
+                    if witness_effect {
+                        return Err(RenderError::InvalidConstructorInitializer(
+                            binding.name.clone(),
+                        ));
+                    }
+                    if actual != binding.ty {
+                        return Err(RenderError::TypeMismatch {
+                            expected: binding.ty.clone(),
+                            actual,
+                        });
+                    }
+                    actions.extend(expression_steps);
+                    let local_name = syn::Ident::new(
+                        &format!("__compact_constructor_local_{}", *next_temp),
+                        Span::call_site(),
+                    );
+                    *next_temp += 1;
+                    let ty = rust_type(&binding.ty)?;
+                    actions.push(syn::parse_quote!(let #local_name: #ty = #value;));
+                    locals.insert(binding.name.as_str(), (&binding.ty, local_name));
+                }
+                actions.extend(render_constructor_vm_steps(
+                    std::slice::from_ref(step.as_ref()),
+                    ledger_fields,
+                    &locals,
+                    witnesses,
+                    circuits,
+                    stateful_circuits,
+                    next_loop,
+                    next_temp,
+                )?);
+            }
             ConstructorStep::Sequence { steps } => {
                 actions.extend(render_constructor_vm_steps(
                     steps,
@@ -1883,7 +1939,8 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                         &callable_stateful_circuits,
                     )
             }
-            ConstructorStep::Sequence { .. }
+            ConstructorStep::Let { .. }
+            | ConstructorStep::Sequence { .. }
             | ConstructorStep::Assert { .. }
             | ConstructorStep::CounterIncrement { .. }
             | ConstructorStep::CounterDecrement { .. }

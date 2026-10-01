@@ -16,10 +16,6 @@ pub mod ledger_contract {
     pub fn initial_state<Private>(
         __compact_context: runtime::context::ConstructorContext<Private>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
-        let __compact_constructor_value_0 = runtime::FixedVector::new([
-            runtime::jubjub_point_x(runtime::hash_to_curve(runtime::Field::from(1u128))),
-            runtime::jubjub_point_y(runtime::hash_to_curve(runtime::Field::from(1u128))),
-        ]);
         let state = runtime::ledger::contract_state(vec![
             runtime::ledger::constructor_cell::<bool, runtime::ledger::DefaultDB>(
                 Default::default(),
@@ -27,12 +23,22 @@ pub mod ledger_contract {
             runtime::ledger::constructor_cell::<
                 runtime::FixedVector<runtime::Field, 2>,
                 runtime::ledger::DefaultDB,
-            >(__compact_constructor_value_0.clone()),
+            >(Default::default()),
         ]);
-        Ok(runtime::context::ConstructorResult::new(
-            __compact_context,
-            state,
-        ))
+        {
+            let mut context = runtime::context::ConstructorResult::new(__compact_context, state)
+                .into_circuit_context(runtime::ledger::ContractAddress::default());
+            let mut total_cost = runtime::context::RunningCost::default();
+            let __compact_constructor_local_0: runtime::FixedVector<runtime::Field, 2> =
+                runtime::FixedVector::new([
+                    runtime::jubjub_point_x(runtime::hash_to_curve(runtime::Field::from(1u128))),
+                    runtime::jubjub_point_y(runtime::hash_to_curve(runtime::Field::from(1u128))),
+                ]);
+            let step = context.write_cell(1, (__compact_constructor_local_0.clone()).clone())?;
+            context = step.context;
+            let _ = total_cost;
+            Ok(context.into_constructor_result())
+        }
     }
     pub fn ping<Private>(
         context: runtime::context::CircuitContext<Private>,

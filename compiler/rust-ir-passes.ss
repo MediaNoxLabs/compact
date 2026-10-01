@@ -513,8 +513,12 @@
           [(if ,src ,expr0 ,expr1 ,expr2)
            (object (cons "kind" "if")
                    (cons "condition" (expression-ir expr0 src))
-                   (cons "then" (typed-expression-ir expr1 expected-type src))
-                   (cons "otherwise" (typed-expression-ir expr2 expected-type src)))]
+                   (cons "then" (object (cons "kind" "coerce")
+                                        (cons "value" (typed-expression-ir expr1 expected-type src))
+                                        (cons "ty" (type-ir expected-type src))))
+                   (cons "otherwise" (object (cons "kind" "coerce")
+                                             (cons "value" (typed-expression-ir expr2 expected-type src))
+                                             (cons "ty" (type-ir expected-type src)))))]
           [(seq ,src ,expr* ... ,expr)
            (if (checked-unsigned-subtraction? expr* expr)
                (typed-expression-ir expr expected-type src)
@@ -895,8 +899,12 @@
           [(if ,src ,expr0 ,expr1 ,expr2)
            (object (cons "kind" "if")
                    (cons "condition" (stateful-expression-ir expr0 src witness-ids))
-                   (cons "then" (stateful-typed-expression-ir expr1 expected-type src witness-ids))
-                   (cons "otherwise" (stateful-typed-expression-ir expr2 expected-type src witness-ids)))]
+                   (cons "then" (object (cons "kind" "coerce")
+                                        (cons "value" (stateful-typed-expression-ir expr1 expected-type src witness-ids))
+                                        (cons "ty" (type-ir expected-type src))))
+                   (cons "otherwise" (object (cons "kind" "coerce")
+                                             (cons "value" (stateful-typed-expression-ir expr2 expected-type src witness-ids))
+                                             (cons "ty" (type-ir expected-type src)))))]
           [(quote ,src ,datum)
            (typed-expression-ir value-expr expected-type src)]
           [(safe-cast ,src ,type ,type^ ,expr)
@@ -1026,8 +1034,8 @@
                    (cons "otherwise" (stateful-expression-ir expr2 src witness-ids)))]
           [(== ,src ,type ,expr1 ,expr2)
            (object (cons "kind" "equal")
-                   (cons "left" (stateful-expression-ir expr1 src witness-ids))
-                   (cons "right" (stateful-expression-ir expr2 src witness-ids)))]
+                   (cons "left" (stateful-typed-expression-ir expr1 type src witness-ids))
+                   (cons "right" (stateful-typed-expression-ir expr2 type src witness-ids)))]
           [(< ,src ,bits ,expr1 ,expr2)
            (object (cons "kind" "compare") (cons "operator" "less")
                    (cons "left" (stateful-expression-ir expr1 src witness-ids))
@@ -1046,8 +1054,8 @@
                    (cons "right" (stateful-expression-ir expr2 src witness-ids)))]
           [(!= ,src ,type ,expr1 ,expr2)
            (object (cons "kind" "not_equal")
-                   (cons "left" (stateful-expression-ir expr1 src witness-ids))
-                   (cons "right" (stateful-expression-ir expr2 src witness-ids)))]
+                   (cons "left" (stateful-typed-expression-ir expr1 type src witness-ids))
+                   (cons "right" (stateful-typed-expression-ir expr2 type src witness-ids)))]
           [(let* ,src ([,local* ,expr*] ...) ,expr)
            (object (cons "kind" "let")
                    (cons "bindings"
@@ -1316,7 +1324,7 @@
           [(var-ref ,src ,var-name)
            (let ([binding (assq (id-sym var-name) bindings)])
              (cond
-               [binding (cdr binding)]
+               [binding (expression-ir expr src)]
                [(memq (id-sym var-name) parameters) (expression-ir expr src)]
                [else (source-errorf src "Rust constructor value must be a parameter or typed literal")]))]
           [else (typed-expression-ir expr expected-type owner-src)]))
@@ -1402,7 +1410,17 @@
                          [(,var-name ,type)
                           (cons (cons (id-sym var-name) (typed-expression-ir value type src)) bindings)]))
                      bindings local* expr*)])
-             (constructor-step-ir expr parameters bindings^ src))]
+             (object (cons "kind" "let")
+                     (cons "bindings"
+                           (list->vector
+                             (map (lambda (local value)
+                                    (nanopass-case (Lnodisclose Argument) local
+                                      [(,var-name ,type)
+                                       (object (cons "name" (symbol->string (id-sym var-name)))
+                                               (cons "ty" (type-ir type src))
+                                               (cons "value" (typed-expression-ir value type src)))]))
+                                  local* expr*)))
+                     (cons "step" (constructor-step-ir expr parameters bindings^ src))))]
           [(public-ledger ,src ,ledger-field-name ,sugar? (,path-elt* ...) ,src^ ,adt-op ,expr* ...)
            (unless (and (= (length path-elt*) 1)
                         (integer? (car path-elt*)))
@@ -1491,7 +1509,7 @@
                       (object (cons "kind" "cell_write")
                               (cons "field" (symbol->string (id-sym ledger-field-name)))
                               (cons "index" (car path-elt*))
-                              (cons "value" (if binding (cdr binding) (expression-ir (car expr*) src)))))]
+                              (cons "value" (expression-ir (car expr*) src))))]
                    [else
                     (object (cons "kind" "cell_write")
                             (cons "field" (symbol->string (id-sym ledger-field-name)))

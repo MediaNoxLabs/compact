@@ -152,20 +152,17 @@ pub mod ledger_contract {
             let __compact_call_1 = vecDiffers(context, __compact_call_argument_0)?;
             context = __compact_call_1.context;
             total_cost += __compact_call_1.gas_cost;
-            let step = context.write_cell(
-                5,
-                (runtime::Field::from(
-                    (if __compact_call_1.result {
-                        runtime::BoundedUint::<2>::new(1u128)
-                            .expect("Compact Uint literal fits its maximum")
-                    } else {
-                        runtime::BoundedUint::<2>::new(2u128)
-                            .expect("Compact Uint literal fits its maximum")
-                    })
-                    .value(),
-                ))
-                .clone(),
-            )?;
+            let __compact_constructor_local_2: runtime::Field = runtime::Field::from(
+                (if __compact_call_1.result {
+                    runtime::BoundedUint::<2>::new(1u128)
+                        .expect("Compact Uint literal fits its maximum")
+                } else {
+                    runtime::BoundedUint::<2>::new(2u128)
+                        .expect("Compact Uint literal fits its maximum")
+                })
+                .value(),
+            );
+            let step = context.write_cell(5, (__compact_constructor_local_2).clone())?;
             context = step.context;
             let _ = total_cost;
             Ok(context.into_constructor_result())

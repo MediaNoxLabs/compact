@@ -27,19 +27,30 @@ pub mod ledger_contract {
             let mut context = runtime::context::ConstructorResult::new(__compact_context, state)
                 .into_circuit_context(runtime::ledger::ContractAddress::default());
             let mut total_cost = runtime::context::RunningCost::default();
-            let step = context.write_cell(0, (runtime::Field::from(1u128)).clone())?;
+            let __compact_constructor_local_0: runtime::Field = runtime::Field::from(1u128);
+            let step = context.write_cell(0, (__compact_constructor_local_0).clone())?;
             context = step.context;
             let step =
                 context.increment_counter(1, __compact_constructor_param_0.value() as u16)?;
             context = step.context;
-            let step = context.write_cell(0, (runtime::Field::from(2u128)).clone())?;
+            let __compact_constructor_local_1: runtime::Field = runtime::Field::from(2u128);
+            let step = context.write_cell(0, (__compact_constructor_local_1).clone())?;
             context = step.context;
+            let __compact_constructor_local_2: runtime::BoundedUint<65535> =
+                runtime::BoundedUint::<65535>::new(2u128)
+                    .expect("Compact Uint literal fits its maximum");
             let step = context.increment_counter(1, 2u16)?;
             context = step.context;
             let step = context.write_cell(1, 0_u64)?;
             context = step.context;
+            let __compact_constructor_local_3: runtime::BoundedUint<65535> =
+                runtime::BoundedUint::<65535>::new(5u128)
+                    .expect("Compact Uint literal fits its maximum");
             let step = context.increment_counter(1, 5u16)?;
             context = step.context;
+            let __compact_constructor_local_4: runtime::BoundedUint<65535> =
+                runtime::BoundedUint::<65535>::new(1u128)
+                    .expect("Compact Uint literal fits its maximum");
             let step = context.decrement_counter(1, 1u16)?;
             context = step.context;
             let _ = total_cost;

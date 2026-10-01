@@ -17,8 +17,13 @@
 name = "compact-rust-backend"
 version = "0.1.0"
 edition = "2024"
+rust-version = "1.88"
 license = "Apache-2.0"
 description = "Typed Rust syntax backend for Compact"
+repository = "https://github.com/MediaNoxLabs/compact"
+homepage = "https://github.com/MediaNoxLabs/compact"
+readme = "README.md"
+include = ["Cargo.toml", "README.md", "src/**", "tests/**", "fixtures/**"]
 
 [dependencies]
 proc-macro2 = "1"

@@ -17,11 +17,16 @@
 name = "midnight-compact-runtime"
 version = "0.1.0"
 edition = "2024"
+rust-version = "1.88"
 license = "Apache-2.0"
 description = "Native Compact semantics on Midnight ledger primitives"
+repository = "https://github.com/MediaNoxLabs/compact"
+homepage = "https://github.com/MediaNoxLabs/compact"
+readme = "README.md"
+include = ["Cargo.toml", "README.md", "src/**", "tests/**"]
 
 [dependencies]
-midnight-compact-runtime-macros = { path = "../runtime-rs-macros" }
+midnight-compact-runtime-macros = { version = "=0.1.0", path = "../runtime-rs-macros" }
 # Exact crates published with midnight-ledger's ledger-8.0.2 tag. They share
 # representation and VM APIs; minor-version mixing has already broken the VM.
 midnight-base-crypto = "=1.0.0"

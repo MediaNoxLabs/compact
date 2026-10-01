@@ -65,3 +65,23 @@ fn generated_counter_state_can_enter_a_replayable_ledger_trace() {
     }
     assert_eq!(recorded.public.verify_ops().len(), 3);
 }
+
+#[test]
+fn generated_counter_read_has_a_replayable_observation() {
+    let constructor = initial_state(ConstructorContext::new(())).unwrap();
+    let context = constructor.into_circuit_context(ContractAddress::default());
+    let incremented = recorded::increment(context).unwrap();
+    let read = recorded::read_round(incremented.execution.context).unwrap();
+    assert_eq!(read.execution.result.value(), 1);
+    let replay = read
+        .public
+        .initial()
+        .query(
+            read.public.verify_ops(),
+            None,
+            &read.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(read.execution.context.query.effects, replay.context.effects);
+    assert!(!read.public.verify_ops().is_empty());
+}

@@ -1547,6 +1547,8 @@ fn counter_read_returns_uint64() {
     };
     let source = render(&contract).unwrap();
     assert!(source.contains("context.read_cell::<u64>(0)?"));
+    assert!(source.contains("frame.read_cell(0)?"));
+    assert!(source.contains("let (frame, observed): (_, u64) = frame.read_cell(0)?;"));
     assert!(source.contains("pub struct Contract<W>"));
     assert!(source.contains("crate::ledger_contract::read_round(context"));
 

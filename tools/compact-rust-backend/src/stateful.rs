@@ -1368,8 +1368,7 @@ pub(crate) fn render_recorded_counter_circuit(
     circuit: &StatefulCircuit,
     ledger_fields: &HashMap<&str, &LedgerField>,
 ) -> Result<Option<syn::Item>, RenderError> {
-    if circuit.internal || circuit.result != Type::Unit || circuit.return_value != StateReturn::Unit
-    {
+    if circuit.internal {
         return Ok(None);
     }
 
@@ -1507,7 +1506,38 @@ pub(crate) fn render_recorded_counter_circuit(
             return Ok(None);
         }
     }
-    if steps.is_empty() {
+    let result_ty = rust_type(&circuit.result)?;
+    let (return_steps, result): (Vec<syn::Stmt>, syn::Expr) = match &circuit.return_value {
+        StateReturn::Unit if circuit.result == Type::Unit => {
+            if steps.is_empty() {
+                return Ok(None);
+            }
+            (Vec::new(), syn::parse_quote!(()))
+        }
+        StateReturn::CounterRead { field, index }
+            if circuit.result
+                == (Type::Unsigned {
+                    max: u64::MAX.to_string(),
+                }) =>
+        {
+            let declaration = ledger_fields
+                .get(field.as_str())
+                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+            if declaration.declaration != LedgerFieldKind::Counter || declaration.index != *index {
+                return Err(RenderError::UnknownLedgerField(field.clone()));
+            }
+            let path = ledger_path_expr(declaration);
+            (
+                vec![syn::parse_quote!(let (frame, observed): (_, u64) = frame.read_cell(#path)?;)],
+                syn::parse_quote!(
+                    runtime::BoundedUint::<18446744073709551615>::new(observed as u128)
+                        .expect("ledger Counter fits Uint<64>")
+                ),
+            )
+        }
+        _ => return Ok(None),
+    };
+    if steps.is_empty() && return_steps.is_empty() {
         return Ok(None);
     }
 
@@ -1515,10 +1545,11 @@ pub(crate) fn render_recorded_counter_circuit(
         pub fn #name<Private>(
             context: runtime::context::CircuitContext<Private>,
             #(#args),*
-        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError> {
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, #result_ty>, runtime::CompactError> {
             let frame = runtime::recording::RecordingFrame::new(context);
             #(#steps)*
-            Ok(frame.finish(()))
+            #(#return_steps)*
+            Ok(frame.finish(#result))
         }
     }))
 }

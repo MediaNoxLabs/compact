@@ -43,8 +43,8 @@ The Rust runtime has an opt-in `RecordingFrame` for Cell, Counter, and witness
 operations. It preserves the initial ledger query context, ordered verifying
 VM operations, and private witness outputs. Replay and `PreTranscript`
 partitioning pass for the supported slice. The compiler now emits
-`ledger_contract::recorded` functions for exported unit circuits consisting
-only of Counter increments and decrements. These functions return native
+`ledger_contract::recorded` functions for exported circuits consisting of
+Counter increments, decrements, and optional Counter reads. These functions return native
 execution and an ordered public program. Other generated circuit methods
 return native `CircuitResult`; complete operation recording, call proof inputs,
 and wallet submission remain Milestone 2 work.

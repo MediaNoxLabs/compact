@@ -91,7 +91,13 @@ def check_consumer(contract: Path, pure_contract: Path, consumer: Path) -> None:
         "    let replay = call.public.initial().query(\n"
         "        call.public.verify_ops(), None, &call.execution.context.cost_model,\n"
         "    ).unwrap();\n"
-        "    assert_eq!(replay.context.effects, call.execution.context.query.effects);\n}\n"
+        "    assert_eq!(replay.context.effects, call.execution.context.query.effects);\n"
+        "    let read = recorded::read_round(call.execution.context).unwrap();\n"
+        "    assert_eq!(read.execution.result.value(), 1);\n"
+        "    let replay = read.public.initial().query(\n"
+        "        read.public.verify_ops(), None, &read.execution.context.cost_model,\n"
+        "    ).unwrap();\n"
+        "    assert_eq!(replay.context.effects, read.execution.context.query.effects);\n}\n"
     )
     environment = os.environ.copy()
     environment.setdefault("CARGO_TARGET_DIR", str(ROOT / "target/compactc-consumer"))

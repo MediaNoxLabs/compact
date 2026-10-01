@@ -1,0 +1,58 @@
+use compact_rust_set_oracle_fixture::ledger_contract::{check, initial_state};
+use midnight_compact_runtime as runtime;
+use midnight_onchain_state::state::{
+    ContractMaintenanceAuthority, ContractOperation, ContractState, EntryPointBuf,
+};
+use midnight_serialize::tagged_serialize;
+use midnight_storage::storage::HashMap;
+use runtime::context::ConstructorContext;
+use runtime::ledger::{ContractAddress, DefaultDB, StateValue};
+
+fn state_hex(state: StateValue<DefaultDB>) -> String {
+    let operations: HashMap<EntryPointBuf, ContractOperation, DefaultDB> = HashMap::new().insert(
+        EntryPointBuf(b"check".to_vec()),
+        ContractOperation::new(None),
+    );
+    let contract_state =
+        ContractState::new(state, operations, ContractMaintenanceAuthority::default());
+    let mut bytes = Vec::new();
+    tagged_serialize(&contract_state, &mut bytes).unwrap();
+    hex::encode(bytes)
+}
+
+#[test]
+fn exact_set_member_oracle_matches_typescript_state() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/set-oracle.json"
+    ))
+    .unwrap();
+    let initial = initial_state(ConstructorContext::new(())).unwrap();
+    assert_eq!(
+        state_hex(initial.ledger_state.get_ref().clone()),
+        oracle["afterInit"]
+    );
+    let check7 = check(
+        initial.into_circuit_context(ContractAddress::default()),
+        runtime::Field::from(7_u64),
+    )
+    .unwrap();
+    assert_eq!(
+        state_hex(check7.context.query.state.get_ref().clone()),
+        oracle["afterCheck7"]
+    );
+    assert_eq!(
+        runtime::ledger::read_root_cell::<bool, _>(check7.context.query.state.get_ref(), 0)
+            .unwrap(),
+        oracle["flagAfterCheck7"]
+    );
+    let check8 = check(check7.context, runtime::Field::from(8_u64)).unwrap();
+    assert_eq!(
+        state_hex(check8.context.query.state.get_ref().clone()),
+        oracle["afterCheck8"]
+    );
+    assert_eq!(
+        runtime::ledger::read_root_cell::<bool, _>(check8.context.query.state.get_ref(), 0)
+            .unwrap(),
+        oracle["flagAfterCheck8"]
+    );
+}

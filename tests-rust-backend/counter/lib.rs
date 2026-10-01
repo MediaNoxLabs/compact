@@ -14,22 +14,29 @@ pub mod ledger_contract {
     impl<'a> LedgerView<'a> {}
     pub trait Witnesses<Private> {}
     pub fn initial_state<Private>(
-        context: runtime::context::ConstructorContext<Private>,
+        __compact_context: runtime::context::ConstructorContext<Private>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
         let state = runtime::ledger::contract_state(vec![runtime::ledger::constructor_counter()]);
-        Ok(runtime::context::ConstructorResult::new(context, state))
+        Ok(runtime::context::ConstructorResult::new(
+            __compact_context,
+            state,
+        ))
     }
     pub fn increment<Private>(
         context: runtime::context::CircuitContext<Private>,
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let step = context.increment_counter(0, 1)?;
+        let __compact_action_local_0: runtime::BoundedUint<65535> =
+            runtime::BoundedUint::<65535>::new(1u128)
+                .expect("Compact Uint literal fits its maximum");
+        let step = context.increment_counter(0, __compact_action_local_0.value() as u16)?;
         let context = step.context;
         total_cost += step.gas_cost;
+        let result = ();
         Ok(runtime::context::CircuitResult {
             context,
-            result: (),
+            result,
             gas_cost: total_cost,
             private_transcript_outputs,
         })
@@ -45,10 +52,11 @@ pub mod ledger_contract {
         let read_step = context.read_cell::<u64>(0)?;
         let context = read_step.context;
         total_cost += read_step.gas_cost;
+        let result = runtime::BoundedUint::<18446744073709551615>::new(read_step.result as u128)
+            .expect("ledger Counter fits Uint<64>");
         Ok(runtime::context::CircuitResult {
             context,
-            result: runtime::BoundedUint::<18446744073709551615>::new(read_step.result as u128)
-                .expect("ledger Counter fits Uint<64>"),
+            result,
             gas_cost: total_cost,
             private_transcript_outputs,
         })

@@ -25,6 +25,6 @@ pub mod pure_circuits {
     pub fn composite_identity(
         value: crate::types::Composite,
     ) -> Result<crate::types::Composite, runtime::CompactError> {
-        Ok(value)
+        Ok(value.clone())
     }
 }

@@ -14,13 +14,16 @@ pub mod ledger_contract {
     impl<'a> LedgerView<'a> {}
     pub trait Witnesses<Private> {}
     pub fn initial_state<Private>(
-        context: runtime::context::ConstructorContext<Private>,
+        __compact_context: runtime::context::ConstructorContext<Private>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
         let state = runtime::ledger::contract_state(vec![runtime::ledger::constructor_cell::<
             bool,
             runtime::ledger::DefaultDB,
         >(Default::default())]);
-        Ok(runtime::context::ConstructorResult::new(context, state))
+        Ok(runtime::context::ConstructorResult::new(
+            __compact_context,
+            state,
+        ))
     }
     pub fn read_flag<Private>(
         context: runtime::context::CircuitContext<Private>,
@@ -30,9 +33,10 @@ pub mod ledger_contract {
         let read_step = context.read_cell::<bool>(0)?;
         let context = read_step.context;
         total_cost += read_step.gas_cost;
+        let result = read_step.result;
         Ok(runtime::context::CircuitResult {
             context,
-            result: read_step.result,
+            result,
             gas_cost: total_cost,
             private_transcript_outputs,
         })

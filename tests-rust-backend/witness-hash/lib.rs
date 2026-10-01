@@ -25,10 +25,13 @@ pub mod ledger_contract {
         ) -> (Private, runtime::FixedBytes<32>);
     }
     pub fn initial_state<Private>(
-        context: runtime::context::ConstructorContext<Private>,
+        __compact_context: runtime::context::ConstructorContext<Private>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
         let state = runtime::ledger::contract_state(vec![]);
-        Ok(runtime::context::ConstructorResult::new(context, state))
+        Ok(runtime::context::ConstructorResult::new(
+            __compact_context,
+            state,
+        ))
     }
     pub fn hash_echo<Private, W: Witnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,

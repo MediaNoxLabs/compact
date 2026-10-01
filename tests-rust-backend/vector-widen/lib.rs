@@ -7,7 +7,7 @@ pub mod pure_circuits {
         values: runtime::FixedVector<runtime::BoundedUint<255>, 2>,
     ) -> Result<runtime::FixedVector<runtime::Field, 2>, runtime::CompactError> {
         Ok({
-            let __compact_cast_source_0 = (values).clone();
+            let __compact_cast_source_0 = (values.clone()).clone();
             runtime::FixedVector::new(
                 __compact_cast_source_0
                     .into_array()
@@ -29,7 +29,7 @@ pub mod pure_circuits {
         values: runtime::FixedVector<runtime::BoundedUint<255>, 2>,
     ) -> Result<runtime::FixedBytes<32>, runtime::CompactError> {
         Ok(runtime::persistent_hash({
-            let __compact_cast_source_0 = (values).clone();
+            let __compact_cast_source_0 = (values.clone()).clone();
             runtime::FixedVector::new(
                 __compact_cast_source_0
                     .into_array()
@@ -43,7 +43,7 @@ pub mod pure_circuits {
         values: runtime::FixedVector<runtime::BoundedUint<255>, 2>,
     ) -> Result<runtime::FixedBytes<32>, runtime::CompactError> {
         Ok(runtime::persistent_hash(runtime::FixedVector::new([{
-            let __compact_cast_source_0 = (values).clone();
+            let __compact_cast_source_0 = (values.clone()).clone();
             runtime::FixedVector::new(
                 __compact_cast_source_0
                     .into_array()

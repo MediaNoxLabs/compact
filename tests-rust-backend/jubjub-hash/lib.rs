@@ -15,6 +15,6 @@ pub mod pure_circuits {
     pub fn pair_point(
         value: runtime::FixedVector<runtime::Field, 2>,
     ) -> Result<runtime::JubjubPoint, runtime::CompactError> {
-        Ok(runtime::hash_to_curve(value))
+        Ok(runtime::hash_to_curve(value.clone()))
     }
 }

@@ -14,10 +14,13 @@ pub mod ledger_contract {
     impl<'a> LedgerView<'a> {}
     pub trait Witnesses<Private> {}
     pub fn initial_state<Private>(
-        context: runtime::context::ConstructorContext<Private>,
+        __compact_context: runtime::context::ConstructorContext<Private>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
         let state = runtime::ledger::contract_state(vec![runtime::ledger::constructor_counter()]);
-        Ok(runtime::context::ConstructorResult::new(context, state))
+        Ok(runtime::context::ConstructorResult::new(
+            __compact_context,
+            state,
+        ))
     }
     pub fn increment_by<Private>(
         context: runtime::context::CircuitContext<Private>,
@@ -28,9 +31,10 @@ pub mod ledger_contract {
         let step = context.increment_counter(0, __compact_param_0.value() as u16)?;
         let context = step.context;
         total_cost += step.gas_cost;
+        let result = ();
         Ok(runtime::context::CircuitResult {
             context,
-            result: (),
+            result,
             gas_cost: total_cost,
             private_transcript_outputs,
         })
@@ -44,9 +48,10 @@ pub mod ledger_contract {
         let step = context.decrement_counter(0, __compact_param_0.value() as u16)?;
         let context = step.context;
         total_cost += step.gas_cost;
+        let result = ();
         Ok(runtime::context::CircuitResult {
             context,
-            result: (),
+            result,
             gas_cost: total_cost,
             private_transcript_outputs,
         })
@@ -59,9 +64,10 @@ pub mod ledger_contract {
         let step = context.write_cell(0, 0_u64)?;
         let context = step.context;
         total_cost += step.gas_cost;
+        let result = ();
         Ok(runtime::context::CircuitResult {
             context,
-            result: (),
+            result,
             gas_cost: total_cost,
             private_transcript_outputs,
         })

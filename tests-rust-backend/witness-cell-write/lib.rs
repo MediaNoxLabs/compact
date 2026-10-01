@@ -24,13 +24,16 @@ pub mod ledger_contract {
         ) -> (Private, runtime::Field);
     }
     pub fn initial_state<Private>(
-        context: runtime::context::ConstructorContext<Private>,
+        __compact_context: runtime::context::ConstructorContext<Private>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
         let state = runtime::ledger::contract_state(vec![runtime::ledger::constructor_cell::<
             runtime::Field,
             runtime::ledger::DefaultDB,
         >(Default::default())]);
-        Ok(runtime::context::ConstructorResult::new(context, state))
+        Ok(runtime::context::ConstructorResult::new(
+            __compact_context,
+            state,
+        ))
     }
     pub fn write_secret<Private, W: Witnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,
@@ -40,23 +43,25 @@ pub mod ledger_contract {
         let mut total_cost = runtime::context::RunningCost::default();
         let mut private_transcript_outputs = Vec::new();
         let mut context = context;
-        let (__compact_next_private_0, __compact_witness_0) = witnesses.secret(
+        let __compact_argument_0 = __compact_param_0;
+        let (__compact_next_private_1, __compact_witness_1) = witnesses.secret(
             context.witness_context_with(LedgerView {
                 state: context.query.state.get_ref(),
             }),
-            __compact_param_0,
+            __compact_argument_0,
         );
-        context.private_state = __compact_next_private_0;
+        context.private_state = __compact_next_private_1;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_0.clone(),
+            __compact_witness_1.clone(),
         ));
-        let __compact_action_local_0: runtime::Field = __compact_witness_0;
+        let __compact_action_local_0: runtime::Field = __compact_witness_1;
         let step = context.write_cell(0, __compact_action_local_0)?;
         let context = step.context;
         total_cost += step.gas_cost;
+        let result = ();
         Ok(runtime::context::CircuitResult {
             context,
-            result: (),
+            result,
             gas_cost: total_cost,
             private_transcript_outputs,
         })
@@ -69,38 +74,41 @@ pub mod ledger_contract {
         let mut total_cost = runtime::context::RunningCost::default();
         let mut private_transcript_outputs = Vec::new();
         let mut context = context;
-        let (__compact_next_private_0, __compact_witness_0) = witnesses.secret(
-            context.witness_context_with(LedgerView {
-                state: context.query.state.get_ref(),
-            }),
-            __compact_param_0,
-        );
-        context.private_state = __compact_next_private_0;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_0.clone(),
-        ));
-        let __compact_action_local_0: runtime::Field = __compact_witness_0;
-        let step = context.write_cell(0, __compact_action_local_0)?;
-        let context = step.context;
-        total_cost += step.gas_cost;
-        let mut context = context;
+        let __compact_argument_0 = __compact_param_0;
         let (__compact_next_private_1, __compact_witness_1) = witnesses.secret(
             context.witness_context_with(LedgerView {
                 state: context.query.state.get_ref(),
             }),
-            __compact_param_0,
+            __compact_argument_0,
         );
         context.private_state = __compact_next_private_1;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
             __compact_witness_1.clone(),
         ));
-        let __compact_action_local_1: runtime::Field = __compact_witness_1;
+        let __compact_action_local_0: runtime::Field = __compact_witness_1;
+        let step = context.write_cell(0, __compact_action_local_0)?;
+        let context = step.context;
+        total_cost += step.gas_cost;
+        let mut context = context;
+        let __compact_argument_2 = __compact_param_0;
+        let (__compact_next_private_3, __compact_witness_3) = witnesses.secret(
+            context.witness_context_with(LedgerView {
+                state: context.query.state.get_ref(),
+            }),
+            __compact_argument_2,
+        );
+        context.private_state = __compact_next_private_3;
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
+            __compact_witness_3.clone(),
+        ));
+        let __compact_action_local_1: runtime::Field = __compact_witness_3;
         let step = context.write_cell(0, __compact_action_local_1)?;
         let context = step.context;
         total_cost += step.gas_cost;
+        let result = ();
         Ok(runtime::context::CircuitResult {
             context,
-            result: (),
+            result,
             gas_cost: total_cost,
             private_transcript_outputs,
         })
@@ -114,9 +122,10 @@ pub mod ledger_contract {
         let read_step = context.read_cell::<runtime::Field>(0)?;
         let context = read_step.context;
         total_cost += read_step.gas_cost;
+        let result = read_step.result;
         Ok(runtime::context::CircuitResult {
             context,
-            result: read_step.result,
+            result,
             gas_cost: total_cost,
             private_transcript_outputs,
         })

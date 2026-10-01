@@ -33,7 +33,7 @@ pub mod ledger_contract {
     impl<'a> LedgerView<'a> {}
     pub trait Witnesses<Private> {}
     pub fn initial_state<Private>(
-        context: runtime::context::ConstructorContext<Private>,
+        __compact_context: runtime::context::ConstructorContext<Private>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
         let state = runtime::ledger::contract_state(vec![
             runtime::ledger::constructor_cell::<runtime::JubjubPoint, runtime::ledger::DefaultDB>(
@@ -43,7 +43,10 @@ pub mod ledger_contract {
                 Default::default(),
             ),
         ]);
-        Ok(runtime::context::ConstructorResult::new(context, state))
+        Ok(runtime::context::ConstructorResult::new(
+            __compact_context,
+            state,
+        ))
     }
     pub fn set_point<Private>(
         context: runtime::context::CircuitContext<Private>,
@@ -85,7 +88,7 @@ pub mod ledger_contract {
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let step = context.write_cell(1, __compact_param_0)?;
+        let step = context.write_cell(1, __compact_param_0.clone())?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();

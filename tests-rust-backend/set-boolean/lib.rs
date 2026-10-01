@@ -14,13 +14,16 @@ pub mod ledger_contract {
     impl<'a> LedgerView<'a> {}
     pub trait Witnesses<Private> {}
     pub fn initial_state<Private>(
-        context: runtime::context::ConstructorContext<Private>,
+        __compact_context: runtime::context::ConstructorContext<Private>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
         let state = runtime::ledger::contract_state(vec![
             runtime::ledger::constructor_set(),
             runtime::ledger::constructor_set(),
         ]);
-        Ok(runtime::context::ConstructorResult::new(context, state))
+        Ok(runtime::context::ConstructorResult::new(
+            __compact_context,
+            state,
+        ))
     }
     pub fn add<Private>(
         context: runtime::context::CircuitContext<Private>,
@@ -31,9 +34,10 @@ pub mod ledger_contract {
         let step = context.insert_set(0, __compact_param_0)?;
         let context = step.context;
         total_cost += step.gas_cost;
+        let result = ();
         Ok(runtime::context::CircuitResult {
             context,
-            result: (),
+            result,
             gas_cost: total_cost,
             private_transcript_outputs,
         })
@@ -47,9 +51,10 @@ pub mod ledger_contract {
         let read_step = context.member_set(0, __compact_param_0)?;
         let context = read_step.context;
         total_cost += read_step.gas_cost;
+        let result = read_step.result;
         Ok(runtime::context::CircuitResult {
             context,
-            result: read_step.result,
+            result,
             gas_cost: total_cost,
             private_transcript_outputs,
         })
@@ -63,9 +68,10 @@ pub mod ledger_contract {
         let step = context.insert_set(1, __compact_param_0)?;
         let context = step.context;
         total_cost += step.gas_cost;
+        let result = ();
         Ok(runtime::context::CircuitResult {
             context,
-            result: (),
+            result,
             gas_cost: total_cost,
             private_transcript_outputs,
         })
@@ -79,9 +85,10 @@ pub mod ledger_contract {
         let read_step = context.member_set(1, __compact_param_0)?;
         let context = read_step.context;
         total_cost += read_step.gas_cost;
+        let result = read_step.result;
         Ok(runtime::context::CircuitResult {
             context,
-            result: read_step.result,
+            result,
             gas_cost: total_cost,
             private_transcript_outputs,
         })
@@ -95,9 +102,10 @@ pub mod ledger_contract {
         let step = context.remove_set(0, __compact_param_0)?;
         let context = step.context;
         total_cost += step.gas_cost;
+        let result = ();
         Ok(runtime::context::CircuitResult {
             context,
-            result: (),
+            result,
             gas_cost: total_cost,
             private_transcript_outputs,
         })
@@ -113,10 +121,11 @@ pub mod ledger_contract {
         let read_step = context.size_set(0)?;
         let context = read_step.context;
         total_cost += read_step.gas_cost;
+        let result = runtime::BoundedUint::<18446744073709551615>::new(read_step.result as u128)
+            .expect("ledger collection size fits Uint<64>");
         Ok(runtime::context::CircuitResult {
             context,
-            result: runtime::BoundedUint::<18446744073709551615>::new(read_step.result as u128)
-                .expect("ledger collection size fits Uint<64>"),
+            result,
             gas_cost: total_cost,
             private_transcript_outputs,
         })
@@ -129,9 +138,10 @@ pub mod ledger_contract {
         let read_step = context.is_empty_set(0)?;
         let context = read_step.context;
         total_cost += read_step.gas_cost;
+        let result = read_step.result;
         Ok(runtime::context::CircuitResult {
             context,
-            result: read_step.result,
+            result,
             gas_cost: total_cost,
             private_transcript_outputs,
         })
@@ -144,9 +154,10 @@ pub mod ledger_contract {
         let step = context.reset_set(1)?;
         let context = step.context;
         total_cost += step.gas_cost;
+        let result = ();
         Ok(runtime::context::CircuitResult {
             context,
-            result: (),
+            result,
             gas_cost: total_cost,
             private_transcript_outputs,
         })

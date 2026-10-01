@@ -25,6 +25,6 @@ pub mod pure_circuits {
     pub fn pair_identity(
         value: crate::types::Pair,
     ) -> Result<crate::types::Pair, runtime::CompactError> {
-        Ok(value)
+        Ok(value.clone())
     }
 }

@@ -26,10 +26,13 @@ pub mod ledger_contract {
         ) -> (Private, runtime::BoundedUint<18446744073709551615>);
     }
     pub fn initial_state<Private>(
-        context: runtime::context::ConstructorContext<Private>,
+        __compact_context: runtime::context::ConstructorContext<Private>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
         let state = runtime::ledger::contract_state(vec![runtime::ledger::constructor_counter()]);
-        Ok(runtime::context::ConstructorResult::new(context, state))
+        Ok(runtime::context::ConstructorResult::new(
+            __compact_context,
+            state,
+        ))
     }
     pub fn increment_round<Private>(
         context: runtime::context::CircuitContext<Private>,

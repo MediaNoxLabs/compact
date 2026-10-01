@@ -14,10 +14,13 @@ pub mod ledger_contract {
     impl<'a> LedgerView<'a> {}
     pub trait Witnesses<Private> {}
     pub fn initial_state<Private>(
-        context: runtime::context::ConstructorContext<Private>,
+        __compact_context: runtime::context::ConstructorContext<Private>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
         let state = runtime::ledger::contract_state(vec![runtime::ledger::constructor_map()]);
-        Ok(runtime::context::ConstructorResult::new(context, state))
+        Ok(runtime::context::ConstructorResult::new(
+            __compact_context,
+            state,
+        ))
     }
     pub fn put_literal<Private>(
         context: runtime::context::CircuitContext<Private>,
@@ -28,9 +31,10 @@ pub mod ledger_contract {
         let step = context.insert_map(0, true, __compact_action_local_0)?;
         let context = step.context;
         total_cost += step.gas_cost;
+        let result = ();
         Ok(runtime::context::CircuitResult {
             context,
-            result: (),
+            result,
             gas_cost: total_cost,
             private_transcript_outputs,
         })
@@ -44,9 +48,10 @@ pub mod ledger_contract {
         let read_step = context.lookup_map::<_, runtime::Field>(0, true)?;
         let context = read_step.context;
         total_cost += read_step.gas_cost;
+        let result = read_step.result;
         Ok(runtime::context::CircuitResult {
             context,
-            result: read_step.result,
+            result,
             gas_cost: total_cost,
             private_transcript_outputs,
         })

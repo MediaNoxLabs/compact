@@ -15,13 +15,13 @@ pub mod pure_circuits {
     pub fn hash_pair(
         value: runtime::FixedVector<runtime::Field, 2>,
     ) -> Result<runtime::Field, runtime::CompactError> {
-        Ok(runtime::transient_hash(value))
+        Ok(runtime::transient_hash(value.clone()))
     }
     pub fn commit_pair(
         value: runtime::FixedVector<runtime::Field, 2>,
         opening: runtime::Field,
     ) -> Result<runtime::Field, runtime::CompactError> {
-        Ok(runtime::transient_commit(value, opening))
+        Ok(runtime::transient_commit(value.clone(), opening))
     }
     pub fn hash_bytes(
         value: runtime::FixedBytes<4>,

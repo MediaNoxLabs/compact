@@ -23,13 +23,16 @@ pub mod ledger_contract {
         ) -> (Private, bool);
     }
     pub fn initial_state<Private>(
-        context: runtime::context::ConstructorContext<Private>,
+        __compact_context: runtime::context::ConstructorContext<Private>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
         let state = runtime::ledger::contract_state(vec![runtime::ledger::constructor_cell::<
             bool,
             runtime::ledger::DefaultDB,
         >(Default::default())]);
-        Ok(runtime::context::ConstructorResult::new(context, state))
+        Ok(runtime::context::ConstructorResult::new(
+            __compact_context,
+            state,
+        ))
     }
     pub fn set_flag<Private>(
         context: runtime::context::CircuitContext<Private>,

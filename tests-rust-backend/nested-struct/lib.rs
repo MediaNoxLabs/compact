@@ -39,6 +39,6 @@ pub mod pure_circuits {
     pub fn nested_identity(
         value: crate::types::Outer,
     ) -> Result<crate::types::Outer, runtime::CompactError> {
-        Ok(value)
+        Ok(value.clone())
     }
 }

@@ -24,13 +24,16 @@ pub mod ledger_contract {
         ) -> (Private, bool);
     }
     pub fn initial_state<Private>(
-        context: runtime::context::ConstructorContext<Private>,
+        __compact_context: runtime::context::ConstructorContext<Private>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
         let state = runtime::ledger::contract_state(vec![runtime::ledger::constructor_cell::<
             runtime::Field,
             runtime::ledger::DefaultDB,
         >(Default::default())]);
-        Ok(runtime::context::ConstructorResult::new(context, state))
+        Ok(runtime::context::ConstructorResult::new(
+            __compact_context,
+            state,
+        ))
     }
     pub fn checked_value<Private, W: Witnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,
@@ -54,7 +57,7 @@ pub mod ledger_contract {
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
             __compact_witness_1.clone(),
         ));
-        if !__compact_witness_1 {
+        if !(__compact_witness_1) {
             return Err(runtime::CompactError::AssertionFailed(
                 "first witness failed".to_owned(),
             ));
@@ -71,7 +74,7 @@ pub mod ledger_contract {
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
             __compact_witness_3.clone(),
         ));
-        if !__compact_witness_3 {
+        if !(__compact_witness_3) {
             return Err(runtime::CompactError::AssertionFailed(
                 "second witness failed".to_owned(),
             ));
@@ -104,7 +107,7 @@ pub mod ledger_contract {
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
             __compact_witness_1.clone(),
         ));
-        if !__compact_witness_1 {
+        if !(__compact_witness_1) {
             return Err(runtime::CompactError::AssertionFailed(
                 "write denied".to_owned(),
             ));

@@ -17,7 +17,7 @@ pub mod pure_circuits {
     pub fn hash_pair(
         value: runtime::FixedVector<runtime::Field, 2>,
     ) -> Result<runtime::FixedBytes<32>, runtime::CompactError> {
-        Ok(runtime::persistent_hash(value))
+        Ok(runtime::persistent_hash(value.clone()))
     }
     pub fn degrade_digest(
         value: runtime::FixedBytes<32>,

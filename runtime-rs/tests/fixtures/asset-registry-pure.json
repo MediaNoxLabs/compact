@@ -1,0 +1,4 @@
+{
+  "gap": "20",
+  "reverseError": "failed assert: newer record must not predate the older one"
+}

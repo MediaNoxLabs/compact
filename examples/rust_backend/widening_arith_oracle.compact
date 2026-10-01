@@ -1,0 +1,84 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//  	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+//
+// Mid-ladder widening-cast fixture for `mbits->rust-width` /
+// `arith-binop-rust` (rust-passes-emit.ss).
+//
+// The emitter casts BOTH operands of unsigned `+`/`-`/`*` to the result
+// width implied by the typer's `mbits`, so that `wrapping_*` runs at the
+// result width rather than at the receiver's narrower native width.
+// `mbits->rust-width` maps mbits onto a five-rung ladder
+// (u8/u16/u32/u64/u128) via `<=` boundary comparisons.
+//
+// Coverage this fixture adds: the u16 and u32 rungs, which no other
+// fixture reaches. Before it, the ladder was exercised only at:
+//   - u64  — the same-width no-op case (`Uint<64> - Uint<64>`, mbits=64)
+//            in asset_registry_fixture / guarded_assert_arith_fixture;
+//   - u128 — a genuine widening (`x * 2` on Uint<64>, mbits=65) in
+//            map_lambda_fixture.
+//
+// So widening itself was covered, but three of the five rungs — and both
+// interior boundaries — were not. An off-by-one in a rung comparison
+// (`<= 16` vs `< 16`) would silently pick the wrong width, and because
+// `wrapping_*` cannot overflow it would produce a WRONG VALUE rather
+// than a panic, in generated code that still compiles. That is precisely
+// the failure the byte-parity corpus exists to catch.
+//
+// Circuits, one per rung/boundary:
+//   - `sumBytes`:      Uint<8>  + Uint<8>   mbits=9  -> u16 (widen 8->16)
+//   - `ageThresholdDays`: Uint<8> * 365     mbits=17 -> u32 (widen 8->32,
+//                      the shape the deleted digital-passport covered)
+//   - `productBytes`:  Uint<8>  * Uint<8>   mbits=16 -> u16 (upper edge
+//                      of the u16 rung: 16 must still map to u16, not u32)
+//   - `areaOf`:        Uint<16> * Uint<16>  mbits=32 -> u32 (upper edge
+//                      of the u32 rung, and a widen from a non-8 width)
+//   - `recordArea`:    impure caller, so the values are reachable from an
+//                      executing test rather than only from the emitted text.
+
+import CompactStandardLibrary;
+
+export ledger lastArea: Counter;
+
+// mbits = 9 -> u16. Operands are u8, so both are widened.
+export pure circuit sumBytes(a: Uint<8>, b: Uint<8>): Uint<16> {
+  return a + b;
+}
+
+// mbits = 17 -> u32. The `Uint<8> * literal` shape called out in the
+// emitter's own comment, and the one the removed digital-passport fixture
+// was the only carrier of.
+export pure circuit ageThresholdDays(years: Uint<8>): Uint<32> {
+  return years * 365;
+}
+
+// 255 * 255 = 65025, mbits = 16 -> u16. Pins the u16/u32 boundary from
+// below: an off-by-one in `(<= mbits 16)` would widen this to u32.
+export pure circuit productBytes(a: Uint<8>, b: Uint<8>): Uint<16> {
+  return a * b;
+}
+
+// 65535 * 65535, mbits = 32 -> u32. Pins the u32/u64 boundary from below
+// and widens from u16 rather than u8.
+export pure circuit areaOf(w: Uint<16>, h: Uint<16>): Uint<32> {
+  return w * h;
+}
+
+// Impure caller so an executing test can observe the widened results
+// through the ledger, not just read them out of the generated source.
+export circuit recordArea(w: Uint<16>, h: Uint<16>): [] {
+  const area = areaOf(w, h);
+  lastArea.increment(1);
+}

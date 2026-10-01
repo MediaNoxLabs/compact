@@ -260,16 +260,16 @@ pub mod pure_circuits {
             if (policy.clone()).enforceMaxAge.clone() {
                 {
                     if !({
-                        let __compact_local_t: runtime::BoundedUint<18446744073709551615> = {
-                            let __compact_local_t: runtime::BoundedUint<18446744073709551615> =
+                        let __compact_local_t_114: runtime::BoundedUint<18446744073709551615> = {
+                            let __compact_local_t_115: runtime::BoundedUint<18446744073709551615> =
                                 ((record.clone()).provenance.clone()).registeredAt.clone();
                             runtime::subtract_unsigned::<
                                 18446744073709551615,
                                 18446744073709551615,
                                 18446744073709551615,
-                            >(currentTime, __compact_local_t)?
+                            >(currentTime, __compact_local_t_115)?
                         };
-                        __compact_local_t.value() <= (policy.clone()).maxAge.clone().value()
+                        __compact_local_t_114.value() <= (policy.clone()).maxAge.clone().value()
                     }) {
                         return Err(runtime::CompactError::AssertionFailed(
                             "record exceeds the max-age policy".to_owned(),
@@ -289,9 +289,9 @@ pub mod pure_circuits {
         Ok({
             {
                 if !({
-                    let __compact_local_t: runtime::BoundedUint<18446744073709551615> =
+                    let __compact_local_t_111: runtime::BoundedUint<18446744073709551615> =
                         ((newer.clone()).provenance.clone()).registeredAt.clone();
-                    __compact_local_t.value()
+                    __compact_local_t_111.value()
                         >= ((older.clone()).provenance.clone())
                             .registeredAt
                             .clone()
@@ -303,16 +303,16 @@ pub mod pure_circuits {
                 }
             };
             {
-                let __compact_local_t: runtime::BoundedUint<18446744073709551615> =
+                let __compact_local_t_112: runtime::BoundedUint<18446744073709551615> =
                     ((newer.clone()).provenance.clone()).registeredAt.clone();
                 {
-                    let __compact_local_t: runtime::BoundedUint<18446744073709551615> =
+                    let __compact_local_t_113: runtime::BoundedUint<18446744073709551615> =
                         ((older.clone()).provenance.clone()).registeredAt.clone();
                     runtime::subtract_unsigned::<
                         18446744073709551615,
                         18446744073709551615,
                         18446744073709551615,
-                    >(__compact_local_t, __compact_local_t)?
+                    >(__compact_local_t_112, __compact_local_t_113)?
                 }
             }
         })
@@ -338,9 +338,9 @@ pub mod pure_circuits {
         Ok({
             {
                 if !({
-                    let __compact_local_t: runtime::BoundedUint<18446744073709551615> =
+                    let __compact_local_t_110: runtime::BoundedUint<18446744073709551615> =
                         (grant.clone()).grantedAt.clone();
-                    __compact_local_t.value() <= asOf.value()
+                    __compact_local_t_110.value() <= asOf.value()
                 }) {
                     return Err(runtime::CompactError::AssertionFailed(
                         "grant is not yet effective".to_owned(),

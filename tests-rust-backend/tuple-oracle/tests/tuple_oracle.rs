@@ -1,22 +1,38 @@
-use compact_rust_tuple_oracle_fixture::ledger_contract::initial_state;
+use compact_rust_tuple_oracle_fixture::ledger_contract::{initial_state, ping};
 use compact_rust_tuple_oracle_fixture::pure_circuits::{
     as_tuple, as_vector, empty_tuple, hetero, one_tuple, struct_vector_return,
-    struct_vector_to_tuple, tuple_coerce, tuple_first, tuple_second, tuple_to_vector,
-    tuple_var_ref,
+    struct_vector_to_tuple, tuple_coerce, tuple_to_vector, tuple_var_ref,
 };
 use compact_rust_tuple_oracle_fixture::types::Pair;
-use midnight_compact_runtime::context::ConstructorContext;
-use midnight_compact_runtime::ledger::{DefaultDB, StateValue};
-use midnight_compact_runtime::{BoundedUint, Field, FixedVector};
+use midnight_compact_runtime as runtime;
 use midnight_onchain_state::state::{
     ContractMaintenanceAuthority, ContractOperation, ContractState, EntryPointBuf,
 };
 use midnight_serialize::tagged_serialize;
 use midnight_storage::storage::HashMap;
+use runtime::context::ConstructorContext;
+use runtime::ledger::{ContractAddress, DefaultDB, StateValue};
+
+fn field(value: &serde_json::Value) -> runtime::Field {
+    runtime::Field::from(value.as_str().unwrap().parse::<u64>().unwrap())
+}
+
+fn fields(value: &serde_json::Value) -> Vec<runtime::Field> {
+    value.as_array().unwrap().iter().map(field).collect()
+}
+
+fn assert_pairs(actual: (Pair, Pair), expected: &serde_json::Value) {
+    for (pair, oracle) in [actual.0, actual.1]
+        .into_iter()
+        .zip(expected.as_array().unwrap())
+    {
+        assert_eq!(pair.a, field(&oracle["a"]));
+        assert_eq!(pair.b.value().to_string(), oracle["b"]);
+    }
+}
 
 fn state_hex(state: StateValue<DefaultDB>) -> String {
-    let operations: HashMap<EntryPointBuf, ContractOperation, DefaultDB> = HashMap::new();
-    let operations = operations.insert(
+    let operations: HashMap<EntryPointBuf, ContractOperation, DefaultDB> = HashMap::new().insert(
         EntryPointBuf(b"ping".to_vec()),
         ContractOperation::new(None),
     );
@@ -28,76 +44,58 @@ fn state_hex(state: StateValue<DefaultDB>) -> String {
 }
 
 #[test]
-fn tuple_shapes_and_coercions_match_typescript() {
+fn exact_tuple_oracle_matches_typescript_values_and_state() {
     let oracle: serde_json::Value = serde_json::from_str(include_str!(
         "../../../runtime-rs/tests/fixtures/tuple-oracle.json"
     ))
     .unwrap();
-    let constructor = initial_state(ConstructorContext::new(())).unwrap();
+    let values = &oracle["results"];
+    let seven = runtime::Field::from(7_u64);
+    let nine = runtime::BoundedUint::<255>::new(9).unwrap();
+    let eleven = runtime::Field::from(11_u64);
     assert_eq!(
-        state_hex(constructor.ledger_state.get_ref().clone()),
-        oracle["initialHex"]
+        as_vector(seven).unwrap().0.to_vec(),
+        fields(&values["asVector"])
     );
-
-    let field = Field::from(7_u64);
-    let small = BoundedUint::<255>::new(255).unwrap();
-    let pair = (field, field);
-    assert_eq!(as_vector(field).unwrap(), FixedVector::new([field; 2]));
-    assert_eq!(as_tuple(field).unwrap(), pair);
+    let pair = as_tuple(seven).unwrap();
+    assert_eq!(vec![pair.0, pair.1], fields(&values["asTuple"]));
+    let pair = hetero(nine).unwrap();
+    assert_eq!(pair.0, field(&values["hetero"][0]));
+    assert_eq!(pair.1.value().to_string(), values["hetero"][1]);
     assert_eq!(
-        hetero(small).unwrap(),
-        (
-            Field::from(255_u64),
-            BoundedUint::<65535>::new(255).unwrap()
-        )
+        vec![one_tuple(seven).unwrap().0],
+        fields(&values["oneTuple"])
     );
-    assert_eq!(one_tuple(field).unwrap(), (field,));
     assert_eq!(empty_tuple().unwrap(), ());
+    assert!(values["emptyTuple"].as_array().unwrap().is_empty());
+    let pair = tuple_coerce(nine).unwrap();
+    assert_eq!(vec![pair.0, pair.1], fields(&values["tupleCoerce"]));
+    let pair = tuple_var_ref(nine).unwrap();
+    assert_eq!(vec![pair.0, pair.1], fields(&values["tupleVarRef"]));
     assert_eq!(
-        tuple_coerce(small).unwrap(),
-        (Field::from(255_u64), Field::from(255_u64))
+        tuple_to_vector(seven).unwrap().0.to_vec(),
+        fields(&values["tupleToVector"])
     );
-    assert_eq!(
-        tuple_var_ref(small).unwrap(),
-        (Field::from(255_u64), Field::from(255_u64))
+    assert_pairs(
+        struct_vector_return(eleven).unwrap(),
+        &values["structVectorReturn"],
     );
-    assert_eq!(
-        tuple_to_vector(field).unwrap(),
-        FixedVector::new([field; 2])
+    assert_pairs(
+        struct_vector_to_tuple(eleven).unwrap(),
+        &values["structVectorToTuple"],
     );
 
-    let expected_structs = (
-        Pair {
-            a: field,
-            b: BoundedUint::<255>::new(1).unwrap(),
-        },
-        Pair {
-            a: field,
-            b: BoundedUint::<255>::new(2).unwrap(),
-        },
+    let initial = initial_state(ConstructorContext::new(())).unwrap();
+    assert_eq!(
+        state_hex(initial.ledger_state.get_ref().clone()),
+        oracle["afterInit"]
     );
-    assert_eq!(struct_vector_return(field).unwrap(), expected_structs);
-    assert_eq!(struct_vector_to_tuple(field).unwrap(), expected_structs);
-    assert_eq!(tuple_first(field, true).unwrap(), field);
-    assert!(tuple_second(field, true).unwrap());
-    assert_eq!(oracle["tupleFirst"], "7");
-    assert_eq!(oracle["tupleSecond"], true);
-
-    for key in ["asVector", "asTuple", "tupleToVector"] {
-        assert_eq!(oracle[key], serde_json::json!(["7", "7"]));
-    }
-    for key in ["tupleCoerce", "tupleVarRef"] {
-        assert_eq!(oracle[key], serde_json::json!(["255", "255"]));
-    }
-    assert_eq!(oracle["hetero"], serde_json::json!(["255", "255"]));
-    assert_eq!(oracle["oneTuple"], serde_json::json!(["7"]));
-    assert_eq!(oracle["emptyTuple"], serde_json::json!([]));
-    for key in ["structVectorReturn", "structVectorToTuple"] {
-        assert_eq!(
-            oracle[key],
-            serde_json::json!([
-                { "a": "7", "b": "1" }, { "a": "7", "b": "2" }
-            ])
-        );
-    }
+    let after = ping(initial.into_circuit_context(ContractAddress::default())).unwrap();
+    assert_eq!(
+        state_hex(after.context.query.state.get_ref().clone()),
+        oracle["afterPing"]
+    );
+    let flag =
+        runtime::ledger::read_root_cell::<bool, _>(after.context.query.state.get_ref(), 0).unwrap();
+    assert_eq!(flag, oracle["flagAfterPing"]);
 }

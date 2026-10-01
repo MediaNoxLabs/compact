@@ -104,6 +104,18 @@ export pure circuit struct_vector_to_tuple(x: Field): [Pair, Pair] {
   return t;
 }
 
+export pure circuit tuple_first(x: Field, flag: Boolean): Field {
+  const pair: [Field, Boolean] = [x, flag];
+  const [first, second] = pair;
+  return first;
+}
+
+export pure circuit tuple_second(x: Field, flag: Boolean): Boolean {
+  const pair: [Field, Boolean] = [x, flag];
+  const [first, second] = pair;
+  return second;
+}
+
 export circuit ping(): [] {
   flag.write(true);
 }

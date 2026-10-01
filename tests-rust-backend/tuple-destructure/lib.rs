@@ -134,6 +134,45 @@ pub mod pure_circuits {
             }
         })
     }
+    pub fn tuple_first(
+        x: runtime::Field,
+        flag: bool,
+    ) -> Result<runtime::Field, runtime::CompactError> {
+        Ok({
+            let __compact_local_pair: (runtime::Field, bool) = (x, flag);
+            {
+                let __compact_local___compact_pattern_tmp2: (runtime::Field, bool) =
+                    __compact_local_pair;
+                {
+                    let __compact_local_first: runtime::Field =
+                        (__compact_local___compact_pattern_tmp2).0;
+                    {
+                        let __compact_local_second: bool =
+                            (__compact_local___compact_pattern_tmp2).1;
+                        __compact_local_first
+                    }
+                }
+            }
+        })
+    }
+    pub fn tuple_second(x: runtime::Field, flag: bool) -> Result<bool, runtime::CompactError> {
+        Ok({
+            let __compact_local_pair: (runtime::Field, bool) = (x, flag);
+            {
+                let __compact_local___compact_pattern_tmp1: (runtime::Field, bool) =
+                    __compact_local_pair;
+                {
+                    let __compact_local_first: runtime::Field =
+                        (__compact_local___compact_pattern_tmp1).0;
+                    {
+                        let __compact_local_second: bool =
+                            (__compact_local___compact_pattern_tmp1).1;
+                        __compact_local_second
+                    }
+                }
+            }
+        })
+    }
 }
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;

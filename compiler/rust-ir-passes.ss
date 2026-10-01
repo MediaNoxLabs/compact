@@ -32,6 +32,15 @@
     (definitions
       (define (object . fields) fields)
 
+      ;; Lowering can create distinct temporaries with the same source
+      ;; symbol. Preserve their ID identity in the Rust IR so nested lets
+      ;; cannot silently shadow an earlier operand.
+      (define (rust-var-name var-name)
+        (let ([base (symbol->string (id-sym var-name))])
+          (if (id-temp? var-name)
+              (format "~a_~a" base (id-uniq var-name))
+              base)))
+
       (define call-argument-types (make-eq-hashtable))
       (define current-variable-types (make-parameter #f))
       (define struct-shape-names '())
@@ -147,7 +156,7 @@
                         (map (lambda (local value)
                                (nanopass-case (Lnodisclose Argument) local
                                  [(,var-name ,type)
-                                  (object (cons "name" (symbol->string (id-sym var-name)))
+                                  (object (cons "name" (rust-var-name var-name))
                                           (cons "ty" (type-ir type src))
                                           (cons "value" (typed-expression-ir value type src)))]))
                              local* expr*)))
@@ -183,7 +192,7 @@
           [(return ,src ,expr) (expression-ir expr owner-src)]
           [(var-ref ,src ,var-name)
            (object (cons "kind" "parameter")
-                   (cons "name" (symbol->string (id-sym var-name))))]
+                   (cons "name" (rust-var-name var-name)))]
           [(elt-ref ,src ,expr ,elt-name ,nat)
            (object (cons "kind" "struct_field")
                    (cons "value" (expression-ir expr src))
@@ -294,7 +303,7 @@
                       (eq-hashtable-set! (current-variable-types) var-name type^))
                     (object (cons "kind" "vector_map")
                             (cons "parameter"
-                                  (object (cons "name" (symbol->string (id-sym var-name)))
+                                  (object (cons "name" (rust-var-name var-name))
                                           (cons "ty" (type-ir type^ src))))
                             (cons "source" (typed-expression-ir expr1 type1 src))
                             (cons "body" (typed-expression-ir expr type src))
@@ -650,7 +659,7 @@
       (define (argument-ir arg owner-src)
         (nanopass-case (Lnodisclose Argument) arg
           [(,var-name ,type)
-           (object (cons "name" (symbol->string (id-sym var-name)))
+           (object (cons "name" (rust-var-name var-name))
                    (cons "ty" (type-ir type owner-src)))]))
 
       (define (exported-names function-name export-alist)
@@ -873,7 +882,7 @@
                          [(,var-name ,type)
                           (cons (cons (id-sym var-name)
                                       (object (cons "kind" "parameter")
-                                              (cons "name" (symbol->string (id-sym var-name)))))
+                                              (cons "name" (rust-var-name var-name))))
                                 environment)]))
                      environment local* expr*)])
              (object (cons "kind" "let")
@@ -882,7 +891,7 @@
                              (map (lambda (local value)
                                     (nanopass-case (Lnodisclose Argument) local
                                       [(,var-name ,type)
-                                       (object (cons "name" (symbol->string (id-sym var-name)))
+                                       (object (cons "name" (rust-var-name var-name))
                                                (cons "ty" (type-ir type src))
                                                (cons "value" (stateful-typed-expression-ir value type src witness-ids)))]))
                                   local* expr*)))
@@ -1257,7 +1266,7 @@
                            (map (lambda (local value)
                                   (nanopass-case (Lnodisclose Argument) local
                                     [(,var-name ,type)
-                                     (object (cons "name" (symbol->string (id-sym var-name)))
+                                     (object (cons "name" (rust-var-name var-name))
                                              (cons "ty" (type-ir type src))
                                              (cons "value" (stateful-typed-expression-ir value type src witness-ids)))]))
                                 local* expr*)))
@@ -1497,7 +1506,7 @@
                                                      [(,var-name ,type)
                                                       (cons (id-sym var-name)
                                                             (object (cons "kind" "parameter")
-                                                                    (cons "name" (symbol->string (id-sym var-name)))))]))
+                                                                    (cons "name" (rust-var-name var-name))))]))
                                                  arg*) witness-ids)))
                             (if (member name names) '() (list (cons "internal" #t)))))
                         all-names)
@@ -1649,7 +1658,7 @@
                              (map (lambda (local value)
                                     (nanopass-case (Lnodisclose Argument) local
                                       [(,var-name ,type)
-                                       (object (cons "name" (symbol->string (id-sym var-name)))
+                                       (object (cons "name" (rust-var-name var-name))
                                                (cons "ty" (type-ir type src))
                                                (cons "value" (constructor-typed-expression-ir value type src witness-ids)))]))
                                   local* expr*)))

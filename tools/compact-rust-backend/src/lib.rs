@@ -432,6 +432,30 @@ fn collect_action_types(
     Ok(())
 }
 
+fn coerce_aggregate_fields(
+    sources: &[Type],
+    targets: &[Type],
+    depth: usize,
+) -> Result<(Vec<syn::Ident>, Vec<syn::Expr>), RenderError> {
+    debug_assert_eq!(sources.len(), targets.len());
+    let items = (0..sources.len())
+        .map(|index| {
+            syn::Ident::new(
+                &format!("__compact_cast_item_{depth}_{index}"),
+                Span::call_site(),
+            )
+        })
+        .collect::<Vec<_>>();
+    let mapped = items
+        .iter()
+        .zip(sources.iter().zip(targets))
+        .map(|(item, (source_ty, target_ty))| {
+            coerce_expression(syn::parse_quote!(#item), source_ty, target_ty, depth + 1)
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok((items, mapped))
+}
+
 fn coerce_expression(
     value: syn::Expr,
     actual: &Type,
@@ -444,6 +468,23 @@ fn coerce_expression(
     match (actual, target) {
         (Type::Unsigned { .. }, Type::Field) => {
             Ok(syn::parse_quote!(runtime::Field::from((#value).value())))
+        }
+        (Type::Unsigned { max: source_max }, Type::Unsigned { max: target_max }) => {
+            let source_maximum = source_max
+                .parse::<u128>()
+                .map_err(|_| RenderError::InvalidUnsignedMaximum(source_max.clone()))?;
+            let target_maximum = target_max
+                .parse::<u128>()
+                .map_err(|_| RenderError::InvalidUnsignedMaximum(target_max.clone()))?;
+            if source_maximum > target_maximum {
+                return Err(RenderError::TypeMismatch {
+                    expected: target.clone(),
+                    actual: actual.clone(),
+                });
+            }
+            let source_lit = syn::LitInt::new(source_max, Span::call_site());
+            let target_lit = syn::LitInt::new(target_max, Span::call_site());
+            Ok(syn::parse_quote!(runtime::cast_unsigned::<#source_lit, #target_lit>(#value)?))
         }
         (
             Type::Vector {
@@ -465,8 +506,54 @@ fn coerce_expression(
                 depth + 1,
             )?;
             Ok(syn::parse_quote!({
-                let #source = (#value).clone();
+                let #source = #value;
                 runtime::FixedVector::new(#source.into_array().map(|#item| #mapped))
+            }))
+        }
+        (Type::Tuple { elements: sources }, Type::Tuple { elements: targets })
+            if sources.len() == targets.len() && !sources.is_empty() =>
+        {
+            let source =
+                syn::Ident::new(&format!("__compact_cast_source_{depth}"), Span::call_site());
+            let (items, mapped) = coerce_aggregate_fields(sources, targets, depth)?;
+            Ok(syn::parse_quote!({
+                let #source = #value;
+                let (#(#items),*,) = #source;
+                (#(#mapped),*,)
+            }))
+        }
+        (
+            Type::Tuple { elements: sources },
+            Type::Vector {
+                element: target_element,
+                length,
+            },
+        ) if sources.len() == *length && !sources.is_empty() => {
+            let source =
+                syn::Ident::new(&format!("__compact_cast_source_{depth}"), Span::call_site());
+            let targets = vec![*target_element.clone(); sources.len()];
+            let (items, mapped) = coerce_aggregate_fields(sources, &targets, depth)?;
+            Ok(syn::parse_quote!({
+                let #source = #value;
+                let (#(#items),*,) = #source;
+                runtime::FixedVector::new([#(#mapped),*])
+            }))
+        }
+        (
+            Type::Vector {
+                element: source_element,
+                length,
+            },
+            Type::Tuple { elements: targets },
+        ) if *length == targets.len() && !targets.is_empty() => {
+            let source =
+                syn::Ident::new(&format!("__compact_cast_source_{depth}"), Span::call_site());
+            let sources = vec![*source_element.clone(); targets.len()];
+            let (items, mapped) = coerce_aggregate_fields(&sources, targets, depth)?;
+            Ok(syn::parse_quote!({
+                let #source = #value;
+                let [#(#items),*] = #source.into_array();
+                (#(#mapped),*,)
             }))
         }
         _ => Err(RenderError::TypeMismatch {

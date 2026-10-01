@@ -150,6 +150,53 @@ fn vector_coercion_rejects_length_changes() {
 }
 
 #[test]
+fn tuple_coercion_widens_uints_but_rejects_narrowing() {
+    let source = Type::Tuple {
+        elements: vec![
+            Type::Unsigned { max: "255".into() },
+            Type::Unsigned { max: "255".into() },
+        ],
+    };
+    let target = Type::Tuple {
+        elements: vec![
+            Type::Field,
+            Type::Unsigned {
+                max: "65535".into(),
+            },
+        ],
+    };
+    let mut contract = identity(
+        target.clone(),
+        Expr::Coerce {
+            value: Box::new(Expr::Parameter {
+                name: "value".into(),
+            }),
+            ty: target,
+        },
+    );
+    contract.circuits[0].parameters[0].ty = source;
+    assert!(
+        render(&contract)
+            .unwrap()
+            .contains("cast_unsigned::<255, 65535>")
+    );
+    let Expr::Coerce { ty, .. } = &mut contract.circuits[0].body else {
+        unreachable!()
+    };
+    *ty = Type::Tuple {
+        elements: vec![Type::Field, Type::Unsigned { max: "1".into() }],
+    };
+    contract.circuits[0].result = ty.clone();
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::TypeMismatch {
+            expected: Type::Unsigned { max: "1".into() },
+            actual: Type::Unsigned { max: "255".into() },
+        })
+    );
+}
+
+#[test]
 fn constructor_cell_parameters_are_typed_and_validated() {
     let mut contract = identity(
         Type::Field,

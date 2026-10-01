@@ -102,6 +102,28 @@
                (source-errorf src "Rust backend Field literal must be nonnegative"))]
           [else (expression-ir expr owner-src)]))
 
+      (define (let-expression-ir local* expr* body expected-type src)
+        (when (current-variable-types)
+          (for-each (lambda (local)
+                      (nanopass-case (Lnodisclose Argument) local
+                        [(,var-name ,type)
+                         (eq-hashtable-set! (current-variable-types) var-name type)]))
+                    local*))
+        (object (cons "kind" "let")
+                (cons "bindings"
+                      (list->vector
+                        (map (lambda (local value)
+                               (nanopass-case (Lnodisclose Argument) local
+                                 [(,var-name ,type)
+                                  (object (cons "name" (symbol->string (id-sym var-name)))
+                                          (cons "ty" (type-ir type src))
+                                          (cons "value" (typed-expression-ir value type src)))]))
+                             local* expr*)))
+                (cons "body"
+                      (if expected-type
+                          (typed-expression-ir body expected-type src)
+                          (expression-ir body src)))))
+
       ;; Analysis inserts this guard for Uint subtraction. The native checked
       ;; subtraction performs the same comparison, so only this exact guard
       ;; may be folded into the arithmetic expression.
@@ -238,23 +260,7 @@
                    (cons "left" (typed-expression-ir expr1 type src))
                    (cons "right" (typed-expression-ir expr2 type src)))]
           [(let* ,src ([,local* ,expr*] ...) ,expr)
-           (when (current-variable-types)
-             (for-each (lambda (local)
-                         (nanopass-case (Lnodisclose Argument) local
-                           [(,var-name ,type)
-                            (eq-hashtable-set! (current-variable-types) var-name type)]))
-                       local*))
-           (object (cons "kind" "let")
-                   (cons "bindings"
-                         (list->vector
-                           (map (lambda (local value)
-                                  (nanopass-case (Lnodisclose Argument) local
-                                    [(,var-name ,type)
-                                     (object (cons "name" (symbol->string (id-sym var-name)))
-                                             (cons "ty" (type-ir type src))
-                                             (cons "value" (typed-expression-ir value type src)))]))
-                                local* expr*)))
-                   (cons "body" (expression-ir expr src)))]
+           (let-expression-ir local* expr* expr #f src)]
           [(seq ,src ,expr* ... ,expr)
            (if (checked-unsigned-subtraction? expr* expr)
                (expression-ir expr src)
@@ -407,8 +413,32 @@
                        (object (cons "kind" "field_cast")
                                (cons "value" (expression-ir expr src)))]
                       [else (expression-ir expr owner-src)])]
+                   [(tunsigned ,src^ ,nat)
+                    (nanopass-case (Lnodisclose Type) actual-type
+                      [(tunsigned ,src1 ,nat1)
+                       (if (= nat nat1)
+                           (expression-ir expr owner-src)
+                           (object (cons "kind" "unsigned_cast")
+                                   (cons "value" (expression-ir expr src))
+                                   (cons "max" (number->string nat))))]
+                      [else (expression-ir expr owner-src)])]
                    [(tvector ,src^ ,len ,type)
                     (nanopass-case (Lnodisclose Type) actual-type
+                      [(tvector ,src1 ,len1 ,type1)
+                       (object (cons "kind" "coerce")
+                               (cons "value" (expression-ir expr src))
+                               (cons "ty" (type-ir expected-type src)))]
+                      [(ttuple ,src1 ,type* ...)
+                       (object (cons "kind" "coerce")
+                               (cons "value" (expression-ir expr src))
+                               (cons "ty" (type-ir expected-type src)))]
+                      [else (expression-ir expr owner-src)])]
+                   [(ttuple ,src^ ,type* ...)
+                    (nanopass-case (Lnodisclose Type) actual-type
+                      [(ttuple ,src1 ,type1* ...)
+                       (object (cons "kind" "coerce")
+                               (cons "value" (expression-ir expr src))
+                               (cons "ty" (type-ir expected-type src)))]
                       [(tvector ,src1 ,len1 ,type1)
                        (object (cons "kind" "coerce")
                                (cons "value" (expression-ir expr src))
@@ -416,6 +446,8 @@
                       [else (expression-ir expr owner-src)])]
                    [else (expression-ir expr owner-src)])
                  (expression-ir expr owner-src)))]
+          [(let* ,src ([,local* ,expr*] ...) ,expr)
+           (let-expression-ir local* expr* expr expected-type src)]
           [(tuple ,src ,tuple-arg* ...)
            (nanopass-case (Lnodisclose Type) expected-type
              [(tvector ,src^ ,len ,type)

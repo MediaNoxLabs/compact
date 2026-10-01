@@ -51,6 +51,20 @@ pub enum ConstructorStep {
         field: String,
         index: u8,
     },
+    SetInsert {
+        field: String,
+        index: u8,
+        value: Expr,
+    },
+    SetRemove {
+        field: String,
+        index: u8,
+        value: Expr,
+    },
+    SetReset {
+        field: String,
+        index: u8,
+    },
     ForEach {
         binding: Parameter,
         values: Vec<Expr>,

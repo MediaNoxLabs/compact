@@ -1,0 +1,21 @@
+import CompactStandardLibrary;
+
+export ledger seen: Set<Boolean>;
+export ledger history: Set<Boolean>;
+
+constructor() {
+  seen.insert(true);
+  seen.insert(false);
+  seen.remove(false);
+  history.insert(true);
+  history.resetToDefault();
+  history.insert(false);
+}
+
+export circuit contains_seen(value: Boolean): Boolean {
+  return seen.member(disclose(value));
+}
+
+export circuit contains_history(value: Boolean): Boolean {
+  return history.member(disclose(value));
+}

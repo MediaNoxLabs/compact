@@ -964,12 +964,15 @@ fn collect_constructor_step_types(
     enums: &mut BTreeMap<String, Vec<String>>,
 ) -> Result<(), RenderError> {
     match step {
-        ConstructorStep::CellWrite { value, .. } => {
+        ConstructorStep::CellWrite { value, .. }
+        | ConstructorStep::SetInsert { value, .. }
+        | ConstructorStep::SetRemove { value, .. } => {
             collect_expression_types(value, structs, enums)?
         }
         ConstructorStep::CounterIncrement { .. }
         | ConstructorStep::CounterDecrement { .. }
-        | ConstructorStep::CounterReset { .. } => {}
+        | ConstructorStep::CounterReset { .. }
+        | ConstructorStep::SetReset { .. } => {}
         ConstructorStep::ForEach {
             binding,
             values,
@@ -1085,6 +1088,59 @@ fn render_constructor_vm_steps<'a>(
                 }
                 let index = syn::LitInt::new(&index.to_string(), Span::call_site());
                 actions.push(syn::parse_quote!(let step = context.write_cell(#index, 0_u64)?;));
+                actions.push(syn::parse_quote!(context = step.context;));
+            }
+            ConstructorStep::SetInsert {
+                field,
+                index,
+                value,
+            }
+            | ConstructorStep::SetRemove {
+                field,
+                index,
+                value,
+            } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                if declaration.index != *index {
+                    return Err(RenderError::InvalidLedgerIndex(*index));
+                }
+                let LedgerFieldKind::Set { ty } = &declaration.declaration else {
+                    return Err(RenderError::UnknownLedgerField(field.clone()));
+                };
+                if !infallible_constructor_expr(value) {
+                    return Err(RenderError::InvalidConstructorInitializer(field.clone()));
+                }
+                let (value, actual) = expression_with_calls(value, parameters, &HashMap::new())?;
+                if actual != *ty {
+                    return Err(RenderError::TypeMismatch {
+                        expected: ty.clone(),
+                        actual,
+                    });
+                }
+                let method = if matches!(step, ConstructorStep::SetInsert { .. }) {
+                    syn::Ident::new("insert_set", Span::call_site())
+                } else {
+                    syn::Ident::new("remove_set", Span::call_site())
+                };
+                let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+                actions.push(
+                    syn::parse_quote!(let step = context.#method(#index, (#value).clone())?;),
+                );
+                actions.push(syn::parse_quote!(context = step.context;));
+            }
+            ConstructorStep::SetReset { field, index } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                if !matches!(declaration.declaration, LedgerFieldKind::Set { .. })
+                    || declaration.index != *index
+                {
+                    return Err(RenderError::UnknownLedgerField(field.clone()));
+                }
+                let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+                actions.push(syn::parse_quote!(let step = context.reset_set(#index)?;));
                 actions.push(syn::parse_quote!(context = step.context;));
             }
             ConstructorStep::ForEach {
@@ -1310,6 +1366,9 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
             ConstructorStep::CounterIncrement { .. }
             | ConstructorStep::CounterDecrement { .. }
             | ConstructorStep::CounterReset { .. }
+            | ConstructorStep::SetInsert { .. }
+            | ConstructorStep::SetRemove { .. }
+            | ConstructorStep::SetReset { .. }
             | ConstructorStep::ForEach { .. } => true,
         })
     });

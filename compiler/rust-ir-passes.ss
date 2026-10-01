@@ -1133,6 +1133,24 @@
                  (object (cons "kind" "counter_reset")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*)))]
+                [(and (eq? adt-name 'Set) (eq? ledger-op 'insert) (= (length expr*) 1))
+                 (object (cons "kind" "set_insert")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*))
+                         (cons "value" (if (null? adt-arg*)
+                                           (expression-ir (car expr*) src)
+                                           (typed-expression-ir (car expr*) (car adt-arg*) src))))]
+                [(and (eq? adt-name 'Set) (eq? ledger-op 'remove) (= (length expr*) 1))
+                 (object (cons "kind" "set_remove")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*))
+                         (cons "value" (if (null? adt-arg*)
+                                           (expression-ir (car expr*) src)
+                                           (typed-expression-ir (car expr*) (car adt-arg*) src))))]
+                [(and (eq? adt-name 'Set) (eq? ledger-op 'resetToDefault) (null? expr*))
+                 (object (cons "kind" "set_reset")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*)))]
                 [(and (eq? adt-name '__compact_Cell) (eq? ledger-op 'write) (= (length expr*) 1))
                  (nanopass-case (Lnodisclose Expression) (car expr*)
                    [(var-ref ,src1 ,var-name)

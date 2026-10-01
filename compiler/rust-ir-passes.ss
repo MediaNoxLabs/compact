@@ -1003,7 +1003,10 @@
                  (object (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
                          (cons "value" (if binding (cdr binding) (expression-ir (car expr*) src)))))]
-                [else (source-errorf src "Rust constructor Cell initializer must be a constructor parameter or literal")])])]
+                [else
+                 (object (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*))
+                         (cons "value" (expression-ir (car expr*) src)))])])]
           [else (source-errorf owner-src "Rust backend does not yet support this constructor action")]))
 
       (define (constructor-initializers-ir expr parameters owner-src)

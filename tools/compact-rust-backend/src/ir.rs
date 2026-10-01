@@ -130,7 +130,21 @@ pub struct LedgerField {
     /// Frontend identity, distinct from any Rust identifier.
     pub id: String,
     pub index: u8,
+    /// Full physical path when the compiler chunks more than 15 fields.
+    /// Empty for the legacy single-segment `index` representation.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub path: Vec<u8>,
     pub declaration: LedgerFieldKind,
+}
+
+impl LedgerField {
+    pub fn physical_path(&self) -> Vec<u8> {
+        if self.path.is_empty() {
+            vec![self.index]
+        } else {
+            self.path.clone()
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]

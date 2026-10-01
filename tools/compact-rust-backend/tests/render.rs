@@ -207,6 +207,7 @@ fn constructor_cell_parameters_are_typed_and_validated() {
     contract.ledger_fields = vec![LedgerField {
         id: "stored".into(),
         index: 0,
+        path: vec![],
         declaration: LedgerFieldKind::Cell { ty: Type::Field },
     }];
     contract.constructor = Some(Constructor {
@@ -270,6 +271,7 @@ fn constructor_counter_steps_use_typed_vm_calls() {
     contract.ledger_fields = vec![LedgerField {
         id: "count".into(),
         index: 0,
+        path: vec![],
         declaration: LedgerFieldKind::Counter,
     }];
     contract.constructor = Some(Constructor {
@@ -332,6 +334,7 @@ fn constructor_for_each_checks_element_type_and_loop_binding() {
     contract.ledger_fields = vec![LedgerField {
         id: "count".into(),
         index: 0,
+        path: vec![],
         declaration: LedgerFieldKind::Counter,
     }];
     contract.constructor = Some(Constructor {
@@ -402,6 +405,7 @@ fn constructor_set_steps_validate_values_and_use_vm_methods() {
     contract.ledger_fields = vec![LedgerField {
         id: "seen".into(),
         index: 0,
+        path: vec![],
         declaration: LedgerFieldKind::Set { ty: Type::Boolean },
     }];
     contract.constructor = Some(Constructor {
@@ -453,6 +457,7 @@ fn constructor_list_steps_validate_values_and_use_vm_methods() {
     contract.ledger_fields = vec![LedgerField {
         id: "items".into(),
         index: 0,
+        path: vec![],
         declaration: LedgerFieldKind::List { ty: Type::Field },
     }];
     contract.constructor = Some(Constructor {
@@ -503,6 +508,7 @@ fn constructor_map_steps_validate_keys_values_and_use_vm_methods() {
     contract.ledger_fields = vec![LedgerField {
         id: "table".into(),
         index: 0,
+        path: vec![],
         declaration: LedgerFieldKind::Map {
             key: Type::Boolean,
             value: Type::Field,
@@ -564,11 +570,13 @@ fn nested_set_query_in_cell_write_checks_field_and_item_types() {
         LedgerField {
             id: "flag".into(),
             index: 0,
+            path: vec![],
             declaration: LedgerFieldKind::Cell { ty: Type::Boolean },
         },
         LedgerField {
             id: "seen".into(),
             index: 1,
+            path: vec![],
             declaration: LedgerFieldKind::Set { ty: Type::Field },
         },
     ];
@@ -1203,6 +1211,7 @@ fn state_action_must_reference_the_declared_ledger_field_and_index() {
         ledger_fields: vec![LedgerField {
             id: "round".into(),
             index: 0,
+            path: vec![],
             declaration: LedgerFieldKind::Counter,
         }],
         circuits: vec![],
@@ -1275,6 +1284,7 @@ fn stateful_parameters_are_checked_before_cell_writes() {
         ledger_fields: vec![LedgerField {
             id: "flag".into(),
             index: 0,
+            path: vec![],
             declaration: LedgerFieldKind::Cell { ty: Type::Boolean },
         }],
         circuits: vec![],
@@ -1328,6 +1338,7 @@ fn counter_parameter_requires_uint16_and_a_known_name() {
         ledger_fields: vec![LedgerField {
             id: "round".into(),
             index: 0,
+            path: vec![],
             declaration: LedgerFieldKind::Counter,
         }],
         circuits: vec![],
@@ -1390,6 +1401,7 @@ fn ledger_read_return_must_match_the_declared_cell() {
         ledger_fields: vec![LedgerField {
             id: "flag".into(),
             index: 0,
+            path: vec![],
             declaration: LedgerFieldKind::Cell { ty: Type::Boolean },
         }],
         circuits: vec![],
@@ -1437,6 +1449,7 @@ fn counter_read_returns_uint64() {
         ledger_fields: vec![LedgerField {
             id: "round".into(),
             index: 0,
+            path: vec![],
             declaration: LedgerFieldKind::Counter,
         }],
         circuits: vec![],
@@ -1478,6 +1491,7 @@ fn set_actions_require_the_declared_element_type() {
         ledger_fields: vec![LedgerField {
             id: "seen".into(),
             index: 0,
+            path: vec![],
             declaration: LedgerFieldKind::Set { ty: Type::Boolean },
         }],
         circuits: vec![],
@@ -1544,6 +1558,7 @@ fn map_insert_and_lookup_require_key_and_value_types() {
         ledger_fields: vec![LedgerField {
             id: "table".into(),
             index: 0,
+            path: vec![],
             declaration: LedgerFieldKind::Map {
                 key: Type::Boolean,
                 value: Type::Field,
@@ -1660,6 +1675,7 @@ fn list_push_front_and_length_validate_declared_types() {
         ledger_fields: vec![LedgerField {
             id: "items".into(),
             index: 0,
+            path: vec![],
             declaration: LedgerFieldKind::List { ty: Type::Field },
         }],
         circuits: vec![],

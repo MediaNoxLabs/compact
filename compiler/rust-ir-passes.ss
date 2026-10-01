@@ -672,51 +672,64 @@
       (define (ledger-binding-ir binding owner-src)
         (nanopass-case (Lnodisclose Public-Ledger-Array-Element) binding
           [(,src ,ledger-field-name (,path-index* ...) ,type)
-           (unless (and (= (length path-index*) 1)
-                        (< (car path-index*) 16))
-             (source-errorf src "Rust backend supports root ledger fields only"))
+           (unless (and (pair? path-index*)
+                        (for-all (lambda (index) (and (integer? index) (<= 0 index 14))) path-index*))
+             (source-errorf src "Rust backend requires an array-index ledger path"))
            (nanopass-case (Lnodisclose Type) type
              [(tadt ,src^ ,adt-name ([,adt-formal* ,adt-arg*] ...) ,vm-expr (,adt-op* ...) (,adt-rt-op* ...))
               (cond
                 [(eq? adt-name 'Counter)
                  (object (cons "id" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-index*))
+                         (cons "path" (list->vector path-index*))
                          (cons "declaration" (kind "counter")))]
                 [(and (eq? adt-name '__compact_Cell) (= (length adt-arg*) 1))
                  (object (cons "id" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-index*))
+                         (cons "path" (list->vector path-index*))
                          (cons "declaration"
                                (object (cons "kind" "cell")
                                        (cons "ty" (type-ir (car adt-arg*) src)))))]
                 [(and (eq? adt-name 'Set) (= (length adt-arg*) 1))
                  (object (cons "id" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-index*))
+                         (cons "path" (list->vector path-index*))
                          (cons "declaration"
                                (object (cons "kind" "set")
                                        (cons "ty" (type-ir (car adt-arg*) src)))))]
                 [(and (eq? adt-name 'List) (= (length adt-arg*) 1))
                  (object (cons "id" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-index*))
+                         (cons "path" (list->vector path-index*))
                          (cons "declaration"
                                (object (cons "kind" "list")
                                        (cons "ty" (type-ir (car adt-arg*) src)))))]
                 [(and (eq? adt-name 'Map) (= (length adt-arg*) 2))
                  (object (cons "id" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-index*))
+                         (cons "path" (list->vector path-index*))
                          (cons "declaration"
                                (object (cons "kind" "map")
                                        (cons "key" (type-ir (car adt-arg*) src))
                                        (cons "value" (type-ir (cadr adt-arg*) src)))))]
                 [else (source-errorf src "Rust backend does not yet support this ledger ADT")])]
              [else (source-errorf src "Rust backend does not yet support this ledger field type")])]
-          [else (source-errorf owner-src "Rust backend does not yet support nested ledger fields")]))
+          [else (source-errorf owner-src "Rust backend does not yet support this ledger field shape")]))
+
+      (define (ledger-array-ir pl-array owner-src)
+        (nanopass-case (Lnodisclose Public-Ledger-Array) pl-array
+          [(public-ledger-array ,pl-array-elt* ...)
+           (apply append
+             (map (lambda (element)
+                    (nanopass-case (Lnodisclose Public-Ledger-Array-Element) element
+                      [,pl-array (ledger-array-ir pl-array owner-src)]
+                      [,public-binding (list (ledger-binding-ir public-binding owner-src))]))
+                  pl-array-elt*))]))
 
       (define (ledger-fields-ir pelt fields owner-src)
         (nanopass-case (Lnodisclose Program-Element) pelt
           [(public-ledger-declaration ,pl-array ,lconstructor)
-           (nanopass-case (Lnodisclose Public-Ledger-Array) pl-array
-             [(public-ledger-array ,pl-array-elt* ...)
-              (append (map (lambda (binding) (ledger-binding-ir binding owner-src)) pl-array-elt*) fields)])]
+           (append (ledger-array-ir pl-array owner-src) fields)]
           [else fields]))
 
       (define (counter-amount-ir expr environment owner-src)
@@ -783,9 +796,9 @@
                                   local* expr*)))
                      (cons "action" (state-action-ir expr owner-src environment^ witness-ids))))]
           [(public-ledger ,src ,ledger-field-name ,sugar? (,path-elt* ...) ,src^ ,adt-op ,expr* ...)
-           (unless (and (= (length path-elt*) 1)
-                        (integer? (car path-elt*)))
-             (source-errorf src "Rust backend supports root ledger paths only"))
+           (unless (and (pair? path-elt*)
+                        (for-all (lambda (index) (and (integer? index) (<= 0 index 14))) path-elt*))
+             (source-errorf src "Rust backend requires an array-index ledger path"))
            (nanopass-case (Lnodisclose ADT-Op) adt-op
              [(,ledger-op ,op-class (,adt-name (,adt-formal* ,adt-arg*) ...) ((,var-name* ,type*) ...) ,type ,vm-code)
               (cond
@@ -988,9 +1001,9 @@
                             (cons "scalar" (stateful-expression-ir (cadr expr*) src witness-ids)))))]
                [else (expression-ir value-expr owner-src)]))]
           [(public-ledger ,src ,ledger-field-name ,sugar? (,path-elt* ...) ,src^ ,adt-op ,expr* ...)
-           (unless (and (= (length path-elt*) 1)
-                        (integer? (car path-elt*)))
-             (source-errorf src "Rust backend supports root ledger query paths only"))
+           (unless (and (pair? path-elt*)
+                        (for-all (lambda (index) (and (integer? index) (<= 0 index 14))) path-elt*))
+             (source-errorf src "Rust backend requires an array-index ledger query path"))
            (nanopass-case (Lnodisclose ADT-Op) adt-op
              [(,ledger-op ,op-class (,adt-name (,adt-formal* ,adt-arg*) ...) ((,var-name* ,type*) ...) ,type ,vm-code)
               (cond
@@ -1178,9 +1191,9 @@
            (object (cons "kind" "expression")
                    (cons "value" (stateful-expression-ir return-expr src witness-ids)))]
           [(public-ledger ,src ,ledger-field-name ,sugar? (,path-elt* ...) ,src^ ,adt-op ,expr* ...)
-           (unless (and (= (length path-elt*) 1)
-                        (integer? (car path-elt*)))
-             (source-errorf src "Rust backend supports root ledger paths only"))
+           (unless (and (pair? path-elt*)
+                        (for-all (lambda (index) (and (integer? index) (<= 0 index 14))) path-elt*))
+             (source-errorf src "Rust backend requires an array-index ledger path"))
            (nanopass-case (Lnodisclose ADT-Op) adt-op
              [(,ledger-op ,op-class (,adt-name (,adt-formal* ,adt-arg*) ...) ((,var-name* ,type*) ...) ,type ,vm-code)
               (cond
@@ -1422,9 +1435,9 @@
                                   local* expr*)))
                      (cons "step" (constructor-step-ir expr parameters bindings^ src))))]
           [(public-ledger ,src ,ledger-field-name ,sugar? (,path-elt* ...) ,src^ ,adt-op ,expr* ...)
-           (unless (and (= (length path-elt*) 1)
-                        (integer? (car path-elt*)))
-             (source-errorf src "Rust backend supports root constructor ledger paths only"))
+           (unless (and (pair? path-elt*)
+                        (for-all (lambda (index) (and (integer? index) (<= 0 index 14))) path-elt*))
+             (source-errorf src "Rust backend requires an array-index constructor ledger path"))
            (nanopass-case (Lnodisclose ADT-Op) adt-op
              [(,ledger-op ,op-class (,adt-name (,adt-formal* ,adt-arg*) ...) ((,var-name* ,type*) ...) ,type ,vm-code)
               (cond

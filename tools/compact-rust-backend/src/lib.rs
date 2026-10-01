@@ -33,6 +33,8 @@ pub enum RenderError {
     DuplicateParameter(String),
     DuplicateLedgerField(String),
     InvalidLedgerIndex(u8),
+    InvalidLedgerPath(Vec<u8>),
+    UnsupportedLedgerPath(Vec<u8>),
     UnknownLedgerField(String),
     InvalidConstructorInitializer(String),
     UnsupportedLedgerCellType(Type),
@@ -91,6 +93,10 @@ impl fmt::Display for RenderError {
             Self::DuplicateLedgerField(name) => write!(f, "duplicate ledger field {name:?}"),
             Self::InvalidLedgerIndex(index) => {
                 write!(f, "invalid or noncontiguous ledger field index {index}")
+            }
+            Self::InvalidLedgerPath(path) => write!(f, "invalid ledger field path {path:?}"),
+            Self::UnsupportedLedgerPath(path) => {
+                write!(f, "unsupported ledger field kind at chunked path {path:?}")
             }
             Self::UnknownLedgerField(name) => write!(f, "unknown ledger field {name:?}"),
             Self::InvalidConstructorInitializer(name) => write!(
@@ -1449,9 +1455,17 @@ fn render_constructor_vm_steps<'a>(
                 }
                 let index = syn::LitInt::new(&index.to_string(), Span::call_site());
                 actions.extend(expression_steps);
-                actions.push(
-                    syn::parse_quote!(let step = context.write_cell(#index, (#value).clone())?;),
-                );
+                let path = declaration.physical_path();
+                let write: syn::Stmt = if path.len() == 1 {
+                    syn::parse_quote!(let step = context.write_cell(#index, (#value).clone())?;)
+                } else {
+                    let path = path
+                        .iter()
+                        .map(|part| syn::LitInt::new(&part.to_string(), Span::call_site()))
+                        .collect::<Vec<_>>();
+                    syn::parse_quote!(let step = context.write_cell_at_path(&[#(#path),*], (#value).clone())?;)
+                };
+                actions.push(write);
                 actions.push(syn::parse_quote!(context = step.context;));
             }
             ConstructorStep::CounterIncrement {
@@ -1759,6 +1773,32 @@ fn render_constructor_vm_steps<'a>(
     Ok(actions)
 }
 
+/// Mirror the compiler's 15-wide public-ledger batching, including the
+/// leading remainder group used when the field count is not divisible by 15.
+fn expected_ledger_paths(field_count: usize) -> Vec<Vec<u8>> {
+    const SEGMENT: usize = 15;
+    if field_count <= SEGMENT {
+        return (0..field_count).map(|index| vec![index as u8]).collect();
+    }
+    let remainder = field_count % SEGMENT;
+    let mut group_sizes = Vec::new();
+    if remainder != 0 {
+        group_sizes.push(remainder);
+    }
+    group_sizes.extend(std::iter::repeat_n(SEGMENT, field_count / SEGMENT));
+    expected_ledger_paths(group_sizes.len())
+        .into_iter()
+        .zip(group_sizes)
+        .flat_map(|(prefix, size)| {
+            (0..size).map(move |index| {
+                let mut path = prefix.clone();
+                path.push(index as u8);
+                path
+            })
+        })
+        .collect()
+}
+
 pub fn render(contract: &Contract) -> Result<String, RenderError> {
     if contract.schema_version != SCHEMA_VERSION {
         return Err(RenderError::SchemaVersion(contract.schema_version));
@@ -1848,10 +1888,22 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
     }
     let mut ledger_fields = HashMap::new();
     let mut ordered_fields = contract.ledger_fields.iter().collect::<Vec<_>>();
-    ordered_fields.sort_by_key(|field| field.index);
-    for (expected_index, field) in ordered_fields.iter().enumerate() {
-        if field.index as usize != expected_index || field.index >= 16 {
-            return Err(RenderError::InvalidLedgerIndex(field.index));
+    ordered_fields.sort_by_key(|field| field.physical_path());
+    for (expected_path, field) in expected_ledger_paths(ordered_fields.len())
+        .iter()
+        .zip(&ordered_fields)
+    {
+        let path = field.physical_path();
+        if &path != expected_path || path.first() != Some(&field.index) {
+            if field.path.is_empty() {
+                return Err(RenderError::InvalidLedgerIndex(field.index));
+            }
+            return Err(RenderError::InvalidLedgerPath(path));
+        }
+        if path.len() > 2
+            || (path.len() > 1 && !matches!(field.declaration, LedgerFieldKind::Cell { .. }))
+        {
+            return Err(RenderError::UnsupportedLedgerPath(path));
         }
         if ledger_fields.insert(field.id.as_str(), *field).is_some() {
             return Err(RenderError::DuplicateLedgerField(field.id.clone()));

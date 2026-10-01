@@ -38,8 +38,17 @@ pub(crate) fn render_state_expression(
             );
             *next_temp += 1;
             let index = syn::LitInt::new(&index.to_string(), Span::call_site());
-            statements
-                .push(syn::parse_quote!(let #step = context.read_cell::<#value_ty>(#index)?;));
+            let path = declaration.physical_path();
+            let read: syn::Stmt = if path.len() == 1 {
+                syn::parse_quote!(let #step = context.read_cell::<#value_ty>(#index)?;)
+            } else {
+                let path = path
+                    .iter()
+                    .map(|part| syn::LitInt::new(&part.to_string(), Span::call_site()))
+                    .collect::<Vec<_>>();
+                syn::parse_quote!(let #step = context.read_cell_at_path::<#value_ty>(&[#(#path),*])?;)
+            };
+            statements.push(read);
             statements.push(syn::parse_quote!(context = #step.context;));
             statements.push(syn::parse_quote!(total_cost += #step.gas_cost;));
             *query_effect = true;
@@ -1456,9 +1465,17 @@ pub(crate) fn render_stateful_circuit(
                 }
                 statements.extend(value_statements);
                 let index = syn::LitInt::new(&index.to_string(), Span::call_site());
-                statements.push(syn::parse_quote! {
-                    let step = context.write_cell(#index, #value)?;
-                });
+                let path = declaration.physical_path();
+                let write: syn::Stmt = if path.len() == 1 {
+                    syn::parse_quote!(let step = context.write_cell(#index, #value)?;)
+                } else {
+                    let path = path
+                        .iter()
+                        .map(|part| syn::LitInt::new(&part.to_string(), Span::call_site()))
+                        .collect::<Vec<_>>();
+                    syn::parse_quote!(let step = context.write_cell_at_path(&[#(#path),*], #value)?;)
+                };
+                statements.push(write);
                 statements.push(syn::parse_quote! {
                     let context = step.context;
                 });
@@ -1771,9 +1788,17 @@ pub(crate) fn render_stateful_circuit(
                 });
             }
             let index = syn::LitInt::new(&index.to_string(), Span::call_site());
-            statements.push(syn::parse_quote! {
-                let read_step = context.read_cell::<#result_ty>(#index)?;
-            });
+            let path = declaration.physical_path();
+            let read: syn::Stmt = if path.len() == 1 {
+                syn::parse_quote!(let read_step = context.read_cell::<#result_ty>(#index)?;)
+            } else {
+                let path = path
+                    .iter()
+                    .map(|part| syn::LitInt::new(&part.to_string(), Span::call_site()))
+                    .collect::<Vec<_>>();
+                syn::parse_quote!(let read_step = context.read_cell_at_path::<#result_ty>(&[#(#path),*])?;)
+            };
+            statements.push(read);
             statements.push(syn::parse_quote! {
                 let context = read_step.context;
             });

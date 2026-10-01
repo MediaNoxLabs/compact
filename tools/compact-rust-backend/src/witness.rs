@@ -57,11 +57,25 @@ pub(crate) fn build<'a>(
             match &field.declaration {
                 LedgerFieldKind::Cell { ty } => {
                     let ty = rust_type(ty)?;
-                    ledger_view_methods.push(syn::parse_quote! {
-                        pub fn #name(&self) -> Result<#ty, runtime::CompactError> {
-                            runtime::ledger::read_root_cell::<#ty, _>(self.state, #index)
+                    let path = field.physical_path();
+                    let method: syn::ImplItemFn = if path.len() == 1 {
+                        syn::parse_quote! {
+                            pub fn #name(&self) -> Result<#ty, runtime::CompactError> {
+                                runtime::ledger::read_root_cell::<#ty, _>(self.state, #index)
+                            }
                         }
-                    });
+                    } else {
+                        let path = path
+                            .iter()
+                            .map(|part| syn::LitInt::new(&part.to_string(), Span::call_site()))
+                            .collect::<Vec<_>>();
+                        syn::parse_quote! {
+                            pub fn #name(&self) -> Result<#ty, runtime::CompactError> {
+                                runtime::ledger::read_cell_at_path::<#ty, _>(self.state, &[#(#path),*])
+                            }
+                        }
+                    };
+                    ledger_view_methods.push(method);
                 }
                 LedgerFieldKind::Counter => {
                     let max = syn::LitInt::new(&u64::MAX.to_string(), Span::call_site());

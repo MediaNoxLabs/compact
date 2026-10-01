@@ -167,7 +167,30 @@ where
     T: CellValue,
     D: DB,
 {
-    read_cell(root_field(state, index)?)
+    read_cell_at_path(state, &[index])
+}
+
+/// Read a Cell at the compiler's public ledger path, including chunked roots.
+pub fn read_cell_at_path<T, D>(state: &StateValue<D>, path: &[u8]) -> Result<T, CompactError>
+where
+    T: CellValue,
+    D: DB,
+{
+    if path.is_empty() {
+        return Err(CompactError::InvalidLedgerCell("empty ledger path".into()));
+    }
+    let mut current = state;
+    for &index in path {
+        let StateValue::Array(fields) = current else {
+            return Err(CompactError::InvalidLedgerCell(
+                "expected ledger array on path".into(),
+            ));
+        };
+        current = fields.get(index as usize).ok_or_else(|| {
+            CompactError::InvalidLedgerCell(format!("missing ledger path index {index}"))
+        })?;
+    }
+    read_cell(current)
 }
 
 fn root_field<D: DB>(state: &StateValue<D>, index: u8) -> Result<&StateValue<D>, CompactError> {
@@ -311,12 +334,28 @@ pub fn query_cell<T: CellValue, D: DB>(
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<(QueryResults<ResultModeGather, D>, T), CompactError> {
+    query_cell_at_path(context, &[field_index], gas_limit, cost_model)
+}
+
+pub fn query_cell_at_path<T: CellValue, D: DB>(
+    context: &QueryContext<D>,
+    path: &[u8],
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<(QueryResults<ResultModeGather, D>, T), CompactError> {
+    if path.is_empty() {
+        return Err(CompactError::InvalidLedgerCell("empty ledger path".into()));
+    }
     let program = [
         Op::Dup { n: 0 },
         Op::Idx {
             cached: false,
             push_path: false,
-            path: vec![Key::Value(AlignedValue::from(field_index))].into(),
+            path: path
+                .iter()
+                .map(|index| Key::Value(AlignedValue::from(*index)))
+                .collect::<Vec<_>>()
+                .into(),
         },
         Op::Popeq {
             cached: true,
@@ -871,11 +910,50 @@ pub fn write_cell<T: CellValue, D: DB>(
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    write_cell_at_path(context, &[field_index], value, gas_limit, cost_model)
+}
+
+pub fn write_cell_at_path<T: CellValue, D: DB>(
+    context: &QueryContext<D>,
+    path: &[u8],
+    value: T,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    if path.len() == 2 {
+        // Compact indexes the containing array, then inserts at its final
+        // key and inserts the updated array back into the root.
+        let program = [
+            Op::Idx {
+                cached: false,
+                push_path: true,
+                path: vec![Key::Value(AlignedValue::from(path[0]))].into(),
+            },
+            Op::Push {
+                storage: false,
+                value: constructor_cell(path[1]),
+            },
+            Op::Push {
+                storage: true,
+                value: constructor_cell(value),
+            },
+            Op::Ins {
+                cached: false,
+                n: 1,
+            },
+            Op::Ins { cached: true, n: 1 },
+        ];
+        return context.query(&program, gas_limit, cost_model);
+    }
     let program = [
         Op::Idx {
             cached: false,
             push_path: true,
-            path: vec![Key::Value(AlignedValue::from(field_index))].into(),
+            path: path
+                .iter()
+                .map(|index| Key::Value(AlignedValue::from(*index)))
+                .collect::<Vec<_>>()
+                .into(),
         },
         Op::Pop,
         Op::Push {
@@ -945,8 +1023,31 @@ pub fn empty_contract_state() -> ChargedState<DefaultDB> {
 
 /// Build a contract root from ordered ledger fields.
 pub fn contract_state<D: DB>(fields: Vec<StateValue<D>>) -> ChargedState<D> {
-    let root = StateValue::Array(fields.into());
+    let root = chunk_ledger_fields(fields);
     ChargedState::new(root)
+}
+
+fn chunk_ledger_fields<D: DB>(fields: Vec<StateValue<D>>) -> StateValue<D> {
+    const SEGMENT: usize = 15;
+    if fields.len() <= SEGMENT {
+        return StateValue::Array(fields.into());
+    }
+    let remainder = fields.len() % SEGMENT;
+    let mut iter = fields.into_iter();
+    let mut chunks = Vec::new();
+    if remainder != 0 {
+        chunks.push(StateValue::Array(
+            iter.by_ref().take(remainder).collect::<Vec<_>>().into(),
+        ));
+    }
+    loop {
+        let chunk = iter.by_ref().take(SEGMENT).collect::<Vec<_>>();
+        if chunk.is_empty() {
+            break;
+        }
+        chunks.push(StateValue::Array(chunk.into()));
+    }
+    chunk_ledger_fields(chunks)
 }
 
 /// A query context for a newly created empty contract.

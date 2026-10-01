@@ -435,12 +435,19 @@ impl<Private, D: DB> CircuitContext<Private, D> {
     }
 
     pub fn read_cell<T: CellValue>(
-        mut self,
+        self,
         field_index: u8,
     ) -> Result<CircuitResult<Private, T, D>, CompactError> {
-        let (result, value) = ledger::query_cell::<T, D>(
+        self.read_cell_at_path(&[field_index])
+    }
+
+    pub fn read_cell_at_path<T: CellValue>(
+        mut self,
+        path: &[u8],
+    ) -> Result<CircuitResult<Private, T, D>, CompactError> {
+        let (result, value) = ledger::query_cell_at_path::<T, D>(
             &self.query,
-            field_index,
+            path,
             self.gas_limit.clone(),
             &self.cost_model,
         )?;
@@ -454,13 +461,21 @@ impl<Private, D: DB> CircuitContext<Private, D> {
     }
 
     pub fn write_cell<T: CellValue>(
-        mut self,
+        self,
         field_index: u8,
         value: T,
     ) -> Result<CircuitResult<Private, (), D>, CompactError> {
-        let result = ledger::write_cell(
+        self.write_cell_at_path(&[field_index], value)
+    }
+
+    pub fn write_cell_at_path<T: CellValue>(
+        mut self,
+        path: &[u8],
+        value: T,
+    ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        let result = ledger::write_cell_at_path(
             &self.query,
-            field_index,
+            path,
             value,
             self.gas_limit.clone(),
             &self.cost_model,

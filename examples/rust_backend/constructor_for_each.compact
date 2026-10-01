@@ -1,0 +1,16 @@
+import CompactStandardLibrary;
+
+export ledger c: Counter;
+
+constructor() {
+  for (const i of 0..10) {
+    c.increment(1);
+  }
+  for (const x of [1 as Uint<16>, 2, 3]) {
+    c.increment(x);
+  }
+}
+
+export circuit read_count(): Uint<64> {
+  return c.read();
+}

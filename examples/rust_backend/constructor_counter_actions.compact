@@ -1,0 +1,19 @@
+import CompactStandardLibrary;
+
+export ledger value: Field;
+export ledger c: Counter;
+
+constructor(seed: Uint<16>) {
+  value = 1 as Field;
+  c.increment(disclose(seed));
+  value = 2 as Field;
+  c.increment(2);
+}
+
+export circuit read_count(): Uint<64> {
+  return c.read();
+}
+
+export circuit read_value(): Field {
+  return value.read();
+}

@@ -37,6 +37,16 @@ pub enum ConstructorStep {
         index: u8,
         value: Expr,
     },
+    CounterIncrement {
+        field: String,
+        index: u8,
+        amount: CounterAmount,
+    },
+    ForEach {
+        binding: Parameter,
+        values: Vec<Expr>,
+        steps: Vec<ConstructorStep>,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]

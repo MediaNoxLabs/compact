@@ -1020,8 +1020,85 @@
           [(tuple ,src ,tuple-arg* ...) (null? tuple-arg*)]
           [else #f]))
 
-      (define (constructor-initializer-ir expr parameters bindings owner-src)
+      (define (constructor-counter-environment parameters bindings)
+        (append
+          (fold-left
+            (lambda (environment binding)
+              (let* ([value (cdr binding)]
+                     [kind-entry (assoc "kind" value)])
+                (if (and kind-entry (string=? (cdr kind-entry) "unsigned_literal"))
+                    (let ([amount (string->number (cdr (assoc "value" value)))])
+                      (if (and (integer? amount) (<= 0 amount 65535))
+                          (cons (cons (car binding)
+                                      (object (cons "kind" "literal") (cons "value" amount)))
+                                environment)
+                          environment))
+                    environment)))
+            '() bindings)
+          (map (lambda (name)
+                 (cons name (object (cons "kind" "parameter")
+                                    (cons "name" (symbol->string name)))))
+               parameters)))
+
+      (define (constructor-fold-body-ir expr accumulator parameters owner-src)
         (nanopass-case (Lnodisclose Expression) expr
+          [(seq ,src ,expr* ... ,expr)
+           (append
+             (apply append
+               (map (lambda (step) (constructor-fold-body-ir step accumulator parameters src)) expr*))
+             (constructor-fold-body-ir expr accumulator parameters src))]
+          [(tuple ,src ,tuple-arg* ...)
+           (if (null? tuple-arg*)
+               '()
+               (source-errorf src "Rust constructor fold body must have unit effects"))]
+          [(var-ref ,src ,var-name)
+           (if (eq? (id-sym var-name) accumulator)
+               '()
+               (source-errorf src "Rust constructor fold must return its accumulator"))]
+          [else (list (constructor-step-ir expr parameters '() owner-src))]))
+
+      ;; Both literal ranges and array iteration arrive here as a unit-accumulator fold.
+      ;; Preserve its item binding and ordered effects instead of emitting Rust syntax.
+      (define (constructor-step-ir expr parameters bindings owner-src)
+        (nanopass-case (Lnodisclose Expression) expr
+          [(fold ,src ,len ,fun (,expr0 ,type0) ,map-arg ,map-arg* ...)
+           (unless (and (null? map-arg*) (empty-constructor-expression? expr0))
+             (source-errorf src "Rust backend supports one iterable with a unit fold accumulator"))
+           (nanopass-case (Lnodisclose Function) fun
+             [(circuit ,src1 (,arg* ...) ,type ,expr1)
+              (unless (= (length arg*) 2)
+                (source-errorf src1 "Rust constructor fold expects accumulator and item parameters"))
+              (nanopass-case (Lnodisclose Argument) (car arg*)
+                [(,var-name ,type)
+                 (let ([acc-name var-name])
+                 (nanopass-case (Lnodisclose Argument) (cadr arg*)
+                   [(,var-name ,type)
+                    (let ([item-name var-name] [item-type type])
+                    (nanopass-case (Lnodisclose Map-Argument) map-arg
+                      [(,expr2 ,type ,type^)
+                       (nanopass-case (Lnodisclose Expression) expr2
+                         [(tuple ,src2 ,tuple-arg* ...)
+                          (unless (= (length tuple-arg*) len)
+                            (source-errorf src2 "Rust constructor fold length differs from its iterable"))
+                          (object (cons "kind" "for_each")
+                                  (cons "binding"
+                                        (object (cons "name" (symbol->string (id-sym item-name)))
+                                                (cons "ty" (type-ir item-type src))))
+                                  (cons "values"
+                                        (list->vector
+                                          (map (lambda (arg)
+                                                 (nanopass-case (Lnodisclose Tuple-Argument) arg
+                                                   [(single ,src3 ,expr)
+                                                    (typed-expression-ir expr item-type src3)]
+                                                   [else (source-errorf src2 "Rust constructor fold does not support iterable spreads")]))
+                                               tuple-arg*)))
+                                  (cons "steps"
+                                        (list->vector
+                                          (constructor-fold-body-ir expr1 (id-sym acc-name)
+                                                                    (cons (id-sym item-name) parameters)
+                                                                    src1))))]
+                         [else (source-errorf src "Rust constructor fold needs a literal iterable")])]))]))])]
+             [else (source-errorf src "Rust constructor fold needs an inline circuit body")])]
           [(let* ,src ([,local* ,expr*] ...) ,expr)
            (let ([bindings^
                    (fold-left
@@ -1030,32 +1107,39 @@
                          [(,var-name ,type)
                           (cons (cons (id-sym var-name) (typed-expression-ir value type src)) bindings)]))
                      bindings local* expr*)])
-             (constructor-initializer-ir expr parameters bindings^ src))]
+             (constructor-step-ir expr parameters bindings^ src))]
           [(public-ledger ,src ,ledger-field-name ,sugar? (,path-elt* ...) ,src^ ,adt-op ,expr* ...)
            (unless (and (= (length path-elt*) 1)
-                        (integer? (car path-elt*))
-                        (= (length expr*) 1))
-             (source-errorf src "Rust backend supports root Cell constructor writes only"))
+                        (integer? (car path-elt*)))
+             (source-errorf src "Rust backend supports root constructor ledger paths only"))
            (nanopass-case (Lnodisclose ADT-Op) adt-op
              [(,ledger-op ,op-class (,adt-name (,adt-formal* ,adt-arg*) ...) ((,var-name* ,type*) ...) ,type ,vm-code)
-              (unless (and (eq? adt-name '__compact_Cell) (eq? ledger-op 'write))
-                (source-errorf src "Rust backend supports Cell constructor writes only"))
-              (nanopass-case (Lnodisclose Expression) (car expr*)
-                [(var-ref ,src1 ,var-name)
-                 (let ([binding (assq (id-sym var-name) bindings)])
-                   (unless (or binding (memq (id-sym var-name) parameters))
-                     (source-errorf src1 "Rust constructor Cell initializer must be a constructor parameter or literal"))
-                 (object (cons "kind" "cell_write")
+              (cond
+                [(and (eq? adt-name 'Counter) (eq? ledger-op 'increment) (= (length expr*) 1))
+                 (object (cons "kind" "counter_increment")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
-                         (cons "value" (if binding (cdr binding) (expression-ir (car expr*) src)))))]
-                [else
-                 (object (cons "kind" "cell_write")
-                         (cons "field" (symbol->string (id-sym ledger-field-name)))
-                         (cons "index" (car path-elt*))
-                         (cons "value" (if (null? adt-arg*)
-                                           (expression-ir (car expr*) src)
-                                           (typed-expression-ir (car expr*) (car adt-arg*) src))))])])]
+                         (cons "amount" (counter-amount-ir (car expr*)
+                                                           (constructor-counter-environment parameters bindings)
+                                                           src)))]
+                [(and (eq? adt-name '__compact_Cell) (eq? ledger-op 'write) (= (length expr*) 1))
+                 (nanopass-case (Lnodisclose Expression) (car expr*)
+                   [(var-ref ,src1 ,var-name)
+                    (let ([binding (assq (id-sym var-name) bindings)])
+                      (unless (or binding (memq (id-sym var-name) parameters))
+                        (source-errorf src1 "Rust constructor Cell initializer must be a constructor parameter or literal"))
+                      (object (cons "kind" "cell_write")
+                              (cons "field" (symbol->string (id-sym ledger-field-name)))
+                              (cons "index" (car path-elt*))
+                              (cons "value" (if binding (cdr binding) (expression-ir (car expr*) src)))))]
+                   [else
+                    (object (cons "kind" "cell_write")
+                            (cons "field" (symbol->string (id-sym ledger-field-name)))
+                            (cons "index" (car path-elt*))
+                            (cons "value" (if (null? adt-arg*)
+                                              (expression-ir (car expr*) src)
+                                              (typed-expression-ir (car expr*) (car adt-arg*) src))))])]
+                [else (source-errorf src "Rust backend does not yet support this constructor ledger operation")])])]
           [else (source-errorf owner-src "Rust backend does not yet support this constructor action")]))
 
       (define (constructor-steps-ir expr parameters owner-src)
@@ -1064,7 +1148,7 @@
           [(seq ,src ,expr* ... ,expr)
            (unless (empty-constructor-expression? expr)
              (source-errorf src "Rust backend does not yet support constructor return values"))
-           (map (lambda (action) (constructor-initializer-ir action parameters '() src)) expr*)]
+           (map (lambda (action) (constructor-step-ir action parameters '() src)) expr*)]
           [(tuple ,src ,tuple-arg* ...)
            (if (null? tuple-arg*)
                '()

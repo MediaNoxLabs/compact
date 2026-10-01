@@ -11,8 +11,8 @@ use std::error::Error;
 use std::fmt;
 
 use ir::{
-    ComparisonOperator, ConstructorStep, Contract, Expr, LedgerFieldKind, PureCircuit,
-    SCHEMA_VERSION, StateAction, StatefulCircuit, StructField, Type,
+    ComparisonOperator, ConstructorStep, Contract, CounterAmount, Expr, LedgerFieldKind,
+    PureCircuit, SCHEMA_VERSION, StateAction, StatefulCircuit, StructField, Type,
 };
 use proc_macro2::Span;
 use quote::quote;
@@ -32,7 +32,6 @@ pub enum RenderError {
     UnknownWitness(String),
     DuplicateParameter(String),
     DuplicateLedgerField(String),
-    DuplicateConstructorInitializer(String),
     InvalidLedgerIndex(u8),
     UnknownLedgerField(String),
     InvalidConstructorInitializer(String),
@@ -88,9 +87,6 @@ impl fmt::Display for RenderError {
             Self::UnknownWitness(name) => write!(f, "unknown witness {name:?}"),
             Self::DuplicateParameter(name) => write!(f, "duplicate parameter {name:?}"),
             Self::DuplicateLedgerField(name) => write!(f, "duplicate ledger field {name:?}"),
-            Self::DuplicateConstructorInitializer(name) => {
-                write!(f, "duplicate constructor Cell initializer {name:?}")
-            }
             Self::InvalidLedgerIndex(index) => {
                 write!(f, "invalid or noncontiguous ledger field index {index}")
             }
@@ -962,6 +958,158 @@ fn infallible_constructor_expr(value: &Expr) -> bool {
     }
 }
 
+fn collect_constructor_step_types(
+    step: &ConstructorStep,
+    structs: &mut BTreeMap<String, Vec<StructField>>,
+    enums: &mut BTreeMap<String, Vec<String>>,
+) -> Result<(), RenderError> {
+    match step {
+        ConstructorStep::CellWrite { value, .. } => {
+            collect_expression_types(value, structs, enums)?
+        }
+        ConstructorStep::CounterIncrement { .. } => {}
+        ConstructorStep::ForEach {
+            binding,
+            values,
+            steps,
+        } => {
+            collect_named_types(&binding.ty, structs, enums)?;
+            for value in values {
+                collect_expression_types(value, structs, enums)?;
+            }
+            for step in steps {
+                collect_constructor_step_types(step, structs, enums)?;
+            }
+        }
+    }
+    Ok(())
+}
+
+fn render_constructor_vm_steps<'a>(
+    steps: &'a [ConstructorStep],
+    ledger_fields: &HashMap<&str, &ir::LedgerField>,
+    parameters: &HashMap<&'a str, (&'a Type, syn::Ident)>,
+    next_loop: &mut usize,
+) -> Result<Vec<syn::Stmt>, RenderError> {
+    let mut actions = Vec::new();
+    for step in steps {
+        match step {
+            ConstructorStep::CellWrite {
+                field,
+                index,
+                value,
+            } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                if declaration.index != *index {
+                    return Err(RenderError::InvalidLedgerIndex(*index));
+                }
+                let LedgerFieldKind::Cell { ty } = &declaration.declaration else {
+                    return Err(RenderError::InvalidConstructorInitializer(field.clone()));
+                };
+                if !infallible_constructor_expr(value) {
+                    return Err(RenderError::InvalidConstructorInitializer(field.clone()));
+                }
+                let (value, actual) = expression_with_calls(value, parameters, &HashMap::new())?;
+                if actual != *ty {
+                    return Err(RenderError::TypeMismatch {
+                        expected: ty.clone(),
+                        actual,
+                    });
+                }
+                let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+                actions.push(
+                    syn::parse_quote!(let step = context.write_cell(#index, (#value).clone())?;),
+                );
+                actions.push(syn::parse_quote!(context = step.context;));
+            }
+            ConstructorStep::CounterIncrement {
+                field,
+                index,
+                amount,
+            } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                if declaration.declaration != LedgerFieldKind::Counter
+                    || declaration.index != *index
+                {
+                    return Err(RenderError::UnknownLedgerField(field.clone()));
+                }
+                let amount: syn::Expr = match amount {
+                    CounterAmount::Literal { value } => {
+                        let value = syn::LitInt::new(&format!("{value}u16"), Span::call_site());
+                        syn::parse_quote!(#value)
+                    }
+                    CounterAmount::Parameter { name } => {
+                        let (ty, rust_name) = parameters
+                            .get(name.as_str())
+                            .ok_or_else(|| RenderError::UnknownParameter(name.clone()))?;
+                        let expected = Type::Unsigned {
+                            max: "65535".into(),
+                        };
+                        if *ty != &expected {
+                            return Err(RenderError::TypeMismatch {
+                                expected,
+                                actual: (*ty).clone(),
+                            });
+                        }
+                        syn::parse_quote!(#rust_name.value() as u16)
+                    }
+                };
+                let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+                actions.push(
+                    syn::parse_quote!(let step = context.increment_counter(#index, #amount)?;),
+                );
+                actions.push(syn::parse_quote!(context = step.context;));
+            }
+            ConstructorStep::ForEach {
+                binding,
+                values,
+                steps,
+            } => {
+                let loop_index = *next_loop;
+                *next_loop += 1;
+                let item = syn::Ident::new(
+                    &format!("__compact_constructor_item_{loop_index}"),
+                    Span::call_site(),
+                );
+                let iterable = syn::Ident::new(
+                    &format!("__compact_constructor_values_{loop_index}"),
+                    Span::call_site(),
+                );
+                let mut rendered_values = Vec::new();
+                for value in values {
+                    if !infallible_constructor_expr(value) {
+                        return Err(RenderError::InvalidConstructorInitializer(
+                            binding.name.clone(),
+                        ));
+                    }
+                    let (value, actual) =
+                        expression_with_calls(value, parameters, &HashMap::new())?;
+                    if actual != binding.ty {
+                        return Err(RenderError::TypeMismatch {
+                            expected: binding.ty.clone(),
+                            actual,
+                        });
+                    }
+                    rendered_values.push(value);
+                }
+                let mut body_parameters = parameters.clone();
+                body_parameters.insert(binding.name.as_str(), (&binding.ty, item.clone()));
+                let body =
+                    render_constructor_vm_steps(steps, ledger_fields, &body_parameters, next_loop)?;
+                let ty = rust_type(&binding.ty)?;
+                let len = syn::LitInt::new(&values.len().to_string(), Span::call_site());
+                actions.push(syn::parse_quote!(let #iterable: [#ty; #len] = [#((#rendered_values).clone()),*];));
+                actions.push(syn::parse_quote!(for #item in #iterable { #(#body)* }));
+            }
+        }
+    }
+    Ok(actions)
+}
+
 pub fn render(contract: &Contract) -> Result<String, RenderError> {
     if contract.schema_version != SCHEMA_VERSION {
         return Err(RenderError::SchemaVersion(contract.schema_version));
@@ -977,6 +1125,9 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                 &mut struct_definitions,
                 &mut enum_definitions,
             )?;
+        }
+        for step in &constructor.steps {
+            collect_constructor_step_types(step, &mut struct_definitions, &mut enum_definitions)?;
         }
     }
     for circuit in &contract.circuits {
@@ -1129,9 +1280,21 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
     let mut constructor_args = Vec::<syn::FnArg>::new();
     let mut constructor_parameters = HashMap::new();
     let mut constructor_values = HashMap::new();
+    let constructor_uses_vm = contract.constructor.as_ref().is_some_and(|constructor| {
+        let mut seen_cells = HashSet::new();
+        constructor.steps.iter().any(|step| match step {
+            ConstructorStep::CellWrite { field, .. } => !seen_cells.insert(field.as_str()),
+            ConstructorStep::CounterIncrement { .. } | ConstructorStep::ForEach { .. } => true,
+        })
+    });
+    let mut constructor_actions = Vec::<syn::Stmt>::new();
     if let Some(constructor) = &contract.constructor {
-        for parameter in &constructor.parameters {
-            let name = ident(&parameter.name)?;
+        for (index, parameter) in constructor.parameters.iter().enumerate() {
+            ident(&parameter.name)?;
+            let name = syn::Ident::new(
+                &format!("__compact_constructor_param_{index}"),
+                Span::call_site(),
+            );
             if constructor_parameters
                 .insert(parameter.name.as_str(), (&parameter.ty, name.clone()))
                 .is_some()
@@ -1141,37 +1304,44 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
             let ty = rust_type(&parameter.ty)?;
             constructor_args.push(syn::parse_quote!(#name: #ty));
         }
-        for step in &constructor.steps {
-            match step {
-                ConstructorStep::CellWrite {
+        if constructor_uses_vm {
+            constructor_actions = render_constructor_vm_steps(
+                &constructor.steps,
+                &ledger_fields,
+                &constructor_parameters,
+                &mut 0,
+            )?;
+        } else {
+            for step in &constructor.steps {
+                let ConstructorStep::CellWrite {
                     field,
                     index,
                     value,
-                } => {
-                    let declaration = ledger_fields
-                        .get(field.as_str())
-                        .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
-                    if declaration.index != *index {
-                        return Err(RenderError::InvalidLedgerIndex(*index));
-                    }
-                    let LedgerFieldKind::Cell { ty } = &declaration.declaration else {
-                        return Err(RenderError::InvalidConstructorInitializer(field.clone()));
-                    };
-                    if !infallible_constructor_expr(value) {
-                        return Err(RenderError::InvalidConstructorInitializer(field.clone()));
-                    }
-                    let (value, actual) =
-                        expression_with_calls(value, &constructor_parameters, &HashMap::new())?;
-                    if actual != *ty {
-                        return Err(RenderError::TypeMismatch {
-                            expected: ty.clone(),
-                            actual,
-                        });
-                    }
-                    if constructor_values.insert(field.as_str(), value).is_some() {
-                        return Err(RenderError::DuplicateConstructorInitializer(field.clone()));
-                    }
+                } = step
+                else {
+                    unreachable!("VM constructor selection includes effects and loops")
+                };
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                if declaration.index != *index {
+                    return Err(RenderError::InvalidLedgerIndex(*index));
                 }
+                let LedgerFieldKind::Cell { ty } = &declaration.declaration else {
+                    return Err(RenderError::InvalidConstructorInitializer(field.clone()));
+                };
+                if !infallible_constructor_expr(value) {
+                    return Err(RenderError::InvalidConstructorInitializer(field.clone()));
+                }
+                let (value, actual) =
+                    expression_with_calls(value, &constructor_parameters, &HashMap::new())?;
+                if actual != *ty {
+                    return Err(RenderError::TypeMismatch {
+                        expected: ty.clone(),
+                        actual,
+                    });
+                }
+                constructor_values.insert(field.as_str(), value);
             }
         }
     }
@@ -1194,6 +1364,19 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
 
     let ledger_view_methods = &witness_syntax.ledger_view_methods;
     let witness_methods = &witness_syntax.trait_methods;
+    let constructor_return: syn::Expr = if constructor_uses_vm {
+        syn::parse_quote!({
+            let mut context = runtime::context::ConstructorResult::new(__compact_context, state)
+                .into_circuit_context(runtime::ledger::ContractAddress::default());
+            #(#constructor_actions)*
+            Ok(context.into_constructor_result())
+        })
+    } else {
+        syn::parse_quote!(Ok(runtime::context::ConstructorResult::new(
+            __compact_context,
+            state
+        )))
+    };
 
     let runtime_abi = syn::LitInt::new(&RUNTIME_ABI_VERSION.to_string(), Span::call_site());
     let mut struct_items = Vec::<syn::Item>::new();
@@ -1313,7 +1496,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                     #(#constructor_args),*
                 ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
                     let state = runtime::ledger::contract_state(vec![#(#constructor_fields),*]);
-                    Ok(runtime::context::ConstructorResult::new(__compact_context, state))
+                    #constructor_return
                 }
                 #(#stateful_items)*
             }

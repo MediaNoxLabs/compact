@@ -77,6 +77,14 @@ pub struct CircuitResult<Private, Output, D: DB = DefaultDB> {
 }
 
 impl<Private, D: DB> CircuitContext<Private, D> {
+    pub fn into_constructor_result(self) -> ConstructorResult<Private, D> {
+        ConstructorResult {
+            ledger_state: self.query.state,
+            private_state: self.private_state,
+            zswap_state: self.zswap_state,
+        }
+    }
+
     pub fn witness_context(&self) -> WitnessContext<'_, Private, &StateValue<D>> {
         WitnessContext {
             ledger: self.query.state.get_ref(),

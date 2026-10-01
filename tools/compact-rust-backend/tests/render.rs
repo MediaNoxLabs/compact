@@ -52,8 +52,8 @@ fn constructor_cell_parameters_are_typed_and_validated() {
         }],
     });
     let source = render(&contract).unwrap();
-    assert!(source.contains("seed: runtime::Field"));
-    assert!(source.contains("seed.clone()"));
+    assert!(source.contains("__compact_constructor_param_0: runtime::Field"));
+    assert!(source.contains("__compact_constructor_param_0.clone()"));
     assert!(
         source.contains(
             "Result<runtime::context::ConstructorResult<Private>, runtime::CompactError>"
@@ -61,11 +61,16 @@ fn constructor_cell_parameters_are_typed_and_validated() {
     );
 
     let constructor = contract.constructor.as_mut().unwrap();
-    let ConstructorStep::CellWrite { index, .. } = &mut constructor.steps[0];
+    let ConstructorStep::CellWrite { index, .. } = &mut constructor.steps[0] else {
+        panic!("expected Cell write")
+    };
     *index = 1;
     assert_eq!(render(&contract), Err(RenderError::InvalidLedgerIndex(1)));
     let ConstructorStep::CellWrite { index, .. } =
-        &mut contract.constructor.as_mut().unwrap().steps[0];
+        &mut contract.constructor.as_mut().unwrap().steps[0]
+    else {
+        panic!("expected Cell write")
+    };
     *index = 0;
     contract.constructor.as_mut().unwrap().parameters[0].ty = Type::Boolean;
     assert_eq!(
@@ -78,11 +83,128 @@ fn constructor_cell_parameters_are_typed_and_validated() {
     contract.constructor.as_mut().unwrap().parameters[0].ty = Type::Field;
     let duplicate = contract.constructor.as_ref().unwrap().steps[0].clone();
     contract.constructor.as_mut().unwrap().steps.push(duplicate);
+    let source = render(&contract).unwrap();
+    assert_eq!(source.matches("context.write_cell(0,").count(), 2);
+}
+
+#[test]
+fn constructor_counter_steps_use_typed_vm_calls() {
+    let mut contract = identity(
+        Type::Field,
+        Expr::Parameter {
+            name: "value".into(),
+        },
+    );
+    contract.ledger_fields = vec![LedgerField {
+        id: "count".into(),
+        index: 0,
+        declaration: LedgerFieldKind::Counter,
+    }];
+    contract.constructor = Some(Constructor {
+        parameters: vec![Parameter {
+            name: "amount".into(),
+            ty: Type::Unsigned {
+                max: "65535".into(),
+            },
+        }],
+        steps: vec![
+            ConstructorStep::CounterIncrement {
+                field: "count".into(),
+                index: 0,
+                amount: CounterAmount::Parameter {
+                    name: "amount".into(),
+                },
+            },
+            ConstructorStep::CounterIncrement {
+                field: "count".into(),
+                index: 0,
+                amount: CounterAmount::Literal { value: 3 },
+            },
+        ],
+    });
+    let source = render(&contract).unwrap();
+    assert!(source.contains("increment_counter(0, __compact_constructor_param_0.value() as u16)?"));
+    assert!(source.contains("context.increment_counter(0, 3u16)?"));
+    assert!(source.contains("context.into_constructor_result()"));
+    contract.constructor.as_mut().unwrap().parameters[0].ty = Type::Field;
     assert_eq!(
         render(&contract),
-        Err(RenderError::DuplicateConstructorInitializer(
-            "stored".into()
-        ))
+        Err(RenderError::TypeMismatch {
+            expected: Type::Unsigned {
+                max: "65535".into()
+            },
+            actual: Type::Field,
+        })
+    );
+}
+
+#[test]
+fn constructor_for_each_checks_element_type_and_loop_binding() {
+    let mut contract = identity(
+        Type::Field,
+        Expr::Parameter {
+            name: "value".into(),
+        },
+    );
+    contract.ledger_fields = vec![LedgerField {
+        id: "count".into(),
+        index: 0,
+        declaration: LedgerFieldKind::Counter,
+    }];
+    contract.constructor = Some(Constructor {
+        parameters: vec![],
+        steps: vec![ConstructorStep::ForEach {
+            binding: Parameter {
+                name: "item".into(),
+                ty: Type::Unsigned {
+                    max: "65535".into(),
+                },
+            },
+            values: vec![Expr::UnsignedLiteral {
+                value: "2".into(),
+                max: "65535".into(),
+            }],
+            steps: vec![ConstructorStep::CounterIncrement {
+                field: "count".into(),
+                index: 0,
+                amount: CounterAmount::Parameter {
+                    name: "item".into(),
+                },
+            }],
+        }],
+    });
+    let source = render(&contract).unwrap();
+    assert!(source.contains("for __compact_constructor_item_0 in __compact_constructor_values_0"));
+    assert!(source.contains("increment_counter(0, __compact_constructor_item_0.value() as u16)?"));
+    let ConstructorStep::ForEach { binding, steps, .. } =
+        &mut contract.constructor.as_mut().unwrap().steps[0]
+    else {
+        unreachable!()
+    };
+    binding.name = "_".into();
+    let ConstructorStep::CounterIncrement { amount, .. } = &mut steps[0] else {
+        unreachable!()
+    };
+    *amount = CounterAmount::Parameter { name: "_".into() };
+    assert!(
+        render(&contract)
+            .unwrap()
+            .contains("__compact_constructor_item_0")
+    );
+    let ConstructorStep::ForEach { values, .. } =
+        &mut contract.constructor.as_mut().unwrap().steps[0]
+    else {
+        unreachable!()
+    };
+    values[0] = Expr::Boolean { value: true };
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::TypeMismatch {
+            expected: Type::Unsigned {
+                max: "65535".into()
+            },
+            actual: Type::Boolean,
+        })
     );
 }
 

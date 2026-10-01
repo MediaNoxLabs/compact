@@ -255,6 +255,12 @@
              [(ttuple ,src^ ,type* ...)
               (typed-expression-ir expr type src)]
              [else (source-errorf src "Rust backend does not yet support this cast")])]
+          [(downcast-unsigned ,src ,nat? ,nat ,expr)
+           (unless nat?
+             (source-errorf src "Rust backend does not yet support Field-to-Uint downcasts"))
+           (object (cons "kind" "unsigned_cast")
+                   (cons "max" (number->string nat))
+                   (cons "value" (expression-ir expr src)))]
           [(tuple ,src ,tuple-arg* ...)
            (if (null? tuple-arg*)
                (kind "unit")
@@ -262,6 +268,28 @@
                        (cons "elements"
                              (list->vector
                                (map (lambda (arg) (tuple-argument-ir arg owner-src)) tuple-arg*)))))]
+          [(map ,src ,len ,fun ,map-arg ,map-arg* ...)
+           (unless (null? map-arg*)
+             (source-errorf src "Rust backend supports unary Vector map only"))
+           (nanopass-case (Lnodisclose Function) fun
+             [(circuit ,src^ (,arg* ...) ,type ,expr)
+              (unless (= (length arg*) 1)
+                (source-errorf src "Rust backend supports unary Vector map only"))
+              (nanopass-case (Lnodisclose Argument) (car arg*)
+                [(,var-name ,type^)
+                 (nanopass-case (Lnodisclose Map-Argument) map-arg
+                   [(,expr1 ,type1 ,type2)
+                    (when (current-variable-types)
+                      (eq-hashtable-set! (current-variable-types) var-name type^))
+                    (object (cons "kind" "vector_map")
+                            (cons "parameter"
+                                  (object (cons "name" (symbol->string (id-sym var-name)))
+                                          (cons "ty" (type-ir type^ src))))
+                            (cons "source" (typed-expression-ir expr1 type1 src))
+                            (cons "body" (typed-expression-ir expr type src))
+                            (cons "result" (type-ir type src))
+                            (cons "length" len))])])]
+             [else (source-errorf src "Rust backend supports inline Vector map functions only")])]
           [(if ,src ,expr0 ,expr1 ,expr2)
            (object (cons "kind" "if")
                    (cons "condition" (expression-ir expr0 src))

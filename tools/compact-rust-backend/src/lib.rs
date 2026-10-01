@@ -309,6 +309,18 @@ fn collect_expression_types(
                 collect_expression_types(value, structs, enums)?;
             }
         }
+        Expr::VectorMap {
+            parameter,
+            source,
+            body,
+            result,
+            ..
+        } => {
+            collect_named_types(&parameter.ty, structs, enums)?;
+            collect_named_types(result, structs, enums)?;
+            collect_expression_types(source, structs, enums)?;
+            collect_expression_types(body, structs, enums)?;
+        }
         Expr::If {
             condition,
             then,
@@ -808,6 +820,47 @@ fn expression_with_calls(
                 Type::Vector {
                     element: Box::new(element.clone()),
                     length,
+                },
+            ))
+        }
+        Expr::VectorMap {
+            parameter,
+            source,
+            body,
+            result,
+            length,
+        } => {
+            let (source, source_ty) = expression_with_calls(source, parameters, circuits)?;
+            let target_source_ty = Type::Vector {
+                element: Box::new(parameter.ty.clone()),
+                length: *length,
+            };
+            let source = coerce_expression(source, &source_ty, &target_source_ty, 0)?;
+            let item_name = ident(&parameter.name)?;
+            let mut body_parameters = parameters.clone();
+            body_parameters.insert(parameter.name.as_str(), (&parameter.ty, item_name.clone()));
+            let (body, actual) = expression_with_calls(body, &body_parameters, circuits)?;
+            if actual != *result {
+                return Err(RenderError::TypeMismatch {
+                    expected: result.clone(),
+                    actual,
+                });
+            }
+            let mapped = syn::Ident::new("__compact_mapped", Span::call_site());
+            let source_name = syn::Ident::new("__compact_map_source", Span::call_site());
+            let length_lit = syn::LitInt::new(&length.to_string(), Span::call_site());
+            Ok((
+                syn::parse_quote!({
+                    let #source_name = #source;
+                    let mut #mapped = Vec::with_capacity(#length_lit);
+                    for #item_name in #source_name.into_array() {
+                        #mapped.push(#body);
+                    }
+                    runtime::FixedVector::new(#mapped.try_into().expect("Vector map preserves its length"))
+                }),
+                Type::Vector {
+                    element: Box::new(result.clone()),
+                    length: *length,
                 },
             ))
         }

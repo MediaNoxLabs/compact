@@ -473,6 +473,13 @@ pub enum Expr {
         element: Type,
         elements: Vec<Expr>,
     },
+    VectorMap {
+        parameter: Parameter,
+        source: Box<Expr>,
+        body: Box<Expr>,
+        result: Type,
+        length: usize,
+    },
     If {
         condition: Box<Expr>,
         then: Box<Expr>,

@@ -49,6 +49,15 @@ execution and an ordered public program. Other generated circuit methods
 return native `CircuitResult`; complete operation recording, call proof inputs,
 and wallet submission remain Milestone 2 work.
 
+The counter proof smoke now builds its public statement from ledger-8's
+`ContractCallPrototype` and confirms it matches the emitted ZKIR. It uses
+the value-field communication commitment calculated by `Intent::add_call`,
+proves the resulting call transaction, and validates the proven transaction
+against a ledger containing the generated contract. The smoke applies the
+proven call and checks the resulting Counter value. This covers the Counter
+increment slice offline. Other operations and a wallet or node submission
+path remain Milestone 2 work.
+
 ## Implemented slices
 
 The backend supports exported pure circuits with `Field`, `Boolean`,

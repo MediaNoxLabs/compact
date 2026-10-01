@@ -1586,6 +1586,7 @@ dependencies = [
  "midnight-compact-runtime",
  "midnight-curves",
  "midnight-ledger",
+ "midnight-onchain-runtime",
  "midnight-onchain-state",
  "midnight-proofs",
  "midnight-serialize",

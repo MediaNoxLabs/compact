@@ -122,6 +122,15 @@
            (if (boolean? datum)
                (object (cons "kind" "boolean") (cons "value" datum))
                (source-errorf src "Rust backend does not yet support this literal"))]
+          [(default ,src ,type)
+           (nanopass-case (Lnodisclose Type) type
+             [(tboolean ,src^) (object (cons "kind" "boolean") (cons "value" #f))]
+             [(tfield ,src^) (object (cons "kind" "field_literal") (cons "value" "0"))]
+             [(tunsigned ,src^ ,nat)
+              (object (cons "kind" "unsigned_literal")
+                      (cons "value" "0")
+                      (cons "max" (number->string nat)))]
+             [else (source-errorf src "Rust backend does not yet support this default expression")])]
           [(safe-cast ,src ,type ,type^ ,expr)
            (nanopass-case (Lnodisclose Type) type
              [(tfield ,src^)
@@ -501,6 +510,13 @@
 
       (define (state-action-ir expr owner-src environment witness-ids)
         (nanopass-case (Lnodisclose Expression) expr
+          [(call ,src ,function-name ,expr* ...)
+           (when (or (id-pure? function-name)
+                     (eq-hashtable-ref witness-ids function-name #f))
+             (source-errorf src "Rust backend supports stateful circuit calls in action position only"))
+           (object (cons "kind" "circuit_call")
+                   (cons "name" (symbol->string (id-sym function-name)))
+                   (cons "arguments" (list->vector (map (lambda (arg) (stateful-expression-ir arg src witness-ids)) expr*))))]
           [(assert ,src ,expr ,mesg)
            (object (cons "kind" "assert")
                    (cons "condition" (stateful-expression-ir expr src witness-ids))

@@ -1,0 +1,12 @@
+import CompactStandardLibrary;
+
+export ledger count: Counter;
+
+export circuit bump(): [] {
+  count.increment(1);
+}
+
+export circuit bump_twice(): [] {
+  bump();
+  bump();
+}

@@ -12,7 +12,7 @@ use std::fmt;
 
 use ir::{
     ComparisonOperator, Contract, Expr, LedgerFieldKind, PureCircuit, SCHEMA_VERSION, StateAction,
-    StructField, Type,
+    StatefulCircuit, StructField, Type,
 };
 use proc_macro2::Span;
 use quote::quote;
@@ -44,6 +44,7 @@ pub enum RenderError {
     DuplicateEnumVariant(String),
     UnknownParameter(String),
     UnknownCircuit(String),
+    UnsupportedStatefulCall(String),
     ArgumentCount {
         circuit: String,
         expected: usize,
@@ -107,7 +108,10 @@ impl fmt::Display for RenderError {
             Self::EmptyEnum(name) => write!(f, "enum {name:?} has no variants"),
             Self::DuplicateEnumVariant(name) => write!(f, "duplicate enum variant {name:?}"),
             Self::UnknownParameter(name) => write!(f, "unknown parameter {name:?}"),
-            Self::UnknownCircuit(name) => write!(f, "unknown pure circuit {name:?}"),
+            Self::UnknownCircuit(name) => write!(f, "unknown circuit {name:?}"),
+            Self::UnsupportedStatefulCall(name) => {
+                write!(f, "unsupported stateful circuit call {name:?}")
+            }
             Self::ArgumentCount {
                 circuit,
                 expected,
@@ -342,6 +346,11 @@ fn collect_action_types(
     enums: &mut BTreeMap<String, Vec<String>>,
 ) -> Result<(), RenderError> {
     match action {
+        StateAction::CircuitCall { arguments, .. } => {
+            for argument in arguments {
+                collect_expression_types(argument, structs, enums)?;
+            }
+        }
         StateAction::Assert { condition, .. } => {
             collect_expression_types(condition, structs, enums)?;
         }
@@ -1027,6 +1036,11 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
         items.push(item);
     }
 
+    let callable_stateful_circuits: HashMap<&str, &StatefulCircuit> = contract
+        .stateful_circuits
+        .iter()
+        .map(|circuit| (circuit.name.as_str(), circuit))
+        .collect();
     let mut stateful_items = Vec::new();
     for circuit in &contract.stateful_circuits {
         if !names.insert(circuit.name.as_str()) {
@@ -1037,6 +1051,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
             &ledger_fields,
             &witness_syntax.declarations,
             &callable_circuits,
+            &callable_stateful_circuits,
         )?);
     }
 

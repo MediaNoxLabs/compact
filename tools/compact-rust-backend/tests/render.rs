@@ -1158,3 +1158,66 @@ fn struct_definitions_are_shared_by_name_and_must_match() {
         Err(RenderError::ConflictingStruct("Pair".into()))
     );
 }
+
+#[test]
+fn stateful_call_checks_target_and_arguments() {
+    let mut contract = Contract {
+        schema_version: 4,
+        constructor: None,
+        ledger_fields: vec![],
+        witnesses: vec![],
+        circuits: vec![],
+        stateful_circuits: vec![
+            StatefulCircuit {
+                name: "target".into(),
+                parameters: vec![Parameter {
+                    name: "value".into(),
+                    ty: Type::Field,
+                }],
+                actions: vec![],
+                result: Type::Unit,
+                return_value: StateReturn::Unit,
+            },
+            StatefulCircuit {
+                name: "caller".into(),
+                parameters: vec![Parameter {
+                    name: "seed".into(),
+                    ty: Type::Field,
+                }],
+                actions: vec![StateAction::CircuitCall {
+                    name: "target".into(),
+                    arguments: vec![Expr::Parameter {
+                        name: "seed".into(),
+                    }],
+                }],
+                result: Type::Unit,
+                return_value: StateReturn::Unit,
+            },
+        ],
+    };
+    assert!(
+        render(&contract)
+            .unwrap()
+            .contains("let call_step = target(context, __compact_param_0)?")
+    );
+    contract.stateful_circuits[1].actions = vec![StateAction::CircuitCall {
+        name: "target".into(),
+        arguments: vec![],
+    }];
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::ArgumentCount {
+            circuit: "target".into(),
+            expected: 1,
+            actual: 0
+        })
+    );
+    contract.stateful_circuits[1].actions = vec![StateAction::CircuitCall {
+        name: "missing".into(),
+        arguments: vec![],
+    }];
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::UnknownCircuit("missing".into()))
+    );
+}

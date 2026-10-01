@@ -569,11 +569,20 @@ fn render_state_expression(
     }
 }
 
+fn action_contains_call(action: &StateAction) -> bool {
+    match action {
+        StateAction::CircuitCall { .. } => true,
+        StateAction::Let { action, .. } => action_contains_call(action),
+        _ => false,
+    }
+}
+
 pub(crate) fn render_stateful_circuit(
     circuit: &StatefulCircuit,
     ledger_fields: &HashMap<&str, &LedgerField>,
     witnesses: &HashMap<&str, &WitnessDeclaration>,
     circuits: &HashMap<&str, &PureCircuit>,
+    stateful_circuits: &HashMap<&str, &StatefulCircuit>,
 ) -> Result<syn::Item, RenderError> {
     let name = ident(&circuit.name)?;
     let mut parameters = HashMap::new();
@@ -637,6 +646,48 @@ pub(crate) fn render_stateful_circuit(
         }
         let parameters = local_parameters;
         match action {
+            StateAction::CircuitCall {
+                name: callee_name,
+                arguments,
+            } => {
+                let callee = stateful_circuits
+                    .get(callee_name.as_str())
+                    .ok_or_else(|| RenderError::UnknownCircuit(callee_name.clone()))?;
+                // The first call slice keeps transcript handling local to each
+                // generated function. Witness and nested calls need an explicit
+                // composition model before they can safely share a context.
+                if !witnesses.is_empty()
+                    || callee_name == &circuit.name
+                    || callee.actions.iter().any(action_contains_call)
+                {
+                    return Err(RenderError::UnsupportedStatefulCall(callee_name.clone()));
+                }
+                if arguments.len() != callee.parameters.len() {
+                    return Err(RenderError::ArgumentCount {
+                        circuit: callee_name.clone(),
+                        expected: callee.parameters.len(),
+                        actual: arguments.len(),
+                    });
+                }
+                let mut args = Vec::new();
+                for (argument, parameter) in arguments.iter().zip(&callee.parameters) {
+                    let (rendered, actual) =
+                        expression_with_calls(argument, &parameters, circuits)?;
+                    if actual != parameter.ty {
+                        return Err(RenderError::TypeMismatch {
+                            expected: parameter.ty.clone(),
+                            actual,
+                        });
+                    }
+                    args.push(rendered);
+                }
+                let callee_name = ident(callee_name)?;
+                statements.push(syn::parse_quote! {
+                    let call_step = #callee_name(context, #(#args),*)?;
+                });
+                statements.push(syn::parse_quote!(let context = call_step.context;));
+                statements.push(syn::parse_quote!(total_cost += call_step.gas_cost;));
+            }
             StateAction::Assert { condition, message } => {
                 let mut effect_statements = Vec::new();
                 let (condition, actual, effect) = render_state_expression(

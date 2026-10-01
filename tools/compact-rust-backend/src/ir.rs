@@ -141,6 +141,10 @@ pub enum StateReturn {
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum StateAction {
+    CircuitCall {
+        name: String,
+        arguments: Vec<Expr>,
+    },
     Assert {
         condition: Expr,
         message: String,

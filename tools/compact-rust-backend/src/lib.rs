@@ -1067,7 +1067,14 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                     initializer.field.clone(),
                 ));
             };
-            if !matches!(initializer.value, Expr::Parameter { .. }) {
+            if !matches!(
+                initializer.value,
+                Expr::Parameter { .. }
+                    | Expr::Boolean { .. }
+                    | Expr::FieldLiteral { .. }
+                    | Expr::UnsignedLiteral { .. }
+                    | Expr::Unit
+            ) {
                 return Err(RenderError::InvalidConstructorInitializer(
                     initializer.field.clone(),
                 ));

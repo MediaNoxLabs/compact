@@ -975,8 +975,17 @@
           [(tuple ,src ,tuple-arg* ...) (null? tuple-arg*)]
           [else #f]))
 
-      (define (constructor-initializer-ir expr parameters owner-src)
+      (define (constructor-initializer-ir expr parameters bindings owner-src)
         (nanopass-case (Lnodisclose Expression) expr
+          [(let* ,src ([,local* ,expr*] ...) ,expr)
+           (let ([bindings^
+                   (fold-left
+                     (lambda (bindings local value)
+                       (nanopass-case (Lnodisclose Argument) local
+                         [(,var-name ,type)
+                          (cons (cons (id-sym var-name) (expression-ir value src)) bindings)]))
+                     bindings local* expr*)])
+             (constructor-initializer-ir expr parameters bindings^ src))]
           [(public-ledger ,src ,ledger-field-name ,sugar? (,path-elt* ...) ,src^ ,adt-op ,expr* ...)
            (unless (and (= (length path-elt*) 1)
                         (integer? (car path-elt*))
@@ -988,12 +997,13 @@
                 (source-errorf src "Rust backend supports Cell constructor writes only"))
               (nanopass-case (Lnodisclose Expression) (car expr*)
                 [(var-ref ,src1 ,var-name)
-                 (unless (memq (id-sym var-name) parameters)
-                   (source-errorf src1 "Rust constructor Cell initializer must be a constructor parameter"))
+                 (let ([binding (assq (id-sym var-name) bindings)])
+                   (unless (or binding (memq (id-sym var-name) parameters))
+                     (source-errorf src1 "Rust constructor Cell initializer must be a constructor parameter or literal"))
                  (object (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
-                         (cons "value" (expression-ir (car expr*) src)))]
-                [else (source-errorf src "Rust constructor Cell initializer must be a constructor parameter")])])]
+                         (cons "value" (if binding (cdr binding) (expression-ir (car expr*) src)))))]
+                [else (source-errorf src "Rust constructor Cell initializer must be a constructor parameter or literal")])])]
           [else (source-errorf owner-src "Rust backend does not yet support this constructor action")]))
 
       (define (constructor-initializers-ir expr parameters owner-src)
@@ -1002,7 +1012,7 @@
           [(seq ,src ,expr* ... ,expr)
            (unless (empty-constructor-expression? expr)
              (source-errorf src "Rust backend does not yet support constructor return values"))
-           (map (lambda (action) (constructor-initializer-ir action parameters src)) expr*)]
+           (map (lambda (action) (constructor-initializer-ir action parameters '() src)) expr*)]
           [(tuple ,src ,tuple-arg* ...)
            (if (null? tuple-arg*)
                '()

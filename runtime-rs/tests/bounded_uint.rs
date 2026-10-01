@@ -1,3 +1,18 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//  	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 use midnight_base_crypto::fab::{
     Aligned, AlignedValue, Alignment, AlignmentAtom, Value, ValueAtom,
 };
@@ -102,4 +117,50 @@ fn compact_uint_uses_the_declared_byte_alignment_and_ledger_value() {
     );
     assert_eq!(BoundedUint::<0>::BYTE_LENGTH, 0);
     assert_eq!(value.binary_vec(), vec![254]);
+}
+
+fn assert_ledger_encoding<const MAX: u128>(values: &[u128]) {
+    let width = BoundedUint::<MAX>::BYTE_LENGTH as usize;
+    for &integer in values {
+        let value = BoundedUint::<MAX>::new(integer).unwrap();
+        let bytes = integer.to_le_bytes()[..width].to_vec();
+        let aligned = AlignedValue::from(value);
+        let mut normalized = bytes.clone();
+        while normalized.last() == Some(&0) {
+            normalized.pop();
+        }
+        assert_eq!(aligned.value, Value(vec![ValueAtom(normalized)]));
+        assert_eq!(
+            BoundedUint::<MAX>::try_from(&*aligned.as_slice()),
+            Ok(value)
+        );
+        assert_eq!(value.binary_vec(), bytes);
+        assert_eq!(
+            BoundedUint::<MAX>::from_field_repr(&value.field_vec()),
+            Some(value)
+        );
+    }
+}
+
+#[test]
+fn compact_uint_exhaustive_byte_domain_matches_ledger_encoding() {
+    assert_ledger_encoding::<255>(&(0..=255).collect::<Vec<_>>());
+    assert_ledger_encoding::<99>(&(0..=99).collect::<Vec<_>>());
+    for integer in 100..=255 {
+        assert!(BoundedUint::<99>::try_from(&*Value(vec![ValueAtom(vec![integer])])).is_err());
+    }
+}
+
+#[test]
+fn compact_uint_wider_boundaries_match_ledger_encoding() {
+    assert_ledger_encoding::<69_999>(&[0, 1, 255, 256, 65_535, 65_536, 69_999]);
+    assert_ledger_encoding::<4_999_999_999>(&[
+        0,
+        1,
+        255,
+        256,
+        u32::MAX as u128,
+        u32::MAX as u128 + 1,
+        4_999_999_999,
+    ]);
 }

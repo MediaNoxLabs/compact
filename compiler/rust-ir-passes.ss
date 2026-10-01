@@ -42,6 +42,7 @@
               base)))
 
       (define call-argument-types (make-eq-hashtable))
+      (define function-rust-names (make-eq-hashtable))
       (define current-variable-types (make-parameter #f))
       (define struct-shape-names '())
       (define used-struct-names '())
@@ -79,6 +80,7 @@
            (cond
              [(string=? opaque-type "JubjubPoint") (kind "jubjub_point")]
              [(string=? opaque-type "string") (kind "opaque_string")]
+             [(string=? opaque-type "Uint8Array") (kind "opaque_bytes")]
              [else (source-errorf src "Rust backend does not yet support this opaque type")])]
           [(tbytes ,src ,len)
            (object (cons "kind" "bytes")
@@ -318,7 +320,7 @@
               (nanopass-case (Lnodisclose Map-Argument) map-arg
                 [(,expr1 ,type1 ,type2)
                  (object (cons "kind" "vector_fold_call")
-                         (cons "name" (symbol->string (id-sym function-name)))
+                         (cons "name" (rust-function-name function-name))
                          (cons "initial" (typed-expression-ir expr0 type0 src))
                          (cons "source" (typed-expression-ir expr1 type1 src))
                          (cons "accumulator" (type-ir type0 src))
@@ -476,7 +478,7 @@
                [else
                 (let ([formal-types (eq-hashtable-ref call-argument-types function-name #f)])
                   (object (cons "kind" "call")
-                          (cons "name" (symbol->string name))
+                          (cons "name" (rust-function-name function-name))
                           (cons "arguments"
                                 (list->vector
                                   (if formal-types
@@ -662,6 +664,32 @@
            (object (cons "name" (rust-var-name var-name))
                    (cons "ty" (type-ir type owner-src)))]))
 
+      (define (rust-function-name function-name)
+        (or (eq-hashtable-ref function-rust-names function-name #f)
+            (symbol->string (id-sym function-name))))
+
+      (define (index-function-names pelt*)
+        (let ([counts (make-eq-hashtable)])
+          (for-each
+            (lambda (pelt)
+              (nanopass-case (Lnodisclose Program-Element) pelt
+                [(circuit ,src ,function-name (,arg* ...) ,type ,expr)
+                 (let ([name (id-sym function-name)])
+                   (eq-hashtable-set! counts name
+                     (+ 1 (eq-hashtable-ref counts name 0))))]
+                [else (void)]))
+            pelt*)
+          (for-each
+            (lambda (pelt)
+              (nanopass-case (Lnodisclose Program-Element) pelt
+                [(circuit ,src ,function-name (,arg* ...) ,type ,expr)
+                 (when (> (eq-hashtable-ref counts (id-sym function-name) 0) 1)
+                   (eq-hashtable-set! function-rust-names function-name
+                     (format "__compact_function_~a_~a"
+                       (id-sym function-name) (id-uniq function-name))))]
+                [else (void)]))
+            pelt*)))
+
       (define (exported-names function-name export-alist)
         (fold-right
           (lambda (entry names)
@@ -674,7 +702,7 @@
       (define (witness-declaration-ir pelt declarations)
         (nanopass-case (Lnodisclose Program-Element) pelt
           [(witness ,src ,function-name (,arg* ...) ,type)
-           (cons (object (cons "name" (symbol->string (id-sym function-name)))
+           (cons (object (cons "name" (rust-function-name function-name))
                          (cons "parameters" (list->vector (map (lambda (arg) (argument-ir arg src)) arg*)))
                          (cons "result" (type-ir type src)))
                  declarations)]
@@ -726,7 +754,7 @@
         (nanopass-case (Lnodisclose Program-Element) pelt
           [(circuit ,src ,function-name (,arg* ...) ,type ,expr)
            (let* ([names (exported-names function-name export-alist)]
-                  [internal-name (symbol->string (id-sym function-name))])
+                  [internal-name (rust-function-name function-name)])
              (if (id-pure? function-name)
                  (let ([variable-types (make-eq-hashtable)])
                    (for-each (lambda (arg)
@@ -863,7 +891,7 @@
                (object (cons "kind" "expression")
                        (cons "value" (stateful-expression-ir expr src witness-ids)))
                (object (cons "kind" (if (id-pure? function-name) "pure_call" "circuit_call"))
-                       (cons "name" (symbol->string (id-sym function-name)))
+                       (cons "name" (rust-function-name function-name))
                        (cons "arguments" (stateful-call-arguments-ir function-name expr* src witness-ids))))]
           [(assert ,src ,expr ,mesg)
            (object (cons "kind" "assert")
@@ -1103,6 +1131,15 @@
       (define (stateful-expression-ir value-expr owner-src witness-ids)
         (nanopass-case (Lnodisclose Expression) value-expr
           [(return ,src ,expr) (stateful-expression-ir expr src witness-ids)]
+          [(elt-ref ,src ,expr ,elt-name ,nat)
+           (object (cons "kind" "struct_field")
+                   (cons "value" (stateful-expression-ir expr src witness-ids))
+                   (cons "field" (symbol->string elt-name))
+                   (cons "index" nat))]
+          [(tuple-ref ,src ,expr ,kindex)
+           (object (cons "kind" "tuple_index")
+                   (cons "value" (stateful-expression-ir expr src witness-ids))
+                   (cons "index" kindex))]
           [(call ,src ,function-name ,expr* ...)
            (let ([name (id-sym function-name)])
              (cond
@@ -1111,7 +1148,7 @@
                   (unless (and formal-types (= (length expr*) (length formal-types)))
                     (source-errorf src "Rust witness argument count differs from its declaration"))
                   (object (cons "kind" "witness_call")
-                          (cons "name" (symbol->string name))
+                          (cons "name" (rust-function-name function-name))
                           (cons "arguments"
                                 (list->vector
                                   (map (lambda (arg formal-type)
@@ -1164,7 +1201,7 @@
                             (cons "scalar" (stateful-expression-ir (cadr expr*) src witness-ids)))))]
                [else
                 (object (cons "kind" "call")
-                        (cons "name" (symbol->string name))
+                        (cons "name" (rust-function-name function-name))
                         (cons "arguments" (stateful-call-arguments-ir function-name expr* src witness-ids)))]))]
           [(public-ledger ,src ,ledger-field-name ,sugar? (,path-elt* ...) ,src^ ,adt-op ,expr* ...)
            (nanopass-case (Lnodisclose ADT-Op) adt-op
@@ -1488,7 +1525,7 @@
            (if (id-pure? function-name)
                circuits
                (let* ([names (exported-names function-name export-alist)]
-                      [internal-name (symbol->string (id-sym function-name))]
+                      [internal-name (rust-function-name function-name)]
                       [all-names (if (member internal-name names)
                                      names
                                      (append names (list internal-name)))])
@@ -1589,7 +1626,7 @@
                          (if (eq-hashtable-ref witness-ids function-name #f)
                              (stateful-expression-ir expr src witness-ids)
                              (object (cons "kind" "call")
-                                     (cons "name" (symbol->string (id-sym function-name)))
+                                     (cons "name" (rust-function-name function-name))
                                      (cons "arguments"
                                            (stateful-call-arguments-ir function-name expr* src witness-ids))))))]
           [(seq ,src ,expr* ... ,expr)
@@ -1778,20 +1815,32 @@
       (define (type-alias-ir pelt aliases)
         (nanopass-case (Lnodisclose Program-Element) pelt
           [(export-typedef ,src ,type-name (,tvar-name* ...) ,type)
-           (unless (null? tvar-name*)
-             (source-errorf src "Rust backend does not yet support parameterized exported type aliases"))
-           (let* ([name (symbol->string type-name)]
-                  [ty (type-ir type src)]
-                  [kind (cdr (assoc "kind" ty))]
-                  [defined-name (assoc "name" ty)])
-             ;; Exported struct and enum definitions also appear as
-             ;; export-typedef nodes. Their concrete types are emitted by
-             ;; the normal named-type collector, so only retain real aliases.
-             (if (and defined-name
-                      (or (string=? kind "struct") (string=? kind "enum"))
-                      (string=? name (cdr defined-name)))
-                 aliases
-                 (cons (object (cons "name" name) (cons "ty" ty)) aliases)))]
+           (if (and (not (null? tvar-name*))
+                    (nanopass-case (Lnodisclose Type) type
+                      [(tstruct ,src^ ,struct-name (,elt-name* ,type*) ...)
+                       (eq? type-name struct-name)]
+                      [(tenum ,src^ ,enum-name ,elt-name ,elt-name* ...)
+                       (eq? type-name enum-name)]
+                      [else #f]))
+               ;; Generic struct and enum templates are monomorphized by
+               ;; earlier passes. Their concrete instances are collected
+               ;; from typed uses, so no Rust alias is needed here.
+               aliases
+               (begin
+                 (unless (null? tvar-name*)
+                   (source-errorf src "Rust backend does not yet support parameterized exported type alias ~s" type-name))
+                 (let* ([name (symbol->string type-name)]
+                        [ty (type-ir type src)]
+                        [kind (cdr (assoc "kind" ty))]
+                        [defined-name (assoc "name" ty)])
+                   ;; Exported struct and enum definitions also appear as
+                   ;; export-typedef nodes. Their concrete types are emitted
+                   ;; by the normal named-type collector.
+                   (if (and defined-name
+                            (or (string=? kind "struct") (string=? kind "enum"))
+                            (string=? name (cdr defined-name)))
+                       aliases
+                       (cons (object (cons "name" name) (cons "ty" ty)) aliases)))))]
           [else aliases]))
 
       (define (constructor-ir pelt witness-ids)
@@ -1814,8 +1863,10 @@
     (Program : Program (ir) -> Program ()
       [(program ,src (,contract-name* ...) ((,export-name* ,name*) ...) ,pelt* ...)
        (hashtable-clear! call-argument-types)
+       (hashtable-clear! function-rust-names)
        (set! struct-shape-names '())
        (set! used-struct-names '())
+       (index-function-names pelt*)
        (for-each index-call-argument-types pelt*)
        (let* ([witness-ids (witness-id-table pelt*)]
               [constructor* (filter (lambda (value) value)

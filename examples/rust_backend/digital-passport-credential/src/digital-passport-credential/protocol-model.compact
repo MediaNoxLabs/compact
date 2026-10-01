@@ -1,0 +1,57 @@
+// This file is part of midnightntwrk/midnight-verifiable-credential-digital-passport.
+// Copyright (C) Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+export struct DigitalPassportIssuanceOfferBody {
+  supportsExpiration: Boolean,
+  defaultExpirationDays: Uint<16>,
+  requiresHolderPublicKey: Boolean,
+}
+
+export struct DigitalPassportIssuanceRequestBody {
+  holderBinding: ExplicitHolderBinding,
+  holderPublicKey: JubjubPoint,
+  holderChallengeHash: Bytes<32>,
+  requestExpiration: Boolean,
+  requestedExpirationDays: Uint<16>,
+}
+
+export struct DigitalPassportIssuanceResultBody {
+  credential: DigitalPassportCredential,
+  credentialProof: Proof,
+  holderPublicKey: JubjubPoint,
+  issuanceChallengeHash: Bytes<32>,
+  privateParts: DigitalPassportCredentialPrivateParts,
+}
+
+export struct DigitalPassportVerificationRequestBody {
+  requireFirstNameDisclosure: Boolean,
+  requireLastNameDisclosure: Boolean,
+  requireAgeOverThreshold: Boolean,
+  requestedAgeThresholdYears: Uint<8>,
+  requireDocumentNumberDisclosure: Boolean,
+  requireIssuingStateDisclosure: Boolean,
+}
+
+export struct DigitalPassportVerificationSubmissionBody {
+  credential: DigitalPassportCredential,
+  credentialProof: Proof,
+  presentation: DigitalPassportPresentation,
+  presentationProof: Proof,
+}
+
+export struct DigitalPassportVerificationResultBody {
+  credentialRoot: Bytes<32>,
+  verifiedThresholdYears: Uint<8>,
+}

@@ -1,3 +1,18 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//  	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 //! Typed stateful circuit syntax emission.
 
 use proc_macro2::Span;
@@ -79,6 +94,58 @@ pub(crate) fn render_state_expression(
             statements.push(syn::parse_quote!(total_cost += #step.gas_cost;));
             *query_effect = true;
             Ok((syn::parse_quote!(#step.result), ty.clone(), false))
+        }
+        Expr::StructField {
+            value,
+            field,
+            index,
+        } => {
+            let (value, ty, witness_effect) = render_state_expression(
+                value,
+                parameters,
+                witnesses,
+                statements,
+                next_temp,
+                circuits,
+                stateful_circuits,
+                ledger_fields,
+                query_effect,
+            )?;
+            let Type::Struct { fields, .. } = ty else {
+                return Err(RenderError::InvalidStructField(field.clone()));
+            };
+            let declaration = fields
+                .get(*index)
+                .filter(|declaration| declaration.name == *field)
+                .ok_or_else(|| RenderError::InvalidStructField(field.clone()))?;
+            let name = ident(field)?;
+            Ok((
+                syn::parse_quote!((#value).#name.clone()),
+                declaration.ty.clone(),
+                witness_effect,
+            ))
+        }
+        Expr::TupleIndex { value, index } => {
+            let (value, ty, witness_effect) = render_state_expression(
+                value,
+                parameters,
+                witnesses,
+                statements,
+                next_temp,
+                circuits,
+                stateful_circuits,
+                ledger_fields,
+                query_effect,
+            )?;
+            let Type::Tuple { elements } = ty else {
+                return Err(RenderError::ExpectedTuple(ty));
+            };
+            let result = elements
+                .get(*index)
+                .ok_or_else(|| RenderError::InvalidTupleIndex(*index))?
+                .clone();
+            let index = syn::Index::from(*index);
+            Ok((syn::parse_quote!((#value).#index), result, witness_effect))
         }
         Expr::SetMember {
             field,

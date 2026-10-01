@@ -42,7 +42,7 @@ jobs:
       contents: read
     needs: license-check
     # It takes 90+ minutes to build without Nix caching
-    timeout-minutes: 120
+    timeout-minutes: 180
     steps:
       - name: Checkout compactc repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -51,6 +51,11 @@ jobs:
         uses: ./.github/actions/setup-nix-cache
         with:
           attic_token: ${{ secrets.ATTIC_CACHE_TOKEN }}
+
+      - name: Setup Rust toolchain for native backend
+        uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # stable (branch)
+        with:
+          components: rustfmt
 
       - name: Check flake.nix version matches compiler/compiler-version.ss
         run: |
@@ -268,6 +273,12 @@ jobs:
           nix develop .#compiler --command compactc --help
           nix develop .#compiler --command compactc ./test-center/compact/test.compact ./compact-output/
           nix develop .#compiler --command compactc ./examples/tiny.compact ./tiny-output/
+
+      - name: Check and test native Rust backend
+        run: |
+          cargo fmt --all -- --check
+          nix develop .#compiler --command env COMPACTC=compactc python3 tools/compact-rust-backend/check_fixture_outputs.py
+          cargo test --workspace --exclude compact
 
       - name: Merge report as ZIP
         run: |

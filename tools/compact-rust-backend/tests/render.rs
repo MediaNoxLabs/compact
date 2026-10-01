@@ -1,3 +1,18 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//  	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 use compact_rust_backend::ir::{
     Constructor, ConstructorStep, Contract, CounterAmount, Expr, LedgerField, LedgerFieldKind,
     LocalBinding, Parameter, PureCircuit, StateAction, StateReturn, StatefulCircuit, StructField,
@@ -47,6 +62,21 @@ fn exported_alias_is_typed_and_reexported() {
         render(&contract),
         Err(RenderError::ConflictingTypeAlias("Tag".into()))
     );
+}
+
+#[test]
+fn compact_dollar_names_and_rust_reserved_names_render_as_identifiers() {
+    let mut contract = identity(
+        Type::Field,
+        Expr::Parameter {
+            name: "final".into(),
+        },
+    );
+    contract.circuits[0].name = "vote$commit".into();
+    contract.circuits[0].parameters[0].name = "final".into();
+    let source = render(&contract).unwrap();
+    assert!(source.contains("pub fn vote_commit"), "{source}");
+    assert!(source.contains("r#final: runtime::Field"), "{source}");
 }
 
 #[test]
@@ -870,10 +900,10 @@ fn rejects_type_mismatch_and_invalid_identifier() {
         render(&contract),
         Err(RenderError::TypeMismatch { .. })
     ));
-    contract.circuits[0].name = "fn".into();
+    contract.circuits[0].name = "bad-name".into();
     assert_eq!(
         render(&contract),
-        Err(RenderError::InvalidIdentifier("fn".into()))
+        Err(RenderError::InvalidIdentifier("bad-name".into()))
     );
 }
 

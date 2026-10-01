@@ -1,3 +1,18 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//  	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 //! Native Compact runtime surface for the typed Rust backend.
 //!
 //! Generated code uses this facade rather than naming the underlying
@@ -20,7 +35,7 @@ pub use natives::{
     hash_to_curve, jubjub_point_x, jubjub_point_y, jubjub_scalar_from_native, keccak256,
     persistent_commit, persistent_hash, transient_commit, transient_hash, upgrade_from_transient,
 };
-pub use opaque::OpaqueString;
+pub use opaque::{OpaqueBytes, OpaqueString};
 pub use primitives::{
     BoundedUint, FixedBytes, FixedVector, JubjubPoint, WideUint, add_unsigned, cast_unsigned,
     multiply_unsigned, narrow_wide_uint, subtract_unsigned,

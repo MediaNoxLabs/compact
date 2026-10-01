@@ -6,6 +6,23 @@ mod witness;
 
 const RUNTIME_ABI_VERSION: u32 = 3;
 
+const GENERATED_HEADER: &str = r#"// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//  	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+"#;
+
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::error::Error;
 use std::fmt;
@@ -175,7 +192,10 @@ impl fmt::Display for RenderError {
 impl Error for RenderError {}
 
 fn ident(name: &str) -> Result<syn::Ident, RenderError> {
-    syn::parse_str::<syn::Ident>(name).map_err(|_| RenderError::InvalidIdentifier(name.to_owned()))
+    let rust_name = name.replace('$', "_");
+    syn::parse_str::<syn::Ident>(&rust_name)
+        .or_else(|_| syn::parse_str::<syn::Ident>(&format!("r#{rust_name}")))
+        .map_err(|_| RenderError::InvalidIdentifier(name.to_owned()))
 }
 
 fn field_literal_bytes(value: &str) -> Result<[u8; 32], RenderError> {
@@ -268,6 +288,7 @@ fn rust_type(ty: &Type) -> Result<syn::Type, RenderError> {
         Type::Field => syn::parse_quote!(runtime::Field),
         Type::JubjubPoint => syn::parse_quote!(runtime::JubjubPoint),
         Type::OpaqueString => syn::parse_quote!(runtime::OpaqueString),
+        Type::OpaqueBytes => syn::parse_quote!(runtime::OpaqueBytes),
         Type::Bytes { length } => {
             let length = syn::LitInt::new(&length.to_string(), Span::call_site());
             syn::parse_quote!(runtime::FixedBytes<#length>)
@@ -749,9 +770,11 @@ pub(crate) fn coerce_expression(
 
 fn copy_type(ty: &Type) -> bool {
     match ty {
-        Type::Struct { .. } | Type::Vector { .. } | Type::LedgerMap { .. } | Type::OpaqueString => {
-            false
-        }
+        Type::Struct { .. }
+        | Type::Vector { .. }
+        | Type::LedgerMap { .. }
+        | Type::OpaqueString
+        | Type::OpaqueBytes => false,
         Type::Tuple { elements } => elements.iter().all(copy_type),
         Type::Unit
         | Type::Boolean
@@ -2465,7 +2488,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
             Ok(syn::parse_quote!(runtime::ledger::constructor_historic_merkle_tree(#depth)))
         }
         LedgerFieldKind::Cell { ty } => {
-            if !matches!(ty, Type::Boolean | Type::Field | Type::JubjubPoint | Type::OpaqueString | Type::Unsigned { .. } | Type::Bytes { .. } | Type::Struct { .. } | Type::Enum { .. } | Type::Vector { .. } | Type::Tuple { .. } | Type::Unit) {
+            if !matches!(ty, Type::Boolean | Type::Field | Type::JubjubPoint | Type::OpaqueString | Type::OpaqueBytes | Type::Unsigned { .. } | Type::Bytes { .. } | Type::Struct { .. } | Type::Enum { .. } | Type::Vector { .. } | Type::Tuple { .. } | Type::Unit) {
                 return Err(RenderError::UnsupportedLedgerCellType(ty.clone()));
             }
             let ty = rust_type(ty)?;
@@ -2506,6 +2529,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
         .keys()
         .any(|name| is_compact_struct_instantiation(name, "MerkleTreePath"));
     for (name, fields) in &struct_definitions {
+        let empty = fields.is_empty();
         let conversion = if has_merkle_path {
             if is_compact_struct_instantiation(name, "MerkleTreeDigest") {
                 Some("CompactMerkleTreeDigest")
@@ -2528,9 +2552,16 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                 Ok(syn::parse_quote!(pub #field_name: #field_ty))
             })
             .collect::<Result<Vec<syn::Field>, RenderError>>()?;
-        let mut item: syn::ItemStruct = syn::parse_quote! {
-            #[derive(Clone, Debug, Default, PartialEq, Eq, CompactCellValue, BinaryHashRepr, FieldRepr, FromFieldRepr)]
-            pub struct #name { #(#fields),* }
+        let mut item: syn::ItemStruct = if empty {
+            syn::parse_quote! {
+                #[derive(Clone, Debug, Default, PartialEq, Eq, CompactCellValue, BinaryHashRepr, FieldRepr)]
+                pub struct #name {}
+            }
+        } else {
+            syn::parse_quote! {
+                #[derive(Clone, Debug, Default, PartialEq, Eq, CompactCellValue, BinaryHashRepr, FieldRepr, FromFieldRepr)]
+                pub struct #name { #(#fields),* }
+            }
         };
         if let Some(conversion) = conversion {
             let conversion = syn::Ident::new(conversion, Span::call_site());
@@ -2538,6 +2569,17 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                 .push(syn::parse_quote!(#[derive(runtime::#conversion)]));
         }
         struct_items.push(syn::Item::Struct(item));
+        if empty {
+            struct_items.push(syn::parse_quote! {
+                impl FromFieldRepr for #name {
+                    const FIELD_SIZE: usize = 0;
+
+                    fn from_field_repr(repr: &[Fr]) -> Option<Self> {
+                        repr.is_empty().then_some(Self {})
+                    }
+                }
+            });
+        }
     }
     for (name, variants) in &enum_definitions {
         let name = ident(name)?;
@@ -2705,7 +2747,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
     })
     .expect("typed renderer constructed invalid Rust syntax");
     Ok(format!(
-        "// Generated by compactc. Do not edit.\n\n{}",
+        "{GENERATED_HEADER}// Generated by compactc. Do not edit.\n\n{}",
         prettyplease::unparse(&file)
     ))
 }

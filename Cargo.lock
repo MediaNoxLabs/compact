@@ -1058,6 +1058,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-election-oracle-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-enum-identity-fixture"
 version = "0.1.0"
 dependencies = [
@@ -1543,6 +1555,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-passport-dogfood-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-compact-runtime",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-persistent-hash-fixture"
 version = "0.1.0"
 dependencies = [
@@ -1689,6 +1710,18 @@ dependencies = [
 
 [[package]]
 name = "compact-rust-ternary-cond-oracle-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde_json",
+]
+
+[[package]]
+name = "compact-rust-tiny-oracle-fixture"
 version = "0.1.0"
 dependencies = [
  "hex",
@@ -1962,6 +1995,18 @@ dependencies = [
 
 [[package]]
 name = "compact-rust-witnesses-oracle-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde_json",
+]
+
+[[package]]
+name = "compact-rust-zerocash-oracle-fixture"
 version = "0.1.0"
 dependencies = [
  "hex",

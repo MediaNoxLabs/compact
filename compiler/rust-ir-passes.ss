@@ -32,7 +32,7 @@
     (definitions
       (define (object . fields) fields)
 
-      (define circuit-argument-types (make-eq-hashtable))
+      (define call-argument-types (make-eq-hashtable))
       (define current-variable-types (make-parameter #f))
       (define struct-shape-names '())
       (define used-struct-names '())
@@ -382,7 +382,7 @@
                 (object (cons "kind" "jubjub_scalar_from_native")
                         (cons "value" (expression-ir (car expr*) src)))]
                [else
-                (let ([formal-types (eq-hashtable-ref circuit-argument-types function-name #f)])
+                (let ([formal-types (eq-hashtable-ref call-argument-types function-name #f)])
                   (object (cons "kind" "call")
                           (cons "name" (symbol->string name))
                           (cons "arguments"
@@ -595,10 +595,16 @@
             pelt*)
           table))
 
-      (define (index-circuit-argument-types pelt)
+      (define (index-call-argument-types pelt)
         (nanopass-case (Lnodisclose Program-Element) pelt
           [(circuit ,src ,function-name (,arg* ...) ,type ,expr)
-           (eq-hashtable-set! circuit-argument-types function-name
+           (eq-hashtable-set! call-argument-types function-name
+             (map (lambda (arg)
+                    (nanopass-case (Lnodisclose Argument) arg
+                      [(,var-name ,type) type]))
+                  arg*))]
+          [(witness ,src ,function-name (,arg* ...) ,type)
+           (eq-hashtable-set! call-argument-types function-name
              (map (lambda (arg)
                     (nanopass-case (Lnodisclose Argument) arg
                       [(,var-name ,type) type]))
@@ -705,11 +711,12 @@
       (define (state-action-ir expr owner-src environment witness-ids)
         (nanopass-case (Lnodisclose Expression) expr
           [(call ,src ,function-name ,expr* ...)
-           (when (eq-hashtable-ref witness-ids function-name #f)
-             (source-errorf src "Rust backend does not yet support bare witness calls"))
-           (object (cons "kind" (if (id-pure? function-name) "pure_call" "circuit_call"))
-                   (cons "name" (symbol->string (id-sym function-name)))
-                   (cons "arguments" (list->vector (map (lambda (arg) (stateful-expression-ir arg src witness-ids)) expr*))))]
+           (if (eq-hashtable-ref witness-ids function-name #f)
+               (object (cons "kind" "expression")
+                       (cons "value" (stateful-expression-ir expr src witness-ids)))
+               (object (cons "kind" (if (id-pure? function-name) "pure_call" "circuit_call"))
+                       (cons "name" (symbol->string (id-sym function-name)))
+                       (cons "arguments" (list->vector (map (lambda (arg) (stateful-expression-ir arg src witness-ids)) expr*)))))]
           [(assert ,src ,expr ,mesg)
            (object (cons "kind" "assert")
                    (cons "condition" (stateful-expression-ir expr src witness-ids))
@@ -855,9 +862,18 @@
            (let ([name (id-sym function-name)])
              (cond
                [(eq-hashtable-ref witness-ids function-name #f)
-                (object (cons "kind" "witness_call")
-                        (cons "name" (symbol->string name))
-                        (cons "arguments" (list->vector (map (lambda (arg) (stateful-expression-ir arg src witness-ids)) expr*))))]
+                (let ([formal-types (eq-hashtable-ref call-argument-types function-name #f)])
+                  (unless (and formal-types (= (length expr*) (length formal-types)))
+                    (source-errorf src "Rust witness argument count differs from its declaration"))
+                  (object (cons "kind" "witness_call")
+                          (cons "name" (symbol->string name))
+                          (cons "arguments"
+                                (list->vector
+                                  (map (lambda (arg formal-type)
+                                         (object (cons "kind" "coerce")
+                                                 (cons "value" (stateful-expression-ir arg src witness-ids))
+                                                 (cons "ty" (type-ir formal-type src))))
+                                       expr* formal-types)))))]
                [(memq name '(transientHash persistentHash keccak256 degradeToTransient upgradeFromTransient
                               hashToCurve jubjubPointX jubjubPointY ecNeg jubjubScalarFromNative))
                 (unless (= (length expr*) 1)
@@ -1441,10 +1457,10 @@
 
     (Program : Program (ir) -> Program ()
       [(program ,src (,contract-name* ...) ((,export-name* ,name*) ...) ,pelt* ...)
-       (hashtable-clear! circuit-argument-types)
+       (hashtable-clear! call-argument-types)
        (set! struct-shape-names '())
        (set! used-struct-names '())
-       (for-each index-circuit-argument-types pelt*)
+       (for-each index-call-argument-types pelt*)
        (let ([constructor* (filter (lambda (value) value) (map constructor-ir pelt*))]
              [export-alist (map cons export-name* name*)]
              [witness-ids (witness-id-table pelt*)])

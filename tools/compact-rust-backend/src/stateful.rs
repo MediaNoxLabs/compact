@@ -7,7 +7,7 @@ use crate::ir::{
     ComparisonOperator, CounterAmount, Expr, LedgerField, LedgerFieldKind, PureCircuit,
     StateAction, StateReturn, StatefulCircuit, StructField, Type, WitnessDeclaration,
 };
-use crate::{RenderError, expression_with_calls, ident, rust_type};
+use crate::{RenderError, coerce_expression, expression_with_calls, ident, rust_type};
 
 fn render_state_expression(
     value: &Expr,
@@ -644,6 +644,24 @@ fn render_state_expression(
             )?;
             Ok((rendered, ty, effect || body_effect))
         }
+        Expr::Coerce { value, ty } => {
+            let (rendered, actual, effect) = render_state_expression(
+                value,
+                parameters,
+                witnesses,
+                statements,
+                next_temp,
+                circuits,
+                stateful_circuits,
+                ledger_fields,
+                query_effect,
+            )?;
+            Ok((
+                coerce_expression(rendered, &actual, ty, 0)?,
+                ty.clone(),
+                effect,
+            ))
+        }
         Expr::FieldCast { value } => {
             let (value, actual, effect) = render_state_expression(
                 value,
@@ -1013,6 +1031,29 @@ pub(crate) fn render_stateful_circuit(
         }
         let parameters = local_parameters;
         match action {
+            StateAction::Expression { value } => {
+                let mut effect_statements = Vec::new();
+                let mut query_effect = false;
+                let (rendered, _, effect) = render_state_expression(
+                    value,
+                    &parameters,
+                    witnesses,
+                    &mut effect_statements,
+                    &mut next_temp,
+                    circuits,
+                    stateful_circuits,
+                    ledger_fields,
+                    &mut query_effect,
+                )?;
+                if effect {
+                    uses_witness = true;
+                }
+                if effect || query_effect {
+                    statements.push(syn::parse_quote!(let mut context = context;));
+                }
+                statements.extend(effect_statements);
+                statements.push(syn::parse_quote!(let _ = #rendered;));
+            }
             StateAction::PureCall { name, arguments } => {
                 let call = Expr::Call {
                     name: name.clone(),

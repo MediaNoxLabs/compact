@@ -400,6 +400,9 @@ fn collect_action_types(
                 collect_expression_types(argument, structs, enums)?;
             }
         }
+        StateAction::Expression { value } => {
+            collect_expression_types(value, structs, enums)?;
+        }
         StateAction::Assert { condition, .. } => {
             collect_expression_types(condition, structs, enums)?;
         }
@@ -458,7 +461,7 @@ fn coerce_aggregate_fields(
     Ok((items, mapped))
 }
 
-fn coerce_expression(
+pub(crate) fn coerce_expression(
     value: syn::Expr,
     actual: &Type,
     target: &Type,

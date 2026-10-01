@@ -1,0 +1,19 @@
+import CompactStandardLibrary;
+
+export ledger stored: Field;
+
+witness sumWitness(values: Vector<2, Field>): Field;
+
+constructor() {
+  stored = 0;
+}
+
+export circuit keepResult(): [] {
+  const value = sumWitness([0 as Field, 1 as Field]);
+  stored = disclose(value);
+}
+
+export circuit discardResult(): [] {
+  sumWitness([0 as Field, 1 as Field]);
+  stored = 7;
+}

@@ -1,0 +1,91 @@
+{
+  "pass": {
+    "result": "42",
+    "privateState": 9,
+    "privateTranscriptOutputs": [
+      {
+        "valueAtoms": [
+          [
+            1
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "bytes",
+              "length": 1
+            }
+          }
+        ]
+      },
+      {
+        "valueAtoms": [
+          [
+            1
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "bytes",
+              "length": 1
+            }
+          }
+        ]
+      }
+    ],
+    "observed": [
+      {
+        "privateState": 7,
+        "value": true
+      },
+      {
+        "privateState": 8,
+        "value": true
+      }
+    ]
+  },
+  "firstFails": {
+    "error": "failed assert: first witness failed",
+    "observed": [
+      {
+        "privateState": 7,
+        "value": false
+      }
+    ]
+  },
+  "secondFails": {
+    "error": "failed assert: second witness failed",
+    "observed": [
+      {
+        "privateState": 7,
+        "value": true
+      },
+      {
+        "privateState": 8,
+        "value": false
+      }
+    ]
+  },
+  "writePass": {
+    "value": "42",
+    "privateState": 8,
+    "observed": [
+      {
+        "privateState": 7,
+        "value": true
+      }
+    ]
+  },
+  "writeFails": {
+    "error": "failed assert: write denied",
+    "observed": [
+      {
+        "privateState": 7,
+        "value": false
+      }
+    ]
+  }
+}

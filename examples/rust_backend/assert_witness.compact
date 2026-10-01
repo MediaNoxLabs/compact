@@ -1,0 +1,20 @@
+import CompactStandardLibrary;
+
+export ledger cell: Field;
+
+witness echo(flag: Boolean): Boolean;
+
+export circuit checked_value(first: Boolean, second: Boolean, value: Field): Field {
+  assert(disclose(echo(first)), "first witness failed");
+  assert(disclose(echo(second)), "second witness failed");
+  return value;
+}
+
+export circuit checked_write(flag: Boolean, value: Field): [] {
+  assert(disclose(echo(flag)), "write denied");
+  cell = disclose(value);
+}
+
+export circuit read_cell(): Field {
+  return cell.read();
+}

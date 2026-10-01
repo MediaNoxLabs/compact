@@ -554,6 +554,32 @@ pub(crate) fn render_stateful_circuit(
         }
         let parameters = local_parameters;
         match action {
+            StateAction::Assert { condition, message } => {
+                let mut effect_statements = Vec::new();
+                let (condition, actual, effect) = render_state_expression(
+                    condition,
+                    &parameters,
+                    witnesses,
+                    &mut effect_statements,
+                    &mut next_temp,
+                )?;
+                if actual != Type::Boolean {
+                    return Err(RenderError::TypeMismatch {
+                        expected: Type::Boolean,
+                        actual,
+                    });
+                }
+                if effect {
+                    uses_witness = true;
+                    statements.push(syn::parse_quote!(let mut context = context;));
+                }
+                statements.extend(effect_statements);
+                statements.push(syn::parse_quote! {
+                    if !#condition {
+                        return Err(runtime::CompactError::AssertionFailed(#message.to_owned()));
+                    }
+                });
+            }
             StateAction::Let { .. } => unreachable!("action Let wrappers were unwrapped"),
             StateAction::CounterIncrement {
                 field,
@@ -1257,7 +1283,12 @@ pub(crate) fn render_stateful_circuit(
     } else {
         syn::parse_quote!(let private_transcript_outputs = Vec::new();)
     };
-    let cost_init: syn::Stmt = if uses_witness && circuit.actions.is_empty() {
+    let cost_init: syn::Stmt = if uses_witness
+        && circuit
+            .actions
+            .iter()
+            .all(|action| matches!(action, StateAction::Assert { .. }))
+    {
         syn::parse_quote!(let total_cost = runtime::context::RunningCost::default();)
     } else {
         syn::parse_quote!(let mut total_cost = runtime::context::RunningCost::default();)

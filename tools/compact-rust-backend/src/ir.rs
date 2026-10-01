@@ -124,6 +124,10 @@ pub enum StateReturn {
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum StateAction {
+    Assert {
+        condition: Expr,
+        message: String,
+    },
     Let {
         bindings: Vec<LocalBinding>,
         action: Box<StateAction>,

@@ -471,6 +471,10 @@
 
       (define (state-action-ir expr owner-src environment witness-ids)
         (nanopass-case (Lnodisclose Expression) expr
+          [(assert ,src ,expr ,mesg)
+           (object (cons "kind" "assert")
+                   (cons "condition" (stateful-expression-ir expr src witness-ids))
+                   (cons "message" mesg))]
           [(let* ,src ([,local* ,expr*] ...) ,expr)
            (let ([environment^
                    (fold-left
@@ -740,6 +744,9 @@
         (nanopass-case (Lnodisclose Expression) return-expr
           [(return ,src ,expr) (stateful-return-ir expr src witness-ids)]
           [(seq ,src ,expr* ... ,expr) (stateful-return-ir expr src witness-ids)]
+          [(var-ref ,src ,var-name)
+           (object (cons "kind" "expression")
+                   (cons "value" (expression-ir return-expr src)))]
           [(call ,src ,function-name ,expr* ...)
            (if (or (eq-hashtable-ref witness-ids function-name #f)
                    (memq (id-sym function-name)

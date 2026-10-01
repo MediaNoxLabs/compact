@@ -45,6 +45,11 @@ result's declared Compact maximum.
 Pure assertion sequences are typed IR nodes. The fixture checks that two
 assertions run in source order, that a successful circuit returns its value,
 and that both failure messages match generated TypeScript.
+Stateful assertions are typed action nodes. They evaluate a witnessed Boolean
+before deciding whether the following action runs. The fixture compares two
+witnessed assertions and an assertion before a Cell write with generated
+TypeScript, including short circuiting, witness order, private state,
+transcript alignment, and the successful ledger read.
 
 The runtime facade in `runtime-rs` reexports `Fr` from
 `midnight-transient-crypto` 2.0.1 as Compact `Field`. It also reexports the
@@ -241,6 +246,7 @@ cargo test -p compact-rust-backend -p midnight-compact-runtime \
   -p compact-rust-witness-conditional-fixture \
   -p compact-rust-witness-uint-arithmetic-fixture \
   -p compact-rust-witness-hash-fixture \
+  -p compact-rust-assert-witness-fixture \
   -p compact-rust-uint-identity-fixture -p compact-rust-bytes-identity-fixture \
   -p compact-rust-counter-fixture -p compact-rust-cell-boolean-fixture \
   -p compact-rust-struct-identity-fixture -p compact-rust-nested-struct-fixture \

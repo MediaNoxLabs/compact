@@ -325,6 +325,9 @@ fn collect_action_types(
     enums: &mut BTreeMap<String, Vec<String>>,
 ) -> Result<(), RenderError> {
     match action {
+        StateAction::Assert { condition, .. } => {
+            collect_expression_types(condition, structs, enums)?;
+        }
         StateAction::Let { bindings, action } => {
             for binding in bindings {
                 collect_named_types(&binding.ty, structs, enums)?;

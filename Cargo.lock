@@ -706,6 +706,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-assert-witness-fixture"
+version = "0.1.0"
+dependencies = [
+ "midnight-compact-runtime",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-backend"
 version = "0.1.0"
 dependencies = [

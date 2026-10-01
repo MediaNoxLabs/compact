@@ -54,6 +54,11 @@ fn constructor_cell_parameters_are_typed_and_validated() {
     let source = render(&contract).unwrap();
     assert!(source.contains("seed: runtime::Field"));
     assert!(source.contains("seed.clone()"));
+    assert!(
+        source.contains(
+            "Result<runtime::context::ConstructorResult<Private>, runtime::CompactError>"
+        )
+    );
 
     let constructor = contract.constructor.as_mut().unwrap();
     let ConstructorStep::CellWrite { index, .. } = &mut constructor.steps[0];

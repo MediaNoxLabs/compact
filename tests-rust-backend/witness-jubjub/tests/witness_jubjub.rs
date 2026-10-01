@@ -33,7 +33,9 @@ impl Witnesses<u64> for Secret {
 }
 
 fn context() -> midnight_compact_runtime::context::CircuitContext<u64> {
-    initial_state(ConstructorContext::new(7_u64)).into_circuit_context(ContractAddress::default())
+    initial_state(ConstructorContext::new(7_u64))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default())
 }
 
 fn point_json(point: JubjubPoint) -> serde_json::Value {

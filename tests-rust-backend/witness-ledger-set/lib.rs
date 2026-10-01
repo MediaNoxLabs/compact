@@ -29,9 +29,9 @@ pub mod ledger_contract {
     }
     pub fn initial_state<Private>(
         context: runtime::context::ConstructorContext<Private>,
-    ) -> runtime::context::ConstructorResult<Private> {
+    ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
         let state = runtime::ledger::contract_state(vec![runtime::ledger::constructor_set()]);
-        runtime::context::ConstructorResult::new(context, state)
+        Ok(runtime::context::ConstructorResult::new(context, state))
     }
     pub fn add_true<Private>(
         context: runtime::context::CircuitContext<Private>,

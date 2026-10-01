@@ -48,6 +48,7 @@ fn witnessed_assertions_short_circuit_in_typescript_order() {
     ] {
         let witnesses = Echo::default();
         let context = initial_state(ConstructorContext::new(7_u64))
+            .unwrap()
             .into_circuit_context(ContractAddress::default());
         let result = checked_value(context, &witnesses, first, second, Field::from(42_u64));
         let expected = &oracle[name];
@@ -86,6 +87,7 @@ fn witnessed_assertion_guards_ledger_write() {
     for (name, flag) in [("writePass", true), ("writeFails", false)] {
         let witnesses = Echo::default();
         let context = initial_state(ConstructorContext::new(7_u64))
+            .unwrap()
             .into_circuit_context(ContractAddress::default());
         let result = checked_write(context, &witnesses, flag, Field::from(42_u64));
         let expected = &oracle[name];

@@ -4,7 +4,7 @@ use midnight_compact_runtime::ledger::ContractAddress;
 
 #[test]
 fn generated_cell_read_uses_ledger_gather_event() {
-    let constructor = initial_state(ConstructorContext::new(()));
+    let constructor = initial_state(ConstructorContext::new(())).unwrap();
     let context = constructor.into_circuit_context(ContractAddress::default());
     let read = read_flag(context).unwrap();
     assert!(!read.result);

@@ -26,7 +26,7 @@ fn parameterized_constructor_matches_typescript_state_and_read() {
         "../../../runtime-rs/tests/fixtures/constructor-cell-parameter.json"
     ))
     .unwrap();
-    let constructor = initial_state(ConstructorContext::new(()), Field::from(42_u64));
+    let constructor = initial_state(ConstructorContext::new(()), Field::from(42_u64)).unwrap();
     assert_eq!(
         state_hex(constructor.ledger_state.get_ref().clone()),
         oracle["initialHex"]

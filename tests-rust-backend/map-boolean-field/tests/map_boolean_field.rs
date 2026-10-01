@@ -7,7 +7,7 @@ use midnight_compact_runtime::ledger::{ContractAddress, StateValue};
 
 #[test]
 fn generated_map_contract_inserts_and_looks_up_field_values() {
-    let constructor = initial_state(ConstructorContext::new(()));
+    let constructor = initial_state(ConstructorContext::new(())).unwrap();
     let StateValue::Array(fields) = constructor.ledger_state.get_ref() else {
         panic!("expected ledger field array")
     };

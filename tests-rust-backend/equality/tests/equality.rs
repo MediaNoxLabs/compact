@@ -55,6 +55,7 @@ fn typed_equality_matches_typescript_for_scalars_and_composites() {
     }
     for (name, left, right) in [("witnessEqual", 2_u64, 1_u64), ("witnessDifferent", 2, 2)] {
         let context = initial_state(ConstructorContext::new(7_u64))
+            .unwrap()
             .into_circuit_context(ContractAddress::default());
         let result = equal_echo(context, &Echo, Field::from(left), Field::from(right)).unwrap();
         let expected = &oracle[name];

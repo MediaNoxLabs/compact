@@ -52,6 +52,7 @@ fn witness_reads_current_typed_list() {
     ))
     .unwrap();
     let context = initial_state(ConstructorContext::new(7_u64))
+        .unwrap()
         .into_circuit_context(ContractAddress::default());
     let before = private_first_is_42(context, &FirstIs42).unwrap();
     assert_oracle_output(&before, &oracle["before"]);

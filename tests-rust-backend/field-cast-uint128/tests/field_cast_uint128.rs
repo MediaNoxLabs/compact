@@ -32,8 +32,9 @@ fn uint128_to_field_cast_preserves_high_bits_and_matches_typescript() {
     let expected = Field::from(value);
     assert_eq!(as_field(input).unwrap(), expected);
     assert_eq!(oracle["pure"], value.to_string());
-    let context =
-        initial_state(ConstructorContext::new(())).into_circuit_context(ContractAddress::default());
+    let context = initial_state(ConstructorContext::new(()))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
     let saved = save(context, input).unwrap();
     assert_eq!(saved.result, expected);
     assert_eq!(oracle["returned"], value.to_string());

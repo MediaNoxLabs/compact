@@ -31,8 +31,9 @@ fn stateful_calls_execute_twice_and_match_typescript_state() {
         "../../../runtime-rs/tests/fixtures/stateful-circuit-call.json"
     ))
     .unwrap();
-    let context =
-        initial_state(ConstructorContext::new(())).into_circuit_context(ContractAddress::default());
+    let context = initial_state(ConstructorContext::new(()))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
     let called = bump_twice(context).unwrap();
     let state = called.context.query.state.get_ref();
     let StateValue::Array(fields) = state else {

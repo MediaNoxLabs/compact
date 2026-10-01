@@ -25,7 +25,7 @@ fn curve_coordinate_vector_constructor_matches_typescript_state() {
         "../../../runtime-rs/tests/fixtures/hash-to-curve-vector-constructor.json"
     ))
     .unwrap();
-    let constructor = initial_state(ConstructorContext::new(()));
+    let constructor = initial_state(ConstructorContext::new(())).unwrap();
     assert_eq!(
         state_hex(constructor.ledger_state.get_ref().clone()),
         oracle["initialHex"]

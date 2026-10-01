@@ -7,7 +7,7 @@ use midnight_compact_runtime::ledger::{ContractAddress, StateValue, read_counter
 
 #[test]
 fn generated_counter_uses_bounded_parameter() {
-    let constructor = initial_state(ConstructorContext::new(()));
+    let constructor = initial_state(ConstructorContext::new(())).unwrap();
     let context = constructor.into_circuit_context(ContractAddress::default());
     let amount = BoundedUint::<65535>::new(7).unwrap();
     let result = increment_by(context, amount).unwrap();

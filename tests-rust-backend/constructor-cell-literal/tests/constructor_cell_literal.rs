@@ -26,7 +26,7 @@ fn literal_constructor_matches_typescript_state_and_read() {
         "../../../runtime-rs/tests/fixtures/constructor-cell-literal.json"
     ))
     .unwrap();
-    let constructor = initial_state(ConstructorContext::new(()));
+    let constructor = initial_state(ConstructorContext::new(())).unwrap();
     assert_eq!(
         state_hex(constructor.ledger_state.get_ref().clone()),
         oracle["initialHex"]

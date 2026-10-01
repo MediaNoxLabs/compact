@@ -40,6 +40,7 @@ fn generated_keccak_matches_typescript_and_preserves_witness_transcript() {
     }
 
     let context = initial_state(ConstructorContext::new(7_u64))
+        .unwrap()
         .into_circuit_context(ContractAddress::default());
     let result = hash_echo(context, &Echo, Field::from(2_u64)).unwrap();
     let expected = &oracle["witness"];

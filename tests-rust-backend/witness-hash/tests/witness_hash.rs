@@ -26,7 +26,9 @@ impl Witnesses<u64> for Echo {
 }
 
 fn context() -> midnight_compact_runtime::context::CircuitContext<u64> {
-    initial_state(ConstructorContext::new(7_u64)).into_circuit_context(ContractAddress::default())
+    initial_state(ConstructorContext::new(7_u64))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default())
 }
 
 fn assert_oracle<T>(result: &CircuitResult<u64, T>, actual: String, oracle: &serde_json::Value) {

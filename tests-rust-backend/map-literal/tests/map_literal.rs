@@ -5,8 +5,9 @@ use midnight_compact_runtime::ledger::ContractAddress;
 
 #[test]
 fn compiler_typed_local_flows_into_map_insert() {
-    let context =
-        initial_state(ConstructorContext::new(())).into_circuit_context(ContractAddress::default());
+    let context = initial_state(ConstructorContext::new(()))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
     let write = put_literal(context).unwrap();
     let read = lookup_true(write.context).unwrap();
     assert_eq!(read.result, Field::from(42_u64));

@@ -4,7 +4,7 @@ use midnight_compact_runtime::ledger::{ContractAddress, StateValue, read_cell};
 
 #[test]
 fn generated_cell_contract_writes_through_ledger_vm() {
-    let constructor = initial_state(ConstructorContext::new(()));
+    let constructor = initial_state(ConstructorContext::new(())).unwrap();
     let StateValue::Array(initial_fields) = constructor.ledger_state.get_ref() else {
         panic!("expected ledger field array")
     };

@@ -35,7 +35,7 @@ fn point_and_struct_cells_round_trip_with_compact_default_encoding() {
         "../../../runtime-rs/tests/fixtures/jubjub-cell.json"
     ))
     .unwrap();
-    let constructor = initial_state(ConstructorContext::new(()));
+    let constructor = initial_state(ConstructorContext::new(())).unwrap();
     let StateValue::Array(fields) = constructor.ledger_state.get_ref() else {
         panic!("expected ledger root array");
     };

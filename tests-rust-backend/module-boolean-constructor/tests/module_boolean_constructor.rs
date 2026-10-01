@@ -25,7 +25,7 @@ fn module_constructor_and_counter_match_typescript_state() {
         "../../../runtime-rs/tests/fixtures/module-boolean-constructor.json"
     ))
     .unwrap();
-    let constructor = initial_state(ConstructorContext::new(()));
+    let constructor = initial_state(ConstructorContext::new(())).unwrap();
     assert_eq!(
         state_hex(constructor.ledger_state.get_ref().clone()),
         oracle["initialHex"]

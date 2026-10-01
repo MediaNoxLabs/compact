@@ -59,6 +59,7 @@ fn witness_result_composes_with_field_addition() {
     ))
     .unwrap();
     let context = initial_state(ConstructorContext::new(7_u64))
+        .unwrap()
         .into_circuit_context(ContractAddress::default());
     let result = add_secret(context, &Secret, Field::from(2_u64)).unwrap();
     assert_oracle_output(&result, &oracle);
@@ -71,6 +72,7 @@ fn two_witnesses_preserve_source_order_and_transcript_order() {
     ))
     .unwrap();
     let context = initial_state(ConstructorContext::new(7_u64))
+        .unwrap()
         .into_circuit_context(ContractAddress::default());
     let result = sum_secrets(context, &Secret, Field::from(2_u64)).unwrap();
     assert_oracle_output(&result, &oracle);

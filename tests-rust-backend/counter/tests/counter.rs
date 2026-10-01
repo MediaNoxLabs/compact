@@ -4,7 +4,7 @@ use midnight_compact_runtime::ledger::{ContractAddress, StateValue, read_counter
 
 #[test]
 fn generated_counter_contract_runs_through_ledger_vm() {
-    let constructor = initial_state(ConstructorContext::new(()));
+    let constructor = initial_state(ConstructorContext::new(())).unwrap();
     let context = constructor.into_circuit_context(ContractAddress::default());
     let read = read_round(context).unwrap();
     assert_eq!(read.result.value(), 0);

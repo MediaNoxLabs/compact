@@ -35,8 +35,9 @@ fn local_pure_helper_is_callable_without_becoming_an_export() {
         Field::from(9_u64)
     );
     assert_eq!(oracle["exportedPure"], "9");
-    let context =
-        initial_state(ConstructorContext::new(())).into_circuit_context(ContractAddress::default());
+    let context = initial_state(ConstructorContext::new(()))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
     let write = save(context, Field::from(7_u64)).unwrap();
     let read = read_stored(write.context).unwrap();
     assert_eq!(read.result, Field::from(8_u64));

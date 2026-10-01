@@ -56,6 +56,7 @@ fn constructed_points_match_typescript_and_invalid_coordinates_are_rejected() {
     );
 
     let context = initial_state(ConstructorContext::new(7_u64))
+        .unwrap()
         .into_circuit_context(ContractAddress::default());
     let result = construct_echo(context, &Echo, x, y).unwrap();
     let expected = &oracle["witness"];

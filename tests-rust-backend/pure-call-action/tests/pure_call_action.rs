@@ -26,7 +26,7 @@ fn pure_call_action_propagates_error_before_write_and_matches_success_state() {
         "../../../runtime-rs/tests/fixtures/pure-call-action.json"
     ))
     .unwrap();
-    let constructor = initial_state(ConstructorContext::new(()));
+    let constructor = initial_state(ConstructorContext::new(())).unwrap();
     let context = constructor.into_circuit_context(ContractAddress::default());
     let error = match save(context, Field::from(0_u64)) {
         Err(error) => error,
@@ -34,7 +34,7 @@ fn pure_call_action_propagates_error_before_write_and_matches_success_state() {
     };
     assert_eq!(error.to_string(), oracle["zeroError"]);
 
-    let constructor = initial_state(ConstructorContext::new(()));
+    let constructor = initial_state(ConstructorContext::new(())).unwrap();
     let context = constructor.into_circuit_context(ContractAddress::default());
     let saved = save(context, Field::from(7_u64)).unwrap();
     assert_eq!(

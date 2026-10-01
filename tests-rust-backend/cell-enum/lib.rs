@@ -65,11 +65,11 @@ pub mod ledger_contract {
     pub trait Witnesses<Private> {}
     pub fn initial_state<Private>(
         context: runtime::context::ConstructorContext<Private>,
-    ) -> runtime::context::ConstructorResult<Private> {
+    ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
         let state = runtime::ledger::contract_state(vec![runtime::ledger::constructor_cell::<
             crate::types::Choice,
             runtime::ledger::DefaultDB,
         >(Default::default())]);
-        runtime::context::ConstructorResult::new(context, state)
+        Ok(runtime::context::ConstructorResult::new(context, state))
     }
 }

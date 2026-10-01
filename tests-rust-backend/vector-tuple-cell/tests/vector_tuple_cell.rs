@@ -31,7 +31,7 @@ fn vector_and_tuple_cells_match_typescript_state_and_reads() {
         "../../../runtime-rs/tests/fixtures/vector-tuple-cell.json"
     ))
     .unwrap();
-    let constructor = initial_state(ConstructorContext::new(()));
+    let constructor = initial_state(ConstructorContext::new(())).unwrap();
     assert_eq!(
         state_hex(constructor.ledger_state.get_ref().clone()),
         oracle["initialHex"]

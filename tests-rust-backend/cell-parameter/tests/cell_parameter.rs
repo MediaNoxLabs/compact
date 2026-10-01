@@ -4,7 +4,7 @@ use midnight_compact_runtime::ledger::{ContractAddress, StateValue, read_cell};
 
 #[test]
 fn generated_parameterized_cell_write_uses_supplied_value() {
-    let constructor = initial_state(ConstructorContext::new(()));
+    let constructor = initial_state(ConstructorContext::new(())).unwrap();
     let context = constructor.into_circuit_context(ContractAddress::default());
     let result = set_flag(context, true).unwrap();
     let StateValue::Array(fields) = result.context.query.state.get_ref() else {

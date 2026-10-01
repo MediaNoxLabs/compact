@@ -7,7 +7,7 @@ use midnight_compact_runtime::ledger::{ContractAddress, StateValue};
 
 #[test]
 fn generated_empty_list_has_upstream_shape_and_zero_length() {
-    let constructor = initial_state(ConstructorContext::new(()));
+    let constructor = initial_state(ConstructorContext::new(())).unwrap();
     let StateValue::Array(fields) = constructor.ledger_state.get_ref() else {
         panic!("expected ledger root array")
     };

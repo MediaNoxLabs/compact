@@ -62,11 +62,13 @@ fn witnessed_cell_writes_keep_ledger_and_private_effects_in_order() {
     ))
     .unwrap();
     let context = initial_state(ConstructorContext::new(7_u64))
+        .unwrap()
         .into_circuit_context(ContractAddress::default());
     let single = write_secret(context, &Secret, Field::from(2_u64)).unwrap();
     assert_oracle_output(single, &oracle["single"]);
 
     let context = initial_state(ConstructorContext::new(7_u64))
+        .unwrap()
         .into_circuit_context(ContractAddress::default());
     let twice = write_twice(context, &Secret, Field::from(2_u64)).unwrap();
     assert_oracle_output(twice, &oracle["twice"]);

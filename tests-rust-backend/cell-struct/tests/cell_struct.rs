@@ -19,7 +19,7 @@ fn generated_struct_cell_has_ledger_alignment_and_round_trips() {
             .iter()
         ),
     );
-    let constructor = initial_state(ConstructorContext::new(()));
+    let constructor = initial_state(ConstructorContext::new(())).unwrap();
     let StateValue::Array(fields) = constructor.ledger_state.get_ref() else {
         panic!("expected ledger field array")
     };

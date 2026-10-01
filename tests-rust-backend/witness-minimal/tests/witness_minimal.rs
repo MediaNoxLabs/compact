@@ -24,6 +24,7 @@ fn generated_witness_updates_private_state_and_records_aligned_output() {
     ))
     .unwrap();
     let context = initial_state(ConstructorContext::new(7_u64))
+        .unwrap()
         .into_circuit_context(ContractAddress::default());
     let result = read_private(context, &PrivateValue).unwrap();
     assert_eq!(result.result, Field::from(42_u64));

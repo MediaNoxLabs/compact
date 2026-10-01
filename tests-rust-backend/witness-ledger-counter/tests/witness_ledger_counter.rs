@@ -48,6 +48,7 @@ fn witness_reads_current_typed_counter() {
     ))
     .unwrap();
     let context = initial_state(ConstructorContext::new(7_u64))
+        .unwrap()
         .into_circuit_context(ContractAddress::default());
     let before = private_round(context, &ReadRound).unwrap();
     assert_oracle_output(&before, &oracle["before"]);

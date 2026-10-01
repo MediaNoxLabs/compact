@@ -12,7 +12,7 @@ fn generated_enum_cell_has_ledger_alignment_and_round_trips() {
         Choice::alignment(),
         Alignment::singleton(AlignmentAtom::Bytes { length: 1 })
     );
-    let constructor = initial_state(ConstructorContext::new(()));
+    let constructor = initial_state(ConstructorContext::new(())).unwrap();
     let StateValue::Array(fields) = constructor.ledger_state.get_ref() else {
         panic!("expected ledger field array")
     };

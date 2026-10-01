@@ -1311,9 +1311,9 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                 pub fn initial_state<Private>(
                     __compact_context: runtime::context::ConstructorContext<Private>,
                     #(#constructor_args),*
-                ) -> runtime::context::ConstructorResult<Private> {
+                ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
                     let state = runtime::ledger::contract_state(vec![#(#constructor_fields),*]);
-                    runtime::context::ConstructorResult::new(__compact_context, state)
+                    Ok(runtime::context::ConstructorResult::new(__compact_context, state))
                 }
                 #(#stateful_items)*
             }

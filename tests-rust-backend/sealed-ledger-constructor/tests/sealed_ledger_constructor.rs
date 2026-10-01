@@ -25,7 +25,7 @@ fn sealed_fields_match_typescript_initial_and_updated_state() {
         "../../../runtime-rs/tests/fixtures/sealed-ledger-constructor.json"
     ))
     .unwrap();
-    let constructor = initial_state(ConstructorContext::new(()));
+    let constructor = initial_state(ConstructorContext::new(())).unwrap();
     assert_eq!(
         state_hex(constructor.ledger_state.get_ref().clone()),
         oracle["initialHex"]

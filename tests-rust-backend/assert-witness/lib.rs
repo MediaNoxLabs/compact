@@ -25,12 +25,12 @@ pub mod ledger_contract {
     }
     pub fn initial_state<Private>(
         context: runtime::context::ConstructorContext<Private>,
-    ) -> runtime::context::ConstructorResult<Private> {
+    ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
         let state = runtime::ledger::contract_state(vec![runtime::ledger::constructor_cell::<
             runtime::Field,
             runtime::ledger::DefaultDB,
         >(Default::default())]);
-        runtime::context::ConstructorResult::new(context, state)
+        Ok(runtime::context::ConstructorResult::new(context, state))
     }
     pub fn checked_value<Private, W: Witnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,

@@ -46,6 +46,7 @@ fn generated_uint_comparisons_match_typescript_including_witness_order() {
 
     for (name, left, right) in [("witnessTrue", 2, 3), ("witnessFalse", 3, 2)] {
         let context = initial_state(ConstructorContext::new(7_u64))
+            .unwrap()
             .into_circuit_context(ContractAddress::default());
         let result = witnessed_less(context, &Echo, u(left), u(right)).unwrap();
         let expected = &oracle[name];

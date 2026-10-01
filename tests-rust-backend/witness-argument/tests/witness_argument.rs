@@ -26,6 +26,7 @@ fn generated_witness_receives_typed_argument_and_records_result() {
     ))
     .unwrap();
     let context = initial_state(ConstructorContext::new(7_u64))
+        .unwrap()
         .into_circuit_context(ContractAddress::default());
     let result = apply_offset(context, &PrivateOffset, Field::from(2_u64)).unwrap();
     let oracle_result: u64 = oracle["result"].as_str().unwrap().parse().unwrap();

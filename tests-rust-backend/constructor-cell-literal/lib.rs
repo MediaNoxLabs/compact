@@ -15,14 +15,17 @@ pub mod ledger_contract {
     pub trait Witnesses<Private> {}
     pub fn initial_state<Private>(
         __compact_context: runtime::context::ConstructorContext<Private>,
-    ) -> runtime::context::ConstructorResult<Private> {
+    ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
         let state = runtime::ledger::contract_state(vec![runtime::ledger::constructor_cell::<
             runtime::Field,
             runtime::ledger::DefaultDB,
         >(
             runtime::Field::from(7u128).clone()
         )]);
-        runtime::context::ConstructorResult::new(__compact_context, state)
+        Ok(runtime::context::ConstructorResult::new(
+            __compact_context,
+            state,
+        ))
     }
     pub fn read_value<Private>(
         context: runtime::context::CircuitContext<Private>,

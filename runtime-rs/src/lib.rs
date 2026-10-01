@@ -18,8 +18,8 @@ pub use natives::{
     transient_commit, transient_hash, upgrade_from_transient,
 };
 pub use primitives::{
-    BoundedUint, FixedBytes, FixedVector, add_unsigned, cast_unsigned, multiply_unsigned,
-    subtract_unsigned,
+    BoundedUint, FixedBytes, FixedVector, JubjubPoint, add_unsigned, cast_unsigned,
+    multiply_unsigned, subtract_unsigned,
 };
 
 /// Ledger FAB types used by the generated user-type derive.
@@ -34,8 +34,6 @@ pub const RUST_RUNTIME_ABI: u32 = 3;
 /// The ledger line selected by this Compact branch's `flake.nix`.
 pub const LEDGER_VERSION: &str = "ledger-8.0.2";
 
-/// Ledger-8's embedded curve point used by Compact's `JubjubPoint` type.
-pub use midnight_transient_crypto::curve::EmbeddedGroupAffine as JubjubPoint;
 /// Compact `Field` is the scalar field used by the ledger-8 circuit runtime.
 pub use midnight_transient_crypto::curve::Fr;
 pub use midnight_transient_crypto::curve::Fr as Field;

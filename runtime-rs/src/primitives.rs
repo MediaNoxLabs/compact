@@ -1,7 +1,118 @@
 use crate::{BinaryHashRepr, CompactError, FieldRepr, Fr, FromFieldRepr, MemWrite};
-use midnight_base_crypto::fab::{Aligned, Alignment, AlignmentAtom, Value, ValueSlice};
-use midnight_transient_crypto::curve::FR_BYTES_STORED;
+use midnight_base_crypto::fab::{
+    Aligned, Alignment, AlignmentAtom, InvalidBuiltinDecode, Value, ValueSlice,
+};
+use midnight_transient_crypto::curve::{EmbeddedGroupAffine, FR_BYTES_STORED};
 use midnight_transient_crypto::repr::bytes_from_field_repr;
+
+/// Compact's Jubjub point, wrapping the ledger point so it can participate in
+/// the ledger FAB and field-representation derives used by user types.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct JubjubPoint {
+    pub(crate) inner: EmbeddedGroupAffine,
+}
+
+impl From<EmbeddedGroupAffine> for JubjubPoint {
+    fn from(inner: EmbeddedGroupAffine) -> Self {
+        Self { inner }
+    }
+}
+
+impl JubjubPoint {
+    pub fn x(&self) -> Option<Fr> {
+        self.inner.x()
+    }
+
+    pub fn y(&self) -> Option<Fr> {
+        self.inner.y()
+    }
+
+    pub fn identity() -> Self {
+        Self::default()
+    }
+
+    pub fn is_identity(&self) -> bool {
+        self.inner.is_identity()
+    }
+}
+
+impl Aligned for JubjubPoint {
+    fn alignment() -> Alignment {
+        EmbeddedGroupAffine::alignment()
+    }
+}
+
+impl From<JubjubPoint> for Value {
+    fn from(point: JubjubPoint) -> Self {
+        Value::from(point.inner)
+    }
+}
+
+fn checked_jubjub_coordinates(x: Fr, y: Fr) -> Option<EmbeddedGroupAffine> {
+    if x == Fr::from(0_u64) && y == Fr::from(0_u64) {
+        return Some(EmbeddedGroupAffine::identity());
+    }
+    // The pinned ledger's `EmbeddedGroupAffine::new` currently panics when
+    // compressed point decoding fails. Validate through the curve's checked
+    // decoder first, then use the ledger constructor for subgroup handling.
+    let mut bytes: [u8; 32] = y.as_le_bytes().try_into().ok()?;
+    bytes[31] |= (x.as_le_bytes()[0] & 1) << 7;
+    let affine = midnight_curves::JubjubAffine::from_bytes(bytes).into_option()?;
+    if affine.get_u() != x.0 || affine.get_v() != y.0 {
+        return None;
+    }
+    EmbeddedGroupAffine::new(x, y)
+}
+
+impl TryFrom<&ValueSlice> for JubjubPoint {
+    type Error = InvalidBuiltinDecode;
+
+    fn try_from(value: &ValueSlice) -> Result<Self, Self::Error> {
+        if value.0.len() != 2 {
+            return Err(InvalidBuiltinDecode("JubjubPoint"));
+        }
+        let x = Fr::try_from(&value.0[0])?;
+        let y = Fr::try_from(&value.0[1])?;
+        checked_jubjub_coordinates(x, y)
+            .map(Self::from)
+            .ok_or(InvalidBuiltinDecode("JubjubPoint"))
+    }
+}
+
+impl FieldRepr for JubjubPoint {
+    fn field_repr<W: MemWrite<Fr>>(&self, writer: &mut W) {
+        writer.write(&[
+            self.x().unwrap_or_else(|| Fr::from(0_u64)),
+            self.y().unwrap_or_else(|| Fr::from(0_u64)),
+        ]);
+    }
+
+    fn field_size(&self) -> usize {
+        2
+    }
+}
+
+impl FromFieldRepr for JubjubPoint {
+    const FIELD_SIZE: usize = 2;
+
+    fn from_field_repr(repr: &[Fr]) -> Option<Self> {
+        if repr.len() != Self::FIELD_SIZE {
+            return None;
+        }
+        checked_jubjub_coordinates(repr[0], repr[1]).map(Self::from)
+    }
+}
+
+impl BinaryHashRepr for JubjubPoint {
+    fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
+        writer.write(&self.x().unwrap_or_else(|| Fr::from(0_u64)).as_le_bytes());
+        writer.write(&self.y().unwrap_or_else(|| Fr::from(0_u64)).as_le_bytes());
+    }
+
+    fn binary_len(&self) -> usize {
+        64
+    }
+}
 
 /// Fixed-length Compact bytes. Ledger-8 encodes every `[u8; N]` into fields,
 /// but only provides `FromFieldRepr` for `[u8; 32]`; this newtype supplies the

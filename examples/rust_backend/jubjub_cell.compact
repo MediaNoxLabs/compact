@@ -1,0 +1,22 @@
+import CompactStandardLibrary;
+
+struct PointBox { point: JubjubPoint; count: Field; }
+
+export ledger point: JubjubPoint;
+export ledger boxed: PointBox;
+
+export circuit set_point(value: JubjubPoint): [] {
+  point = disclose(value);
+}
+
+export circuit read_point(): JubjubPoint {
+  return point.read();
+}
+
+export circuit set_box(value: PointBox): [] {
+  boxed = disclose(value);
+}
+
+export circuit read_box(): PointBox {
+  return boxed.read();
+}

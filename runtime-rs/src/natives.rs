@@ -4,7 +4,7 @@ use crate::CompactError;
 use crate::{BinaryHashRepr, Field, FieldRepr, FixedBytes, JubjubPoint};
 use midnight_base_crypto::fab::{Aligned, AlignedValue, Value};
 use midnight_base_crypto::hash::{self as persistent, HashOutput, PersistentHashWriter};
-use midnight_transient_crypto::curve::{EmbeddedFr, embedded};
+use midnight_transient_crypto::curve::{EmbeddedFr, EmbeddedGroupAffine, embedded};
 use midnight_transient_crypto::fab::ValueReprAlignedValue;
 use midnight_transient_crypto::hash;
 
@@ -53,7 +53,7 @@ pub fn upgrade_from_transient(value: Field) -> FixedBytes<32> {
 
 /// Map Compact FAB fields to the ledger's embedded curve.
 pub fn hash_to_curve<T: Aligned + Into<Value>>(value: T) -> JubjubPoint {
-    hash::hash_to_curve(&value_repr(value))
+    hash::hash_to_curve(&value_repr(value)).into()
 }
 
 /// Read the affine X coordinate; the identity has Compact's zero coordinate.
@@ -68,12 +68,12 @@ pub fn jubjub_point_y(point: JubjubPoint) -> Field {
 
 /// Add two ledger embedded-curve points.
 pub fn ec_add(left: JubjubPoint, right: JubjubPoint) -> JubjubPoint {
-    left + right
+    (left.inner + right.inner).into()
 }
 
 /// Negate a ledger embedded-curve point.
 pub fn ec_neg(point: JubjubPoint) -> JubjubPoint {
-    -point
+    (-point.inner).into()
 }
 
 fn canonical_jubjub_scalar(value: Field) -> Result<EmbeddedFr, CompactError> {
@@ -82,12 +82,12 @@ fn canonical_jubjub_scalar(value: Field) -> Result<EmbeddedFr, CompactError> {
 
 /// Multiply by a canonical Jubjub scalar, matching the ledger WASM check.
 pub fn ec_mul(point: JubjubPoint, scalar: Field) -> Result<JubjubPoint, CompactError> {
-    Ok(point * canonical_jubjub_scalar(scalar)?)
+    Ok((point.inner * canonical_jubjub_scalar(scalar)?).into())
 }
 
 /// Multiply the embedded group generator by a canonical Jubjub scalar.
 pub fn ec_mul_generator(scalar: Field) -> Result<JubjubPoint, CompactError> {
-    Ok(JubjubPoint::generator() * canonical_jubjub_scalar(scalar)?)
+    Ok((EmbeddedGroupAffine::generator() * canonical_jubjub_scalar(scalar)?).into())
 }
 
 /// Reduce a native field value into the embedded scalar field.

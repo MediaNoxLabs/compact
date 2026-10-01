@@ -13,7 +13,7 @@ pub use midnight_storage::db::DB;
 pub use midnight_storage::storage::Array as LedgerArray;
 pub use midnight_storage::storage::HashMap as LedgerHashMap;
 
-use crate::{BoundedUint, CompactError, Field, FixedBytes, FixedVector};
+use crate::{BoundedUint, CompactError, Field, FixedBytes, FixedVector, JubjubPoint};
 use midnight_base_crypto::cost_model::RunningCost;
 use midnight_base_crypto::fab::{Aligned, AlignedValue, Value, ValueSlice};
 use midnight_onchain_vm::cost_model::CostModel;
@@ -38,7 +38,7 @@ macro_rules! primitive_cell_value {
     )* };
 }
 
-primitive_cell_value!(bool, u8, u16, u32, u64, u128, Field);
+primitive_cell_value!(bool, u8, u16, u32, u64, u128, Field, JubjubPoint);
 
 impl<const MAX: u128> CellValue for BoundedUint<MAX> {
     fn decode_cell_value(value: &ValueSlice) -> Result<Self, CompactError> {

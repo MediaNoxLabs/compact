@@ -2,8 +2,33 @@ use midnight_base_crypto::fab::{
     Aligned, AlignedValue, Alignment, AlignmentAtom, Value, ValueAtom,
 };
 use midnight_compact_runtime::{
-    BinaryHashRepr, Field, FieldRepr, FixedBytes, FixedVector, FromFieldRepr,
+    BinaryHashRepr, Field, FieldRepr, FixedBytes, FixedVector, FromFieldRepr, JubjubPoint,
 };
+
+#[test]
+fn jubjub_identity_uses_ledger_fab_and_normalizes_legacy_zero_sentinel() {
+    let default = JubjubPoint::default();
+    let native = JubjubPoint::from_field_repr(&[Field::from(0_u64), Field::from(0_u64)]).unwrap();
+    assert!(default.is_identity() && native.is_identity());
+    assert_eq!(
+        default.field_vec(),
+        vec![Field::from(0_u64), Field::from(1_u64)]
+    );
+    assert_eq!(native.field_vec(), default.field_vec());
+    assert_eq!(
+        JubjubPoint::from_field_repr(&default.field_vec()),
+        Some(default)
+    );
+    assert_eq!(
+        JubjubPoint::from_field_repr(&native.field_vec()),
+        Some(native)
+    );
+    assert_eq!(AlignedValue::from(default).value, Value::from(default));
+    assert_eq!(AlignedValue::from(default).value, Value::from(native));
+    assert!(JubjubPoint::from_field_repr(&[Field::from(0_u64), Field::from(2_u64)]).is_none());
+    let invalid = Value::from((Field::from(0_u64), Field::from(2_u64)));
+    assert!(JubjubPoint::try_from(&*invalid).is_err());
+}
 
 #[test]
 fn boolean_uses_ledger_single_byte_alignment_and_normalized_values() {

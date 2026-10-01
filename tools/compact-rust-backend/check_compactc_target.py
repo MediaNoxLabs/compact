@@ -137,6 +137,7 @@ def main() -> None:
                     assert (proof / "keys" / f"{circuit}.{extension}").is_file()
                 for extension in ("zkir", "bzkir"):
                     assert (proof / "zkir" / f"{circuit}.{extension}").is_file()
+            run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--", str(proof))
     print("compactc target boundary and manifest: passed")
 
 

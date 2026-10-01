@@ -1,0 +1,13 @@
+import CompactStandardLibrary;
+
+export ledger entries: Map<Opaque<"string">, Field>;
+
+export circuit put(key: Opaque<"string">, value: Field): [] {
+  entries.insert(disclose(key), disclose(value));
+}
+
+export circuit ensure(key: Opaque<"string">): Field {
+  assert(entries.member(disclose(key)), "missing key");
+  const value = entries.lookup(disclose(key));
+  return value;
+}

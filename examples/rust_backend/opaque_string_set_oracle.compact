@@ -1,0 +1,11 @@
+import CompactStandardLibrary;
+
+export ledger names: Set<Opaque<"string">>;
+
+export circuit addName(name: Opaque<"string">): [] {
+  names.insert(disclose(name));
+}
+
+export circuit hasName(name: Opaque<"string">): Boolean {
+  return names.member(disclose(name));
+}

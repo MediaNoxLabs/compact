@@ -1,0 +1,18 @@
+import CompactStandardLibrary;
+
+export ledger first: Field;
+export ledger second: Field;
+
+circuit ensureFirst(value: Field): [] {
+  assert(first == value, "constructor write not visible");
+}
+
+constructor() {
+  first = 7;
+  ensureFirst(first);
+  second = 9;
+}
+
+export circuit readSecond(): Field {
+  return second;
+}

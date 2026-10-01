@@ -32,6 +32,9 @@ pub struct Constructor {
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum ConstructorStep {
+    Expression {
+        value: Expr,
+    },
     Let {
         bindings: Vec<LocalBinding>,
         step: Box<ConstructorStep>,
@@ -366,6 +369,7 @@ pub enum Type {
     Boolean,
     Field,
     JubjubPoint,
+    OpaqueString,
     Bytes {
         length: usize,
     },
@@ -464,9 +468,22 @@ pub enum Expr {
         index: u8,
         value: Box<Expr>,
     },
+    MapMember {
+        field: String,
+        index: u8,
+        key: Box<Expr>,
+    },
+    MapLookup {
+        field: String,
+        index: u8,
+        key: Box<Expr>,
+    },
     CellRead {
         field: String,
         index: u8,
+    },
+    KernelSelf {
+        ty: Type,
     },
     SetIsEmpty {
         field: String,

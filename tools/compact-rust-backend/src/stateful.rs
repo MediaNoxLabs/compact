@@ -24,6 +24,29 @@ pub(crate) fn render_state_expression(
     query_effect: &mut bool,
 ) -> Result<(syn::Expr, Type, bool), RenderError> {
     match value {
+        Expr::KernelSelf { ty } => {
+            let expected = Type::Struct {
+                name: "ContractAddress".into(),
+                fields: vec![StructField {
+                    name: "bytes".into(),
+                    ty: Type::Bytes { length: 32 },
+                }],
+            };
+            if *ty != expected {
+                return Err(RenderError::TypeMismatch {
+                    expected,
+                    actual: ty.clone(),
+                });
+            }
+            let ty_syntax = rust_type(ty)?;
+            Ok((
+                syn::parse_quote!(#ty_syntax {
+                    bytes: runtime::ledger::contract_address_bytes(&context.query.address),
+                }),
+                ty.clone(),
+                false,
+            ))
+        }
         Expr::CellRead { field, index } => {
             let declaration = ledger_fields
                 .get(field.as_str())
@@ -104,6 +127,60 @@ pub(crate) fn render_state_expression(
                 Type::Boolean,
                 witness_effect,
             ))
+        }
+        Expr::MapMember { field, index, key } | Expr::MapLookup { field, index, key } => {
+            let declaration = ledger_fields
+                .get(field.as_str())
+                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+            if declaration.index != *index {
+                return Err(RenderError::InvalidLedgerIndex(*index));
+            }
+            let LedgerFieldKind::Map {
+                key: key_ty,
+                value: value_ty,
+            } = &declaration.declaration
+            else {
+                return Err(RenderError::UnknownLedgerField(field.clone()));
+            };
+            let (key, actual, witness_effect) = render_state_expression(
+                key,
+                parameters,
+                witnesses,
+                statements,
+                next_temp,
+                circuits,
+                stateful_circuits,
+                ledger_fields,
+                query_effect,
+            )?;
+            if actual != *key_ty {
+                return Err(RenderError::TypeMismatch {
+                    expected: key_ty.clone(),
+                    actual,
+                });
+            }
+            let step = syn::Ident::new(
+                &format!("__compact_query_{}", *next_temp),
+                Span::call_site(),
+            );
+            *next_temp += 1;
+            let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+            let result_ty = if matches!(value, Expr::MapMember { .. }) {
+                statements.push(syn::parse_quote!(
+                    let #step = context.member_map(#index, (#key).clone())?;
+                ));
+                Type::Boolean
+            } else {
+                let value_syntax = rust_type(value_ty)?;
+                statements.push(syn::parse_quote!(
+                    let #step = context.lookup_map::<_, #value_syntax>(#index, (#key).clone())?;
+                ));
+                value_ty.clone()
+            };
+            statements.push(syn::parse_quote!(context = #step.context;));
+            statements.push(syn::parse_quote!(total_cost += #step.gas_cost;));
+            *query_effect = true;
+            Ok((syn::parse_quote!(#step.result), result_ty, witness_effect))
         }
         Expr::SetIsEmpty { field, index } | Expr::MapIsEmpty { field, index } => {
             let declaration = ledger_fields
@@ -1103,6 +1180,8 @@ fn expression_contains(expression: &Expr, predicate: &impl Fn(&Expr) -> bool) ->
         | Expr::StructField { value, .. }
         | Expr::TupleIndex { value, .. }
         | Expr::SetMember { value, .. }
+        | Expr::MapMember { key: value, .. }
+        | Expr::MapLookup { key: value, .. }
         | Expr::Assert {
             condition: value, ..
         }
@@ -1149,6 +1228,7 @@ fn expression_contains(expression: &Expr, predicate: &impl Fn(&Expr) -> bool) ->
         | Expr::EnumVariant { .. }
         | Expr::Parameter { .. }
         | Expr::CellRead { .. }
+        | Expr::KernelSelf { .. }
         | Expr::SetIsEmpty { .. }
         | Expr::MapIsEmpty { .. } => false,
     }

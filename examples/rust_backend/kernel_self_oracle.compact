@@ -1,0 +1,11 @@
+import CompactStandardLibrary;
+
+export ledger address: ContractAddress;
+
+constructor() {
+  address = kernel.self();
+}
+
+export circuit readAddress(): ContractAddress {
+  return address;
+}

@@ -67,9 +67,10 @@
           [(tboolean ,src) (kind "boolean")]
           [(tfield ,src) (kind "field")]
           [(topaque ,src ,opaque-type)
-           (if (string=? opaque-type "JubjubPoint")
-               (kind "jubjub_point")
-               (source-errorf src "Rust backend does not yet support this opaque type"))]
+           (cond
+             [(string=? opaque-type "JubjubPoint") (kind "jubjub_point")]
+             [(string=? opaque-type "string") (kind "opaque_string")]
+             [else (source-errorf src "Rust backend does not yet support this opaque type")])]
           [(tbytes ,src ,len)
            (object (cons "kind" "bytes")
                    (cons "length" len))]
@@ -341,6 +342,28 @@
            (object (cons "kind" "assert")
                    (cons "condition" (expression-ir expr src))
                    (cons "message" mesg))]
+          [(public-ledger ,src ,ledger-field-name ,sugar? (,path-elt* ...) ,src^ ,adt-op ,expr* ...)
+           (unless (and (pair? path-elt*)
+                        (for-all (lambda (index) (and (integer? index) (<= 0 index 14))) path-elt*))
+             (source-errorf src "Rust backend requires an array-index ledger query path"))
+           (nanopass-case (Lnodisclose ADT-Op) adt-op
+             [(,ledger-op ,op-class (,adt-name (,adt-formal* ,adt-arg*) ...) ((,var-name* ,type*) ...) ,type ,vm-code)
+              (cond
+                [(and (eq? adt-name '__compact_Cell) (eq? ledger-op 'read) (null? expr*))
+                 (object (cons "kind" "cell_read")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*)))]
+                [(and (eq? adt-name 'Set) (eq? ledger-op 'member) (= (length expr*) 1))
+                 (object (cons "kind" "set_member")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*))
+                         (cons "value" (expression-ir (car expr*) src)))]
+                [(and (eq? adt-name 'Map) (memq ledger-op '(member lookup)) (= (length expr*) 1))
+                 (object (cons "kind" (if (eq? ledger-op 'member) "map_member" "map_lookup"))
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*))
+                         (cons "key" (expression-ir (car expr*) src)))]
+                [else (source-errorf src "Rust backend does not yet support this nested ledger query")])])]
           [(call ,src ,function-name ,expr* ...)
            (let ([name (id-sym function-name)])
              (cond
@@ -960,6 +983,7 @@
            (typed-expression-ir value-expr expected-type src)]
           [(safe-cast ,src ,type ,type^ ,expr)
            (nanopass-case (Lnodisclose Type) type
+             [(tboolean ,src^) (stateful-expression-ir expr src witness-ids)]
              [(tunsigned ,src^ ,nat)
               (let ([literal (maybe-nonnegative-integer-literal expr src)])
                 (if literal
@@ -1039,12 +1063,16 @@
                             (cons "scalar" (stateful-expression-ir (cadr expr*) src witness-ids)))))]
                [else (expression-ir value-expr owner-src)]))]
           [(public-ledger ,src ,ledger-field-name ,sugar? (,path-elt* ...) ,src^ ,adt-op ,expr* ...)
-           (unless (and (pair? path-elt*)
-                        (for-all (lambda (index) (and (integer? index) (<= 0 index 14))) path-elt*))
-             (source-errorf src "Rust backend requires an array-index ledger query path"))
            (nanopass-case (Lnodisclose ADT-Op) adt-op
              [(,ledger-op ,op-class (,adt-name (,adt-formal* ,adt-arg*) ...) ((,var-name* ,type*) ...) ,type ,vm-code)
+              (unless (or (and (eq? adt-name 'Kernel) (eq? ledger-op 'self) (null? expr*))
+                          (and (pair? path-elt*)
+                               (for-all (lambda (index) (and (integer? index) (<= 0 index 14))) path-elt*)))
+                (source-errorf src "Rust backend requires an array-index ledger query path"))
               (cond
+                [(and (eq? adt-name 'Kernel) (eq? ledger-op 'self) (null? expr*))
+                 (object (cons "kind" "kernel_self")
+                         (cons "ty" (type-ir type src)))]
                 [(and (eq? adt-name '__compact_Cell) (eq? ledger-op 'read) (null? expr*))
                  (object (cons "kind" "cell_read")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
@@ -1054,6 +1082,16 @@
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
                          (cons "value" (stateful-expression-ir (car expr*) src witness-ids)))]
+                [(and (eq? adt-name 'Map) (eq? ledger-op 'member) (= (length expr*) 1))
+                 (object (cons "kind" "map_member")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*))
+                         (cons "key" (stateful-expression-ir (car expr*) src witness-ids)))]
+                [(and (eq? adt-name 'Map) (eq? ledger-op 'lookup) (= (length expr*) 1))
+                 (object (cons "kind" "map_lookup")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*))
+                         (cons "key" (stateful-expression-ir (car expr*) src witness-ids)))]
                 [(and (eq? adt-name 'Set) (eq? ledger-op 'isEmpty) (null? expr*))
                  (object (cons "kind" "set_is_empty")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
@@ -1065,6 +1103,7 @@
                 [else (source-errorf src "Rust backend does not yet support this nested ledger query")])])]
           [(safe-cast ,src ,type ,type^ ,expr)
            (nanopass-case (Lnodisclose Type) type
+             [(tboolean ,src^) (stateful-expression-ir expr src witness-ids)]
              [(tunsigned ,src^ ,nat)
               (if (maybe-nonnegative-integer-literal expr src)
                   (expression-ir value-expr owner-src)
@@ -1375,6 +1414,8 @@
       ;; node so the Rust constructor can thread private state.
       (define (constructor-typed-expression-ir expr expected-type owner-src witness-ids)
         (nanopass-case (Lnodisclose Expression) expr
+          [(public-ledger ,src ,ledger-field-name ,sugar? (,path-elt* ...) ,src^ ,adt-op ,expr* ...)
+           (stateful-typed-expression-ir expr expected-type owner-src witness-ids)]
           [(call ,src ,function-name ,expr* ...)
            (if (eq-hashtable-ref witness-ids function-name #f)
                (stateful-typed-expression-ir expr expected-type owner-src witness-ids)
@@ -1412,6 +1453,15 @@
       ;; Preserve its item binding and ordered effects instead of emitting Rust syntax.
       (define (constructor-step-ir expr parameters bindings owner-src witness-ids)
         (nanopass-case (Lnodisclose Expression) expr
+          [(call ,src ,function-name ,expr* ...)
+           (object (cons "kind" "expression")
+                   (cons "value"
+                         (if (eq-hashtable-ref witness-ids function-name #f)
+                             (stateful-expression-ir expr src witness-ids)
+                             (object (cons "kind" "call")
+                                     (cons "name" (symbol->string (id-sym function-name)))
+                                     (cons "arguments"
+                                           (stateful-call-arguments-ir function-name expr* src witness-ids))))))]
           [(seq ,src ,expr* ... ,expr)
            (object (cons "kind" "sequence")
                    (cons "steps"

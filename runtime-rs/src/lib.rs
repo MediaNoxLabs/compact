@@ -9,6 +9,7 @@
 pub mod context;
 pub mod ledger;
 mod natives;
+mod opaque;
 mod primitives;
 
 pub use midnight_compact_runtime_macros::CompactCellValue;
@@ -17,6 +18,7 @@ pub use natives::{
     hash_to_curve, jubjub_point_x, jubjub_point_y, jubjub_scalar_from_native, keccak256,
     persistent_commit, persistent_hash, transient_commit, transient_hash, upgrade_from_transient,
 };
+pub use opaque::OpaqueString;
 pub use primitives::{
     BoundedUint, FixedBytes, FixedVector, JubjubPoint, WideUint, add_unsigned, cast_unsigned,
     multiply_unsigned, narrow_wide_uint, subtract_unsigned,

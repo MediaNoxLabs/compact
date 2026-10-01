@@ -245,6 +245,7 @@ fn rust_type(ty: &Type) -> Result<syn::Type, RenderError> {
         Type::Boolean => syn::parse_quote!(bool),
         Type::Field => syn::parse_quote!(runtime::Field),
         Type::JubjubPoint => syn::parse_quote!(runtime::JubjubPoint),
+        Type::OpaqueString => syn::parse_quote!(runtime::OpaqueString),
         Type::Bytes { length } => {
             let length = syn::LitInt::new(&length.to_string(), Span::call_site());
             syn::parse_quote!(runtime::FixedBytes<#length>)
@@ -419,6 +420,9 @@ fn collect_expression_types(
             collect_expression_types(condition, structs, enums)?;
         }
         Expr::SetMember { value, .. } => collect_expression_types(value, structs, enums)?,
+        Expr::MapMember { key, .. } | Expr::MapLookup { key, .. } => {
+            collect_expression_types(key, structs, enums)?
+        }
         Expr::Call { arguments, .. } | Expr::WitnessCall { arguments, .. } => {
             for argument in arguments {
                 collect_expression_types(argument, structs, enums)?;
@@ -478,6 +482,7 @@ fn collect_expression_types(
         | Expr::BytesLiteral { .. }
         | Expr::UnsignedLiteral { .. }
         | Expr::Parameter { .. } => {}
+        Expr::KernelSelf { ty } => collect_named_types(ty, structs, enums)?,
         Expr::SetIsEmpty { .. } | Expr::MapIsEmpty { .. } | Expr::CellRead { .. } => {}
     }
     Ok(())
@@ -674,6 +679,7 @@ fn copy_type(ty: &Type) -> bool {
         | Type::Boolean
         | Type::Field
         | Type::JubjubPoint
+        | Type::OpaqueString
         | Type::Bytes { .. }
         | Type::Enum { .. }
         | Type::Unsigned { .. } => true,
@@ -1222,9 +1228,12 @@ fn expression_with_calls(
         }
         Expr::WitnessCall { .. }
         | Expr::SetMember { .. }
+        | Expr::MapMember { .. }
+        | Expr::MapLookup { .. }
         | Expr::SetIsEmpty { .. }
         | Expr::MapIsEmpty { .. }
-        | Expr::CellRead { .. } => Err(RenderError::EffectfulExpression),
+        | Expr::CellRead { .. }
+        | Expr::KernelSelf { .. } => Err(RenderError::EffectfulExpression),
         Expr::FieldCast { value } => {
             let (value, actual) = expression_with_calls(value, parameters, circuits)?;
             let Type::Unsigned { max } = &actual else {
@@ -1401,6 +1410,9 @@ fn collect_constructor_step_types(
     enums: &mut BTreeMap<String, Vec<String>>,
 ) -> Result<(), RenderError> {
     match step {
+        ConstructorStep::Expression { value } => {
+            collect_expression_types(value, structs, enums)?;
+        }
         ConstructorStep::Let { bindings, step } => {
             for binding in bindings {
                 collect_named_types(&binding.ty, structs, enums)?;
@@ -1459,6 +1471,7 @@ fn constructor_step_uses_witness(
 ) -> Result<bool, RenderError> {
     let requires = |value: &Expr| stateful::expression_requires_witness(value, stateful_circuits);
     match step {
+        ConstructorStep::Expression { value } => requires(value),
         ConstructorStep::Let { bindings, step } => {
             for binding in bindings {
                 if requires(&binding.value)? {
@@ -1519,6 +1532,23 @@ fn render_constructor_vm_steps<'a>(
     let mut actions = Vec::new();
     for step in steps {
         match step {
+            ConstructorStep::Expression { value } => {
+                let mut expression_steps = Vec::new();
+                let mut query_effect = false;
+                let (value, _, _) = stateful::render_state_expression(
+                    value,
+                    parameters,
+                    witnesses,
+                    &mut expression_steps,
+                    next_temp,
+                    circuits,
+                    stateful_circuits,
+                    ledger_fields,
+                    &mut query_effect,
+                )?;
+                actions.extend(expression_steps);
+                actions.push(syn::parse_quote!(let _ = #value;));
+            }
             ConstructorStep::Let { bindings, step } => {
                 let mut locals = parameters.clone();
                 for binding in bindings {
@@ -2183,7 +2213,8 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                             &callable_stateful_circuits,
                         )
                 }
-                ConstructorStep::Let { .. }
+                ConstructorStep::Expression { .. }
+                | ConstructorStep::Let { .. }
                 | ConstructorStep::Sequence { .. }
                 | ConstructorStep::Assert { .. }
                 | ConstructorStep::CounterIncrement { .. }
@@ -2276,7 +2307,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
         LedgerFieldKind::List { .. } => Ok(syn::parse_quote!(runtime::ledger::constructor_list())),
         LedgerFieldKind::Map { .. } => Ok(syn::parse_quote!(runtime::ledger::constructor_map())),
         LedgerFieldKind::Cell { ty } => {
-            if !matches!(ty, Type::Boolean | Type::Field | Type::JubjubPoint | Type::Unsigned { .. } | Type::Bytes { .. } | Type::Struct { .. } | Type::Enum { .. } | Type::Vector { .. } | Type::Tuple { .. } | Type::Unit) {
+            if !matches!(ty, Type::Boolean | Type::Field | Type::JubjubPoint | Type::OpaqueString | Type::Unsigned { .. } | Type::Bytes { .. } | Type::Struct { .. } | Type::Enum { .. } | Type::Vector { .. } | Type::Tuple { .. } | Type::Unit) {
                 return Err(RenderError::UnsupportedLedgerCellType(ty.clone()));
             }
             let ty = rust_type(ty)?;

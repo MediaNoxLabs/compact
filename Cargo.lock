@@ -924,6 +924,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-constructor-stateful-call-oracle-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-constructor-tuple-coercion-fixture"
 version = "0.1.0"
 dependencies = [
@@ -1103,6 +1115,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-kernel-self-oracle-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-list-field-fixture"
 version = "0.1.0"
 dependencies = [
@@ -1243,6 +1267,30 @@ name = "compact-rust-one-tuple-fixture"
 version = "0.1.0"
 dependencies = [
  "midnight-compact-runtime",
+]
+
+[[package]]
+name = "compact-rust-opaque-string-map-query-oracle-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde_json",
+]
+
+[[package]]
+name = "compact-rust-opaque-string-set-oracle-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde_json",
 ]
 
 [[package]]

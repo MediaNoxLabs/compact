@@ -28,6 +28,11 @@ pub trait CellValue: Aligned + Into<Value> + Sized {
     fn decode_cell_value(value: &ValueSlice) -> Result<Self, CompactError>;
 }
 
+/// Expose the ledger address bytes for Compact's stdlib ContractAddress struct.
+pub fn contract_address_bytes(address: &ContractAddress) -> FixedBytes<32> {
+    FixedBytes(address.0.0)
+}
+
 macro_rules! primitive_cell_value {
     ($($ty:ty),* $(,)?) => {$ (
         impl CellValue for $ty {

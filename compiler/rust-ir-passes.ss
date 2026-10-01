@@ -1045,20 +1045,22 @@
                  (let ([binding (assq (id-sym var-name) bindings)])
                    (unless (or binding (memq (id-sym var-name) parameters))
                      (source-errorf src1 "Rust constructor Cell initializer must be a constructor parameter or literal"))
-                 (object (cons "field" (symbol->string (id-sym ledger-field-name)))
+                 (object (cons "kind" "cell_write")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
                          (cons "value" (if binding (cdr binding) (expression-ir (car expr*) src)))))]
                 [else
-                 (object (cons "field" (symbol->string (id-sym ledger-field-name)))
+                 (object (cons "kind" "cell_write")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
                          (cons "value" (if (null? adt-arg*)
                                            (expression-ir (car expr*) src)
                                            (typed-expression-ir (car expr*) (car adt-arg*) src))))])])]
           [else (source-errorf owner-src "Rust backend does not yet support this constructor action")]))
 
-      (define (constructor-initializers-ir expr parameters owner-src)
+      (define (constructor-steps-ir expr parameters owner-src)
         (nanopass-case (Lnodisclose Expression) expr
-          [(return ,src ,expr) (constructor-initializers-ir expr parameters src)]
+          [(return ,src ,expr) (constructor-steps-ir expr parameters src)]
           [(seq ,src ,expr* ... ,expr)
            (unless (empty-constructor-expression? expr)
              (source-errorf src "Rust backend does not yet support constructor return values"))
@@ -1074,8 +1076,8 @@
           [(public-ledger-declaration ,pl-array ,lconstructor)
            (nanopass-case (Lnodisclose Ledger-Constructor) lconstructor
              [(constructor ,src ((,var-name* ,type*) ...) ,expr)
-              (let ([initializers (constructor-initializers-ir expr (map id-sym var-name*) src)])
-                (if (and (null? var-name*) (null? initializers))
+              (let ([steps (constructor-steps-ir expr (map id-sym var-name*) src)])
+                (if (and (null? var-name*) (null? steps))
                     #f
                     (object (cons "parameters"
                                   (list->vector
@@ -1083,7 +1085,7 @@
                                            (object (cons "name" (symbol->string (id-sym name)))
                                                    (cons "ty" (type-ir ty src))))
                                          var-name* type*)))
-                            (cons "initializers" (list->vector initializers)))))])]
+                            (cons "steps" (list->vector steps)))))])]
           [else #f])))
 
     (Program : Program (ir) -> Program ()
@@ -1095,7 +1097,7 @@
            (source-errorf src "Rust backend found multiple constructors"))
          (print-json
            (get-target-port 'rust.ir.json)
-           (append (object (cons "schema_version" 4)
+           (append (object (cons "schema_version" 5)
                    (cons "ledger_fields"
                          (list->vector
                            (fold-right (lambda (pelt fields) (ledger-fields-ir pelt fields src)) '() pelt*)))

@@ -11,8 +11,8 @@ use std::error::Error;
 use std::fmt;
 
 use ir::{
-    ComparisonOperator, Contract, Expr, LedgerFieldKind, PureCircuit, SCHEMA_VERSION, StateAction,
-    StatefulCircuit, StructField, Type,
+    ComparisonOperator, ConstructorStep, Contract, Expr, LedgerFieldKind, PureCircuit,
+    SCHEMA_VERSION, StateAction, StatefulCircuit, StructField, Type,
 };
 use proc_macro2::Span;
 use quote::quote;
@@ -1141,41 +1141,37 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
             let ty = rust_type(&parameter.ty)?;
             constructor_args.push(syn::parse_quote!(#name: #ty));
         }
-        for initializer in &constructor.initializers {
-            let field = ledger_fields
-                .get(initializer.field.as_str())
-                .ok_or_else(|| RenderError::UnknownLedgerField(initializer.field.clone()))?;
-            if field.index != initializer.index {
-                return Err(RenderError::InvalidLedgerIndex(initializer.index));
-            }
-            let LedgerFieldKind::Cell { ty } = &field.declaration else {
-                return Err(RenderError::InvalidConstructorInitializer(
-                    initializer.field.clone(),
-                ));
-            };
-            if !infallible_constructor_expr(&initializer.value) {
-                return Err(RenderError::InvalidConstructorInitializer(
-                    initializer.field.clone(),
-                ));
-            }
-            let (value, actual) = expression_with_calls(
-                &initializer.value,
-                &constructor_parameters,
-                &HashMap::new(),
-            )?;
-            if actual != *ty {
-                return Err(RenderError::TypeMismatch {
-                    expected: ty.clone(),
-                    actual,
-                });
-            }
-            if constructor_values
-                .insert(initializer.field.as_str(), value)
-                .is_some()
-            {
-                return Err(RenderError::DuplicateConstructorInitializer(
-                    initializer.field.clone(),
-                ));
+        for step in &constructor.steps {
+            match step {
+                ConstructorStep::CellWrite {
+                    field,
+                    index,
+                    value,
+                } => {
+                    let declaration = ledger_fields
+                        .get(field.as_str())
+                        .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                    if declaration.index != *index {
+                        return Err(RenderError::InvalidLedgerIndex(*index));
+                    }
+                    let LedgerFieldKind::Cell { ty } = &declaration.declaration else {
+                        return Err(RenderError::InvalidConstructorInitializer(field.clone()));
+                    };
+                    if !infallible_constructor_expr(value) {
+                        return Err(RenderError::InvalidConstructorInitializer(field.clone()));
+                    }
+                    let (value, actual) =
+                        expression_with_calls(value, &constructor_parameters, &HashMap::new())?;
+                    if actual != *ty {
+                        return Err(RenderError::TypeMismatch {
+                            expected: ty.clone(),
+                            actual,
+                        });
+                    }
+                    if constructor_values.insert(field.as_str(), value).is_some() {
+                        return Err(RenderError::DuplicateConstructorInitializer(field.clone()));
+                    }
+                }
             }
         }
     }

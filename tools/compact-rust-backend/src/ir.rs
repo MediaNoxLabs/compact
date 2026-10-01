@@ -7,7 +7,7 @@
 
 use serde::{Deserialize, Serialize};
 
-pub const SCHEMA_VERSION: u32 = 4;
+pub const SCHEMA_VERSION: u32 = 5;
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -26,15 +26,17 @@ pub struct Contract {
 #[serde(deny_unknown_fields)]
 pub struct Constructor {
     pub parameters: Vec<Parameter>,
-    pub initializers: Vec<CellInitializer>,
+    pub steps: Vec<ConstructorStep>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
-pub struct CellInitializer {
-    pub field: String,
-    pub index: u8,
-    pub value: Expr,
+#[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
+pub enum ConstructorStep {
+    CellWrite {
+        field: String,
+        index: u8,
+        value: Expr,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]

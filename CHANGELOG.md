@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Toolchain 0.31.117, language 0.23.105, runtime 0.16.101]
+
+### Added
+
+- Allow generated Rust contracts to share one local runtime source package with
+  `compactc --target rust --rust-runtime-root <path>`. A combined Cargo consumer
+  test checks two independently generated contracts in one dependency graph.
+
 ## [Toolchain 0.31.116, language 0.23.105, runtime 0.16.101]
 
 ### Added

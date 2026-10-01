@@ -25,6 +25,13 @@ project can depend on `contract/` by path without copying generated source or
 editing its manifest. Run with `--target ts --target rust` to emit both contract
 languages. `--skip-zk` skips proving keys for a quicker local build.
 
+For applications that use several generated contracts, pass the same
+`--rust-runtime-root /path/to/compact` for each compilation. The root must
+contain `runtime-rs/` and `runtime-rs-macros/`. Each generated manifest then
+points to that one runtime source package, allowing the contracts to share a
+Cargo graph. This mode depends on the chosen local path; the default bundled
+mode keeps each individual generated contract self-contained.
+
 The packaged command keeps the ledger-8 Scheme compiler as a sibling named
 `compactc-scheme`. For compiler development, set `COMPACTC_SCHEME` to a local
 Scheme executable and run `cargo run -p compact-rust-backend --bin compactc --`.
@@ -50,15 +57,15 @@ Compact spelling without warning in consumer builds.
 
 | Boundary | Current contract | Failure behavior |
 |---|---|---|
-| Compact compiler | Toolchain 0.31.116, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
+| Compact compiler | Toolchain 0.31.117, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
 | Rust IR | Schema 6, private to this backend | The renderer rejects any other schema before writing `lib.rs`. |
 | Generated code and Rust runtime | ABI 3 | Generated modules assert the ABI at Rust compile time. |
-| Rust runtime source | Exact Git revision in generated `Cargo.toml` | Cargo resolves the matching runtime and its pinned Midnight crates. |
+| Rust runtime source | Bundled runtime crates or an explicit shared source root | Cargo resolves the matching runtime and its pinned Midnight crates. |
 
 `--runtime-version` reports the TypeScript runtime version; the Rust runtime
-compatibility contract is the ABI assertion and exact Git revision. The
+compatibility contract is the ABI assertion and matching source packages. The
 generated `Cargo.toml` has `publish = false` because it is a contract-specific
-artifact. Change the runtime pin only alongside an ABI and consumer test review.
+artifact. Change the runtime source only alongside an ABI and consumer test review.
 
 The backend directory has its own `Cargo.lock` for the isolated Nix
 `compact-rust-cli` package. The repository root lockfile governs workspace
@@ -106,13 +113,11 @@ separate temporary harness before adding a `node_modules` link. The compiler
 cleans its output directories on each run, so links must stay outside them.
 The rejection checker verifies source-located failures for unsupported
 constructs and that no generated Rust library survives a rejected compile.
-The `--proof` target check uses the ledger-8 proof crate to load the emitted
-counter ZKIR and keys, prove the increment statement, verify the proof, and
-reject a changed binding input. It also combines the generated counter
-constructor state with the emitted verifier key and validates an offline
-ledger-8 deployment transaction. The proof statement is a fixed test
-transcript; generated circuit calls still need a recording path that captures
-their actual public and private transcripts for wallet submission.
+The `--proof` target check derives the Counter increment statement from the
+generated recorded trace, proves it against emitted ZKIR and keys, and rejects
+a changed binding input. It validates an offline ledger-8 deployment, then
+proves, validates, and applies a Counter call transaction. Other circuit
+operations still need recording coverage before wallet submission.
 
 The fixture suite covers all 37 top-level `*_fixture.compact` contracts from
 the `codegen-rust` oracle branch, alongside smaller source contracts used to

@@ -29,13 +29,14 @@ use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
 use toml_edit::{DocumentMut, InlineTable, Item, Table, Value as TomlValue, value};
 
-const TARGET_HELP: &str = "\n  --target <ts|rust> selects contract code. Repeat to emit both.\n    With no --target, TypeScript remains the default. Rust emits a standalone\n    contract/Cargo.toml, source, and matching runtime crates; ZKIR and keys are independent.\n";
+const TARGET_HELP: &str = "\n  --target <ts|rust> selects contract code. Repeat to emit both.\n    With no --target, TypeScript remains the default. Rust emits a standalone\n    contract/Cargo.toml, source, and matching runtime crates; ZKIR and keys are independent.\n  --rust-runtime-root <path> uses one shared runtime source root for generated\n    Rust crates. The root must contain runtime-rs/ and runtime-rs-macros/.\n";
 
 #[derive(Default)]
 struct Targets {
     explicit: bool,
     ts: bool,
     rust: bool,
+    runtime_root: Option<PathBuf>,
 }
 
 fn select_targets(args: Vec<OsString>) -> Result<(Targets, Vec<OsString>), String> {
@@ -43,6 +44,27 @@ fn select_targets(args: Vec<OsString>) -> Result<(Targets, Vec<OsString>), Strin
     let mut forwarded = Vec::with_capacity(args.len());
     let mut arguments = args.into_iter();
     while let Some(argument) = arguments.next() {
+        if argument == "--rust-runtime-root" {
+            let root = arguments
+                .next()
+                .ok_or("--rust-runtime-root needs a directory")?;
+            if targets.runtime_root.replace(PathBuf::from(root)).is_some() {
+                return Err("--rust-runtime-root may be given only once".into());
+            }
+            continue;
+        }
+        if let Some(root) = argument
+            .to_str()
+            .and_then(|s| s.strip_prefix("--rust-runtime-root="))
+        {
+            if root.is_empty() {
+                return Err("--rust-runtime-root needs a directory".into());
+            }
+            if targets.runtime_root.replace(PathBuf::from(root)).is_some() {
+                return Err("--rust-runtime-root may be given only once".into());
+            }
+            continue;
+        }
         let selected = if argument == "--target" {
             Some(arguments.next().ok_or("--target needs ts or rust")?)
         } else if let Some(value) = argument.to_str().and_then(|s| s.strip_prefix("--target=")) {
@@ -68,6 +90,9 @@ fn select_targets(args: Vec<OsString>) -> Result<(Targets, Vec<OsString>), Strin
     }
     if !targets.explicit {
         targets.ts = true;
+    }
+    if targets.runtime_root.is_some() && !targets.rust {
+        return Err("--rust-runtime-root requires --target rust".into());
     }
     Ok((targets, forwarded))
 }
@@ -102,7 +127,7 @@ fn package_name(source: &Path) -> String {
     name.trim_end_matches('-').to_owned()
 }
 
-fn crate_manifest(source: &Path) -> String {
+fn crate_manifest(source: &Path, runtime: &Path) -> Result<String, Box<dyn Error>> {
     let mut document = DocumentMut::new();
     let mut package = Table::new();
     package["name"] = value(package_name(source));
@@ -123,12 +148,33 @@ fn crate_manifest(source: &Path) -> String {
     document["lib"] = Item::Table(library);
 
     let mut dependency = InlineTable::new();
-    dependency.insert("path", TomlValue::from("runtime-rs"));
+    dependency.insert(
+        "path",
+        TomlValue::from(
+            runtime
+                .to_str()
+                .ok_or("Rust runtime path is not valid UTF-8 for Cargo.toml")?,
+        ),
+    );
     dependency.insert("package", TomlValue::from("midnight-compact-runtime"));
     let mut dependencies = Table::new();
     dependencies["midnight-compact-runtime"] = Item::Value(TomlValue::InlineTable(dependency));
     document["dependencies"] = Item::Table(dependencies);
-    document.to_string()
+    Ok(document.to_string())
+}
+
+fn shared_runtime_path(root: &Path) -> Result<PathBuf, Box<dyn Error>> {
+    let root = fs::canonicalize(root)?;
+    for package in ["runtime-rs", "runtime-rs-macros"] {
+        if !root.join(package).join("Cargo.toml").is_file() {
+            return Err(format!(
+                "shared Rust runtime root lacks {package}/Cargo.toml: {}",
+                root.display()
+            )
+            .into());
+        }
+    }
+    Ok(root.join("runtime-rs"))
 }
 
 fn runtime_source_root() -> Result<PathBuf, Box<dyn Error>> {
@@ -279,6 +325,11 @@ fn run() -> Result<i32, Box<dyn Error>> {
             "usage: compactc [--target ts|rust] [flags] <source.compact> <output-directory>".into(),
         );
     }
+    let shared_runtime = targets
+        .runtime_root
+        .as_deref()
+        .map(shared_runtime_path)
+        .transpose()?;
     let source = PathBuf::from(args[args.len() - 2].clone());
     let output = PathBuf::from(args[args.len() - 1].clone());
     let insert_at = args.len() - 2;
@@ -296,8 +347,16 @@ fn run() -> Result<i32, Box<dyn Error>> {
         serde_json::from_slice(&fs::read(contract_dir.join("compact-rust-ir.json"))?)?;
     let source_code = render(&ir)?;
     fs::write(contract_dir.join("lib.rs"), source_code)?;
-    fs::write(contract_dir.join("Cargo.toml"), crate_manifest(&source))?;
-    copy_runtime_sources(&contract_dir)?;
+    let runtime = if let Some(runtime) = shared_runtime {
+        runtime
+    } else {
+        copy_runtime_sources(&contract_dir)?;
+        PathBuf::from("runtime-rs")
+    };
+    fs::write(
+        contract_dir.join("Cargo.toml"),
+        crate_manifest(&source, &runtime)?,
+    )?;
     refresh_manifest(&output)?;
     Ok(0)
 }
@@ -345,6 +404,39 @@ mod tests {
 
         let unknown = select_targets(vec![OsString::from("--target=wasm")]);
         assert!(matches!(unknown, Err(message) if message.contains("valid targets are ts, rust")));
+
+        let without_rust = select_targets(
+            ["--rust-runtime-root", "/shared", "in.compact", "out"]
+                .into_iter()
+                .map(OsString::from)
+                .collect(),
+        );
+        assert!(matches!(without_rust, Err(message) if message.contains("requires --target rust")));
+        let missing_root = select_targets(
+            ["--target", "rust", "--rust-runtime-root"]
+                .into_iter()
+                .map(OsString::from)
+                .collect(),
+        );
+        assert!(matches!(missing_root, Err(message) if message.contains("needs a directory")));
+    }
+
+    #[test]
+    fn shared_runtime_option_is_removed_before_scheme_compilation() {
+        let (targets, forwarded) = select_targets(
+            [
+                "--target=rust",
+                "--rust-runtime-root=/shared",
+                "in.compact",
+                "out",
+            ]
+            .into_iter()
+            .map(OsString::from)
+            .collect(),
+        )
+        .unwrap();
+        assert_eq!(targets.runtime_root.as_deref(), Some(Path::new("/shared")));
+        assert_eq!(forwarded, ["in.compact", "out"].map(OsString::from));
     }
 
     #[test]

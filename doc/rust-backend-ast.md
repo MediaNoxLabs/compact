@@ -34,10 +34,11 @@ through `ledger_contract::Contract<W>`, with the same typed arguments and
 witness contract as the free functions.
 
 The bundled runtime makes each generated contract independently buildable.
-Multiple separately generated contracts cannot yet share one Cargo lockfile:
-each contains a path package named `midnight-compact-runtime` at the same
-version. A shared versioned runtime distribution is still required for
-multi-contract Rust applications.
+By default, multiple separately generated contracts cannot share one Cargo
+lockfile: each contains a path package named `midnight-compact-runtime` at the
+same version. The explicit `--rust-runtime-root` compiler option lets several
+generated contracts use one local runtime package. A shared versioned runtime
+distribution is still required for portable multi-contract Rust applications.
 
 The Rust runtime has an opt-in `RecordingFrame` for Cell, Counter, and witness
 operations. It preserves the initial ledger query context, ordered verifying

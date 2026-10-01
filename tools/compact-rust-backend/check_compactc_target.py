@@ -36,7 +36,7 @@ def run(*arguments: str, cwd: Path = ROOT) -> None:
     subprocess.run(arguments, cwd=cwd, check=True)
 
 
-def check_manifest(output: Path) -> None:
+def check_manifest(output: Path, *, require_zkir: bool = True) -> None:
     manifest = json.loads((output / "compiler/contract-manifest.json").read_text())
     def check_tree(path: Path, entries: dict) -> None:
         for name, entry in entries.items():
@@ -51,7 +51,9 @@ def check_manifest(output: Path) -> None:
                 content = child.read_bytes()
                 assert entry["size"] == len(content), child
                 assert entry["hash"] == hashlib.sha256(content).hexdigest(), child
-    directories = ["compiler", "contract", "zkir"]
+    directories = ["compiler", "contract"]
+    if require_zkir:
+        directories.append("zkir")
     if (output / "keys").is_dir():
         directories.append("keys")
     for directory in directories:
@@ -121,6 +123,52 @@ def check_consumer(contract: Path, pure_contract: Path, consumer: Path) -> None:
     subprocess.run(["cargo", "test", "--quiet"], cwd=pure_consumer, env=environment, check=True)
 
 
+def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
+    contracts = []
+    for name, source in (("counter", SOURCE), ("field_add", PURE_SOURCE)):
+        output = base / f"shared-{name}"
+        run(
+            compiler, "--target", "rust", "--rust-runtime-root", str(ROOT),
+            "--skip-zk", str(source), str(output),
+        )
+        check_manifest(output, require_zkir=name != "field_add")
+        contract = output / "contract"
+        manifest = tomllib.loads((contract / "Cargo.toml").read_text())
+        assert Path(manifest["dependencies"]["midnight-compact-runtime"]["path"]) == ROOT / "runtime-rs"
+        assert not (contract / "runtime-rs").exists()
+        contracts.append((contract, manifest["package"]["name"]))
+
+    consumer = base / "shared-consumer"
+    consumer.mkdir()
+    (consumer / "tests").mkdir()
+    (consumer / "Cargo.toml").write_text(
+        "[package]\nname = \"compactc-shared-runtime-smoke\"\n"
+        "version = \"0.1.0\"\nedition = \"2024\"\n\n[dependencies]\n"
+        + "".join(
+            f"{name} = {{ path = {json.dumps(str(contract))} }}\n"
+            for contract, name in contracts
+        )
+        + f'midnight-compact-runtime = {{ path = {json.dumps(str(ROOT / "runtime-rs"))} }}\n'
+    )
+    (consumer / "tests/both.rs").write_text(
+        "use compact_contract_counter::ledger_contract::{Contract, initial_state};\n"
+        "use compact_contract_field_add::pure_circuits::field_add;\n"
+        "use midnight_compact_runtime::context::ConstructorContext;\n"
+        "use midnight_compact_runtime::ledger::ContractAddress;\n"
+        "#[test]\nfn two_generated_contracts_share_one_runtime() {\n"
+        "    let state = initial_state(ConstructorContext::new(())).unwrap();\n"
+        "    let context = state.into_circuit_context(ContractAddress::default());\n"
+        "    let result = Contract::default().increment(context).unwrap();\n"
+        "    let read = Contract::default().read_round(result.context).unwrap();\n"
+        "    assert_eq!(read.result.value(), 1);\n"
+        "    assert_eq!(field_add(2u64.into(), 3u64.into()).unwrap(), 5u64.into());\n"
+        "}\n"
+    )
+    environment = os.environ.copy()
+    environment.setdefault("CARGO_TARGET_DIR", str(ROOT / "target/compactc-consumer"))
+    subprocess.run(["cargo", "test", "--quiet"], cwd=consumer, env=environment, check=True)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--consumer", action="store_true", help="build and run a separate consumer")
@@ -161,6 +209,7 @@ def main() -> None:
         if args.consumer:
             run(compiler, "--target", "rust", "--skip-zk", str(PURE_SOURCE), str(pure))
             check_consumer(rust / "contract", pure / "contract", base / "consumer")
+            check_shared_runtime_consumer(compiler, base)
         if args.proof:
             proof = base / "proof"
             run(compiler, "--target", "rust", str(SOURCE), str(proof))

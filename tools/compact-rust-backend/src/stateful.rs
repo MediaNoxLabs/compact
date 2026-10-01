@@ -1101,6 +1101,7 @@ fn action_calls_named(action: &StateAction, name: &str) -> bool {
         | StateAction::SetInsert { value, .. }
         | StateAction::SetRemove { value, .. }
         | StateAction::ListPushFront { value, .. }
+        | StateAction::HistoricMerkleInsert { value, .. }
         | StateAction::HistoricMerkleInsertIndexDefault {
             position: value, ..
         }
@@ -1110,13 +1111,17 @@ fn action_calls_named(action: &StateAction, name: &str) -> bool {
         StateAction::MapInsert { key, value, .. } => {
             expression_calls_named(key, name) || expression_calls_named(value, name)
         }
+        StateAction::HistoricMerkleInsertIndex {
+            value, position, ..
+        } => expression_calls_named(value, name) || expression_calls_named(position, name),
         StateAction::CounterIncrement { .. }
         | StateAction::CounterDecrement { .. }
         | StateAction::CounterReset { .. }
         | StateAction::SetReset { .. }
         | StateAction::ListPopFront { .. }
         | StateAction::ListReset { .. }
-        | StateAction::MapReset { .. } => false,
+        | StateAction::MapReset { .. }
+        | StateAction::HistoricMerkleResetHistory { .. } => false,
     }
 }
 
@@ -1296,6 +1301,7 @@ fn action_contains_witness(action: &StateAction) -> bool {
         | StateAction::SetInsert { value, .. }
         | StateAction::SetRemove { value, .. }
         | StateAction::ListPushFront { value, .. }
+        | StateAction::HistoricMerkleInsert { value, .. }
         | StateAction::HistoricMerkleInsertIndexDefault {
             position: value, ..
         }
@@ -1314,13 +1320,17 @@ fn action_contains_witness(action: &StateAction) -> bool {
         StateAction::MapInsert { key, value, .. } => {
             expression_contains_witness(key) || expression_contains_witness(value)
         }
+        StateAction::HistoricMerkleInsertIndex {
+            value, position, ..
+        } => expression_contains_witness(value) || expression_contains_witness(position),
         StateAction::CounterIncrement { .. }
         | StateAction::CounterDecrement { .. }
         | StateAction::CounterReset { .. }
         | StateAction::SetReset { .. }
         | StateAction::ListPopFront { .. }
         | StateAction::ListReset { .. }
-        | StateAction::MapReset { .. } => false,
+        | StateAction::MapReset { .. }
+        | StateAction::HistoricMerkleResetHistory { .. } => false,
     }
 }
 
@@ -2030,6 +2040,107 @@ pub(crate) fn render_stateful_circuit(
                 statements.push(syn::parse_quote! {
                     total_cost += step.gas_cost;
                 });
+            }
+            StateAction::HistoricMerkleResetHistory { field, index } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                if !matches!(
+                    declaration.declaration,
+                    LedgerFieldKind::HistoricMerkleTree { .. }
+                ) || declaration.index != *index
+                {
+                    return Err(RenderError::UnknownLedgerField(field.clone()));
+                }
+                let path = ledger_path_expr(declaration);
+                statements.push(syn::parse_quote! {
+                    let step = context.historic_reset_history(#path)?;
+                });
+                statements.push(syn::parse_quote!(let context = step.context;));
+                statements.push(syn::parse_quote!(total_cost += step.gas_cost;));
+            }
+            StateAction::HistoricMerkleInsert {
+                field,
+                index,
+                value,
+            }
+            | StateAction::HistoricMerkleInsertIndex {
+                field,
+                index,
+                value,
+                ..
+            } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                let LedgerFieldKind::HistoricMerkleTree { ty, .. } = &declaration.declaration
+                else {
+                    return Err(RenderError::UnknownLedgerField(field.clone()));
+                };
+                if declaration.index != *index {
+                    return Err(RenderError::UnknownLedgerField(field.clone()));
+                }
+                let mut value_statements = Vec::new();
+                let mut query_effect = false;
+                let (value, actual, value_witness_effect) = render_state_expression(
+                    value,
+                    &parameters,
+                    witnesses,
+                    &mut value_statements,
+                    &mut next_temp,
+                    circuits,
+                    stateful_circuits,
+                    ledger_fields,
+                    &mut query_effect,
+                )?;
+                if &actual != ty {
+                    return Err(RenderError::TypeMismatch {
+                        expected: ty.clone(),
+                        actual,
+                    });
+                }
+                let mut witness_effect = value_witness_effect;
+                let position =
+                    if let StateAction::HistoricMerkleInsertIndex { position, .. } = action {
+                        let (rendered, actual, effect) = render_state_expression(
+                            position,
+                            &parameters,
+                            witnesses,
+                            &mut value_statements,
+                            &mut next_temp,
+                            circuits,
+                            stateful_circuits,
+                            ledger_fields,
+                            &mut query_effect,
+                        )?;
+                        let expected = Type::Unsigned {
+                            max: u64::MAX.to_string(),
+                        };
+                        if actual != expected {
+                            return Err(RenderError::TypeMismatch { expected, actual });
+                        }
+                        witness_effect |= effect;
+                        Some(rendered)
+                    } else {
+                        None
+                    };
+                uses_witness |= witness_effect;
+                if witness_effect || query_effect {
+                    statements.push(syn::parse_quote!(let mut context = context;));
+                }
+                statements.extend(value_statements);
+                let path = ledger_path_expr(declaration);
+                if let Some(position) = position {
+                    statements.push(syn::parse_quote! {
+                        let step = context.historic_insert_index(#path, #value, #position)?;
+                    });
+                } else {
+                    statements.push(syn::parse_quote! {
+                        let step = context.historic_insert(#path, #value)?;
+                    });
+                }
+                statements.push(syn::parse_quote!(let context = step.context;));
+                statements.push(syn::parse_quote!(total_cost += step.gas_cost;));
             }
             StateAction::HistoricMerkleInsertIndexDefault {
                 field,

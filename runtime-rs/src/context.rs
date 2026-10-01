@@ -449,6 +449,72 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         })
     }
 
+    pub fn historic_insert_index<T: CellValue>(
+        mut self,
+        path: impl Into<ledger::LedgerPath>,
+        item: T,
+        position: crate::BoundedUint<{ u64::MAX as u128 }>,
+    ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        let result = ledger::historic_insert_index(
+            &self.query,
+            path,
+            item,
+            position.value() as u64,
+            self.gas_limit.clone(),
+            &self.cost_model,
+        )
+        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+        self.query = result.context;
+        Ok(CircuitResult {
+            context: self,
+            result: (),
+            gas_cost: result.gas_cost,
+            private_transcript_outputs: Vec::new(),
+        })
+    }
+
+    pub fn historic_insert<T: CellValue>(
+        mut self,
+        path: impl Into<ledger::LedgerPath>,
+        item: T,
+    ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        let result = ledger::historic_insert(
+            &self.query,
+            path,
+            item,
+            self.gas_limit.clone(),
+            &self.cost_model,
+        )
+        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+        self.query = result.context;
+        Ok(CircuitResult {
+            context: self,
+            result: (),
+            gas_cost: result.gas_cost,
+            private_transcript_outputs: Vec::new(),
+        })
+    }
+
+    pub fn historic_reset_history(
+        mut self,
+        path: impl Into<ledger::LedgerPath>,
+    ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        let result = ledger::historic_reset_history(
+            &self.query,
+            path,
+            self.gas_limit.clone(),
+            &self.cost_model,
+        )
+        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+        self.query = result.context;
+        Ok(CircuitResult {
+            context: self,
+            result: (),
+            gas_cost: result.gas_cost,
+            private_transcript_outputs: Vec::new(),
+        })
+    }
+
     pub fn read_cell<T: CellValue>(
         self,
         path: impl Into<ledger::LedgerPath>,

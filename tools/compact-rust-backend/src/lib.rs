@@ -548,8 +548,15 @@ fn collect_action_types(
         StateAction::CellWrite { value, .. }
         | StateAction::SetInsert { value, .. }
         | StateAction::SetRemove { value, .. }
-        | StateAction::ListPushFront { value, .. } => {
+        | StateAction::ListPushFront { value, .. }
+        | StateAction::HistoricMerkleInsert { value, .. } => {
             collect_expression_types(value, structs, enums)?;
+        }
+        StateAction::HistoricMerkleInsertIndex {
+            value, position, ..
+        } => {
+            collect_expression_types(value, structs, enums)?;
+            collect_expression_types(position, structs, enums)?;
         }
         StateAction::MapInsert { key, value, .. } => {
             collect_expression_types(key, structs, enums)?;
@@ -567,7 +574,8 @@ fn collect_action_types(
         | StateAction::SetReset { .. }
         | StateAction::ListPopFront { .. }
         | StateAction::ListReset { .. }
-        | StateAction::MapReset { .. } => {}
+        | StateAction::MapReset { .. }
+        | StateAction::HistoricMerkleResetHistory { .. } => {}
     }
     Ok(())
 }

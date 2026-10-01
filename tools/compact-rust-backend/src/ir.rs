@@ -338,6 +338,21 @@ pub enum StateAction {
         index: u8,
         position: Expr,
     },
+    HistoricMerkleInsert {
+        field: String,
+        index: u8,
+        value: Expr,
+    },
+    HistoricMerkleInsertIndex {
+        field: String,
+        index: u8,
+        value: Expr,
+        position: Expr,
+    },
+    HistoricMerkleResetHistory {
+        field: String,
+        index: u8,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]

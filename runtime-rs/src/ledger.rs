@@ -22,6 +22,7 @@ use midnight_onchain_vm::result_mode::{GatherEvent, ResultModeGather, ResultMode
 use midnight_serialize::Serializable;
 use midnight_storage::arena::Sp;
 use midnight_transient_crypto::fab::ValueReprAlignedValue;
+use midnight_transient_crypto::hash::HashOutput;
 use midnight_transient_crypto::merkle_tree::{MerkleTree, leaf_hash};
 use std::marker::PhantomData;
 
@@ -534,11 +535,51 @@ pub fn historic_insert_index_default<T: CellValue + Default, D: DB>(
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    historic_insert_index_hashed(
+        context,
+        path,
+        leaf_hash_for(T::default()),
+        position,
+        gas_limit,
+        cost_model,
+    )
+}
+
+fn leaf_hash_for<T: CellValue>(item: T) -> HashOutput {
+    let aligned = AlignedValue::new(item.into(), T::alignment())
+        .expect("a typed Compact value must fit its alignment");
+    leaf_hash(&ValueReprAlignedValue(aligned))
+}
+
+/// Insert a typed leaf at a given index and record the resulting root.
+pub fn historic_insert_index<T: CellValue, D: DB>(
+    context: &QueryContext<D>,
+    path: impl Into<LedgerPath>,
+    item: T,
+    position: u64,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    historic_insert_index_hashed(
+        context,
+        path,
+        leaf_hash_for(item),
+        position,
+        gas_limit,
+        cost_model,
+    )
+}
+
+fn historic_insert_index_hashed<D: DB>(
+    context: &QueryContext<D>,
+    path: impl Into<LedgerPath>,
+    hash: HashOutput,
+    position: u64,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
     let path = path.into();
     let keys = path_keys(path.as_slice());
-    let default = AlignedValue::new(T::default().into(), T::alignment())
-        .expect("a typed Compact value must fit its alignment");
-    let default_leaf_hash = leaf_hash(&ValueReprAlignedValue(default));
     let index_key = |index| vec![Key::Value(AlignedValue::from(index))].into();
     let program = [
         Op::Idx {
@@ -557,7 +598,7 @@ pub fn historic_insert_index_default<T: CellValue + Default, D: DB>(
         },
         Op::Push {
             storage: true,
-            value: StateValue::Cell(Sp::new(AlignedValue::from(default_leaf_hash))),
+            value: StateValue::Cell(Sp::new(AlignedValue::from(hash))),
         },
         Op::Ins {
             cached: false,
@@ -608,6 +649,122 @@ pub fn historic_insert_index_default<T: CellValue + Default, D: DB>(
         Op::Ins {
             cached: true,
             n: path.as_slice().len() as u8 + 1,
+        },
+    ];
+    context.query(&program, gas_limit, cost_model)
+}
+
+/// Insert a typed leaf at the first free index and record the resulting root.
+pub fn historic_insert<T: CellValue, D: DB>(
+    context: &QueryContext<D>,
+    path: impl Into<LedgerPath>,
+    item: T,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    let path = path.into();
+    let keys = path_keys(path.as_slice());
+    let index_key = |index| vec![Key::Value(AlignedValue::from(index))].into();
+    let hash = leaf_hash_for(item);
+    let program = [
+        Op::Idx {
+            cached: false,
+            push_path: true,
+            path: keys.into(),
+        },
+        Op::Idx {
+            cached: false,
+            push_path: true,
+            path: index_key(0_u8),
+        },
+        Op::Dup { n: 2 },
+        Op::Idx {
+            cached: false,
+            push_path: false,
+            path: index_key(1_u8),
+        },
+        Op::Push {
+            storage: true,
+            value: StateValue::Cell(Sp::new(AlignedValue::from(hash))),
+        },
+        Op::Ins {
+            cached: false,
+            n: 1,
+        },
+        Op::Ins { cached: true, n: 1 },
+        Op::Idx {
+            cached: false,
+            push_path: true,
+            path: index_key(1_u8),
+        },
+        Op::Addi { immediate: 1 },
+        Op::Ins { cached: true, n: 1 },
+        Op::Idx {
+            cached: false,
+            push_path: true,
+            path: index_key(2_u8),
+        },
+        Op::Dup { n: 2 },
+        Op::Idx {
+            cached: false,
+            push_path: false,
+            path: index_key(0_u8),
+        },
+        Op::Root,
+        Op::Push {
+            storage: true,
+            value: StateValue::Null,
+        },
+        Op::Ins {
+            cached: false,
+            n: 1,
+        },
+        Op::Ins {
+            cached: true,
+            n: path.as_slice().len() as u8 + 1,
+        },
+    ];
+    context.query(&program, gas_limit, cost_model)
+}
+
+/// Keep only the current root in a HistoricMerkleTree's history.
+pub fn historic_reset_history<D: DB>(
+    context: &QueryContext<D>,
+    path: impl Into<LedgerPath>,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    let path = path.into();
+    let keys = path_keys(path.as_slice());
+    let index_key = |index| vec![Key::Value(AlignedValue::from(index))].into();
+    let program = [
+        Op::Idx {
+            cached: false,
+            push_path: true,
+            path: keys.into(),
+        },
+        Op::Push {
+            storage: false,
+            value: constructor_cell(2_u8),
+        },
+        Op::Push {
+            storage: true,
+            value: constructor_map(),
+        },
+        Op::Dup { n: 2 },
+        Op::Idx {
+            cached: false,
+            push_path: false,
+            path: index_key(0_u8),
+        },
+        Op::Root,
+        Op::Push {
+            storage: true,
+            value: StateValue::Null,
+        },
+        Op::Ins {
+            cached: true,
+            n: path.as_slice().len() as u8 + 2,
         },
     ];
     context.query(&program, gas_limit, cost_model)

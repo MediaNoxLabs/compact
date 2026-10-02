@@ -26,7 +26,8 @@ use crate::ir::{
 use crate::stateful::circuit_uses_witness;
 use crate::{RenderError, expression_with_calls, ident, list_head_result_type, rust_type};
 
-/// Emit a replayable public VM trace for supported root Cell, Counter, Set, Map, and List
+/// Emit a replayable public VM trace for supported root Cell, Counter, Set, Map, List,
+/// and plain Merkle append
 /// operations, including witnessed Cell values. Unsupported circuits have no
 /// recorded entry point.
 pub(crate) fn render_recorded_circuit(
@@ -1461,6 +1462,29 @@ fn render_recorded_item(
                 let slot = ident(field)?;
                 steps.push(syn::parse_quote!(
                     let frame = crate::ledger_slots::#slot.record_reset(frame)?;
+                ));
+                Ok(true)
+            }
+            StateAction::MerkleInsert {
+                field,
+                index,
+                value,
+            } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                let LedgerFieldKind::MerkleTree { ty, .. } = &declaration.declaration else {
+                    return Ok(false);
+                };
+                if declaration.index != *index || declaration.physical_path().len() != 1 {
+                    return Ok(false);
+                }
+                let Some(value) = cell_source(value, ty, locals, parameters) else {
+                    return Ok(false);
+                };
+                let slot = ident(field)?;
+                steps.push(syn::parse_quote!(
+                    let frame = crate::ledger_slots::#slot.record_insert(frame, #value)?;
                 ));
                 Ok(true)
             }

@@ -15,7 +15,7 @@
 
 //! An opt-in path from native circuit execution to a replayable ledger program.
 //!
-//! Cell, Counter, Set, Map, and List operations are supported so far. Generated contracts must
+//! Cell, Counter, Set, Map, List, and plain Merkle append are supported so far. Generated contracts must
 //! not claim a transaction-ready trace until every operation they use records
 //! its corresponding verifying VM instruction.
 
@@ -186,6 +186,15 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
     ) -> Result<Self, CompactError> {
         let path = path.into();
         self.apply_verify_program(ledger::set_insert_program(path.as_slice(), value))
+    }
+
+    /// Append a typed leaf to a plain Merkle tree and retain its verifying VM program.
+    pub fn insert_merkle<T: CellValue>(
+        self,
+        path: impl Into<LedgerPath>,
+        value: T,
+    ) -> Result<Self, CompactError> {
+        self.apply_verify_program(ledger::merkle_insert_program(path, value))
     }
 
     pub fn remove_set<T: CellValue>(

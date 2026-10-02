@@ -6,6 +6,9 @@ midnight-zk primitives for fields, encoding, cryptography, state, and VM
 queries. Generated code checks `RUST_RUNTIME_ABI` at compile time. A generated
 crate bundles matching runtime sources by default or points to one shared
 source root when compiled with `--rust-runtime-root`.
+ABI 13 adds replayable plain-tree `MerkleSlot::record_insert` and
+`RecordingFrame::insert_merkle`, sharing the native ledger-8 append VM builder.
+Generated recorded entry points are emitted only for completely supported circuits.
 ABI 12 adds `slots::MerkleSlot<T, DEPTH, HISTORIC>` for named native tree
 operations with a fixed declared leaf type, path and depth. Historic-only
 `reset_history` is available only when `HISTORIC` is true. ABI 11 gives Merkle witness views charged `is_full` and `check_root` methods

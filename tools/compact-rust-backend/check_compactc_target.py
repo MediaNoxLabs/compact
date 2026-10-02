@@ -260,6 +260,11 @@ def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
         "    let merkle_insert = compact_contract_merkle_tree_oracle::ledger_slots::t.insert(merkle_context, midnight_compact_runtime::BoundedUint::<255>::new(7).unwrap()).unwrap();\n"
         "    let merkle_full = compact_contract_merkle_tree_oracle::ledger_slots::t.is_full(merkle_insert.context).unwrap();\n"
         "    assert!(!merkle_full.result);\n"
+        "    let merkle = initial_merkle_state(ConstructorContext::new(())).unwrap();\n"
+        "    let merkle_context = merkle.into_circuit_context(ContractAddress::default());\n"
+        "    let recorded_merkle = compact_contract_merkle_tree_oracle::ledger_contract::recorded::append(merkle_context, midnight_compact_runtime::BoundedUint::<255>::new(7).unwrap()).unwrap();\n"
+        "    let merkle_replay = recorded_merkle.public.initial().query(recorded_merkle.public.verify_ops(), None, &recorded_merkle.execution.context.cost_model).unwrap();\n"
+        "    assert_eq!(merkle_replay.context.effects, recorded_merkle.execution.context.query.effects);\n"
         "    let historic = initial_historic_merkle_state(ConstructorContext::new(())).unwrap();\n"
         "    let historic_context = historic.into_circuit_context(ContractAddress::default());\n"
         "    let _: midnight_compact_runtime::slots::MerkleSlot<midnight_compact_runtime::BoundedUint<255>, 3, true> = compact_contract_hmt_insert_oracle::ledger_slots::t;\n"
@@ -391,6 +396,34 @@ def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
         cwd=consumer, env=environment, capture_output=True, text=True,
     )
     assert rejected.returncode != 0, "wrong Merkle leaf type unexpectedly compiled"
+    assert "error[E0308]: mismatched types" in rejected.stderr, rejected.stderr
+    assert "expected `BoundedUint<255>`" in rejected.stderr, rejected.stderr
+
+    (consumer / "examples/unsupported_recorded_merkle_index.rs").write_text(
+        "use compact_contract_merkle_tree_oracle::ledger_contract::recorded;\n"
+        "fn main() { let _ = recorded::place::<()>; }\n"
+    )
+    rejected = subprocess.run(
+        ["cargo", "check", "--quiet", "--example", "unsupported_recorded_merkle_index"],
+        cwd=consumer, env=environment, capture_output=True, text=True,
+    )
+    assert rejected.returncode != 0, "unsupported indexed Merkle trace unexpectedly compiled"
+    assert "cannot find value `place` in module `recorded`" in rejected.stderr, rejected.stderr
+
+    (consumer / "examples/wrong_recorded_merkle_leaf.rs").write_text(
+        "use compact_contract_merkle_tree_oracle::ledger_contract::{initial_state, recorded};\n"
+        "use compact_contract_merkle_tree_oracle::runtime::{context::ConstructorContext, ledger::ContractAddress};\n"
+        "fn main() {\n"
+        "    let state = initial_state(ConstructorContext::new(())).unwrap();\n"
+        "    let context = state.into_circuit_context(ContractAddress::default());\n"
+        "    let _ = recorded::append(context, true);\n"
+        "}\n"
+    )
+    rejected = subprocess.run(
+        ["cargo", "check", "--quiet", "--example", "wrong_recorded_merkle_leaf"],
+        cwd=consumer, env=environment, capture_output=True, text=True,
+    )
+    assert rejected.returncode != 0, "wrong recorded Merkle leaf unexpectedly compiled"
     assert "error[E0308]: mismatched types" in rejected.stderr, rejected.stderr
     assert "expected `BoundedUint<255>`" in rejected.stderr, rejected.stderr
 
@@ -753,6 +786,13 @@ def main() -> None:
                     assert (list_shapes_proof / "keys" / f"{circuit}.{extension}").is_file()
                 for extension in ("zkir", "bzkir"):
                     assert (list_shapes_proof / "zkir" / f"{circuit}.{extension}").is_file()
+            merkle_proof = base / "merkle-proof"
+            run(compiler, "--target", "rust", str(MERKLE_SOURCE), str(merkle_proof))
+            check_manifest(merkle_proof)
+            for extension in ("prover", "verifier"):
+                assert (merkle_proof / "keys" / f"append.{extension}").is_file()
+            for extension in ("zkir", "bzkir"):
+                assert (merkle_proof / "zkir" / f"append.{extension}").is_file()
             constructor_list_proof = base / "constructor-list-proof"
             run(compiler, "--target", "rust", str(CONSTRUCTOR_LIST_SOURCE), str(constructor_list_proof))
             check_manifest(constructor_list_proof)
@@ -792,6 +832,7 @@ def main() -> None:
                 str(tiny_proof),
                 str(nested_map_shape_proof),
                 str(list_shapes_proof),
+                str(merkle_proof),
             )
     print("compactc target boundary and manifest: passed")
 

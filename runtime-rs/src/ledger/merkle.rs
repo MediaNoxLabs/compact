@@ -674,6 +674,18 @@ fn merkle_insert_hashed_program<D: DB>(
     program
 }
 
+/// Build the same verifying program used by native append, for a recorded circuit.
+pub(crate) fn merkle_insert_program<T: CellValue, D: DB>(
+    path: impl Into<LedgerPath>,
+    item: T,
+) -> Vec<Op<ResultModeVerify, D>> {
+    merkle_insert_hashed_program(
+        path.into(),
+        AlignedValue::from(leaf_hash_for(item)),
+        MerkleHistory::CurrentOnly,
+    )
+}
+
 /// Keep only the current root in a HistoricMerkleTree's history.
 pub fn historic_reset_history<D: DB>(
     context: &QueryContext<D>,

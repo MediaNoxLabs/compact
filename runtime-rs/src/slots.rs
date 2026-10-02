@@ -147,6 +147,17 @@ impl<T: CellValue, const DEPTH: u8, const HISTORIC: bool> MerkleSlot<T, DEPTH, H
     }
 }
 
+impl<T: CellValue, const DEPTH: u8> MerkleSlot<T, DEPTH, false> {
+    /// Record a complete plain-tree append trace for replay and proof.
+    pub fn record_insert<Private, D: DB>(
+        self,
+        frame: RecordingFrame<Private, D>,
+        value: T,
+    ) -> Result<RecordingFrame<Private, D>, CompactError> {
+        frame.insert_merkle(self.path, value)
+    }
+}
+
 impl<T: CellValue, const DEPTH: u8> MerkleSlot<T, DEPTH, true> {
     pub fn reset_history<Private, D: DB>(
         self,

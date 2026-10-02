@@ -1604,6 +1604,7 @@ dependencies = [
  "compact-rust-counter-fixture",
  "compact-rust-list-field-fixture",
  "compact-rust-map-boolean-field-fixture",
+ "compact-rust-merkle-tree-oracle-fixture",
  "compact-rust-nested-map-shape-fixture",
  "compact-rust-nested-witness-call-oracle-fixture",
  "compact-rust-recorded-enum-cell-fixture",

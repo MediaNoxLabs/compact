@@ -246,6 +246,7 @@ pub(crate) use collections::{
 };
 pub(crate) use counter::counter_program;
 pub use counter::{constructor_counter, decrement_counter, increment_counter, read_counter};
+pub(crate) use merkle::merkle_insert_program;
 pub use merkle::{
     HistoricMerkleTreeView, MerkleTreeView, MeteredHistoricMerkleTreeView, MeteredMerkleTreeView,
     constructor_historic_merkle_tree, constructor_merkle_tree, historic_check_root,

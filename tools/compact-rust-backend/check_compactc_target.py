@@ -488,6 +488,22 @@ def check_merkle_witness_consumer(compiler: str, base: Path) -> None:
     environment = os.environ.copy()
     environment.setdefault("CARGO_TARGET_DIR", str(ROOT / "target/compactc-consumer"))
     subprocess.run(["cargo", "test", "--quiet"], cwd=consumer, env=environment, check=True)
+    (consumer / "examples").mkdir()
+    (consumer / "examples/wrong_merkle_root.rs").write_text(
+        "use compact_contract_merkle_path_witness::ledger_contract::LedgerView;\n"
+        "use compact_contract_merkle_path_witness::runtime::context::WitnessContext;\n"
+        "use compact_contract_merkle_path_witness::runtime::CompactError;\n"
+        "fn invalid(context: WitnessContext<'_, (), LedgerView<'_>>) -> Result<(), CompactError> {\n"
+        "    let _ = context.ledger.t()?.check_root(true)?;\n"
+        "    Ok(())\n"
+        "}\n"
+        "fn main() {}\n"
+    )
+    rejected = subprocess.run(
+        ["cargo", "check", "--quiet", "--example", "wrong_merkle_root"],
+        cwd=consumer, env=environment, text=True, capture_output=True,
+    )
+    assert rejected.returncode != 0 and "expected `MerkleTreeDigest`" in rejected.stderr, rejected.stderr
 
 
 def main() -> None:

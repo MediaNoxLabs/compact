@@ -326,10 +326,17 @@ pub mod ledger_contract {
         pub fn commitments(
             &self,
         ) -> Result<
-            runtime::ledger::MeteredHistoricMerkleTreeView<'a, runtime::ledger::DefaultDB>,
+            runtime::ledger::MeteredHistoricMerkleTreeView<
+                'a,
+                crate::types::MerkleTreeDigest,
+                runtime::ledger::DefaultDB,
+            >,
             runtime::CompactError,
         > {
-            runtime::ledger::metered_historic_merkle_tree_view_at_path(self.meter, &[1], 32)
+            runtime::ledger::metered_historic_merkle_tree_view_at_path::<
+                crate::types::MerkleTreeDigest,
+                _,
+            >(self.meter, &[1], 32)
         }
         pub fn ciphertexts(&self) -> Result<runtime::OpaqueBytes, runtime::CompactError> {
             self.meter.read_cell::<runtime::OpaqueBytes>(&[2])

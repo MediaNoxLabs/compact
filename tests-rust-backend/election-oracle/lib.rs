@@ -308,18 +308,34 @@ pub mod ledger_contract {
         pub fn committed_votes(
             &self,
         ) -> Result<
-            runtime::ledger::MeteredMerkleTreeView<'a, runtime::ledger::DefaultDB>,
+            runtime::ledger::MeteredMerkleTreeView<
+                'a,
+                crate::types::MerkleTreeDigest,
+                runtime::ledger::DefaultDB,
+            >,
             runtime::CompactError,
         > {
-            runtime::ledger::metered_merkle_tree_view_at_path(self.meter, &[5], 10)
+            runtime::ledger::metered_merkle_tree_view_at_path::<crate::types::MerkleTreeDigest, _>(
+                self.meter,
+                &[5],
+                10,
+            )
         }
         pub fn eligible_voters(
             &self,
         ) -> Result<
-            runtime::ledger::MeteredMerkleTreeView<'a, runtime::ledger::DefaultDB>,
+            runtime::ledger::MeteredMerkleTreeView<
+                'a,
+                crate::types::MerkleTreeDigest,
+                runtime::ledger::DefaultDB,
+            >,
             runtime::CompactError,
         > {
-            runtime::ledger::metered_merkle_tree_view_at_path(self.meter, &[6], 10)
+            runtime::ledger::metered_merkle_tree_view_at_path::<crate::types::MerkleTreeDigest, _>(
+                self.meter,
+                &[6],
+                10,
+            )
         }
         pub fn committed(
             &self,

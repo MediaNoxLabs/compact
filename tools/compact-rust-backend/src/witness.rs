@@ -146,16 +146,16 @@ pub(crate) fn build<'a>(
                     LedgerFieldKind::HistoricMerkleTree { depth, .. } => {
                         let depth = syn::LitInt::new(&depth.to_string(), Span::call_site());
                         ledger_view_methods.push(syn::parse_quote! {
-                        pub fn #name(&self) -> Result<runtime::ledger::MeteredHistoricMerkleTreeView<'a, runtime::ledger::DefaultDB>, runtime::CompactError> {
-                            runtime::ledger::metered_historic_merkle_tree_view_at_path(self.meter, &[#(#path),*], #depth)
+                        pub fn #name(&self) -> Result<runtime::ledger::MeteredHistoricMerkleTreeView<'a, crate::types::MerkleTreeDigest, runtime::ledger::DefaultDB>, runtime::CompactError> {
+                            runtime::ledger::metered_historic_merkle_tree_view_at_path::<crate::types::MerkleTreeDigest, _>(self.meter, &[#(#path),*], #depth)
                         }
                     });
                     }
                     LedgerFieldKind::MerkleTree { depth, .. } => {
                         let depth = syn::LitInt::new(&depth.to_string(), Span::call_site());
                         ledger_view_methods.push(syn::parse_quote! {
-                        pub fn #name(&self) -> Result<runtime::ledger::MeteredMerkleTreeView<'a, runtime::ledger::DefaultDB>, runtime::CompactError> {
-                            runtime::ledger::metered_merkle_tree_view_at_path(self.meter, &[#(#path),*], #depth)
+                        pub fn #name(&self) -> Result<runtime::ledger::MeteredMerkleTreeView<'a, crate::types::MerkleTreeDigest, runtime::ledger::DefaultDB>, runtime::CompactError> {
+                            runtime::ledger::metered_merkle_tree_view_at_path::<crate::types::MerkleTreeDigest, _>(self.meter, &[#(#path),*], #depth)
                         }
                     });
                     }

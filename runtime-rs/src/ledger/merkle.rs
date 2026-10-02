@@ -33,6 +33,7 @@ use midnight_storage::db::DB;
 use midnight_transient_crypto::fab::ValueReprAlignedValue;
 use midnight_transient_crypto::hash::HashOutput;
 use midnight_transient_crypto::merkle_tree::{MerkleTree, leaf_hash};
+use std::marker::PhantomData;
 use std::ops::Deref;
 
 /// Compact's plain MerkleTree stores the bounded tree and first free index.
@@ -48,27 +49,29 @@ pub struct MerkleTreeView<'a, D: DB> {
 
 /// Witness-facing Merkle view. Structural methods are local; Compact `read`
 /// methods execute and charge the canonical ledger VM programs.
-pub struct MeteredMerkleTreeView<'a, D: DB> {
+pub struct MeteredMerkleTreeView<'a, Root, D: DB> {
     view: MerkleTreeView<'a, D>,
     meter: &'a WitnessReadMeter<'a, D>,
     path: LedgerPath,
     depth: u8,
+    root: PhantomData<Root>,
 }
 
-pub fn metered_merkle_tree_view_at_path<'a, D: DB>(
+pub fn metered_merkle_tree_view_at_path<'a, Root: CellValue, D: DB>(
     meter: &'a WitnessReadMeter<'a, D>,
     path: &[u8],
     depth: u8,
-) -> Result<MeteredMerkleTreeView<'a, D>, CompactError> {
+) -> Result<MeteredMerkleTreeView<'a, Root, D>, CompactError> {
     Ok(MeteredMerkleTreeView {
         view: merkle_tree_view_at_path(meter.state(), path)?,
         meter,
         path: path.into(),
         depth,
+        root: PhantomData,
     })
 }
 
-impl<'a, D: DB> Deref for MeteredMerkleTreeView<'a, D> {
+impl<'a, Root, D: DB> Deref for MeteredMerkleTreeView<'a, Root, D> {
     type Target = MerkleTreeView<'a, D>;
 
     fn deref(&self) -> &Self::Target {
@@ -76,13 +79,13 @@ impl<'a, D: DB> Deref for MeteredMerkleTreeView<'a, D> {
     }
 }
 
-impl<D: DB> MeteredMerkleTreeView<'_, D> {
+impl<Root: CellValue, D: DB> MeteredMerkleTreeView<'_, Root, D> {
     pub fn is_full(&self) -> Result<bool, CompactError> {
         self.meter
             .read_merkle_is_full(self.path.as_slice(), self.depth)
     }
 
-    pub fn check_root<T: CellValue>(&self, root: T) -> Result<bool, CompactError> {
+    pub fn check_root(&self, root: Root) -> Result<bool, CompactError> {
         self.meter
             .read_merkle_check_root(self.path.as_slice(), root)
     }
@@ -181,27 +184,29 @@ pub struct HistoricMerkleTreeView<'a, D: DB> {
 
 /// Historic Merkle witness view with local tree/history projections and
 /// charged VM reads for fullness and historical root membership.
-pub struct MeteredHistoricMerkleTreeView<'a, D: DB> {
+pub struct MeteredHistoricMerkleTreeView<'a, Root, D: DB> {
     view: HistoricMerkleTreeView<'a, D>,
     meter: &'a WitnessReadMeter<'a, D>,
     path: LedgerPath,
     depth: u8,
+    root: PhantomData<Root>,
 }
 
-pub fn metered_historic_merkle_tree_view_at_path<'a, D: DB>(
+pub fn metered_historic_merkle_tree_view_at_path<'a, Root: CellValue, D: DB>(
     meter: &'a WitnessReadMeter<'a, D>,
     path: &[u8],
     depth: u8,
-) -> Result<MeteredHistoricMerkleTreeView<'a, D>, CompactError> {
+) -> Result<MeteredHistoricMerkleTreeView<'a, Root, D>, CompactError> {
     Ok(MeteredHistoricMerkleTreeView {
         view: historic_merkle_tree_view_at_path(meter.state(), path)?,
         meter,
         path: path.into(),
         depth,
+        root: PhantomData,
     })
 }
 
-impl<'a, D: DB> Deref for MeteredHistoricMerkleTreeView<'a, D> {
+impl<'a, Root, D: DB> Deref for MeteredHistoricMerkleTreeView<'a, Root, D> {
     type Target = HistoricMerkleTreeView<'a, D>;
 
     fn deref(&self) -> &Self::Target {
@@ -209,13 +214,13 @@ impl<'a, D: DB> Deref for MeteredHistoricMerkleTreeView<'a, D> {
     }
 }
 
-impl<D: DB> MeteredHistoricMerkleTreeView<'_, D> {
+impl<Root: CellValue, D: DB> MeteredHistoricMerkleTreeView<'_, Root, D> {
     pub fn is_full(&self) -> Result<bool, CompactError> {
         self.meter
             .read_historic_merkle_is_full(self.path.as_slice(), self.depth)
     }
 
-    pub fn check_root<T: CellValue>(&self, root: T) -> Result<bool, CompactError> {
+    pub fn check_root(&self, root: Root) -> Result<bool, CompactError> {
         self.meter
             .read_historic_merkle_check_root(self.path.as_slice(), root)
     }

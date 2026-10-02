@@ -147,10 +147,18 @@ pub mod ledger_contract {
         pub fn t(
             &self,
         ) -> Result<
-            runtime::ledger::MeteredMerkleTreeView<'a, runtime::ledger::DefaultDB>,
+            runtime::ledger::MeteredMerkleTreeView<
+                'a,
+                crate::types::MerkleTreeDigest,
+                runtime::ledger::DefaultDB,
+            >,
             runtime::CompactError,
         > {
-            runtime::ledger::metered_merkle_tree_view_at_path(self.meter, &[0], 3)
+            runtime::ledger::metered_merkle_tree_view_at_path::<crate::types::MerkleTreeDigest, _>(
+                self.meter,
+                &[0],
+                3,
+            )
         }
     }
     pub trait Witnesses<Private> {

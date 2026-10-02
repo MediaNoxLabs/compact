@@ -33,6 +33,21 @@ pub mod types {
         FieldRepr,
         FromFieldRepr,
     )]
+    pub struct Maybe {
+        pub is_some: bool,
+        pub value: crate::types::Packet,
+    }
+    #[derive(
+        Clone,
+        Debug,
+        Default,
+        PartialEq,
+        Eq,
+        CompactCellValue,
+        BinaryHashRepr,
+        FieldRepr,
+        FromFieldRepr,
+    )]
     pub struct Packet {
         pub tag: runtime::FixedBytes<3>,
         pub count: runtime::BoundedUint<65535>,
@@ -300,6 +315,23 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
+    pub fn first_packet<Private>(
+        context: runtime::context::CircuitContext<Private>,
+    ) -> Result<runtime::context::CircuitResult<Private, crate::types::Maybe>, runtime::CompactError>
+    {
+        let mut total_cost = runtime::context::RunningCost::default();
+        let private_transcript_outputs = Vec::new();
+        let read_step = crate::ledger_slots::packets.head::<crate::types::Maybe, _, _>(context)?;
+        let context = read_step.context;
+        total_cost += read_step.gas_cost;
+        let result = read_step.result;
+        Ok(runtime::context::CircuitResult {
+            context,
+            result,
+            gas_cost: total_cost,
+            private_transcript_outputs,
+        })
+    }
     pub fn read_flags<Private, W: TryWitnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,
         witnesses: &W,
@@ -481,6 +513,17 @@ pub mod ledger_contract {
                 .record_push_front(frame, (__compact_param_0).clone())?;
             Ok(frame.finish(()))
         }
+        pub fn first_packet<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<
+            runtime::recording::RecordedCircuitResult<Private, crate::types::Maybe>,
+            runtime::CompactError,
+        > {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, observed): (_, crate::types::Maybe) =
+                crate::ledger_slots::packets.record_head::<crate::types::Maybe, _, _>(frame)?;
+            Ok(frame.finish(observed))
+        }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
         impl Contract {
@@ -523,6 +566,15 @@ pub mod ledger_contract {
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             {
                 crate::ledger_contract::recorded::push_packet(context, __compact_param_0)
+            }
+            pub fn first_packet<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, crate::types::Maybe>,
+                runtime::CompactError,
+            > {
+                crate::ledger_contract::recorded::first_packet(context)
             }
         }
     }
@@ -583,6 +635,15 @@ pub mod ledger_contract {
             __compact_param_0: crate::types::Packet,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
             crate::ledger_contract::push_packet(context, __compact_param_0)
+        }
+        pub fn first_packet<Private>(
+            &self,
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<
+            runtime::context::CircuitResult<Private, crate::types::Maybe>,
+            runtime::CompactError,
+        > {
+            crate::ledger_contract::first_packet(context)
         }
         pub fn read_flags<Private>(
             &self,

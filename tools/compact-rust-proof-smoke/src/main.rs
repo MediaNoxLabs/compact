@@ -1054,6 +1054,42 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     }
     if let Some(list_shapes_root) = list_shapes_root.as_ref().map(Path::new) {
+        let initial = list_shapes_contract::initial_state(ConstructorContext::new(()))?;
+        let deploy = make_deploy(
+            list_shapes_root,
+            "first_packet",
+            initial.ledger_state.get_ref().clone(),
+            &mut rng,
+        )?;
+        let context = initial.into_circuit_context(deploy.address());
+        let recorded = list_shapes_contract::Contract::default()
+            .recording
+            .first_packet(context)?;
+        if recorded.execution.result.is_some || recorded.execution.result.value != Packet::default()
+        {
+            return Err("empty packet List head did not return the Compact default".into());
+        }
+        let call = check_generated_trace(list_shapes_root, "first_packet", recorded, ())?;
+        check_transaction(
+            list_shapes_root,
+            "first_packet",
+            deploy,
+            call,
+            &mut rng,
+            |contract| {
+                let StateValue::Array(fields) = contract.data.get_ref() else {
+                    return Err("List shape contract state is not an array".into());
+                };
+                let StateValue::Array(items) = fields.get(4).ok_or("packet List field missing")?
+                else {
+                    return Err("packet List field is not an array".into());
+                };
+                if read_cell::<u64, _>(items.get(2).ok_or("packet List length missing")?)? != 0 {
+                    return Err("proven packet head read changed the List".into());
+                }
+                Ok(())
+            },
+        )?;
         for (circuit, index) in [
             ("push_flag", 0),
             ("push_count", 1),

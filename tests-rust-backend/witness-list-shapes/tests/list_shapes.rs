@@ -14,8 +14,9 @@
 // limitations under the License.
 
 use compact_rust_witness_list_shapes_fixture::ledger_contract::{
-    LedgerView, TryWitnesses, initial_state, push_choice, push_count, push_flag, push_packet,
-    push_tag, read_choices, read_counts, read_flags, read_packets, read_tags,
+    Contract, LedgerView, TryWitnesses, first_packet, initial_state, push_choice, push_count,
+    push_flag, push_packet, push_tag, read_choices, read_counts, read_flags, read_packets,
+    read_tags,
 };
 use compact_rust_witness_list_shapes_fixture::types::{Choice, Packet};
 use midnight_compact_runtime as runtime;
@@ -107,6 +108,7 @@ fn state_hex(state: StateValue<DefaultDB>) -> String {
         "push_tag",
         "push_choice",
         "push_packet",
+        "first_packet",
     ] {
         operations = operations.insert(
             EntryPointBuf(name.as_bytes().to_vec()),
@@ -117,6 +119,135 @@ fn state_hex(state: StateValue<DefaultDB>) -> String {
     let mut bytes = Vec::new();
     tagged_serialize(&state, &mut bytes).unwrap();
     hex::encode(bytes)
+}
+
+fn normalized_vm_ops(ops: &mut serde_json::Value) {
+    match ops {
+        serde_json::Value::Object(object) => {
+            if object.contains_key("alignment") {
+                if let Some(serde_json::Value::Array(chunks)) = object.get_mut("value") {
+                    for chunk in chunks {
+                        if let serde_json::Value::Array(bytes) = chunk {
+                            let bytes = bytes
+                                .iter()
+                                .map(|byte| byte.as_u64().unwrap() as u8)
+                                .collect::<Vec<_>>();
+                            *chunk = serde_json::json!({"bytesHex": hex::encode(bytes)});
+                        }
+                    }
+                }
+            }
+            for value in object.values_mut() {
+                normalized_vm_ops(value);
+            }
+        }
+        serde_json::Value::Array(values) => {
+            for value in values {
+                normalized_vm_ops(value);
+            }
+        }
+        _ => {}
+    }
+}
+
+#[test]
+fn recorded_packet_head_matches_typescript_on_empty_and_populated_lists() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/witness-list-shapes.json"
+    ))
+    .unwrap();
+    let packet = Packet {
+        tag: FixedBytes::new([4, 5, 6]),
+        count: BoundedUint::<65535>::new(7).unwrap(),
+    };
+    for (populated, key) in [(false, "emptyPacketHead"), (true, "populatedPacketHead")] {
+        let private = if populated { 10_u64 } else { 5_u64 };
+        let native = initial_state(ConstructorContext::new(private))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default());
+        let recorded = initial_state(ConstructorContext::new(private))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default());
+        let populate = |context| {
+            let context = push_flag(context, true).unwrap().context;
+            let context = push_count(context, BoundedUint::<65535>::new(42).unwrap())
+                .unwrap()
+                .context;
+            let context = push_tag(context, FixedBytes::new([1, 2, 3]))
+                .unwrap()
+                .context;
+            let context = push_choice(context, Choice::no).unwrap().context;
+            push_packet(context, packet.clone()).unwrap().context
+        };
+        let native = if populated { populate(native) } else { native };
+        let recorded = if populated {
+            populate(recorded)
+        } else {
+            recorded
+        };
+        let native = first_packet(native).unwrap();
+        let recorded = Contract::default()
+            .recording
+            .first_packet(recorded)
+            .unwrap();
+        let expected = &oracle[key];
+        assert_eq!(native.result, recorded.execution.result);
+        assert_eq!(recorded.execution.result.is_some, populated);
+        assert_eq!(
+            recorded.execution.result.value,
+            if populated {
+                packet.clone()
+            } else {
+                Packet::default()
+            }
+        );
+        assert_eq!(native.gas_cost, recorded.execution.gas_cost);
+        assert_eq!(
+            native.context.query.state.get_ref(),
+            recorded.execution.context.query.state.get_ref()
+        );
+        assert_eq!(
+            state_hex(recorded.execution.context.query.state.get_ref().clone()),
+            if populated {
+                oracle["populatedState"].as_str().unwrap()
+            } else {
+                oracle["initialState"].as_str().unwrap()
+            }
+        );
+        assert_eq!(
+            recorded.execution.context.private_state,
+            expected["privateState"].as_u64().unwrap()
+        );
+        assert_eq!(recorded.execution.private_transcript_outputs.len(), 0);
+        assert_eq!(expected["privateTranscriptOutputs"], serde_json::json!([]));
+        let gas = serde_json::to_value(recorded.execution.gas_cost).unwrap();
+        for dimension in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+            assert_eq!(
+                gas[dimension].as_u64().unwrap().to_string(),
+                expected["queries"][0]["gasCost"][dimension]
+            );
+            assert_eq!(
+                expected["queries"][0]["gasCost"][dimension],
+                expected["reportedGas"][dimension]
+            );
+        }
+        let mut ops = serde_json::to_value(recorded.public.verify_ops()).unwrap();
+        normalized_vm_ops(&mut ops);
+        assert_eq!(ops, expected["publicTranscript"]);
+        let replay = recorded
+            .public
+            .initial()
+            .query(
+                recorded.public.verify_ops(),
+                None,
+                &recorded.execution.context.cost_model,
+            )
+            .unwrap();
+        assert_eq!(
+            replay.context.effects,
+            recorded.execution.context.query.effects
+        );
+    }
 }
 
 fn assert_prefix(meter: &WitnessReadMeter<'_>, queries: &serde_json::Value, count: usize) {

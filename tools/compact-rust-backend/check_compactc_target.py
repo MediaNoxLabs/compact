@@ -697,7 +697,7 @@ def main() -> None:
             list_shapes_proof = base / "list-shapes-proof"
             run(compiler, "--target", "rust", str(LIST_SHAPES_SOURCE), str(list_shapes_proof))
             check_manifest(list_shapes_proof)
-            for circuit in ("push_flag", "push_count", "push_tag", "push_choice", "push_packet"):
+            for circuit in ("push_flag", "push_count", "push_tag", "push_choice", "push_packet", "first_packet"):
                 for extension in ("prover", "verifier"):
                     assert (list_shapes_proof / "keys" / f"{circuit}.{extension}").is_file()
                 for extension in ("zkir", "bzkir"):

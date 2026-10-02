@@ -23,6 +23,11 @@ if (!contractPath) throw new Error('expected contract/index.js');
 const { Contract, Choice } = await import(pathToFileURL(contractPath).href);
 const normalize = (value) => JSON.parse(JSON.stringify(value, (_, item) =>
   typeof item === 'bigint' ? item.toString() : item));
+const normalizeVm = (value) => JSON.parse(JSON.stringify(value, (_, item) => {
+  if (typeof item === 'bigint') return item.toString();
+  if (item instanceof Uint8Array) return { bytesHex: Buffer.from(item).toString('hex') };
+  return item;
+}));
 const queries = [];
 const originalQuery = runtime.QueryContext.prototype.query;
 runtime.QueryContext.prototype.query = function (...args) {
@@ -77,15 +82,29 @@ function read(name) {
         valueAtoms: value.map(atom => Array.from(atom)), alignment,
       }),
     ),
-    publicTranscript: normalize(output.proofData.publicTranscript),
+    publicTranscript: normalizeVm(output.proofData.publicTranscript),
     reportedGas: normalize(output.gasCost),
     queries: queries.slice(q),
     observation: observed.slice(o)[0],
   };
 }
+function readPacketHead() {
+  const q = queries.length;
+  const output = contract.circuits.first_packet(context);
+  context = output.context;
+  return {
+    result: normalize(output.result),
+    privateState: output.context.currentPrivateState,
+    publicTranscript: normalizeVm(output.proofData.publicTranscript),
+    privateTranscriptOutputs: normalize(output.proofData.privateTranscriptOutputs),
+    reportedGas: normalize(output.gasCost),
+    queries: queries.slice(q),
+  };
+}
 const names = ['flags', 'counts', 'tags', 'choices', 'packets'];
 const initialState = stateHex();
 const before = Object.fromEntries(names.map(name => [name, read(name)]));
+const emptyPacketHead = readPacketHead();
 context = contract.circuits.push_flag(context, true).context;
 context = contract.circuits.push_count(context, 42n).context;
 context = contract.circuits.push_tag(context, new Uint8Array([1, 2, 3])).context;
@@ -93,4 +112,5 @@ context = contract.circuits.push_choice(context, Choice.no).context;
 context = contract.circuits.push_packet(context, { tag: new Uint8Array([4, 5, 6]), count: 7n }).context;
 const populatedState = stateHex();
 const after = Object.fromEntries(names.map(name => [name, read(name)]));
-process.stdout.write(JSON.stringify({ initialState, populatedState, before, after }, null, 2) + '\n');
+const populatedPacketHead = readPacketHead();
+process.stdout.write(JSON.stringify({ initialState, populatedState, before, after, emptyPacketHead, populatedPacketHead }, null, 2) + '\n');

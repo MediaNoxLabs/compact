@@ -1582,7 +1582,6 @@ pub(crate) fn render_recorded_circuit(
             if declaration.index != *index
                 || declaration.physical_path().len() != 1
                 || circuit.result != expected
-                || !matches!(ty, Type::Boolean | Type::Field)
             {
                 return Ok(None);
             }

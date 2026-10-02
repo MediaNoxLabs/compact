@@ -2472,7 +2472,6 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
         .collect();
     let mut stateful_items = Vec::new();
     let mut contract_methods = Vec::new();
-    let mut recorded_items = Vec::new();
     let mut recorded_methods = Vec::new();
     let mut borrowed_recorded_methods = Vec::new();
     let mut witnessed_recorded = false;
@@ -2493,12 +2492,25 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
             {
                 contract_methods.push(method);
             }
+            Ok(())
+        })?;
+    }
+    let (shared_recorded_callees, mut recorded_items) = recorded::plan_recorded_helpers(
+        &contract.stateful_circuits,
+        &ledger_fields,
+        &witness_syntax.declarations,
+        &callable_circuits,
+        &callable_stateful_circuits,
+    )?;
+    for circuit in &contract.stateful_circuits {
+        located(circuit.source.as_ref(), || {
             if let Some(item) = recorded::render_recorded_circuit(
                 circuit,
                 &ledger_fields,
                 &witness_syntax.declarations,
                 &callable_circuits,
                 &callable_stateful_circuits,
+                &shared_recorded_callees,
             )? {
                 recorded_items.push(item);
                 let uses_witness = stateful::circuit_uses_witness(

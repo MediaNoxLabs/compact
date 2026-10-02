@@ -1712,6 +1712,47 @@ fn witnessed_field_cell_and_nested_call_use_native_frame() {
     assert!(source.contains(".apply(|context|"));
     assert!(source.contains("self::inner(context, witnesses"));
     assert!(source.contains("Ok(frame.finish(()))"));
+
+    let mut second_caller = contract.stateful_circuits[1].clone();
+    second_caller.name = "outer_again".into();
+    contract.stateful_circuits.push(second_caller);
+    let shared = render(&contract).unwrap();
+    syn::parse_file(&shared).unwrap();
+    assert_eq!(
+        shared.matches("fn __compact_recorded_body_inner<").count(),
+        1
+    );
+    assert_eq!(shared.matches("__compact_recorded_body_inner").count(), 3);
+
+    let mut name_collision = contract.stateful_circuits[1].clone();
+    name_collision.name = "__compact_recorded_body_inner".into();
+    contract.stateful_circuits.push(name_collision);
+    let generated = syn::parse_file(&render(&contract).unwrap()).unwrap();
+    let ledger = generated
+        .items
+        .iter()
+        .find_map(|item| match item {
+            syn::Item::Mod(module) if module.ident == "ledger_contract" => Some(module),
+            _ => None,
+        })
+        .unwrap();
+    let recorded = ledger
+        .content
+        .as_ref()
+        .unwrap()
+        .1
+        .iter()
+        .find_map(|item| match item {
+            syn::Item::Mod(module) if module.ident == "recorded" => Some(module),
+            _ => None,
+        })
+        .unwrap();
+    let mut function_names = std::collections::HashSet::new();
+    for item in &recorded.content.as_ref().unwrap().1 {
+        if let syn::Item::Fn(function) = item {
+            assert!(function_names.insert(function.sig.ident.to_string()));
+        }
+    }
 }
 
 #[test]
@@ -2658,6 +2699,17 @@ fn stateful_call_checks_target_and_arguments() {
     assert!(matches!(
         render(&contract),
         Err(RenderError::UnsupportedStatefulCall(_))
+    ));
+    let source = SourceLocation {
+        file: "recursive.compact".into(),
+        line: 4,
+        column: 1,
+    };
+    contract.stateful_circuits[0].source = Some(source.clone());
+    assert!(matches!(
+        render(&contract),
+        Err(RenderError::Located { location, error })
+            if location == source && matches!(*error, RenderError::UnsupportedStatefulCall(_))
     ));
 }
 

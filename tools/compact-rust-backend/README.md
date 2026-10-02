@@ -67,12 +67,13 @@ The runtime's recording frame is opt-in. When a circuit has a complete recorded
 trace, the generated `contract.recording` handle exposes it as a typed method.
 For witnessed root Cell circuits, `contract.recording()` borrows the contract's
 witness implementation and records private outputs in execution order. A
-supported Unit-returning stateful call is expanded in recording order, including
-its typed arguments and nested witness operations. The separate recorded
-emitter also evaluates supported Field reads, witness calls, addition, and
-internal Field-returning calls in source order. Supported root Set and Map
-mutation, membership, lookup, size, and emptiness calls have replayable recorded
-methods. Root typed List push, pop, reset, length, emptiness, and head
+supported Unit-returning stateful call uses one private, frame-taking Rust
+helper for each referenced callee. Calls evaluate typed arguments in source
+order and share the frame across nested witness and ledger operations. The
+separate recorded emitter still evaluates supported Field reads, witness
+calls, addition, and internal Field-returning calls in source order. Supported
+root Set and Map mutation, membership, lookup, size, and emptiness calls have
+replayable recorded methods. Root typed List push, pop, reset, length, emptiness, and head
 calls also have recorded methods. Merkle calls remain native until a complete
 recorded trace is supported. Other methods continue to
 return native execution results until their full transcript coverage is proven.

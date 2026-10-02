@@ -35,8 +35,220 @@ pub(crate) fn render_recorded_circuit(
     witnesses: &HashMap<&str, &WitnessDeclaration>,
     pure_circuits: &HashMap<&str, &PureCircuit>,
     circuits: &HashMap<&str, &StatefulCircuit>,
+    shared_callees: &HashSet<String>,
 ) -> Result<Option<syn::Item>, RenderError> {
-    if circuit.internal {
+    render_recorded_item(
+        circuit,
+        ledger_fields,
+        witnesses,
+        pure_circuits,
+        circuits,
+        shared_callees,
+        false,
+    )
+}
+
+pub(crate) fn render_recorded_helper(
+    circuit: &StatefulCircuit,
+    ledger_fields: &HashMap<&str, &LedgerField>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    pure_circuits: &HashMap<&str, &PureCircuit>,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+    shared_callees: &HashSet<String>,
+) -> Result<Option<syn::Item>, RenderError> {
+    render_recorded_item(
+        circuit,
+        ledger_fields,
+        witnesses,
+        pure_circuits,
+        circuits,
+        shared_callees,
+        true,
+    )
+}
+
+fn helper_ident(
+    name: &str,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+) -> Result<syn::Ident, RenderError> {
+    let base = ident(&format!("__compact_recorded_body_{name}"))?;
+    let mut duplicate_base = false;
+    for other in circuits.keys() {
+        if ident(other)? == base {
+            duplicate_base = true;
+            break;
+        }
+        if *other != name && ident(&format!("__compact_recorded_body_{other}"))? == base {
+            duplicate_base = true;
+            break;
+        }
+    }
+    if !duplicate_base {
+        return Ok(base);
+    }
+
+    // A Compact declaration may itself use our preferred helper name. Use a
+    // stable index and the raw-name bytes so even `$`/`_` aliases stay distinct.
+    let mut ordered: Vec<_> = circuits.keys().copied().collect();
+    ordered.sort_unstable();
+    let index = ordered
+        .iter()
+        .position(|candidate| *candidate == name)
+        .ok_or_else(|| RenderError::UnknownCircuit(name.to_owned()))?;
+    let mut fallback = format!("__compact_recorded_body_{index}_x");
+    for byte in name.bytes() {
+        fallback.push_str(&format!("{byte:02x}"));
+    }
+    loop {
+        let candidate = ident(&fallback)?;
+        let occupied = circuits.keys().any(|other| {
+            ident(other).is_ok_and(|id| id == candidate)
+                || ident(&format!("__compact_recorded_body_{other}"))
+                    .is_ok_and(|id| id == candidate)
+        });
+        if !occupied {
+            return Ok(candidate);
+        }
+        fallback.push('_');
+    }
+}
+
+fn collect_unit_callees(action: &StateAction, names: &mut HashSet<String>) {
+    match action {
+        StateAction::CircuitCall { name, .. } => {
+            names.insert(name.clone());
+        }
+        StateAction::Sequence { actions } => {
+            for action in actions {
+                collect_unit_callees(action, names);
+            }
+        }
+        StateAction::If {
+            then, otherwise, ..
+        } => {
+            collect_unit_callees(then, names);
+            collect_unit_callees(otherwise, names);
+        }
+        StateAction::Let { action, .. } => collect_unit_callees(action, names),
+        _ => {}
+    }
+}
+
+/// Find recordable Unit callees before emitting any public entry point. Rendering each
+/// candidate without sharing also checks transitive support and rejects recursion.
+pub(crate) fn plan_recorded_helpers(
+    ordered_circuits: &[StatefulCircuit],
+    ledger_fields: &HashMap<&str, &LedgerField>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    pure_circuits: &HashMap<&str, &PureCircuit>,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+) -> Result<(HashSet<String>, Vec<syn::Item>), RenderError> {
+    let mut roots_with_calls = HashSet::new();
+    for circuit in ordered_circuits.iter().filter(|circuit| !circuit.internal) {
+        let mut calls = HashSet::new();
+        for action in &circuit.actions {
+            collect_unit_callees(action, &mut calls);
+        }
+        if !calls.is_empty() {
+            roots_with_calls.insert(circuit.name.as_str());
+        }
+    }
+    if roots_with_calls.is_empty() {
+        return Ok((HashSet::new(), Vec::new()));
+    }
+
+    let mut candidates = HashSet::new();
+    for circuit in ordered_circuits
+        .iter()
+        .filter(|circuit| roots_with_calls.contains(circuit.name.as_str()))
+    {
+        let recorded = crate::located(circuit.source.as_ref(), || {
+            render_recorded_circuit(
+                circuit,
+                ledger_fields,
+                witnesses,
+                pure_circuits,
+                circuits,
+                &HashSet::new(),
+            )
+        })?;
+        if recorded.is_none() {
+            continue;
+        }
+        for action in &circuit.actions {
+            collect_unit_callees(action, &mut candidates);
+        }
+    }
+    loop {
+        let previous = candidates.len();
+        let current = candidates.clone();
+        for circuit in ordered_circuits
+            .iter()
+            .filter(|circuit| current.contains(&circuit.name))
+        {
+            for action in &circuit.actions {
+                collect_unit_callees(action, &mut candidates);
+            }
+        }
+        if candidates.len() == previous {
+            break;
+        }
+    }
+    let mut names = HashSet::new();
+    for circuit in ordered_circuits {
+        if !candidates.contains(&circuit.name)
+            || circuit.result != Type::Unit
+            || circuit.return_value != StateReturn::Unit
+        {
+            continue;
+        }
+        if crate::located(circuit.source.as_ref(), || {
+            render_recorded_helper(
+                circuit,
+                ledger_fields,
+                witnesses,
+                pure_circuits,
+                circuits,
+                &HashSet::new(),
+            )
+        })?
+        .is_some()
+        {
+            names.insert(circuit.name.clone());
+        }
+    }
+    let mut items = Vec::new();
+    for circuit in ordered_circuits {
+        if !names.contains(&circuit.name) {
+            continue;
+        }
+        let item = crate::located(circuit.source.as_ref(), || {
+            render_recorded_helper(
+                circuit,
+                ledger_fields,
+                witnesses,
+                pure_circuits,
+                circuits,
+                &names,
+            )
+        })?;
+        if let Some(item) = item {
+            items.push(item);
+        }
+    }
+    Ok((names, items))
+}
+
+fn render_recorded_item(
+    circuit: &StatefulCircuit,
+    ledger_fields: &HashMap<&str, &LedgerField>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    pure_circuits: &HashMap<&str, &PureCircuit>,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+    shared_callees: &HashSet<String>,
+    helper: bool,
+) -> Result<Option<syn::Item>, RenderError> {
+    if circuit.internal && !helper {
         return Ok(None);
     }
 
@@ -358,6 +570,7 @@ pub(crate) fn render_recorded_circuit(
                         ledger_fields,
                         witnesses,
                         circuits,
+                        &HashSet::new(),
                         steps,
                         next_temp,
                         visiting,
@@ -637,6 +850,7 @@ pub(crate) fn render_recorded_circuit(
         ledger_fields: &HashMap<&str, &LedgerField>,
         witnesses: &HashMap<&str, &WitnessDeclaration>,
         circuits: &HashMap<&str, &StatefulCircuit>,
+        shared_callees: &HashSet<String>,
         steps: &mut Vec<syn::Stmt>,
         next_temp: &mut usize,
         visiting: &mut HashSet<String>,
@@ -651,6 +865,7 @@ pub(crate) fn render_recorded_circuit(
                         ledger_fields,
                         witnesses,
                         circuits,
+                        shared_callees,
                         steps,
                         next_temp,
                         visiting,
@@ -798,6 +1013,7 @@ pub(crate) fn render_recorded_circuit(
                     ledger_fields,
                     witnesses,
                     circuits,
+                    shared_callees,
                     steps,
                     next_temp,
                     visiting,
@@ -838,6 +1054,66 @@ pub(crate) fn render_recorded_circuit(
                         expected: callee.parameters.len(),
                         actual: arguments.len(),
                     });
+                }
+                if shared_callees.contains(name) {
+                    let mut args = Vec::new();
+                    for (argument, parameter) in arguments.iter().zip(&callee.parameters) {
+                        let value = if parameter.ty == Type::Field {
+                            field_expression(
+                                argument,
+                                locals,
+                                parameters,
+                                ledger_fields,
+                                witnesses,
+                                circuits,
+                                steps,
+                                next_temp,
+                                visiting,
+                            )?
+                        } else if parameter.ty
+                            == (Type::Unsigned {
+                                max: "65535".into(),
+                            })
+                        {
+                            let uncoerced = match argument {
+                                Expr::Coerce { value, ty } if *ty == parameter.ty => value.as_ref(),
+                                _ => argument,
+                            };
+                            match uncoerced {
+                                Expr::Parameter { name } if !locals.contains_key(name) => {
+                                    cell_source(argument, &parameter.ty, locals, parameters)
+                                }
+                                _ => amount_source(argument, locals, parameters).map(|value| {
+                                    syn::parse_quote!(
+                                        runtime::BoundedUint::<65535>::new((#value) as u128)
+                                            .expect("Compact Uint argument fits its maximum")
+                                    )
+                                }),
+                            }
+                        } else {
+                            cell_source(argument, &parameter.ty, locals, parameters)
+                        };
+                        let Some(value) = value else { return Ok(false) };
+                        let arg = syn::Ident::new(
+                            &format!("__compact_recorded_arg_{}", *next_temp),
+                            Span::call_site(),
+                        );
+                        *next_temp += 1;
+                        let arg_ty = rust_type(&parameter.ty)?;
+                        steps.push(syn::parse_quote!(let #arg: #arg_ty = #value;));
+                        args.push(arg);
+                    }
+                    let helper = helper_ident(name, circuits)?;
+                    if circuit_uses_witness(callee, circuits, &mut HashSet::new())? {
+                        steps.push(syn::parse_quote!(
+                            let (frame, _) = #helper(frame, witnesses, #(#args),*)?;
+                        ));
+                    } else {
+                        steps.push(syn::parse_quote!(
+                            let (frame, _) = #helper(frame, #(#args),*)?;
+                        ));
+                    }
+                    return Ok(true);
                 }
                 if !visiting.insert(name.clone()) {
                     return Err(RenderError::UnsupportedStatefulCall(name.clone()));
@@ -886,6 +1162,7 @@ pub(crate) fn render_recorded_circuit(
                         ledger_fields,
                         witnesses,
                         circuits,
+                        shared_callees,
                         steps,
                         next_temp,
                         visiting,
@@ -1258,6 +1535,7 @@ pub(crate) fn render_recorded_circuit(
             ledger_fields,
             witnesses,
             circuits,
+            shared_callees,
             &mut steps,
             &mut next_temp,
             &mut visiting,
@@ -1686,7 +1964,69 @@ pub(crate) fn render_recorded_circuit(
         return Ok(None);
     }
 
-    let item = if circuit_uses_witness(circuit, circuits, &mut HashSet::new())? {
+    let uses_witness = circuit_uses_witness(circuit, circuits, &mut HashSet::new())?;
+    let item = if helper {
+        let body_name = helper_ident(&circuit.name, circuits)?;
+        if uses_witness {
+            syn::parse_quote! {
+                fn #body_name<Private, W: super::TryWitnesses<Private>>(
+                    frame: runtime::recording::RecordingFrame<Private>,
+                    witnesses: &W,
+                    #(#args),*
+                ) -> Result<(runtime::recording::RecordingFrame<Private>, #result_ty), runtime::CompactError> {
+                    #(#steps)*
+                    #(#return_steps)*
+                    Ok((frame, #result))
+                }
+            }
+        } else {
+            syn::parse_quote! {
+                fn #body_name<Private>(
+                    frame: runtime::recording::RecordingFrame<Private>,
+                    #(#args),*
+                ) -> Result<(runtime::recording::RecordingFrame<Private>, #result_ty), runtime::CompactError> {
+                    #(#steps)*
+                    #(#return_steps)*
+                    Ok((frame, #result))
+                }
+            }
+        }
+    } else if shared_callees.contains(&circuit.name) {
+        let body_name = helper_ident(&circuit.name, circuits)?;
+        // Parameter order must follow the Compact declaration, not HashMap order.
+        let call_args: Vec<_> = circuit
+            .parameters
+            .iter()
+            .enumerate()
+            .map(|(index, _)| {
+                syn::Ident::new(&format!("__compact_param_{index}"), Span::call_site())
+            })
+            .collect();
+        if uses_witness {
+            syn::parse_quote! {
+                pub fn #name<Private, W: super::TryWitnesses<Private>>(
+                    context: runtime::context::CircuitContext<Private>,
+                    witnesses: &W,
+                    #(#args),*
+                ) -> Result<runtime::recording::RecordedCircuitResult<Private, #result_ty>, runtime::CompactError> {
+                    let frame = runtime::recording::RecordingFrame::new(context);
+                    let (frame, result) = #body_name(frame, witnesses, #(#call_args),*)?;
+                    Ok(frame.finish(result))
+                }
+            }
+        } else {
+            syn::parse_quote! {
+                pub fn #name<Private>(
+                    context: runtime::context::CircuitContext<Private>,
+                    #(#args),*
+                ) -> Result<runtime::recording::RecordedCircuitResult<Private, #result_ty>, runtime::CompactError> {
+                    let frame = runtime::recording::RecordingFrame::new(context);
+                    let (frame, result) = #body_name(frame, #(#call_args),*)?;
+                    Ok(frame.finish(result))
+                }
+            }
+        }
+    } else if uses_witness {
         syn::parse_quote! {
             pub fn #name<Private, W: super::TryWitnesses<Private>>(
                 context: runtime::context::CircuitContext<Private>,

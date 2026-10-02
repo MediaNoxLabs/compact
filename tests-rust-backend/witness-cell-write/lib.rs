@@ -188,6 +188,25 @@ pub mod ledger_contract {
     /// Circuits with a replayable ordered ledger program.
     pub mod recorded {
         use midnight_compact_runtime as runtime;
+        fn __compact_recorded_body_write_inner<Private, W: super::TryWitnesses<Private>>(
+            frame: runtime::recording::RecordingFrame<Private>,
+            witnesses: &W,
+            __compact_param_0: runtime::Field,
+        ) -> Result<(runtime::recording::RecordingFrame<Private>, ()), runtime::CompactError>
+        {
+            let __compact_recorded_arg_0 = __compact_param_0;
+            let (frame, __compact_witness_1) = frame.try_witness_metered(|context, meter| {
+                witnesses.secret(
+                    context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                        meter,
+                    }),
+                    __compact_recorded_arg_0,
+                )
+            })?;
+            let frame = crate::ledger_slots::cell.record_write(frame, __compact_witness_1)?;
+            Ok((frame, ()))
+        }
         pub fn write_secret<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
             witnesses: &W,
@@ -246,30 +265,12 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_arg_0 = __compact_param_0;
-            let __compact_recorded_arg_1 = __compact_recorded_arg_0;
-            let (frame, __compact_witness_2) = frame.try_witness_metered(|context, meter| {
-                witnesses.secret(
-                    context.witness_context_with(super::LedgerView {
-                        state: context.query.state.get_ref(),
-                        meter,
-                    }),
-                    __compact_recorded_arg_1,
-                )
-            })?;
-            let frame = crate::ledger_slots::cell.record_write(frame, __compact_witness_2)?;
-            let __compact_recorded_arg_3 = __compact_param_0;
-            let __compact_recorded_arg_4 = __compact_recorded_arg_3;
-            let (frame, __compact_witness_5) = frame.try_witness_metered(|context, meter| {
-                witnesses.secret(
-                    context.witness_context_with(super::LedgerView {
-                        state: context.query.state.get_ref(),
-                        meter,
-                    }),
-                    __compact_recorded_arg_4,
-                )
-            })?;
-            let frame = crate::ledger_slots::cell.record_write(frame, __compact_witness_5)?;
+            let __compact_recorded_arg_0: runtime::Field = __compact_param_0;
+            let (frame, _) =
+                __compact_recorded_body_write_inner(frame, witnesses, __compact_recorded_arg_0)?;
+            let __compact_recorded_arg_1: runtime::Field = __compact_param_0;
+            let (frame, _) =
+                __compact_recorded_body_write_inner(frame, witnesses, __compact_recorded_arg_1)?;
             Ok(frame.finish(()))
         }
         pub fn read_cell<Private>(

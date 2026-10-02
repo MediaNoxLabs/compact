@@ -29,12 +29,12 @@ runtime as a path dependency. A separate Rust
 project can depend on `contract/` by path without copying generated source or
 editing its manifest. Run with `--target ts --target rust` to emit both contract
 languages. `--skip-zk` skips proving keys for a quicker local build.
-For declared Cells and Counters, the generated `ledger_slots` module exposes
-typed constants such as `ledger_slots::flag` and `ledger_slots::round`. Their
-methods run the matching runtime VM operations or add them to a recording
-frame; a Cell write accepts only the declared Rust value type. Generated
-recorded methods call these descriptors as well. This first descriptor slice
-covers Cells and Counters, including chunked ledger paths.
+The generated `ledger_slots` module exposes named typed descriptors for Cell,
+Counter, Set, Map, List, and Merkle declarations. For example,
+`ledger_slots::tree.insert(context, value)` accepts the declared Merkle leaf
+type and uses its declared path and depth. Plain and historic Merkle slots
+share the native API; only historic slots expose `reset_history`. These slot
+constructors are public typed conveniences, not access-control boundaries.
 
 For applications that use several generated contracts, pass the same
 `--rust-runtime-root /path/to/compact` for each compilation. The root must
@@ -59,7 +59,7 @@ stateful circuits are available as free functions and as methods on
 and typed circuit arguments; witness bounds apply only to methods that need
 them. The facade delegates to the existing functions, preserving state and
 witness behavior. `ledger_slots` exposes typed Cell, Counter, Set, scalar Map,
-and root List descriptors. Nested Maps have a typed structural slot with
+root List, and plain/historic Merkle descriptors. Nested Maps have a typed structural slot with
 `MapNode<K, V>` values. Its `is_empty`, `size`, and `member` shape reads are
 available for native and recorded calls; scalar lookup and value mutations
 remain unavailable until nested value semantics are proven.
@@ -72,8 +72,9 @@ its typed arguments and nested witness operations. The separate recorded
 emitter also evaluates supported Field reads, witness calls, addition, and
 internal Field-returning calls in source order. Supported root Set and Map
 mutation, membership, lookup, size, and emptiness calls have replayable recorded
-methods. Root Field/Boolean List push, pop, reset, length, emptiness, and head
-calls also have recorded methods. Other methods continue to
+methods. Root typed List push, pop, reset, length, emptiness, and head
+calls also have recorded methods. Merkle calls remain native until a complete
+recorded trace is supported. Other methods continue to
 return native execution results until their full transcript coverage is proven.
 The `tiny` fixture also records typed enum/Bytes Cell reads and writes,
 state-backed assertions, Bytes witnesses and pure calls, and a conditional
@@ -98,7 +99,7 @@ Compact spelling without warning in consumer builds.
 |---|---|---|
 | Compact compiler | Toolchain 0.31.133, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
 | Rust IR | Schema 8, private to this backend | The renderer rejects any other schema before writing `lib.rs`. Ledger, circuit, witness, constructor, and exported alias declarations carry optional Compact source locations for diagnostics. |
-| Generated code and Rust runtime | ABI 11 | Generated modules assert the ABI at Rust compile time. ABI 11 meters Merkle witness VM reads while keeping local projections uncharged; ABI 10 adds fallible `TryWitnesses` and adapts existing pair-returning `Witnesses` implementations; ABI 9 meters List witness reads, ABI 8 Map, ABI 7 Set, ABI 6 Cell/Counter; ABI 5 added structural nested Map slots. |
+| Generated code and Rust runtime | ABI 12 | Generated modules assert the ABI at Rust compile time. ABI 12 adds typed plain/historic Merkle slots for native calls; ABI 11 meters Merkle witness VM reads while keeping local projections uncharged; ABI 10 adds fallible `TryWitnesses` and adapts existing pair-returning `Witnesses` implementations; ABI 9 meters List witness reads, ABI 8 Map, ABI 7 Set, ABI 6 Cell/Counter; ABI 5 added structural nested Map slots. |
 | Rust runtime source | Bundled runtime crates or an explicit shared source root | Cargo resolves the matching runtime and its pinned Midnight crates. |
 
 `--runtime-version` reports the TypeScript runtime version; the Rust runtime

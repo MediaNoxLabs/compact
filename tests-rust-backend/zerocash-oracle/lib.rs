@@ -201,7 +201,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 11);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 12);
     pub(crate) fn merkleTreePathRoot(
         path: crate::types::MerkleTreePath,
     ) -> Result<crate::types::MerkleTreeDigest, runtime::CompactError> {
@@ -288,19 +288,21 @@ pub mod pure_circuits {
         })
     }
 }
-/// Typed descriptors for Compact Cell, Counter, Set, Map, and List declarations.
+/// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
 pub mod ledger_slots {
     use midnight_compact_runtime as runtime;
     pub const nullifiers: runtime::slots::SetSlot<crate::types::nullifier> =
         runtime::slots::SetSlot::new(&[0u8]);
+    pub const commitments: runtime::slots::MerkleSlot<crate::types::commitment, 32u8, true> =
+        runtime::slots::MerkleSlot::new(&[1u8]);
     pub const ciphertexts: runtime::slots::CellSlot<runtime::OpaqueBytes> =
         runtime::slots::CellSlot::new(&[2u8]);
 }
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 11);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 12);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -576,8 +578,8 @@ pub mod ledger_contract {
         let __compact_call_argument_9 = __compact_action_local_4.clone();
         let __compact_expression_local_10: crate::types::MerkleTreeDigest =
             crate::pure_circuits::merkleTreePathRoot(__compact_call_argument_9)?;
-        let __compact_query_11 =
-            context.historic_check_root(1, __compact_expression_local_10.clone())?;
+        let __compact_query_11 = crate::ledger_slots::commitments
+            .check_root(context, __compact_expression_local_10.clone())?;
         context = __compact_query_11.context;
         total_cost += __compact_query_11.gas_cost;
         if !(if __compact_query_11.result {
@@ -610,7 +612,8 @@ pub mod ledger_contract {
                 __compact_call_argument_14,
                 __compact_call_argument_15,
             )?;
-        let step = context.historic_insert(1, __compact_action_local_6.clone())?;
+        let step =
+            crate::ledger_slots::commitments.insert(context, __compact_action_local_6.clone())?;
         let context = step.context;
         total_cost += step.gas_cost;
         let mut context = context;
@@ -714,7 +717,8 @@ pub mod ledger_contract {
                 __compact_call_argument_4,
                 __compact_call_argument_5,
             )?;
-        let step = context.historic_insert(1, __compact_action_local_2.clone())?;
+        let step =
+            crate::ledger_slots::commitments.insert(context, __compact_action_local_2.clone())?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();

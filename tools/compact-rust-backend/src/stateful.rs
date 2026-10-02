@@ -283,14 +283,10 @@ pub(crate) fn render_state_expression(
                 Span::call_site(),
             );
             *next_temp += 1;
-            let path = ledger_path_expr(declaration);
-            let method = if historic {
-                "historic_check_root"
-            } else {
-                "merkle_check_root"
-            };
-            let method = syn::Ident::new(method, Span::call_site());
-            statements.push(syn::parse_quote!(let #step = context.#method(#path, #root)?;));
+            let slot = ident(&declaration.id)?;
+            statements.push(syn::parse_quote!(
+                let #step = crate::ledger_slots::#slot.check_root(context, #root)?;
+            ));
             statements.push(syn::parse_quote!(context = #step.context;));
             statements.push(syn::parse_quote!(total_cost += #step.gas_cost;));
             *query_effect = true;
@@ -2277,9 +2273,9 @@ pub(crate) fn render_stateful_circuit(
                 {
                     return Err(RenderError::UnknownLedgerField(field.clone()));
                 }
-                let path = ledger_path_expr(declaration);
+                let slot = ident(&declaration.id)?;
                 statements.push(syn::parse_quote! {
-                    let step = context.historic_reset_history(#path)?;
+                    let step = crate::ledger_slots::#slot.reset_history(context)?;
                 });
                 statements.push(syn::parse_quote!(let context = step.context;));
                 statements.push(syn::parse_quote!(total_cost += step.gas_cost;));
@@ -2289,9 +2285,9 @@ pub(crate) fn render_stateful_circuit(
                 let declaration = ledger_fields
                     .get(field.as_str())
                     .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
-                let (depth, historic) = match declaration.declaration {
-                    LedgerFieldKind::HistoricMerkleTree { depth, .. } => (depth, true),
-                    LedgerFieldKind::MerkleTree { depth, .. } => (depth, false),
+                let historic = match declaration.declaration {
+                    LedgerFieldKind::HistoricMerkleTree { .. } => true,
+                    LedgerFieldKind::MerkleTree { .. } => false,
                     _ => return Err(RenderError::UnknownLedgerField(field.clone())),
                 };
                 let action_historic =
@@ -2299,16 +2295,9 @@ pub(crate) fn render_stateful_circuit(
                 if declaration.index != *index || historic != action_historic {
                     return Err(RenderError::UnknownLedgerField(field.clone()));
                 }
-                let path = ledger_path_expr(declaration);
-                let depth = syn::LitInt::new(&depth.to_string(), Span::call_site());
-                let method = if historic {
-                    "historic_reset_to_default"
-                } else {
-                    "merkle_reset_to_default"
-                };
-                let method = syn::Ident::new(method, Span::call_site());
+                let slot = ident(&declaration.id)?;
                 statements.push(syn::parse_quote! {
-                    let step = context.#method(#path, #depth)?;
+                    let step = crate::ledger_slots::#slot.reset_to_default(context)?;
                 });
                 statements.push(syn::parse_quote!(let context = step.context;));
                 statements.push(syn::parse_quote!(total_cost += step.gas_cost;));
@@ -2436,25 +2425,21 @@ pub(crate) fn render_stateful_circuit(
                     statements.push(syn::parse_quote!(let mut context = context;));
                 }
                 statements.extend(value_statements);
-                let path = ledger_path_expr(declaration);
-                let method = match (historic, is_hash, position.is_some()) {
-                    (true, false, false) => "historic_insert",
-                    (true, false, true) => "historic_insert_index",
-                    (true, true, false) => "historic_insert_hash",
-                    (true, true, true) => "historic_insert_hash_index",
-                    (false, false, false) => "merkle_insert",
-                    (false, false, true) => "merkle_insert_index",
-                    (false, true, false) => "merkle_insert_hash",
-                    (false, true, true) => "merkle_insert_hash_index",
+                let slot = ident(&declaration.id)?;
+                let method = match (is_hash, position.is_some()) {
+                    (false, false) => "insert",
+                    (false, true) => "insert_index",
+                    (true, false) => "insert_hash",
+                    (true, true) => "insert_hash_index",
                 };
                 let method = syn::Ident::new(method, Span::call_site());
                 if let Some(position) = position {
                     statements.push(syn::parse_quote! {
-                        let step = context.#method(#path, #value, #position)?;
+                        let step = crate::ledger_slots::#slot.#method(context, #value, #position)?;
                     });
                 } else {
                     statements.push(syn::parse_quote! {
-                        let step = context.#method(#path, #value)?;
+                        let step = crate::ledger_slots::#slot.#method(context, #value)?;
                     });
                 }
                 statements.push(syn::parse_quote!(let context = step.context;));
@@ -2473,9 +2458,9 @@ pub(crate) fn render_stateful_circuit(
                 let declaration = ledger_fields
                     .get(field.as_str())
                     .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
-                let (ty, historic) = match &declaration.declaration {
-                    LedgerFieldKind::HistoricMerkleTree { ty, .. } => (ty, true),
-                    LedgerFieldKind::MerkleTree { ty, .. } => (ty, false),
+                let historic = match &declaration.declaration {
+                    LedgerFieldKind::HistoricMerkleTree { .. } => true,
+                    LedgerFieldKind::MerkleTree { .. } => false,
                     _ => return Err(RenderError::UnknownLedgerField(field.clone())),
                 };
                 let action_historic =
@@ -2509,16 +2494,9 @@ pub(crate) fn render_stateful_circuit(
                     statements.push(syn::parse_quote!(let mut context = context;));
                 }
                 statements.extend(value_statements);
-                let path = ledger_path_expr(declaration);
-                let leaf_ty = rust_type(ty)?;
-                let method = if historic {
-                    "historic_insert_index_default"
-                } else {
-                    "merkle_insert_index_default"
-                };
-                let method = syn::Ident::new(method, Span::call_site());
+                let slot = ident(&declaration.id)?;
                 statements.push(syn::parse_quote! {
-                    let step = context.#method::<#leaf_ty>(#path, #position)?;
+                    let step = crate::ledger_slots::#slot.insert_index_default(context, #position)?;
                 });
                 statements.push(syn::parse_quote!(let context = step.context;));
                 statements.push(syn::parse_quote!(total_cost += step.gas_cost;));
@@ -2714,9 +2692,9 @@ pub(crate) fn render_stateful_circuit(
             let declaration = ledger_fields
                 .get(field.as_str())
                 .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
-            let (depth, historic) = match declaration.declaration {
-                LedgerFieldKind::HistoricMerkleTree { depth, .. } => (depth, true),
-                LedgerFieldKind::MerkleTree { depth, .. } => (depth, false),
+            let historic = match declaration.declaration {
+                LedgerFieldKind::HistoricMerkleTree { .. } => true,
+                LedgerFieldKind::MerkleTree { .. } => false,
                 _ => return Err(RenderError::UnknownLedgerField(field.clone())),
             };
             let return_historic = matches!(
@@ -2732,16 +2710,9 @@ pub(crate) fn render_stateful_circuit(
                     actual: circuit.result.clone(),
                 });
             }
-            let path = ledger_path_expr(declaration);
-            let depth = syn::LitInt::new(&depth.to_string(), Span::call_site());
-            let method = if historic {
-                "historic_is_full"
-            } else {
-                "merkle_is_full"
-            };
-            let method = syn::Ident::new(method, Span::call_site());
+            let slot = ident(&declaration.id)?;
             statements.push(syn::parse_quote! {
-                let read_step = context.#method(#path, #depth)?;
+                let read_step = crate::ledger_slots::#slot.is_full(context)?;
             });
             statements.push(syn::parse_quote!(let context = read_step.context;));
             statements.push(syn::parse_quote!(total_cost += read_step.gas_cost;));
@@ -2781,15 +2752,9 @@ pub(crate) fn render_stateful_circuit(
             if actual != expected {
                 return Err(RenderError::TypeMismatch { expected, actual });
             }
-            let path = ledger_path_expr(declaration);
-            let method = if historic {
-                "historic_check_root"
-            } else {
-                "merkle_check_root"
-            };
-            let method = syn::Ident::new(method, Span::call_site());
+            let slot = ident(&declaration.id)?;
             statements.push(syn::parse_quote! {
-                let read_step = context.#method(#path, #root)?;
+                let read_step = crate::ledger_slots::#slot.check_root(context, #root)?;
             });
             statements.push(syn::parse_quote!(let context = read_step.context;));
             statements.push(syn::parse_quote!(total_cost += read_step.gas_cost;));

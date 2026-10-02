@@ -6,7 +6,7 @@ mod recorded;
 mod stateful;
 mod witness;
 
-const RUNTIME_ABI_VERSION: u32 = 11;
+const RUNTIME_ABI_VERSION: u32 = 12;
 
 const GENERATED_HEADER: &str = r#"// This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
@@ -2916,12 +2916,23 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                         runtime::slots::MapSlot::new(&[#(#path),*]);
                 });
             }
-            _ => {}
+            LedgerFieldKind::MerkleTree { ty, depth }
+            | LedgerFieldKind::HistoricMerkleTree { ty, depth } => {
+                let leaf = rust_type(ty)?;
+                let historic = matches!(
+                    &field.declaration,
+                    LedgerFieldKind::HistoricMerkleTree { .. }
+                );
+                slot_items.push(syn::parse_quote! {
+                    pub const #name: runtime::slots::MerkleSlot<#leaf, #depth, #historic> =
+                        runtime::slots::MerkleSlot::new(&[#(#path),*]);
+                });
+            }
         }
     }
     let slots_module: Option<syn::Item> = (!slot_items.is_empty()).then(|| {
         syn::parse_quote! {
-            /// Typed descriptors for Compact Cell, Counter, Set, Map, and List declarations.
+            /// Typed descriptors for Compact ledger declarations.
             #[allow(non_upper_case_globals)]
             pub mod ledger_slots {
                 use midnight_compact_runtime as runtime;

@@ -210,10 +210,84 @@ fn generated_unit_enum_uses_checked_derive_without_handwritten_codecs() {
     let source = render(&contract).unwrap();
     assert!(source.contains("CompactCellValue, CompactEnum"));
     assert!(source.contains("pub enum Choice"));
-    assert!(source.contains("RUST_RUNTIME_ABI == 11"));
+    assert!(source.contains("RUST_RUNTIME_ABI == 12"));
     assert!(!source.contains("impl FieldRepr for Choice"));
     assert!(!source.contains("impl BinaryHashRepr for Choice"));
     assert!(!source.contains("impl FromFieldRepr for Choice"));
+}
+
+#[test]
+fn native_merkle_calls_use_declared_typed_slots() {
+    let mut contract = identity(Type::Unit, Expr::Unit);
+    let leaf = Type::Unsigned { max: "255".into() };
+    contract.ledger_fields = vec![
+        LedgerField {
+            source: None,
+            id: "plain".into(),
+            index: 0,
+            path: vec![],
+            declaration: LedgerFieldKind::MerkleTree {
+                ty: leaf.clone(),
+                depth: 3,
+            },
+        },
+        LedgerField {
+            source: None,
+            id: "historic".into(),
+            index: 1,
+            path: vec![],
+            declaration: LedgerFieldKind::HistoricMerkleTree { ty: leaf, depth: 4 },
+        },
+    ];
+    contract.stateful_circuits = vec![
+        StatefulCircuit {
+            source: None,
+            internal: false,
+            name: "plain_full".into(),
+            parameters: vec![Parameter {
+                name: "value".into(),
+                ty: Type::Unsigned { max: "255".into() },
+            }],
+            actions: vec![StateAction::MerkleInsert {
+                field: "plain".into(),
+                index: 0,
+                value: Expr::Parameter {
+                    name: "value".into(),
+                },
+            }],
+            result: Type::Boolean,
+            return_value: StateReturn::MerkleIsFull {
+                field: "plain".into(),
+                index: 0,
+            },
+        },
+        StatefulCircuit {
+            source: None,
+            internal: false,
+            name: "reset_history".into(),
+            parameters: vec![],
+            actions: vec![StateAction::HistoricMerkleResetHistory {
+                field: "historic".into(),
+                index: 1,
+            }],
+            result: Type::Boolean,
+            return_value: StateReturn::HistoricMerkleIsFull {
+                field: "historic".into(),
+                index: 1,
+            },
+        },
+    ];
+    let source = render(&contract).unwrap();
+    assert!(source.contains(
+        "pub const plain: runtime::slots::MerkleSlot<runtime::BoundedUint<255>, 3u8, false>"
+    ));
+    assert!(source.contains("pub const historic: runtime::slots::MerkleSlot<"));
+    assert!(source.contains("4u8,\n        true,"));
+    assert!(source.contains("crate::ledger_slots::plain.insert(context, __compact_param_0)?"));
+    assert!(source.contains("crate::ledger_slots::plain.is_full(context)?"));
+    assert!(source.contains("crate::ledger_slots::historic.reset_history(context)?"));
+    assert!(source.contains("crate::ledger_slots::historic.is_full(context)?"));
+    assert!(!source.contains("context.merkle_insert(0,"));
 }
 
 #[test]

@@ -27,6 +27,135 @@ use crate::context::{CircuitContext, CircuitResult};
 use crate::ledger::{CellValue, DB};
 use crate::recording::RecordingFrame;
 
+/// A compiler-declared Merkle tree. The leaf type, depth, and historic kind
+/// are fixed at the generated declaration rather than repeated at call sites.
+#[derive(Clone, Copy)]
+pub struct MerkleSlot<T, const DEPTH: u8, const HISTORIC: bool> {
+    path: &'static [u8],
+    leaf: PhantomData<fn() -> T>,
+}
+
+impl<T: CellValue, const DEPTH: u8, const HISTORIC: bool> MerkleSlot<T, DEPTH, HISTORIC> {
+    pub const fn new(path: &'static [u8]) -> Self {
+        Self {
+            path,
+            leaf: PhantomData,
+        }
+    }
+
+    pub const fn path(self) -> &'static [u8] {
+        self.path
+    }
+
+    pub fn insert<Private, D: DB>(
+        self,
+        context: CircuitContext<Private, D>,
+        value: T,
+    ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        if HISTORIC {
+            context.historic_insert(self.path, value)
+        } else {
+            context.merkle_insert(self.path, value)
+        }
+    }
+
+    pub fn insert_index<Private, D: DB>(
+        self,
+        context: CircuitContext<Private, D>,
+        value: T,
+        position: crate::BoundedUint<{ u64::MAX as u128 }>,
+    ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        if HISTORIC {
+            context.historic_insert_index(self.path, value, position)
+        } else {
+            context.merkle_insert_index(self.path, value, position)
+        }
+    }
+
+    pub fn insert_hash<Private, D: DB>(
+        self,
+        context: CircuitContext<Private, D>,
+        hash: crate::FixedBytes<32>,
+    ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        if HISTORIC {
+            context.historic_insert_hash(self.path, hash)
+        } else {
+            context.merkle_insert_hash(self.path, hash)
+        }
+    }
+
+    pub fn insert_hash_index<Private, D: DB>(
+        self,
+        context: CircuitContext<Private, D>,
+        hash: crate::FixedBytes<32>,
+        position: crate::BoundedUint<{ u64::MAX as u128 }>,
+    ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        if HISTORIC {
+            context.historic_insert_hash_index(self.path, hash, position)
+        } else {
+            context.merkle_insert_hash_index(self.path, hash, position)
+        }
+    }
+
+    pub fn insert_index_default<Private, D: DB>(
+        self,
+        context: CircuitContext<Private, D>,
+        position: crate::BoundedUint<{ u64::MAX as u128 }>,
+    ) -> Result<CircuitResult<Private, (), D>, CompactError>
+    where
+        T: Default,
+    {
+        if HISTORIC {
+            context.historic_insert_index_default::<T>(self.path, position)
+        } else {
+            context.merkle_insert_index_default::<T>(self.path, position)
+        }
+    }
+
+    pub fn reset_to_default<Private, D: DB>(
+        self,
+        context: CircuitContext<Private, D>,
+    ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        if HISTORIC {
+            context.historic_reset_to_default(self.path, DEPTH)
+        } else {
+            context.merkle_reset_to_default(self.path, DEPTH)
+        }
+    }
+
+    pub fn is_full<Private, D: DB>(
+        self,
+        context: CircuitContext<Private, D>,
+    ) -> Result<CircuitResult<Private, bool, D>, CompactError> {
+        if HISTORIC {
+            context.historic_is_full(self.path, DEPTH)
+        } else {
+            context.merkle_is_full(self.path, DEPTH)
+        }
+    }
+
+    pub fn check_root<Private, D: DB, R: CellValue>(
+        self,
+        context: CircuitContext<Private, D>,
+        root: R,
+    ) -> Result<CircuitResult<Private, bool, D>, CompactError> {
+        if HISTORIC {
+            context.historic_check_root(self.path, root)
+        } else {
+            context.merkle_check_root(self.path, root)
+        }
+    }
+}
+
+impl<T: CellValue, const DEPTH: u8> MerkleSlot<T, DEPTH, true> {
+    pub fn reset_history<Private, D: DB>(
+        self,
+        context: CircuitContext<Private, D>,
+    ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        context.historic_reset_history(self.path)
+    }
+}
+
 #[derive(Clone, Copy)]
 pub struct CellSlot<T> {
     path: &'static [u8],

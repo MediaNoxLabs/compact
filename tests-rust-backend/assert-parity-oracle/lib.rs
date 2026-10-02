@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 11);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 12);
     pub fn require_true(b: bool) -> Result<bool, runtime::CompactError> {
         Ok({
             {
@@ -34,7 +34,7 @@ pub mod pure_circuits {
         })
     }
 }
-/// Typed descriptors for Compact Cell, Counter, Set, Map, and List declarations.
+/// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
 pub mod ledger_slots {
     use midnight_compact_runtime as runtime;
@@ -43,7 +43,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 11);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 12);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,

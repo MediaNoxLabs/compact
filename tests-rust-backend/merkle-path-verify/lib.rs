@@ -87,7 +87,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 11);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 12);
     pub(crate) fn merkleTreePathRoot(
         path: crate::types::MerkleTreePath,
     ) -> Result<crate::types::MerkleTreeDigest, runtime::CompactError> {
@@ -133,10 +133,17 @@ pub mod pure_circuits {
         })
     }
 }
+/// Typed descriptors for Compact ledger declarations.
+#[allow(non_upper_case_globals)]
+pub mod ledger_slots {
+    use midnight_compact_runtime as runtime;
+    pub const t: runtime::slots::MerkleSlot<runtime::BoundedUint<255>, 3u8, false> =
+        runtime::slots::MerkleSlot::new(&[0u8]);
+}
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 11);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 12);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -198,7 +205,7 @@ pub mod ledger_contract {
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let step = context.merkle_insert(0, __compact_param_0)?;
+        let step = crate::ledger_slots::t.insert(context, __compact_param_0)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();
@@ -218,7 +225,11 @@ pub mod ledger_contract {
         let __compact_action_local_0: runtime::BoundedUint<18446744073709551615> =
             runtime::BoundedUint::<18446744073709551615>::new(0u128)
                 .expect("Compact Uint literal fits its maximum");
-        let step = context.merkle_insert_index(0, __compact_param_0, __compact_action_local_0)?;
+        let step = crate::ledger_slots::t.insert_index(
+            context,
+            __compact_param_0,
+            __compact_action_local_0,
+        )?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();
@@ -251,7 +262,7 @@ pub mod ledger_contract {
         let __compact_expression_local_2: crate::types::MerkleTreeDigest =
             crate::pure_circuits::merkleTreePathRoot(__compact_call_argument_1)?;
         let __compact_query_3 =
-            context.merkle_check_root(0, __compact_expression_local_2.clone())?;
+            crate::ledger_slots::t.check_root(context, __compact_expression_local_2.clone())?;
         context = __compact_query_3.context;
         total_cost += __compact_query_3.gas_cost;
         let result = __compact_query_3.result;

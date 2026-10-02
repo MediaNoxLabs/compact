@@ -139,7 +139,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 11);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 12);
     pub(crate) fn merkleTreePathRoot(
         path: crate::types::MerkleTreePath,
     ) -> Result<crate::types::MerkleTreeDigest, runtime::CompactError> {
@@ -256,7 +256,7 @@ pub mod pure_circuits {
         Ok(runtime::persistent_hash((ballot, sk)))
     }
 }
-/// Typed descriptors for Compact Cell, Counter, Set, Map, and List declarations.
+/// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
 pub mod ledger_slots {
     use midnight_compact_runtime as runtime;
@@ -268,6 +268,10 @@ pub mod ledger_slots {
         runtime::slots::CellSlot::new(&[2u8]);
     pub const tally_yes: runtime::slots::CounterSlot = runtime::slots::CounterSlot::new(&[3u8]);
     pub const tally_no: runtime::slots::CounterSlot = runtime::slots::CounterSlot::new(&[4u8]);
+    pub const committed_votes: runtime::slots::MerkleSlot<runtime::FixedBytes<32>, 10u8, false> =
+        runtime::slots::MerkleSlot::new(&[5u8]);
+    pub const eligible_voters: runtime::slots::MerkleSlot<runtime::FixedBytes<32>, 10u8, false> =
+        runtime::slots::MerkleSlot::new(&[6u8]);
     pub const committed: runtime::slots::SetSlot<runtime::FixedBytes<32>> =
         runtime::slots::SetSlot::new(&[7u8]);
     pub const revealed: runtime::slots::SetSlot<runtime::FixedBytes<32>> =
@@ -276,7 +280,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 11);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 12);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -628,8 +632,8 @@ pub mod ledger_contract {
             let __compact_call_argument_12 = (__compact_action_local_3.clone()).value.clone();
             let __compact_expression_local_13: crate::types::MerkleTreeDigest =
                 crate::pure_circuits::merkleTreePathRoot(__compact_call_argument_12)?;
-            let __compact_query_14 =
-                context.merkle_check_root(6, __compact_expression_local_13.clone())?;
+            let __compact_query_14 = crate::ledger_slots::eligible_voters
+                .check_root(context, __compact_expression_local_13.clone())?;
             context = __compact_query_14.context;
             total_cost += __compact_query_14.gas_cost;
             __compact_query_14.result
@@ -657,7 +661,8 @@ pub mod ledger_contract {
                 __compact_call_argument_17,
                 __compact_call_argument_18,
             )?;
-        let step = context.merkle_insert(5, __compact_action_local_4)?;
+        let step =
+            crate::ledger_slots::committed_votes.insert(context, __compact_action_local_4)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let step = crate::ledger_slots::committed.insert(context, __compact_action_local_1)?;
@@ -790,8 +795,8 @@ pub mod ledger_contract {
             let __compact_call_argument_13 = (__compact_action_local_4.clone()).value.clone();
             let __compact_expression_local_14: crate::types::MerkleTreeDigest =
                 crate::pure_circuits::merkleTreePathRoot(__compact_call_argument_13)?;
-            let __compact_query_15 =
-                context.merkle_check_root(5, __compact_expression_local_14.clone())?;
+            let __compact_query_15 = crate::ledger_slots::committed_votes
+                .check_root(context, __compact_expression_local_14.clone())?;
             context = __compact_query_15.context;
             total_cost += __compact_query_15.gas_cost;
             __compact_query_15.result
@@ -1044,7 +1049,7 @@ pub mod ledger_contract {
                 "Attempted to add a voter after setup phase".to_owned(),
             ));
         }
-        let step = context.merkle_insert(6, __compact_param_0)?;
+        let step = crate::ledger_slots::eligible_voters.insert(context, __compact_param_0)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();

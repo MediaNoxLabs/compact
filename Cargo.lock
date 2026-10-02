@@ -3854,6 +3854,7 @@ dependencies = [
  "midnight-transient-crypto",
  "midnight-zk-stdlib",
  "midnight-zswap",
+ "serde",
  "serde_json",
  "sha3",
 ]

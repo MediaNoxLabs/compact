@@ -593,7 +593,15 @@ fn merkle_insert_hashed<D: DB>(
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
-    let path = path.into();
+    let program = merkle_insert_hashed_program::<D>(path.into(), hash, history);
+    context.query(&program, gas_limit, cost_model)
+}
+
+fn merkle_insert_hashed_program<D: DB>(
+    path: LedgerPath,
+    hash: AlignedValue,
+    history: MerkleHistory,
+) -> Vec<Op<ResultModeVerify, D>> {
     let keys = path_keys(path.as_slice());
     let index_key = |index| vec![Key::Value(AlignedValue::from(index))].into();
     let mut program = vec![
@@ -663,7 +671,7 @@ fn merkle_insert_hashed<D: DB>(
             n: path.as_slice().len() as u8 + 1,
         });
     }
-    context.query(&program, gas_limit, cost_model)
+    program
 }
 
 /// Keep only the current root in a HistoricMerkleTree's history.
@@ -673,10 +681,14 @@ pub fn historic_reset_history<D: DB>(
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
-    let path = path.into();
+    let program = historic_reset_history_program::<D>(path.into());
+    context.query(&program, gas_limit, cost_model)
+}
+
+fn historic_reset_history_program<D: DB>(path: LedgerPath) -> Vec<Op<ResultModeVerify, D>> {
     let keys = path_keys(path.as_slice());
     let index_key = |index| vec![Key::Value(AlignedValue::from(index))].into();
-    let program = [
+    vec![
         Op::Idx {
             cached: false,
             push_path: true,
@@ -705,8 +717,7 @@ pub fn historic_reset_history<D: DB>(
             cached: true,
             n: path.as_slice().len() as u8 + 2,
         },
-    ];
-    context.query(&program, gas_limit, cost_model)
+    ]
 }
 
 /// Reset a HistoricMerkleTree and seed its new blank root through the VM.
@@ -823,12 +834,23 @@ pub fn historic_is_full<D: DB>(
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<(QueryResults<ResultModeGather, D>, bool), CompactError> {
+    let program = is_full_program::<D>(path.into(), depth)?;
+    let result = context
+        .query(&program, gas_limit, cost_model)
+        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+    let decoded = decode_last_read::<bool, D>(&result)?;
+    Ok((result, decoded))
+}
+
+fn is_full_program<D: DB>(
+    path: LedgerPath,
+    depth: u8,
+) -> Result<Vec<Op<ResultModeGather, D>>, CompactError> {
     let capacity = 1_u64.checked_shl(depth as u32).ok_or_else(|| {
         CompactError::InvalidLedgerCell(format!("invalid HistoricMerkleTree depth {depth}"))
     })?;
-    let path = path.into();
     let index_key = vec![Key::Value(AlignedValue::from(1_u8))].into();
-    let program = [
+    Ok(vec![
         Op::Dup { n: 0 },
         Op::Idx {
             cached: false,
@@ -850,12 +872,7 @@ pub fn historic_is_full<D: DB>(
             cached: true,
             result: (),
         },
-    ];
-    let result = context
-        .query(&program, gas_limit, cost_model)
-        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
-    let decoded = decode_last_read::<bool, D>(&result)?;
-    Ok((result, decoded))
+    ])
 }
 
 pub fn merkle_is_full<D: DB>(
@@ -876,9 +893,23 @@ pub fn merkle_check_root<T: CellValue, D: DB>(
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<(QueryResults<ResultModeGather, D>, bool), CompactError> {
-    let path = path.into();
-    let index_key = vec![Key::Value(AlignedValue::from(0_u8))].into();
-    let program = [
+    let program = check_root_program::<T, D>(path.into(), root, MerkleHistory::CurrentOnly);
+    let result = context
+        .query(&program, gas_limit, cost_model)
+        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+    let decoded = decode_last_read::<bool, D>(&result)?;
+    Ok((result, decoded))
+}
+
+fn check_root_program<T: CellValue, D: DB>(
+    path: LedgerPath,
+    root: T,
+    history: MerkleHistory,
+) -> Vec<Op<ResultModeGather, D>> {
+    let historic = matches!(history, MerkleHistory::Historic);
+    let index = if historic { 2_u8 } else { 0_u8 };
+    let index_key = vec![Key::Value(AlignedValue::from(index))].into();
+    let mut program = vec![
         Op::Dup { n: 0 },
         Op::Idx {
             cached: false,
@@ -890,22 +921,30 @@ pub fn merkle_check_root<T: CellValue, D: DB>(
             push_path: false,
             path: index_key,
         },
-        Op::Root,
-        Op::Push {
-            storage: false,
-            value: constructor_cell(root),
-        },
-        Op::Eq,
-        Op::Popeq {
-            cached: true,
-            result: (),
-        },
     ];
-    let result = context
-        .query(&program, gas_limit, cost_model)
-        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
-    let decoded = decode_last_read::<bool, D>(&result)?;
-    Ok((result, decoded))
+    if historic {
+        program.extend([
+            Op::Push {
+                storage: false,
+                value: constructor_cell(root),
+            },
+            Op::Member,
+        ]);
+    } else {
+        program.extend([
+            Op::Root,
+            Op::Push {
+                storage: false,
+                value: constructor_cell(root),
+            },
+            Op::Eq,
+        ]);
+    }
+    program.push(Op::Popeq {
+        cached: true,
+        result: (),
+    });
+    program
 }
 
 /// Query membership in a HistoricMerkleTree's root history.
@@ -916,33 +955,100 @@ pub fn historic_check_root<T: CellValue, D: DB>(
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<(QueryResults<ResultModeGather, D>, bool), CompactError> {
-    let path = path.into();
-    let index_key = vec![Key::Value(AlignedValue::from(2_u8))].into();
-    let program = [
-        Op::Dup { n: 0 },
-        Op::Idx {
-            cached: false,
-            push_path: false,
-            path: path_keys(path.as_slice()).into(),
-        },
-        Op::Idx {
-            cached: false,
-            push_path: false,
-            path: index_key,
-        },
-        Op::Push {
-            storage: false,
-            value: constructor_cell(root),
-        },
-        Op::Member,
-        Op::Popeq {
-            cached: true,
-            result: (),
-        },
-    ];
+    let program = check_root_program::<T, D>(path.into(), root, MerkleHistory::Historic);
     let result = context
         .query(&program, gas_limit, cost_model)
         .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
     let decoded = decode_last_read::<bool, D>(&result)?;
     Ok((result, decoded))
+}
+
+#[cfg(test)]
+mod query_program_tests {
+    use super::*;
+    use crate::Field;
+    use crate::ledger::DefaultDB;
+    use midnight_onchain_vm::result_mode::ResultMode;
+
+    fn tags<M: ResultMode<DefaultDB>>(program: &[Op<M, DefaultDB>]) -> Vec<String>
+    where
+        Op<M, DefaultDB>: serde::Serialize,
+    {
+        program
+            .iter()
+            .map(|operation| {
+                let value = serde_json::to_value(operation).unwrap();
+                match value {
+                    serde_json::Value::String(tag) => tag,
+                    serde_json::Value::Object(fields) if fields.len() == 1 => {
+                        fields.into_iter().next().unwrap().0
+                    }
+                    other => panic!("unexpected serialized VM operation: {other}"),
+                }
+            })
+            .collect()
+    }
+
+    fn expected_tags(oracle: &serde_json::Value, call: &str) -> Vec<String> {
+        let queries = oracle["nativeQueries"][call]["queries"].as_array().unwrap();
+        assert_eq!(queries.len(), 1, "{call}: expected one ledger-8 query");
+        queries[0]["opTags"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|tag| tag.as_str().unwrap().to_owned())
+            .collect()
+    }
+
+    #[test]
+    fn native_merkle_programs_match_captured_ledger8_operation_order() {
+        let plain: serde_json::Value =
+            serde_json::from_str(include_str!("../../tests/fixtures/merkle-tree-oracle.json"))
+                .unwrap();
+        let historic: serde_json::Value =
+            serde_json::from_str(include_str!("../../tests/fixtures/hmt-insert-oracle.json"))
+                .unwrap();
+        let path = || LedgerPath::from(&[0_u8][..]);
+        let hash = || AlignedValue::from(leaf_hash_for(BoundedUint::<255>::new(7).unwrap()));
+
+        let full = tags(&is_full_program::<DefaultDB>(path(), 3).unwrap());
+        assert_eq!(full, expected_tags(&plain, "fullAtInit"));
+        assert_eq!(full, expected_tags(&historic, "fullAtInit"));
+        assert_eq!(
+            tags(&check_root_program::<_, DefaultDB>(
+                path(),
+                Field::from(0_u64),
+                MerkleHistory::CurrentOnly,
+            )),
+            expected_tags(&plain, "knownAtInit")
+        );
+        assert_eq!(
+            tags(&check_root_program::<_, DefaultDB>(
+                path(),
+                Field::from(0_u64),
+                MerkleHistory::Historic,
+            )),
+            expected_tags(&historic, "knownAtInit")
+        );
+        assert_eq!(
+            tags(&merkle_insert_hashed_program::<DefaultDB>(
+                path(),
+                hash(),
+                MerkleHistory::CurrentOnly,
+            )),
+            expected_tags(&plain, "append7")
+        );
+        assert_eq!(
+            tags(&merkle_insert_hashed_program::<DefaultDB>(
+                path(),
+                hash(),
+                MerkleHistory::Historic,
+            )),
+            expected_tags(&historic, "append7")
+        );
+        assert_eq!(
+            tags(&historic_reset_history_program::<DefaultDB>(path())),
+            expected_tags(&historic, "forgetHistory")
+        );
+    }
 }

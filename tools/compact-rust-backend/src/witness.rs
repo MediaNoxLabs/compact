@@ -107,14 +107,9 @@ pub(crate) fn build<'a>(
                     LedgerFieldKind::Map { key, value } => {
                         let key = rust_type(key)?;
                         let value = rust_type(value)?;
-                        let view: syn::Expr = if path.len() == 1 {
-                            syn::parse_quote!(runtime::ledger::map_view::<#key, #value, _>(self.state, #index))
-                        } else {
-                            syn::parse_quote!(runtime::ledger::map_view_at_path::<#key, #value, _>(self.state, &[#(#path),*]))
-                        };
                         ledger_view_methods.push(syn::parse_quote! {
-                        pub fn #name(&self) -> Result<runtime::ledger::MapView<'a, #key, #value, runtime::ledger::DefaultDB>, runtime::CompactError> {
-                            #view
+                        pub fn #name(&self) -> Result<runtime::ledger::MeteredMapView<'a, #key, #value, runtime::ledger::DefaultDB>, runtime::CompactError> {
+                            runtime::ledger::metered_map_view_at_path::<#key, #value, _>(self.meter, &[#(#path),*])
                         }
                     });
                     }

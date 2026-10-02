@@ -126,7 +126,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 7);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 8);
     pub fn assertRecordFreshEnough(
         policy: crate::types::FreshnessPolicy,
         record: crate::types::AssetRecord,
@@ -286,7 +286,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 7);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 8);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -365,7 +365,7 @@ pub mod ledger_contract {
         pub fn records(
             &self,
         ) -> Result<
-            runtime::ledger::MapView<
+            runtime::ledger::MeteredMapView<
                 'a,
                 runtime::OpaqueString,
                 crate::types::AssetRecord,
@@ -373,15 +373,16 @@ pub mod ledger_contract {
             >,
             runtime::CompactError,
         > {
-            runtime::ledger::map_view_at_path::<runtime::OpaqueString, crate::types::AssetRecord, _>(
-                self.state,
-                &[1, 10],
-            )
+            runtime::ledger::metered_map_view_at_path::<
+                runtime::OpaqueString,
+                crate::types::AssetRecord,
+                _,
+            >(self.meter, &[1, 10])
         }
         pub fn custodyGrants(
             &self,
         ) -> Result<
-            runtime::ledger::MapView<
+            runtime::ledger::MeteredMapView<
                 'a,
                 runtime::OpaqueString,
                 crate::types::CustodyGrant,
@@ -389,10 +390,11 @@ pub mod ledger_contract {
             >,
             runtime::CompactError,
         > {
-            runtime::ledger::map_view_at_path::<runtime::OpaqueString, crate::types::CustodyGrant, _>(
-                self.state,
-                &[1, 11],
-            )
+            runtime::ledger::metered_map_view_at_path::<
+                runtime::OpaqueString,
+                crate::types::CustodyGrant,
+                _,
+            >(self.meter, &[1, 11])
         }
         pub fn retiredKeys(
             &self,

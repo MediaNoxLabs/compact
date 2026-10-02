@@ -93,7 +93,7 @@ Compact spelling without warning in consumer builds.
 |---|---|---|
 | Compact compiler | Toolchain 0.31.133, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
 | Rust IR | Schema 8, private to this backend | The renderer rejects any other schema before writing `lib.rs`. Ledger, circuit, witness, constructor, and exported alias declarations carry optional Compact source locations for diagnostics. |
-| Generated code and Rust runtime | ABI 7 | Generated modules assert the ABI at Rust compile time. ABI 7 meters Set witness methods through canonical VM queries and exposes their failures as `Result`; ABI 6 meters Cell and Counter reads; ABI 5 added structural nested Map slots. |
+| Generated code and Rust runtime | ABI 8 | Generated modules assert the ABI at Rust compile time. ABI 8 meters Map witness `member`, `lookup`, `size`, and `is_empty` with canonical VM queries and `Result` methods; ABI 7 meters Set views; ABI 6 meters Cell and Counter reads; ABI 5 added structural nested Map slots. |
 | Rust runtime source | Bundled runtime crates or an explicit shared source root | Cargo resolves the matching runtime and its pinned Midnight crates. |
 
 `--runtime-version` reports the TypeScript runtime version; the Rust runtime

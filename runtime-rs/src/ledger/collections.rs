@@ -113,6 +113,43 @@ pub struct MapView<'a, K, V, D: DB> {
     marker: PhantomData<(K, V)>,
 }
 
+/// Witness-facing Map projection that charges each canonical ledger VM query.
+pub struct MeteredMapView<'a, K, V, D: DB> {
+    meter: &'a WitnessReadMeter<'a, D>,
+    path: LedgerPath,
+    marker: PhantomData<(K, V)>,
+}
+
+pub fn metered_map_view_at_path<'a, K: CellValue, V: CellValue, D: DB>(
+    meter: &'a WitnessReadMeter<'a, D>,
+    path: &[u8],
+) -> Result<MeteredMapView<'a, K, V, D>, CompactError> {
+    let _ = map_view_at_path::<K, V, D>(meter.state(), path)?;
+    Ok(MeteredMapView {
+        meter,
+        path: path.into(),
+        marker: PhantomData,
+    })
+}
+
+impl<K: CellValue, V: CellValue, D: DB> MeteredMapView<'_, K, V, D> {
+    pub fn member(&self, key: K) -> Result<bool, CompactError> {
+        self.meter.read_map_member(self.path.as_slice(), key)
+    }
+
+    pub fn lookup(&self, key: K) -> Result<V, CompactError> {
+        self.meter.read_map_lookup(self.path.as_slice(), key)
+    }
+
+    pub fn size(&self) -> Result<BoundedUint<{ u64::MAX as u128 }>, CompactError> {
+        BoundedUint::new(self.meter.read_map_size(self.path.as_slice())? as u128)
+    }
+
+    pub fn is_empty(&self) -> Result<bool, CompactError> {
+        self.meter.read_map_is_empty(self.path.as_slice())
+    }
+}
+
 pub fn map_view<K: CellValue, V: CellValue, D: DB>(
     state: &StateValue<D>,
     index: u8,

@@ -2038,7 +2038,11 @@ dependencies = [
 name = "compact-rust-witness-ledger-map-fixture"
 version = "0.1.0"
 dependencies = [
+ "hex",
  "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
  "serde_json",
 ]
 

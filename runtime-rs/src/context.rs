@@ -152,6 +152,48 @@ impl<'a, D: DB> WitnessReadMeter<'a, D> {
         Ok(empty)
     }
 
+    pub fn read_map_member<K: CellValue>(&self, path: &[u8], key: K) -> Result<bool, CompactError> {
+        let (result, present) = ledger::member_map(
+            self.query,
+            path,
+            key,
+            self.gas_limit.clone(),
+            self.cost_model,
+        )?;
+        *self.observed_gas.borrow_mut() += result.gas_cost;
+        Ok(present)
+    }
+
+    pub fn read_map_lookup<K: CellValue, V: CellValue>(
+        &self,
+        path: &[u8],
+        key: K,
+    ) -> Result<V, CompactError> {
+        let (result, value) = ledger::lookup_map(
+            self.query,
+            path,
+            key,
+            self.gas_limit.clone(),
+            self.cost_model,
+        )?;
+        *self.observed_gas.borrow_mut() += result.gas_cost;
+        Ok(value)
+    }
+
+    pub fn read_map_size(&self, path: &[u8]) -> Result<u64, CompactError> {
+        let (result, size) =
+            ledger::size_map(self.query, path, self.gas_limit.clone(), self.cost_model)?;
+        *self.observed_gas.borrow_mut() += result.gas_cost;
+        Ok(size)
+    }
+
+    pub fn read_map_is_empty(&self, path: &[u8]) -> Result<bool, CompactError> {
+        let (result, empty) =
+            ledger::is_empty_map(self.query, path, self.gas_limit.clone(), self.cost_model)?;
+        *self.observed_gas.borrow_mut() += result.gas_cost;
+        Ok(empty)
+    }
+
     pub fn gas_cost(&self) -> RunningCost {
         self.observed_gas.borrow().clone()
     }

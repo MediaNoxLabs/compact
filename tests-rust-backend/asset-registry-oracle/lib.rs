@@ -20,6 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod types {
     use midnight_compact_runtime as runtime;
+    use runtime::CompactEnum;
     use runtime::{BinaryHashRepr, CompactCellValue, FieldRepr, Fr, FromFieldRepr, MemWrite};
     #[derive(
         Clone,
@@ -100,164 +101,32 @@ pub mod types {
         pub registeredAt: runtime::BoundedUint<18446744073709551615>,
     }
     #[allow(non_camel_case_types)]
-    #[derive(Clone, Copy, Debug, PartialEq, Eq, CompactCellValue)]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, CompactCellValue, CompactEnum)]
     pub enum AssetClass {
         Unspecified,
         Instrument,
         Container,
         Document,
     }
-    impl Default for AssetClass {
-        fn default() -> Self {
-            Self::Unspecified
-        }
-    }
-    impl FieldRepr for AssetClass {
-        fn field_repr<W: MemWrite<Fr>>(&self, writer: &mut W) {
-            let ordinal: u128 = match self {
-                Self::Unspecified => 0,
-                Self::Instrument => 1,
-                Self::Container => 2,
-                Self::Document => 3,
-            };
-            ordinal.field_repr(writer);
-        }
-        fn field_size(&self) -> usize {
-            1
-        }
-    }
-    impl BinaryHashRepr for AssetClass {
-        fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
-            let ordinal: u128 = match self {
-                Self::Unspecified => 0,
-                Self::Instrument => 1,
-                Self::Container => 2,
-                Self::Document => 3,
-            };
-            writer.write(&ordinal.to_le_bytes()[..1]);
-        }
-        fn binary_len(&self) -> usize {
-            1
-        }
-    }
-    impl FromFieldRepr for AssetClass {
-        const FIELD_SIZE: usize = 1;
-        fn from_field_repr(repr: &[Fr]) -> Option<Self> {
-            let ordinal = <u128 as FromFieldRepr>::from_field_repr(repr)?;
-            match ordinal {
-                0 => Some(Self::Unspecified),
-                1 => Some(Self::Instrument),
-                2 => Some(Self::Container),
-                3 => Some(Self::Document),
-                _ => None,
-            }
-        }
-    }
     #[allow(non_camel_case_types)]
-    #[derive(Clone, Copy, Debug, PartialEq, Eq, CompactCellValue)]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, CompactCellValue, CompactEnum)]
     pub enum ListMutation {
         Unspecified,
         Add,
         Drop,
     }
-    impl Default for ListMutation {
-        fn default() -> Self {
-            Self::Unspecified
-        }
-    }
-    impl FieldRepr for ListMutation {
-        fn field_repr<W: MemWrite<Fr>>(&self, writer: &mut W) {
-            let ordinal: u128 = match self {
-                Self::Unspecified => 0,
-                Self::Add => 1,
-                Self::Drop => 2,
-            };
-            ordinal.field_repr(writer);
-        }
-        fn field_size(&self) -> usize {
-            1
-        }
-    }
-    impl BinaryHashRepr for ListMutation {
-        fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
-            let ordinal: u128 = match self {
-                Self::Unspecified => 0,
-                Self::Add => 1,
-                Self::Drop => 2,
-            };
-            writer.write(&ordinal.to_le_bytes()[..1]);
-        }
-        fn binary_len(&self) -> usize {
-            1
-        }
-    }
-    impl FromFieldRepr for ListMutation {
-        const FIELD_SIZE: usize = 1;
-        fn from_field_repr(repr: &[Fr]) -> Option<Self> {
-            let ordinal = <u128 as FromFieldRepr>::from_field_repr(repr)?;
-            match ordinal {
-                0 => Some(Self::Unspecified),
-                1 => Some(Self::Add),
-                2 => Some(Self::Drop),
-                _ => None,
-            }
-        }
-    }
     #[allow(non_camel_case_types)]
-    #[derive(Clone, Copy, Debug, PartialEq, Eq, CompactCellValue)]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, CompactCellValue, CompactEnum)]
     pub enum RecordMutation {
         Unspecified,
         Insert,
         Update,
     }
-    impl Default for RecordMutation {
-        fn default() -> Self {
-            Self::Unspecified
-        }
-    }
-    impl FieldRepr for RecordMutation {
-        fn field_repr<W: MemWrite<Fr>>(&self, writer: &mut W) {
-            let ordinal: u128 = match self {
-                Self::Unspecified => 0,
-                Self::Insert => 1,
-                Self::Update => 2,
-            };
-            ordinal.field_repr(writer);
-        }
-        fn field_size(&self) -> usize {
-            1
-        }
-    }
-    impl BinaryHashRepr for RecordMutation {
-        fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
-            let ordinal: u128 = match self {
-                Self::Unspecified => 0,
-                Self::Insert => 1,
-                Self::Update => 2,
-            };
-            writer.write(&ordinal.to_le_bytes()[..1]);
-        }
-        fn binary_len(&self) -> usize {
-            1
-        }
-    }
-    impl FromFieldRepr for RecordMutation {
-        const FIELD_SIZE: usize = 1;
-        fn from_field_repr(repr: &[Fr]) -> Option<Self> {
-            let ordinal = <u128 as FromFieldRepr>::from_field_repr(repr)?;
-            match ordinal {
-                0 => Some(Self::Unspecified),
-                1 => Some(Self::Insert),
-                2 => Some(Self::Update),
-                _ => None,
-            }
-        }
-    }
 }
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 3);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 4);
     pub fn assertRecordFreshEnough(
         policy: crate::types::FreshnessPolicy,
         record: crate::types::AssetRecord,
@@ -417,7 +286,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 3);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 4);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,

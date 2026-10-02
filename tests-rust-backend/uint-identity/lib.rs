@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 3);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 4);
     pub fn uint_identity(
         value: runtime::BoundedUint<255>,
     ) -> Result<runtime::BoundedUint<255>, runtime::CompactError> {

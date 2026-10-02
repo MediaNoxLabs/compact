@@ -20,6 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod types {
     use midnight_compact_runtime as runtime;
+    use runtime::CompactEnum;
     use runtime::{BinaryHashRepr, CompactCellValue, FieldRepr, Fr, FromFieldRepr, MemWrite};
     #[derive(
         Clone,
@@ -114,160 +115,31 @@ pub mod types {
         pub goes_left: bool,
     }
     #[allow(non_camel_case_types)]
-    #[derive(Clone, Copy, Debug, PartialEq, Eq, CompactCellValue)]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, CompactCellValue, CompactEnum)]
     pub enum PermissibleVotes {
         yes,
         no,
     }
-    impl Default for PermissibleVotes {
-        fn default() -> Self {
-            Self::yes
-        }
-    }
-    impl FieldRepr for PermissibleVotes {
-        fn field_repr<W: MemWrite<Fr>>(&self, writer: &mut W) {
-            let ordinal: u128 = match self {
-                Self::yes => 0,
-                Self::no => 1,
-            };
-            ordinal.field_repr(writer);
-        }
-        fn field_size(&self) -> usize {
-            1
-        }
-    }
-    impl BinaryHashRepr for PermissibleVotes {
-        fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
-            let ordinal: u128 = match self {
-                Self::yes => 0,
-                Self::no => 1,
-            };
-            writer.write(&ordinal.to_le_bytes()[..1]);
-        }
-        fn binary_len(&self) -> usize {
-            1
-        }
-    }
-    impl FromFieldRepr for PermissibleVotes {
-        const FIELD_SIZE: usize = 1;
-        fn from_field_repr(repr: &[Fr]) -> Option<Self> {
-            let ordinal = <u128 as FromFieldRepr>::from_field_repr(repr)?;
-            match ordinal {
-                0 => Some(Self::yes),
-                1 => Some(Self::no),
-                _ => None,
-            }
-        }
-    }
     #[allow(non_camel_case_types)]
-    #[derive(Clone, Copy, Debug, PartialEq, Eq, CompactCellValue)]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, CompactCellValue, CompactEnum)]
     pub enum PrivateState {
         initial,
         committed,
         revealed,
     }
-    impl Default for PrivateState {
-        fn default() -> Self {
-            Self::initial
-        }
-    }
-    impl FieldRepr for PrivateState {
-        fn field_repr<W: MemWrite<Fr>>(&self, writer: &mut W) {
-            let ordinal: u128 = match self {
-                Self::initial => 0,
-                Self::committed => 1,
-                Self::revealed => 2,
-            };
-            ordinal.field_repr(writer);
-        }
-        fn field_size(&self) -> usize {
-            1
-        }
-    }
-    impl BinaryHashRepr for PrivateState {
-        fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
-            let ordinal: u128 = match self {
-                Self::initial => 0,
-                Self::committed => 1,
-                Self::revealed => 2,
-            };
-            writer.write(&ordinal.to_le_bytes()[..1]);
-        }
-        fn binary_len(&self) -> usize {
-            1
-        }
-    }
-    impl FromFieldRepr for PrivateState {
-        const FIELD_SIZE: usize = 1;
-        fn from_field_repr(repr: &[Fr]) -> Option<Self> {
-            let ordinal = <u128 as FromFieldRepr>::from_field_repr(repr)?;
-            match ordinal {
-                0 => Some(Self::initial),
-                1 => Some(Self::committed),
-                2 => Some(Self::revealed),
-                _ => None,
-            }
-        }
-    }
     #[allow(non_camel_case_types)]
-    #[derive(Clone, Copy, Debug, PartialEq, Eq, CompactCellValue)]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, CompactCellValue, CompactEnum)]
     pub enum PublicState {
         setup,
         commit,
         reveal,
         r#final,
     }
-    impl Default for PublicState {
-        fn default() -> Self {
-            Self::setup
-        }
-    }
-    impl FieldRepr for PublicState {
-        fn field_repr<W: MemWrite<Fr>>(&self, writer: &mut W) {
-            let ordinal: u128 = match self {
-                Self::setup => 0,
-                Self::commit => 1,
-                Self::reveal => 2,
-                Self::r#final => 3,
-            };
-            ordinal.field_repr(writer);
-        }
-        fn field_size(&self) -> usize {
-            1
-        }
-    }
-    impl BinaryHashRepr for PublicState {
-        fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
-            let ordinal: u128 = match self {
-                Self::setup => 0,
-                Self::commit => 1,
-                Self::reveal => 2,
-                Self::r#final => 3,
-            };
-            writer.write(&ordinal.to_le_bytes()[..1]);
-        }
-        fn binary_len(&self) -> usize {
-            1
-        }
-    }
-    impl FromFieldRepr for PublicState {
-        const FIELD_SIZE: usize = 1;
-        fn from_field_repr(repr: &[Fr]) -> Option<Self> {
-            let ordinal = <u128 as FromFieldRepr>::from_field_repr(repr)?;
-            match ordinal {
-                0 => Some(Self::setup),
-                1 => Some(Self::commit),
-                2 => Some(Self::reveal),
-                3 => Some(Self::r#final),
-                _ => None,
-            }
-        }
-    }
 }
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 3);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 4);
     pub(crate) fn merkleTreePathRoot(
         path: crate::types::MerkleTreePath,
     ) -> Result<crate::types::MerkleTreeDigest, runtime::CompactError> {
@@ -404,7 +276,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 3);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 4);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,

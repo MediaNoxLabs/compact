@@ -5,7 +5,7 @@ mod recorded;
 mod stateful;
 mod witness;
 
-const RUNTIME_ABI_VERSION: u32 = 3;
+const RUNTIME_ABI_VERSION: u32 = 4;
 
 const GENERATED_HEADER: &str = r#"// This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
@@ -2620,65 +2620,12 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
             .iter()
             .map(|variant| ident(variant))
             .collect::<Result<Vec<_>, _>>()?;
-        let to_ordinal = variants
-            .iter()
-            .enumerate()
-            .map(|(number, variant)| {
-                let number = syn::LitInt::new(&number.to_string(), Span::call_site());
-                quote!(Self::#variant => #number,)
-            })
-            .collect::<Vec<_>>();
-        let from_ordinal = variants
-            .iter()
-            .enumerate()
-            .map(|(number, variant)| {
-                let number = syn::LitInt::new(&number.to_string(), Span::call_site());
-                quote!(#number => Some(Self::#variant),)
-            })
-            .collect::<Vec<_>>();
-        let max_ordinal = variants.len() - 1;
-        let byte_length = ((usize::BITS - max_ordinal.leading_zeros()) as usize).div_ceil(8);
-        let byte_length = syn::LitInt::new(&byte_length.to_string(), Span::call_site());
         struct_items.push(syn::parse_quote! {
             #[allow(non_camel_case_types)]
-            #[derive(Clone, Copy, Debug, PartialEq, Eq, CompactCellValue)]
+            #[derive(Clone, Copy, Debug, PartialEq, Eq, CompactCellValue, CompactEnum)]
             pub enum #name { #(#variants),* }
         });
-        let first = &variants[0];
-        struct_items.push(syn::parse_quote! {
-            impl Default for #name {
-                fn default() -> Self { Self::#first }
-            }
-        });
-        struct_items.push(syn::parse_quote! {
-            impl FieldRepr for #name {
-                fn field_repr<W: MemWrite<Fr>>(&self, writer: &mut W) {
-                    let ordinal: u128 = match self { #(#to_ordinal)* };
-                    ordinal.field_repr(writer);
-                }
-                fn field_size(&self) -> usize { 1 }
-            }
-        });
-        struct_items.push(syn::parse_quote! {
-            impl BinaryHashRepr for #name {
-                fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
-                    let ordinal: u128 = match self { #(#to_ordinal)* };
-                    writer.write(&ordinal.to_le_bytes()[..#byte_length]);
-                }
-                fn binary_len(&self) -> usize { #byte_length }
-            }
-        });
-        struct_items.push(syn::parse_quote! {
-            impl FromFieldRepr for #name {
-                const FIELD_SIZE: usize = 1;
-                fn from_field_repr(repr: &[Fr]) -> Option<Self> {
-                    let ordinal = <u128 as FromFieldRepr>::from_field_repr(repr)?;
-                    match ordinal { #(#from_ordinal)* _ => None }
-                }
-            }
-        });
     }
-    let has_derived_types = !struct_items.is_empty();
     let mut alias_names = HashSet::new();
     let mut alias_reexports = Vec::new();
     for alias in &contract.type_aliases {
@@ -2697,11 +2644,22 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
         struct_items.push(syn::parse_quote!(#[allow(non_camel_case_types)] pub type #name = #ty;));
         alias_reexports.push(name);
     }
-    let derive_imports: Option<syn::Item> = has_derived_types.then(|| {
-        syn::parse_quote!(
+    let mut derive_imports = Vec::<syn::Item>::new();
+    if !struct_definitions.is_empty() {
+        // The upstream struct derives expand with unqualified Fr and MemWrite.
+        derive_imports.push(syn::parse_quote!(
             use runtime::{BinaryHashRepr, CompactCellValue, FieldRepr, Fr, FromFieldRepr, MemWrite};
-        )
-    });
+        ));
+        if !enum_definitions.is_empty() {
+            derive_imports.push(syn::parse_quote!(
+                use runtime::CompactEnum;
+            ));
+        }
+    } else if !enum_definitions.is_empty() {
+        derive_imports.push(syn::parse_quote!(
+            use runtime::{CompactCellValue, CompactEnum};
+        ));
+    }
     let types_module: Option<syn::Item> = if struct_items.is_empty() {
         None
     } else {
@@ -2709,7 +2667,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
             #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
             pub mod types {
                 use midnight_compact_runtime as runtime;
-                #derive_imports
+                #(#derive_imports)*
                 #(#struct_items)*
             }
         })

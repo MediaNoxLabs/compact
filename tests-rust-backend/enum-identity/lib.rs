@@ -20,58 +20,18 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod types {
     use midnight_compact_runtime as runtime;
-    use runtime::{BinaryHashRepr, CompactCellValue, FieldRepr, Fr, FromFieldRepr, MemWrite};
+    use runtime::{CompactCellValue, CompactEnum};
     #[allow(non_camel_case_types)]
-    #[derive(Clone, Copy, Debug, PartialEq, Eq, CompactCellValue)]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, CompactCellValue, CompactEnum)]
     pub enum Choice {
         yes,
         no,
-    }
-    impl Default for Choice {
-        fn default() -> Self {
-            Self::yes
-        }
-    }
-    impl FieldRepr for Choice {
-        fn field_repr<W: MemWrite<Fr>>(&self, writer: &mut W) {
-            let ordinal: u128 = match self {
-                Self::yes => 0,
-                Self::no => 1,
-            };
-            ordinal.field_repr(writer);
-        }
-        fn field_size(&self) -> usize {
-            1
-        }
-    }
-    impl BinaryHashRepr for Choice {
-        fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
-            let ordinal: u128 = match self {
-                Self::yes => 0,
-                Self::no => 1,
-            };
-            writer.write(&ordinal.to_le_bytes()[..1]);
-        }
-        fn binary_len(&self) -> usize {
-            1
-        }
-    }
-    impl FromFieldRepr for Choice {
-        const FIELD_SIZE: usize = 1;
-        fn from_field_repr(repr: &[Fr]) -> Option<Self> {
-            let ordinal = <u128 as FromFieldRepr>::from_field_repr(repr)?;
-            match ordinal {
-                0 => Some(Self::yes),
-                1 => Some(Self::no),
-                _ => None,
-            }
-        }
     }
 }
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 3);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 4);
     pub fn choice_identity(
         value: crate::types::Choice,
     ) -> Result<crate::types::Choice, runtime::CompactError> {

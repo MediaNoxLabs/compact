@@ -20,6 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod types {
     use midnight_compact_runtime as runtime;
+    use runtime::CompactEnum;
     use runtime::{BinaryHashRepr, CompactCellValue, FieldRepr, Fr, FromFieldRepr, MemWrite};
     #[derive(
         Clone,
@@ -704,96 +705,16 @@ pub mod types {
         pub methodId: runtime::FixedBytes<32>,
     }
     #[allow(non_camel_case_types)]
-    #[derive(Clone, Copy, Debug, PartialEq, Eq, CompactCellValue)]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, CompactCellValue, CompactEnum)]
     pub enum HolderBindingProfile {
         explicitDid,
         secretHolder,
         blindedSecretHolder,
     }
-    impl Default for HolderBindingProfile {
-        fn default() -> Self {
-            Self::explicitDid
-        }
-    }
-    impl FieldRepr for HolderBindingProfile {
-        fn field_repr<W: MemWrite<Fr>>(&self, writer: &mut W) {
-            let ordinal: u128 = match self {
-                Self::explicitDid => 0,
-                Self::secretHolder => 1,
-                Self::blindedSecretHolder => 2,
-            };
-            ordinal.field_repr(writer);
-        }
-        fn field_size(&self) -> usize {
-            1
-        }
-    }
-    impl BinaryHashRepr for HolderBindingProfile {
-        fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
-            let ordinal: u128 = match self {
-                Self::explicitDid => 0,
-                Self::secretHolder => 1,
-                Self::blindedSecretHolder => 2,
-            };
-            writer.write(&ordinal.to_le_bytes()[..1]);
-        }
-        fn binary_len(&self) -> usize {
-            1
-        }
-    }
-    impl FromFieldRepr for HolderBindingProfile {
-        const FIELD_SIZE: usize = 1;
-        fn from_field_repr(repr: &[Fr]) -> Option<Self> {
-            let ordinal = <u128 as FromFieldRepr>::from_field_repr(repr)?;
-            match ordinal {
-                0 => Some(Self::explicitDid),
-                1 => Some(Self::secretHolder),
-                2 => Some(Self::blindedSecretHolder),
-                _ => None,
-            }
-        }
-    }
     #[allow(non_camel_case_types)]
-    #[derive(Clone, Copy, Debug, PartialEq, Eq, CompactCellValue)]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, CompactCellValue, CompactEnum)]
     pub enum StatusType {
         revocationRegistry,
-    }
-    impl Default for StatusType {
-        fn default() -> Self {
-            Self::revocationRegistry
-        }
-    }
-    impl FieldRepr for StatusType {
-        fn field_repr<W: MemWrite<Fr>>(&self, writer: &mut W) {
-            let ordinal: u128 = match self {
-                Self::revocationRegistry => 0,
-            };
-            ordinal.field_repr(writer);
-        }
-        fn field_size(&self) -> usize {
-            1
-        }
-    }
-    impl BinaryHashRepr for StatusType {
-        fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
-            let ordinal: u128 = match self {
-                Self::revocationRegistry => 0,
-            };
-            writer.write(&ordinal.to_le_bytes()[..0]);
-        }
-        fn binary_len(&self) -> usize {
-            0
-        }
-    }
-    impl FromFieldRepr for StatusType {
-        const FIELD_SIZE: usize = 1;
-        fn from_field_repr(repr: &[Fr]) -> Option<Self> {
-            let ordinal = <u128 as FromFieldRepr>::from_field_repr(repr)?;
-            match ordinal {
-                0 => Some(Self::revocationRegistry),
-                _ => None,
-            }
-        }
     }
     #[allow(non_camel_case_types)]
     pub type DigitalPassportCredential = crate::types::Credential;
@@ -820,7 +741,7 @@ pub use types::{
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 3);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 4);
     pub fn noSchemaFamilyResolverHint() -> Result<runtime::FixedBytes<32>, runtime::CompactError> {
         Ok(runtime::FixedBytes::new([
             109u8, 105u8, 100u8, 110u8, 105u8, 103u8, 104u8, 116u8, 58u8, 118u8, 99u8, 58u8, 115u8,

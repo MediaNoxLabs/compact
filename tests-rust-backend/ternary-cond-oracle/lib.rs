@@ -20,6 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod types {
     use midnight_compact_runtime as runtime;
+    use runtime::CompactEnum;
     use runtime::{BinaryHashRepr, CompactCellValue, FieldRepr, Fr, FromFieldRepr, MemWrite};
     #[derive(
         Clone,
@@ -51,60 +52,17 @@ pub mod types {
         pub value: runtime::Field,
     }
     #[allow(non_camel_case_types)]
-    #[derive(Clone, Copy, Debug, PartialEq, Eq, CompactCellValue)]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, CompactCellValue, CompactEnum)]
     pub enum Color {
         red,
         green,
         blue,
     }
-    impl Default for Color {
-        fn default() -> Self {
-            Self::red
-        }
-    }
-    impl FieldRepr for Color {
-        fn field_repr<W: MemWrite<Fr>>(&self, writer: &mut W) {
-            let ordinal: u128 = match self {
-                Self::red => 0,
-                Self::green => 1,
-                Self::blue => 2,
-            };
-            ordinal.field_repr(writer);
-        }
-        fn field_size(&self) -> usize {
-            1
-        }
-    }
-    impl BinaryHashRepr for Color {
-        fn binary_repr<W: MemWrite<u8>>(&self, writer: &mut W) {
-            let ordinal: u128 = match self {
-                Self::red => 0,
-                Self::green => 1,
-                Self::blue => 2,
-            };
-            writer.write(&ordinal.to_le_bytes()[..1]);
-        }
-        fn binary_len(&self) -> usize {
-            1
-        }
-    }
-    impl FromFieldRepr for Color {
-        const FIELD_SIZE: usize = 1;
-        fn from_field_repr(repr: &[Fr]) -> Option<Self> {
-            let ordinal = <u128 as FromFieldRepr>::from_field_repr(repr)?;
-            match ordinal {
-                0 => Some(Self::red),
-                1 => Some(Self::green),
-                2 => Some(Self::blue),
-                _ => None,
-            }
-        }
-    }
 }
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 3);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 4);
     pub(crate) fn some(
         value: runtime::Field,
     ) -> Result<crate::types::Maybe, runtime::CompactError> {
@@ -459,7 +417,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 3);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 4);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,

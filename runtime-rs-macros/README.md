@@ -1,10 +1,15 @@
 # Midnight Compact runtime derives
 
 This crate provides procedural derives for ledger representation types emitted
-by the Compact Rust backend: `CompactCellValue`, `CompactMerklePath`,
+by the Compact Rust backend: `CompactCellValue`, `CompactEnum`, `CompactMerklePath`,
 `CompactMerklePathEntry`, and `CompactMerkleTreeDigest`. The main
 `midnight-compact-runtime` crate reexports these derives and is the intended
 dependency for generated contracts.
+
+`CompactEnum` derives the default first variant and the checked field and
+binary representations for a concrete unit enum. Variant order determines
+ordinals; the binary width grows from one to two bytes at 257 variants. It
+rejects data-carrying variants and explicit Rust discriminants.
 
 The derives implement mechanical conversions to Midnight ledger values. The
 compiler owns source typing and the runtime owns the corresponding ledger

@@ -42,6 +42,28 @@ fn identity(result: Type, body: Expr) -> Contract {
 }
 
 #[test]
+fn generated_unit_enum_uses_checked_derive_without_handwritten_codecs() {
+    let choice = Type::Enum {
+        name: "Choice".into(),
+        variants: vec!["yes".into(), "no".into()],
+    };
+    let mut contract = identity(
+        choice.clone(),
+        Expr::Parameter {
+            name: "value".into(),
+        },
+    );
+    contract.circuits[0].parameters[0].ty = choice;
+    let source = render(&contract).unwrap();
+    assert!(source.contains("CompactCellValue, CompactEnum"));
+    assert!(source.contains("pub enum Choice"));
+    assert!(source.contains("RUST_RUNTIME_ABI == 4"));
+    assert!(!source.contains("impl FieldRepr for Choice"));
+    assert!(!source.contains("impl BinaryHashRepr for Choice"));
+    assert!(!source.contains("impl FromFieldRepr for Choice"));
+}
+
+#[test]
 fn exported_alias_is_typed_and_reexported() {
     let mut contract = identity(
         Type::Field,

@@ -1612,6 +1612,7 @@ dependencies = [
  "compact-rust-stateful-circuit-call-fixture",
  "compact-rust-tiny-oracle-fixture",
  "compact-rust-witness-cell-write-fixture",
+ "compact-rust-witness-list-shapes-fixture",
  "futures-executor",
  "midnight-base-crypto",
  "midnight-circuits",
@@ -2056,6 +2057,18 @@ dependencies = [
 
 [[package]]
 name = "compact-rust-witness-ledger-set-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde_json",
+]
+
+[[package]]
+name = "compact-rust-witness-list-shapes-fixture"
 version = "0.1.0"
 dependencies = [
  "hex",

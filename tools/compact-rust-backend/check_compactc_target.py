@@ -44,6 +44,7 @@ TINY_SOURCE = ROOT / "examples/rust_backend/tiny_oracle.compact"
 CELL_READ_SOURCE = ROOT / "examples/rust_backend/cell_read.compact"
 WITNESS_CELL_SOURCE = ROOT / "examples/rust_backend/witness_cell_write.compact"
 MERKLE_WITNESS_SOURCE = ROOT / "examples/rust_backend/merkle_path_witness.compact"
+LIST_SHAPES_SOURCE = ROOT / "examples/rust_backend/witness_list_shapes.compact"
 NESTED_COUNTER_SOURCE = ROOT / "examples/rust_backend/stateful_circuit_call.compact"
 NESTED_WITNESS_SOURCE = ROOT / "examples/rust_backend/nested_witness_call_oracle.compact"
 ALIAS_SOURCE = ROOT / "examples/rust_backend/aliases_oracle.compact"
@@ -506,6 +507,28 @@ def check_merkle_witness_consumer(compiler: str, base: Path) -> None:
     assert rejected.returncode != 0 and "expected `MerkleTreeDigest`" in rejected.stderr, rejected.stderr
 
 
+def check_list_shapes_consumer(compiler: str, base: Path) -> None:
+    output = base / "list-shapes-contract"
+    run(compiler, "--target", "rust", "--skip-zk", str(LIST_SHAPES_SOURCE), str(output))
+    check_manifest(output)
+    contract = output / "contract"
+    package = tomllib.loads((contract / "Cargo.toml").read_text())
+    consumer = base / "list-shapes-consumer"
+    consumer.mkdir()
+    (consumer / "tests").mkdir()
+    (consumer / "Cargo.toml").write_text(
+        "[package]\nname = \"compactc-list-shapes-smoke\"\n"
+        "version = \"0.1.0\"\nedition = \"2024\"\n\n[dependencies]\n"
+        f'{package["package"]["name"]} = {{ path = {json.dumps(str(contract))} }}\n'
+    )
+    (consumer / "tests/list_shapes.rs").write_bytes(
+        (ROOT / "tools/compact-rust-backend/consumers/list_shapes.rs").read_bytes()
+    )
+    environment = os.environ.copy()
+    environment.setdefault("CARGO_TARGET_DIR", str(ROOT / "target/compactc-consumer"))
+    subprocess.run(["cargo", "test", "--quiet"], cwd=consumer, env=environment, check=True)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--consumer", action="store_true", help="build and run a separate consumer")
@@ -578,6 +601,7 @@ def main() -> None:
             check_shared_runtime_consumer(compiler, base)
             check_witness_consumer(compiler, base)
             check_merkle_witness_consumer(compiler, base)
+            check_list_shapes_consumer(compiler, base)
         if args.proof:
             proof = base / "proof"
             run(compiler, "--target", "rust", str(SOURCE), str(proof))
@@ -670,6 +694,14 @@ def main() -> None:
                     assert (list_proof / "keys" / f"{circuit}.{extension}").is_file()
                 for extension in ("zkir", "bzkir"):
                     assert (list_proof / "zkir" / f"{circuit}.{extension}").is_file()
+            list_shapes_proof = base / "list-shapes-proof"
+            run(compiler, "--target", "rust", str(LIST_SHAPES_SOURCE), str(list_shapes_proof))
+            check_manifest(list_shapes_proof)
+            for circuit in ("push_flag", "push_count", "push_tag", "push_choice", "push_packet"):
+                for extension in ("prover", "verifier"):
+                    assert (list_shapes_proof / "keys" / f"{circuit}.{extension}").is_file()
+                for extension in ("zkir", "bzkir"):
+                    assert (list_shapes_proof / "zkir" / f"{circuit}.{extension}").is_file()
             constructor_list_proof = base / "constructor-list-proof"
             run(compiler, "--target", "rust", str(CONSTRUCTOR_LIST_SOURCE), str(constructor_list_proof))
             check_manifest(constructor_list_proof)
@@ -708,6 +740,7 @@ def main() -> None:
                 str(enum_cell_proof),
                 str(tiny_proof),
                 str(nested_map_shape_proof),
+                str(list_shapes_proof),
             )
     print("compactc target boundary and manifest: passed")
 

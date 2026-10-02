@@ -1,0 +1,43 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//  	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import CompactStandardLibrary;
+
+export enum Choice { yes, no }
+struct Packet { tag: Bytes<3>; count: Uint<16>; }
+
+export ledger flags: List<Boolean>;
+export ledger counts: List<Uint<16>>;
+export ledger tags: List<Bytes<3>>;
+export ledger choices: List<Choice>;
+export ledger packets: List<Packet>;
+
+witness inspect_flags(): Boolean;
+witness inspect_counts(): Boolean;
+witness inspect_tags(): Boolean;
+witness inspect_choices(): Boolean;
+witness inspect_packets(): Boolean;
+
+export circuit push_flag(value: Boolean): [] { flags.pushFront(disclose(value)); }
+export circuit push_count(value: Uint<16>): [] { counts.pushFront(disclose(value)); }
+export circuit push_tag(value: Bytes<3>): [] { tags.pushFront(disclose(value)); }
+export circuit push_choice(value: Choice): [] { choices.pushFront(disclose(value)); }
+export circuit push_packet(value: Packet): [] { packets.pushFront(disclose(value)); }
+
+export circuit read_flags(): Boolean { return disclose(inspect_flags()); }
+export circuit read_counts(): Boolean { return disclose(inspect_counts()); }
+export circuit read_tags(): Boolean { return disclose(inspect_tags()); }
+export circuit read_choices(): Boolean { return disclose(inspect_choices()); }
+export circuit read_packets(): Boolean { return disclose(inspect_packets()); }

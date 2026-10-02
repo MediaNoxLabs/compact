@@ -32,6 +32,7 @@ compact-rust-map-boolean-field-fixture = { path = "../../tests-rust-backend/map-
 compact-rust-nested-map-shape-fixture = { path = "../../tests-rust-backend/nested-map-shape" }
 compact-rust-constructor-map-actions-fixture = { path = "../../tests-rust-backend/constructor-map-actions" }
 compact-rust-list-field-fixture = { path = "../../tests-rust-backend/list-field" }
+compact-rust-witness-list-shapes-fixture = { path = "../../tests-rust-backend/witness-list-shapes" }
 compact-rust-constructor-list-actions-fixture = { path = "../../tests-rust-backend/constructor-list-actions" }
 compact-rust-tiny-oracle-fixture = { path = "../../tests-rust-backend/tiny-oracle" }
 compact-rust-recorded-enum-cell-fixture = { path = "../../tests-rust-backend/recorded-enum-cell" }

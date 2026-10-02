@@ -1,0 +1,980 @@
+{
+  "initialState": "6d69646e696768743a636f6e74726163742d73746174655b76365d3aa400040004000801040008400804080401040c080104400004100000000000000000000000000008020808001408040c04180403041c0801044000202020200000000000000000000000080210081c2408041404280403042c0004300801040434f4030472e4000104000001040000010400000104000001040000010400000104000001040000010400000104000001040000010400000104000001040000043815020304ff0102400000104000001040000010400000104000001040000010400000104000001040000010400000108010404010403040108040c080104000001080208400104000001080104040104000001080104040104010401084008000104000001040000010400000104000001040000010400000104000001040000010400000104000043c15020304ff0102010404010401040108400800010400000104000001040000010400000104000001040000010400000104000001040000010400000104000001040000010400000108010404010403040108040c080104000001080208400104000001080104040104000001080104040104010401084008000104000001040000010400000100044015020304ff0102c08010400000108020840010400000108010404010400000108010404010401040108400800010400000104000001040000010400000104000001040000010400000104000001040000010400000104000001040000010400000108010404010403040108040c080104000001080208400104000001080104040104000001080044415020304ff0102010403040108041408010403040108040c08010400000108020840010400000108010404010400000108010404010401040108400800010400000104000001040000010400000104000001040000010400000104000001040000010400000104000001040000010400000108021040010400000108010404010403040108040000302c707573685f63686f696365084c0000045008010404549003043f80ff098cf439c229a10b15fed4543b8a197bd35c380d54fe7f7e3c5de27ec535f0002c28707573685f636f756e74085c0000046008010404649003043f80bccd7dc5a9294db47ea7de1aa5e645209e0f1d0ee136d999f2e630f2405c1400002824707573685f666c6167086c0000047008010404749003043f808ce1a5fe2f66c7c6c043940864a3084c9bbf64d3dc0b4aa577aec704be27f69000302c707573685f7061636b6574087c0000048008010404849003043f800e8ab9b5bd0cea0dc3e7af3196e84d00070d140d7d739bb29be78d75127dadc0002420707573685f746167088c0000049008010404949003043f80b6d817b958c0abf80582462f250f3dd6c4fef7b50ae464c107924de515585d304000000000005800000068780088000098080214142800489c001003000400",
+  "populatedState": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a010100040404000801040404900304408074d44b2ca5d4d22166be8090eb1e0779ff8feea4251ff6e5a40aaabd92a6c38e000c412a02040c0401000400041408010400084008041c04010420080104401418241414141414141414141414141408020808142808040c042c040304300801040008010804380401043c080104401434401414141414141414141414141408020808104408040c04480403044c080104001443010203030454040108584408040c045c040304600801040008010104680401086c4408040c0470040304740801040024824304050607c20302047c040108804408040c04840403048808010440145064788c141414141414141414141408021008749008041404940403049800049c08010404a0a403044a94010403040074d44b2ca5d4d22166be8090eb1e0779ff8feea4251ff6e5a40aaabd92a6c38e00302c707573685f63686f69636508a8140004ac08010404b09003043f80ff098cf439c229a10b15fed4543b8a197bd35c380d54fe7f7e3c5de27ec535f0002c28707573685f636f756e7408b8140004bc08010404c09003043f80bccd7dc5a9294db47ea7de1aa5e645209e0f1d0ee136d999f2e630f2405c1400002824707573685f666c616708c8140004cc08010404d09003043f808ce1a5fe2f66c7c6c043940864a3084c9bbf64d3dc0b4aa577aec704be27f69000302c707573685f7061636b657408d8140004dc08010404e09003043f800e8ab9b5bd0cea0dc3e7af3196e84d00070d140d7d739bb29be78d75127dadc0002420707573685f74616708e8140004ec08010404f09003043f80b6d817b958c0abf80582462f250f3dd6c4fef7b50ae464c107924de515585d30401414141414b4141414c4d414e41414f4080214149408a4f8141003000400",
+  "before": {
+    "flags": {
+      "result": false,
+      "privateState": 1,
+      "privateTranscriptOutputs": [
+        {
+          "valueAtoms": [
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        }
+      ],
+      "publicTranscript": [],
+      "reportedGas": {
+        "readTime": "0",
+        "computeTime": "0",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "340000000",
+            "computeTime": "1427972931",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "idx",
+            "dup",
+            "type",
+            "push",
+            "eq",
+            "branch",
+            "push",
+            "swap",
+            "concat",
+            "jmp",
+            "pop",
+            "push",
+            "popeq"
+          ]
+        },
+        {
+          "gasCost": {
+            "readTime": "340000000",
+            "computeTime": "1425303631",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "idx",
+            "type",
+            "push",
+            "eq",
+            "popeq"
+          ]
+        },
+        {
+          "gasCost": {
+            "readTime": "340000000",
+            "computeTime": "1423414095",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "idx",
+            "popeq"
+          ]
+        }
+      ],
+      "observation": {
+        "name": "flags",
+        "head": {
+          "is_some": false,
+          "value": false
+        },
+        "empty": true,
+        "length": "0"
+      }
+    },
+    "counts": {
+      "result": false,
+      "privateState": 2,
+      "privateTranscriptOutputs": [
+        {
+          "valueAtoms": [
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        }
+      ],
+      "publicTranscript": [],
+      "reportedGas": {
+        "readTime": "0",
+        "computeTime": "0",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "340000000",
+            "computeTime": "1427972931",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "idx",
+            "dup",
+            "type",
+            "push",
+            "eq",
+            "branch",
+            "push",
+            "swap",
+            "concat",
+            "jmp",
+            "pop",
+            "push",
+            "popeq"
+          ]
+        },
+        {
+          "gasCost": {
+            "readTime": "340000000",
+            "computeTime": "1425303631",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "idx",
+            "type",
+            "push",
+            "eq",
+            "popeq"
+          ]
+        },
+        {
+          "gasCost": {
+            "readTime": "340000000",
+            "computeTime": "1423414095",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "idx",
+            "popeq"
+          ]
+        }
+      ],
+      "observation": {
+        "name": "counts",
+        "head": {
+          "is_some": false,
+          "value": "0"
+        },
+        "empty": true,
+        "length": "0"
+      }
+    },
+    "tags": {
+      "result": false,
+      "privateState": 3,
+      "privateTranscriptOutputs": [
+        {
+          "valueAtoms": [
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        }
+      ],
+      "publicTranscript": [],
+      "reportedGas": {
+        "readTime": "0",
+        "computeTime": "0",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "340000000",
+            "computeTime": "1427972931",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "idx",
+            "dup",
+            "type",
+            "push",
+            "eq",
+            "branch",
+            "push",
+            "swap",
+            "concat",
+            "jmp",
+            "pop",
+            "push",
+            "popeq"
+          ]
+        },
+        {
+          "gasCost": {
+            "readTime": "340000000",
+            "computeTime": "1425303631",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "idx",
+            "type",
+            "push",
+            "eq",
+            "popeq"
+          ]
+        },
+        {
+          "gasCost": {
+            "readTime": "340000000",
+            "computeTime": "1423414095",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "idx",
+            "popeq"
+          ]
+        }
+      ],
+      "observation": {
+        "name": "tags",
+        "head": {
+          "is_some": false,
+          "value": {
+            "0": 0,
+            "1": 0,
+            "2": 0
+          }
+        },
+        "empty": true,
+        "length": "0"
+      }
+    },
+    "choices": {
+      "result": false,
+      "privateState": 4,
+      "privateTranscriptOutputs": [
+        {
+          "valueAtoms": [
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        }
+      ],
+      "publicTranscript": [],
+      "reportedGas": {
+        "readTime": "0",
+        "computeTime": "0",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "340000000",
+            "computeTime": "1427972931",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "idx",
+            "dup",
+            "type",
+            "push",
+            "eq",
+            "branch",
+            "push",
+            "swap",
+            "concat",
+            "jmp",
+            "pop",
+            "push",
+            "popeq"
+          ]
+        },
+        {
+          "gasCost": {
+            "readTime": "340000000",
+            "computeTime": "1425303631",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "idx",
+            "type",
+            "push",
+            "eq",
+            "popeq"
+          ]
+        },
+        {
+          "gasCost": {
+            "readTime": "340000000",
+            "computeTime": "1423414095",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "idx",
+            "popeq"
+          ]
+        }
+      ],
+      "observation": {
+        "name": "choices",
+        "head": {
+          "is_some": false,
+          "value": 0
+        },
+        "empty": true,
+        "length": "0"
+      }
+    },
+    "packets": {
+      "result": false,
+      "privateState": 5,
+      "privateTranscriptOutputs": [
+        {
+          "valueAtoms": [
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        }
+      ],
+      "publicTranscript": [],
+      "reportedGas": {
+        "readTime": "0",
+        "computeTime": "0",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "340000000",
+            "computeTime": "1427972961",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "idx",
+            "dup",
+            "type",
+            "push",
+            "eq",
+            "branch",
+            "push",
+            "swap",
+            "concat",
+            "jmp",
+            "pop",
+            "push",
+            "popeq"
+          ]
+        },
+        {
+          "gasCost": {
+            "readTime": "340000000",
+            "computeTime": "1425303631",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "idx",
+            "type",
+            "push",
+            "eq",
+            "popeq"
+          ]
+        },
+        {
+          "gasCost": {
+            "readTime": "340000000",
+            "computeTime": "1423414095",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "idx",
+            "popeq"
+          ]
+        }
+      ],
+      "observation": {
+        "name": "packets",
+        "head": {
+          "is_some": false,
+          "value": {
+            "tag": {
+              "0": 0,
+              "1": 0,
+              "2": 0
+            },
+            "count": "0"
+          }
+        },
+        "empty": true,
+        "length": "0"
+      }
+    }
+  },
+  "after": {
+    "flags": {
+      "result": true,
+      "privateState": 6,
+      "privateTranscriptOutputs": [
+        {
+          "valueAtoms": [
+            [
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        }
+      ],
+      "publicTranscript": [],
+      "reportedGas": {
+        "readTime": "0",
+        "computeTime": "0",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "340000000",
+            "computeTime": "1429923784",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "idx",
+            "dup",
+            "type",
+            "push",
+            "eq",
+            "branch",
+            "push",
+            "swap",
+            "concat",
+            "jmp",
+            "pop",
+            "push",
+            "popeq"
+          ]
+        },
+        {
+          "gasCost": {
+            "readTime": "340000000",
+            "computeTime": "1425239624",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "idx",
+            "type",
+            "push",
+            "eq",
+            "popeq"
+          ]
+        },
+        {
+          "gasCost": {
+            "readTime": "340000000",
+            "computeTime": "1423414095",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "idx",
+            "popeq"
+          ]
+        }
+      ],
+      "observation": {
+        "name": "flags",
+        "head": {
+          "is_some": true,
+          "value": true
+        },
+        "empty": false,
+        "length": "1"
+      }
+    },
+    "counts": {
+      "result": true,
+      "privateState": 7,
+      "privateTranscriptOutputs": [
+        {
+          "valueAtoms": [
+            [
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        }
+      ],
+      "publicTranscript": [],
+      "reportedGas": {
+        "readTime": "0",
+        "computeTime": "0",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "340000000",
+            "computeTime": "1429924245",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "idx",
+            "dup",
+            "type",
+            "push",
+            "eq",
+            "branch",
+            "push",
+            "swap",
+            "concat",
+            "jmp",
+            "pop",
+            "push",
+            "popeq"
+          ]
+        },
+        {
+          "gasCost": {
+            "readTime": "340000000",
+            "computeTime": "1425239624",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "idx",
+            "type",
+            "push",
+            "eq",
+            "popeq"
+          ]
+        },
+        {
+          "gasCost": {
+            "readTime": "340000000",
+            "computeTime": "1423414095",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "idx",
+            "popeq"
+          ]
+        }
+      ],
+      "observation": {
+        "name": "counts",
+        "head": {
+          "is_some": true,
+          "value": "42"
+        },
+        "empty": false,
+        "length": "1"
+      }
+    },
+    "tags": {
+      "result": true,
+      "privateState": 8,
+      "privateTranscriptOutputs": [
+        {
+          "valueAtoms": [
+            [
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        }
+      ],
+      "publicTranscript": [],
+      "reportedGas": {
+        "readTime": "0",
+        "computeTime": "0",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "340000000",
+            "computeTime": "1429925167",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "idx",
+            "dup",
+            "type",
+            "push",
+            "eq",
+            "branch",
+            "push",
+            "swap",
+            "concat",
+            "jmp",
+            "pop",
+            "push",
+            "popeq"
+          ]
+        },
+        {
+          "gasCost": {
+            "readTime": "340000000",
+            "computeTime": "1425239624",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "idx",
+            "type",
+            "push",
+            "eq",
+            "popeq"
+          ]
+        },
+        {
+          "gasCost": {
+            "readTime": "340000000",
+            "computeTime": "1423414095",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "idx",
+            "popeq"
+          ]
+        }
+      ],
+      "observation": {
+        "name": "tags",
+        "head": {
+          "is_some": true,
+          "value": {
+            "0": 1,
+            "1": 2,
+            "2": 3
+          }
+        },
+        "empty": false,
+        "length": "1"
+      }
+    },
+    "choices": {
+      "result": true,
+      "privateState": 9,
+      "privateTranscriptOutputs": [
+        {
+          "valueAtoms": [
+            [
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        }
+      ],
+      "publicTranscript": [],
+      "reportedGas": {
+        "readTime": "0",
+        "computeTime": "0",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "340000000",
+            "computeTime": "1429923784",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "idx",
+            "dup",
+            "type",
+            "push",
+            "eq",
+            "branch",
+            "push",
+            "swap",
+            "concat",
+            "jmp",
+            "pop",
+            "push",
+            "popeq"
+          ]
+        },
+        {
+          "gasCost": {
+            "readTime": "340000000",
+            "computeTime": "1425239624",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "idx",
+            "type",
+            "push",
+            "eq",
+            "popeq"
+          ]
+        },
+        {
+          "gasCost": {
+            "readTime": "340000000",
+            "computeTime": "1423414095",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "idx",
+            "popeq"
+          ]
+        }
+      ],
+      "observation": {
+        "name": "choices",
+        "head": {
+          "is_some": true,
+          "value": 1
+        },
+        "empty": false,
+        "length": "1"
+      }
+    },
+    "packets": {
+      "result": true,
+      "privateState": 10,
+      "privateTranscriptOutputs": [
+        {
+          "valueAtoms": [
+            [
+              1
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 1
+              }
+            }
+          ]
+        }
+      ],
+      "publicTranscript": [],
+      "reportedGas": {
+        "readTime": "0",
+        "computeTime": "0",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "340000000",
+            "computeTime": "1429926981",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "idx",
+            "dup",
+            "type",
+            "push",
+            "eq",
+            "branch",
+            "push",
+            "swap",
+            "concat",
+            "jmp",
+            "pop",
+            "push",
+            "popeq"
+          ]
+        },
+        {
+          "gasCost": {
+            "readTime": "340000000",
+            "computeTime": "1425239624",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "idx",
+            "type",
+            "push",
+            "eq",
+            "popeq"
+          ]
+        },
+        {
+          "gasCost": {
+            "readTime": "340000000",
+            "computeTime": "1423414095",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "idx",
+            "popeq"
+          ]
+        }
+      ],
+      "observation": {
+        "name": "packets",
+        "head": {
+          "is_some": true,
+          "value": {
+            "tag": {
+              "0": 4,
+              "1": 5,
+              "2": 6
+            },
+            "count": "7"
+          }
+        },
+        "empty": false,
+        "length": "1"
+      }
+    }
+  }
+}

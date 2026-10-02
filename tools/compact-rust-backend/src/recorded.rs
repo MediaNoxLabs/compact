@@ -98,7 +98,12 @@ pub(crate) fn render_recorded_circuit(
     ) -> Option<syn::Expr> {
         if !matches!(
             ty,
-            Type::Boolean | Type::Field | Type::Bytes { .. } | Type::Enum { .. }
+            Type::Boolean
+                | Type::Field
+                | Type::Bytes { .. }
+                | Type::Unsigned { .. }
+                | Type::Enum { .. }
+                | Type::Struct { .. }
         ) {
             return None;
         }
@@ -115,7 +120,10 @@ pub(crate) fn render_recorded_circuit(
                     (actual == &ty).then(|| syn::parse_quote!(#rust_name))
                 })
                 .map(|source| {
-                    if matches!(ty, Type::Bytes { .. } | Type::Enum { .. }) {
+                    if matches!(
+                        ty,
+                        Type::Bytes { .. } | Type::Enum { .. } | Type::Struct { .. }
+                    ) {
                         syn::parse_quote!((#source).clone())
                     } else {
                         source
@@ -614,6 +622,10 @@ pub(crate) fn render_recorded_circuit(
                 next_temp,
                 visiting,
             ),
+            Type::Bytes { .. }
+            | Type::Unsigned { .. }
+            | Type::Enum { .. }
+            | Type::Struct { .. } => Ok(cell_source(value, ty, locals, parameters)),
             _ => Ok(None),
         }
     }

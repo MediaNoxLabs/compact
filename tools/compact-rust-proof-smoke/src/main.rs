@@ -42,15 +42,17 @@ use compact_rust_set_oracle_fixture::ledger_contract as set_oracle_contract;
 use compact_rust_stateful_circuit_call_fixture::ledger_contract as nested_contract;
 use compact_rust_tiny_oracle_fixture::ledger_contract as tiny_contract;
 use compact_rust_witness_cell_write_fixture::ledger_contract as witness_contract;
+use compact_rust_witness_list_shapes_fixture::ledger_contract as list_shapes_contract;
+use compact_rust_witness_list_shapes_fixture::types::{Choice as ListChoice, Packet};
 use midnight_base_crypto::data_provider::{FetchMode, MidnightDataProvider, OutputMode};
 use midnight_base_crypto::time::Timestamp;
-use midnight_compact_runtime::BoundedUint;
 use midnight_compact_runtime::Field;
 use midnight_compact_runtime::context::{ConstructorContext, WitnessContext};
 use midnight_compact_runtime::fab::AlignedValue;
 use midnight_compact_runtime::ledger::{DefaultDB, StateValue, read_cell, read_counter};
 use midnight_compact_runtime::recording::RecordedCircuitResult;
 use midnight_compact_runtime::transaction::{CallSpec, prepare_call};
+use midnight_compact_runtime::{BoundedUint, FixedBytes};
 use midnight_ledger::construct::{ContractCallExt, ContractCallPrototype};
 use midnight_ledger::semantics::{TransactionContext, TransactionResult};
 use midnight_ledger::structure::{
@@ -326,9 +328,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     let enum_cell_root = arguments.next();
     let tiny_root = arguments.next();
     let nested_map_shape_root = arguments.next();
+    let list_shapes_root = arguments.next();
     if arguments.next().is_some() {
         return Err(
-            "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output> [witness-output] [nested-output] [nested-witness-output] [set-output] [set-oracle-output] [map-output] [constructor-map-output] [list-output] [constructor-list-output] [enum-cell-output] [tiny-output] [nested-map-shape-output]"
+            "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output> [witness-output] [nested-output] [nested-witness-output] [set-output] [set-oracle-output] [map-output] [constructor-map-output] [list-output] [constructor-list-output] [enum-cell-output] [tiny-output] [nested-map-shape-output] [list-shapes-output]"
                 .into(),
         );
     }
@@ -1044,6 +1047,113 @@ fn main() -> Result<(), Box<dyn Error>> {
                         if length != expected {
                             return Err("proven constructor List call produced wrong length".into());
                         }
+                    }
+                    Ok(())
+                },
+            )?;
+        }
+    }
+    if let Some(list_shapes_root) = list_shapes_root.as_ref().map(Path::new) {
+        for (circuit, index) in [
+            ("push_flag", 0),
+            ("push_count", 1),
+            ("push_tag", 2),
+            ("push_choice", 3),
+            ("push_packet", 4),
+        ] {
+            let initial = list_shapes_contract::initial_state(ConstructorContext::new(()))?;
+            let deploy = make_deploy(
+                list_shapes_root,
+                circuit,
+                initial.ledger_state.get_ref().clone(),
+                &mut rng,
+            )?;
+            let context = initial.into_circuit_context(deploy.address());
+            let contract = list_shapes_contract::Contract::default();
+            let call = match circuit {
+                "push_flag" => check_generated_trace(
+                    list_shapes_root,
+                    circuit,
+                    contract.recording.push_flag(context, true)?,
+                    true,
+                )?,
+                "push_count" => {
+                    let value = BoundedUint::<65535>::new(42)?;
+                    check_generated_trace(
+                        list_shapes_root,
+                        circuit,
+                        contract.recording.push_count(context, value)?,
+                        value,
+                    )?
+                }
+                "push_tag" => {
+                    let value = FixedBytes::new([1, 2, 3]);
+                    check_generated_trace(
+                        list_shapes_root,
+                        circuit,
+                        contract.recording.push_tag(context, value)?,
+                        value,
+                    )?
+                }
+                "push_choice" => check_generated_trace(
+                    list_shapes_root,
+                    circuit,
+                    contract.recording.push_choice(context, ListChoice::no)?,
+                    ListChoice::no,
+                )?,
+                "push_packet" => {
+                    let value = Packet {
+                        tag: FixedBytes::new([4, 5, 6]),
+                        count: BoundedUint::<65535>::new(7)?,
+                    };
+                    check_generated_trace(
+                        list_shapes_root,
+                        circuit,
+                        contract.recording.push_packet(context, value.clone())?,
+                        value,
+                    )?
+                }
+                _ => unreachable!(),
+            };
+            check_transaction(
+                list_shapes_root,
+                circuit,
+                deploy,
+                call,
+                &mut rng,
+                |contract| {
+                    let StateValue::Array(fields) = contract.data.get_ref() else {
+                        return Err("List shape contract state is not an array".into());
+                    };
+                    let StateValue::Array(items) = fields.get(index).ok_or("List field missing")?
+                    else {
+                        return Err("List field is not an array".into());
+                    };
+                    if read_cell::<u64, _>(items.get(2).ok_or("List length missing")?)? != 1 {
+                        return Err("proven typed List call produced wrong length".into());
+                    }
+                    let head = items.get(0).ok_or("List head missing")?;
+                    let correct = match circuit {
+                        "push_flag" => read_cell::<bool, _>(head)? == true,
+                        "push_count" => {
+                            read_cell::<BoundedUint<65535>, _>(head)?
+                                == BoundedUint::<65535>::new(42)?
+                        }
+                        "push_tag" => {
+                            read_cell::<FixedBytes<3>, _>(head)? == FixedBytes::new([1, 2, 3])
+                        }
+                        "push_choice" => read_cell::<ListChoice, _>(head)? == ListChoice::no,
+                        "push_packet" => {
+                            read_cell::<Packet, _>(head)?
+                                == Packet {
+                                    tag: FixedBytes::new([4, 5, 6]),
+                                    count: BoundedUint::<65535>::new(7)?,
+                                }
+                        }
+                        _ => unreachable!(),
+                    };
+                    if !correct {
+                        return Err("proven typed List call wrote wrong head".into());
                     }
                     Ok(())
                 },

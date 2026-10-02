@@ -270,6 +270,11 @@ def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
         "    let _: midnight_compact_runtime::slots::MerkleSlot<midnight_compact_runtime::BoundedUint<255>, 3, true> = compact_contract_hmt_insert_oracle::ledger_slots::t;\n"
         "    let historic_insert = compact_contract_hmt_insert_oracle::ledger_slots::t.insert(historic_context, midnight_compact_runtime::BoundedUint::<255>::new(7).unwrap()).unwrap();\n"
         "    let _historic_reset = compact_contract_hmt_insert_oracle::ledger_slots::t.reset_history(historic_insert.context).unwrap();\n"
+        "    let historic = initial_historic_merkle_state(ConstructorContext::new(())).unwrap();\n"
+        "    let historic_context = historic.into_circuit_context(ContractAddress::default());\n"
+        "    let recorded_historic = compact_contract_hmt_insert_oracle::ledger_contract::recorded::append(historic_context, midnight_compact_runtime::BoundedUint::<255>::new(7).unwrap()).unwrap();\n"
+        "    let historic_replay = recorded_historic.public.initial().query(recorded_historic.public.verify_ops(), None, &recorded_historic.execution.context.cost_model).unwrap();\n"
+        "    assert_eq!(historic_replay.context.effects, recorded_historic.execution.context.query.effects);\n"
         "    assert_eq!(field_add(2u64.into(), 3u64.into()).unwrap(), 5u64.into());\n"
         "}\n"
     )
@@ -409,6 +414,45 @@ def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
     )
     assert rejected.returncode != 0, "unsupported indexed Merkle trace unexpectedly compiled"
     assert "cannot find value `place` in module `recorded`" in rejected.stderr, rejected.stderr
+
+    (consumer / "examples/unsupported_recorded_historic_index.rs").write_text(
+        "use compact_contract_hmt_insert_oracle::ledger_contract::recorded;\n"
+        "fn main() { let _ = recorded::place::<()>; }\n"
+    )
+    rejected = subprocess.run(
+        ["cargo", "check", "--quiet", "--example", "unsupported_recorded_historic_index"],
+        cwd=consumer, env=environment, capture_output=True, text=True,
+    )
+    assert rejected.returncode != 0, "unsupported historic indexed trace unexpectedly compiled"
+    assert "cannot find value `place` in module `recorded`" in rejected.stderr, rejected.stderr
+
+    (consumer / "examples/wrong_recorded_historic_leaf.rs").write_text(
+        "use compact_contract_hmt_insert_oracle::ledger_contract::{initial_state, recorded};\n"
+        "use compact_contract_hmt_insert_oracle::runtime::{context::ConstructorContext, ledger::ContractAddress};\n"
+        "fn main() {\n"
+        "    let state = initial_state(ConstructorContext::new(())).unwrap();\n"
+        "    let context = state.into_circuit_context(ContractAddress::default());\n"
+        "    let _ = recorded::append(context, true);\n"
+        "}\n"
+    )
+    rejected = subprocess.run(
+        ["cargo", "check", "--quiet", "--example", "wrong_recorded_historic_leaf"],
+        cwd=consumer, env=environment, capture_output=True, text=True,
+    )
+    assert rejected.returncode != 0, "wrong recorded historic leaf unexpectedly compiled"
+    assert "error[E0308]: mismatched types" in rejected.stderr, rejected.stderr
+    assert "expected `BoundedUint<255>`" in rejected.stderr, rejected.stderr
+
+    (consumer / "examples/unsupported_recorded_history_reset.rs").write_text(
+        "use compact_contract_hmt_insert_oracle::ledger_contract::recorded;\n"
+        "fn main() { let _ = recorded::forget_history::<()>; }\n"
+    )
+    rejected = subprocess.run(
+        ["cargo", "check", "--quiet", "--example", "unsupported_recorded_history_reset"],
+        cwd=consumer, env=environment, capture_output=True, text=True,
+    )
+    assert rejected.returncode != 0, "unsupported history reset trace unexpectedly compiled"
+    assert "cannot find value `forget_history` in module `recorded`" in rejected.stderr, rejected.stderr
 
     (consumer / "examples/wrong_recorded_merkle_leaf.rs").write_text(
         "use compact_contract_merkle_tree_oracle::ledger_contract::{initial_state, recorded};\n"
@@ -793,6 +837,13 @@ def main() -> None:
                 assert (merkle_proof / "keys" / f"append.{extension}").is_file()
             for extension in ("zkir", "bzkir"):
                 assert (merkle_proof / "zkir" / f"append.{extension}").is_file()
+            historic_merkle_proof = base / "historic-merkle-proof"
+            run(compiler, "--target", "rust", str(HISTORIC_MERKLE_SOURCE), str(historic_merkle_proof))
+            check_manifest(historic_merkle_proof)
+            for extension in ("prover", "verifier"):
+                assert (historic_merkle_proof / "keys" / f"append.{extension}").is_file()
+            for extension in ("zkir", "bzkir"):
+                assert (historic_merkle_proof / "zkir" / f"append.{extension}").is_file()
             constructor_list_proof = base / "constructor-list-proof"
             run(compiler, "--target", "rust", str(CONSTRUCTOR_LIST_SOURCE), str(constructor_list_proof))
             check_manifest(constructor_list_proof)
@@ -833,6 +884,7 @@ def main() -> None:
                 str(nested_map_shape_proof),
                 str(list_shapes_proof),
                 str(merkle_proof),
+                str(historic_merkle_proof),
             )
     print("compactc target boundary and manifest: passed")
 

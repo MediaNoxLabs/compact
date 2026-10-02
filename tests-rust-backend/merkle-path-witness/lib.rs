@@ -72,7 +72,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 13);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 14);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -86,7 +86,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 13);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 14);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -357,6 +357,15 @@ pub mod ledger_contract {
             let frame = crate::ledger_slots::t.record_insert(frame, __compact_param_0)?;
             Ok(frame.finish(()))
         }
+        pub fn append_h<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::BoundedUint<255>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let frame = crate::ledger_slots::h.record_insert(frame, __compact_param_0)?;
+            Ok(frame.finish(()))
+        }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
         impl Contract {
@@ -367,6 +376,14 @@ pub mod ledger_contract {
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             {
                 crate::ledger_contract::recorded::append(context, __compact_param_0)
+            }
+            pub fn append_h<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                __compact_param_0: runtime::BoundedUint<255>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::append_h(context, __compact_param_0)
             }
         }
     }

@@ -159,6 +159,15 @@ impl<T: CellValue, const DEPTH: u8> MerkleSlot<T, DEPTH, false> {
 }
 
 impl<T: CellValue, const DEPTH: u8> MerkleSlot<T, DEPTH, true> {
+    /// Record a complete historic-tree append, including the root-history update.
+    pub fn record_insert<Private, D: DB>(
+        self,
+        frame: RecordingFrame<Private, D>,
+        value: T,
+    ) -> Result<RecordingFrame<Private, D>, CompactError> {
+        frame.insert_historic_merkle(self.path, value)
+    }
+
     pub fn reset_history<Private, D: DB>(
         self,
         context: CircuitContext<Private, D>,

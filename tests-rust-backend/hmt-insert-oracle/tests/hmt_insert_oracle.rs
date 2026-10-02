@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use compact_rust_hmt_insert_oracle_fixture::ledger_contract::recorded;
 use compact_rust_hmt_insert_oracle_fixture::ledger_contract::{
     append, append_hash, forget_history, full, initial_state, known, place, place_hash, reset_tree,
 };
@@ -123,6 +124,55 @@ fn assert_history(state: &StateValue<DefaultDB>, oracle: &serde_json::Value, key
     actual.sort();
     expected.sort();
     assert_eq!(actual, expected, "history mismatch at {key}");
+}
+
+#[test]
+fn recorded_historic_append_preserves_root_history_and_replays() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/hmt-insert-oracle.json"
+    ))
+    .unwrap();
+    let initial = initial_state(ConstructorContext::new(())).unwrap();
+    let context = initial.into_circuit_context(ContractAddress::default());
+    let recorded = recorded::append(context, bounded::<255>(7)).unwrap();
+    assert_eq!(recorded.execution.result, ());
+    assert_state(
+        recorded.execution.context.query.state.get_ref(),
+        &oracle,
+        "afterAppend7",
+        1,
+    );
+    assert_history(
+        recorded.execution.context.query.state.get_ref(),
+        &oracle,
+        "historyAfterAppend7",
+    );
+    assert_native_query_gas("append7", &recorded.execution.gas_cost, &oracle);
+
+    let queries = oracle["nativeQueries"]["append7"]["queries"]
+        .as_array()
+        .unwrap();
+    assert_eq!(queries.len(), 1);
+    let actual_program = serde_json::to_value(recorded.public.verify_ops()).unwrap();
+    assert_eq!(actual_program, queries[0]["program"]);
+    let replay = recorded
+        .public
+        .initial()
+        .query(
+            recorded.public.verify_ops(),
+            None,
+            &recorded.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(
+        state_hex(replay.context.state.get_ref().clone()),
+        state_hex(recorded.execution.context.query.state.get_ref().clone())
+    );
+    assert_history(
+        replay.context.state.get_ref(),
+        &oracle,
+        "historyAfterAppend7",
+    );
 }
 
 #[test]

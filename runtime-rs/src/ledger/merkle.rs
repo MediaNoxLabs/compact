@@ -686,6 +686,18 @@ pub(crate) fn merkle_insert_program<T: CellValue, D: DB>(
     )
 }
 
+/// Build the native historic append program, including its root-history update.
+pub(crate) fn historic_merkle_insert_program<T: CellValue, D: DB>(
+    path: impl Into<LedgerPath>,
+    item: T,
+) -> Vec<Op<ResultModeVerify, D>> {
+    merkle_insert_hashed_program(
+        path.into(),
+        AlignedValue::from(leaf_hash_for(item)),
+        MerkleHistory::Historic,
+    )
+}
+
 /// Keep only the current root in a HistoricMerkleTree's history.
 pub fn historic_reset_history<D: DB>(
     context: &QueryContext<D>,

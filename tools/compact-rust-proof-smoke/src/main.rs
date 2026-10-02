@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Prove emitted Counter, Cell, Set, Map, List, Merkle, and enum Cell artifacts in offline ledger-8 transactions.
+//! Prove emitted Counter, Cell, Set, Map, List, plain/historic Merkle, and enum Cell artifacts in offline ledger-8 transactions.
 //!
 //! The proof uses the ledger-derived statement from a generated counter VM
 //! program and checks it against the fixture's known ZKIR encoding. The call
@@ -31,6 +31,7 @@ use compact_rust_cell_read_fixture::ledger_contract as cell_read_contract;
 use compact_rust_constructor_list_actions_fixture::ledger_contract as constructor_list_contract;
 use compact_rust_constructor_map_actions_fixture::ledger_contract as constructor_map_contract;
 use compact_rust_counter_fixture::ledger_contract as counter_contract;
+use compact_rust_hmt_insert_oracle_fixture::ledger_contract as historic_merkle_contract;
 use compact_rust_list_field_fixture::ledger_contract as list_contract;
 use compact_rust_map_boolean_field_fixture::ledger_contract as map_contract;
 use compact_rust_merkle_tree_oracle_fixture::ledger_contract as merkle_contract;
@@ -51,7 +52,8 @@ use midnight_compact_runtime::Field;
 use midnight_compact_runtime::context::{ConstructorContext, WitnessContext};
 use midnight_compact_runtime::fab::AlignedValue;
 use midnight_compact_runtime::ledger::{
-    DefaultDB, StateValue, merkle_tree_view_at_path, read_cell, read_counter,
+    DefaultDB, StateValue, historic_merkle_tree_view_at_path, merkle_tree_view_at_path, read_cell,
+    read_counter,
 };
 use midnight_compact_runtime::recording::RecordedCircuitResult;
 use midnight_compact_runtime::transaction::{CallSpec, prepare_call};
@@ -333,9 +335,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     let nested_map_shape_root = arguments.next();
     let list_shapes_root = arguments.next();
     let merkle_root = arguments.next();
+    let historic_merkle_root = arguments.next();
     if arguments.next().is_some() {
         return Err(
-            "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output> [witness-output] [nested-output] [nested-witness-output] [set-output] [set-oracle-output] [map-output] [constructor-map-output] [list-output] [constructor-list-output] [enum-cell-output] [tiny-output] [nested-map-shape-output] [list-shapes-output] [merkle-output]"
+            "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output> [witness-output] [nested-output] [nested-witness-output] [set-output] [set-oracle-output] [map-output] [constructor-map-output] [list-output] [constructor-list-output] [enum-cell-output] [tiny-output] [nested-map-shape-output] [list-shapes-output] [merkle-output] [historic-merkle-output]"
                 .into(),
         );
     }
@@ -1449,6 +1452,35 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
             if tree.find_path_for_leaf(value).is_none() {
                 return Err("proven Merkle append did not store the typed leaf".into());
+            }
+            Ok(())
+        })?;
+    }
+    if let Some(historic_root) = historic_merkle_root.as_ref().map(Path::new) {
+        let circuit = "append";
+        let initial = historic_merkle_contract::initial_state(ConstructorContext::new(()))?;
+        let deploy = make_deploy(
+            historic_root,
+            circuit,
+            initial.ledger_state.get_ref().clone(),
+            &mut rng,
+        )?;
+        let context = initial.into_circuit_context(deploy.address());
+        let value = BoundedUint::<255>::new(7)?;
+        let recorded = historic_merkle_contract::Contract::default()
+            .recording
+            .append(context, value)?;
+        let call = check_generated_trace(historic_root, circuit, recorded, value)?;
+        check_transaction(historic_root, circuit, deploy, call, &mut rng, |contract| {
+            let tree = historic_merkle_tree_view_at_path(contract.data.get_ref(), &[0])?;
+            if tree.first_free()?.value() != 1 {
+                return Err("proven historic append did not advance the leaf index".into());
+            }
+            if tree.find_path_for_leaf(value).is_none() {
+                return Err("proven historic append did not store the typed leaf".into());
+            }
+            if tree.history()?.len() != 2 {
+                return Err("proven historic append did not retain both roots".into());
             }
             Ok(())
         })?;

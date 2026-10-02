@@ -15,7 +15,7 @@
 
 //! An opt-in path from native circuit execution to a replayable ledger program.
 //!
-//! Cell, Counter, Set, Map, List, and plain Merkle append are supported so far. Generated contracts must
+//! Cell, Counter, Set, Map, List, and plain/historic Merkle append are supported so far. Generated contracts must
 //! not claim a transaction-ready trace until every operation they use records
 //! its corresponding verifying VM instruction.
 
@@ -195,6 +195,15 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         value: T,
     ) -> Result<Self, CompactError> {
         self.apply_verify_program(ledger::merkle_insert_program(path, value))
+    }
+
+    /// Append to a historic Merkle tree and retain its root-history VM update.
+    pub fn insert_historic_merkle<T: CellValue>(
+        self,
+        path: impl Into<LedgerPath>,
+        value: T,
+    ) -> Result<Self, CompactError> {
+        self.apply_verify_program(ledger::historic_merkle_insert_program(path, value))
     }
 
     pub fn remove_set<T: CellValue>(

@@ -651,7 +651,8 @@ fn nested_set_query_in_cell_write_checks_field_and_item_types() {
         return_value: StateReturn::Unit,
     }];
     let source = render(&contract).unwrap();
-    assert!(source.contains("member_set(1,"));
+    assert!(source.contains("crate::ledger_slots::seen"));
+    assert!(source.contains(".member(context,"));
     assert!(source.contains("total_cost += __compact_query_0.gas_cost"));
     let effectful_value = {
         let StateAction::CellWrite { value, .. } = &mut contract.stateful_circuits[0].actions[0]
@@ -1725,11 +1726,9 @@ fn set_actions_require_the_declared_element_type() {
             return_value: StateReturn::Unit,
         }],
     };
-    assert!(
-        render(&contract)
-            .unwrap()
-            .contains("context.insert_set(0, __compact_param_0)?")
-    );
+    let source = render(&contract).unwrap();
+    assert!(source.contains("pub const seen: runtime::slots::SetSlot<bool>"));
+    assert!(source.contains("crate::ledger_slots::seen.insert(context, __compact_param_0)?"));
     contract.stateful_circuits[0].parameters[0].ty = Type::Field;
     assert_eq!(
         render(&contract),
@@ -1744,7 +1743,11 @@ fn set_actions_require_the_declared_element_type() {
         field: "seen".into(),
         index: 0,
     }];
-    assert!(render(&contract).unwrap().contains("context.reset_set(0)?"));
+    assert!(
+        render(&contract)
+            .unwrap()
+            .contains("crate::ledger_slots::seen.reset(context)?")
+    );
     contract.stateful_circuits[0].actions.clear();
     contract.stateful_circuits[0].return_value = StateReturn::SetSize {
         field: "seen".into(),
@@ -1759,6 +1762,11 @@ fn set_actions_require_the_declared_element_type() {
             actual: Type::Unit,
         })
     );
+    contract.stateful_circuits[0].result = Type::Unsigned {
+        max: u64::MAX.to_string(),
+    };
+    let source = render(&contract).unwrap();
+    assert!(source.contains("crate::ledger_slots::seen.size(context)?"));
 }
 
 #[test]

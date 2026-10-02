@@ -22,13 +22,14 @@ pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
     const _: () = assert!(runtime::RUST_RUNTIME_ABI == 3);
 }
-/// Typed descriptors for Compact Cell and Counter declarations.
+/// Typed descriptors for Compact Cell, Counter, and Set declarations.
 #[allow(non_upper_case_globals)]
 pub mod ledger_slots {
     use midnight_compact_runtime as runtime;
     pub const memberFlag: runtime::slots::CellSlot<bool> = runtime::slots::CellSlot::new(&[0u8]);
     pub const setEmptyFlag: runtime::slots::CellSlot<bool> = runtime::slots::CellSlot::new(&[1u8]);
     pub const mapEmptyFlag: runtime::slots::CellSlot<bool> = runtime::slots::CellSlot::new(&[2u8]);
+    pub const seen: runtime::slots::SetSlot<runtime::Field> = runtime::slots::SetSlot::new(&[3u8]);
 }
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
@@ -67,7 +68,7 @@ pub mod ledger_contract {
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let step = context.insert_set(3, __compact_param_0)?;
+        let step = crate::ledger_slots::seen.insert(context, __compact_param_0)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let step = context.insert_map(4, __compact_param_0, __compact_param_0)?;
@@ -88,7 +89,8 @@ pub mod ledger_contract {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
         let mut context = context;
-        let __compact_query_0 = context.member_set(3, (__compact_param_0).clone())?;
+        let __compact_query_0 =
+            crate::ledger_slots::seen.member(context, (__compact_param_0).clone())?;
         context = __compact_query_0.context;
         total_cost += __compact_query_0.gas_cost;
         let __compact_action_local_0: bool = __compact_query_0.result;

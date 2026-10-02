@@ -288,10 +288,12 @@ pub mod pure_circuits {
         })
     }
 }
-/// Typed descriptors for Compact Cell and Counter declarations.
+/// Typed descriptors for Compact Cell, Counter, and Set declarations.
 #[allow(non_upper_case_globals)]
 pub mod ledger_slots {
     use midnight_compact_runtime as runtime;
+    pub const nullifiers: runtime::slots::SetSlot<crate::types::nullifier> =
+        runtime::slots::SetSlot::new(&[0u8]);
     pub const ciphertexts: runtime::slots::CellSlot<runtime::OpaqueBytes> =
         runtime::slots::CellSlot::new(&[2u8]);
 }
@@ -400,8 +402,8 @@ pub mod ledger_contract {
                 __compact_call_argument_2,
             )?;
         let mut context = context;
-        let __compact_query_3 =
-            context.member_set(0, (__compact_action_local_1.clone()).clone())?;
+        let __compact_query_3 = crate::ledger_slots::nullifiers
+            .member(context, (__compact_action_local_1.clone()).clone())?;
         context = __compact_query_3.context;
         total_cost += __compact_query_3.gas_cost;
         if !(if __compact_query_3.result {
@@ -413,7 +415,8 @@ pub mod ledger_contract {
                 "spend: Coin already spent".to_owned(),
             ));
         }
-        let step = context.insert_set(0, __compact_action_local_1.clone())?;
+        let step =
+            crate::ledger_slots::nullifiers.insert(context, __compact_action_local_1.clone())?;
         let context = step.context;
         total_cost += step.gas_cost;
         let __compact_call_argument_4 = __compact_action_local_0.clone();

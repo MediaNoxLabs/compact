@@ -370,7 +370,7 @@ pub mod pure_circuits {
         })
     }
 }
-/// Typed descriptors for Compact Cell and Counter declarations.
+/// Typed descriptors for Compact Cell, Counter, and Set declarations.
 #[allow(non_upper_case_globals)]
 pub mod ledger_slots {
     use midnight_compact_runtime as runtime;
@@ -401,6 +401,12 @@ pub mod ledger_slots {
     pub const revision: runtime::slots::CounterSlot = runtime::slots::CounterSlot::new(&[1u8, 8u8]);
     pub const writeCount: runtime::slots::CounterSlot =
         runtime::slots::CounterSlot::new(&[1u8, 9u8]);
+    pub const retiredKeys: runtime::slots::SetSlot<runtime::OpaqueString> =
+        runtime::slots::SetSlot::new(&[1u8, 12u8]);
+    pub const watchList: runtime::slots::SetSlot<runtime::OpaqueString> =
+        runtime::slots::SetSlot::new(&[1u8, 13u8]);
+    pub const tags: runtime::slots::SetSlot<runtime::Field> =
+        runtime::slots::SetSlot::new(&[1u8, 14u8]);
 }
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
@@ -991,8 +997,8 @@ pub mod ledger_contract {
             ));
         }
         let mut context = context;
-        let __compact_query_1 =
-            context.member_set(&[1, 13], (__compact_action_local_0.clone()).clone())?;
+        let __compact_query_1 = crate::ledger_slots::watchList
+            .member(context, (__compact_action_local_0.clone()).clone())?;
         context = __compact_query_1.context;
         total_cost += __compact_query_1.gas_cost;
         if !(if __compact_query_1.result {
@@ -1007,7 +1013,8 @@ pub mod ledger_contract {
         let step = context.remove_map(&[1, 10], __compact_action_local_0.clone())?;
         let context = step.context;
         total_cost += step.gas_cost;
-        let step = context.insert_set(&[1, 12], __compact_action_local_0.clone())?;
+        let step =
+            crate::ledger_slots::retiredKeys.insert(context, __compact_action_local_0.clone())?;
         let context = step.context;
         total_cost += step.gas_cost;
         let call_step = recordWrite(context, witnesses)?;
@@ -1152,8 +1159,8 @@ pub mod ledger_contract {
             #[allow(unused_mut)]
             let mut context = context;
             let mut context = context;
-            let __compact_query_5 =
-                context.member_set(&[1, 13], (__compact_action_local_0.clone()).clone())?;
+            let __compact_query_5 = crate::ledger_slots::watchList
+                .member(context, (__compact_action_local_0.clone()).clone())?;
             context = __compact_query_5.context;
             total_cost += __compact_query_5.gas_cost;
             if !(if __compact_query_5.result {
@@ -1165,7 +1172,8 @@ pub mod ledger_contract {
                     "record is already watched".to_owned(),
                 ));
             }
-            let step = context.insert_set(&[1, 13], __compact_action_local_0.clone())?;
+            let step =
+                crate::ledger_slots::watchList.insert(context, __compact_action_local_0.clone())?;
             let context = step.context;
             total_cost += step.gas_cost;
             context
@@ -1178,8 +1186,8 @@ pub mod ledger_contract {
                 #[allow(unused_mut)]
                 let mut context = context;
                 let mut context = context;
-                let __compact_query_7 =
-                    context.member_set(&[1, 13], (__compact_action_local_0.clone()).clone())?;
+                let __compact_query_7 = crate::ledger_slots::watchList
+                    .member(context, (__compact_action_local_0.clone()).clone())?;
                 context = __compact_query_7.context;
                 total_cost += __compact_query_7.gas_cost;
                 if !(__compact_query_7.result) {
@@ -1187,7 +1195,8 @@ pub mod ledger_contract {
                         "record is not watched".to_owned(),
                     ));
                 }
-                let step = context.remove_set(&[1, 13], __compact_action_local_0.clone())?;
+                let step = crate::ledger_slots::watchList
+                    .remove(context, __compact_action_local_0.clone())?;
                 let context = step.context;
                 total_cost += step.gas_cost;
                 context
@@ -1220,7 +1229,7 @@ pub mod ledger_contract {
         let call_step = assertWritable(context)?;
         let context = call_step.context;
         total_cost += call_step.gas_cost;
-        let step = context.insert_set(&[1, 14], __compact_param_0)?;
+        let step = crate::ledger_slots::tags.insert(context, __compact_param_0)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let call_step = recordWrite(context, witnesses)?;

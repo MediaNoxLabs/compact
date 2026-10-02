@@ -22,6 +22,14 @@ pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
     const _: () = assert!(runtime::RUST_RUNTIME_ABI == 3);
 }
+/// Typed descriptors for Compact Cell, Counter, and Set declarations.
+#[allow(non_upper_case_globals)]
+pub mod ledger_slots {
+    use midnight_compact_runtime as runtime;
+    pub const seen: runtime::slots::SetSlot<bool> = runtime::slots::SetSlot::new(&[0u8]);
+    pub const fields: runtime::slots::SetSlot<runtime::Field> =
+        runtime::slots::SetSlot::new(&[1u8]);
+}
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
@@ -50,7 +58,7 @@ pub mod ledger_contract {
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let step = context.insert_set(0, __compact_param_0)?;
+        let step = crate::ledger_slots::seen.insert(context, __compact_param_0)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();
@@ -67,7 +75,7 @@ pub mod ledger_contract {
     ) -> Result<runtime::context::CircuitResult<Private, bool>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let read_step = context.member_set(0, __compact_param_0)?;
+        let read_step = crate::ledger_slots::seen.member(context, __compact_param_0)?;
         let context = read_step.context;
         total_cost += read_step.gas_cost;
         let result = read_step.result;
@@ -84,7 +92,7 @@ pub mod ledger_contract {
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let step = context.insert_set(1, __compact_param_0)?;
+        let step = crate::ledger_slots::fields.insert(context, __compact_param_0)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();
@@ -101,7 +109,7 @@ pub mod ledger_contract {
     ) -> Result<runtime::context::CircuitResult<Private, bool>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let read_step = context.member_set(1, __compact_param_0)?;
+        let read_step = crate::ledger_slots::fields.member(context, __compact_param_0)?;
         let context = read_step.context;
         total_cost += read_step.gas_cost;
         let result = read_step.result;
@@ -118,7 +126,7 @@ pub mod ledger_contract {
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let step = context.remove_set(0, __compact_param_0)?;
+        let step = crate::ledger_slots::seen.remove(context, __compact_param_0)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();
@@ -137,7 +145,7 @@ pub mod ledger_contract {
     > {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let read_step = context.size_set(0)?;
+        let read_step = crate::ledger_slots::seen.size(context)?;
         let context = read_step.context;
         total_cost += read_step.gas_cost;
         let result = runtime::BoundedUint::<18446744073709551615>::new(read_step.result as u128)
@@ -154,7 +162,7 @@ pub mod ledger_contract {
     ) -> Result<runtime::context::CircuitResult<Private, bool>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let read_step = context.is_empty_set(0)?;
+        let read_step = crate::ledger_slots::seen.is_empty(context)?;
         let context = read_step.context;
         total_cost += read_step.gas_cost;
         let result = read_step.result;
@@ -170,7 +178,7 @@ pub mod ledger_contract {
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let step = context.reset_set(1)?;
+        let step = crate::ledger_slots::fields.reset(context)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();
@@ -196,14 +204,14 @@ pub mod ledger_contract {
             context = if __compact_param_0 {
                 #[allow(unused_mut)]
                 let mut context = context;
-                let step = context.insert_set(0, true)?;
+                let step = crate::ledger_slots::seen.insert(context, true)?;
                 let context = step.context;
                 total_cost += step.gas_cost;
                 context
             } else {
                 #[allow(unused_mut)]
                 let mut context = context;
-                let step = context.insert_set(0, false)?;
+                let step = crate::ledger_slots::seen.insert(context, false)?;
                 let context = step.context;
                 total_cost += step.gas_cost;
                 context
@@ -212,12 +220,12 @@ pub mod ledger_contract {
         } else {
             #[allow(unused_mut)]
             let mut context = context;
-            let step = context.remove_set(0, __compact_param_0)?;
+            let step = crate::ledger_slots::seen.remove(context, __compact_param_0)?;
             let context = step.context;
             total_cost += step.gas_cost;
             context
         };
-        let read_step = context.member_set(0, __compact_param_0)?;
+        let read_step = crate::ledger_slots::seen.member(context, __compact_param_0)?;
         let context = read_step.context;
         total_cost += read_step.gas_cost;
         let result = read_step.result;

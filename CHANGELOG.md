@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Toolchain 0.31.127, language 0.23.105, runtime 0.16.101]
+
+### Added
+
+- Generate typed `SetSlot<T>` descriptors from Compact Set declarations, preserving
+  compiler-derived physical paths and element types. Native Set membership,
+  insert, remove, reset, size, and emptiness calls now use these named slots.
+- Exercise a generated Set from a separate Cargo consumer and reject a wrong
+  Set element type at compile time.
+
 ## [Toolchain 0.31.126, language 0.23.105, runtime 0.16.101]
 
 ### Changed

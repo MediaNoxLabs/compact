@@ -2799,12 +2799,19 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                 pub const #name: runtime::slots::CounterSlot =
                     runtime::slots::CounterSlot::new(&[#(#path),*]);
             }),
+            LedgerFieldKind::Set { ty } => {
+                let ty = rust_type(ty)?;
+                slot_items.push(syn::parse_quote! {
+                    pub const #name: runtime::slots::SetSlot<#ty> =
+                        runtime::slots::SetSlot::new(&[#(#path),*]);
+                });
+            }
             _ => {}
         }
     }
     let slots_module: Option<syn::Item> = (!slot_items.is_empty()).then(|| {
         syn::parse_quote! {
-            /// Typed descriptors for Compact Cell and Counter declarations.
+            /// Typed descriptors for Compact Cell, Counter, and Set declarations.
             #[allow(non_upper_case_globals)]
             pub mod ledger_slots {
                 use midnight_compact_runtime as runtime;

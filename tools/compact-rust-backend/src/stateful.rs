@@ -175,9 +175,10 @@ pub(crate) fn render_state_expression(
                 Span::call_site(),
             );
             *next_temp += 1;
-            let index = ledger_path_expr(declaration);
-            statements
-                .push(syn::parse_quote!(let #step = context.member_set(#index, (#item).clone())?;));
+            let slot = ident(&declaration.id)?;
+            statements.push(syn::parse_quote!(
+                let #step = crate::ledger_slots::#slot.member(context, (#item).clone())?;
+            ));
             statements.push(syn::parse_quote!(context = #step.context;));
             statements.push(syn::parse_quote!(total_cost += #step.gas_cost;));
             *query_effect = true;
@@ -2087,14 +2088,14 @@ pub(crate) fn render_stateful_circuit(
                         actual,
                     });
                 }
-                let index = ledger_path_expr(declaration);
+                let slot = ident(&declaration.id)?;
                 let method = if matches!(action, StateAction::SetInsert { .. }) {
-                    syn::Ident::new("insert_set", Span::call_site())
+                    syn::Ident::new("insert", Span::call_site())
                 } else {
-                    syn::Ident::new("remove_set", Span::call_site())
+                    syn::Ident::new("remove", Span::call_site())
                 };
                 statements.push(syn::parse_quote! {
-                    let step = context.#method(#index, #value)?;
+                    let step = crate::ledger_slots::#slot.#method(context, #value)?;
                 });
                 statements.push(syn::parse_quote! {
                     let context = step.context;
@@ -2112,9 +2113,9 @@ pub(crate) fn render_stateful_circuit(
                 {
                     return Err(RenderError::UnknownLedgerField(field.clone()));
                 }
-                let index = ledger_path_expr(declaration);
+                let slot = ident(&declaration.id)?;
                 statements.push(syn::parse_quote! {
-                    let step = context.reset_set(#index)?;
+                    let step = crate::ledger_slots::#slot.reset(context)?;
                 });
                 statements.push(syn::parse_quote! {
                     let context = step.context;
@@ -2819,9 +2820,9 @@ pub(crate) fn render_stateful_circuit(
                     actual,
                 });
             }
-            let index = ledger_path_expr(declaration);
+            let slot = ident(&declaration.id)?;
             statements.push(syn::parse_quote! {
-                let read_step = context.member_set(#index, #value)?;
+                let read_step = crate::ledger_slots::#slot.member(context, #value)?;
             });
             statements.push(syn::parse_quote! {
                 let context = read_step.context;
@@ -2867,17 +2868,21 @@ pub(crate) fn render_stateful_circuit(
                     actual: circuit.result.clone(),
                 });
             }
-            let index = ledger_path_expr(declaration);
-            let method = match (is_map, is_size) {
-                (false, true) => "size_set",
-                (false, false) => "is_empty_set",
-                (true, true) => "size_map",
-                (true, false) => "is_empty_map",
-            };
-            let method = syn::Ident::new(method, Span::call_site());
-            statements.push(syn::parse_quote! {
-                let read_step = context.#method(#index)?;
-            });
+            if is_map {
+                let index = ledger_path_expr(declaration);
+                let method = if is_size { "size_map" } else { "is_empty_map" };
+                let method = syn::Ident::new(method, Span::call_site());
+                statements.push(syn::parse_quote!(
+                    let read_step = context.#method(#index)?;
+                ));
+            } else {
+                let slot = ident(&declaration.id)?;
+                let method = if is_size { "size" } else { "is_empty" };
+                let method = syn::Ident::new(method, Span::call_site());
+                statements.push(syn::parse_quote!(
+                    let read_step = crate::ledger_slots::#slot.#method(context)?;
+                ));
+            }
             statements.push(syn::parse_quote! {
                 let context = read_step.context;
             });

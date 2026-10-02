@@ -133,3 +133,68 @@ impl CounterSlot {
         frame.decrement_counter(self.path, amount)
     }
 }
+
+/// A compiler-declared Set with a fixed element type and physical path.
+#[derive(Clone, Copy)]
+pub struct SetSlot<T> {
+    path: &'static [u8],
+    element: PhantomData<fn() -> T>,
+}
+
+impl<T: CellValue> SetSlot<T> {
+    pub const fn new(path: &'static [u8]) -> Self {
+        Self {
+            path,
+            element: PhantomData,
+        }
+    }
+
+    pub const fn path(self) -> &'static [u8] {
+        self.path
+    }
+
+    pub fn insert<Private, D: DB>(
+        self,
+        context: CircuitContext<Private, D>,
+        value: T,
+    ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        context.insert_set(self.path, value)
+    }
+
+    pub fn remove<Private, D: DB>(
+        self,
+        context: CircuitContext<Private, D>,
+        value: T,
+    ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        context.remove_set(self.path, value)
+    }
+
+    pub fn member<Private, D: DB>(
+        self,
+        context: CircuitContext<Private, D>,
+        value: T,
+    ) -> Result<CircuitResult<Private, bool, D>, CompactError> {
+        context.member_set(self.path, value)
+    }
+
+    pub fn reset<Private, D: DB>(
+        self,
+        context: CircuitContext<Private, D>,
+    ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        context.reset_set(self.path)
+    }
+
+    pub fn size<Private, D: DB>(
+        self,
+        context: CircuitContext<Private, D>,
+    ) -> Result<CircuitResult<Private, u64, D>, CompactError> {
+        context.size_set(self.path)
+    }
+
+    pub fn is_empty<Private, D: DB>(
+        self,
+        context: CircuitContext<Private, D>,
+    ) -> Result<CircuitResult<Private, bool, D>, CompactError> {
+        context.is_empty_set(self.path)
+    }
+}

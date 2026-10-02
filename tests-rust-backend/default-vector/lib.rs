@@ -32,7 +32,7 @@ pub mod pure_circuits {
         > as Default>::default()))
     }
 }
-/// Typed descriptors for Compact Cell and Counter declarations.
+/// Typed descriptors for Compact Cell, Counter, and Set declarations.
 #[allow(non_upper_case_globals)]
 pub mod ledger_slots {
     use midnight_compact_runtime as runtime;

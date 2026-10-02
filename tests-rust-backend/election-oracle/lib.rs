@@ -384,7 +384,7 @@ pub mod pure_circuits {
         Ok(runtime::persistent_hash((ballot, sk)))
     }
 }
-/// Typed descriptors for Compact Cell and Counter declarations.
+/// Typed descriptors for Compact Cell, Counter, and Set declarations.
 #[allow(non_upper_case_globals)]
 pub mod ledger_slots {
     use midnight_compact_runtime as runtime;
@@ -396,6 +396,10 @@ pub mod ledger_slots {
         runtime::slots::CellSlot::new(&[2u8]);
     pub const tally_yes: runtime::slots::CounterSlot = runtime::slots::CounterSlot::new(&[3u8]);
     pub const tally_no: runtime::slots::CounterSlot = runtime::slots::CounterSlot::new(&[4u8]);
+    pub const committed: runtime::slots::SetSlot<runtime::FixedBytes<32>> =
+        runtime::slots::SetSlot::new(&[7u8]);
+    pub const revealed: runtime::slots::SetSlot<runtime::FixedBytes<32>> =
+        runtime::slots::SetSlot::new(&[8u8]);
 }
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
@@ -578,7 +582,8 @@ pub mod ledger_contract {
         let __compact_action_local_1: runtime::FixedBytes<32> =
             crate::pure_circuits::commitment_nullifier(__compact_call_argument_7)?;
         let mut context = context;
-        let __compact_query_8 = context.member_set(7, (__compact_action_local_1).clone())?;
+        let __compact_query_8 =
+            crate::ledger_slots::committed.member(context, (__compact_action_local_1).clone())?;
         context = __compact_query_8.context;
         total_cost += __compact_query_8.gas_cost;
         if !(if __compact_query_8.result {
@@ -644,7 +649,7 @@ pub mod ledger_contract {
         let step = context.merkle_insert(5, __compact_action_local_4)?;
         let context = step.context;
         total_cost += step.gas_cost;
-        let step = context.insert_set(7, __compact_action_local_1)?;
+        let step = crate::ledger_slots::committed.insert(context, __compact_action_local_1)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let mut context = context;
@@ -708,7 +713,8 @@ pub mod ledger_contract {
         let __compact_action_local_1: runtime::FixedBytes<32> =
             crate::pure_circuits::reveal_nullifier(__compact_call_argument_5)?;
         let mut context = context;
-        let __compact_query_6 = context.member_set(8, (__compact_action_local_1).clone())?;
+        let __compact_query_6 =
+            crate::ledger_slots::revealed.member(context, (__compact_action_local_1).clone())?;
         context = __compact_query_6.context;
         total_cost += __compact_query_6.gas_cost;
         if !(if __compact_query_6.result {
@@ -803,7 +809,7 @@ pub mod ledger_contract {
             total_cost += step.gas_cost;
             context
         };
-        let step = context.insert_set(8, __compact_action_local_1)?;
+        let step = crate::ledger_slots::revealed.insert(context, __compact_action_local_1)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let mut context = context;

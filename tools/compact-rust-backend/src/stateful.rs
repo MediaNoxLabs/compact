@@ -1368,6 +1368,7 @@ pub(crate) fn render_recorded_circuit(
     circuit: &StatefulCircuit,
     ledger_fields: &HashMap<&str, &LedgerField>,
     witnesses: &HashMap<&str, &WitnessDeclaration>,
+    circuits: &HashMap<&str, &StatefulCircuit>,
 ) -> Result<Option<syn::Item>, RenderError> {
     if circuit.internal {
         return Ok(None);
@@ -1395,6 +1396,14 @@ pub(crate) fn render_recorded_circuit(
         parameters: &HashMap<&str, (&Type, syn::Ident)>,
     ) -> Option<syn::Expr> {
         match value {
+            Expr::Coerce { value, ty }
+                if *ty
+                    == (Type::Unsigned {
+                        max: "65535".into(),
+                    }) =>
+            {
+                amount_source(value, locals, parameters)
+            }
             Expr::UnsignedLiteral { value, max } if max == "65535" => {
                 let value = value.parse::<u16>().ok()?;
                 let literal = syn::LitInt::new(&format!("{value}u16"), Span::call_site());
@@ -1443,8 +1452,10 @@ pub(crate) fn render_recorded_circuit(
         parameters: &HashMap<&str, (&Type, syn::Ident)>,
         ledger_fields: &HashMap<&str, &LedgerField>,
         witnesses: &HashMap<&str, &WitnessDeclaration>,
+        circuits: &HashMap<&str, &StatefulCircuit>,
         steps: &mut Vec<syn::Stmt>,
-        next_witness: &mut usize,
+        next_temp: &mut usize,
+        visiting: &mut HashSet<String>,
     ) -> Result<bool, RenderError> {
         match action {
             StateAction::Sequence { actions } => {
@@ -1455,8 +1466,10 @@ pub(crate) fn render_recorded_circuit(
                         parameters,
                         ledger_fields,
                         witnesses,
+                        circuits,
                         steps,
-                        next_witness,
+                        next_temp,
+                        visiting,
                     )? {
                         return Ok(false);
                     }
@@ -1506,10 +1519,10 @@ pub(crate) fn render_recorded_circuit(
                         }
                         let method = ident(name)?;
                         let value = syn::Ident::new(
-                            &format!("__compact_witness_{}", *next_witness),
+                            &format!("__compact_witness_{}", *next_temp),
                             Span::call_site(),
                         );
-                        *next_witness += 1;
+                        *next_temp += 1;
                         steps.push(syn::parse_quote! {
                             let (frame, #value) = frame.witness(|context| {
                                 witnesses.#method(
@@ -1531,9 +1544,70 @@ pub(crate) fn render_recorded_circuit(
                     parameters,
                     ledger_fields,
                     witnesses,
+                    circuits,
                     steps,
-                    next_witness,
+                    next_temp,
+                    visiting,
                 )
+            }
+            StateAction::CircuitCall { name, arguments } => {
+                let callee = circuits
+                    .get(name.as_str())
+                    .ok_or_else(|| RenderError::UnsupportedStatefulCall(name.clone()))?;
+                if callee.result != Type::Unit || callee.return_value != StateReturn::Unit {
+                    return Ok(false);
+                }
+                if arguments.len() != callee.parameters.len() {
+                    return Err(RenderError::ArgumentCount {
+                        circuit: name.clone(),
+                        expected: callee.parameters.len(),
+                        actual: arguments.len(),
+                    });
+                }
+                if !visiting.insert(name.clone()) {
+                    return Err(RenderError::UnsupportedStatefulCall(name.clone()));
+                }
+                let mut callee_locals = HashMap::new();
+                for (argument, parameter) in arguments.iter().zip(&callee.parameters) {
+                    let value = if parameter.ty
+                        == (Type::Unsigned {
+                            max: "65535".into(),
+                        }) {
+                        amount_source(argument, locals, parameters)
+                    } else {
+                        cell_source(argument, &parameter.ty, locals, parameters)
+                    };
+                    let Some(value) = value else {
+                        visiting.remove(name);
+                        return Ok(false);
+                    };
+                    let arg = syn::Ident::new(
+                        &format!("__compact_recorded_arg_{}", *next_temp),
+                        Span::call_site(),
+                    );
+                    *next_temp += 1;
+                    steps.push(syn::parse_quote!(let #arg = #value;));
+                    callee_locals.insert(parameter.name.clone(), syn::parse_quote!(#arg));
+                }
+                let mut complete = true;
+                for action in &callee.actions {
+                    if !append_steps(
+                        action,
+                        &callee_locals,
+                        &HashMap::new(),
+                        ledger_fields,
+                        witnesses,
+                        circuits,
+                        steps,
+                        next_temp,
+                        visiting,
+                    )? {
+                        complete = false;
+                        break;
+                    }
+                }
+                visiting.remove(name);
+                Ok(complete)
             }
             StateAction::CounterIncrement {
                 field,
@@ -1611,7 +1685,8 @@ pub(crate) fn render_recorded_circuit(
     }
 
     let mut steps = Vec::<syn::Stmt>::new();
-    let mut next_witness = 0;
+    let mut next_temp = 0;
+    let mut visiting = HashSet::from([circuit.name.clone()]);
     for action in &circuit.actions {
         if !append_steps(
             action,
@@ -1619,8 +1694,10 @@ pub(crate) fn render_recorded_circuit(
             &parameters,
             ledger_fields,
             witnesses,
+            circuits,
             &mut steps,
-            &mut next_witness,
+            &mut next_temp,
+            &mut visiting,
         )? {
             return Ok(None);
         }
@@ -1687,7 +1764,7 @@ pub(crate) fn render_recorded_circuit(
         return Ok(None);
     }
 
-    let item = if circuit_contains_witness(circuit) {
+    let item = if circuit_uses_witness(circuit, circuits, &mut HashSet::new())? {
         syn::parse_quote! {
             pub fn #name<Private, W: super::Witnesses<Private>>(
                 context: runtime::context::CircuitContext<Private>,
@@ -1719,6 +1796,7 @@ pub(crate) fn render_recorded_circuit(
 /// A recording handle that borrows the user-supplied witness implementation.
 pub(crate) fn render_borrowed_recorded_contract_method(
     circuit: &StatefulCircuit,
+    uses_witness: bool,
 ) -> Result<syn::ImplItemFn, RenderError> {
     let name = ident(&circuit.name)?;
     let mut args = Vec::<syn::FnArg>::new();
@@ -1730,7 +1808,7 @@ pub(crate) fn render_borrowed_recorded_contract_method(
         call_args.push(arg);
     }
     let result = rust_type(&circuit.result)?;
-    let method = if circuit_contains_witness(circuit) {
+    let method = if uses_witness {
         syn::parse_quote! {
             pub fn #name<Private>(
                 &self,

@@ -2375,15 +2375,23 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
             circuit,
             &ledger_fields,
             &witness_syntax.declarations,
+            &callable_stateful_circuits,
         )? {
             recorded_items.push(item);
-            if stateful::circuit_contains_witness(circuit) {
+            let uses_witness = stateful::circuit_uses_witness(
+                circuit,
+                &callable_stateful_circuits,
+                &mut HashSet::new(),
+            )?;
+            if uses_witness {
                 witnessed_recorded = true;
             } else {
                 recorded_methods.push(stateful::render_recorded_contract_method(circuit)?);
             }
-            borrowed_recorded_methods
-                .push(stateful::render_borrowed_recorded_contract_method(circuit)?);
+            borrowed_recorded_methods.push(stateful::render_borrowed_recorded_contract_method(
+                circuit,
+                uses_witness,
+            )?);
         }
     }
 

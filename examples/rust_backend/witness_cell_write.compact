@@ -28,6 +28,15 @@ export circuit write_twice(seed: Field): [] {
   cell = disclose(secret(seed));
 }
 
+circuit write_inner(seed: Field): [] {
+  cell = disclose(secret(seed));
+}
+
+export circuit write_nested_twice(seed: Field): [] {
+  write_inner(seed);
+  write_inner(seed);
+}
+
 export circuit read_cell(): Field {
   return cell.read();
 }

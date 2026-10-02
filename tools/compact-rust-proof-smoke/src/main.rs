@@ -29,9 +29,11 @@ use std::path::{Path, PathBuf};
 use compact_rust_cell_boolean_fixture::ledger_contract as cell_contract;
 use compact_rust_cell_read_fixture::ledger_contract as cell_read_contract;
 use compact_rust_counter_fixture::ledger_contract as counter_contract;
+use compact_rust_stateful_circuit_call_fixture::ledger_contract as nested_contract;
 use compact_rust_witness_cell_write_fixture::ledger_contract as witness_contract;
 use midnight_base_crypto::data_provider::{FetchMode, MidnightDataProvider, OutputMode};
 use midnight_base_crypto::time::Timestamp;
+use midnight_compact_runtime::BoundedUint;
 use midnight_compact_runtime::Field;
 use midnight_compact_runtime::context::{ConstructorContext, WitnessContext};
 use midnight_compact_runtime::fab::AlignedValue;
@@ -280,9 +282,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output>",
     )?;
     let witness_root = arguments.next();
+    let nested_root = arguments.next();
     if arguments.next().is_some() {
         return Err(
-            "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output> [witness-output]"
+            "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output> [witness-output] [nested-output]"
                 .into(),
         );
     }
@@ -414,6 +417,102 @@ fn main() -> Result<(), Box<dyn Error>> {
                     != Field::from(10_u64)
                 {
                     return Err("proven witness call did not write the final Cell value".into());
+                }
+                Ok(())
+            },
+        )?;
+
+        let nested_initial = witness_contract::initial_state(ConstructorContext::new(7_u64))?;
+        let nested_deploy = make_deploy(
+            witness_root,
+            "write_nested_twice",
+            nested_initial.ledger_state.get_ref().clone(),
+            &mut rng,
+        )?;
+        let context = nested_initial.into_circuit_context(nested_deploy.address());
+        let recorded = witness_contract::Contract::from(Secret)
+            .recording()
+            .write_nested_twice(context, seed)?;
+        if recorded.execution.private_transcript_outputs.len() != 2 {
+            return Err("nested witness call lost a private value".into());
+        }
+        let nested_call =
+            check_generated_trace(witness_root, "write_nested_twice", recorded, seed)?;
+        check_transaction(
+            witness_root,
+            "write_nested_twice",
+            nested_deploy,
+            nested_call,
+            &mut rng,
+            |contract| {
+                let StateValue::Array(fields) = contract.data.get_ref() else {
+                    return Err("nested witnessed state is not an array".into());
+                };
+                if read_cell::<Field, _>(fields.get(0).ok_or("nested witness Cell missing")?)?
+                    != Field::from(10_u64)
+                {
+                    return Err("proven nested witness call did not write both values".into());
+                }
+                Ok(())
+            },
+        )?;
+    }
+    if let Some(nested_root) = nested_root {
+        let nested_root = Path::new(&nested_root);
+        let nested_initial = nested_contract::initial_state(ConstructorContext::new(()))?;
+        let nested_deploy = make_deploy(
+            nested_root,
+            "bump_twice",
+            nested_initial.ledger_state.get_ref().clone(),
+            &mut rng,
+        )?;
+        let context = nested_initial.into_circuit_context(nested_deploy.address());
+        let recorded = nested_contract::Contract::default()
+            .recording
+            .bump_twice(context)?;
+        let nested_call = check_generated_trace(nested_root, "bump_twice", recorded, ())?;
+        check_transaction(
+            nested_root,
+            "bump_twice",
+            nested_deploy,
+            nested_call,
+            &mut rng,
+            |contract| {
+                let StateValue::Array(fields) = contract.data.get_ref() else {
+                    return Err("nested Counter state is not an array".into());
+                };
+                if read_counter(fields.get(0).ok_or("nested Counter missing")?)? != 2 {
+                    return Err("proven nested call did not increment twice".into());
+                }
+                Ok(())
+            },
+        )?;
+
+        let parameterized_initial = nested_contract::initial_state(ConstructorContext::new(()))?;
+        let parameterized_deploy = make_deploy(
+            nested_root,
+            "add_twice",
+            parameterized_initial.ledger_state.get_ref().clone(),
+            &mut rng,
+        )?;
+        let context = parameterized_initial.into_circuit_context(parameterized_deploy.address());
+        let amount = BoundedUint::<65535>::new(3)?;
+        let recorded = nested_contract::Contract::default()
+            .recording
+            .add_twice(context, amount)?;
+        let parameterized_call = check_generated_trace(nested_root, "add_twice", recorded, amount)?;
+        check_transaction(
+            nested_root,
+            "add_twice",
+            parameterized_deploy,
+            parameterized_call,
+            &mut rng,
+            |contract| {
+                let StateValue::Array(fields) = contract.data.get_ref() else {
+                    return Err("parameterized Counter state is not an array".into());
+                };
+                if read_counter(fields.get(0).ok_or("parameterized Counter missing")?)? != 6 {
+                    return Err("proven parameterized call did not increment twice".into());
                 }
                 Ok(())
             },

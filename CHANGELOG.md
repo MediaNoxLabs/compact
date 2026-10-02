@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Toolchain 0.31.124, language 0.23.105, runtime 0.16.101]
+
+### Added
+
+- Record supported nested Unit-returning stateful calls in the generated Rust
+  trace, preserving argument evaluation and witness output order. Unsupported
+  nested shapes continue to have no recorded entry point.
+- Prove, verify, and apply generated nested Counter calls with and without an
+  argument, and a nested two-witness Field Cell call, in the offline ledger-8
+  gate.
+
 ## [Toolchain 0.31.123, language 0.23.105, runtime 0.16.101]
 
 ### Added

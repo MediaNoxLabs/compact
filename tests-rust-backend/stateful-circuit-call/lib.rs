@@ -135,6 +135,15 @@ pub mod ledger_contract {
             let frame = crate::ledger_slots::count.record_increment(frame, 1u16)?;
             Ok(frame.finish(()))
         }
+        pub fn bump_twice<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let frame = crate::ledger_slots::count.record_increment(frame, 1u16)?;
+            let frame = crate::ledger_slots::count.record_increment(frame, 1u16)?;
+            Ok(frame.finish(()))
+        }
         pub fn add<Private>(
             context: runtime::context::CircuitContext<Private>,
             __compact_param_0: runtime::BoundedUint<65535>,
@@ -143,6 +152,20 @@ pub mod ledger_contract {
             let frame = runtime::recording::RecordingFrame::new(context);
             let frame = crate::ledger_slots::count
                 .record_increment(frame, __compact_param_0.value() as u16)?;
+            Ok(frame.finish(()))
+        }
+        pub fn add_twice<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::BoundedUint<65535>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_arg_0 = __compact_param_0.value() as u16;
+            let frame =
+                crate::ledger_slots::count.record_increment(frame, __compact_recorded_arg_0)?;
+            let __compact_recorded_arg_1 = __compact_param_0.value() as u16;
+            let frame =
+                crate::ledger_slots::count.record_increment(frame, __compact_recorded_arg_1)?;
             Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
@@ -155,6 +178,13 @@ pub mod ledger_contract {
             {
                 crate::ledger_contract::recorded::bump(context)
             }
+            pub fn bump_twice<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::bump_twice(context)
+            }
             pub fn add<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
@@ -162,6 +192,14 @@ pub mod ledger_contract {
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             {
                 crate::ledger_contract::recorded::add(context, __compact_param_0)
+            }
+            pub fn add_twice<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                __compact_param_0: runtime::BoundedUint<65535>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::add_twice(context, __compact_param_0)
             }
         }
     }

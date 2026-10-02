@@ -33,6 +33,7 @@ PURE_SOURCE = ROOT / "examples/rust_backend/field_add.compact"
 CELL_SOURCE = ROOT / "examples/rust_backend/cell_boolean.compact"
 CELL_READ_SOURCE = ROOT / "examples/rust_backend/cell_read.compact"
 WITNESS_CELL_SOURCE = ROOT / "examples/rust_backend/witness_cell_write.compact"
+NESTED_COUNTER_SOURCE = ROOT / "examples/rust_backend/stateful_circuit_call.compact"
 
 
 def run(*arguments: str, cwd: Path = ROOT) -> None:
@@ -314,13 +315,22 @@ def main() -> None:
             witness_proof = base / "witness-proof"
             run(compiler, "--target", "rust", str(WITNESS_CELL_SOURCE), str(witness_proof))
             check_manifest(witness_proof)
-            for extension in ("prover", "verifier"):
-                assert (witness_proof / "keys" / f"write_twice.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (witness_proof / "zkir" / f"write_twice.{extension}").is_file()
+            for circuit in ("write_twice", "write_nested_twice"):
+                for extension in ("prover", "verifier"):
+                    assert (witness_proof / "keys" / f"{circuit}.{extension}").is_file()
+                for extension in ("zkir", "bzkir"):
+                    assert (witness_proof / "zkir" / f"{circuit}.{extension}").is_file()
+            nested_proof = base / "nested-proof"
+            run(compiler, "--target", "rust", str(NESTED_COUNTER_SOURCE), str(nested_proof))
+            check_manifest(nested_proof)
+            for circuit in ("bump_twice", "add_twice"):
+                for extension in ("prover", "verifier"):
+                    assert (nested_proof / "keys" / f"{circuit}.{extension}").is_file()
+                for extension in ("zkir", "bzkir"):
+                    assert (nested_proof / "zkir" / f"{circuit}.{extension}").is_file()
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
-                str(proof), str(cell_proof), str(cell_read_proof), str(witness_proof),
+                str(proof), str(cell_proof), str(cell_read_proof), str(witness_proof), str(nested_proof),
             )
     print("compactc target boundary and manifest: passed")
 

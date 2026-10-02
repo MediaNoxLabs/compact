@@ -14,7 +14,8 @@
 // limitations under the License.
 
 use compact_rust_witness_cell_write_fixture::ledger_contract::{
-    Contract, LedgerView, Witnesses, initial_state, read_cell, write_secret, write_twice,
+    Contract, LedgerView, Witnesses, initial_state, read_cell, write_nested_twice, write_secret,
+    write_twice,
 };
 use midnight_compact_runtime::Field;
 use midnight_compact_runtime::context::{CircuitResult, ConstructorContext, WitnessContext};
@@ -135,6 +136,52 @@ fn witnessed_writes_record_private_values_and_public_operations_in_order() {
     assert_eq!(
         recorded.execution.context.query.effects,
         replay.context.effects
+    );
+}
+
+#[test]
+fn nested_witnessed_writes_record_the_same_private_and_public_effects() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/witness-cell-write-ts-output.json"
+    ))
+    .unwrap();
+    let seed = Field::from(2_u64);
+    let native = write_nested_twice(
+        initial_state(ConstructorContext::new(7_u64))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default()),
+        &Secret,
+        seed,
+    )
+    .unwrap();
+    assert_oracle_output(native, &oracle["twice"]);
+
+    let context = initial_state(ConstructorContext::new(7_u64))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let recorded = Contract::from(Secret)
+        .recording()
+        .write_nested_twice(context, seed)
+        .unwrap();
+    assert_eq!(recorded.execution.context.private_state, 9);
+    assert_eq!(recorded.execution.private_transcript_outputs.len(), 2);
+    assert_eq!(recorded.public.verify_ops().len(), 6);
+    let replay = recorded
+        .public
+        .initial()
+        .query(
+            recorded.public.verify_ops(),
+            None,
+            &recorded.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(
+        replay.context.effects,
+        recorded.execution.context.query.effects
+    );
+    assert_eq!(
+        read_root_cell::<Field, _>(recorded.execution.context.query.state.get_ref(), 0).unwrap(),
+        Field::from(10_u64)
     );
 }
 

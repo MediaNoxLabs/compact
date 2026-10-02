@@ -14,7 +14,7 @@
 // limitations under the License.
 
 use compact_rust_stateful_circuit_call_fixture::ledger_contract::{
-    add_twice, bump_twice, initial_state,
+    Contract, add_twice, bump_twice, initial_state,
 };
 use midnight_compact_runtime::BoundedUint;
 use midnight_compact_runtime::context::ConstructorContext;
@@ -63,4 +63,61 @@ fn stateful_calls_execute_twice_and_match_typescript_state() {
     };
     assert_eq!(read_counter(&fields.get(0).unwrap()).unwrap(), 8);
     assert_eq!(state_hex(state.clone()), oracle["afterHex"]);
+}
+
+#[test]
+fn nested_recorded_calls_preserve_oracle_state_and_replay_effects() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/stateful-circuit-call.json"
+    ))
+    .unwrap();
+    let context = initial_state(ConstructorContext::new(()))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let contract = Contract::default();
+    let first = contract.recording.bump_twice(context).unwrap();
+    assert_eq!(first.public.verify_ops().len(), 6);
+    let replay = first
+        .public
+        .initial()
+        .query(
+            first.public.verify_ops(),
+            None,
+            &first.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(
+        replay.context.effects,
+        first.execution.context.query.effects
+    );
+    assert_eq!(
+        state_hex(first.execution.context.query.state.get_ref().clone()),
+        oracle["afterBumpHex"]
+    );
+
+    let second = contract
+        .recording
+        .add_twice(
+            first.execution.context,
+            BoundedUint::<65535>::new(3).unwrap(),
+        )
+        .unwrap();
+    assert_eq!(second.public.verify_ops().len(), 6);
+    let replay = second
+        .public
+        .initial()
+        .query(
+            second.public.verify_ops(),
+            None,
+            &second.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(
+        replay.context.effects,
+        second.execution.context.query.effects
+    );
+    assert_eq!(
+        state_hex(second.execution.context.query.state.get_ref().clone()),
+        oracle["afterHex"]
+    );
 }

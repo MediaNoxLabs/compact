@@ -1372,6 +1372,58 @@ fn state_action_must_reference_the_declared_ledger_field_and_index() {
 }
 
 #[test]
+fn unsupported_nested_call_does_not_expose_an_incomplete_trace() {
+    let mut contract = Contract {
+        schema_version: 6,
+        type_aliases: vec![],
+        constructor: None,
+        witnesses: vec![],
+        ledger_fields: vec![LedgerField {
+            id: "round".into(),
+            index: 0,
+            path: vec![],
+            declaration: LedgerFieldKind::Counter,
+        }],
+        circuits: vec![],
+        stateful_circuits: vec![
+            StatefulCircuit {
+                internal: true,
+                name: "inner".into(),
+                parameters: vec![],
+                result: Type::Unit,
+                return_value: StateReturn::Unit,
+                actions: vec![StateAction::CounterReset {
+                    field: "round".into(),
+                    index: 0,
+                }],
+            },
+            StatefulCircuit {
+                internal: false,
+                name: "outer".into(),
+                parameters: vec![],
+                result: Type::Unit,
+                return_value: StateReturn::Unit,
+                actions: vec![StateAction::CircuitCall {
+                    name: "inner".into(),
+                    arguments: vec![],
+                }],
+            },
+        ],
+    };
+    assert!(!render(&contract).unwrap().contains("pub mod recorded"));
+
+    contract.stateful_circuits[0].actions.clear();
+    contract.stateful_circuits[0].result = Type::Unsigned {
+        max: u64::MAX.to_string(),
+    };
+    contract.stateful_circuits[0].return_value = StateReturn::CounterRead {
+        field: "round".into(),
+        index: 0,
+    };
+    assert!(!render(&contract).unwrap().contains("pub mod recorded"));
+}
+
+#[test]
 fn stateful_parameters_are_checked_before_cell_writes() {
     let mut contract = Contract {
         schema_version: 6,

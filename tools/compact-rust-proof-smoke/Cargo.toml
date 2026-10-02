@@ -26,6 +26,8 @@ description = "Ledger-8 proof compatibility gate for Rust Compact output"
 compact-rust-counter-fixture = { path = "../../tests-rust-backend/counter" }
 compact-rust-cell-boolean-fixture = { path = "../../tests-rust-backend/cell-boolean" }
 compact-rust-cell-read-fixture = { path = "../../tests-rust-backend/cell-read" }
+compact-rust-set-boolean-fixture = { path = "../../tests-rust-backend/set-boolean" }
+compact-rust-set-oracle-fixture = { path = "../../tests-rust-backend/set-oracle" }
 compact-rust-witness-cell-write-fixture = { path = "../../tests-rust-backend/witness-cell-write" }
 compact-rust-stateful-circuit-call-fixture = { path = "../../tests-rust-backend/stateful-circuit-call" }
 compact-rust-nested-witness-call-oracle-fixture = { path = "../../tests-rust-backend/nested-witness-call-oracle" }

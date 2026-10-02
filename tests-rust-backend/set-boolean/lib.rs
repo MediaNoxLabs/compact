@@ -236,19 +236,187 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
+    /// Circuits with a replayable ordered ledger program.
+    pub mod recorded {
+        use midnight_compact_runtime as runtime;
+        pub fn add<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: bool,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let frame = crate::ledger_slots::seen.record_insert(frame, __compact_param_0)?;
+            Ok(frame.finish(()))
+        }
+        pub fn contains<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: bool,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_key_0 = __compact_param_0;
+            let (frame, __compact_recorded_member_1): (_, bool) =
+                crate::ledger_slots::seen.record_member(frame, __compact_recorded_key_0)?;
+            Ok(frame.finish(__compact_recorded_member_1))
+        }
+        pub fn add_field<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::Field,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let frame = crate::ledger_slots::fields.record_insert(frame, __compact_param_0)?;
+            Ok(frame.finish(()))
+        }
+        pub fn contains_field<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::Field,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_key_0 = __compact_param_0;
+            let (frame, __compact_recorded_member_1): (_, bool) =
+                crate::ledger_slots::fields.record_member(frame, __compact_recorded_key_0)?;
+            Ok(frame.finish(__compact_recorded_member_1))
+        }
+        pub fn remove<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: bool,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let frame = crate::ledger_slots::seen.record_remove(frame, __compact_param_0)?;
+            Ok(frame.finish(()))
+        }
+        pub fn seen_size<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<
+            runtime::recording::RecordedCircuitResult<
+                Private,
+                runtime::BoundedUint<18446744073709551615>,
+            >,
+            runtime::CompactError,
+        > {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, observed): (_, u64) = crate::ledger_slots::seen.record_size(frame)?;
+            Ok(frame.finish(
+                runtime::BoundedUint::<18446744073709551615>::new(observed as u128)
+                    .expect("ledger Set size fits Uint<64>"),
+            ))
+        }
+        pub fn seen_is_empty<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, observed): (_, bool) = crate::ledger_slots::seen.record_is_empty(frame)?;
+            Ok(frame.finish(observed))
+        }
+        pub fn reset_fields<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let frame = crate::ledger_slots::fields.record_reset(frame)?;
+            Ok(frame.finish(()))
+        }
+        /// Typed handle for circuits with a complete recorded trace.
+        pub struct Contract;
+        impl Contract {
+            pub fn add<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                __compact_param_0: bool,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::add(context, __compact_param_0)
+            }
+            pub fn contains<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                __compact_param_0: bool,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, bool>,
+                runtime::CompactError,
+            > {
+                crate::ledger_contract::recorded::contains(context, __compact_param_0)
+            }
+            pub fn add_field<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                __compact_param_0: runtime::Field,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::add_field(context, __compact_param_0)
+            }
+            pub fn contains_field<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                __compact_param_0: runtime::Field,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, bool>,
+                runtime::CompactError,
+            > {
+                crate::ledger_contract::recorded::contains_field(context, __compact_param_0)
+            }
+            pub fn remove<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                __compact_param_0: bool,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::remove(context, __compact_param_0)
+            }
+            pub fn seen_size<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<
+                    Private,
+                    runtime::BoundedUint<18446744073709551615>,
+                >,
+                runtime::CompactError,
+            > {
+                crate::ledger_contract::recorded::seen_size(context)
+            }
+            pub fn seen_is_empty<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, bool>,
+                runtime::CompactError,
+            > {
+                crate::ledger_contract::recorded::seen_is_empty(context)
+            }
+            pub fn reset_fields<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::reset_fields(context)
+            }
+        }
+    }
     /// Groups the contract's exported circuits for Rust consumers.
     pub struct Contract<W> {
         #[allow(dead_code)]
         witnesses: W,
+        pub recording: recorded::Contract,
     }
     impl<W> From<W> for Contract<W> {
         fn from(witnesses: W) -> Self {
-            Self { witnesses }
+            Self {
+                witnesses,
+                recording: recorded::Contract,
+            }
         }
     }
     impl Default for Contract<()> {
         fn default() -> Self {
-            Self { witnesses: () }
+            Self {
+                witnesses: (),
+                recording: recorded::Contract,
+            }
         }
     }
     impl<W> Contract<W> {

@@ -197,4 +197,52 @@ impl<T: CellValue> SetSlot<T> {
     ) -> Result<CircuitResult<Private, bool, D>, CompactError> {
         context.is_empty_set(self.path)
     }
+
+    pub fn record_insert<Private, D: DB>(
+        self,
+        frame: RecordingFrame<Private, D>,
+        value: T,
+    ) -> Result<RecordingFrame<Private, D>, CompactError> {
+        frame.insert_set(self.path, value)
+    }
+
+    pub fn record_remove<Private, D: DB>(
+        self,
+        frame: RecordingFrame<Private, D>,
+        value: T,
+    ) -> Result<RecordingFrame<Private, D>, CompactError> {
+        frame.remove_set(self.path, value)
+    }
+
+    pub fn record_member<Private, D: DB>(
+        self,
+        frame: RecordingFrame<Private, D>,
+        value: T,
+    ) -> Result<(RecordingFrame<Private, D>, bool), CompactError>
+    where
+        T: Clone,
+    {
+        frame.member_set(self.path, value)
+    }
+
+    pub fn record_reset<Private, D: DB>(
+        self,
+        frame: RecordingFrame<Private, D>,
+    ) -> Result<RecordingFrame<Private, D>, CompactError> {
+        frame.reset_set(self.path)
+    }
+
+    pub fn record_size<Private, D: DB>(
+        self,
+        frame: RecordingFrame<Private, D>,
+    ) -> Result<(RecordingFrame<Private, D>, u64), CompactError> {
+        frame.size_set(self.path)
+    }
+
+    pub fn record_is_empty<Private, D: DB>(
+        self,
+        frame: RecordingFrame<Private, D>,
+    ) -> Result<(RecordingFrame<Private, D>, bool), CompactError> {
+        frame.is_empty_set(self.path)
+    }
 }

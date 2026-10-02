@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use compact_rust_set_oracle_fixture::ledger_contract::{check, initial_state};
+use compact_rust_set_oracle_fixture::ledger_contract::{Contract, check, initial_state};
 use midnight_compact_runtime as runtime;
 use midnight_onchain_state::state::{
     ContractMaintenanceAuthority, ContractOperation, ContractState, EntryPointBuf,
@@ -70,4 +70,37 @@ fn exact_set_member_oracle_matches_typescript_state() {
             .unwrap(),
         oracle["flagAfterCheck8"]
     );
+}
+
+#[test]
+fn recorded_set_member_and_cell_write_match_oracle_and_replay() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/set-oracle.json"
+    ))
+    .unwrap();
+    let context = initial_state(ConstructorContext::new(()))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let call = Contract::default()
+        .recording
+        .check(context, runtime::Field::from(7_u64))
+        .unwrap();
+    assert_eq!(
+        state_hex(call.execution.context.query.state.get_ref().clone()),
+        oracle["afterCheck7"]
+    );
+    let replay = call
+        .public
+        .initial()
+        .query(
+            call.public.verify_ops(),
+            None,
+            &call.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(
+        replay.context.state.get_ref(),
+        call.execution.context.query.state.get_ref()
+    );
+    assert_eq!(replay.context.effects, call.execution.context.query.effects);
 }

@@ -1660,16 +1660,11 @@ pub fn reset_map<D: DB>(
 }
 
 /// Insert a typed element into a Set through the ledger VM.
-pub fn insert_set<T: CellValue, D: DB>(
-    context: &QueryContext<D>,
-    path: impl Into<LedgerPath>,
+pub(crate) fn set_insert_program<T: CellValue, D: DB>(
+    path: &[u8],
     value: T,
-    gas_limit: Option<RunningCost>,
-    cost_model: &CostModel,
-) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
-    let path = path.into();
-    let path = path.as_slice();
-    let program = [
+) -> Vec<Op<ResultModeVerify, D>> {
+    vec![
         Op::Idx {
             cached: false,
             push_path: true,
@@ -1691,21 +1686,29 @@ pub fn insert_set<T: CellValue, D: DB>(
             cached: true,
             n: path.len() as u8,
         },
-    ];
-    context.query(&program, gas_limit, cost_model)
+    ]
 }
 
-/// Test membership through a gather query and decode the ledger's Boolean Cell.
-pub fn member_set<T: CellValue, D: DB>(
+pub fn insert_set<T: CellValue, D: DB>(
     context: &QueryContext<D>,
     path: impl Into<LedgerPath>,
     value: T,
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
-) -> Result<(QueryResults<ResultModeGather, D>, bool), CompactError> {
+) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
     let path = path.into();
     let path = path.as_slice();
-    let program = [
+    let program = set_insert_program(path, value);
+    context.query(&program, gas_limit, cost_model)
+}
+
+/// Test membership through a gather query and decode the ledger's Boolean Cell.
+pub(crate) fn set_member_program<T: CellValue, M: ResultMode<D>, D: DB>(
+    path: &[u8],
+    value: T,
+    read_result: M::ReadResult,
+) -> Vec<Op<M, D>> {
+    vec![
         Op::Dup { n: 0 },
         Op::Idx {
             cached: false,
@@ -1719,9 +1722,21 @@ pub fn member_set<T: CellValue, D: DB>(
         Op::Member,
         Op::Popeq {
             cached: true,
-            result: (),
+            result: read_result,
         },
-    ];
+    ]
+}
+
+pub fn member_set<T: CellValue, D: DB>(
+    context: &QueryContext<D>,
+    path: impl Into<LedgerPath>,
+    value: T,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<(QueryResults<ResultModeGather, D>, bool), CompactError> {
+    let path = path.into();
+    let path = path.as_slice();
+    let program = set_member_program::<T, ResultModeGather, D>(path, value, ());
     let result = context
         .query(&program, gas_limit, cost_model)
         .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
@@ -1729,16 +1744,11 @@ pub fn member_set<T: CellValue, D: DB>(
     Ok((result, decoded))
 }
 
-pub fn remove_set<T: CellValue, D: DB>(
-    context: &QueryContext<D>,
-    path: impl Into<LedgerPath>,
+pub(crate) fn set_remove_program<T: CellValue, D: DB>(
+    path: &[u8],
     value: T,
-    gas_limit: Option<RunningCost>,
-    cost_model: &CostModel,
-) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
-    let path = path.into();
-    let path = path.as_slice();
-    let program = [
+) -> Vec<Op<ResultModeVerify, D>> {
+    vec![
         Op::Idx {
             cached: false,
             push_path: true,
@@ -1753,8 +1763,69 @@ pub fn remove_set<T: CellValue, D: DB>(
             cached: true,
             n: path.len() as u8,
         },
-    ];
+    ]
+}
+
+pub fn remove_set<T: CellValue, D: DB>(
+    context: &QueryContext<D>,
+    path: impl Into<LedgerPath>,
+    value: T,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    let path = path.into();
+    let path = path.as_slice();
+    let program = set_remove_program(path, value);
     context.query(&program, gas_limit, cost_model)
+}
+
+pub(crate) fn set_reset_program<D: DB>(path: &[u8]) -> Vec<Op<ResultModeVerify, D>> {
+    let Some((field, parent)) = path.split_last() else {
+        // Preserve the previous low-level empty-path program; compiler-declared
+        // Set paths are nonempty and use the keyed replacement below.
+        return vec![
+            Op::Idx {
+                cached: false,
+                push_path: true,
+                path: path_keys(path).into(),
+            },
+            Op::Pop,
+            Op::Push {
+                storage: true,
+                value: constructor_set(),
+            },
+            Op::Ins { cached: true, n: 0 },
+        ];
+    };
+    let mut program = Vec::new();
+    if !parent.is_empty() {
+        program.push(Op::Idx {
+            cached: false,
+            push_path: true,
+            path: path_keys(parent).into(),
+        });
+    }
+    program.extend([
+        Op::Push {
+            storage: false,
+            value: constructor_cell(*field),
+        },
+        Op::Push {
+            storage: true,
+            value: constructor_set(),
+        },
+        Op::Ins {
+            cached: false,
+            n: 1,
+        },
+    ]);
+    if !parent.is_empty() {
+        program.push(Op::Ins {
+            cached: true,
+            n: parent.len() as u8,
+        });
+    }
+    program
 }
 
 pub fn reset_set<D: DB>(
@@ -1765,23 +1836,27 @@ pub fn reset_set<D: DB>(
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
     let path = path.into();
     let path = path.as_slice();
-    let program = [
+    let program = set_reset_program(path);
+    context.query(&program, gas_limit, cost_model)
+}
+
+pub(crate) fn set_size_program<M: ResultMode<D>, D: DB>(
+    path: &[u8],
+    read_result: M::ReadResult,
+) -> Vec<Op<M, D>> {
+    vec![
+        Op::Dup { n: 0 },
         Op::Idx {
             cached: false,
-            push_path: true,
+            push_path: false,
             path: path_keys(path).into(),
         },
-        Op::Pop,
-        Op::Push {
-            storage: true,
-            value: constructor_set(),
-        },
-        Op::Ins {
+        Op::Size,
+        Op::Popeq {
             cached: true,
-            n: path.len() as u8,
+            result: read_result,
         },
-    ];
-    context.query(&program, gas_limit, cost_model)
+    ]
 }
 
 pub fn size_set<D: DB>(
@@ -1792,19 +1867,7 @@ pub fn size_set<D: DB>(
 ) -> Result<(QueryResults<ResultModeGather, D>, u64), CompactError> {
     let path = path.into();
     let path = path.as_slice();
-    let program = [
-        Op::Dup { n: 0 },
-        Op::Idx {
-            cached: false,
-            push_path: false,
-            path: path_keys(path).into(),
-        },
-        Op::Size,
-        Op::Popeq {
-            cached: true,
-            result: (),
-        },
-    ];
+    let program = set_size_program::<ResultModeGather, D>(path, ());
     let result = context
         .query(&program, gas_limit, cost_model)
         .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
@@ -1812,15 +1875,11 @@ pub fn size_set<D: DB>(
     Ok((result, decoded))
 }
 
-pub fn is_empty_set<D: DB>(
-    context: &QueryContext<D>,
-    path: impl Into<LedgerPath>,
-    gas_limit: Option<RunningCost>,
-    cost_model: &CostModel,
-) -> Result<(QueryResults<ResultModeGather, D>, bool), CompactError> {
-    let path = path.into();
-    let path = path.as_slice();
-    let program = [
+pub(crate) fn set_is_empty_program<M: ResultMode<D>, D: DB>(
+    path: &[u8],
+    read_result: M::ReadResult,
+) -> Vec<Op<M, D>> {
+    vec![
         Op::Dup { n: 0 },
         Op::Idx {
             cached: false,
@@ -1835,9 +1894,20 @@ pub fn is_empty_set<D: DB>(
         Op::Eq,
         Op::Popeq {
             cached: true,
-            result: (),
+            result: read_result,
         },
-    ];
+    ]
+}
+
+pub fn is_empty_set<D: DB>(
+    context: &QueryContext<D>,
+    path: impl Into<LedgerPath>,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<(QueryResults<ResultModeGather, D>, bool), CompactError> {
+    let path = path.into();
+    let path = path.as_slice();
+    let program = set_is_empty_program::<ResultModeGather, D>(path, ());
     let result = context
         .query(&program, gas_limit, cost_model)
         .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;

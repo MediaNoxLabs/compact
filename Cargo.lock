@@ -1583,6 +1583,8 @@ dependencies = [
  "compact-rust-cell-read-fixture",
  "compact-rust-counter-fixture",
  "compact-rust-nested-witness-call-oracle-fixture",
+ "compact-rust-set-boolean-fixture",
+ "compact-rust-set-oracle-fixture",
  "compact-rust-stateful-circuit-call-fixture",
  "compact-rust-witness-cell-write-fixture",
  "futures-executor",

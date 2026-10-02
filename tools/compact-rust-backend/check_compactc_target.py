@@ -32,6 +32,7 @@ SOURCE = ROOT / "examples/rust_backend/counter.compact"
 PURE_SOURCE = ROOT / "examples/rust_backend/field_add.compact"
 CELL_SOURCE = ROOT / "examples/rust_backend/cell_boolean.compact"
 SET_SOURCE = ROOT / "examples/rust_backend/set_oracle.compact"
+SET_BOOLEAN_SOURCE = ROOT / "examples/rust_backend/set_boolean.compact"
 CELL_READ_SOURCE = ROOT / "examples/rust_backend/cell_read.compact"
 WITNESS_CELL_SOURCE = ROOT / "examples/rust_backend/witness_cell_write.compact"
 NESTED_COUNTER_SOURCE = ROOT / "examples/rust_backend/stateful_circuit_call.compact"
@@ -387,10 +388,28 @@ def main() -> None:
                     assert (nested_witness_proof / "keys" / f"{circuit}.{extension}").is_file()
                 for extension in ("zkir", "bzkir"):
                     assert (nested_witness_proof / "zkir" / f"{circuit}.{extension}").is_file()
+            set_proof = base / "set-proof"
+            run(compiler, "--target", "rust", str(SET_BOOLEAN_SOURCE), str(set_proof))
+            check_manifest(set_proof)
+            for circuit in (
+                "add", "contains", "remove", "seen_size", "seen_is_empty",
+                "add_field", "contains_field", "reset_fields",
+            ):
+                for extension in ("prover", "verifier"):
+                    assert (set_proof / "keys" / f"{circuit}.{extension}").is_file()
+                for extension in ("zkir", "bzkir"):
+                    assert (set_proof / "zkir" / f"{circuit}.{extension}").is_file()
+            set_oracle_proof = base / "set-oracle-proof"
+            run(compiler, "--target", "rust", str(SET_SOURCE), str(set_oracle_proof))
+            check_manifest(set_oracle_proof)
+            for extension in ("prover", "verifier"):
+                assert (set_oracle_proof / "keys" / f"check.{extension}").is_file()
+            for extension in ("zkir", "bzkir"):
+                assert (set_oracle_proof / "zkir" / f"check.{extension}").is_file()
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 str(proof), str(cell_proof), str(cell_read_proof), str(witness_proof), str(nested_proof),
-                str(nested_witness_proof),
+                str(nested_witness_proof), str(set_proof), str(set_oracle_proof),
             )
     print("compactc target boundary and manifest: passed")
 

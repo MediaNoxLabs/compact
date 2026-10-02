@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Toolchain 0.31.128, language 0.23.105, runtime 0.16.101]
+
+### Added
+
+- Record complete root Set insert, remove, reset, membership, size, and
+  emptiness VM traces through generated typed methods. Preserve observed Gather
+  values in Verify programs and withhold recorded methods for unsupported Set
+  expressions or control flow.
+- Prove, verify, validate, and apply emitted ledger-8 Set calls, including a
+  Set membership query followed by a Cell write.
+
+### Fixed
+
+- Make Set reset use Compact's keyed insertion opcode sequence. The previous
+  final-state-equivalent sequence failed the emitted ZKIR public statement.
+
 ## [Toolchain 0.31.127, language 0.23.105, runtime 0.16.101]
 
 ### Added

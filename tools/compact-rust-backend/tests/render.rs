@@ -653,6 +653,7 @@ fn nested_set_query_in_cell_write_checks_field_and_item_types() {
     let source = render(&contract).unwrap();
     assert!(source.contains("crate::ledger_slots::seen"));
     assert!(source.contains(".member(context,"));
+    assert!(source.contains(".record_member(frame,"), "{source}");
     assert!(source.contains("total_cost += __compact_query_0.gas_cost"));
     let effectful_value = {
         let StateAction::CellWrite { value, .. } = &mut contract.stateful_circuits[0].actions[0]
@@ -1729,6 +1730,10 @@ fn set_actions_require_the_declared_element_type() {
     let source = render(&contract).unwrap();
     assert!(source.contains("pub const seen: runtime::slots::SetSlot<bool>"));
     assert!(source.contains("crate::ledger_slots::seen.insert(context, __compact_param_0)?"));
+    assert!(
+        source.contains(".record_insert(frame, __compact_param_0)?"),
+        "{source}"
+    );
     contract.stateful_circuits[0].parameters[0].ty = Type::Field;
     assert_eq!(
         render(&contract),
@@ -1767,6 +1772,24 @@ fn set_actions_require_the_declared_element_type() {
     };
     let source = render(&contract).unwrap();
     assert!(source.contains("crate::ledger_slots::seen.size(context)?"));
+    assert!(source.contains(".record_size(frame)?"), "{source}");
+
+    // The native slot handles this type, but the recorder must not expose a
+    // method until its complete typed expression path is supported.
+    contract.ledger_fields[0].declaration = LedgerFieldKind::Set {
+        ty: Type::Bytes { length: 32 },
+    };
+    contract.stateful_circuits[0].parameters[0].ty = Type::Bytes { length: 32 };
+    contract.stateful_circuits[0].result = Type::Unit;
+    contract.stateful_circuits[0].return_value = StateReturn::Unit;
+    contract.stateful_circuits[0].actions = vec![StateAction::SetInsert {
+        field: "seen".into(),
+        index: 0,
+        value: Expr::Parameter {
+            name: "value".into(),
+        },
+    }];
+    assert!(!render(&contract).unwrap().contains("pub mod recorded"));
 }
 
 #[test]

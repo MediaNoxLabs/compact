@@ -198,6 +198,19 @@ pub mod ledger_contract {
     /// Circuits with a replayable ordered ledger program.
     pub mod recorded {
         use midnight_compact_runtime as runtime;
+        pub fn check_member<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::Field,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_key_0 = __compact_param_0;
+            let (frame, __compact_recorded_member_1): (_, bool) =
+                crate::ledger_slots::seen.record_member(frame, __compact_recorded_key_0)?;
+            let frame =
+                crate::ledger_slots::memberFlag.record_write(frame, __compact_recorded_member_1)?;
+            Ok(frame.finish(()))
+        }
         pub fn member_flag<Private>(
             context: runtime::context::CircuitContext<Private>,
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
@@ -228,6 +241,14 @@ pub mod ledger_contract {
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
         impl Contract {
+            pub fn check_member<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                __compact_param_0: runtime::Field,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::check_member(context, __compact_param_0)
+            }
             pub fn member_flag<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,

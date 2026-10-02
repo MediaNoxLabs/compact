@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use compact_rust_set_boolean_fixture::ledger_contract::Contract;
 use compact_rust_set_boolean_fixture::ledger_contract::{
     add, add_field, choose, contains, contains_field, initial_state, remove, reset_fields,
     seen_is_empty, seen_size,
@@ -154,4 +155,69 @@ fn conditional_set_actions_keep_the_selected_branch_and_following_query() {
     );
     let present = contains(other.context, false).unwrap();
     assert!(present.result);
+}
+
+#[test]
+fn recorded_set_mutation_and_queries_match_native_state_and_replay() {
+    let context = initial_state(ConstructorContext::new(()))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let contract = Contract::default();
+    let added = contract.recording.add(context, true).unwrap();
+    let replay = added
+        .public
+        .initial()
+        .query(
+            added.public.verify_ops(),
+            None,
+            &added.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(
+        replay.context.effects,
+        added.execution.context.query.effects
+    );
+    assert_eq!(
+        replay.context.state.get_ref(),
+        added.execution.context.query.state.get_ref()
+    );
+
+    let contains = contract
+        .recording
+        .contains(added.execution.context, true)
+        .unwrap();
+    assert!(contains.execution.result);
+    let replay = contains
+        .public
+        .initial()
+        .query(
+            contains.public.verify_ops(),
+            None,
+            &contains.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(
+        replay.context.effects,
+        contains.execution.context.query.effects
+    );
+
+    let size = contract
+        .recording
+        .seen_size(contains.execution.context)
+        .unwrap();
+    assert_eq!(size.execution.result.value(), 1);
+    let empty = contract
+        .recording
+        .seen_is_empty(size.execution.context)
+        .unwrap();
+    assert!(!empty.execution.result);
+    let removed = contract
+        .recording
+        .remove(empty.execution.context, true)
+        .unwrap();
+    let empty = contract
+        .recording
+        .seen_is_empty(removed.execution.context)
+        .unwrap();
+    assert!(empty.execution.result);
 }

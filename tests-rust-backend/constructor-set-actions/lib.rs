@@ -100,19 +100,76 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
+    /// Circuits with a replayable ordered ledger program.
+    pub mod recorded {
+        use midnight_compact_runtime as runtime;
+        pub fn contains_seen<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: bool,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_key_0 = __compact_param_0;
+            let (frame, __compact_recorded_member_1): (_, bool) =
+                crate::ledger_slots::seen.record_member(frame, __compact_recorded_key_0)?;
+            Ok(frame.finish(__compact_recorded_member_1))
+        }
+        pub fn contains_history<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: bool,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_key_0 = __compact_param_0;
+            let (frame, __compact_recorded_member_1): (_, bool) =
+                crate::ledger_slots::history.record_member(frame, __compact_recorded_key_0)?;
+            Ok(frame.finish(__compact_recorded_member_1))
+        }
+        /// Typed handle for circuits with a complete recorded trace.
+        pub struct Contract;
+        impl Contract {
+            pub fn contains_seen<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                __compact_param_0: bool,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, bool>,
+                runtime::CompactError,
+            > {
+                crate::ledger_contract::recorded::contains_seen(context, __compact_param_0)
+            }
+            pub fn contains_history<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                __compact_param_0: bool,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, bool>,
+                runtime::CompactError,
+            > {
+                crate::ledger_contract::recorded::contains_history(context, __compact_param_0)
+            }
+        }
+    }
     /// Groups the contract's exported circuits for Rust consumers.
     pub struct Contract<W> {
         #[allow(dead_code)]
         witnesses: W,
+        pub recording: recorded::Contract,
     }
     impl<W> From<W> for Contract<W> {
         fn from(witnesses: W) -> Self {
-            Self { witnesses }
+            Self {
+                witnesses,
+                recording: recorded::Contract,
+            }
         }
     }
     impl Default for Contract<()> {
         fn default() -> Self {
-            Self { witnesses: () }
+            Self {
+                witnesses: (),
+                recording: recorded::Contract,
+            }
         }
     }
     impl<W> Contract<W> {

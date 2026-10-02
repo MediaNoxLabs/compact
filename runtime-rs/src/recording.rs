@@ -5,7 +5,7 @@
 
 //! An opt-in path from native circuit execution to a replayable ledger program.
 //!
-//! Cell reads, writes, and Counter updates are supported so far. Generated contracts must
+//! Cell, Counter, and Set operations are supported so far. Generated contracts must
 //! not claim a transaction-ready trace until every operation they use records
 //! its corresponding verifying VM instruction.
 
@@ -85,21 +85,13 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
     }
 
     pub fn write_cell<T: CellValue>(
-        mut self,
+        self,
         path: impl Into<LedgerPath>,
         value: T,
     ) -> Result<Self, CompactError> {
         let path = path.into();
         let program = ledger::cell_write_program(path.as_slice(), value);
-        let result = self
-            .context
-            .query
-            .query(&program, self.context.gas_limit, &self.context.cost_model)
-            .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
-        self.context.query = result.context;
-        self.observed_gas += result.gas_cost;
-        self.verify_ops.extend(program);
-        Ok(self)
+        self.apply_verify_program(program)
     }
 
     pub fn increment_counter(
@@ -119,13 +111,20 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
     }
 
     fn update_counter(
-        mut self,
+        self,
         path: impl Into<LedgerPath>,
         amount: u16,
         subtract: bool,
     ) -> Result<Self, CompactError> {
         let path = path.into();
         let program = ledger::counter_program(path.as_slice(), amount, subtract);
+        self.apply_verify_program(program)
+    }
+
+    fn apply_verify_program(
+        mut self,
+        program: Vec<Op<ResultModeVerify, D>>,
+    ) -> Result<Self, CompactError> {
         let result = self
             .context
             .query
@@ -135,6 +134,97 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         self.observed_gas += result.gas_cost;
         self.verify_ops.extend(program);
         Ok(self)
+    }
+
+    pub fn insert_set<T: CellValue>(
+        self,
+        path: impl Into<LedgerPath>,
+        value: T,
+    ) -> Result<Self, CompactError> {
+        let path = path.into();
+        self.apply_verify_program(ledger::set_insert_program(path.as_slice(), value))
+    }
+
+    pub fn remove_set<T: CellValue>(
+        self,
+        path: impl Into<LedgerPath>,
+        value: T,
+    ) -> Result<Self, CompactError> {
+        let path = path.into();
+        self.apply_verify_program(ledger::set_remove_program(path.as_slice(), value))
+    }
+
+    pub fn reset_set(self, path: impl Into<LedgerPath>) -> Result<Self, CompactError> {
+        let path = path.into();
+        self.apply_verify_program(ledger::set_reset_program(path.as_slice()))
+    }
+
+    pub fn member_set<T: CellValue + Clone>(
+        mut self,
+        path: impl Into<LedgerPath>,
+        value: T,
+    ) -> Result<(Self, bool), CompactError> {
+        let path = path.into();
+        let (result, member) = ledger::member_set(
+            &self.context.query,
+            path.as_slice(),
+            value.clone(),
+            self.context.gas_limit,
+            &self.context.cost_model,
+        )?;
+        let Some(GatherEvent::Read(observed)) = result.events.last() else {
+            return Err(CompactError::InvalidLedgerCell(
+                "missing Set member event".into(),
+            ));
+        };
+        let program = ledger::set_member_program(path.as_slice(), value, observed.clone());
+        self.context.query = result.context;
+        self.observed_gas += result.gas_cost;
+        self.verify_ops.extend(program);
+        Ok((self, member))
+    }
+
+    pub fn size_set(mut self, path: impl Into<LedgerPath>) -> Result<(Self, u64), CompactError> {
+        let path = path.into();
+        let (result, size) = ledger::size_set(
+            &self.context.query,
+            path.as_slice(),
+            self.context.gas_limit,
+            &self.context.cost_model,
+        )?;
+        let Some(GatherEvent::Read(observed)) = result.events.last() else {
+            return Err(CompactError::InvalidLedgerCell(
+                "missing Set size event".into(),
+            ));
+        };
+        let program = ledger::set_size_program(path.as_slice(), observed.clone());
+        self.context.query = result.context;
+        self.observed_gas += result.gas_cost;
+        self.verify_ops.extend(program);
+        Ok((self, size))
+    }
+
+    pub fn is_empty_set(
+        mut self,
+        path: impl Into<LedgerPath>,
+    ) -> Result<(Self, bool), CompactError> {
+        let path = path.into();
+        let (result, empty) = ledger::is_empty_set(
+            &self.context.query,
+            path.as_slice(),
+            self.context.gas_limit,
+            &self.context.cost_model,
+        )?;
+        let Some(GatherEvent::Read(observed)) = result.events.last() else {
+            return Err(CompactError::InvalidLedgerCell(
+                "missing Set emptiness event".into(),
+            ));
+        };
+        let program = ledger::set_is_empty_program(path.as_slice(), observed.clone());
+        self.context.query = result.context;
+        self.observed_gas += result.gas_cost;
+        self.verify_ops.extend(program);
+        Ok((self, empty))
     }
 
     pub fn read_cell<T: CellValue>(

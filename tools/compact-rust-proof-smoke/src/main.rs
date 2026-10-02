@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Prove emitted Counter and Cell artifacts in offline ledger-8 transactions.
+//! Prove emitted Counter, Cell, and Set artifacts in offline ledger-8 transactions.
 //!
 //! The proof uses the ledger-derived statement from a generated counter VM
 //! program and checks it against the fixture's known ZKIR encoding. The call
@@ -30,6 +30,8 @@ use compact_rust_cell_boolean_fixture::ledger_contract as cell_contract;
 use compact_rust_cell_read_fixture::ledger_contract as cell_read_contract;
 use compact_rust_counter_fixture::ledger_contract as counter_contract;
 use compact_rust_nested_witness_call_oracle_fixture::ledger_contract as expression_contract;
+use compact_rust_set_boolean_fixture::ledger_contract as set_contract;
+use compact_rust_set_oracle_fixture::ledger_contract as set_oracle_contract;
 use compact_rust_stateful_circuit_call_fixture::ledger_contract as nested_contract;
 use compact_rust_witness_cell_write_fixture::ledger_contract as witness_contract;
 use midnight_base_crypto::data_provider::{FetchMode, MidnightDataProvider, OutputMode};
@@ -296,9 +298,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     let witness_root = arguments.next();
     let nested_root = arguments.next();
     let expression_root = arguments.next();
+    let set_root = arguments.next();
+    let set_oracle_root = arguments.next();
     if arguments.next().is_some() {
         return Err(
-            "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output> [witness-output] [nested-output] [nested-witness-output]"
+            "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output> [witness-output] [nested-output] [nested-witness-output] [set-output] [set-oracle-output]"
                 .into(),
         );
     }
@@ -571,6 +575,138 @@ fn main() -> Result<(), Box<dyn Error>> {
                 },
             )?;
         }
+    }
+    if let Some(set_root) = set_root {
+        let set_root = Path::new(&set_root);
+        for circuit in [
+            "add",
+            "contains",
+            "remove",
+            "seen_size",
+            "seen_is_empty",
+            "add_field",
+            "contains_field",
+            "reset_fields",
+        ] {
+            let initial = set_contract::initial_state(ConstructorContext::new(()))?;
+            let deploy = make_deploy(
+                set_root,
+                circuit,
+                initial.ledger_state.get_ref().clone(),
+                &mut rng,
+            )?;
+            let context = initial.into_circuit_context(deploy.address());
+            let contract = set_contract::Contract::default();
+            let call = match circuit {
+                "add" => check_generated_trace(
+                    set_root,
+                    circuit,
+                    contract.recording.add(context, true)?,
+                    true,
+                )?,
+                "contains" => {
+                    let recorded = contract.recording.contains(context, true)?;
+                    if recorded.execution.result {
+                        return Err("empty Set unexpectedly contains true".into());
+                    }
+                    check_generated_trace(set_root, circuit, recorded, true)?
+                }
+                "remove" => check_generated_trace(
+                    set_root,
+                    circuit,
+                    contract.recording.remove(context, true)?,
+                    true,
+                )?,
+                "seen_size" => {
+                    let recorded = contract.recording.seen_size(context)?;
+                    if recorded.execution.result.value() != 0 {
+                        return Err("empty Set unexpectedly has nonzero size".into());
+                    }
+                    check_generated_trace(set_root, circuit, recorded, ())?
+                }
+                "seen_is_empty" => {
+                    let recorded = contract.recording.seen_is_empty(context)?;
+                    if !recorded.execution.result {
+                        return Err("new Set unexpectedly nonempty".into());
+                    }
+                    check_generated_trace(set_root, circuit, recorded, ())?
+                }
+                "add_field" => {
+                    let key = Field::from(7_u64);
+                    check_generated_trace(
+                        set_root,
+                        circuit,
+                        contract.recording.add_field(context, key)?,
+                        key,
+                    )?
+                }
+                "contains_field" => {
+                    let key = Field::from(7_u64);
+                    let recorded = contract.recording.contains_field(context, key)?;
+                    if recorded.execution.result {
+                        return Err("empty Field Set unexpectedly contains seven".into());
+                    }
+                    check_generated_trace(set_root, circuit, recorded, key)?
+                }
+                "reset_fields" => check_generated_trace(
+                    set_root,
+                    circuit,
+                    contract.recording.reset_fields(context)?,
+                    (),
+                )?,
+                _ => unreachable!(),
+            };
+            check_transaction(set_root, circuit, deploy, call, &mut rng, |contract| {
+                let StateValue::Array(fields) = contract.data.get_ref() else {
+                    return Err("Set contract state is not an array".into());
+                };
+                let StateValue::Map(set) = fields.get(0).ok_or("Set field missing")? else {
+                    return Err("Set field is not a map".into());
+                };
+                if set.size() != usize::from(circuit == "add") {
+                    return Err("proven Set call produced the wrong size".into());
+                }
+                let StateValue::Map(fields_set) = fields.get(1).ok_or("Field Set missing")? else {
+                    return Err("Field Set is not a map".into());
+                };
+                if fields_set.size() != usize::from(circuit == "add_field") {
+                    return Err("proven Field Set call produced the wrong size".into());
+                }
+                Ok(())
+            })?;
+        }
+    }
+    if let Some(set_oracle_root) = set_oracle_root {
+        let set_oracle_root = Path::new(&set_oracle_root);
+        let initial = set_oracle_contract::initial_state(ConstructorContext::new(()))?;
+        let deploy = make_deploy(
+            set_oracle_root,
+            "check",
+            initial.ledger_state.get_ref().clone(),
+            &mut rng,
+        )?;
+        let context = initial.into_circuit_context(deploy.address());
+        let key = Field::from(7_u64);
+        let recorded = set_oracle_contract::Contract::default()
+            .recording
+            .check(context, key)?;
+        let call = check_generated_trace(set_oracle_root, "check", recorded, key)?;
+        check_transaction(
+            set_oracle_root,
+            "check",
+            deploy,
+            call,
+            &mut rng,
+            |contract| {
+                let StateValue::Array(fields) = contract.data.get_ref() else {
+                    return Err("Set oracle state is not an array".into());
+                };
+                if read_cell::<bool, _>(fields.get(0).ok_or("Set oracle flag missing")?)? {
+                    return Err("proven Set member query unexpectedly found an element".into());
+                }
+                Ok(())
+            },
+        )?;
     }
     Ok(())
 }

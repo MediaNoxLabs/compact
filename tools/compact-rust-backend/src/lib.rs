@@ -6,7 +6,7 @@ mod recorded;
 mod stateful;
 mod witness;
 
-const RUNTIME_ABI_VERSION: u32 = 5;
+const RUNTIME_ABI_VERSION: u32 = 6;
 
 const GENERATED_HEADER: &str = r#"// This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
@@ -2919,6 +2919,8 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                     pub struct LedgerView<'a> {
                         #[allow(dead_code)]
                         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
+                        #[allow(dead_code)]
+                        meter: &'a runtime::context::WitnessReadMeter<'a>,
                     }
                     impl<'a> LedgerView<'a> {
                         #(#ledger_view_methods)*

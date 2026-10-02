@@ -81,10 +81,11 @@ fn field_expression(
             );
             *next_id += 1;
             steps.push(syn::parse_quote! {
-                let (frame, #value_name) = frame.witness(|context| {
+                let (frame, #value_name) = frame.witness_metered(|context, meter| {
                     witnesses.#witness_name(
                         context.witness_context_with(LedgerView {
                             state: context.query.state.get_ref(),
+                            meter,
                         }),
                         #(#args),*
                     )

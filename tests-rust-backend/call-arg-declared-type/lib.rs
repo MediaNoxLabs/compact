@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 5);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 6);
     pub fn idf(x: runtime::Field) -> Result<runtime::Field, runtime::CompactError> {
         Ok(x)
     }
@@ -99,37 +99,39 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 5);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 6);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
+        #[allow(dead_code)]
+        meter: &'a runtime::context::WitnessReadMeter<'a>,
     }
     impl<'a> LedgerView<'a> {
         pub fn opening(&self) -> Result<runtime::FixedBytes<32>, runtime::CompactError> {
-            runtime::ledger::read_root_cell::<runtime::FixedBytes<32>, _>(self.state, 0)
+            self.meter.read_cell::<runtime::FixedBytes<32>>(&[0])
         }
         pub fn commitCell(&self) -> Result<runtime::FixedBytes<32>, runtime::CompactError> {
-            runtime::ledger::read_root_cell::<runtime::FixedBytes<32>, _>(self.state, 1)
+            self.meter.read_cell::<runtime::FixedBytes<32>>(&[1])
         }
         pub fn hashCell(&self) -> Result<runtime::FixedBytes<32>, runtime::CompactError> {
-            runtime::ledger::read_root_cell::<runtime::FixedBytes<32>, _>(self.state, 2)
+            self.meter.read_cell::<runtime::FixedBytes<32>>(&[2])
         }
         pub fn fieldCell(&self) -> Result<runtime::Field, runtime::CompactError> {
-            runtime::ledger::read_root_cell::<runtime::Field, _>(self.state, 3)
+            self.meter.read_cell::<runtime::Field>(&[3])
         }
         pub fn armCell(&self) -> Result<runtime::Field, runtime::CompactError> {
-            runtime::ledger::read_root_cell::<runtime::Field, _>(self.state, 4)
+            self.meter.read_cell::<runtime::Field>(&[4])
         }
         pub fn condCell(&self) -> Result<runtime::Field, runtime::CompactError> {
-            runtime::ledger::read_root_cell::<runtime::Field, _>(self.state, 5)
+            self.meter.read_cell::<runtime::Field>(&[5])
         }
         pub fn flag(&self) -> Result<bool, runtime::CompactError> {
-            runtime::ledger::read_root_cell::<bool, _>(self.state, 6)
+            self.meter.read_cell::<bool>(&[6])
         }
         pub fn asserts(
             &self,
         ) -> Result<runtime::BoundedUint<18446744073709551615>, runtime::CompactError> {
-            let value = runtime::ledger::read_root_cell::<u64, _>(self.state, 7)?;
+            let value = self.meter.read_cell::<u64>(&[7])?;
             runtime::BoundedUint::<18446744073709551615>::new(value as u128)
         }
     }
@@ -424,12 +426,15 @@ pub mod ledger_contract {
             let (__compact_cast_item_0_0, __compact_cast_item_0_1) = __compact_cast_source_0;
             runtime::FixedVector::new([__compact_cast_item_0_0, __compact_cast_item_0_1])
         };
+        let __compact_witness_meter_3 = runtime::context::WitnessReadMeter::new(&context);
         let (__compact_next_private_3, __compact_witness_3) = witnesses.sumWitness(
             context.witness_context_with(LedgerView {
                 state: context.query.state.get_ref(),
+                meter: &__compact_witness_meter_3,
             }),
             __compact_argument_2,
         );
+        total_cost += __compact_witness_meter_3.gas_cost();
         context.private_state = __compact_next_private_3;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
             __compact_witness_3.clone(),
@@ -460,12 +465,15 @@ pub mod ledger_contract {
             let (__compact_cast_item_0_0, __compact_cast_item_0_1) = __compact_cast_source_0;
             runtime::FixedVector::new([__compact_cast_item_0_0, __compact_cast_item_0_1])
         };
+        let __compact_witness_meter_3 = runtime::context::WitnessReadMeter::new(&context);
         let (__compact_next_private_3, __compact_witness_3) = witnesses.sumWitness(
             context.witness_context_with(LedgerView {
                 state: context.query.state.get_ref(),
+                meter: &__compact_witness_meter_3,
             }),
             __compact_argument_2,
         );
+        total_cost += __compact_witness_meter_3.gas_cost();
         context.private_state = __compact_next_private_3;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
             __compact_witness_3.clone(),

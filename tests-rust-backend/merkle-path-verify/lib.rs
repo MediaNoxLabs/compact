@@ -87,7 +87,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 5);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 6);
     pub(crate) fn merkleTreePathRoot(
         path: crate::types::MerkleTreePath,
     ) -> Result<crate::types::MerkleTreeDigest, runtime::CompactError> {
@@ -136,10 +136,12 @@ pub mod pure_circuits {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 5);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 6);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
+        #[allow(dead_code)]
+        meter: &'a runtime::context::WitnessReadMeter<'a>,
     }
     impl<'a> LedgerView<'a> {
         pub fn t(
@@ -211,10 +213,13 @@ pub mod ledger_contract {
         let mut total_cost = runtime::context::RunningCost::default();
         let mut private_transcript_outputs = Vec::new();
         let mut context = context;
+        let __compact_witness_meter_0 = runtime::context::WitnessReadMeter::new(&context);
         let (__compact_next_private_0, __compact_witness_0) =
             witnesses.leaf_path(context.witness_context_with(LedgerView {
                 state: context.query.state.get_ref(),
+                meter: &__compact_witness_meter_0,
             }));
+        total_cost += __compact_witness_meter_0.gas_cost();
         context.private_state = __compact_next_private_0;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
             __compact_witness_0.clone(),

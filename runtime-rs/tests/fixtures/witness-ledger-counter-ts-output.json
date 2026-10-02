@@ -2,6 +2,28 @@
   "before": {
     "result": "0",
     "privateState": 8,
+    "reportedGas": {
+      "readTime": "0",
+      "computeTime": "0",
+      "bytesWritten": "0",
+      "bytesDeleted": "0"
+    },
+    "queries": [
+      {
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1249914853",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        },
+        "opTags": [
+          "dup",
+          "idx",
+          "popeq"
+        ]
+      }
+    ],
+    "publicTranscript": [],
     "privateTranscriptOutputs": [
       {
         "valueAtoms": [
@@ -22,6 +44,28 @@
   "after": {
     "result": "1",
     "privateState": 9,
+    "reportedGas": {
+      "readTime": "0",
+      "computeTime": "0",
+      "bytesWritten": "0",
+      "bytesDeleted": "0"
+    },
+    "queries": [
+      {
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1249914853",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        },
+        "opTags": [
+          "dup",
+          "idx",
+          "popeq"
+        ]
+      }
+    ],
+    "publicTranscript": [],
     "privateTranscriptOutputs": [
       {
         "valueAtoms": [

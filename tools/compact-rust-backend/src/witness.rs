@@ -81,36 +81,17 @@ pub(crate) fn build<'a>(
                 match &field.declaration {
                     LedgerFieldKind::Cell { ty } => {
                         let ty = rust_type(ty)?;
-                        let path = field.physical_path();
-                        let method: syn::ImplItemFn = if path.len() == 1 {
-                            syn::parse_quote! {
-                                pub fn #name(&self) -> Result<#ty, runtime::CompactError> {
-                                    runtime::ledger::read_root_cell::<#ty, _>(self.state, #index)
-                                }
+                        ledger_view_methods.push(syn::parse_quote! {
+                            pub fn #name(&self) -> Result<#ty, runtime::CompactError> {
+                                self.meter.read_cell::<#ty>(&[#(#path),*])
                             }
-                        } else {
-                            let path = path
-                                .iter()
-                                .map(|part| syn::LitInt::new(&part.to_string(), Span::call_site()))
-                                .collect::<Vec<_>>();
-                            syn::parse_quote! {
-                                pub fn #name(&self) -> Result<#ty, runtime::CompactError> {
-                                    runtime::ledger::read_cell_at_path::<#ty, _>(self.state, &[#(#path),*])
-                                }
-                            }
-                        };
-                        ledger_view_methods.push(method);
+                        });
                     }
                     LedgerFieldKind::Counter => {
                         let max = syn::LitInt::new(&u64::MAX.to_string(), Span::call_site());
-                        let read: syn::Expr = if path.len() == 1 {
-                            syn::parse_quote!(runtime::ledger::read_root_cell::<u64, _>(self.state, #index)?)
-                        } else {
-                            syn::parse_quote!(runtime::ledger::read_cell_at_path::<u64, _>(self.state, &[#(#path),*])?)
-                        };
                         ledger_view_methods.push(syn::parse_quote! {
                         pub fn #name(&self) -> Result<runtime::BoundedUint<#max>, runtime::CompactError> {
-                            let value = #read;
+                            let value = self.meter.read_cell::<u64>(&[#(#path),*])?;
                             runtime::BoundedUint::<#max>::new(value as u128)
                         }
                     });

@@ -462,14 +462,23 @@ pub(crate) fn render_state_expression(
             );
             let value_name =
                 syn::Ident::new(&format!("__compact_witness_{index}"), Span::call_site());
+            let meter_name = syn::Ident::new(
+                &format!("__compact_witness_meter_{index}"),
+                Span::call_site(),
+            );
+            statements.push(syn::parse_quote! {
+                let #meter_name = runtime::context::WitnessReadMeter::new(&context);
+            });
             statements.push(syn::parse_quote! {
                 let (#private_name, #value_name) = witnesses.#witness_name(
                     context.witness_context_with(LedgerView {
                         state: context.query.state.get_ref(),
+                        meter: &#meter_name,
                     }),
                     #(#rendered_arguments),*
                 );
             });
+            statements.push(syn::parse_quote!(total_cost += #meter_name.gas_cost();));
             statements.push(syn::parse_quote!(context.private_state = #private_name;));
             statements.push(syn::parse_quote! {
                 private_transcript_outputs.push(runtime::fab::AlignedValue::from(#value_name.clone()));
@@ -2516,7 +2525,6 @@ pub(crate) fn render_stateful_circuit(
         }
     }
     let result_ty = rust_type(&circuit.result)?;
-    let mut return_query_effect = false;
     let return_expr: syn::Expr = match &circuit.return_value {
         StateReturn::Expression { value } => {
             let mut effect_statements = Vec::new();
@@ -2541,7 +2549,6 @@ pub(crate) fn render_stateful_circuit(
             if effect {
                 uses_witness = true;
             }
-            return_query_effect = query_effect;
             if effect || query_effect {
                 statements.push(syn::parse_quote!(let mut context = context;));
             }
@@ -2960,17 +2967,8 @@ pub(crate) fn render_stateful_circuit(
     } else {
         syn::parse_quote!(let private_transcript_outputs = Vec::new();)
     };
-    let cost_init: syn::Stmt = if uses_witness
-        && !return_query_effect
-        && circuit
-            .actions
-            .iter()
-            .all(|action| matches!(action, StateAction::Assert { .. }))
-    {
-        syn::parse_quote!(let total_cost = runtime::context::RunningCost::default();)
-    } else {
-        syn::parse_quote!(let mut total_cost = runtime::context::RunningCost::default();)
-    };
+    let cost_init: syn::Stmt =
+        syn::parse_quote!(let mut total_cost = runtime::context::RunningCost::default(););
     let visibility: syn::Visibility = if circuit.internal {
         syn::parse_quote!(pub(crate))
     } else {

@@ -1,7 +1,98 @@
 {
   "single": {
+    "afterInit": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a6c0008404104000401040408010404080403040c00041008010404145803042448010403040108010404010401040108404100004c4877726974655f6e65737465645f7477696365000400081c2000042408010404288c03043e7c4d75450e7a7912dc4fad768bf10193feb09528e0a67ad62989a58a11deb273002824726561645f63656c6c08302000043408010404388c03043e7c2ab5296967248f171993f639b1b710f545c5fffdbbb299829816722fc0690c402020202c20202020203c20202020202008020800343077726974655f736563726574084420000448080104044c9003043f80d5e1645e1620dca946d73d26acae4c89c53ef067c62639006ec2a6b729bd1fa000302c77726974655f7477696365085420000458080104045c9003043f80274ce54ee536fb368540af83ac8a840a49cef61331b737792678807ba00b99b040202020402050202020202020202020600802101408201864201003000400",
+    "afterCall": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a6c0008094104000401040408010404080403040c00041008010404145803042448010403040108010404010401040108094100004c4877726974655f6e65737465645f7477696365000400081c2000042408010404288c03043e7c4d75450e7a7912dc4fad768bf10193feb09528e0a67ad62989a58a11deb273002824726561645f63656c6c08302000043408010404388c03043e7c2ab5296967248f171993f639b1b710f545c5fffdbbb299829816722fc0690c402020202c20202020203c20202020202008020800343077726974655f736563726574084420000448080104044c9003043f80d5e1645e1620dca946d73d26acae4c89c53ef067c62639006ec2a6b729bd1fa000302c77726974655f7477696365085420000458080104045c9003043f80274ce54ee536fb368540af83ac8a840a49cef61331b737792678807ba00b99b040202020402050202020202020202020600802101408201864201003000400",
     "cell": "9",
     "privateState": 8,
+    "reportedGas": {
+      "readTime": "85000000",
+      "computeTime": "1233942932",
+      "bytesWritten": "36",
+      "bytesDeleted": "36"
+    },
+    "queries": [
+      {
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1249914853",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        },
+        "opTags": [
+          "dup",
+          "idx",
+          "popeq"
+        ]
+      },
+      {
+        "gasCost": {
+          "readTime": "85000000",
+          "computeTime": "1233942932",
+          "bytesWritten": "36",
+          "bytesDeleted": "36"
+        },
+        "opTags": [
+          "push",
+          "push",
+          "ins"
+        ]
+      }
+    ],
+    "publicTranscript": [
+      {
+        "push": {
+          "storage": false,
+          "value": {
+            "tag": "cell",
+            "content": {
+              "value": [
+                {
+                  "bytesHex": ""
+                }
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "bytes",
+                    "length": 1
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "push": {
+          "storage": true,
+          "value": {
+            "tag": "cell",
+            "content": {
+              "value": [
+                {
+                  "bytesHex": "09"
+                }
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "field"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ins": {
+          "cached": false,
+          "n": 1
+        }
+      }
+    ],
     "privateTranscriptOutputs": [
       {
         "valueAtoms": [
@@ -21,8 +112,384 @@
     ]
   },
   "twice": {
+    "afterInit": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a6c0008404104000401040408010404080403040c00041008010404145803042448010403040108010404010401040108404100004c4877726974655f6e65737465645f7477696365000400081c2000042408010404288c03043e7c4d75450e7a7912dc4fad768bf10193feb09528e0a67ad62989a58a11deb273002824726561645f63656c6c08302000043408010404388c03043e7c2ab5296967248f171993f639b1b710f545c5fffdbbb299829816722fc0690c402020202c20202020203c20202020202008020800343077726974655f736563726574084420000448080104044c9003043f80d5e1645e1620dca946d73d26acae4c89c53ef067c62639006ec2a6b729bd1fa000302c77726974655f7477696365085420000458080104045c9003043f80274ce54ee536fb368540af83ac8a840a49cef61331b737792678807ba00b99b040202020402050202020202020202020600802101408201864201003000400",
+    "afterCall": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a6c00080a4104000401040408010404080403040c000410080104041458030424480104030401080104040104010401080a4100004c4877726974655f6e65737465645f7477696365000400081c2000042408010404288c03043e7c4d75450e7a7912dc4fad768bf10193feb09528e0a67ad62989a58a11deb273002824726561645f63656c6c08302000043408010404388c03043e7c2ab5296967248f171993f639b1b710f545c5fffdbbb299829816722fc0690c402020202c20202020203c20202020202008020800343077726974655f736563726574084420000448080104044c9003043f80d5e1645e1620dca946d73d26acae4c89c53ef067c62639006ec2a6b729bd1fa000302c77726974655f7477696365085420000458080104045c9003043f80274ce54ee536fb368540af83ac8a840a49cef61331b737792678807ba00b99b040202020402050202020202020202020600802101408201864201003000400",
     "cell": "10",
     "privateState": 9,
+    "reportedGas": {
+      "readTime": "85000000",
+      "computeTime": "1233942932",
+      "bytesWritten": "36",
+      "bytesDeleted": "36"
+    },
+    "queries": [
+      {
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1249914853",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        },
+        "opTags": [
+          "dup",
+          "idx",
+          "popeq"
+        ]
+      },
+      {
+        "gasCost": {
+          "readTime": "85000000",
+          "computeTime": "1233942932",
+          "bytesWritten": "36",
+          "bytesDeleted": "36"
+        },
+        "opTags": [
+          "push",
+          "push",
+          "ins"
+        ]
+      },
+      {
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1249914853",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        },
+        "opTags": [
+          "dup",
+          "idx",
+          "popeq"
+        ]
+      },
+      {
+        "gasCost": {
+          "readTime": "85000000",
+          "computeTime": "1233942932",
+          "bytesWritten": "36",
+          "bytesDeleted": "36"
+        },
+        "opTags": [
+          "push",
+          "push",
+          "ins"
+        ]
+      }
+    ],
+    "publicTranscript": [
+      {
+        "push": {
+          "storage": false,
+          "value": {
+            "tag": "cell",
+            "content": {
+              "value": [
+                {
+                  "bytesHex": ""
+                }
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "bytes",
+                    "length": 1
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "push": {
+          "storage": true,
+          "value": {
+            "tag": "cell",
+            "content": {
+              "value": [
+                {
+                  "bytesHex": "09"
+                }
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "field"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ins": {
+          "cached": false,
+          "n": 1
+        }
+      },
+      {
+        "push": {
+          "storage": false,
+          "value": {
+            "tag": "cell",
+            "content": {
+              "value": [
+                {
+                  "bytesHex": ""
+                }
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "bytes",
+                    "length": 1
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "push": {
+          "storage": true,
+          "value": {
+            "tag": "cell",
+            "content": {
+              "value": [
+                {
+                  "bytesHex": "0a"
+                }
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "field"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ins": {
+          "cached": false,
+          "n": 1
+        }
+      }
+    ],
+    "privateTranscriptOutputs": [
+      {
+        "valueAtoms": [
+          [
+            9
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          }
+        ]
+      },
+      {
+        "valueAtoms": [
+          [
+            10
+          ]
+        ],
+        "alignment": [
+          {
+            "tag": "atom",
+            "value": {
+              "tag": "field"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "nested": {
+    "afterInit": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a6c0008404104000401040408010404080403040c00041008010404145803042448010403040108010404010401040108404100004c4877726974655f6e65737465645f7477696365000400081c2000042408010404288c03043e7c4d75450e7a7912dc4fad768bf10193feb09528e0a67ad62989a58a11deb273002824726561645f63656c6c08302000043408010404388c03043e7c2ab5296967248f171993f639b1b710f545c5fffdbbb299829816722fc0690c402020202c20202020203c20202020202008020800343077726974655f736563726574084420000448080104044c9003043f80d5e1645e1620dca946d73d26acae4c89c53ef067c62639006ec2a6b729bd1fa000302c77726974655f7477696365085420000458080104045c9003043f80274ce54ee536fb368540af83ac8a840a49cef61331b737792678807ba00b99b040202020402050202020202020202020600802101408201864201003000400",
+    "afterCall": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a6c00080a4104000401040408010404080403040c000410080104041458030424480104030401080104040104010401080a4100004c4877726974655f6e65737465645f7477696365000400081c2000042408010404288c03043e7c4d75450e7a7912dc4fad768bf10193feb09528e0a67ad62989a58a11deb273002824726561645f63656c6c08302000043408010404388c03043e7c2ab5296967248f171993f639b1b710f545c5fffdbbb299829816722fc0690c402020202c20202020203c20202020202008020800343077726974655f736563726574084420000448080104044c9003043f80d5e1645e1620dca946d73d26acae4c89c53ef067c62639006ec2a6b729bd1fa000302c77726974655f7477696365085420000458080104045c9003043f80274ce54ee536fb368540af83ac8a840a49cef61331b737792678807ba00b99b040202020402050202020202020202020600802101408201864201003000400",
+    "cell": "10",
+    "privateState": 9,
+    "reportedGas": {
+      "readTime": "85000000",
+      "computeTime": "1233942932",
+      "bytesWritten": "36",
+      "bytesDeleted": "36"
+    },
+    "queries": [
+      {
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1249914853",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        },
+        "opTags": [
+          "dup",
+          "idx",
+          "popeq"
+        ]
+      },
+      {
+        "gasCost": {
+          "readTime": "85000000",
+          "computeTime": "1233942932",
+          "bytesWritten": "36",
+          "bytesDeleted": "36"
+        },
+        "opTags": [
+          "push",
+          "push",
+          "ins"
+        ]
+      },
+      {
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1249914853",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        },
+        "opTags": [
+          "dup",
+          "idx",
+          "popeq"
+        ]
+      },
+      {
+        "gasCost": {
+          "readTime": "85000000",
+          "computeTime": "1233942932",
+          "bytesWritten": "36",
+          "bytesDeleted": "36"
+        },
+        "opTags": [
+          "push",
+          "push",
+          "ins"
+        ]
+      }
+    ],
+    "publicTranscript": [
+      {
+        "push": {
+          "storage": false,
+          "value": {
+            "tag": "cell",
+            "content": {
+              "value": [
+                {
+                  "bytesHex": ""
+                }
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "bytes",
+                    "length": 1
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "push": {
+          "storage": true,
+          "value": {
+            "tag": "cell",
+            "content": {
+              "value": [
+                {
+                  "bytesHex": "09"
+                }
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "field"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ins": {
+          "cached": false,
+          "n": 1
+        }
+      },
+      {
+        "push": {
+          "storage": false,
+          "value": {
+            "tag": "cell",
+            "content": {
+              "value": [
+                {
+                  "bytesHex": ""
+                }
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "bytes",
+                    "length": 1
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "push": {
+          "storage": true,
+          "value": {
+            "tag": "cell",
+            "content": {
+              "value": [
+                {
+                  "bytesHex": "0a"
+                }
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "field"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ins": {
+          "cached": false,
+          "n": 1
+        }
+      }
+    ],
     "privateTranscriptOutputs": [
       {
         "valueAtoms": [

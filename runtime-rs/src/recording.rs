@@ -25,7 +25,7 @@ use midnight_onchain_vm::ops::Op;
 use midnight_onchain_vm::result_mode::{GatherEvent, ResultModeVerify};
 
 use crate::CompactError;
-use crate::context::{CircuitContext, CircuitResult};
+use crate::context::{CircuitContext, CircuitResult, WitnessReadMeter};
 use crate::ledger::{self, CellValue, DB, DefaultDB, LedgerPath, QueryContext};
 
 /// The starting ledger context and the ordered VM program for one circuit.
@@ -89,6 +89,21 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         F: FnOnce(&CircuitContext<Private, D>) -> (Private, T),
     {
         let (next_private, value) = call(&self.context);
+        self.context.private_state = next_private;
+        self.private_outputs.push(AlignedValue::from(value.clone()));
+        (self, value)
+    }
+
+    /// Invoke a witness and charge ledger reads made through its projection.
+    pub fn witness_metered<T, F>(mut self, call: F) -> (Self, T)
+    where
+        T: Clone,
+        AlignedValue: From<T>,
+        F: FnOnce(&CircuitContext<Private, D>, &WitnessReadMeter<'_, D>) -> (Private, T),
+    {
+        let meter = WitnessReadMeter::new(&self.context);
+        let (next_private, value) = call(&self.context, &meter);
+        self.observed_gas += meter.gas_cost();
         self.context.private_state = next_private;
         self.private_outputs.push(AlignedValue::from(value.clone()));
         (self, value)

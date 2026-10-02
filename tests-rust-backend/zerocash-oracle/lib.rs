@@ -201,7 +201,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 5);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 6);
     pub(crate) fn merkleTreePathRoot(
         path: crate::types::MerkleTreePath,
     ) -> Result<crate::types::MerkleTreeDigest, runtime::CompactError> {
@@ -300,10 +300,12 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 5);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 6);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
+        #[allow(dead_code)]
+        meter: &'a runtime::context::WitnessReadMeter<'a>,
     }
     impl<'a> LedgerView<'a> {
         pub fn nullifiers(
@@ -323,7 +325,7 @@ pub mod ledger_contract {
             runtime::ledger::historic_merkle_tree_view_at_path(self.state, &[1])
         }
         pub fn ciphertexts(&self) -> Result<runtime::OpaqueBytes, runtime::CompactError> {
-            runtime::ledger::read_root_cell::<runtime::OpaqueBytes, _>(self.state, 2)
+            self.meter.read_cell::<runtime::OpaqueBytes>(&[2])
         }
     }
     pub trait Witnesses<Private> {
@@ -385,10 +387,13 @@ pub mod ledger_contract {
         let mut total_cost = runtime::context::RunningCost::default();
         let mut private_transcript_outputs = Vec::new();
         let mut context = context;
+        let __compact_witness_meter_0 = runtime::context::WitnessReadMeter::new(&context);
         let (__compact_next_private_0, __compact_witness_0) =
             witnesses.private_zk_secret_key(context.witness_context_with(LedgerView {
                 state: context.query.state.get_ref(),
+                meter: &__compact_witness_meter_0,
             }));
+        total_cost += __compact_witness_meter_0.gas_cost();
         context.private_state = __compact_next_private_0;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
             __compact_witness_0.clone(),
@@ -431,12 +436,15 @@ pub mod ledger_contract {
             )?;
         let mut context = context;
         let __compact_argument_7 = __compact_action_local_3.clone();
+        let __compact_witness_meter_8 = runtime::context::WitnessReadMeter::new(&context);
         let (__compact_next_private_8, __compact_witness_8) = witnesses.context_path_of(
             context.witness_context_with(LedgerView {
                 state: context.query.state.get_ref(),
+                meter: &__compact_witness_meter_8,
             }),
             __compact_argument_7,
         );
+        total_cost += __compact_witness_meter_8.gas_cost();
         context.private_state = __compact_next_private_8;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
             __compact_witness_8.clone(),
@@ -461,10 +469,13 @@ pub mod ledger_contract {
             ));
         }
         let mut context = context;
+        let __compact_witness_meter_13 = runtime::context::WitnessReadMeter::new(&context);
         let (__compact_next_private_13, __compact_witness_13) =
             witnesses.context_new_coin_info(context.witness_context_with(LedgerView {
                 state: context.query.state.get_ref(),
+                meter: &__compact_witness_meter_13,
             }));
+        total_cost += __compact_witness_meter_13.gas_cost();
         context.private_state = __compact_next_private_13;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
             __compact_witness_13.clone(),
@@ -483,13 +494,16 @@ pub mod ledger_contract {
         let mut context = context;
         let __compact_argument_16 = (__compact_param_0.clone()).encryption.clone();
         let __compact_argument_17 = __compact_action_local_5.clone();
+        let __compact_witness_meter_18 = runtime::context::WitnessReadMeter::new(&context);
         let (__compact_next_private_18, __compact_witness_18) = witnesses.context_encrypt(
             context.witness_context_with(LedgerView {
                 state: context.query.state.get_ref(),
+                meter: &__compact_witness_meter_18,
             }),
             __compact_argument_16,
             __compact_argument_17,
         );
+        total_cost += __compact_witness_meter_18.gas_cost();
         context.private_state = __compact_next_private_18;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
             __compact_witness_18.clone(),
@@ -501,12 +515,15 @@ pub mod ledger_contract {
         total_cost += step.gas_cost;
         let mut context = context;
         let __compact_argument_19 = __compact_param_1.clone();
+        let __compact_witness_meter_20 = runtime::context::WitnessReadMeter::new(&context);
         let (__compact_next_private_20, __compact_witness_20) = witnesses.private_remove_coin(
             context.witness_context_with(LedgerView {
                 state: context.query.state.get_ref(),
+                meter: &__compact_witness_meter_20,
             }),
             __compact_argument_19,
         );
+        total_cost += __compact_witness_meter_20.gas_cost();
         context.private_state = __compact_next_private_20;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
             __compact_witness_20.clone(),
@@ -527,20 +544,26 @@ pub mod ledger_contract {
         let mut total_cost = runtime::context::RunningCost::default();
         let mut private_transcript_outputs = Vec::new();
         let mut context = context;
+        let __compact_witness_meter_0 = runtime::context::WitnessReadMeter::new(&context);
         let (__compact_next_private_0, __compact_witness_0) =
             witnesses.context_new_coin_info(context.witness_context_with(LedgerView {
                 state: context.query.state.get_ref(),
+                meter: &__compact_witness_meter_0,
             }));
+        total_cost += __compact_witness_meter_0.gas_cost();
         context.private_state = __compact_next_private_0;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
             __compact_witness_0.clone(),
         ));
         let __compact_action_local_0: crate::types::coin_info = __compact_witness_0;
         let mut context = context;
+        let __compact_witness_meter_1 = runtime::context::WitnessReadMeter::new(&context);
         let (__compact_next_private_1, __compact_witness_1) =
             witnesses.private_zk_public_key(context.witness_context_with(LedgerView {
                 state: context.query.state.get_ref(),
+                meter: &__compact_witness_meter_1,
             }));
+        total_cost += __compact_witness_meter_1.gas_cost();
         context.private_state = __compact_next_private_1;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
             __compact_witness_1.clone(),
@@ -548,12 +571,15 @@ pub mod ledger_contract {
         let __compact_action_local_1: crate::types::zk_public_key = __compact_witness_1;
         let mut context = context;
         let __compact_argument_2 = __compact_action_local_0.clone();
+        let __compact_witness_meter_3 = runtime::context::WitnessReadMeter::new(&context);
         let (__compact_next_private_3, __compact_witness_3) = witnesses.private_add_coin(
             context.witness_context_with(LedgerView {
                 state: context.query.state.get_ref(),
+                meter: &__compact_witness_meter_3,
             }),
             __compact_argument_2,
         );
+        total_cost += __compact_witness_meter_3.gas_cost();
         context.private_state = __compact_next_private_3;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
             __compact_witness_3.clone(),

@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 5);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 6);
 }
 /// Typed descriptors for Compact Cell, Counter, Set, Map, and List declarations.
 #[allow(non_upper_case_globals)]
@@ -31,14 +31,16 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 5);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 6);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
+        #[allow(dead_code)]
+        meter: &'a runtime::context::WitnessReadMeter<'a>,
     }
     impl<'a> LedgerView<'a> {
         pub fn v(&self) -> Result<runtime::Field, runtime::CompactError> {
-            runtime::ledger::read_root_cell::<runtime::Field, _>(self.state, 0)
+            self.meter.read_cell::<runtime::Field>(&[0])
         }
     }
     pub trait Witnesses<Private> {
@@ -64,9 +66,10 @@ pub mod ledger_contract {
         witnesses: &W,
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let frame = runtime::context::CircuitFrame::new(context);
-        let (frame, __compact_frame_witness_0) = frame.witness(|context| {
+        let (frame, __compact_frame_witness_0) = frame.witness_metered(|context, meter| {
             witnesses.fetch_field(context.witness_context_with(LedgerView {
                 state: context.query.state.get_ref(),
+                meter,
             }))
         });
         let __compact_frame_local_1: runtime::Field = __compact_frame_witness_0;
@@ -83,9 +86,10 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, __compact_witness_0) = frame.witness(|context| {
+            let (frame, __compact_witness_0) = frame.witness_metered(|context, meter| {
                 witnesses.fetch_field(context.witness_context_with(super::LedgerView {
                     state: context.query.state.get_ref(),
+                    meter,
                 }))
             });
             let frame = crate::ledger_slots::v.record_write(frame, __compact_witness_0)?;

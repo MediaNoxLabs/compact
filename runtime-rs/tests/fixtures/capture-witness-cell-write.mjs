@@ -21,6 +21,16 @@ import * as runtime from '../../../runtime/dist/index.js';
 const [contractPath] = process.argv.slice(2);
 if (!contractPath) throw new Error('expected contract/index.js');
 const { Contract } = await import(pathToFileURL(contractPath).href);
+const queryCosts = [];
+const originalQuery = runtime.QueryContext.prototype.query;
+runtime.QueryContext.prototype.query = function (...args) {
+  const result = originalQuery.call(this, ...args);
+  queryCosts.push({
+    gasCost: result.gasCost,
+    opTags: args[0].map((op) => Object.keys(op)[0]),
+  });
+  return result;
+};
 const contract = new Contract({
   secret: ({ ledger, privateState }, seed) => {
     if (seed !== 2n) throw new Error('unexpected witness argument');
@@ -36,20 +46,48 @@ function initialContext() {
     initialPrivateState: 7,
     initialZswapLocalState: runtime.emptyZswapLocalState(coinPublicKey),
   });
-  return runtime.createCircuitContext(
-    runtime.dummyContractAddress(),
-    coinPublicKey,
-    initial.currentContractState.data,
-    initial.currentPrivateState,
-  );
+  return {
+    initial,
+    context: runtime.createCircuitContext(
+      runtime.dummyContractAddress(),
+      coinPublicKey,
+      initial.currentContractState.data,
+      initial.currentPrivateState,
+    ),
+  };
+}
+
+const stateHex = (initial) => Buffer.from(initial.currentContractState.serialize()).toString('hex');
+
+function normalize(value) {
+  if (typeof value === 'bigint') return value.toString();
+  if (value instanceof Uint8Array) return { bytesHex: Buffer.from(value).toString('hex') };
+  if (Array.isArray(value)) return value.map(normalize);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([key, inner]) => [key, normalize(inner)]));
+  }
+  return value;
 }
 
 function run(name) {
-  const write = contract.circuits[name](initialContext(), 2n);
+  const { initial, context } = initialContext();
+  const afterInit = stateHex(initial);
+  const queryStart = queryCosts.length;
+  const write = contract.circuits[name](context, 2n);
+  const queries = queryCosts.slice(queryStart);
+  initial.currentContractState.data = new runtime.ChargedState(
+    write.context.currentQueryContext.state.state,
+  );
+  const afterCall = stateHex(initial);
   const read = contract.circuits.read_cell(write.context);
   return {
+    afterInit,
+    afterCall,
     cell: read.result.toString(),
     privateState: write.context.currentPrivateState,
+    reportedGas: normalize(write.gasCost),
+    queries: normalize(queries),
+    publicTranscript: normalize(write.proofData.publicTranscript),
     privateTranscriptOutputs: write.proofData.privateTranscriptOutputs.map(
       ({ value, alignment }) => ({
         valueAtoms: value.map((atom) => Array.from(atom)),
@@ -62,4 +100,5 @@ function run(name) {
 process.stdout.write(JSON.stringify({
   single: run('write_secret'),
   twice: run('write_twice'),
+  nested: run('write_nested_twice'),
 }, null, 2) + '\n');

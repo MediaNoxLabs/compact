@@ -6,14 +6,17 @@ midnight-zk primitives for fields, encoding, cryptography, state, and VM
 queries. Generated code checks `RUST_RUNTIME_ABI` at compile time. A generated
 crate bundles matching runtime sources by default or points to one shared
 source root when compiled with `--rust-runtime-root`.
-ABI 5 adds `slots::MapNode<K, V>` for nested ledger Map declarations. The
+ABI 6 adds `context::WitnessReadMeter` and generated ledger projections that
+charge Cell and Counter reads made inside witnesses. Collection and Merkle
+witness views still need operation-level metering. ABI 5 added
+`slots::MapNode<K, V>` for nested ledger Map declarations. The
 marker is a type-level shape, not a FAB scalar value. A nested `MapSlot` permits
 `is_empty`, `size`, and `member` reads, including recording, while scalar
 lookup and mutations require a `CellValue` value type.
-`context::CircuitFrame` is an additive native composition probe: its consuming
-`witness`, `apply`, and `finish` methods accumulate successor context, total
-gas, and private FAB outputs. Generated native bodies do not yet use it; see
-the M2 design decision in ADR-0005 and issue #110.
+`context::CircuitFrame` composes eligible generated witnessed Cell and nested
+native bodies. Its consuming `witness_metered`, `apply`, and `finish` methods
+accumulate witness read costs, successor context, ledger query gas, and private
+FAB outputs. See M2 decisions ADR-0005 / issue #110 and ADR-0015 / issue #116.
 
 For the compiler command, generated crate layout, and compatibility matrix,
 see the [Rust backend guide](https://github.com/MediaNoxLabs/compact/blob/codex/rust-backend-ast/tools/compact-rust-backend/README.md).

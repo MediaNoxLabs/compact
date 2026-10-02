@@ -104,7 +104,7 @@ pub use types::Schnorr_SchnorrSignature;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 5);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 6);
     pub fn attestationDigest(
         subject: runtime::FixedBytes<32>,
         epoch: runtime::BoundedUint<18446744073709551615>,
@@ -141,23 +141,25 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 5);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 6);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
+        #[allow(dead_code)]
+        meter: &'a runtime::context::WitnessReadMeter<'a>,
     }
     impl<'a> LedgerView<'a> {
         pub fn attestorKey(&self) -> Result<runtime::JubjubPoint, runtime::CompactError> {
-            runtime::ledger::read_root_cell::<runtime::JubjubPoint, _>(self.state, 0)
+            self.meter.read_cell::<runtime::JubjubPoint>(&[0])
         }
         pub fn acceptedCount(
             &self,
         ) -> Result<runtime::BoundedUint<18446744073709551615>, runtime::CompactError> {
-            let value = runtime::ledger::read_root_cell::<u64, _>(self.state, 1)?;
+            let value = self.meter.read_cell::<u64>(&[1])?;
             runtime::BoundedUint::<18446744073709551615>::new(value as u128)
         }
         pub fn open(&self) -> Result<bool, runtime::CompactError> {
-            runtime::ledger::read_root_cell::<bool, _>(self.state, 2)
+            self.meter.read_cell::<bool>(&[2])
         }
     }
     pub trait Witnesses<Private> {
@@ -200,10 +202,13 @@ pub mod ledger_contract {
             let mut private_transcript_outputs = Vec::new();
             let step = context.write_cell(2, (true).clone())?;
             context = step.context;
+            let __compact_witness_meter_0 = runtime::context::WitnessReadMeter::new(&context);
             let (__compact_next_private_0, __compact_witness_0) =
                 witnesses.localAttestorKey(context.witness_context_with(LedgerView {
                     state: context.query.state.get_ref(),
+                    meter: &__compact_witness_meter_0,
                 }));
+            total_cost += __compact_witness_meter_0.gas_cost();
             context.private_state = __compact_next_private_0;
             private_transcript_outputs.push(runtime::fab::AlignedValue::from(
                 __compact_witness_0.clone(),
@@ -245,12 +250,15 @@ pub mod ledger_contract {
         .expect("validated Compact Field literal");
         let mut context = context;
         let __compact_argument_0 = __compact_action_local_3;
+        let __compact_witness_meter_1 = runtime::context::WitnessReadMeter::new(&context);
         let (__compact_next_private_1, __compact_witness_1) = witnesses.getSchnorrReduction(
             context.witness_context_with(LedgerView {
                 state: context.query.state.get_ref(),
+                meter: &__compact_witness_meter_1,
             }),
             __compact_argument_0,
         );
+        total_cost += __compact_witness_meter_1.gas_cost();
         context.private_state = __compact_next_private_1;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
             __compact_witness_1.clone(),

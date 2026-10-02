@@ -210,7 +210,7 @@ fn generated_unit_enum_uses_checked_derive_without_handwritten_codecs() {
     let source = render(&contract).unwrap();
     assert!(source.contains("CompactCellValue, CompactEnum"));
     assert!(source.contains("pub enum Choice"));
-    assert!(source.contains("RUST_RUNTIME_ABI == 5"));
+    assert!(source.contains("RUST_RUNTIME_ABI == 6"));
     assert!(!source.contains("impl FieldRepr for Choice"));
     assert!(!source.contains("impl BinaryHashRepr for Choice"));
     assert!(!source.contains("impl FromFieldRepr for Choice"));
@@ -1630,7 +1630,9 @@ fn witnessed_field_cell_and_nested_call_use_native_frame() {
     let source = render(&contract).unwrap();
     syn::parse_file(&source).unwrap();
     assert_eq!(source.matches("CircuitFrame::new(context)").count(), 2);
-    assert!(source.contains(".witness(|context|"));
+    assert!(source.contains("meter: &'a runtime::context::WitnessReadMeter<'a>"));
+    assert!(source.contains("self.meter.read_cell::<runtime::Field>(&[0])"));
+    assert!(source.contains(".witness_metered(|context, meter|"));
     assert!(source.contains("ledger_slots::cell.write(context"));
     assert!(source.contains(".apply(|context|"));
     assert!(source.contains("self::inner(context, witnesses"));

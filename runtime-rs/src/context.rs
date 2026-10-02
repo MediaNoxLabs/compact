@@ -23,6 +23,7 @@ pub use midnight_base_crypto::cost_model::RunningCost;
 use midnight_base_crypto::fab::AlignedValue;
 use midnight_onchain_vm::cost_model::{CostModel, INITIAL_COST_MODEL};
 use midnight_zswap::local::State as ZswapLocalState;
+use std::cell::RefCell;
 
 use crate::ledger::{
     CellValue, ChargedState, ContractAddress, DB, DefaultDB, QueryContext, StateValue,
@@ -84,6 +85,44 @@ pub struct WitnessContext<'a, Private, Ledger = &'a StateValue<DefaultDB>> {
     pub contract_address: &'a ContractAddress,
 }
 
+/// Charges ledger reads performed through a generated witness ledger view.
+///
+/// The witness only borrows the current query state. Each projected Cell read
+/// runs the same ledger VM program as a circuit read and adds that query's cost
+/// without adding a public proof operation to the witness result.
+pub struct WitnessReadMeter<'a, D: DB = DefaultDB> {
+    query: &'a QueryContext<D>,
+    cost_model: &'a CostModel,
+    gas_limit: Option<RunningCost>,
+    observed_gas: RefCell<RunningCost>,
+}
+
+impl<'a, D: DB> WitnessReadMeter<'a, D> {
+    pub fn new<Private>(context: &'a CircuitContext<Private, D>) -> Self {
+        Self {
+            query: &context.query,
+            cost_model: &context.cost_model,
+            gas_limit: context.gas_limit.clone(),
+            observed_gas: RefCell::new(RunningCost::ZERO),
+        }
+    }
+
+    pub fn read_cell<T: CellValue>(&self, path: &[u8]) -> Result<T, CompactError> {
+        let (result, value) = ledger::query_cell_at_path::<T, D>(
+            self.query,
+            path,
+            self.gas_limit.clone(),
+            self.cost_model,
+        )?;
+        *self.observed_gas.borrow_mut() += result.gas_cost;
+        Ok(value)
+    }
+
+    pub fn gas_cost(&self) -> RunningCost {
+        self.observed_gas.borrow().clone()
+    }
+}
+
 pub struct CircuitResult<Private, Output, D: DB = DefaultDB> {
     pub context: CircuitContext<Private, D>,
     pub result: Output,
@@ -126,6 +165,21 @@ impl<Private, D: DB> CircuitFrame<Private, D> {
         F: FnOnce(&CircuitContext<Private, D>) -> (Private, T),
     {
         let (next_private, value) = call(&self.context);
+        self.context.private_state = next_private;
+        self.private_outputs.push(AlignedValue::from(value.clone()));
+        (self, value)
+    }
+
+    /// Invoke a witness with a ledger view that meters its projected reads.
+    pub fn witness_metered<T, F>(mut self, call: F) -> (Self, T)
+    where
+        T: Clone,
+        AlignedValue: From<T>,
+        F: FnOnce(&CircuitContext<Private, D>, &WitnessReadMeter<'_, D>) -> (Private, T),
+    {
+        let meter = WitnessReadMeter::new(&self.context);
+        let (next_private, value) = call(&self.context, &meter);
+        self.gas_cost += meter.gas_cost();
         self.context.private_state = next_private;
         self.private_outputs.push(AlignedValue::from(value.clone()));
         (self, value)

@@ -238,10 +238,11 @@ pub(crate) fn render_recorded_circuit(
                 );
                 *next_temp += 1;
                 steps.push(syn::parse_quote! {
-                    let (frame, #observed) = frame.witness(|context| {
+                    let (frame, #observed) = frame.witness_metered(|context, meter| {
                         witnesses.#method(
                             context.witness_context_with(super::LedgerView {
                                 state: context.query.state.get_ref(),
+                                meter,
                             }),
                             #(#args),*
                         )
@@ -729,10 +730,11 @@ pub(crate) fn render_recorded_circuit(
                         );
                         *next_temp += 1;
                         steps.push(syn::parse_quote! {
-                            let (frame, #value) = frame.witness(|context| {
+                            let (frame, #value) = frame.witness_metered(|context, meter| {
                                 witnesses.#method(
                                     context.witness_context_with(super::LedgerView {
                                         state: context.query.state.get_ref(),
+                                        meter,
                                     }),
                                     #(#args),*
                                 )

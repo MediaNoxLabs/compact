@@ -22,6 +22,16 @@ import * as runtime from '../../../runtime/dist/index.js';
 const [contractPath] = process.argv.slice(2);
 if (!contractPath) throw new Error('expected contract/index.js');
 const { Contract } = await import(pathToFileURL(contractPath).href);
+const queryCosts = [];
+const originalQuery = runtime.QueryContext.prototype.query;
+runtime.QueryContext.prototype.query = function (...args) {
+  const result = originalQuery.call(this, ...args);
+  queryCosts.push({
+    gasCost: result.gasCost,
+    opTags: args[0].map((op) => Object.keys(op)[0]),
+  });
+  return result;
+};
 const contract = new Contract({
   read_round: ({ ledger, privateState }) => [privateState + 1, ledger.round],
 });
@@ -37,10 +47,23 @@ let context = runtime.createCircuitContext(
   initial.currentPrivateState,
 );
 
-function output(result) {
+function normalize(value) {
+  if (typeof value === 'bigint') return value.toString();
+  if (value instanceof Uint8Array) return { bytesHex: Buffer.from(value).toString('hex') };
+  if (Array.isArray(value)) return value.map(normalize);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([key, inner]) => [key, normalize(inner)]));
+  }
+  return value;
+}
+
+function output(result, queries) {
   return {
     result: result.result.toString(),
     privateState: result.context.currentPrivateState,
+    reportedGas: normalize(result.gasCost),
+    queries: normalize(queries),
+    publicTranscript: normalize(result.proofData.publicTranscript),
     privateTranscriptOutputs: result.proofData.privateTranscriptOutputs.map(
       ({ value, alignment }) => ({
         valueAtoms: value.map((atom) => Array.from(atom)),
@@ -50,7 +73,14 @@ function output(result) {
   };
 }
 
+let queryStart = queryCosts.length;
 const before = contract.circuits.private_round(context);
+const beforeQueries = queryCosts.slice(queryStart);
 context = contract.circuits.increment_round(before.context).context;
+queryStart = queryCosts.length;
 const after = contract.circuits.private_round(context);
-process.stdout.write(JSON.stringify({ before: output(before), after: output(after) }, null, 2) + '\n');
+const afterQueries = queryCosts.slice(queryStart);
+process.stdout.write(JSON.stringify({
+  before: output(before, beforeQueries),
+  after: output(after, afterQueries),
+}, null, 2) + '\n');

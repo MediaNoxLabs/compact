@@ -126,7 +126,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 5);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 6);
     pub fn assertRecordFreshEnough(
         policy: crate::types::FreshnessPolicy,
         record: crate::types::AssetRecord,
@@ -286,90 +286,80 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 5);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 6);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
+        #[allow(dead_code)]
+        meter: &'a runtime::context::WitnessReadMeter<'a>,
     }
     impl<'a> LedgerView<'a> {
         pub fn schemaVersion(
             &self,
         ) -> Result<runtime::BoundedUint<4294967295>, runtime::CompactError> {
-            runtime::ledger::read_cell_at_path::<runtime::BoundedUint<4294967295>, _>(
-                self.state,
-                &[0, 0],
-            )
+            self.meter
+                .read_cell::<runtime::BoundedUint<4294967295>>(&[0, 0])
         }
         pub fn registryId(&self) -> Result<crate::types::ContractAddress, runtime::CompactError> {
-            runtime::ledger::read_cell_at_path::<crate::types::ContractAddress, _>(
-                self.state,
-                &[0, 1],
-            )
+            self.meter
+                .read_cell::<crate::types::ContractAddress>(&[0, 1])
         }
         pub fn custodian(&self) -> Result<crate::types::ContractAddress, runtime::CompactError> {
-            runtime::ledger::read_cell_at_path::<crate::types::ContractAddress, _>(
-                self.state,
-                &[0, 2],
-            )
+            self.meter
+                .read_cell::<crate::types::ContractAddress>(&[0, 2])
         }
         pub fn operatorKey(&self) -> Result<runtime::JubjubPoint, runtime::CompactError> {
-            runtime::ledger::read_cell_at_path::<runtime::JubjubPoint, _>(self.state, &[0, 3])
+            self.meter.read_cell::<runtime::JubjubPoint>(&[0, 3])
         }
         pub fn auditorKey(&self) -> Result<runtime::JubjubPoint, runtime::CompactError> {
-            runtime::ledger::read_cell_at_path::<runtime::JubjubPoint, _>(self.state, &[0, 4])
+            self.meter.read_cell::<runtime::JubjubPoint>(&[0, 4])
         }
         pub fn salt(&self) -> Result<runtime::FixedBytes<32>, runtime::CompactError> {
-            runtime::ledger::read_cell_at_path::<runtime::FixedBytes<32>, _>(self.state, &[1, 0])
+            self.meter.read_cell::<runtime::FixedBytes<32>>(&[1, 0])
         }
         pub fn label(&self) -> Result<runtime::FixedBytes<32>, runtime::CompactError> {
-            runtime::ledger::read_cell_at_path::<runtime::FixedBytes<32>, _>(self.state, &[1, 1])
+            self.meter.read_cell::<runtime::FixedBytes<32>>(&[1, 1])
         }
         pub fn createdAt(
             &self,
         ) -> Result<runtime::BoundedUint<18446744073709551615>, runtime::CompactError> {
-            runtime::ledger::read_cell_at_path::<runtime::BoundedUint<18446744073709551615>, _>(
-                self.state,
-                &[1, 2],
-            )
+            self.meter
+                .read_cell::<runtime::BoundedUint<18446744073709551615>>(&[1, 2])
         }
         pub fn updatedAt(
             &self,
         ) -> Result<runtime::BoundedUint<18446744073709551615>, runtime::CompactError> {
-            runtime::ledger::read_cell_at_path::<runtime::BoundedUint<18446744073709551615>, _>(
-                self.state,
-                &[1, 3],
-            )
+            self.meter
+                .read_cell::<runtime::BoundedUint<18446744073709551615>>(&[1, 3])
         }
         pub fn maxAgeSeconds(
             &self,
         ) -> Result<runtime::BoundedUint<18446744073709551615>, runtime::CompactError> {
-            runtime::ledger::read_cell_at_path::<runtime::BoundedUint<18446744073709551615>, _>(
-                self.state,
-                &[1, 4],
-            )
+            self.meter
+                .read_cell::<runtime::BoundedUint<18446744073709551615>>(&[1, 4])
         }
         pub fn recordCount(
             &self,
         ) -> Result<runtime::BoundedUint<18446744073709551615>, runtime::CompactError> {
-            let value = runtime::ledger::read_cell_at_path::<u64, _>(self.state, &[1, 5])?;
+            let value = self.meter.read_cell::<u64>(&[1, 5])?;
             runtime::BoundedUint::<18446744073709551615>::new(value as u128)
         }
         pub fn open(&self) -> Result<bool, runtime::CompactError> {
-            runtime::ledger::read_cell_at_path::<bool, _>(self.state, &[1, 6])
+            self.meter.read_cell::<bool>(&[1, 6])
         }
         pub fn frozen(&self) -> Result<bool, runtime::CompactError> {
-            runtime::ledger::read_cell_at_path::<bool, _>(self.state, &[1, 7])
+            self.meter.read_cell::<bool>(&[1, 7])
         }
         pub fn revision(
             &self,
         ) -> Result<runtime::BoundedUint<18446744073709551615>, runtime::CompactError> {
-            let value = runtime::ledger::read_cell_at_path::<u64, _>(self.state, &[1, 8])?;
+            let value = self.meter.read_cell::<u64>(&[1, 8])?;
             runtime::BoundedUint::<18446744073709551615>::new(value as u128)
         }
         pub fn writeCount(
             &self,
         ) -> Result<runtime::BoundedUint<18446744073709551615>, runtime::CompactError> {
-            let value = runtime::ledger::read_cell_at_path::<u64, _>(self.state, &[1, 9])?;
+            let value = self.meter.read_cell::<u64>(&[1, 9])?;
             runtime::BoundedUint::<18446744073709551615>::new(value as u128)
         }
         pub fn records(
@@ -537,10 +527,13 @@ pub mod ledger_contract {
             context = step.context;
             let step = context.write_cell_at_path(&[1, 7], (false).clone())?;
             context = step.context;
+            let __compact_witness_meter_3 = runtime::context::WitnessReadMeter::new(&context);
             let (__compact_next_private_3, __compact_witness_3) =
                 witnesses.localOperatorKey(context.witness_context_with(LedgerView {
                     state: context.query.state.get_ref(),
+                    meter: &__compact_witness_meter_3,
                 }));
+            total_cost += __compact_witness_meter_3.gas_cost();
             context.private_state = __compact_next_private_3;
             private_transcript_outputs.push(runtime::fab::AlignedValue::from(
                 __compact_witness_3.clone(),
@@ -549,10 +542,13 @@ pub mod ledger_contract {
             let step =
                 context.write_cell_at_path(&[0, 3], (__compact_constructor_local_4).clone())?;
             context = step.context;
+            let __compact_witness_meter_5 = runtime::context::WitnessReadMeter::new(&context);
             let (__compact_next_private_5, __compact_witness_5) =
                 witnesses.localAuditorKey(context.witness_context_with(LedgerView {
                     state: context.query.state.get_ref(),
+                    meter: &__compact_witness_meter_5,
                 }));
+            total_cost += __compact_witness_meter_5.gas_cost();
             context.private_state = __compact_next_private_5;
             private_transcript_outputs.push(runtime::fab::AlignedValue::from(
                 __compact_witness_5.clone(),
@@ -570,10 +566,13 @@ pub mod ledger_contract {
             context = __compact_call_9.context;
             total_cost += __compact_call_9.gas_cost;
             let _ = __compact_call_9.result;
+            let __compact_witness_meter_10 = runtime::context::WitnessReadMeter::new(&context);
             let (__compact_next_private_10, __compact_witness_10) =
                 witnesses.currentTimestamp(context.witness_context_with(LedgerView {
                     state: context.query.state.get_ref(),
+                    meter: &__compact_witness_meter_10,
                 }));
+            total_cost += __compact_witness_meter_10.gas_cost();
             context.private_state = __compact_next_private_10;
             private_transcript_outputs.push(runtime::fab::AlignedValue::from(
                 __compact_witness_10.clone(),
@@ -644,10 +643,13 @@ pub mod ledger_contract {
         let context = step.context;
         total_cost += step.gas_cost;
         let mut context = context;
+        let __compact_witness_meter_0 = runtime::context::WitnessReadMeter::new(&context);
         let (__compact_next_private_0, __compact_witness_0) =
             witnesses.currentTimestamp(context.witness_context_with(LedgerView {
                 state: context.query.state.get_ref(),
+                meter: &__compact_witness_meter_0,
             }));
+        total_cost += __compact_witness_meter_0.gas_cost();
         context.private_state = __compact_next_private_0;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
             __compact_witness_0.clone(),

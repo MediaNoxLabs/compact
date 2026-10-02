@@ -32,6 +32,30 @@ impl Witnesses<u64> for ReadRound {
 }
 
 fn assert_oracle_output(result: &CircuitResult<u64, CounterValue>, oracle: &serde_json::Value) {
+    let queries = oracle["queries"].as_array().unwrap();
+    assert_eq!(queries.len(), 1);
+    assert_eq!(oracle["publicTranscript"].as_array().unwrap().len(), 0);
+    let actual_gas = serde_json::to_value(result.gas_cost).unwrap();
+    for key in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+        let expected: u64 = queries
+            .iter()
+            .map(|query| {
+                query["gasCost"][key]
+                    .as_str()
+                    .unwrap()
+                    .parse::<u64>()
+                    .unwrap()
+            })
+            .sum();
+        assert_eq!(
+            actual_gas[key].as_u64().unwrap(),
+            expected,
+            "{key} total gas"
+        );
+        // The TypeScript wrapper reports no public query for a witness-only
+        // circuit, although the witness ledger read still runs a VM query.
+        assert_eq!(oracle["reportedGas"][key], "0");
+    }
     let expected: u128 = oracle["result"].as_str().unwrap().parse().unwrap();
     assert_eq!(result.result.value(), expected);
     assert_eq!(

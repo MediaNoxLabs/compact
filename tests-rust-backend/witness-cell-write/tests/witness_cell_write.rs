@@ -19,10 +19,72 @@ use compact_rust_witness_cell_write_fixture::ledger_contract::{
 };
 use compact_rust_witness_cell_write_fixture::ledger_slots;
 use midnight_compact_runtime::context::{
-    CircuitFrame, CircuitResult, ConstructorContext, WitnessContext,
+    CircuitFrame, CircuitResult, ConstructorContext, WitnessContext, WitnessReadMeter,
 };
-use midnight_compact_runtime::ledger::{ContractAddress, DefaultDB, read_root_cell};
+use midnight_compact_runtime::ledger::StateValue;
+use midnight_compact_runtime::ledger::{
+    ContractAddress, DefaultDB, query_cell_at_path, read_root_cell,
+};
+use midnight_compact_runtime::recording::RecordedCircuitResult;
 use midnight_compact_runtime::{CompactError, Field};
+use midnight_onchain_state::state::{
+    ContractMaintenanceAuthority, ContractOperation, ContractState, EntryPointBuf,
+};
+use midnight_serialize::tagged_serialize;
+use midnight_storage::storage::HashMap;
+
+fn state_hex(state: StateValue<DefaultDB>) -> String {
+    let mut operations: HashMap<EntryPointBuf, ContractOperation, DefaultDB> = HashMap::new();
+    for name in [
+        "write_secret",
+        "write_twice",
+        "write_nested_twice",
+        "read_cell",
+    ] {
+        operations = operations.insert(
+            EntryPointBuf(name.as_bytes().to_vec()),
+            ContractOperation::new(None),
+        );
+    }
+    let state = ContractState::new(state, operations, ContractMaintenanceAuthority::default());
+    let mut bytes = Vec::new();
+    tagged_serialize(&state, &mut bytes).unwrap();
+    hex::encode(bytes)
+}
+
+fn normalized_verify_ops(recorded: &RecordedCircuitResult<u64, ()>) -> serde_json::Value {
+    fn normalize(value: &mut serde_json::Value) {
+        match value {
+            serde_json::Value::Object(object) => {
+                if object.contains_key("alignment") {
+                    if let Some(serde_json::Value::Array(chunks)) = object.get_mut("value") {
+                        for chunk in chunks {
+                            if let serde_json::Value::Array(bytes) = chunk {
+                                let bytes = bytes
+                                    .iter()
+                                    .map(|byte| byte.as_u64().unwrap() as u8)
+                                    .collect::<Vec<_>>();
+                                *chunk = serde_json::json!({ "bytesHex": hex::encode(bytes) });
+                            }
+                        }
+                    }
+                }
+                for child in object.values_mut() {
+                    normalize(child);
+                }
+            }
+            serde_json::Value::Array(values) => {
+                for child in values {
+                    normalize(child);
+                }
+            }
+            _ => {}
+        }
+    }
+    let mut ops = serde_json::to_value(recorded.public.verify_ops()).unwrap();
+    normalize(&mut ops);
+    ops
+}
 
 struct Secret;
 
@@ -44,6 +106,30 @@ fn secret_logic(private_state: u64, current_cell: Field, seed: Field) -> (u64, F
 }
 
 fn assert_oracle_output(write: CircuitResult<u64, ()>, oracle: &serde_json::Value) {
+    assert_eq!(
+        state_hex(write.context.query.state.get_ref().clone()),
+        oracle["afterCall"],
+    );
+    let actual_gas = serde_json::to_value(write.gas_cost).unwrap();
+    let queries = oracle["queries"].as_array().unwrap();
+    for key in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+        let total: u64 = queries
+            .iter()
+            .map(|query| {
+                query["gasCost"][key]
+                    .as_str()
+                    .unwrap()
+                    .parse::<u64>()
+                    .unwrap()
+            })
+            .sum();
+        assert_eq!(actual_gas[key].as_u64().unwrap(), total, "{key} total gas");
+        assert_eq!(
+            oracle["reportedGas"][key],
+            queries.last().unwrap()["gasCost"][key],
+            "TypeScript reports the final query's {key}",
+        );
+    }
     assert_eq!(
         write.context.private_state,
         oracle["privateState"].as_u64().unwrap()
@@ -84,6 +170,10 @@ fn witnessed_cell_writes_keep_ledger_and_private_effects_in_order() {
     let context = initial_state(ConstructorContext::new(7_u64))
         .unwrap()
         .into_circuit_context(ContractAddress::default());
+    assert_eq!(
+        state_hex(context.query.state.get_ref().clone()),
+        oracle["single"]["afterInit"],
+    );
     let single = write_secret(context, &Secret, Field::from(2_u64)).unwrap();
     assert_oracle_output(single, &oracle["single"]);
 
@@ -96,6 +186,10 @@ fn witnessed_cell_writes_keep_ledger_and_private_effects_in_order() {
 
 #[test]
 fn witnessed_writes_record_private_values_and_public_operations_in_order() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/witness-cell-write-ts-output.json"
+    ))
+    .unwrap();
     let seed = Field::from(2_u64);
     let native = write_twice(
         initial_state(ConstructorContext::new(7_u64))
@@ -121,8 +215,17 @@ fn witnessed_writes_record_private_values_and_public_operations_in_order() {
         recorded.execution.private_transcript_outputs,
         native.private_transcript_outputs
     );
+    assert_eq!(recorded.execution.gas_cost, native.gas_cost);
+    assert_eq!(
+        state_hex(recorded.execution.context.query.state.get_ref().clone()),
+        oracle["twice"]["afterCall"],
+    );
     assert_eq!(recorded.execution.private_transcript_outputs.len(), 2);
     assert_eq!(recorded.public.verify_ops().len(), 6);
+    assert_eq!(
+        normalized_verify_ops(&recorded),
+        oracle["twice"]["publicTranscript"],
+    );
     let replay = recorded
         .public
         .initial()
@@ -157,7 +260,8 @@ fn nested_witnessed_writes_record_the_same_private_and_public_effects() {
         seed,
     )
     .unwrap();
-    assert_oracle_output(native, &oracle["twice"]);
+    let native_gas = native.gas_cost.clone();
+    assert_oracle_output(native, &oracle["nested"]);
 
     let context = initial_state(ConstructorContext::new(7_u64))
         .unwrap()
@@ -168,7 +272,16 @@ fn nested_witnessed_writes_record_the_same_private_and_public_effects() {
         .unwrap();
     assert_eq!(recorded.execution.context.private_state, 9);
     assert_eq!(recorded.execution.private_transcript_outputs.len(), 2);
+    assert_eq!(recorded.execution.gas_cost, native_gas);
+    assert_eq!(
+        state_hex(recorded.execution.context.query.state.get_ref().clone()),
+        oracle["nested"]["afterCall"],
+    );
     assert_eq!(recorded.public.verify_ops().len(), 6);
+    assert_eq!(
+        normalized_verify_ops(&recorded),
+        oracle["nested"]["publicTranscript"],
+    );
     let replay = recorded
         .public
         .initial()
@@ -212,8 +325,8 @@ fn native_frame_preserves_witness_and_nested_call_order() {
     let context = initial_state(ConstructorContext::new(7_u64))
         .unwrap()
         .into_circuit_context(ContractAddress::default());
-    let (frame, secret) = CircuitFrame::new(context).witness(|context| {
-        let current = read_root_cell::<Field, _>(context.query.state.get_ref(), 0).unwrap();
+    let (frame, secret) = CircuitFrame::new(context).witness_metered(|context, meter| {
+        let current = meter.read_cell::<Field>(&[0]).unwrap();
         secret_logic(context.private_state, current, seed)
     });
     let (frame, ()) = frame
@@ -264,7 +377,7 @@ fn native_frame_preserves_witness_and_nested_call_order() {
         framed.private_transcript_outputs,
         native.private_transcript_outputs
     );
-    assert_oracle_output(framed, &oracle["twice"]);
+    assert_oracle_output(framed, &oracle["nested"]);
 }
 
 #[test]
@@ -288,4 +401,45 @@ fn native_frame_aborts_before_a_later_step_on_error() {
         });
     assert!(matches!(result, Err(CompactError::AssertionFailed(message)) if message == "stop"));
     assert!(!later_step_ran);
+}
+
+#[test]
+fn witness_read_meter_charges_each_successful_read() {
+    let context = initial_state(ConstructorContext::new(7_u64))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let (query, value) = query_cell_at_path::<Field, _>(
+        &context.query,
+        &[0],
+        context.gas_limit.clone(),
+        &context.cost_model,
+    )
+    .unwrap();
+    assert_eq!(value, Field::from(0_u64));
+    let expected_cost = query.gas_cost;
+    let (frame, ()) = CircuitFrame::new(context).witness_metered(|context, meter| {
+        assert_eq!(meter.read_cell::<Field>(&[0]).unwrap(), Field::from(0_u64));
+        assert_eq!(meter.read_cell::<Field>(&[0]).unwrap(), Field::from(0_u64));
+        (context.private_state, ())
+    });
+    assert_eq!(
+        frame.finish(()).gas_cost,
+        expected_cost.clone() + expected_cost
+    );
+
+    let context = initial_state(ConstructorContext::new(7_u64))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let meter = WitnessReadMeter::new(&context);
+    assert!(meter.read_cell::<Field>(&[1]).is_err());
+    assert_eq!(
+        meter.gas_cost(),
+        midnight_compact_runtime::context::RunningCost::ZERO
+    );
+    let (frame, ()) =
+        CircuitFrame::new(context).witness_metered(|context, _meter| (context.private_state, ()));
+    assert_eq!(
+        frame.finish(()).gas_cost,
+        midnight_compact_runtime::context::RunningCost::ZERO,
+    );
 }

@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 5);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 6);
     pub fn hash_field(
         value: runtime::Field,
     ) -> Result<runtime::FixedBytes<32>, runtime::CompactError> {
@@ -40,10 +40,12 @@ pub mod pure_circuits {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 5);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 6);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
+        #[allow(dead_code)]
+        meter: &'a runtime::context::WitnessReadMeter<'a>,
     }
     impl<'a> LedgerView<'a> {}
     pub trait Witnesses<Private> {
@@ -70,16 +72,19 @@ pub mod ledger_contract {
         runtime::context::CircuitResult<Private, runtime::FixedBytes<32>>,
         runtime::CompactError,
     > {
-        let total_cost = runtime::context::RunningCost::default();
+        let mut total_cost = runtime::context::RunningCost::default();
         let mut private_transcript_outputs = Vec::new();
         let mut context = context;
         let __compact_argument_0 = __compact_param_0;
+        let __compact_witness_meter_1 = runtime::context::WitnessReadMeter::new(&context);
         let (__compact_next_private_1, __compact_witness_1) = witnesses.echo(
             context.witness_context_with(LedgerView {
                 state: context.query.state.get_ref(),
+                meter: &__compact_witness_meter_1,
             }),
             __compact_argument_0,
         );
+        total_cost += __compact_witness_meter_1.gas_cost();
         context.private_state = __compact_next_private_1;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
             __compact_witness_1.clone(),

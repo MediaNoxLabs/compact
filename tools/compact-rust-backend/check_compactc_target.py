@@ -38,6 +38,8 @@ NESTED_MAP_SOURCE = ROOT / "examples/rust_backend/nested_map_oracle.compact"
 NESTED_MAP_SHAPE_SOURCE = ROOT / "examples/rust_backend/nested_map_shape.compact"
 CONSTRUCTOR_MAP_SOURCE = ROOT / "examples/rust_backend/constructor_map_actions.compact"
 LIST_SOURCE = ROOT / "examples/rust_backend/list_field.compact"
+MERKLE_SOURCE = ROOT / "examples/rust_backend/merkle_tree_oracle.compact"
+HISTORIC_MERKLE_SOURCE = ROOT / "examples/rust_backend/hmt_insert_oracle.compact"
 CONSTRUCTOR_LIST_SOURCE = ROOT / "examples/rust_backend/constructor_list_actions.compact"
 RECORDED_ENUM_SOURCE = ROOT / "examples/rust_backend/recorded_enum_cell.compact"
 TINY_SOURCE = ROOT / "examples/rust_backend/tiny_oracle.compact"
@@ -165,6 +167,8 @@ def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
         ("map_boolean_field", MAP_BOOLEAN_SOURCE),
         ("nested_map_oracle", NESTED_MAP_SOURCE),
         ("list_field", LIST_SOURCE),
+        ("merkle_tree_oracle", MERKLE_SOURCE),
+        ("hmt_insert_oracle", HISTORIC_MERKLE_SOURCE),
     ):
         output = base / f"shared-{name}"
         run(
@@ -198,6 +202,8 @@ def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
         "use compact_contract_map_boolean_field::ledger_contract::{Contract as MapContract, initial_state as initial_map_state};\n"
         "use compact_contract_nested_map_oracle::ledger_contract::initial_state as initial_nested_map_state;\n"
         "use compact_contract_list_field::ledger_contract::{Contract as ListContract, initial_state as initial_list_state};\n"
+        "use compact_contract_merkle_tree_oracle::ledger_contract::initial_state as initial_merkle_state;\n"
+        "use compact_contract_hmt_insert_oracle::ledger_contract::initial_state as initial_historic_merkle_state;\n"
         "use midnight_compact_runtime::context::ConstructorContext;\n"
         "use midnight_compact_runtime::ledger::ContractAddress;\n"
         "use midnight_compact_runtime::Field;\n"
@@ -248,6 +254,17 @@ def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
         "    let first = ListContract::default().recording.first_item(list_call.execution.context).unwrap();\n"
         "    assert!(first.execution.result.is_some);\n"
         "    assert_eq!(first.execution.result.value, Field::from(5_u64));\n"
+        "    let merkle = initial_merkle_state(ConstructorContext::new(())).unwrap();\n"
+        "    let merkle_context = merkle.into_circuit_context(ContractAddress::default());\n"
+        "    let _: midnight_compact_runtime::slots::MerkleSlot<midnight_compact_runtime::BoundedUint<255>, 3, false> = compact_contract_merkle_tree_oracle::ledger_slots::t;\n"
+        "    let merkle_insert = compact_contract_merkle_tree_oracle::ledger_slots::t.insert(merkle_context, midnight_compact_runtime::BoundedUint::<255>::new(7).unwrap()).unwrap();\n"
+        "    let merkle_full = compact_contract_merkle_tree_oracle::ledger_slots::t.is_full(merkle_insert.context).unwrap();\n"
+        "    assert!(!merkle_full.result);\n"
+        "    let historic = initial_historic_merkle_state(ConstructorContext::new(())).unwrap();\n"
+        "    let historic_context = historic.into_circuit_context(ContractAddress::default());\n"
+        "    let _: midnight_compact_runtime::slots::MerkleSlot<midnight_compact_runtime::BoundedUint<255>, 3, true> = compact_contract_hmt_insert_oracle::ledger_slots::t;\n"
+        "    let historic_insert = compact_contract_hmt_insert_oracle::ledger_slots::t.insert(historic_context, midnight_compact_runtime::BoundedUint::<255>::new(7).unwrap()).unwrap();\n"
+        "    let _historic_reset = compact_contract_hmt_insert_oracle::ledger_slots::t.reset_history(historic_insert.context).unwrap();\n"
         "    assert_eq!(field_add(2u64.into(), 3u64.into()).unwrap(), 5u64.into());\n"
         "}\n"
     )
@@ -359,6 +376,40 @@ def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
     assert rejected.returncode != 0, "wrong Map value type unexpectedly compiled"
     assert "error[E0308]: mismatched types" in rejected.stderr, rejected.stderr
     assert "found `bool`" in rejected.stderr, rejected.stderr
+
+    (consumer / "examples/wrong_merkle_leaf.rs").write_text(
+        "use compact_contract_merkle_tree_oracle::ledger_contract::initial_state;\n"
+        "use compact_contract_merkle_tree_oracle::runtime::{context::ConstructorContext, ledger::ContractAddress};\n"
+        "fn main() {\n"
+        "    let state = initial_state(ConstructorContext::new(())).unwrap();\n"
+        "    let context = state.into_circuit_context(ContractAddress::default());\n"
+        "    let _ = compact_contract_merkle_tree_oracle::ledger_slots::t.insert(context, true);\n"
+        "}\n"
+    )
+    rejected = subprocess.run(
+        ["cargo", "check", "--quiet", "--example", "wrong_merkle_leaf"],
+        cwd=consumer, env=environment, capture_output=True, text=True,
+    )
+    assert rejected.returncode != 0, "wrong Merkle leaf type unexpectedly compiled"
+    assert "error[E0308]: mismatched types" in rejected.stderr, rejected.stderr
+    assert "expected `BoundedUint<255>`" in rejected.stderr, rejected.stderr
+
+    (consumer / "examples/plain_merkle_reset_history.rs").write_text(
+        "use compact_contract_merkle_tree_oracle::ledger_contract::initial_state;\n"
+        "use compact_contract_merkle_tree_oracle::runtime::{context::ConstructorContext, ledger::ContractAddress};\n"
+        "fn main() {\n"
+        "    let state = initial_state(ConstructorContext::new(())).unwrap();\n"
+        "    let context = state.into_circuit_context(ContractAddress::default());\n"
+        "    let _ = compact_contract_merkle_tree_oracle::ledger_slots::t.reset_history(context);\n"
+        "}\n"
+    )
+    rejected = subprocess.run(
+        ["cargo", "check", "--quiet", "--example", "plain_merkle_reset_history"],
+        cwd=consumer, env=environment, capture_output=True, text=True,
+    )
+    assert rejected.returncode != 0, "plain Merkle history reset unexpectedly compiled"
+    assert "error[E0599]" in rejected.stderr, rejected.stderr
+    assert "MerkleSlot<T, DEPTH, true>" in rejected.stderr, rejected.stderr
 
 
 def check_witness_consumer(compiler: str, base: Path) -> None:

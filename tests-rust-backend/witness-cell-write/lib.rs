@@ -222,45 +222,19 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, __compact_witness_0) = frame.witness(|context| {
-                witnesses.secret(
-                    context.witness_context_with(super::LedgerView {
-                        state: context.query.state.get_ref(),
-                    }),
-                    __compact_param_0,
-                )
-            });
-            let frame = crate::ledger_slots::cell.record_write(frame, __compact_witness_0)?;
-            Ok(frame.finish(()))
-        }
-        pub fn write_twice<Private, W: super::Witnesses<Private>>(
-            context: runtime::context::CircuitContext<Private>,
-            witnesses: &W,
-            __compact_param_0: runtime::Field,
-        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
-        {
-            let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, __compact_witness_0) = frame.witness(|context| {
-                witnesses.secret(
-                    context.witness_context_with(super::LedgerView {
-                        state: context.query.state.get_ref(),
-                    }),
-                    __compact_param_0,
-                )
-            });
-            let frame = crate::ledger_slots::cell.record_write(frame, __compact_witness_0)?;
+            let __compact_recorded_arg_0 = __compact_param_0;
             let (frame, __compact_witness_1) = frame.witness(|context| {
                 witnesses.secret(
                     context.witness_context_with(super::LedgerView {
                         state: context.query.state.get_ref(),
                     }),
-                    __compact_param_0,
+                    __compact_recorded_arg_0,
                 )
             });
             let frame = crate::ledger_slots::cell.record_write(frame, __compact_witness_1)?;
             Ok(frame.finish(()))
         }
-        pub fn write_nested_twice<Private, W: super::Witnesses<Private>>(
+        pub fn write_twice<Private, W: super::Witnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
             witnesses: &W,
             __compact_param_0: runtime::Field,
@@ -287,6 +261,37 @@ pub mod ledger_contract {
                 )
             });
             let frame = crate::ledger_slots::cell.record_write(frame, __compact_witness_3)?;
+            Ok(frame.finish(()))
+        }
+        pub fn write_nested_twice<Private, W: super::Witnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: runtime::Field,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_arg_0 = __compact_param_0;
+            let __compact_recorded_arg_1 = __compact_recorded_arg_0;
+            let (frame, __compact_witness_2) = frame.witness(|context| {
+                witnesses.secret(
+                    context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                    }),
+                    __compact_recorded_arg_1,
+                )
+            });
+            let frame = crate::ledger_slots::cell.record_write(frame, __compact_witness_2)?;
+            let __compact_recorded_arg_3 = __compact_param_0;
+            let __compact_recorded_arg_4 = __compact_recorded_arg_3;
+            let (frame, __compact_witness_5) = frame.witness(|context| {
+                witnesses.secret(
+                    context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                    }),
+                    __compact_recorded_arg_4,
+                )
+            });
+            let frame = crate::ledger_slots::cell.record_write(frame, __compact_witness_5)?;
             Ok(frame.finish(()))
         }
         pub fn read_cell<Private>(

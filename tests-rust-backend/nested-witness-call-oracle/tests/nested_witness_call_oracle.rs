@@ -14,7 +14,7 @@
 // limitations under the License.
 
 use compact_rust_nested_witness_call_oracle_fixture::ledger_contract::{
-    LedgerView, Witnesses, initial_state, outer, outerValue,
+    Contract, LedgerView, Witnesses, initial_state, outer, outerValue,
 };
 use midnight_compact_runtime::Field;
 use midnight_compact_runtime::context::{ConstructorContext, WitnessContext};
@@ -84,6 +84,74 @@ fn nested_witness_call_preserves_state_and_transcript_order() {
     assert_transcript(
         &value_call.private_transcript_outputs,
         &reference["outerValueTranscript"],
+    );
+}
+
+#[test]
+fn recorded_nested_expressions_match_typescript_and_replay() {
+    let reference: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/nested-witness-call-oracle.json"
+    ))
+    .unwrap();
+    let context = initial_state(ConstructorContext::new(7_u64))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let contract = Contract::from(OracleWitness);
+    let outer = contract.recording().outer(context).unwrap();
+    assert_eq!(
+        outer.execution.context.private_state,
+        reference["privateState"].as_u64().unwrap()
+    );
+    assert_eq!(
+        state_hex(outer.execution.context.query.state.get_ref().clone()),
+        reference["afterOuterHex"]
+    );
+    assert_transcript(
+        &outer.execution.private_transcript_outputs,
+        &reference["privateTranscriptOutputs"],
+    );
+    let replay = outer
+        .public
+        .initial()
+        .query(
+            outer.public.verify_ops(),
+            None,
+            &outer.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(
+        replay.context.effects,
+        outer.execution.context.query.effects
+    );
+
+    let outer_value = contract
+        .recording()
+        .outerValue(outer.execution.context)
+        .unwrap();
+    assert_eq!(
+        outer_value.execution.context.private_state,
+        reference["afterOuterValuePrivateState"].as_u64().unwrap()
+    );
+    assert_eq!(
+        state_hex(outer_value.execution.context.query.state.get_ref().clone()),
+        reference["afterOuterValueHex"]
+    );
+    assert_transcript(
+        &outer_value.execution.private_transcript_outputs,
+        &reference["outerValueTranscript"],
+    );
+    let replay = outer_value
+        .public
+        .initial()
+        .query(
+            outer_value.public.verify_ops(),
+            None,
+            &outer_value.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(
+        replay.context.effects,
+        outer_value.execution.context.query.effects
     );
 }
 

@@ -180,19 +180,93 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
+    /// Circuits with a replayable ordered ledger program.
+    pub mod recorded {
+        use midnight_compact_runtime as runtime;
+        pub fn outer<Private, W: super::Witnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_recorded_value_0): (_, runtime::Field) =
+                crate::ledger_slots::value.record_read(frame)?;
+            let __compact_recorded_arg_1 = __compact_recorded_value_0;
+            let __compact_recorded_arg_2 = __compact_recorded_arg_1;
+            let (frame, __compact_witness_3) = frame.witness(|context| {
+                witnesses.secret(context.witness_context_with(super::LedgerView {
+                    state: context.query.state.get_ref(),
+                }))
+            });
+            let __compact_recorded_sum_4: runtime::Field =
+                __compact_witness_3 + __compact_recorded_arg_2;
+            let frame = crate::ledger_slots::value.record_write(frame, __compact_recorded_sum_4)?;
+            Ok(frame.finish(()))
+        }
+        pub fn outerValue<Private, W: super::Witnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_witness_0) = frame.witness(|context| {
+                witnesses.secret(context.witness_context_with(super::LedgerView {
+                    state: context.query.state.get_ref(),
+                }))
+            });
+            let __compact_recorded_return_1: runtime::Field = __compact_witness_0;
+            let frame =
+                crate::ledger_slots::value.record_write(frame, __compact_recorded_return_1)?;
+            Ok(frame.finish(()))
+        }
+        /// Typed handle for circuits with a complete recorded trace.
+        pub struct Contract;
+        impl Contract {}
+        /// A recording handle with access to the contract's witnesses.
+        pub struct BorrowedContract<'a, W> {
+            pub(super) witnesses: &'a W,
+        }
+        impl<W> BorrowedContract<'_, W> {
+            pub fn outer<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            where
+                W: super::Witnesses<Private>,
+            {
+                outer(context, self.witnesses)
+            }
+            pub fn outerValue<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            where
+                W: super::Witnesses<Private>,
+            {
+                outerValue(context, self.witnesses)
+            }
+        }
+    }
     /// Groups the contract's exported circuits for Rust consumers.
     pub struct Contract<W> {
         #[allow(dead_code)]
         witnesses: W,
+        pub recording: recorded::Contract,
     }
     impl<W> From<W> for Contract<W> {
         fn from(witnesses: W) -> Self {
-            Self { witnesses }
+            Self {
+                witnesses,
+                recording: recorded::Contract,
+            }
         }
     }
     impl Default for Contract<()> {
         fn default() -> Self {
-            Self { witnesses: () }
+            Self {
+                witnesses: (),
+                recording: recorded::Contract,
+            }
         }
     }
     impl<W> Contract<W> {
@@ -213,6 +287,12 @@ pub mod ledger_contract {
             W: Witnesses<Private>,
         {
             crate::ledger_contract::outerValue(context, &self.witnesses)
+        }
+        /// Borrow the contract's witnesses for a replayable circuit call.
+        pub fn recording(&self) -> recorded::BorrowedContract<'_, W> {
+            recorded::BorrowedContract {
+                witnesses: &self.witnesses,
+            }
         }
     }
 }

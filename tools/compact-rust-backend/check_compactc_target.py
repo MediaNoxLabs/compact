@@ -34,6 +34,7 @@ CELL_SOURCE = ROOT / "examples/rust_backend/cell_boolean.compact"
 CELL_READ_SOURCE = ROOT / "examples/rust_backend/cell_read.compact"
 WITNESS_CELL_SOURCE = ROOT / "examples/rust_backend/witness_cell_write.compact"
 NESTED_COUNTER_SOURCE = ROOT / "examples/rust_backend/stateful_circuit_call.compact"
+NESTED_WITNESS_SOURCE = ROOT / "examples/rust_backend/nested_witness_call_oracle.compact"
 
 
 def run(*arguments: str, cwd: Path = ROOT) -> None:
@@ -328,9 +329,18 @@ def main() -> None:
                     assert (nested_proof / "keys" / f"{circuit}.{extension}").is_file()
                 for extension in ("zkir", "bzkir"):
                     assert (nested_proof / "zkir" / f"{circuit}.{extension}").is_file()
+            nested_witness_proof = base / "nested-witness-proof"
+            run(compiler, "--target", "rust", str(NESTED_WITNESS_SOURCE), str(nested_witness_proof))
+            check_manifest(nested_witness_proof)
+            for circuit in ("outer", "outerValue"):
+                for extension in ("prover", "verifier"):
+                    assert (nested_witness_proof / "keys" / f"{circuit}.{extension}").is_file()
+                for extension in ("zkir", "bzkir"):
+                    assert (nested_witness_proof / "zkir" / f"{circuit}.{extension}").is_file()
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 str(proof), str(cell_proof), str(cell_read_proof), str(witness_proof), str(nested_proof),
+                str(nested_witness_proof),
             )
     print("compactc target boundary and manifest: passed")
 

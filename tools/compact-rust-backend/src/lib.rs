@@ -1,6 +1,7 @@
 //! Rust syntax construction from Compact's typed backend IR.
 
 pub mod ir;
+mod recorded;
 mod stateful;
 mod witness;
 
@@ -2371,7 +2372,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
         {
             contract_methods.push(method);
         }
-        if let Some(item) = stateful::render_recorded_circuit(
+        if let Some(item) = recorded::render_recorded_circuit(
             circuit,
             &ledger_fields,
             &witness_syntax.declarations,
@@ -2386,9 +2387,9 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
             if uses_witness {
                 witnessed_recorded = true;
             } else {
-                recorded_methods.push(stateful::render_recorded_contract_method(circuit)?);
+                recorded_methods.push(recorded::render_recorded_contract_method(circuit)?);
             }
-            borrowed_recorded_methods.push(stateful::render_borrowed_recorded_contract_method(
+            borrowed_recorded_methods.push(recorded::render_borrowed_recorded_contract_method(
                 circuit,
                 uses_witness,
             )?);

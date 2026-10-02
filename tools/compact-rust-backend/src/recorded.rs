@@ -1,0 +1,812 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//  	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+//! Emit complete replayable traces from supported typed stateful IR.
+//! Unsupported effect shapes have no generated recorded entry point.
+
+use proc_macro2::Span;
+use std::collections::{HashMap, HashSet};
+
+use crate::ir::{
+    CounterAmount, Expr, LedgerField, LedgerFieldKind, StateAction, StateReturn, StatefulCircuit,
+    Type, WitnessDeclaration,
+};
+use crate::stateful::circuit_uses_witness;
+use crate::{RenderError, ident, rust_type};
+
+/// Emit a replayable public VM trace for the supported root Cell and Counter
+/// operations, including witnessed Cell values. Unsupported circuits have no
+/// recorded entry point.
+pub(crate) fn render_recorded_circuit(
+    circuit: &StatefulCircuit,
+    ledger_fields: &HashMap<&str, &LedgerField>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+) -> Result<Option<syn::Item>, RenderError> {
+    if circuit.internal {
+        return Ok(None);
+    }
+
+    let name = ident(&circuit.name)?;
+    let mut parameters = HashMap::new();
+    let mut args = Vec::<syn::FnArg>::new();
+    for (index, parameter) in circuit.parameters.iter().enumerate() {
+        ident(&parameter.name)?;
+        let rust_name = syn::Ident::new(&format!("__compact_param_{index}"), Span::call_site());
+        if parameters
+            .insert(parameter.name.as_str(), (&parameter.ty, rust_name.clone()))
+            .is_some()
+        {
+            return Err(RenderError::DuplicateParameter(parameter.name.clone()));
+        }
+        let arg_ty = rust_type(&parameter.ty)?;
+        args.push(syn::parse_quote!(#rust_name: #arg_ty));
+    }
+
+    fn amount_source(
+        value: &Expr,
+        locals: &HashMap<String, syn::Expr>,
+        parameters: &HashMap<&str, (&Type, syn::Ident)>,
+    ) -> Option<syn::Expr> {
+        match value {
+            Expr::Coerce { value, ty }
+                if *ty
+                    == (Type::Unsigned {
+                        max: "65535".into(),
+                    }) =>
+            {
+                amount_source(value, locals, parameters)
+            }
+            Expr::UnsignedLiteral { value, max } if max == "65535" => {
+                let value = value.parse::<u16>().ok()?;
+                let literal = syn::LitInt::new(&format!("{value}u16"), Span::call_site());
+                Some(syn::parse_quote!(#literal))
+            }
+            Expr::Parameter { name } => locals.get(name).cloned().or_else(|| {
+                let (ty, rust_name) = parameters.get(name.as_str())?;
+                if **ty
+                    != (Type::Unsigned {
+                        max: "65535".into(),
+                    })
+                {
+                    return None;
+                }
+                Some(syn::parse_quote!(#rust_name.value() as u16))
+            }),
+            _ => None,
+        }
+    }
+
+    fn cell_source(
+        value: &Expr,
+        ty: &Type,
+        locals: &HashMap<String, syn::Expr>,
+        parameters: &HashMap<&str, (&Type, syn::Ident)>,
+    ) -> Option<syn::Expr> {
+        if !matches!(ty, Type::Boolean | Type::Field) {
+            return None;
+        }
+        match value {
+            Expr::Coerce { value, ty: target } if target == ty => {
+                cell_source(value, ty, locals, parameters)
+            }
+            Expr::Boolean { value } if *ty == Type::Boolean => Some(syn::parse_quote!(#value)),
+            Expr::Parameter { name } => locals.get(name).cloned().or_else(|| {
+                let (actual, rust_name) = parameters.get(name.as_str())?;
+                (actual == &ty).then(|| syn::parse_quote!(#rust_name))
+            }),
+            _ => None,
+        }
+    }
+
+    /// Lower a Field expression together with its ordered recording effects.
+    /// The returned syntax refers only to values already evaluated in `steps`.
+    fn field_expression(
+        value: &Expr,
+        locals: &HashMap<String, syn::Expr>,
+        parameters: &HashMap<&str, (&Type, syn::Ident)>,
+        ledger_fields: &HashMap<&str, &LedgerField>,
+        witnesses: &HashMap<&str, &WitnessDeclaration>,
+        circuits: &HashMap<&str, &StatefulCircuit>,
+        steps: &mut Vec<syn::Stmt>,
+        next_temp: &mut usize,
+        visiting: &mut HashSet<String>,
+    ) -> Result<Option<syn::Expr>, RenderError> {
+        match value {
+            Expr::Coerce { value, ty } if *ty == Type::Field => field_expression(
+                value,
+                locals,
+                parameters,
+                ledger_fields,
+                witnesses,
+                circuits,
+                steps,
+                next_temp,
+                visiting,
+            ),
+            Expr::Parameter { .. } => Ok(cell_source(value, &Type::Field, locals, parameters)),
+            Expr::CellRead { field, index } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                if declaration.declaration != (LedgerFieldKind::Cell { ty: Type::Field })
+                    || declaration.index != *index
+                    || declaration.physical_path().len() != 1
+                {
+                    return Ok(None);
+                }
+                let slot = ident(field)?;
+                let observed = syn::Ident::new(
+                    &format!("__compact_recorded_value_{}", *next_temp),
+                    Span::call_site(),
+                );
+                *next_temp += 1;
+                steps.push(syn::parse_quote! {
+                    let (frame, #observed): (_, runtime::Field) =
+                        crate::ledger_slots::#slot.record_read(frame)?;
+                });
+                Ok(Some(syn::parse_quote!(#observed)))
+            }
+            Expr::WitnessCall { name, arguments } => {
+                let declaration = witnesses
+                    .get(name.as_str())
+                    .ok_or_else(|| RenderError::UnknownWitness(name.clone()))?;
+                if declaration.result != Type::Field {
+                    return Ok(None);
+                }
+                if arguments.len() != declaration.parameters.len() {
+                    return Err(RenderError::ArgumentCount {
+                        circuit: name.clone(),
+                        expected: declaration.parameters.len(),
+                        actual: arguments.len(),
+                    });
+                }
+                let mut args = Vec::new();
+                for (argument, parameter) in arguments.iter().zip(&declaration.parameters) {
+                    let value = if parameter.ty == Type::Field {
+                        field_expression(
+                            argument,
+                            locals,
+                            parameters,
+                            ledger_fields,
+                            witnesses,
+                            circuits,
+                            steps,
+                            next_temp,
+                            visiting,
+                        )?
+                    } else {
+                        cell_source(argument, &parameter.ty, locals, parameters)
+                    };
+                    let Some(value) = value else {
+                        return Ok(None);
+                    };
+                    let arg = syn::Ident::new(
+                        &format!("__compact_recorded_arg_{}", *next_temp),
+                        Span::call_site(),
+                    );
+                    *next_temp += 1;
+                    steps.push(syn::parse_quote!(let #arg = #value;));
+                    args.push(arg);
+                }
+                let method = ident(name)?;
+                let observed = syn::Ident::new(
+                    &format!("__compact_witness_{}", *next_temp),
+                    Span::call_site(),
+                );
+                *next_temp += 1;
+                steps.push(syn::parse_quote! {
+                    let (frame, #observed) = frame.witness(|context| {
+                        witnesses.#method(
+                            context.witness_context_with(super::LedgerView {
+                                state: context.query.state.get_ref(),
+                            }),
+                            #(#args),*
+                        )
+                    });
+                });
+                Ok(Some(syn::parse_quote!(#observed)))
+            }
+            Expr::Add { left, right } => {
+                let Some(left) = field_expression(
+                    left,
+                    locals,
+                    parameters,
+                    ledger_fields,
+                    witnesses,
+                    circuits,
+                    steps,
+                    next_temp,
+                    visiting,
+                )?
+                else {
+                    return Ok(None);
+                };
+                let Some(right) = field_expression(
+                    right,
+                    locals,
+                    parameters,
+                    ledger_fields,
+                    witnesses,
+                    circuits,
+                    steps,
+                    next_temp,
+                    visiting,
+                )?
+                else {
+                    return Ok(None);
+                };
+                let sum = syn::Ident::new(
+                    &format!("__compact_recorded_sum_{}", *next_temp),
+                    Span::call_site(),
+                );
+                *next_temp += 1;
+                steps.push(syn::parse_quote!(let #sum: runtime::Field = #left + #right;));
+                Ok(Some(syn::parse_quote!(#sum)))
+            }
+            Expr::Call { name, arguments } => {
+                let Some(callee) = circuits.get(name.as_str()) else {
+                    return Ok(None);
+                };
+                let StateReturn::Expression { value: result } = &callee.return_value else {
+                    return Ok(None);
+                };
+                if callee.result != Type::Field {
+                    return Ok(None);
+                }
+                if arguments.len() != callee.parameters.len() {
+                    return Err(RenderError::ArgumentCount {
+                        circuit: name.clone(),
+                        expected: callee.parameters.len(),
+                        actual: arguments.len(),
+                    });
+                }
+                if !visiting.insert(name.clone()) {
+                    return Err(RenderError::UnsupportedStatefulCall(name.clone()));
+                }
+                let mut callee_locals = HashMap::new();
+                for (argument, parameter) in arguments.iter().zip(&callee.parameters) {
+                    let value = if parameter.ty == Type::Field {
+                        field_expression(
+                            argument,
+                            locals,
+                            parameters,
+                            ledger_fields,
+                            witnesses,
+                            circuits,
+                            steps,
+                            next_temp,
+                            visiting,
+                        )?
+                    } else if parameter.ty
+                        == (Type::Unsigned {
+                            max: "65535".into(),
+                        })
+                    {
+                        amount_source(argument, locals, parameters)
+                    } else {
+                        cell_source(argument, &parameter.ty, locals, parameters)
+                    };
+                    let Some(value) = value else {
+                        visiting.remove(name);
+                        return Ok(None);
+                    };
+                    let arg = syn::Ident::new(
+                        &format!("__compact_recorded_arg_{}", *next_temp),
+                        Span::call_site(),
+                    );
+                    *next_temp += 1;
+                    steps.push(syn::parse_quote!(let #arg = #value;));
+                    callee_locals.insert(parameter.name.clone(), syn::parse_quote!(#arg));
+                }
+                for action in &callee.actions {
+                    if !append_steps(
+                        action,
+                        &callee_locals,
+                        &HashMap::new(),
+                        ledger_fields,
+                        witnesses,
+                        circuits,
+                        steps,
+                        next_temp,
+                        visiting,
+                    )? {
+                        visiting.remove(name);
+                        return Ok(None);
+                    }
+                }
+                let value = field_expression(
+                    result,
+                    &callee_locals,
+                    &HashMap::new(),
+                    ledger_fields,
+                    witnesses,
+                    circuits,
+                    steps,
+                    next_temp,
+                    visiting,
+                )?;
+                visiting.remove(name);
+                let Some(value) = value else {
+                    return Ok(None);
+                };
+                let returned = syn::Ident::new(
+                    &format!("__compact_recorded_return_{}", *next_temp),
+                    Span::call_site(),
+                );
+                *next_temp += 1;
+                steps.push(syn::parse_quote!(let #returned: runtime::Field = #value;));
+                Ok(Some(syn::parse_quote!(#returned)))
+            }
+            _ => Ok(None),
+        }
+    }
+
+    fn append_steps(
+        action: &StateAction,
+        locals: &HashMap<String, syn::Expr>,
+        parameters: &HashMap<&str, (&Type, syn::Ident)>,
+        ledger_fields: &HashMap<&str, &LedgerField>,
+        witnesses: &HashMap<&str, &WitnessDeclaration>,
+        circuits: &HashMap<&str, &StatefulCircuit>,
+        steps: &mut Vec<syn::Stmt>,
+        next_temp: &mut usize,
+        visiting: &mut HashSet<String>,
+    ) -> Result<bool, RenderError> {
+        match action {
+            StateAction::Sequence { actions } => {
+                for action in actions {
+                    if !append_steps(
+                        action,
+                        locals,
+                        parameters,
+                        ledger_fields,
+                        witnesses,
+                        circuits,
+                        steps,
+                        next_temp,
+                        visiting,
+                    )? {
+                        return Ok(false);
+                    }
+                }
+                Ok(true)
+            }
+            StateAction::Let { bindings, action } => {
+                let mut scoped = locals.clone();
+                for binding in bindings {
+                    if binding.ty
+                        == (Type::Unsigned {
+                            max: "65535".into(),
+                        })
+                    {
+                        let Some(value) = amount_source(&binding.value, &scoped, parameters) else {
+                            return Ok(false);
+                        };
+                        scoped.insert(binding.name.clone(), value);
+                    } else if binding.ty == Type::Field {
+                        let Some(value) = field_expression(
+                            &binding.value,
+                            &scoped,
+                            parameters,
+                            ledger_fields,
+                            witnesses,
+                            circuits,
+                            steps,
+                            next_temp,
+                            visiting,
+                        )?
+                        else {
+                            return Ok(false);
+                        };
+                        scoped.insert(binding.name.clone(), value);
+                    } else if let Expr::WitnessCall { name, arguments } = &binding.value {
+                        if !matches!(binding.ty, Type::Boolean | Type::Field) {
+                            return Ok(false);
+                        }
+                        let declaration = witnesses
+                            .get(name.as_str())
+                            .ok_or_else(|| RenderError::UnknownWitness(name.clone()))?;
+                        if arguments.len() != declaration.parameters.len() {
+                            return Err(RenderError::ArgumentCount {
+                                circuit: name.clone(),
+                                expected: declaration.parameters.len(),
+                                actual: arguments.len(),
+                            });
+                        }
+                        if binding.ty != declaration.result {
+                            return Err(RenderError::TypeMismatch {
+                                expected: binding.ty.clone(),
+                                actual: declaration.result.clone(),
+                            });
+                        }
+                        let mut args = Vec::new();
+                        for (argument, parameter) in arguments.iter().zip(&declaration.parameters) {
+                            let Some(arg) =
+                                cell_source(argument, &parameter.ty, &scoped, parameters)
+                            else {
+                                return Ok(false);
+                            };
+                            args.push(arg);
+                        }
+                        let method = ident(name)?;
+                        let value = syn::Ident::new(
+                            &format!("__compact_witness_{}", *next_temp),
+                            Span::call_site(),
+                        );
+                        *next_temp += 1;
+                        steps.push(syn::parse_quote! {
+                            let (frame, #value) = frame.witness(|context| {
+                                witnesses.#method(
+                                    context.witness_context_with(super::LedgerView {
+                                        state: context.query.state.get_ref(),
+                                    }),
+                                    #(#args),*
+                                )
+                            });
+                        });
+                        scoped.insert(binding.name.clone(), syn::parse_quote!(#value));
+                    } else {
+                        return Ok(false);
+                    }
+                }
+                append_steps(
+                    action,
+                    &scoped,
+                    parameters,
+                    ledger_fields,
+                    witnesses,
+                    circuits,
+                    steps,
+                    next_temp,
+                    visiting,
+                )
+            }
+            StateAction::CircuitCall { name, arguments } => {
+                let callee = circuits
+                    .get(name.as_str())
+                    .ok_or_else(|| RenderError::UnsupportedStatefulCall(name.clone()))?;
+                if callee.result != Type::Unit || callee.return_value != StateReturn::Unit {
+                    return Ok(false);
+                }
+                if arguments.len() != callee.parameters.len() {
+                    return Err(RenderError::ArgumentCount {
+                        circuit: name.clone(),
+                        expected: callee.parameters.len(),
+                        actual: arguments.len(),
+                    });
+                }
+                if !visiting.insert(name.clone()) {
+                    return Err(RenderError::UnsupportedStatefulCall(name.clone()));
+                }
+                let mut callee_locals = HashMap::new();
+                for (argument, parameter) in arguments.iter().zip(&callee.parameters) {
+                    let value = if parameter.ty == Type::Field {
+                        field_expression(
+                            argument,
+                            locals,
+                            parameters,
+                            ledger_fields,
+                            witnesses,
+                            circuits,
+                            steps,
+                            next_temp,
+                            visiting,
+                        )?
+                    } else if parameter.ty
+                        == (Type::Unsigned {
+                            max: "65535".into(),
+                        })
+                    {
+                        amount_source(argument, locals, parameters)
+                    } else {
+                        cell_source(argument, &parameter.ty, locals, parameters)
+                    };
+                    let Some(value) = value else {
+                        visiting.remove(name);
+                        return Ok(false);
+                    };
+                    let arg = syn::Ident::new(
+                        &format!("__compact_recorded_arg_{}", *next_temp),
+                        Span::call_site(),
+                    );
+                    *next_temp += 1;
+                    steps.push(syn::parse_quote!(let #arg = #value;));
+                    callee_locals.insert(parameter.name.clone(), syn::parse_quote!(#arg));
+                }
+                let mut complete = true;
+                for action in &callee.actions {
+                    if !append_steps(
+                        action,
+                        &callee_locals,
+                        &HashMap::new(),
+                        ledger_fields,
+                        witnesses,
+                        circuits,
+                        steps,
+                        next_temp,
+                        visiting,
+                    )? {
+                        complete = false;
+                        break;
+                    }
+                }
+                visiting.remove(name);
+                Ok(complete)
+            }
+            StateAction::CounterIncrement {
+                field,
+                index,
+                amount,
+            }
+            | StateAction::CounterDecrement {
+                field,
+                index,
+                amount,
+            } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                if declaration.declaration != LedgerFieldKind::Counter
+                    || declaration.index != *index
+                {
+                    return Err(RenderError::UnknownLedgerField(field.clone()));
+                }
+                let slot = ident(field)?;
+                let amount: syn::Expr = match amount {
+                    CounterAmount::Literal { value } => {
+                        let literal = syn::LitInt::new(&format!("{value}u16"), Span::call_site());
+                        syn::parse_quote!(#literal)
+                    }
+                    CounterAmount::Parameter { name } => {
+                        let Some(value) = amount_source(
+                            &Expr::Parameter { name: name.clone() },
+                            locals,
+                            parameters,
+                        ) else {
+                            return Ok(false);
+                        };
+                        value
+                    }
+                };
+                let method = if matches!(action, StateAction::CounterIncrement { .. }) {
+                    syn::Ident::new("record_increment", Span::call_site())
+                } else {
+                    syn::Ident::new("record_decrement", Span::call_site())
+                };
+                steps.push(syn::parse_quote!(
+                    let frame = crate::ledger_slots::#slot.#method(frame, #amount)?;
+                ));
+                Ok(true)
+            }
+            StateAction::CellWrite {
+                field,
+                index,
+                value,
+            } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                let LedgerFieldKind::Cell { ty } = &declaration.declaration else {
+                    return Ok(false);
+                };
+                if !matches!(ty, Type::Boolean | Type::Field) {
+                    return Ok(false);
+                }
+                if declaration.index != *index || declaration.physical_path().len() != 1 {
+                    return Ok(false);
+                }
+                let value = if *ty == Type::Field {
+                    field_expression(
+                        value,
+                        locals,
+                        parameters,
+                        ledger_fields,
+                        witnesses,
+                        circuits,
+                        steps,
+                        next_temp,
+                        visiting,
+                    )?
+                } else {
+                    cell_source(value, ty, locals, parameters)
+                };
+                let Some(value) = value else {
+                    return Ok(false);
+                };
+                let slot = ident(field)?;
+                steps.push(syn::parse_quote!(
+                    let frame = crate::ledger_slots::#slot.record_write(frame, #value)?;
+                ));
+                Ok(true)
+            }
+            _ => Ok(false),
+        }
+    }
+
+    let mut steps = Vec::<syn::Stmt>::new();
+    let mut next_temp = 0;
+    let mut visiting = HashSet::from([circuit.name.clone()]);
+    for action in &circuit.actions {
+        if !append_steps(
+            action,
+            &HashMap::new(),
+            &parameters,
+            ledger_fields,
+            witnesses,
+            circuits,
+            &mut steps,
+            &mut next_temp,
+            &mut visiting,
+        )? {
+            return Ok(None);
+        }
+    }
+    let result_ty = rust_type(&circuit.result)?;
+    let (return_steps, result): (Vec<syn::Stmt>, syn::Expr) = match &circuit.return_value {
+        StateReturn::Unit if circuit.result == Type::Unit => {
+            if steps.is_empty() {
+                return Ok(None);
+            }
+            (Vec::new(), syn::parse_quote!(()))
+        }
+        StateReturn::CounterRead { field, index }
+            if circuit.result
+                == (Type::Unsigned {
+                    max: u64::MAX.to_string(),
+                }) =>
+        {
+            let declaration = ledger_fields
+                .get(field.as_str())
+                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+            if declaration.declaration != LedgerFieldKind::Counter || declaration.index != *index {
+                return Err(RenderError::UnknownLedgerField(field.clone()));
+            }
+            let slot = ident(field)?;
+            (
+                vec![syn::parse_quote!(
+                    let (frame, observed): (_, u64) =
+                        crate::ledger_slots::#slot.record_read(frame)?;
+                )],
+                syn::parse_quote!(
+                    runtime::BoundedUint::<18446744073709551615>::new(observed as u128)
+                        .expect("ledger Counter fits Uint<64>")
+                ),
+            )
+        }
+        StateReturn::CellRead { field, index }
+            if matches!(circuit.result, Type::Boolean | Type::Field) =>
+        {
+            let declaration = ledger_fields
+                .get(field.as_str())
+                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+            if declaration.declaration
+                != (LedgerFieldKind::Cell {
+                    ty: circuit.result.clone(),
+                })
+                || declaration.index != *index
+                || declaration.physical_path().len() != 1
+            {
+                return Ok(None);
+            }
+            let slot = ident(field)?;
+            (
+                vec![syn::parse_quote!(
+                    let (frame, observed): (_, #result_ty) =
+                        crate::ledger_slots::#slot.record_read(frame)?;
+                )],
+                syn::parse_quote!(observed),
+            )
+        }
+        _ => return Ok(None),
+    };
+    if steps.is_empty() && return_steps.is_empty() {
+        return Ok(None);
+    }
+
+    let item = if circuit_uses_witness(circuit, circuits, &mut HashSet::new())? {
+        syn::parse_quote! {
+            pub fn #name<Private, W: super::Witnesses<Private>>(
+                context: runtime::context::CircuitContext<Private>,
+                witnesses: &W,
+                #(#args),*
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, #result_ty>, runtime::CompactError> {
+                let frame = runtime::recording::RecordingFrame::new(context);
+                #(#steps)*
+                #(#return_steps)*
+                Ok(frame.finish(#result))
+            }
+        }
+    } else {
+        syn::parse_quote! {
+        pub fn #name<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            #(#args),*
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, #result_ty>, runtime::CompactError> {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            #(#steps)*
+            #(#return_steps)*
+            Ok(frame.finish(#result))
+        }
+        }
+    };
+    Ok(Some(item))
+}
+
+/// A recording handle that borrows the user-supplied witness implementation.
+pub(crate) fn render_borrowed_recorded_contract_method(
+    circuit: &StatefulCircuit,
+    uses_witness: bool,
+) -> Result<syn::ImplItemFn, RenderError> {
+    let name = ident(&circuit.name)?;
+    let mut args = Vec::<syn::FnArg>::new();
+    let mut call_args = Vec::<syn::Ident>::new();
+    for (index, parameter) in circuit.parameters.iter().enumerate() {
+        let arg = syn::Ident::new(&format!("__compact_param_{index}"), Span::call_site());
+        let ty = rust_type(&parameter.ty)?;
+        args.push(syn::parse_quote!(#arg: #ty));
+        call_args.push(arg);
+    }
+    let result = rust_type(&circuit.result)?;
+    let method = if uses_witness {
+        syn::parse_quote! {
+            pub fn #name<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                #(#args),*
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, #result>, runtime::CompactError>
+            where W: super::Witnesses<Private> {
+                #name(context, self.witnesses, #(#call_args),*)
+            }
+        }
+    } else {
+        syn::parse_quote! {
+            pub fn #name<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                #(#args),*
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, #result>, runtime::CompactError> {
+                #name(context, #(#call_args),*)
+            }
+        }
+    };
+    Ok(method)
+}
+
+/// A typed method on the generated recording handle. The ledger program is
+/// still produced by the corresponding `recorded` module function.
+pub(crate) fn render_recorded_contract_method(
+    circuit: &StatefulCircuit,
+) -> Result<syn::ImplItemFn, RenderError> {
+    let name = ident(&circuit.name)?;
+    let mut args = Vec::<syn::FnArg>::new();
+    let mut call_args = Vec::<syn::Ident>::new();
+    for (index, parameter) in circuit.parameters.iter().enumerate() {
+        let arg = syn::Ident::new(&format!("__compact_param_{index}"), Span::call_site());
+        let ty = rust_type(&parameter.ty)?;
+        args.push(syn::parse_quote!(#arg: #ty));
+        call_args.push(arg);
+    }
+    let result = rust_type(&circuit.result)?;
+    Ok(syn::parse_quote! {
+        pub fn #name<Private>(
+            &self,
+            context: runtime::context::CircuitContext<Private>,
+            #(#args),*
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, #result>, runtime::CompactError> {
+            crate::ledger_contract::recorded::#name(context, #(#call_args),*)
+        }
+    })
+}

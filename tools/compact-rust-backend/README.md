@@ -59,9 +59,10 @@ trace, the generated `contract.recording` handle exposes it as a typed method.
 For witnessed root Cell circuits, `contract.recording()` borrows the contract's
 witness implementation and records private outputs in execution order. A
 supported Unit-returning stateful call is expanded in recording order, including
-its typed arguments and nested witness operations. Other methods continue to
-return native execution results. This distinction remains explicit until full
-transcript coverage is proven.
+its typed arguments and nested witness operations. The separate recorded
+emitter also evaluates supported Field reads, witness calls, addition, and
+internal Field-returning calls in source order. Other methods continue to
+return native execution results until their full transcript coverage is proven.
 Enable the runtime's `ledger-transaction` feature in a consuming Cargo graph
 to use `transaction::prepare_call` with a recorded result and a `CallSpec`.
 That adapter builds a ledger-8 call prototype from the trace and emitted
@@ -76,7 +77,7 @@ Compact spelling without warning in consumer builds.
 
 | Boundary | Current contract | Failure behavior |
 |---|---|---|
-| Compact compiler | Toolchain 0.31.124, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
+| Compact compiler | Toolchain 0.31.125, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
 | Rust IR | Schema 6, private to this backend | The renderer rejects any other schema before writing `lib.rs`. |
 | Generated code and Rust runtime | ABI 3 | Generated modules assert the ABI at Rust compile time. |
 | Rust runtime source | Bundled runtime crates or an explicit shared source root | Cargo resolves the matching runtime and its pinned Midnight crates. |

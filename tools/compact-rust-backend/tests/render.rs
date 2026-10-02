@@ -1424,6 +1424,61 @@ fn unsupported_nested_call_does_not_expose_an_incomplete_trace() {
 }
 
 #[test]
+fn unsupported_field_expression_does_not_expose_a_recorded_call() {
+    let mut contract = Contract {
+        schema_version: 6,
+        type_aliases: vec![],
+        constructor: None,
+        witnesses: vec![],
+        ledger_fields: vec![LedgerField {
+            id: "value".into(),
+            index: 0,
+            path: vec![],
+            declaration: LedgerFieldKind::Cell { ty: Type::Field },
+        }],
+        circuits: vec![],
+        stateful_circuits: vec![StatefulCircuit {
+            internal: false,
+            name: "write".into(),
+            parameters: vec![
+                Parameter {
+                    name: "left".into(),
+                    ty: Type::Field,
+                },
+                Parameter {
+                    name: "right".into(),
+                    ty: Type::Field,
+                },
+            ],
+            result: Type::Unit,
+            return_value: StateReturn::Unit,
+            actions: vec![StateAction::CellWrite {
+                field: "value".into(),
+                index: 0,
+                value: Expr::Multiply {
+                    left: Box::new(Expr::Parameter {
+                        name: "left".into(),
+                    }),
+                    right: Box::new(Expr::Parameter {
+                        name: "right".into(),
+                    }),
+                },
+            }],
+        }],
+    };
+    assert!(!render(&contract).unwrap().contains("pub mod recorded"));
+
+    let StateAction::CellWrite { value, .. } = &mut contract.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    let Expr::Multiply { left, right } = value.clone() else {
+        unreachable!()
+    };
+    *value = Expr::Add { left, right };
+    assert!(render(&contract).unwrap().contains("pub mod recorded"));
+}
+
+#[test]
 fn stateful_parameters_are_checked_before_cell_writes() {
     let mut contract = Contract {
         schema_version: 6,

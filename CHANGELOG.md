@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Toolchain 0.31.125, language 0.23.105, runtime 0.16.101]
+
+### Added
+
+- Record ordered root Field reads, witness calls, Field addition, and internal
+  Field-returning circuit calls in the generated Rust trace. Keep this
+  effect-aware recorder separate from native stateful emission.
+- Prove, verify, and apply the `nested_witness_call_oracle` exports using
+  Compact-emitted ledger-8 artifacts, including a Cell read used as a call
+  argument and an internal witnessed return value.
+
 ## [Toolchain 0.31.124, language 0.23.105, runtime 0.16.101]
 
 ### Added

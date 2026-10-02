@@ -29,6 +29,7 @@ use std::path::{Path, PathBuf};
 use compact_rust_cell_boolean_fixture::ledger_contract as cell_contract;
 use compact_rust_cell_read_fixture::ledger_contract as cell_read_contract;
 use compact_rust_counter_fixture::ledger_contract as counter_contract;
+use compact_rust_nested_witness_call_oracle_fixture::ledger_contract as expression_contract;
 use compact_rust_stateful_circuit_call_fixture::ledger_contract as nested_contract;
 use compact_rust_witness_cell_write_fixture::ledger_contract as witness_contract;
 use midnight_base_crypto::data_provider::{FetchMode, MidnightDataProvider, OutputMode};
@@ -270,6 +271,17 @@ impl witness_contract::Witnesses<u64> for Secret {
     }
 }
 
+struct NestedSecret;
+
+impl expression_contract::Witnesses<u64> for NestedSecret {
+    fn secret(
+        &self,
+        context: WitnessContext<'_, u64, expression_contract::LedgerView<'_>>,
+    ) -> (u64, Field) {
+        (*context.private_state + 1, Field::from(7_u64))
+    }
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     let mut arguments = env::args_os().skip(1);
     let counter_root = arguments.next().ok_or(
@@ -283,9 +295,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     )?;
     let witness_root = arguments.next();
     let nested_root = arguments.next();
+    let expression_root = arguments.next();
     if arguments.next().is_some() {
         return Err(
-            "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output> [witness-output] [nested-output]"
+            "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output> [witness-output] [nested-output] [nested-witness-output]"
                 .into(),
         );
     }
@@ -517,6 +530,47 @@ fn main() -> Result<(), Box<dyn Error>> {
                 Ok(())
             },
         )?;
+    }
+    if let Some(expression_root) = expression_root {
+        let expression_root = Path::new(&expression_root);
+        for circuit in ["outer", "outerValue"] {
+            let initial = expression_contract::initial_state(ConstructorContext::new(7_u64))?;
+            let deploy = make_deploy(
+                expression_root,
+                circuit,
+                initial.ledger_state.get_ref().clone(),
+                &mut rng,
+            )?;
+            let context = initial.into_circuit_context(deploy.address());
+            let contract = expression_contract::Contract::from(NestedSecret);
+            let recorded = match circuit {
+                "outer" => contract.recording().outer(context)?,
+                "outerValue" => contract.recording().outerValue(context)?,
+                _ => unreachable!(),
+            };
+            if recorded.execution.private_transcript_outputs.len() != 1 {
+                return Err(format!("{circuit} did not record one private value").into());
+            }
+            let call = check_generated_trace(expression_root, circuit, recorded, ())?;
+            check_transaction(
+                expression_root,
+                circuit,
+                deploy,
+                call,
+                &mut rng,
+                |contract| {
+                    let StateValue::Array(fields) = contract.data.get_ref() else {
+                        return Err("nested expression state is not an array".into());
+                    };
+                    if read_cell::<Field, _>(fields.get(0).ok_or("Field Cell missing")?)?
+                        != Field::from(7_u64)
+                    {
+                        return Err("proven nested expression did not write Field 7".into());
+                    }
+                    Ok(())
+                },
+            )?;
+        }
     }
     Ok(())
 }

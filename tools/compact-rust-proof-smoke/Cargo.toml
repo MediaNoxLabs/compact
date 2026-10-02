@@ -28,6 +28,7 @@ compact-rust-cell-boolean-fixture = { path = "../../tests-rust-backend/cell-bool
 compact-rust-cell-read-fixture = { path = "../../tests-rust-backend/cell-read" }
 compact-rust-witness-cell-write-fixture = { path = "../../tests-rust-backend/witness-cell-write" }
 compact-rust-stateful-circuit-call-fixture = { path = "../../tests-rust-backend/stateful-circuit-call" }
+compact-rust-nested-witness-call-oracle-fixture = { path = "../../tests-rust-backend/nested-witness-call-oracle" }
 midnight-compact-runtime = { path = "../../runtime-rs", features = ["ledger-transaction"] }
 midnight-ledger = "=8.0.2"
 midnight-onchain-state = "=3.0.0"

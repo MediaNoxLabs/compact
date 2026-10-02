@@ -16,8 +16,12 @@
 import CompactStandardLibrary;
 
 export ledger t: MerkleTree<3, Uint<8>>;
+export ledger h: HistoricMerkleTree<3, Uint<8>>;
 
 witness leaf_path(): MerkleTreePath<3, Uint<8>>;
+witness historic_path(): MerkleTreePath<3, Uint<8>>;
+witness merkle_checks(): Boolean;
+witness historic_checks(): Boolean;
 
 export circuit append(value: Uint<8>): [] {
   t.insert(disclose(value));
@@ -25,4 +29,20 @@ export circuit append(value: Uint<8>): [] {
 
 export circuit get_path(): MerkleTreePath<3, Uint<8>> {
   return disclose(leaf_path());
+}
+
+export circuit append_h(value: Uint<8>): [] {
+  h.insert(disclose(value));
+}
+
+export circuit get_historic_path(): MerkleTreePath<3, Uint<8>> {
+  return disclose(historic_path());
+}
+
+export circuit check_witness_merkle(): Boolean {
+  return disclose(merkle_checks());
+}
+
+export circuit check_witness_history(): Boolean {
+  return disclose(historic_checks());
 }

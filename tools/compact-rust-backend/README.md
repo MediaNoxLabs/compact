@@ -5,6 +5,11 @@ its typed Rust IR as native Rust source. It is independent of the TypeScript
 backend. The generated code uses [`midnight-compact-runtime`](../../runtime-rs),
 which delegates state, encoding, hashing, curves, and VM operations to the
 ledger-8 Midnight crates.
+Generated Merkle witness views expose local `root`, `first_free`, path, and
+historic history methods alongside fallible `is_full` and `check_root` methods.
+The latter two execute canonical ledger-8 VM queries and contribute their cost
+to Rust circuit results. TypeScript currently reports zero wrapper gas for
+witness-only VM queries; the Rust result sums the observed query costs.
 
 ## Compile a contract
 
@@ -93,7 +98,7 @@ Compact spelling without warning in consumer builds.
 |---|---|---|
 | Compact compiler | Toolchain 0.31.133, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
 | Rust IR | Schema 8, private to this backend | The renderer rejects any other schema before writing `lib.rs`. Ledger, circuit, witness, constructor, and exported alias declarations carry optional Compact source locations for diagnostics. |
-| Generated code and Rust runtime | ABI 10 | Generated modules assert the ABI at Rust compile time. ABI 10 adds fallible `TryWitnesses` and adapts existing pair-returning `Witnesses` implementations; ABI 9 meters List witness reads, ABI 8 Map, ABI 7 Set, ABI 6 Cell/Counter; ABI 5 added structural nested Map slots. |
+| Generated code and Rust runtime | ABI 11 | Generated modules assert the ABI at Rust compile time. ABI 11 meters Merkle witness VM reads while keeping local projections uncharged; ABI 10 adds fallible `TryWitnesses` and adapts existing pair-returning `Witnesses` implementations; ABI 9 meters List witness reads, ABI 8 Map, ABI 7 Set, ABI 6 Cell/Counter; ABI 5 added structural nested Map slots. |
 | Rust runtime source | Bundled runtime crates or an explicit shared source root | Cargo resolves the matching runtime and its pinned Midnight crates. |
 
 `--runtime-version` reports the TypeScript runtime version; the Rust runtime

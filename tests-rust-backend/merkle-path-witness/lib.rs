@@ -72,12 +72,12 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 10);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 11);
 }
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 10);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 11);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -88,10 +88,18 @@ pub mod ledger_contract {
         pub fn t(
             &self,
         ) -> Result<
-            runtime::ledger::MerkleTreeView<'a, runtime::ledger::DefaultDB>,
+            runtime::ledger::MeteredMerkleTreeView<'a, runtime::ledger::DefaultDB>,
             runtime::CompactError,
         > {
-            runtime::ledger::merkle_tree_view_at_path(self.state, &[0])
+            runtime::ledger::metered_merkle_tree_view_at_path(self.meter, &[0], 3)
+        }
+        pub fn h(
+            &self,
+        ) -> Result<
+            runtime::ledger::MeteredHistoricMerkleTreeView<'a, runtime::ledger::DefaultDB>,
+            runtime::CompactError,
+        > {
+            runtime::ledger::metered_historic_merkle_tree_view_at_path(self.meter, &[1], 3)
         }
     }
     pub trait Witnesses<Private> {
@@ -99,6 +107,18 @@ pub mod ledger_contract {
             &self,
             context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
         ) -> (Private, crate::types::MerkleTreePath);
+        fn historic_path(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+        ) -> (Private, crate::types::MerkleTreePath);
+        fn merkle_checks(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+        ) -> (Private, bool);
+        fn historic_checks(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+        ) -> (Private, bool);
     }
     /// Witness methods that can propagate ledger projection failures.
     pub trait TryWitnesses<Private> {
@@ -106,6 +126,18 @@ pub mod ledger_contract {
             &self,
             context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
         ) -> Result<(Private, crate::types::MerkleTreePath), runtime::CompactError>;
+        fn historic_path(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+        ) -> Result<(Private, crate::types::MerkleTreePath), runtime::CompactError>;
+        fn merkle_checks(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+        ) -> Result<(Private, bool), runtime::CompactError>;
+        fn historic_checks(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+        ) -> Result<(Private, bool), runtime::CompactError>;
     }
     impl<Private, W: Witnesses<Private>> TryWitnesses<Private> for W {
         fn leaf_path(
@@ -114,12 +146,32 @@ pub mod ledger_contract {
         ) -> Result<(Private, crate::types::MerkleTreePath), runtime::CompactError> {
             Ok(<W as Witnesses<Private>>::leaf_path(self, context))
         }
+        fn historic_path(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+        ) -> Result<(Private, crate::types::MerkleTreePath), runtime::CompactError> {
+            Ok(<W as Witnesses<Private>>::historic_path(self, context))
+        }
+        fn merkle_checks(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+        ) -> Result<(Private, bool), runtime::CompactError> {
+            Ok(<W as Witnesses<Private>>::merkle_checks(self, context))
+        }
+        fn historic_checks(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+        ) -> Result<(Private, bool), runtime::CompactError> {
+            Ok(<W as Witnesses<Private>>::historic_checks(self, context))
+        }
     }
     pub fn initial_state<Private>(
         __compact_context: runtime::context::ConstructorContext<Private>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
-        let state =
-            runtime::ledger::contract_state(vec![runtime::ledger::constructor_merkle_tree(3u8)]);
+        let state = runtime::ledger::contract_state(vec![
+            runtime::ledger::constructor_merkle_tree(3u8),
+            runtime::ledger::constructor_historic_merkle_tree(3u8),
+        ]);
         Ok(runtime::context::ConstructorResult::new(
             __compact_context,
             state,
@@ -171,6 +223,104 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
+    pub fn append_h<Private>(
+        context: runtime::context::CircuitContext<Private>,
+        __compact_param_0: runtime::BoundedUint<255>,
+    ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
+        let mut total_cost = runtime::context::RunningCost::default();
+        let private_transcript_outputs = Vec::new();
+        let step = context.historic_insert(1, __compact_param_0)?;
+        let context = step.context;
+        total_cost += step.gas_cost;
+        let result = ();
+        Ok(runtime::context::CircuitResult {
+            context,
+            result,
+            gas_cost: total_cost,
+            private_transcript_outputs,
+        })
+    }
+    pub fn get_historic_path<Private, W: TryWitnesses<Private>>(
+        context: runtime::context::CircuitContext<Private>,
+        witnesses: &W,
+    ) -> Result<
+        runtime::context::CircuitResult<Private, crate::types::MerkleTreePath>,
+        runtime::CompactError,
+    > {
+        let mut total_cost = runtime::context::RunningCost::default();
+        let mut private_transcript_outputs = Vec::new();
+        let mut context = context;
+        let __compact_witness_meter_0 = runtime::context::WitnessReadMeter::new(&context);
+        let (__compact_next_private_0, __compact_witness_0) =
+            witnesses.historic_path(context.witness_context_with(LedgerView {
+                state: context.query.state.get_ref(),
+                meter: &__compact_witness_meter_0,
+            }))?;
+        total_cost += __compact_witness_meter_0.gas_cost();
+        context.private_state = __compact_next_private_0;
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
+            __compact_witness_0.clone(),
+        ));
+        let result = __compact_witness_0;
+        Ok(runtime::context::CircuitResult {
+            context,
+            result,
+            gas_cost: total_cost,
+            private_transcript_outputs,
+        })
+    }
+    pub fn check_witness_merkle<Private, W: TryWitnesses<Private>>(
+        context: runtime::context::CircuitContext<Private>,
+        witnesses: &W,
+    ) -> Result<runtime::context::CircuitResult<Private, bool>, runtime::CompactError> {
+        let mut total_cost = runtime::context::RunningCost::default();
+        let mut private_transcript_outputs = Vec::new();
+        let mut context = context;
+        let __compact_witness_meter_0 = runtime::context::WitnessReadMeter::new(&context);
+        let (__compact_next_private_0, __compact_witness_0) =
+            witnesses.merkle_checks(context.witness_context_with(LedgerView {
+                state: context.query.state.get_ref(),
+                meter: &__compact_witness_meter_0,
+            }))?;
+        total_cost += __compact_witness_meter_0.gas_cost();
+        context.private_state = __compact_next_private_0;
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
+            __compact_witness_0.clone(),
+        ));
+        let result = __compact_witness_0;
+        Ok(runtime::context::CircuitResult {
+            context,
+            result,
+            gas_cost: total_cost,
+            private_transcript_outputs,
+        })
+    }
+    pub fn check_witness_history<Private, W: TryWitnesses<Private>>(
+        context: runtime::context::CircuitContext<Private>,
+        witnesses: &W,
+    ) -> Result<runtime::context::CircuitResult<Private, bool>, runtime::CompactError> {
+        let mut total_cost = runtime::context::RunningCost::default();
+        let mut private_transcript_outputs = Vec::new();
+        let mut context = context;
+        let __compact_witness_meter_0 = runtime::context::WitnessReadMeter::new(&context);
+        let (__compact_next_private_0, __compact_witness_0) =
+            witnesses.historic_checks(context.witness_context_with(LedgerView {
+                state: context.query.state.get_ref(),
+                meter: &__compact_witness_meter_0,
+            }))?;
+        total_cost += __compact_witness_meter_0.gas_cost();
+        context.private_state = __compact_next_private_0;
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
+            __compact_witness_0.clone(),
+        ));
+        let result = __compact_witness_0;
+        Ok(runtime::context::CircuitResult {
+            context,
+            result,
+            gas_cost: total_cost,
+            private_transcript_outputs,
+        })
+    }
     /// Groups the contract's exported circuits for Rust consumers.
     pub struct Contract<W> {
         #[allow(dead_code)]
@@ -205,6 +355,43 @@ pub mod ledger_contract {
             W: TryWitnesses<Private>,
         {
             crate::ledger_contract::get_path(context, &self.witnesses)
+        }
+        pub fn append_h<Private>(
+            &self,
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::BoundedUint<255>,
+        ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
+            crate::ledger_contract::append_h(context, __compact_param_0)
+        }
+        pub fn get_historic_path<Private>(
+            &self,
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<
+            runtime::context::CircuitResult<Private, crate::types::MerkleTreePath>,
+            runtime::CompactError,
+        >
+        where
+            W: TryWitnesses<Private>,
+        {
+            crate::ledger_contract::get_historic_path(context, &self.witnesses)
+        }
+        pub fn check_witness_merkle<Private>(
+            &self,
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::context::CircuitResult<Private, bool>, runtime::CompactError>
+        where
+            W: TryWitnesses<Private>,
+        {
+            crate::ledger_contract::check_witness_merkle(context, &self.witnesses)
+        }
+        pub fn check_witness_history<Private>(
+            &self,
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::context::CircuitResult<Private, bool>, runtime::CompactError>
+        where
+            W: TryWitnesses<Private>,
+        {
+            crate::ledger_contract::check_witness_history(context, &self.witnesses)
         }
     }
 }

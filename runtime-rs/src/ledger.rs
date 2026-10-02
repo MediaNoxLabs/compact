@@ -247,13 +247,14 @@ pub(crate) use collections::{
 pub(crate) use counter::counter_program;
 pub use counter::{constructor_counter, decrement_counter, increment_counter, read_counter};
 pub use merkle::{
-    HistoricMerkleTreeView, MerkleTreeView, constructor_historic_merkle_tree,
-    constructor_merkle_tree, historic_check_root, historic_insert, historic_insert_hash,
-    historic_insert_hash_index, historic_insert_index, historic_insert_index_default,
-    historic_is_full, historic_merkle_tree_view_at_path, historic_reset_history,
-    historic_reset_to_default, merkle_check_root, merkle_insert, merkle_insert_hash,
-    merkle_insert_hash_index, merkle_insert_index, merkle_insert_index_default, merkle_is_full,
-    merkle_reset_to_default, merkle_tree_view_at_path,
+    HistoricMerkleTreeView, MerkleTreeView, MeteredHistoricMerkleTreeView, MeteredMerkleTreeView,
+    constructor_historic_merkle_tree, constructor_merkle_tree, historic_check_root,
+    historic_insert, historic_insert_hash, historic_insert_hash_index, historic_insert_index,
+    historic_insert_index_default, historic_is_full, historic_merkle_tree_view_at_path,
+    historic_reset_history, historic_reset_to_default, merkle_check_root, merkle_insert,
+    merkle_insert_hash, merkle_insert_hash_index, merkle_insert_index, merkle_insert_index_default,
+    merkle_is_full, merkle_reset_to_default, merkle_tree_view_at_path,
+    metered_historic_merkle_tree_view_at_path, metered_merkle_tree_view_at_path,
 };
 
 /// The root ledger state for a contract with no public ledger fields.

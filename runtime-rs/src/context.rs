@@ -236,6 +236,46 @@ impl<'a, D: DB> WitnessReadMeter<'a, D> {
         Ok(length)
     }
 
+    pub fn read_merkle_is_full(&self, path: &[u8], depth: u8) -> Result<bool, CompactError> {
+        let (result, full) =
+            ledger::merkle_is_full(self.query, path, depth, self.gas_limit, self.cost_model)?;
+        *self.observed_gas.borrow_mut() += result.gas_cost;
+        Ok(full)
+    }
+
+    pub fn read_merkle_check_root<T: CellValue>(
+        &self,
+        path: &[u8],
+        root: T,
+    ) -> Result<bool, CompactError> {
+        let (result, known) =
+            ledger::merkle_check_root(self.query, path, root, self.gas_limit, self.cost_model)?;
+        *self.observed_gas.borrow_mut() += result.gas_cost;
+        Ok(known)
+    }
+
+    pub fn read_historic_merkle_is_full(
+        &self,
+        path: &[u8],
+        depth: u8,
+    ) -> Result<bool, CompactError> {
+        let (result, full) =
+            ledger::historic_is_full(self.query, path, depth, self.gas_limit, self.cost_model)?;
+        *self.observed_gas.borrow_mut() += result.gas_cost;
+        Ok(full)
+    }
+
+    pub fn read_historic_merkle_check_root<T: CellValue>(
+        &self,
+        path: &[u8],
+        root: T,
+    ) -> Result<bool, CompactError> {
+        let (result, known) =
+            ledger::historic_check_root(self.query, path, root, self.gas_limit, self.cost_model)?;
+        *self.observed_gas.borrow_mut() += result.gas_cost;
+        Ok(known)
+    }
+
     pub fn gas_cost(&self) -> RunningCost {
         self.observed_gas.borrow().clone()
     }

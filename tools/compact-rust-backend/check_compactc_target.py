@@ -43,6 +43,7 @@ RECORDED_ENUM_SOURCE = ROOT / "examples/rust_backend/recorded_enum_cell.compact"
 TINY_SOURCE = ROOT / "examples/rust_backend/tiny_oracle.compact"
 CELL_READ_SOURCE = ROOT / "examples/rust_backend/cell_read.compact"
 WITNESS_CELL_SOURCE = ROOT / "examples/rust_backend/witness_cell_write.compact"
+MERKLE_WITNESS_SOURCE = ROOT / "examples/rust_backend/merkle_path_witness.compact"
 NESTED_COUNTER_SOURCE = ROOT / "examples/rust_backend/stateful_circuit_call.compact"
 NESTED_WITNESS_SOURCE = ROOT / "examples/rust_backend/nested_witness_call_oracle.compact"
 ALIAS_SOURCE = ROOT / "examples/rust_backend/aliases_oracle.compact"
@@ -425,6 +426,70 @@ def check_witness_consumer(compiler: str, base: Path) -> None:
     subprocess.run(["cargo", "test", "--quiet"], cwd=consumer, env=environment, check=True)
 
 
+def check_merkle_witness_consumer(compiler: str, base: Path) -> None:
+    output = base / "merkle-witness-contract"
+    run(compiler, "--target", "rust", "--skip-zk", str(MERKLE_WITNESS_SOURCE), str(output))
+    check_manifest(output)
+    contract = output / "contract"
+    package = tomllib.loads((contract / "Cargo.toml").read_text())
+    consumer = base / "merkle-witness-consumer"
+    consumer.mkdir()
+    (consumer / "tests").mkdir()
+    (consumer / "Cargo.toml").write_text(
+        "[package]\nname = \"compactc-merkle-witness-smoke\"\n"
+        "version = \"0.1.0\"\nedition = \"2024\"\n\n[dependencies]\n"
+        f'{package["package"]["name"]} = {{ path = {json.dumps(str(contract))} }}\n'
+    )
+    (consumer / "tests/merkle.rs").write_text(
+        "use compact_contract_merkle_path_witness::ledger_contract::{Contract, LedgerView, TryWitnesses, initial_state};\n"
+        "use compact_contract_merkle_path_witness::types::{MerkleTreeDigest, MerkleTreePath};\n"
+        "use compact_contract_merkle_path_witness::runtime::{BoundedUint, CompactError};\n"
+        "use compact_contract_merkle_path_witness::runtime::context::{ConstructorContext, RunningCost, WitnessContext};\n"
+        "use compact_contract_merkle_path_witness::runtime::ledger::ContractAddress;\n"
+        "struct MerkleWitness;\n"
+        "impl TryWitnesses<()> for MerkleWitness {\n"
+        "    fn leaf_path(&self, context: WitnessContext<'_, (), LedgerView<'_>>) -> Result<((), MerkleTreePath), CompactError> {\n"
+        "        let path = context.ledger.t()?.path_for_leaf(0, BoundedUint::<255>::new(7)?)?;\n"
+        "        Ok(((), MerkleTreePath::from_ledger_path(path)?))\n"
+        "    }\n"
+        "    fn historic_path(&self, context: WitnessContext<'_, (), LedgerView<'_>>) -> Result<((), MerkleTreePath), CompactError> {\n"
+        "        let path = context.ledger.h()?.path_for_leaf(0, BoundedUint::<255>::new(7)?)?;\n"
+        "        Ok(((), MerkleTreePath::from_ledger_path(path)?))\n"
+        "    }\n"
+        "    fn merkle_checks(&self, context: WitnessContext<'_, (), LedgerView<'_>>) -> Result<((), bool), CompactError> {\n"
+        "        let tree = context.ledger.t()?;\n"
+        "        let root = MerkleTreeDigest { field: tree.root().unwrap().0 };\n"
+        "        Ok(((), !tree.is_full()? && tree.check_root(root)?))\n"
+        "    }\n"
+        "    fn historic_checks(&self, context: WitnessContext<'_, (), LedgerView<'_>>) -> Result<((), bool), CompactError> {\n"
+        "        let tree = context.ledger.h()?;\n"
+        "        let root = MerkleTreeDigest { field: tree.root().unwrap().0 };\n"
+        "        Ok(((), !tree.is_full()? && tree.check_root(root)?))\n"
+        "    }\n"
+        "}\n"
+        "#[test]\nfn merkle_witness_views_work_from_a_one_dependency_crate() {\n"
+        "    let contract = Contract::from(MerkleWitness);\n"
+        "    let context = initial_state(ConstructorContext::new(())).unwrap().into_circuit_context(ContractAddress::default());\n"
+        "    let context = contract.append(context, BoundedUint::<255>::new(7).unwrap()).unwrap().context;\n"
+        "    let context = contract.append_h(context, BoundedUint::<255>::new(7).unwrap()).unwrap().context;\n"
+        "    let local = contract.get_path(context).unwrap();\n"
+        "    assert_eq!(local.gas_cost, RunningCost::ZERO);\n"
+        "    let local_h = contract.get_historic_path(local.context).unwrap();\n"
+        "    assert_eq!(local_h.gas_cost, RunningCost::ZERO);\n"
+        "    let plain = contract.check_witness_merkle(local_h.context).unwrap();\n"
+        "    assert!(plain.result && plain.gas_cost.read_time > RunningCost::ZERO.read_time);\n"
+        "    let historic = contract.check_witness_history(plain.context).unwrap();\n"
+        "    assert!(historic.result && historic.gas_cost.read_time > RunningCost::ZERO.read_time);\n"
+        "    let mut rejected = initial_state(ConstructorContext::new(())).unwrap().into_circuit_context(ContractAddress::default());\n"
+        "    rejected.gas_limit = Some(RunningCost::ZERO);\n"
+        "    assert!(contract.check_witness_merkle(rejected).is_err());\n"
+        "}\n"
+    )
+    environment = os.environ.copy()
+    environment.setdefault("CARGO_TARGET_DIR", str(ROOT / "target/compactc-consumer"))
+    subprocess.run(["cargo", "test", "--quiet"], cwd=consumer, env=environment, check=True)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--consumer", action="store_true", help="build and run a separate consumer")
@@ -496,6 +561,7 @@ def main() -> None:
             check_consumer(rust / "contract", pure / "contract", base / "consumer")
             check_shared_runtime_consumer(compiler, base)
             check_witness_consumer(compiler, base)
+            check_merkle_witness_consumer(compiler, base)
         if args.proof:
             proof = base / "proof"
             run(compiler, "--target", "rust", str(SOURCE), str(proof))

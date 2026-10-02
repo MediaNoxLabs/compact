@@ -143,17 +143,19 @@ pub(crate) fn build<'a>(
                         }
                     });
                     }
-                    LedgerFieldKind::HistoricMerkleTree { .. } => {
+                    LedgerFieldKind::HistoricMerkleTree { depth, .. } => {
+                        let depth = syn::LitInt::new(&depth.to_string(), Span::call_site());
                         ledger_view_methods.push(syn::parse_quote! {
-                        pub fn #name(&self) -> Result<runtime::ledger::HistoricMerkleTreeView<'a, runtime::ledger::DefaultDB>, runtime::CompactError> {
-                            runtime::ledger::historic_merkle_tree_view_at_path(self.state, &[#(#path),*])
+                        pub fn #name(&self) -> Result<runtime::ledger::MeteredHistoricMerkleTreeView<'a, runtime::ledger::DefaultDB>, runtime::CompactError> {
+                            runtime::ledger::metered_historic_merkle_tree_view_at_path(self.meter, &[#(#path),*], #depth)
                         }
                     });
                     }
-                    LedgerFieldKind::MerkleTree { .. } => {
+                    LedgerFieldKind::MerkleTree { depth, .. } => {
+                        let depth = syn::LitInt::new(&depth.to_string(), Span::call_site());
                         ledger_view_methods.push(syn::parse_quote! {
-                        pub fn #name(&self) -> Result<runtime::ledger::MerkleTreeView<'a, runtime::ledger::DefaultDB>, runtime::CompactError> {
-                            runtime::ledger::merkle_tree_view_at_path(self.state, &[#(#path),*])
+                        pub fn #name(&self) -> Result<runtime::ledger::MeteredMerkleTreeView<'a, runtime::ledger::DefaultDB>, runtime::CompactError> {
+                            runtime::ledger::metered_merkle_tree_view_at_path(self.meter, &[#(#path),*], #depth)
                         }
                     });
                     }

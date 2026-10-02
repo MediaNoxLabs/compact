@@ -21,10 +21,10 @@ use std::collections::{HashMap, HashSet};
 
 use crate::ir::{
     CounterAmount, Expr, LedgerField, LedgerFieldKind, PureCircuit, StateAction, StateReturn,
-    StatefulCircuit, StructField, Type, WitnessDeclaration,
+    StatefulCircuit, Type, WitnessDeclaration,
 };
 use crate::stateful::circuit_uses_witness;
-use crate::{RenderError, expression_with_calls, ident, rust_type};
+use crate::{RenderError, expression_with_calls, ident, list_head_result_type, rust_type};
 
 /// Emit a replayable public VM trace for supported root Cell, Counter, Set, Map, and List
 /// operations, including witnessed Cell values. Unsupported circuits have no
@@ -1566,19 +1566,7 @@ pub(crate) fn render_recorded_circuit(
             let LedgerFieldKind::List { ty } = &declaration.declaration else {
                 return Ok(None);
             };
-            let expected = Type::Struct {
-                name: "Maybe".into(),
-                fields: vec![
-                    StructField {
-                        name: "is_some".into(),
-                        ty: Type::Boolean,
-                    },
-                    StructField {
-                        name: "value".into(),
-                        ty: ty.clone(),
-                    },
-                ],
-            };
+            let expected = list_head_result_type(ty, &circuit.result);
             if declaration.index != *index
                 || declaration.physical_path().len() != 1
                 || circuit.result != expected

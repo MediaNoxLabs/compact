@@ -2242,6 +2242,29 @@ fn is_compact_struct_instantiation(name: &str, source_name: &str) -> bool {
             })
 }
 
+/// Preserve the compiler-assigned concrete name of a `Maybe<T>` instantiation
+/// while checking the exact List element shape. A source can contain several
+/// `Maybe<T>` types, so only the first one is necessarily named `Maybe`.
+fn list_head_result_type(element: &Type, actual: &Type) -> Type {
+    let name = match actual {
+        Type::Struct { name, .. } if is_compact_struct_instantiation(name, "Maybe") => name.clone(),
+        _ => "Maybe".into(),
+    };
+    Type::Struct {
+        name,
+        fields: vec![
+            StructField {
+                name: "is_some".into(),
+                ty: Type::Boolean,
+            },
+            StructField {
+                name: "value".into(),
+                ty: element.clone(),
+            },
+        ],
+    }
+}
+
 pub fn render(contract: &Contract) -> Result<String, RenderError> {
     if contract.schema_version != SCHEMA_VERSION {
         return Err(RenderError::SchemaVersion(contract.schema_version));

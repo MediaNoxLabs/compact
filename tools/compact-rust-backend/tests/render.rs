@@ -2406,6 +2406,55 @@ fn list_push_front_and_length_validate_declared_types() {
         source.contains(".record_head::<crate::types::Maybe, _, _>(frame)?"),
         "{source}"
     );
+    let mut second_instantiation = contract.stateful_circuits[0].result.clone();
+    let Type::Struct { name, .. } = &mut second_instantiation else {
+        unreachable!();
+    };
+    *name = "MaybeCompact1".into();
+    contract.stateful_circuits[0].result = second_instantiation.clone();
+    let source = render(&contract).unwrap();
+    assert!(
+        source.contains(".head::<crate::types::MaybeCompact1, _, _>(context)?"),
+        "{source}"
+    );
+    assert!(
+        source.contains(".record_head::<crate::types::MaybeCompact1, _, _>(frame)?"),
+        "{source}"
+    );
+    for invalid in ["MaybeCompact", "MaybeCompactX", "MaybeOther"] {
+        let mut actual = second_instantiation.clone();
+        let Type::Struct { name, .. } = &mut actual else {
+            unreachable!();
+        };
+        *name = invalid.into();
+        contract.stateful_circuits[0].result = actual.clone();
+        assert_eq!(
+            render(&contract),
+            Err(RenderError::TypeMismatch {
+                expected: Type::Struct {
+                    name: "Maybe".into(),
+                    fields: match &second_instantiation {
+                        Type::Struct { fields, .. } => fields.clone(),
+                        _ => unreachable!(),
+                    },
+                },
+                actual,
+            })
+        );
+    }
+    let mut wrong_value = second_instantiation.clone();
+    let Type::Struct { fields, .. } = &mut wrong_value else {
+        unreachable!();
+    };
+    fields[1].ty = Type::Boolean;
+    contract.stateful_circuits[0].result = wrong_value.clone();
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::TypeMismatch {
+            expected: second_instantiation,
+            actual: wrong_value,
+        })
+    );
 }
 
 #[test]

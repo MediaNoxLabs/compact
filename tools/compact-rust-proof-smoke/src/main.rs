@@ -1057,6 +1057,41 @@ fn main() -> Result<(), Box<dyn Error>> {
         let initial = list_shapes_contract::initial_state(ConstructorContext::new(()))?;
         let deploy = make_deploy(
             list_shapes_root,
+            "first_choice",
+            initial.ledger_state.get_ref().clone(),
+            &mut rng,
+        )?;
+        let context = initial.into_circuit_context(deploy.address());
+        let recorded = list_shapes_contract::Contract::default()
+            .recording
+            .first_choice(context)?;
+        if recorded.execution.result.is_some || recorded.execution.result.value != ListChoice::yes {
+            return Err("empty Choice List head did not return the Compact default".into());
+        }
+        let call = check_generated_trace(list_shapes_root, "first_choice", recorded, ())?;
+        check_transaction(
+            list_shapes_root,
+            "first_choice",
+            deploy,
+            call,
+            &mut rng,
+            |contract| {
+                let StateValue::Array(fields) = contract.data.get_ref() else {
+                    return Err("List shape contract state is not an array".into());
+                };
+                let StateValue::Array(items) = fields.get(3).ok_or("Choice List field missing")?
+                else {
+                    return Err("Choice List field is not an array".into());
+                };
+                if read_cell::<u64, _>(items.get(2).ok_or("Choice List length missing")?)? != 0 {
+                    return Err("proven Choice head read changed the List".into());
+                }
+                Ok(())
+            },
+        )?;
+        let initial = list_shapes_contract::initial_state(ConstructorContext::new(()))?;
+        let deploy = make_deploy(
+            list_shapes_root,
             "first_packet",
             initial.ledger_state.get_ref().clone(),
             &mut rng,

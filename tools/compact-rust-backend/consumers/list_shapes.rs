@@ -14,13 +14,14 @@
 // limitations under the License.
 
 use compact_contract_witness_list_shapes::ledger_contract::{
-    Contract, LedgerView, TryWitnesses, first_packet, initial_state, push_choice, push_count, push_flag, push_packet,
-    push_tag, read_choices, read_counts, read_flags, read_packets, read_tags,
+    Contract, LedgerView, TryWitnesses, first_choice, first_packet, initial_state, push_choice,
+    push_count, push_flag, push_packet, push_tag, read_choices, read_counts, read_flags,
+    read_packets, read_tags,
 };
 use compact_contract_witness_list_shapes::runtime::context::{ConstructorContext, WitnessContext};
 use compact_contract_witness_list_shapes::runtime::ledger::ContractAddress;
 use compact_contract_witness_list_shapes::runtime::{BoundedUint, CompactError, FixedBytes};
-use compact_contract_witness_list_shapes::types::{Choice, Packet};
+use compact_contract_witness_list_shapes::types::{Choice, Maybe, MaybeCompact1, Packet};
 
 struct Inspect;
 
@@ -44,11 +45,22 @@ fn packaged_crate_exposes_recorded_packet_head() {
     let initial = initial_state(ConstructorContext::new(())).unwrap();
     let context = initial.into_circuit_context(ContractAddress::default());
     let recorded = Contract::default().recording.first_packet(context).unwrap();
+    let _: &MaybeCompact1 = &recorded.execution.result;
     assert!(!recorded.execution.result.is_some);
     assert_eq!(recorded.execution.result.value, Packet::default());
     assert!(!recorded.public.verify_ops().is_empty());
 
-    let context = initial_state(ConstructorContext::new(())).unwrap()
+    let context = initial_state(ConstructorContext::new(()))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let choice = Contract::default().recording.first_choice(context).unwrap();
+    let _: &Maybe = &choice.execution.result;
+    assert!(!choice.execution.result.is_some);
+    assert_eq!(choice.execution.result.value, Choice::yes);
+    assert!(!choice.public.verify_ops().is_empty());
+
+    let context = initial_state(ConstructorContext::new(()))
+        .unwrap()
         .into_circuit_context(ContractAddress::default());
     let value = Packet {
         tag: FixedBytes::new([4, 5, 6]),
@@ -58,6 +70,13 @@ fn packaged_crate_exposes_recorded_packet_head() {
     let native = first_packet(context).unwrap();
     assert!(native.result.is_some);
     assert_eq!(native.result.value, value);
+    let context = initial_state(ConstructorContext::new(()))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let context = push_choice(context, Choice::no).unwrap().context;
+    let native = first_choice(context).unwrap();
+    assert!(native.result.is_some);
+    assert_eq!(native.result.value, Choice::no);
 }
 
 impl TryWitnesses<()> for Inspect {

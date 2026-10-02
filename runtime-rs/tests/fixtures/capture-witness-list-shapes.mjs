@@ -88,9 +88,9 @@ function read(name) {
     observation: observed.slice(o)[0],
   };
 }
-function readPacketHead() {
+function readHead(circuit) {
   const q = queries.length;
-  const output = contract.circuits.first_packet(context);
+  const output = contract.circuits[circuit](context);
   context = output.context;
   return {
     result: normalize(output.result),
@@ -104,7 +104,8 @@ function readPacketHead() {
 const names = ['flags', 'counts', 'tags', 'choices', 'packets'];
 const initialState = stateHex();
 const before = Object.fromEntries(names.map(name => [name, read(name)]));
-const emptyPacketHead = readPacketHead();
+const emptyPacketHead = readHead('first_packet');
+const emptyChoiceHead = readHead('first_choice');
 context = contract.circuits.push_flag(context, true).context;
 context = contract.circuits.push_count(context, 42n).context;
 context = contract.circuits.push_tag(context, new Uint8Array([1, 2, 3])).context;
@@ -112,5 +113,6 @@ context = contract.circuits.push_choice(context, Choice.no).context;
 context = contract.circuits.push_packet(context, { tag: new Uint8Array([4, 5, 6]), count: 7n }).context;
 const populatedState = stateHex();
 const after = Object.fromEntries(names.map(name => [name, read(name)]));
-const populatedPacketHead = readPacketHead();
-process.stdout.write(JSON.stringify({ initialState, populatedState, before, after, emptyPacketHead, populatedPacketHead }, null, 2) + '\n');
+const populatedPacketHead = readHead('first_packet');
+const populatedChoiceHead = readHead('first_choice');
+process.stdout.write(JSON.stringify({ initialState, populatedState, before, after, emptyPacketHead, populatedPacketHead, emptyChoiceHead, populatedChoiceHead }, null, 2) + '\n');

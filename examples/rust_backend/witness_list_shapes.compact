@@ -36,6 +36,7 @@ export circuit push_tag(value: Bytes<3>): [] { tags.pushFront(disclose(value)); 
 export circuit push_choice(value: Choice): [] { choices.pushFront(disclose(value)); }
 export circuit push_packet(value: Packet): [] { packets.pushFront(disclose(value)); }
 export circuit first_packet(): Maybe<Packet> { return packets.head(); }
+export circuit first_choice(): Maybe<Choice> { return choices.head(); }
 
 export circuit read_flags(): Boolean { return disclose(inspect_flags()); }
 export circuit read_counts(): Boolean { return disclose(inspect_counts()); }

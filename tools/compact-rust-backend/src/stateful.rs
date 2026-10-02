@@ -24,7 +24,8 @@ use crate::ir::{
 };
 use crate::{
     RenderError, UnsignedMaximum, coerce_expression, expression_with_calls, ident,
-    ledger_path_expr, map_slot_types, rust_type, unsigned_cast_syntax, unsigned_maximum,
+    ledger_path_expr, list_head_result_type, map_slot_types, rust_type, unsigned_cast_syntax,
+    unsigned_maximum,
 };
 
 pub(crate) fn render_state_expression(
@@ -2689,19 +2690,7 @@ pub(crate) fn render_stateful_circuit(
             if declaration.index != *index {
                 return Err(RenderError::UnknownLedgerField(field.clone()));
             }
-            let expected = Type::Struct {
-                name: "Maybe".into(),
-                fields: vec![
-                    StructField {
-                        name: "is_some".into(),
-                        ty: Type::Boolean,
-                    },
-                    StructField {
-                        name: "value".into(),
-                        ty: ty.clone(),
-                    },
-                ],
-            };
+            let expected = list_head_result_type(ty, &circuit.result);
             if circuit.result != expected {
                 return Err(RenderError::TypeMismatch {
                     expected,

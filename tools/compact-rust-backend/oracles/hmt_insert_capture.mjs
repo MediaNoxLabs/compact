@@ -24,6 +24,23 @@ const contractIndex = resolve(process.argv[2], 'index.js');
 const requireFromContract = createRequire(contractIndex);
 const runtime = await import(pathToFileURL(requireFromContract.resolve('@midnight-ntwrk/compact-runtime')));
 const { Contract, ledger } = await import(pathToFileURL(contractIndex));
+const queryCosts = [];
+const originalQuery = runtime.QueryContext.prototype.query;
+runtime.QueryContext.prototype.query = function (...args) {
+  const result = originalQuery.call(this, ...args);
+  queryCosts.push({
+    gasCost: result.gasCost,
+    opTags: args[0].map((op) => typeof op === 'string' ? op : Object.keys(op)[0]),
+  });
+  return result;
+};
+const nativeQueries = {};
+function capture(name, invoke) {
+  const start = queryCosts.length;
+  const output = invoke();
+  nativeQueries[name] = { reportedGas: output.gasCost, queries: queryCosts.slice(start) };
+  return output;
+}
 const contract = new Contract({});
 const coinPublicKey = { bytes: new Uint8Array(32) };
 const initial = contract.initialState({
@@ -76,9 +93,13 @@ function pathData(path) {
   };
 }
 const historyAtInit = history();
-const fullAtInit = full();
-const knownAtInit = known(rootAtInit);
-context = contract.circuits.append(context, 7n).context;
+const fullAtInitOutput = capture('fullAtInit', () => contract.circuits.full(context));
+context = fullAtInitOutput.context;
+const fullAtInit = fullAtInitOutput.result;
+const knownAtInitOutput = capture('knownAtInit', () => contract.circuits.known(context, rootAtInit));
+context = knownAtInitOutput.context;
+const knownAtInit = knownAtInitOutput.result;
+context = capture('append7', () => contract.circuits.append(context, 7n)).context;
 const afterAppend7 = snapshot();
 const historyAfterAppend7 = history();
 const pathFor7At0 = pathData(currentTree().pathForLeaf(0n, 7n));
@@ -94,7 +115,7 @@ const afterAppend11 = snapshot();
 context = contract.circuits.place(context, 13n, 1n).context;
 const afterPlace13At1 = snapshot();
 const rootBeforeReset = currentRoot();
-context = contract.circuits.forget_history(context).context;
+context = capture('forgetHistory', () => contract.circuits.forget_history(context)).context;
 const afterForgetHistory = snapshot();
 const historyAfterForget = history();
 const knownInitialAfterReset = known(rootAtInit);
@@ -114,4 +135,13 @@ const afterResetTree = snapshot();
 const fullAfterTreeReset = full();
 const knownOldAfterTreeReset = known(rootBeforeTreeReset);
 const knownBlankAfterTreeReset = known(rootAtInit);
-process.stdout.write(JSON.stringify({ afterInit, historyAtInit, afterAppend7, historyAfterAppend7, pathFor7At0, wrongPathFor8At0, foundPathFor7, missingPathFor8, afterPlace9At3, pathFor9At3, afterAppend11, afterPlace13At1, afterForgetHistory, historyAfterForget, fullAtInit, fullBeforeCapacity, afterAppendHash, afterPlaceHashAt7, fullAtCapacity, afterReplaceHashAt1, fullAfterReplacement, afterResetTree, fullAfterTreeReset, knownOldAfterTreeReset, knownBlankAfterTreeReset, knownAtInit, knownInitialAfterAppend, knownInitialAfterReset, knownCurrentAfterReset }, null, 2) + '\n');
+function normalize(value) {
+  if (typeof value === 'bigint') return value.toString();
+  if (value instanceof Uint8Array) return { bytesHex: Buffer.from(value).toString('hex') };
+  if (Array.isArray(value)) return value.map(normalize);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([key, inner]) => [key, normalize(inner)]));
+  }
+  return value;
+}
+process.stdout.write(JSON.stringify(normalize({ afterInit, historyAtInit, afterAppend7, historyAfterAppend7, pathFor7At0, wrongPathFor8At0, foundPathFor7, missingPathFor8, afterPlace9At3, pathFor9At3, afterAppend11, afterPlace13At1, afterForgetHistory, historyAfterForget, fullAtInit, fullBeforeCapacity, afterAppendHash, afterPlaceHashAt7, fullAtCapacity, afterReplaceHashAt1, fullAfterReplacement, afterResetTree, fullAfterTreeReset, knownOldAfterTreeReset, knownBlankAfterTreeReset, knownAtInit, knownInitialAfterAppend, knownInitialAfterReset, knownCurrentAfterReset, nativeQueries }), null, 2) + '\n');

@@ -53,6 +53,35 @@ fn bounded<const MAX: u128>(value: u128) -> runtime::BoundedUint<MAX> {
     runtime::BoundedUint::new(value).unwrap()
 }
 
+fn assert_native_query_gas(
+    label: &str,
+    actual: &runtime::context::RunningCost,
+    oracle: &serde_json::Value,
+) {
+    let capture = &oracle["nativeQueries"][label];
+    let queries = capture["queries"].as_array().unwrap();
+    assert!(!queries.is_empty(), "{label}: no captured ledger query");
+    let actual = serde_json::to_value(actual).unwrap();
+    for key in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+        let total: u64 = queries
+            .iter()
+            .map(|query| {
+                query["gasCost"][key]
+                    .as_str()
+                    .unwrap()
+                    .parse::<u64>()
+                    .unwrap()
+            })
+            .sum();
+        assert_eq!(actual[key].as_u64().unwrap(), total, "{label}: {key}");
+        assert_eq!(
+            capture["reportedGas"][key],
+            queries.last().unwrap()["gasCost"][key],
+            "{label}: TypeScript reported {key}"
+        );
+    }
+}
+
 fn current_root(state: &StateValue<DefaultDB>) -> MerkleTreeDigest {
     let root = runtime::ledger::merkle_tree_view_at_path(state, &[0])
         .unwrap()
@@ -90,9 +119,12 @@ fn merkle_tree_operations_match_typescript_state_bytes() {
     let context = initial.into_circuit_context(ContractAddress::default());
     let at_init = full(context).unwrap();
     assert_eq!(at_init.result, oracle["fullAtInit"]);
+    assert_native_query_gas("fullAtInit", &at_init.gas_cost, &oracle);
     let known_init = known(at_init.context, initial_root.clone()).unwrap();
     assert_eq!(known_init.result, oracle["knownAtInit"]);
+    assert_native_query_gas("knownAtInit", &known_init.gas_cost, &oracle);
     let after_append7 = append(known_init.context, bounded::<255>(7)).unwrap();
+    assert_native_query_gas("append7", &after_append7.gas_cost, &oracle);
     assert_state(
         after_append7.context.query.state.get_ref(),
         &oracle,

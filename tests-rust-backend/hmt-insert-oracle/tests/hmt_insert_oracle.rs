@@ -49,6 +49,35 @@ fn state_hex(state: StateValue<DefaultDB>) -> String {
     hex::encode(bytes)
 }
 
+fn assert_native_query_gas(
+    label: &str,
+    actual: &runtime::context::RunningCost,
+    oracle: &serde_json::Value,
+) {
+    let capture = &oracle["nativeQueries"][label];
+    let queries = capture["queries"].as_array().unwrap();
+    assert!(!queries.is_empty(), "{label}: no captured ledger query");
+    let actual = serde_json::to_value(actual).unwrap();
+    for key in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+        let total: u64 = queries
+            .iter()
+            .map(|query| {
+                query["gasCost"][key]
+                    .as_str()
+                    .unwrap()
+                    .parse::<u64>()
+                    .unwrap()
+            })
+            .sum();
+        assert_eq!(actual[key].as_u64().unwrap(), total, "{label}: {key}");
+        assert_eq!(
+            capture["reportedGas"][key],
+            queries.last().unwrap()["gasCost"][key],
+            "{label}: TypeScript reported {key}"
+        );
+    }
+}
+
 fn bounded<const MAX: u128>(value: u128) -> runtime::BoundedUint<MAX> {
     runtime::BoundedUint::new(value).unwrap()
 }
@@ -114,9 +143,12 @@ fn historic_merkle_insert_modes_match_typescript_state_bytes() {
     let context = initial.into_circuit_context(ContractAddress::default());
     let initial_full = full(context).unwrap();
     assert_eq!(initial_full.result, oracle["fullAtInit"]);
+    assert_native_query_gas("fullAtInit", &initial_full.gas_cost, &oracle);
     let initial_known = known(initial_full.context, initial_root.clone()).unwrap();
     assert_eq!(initial_known.result, oracle["knownAtInit"]);
+    assert_native_query_gas("knownAtInit", &initial_known.gas_cost, &oracle);
     let after_append7 = append(initial_known.context, bounded::<255>(7)).unwrap();
+    assert_native_query_gas("append7", &after_append7.gas_cost, &oracle);
     assert_state(
         after_append7.context.query.state.get_ref(),
         &oracle,
@@ -222,6 +254,7 @@ fn historic_merkle_insert_modes_match_typescript_state_bytes() {
 
     let root_before_reset = current_root(after_place13.context.query.state.get_ref());
     let after_forget = forget_history(after_place13.context).unwrap();
+    assert_native_query_gas("forgetHistory", &after_forget.gas_cost, &oracle);
     assert_state(
         after_forget.context.query.state.get_ref(),
         &oracle,

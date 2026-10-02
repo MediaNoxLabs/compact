@@ -87,5 +87,91 @@
   "afterResetTree": "6d69646e696768743a636f6e74726163742d73746174655b76365d3ac8000c04020300084008040404010408080104040c140304010410080010080408041404030418080104041c040304200004240801040428c803045cb8010403040108010404010403040108040808010c0402030001140304010410040108010404010401040108400800001c18617070656e64000400083034000438080104043c8c03043e7c50dfc9912c044b2b3e1eafb4bf22be0402cc58f4b5e9b225061906b7bb34c700141066756c6c084434000448080104044c8c03043e7c3ad8776382e22b945069dfd6c77ff0689608e6123c83bcbf29d69cae679e0640343434403434343434343434343450340802080018146b6e6f776e08583400045c08010404608c03043e7cb728c59a828a4ceebe2af12771f91ebeb612c90c29c8267c7f28c8a35511de001814706c61636508683400046c08010404708c03043e7c57e87b4dea824d7671b659acf88ed7689b8b78a293b209363a83aa40e2633c4034643434343434347434343434343434080208002c2872657365745f74726565087c3400048008010404848c03043e7c1a5b135d29c15acba47d549fda4ded11cdc75ed045a1bfb2ad431e2fe206d6002c28706c6163655f68617368088c3400049008010404948c03043e7c86c13bcc457cf4fcfffb8df70ebc3b7dec483629223167f3d46a6b03282f33408834343434343434343434349834343408020800302c617070656e645f6861736808a0340004a408010404a89003043f802050cc425163aeff05aee58d201b6781bada96173d230663fa44c3df5a914a10003834706c6163655f64656661756c7408b0340004b408010404b89003043f807d948342534b746a1b484277de3841e792f8471fbc0dac95dc464e4012e0c9004054343434789c3434ac34343434bc3434080220141c342cc0341003000400",
   "fullAfterTreeReset": false,
   "knownOldAfterTreeReset": false,
-  "knownBlankAfterTreeReset": true
+  "knownBlankAfterTreeReset": true,
+  "nativeQueries": {
+    "fullAtInit": {
+      "reportedGas": {
+        "readTime": "340000000",
+        "computeTime": "1425491435",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "340000000",
+            "computeTime": "1425491435",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "idx",
+            "push",
+            "lt",
+            "neg",
+            "popeq"
+          ]
+        }
+      ]
+    },
+    "knownAtInit": {
+      "reportedGas": {
+        "readTime": "340000000",
+        "computeTime": "1425433517",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "340000000",
+            "computeTime": "1425433517",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "idx",
+            "root",
+            "push",
+            "eq",
+            "popeq"
+          ]
+        }
+      ]
+    },
+    "append7": {
+      "reportedGas": {
+        "readTime": "935000000",
+        "computeTime": "2276512135",
+        "bytesWritten": "436",
+        "bytesDeleted": "92"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "935000000",
+            "computeTime": "2276512135",
+            "bytesWritten": "436",
+            "bytesDeleted": "92"
+          },
+          "opTags": [
+            "idx",
+            "idx",
+            "dup",
+            "idx",
+            "push",
+            "ins",
+            "ins",
+            "idx",
+            "addi",
+            "ins"
+          ]
+        }
+      ]
+    }
+  }
 }

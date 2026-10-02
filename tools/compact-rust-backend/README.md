@@ -215,6 +215,11 @@ normalized public Verify operation with this TypeScript transcript for
 outputs, and assertion failures. A single replay query has different gas
 from the sum of the compiler's separate queries; replay checks state and
 the query sums check gas.
+The plain and historic Merkle captures also retain labeled native VM query
+costs for initial fullness, root checks, and insertion; the historic capture
+adds history reset. Their Rust fixture tests compare all four gas dimensions
+against the TypeScript query sums while preserving the existing state and
+result oracles. These native circuits do not yet emit recorded proof traces.
 The `--proof` target check derives the Counter increment statement from the
 generated recorded trace, proves it against emitted ZKIR and keys, and rejects
 a changed binding input. It also validates offline ledger-8 deployments and

@@ -22,6 +22,12 @@ pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
     const _: () = assert!(runtime::RUST_RUNTIME_ABI == 3);
 }
+/// Typed descriptors for Compact Cell, Counter, Set, Map, and List declarations.
+#[allow(non_upper_case_globals)]
+pub mod ledger_slots {
+    use midnight_compact_runtime as runtime;
+    pub const items: runtime::slots::ListSlot<runtime::Field> = runtime::slots::ListSlot::new(0u8);
+}
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
@@ -61,7 +67,7 @@ pub mod ledger_contract {
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let step = context.push_front_list(0, __compact_param_0)?;
+        let step = crate::ledger_slots::items.push_front(context, __compact_param_0)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();
@@ -77,7 +83,7 @@ pub mod ledger_contract {
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let step = context.pop_front_list(0)?;
+        let step = crate::ledger_slots::items.pop_front(context)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();
@@ -111,19 +117,66 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
+    /// Circuits with a replayable ordered ledger program.
+    pub mod recorded {
+        use midnight_compact_runtime as runtime;
+        pub fn prepend<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::Field,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let frame = crate::ledger_slots::items.record_push_front(frame, __compact_param_0)?;
+            Ok(frame.finish(()))
+        }
+        pub fn drop_first<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let frame = crate::ledger_slots::items.record_pop_front(frame)?;
+            Ok(frame.finish(()))
+        }
+        /// Typed handle for circuits with a complete recorded trace.
+        pub struct Contract;
+        impl Contract {
+            pub fn prepend<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                __compact_param_0: runtime::Field,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::prepend(context, __compact_param_0)
+            }
+            pub fn drop_first<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::drop_first(context)
+            }
+        }
+    }
     /// Groups the contract's exported circuits for Rust consumers.
     pub struct Contract<W> {
         #[allow(dead_code)]
         witnesses: W,
+        pub recording: recorded::Contract,
     }
     impl<W> From<W> for Contract<W> {
         fn from(witnesses: W) -> Self {
-            Self { witnesses }
+            Self {
+                witnesses,
+                recording: recorded::Contract,
+            }
         }
     }
     impl Default for Contract<()> {
         fn default() -> Self {
-            Self { witnesses: () }
+            Self {
+                witnesses: (),
+                recording: recorded::Contract,
+            }
         }
     }
     impl<W> Contract<W> {

@@ -402,3 +402,115 @@ impl<K: CellValue, V: CellValue> MapSlot<K, V> {
         frame.is_empty_map(self.path)
     }
 }
+
+/// A compiler-declared root List with a fixed element type.
+#[derive(Clone, Copy)]
+pub struct ListSlot<T> {
+    index: u8,
+    element: PhantomData<fn() -> T>,
+}
+
+impl<T: CellValue> ListSlot<T> {
+    pub const fn new(index: u8) -> Self {
+        Self {
+            index,
+            element: PhantomData,
+        }
+    }
+
+    pub const fn index(self) -> u8 {
+        self.index
+    }
+
+    pub fn push_front<Private, D: DB>(
+        self,
+        context: CircuitContext<Private, D>,
+        value: T,
+    ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        context.push_front_list(self.index, value)
+    }
+
+    pub fn pop_front<Private, D: DB>(
+        self,
+        context: CircuitContext<Private, D>,
+    ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        context.pop_front_list(self.index)
+    }
+
+    pub fn reset<Private, D: DB>(
+        self,
+        context: CircuitContext<Private, D>,
+    ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        context.reset_list(self.index)
+    }
+
+    pub fn length<Private, D: DB>(
+        self,
+        context: CircuitContext<Private, D>,
+    ) -> Result<CircuitResult<Private, u64, D>, CompactError> {
+        context.length_list(self.index)
+    }
+
+    pub fn is_empty<Private, D: DB>(
+        self,
+        context: CircuitContext<Private, D>,
+    ) -> Result<CircuitResult<Private, bool, D>, CompactError> {
+        context.is_empty_list(self.index)
+    }
+
+    pub fn head<M: CellValue, Private, D: DB>(
+        self,
+        context: CircuitContext<Private, D>,
+    ) -> Result<CircuitResult<Private, M, D>, CompactError>
+    where
+        T: Default,
+    {
+        context.head_list::<T, M>(self.index)
+    }
+
+    pub fn record_push_front<Private, D: DB>(
+        self,
+        frame: RecordingFrame<Private, D>,
+        value: T,
+    ) -> Result<RecordingFrame<Private, D>, CompactError> {
+        frame.push_front_list(self.index, value)
+    }
+
+    pub fn record_pop_front<Private, D: DB>(
+        self,
+        frame: RecordingFrame<Private, D>,
+    ) -> Result<RecordingFrame<Private, D>, CompactError> {
+        frame.pop_front_list(self.index)
+    }
+
+    pub fn record_reset<Private, D: DB>(
+        self,
+        frame: RecordingFrame<Private, D>,
+    ) -> Result<RecordingFrame<Private, D>, CompactError> {
+        frame.reset_list(self.index)
+    }
+
+    pub fn record_length<Private, D: DB>(
+        self,
+        frame: RecordingFrame<Private, D>,
+    ) -> Result<(RecordingFrame<Private, D>, u64), CompactError> {
+        frame.length_list(self.index)
+    }
+
+    pub fn record_is_empty<Private, D: DB>(
+        self,
+        frame: RecordingFrame<Private, D>,
+    ) -> Result<(RecordingFrame<Private, D>, bool), CompactError> {
+        frame.is_empty_list(self.index)
+    }
+
+    pub fn record_head<M: CellValue, Private, D: DB>(
+        self,
+        frame: RecordingFrame<Private, D>,
+    ) -> Result<(RecordingFrame<Private, D>, M), CompactError>
+    where
+        T: Default,
+    {
+        frame.head_list::<T, M>(self.index)
+    }
+}

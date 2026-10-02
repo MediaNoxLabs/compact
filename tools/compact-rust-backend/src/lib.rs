@@ -2806,6 +2806,14 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                         runtime::slots::SetSlot::new(&[#(#path),*]);
                 });
             }
+            LedgerFieldKind::List { ty } => {
+                let ty = rust_type(ty)?;
+                let index = field.index;
+                slot_items.push(syn::parse_quote! {
+                    pub const #name: runtime::slots::ListSlot<#ty> =
+                        runtime::slots::ListSlot::new(#index);
+                });
+            }
             LedgerFieldKind::Map { key, value } => {
                 // Nested ledger maps have no CellValue representation yet.
                 // Keep their constructor/native support without advertising
@@ -2830,7 +2838,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
     }
     let slots_module: Option<syn::Item> = (!slot_items.is_empty()).then(|| {
         syn::parse_quote! {
-            /// Typed descriptors for Compact Cell, Counter, Set, and Map declarations.
+            /// Typed descriptors for Compact Cell, Counter, Set, Map, and List declarations.
             #[allow(non_upper_case_globals)]
             pub mod ledger_slots {
                 use midnight_compact_runtime as runtime;

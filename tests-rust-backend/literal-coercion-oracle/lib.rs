@@ -383,7 +383,7 @@ pub mod pure_circuits {
         )?)
     }
 }
-/// Typed descriptors for Compact Cell, Counter, Set, and Map declarations.
+/// Typed descriptors for Compact Cell, Counter, Set, Map, and List declarations.
 #[allow(non_upper_case_globals)]
 pub mod ledger_slots {
     use midnight_compact_runtime as runtime;

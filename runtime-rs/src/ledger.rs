@@ -38,9 +38,8 @@ use midnight_onchain_vm::ops::{Key, Op};
 use midnight_onchain_vm::result_mode::{
     GatherEvent, ResultMode, ResultModeGather, ResultModeVerify,
 };
-use midnight_serialize::Serializable;
 use midnight_storage::arena::Sp;
-use midnight_transient_crypto::fab::ValueReprAlignedValue;
+use midnight_transient_crypto::fab::{AlignmentExt, ValueReprAlignedValue};
 use midnight_transient_crypto::hash::HashOutput;
 use midnight_transient_crypto::merkle_tree::{MerkleTree, leaf_hash};
 use std::marker::PhantomData;
@@ -1322,13 +1321,11 @@ pub fn historic_check_root<T: CellValue, D: DB>(
     Ok((result, decoded))
 }
 
-pub fn length_list<D: DB>(
-    context: &QueryContext<D>,
+pub(crate) fn list_length_program<M: ResultMode<D>, D: DB>(
     field_index: u8,
-    gas_limit: Option<RunningCost>,
-    cost_model: &CostModel,
-) -> Result<(QueryResults<ResultModeGather, D>, u64), CompactError> {
-    let program = [
+    read_result: M::ReadResult,
+) -> Vec<Op<M, D>> {
+    vec![
         Op::Dup { n: 0 },
         Op::Idx {
             cached: false,
@@ -1342,9 +1339,18 @@ pub fn length_list<D: DB>(
         },
         Op::Popeq {
             cached: true,
-            result: (),
+            result: read_result,
         },
-    ];
+    ]
+}
+
+pub fn length_list<D: DB>(
+    context: &QueryContext<D>,
+    field_index: u8,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<(QueryResults<ResultModeGather, D>, u64), CompactError> {
+    let program = list_length_program::<ResultModeGather, D>(field_index, ());
     let result = context
         .query(&program, gas_limit, cost_model)
         .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
@@ -1352,13 +1358,11 @@ pub fn length_list<D: DB>(
     Ok((result, decoded))
 }
 
-pub fn is_empty_list<D: DB>(
-    context: &QueryContext<D>,
+pub(crate) fn list_is_empty_program<M: ResultMode<D>, D: DB>(
     field_index: u8,
-    gas_limit: Option<RunningCost>,
-    cost_model: &CostModel,
-) -> Result<(QueryResults<ResultModeGather, D>, bool), CompactError> {
-    let program = [
+    read_result: M::ReadResult,
+) -> Vec<Op<M, D>> {
+    vec![
         Op::Dup { n: 0 },
         Op::Idx {
             cached: false,
@@ -1378,9 +1382,18 @@ pub fn is_empty_list<D: DB>(
         Op::Eq,
         Op::Popeq {
             cached: true,
-            result: (),
+            result: read_result,
         },
-    ];
+    ]
+}
+
+pub fn is_empty_list<D: DB>(
+    context: &QueryContext<D>,
+    field_index: u8,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<(QueryResults<ResultModeGather, D>, bool), CompactError> {
+    let program = list_is_empty_program::<ResultModeGather, D>(field_index, ());
     let result = context
         .query(&program, gas_limit, cost_model)
         .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
@@ -1388,18 +1401,18 @@ pub fn is_empty_list<D: DB>(
     Ok((result, decoded))
 }
 
-pub fn head_list<T: CellValue + Default, M: CellValue, D: DB>(
-    context: &QueryContext<D>,
+pub(crate) fn list_head_program<T: CellValue + Default, R: ResultMode<D>, D: DB>(
     field_index: u8,
-    gas_limit: Option<RunningCost>,
-    cost_model: &CostModel,
-) -> Result<(QueryResults<ResultModeGather, D>, M), CompactError> {
-    let default = AlignedValue::new(T::default().into(), T::alignment())
+    read_result: R::ReadResult,
+) -> Vec<Op<R, D>> {
+    let alignment = T::alignment();
+    let default = AlignedValue::new(T::default().into(), alignment.clone())
         .expect("default CellValue must match its alignment");
-    let concat_bound = (Serializable::serialized_size(&AlignedValue::from(1_u8))
-        + Serializable::serialized_size(&default)) as u32;
+    // Compact's VMmax-sizeof uses the alignment's maximum encoded size,
+    // including for a zero value whose actual serialization is shorter.
+    let concat_bound = (2 + alignment.max_aligned_size()) as u32;
     let absent = AlignedValue::concat([AlignedValue::from(0_u8), default].iter());
-    let program = [
+    vec![
         Op::Dup { n: 0 },
         Op::Idx {
             cached: false,
@@ -1436,9 +1449,18 @@ pub fn head_list<T: CellValue + Default, M: CellValue, D: DB>(
         },
         Op::Popeq {
             cached: true,
-            result: (),
+            result: read_result,
         },
-    ];
+    ]
+}
+
+pub fn head_list<T: CellValue + Default, M: CellValue, D: DB>(
+    context: &QueryContext<D>,
+    field_index: u8,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<(QueryResults<ResultModeGather, D>, M), CompactError> {
+    let program = list_head_program::<T, ResultModeGather, D>(field_index, ());
     let result = context
         .query(&program, gas_limit, cost_model)
         .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
@@ -1446,14 +1468,11 @@ pub fn head_list<T: CellValue + Default, M: CellValue, D: DB>(
     Ok((result, decoded))
 }
 
-pub fn push_front_list<T: CellValue, D: DB>(
-    context: &QueryContext<D>,
+pub(crate) fn list_push_front_program<T: CellValue, D: DB>(
     field_index: u8,
     value: T,
-    gas_limit: Option<RunningCost>,
-    cost_model: &CostModel,
-) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
-    let program = [
+) -> Vec<Op<ResultModeVerify, D>> {
+    vec![
         Op::Idx {
             cached: false,
             push_path: true,
@@ -1486,17 +1505,22 @@ pub fn push_front_list<T: CellValue, D: DB>(
         },
         Op::Swap { n: 0 },
         Op::Ins { cached: true, n: 2 },
-    ];
-    context.query(&program, gas_limit, cost_model)
+    ]
 }
 
-pub fn pop_front_list<D: DB>(
+pub fn push_front_list<T: CellValue, D: DB>(
     context: &QueryContext<D>,
     field_index: u8,
+    value: T,
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
-    let program = [
+    let program = list_push_front_program(field_index, value);
+    context.query(&program, gas_limit, cost_model)
+}
+
+pub(crate) fn list_pop_front_program<D: DB>(field_index: u8) -> Vec<Op<ResultModeVerify, D>> {
+    vec![
         Op::Idx {
             cached: false,
             push_path: true,
@@ -1508,22 +1532,21 @@ pub fn pop_front_list<D: DB>(
             path: vec![Key::Value(AlignedValue::from(1_u8))].into(),
         },
         Op::Ins { cached: true, n: 1 },
-    ];
-    context.query(&program, gas_limit, cost_model)
+    ]
 }
 
-pub fn reset_list<D: DB>(
+pub fn pop_front_list<D: DB>(
     context: &QueryContext<D>,
     field_index: u8,
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
-    let program = [
-        Op::Idx {
-            cached: false,
-            push_path: true,
-            path: vec![].into(),
-        },
+    let program = list_pop_front_program(field_index);
+    context.query(&program, gas_limit, cost_model)
+}
+
+pub(crate) fn list_reset_program<D: DB>(field_index: u8) -> Vec<Op<ResultModeVerify, D>> {
+    vec![
         Op::Push {
             storage: false,
             value: constructor_cell(field_index),
@@ -1536,8 +1559,16 @@ pub fn reset_list<D: DB>(
             cached: false,
             n: 1,
         },
-        Op::Ins { cached: true, n: 0 },
-    ];
+    ]
+}
+
+pub fn reset_list<D: DB>(
+    context: &QueryContext<D>,
+    field_index: u8,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    let program = list_reset_program(field_index);
     context.query(&program, gas_limit, cost_model)
 }
 

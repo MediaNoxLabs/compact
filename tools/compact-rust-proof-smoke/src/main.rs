@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Prove emitted Counter, Cell, Set, and Map artifacts in offline ledger-8 transactions.
+//! Prove emitted Counter, Cell, Set, Map, and List artifacts in offline ledger-8 transactions.
 //!
 //! The proof uses the ledger-derived statement from a generated counter VM
 //! program and checks it against the fixture's known ZKIR encoding. The call
@@ -28,8 +28,10 @@ use std::path::{Path, PathBuf};
 
 use compact_rust_cell_boolean_fixture::ledger_contract as cell_contract;
 use compact_rust_cell_read_fixture::ledger_contract as cell_read_contract;
+use compact_rust_constructor_list_actions_fixture::ledger_contract as constructor_list_contract;
 use compact_rust_constructor_map_actions_fixture::ledger_contract as constructor_map_contract;
 use compact_rust_counter_fixture::ledger_contract as counter_contract;
+use compact_rust_list_field_fixture::ledger_contract as list_contract;
 use compact_rust_map_boolean_field_fixture::ledger_contract as map_contract;
 use compact_rust_nested_witness_call_oracle_fixture::ledger_contract as expression_contract;
 use compact_rust_set_boolean_fixture::ledger_contract as set_contract;
@@ -304,9 +306,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     let set_oracle_root = arguments.next();
     let map_root = arguments.next();
     let constructor_map_root = arguments.next();
+    let list_root = arguments.next();
+    let constructor_list_root = arguments.next();
     if arguments.next().is_some() {
         return Err(
-            "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output> [witness-output] [nested-output] [nested-witness-output] [set-output] [set-oracle-output] [map-output] [constructor-map-output]"
+            "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output> [witness-output] [nested-output] [nested-witness-output] [set-output] [set-oracle-output] [map-output] [constructor-map-output] [list-output] [constructor-list-output]"
                 .into(),
         );
     }
@@ -861,6 +865,166 @@ fn main() -> Result<(), Box<dyn Error>> {
                         };
                         if table.size() != 1 {
                             return Err("constructor Map read changed state".into());
+                        }
+                    }
+                    Ok(())
+                },
+            )?;
+        }
+    }
+    if let Some(list_root) = list_root {
+        let list_root = Path::new(&list_root);
+        for circuit in [
+            "item_count",
+            "items_empty",
+            "first_item",
+            "prepend",
+            "clear_items",
+        ] {
+            let initial = list_contract::initial_state(ConstructorContext::new(()))?;
+            let deploy = make_deploy(
+                list_root,
+                circuit,
+                initial.ledger_state.get_ref().clone(),
+                &mut rng,
+            )?;
+            let context = initial.into_circuit_context(deploy.address());
+            let contract = list_contract::Contract::default();
+            let call = match circuit {
+                "item_count" => {
+                    let recorded = contract.recording.item_count(context)?;
+                    if recorded.execution.result.value() != 0 {
+                        return Err("empty List unexpectedly has nonzero length".into());
+                    }
+                    check_generated_trace(list_root, circuit, recorded, ())?
+                }
+                "items_empty" => {
+                    let recorded = contract.recording.items_empty(context)?;
+                    if !recorded.execution.result {
+                        return Err("new List unexpectedly nonempty".into());
+                    }
+                    check_generated_trace(list_root, circuit, recorded, ())?
+                }
+                "first_item" => {
+                    let recorded = contract.recording.first_item(context)?;
+                    if recorded.execution.result.is_some
+                        || recorded.execution.result.value != Field::from(0_u64)
+                    {
+                        return Err("empty List head differs from Maybe default".into());
+                    }
+                    check_generated_trace(list_root, circuit, recorded, ())?
+                }
+                "prepend" => {
+                    let value = Field::from(7_u64);
+                    check_generated_trace(
+                        list_root,
+                        circuit,
+                        contract.recording.prepend(context, value)?,
+                        value,
+                    )?
+                }
+                "clear_items" => check_generated_trace(
+                    list_root,
+                    circuit,
+                    contract.recording.clear_items(context)?,
+                    (),
+                )?,
+                _ => unreachable!(),
+            };
+            check_transaction(list_root, circuit, deploy, call, &mut rng, |contract| {
+                let StateValue::Array(fields) = contract.data.get_ref() else {
+                    return Err("List contract state is not an array".into());
+                };
+                let StateValue::Array(items) = fields.get(0).ok_or("List field missing")? else {
+                    return Err("List field is not an array".into());
+                };
+                let length = read_cell::<u64, _>(items.get(2).ok_or("List length missing")?)?;
+                if length != u64::from(circuit == "prepend") {
+                    return Err("proven List call produced the wrong length".into());
+                }
+                Ok(())
+            })?;
+        }
+    }
+    if let Some(constructor_list_root) = constructor_list_root {
+        let constructor_list_root = Path::new(&constructor_list_root);
+        for circuit in [
+            "item_count",
+            "history_count",
+            "first_item",
+            "drop_first",
+            "clear_items",
+        ] {
+            let initial = constructor_list_contract::initial_state(ConstructorContext::new(()))?;
+            let deploy = make_deploy(
+                constructor_list_root,
+                circuit,
+                initial.ledger_state.get_ref().clone(),
+                &mut rng,
+            )?;
+            let context = initial.into_circuit_context(deploy.address());
+            let contract = constructor_list_contract::Contract::default();
+            let call = match circuit {
+                "item_count" => {
+                    let recorded = contract.recording.item_count(context)?;
+                    if recorded.execution.result.value() != 1 {
+                        return Err("constructor List item count differs".into());
+                    }
+                    check_generated_trace(constructor_list_root, circuit, recorded, ())?
+                }
+                "history_count" => {
+                    let recorded = contract.recording.history_count(context)?;
+                    if recorded.execution.result.value() != 1 {
+                        return Err("constructor List history count differs".into());
+                    }
+                    check_generated_trace(constructor_list_root, circuit, recorded, ())?
+                }
+                "first_item" => {
+                    let recorded = contract.recording.first_item(context)?;
+                    if !recorded.execution.result.is_some
+                        || recorded.execution.result.value != Field::from(1_u64)
+                    {
+                        return Err("constructor List head differs".into());
+                    }
+                    check_generated_trace(constructor_list_root, circuit, recorded, ())?
+                }
+                "drop_first" => check_generated_trace(
+                    constructor_list_root,
+                    circuit,
+                    contract.recording.drop_first(context)?,
+                    (),
+                )?,
+                "clear_items" => check_generated_trace(
+                    constructor_list_root,
+                    circuit,
+                    contract.recording.clear_items(context)?,
+                    (),
+                )?,
+                _ => unreachable!(),
+            };
+            check_transaction(
+                constructor_list_root,
+                circuit,
+                deploy,
+                call,
+                &mut rng,
+                |contract| {
+                    let StateValue::Array(fields) = contract.data.get_ref() else {
+                        return Err("constructor List state is not an array".into());
+                    };
+                    for index in 0..2 {
+                        let StateValue::Array(items) =
+                            fields.get(index).ok_or("List field missing")?
+                        else {
+                            return Err("constructor List field is not an array".into());
+                        };
+                        let length =
+                            read_cell::<u64, _>(items.get(2).ok_or("List length missing")?)?;
+                        let expected = u64::from(
+                            index != 0 || !matches!(circuit, "drop_first" | "clear_items"),
+                        );
+                        if length != expected {
+                            return Err("proven constructor List call produced wrong length".into());
                         }
                     }
                     Ok(())

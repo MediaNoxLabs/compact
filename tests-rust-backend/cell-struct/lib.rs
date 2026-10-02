@@ -42,7 +42,7 @@ pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
     const _: () = assert!(runtime::RUST_RUNTIME_ABI == 3);
 }
-/// Typed descriptors for Compact Cell, Counter, Set, and Map declarations.
+/// Typed descriptors for Compact Cell, Counter, Set, Map, and List declarations.
 #[allow(non_upper_case_globals)]
 pub mod ledger_slots {
     use midnight_compact_runtime as runtime;

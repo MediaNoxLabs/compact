@@ -21,12 +21,12 @@ use std::collections::{HashMap, HashSet};
 
 use crate::ir::{
     CounterAmount, Expr, LedgerField, LedgerFieldKind, StateAction, StateReturn, StatefulCircuit,
-    Type, WitnessDeclaration,
+    StructField, Type, WitnessDeclaration,
 };
 use crate::stateful::circuit_uses_witness;
 use crate::{RenderError, expression_with_calls, ident, rust_type};
 
-/// Emit a replayable public VM trace for supported root Cell, Counter, Set, and Map
+/// Emit a replayable public VM trace for supported root Cell, Counter, Set, Map, and List
 /// operations, including witnessed Cell values. Unsupported circuits have no
 /// recorded entry point.
 pub(crate) fn render_recorded_circuit(
@@ -813,6 +813,61 @@ pub(crate) fn render_recorded_circuit(
                 ));
                 Ok(true)
             }
+            StateAction::ListPushFront {
+                field,
+                index,
+                value,
+            } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                let LedgerFieldKind::List { ty } = &declaration.declaration else {
+                    return Ok(false);
+                };
+                if declaration.index != *index || declaration.physical_path().len() != 1 {
+                    return Ok(false);
+                }
+                let value = scalar_expression(
+                    value,
+                    ty,
+                    locals,
+                    parameters,
+                    ledger_fields,
+                    witnesses,
+                    circuits,
+                    steps,
+                    next_temp,
+                    visiting,
+                )?;
+                let Some(value) = value else { return Ok(false) };
+                let slot = ident(field)?;
+                steps.push(syn::parse_quote!(
+                    let frame = crate::ledger_slots::#slot.record_push_front(frame, #value)?;
+                ));
+                Ok(true)
+            }
+            StateAction::ListPopFront { field, index }
+            | StateAction::ListReset { field, index } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                if !matches!(declaration.declaration, LedgerFieldKind::List { .. })
+                    || declaration.index != *index
+                    || declaration.physical_path().len() != 1
+                {
+                    return Ok(false);
+                }
+                let slot = ident(field)?;
+                let method = if matches!(action, StateAction::ListPopFront { .. }) {
+                    syn::Ident::new("record_pop_front", Span::call_site())
+                } else {
+                    syn::Ident::new("record_reset", Span::call_site())
+                };
+                steps.push(syn::parse_quote!(
+                    let frame = crate::ledger_slots::#slot.#method(frame)?;
+                ));
+                Ok(true)
+            }
             StateAction::MapInsert {
                 field,
                 index,
@@ -1127,6 +1182,88 @@ pub(crate) fn render_recorded_circuit(
                 vec![syn::parse_quote!(
                     let (frame, observed): (_, bool) =
                         crate::ledger_slots::#slot.record_is_empty(frame)?;
+                )],
+                syn::parse_quote!(observed),
+            )
+        }
+        StateReturn::ListLength { field, index }
+            if circuit.result
+                == (Type::Unsigned {
+                    max: u64::MAX.to_string(),
+                }) =>
+        {
+            let declaration = ledger_fields
+                .get(field.as_str())
+                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+            if !matches!(declaration.declaration, LedgerFieldKind::List { .. })
+                || declaration.index != *index
+                || declaration.physical_path().len() != 1
+            {
+                return Ok(None);
+            }
+            let slot = ident(field)?;
+            (
+                vec![syn::parse_quote!(
+                    let (frame, observed): (_, u64) =
+                        crate::ledger_slots::#slot.record_length(frame)?;
+                )],
+                syn::parse_quote!(
+                    runtime::BoundedUint::<18446744073709551615>::new(observed as u128)
+                        .expect("ledger List length fits Uint<64>")
+                ),
+            )
+        }
+        StateReturn::ListIsEmpty { field, index } if circuit.result == Type::Boolean => {
+            let declaration = ledger_fields
+                .get(field.as_str())
+                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+            if !matches!(declaration.declaration, LedgerFieldKind::List { .. })
+                || declaration.index != *index
+                || declaration.physical_path().len() != 1
+            {
+                return Ok(None);
+            }
+            let slot = ident(field)?;
+            (
+                vec![syn::parse_quote!(
+                    let (frame, observed): (_, bool) =
+                        crate::ledger_slots::#slot.record_is_empty(frame)?;
+                )],
+                syn::parse_quote!(observed),
+            )
+        }
+        StateReturn::ListHead { field, index } => {
+            let declaration = ledger_fields
+                .get(field.as_str())
+                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+            let LedgerFieldKind::List { ty } = &declaration.declaration else {
+                return Ok(None);
+            };
+            let expected = Type::Struct {
+                name: "Maybe".into(),
+                fields: vec![
+                    StructField {
+                        name: "is_some".into(),
+                        ty: Type::Boolean,
+                    },
+                    StructField {
+                        name: "value".into(),
+                        ty: ty.clone(),
+                    },
+                ],
+            };
+            if declaration.index != *index
+                || declaration.physical_path().len() != 1
+                || circuit.result != expected
+                || !matches!(ty, Type::Boolean | Type::Field)
+            {
+                return Ok(None);
+            }
+            let slot = ident(field)?;
+            (
+                vec![syn::parse_quote!(
+                    let (frame, observed): (_, #result_ty) =
+                        crate::ledger_slots::#slot.record_head::<#result_ty, _, _>(frame)?;
                 )],
                 syn::parse_quote!(observed),
             )

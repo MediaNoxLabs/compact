@@ -42,6 +42,12 @@ pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
     const _: () = assert!(runtime::RUST_RUNTIME_ABI == 3);
 }
+/// Typed descriptors for Compact Cell, Counter, Set, Map, and List declarations.
+#[allow(non_upper_case_globals)]
+pub mod ledger_slots {
+    use midnight_compact_runtime as runtime;
+    pub const items: runtime::slots::ListSlot<runtime::Field> = runtime::slots::ListSlot::new(0u8);
+}
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
@@ -69,7 +75,7 @@ pub mod ledger_contract {
     > {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let read_step = context.length_list(0)?;
+        let read_step = crate::ledger_slots::items.length(context)?;
         let context = read_step.context;
         total_cost += read_step.gas_cost;
         let result = runtime::BoundedUint::<18446744073709551615>::new(read_step.result as u128)
@@ -86,7 +92,7 @@ pub mod ledger_contract {
     ) -> Result<runtime::context::CircuitResult<Private, bool>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let read_step = context.is_empty_list(0)?;
+        let read_step = crate::ledger_slots::items.is_empty(context)?;
         let context = read_step.context;
         total_cost += read_step.gas_cost;
         let result = read_step.result;
@@ -103,7 +109,7 @@ pub mod ledger_contract {
     {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let read_step = context.head_list::<runtime::Field, crate::types::Maybe>(0)?;
+        let read_step = crate::ledger_slots::items.head::<crate::types::Maybe, _, _>(context)?;
         let context = read_step.context;
         total_cost += read_step.gas_cost;
         let result = read_step.result;
@@ -120,7 +126,7 @@ pub mod ledger_contract {
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let step = context.push_front_list(0, __compact_param_0)?;
+        let step = crate::ledger_slots::items.push_front(context, __compact_param_0)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();
@@ -136,7 +142,7 @@ pub mod ledger_contract {
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let step = context.pop_front_list(0)?;
+        let step = crate::ledger_slots::items.pop_front(context)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();
@@ -152,7 +158,7 @@ pub mod ledger_contract {
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let step = context.reset_list(0)?;
+        let step = crate::ledger_slots::items.reset(context)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();
@@ -163,19 +169,146 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
+    /// Circuits with a replayable ordered ledger program.
+    pub mod recorded {
+        use midnight_compact_runtime as runtime;
+        pub fn item_count<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<
+            runtime::recording::RecordedCircuitResult<
+                Private,
+                runtime::BoundedUint<18446744073709551615>,
+            >,
+            runtime::CompactError,
+        > {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, observed): (_, u64) = crate::ledger_slots::items.record_length(frame)?;
+            Ok(frame.finish(
+                runtime::BoundedUint::<18446744073709551615>::new(observed as u128)
+                    .expect("ledger List length fits Uint<64>"),
+            ))
+        }
+        pub fn items_empty<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, observed): (_, bool) = crate::ledger_slots::items.record_is_empty(frame)?;
+            Ok(frame.finish(observed))
+        }
+        pub fn first_item<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<
+            runtime::recording::RecordedCircuitResult<Private, crate::types::Maybe>,
+            runtime::CompactError,
+        > {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, observed): (_, crate::types::Maybe) =
+                crate::ledger_slots::items.record_head::<crate::types::Maybe, _, _>(frame)?;
+            Ok(frame.finish(observed))
+        }
+        pub fn prepend<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::Field,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let frame = crate::ledger_slots::items.record_push_front(frame, __compact_param_0)?;
+            Ok(frame.finish(()))
+        }
+        pub fn drop_first<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let frame = crate::ledger_slots::items.record_pop_front(frame)?;
+            Ok(frame.finish(()))
+        }
+        pub fn clear_items<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let frame = crate::ledger_slots::items.record_reset(frame)?;
+            Ok(frame.finish(()))
+        }
+        /// Typed handle for circuits with a complete recorded trace.
+        pub struct Contract;
+        impl Contract {
+            pub fn item_count<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<
+                    Private,
+                    runtime::BoundedUint<18446744073709551615>,
+                >,
+                runtime::CompactError,
+            > {
+                crate::ledger_contract::recorded::item_count(context)
+            }
+            pub fn items_empty<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, bool>,
+                runtime::CompactError,
+            > {
+                crate::ledger_contract::recorded::items_empty(context)
+            }
+            pub fn first_item<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, crate::types::Maybe>,
+                runtime::CompactError,
+            > {
+                crate::ledger_contract::recorded::first_item(context)
+            }
+            pub fn prepend<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                __compact_param_0: runtime::Field,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::prepend(context, __compact_param_0)
+            }
+            pub fn drop_first<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::drop_first(context)
+            }
+            pub fn clear_items<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::clear_items(context)
+            }
+        }
+    }
     /// Groups the contract's exported circuits for Rust consumers.
     pub struct Contract<W> {
         #[allow(dead_code)]
         witnesses: W,
+        pub recording: recorded::Contract,
     }
     impl<W> From<W> for Contract<W> {
         fn from(witnesses: W) -> Self {
-            Self { witnesses }
+            Self {
+                witnesses,
+                recording: recorded::Contract,
+            }
         }
     }
     impl Default for Contract<()> {
         fn default() -> Self {
-            Self { witnesses: () }
+            Self {
+                witnesses: (),
+                recording: recorded::Contract,
+            }
         }
     }
     impl<W> Contract<W> {

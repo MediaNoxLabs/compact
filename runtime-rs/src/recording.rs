@@ -5,7 +5,7 @@
 
 //! An opt-in path from native circuit execution to a replayable ledger program.
 //!
-//! Cell, Counter, Set, and Map operations are supported so far. Generated contracts must
+//! Cell, Counter, Set, Map, and List operations are supported so far. Generated contracts must
 //! not claim a transaction-ready trace until every operation they use records
 //! its corresponding verifying VM instruction.
 
@@ -288,6 +288,83 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
 
     pub fn is_empty_map(self, path: impl Into<LedgerPath>) -> Result<(Self, bool), CompactError> {
         self.is_empty_set(path)
+    }
+
+    pub fn push_front_list<T: CellValue>(
+        self,
+        field_index: u8,
+        value: T,
+    ) -> Result<Self, CompactError> {
+        self.apply_verify_program(ledger::list_push_front_program(field_index, value))
+    }
+
+    pub fn pop_front_list(self, field_index: u8) -> Result<Self, CompactError> {
+        self.apply_verify_program(ledger::list_pop_front_program(field_index))
+    }
+
+    pub fn reset_list(self, field_index: u8) -> Result<Self, CompactError> {
+        self.apply_verify_program(ledger::list_reset_program(field_index))
+    }
+
+    pub fn length_list(mut self, field_index: u8) -> Result<(Self, u64), CompactError> {
+        let (result, length) = ledger::length_list(
+            &self.context.query,
+            field_index,
+            self.context.gas_limit,
+            &self.context.cost_model,
+        )?;
+        let Some(GatherEvent::Read(observed)) = result.events.last() else {
+            return Err(CompactError::InvalidLedgerCell(
+                "missing List length event".into(),
+            ));
+        };
+        let program = ledger::list_length_program(field_index, observed.clone());
+        self.context.query = result.context;
+        self.observed_gas += result.gas_cost;
+        self.verify_ops.extend(program);
+        Ok((self, length))
+    }
+
+    pub fn is_empty_list(mut self, field_index: u8) -> Result<(Self, bool), CompactError> {
+        let (result, empty) = ledger::is_empty_list(
+            &self.context.query,
+            field_index,
+            self.context.gas_limit,
+            &self.context.cost_model,
+        )?;
+        let Some(GatherEvent::Read(observed)) = result.events.last() else {
+            return Err(CompactError::InvalidLedgerCell(
+                "missing List emptiness event".into(),
+            ));
+        };
+        let program = ledger::list_is_empty_program(field_index, observed.clone());
+        self.context.query = result.context;
+        self.observed_gas += result.gas_cost;
+        self.verify_ops.extend(program);
+        Ok((self, empty))
+    }
+
+    pub fn head_list<T: CellValue + Default, M: CellValue>(
+        mut self,
+        field_index: u8,
+    ) -> Result<(Self, M), CompactError> {
+        let (result, head) = ledger::head_list::<T, M, D>(
+            &self.context.query,
+            field_index,
+            self.context.gas_limit,
+            &self.context.cost_model,
+        )?;
+        let Some(GatherEvent::Read(observed)) = result.events.last() else {
+            return Err(CompactError::InvalidLedgerCell(
+                "missing List head event".into(),
+            ));
+        };
+        let program =
+            ledger::list_head_program::<T, ResultModeVerify, D>(field_index, observed.clone());
+        self.context.query = result.context;
+        self.observed_gas += result.gas_cost;
+        self.verify_ops.extend(program);
+        Ok((self, head))
     }
 
     pub fn read_cell<T: CellValue>(

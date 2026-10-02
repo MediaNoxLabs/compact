@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Toolchain 0.31.130, language 0.23.105, runtime 0.16.101]
+
+### Added
+
+- Generate typed root `ListSlot<T>` descriptors for Compact List declarations;
+  native and recorded List circuits use the same named slot and compiler VM
+  programs. Record push, pop, reset, length, emptiness, and head reads with
+  replayable observed values.
+- Prove, verify, validate, and apply generated List calls against ledger-8
+  artifacts, including constructor seeded head and mutation paths. A separate
+  Cargo consumer rejects a wrong List element at Rust type checking.
+
+### Fixed
+
+- Use the declared element alignment's maximum encoded size for List head
+  `Concat`, and omit suppressed root-path operations from List reset. Both
+  changes align the recorded public transcript with Compact's emitted ZKIR.
+
 ## [Toolchain 0.31.129, language 0.23.105, runtime 0.16.101]
 
 ### Added

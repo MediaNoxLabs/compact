@@ -1970,11 +1970,13 @@ fn list_push_front_and_length_validate_declared_types() {
             return_value: StateReturn::Unit,
         }],
     };
+    let source = render(&contract).unwrap();
+    assert!(source.contains("ListSlot<runtime::Field>"), "{source}");
     assert!(
-        render(&contract)
-            .unwrap()
-            .contains("context.push_front_list(0, __compact_param_0)?")
+        source.contains(".push_front(context, __compact_param_0)?"),
+        "{source}"
     );
+    assert!(source.contains(".record_push_front(frame,"), "{source}");
     contract.stateful_circuits[0].parameters[0].ty = Type::Boolean;
     assert_eq!(
         render(&contract),
@@ -2022,10 +2024,14 @@ fn list_push_front_and_length_validate_declared_types() {
         })
     );
     contract.stateful_circuits[0].result = maybe_field;
+    let source = render(&contract).unwrap();
     assert!(
-        render(&contract)
-            .unwrap()
-            .contains("head_list::<runtime::Field, crate::types::Maybe>(0)?")
+        source.contains(".head::<crate::types::Maybe, _, _>(context)?"),
+        "{source}"
+    );
+    assert!(
+        source.contains(".record_head::<crate::types::Maybe, _, _>(frame)?"),
+        "{source}"
     );
 }
 

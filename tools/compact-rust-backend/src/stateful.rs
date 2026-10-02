@@ -2023,9 +2023,9 @@ pub(crate) fn render_stateful_circuit(
                         actual,
                     });
                 }
-                let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+                let slot = ident(&declaration.id)?;
                 statements.push(syn::parse_quote! {
-                    let step = context.push_front_list(#index, #value)?;
+                    let step = crate::ledger_slots::#slot.push_front(context, #value)?;
                 });
                 statements.push(syn::parse_quote! {
                     let context = step.context;
@@ -2044,15 +2044,15 @@ pub(crate) fn render_stateful_circuit(
                 {
                     return Err(RenderError::UnknownLedgerField(field.clone()));
                 }
-                let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+                let slot = ident(&declaration.id)?;
                 let method = if matches!(action, StateAction::ListPopFront { .. }) {
-                    "pop_front_list"
+                    "pop_front"
                 } else {
-                    "reset_list"
+                    "reset"
                 };
                 let method = syn::Ident::new(method, Span::call_site());
                 statements.push(syn::parse_quote! {
-                    let step = context.#method(#index)?;
+                    let step = crate::ledger_slots::#slot.#method(context)?;
                 });
                 statements.push(syn::parse_quote! {
                     let context = step.context;
@@ -2619,10 +2619,10 @@ pub(crate) fn render_stateful_circuit(
                     actual: circuit.result.clone(),
                 });
             }
-            let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+            let slot = ident(&declaration.id)?;
             let max = syn::LitInt::new(&u64::MAX.to_string(), Span::call_site());
             statements.push(syn::parse_quote! {
-                let read_step = context.length_list(#index)?;
+                let read_step = crate::ledger_slots::#slot.length(context)?;
             });
             statements.push(syn::parse_quote! {
                 let context = read_step.context;
@@ -2647,9 +2647,9 @@ pub(crate) fn render_stateful_circuit(
                     actual: circuit.result.clone(),
                 });
             }
-            let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+            let slot = ident(&declaration.id)?;
             statements.push(syn::parse_quote! {
-                let read_step = context.is_empty_list(#index)?;
+                let read_step = crate::ledger_slots::#slot.is_empty(context)?;
             });
             statements.push(syn::parse_quote! {
                 let context = read_step.context;
@@ -2688,10 +2688,9 @@ pub(crate) fn render_stateful_circuit(
                     actual: circuit.result.clone(),
                 });
             }
-            let value_ty = rust_type(ty)?;
-            let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+            let slot = ident(&declaration.id)?;
             statements.push(syn::parse_quote! {
-                let read_step = context.head_list::<#value_ty, #result_ty>(#index)?;
+                let read_step = crate::ledger_slots::#slot.head::<#result_ty, _, _>(context)?;
             });
             statements.push(syn::parse_quote! {
                 let context = read_step.context;

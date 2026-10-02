@@ -53,8 +53,8 @@ stateful circuits are available as free functions and as methods on
 `Witnesses<Private>` trait. Methods take an explicit `CircuitContext<Private>`
 and typed circuit arguments; witness bounds apply only to methods that need
 them. The facade delegates to the existing functions, preserving state and
-witness behavior. `ledger_slots` exposes typed Cell, Counter, Set, and scalar
-Map descriptors. Nested Map values retain their constructor support but have
+witness behavior. `ledger_slots` exposes typed Cell, Counter, Set, scalar Map,
+and root List descriptors. Nested Map values retain their constructor support but have
 no scalar slot until they have a typed runtime value representation.
 The runtime's recording frame is opt-in. When a circuit has a complete recorded
 trace, the generated `contract.recording` handle exposes it as a typed method.
@@ -65,7 +65,8 @@ its typed arguments and nested witness operations. The separate recorded
 emitter also evaluates supported Field reads, witness calls, addition, and
 internal Field-returning calls in source order. Supported root Set and Map
 mutation, membership, lookup, size, and emptiness calls have replayable recorded
-methods. Other methods continue to
+methods. Root Field/Boolean List push, pop, reset, length, emptiness, and head
+calls also have recorded methods. Other methods continue to
 return native execution results until their full transcript coverage is proven.
 Enable the runtime's `ledger-transaction` feature in a consuming Cargo graph
 to use `transaction::prepare_call` with a recorded result and a `CallSpec`.
@@ -81,7 +82,7 @@ Compact spelling without warning in consumer builds.
 
 | Boundary | Current contract | Failure behavior |
 |---|---|---|
-| Compact compiler | Toolchain 0.31.129, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
+| Compact compiler | Toolchain 0.31.130, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
 | Rust IR | Schema 6, private to this backend | The renderer rejects any other schema before writing `lib.rs`. |
 | Generated code and Rust runtime | ABI 3 | Generated modules assert the ABI at Rust compile time. |
 | Rust runtime source | Bundled runtime crates or an explicit shared source root | Cargo resolves the matching runtime and its pinned Midnight crates. |
@@ -139,10 +140,10 @@ The rejection checker verifies source-located failures for unsupported
 constructs and that no generated Rust library survives a rejected compile.
 The `--proof` target check derives the Counter increment statement from the
 generated recorded trace, proves it against emitted ZKIR and keys, and rejects
-a changed binding input. It validates offline ledger-8 deployments, then
-proves, validates, and applies Counter increment, Boolean Cell write, and
-Boolean Cell read calls.
-Other circuit operations still need recording coverage before wallet submission.
+a changed binding input. It also validates offline ledger-8 deployments and
+proves, verifies, validates, and applies the supported Counter, Cell, Set,
+Map, and List call fixtures. Other circuit operations still need recording
+coverage before wallet submission.
 
 The fixture suite covers all 37 top-level `*_fixture.compact` contracts from
 the `codegen-rust` oracle branch, alongside smaller source contracts used to

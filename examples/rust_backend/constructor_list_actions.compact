@@ -34,3 +34,15 @@ export circuit item_count(): Uint<64> {
 export circuit history_count(): Uint<64> {
   return history.length();
 }
+
+export circuit first_item(): Maybe<Field> {
+  return items.head();
+}
+
+export circuit drop_first(): [] {
+  items.popFront();
+}
+
+export circuit clear_items(): [] {
+  items.resetToDefault();
+}

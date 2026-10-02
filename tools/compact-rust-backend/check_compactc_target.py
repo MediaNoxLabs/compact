@@ -35,6 +35,8 @@ SET_SOURCE = ROOT / "examples/rust_backend/set_oracle.compact"
 SET_BOOLEAN_SOURCE = ROOT / "examples/rust_backend/set_boolean.compact"
 MAP_BOOLEAN_SOURCE = ROOT / "examples/rust_backend/map_boolean_field.compact"
 CONSTRUCTOR_MAP_SOURCE = ROOT / "examples/rust_backend/constructor_map_actions.compact"
+LIST_SOURCE = ROOT / "examples/rust_backend/list_field.compact"
+CONSTRUCTOR_LIST_SOURCE = ROOT / "examples/rust_backend/constructor_list_actions.compact"
 CELL_READ_SOURCE = ROOT / "examples/rust_backend/cell_read.compact"
 WITNESS_CELL_SOURCE = ROOT / "examples/rust_backend/witness_cell_write.compact"
 NESTED_COUNTER_SOURCE = ROOT / "examples/rust_backend/stateful_circuit_call.compact"
@@ -154,6 +156,7 @@ def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
         ("counter", SOURCE), ("field_add", PURE_SOURCE),
         ("cell_boolean", CELL_SOURCE), ("set_oracle", SET_SOURCE),
         ("map_boolean_field", MAP_BOOLEAN_SOURCE),
+        ("list_field", LIST_SOURCE),
     ):
         output = base / f"shared-{name}"
         run(
@@ -185,6 +188,7 @@ def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
         "use compact_contract_field_add::pure_circuits::field_add;\n"
         "use compact_contract_set_oracle::ledger_contract::{Contract as SetContract, initial_state as initial_set_state};\n"
         "use compact_contract_map_boolean_field::ledger_contract::{Contract as MapContract, initial_state as initial_map_state};\n"
+        "use compact_contract_list_field::ledger_contract::{Contract as ListContract, initial_state as initial_list_state};\n"
         "use midnight_compact_runtime::context::ConstructorContext;\n"
         "use midnight_compact_runtime::ledger::ContractAddress;\n"
         "use midnight_compact_runtime::Field;\n"
@@ -219,6 +223,17 @@ def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
         "    assert_eq!(map_replay.context.effects, map_call.execution.context.query.effects);\n"
         "    let lookup = MapContract::default().recording.get(map_call.execution.context, true).unwrap();\n"
         "    assert_eq!(lookup.execution.result, Field::from(9_u64));\n"
+        "    let list = initial_list_state(ConstructorContext::new(())).unwrap();\n"
+        "    let list_context = list.into_circuit_context(ContractAddress::default());\n"
+        "    let _: midnight_compact_runtime::slots::ListSlot<Field> = compact_contract_list_field::ledger_slots::items;\n"
+        "    let list_call = ListContract::default().recording.prepend(list_context, Field::from(5_u64)).unwrap();\n"
+        "    let list_replay = list_call.public.initial().query(\n"
+        "        list_call.public.verify_ops(), None, &list_call.execution.context.cost_model,\n"
+        "    ).unwrap();\n"
+        "    assert_eq!(list_replay.context.effects, list_call.execution.context.query.effects);\n"
+        "    let first = ListContract::default().recording.first_item(list_call.execution.context).unwrap();\n"
+        "    assert!(first.execution.result.is_some);\n"
+        "    assert_eq!(first.execution.result.value, Field::from(5_u64));\n"
         "    assert_eq!(field_add(2u64.into(), 3u64.into()).unwrap(), 5u64.into());\n"
         "}\n"
     )
@@ -260,6 +275,24 @@ def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
         cwd=consumer, env=environment, capture_output=True, text=True,
     )
     assert rejected.returncode != 0, "wrong Set element type unexpectedly compiled"
+    assert "error[E0308]: mismatched types" in rejected.stderr, rejected.stderr
+    assert "found `bool`" in rejected.stderr, rejected.stderr
+
+
+    (consumer / "examples/wrong_list_element.rs").write_text(
+        "use compact_contract_list_field::ledger_contract::initial_state;\n"
+        "use compact_contract_list_field::runtime::{context::ConstructorContext, ledger::ContractAddress};\n"
+        "fn main() {\n"
+        "    let state = initial_state(ConstructorContext::new(())).unwrap();\n"
+        "    let context = state.into_circuit_context(ContractAddress::default());\n"
+        "    let _ = compact_contract_list_field::ledger_slots::items.push_front(context, true);\n"
+        "}\n"
+    )
+    rejected = subprocess.run(
+        ["cargo", "check", "--quiet", "--example", "wrong_list_element"],
+        cwd=consumer, env=environment, capture_output=True, text=True,
+    )
+    assert rejected.returncode != 0, "wrong List element type unexpectedly compiled"
     assert "error[E0308]: mismatched types" in rejected.stderr, rejected.stderr
     assert "found `bool`" in rejected.stderr, rejected.stderr
 
@@ -473,11 +506,27 @@ def main() -> None:
                     assert (constructor_map_proof / "keys" / f"{circuit}.{extension}").is_file()
                 for extension in ("zkir", "bzkir"):
                     assert (constructor_map_proof / "zkir" / f"{circuit}.{extension}").is_file()
+            list_proof = base / "list-proof"
+            run(compiler, "--target", "rust", str(LIST_SOURCE), str(list_proof))
+            check_manifest(list_proof)
+            for circuit in ("item_count", "items_empty", "first_item", "prepend", "drop_first", "clear_items"):
+                for extension in ("prover", "verifier"):
+                    assert (list_proof / "keys" / f"{circuit}.{extension}").is_file()
+                for extension in ("zkir", "bzkir"):
+                    assert (list_proof / "zkir" / f"{circuit}.{extension}").is_file()
+            constructor_list_proof = base / "constructor-list-proof"
+            run(compiler, "--target", "rust", str(CONSTRUCTOR_LIST_SOURCE), str(constructor_list_proof))
+            check_manifest(constructor_list_proof)
+            for circuit in ("item_count", "history_count", "first_item", "drop_first", "clear_items"):
+                for extension in ("prover", "verifier"):
+                    assert (constructor_list_proof / "keys" / f"{circuit}.{extension}").is_file()
+                for extension in ("zkir", "bzkir"):
+                    assert (constructor_list_proof / "zkir" / f"{circuit}.{extension}").is_file()
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 str(proof), str(cell_proof), str(cell_read_proof), str(witness_proof), str(nested_proof),
                 str(nested_witness_proof), str(set_proof), str(set_oracle_proof),
-                str(map_proof), str(constructor_map_proof),
+                str(map_proof), str(constructor_map_proof), str(list_proof), str(constructor_list_proof),
             )
     print("compactc target boundary and manifest: passed")
 

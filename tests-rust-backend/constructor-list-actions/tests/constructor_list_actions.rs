@@ -14,8 +14,9 @@
 // limitations under the License.
 
 use compact_rust_constructor_list_actions_fixture::ledger_contract::{
-    history_count, initial_state, item_count,
+    Contract, drop_first, history_count, initial_state, item_count,
 };
+use midnight_compact_runtime::Field;
 use midnight_compact_runtime::context::ConstructorContext;
 use midnight_compact_runtime::ledger::{ContractAddress, DefaultDB, StateValue};
 use midnight_onchain_state::state::{
@@ -55,4 +56,51 @@ fn constructor_list_actions_match_typescript_state() {
     let history = history_count(items.context).unwrap();
     assert_eq!(history.result.value().to_string(), oracle["historyCount"]);
     assert_eq!(history.result.value(), 1);
+}
+
+#[test]
+fn constructor_list_head_and_drop_recording_replay() {
+    let initial = initial_state(ConstructorContext::new(())).unwrap();
+    let context = initial.into_circuit_context(ContractAddress::default());
+    let head = Contract::default().recording.first_item(context).unwrap();
+    assert!(head.execution.result.is_some);
+    assert_eq!(head.execution.result.value, Field::from(1_u64));
+    let replay = head
+        .public
+        .initial()
+        .query(
+            head.public.verify_ops(),
+            None,
+            &head.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(replay.context.effects, head.execution.context.query.effects);
+
+    let native = drop_first(
+        initial_state(ConstructorContext::new(()))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default()),
+    )
+    .unwrap();
+    let recorded = Contract::default()
+        .recording
+        .drop_first(head.execution.context)
+        .unwrap();
+    assert_eq!(
+        native.context.query.state.get_ref(),
+        recorded.execution.context.query.state.get_ref()
+    );
+    let replay = recorded
+        .public
+        .initial()
+        .query(
+            recorded.public.verify_ops(),
+            None,
+            &recorded.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(
+        replay.context.effects,
+        recorded.execution.context.query.effects
+    );
 }

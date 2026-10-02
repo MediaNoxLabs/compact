@@ -200,6 +200,43 @@ pub struct ListView<'a, T, D: DB> {
     marker: PhantomData<T>,
 }
 
+/// Witness-facing List projection that charges each canonical ledger VM query.
+pub struct MeteredListView<'a, T, D: DB> {
+    meter: &'a WitnessReadMeter<'a, D>,
+    index: u8,
+    marker: PhantomData<T>,
+}
+
+pub fn metered_list_view<'a, T: CellValue, D: DB>(
+    meter: &'a WitnessReadMeter<'a, D>,
+    index: u8,
+) -> Result<MeteredListView<'a, T, D>, CompactError> {
+    let _ = list_view::<T, D>(meter.state(), index)?;
+    Ok(MeteredListView {
+        meter,
+        index,
+        marker: PhantomData,
+    })
+}
+
+impl<T: CellValue, D: DB> MeteredListView<'_, T, D> {
+    pub fn head(&self) -> Result<Option<T>, CompactError>
+    where
+        T: Default,
+        midnight_base_crypto::fab::Value: From<T>,
+    {
+        self.meter.read_list_head::<T>(self.index)
+    }
+
+    pub fn length(&self) -> Result<BoundedUint<{ u64::MAX as u128 }>, CompactError> {
+        BoundedUint::new(self.meter.read_list_length(self.index)? as u128)
+    }
+
+    pub fn is_empty(&self) -> Result<bool, CompactError> {
+        self.meter.read_list_is_empty(self.index)
+    }
+}
+
 pub fn list_view<T: CellValue, D: DB>(
     state: &StateValue<D>,
     index: u8,

@@ -6,6 +6,9 @@ midnight-zk primitives for fields, encoding, cryptography, state, and VM
 queries. Generated code checks `RUST_RUNTIME_ABI` at compile time. A generated
 crate bundles matching runtime sources by default or points to one shared
 source root when compiled with `--rust-runtime-root`.
+ABI 9 adds `ledger::MeteredListView`, which runs canonical List `head`,
+`is_empty`, and `length` witness queries and maps the VM's Maybe pair to
+`Option<T>`. The methods return `Result` so failed queries remain visible.
 ABI 8 adds `ledger::MeteredMapView`, which runs canonical ledger queries for
 Map `member`, `lookup`, `size`, and `is_empty` calls inside witnesses. These
 methods return `Result` so query rejection is visible at the call site.
@@ -13,7 +16,7 @@ ABI 7 added `ledger::MeteredSetView`, which runs canonical ledger queries for
 Set `member`, `size`, and `is_empty` calls inside witnesses. Those methods
 return `Result` so query rejection is visible at the call site. ABI 6 added
 `context::WitnessReadMeter` and generated Cell/Counter witness read metering.
-List and Merkle witness views still need operation-level metering.
+Merkle witness views still need operation-level metering.
 The witness trait still returns a value pair, so it cannot propagate a query
 error through `?` without a later API revision. ABI 5 added
 `slots::MapNode<K, V>` for nested ledger Map declarations. The

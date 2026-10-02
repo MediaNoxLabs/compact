@@ -18,6 +18,16 @@
 import { pathToFileURL } from 'node:url';
 import * as runtime from '../../../runtime/dist/index.js';
 
+const queryCosts = [];
+const originalQuery = runtime.QueryContext.prototype.query;
+runtime.QueryContext.prototype.query = function (...args) {
+  const result = originalQuery.call(this, ...args);
+  queryCosts.push(Object.fromEntries(
+    Object.entries(result.gasCost).map(([name, value]) => [name, value.toString()]),
+  ));
+  return result;
+};
+
 const [contractPath] = process.argv.slice(2);
 if (!contractPath) throw new Error('expected contract/index.js');
 const { Contract } = await import(pathToFileURL(contractPath).href);
@@ -37,6 +47,7 @@ const initial = contract.initialState({
   initialPrivateState: 7,
   initialZswapLocalState: runtime.emptyZswapLocalState(coinPublicKey),
 });
+const initialState = Buffer.from(initial.currentContractState.serialize()).toString('hex');
 let context = runtime.createCircuitContext(
   runtime.dummyContractAddress(),
   coinPublicKey,
@@ -44,7 +55,7 @@ let context = runtime.createCircuitContext(
   initial.currentPrivateState,
 );
 
-function output(result) {
+function output(result, costs) {
   return {
     result: result.result,
     privateState: result.context.currentPrivateState,
@@ -54,17 +65,35 @@ function output(result) {
         alignment,
       }),
     ),
+    queryCosts: costs,
   };
 }
 
-const before = contract.circuits.private_first_is_42(context);
+function read(ctx) {
+  const start = queryCosts.length;
+  const result = contract.circuits.private_first_is_42(ctx);
+  return { context: result.context, output: output(result, queryCosts.slice(start)) };
+}
+
+function stateHex(ctx) {
+  initial.currentContractState.data = new runtime.ChargedState(
+    ctx.currentQueryContext.state.state,
+  );
+  return Buffer.from(initial.currentContractState.serialize()).toString('hex');
+}
+
+const before = read(context);
 context = contract.circuits.prepend(before.context, 42n).context;
-const after = contract.circuits.private_first_is_42(context);
+const afterState = stateHex(context);
+const after = read(context);
 context = contract.circuits.prepend(after.context, 7n).context;
-const covered = contract.circuits.private_first_is_42(context);
+const coveredState = stateHex(context);
+const covered = read(context);
 context = contract.circuits.drop_first(covered.context).context;
-const restored = contract.circuits.private_first_is_42(context);
+const restoredState = stateHex(context);
+const restored = read(context);
 process.stdout.write(JSON.stringify({
-  before: output(before), after: output(after),
-  covered: output(covered), restored: output(restored),
+  initialState, afterState, coveredState, restoredState,
+  before: before.output, after: after.output,
+  covered: covered.output, restored: restored.output,
 }, null, 2) + '\n');

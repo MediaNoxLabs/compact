@@ -116,8 +116,8 @@ pub(crate) fn build<'a>(
                     LedgerFieldKind::List { ty } => {
                         let ty = rust_type(ty)?;
                         ledger_view_methods.push(syn::parse_quote! {
-                        pub fn #name(&self) -> Result<runtime::ledger::ListView<'a, #ty, runtime::ledger::DefaultDB>, runtime::CompactError> {
-                            runtime::ledger::list_view::<#ty, _>(self.state, #index)
+                        pub fn #name(&self) -> Result<runtime::ledger::MeteredListView<'a, #ty, runtime::ledger::DefaultDB>, runtime::CompactError> {
+                            runtime::ledger::metered_list_view::<#ty, _>(self.meter, #index)
                         }
                     });
                     }

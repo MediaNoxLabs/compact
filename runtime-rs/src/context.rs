@@ -194,6 +194,45 @@ impl<'a, D: DB> WitnessReadMeter<'a, D> {
         Ok(empty)
     }
 
+    pub fn read_list_head<T: CellValue + Default>(
+        &self,
+        field_index: u8,
+    ) -> Result<Option<T>, CompactError>
+    where
+        midnight_base_crypto::fab::Value: From<T>,
+    {
+        let (result, (present, value)) = ledger::head_list::<T, (bool, T), D>(
+            self.query,
+            field_index,
+            self.gas_limit.clone(),
+            self.cost_model,
+        )?;
+        *self.observed_gas.borrow_mut() += result.gas_cost;
+        Ok(present.then_some(value))
+    }
+
+    pub fn read_list_is_empty(&self, field_index: u8) -> Result<bool, CompactError> {
+        let (result, empty) = ledger::is_empty_list(
+            self.query,
+            field_index,
+            self.gas_limit.clone(),
+            self.cost_model,
+        )?;
+        *self.observed_gas.borrow_mut() += result.gas_cost;
+        Ok(empty)
+    }
+
+    pub fn read_list_length(&self, field_index: u8) -> Result<u64, CompactError> {
+        let (result, length) = ledger::length_list(
+            self.query,
+            field_index,
+            self.gas_limit.clone(),
+            self.cost_model,
+        )?;
+        *self.observed_gas.borrow_mut() += result.gas_cost;
+        Ok(length)
+    }
+
     pub fn gas_cost(&self) -> RunningCost {
         self.observed_gas.borrow().clone()
     }

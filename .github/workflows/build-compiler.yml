@@ -313,6 +313,7 @@ jobs:
           cargo fmt --all -- --check
           nix develop .#compiler --command env COMPACTC=compactc python3 tools/compact-rust-backend/check_compactc_target.py --consumer --proof
           nix develop .#compiler --command env COMPACTC=compactc python3 tools/compact-rust-backend/check_fixture_outputs.py
+          python3 tools/compact-rust-backend/check_oracle_acceptance.py
           nix develop .#compiler --command env COMPACTC=compactc python3 tools/compact-rust-backend/check_rejections.py
           cargo test --workspace --exclude compact
 

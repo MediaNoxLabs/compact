@@ -130,6 +130,7 @@ nix develop .#compiler --command env COMPACTC=compactc \
   python3 tools/compact-rust-backend/check_compactc_target.py --consumer --proof
 COMPACTC=/path/to/ledger-8/compactc \
   python3 tools/compact-rust-backend/check_fixture_outputs.py
+python3 tools/compact-rust-backend/check_oracle_acceptance.py
 COMPACTC=/path/to/ledger-8/compactc \
   python3 tools/compact-rust-backend/check_rejections.py
 cargo test --workspace --exclude compact
@@ -141,6 +142,12 @@ and compares it with the checked-in generated Rust. Use `--update` after an
 intentional renderer change, then inspect the diff. The fixture crates also
 compare native results and serialized state with captures from the ledger-8
 TypeScript runtime. Capture programs are in [`oracles`](oracles).
+The [oracle acceptance inventory](oracle_acceptance.json) pins the 37
+`codegen-rust` fixture sources at the recorded commit. Its checker verifies
+local source bytes, executable lines after excluding full-line comments, and
+Rust test/TypeScript fixture links. This is a provenance and test-inventory
+gate; individual executing tests establish result and state parity, while
+negative cases, gas, and VM transcript coverage remain separate M2 work.
 When capturing from a local runtime package, copy generated `index.js` into a
 separate temporary harness before adding a `node_modules` link. The compiler
 cleans its output directories on each run, so links must stay outside them.

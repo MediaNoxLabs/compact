@@ -1,0 +1,451 @@
+{
+  "oracle_ref": "589c92ef961ce89ac730140e81b76d4c08222a70",
+  "fixtures": [
+    {
+      "oracle_source": "examples/aliases_fixture.compact",
+      "source": "examples/rust_backend/aliases_oracle.compact",
+      "source_sha256": "a8f555d08c8f4308097620d4c974542aa23d216dd32d00de3ea752b4ae24fd0a",
+      "non_comment_sha256": "086772d7e85ab068e3acadacbd2d1db48109dda3d52d1fa0e918b9d9e0106b2e",
+      "rust_tests": [
+        "tests-rust-backend/aliases-oracle/tests/aliases_oracle.rs"
+      ],
+      "typescript_fixtures": [
+        "runtime-rs/tests/fixtures/aliases-oracle.json"
+      ]
+    },
+    {
+      "oracle_source": "examples/assert_parity_fixture.compact",
+      "source": "examples/rust_backend/assert_parity_oracle.compact",
+      "source_sha256": "0a9bbadf7e52ef1e7a8149d093531f6ad5b295778510807bf7b4740425b00c60",
+      "non_comment_sha256": "01bd0c88a785ddfe10900e6790ca16d4e4c2dd151f311894427bd077a3d7fa2a",
+      "rust_tests": [
+        "tests-rust-backend/assert-parity-oracle/tests/assert_parity_oracle.rs"
+      ],
+      "typescript_fixtures": [
+        "runtime-rs/tests/fixtures/assert-parity-oracle.json"
+      ]
+    },
+    {
+      "oracle_source": "examples/asset_registry_fixture.compact",
+      "source": "examples/rust_backend/asset_registry_oracle.compact",
+      "source_sha256": "d4491f60b069780350cd219f7c02292702a5714626eed38124b218e12abde30c",
+      "non_comment_sha256": "185b93c0ba3a0c879ca11638e7a501fe12e5fb5764e9701895fa251f0cbbe7e3",
+      "rust_tests": [
+        "tests-rust-backend/asset-registry-oracle/tests/asset_registry_oracle.rs",
+        "tests-rust-backend/asset-registry-oracle/tests/registration_gap.rs"
+      ],
+      "typescript_fixtures": [
+        "runtime-rs/tests/fixtures/asset-registry-oracle.json",
+        "runtime-rs/tests/fixtures/asset-registry-pure.json"
+      ]
+    },
+    {
+      "oracle_source": "examples/bounded_uint_fixture.compact",
+      "source": "examples/rust_backend/bounded_uint_oracle.compact",
+      "source_sha256": "b16524762f5ae3d5fac00b25f893d786293407bcc52d2a751be004a655f76281",
+      "non_comment_sha256": "1c13b5f821d05f8efe23d394e1e6b587a7b39fe2309b6c1d881b25c441fd5341",
+      "rust_tests": [
+        "tests-rust-backend/bounded-uint-oracle/tests/bounded_uint_oracle.rs"
+      ],
+      "typescript_fixtures": [
+        "runtime-rs/tests/fixtures/bounded-uint-oracle.json"
+      ]
+    },
+    {
+      "oracle_source": "examples/bug11_fixture.compact",
+      "source": "examples/rust_backend/bug11_oracle.compact",
+      "source_sha256": "c0dc59ef6c00f06785b2fe6b6af7c7d9c2e9a7b472efb23566666b2cbe2914fc",
+      "non_comment_sha256": "4e84ec7ef86208433bce2ca8f9caa6725a2d125292f1c7550f9ad60b015f499e",
+      "rust_tests": [
+        "tests-rust-backend/bug11-oracle/tests/bug11_oracle.rs"
+      ],
+      "typescript_fixtures": [
+        "runtime-rs/tests/fixtures/bug11-oracle.json"
+      ]
+    },
+    {
+      "oracle_source": "examples/call_arg_declared_type_fixture.compact",
+      "source": "examples/rust_backend/call_arg_declared_type.compact",
+      "source_sha256": "4fcef200298b909bc50d9b59c9b5ab3d72402d55a2179e01adba9e57bbf9a850",
+      "non_comment_sha256": "71e4458b718b20804154a07cb638b440b58dbe3fe794880c7ee16c87ace39416",
+      "rust_tests": [
+        "tests-rust-backend/call-arg-declared-type/tests/call_arg_declared_type.rs"
+      ],
+      "typescript_fixtures": [
+        "runtime-rs/tests/fixtures/call-arg-declared-type.json"
+      ]
+    },
+    {
+      "oracle_source": "examples/chunked_ledger_fixture.compact",
+      "source": "examples/rust_backend/chunked_ledger_oracle.compact",
+      "source_sha256": "bd5bc1c79ea6729835b871b40cd308cbf7586ecd8778ff44905bdf2de1a03126",
+      "non_comment_sha256": "bc140fd6bbb2df6dd9f237f81152d901cf872f2da20851d88fd518289c0a272a",
+      "rust_tests": [
+        "tests-rust-backend/chunked-ledger-oracle/tests/chunked_ledger_oracle.rs"
+      ],
+      "typescript_fixtures": [
+        "runtime-rs/tests/fixtures/chunked-ledger-oracle.json"
+      ]
+    },
+    {
+      "oracle_source": "examples/cross_circuit_fixture.compact",
+      "source": "examples/rust_backend/cross_circuit_oracle.compact",
+      "source_sha256": "904cd7d57bf59cdaec43826908578f03c08c28529471e0277e968c182890c422",
+      "non_comment_sha256": "09fbd6ebc5efb493c2d7e3f7b64e0bc5bb1a8a615a13feed7610b716d28d8b9c",
+      "rust_tests": [
+        "tests-rust-backend/cross-circuit-oracle/tests/cross_circuit_oracle.rs"
+      ],
+      "typescript_fixtures": [
+        "runtime-rs/tests/fixtures/cross-circuit-oracle.json"
+      ]
+    },
+    {
+      "oracle_source": "examples/fold_fixture.compact",
+      "source": "examples/rust_backend/fold_oracle.compact",
+      "source_sha256": "88ac4eb7e88594bc3c4e3a336f93e4347593430cf7f9b9a739433f784ea31899",
+      "non_comment_sha256": "30943f2570d189e3c7dfb3cbfc94a59d023fe3898229283c23d0809476d3fa9b",
+      "rust_tests": [
+        "tests-rust-backend/fold-oracle/tests/fold_oracle.rs"
+      ],
+      "typescript_fixtures": [
+        "runtime-rs/tests/fixtures/fold-oracle.json"
+      ]
+    },
+    {
+      "oracle_source": "examples/for_iter_fixture.compact",
+      "source": "examples/rust_backend/for_iter_oracle.compact",
+      "source_sha256": "4fb9970da6c7620aef3a5036deb7e28ff0b16faa15b108faf1976b0ad7f0a4d2",
+      "non_comment_sha256": "2708e5b706cd0e980feb08676f550b620e649ad42ef665a7dd2b2c6ca9996260",
+      "rust_tests": [
+        "tests-rust-backend/for-iter-oracle/tests/for_iter_oracle.rs"
+      ],
+      "typescript_fixtures": [
+        "runtime-rs/tests/fixtures/for-iter-oracle.json"
+      ]
+    },
+    {
+      "oracle_source": "examples/for_range_fixture.compact",
+      "source": "examples/rust_backend/for_range_oracle.compact",
+      "source_sha256": "5fb90b643460f465e9d75f40c4cd66fba8f9c186c85f01eff2f4256976e7550f",
+      "non_comment_sha256": "2633eeb1df0b6ea68fe1623618bcc7f3c624a68be9ce85a3bd3777af737271a8",
+      "rust_tests": [
+        "tests-rust-backend/for-range-oracle/tests/for_range_oracle.rs"
+      ],
+      "typescript_fixtures": [
+        "runtime-rs/tests/fixtures/for-range-oracle.json"
+      ]
+    },
+    {
+      "oracle_source": "examples/guarded_assert_arith_fixture.compact",
+      "source": "examples/rust_backend/guarded_assert_arith_oracle.compact",
+      "source_sha256": "5fbe502b7f9b6d2aaff3004053bfddf61223cc1c525f3f342e5deb9dfff8ff3d",
+      "non_comment_sha256": "5e8f34c55ed92886e6e34b574f7d8908cb7643a6bbe90bd8d7746fa8f9fdbe1c",
+      "rust_tests": [
+        "tests-rust-backend/guarded-assert-arith-oracle/tests/guarded_assert_arith_oracle.rs"
+      ],
+      "typescript_fixtures": [
+        "runtime-rs/tests/fixtures/guarded-assert-arith-oracle.json"
+      ]
+    },
+    {
+      "oracle_source": "examples/hash_to_curve_fixture.compact",
+      "source": "examples/rust_backend/hash_to_curve_vector_constructor.compact",
+      "source_sha256": "4c6f1643cb5c6d0aaa7a8e1ab61b57262d4b11c1a232413b5d091409ffd5f9db",
+      "non_comment_sha256": "e06fa4a2cae90f7042daa0bd631d5ca181df65f14a2defe09f28d1268f8c5347",
+      "rust_tests": [
+        "tests-rust-backend/hash-to-curve-vector-constructor/tests/hash_to_curve_vector_constructor.rs"
+      ],
+      "typescript_fixtures": [
+        "runtime-rs/tests/fixtures/hash-to-curve-vector-constructor.json"
+      ]
+    },
+    {
+      "oracle_source": "examples/hmt_default_fixture.compact",
+      "source": "examples/rust_backend/hmt_default_oracle.compact",
+      "source_sha256": "b3c9e4d9010a6656aafebb618d7066be639eb2ed9cba29de32c5c4ba2c8c113c",
+      "non_comment_sha256": "cc2946d68da776d4c2387f8d0639a47aecf9bb85b2bf1d1d68aec3de14d536c9",
+      "rust_tests": [
+        "tests-rust-backend/hmt-default-oracle/tests/hmt_default_oracle.rs"
+      ],
+      "typescript_fixtures": [
+        "runtime-rs/tests/fixtures/hmt-default-oracle.json"
+      ]
+    },
+    {
+      "oracle_source": "examples/if_stmt_fixture.compact",
+      "source": "examples/rust_backend/if_stmt_oracle.compact",
+      "source_sha256": "7dae3ade7f968a6a4350164813ca8501555424a8f2aa5e069d0c57f6c623aeb2",
+      "non_comment_sha256": "107fb49f5731678abf116894937549a1a4c74cdf4e04c762b5bd2c9180d0e574",
+      "rust_tests": [
+        "tests-rust-backend/if-stmt-oracle/tests/if_stmt_oracle.rs"
+      ],
+      "typescript_fixtures": [
+        "runtime-rs/tests/fixtures/if-stmt-oracle.json"
+      ]
+    },
+    {
+      "oracle_source": "examples/inline_type_scope_fixture.compact",
+      "source": "examples/rust_backend/inline_type_scope_oracle.compact",
+      "source_sha256": "fbfc0cd344194a444e79d408f139f46a2b33e70ec35b1f8e9b5bf0d2126aa915",
+      "non_comment_sha256": "932b350b340d1d7fe3f044dd61158af75225e0d0e964ca46b59278639aea316a",
+      "rust_tests": [
+        "tests-rust-backend/inline-type-scope-oracle/tests/inline_type_scope_oracle.rs"
+      ],
+      "typescript_fixtures": [
+        "runtime-rs/tests/fixtures/inline-type-scope-oracle.json"
+      ]
+    },
+    {
+      "oracle_source": "examples/list_fixture.compact",
+      "source": "examples/rust_backend/list_oracle.compact",
+      "source_sha256": "ea2ed56be6d362928b375dfd453a8a0c72d9b1662b561f8f342e9bba53398b45",
+      "non_comment_sha256": "4c69bba3c3266d891fcf78a77bdda343776b95893672ff28020af2c99329b55a",
+      "rust_tests": [
+        "tests-rust-backend/list-oracle/tests/list_oracle.rs"
+      ],
+      "typescript_fixtures": [
+        "runtime-rs/tests/fixtures/list-oracle.json"
+      ]
+    },
+    {
+      "oracle_source": "examples/literal_coercion_fixture.compact",
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "source_sha256": "36f96813375018305b362745442cc3acbcebeb152fd7f44f5c79a4551c58d6a5",
+      "non_comment_sha256": "caa3e8500bf190e2337df8c8fda8f0395090e5f72841eeec340f79c85bd16da9",
+      "rust_tests": [
+        "tests-rust-backend/literal-coercion-oracle/tests/literal_coercion_oracle.rs"
+      ],
+      "typescript_fixtures": [
+        "runtime-rs/tests/fixtures/literal-coercion-oracle.json"
+      ]
+    },
+    {
+      "oracle_source": "examples/map_fixture.compact",
+      "source": "examples/rust_backend/map_oracle.compact",
+      "source_sha256": "e38a91f47f3a491581477a3b6fe86dd9e88a2ffd1a10a59435af95c4896819bb",
+      "non_comment_sha256": "3b79913bf95490856cedc85db7864b7b2657300376d58de5cf77a1fd7564e1db",
+      "rust_tests": [
+        "tests-rust-backend/map-oracle/tests/map_oracle.rs"
+      ],
+      "typescript_fixtures": [
+        "runtime-rs/tests/fixtures/map-oracle.json"
+      ]
+    },
+    {
+      "oracle_source": "examples/map_fn_fixture.compact",
+      "source": "examples/rust_backend/map_fn_oracle.compact",
+      "source_sha256": "345a7a877ec71289ceb0a0a49ae95b3eba45a2eba07143f438f73b1e856aef88",
+      "non_comment_sha256": "e17ba3046b96980d0dd1364edee1a318fba9745e3979b0a8ad79b6568bf97d92",
+      "rust_tests": [
+        "tests-rust-backend/map-fn-oracle/tests/map_fn_oracle.rs"
+      ],
+      "typescript_fixtures": [
+        "runtime-rs/tests/fixtures/map-fn-oracle.json"
+      ]
+    },
+    {
+      "oracle_source": "examples/map_lambda_fixture.compact",
+      "source": "examples/rust_backend/map_lambda_oracle.compact",
+      "source_sha256": "06c8929975a66883efbc8d5a7321dd3a54c37c416d2e502286ebadfc99f50f29",
+      "non_comment_sha256": "8dbfd6d51532e195c92409eac442cb75cbae0f5bf60ce5917e8ef718d1ca2c86",
+      "rust_tests": [
+        "tests-rust-backend/map-lambda-oracle/tests/map_lambda_oracle.rs"
+      ],
+      "typescript_fixtures": [
+        "runtime-rs/tests/fixtures/map-lambda-oracle.json"
+      ]
+    },
+    {
+      "oracle_source": "examples/mixed_width_operand_fixture.compact",
+      "source": "examples/rust_backend/mixed_width_operand_oracle.compact",
+      "source_sha256": "a50b61991efe75d391fe373fb70ef1c6a71d1e0162894b7cbc12e0b36feb4b83",
+      "non_comment_sha256": "0bd88b86e0d161a64a50561bed5bde8ed7dd0e1ed3aa0855eec2a12b6aa64355",
+      "rust_tests": [
+        "tests-rust-backend/mixed-width-operand-oracle/tests/mixed_width_operand_oracle.rs"
+      ],
+      "typescript_fixtures": [
+        "runtime-rs/tests/fixtures/mixed-width-operand-oracle.json"
+      ]
+    },
+    {
+      "oracle_source": "examples/module_fixture.compact",
+      "source": "examples/rust_backend/module_boolean_constructor.compact",
+      "source_sha256": "eab2c07069f8a7ef7a4a499531a6b4b00c82a0c859dda74f059b1dc654168ab5",
+      "non_comment_sha256": "2fd906d31484a7c02896c1c5a5ef44588832e2be84bb667460290841121d1a31",
+      "rust_tests": [
+        "tests-rust-backend/module-boolean-constructor/tests/module_boolean_constructor.rs"
+      ],
+      "typescript_fixtures": [
+        "runtime-rs/tests/fixtures/module-boolean-constructor.json"
+      ]
+    },
+    {
+      "oracle_source": "examples/multi_pl_call_fixture.compact",
+      "source": "examples/rust_backend/multi_pl_call_oracle.compact",
+      "source_sha256": "95413fe91848369d13e5b49fb55b8b73fc007fb957aae9a44762303f850e740c",
+      "non_comment_sha256": "784c8d9f2b7890b0a63a230e2d435e187b67084873cb4df309b8804fcc67475e",
+      "rust_tests": [
+        "tests-rust-backend/multi-pl-call-oracle/tests/multi_pl_call_oracle.rs"
+      ],
+      "typescript_fixtures": [
+        "runtime-rs/tests/fixtures/multi-pl-call-oracle.json"
+      ]
+    },
+    {
+      "oracle_source": "examples/nested_map_fixture.compact",
+      "source": "examples/rust_backend/nested_map_oracle.compact",
+      "source_sha256": "901cdfa4df0da88021f1364bff625191329d7dbc7f83a13f38ca89c8b0526eaa",
+      "non_comment_sha256": "9a1cda84d2b68e584cf65a19aad9855206f6e541e791ae8a850aa7b420ff9d28",
+      "rust_tests": [
+        "tests-rust-backend/nested-map-oracle/tests/nested_map_oracle.rs"
+      ],
+      "typescript_fixtures": [
+        "runtime-rs/tests/fixtures/nested-map-oracle.json"
+      ]
+    },
+    {
+      "oracle_source": "examples/pure_circuit_fixture.compact",
+      "source": "examples/rust_backend/pure_circuit_oracle.compact",
+      "source_sha256": "595013805a0b468bfdb0f0f5500636d4d2a6785267ea32cf36761cf970899d76",
+      "non_comment_sha256": "6bb17770f3683c463c91530c3bfcc1d1e93d1f5e892d7d21489046ab6440eca1",
+      "rust_tests": [
+        "tests-rust-backend/pure-circuit-oracle/tests/pure_circuit_oracle.rs"
+      ],
+      "typescript_fixtures": [
+        "runtime-rs/tests/fixtures/pure-circuit-oracle.json"
+      ]
+    },
+    {
+      "oracle_source": "examples/schnorr_attest_fixture.compact",
+      "source": "examples/rust_backend/schnorr_attest_oracle.compact",
+      "source_sha256": "bec0cec6d7e6dd7abf926df261af5a0681237df00f4aaa6a33f927d73ee3ccea",
+      "non_comment_sha256": "e4953b3525efb83431e49e46be9240d6e86df9d98933f5a3d3b19b9844a311ad",
+      "rust_tests": [
+        "tests-rust-backend/schnorr-attest-oracle/tests/schnorr_attest_oracle.rs"
+      ],
+      "typescript_fixtures": [
+        "runtime-rs/tests/fixtures/schnorr-attest-oracle.json"
+      ]
+    },
+    {
+      "oracle_source": "examples/sealed_ledger_fixture.compact",
+      "source": "examples/rust_backend/sealed_ledger_constructor.compact",
+      "source_sha256": "51b06920a8df92dd22a909de103cc870d3cb60569bc7a13a67f23d2025974f4b",
+      "non_comment_sha256": "e2c7e71345cf9caa2115b470ea7ec2354aaa69c6a82cdd4abf1b6b9d68dea0e0",
+      "rust_tests": [
+        "tests-rust-backend/sealed-ledger-constructor/tests/sealed_ledger_constructor.rs"
+      ],
+      "typescript_fixtures": [
+        "runtime-rs/tests/fixtures/sealed-ledger-constructor.json"
+      ]
+    },
+    {
+      "oracle_source": "examples/set_fixture.compact",
+      "source": "examples/rust_backend/set_oracle.compact",
+      "source_sha256": "8f5260dfc6731df4c3fef091cddc2d53129cdcef85c68246a4333aa5689ca516",
+      "non_comment_sha256": "0ef616cfe99c6e6415f6fa4b705027cf22045585608be44a2f2ca6897e177816",
+      "rust_tests": [
+        "tests-rust-backend/set-oracle/tests/set_oracle.rs"
+      ],
+      "typescript_fixtures": [
+        "runtime-rs/tests/fixtures/set-oracle.json"
+      ]
+    },
+    {
+      "oracle_source": "examples/set_size_fixture.compact",
+      "source": "examples/rust_backend/set_size_oracle.compact",
+      "source_sha256": "9e8951bd2a1103ae3b25ab0cd812d4682ac762e62642a215a0346a9a6152f5d0",
+      "non_comment_sha256": "ef190b8c570c43d8e9aeb855cd1340de29f37a83b1c8ffd4892b39e821c7d876",
+      "rust_tests": [
+        "tests-rust-backend/set-size-oracle/tests/set_size_oracle.rs"
+      ],
+      "typescript_fixtures": [
+        "runtime-rs/tests/fixtures/set-size-oracle.json"
+      ]
+    },
+    {
+      "oracle_source": "examples/struct_collision_fixture.compact",
+      "source": "examples/rust_backend/struct_collision_oracle.compact",
+      "source_sha256": "12dc9ce371dda4ce30f4dfcbcfb5c6f7422c9089e0e8a6d8a63cf0234918491c",
+      "non_comment_sha256": "96e40b71c5febf2d6f56fd22577b1bda7c1fcbe8ca704911ef1d7d61e6b8db40",
+      "rust_tests": [
+        "tests-rust-backend/struct-collision-oracle/tests/struct_collision_oracle.rs"
+      ],
+      "typescript_fixtures": [
+        "runtime-rs/tests/fixtures/struct-collision-oracle.json"
+      ]
+    },
+    {
+      "oracle_source": "examples/ternary_cond_fixture.compact",
+      "source": "examples/rust_backend/ternary_cond_oracle.compact",
+      "source_sha256": "e95aef740573d9e5ba8980a74c0eabdf1c5fad4948750aeaa2a80502c3025b73",
+      "non_comment_sha256": "33465c22ee3b0942ca7fe96489b5f68e9427e6aeeb613dc43c595da8e833481c",
+      "rust_tests": [
+        "tests-rust-backend/ternary-cond-oracle/tests/ternary_cond_oracle.rs"
+      ],
+      "typescript_fixtures": [
+        "runtime-rs/tests/fixtures/ternary-cond-oracle.json"
+      ]
+    },
+    {
+      "oracle_source": "examples/tuple_fixture.compact",
+      "source": "examples/rust_backend/tuple_oracle.compact",
+      "source_sha256": "7d8ff7b559a41897cdbd327b6c2c7e2c29673d00f4d7c67ec7bd901f8a1b2bcc",
+      "non_comment_sha256": "8fe96611f3226e4ba1e575d5888f0fab96fa7bc34b29969f51355723c809bceb",
+      "rust_tests": [
+        "tests-rust-backend/tuple-oracle/tests/tuple_oracle.rs"
+      ],
+      "typescript_fixtures": [
+        "runtime-rs/tests/fixtures/tuple-oracle.json"
+      ]
+    },
+    {
+      "oracle_source": "examples/uints_fixture.compact",
+      "source": "examples/rust_backend/uints_oracle.compact",
+      "source_sha256": "067105d62e324eb6df7e3d451d8714ed55b29a5a2b5cb3201ae7f074c180194d",
+      "non_comment_sha256": "3f7f51661f8f57e1f0daf261160ef913cdde4b9b7336cb00f7125cc63ae9afbc",
+      "rust_tests": [
+        "tests-rust-backend/uints-oracle/tests/uints_oracle.rs"
+      ],
+      "typescript_fixtures": [
+        "runtime-rs/tests/fixtures/uints-oracle.json"
+      ]
+    },
+    {
+      "oracle_source": "examples/vector_fixture.compact",
+      "source": "examples/rust_backend/vector_oracle.compact",
+      "source_sha256": "92249b023d0edada894ea0c17d81177bb8c4a857adf4610e42222494926bc67d",
+      "non_comment_sha256": "792d7d2224af9c06e9f8252d9edd0b99c4e1a40997a2936496a2ed1692815b5d",
+      "rust_tests": [
+        "tests-rust-backend/vector-oracle/tests/vector_oracle.rs"
+      ],
+      "typescript_fixtures": [
+        "runtime-rs/tests/fixtures/vector-oracle.json"
+      ]
+    },
+    {
+      "oracle_source": "examples/widening_arith_fixture.compact",
+      "source": "examples/rust_backend/widening_arith_oracle.compact",
+      "source_sha256": "11bdb8ee69d6157f4bc8df848517bebcfea9e7edb64fcdb76435272b505c4c82",
+      "non_comment_sha256": "cf692d560bdefc536ecdc75e43692088e85fa73c610fd79cebbf0884fb363212",
+      "rust_tests": [
+        "tests-rust-backend/widening-arith-oracle/tests/widening_arith_oracle.rs"
+      ],
+      "typescript_fixtures": [
+        "runtime-rs/tests/fixtures/widening-arith-oracle.json"
+      ]
+    },
+    {
+      "oracle_source": "examples/witnesses_fixture.compact",
+      "source": "examples/rust_backend/witnesses_oracle.compact",
+      "source_sha256": "61b24d39ae57d4ae1c05311d19af9a2e8f094d7f86062e54c89fe3a6eb6ba227",
+      "non_comment_sha256": "9608bb7186bdfa4a724fc12fb8456f89f9094b7c6ca3cd970604f9ca347bed4e",
+      "rust_tests": [
+        "tests-rust-backend/witnesses-oracle/tests/witnesses_oracle.rs"
+      ],
+      "typescript_fixtures": [
+        "runtime-rs/tests/fixtures/witnesses-oracle.json"
+      ]
+    }
+  ]
+}

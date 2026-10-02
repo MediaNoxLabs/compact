@@ -22,11 +22,11 @@ use std::env;
 use std::error::Error;
 use std::fs;
 use std::path::PathBuf;
-use std::process::Command;
+use std::process::{self, Command};
 
 use compact_rust_backend::{ir::Contract, render};
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn run() -> Result<(), Box<dyn Error>> {
     let mut args = env::args_os().skip(1);
     let source = PathBuf::from(
         args.next()
@@ -57,4 +57,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     let rust = render(&ir)?;
     fs::write(contract_dir.join("lib.rs"), rust)?;
     Ok(())
+}
+
+fn main() {
+    if let Err(error) = run() {
+        eprintln!("compact-rustc: {error}");
+        process::exit(1);
+    }
 }

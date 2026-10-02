@@ -72,6 +72,22 @@
       (define (kind name)
         (object (cons "kind" name)))
 
+      ;; Keep diagnostics reproducible when the same source is compiled from
+      ;; different checkout paths. A later IR slice can retain relative paths
+      ;; for imports whose basenames collide.
+      (define (with-source src fields)
+        (call-with-values
+          (lambda () (locate-source-object-source src #t #f))
+          (case-lambda
+            [() fields]
+            [(ignored-path line column)
+             (append fields
+               (list (cons "source"
+                     (object
+                       (cons "file" (path-last (source-file-descriptor-path (source-object-sfd src))))
+                       (cons "line" line)
+                       (cons "column" column)))))])))
+
       (define (type-ir ty owner-src)
         (nanopass-case (Lnodisclose Type) ty
           [(tboolean ,src) (kind "boolean")]
@@ -788,7 +804,8 @@
            (unless (and (pair? path-index*)
                         (for-all (lambda (index) (and (integer? index) (<= 0 index 14))) path-index*))
              (source-errorf src "Rust backend requires an array-index ledger path"))
-           (nanopass-case (Lnodisclose Type) type
+           (with-source src
+             (nanopass-case (Lnodisclose Type) type
              [(tadt ,src^ ,adt-name ([,adt-formal* ,adt-arg*] ...) ,vm-expr (,adt-op* ...) (,adt-rt-op* ...))
               (cond
                 [(eq? adt-name 'Counter)
@@ -836,7 +853,7 @@
                                        (cons "depth" (car adt-arg*))
                                        (cons "ty" (type-ir (cadr adt-arg*) src)))))]
                 [else (source-errorf src "Rust backend does not yet support this ledger ADT")])]
-             [else (source-errorf src "Rust backend does not yet support this ledger field type")])]
+             [else (source-errorf src "Rust backend does not yet support this ledger field type")]))]
           [else (source-errorf owner-src "Rust backend does not yet support this ledger field shape")]))
 
       (define (ledger-array-ir pl-array owner-src)
@@ -1908,7 +1925,7 @@
            (source-errorf src "Rust backend found multiple constructors"))
          (print-json
            (get-target-port 'rust.ir.json)
-           (append (object (cons "schema_version" 6)
+           (append (object (cons "schema_version" 7)
                    (cons "type_aliases"
                          (list->vector (fold-right type-alias-ir '() pelt*)))
                    (cons "ledger_fields"

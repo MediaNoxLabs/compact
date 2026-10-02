@@ -22,7 +22,16 @@
 
 use serde::{Deserialize, Serialize};
 
-pub const SCHEMA_VERSION: u32 = 6;
+pub const SCHEMA_VERSION: u32 = 7;
+
+/// A Compact source position, independent of the compiler checkout path.
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct SourceLocation {
+    pub file: String,
+    pub line: usize,
+    pub column: usize,
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -161,6 +170,8 @@ pub struct LedgerField {
     /// Empty for the legacy single-segment `index` representation.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub path: Vec<u8>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source: Option<SourceLocation>,
     pub declaration: LedgerFieldKind,
 }
 

@@ -67,7 +67,11 @@ def main() -> int:
             message = result.stderr + result.stdout
             if result.returncode == 0:
                 failures.append(f"{name}: compiler accepted an unsupported construct")
-            elif diagnostic not in message or f"{name}.compact line " not in message:
+            elif (
+                diagnostic not in message
+                or f"{name}.compact line " not in message
+                or " char " not in message
+            ):
                 failures.append(f"{name}: missing source diagnostic:\n{message}")
             if (output_path / "contract" / "lib.rs").exists():
                 failures.append(f"{name}: rejected source left a generated Rust library")

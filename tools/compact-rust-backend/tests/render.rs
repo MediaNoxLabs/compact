@@ -13,16 +13,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use std::io::Write;
+use std::process::{Command, Stdio};
+
 use compact_rust_backend::ir::{
     Constructor, ConstructorStep, Contract, CounterAmount, Expr, LedgerField, LedgerFieldKind,
-    LocalBinding, Parameter, PureCircuit, StateAction, StateReturn, StatefulCircuit, StructField,
-    Type, TypeAlias, WitnessDeclaration,
+    LocalBinding, Parameter, PureCircuit, SourceLocation, StateAction, StateReturn,
+    StatefulCircuit, StructField, Type, TypeAlias, WitnessDeclaration,
 };
 use compact_rust_backend::{RenderError, render};
 
 fn identity(result: Type, body: Expr) -> Contract {
     Contract {
-        schema_version: 6,
+        schema_version: 7,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -39,6 +42,71 @@ fn identity(result: Type, body: Expr) -> Contract {
         }],
         stateful_circuits: vec![],
     }
+}
+
+#[test]
+fn ledger_validation_retains_compact_source_location() {
+    let mut contract = identity(Type::Unit, Expr::Unit);
+    let location = SourceLocation {
+        file: "vault.compact".into(),
+        line: 2,
+        column: 8,
+    };
+    contract.ledger_fields.push(LedgerField {
+        source: Some(location.clone()),
+        id: "balance".into(),
+        index: 3,
+        path: vec![3, 0],
+        declaration: LedgerFieldKind::Counter,
+    });
+    let error = render(&contract).unwrap_err();
+    assert_eq!(
+        error,
+        RenderError::Located {
+            location,
+            error: Box::new(RenderError::InvalidLedgerPath(vec![3, 0])),
+        }
+    );
+    assert_eq!(
+        error.to_string(),
+        "vault.compact line 2 char 8: invalid ledger field path [3, 0]"
+    );
+    assert!(std::error::Error::source(&error).is_some());
+}
+
+#[test]
+fn backend_cli_prints_source_diagnostic_instead_of_debug_structure() {
+    let mut contract = identity(Type::Unit, Expr::Unit);
+    contract.ledger_fields.push(LedgerField {
+        source: Some(SourceLocation {
+            file: "vault.compact".into(),
+            line: 2,
+            column: 8,
+        }),
+        id: "balance".into(),
+        index: 3,
+        path: vec![3, 0],
+        declaration: LedgerFieldKind::Counter,
+    });
+    let mut child = Command::new(env!("CARGO_BIN_EXE_compact-rust-backend"))
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    child
+        .stdin
+        .take()
+        .unwrap()
+        .write_all(&serde_json::to_vec(&contract).unwrap())
+        .unwrap();
+    let output = child.wait_with_output().unwrap();
+    assert!(!output.status.success());
+    assert_eq!(
+        String::from_utf8(output.stderr).unwrap(),
+        "compact-rust-backend: vault.compact line 2 char 8: invalid ledger field path [3, 0]\n"
+    );
+    assert!(output.stdout.is_empty());
 }
 
 #[test]
@@ -281,6 +349,7 @@ fn constructor_cell_parameters_are_typed_and_validated() {
         },
     );
     contract.ledger_fields = vec![LedgerField {
+        source: None,
         id: "stored".into(),
         index: 0,
         path: vec![],
@@ -345,6 +414,7 @@ fn constructor_counter_steps_use_typed_vm_calls() {
         },
     );
     contract.ledger_fields = vec![LedgerField {
+        source: None,
         id: "count".into(),
         index: 0,
         path: vec![],
@@ -408,6 +478,7 @@ fn constructor_for_each_checks_element_type_and_loop_binding() {
         },
     );
     contract.ledger_fields = vec![LedgerField {
+        source: None,
         id: "count".into(),
         index: 0,
         path: vec![],
@@ -479,6 +550,7 @@ fn constructor_set_steps_validate_values_and_use_vm_methods() {
         },
     );
     contract.ledger_fields = vec![LedgerField {
+        source: None,
         id: "seen".into(),
         index: 0,
         path: vec![],
@@ -531,6 +603,7 @@ fn constructor_list_steps_validate_values_and_use_vm_methods() {
         },
     );
     contract.ledger_fields = vec![LedgerField {
+        source: None,
         id: "items".into(),
         index: 0,
         path: vec![],
@@ -582,6 +655,7 @@ fn constructor_map_steps_validate_keys_values_and_use_vm_methods() {
         },
     );
     contract.ledger_fields = vec![LedgerField {
+        source: None,
         id: "table".into(),
         index: 0,
         path: vec![],
@@ -644,12 +718,14 @@ fn nested_set_query_in_cell_write_checks_field_and_item_types() {
     );
     contract.ledger_fields = vec![
         LedgerField {
+            source: None,
             id: "flag".into(),
             index: 0,
             path: vec![],
             declaration: LedgerFieldKind::Cell { ty: Type::Boolean },
         },
         LedgerField {
+            source: None,
             id: "seen".into(),
             index: 1,
             path: vec![],
@@ -871,6 +947,8 @@ fn rejects_bad_schema_and_unknown_references() {
     contract.schema_version = 4;
     assert_eq!(render(&contract), Err(RenderError::SchemaVersion(4)));
     contract.schema_version = 6;
+    assert_eq!(render(&contract), Err(RenderError::SchemaVersion(6)));
+    contract.schema_version = 7;
     contract.circuits[0].body = Expr::Parameter {
         name: "missing".into(),
     };
@@ -1213,7 +1291,7 @@ fn rejects_noncanonical_or_unsupported_unsigned_maxima() {
         "452312848583266388373324160190187140051835877600158453279131187530910662656",
     ] {
         let contract = Contract {
-            schema_version: 6,
+            schema_version: 7,
             type_aliases: vec![],
             constructor: None,
             witnesses: vec![],
@@ -1251,7 +1329,7 @@ fn unknown_json_fields_are_rejected() {
 #[test]
 fn witness_calls_require_a_declared_witness_and_matching_signature() {
     let mut contract = Contract {
-        schema_version: 6,
+        schema_version: 7,
         type_aliases: vec![],
         constructor: None,
         ledger_fields: vec![],
@@ -1315,11 +1393,12 @@ fn witness_calls_require_a_declared_witness_and_matching_signature() {
 #[test]
 fn state_action_must_reference_the_declared_ledger_field_and_index() {
     let mut contract = Contract {
-        schema_version: 6,
+        schema_version: 7,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
         ledger_fields: vec![LedgerField {
+            source: None,
             id: "round".into(),
             index: 0,
             path: vec![],
@@ -1398,11 +1477,12 @@ fn state_action_must_reference_the_declared_ledger_field_and_index() {
 #[test]
 fn unsupported_nested_call_does_not_expose_an_incomplete_trace() {
     let mut contract = Contract {
-        schema_version: 6,
+        schema_version: 7,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
         ledger_fields: vec![LedgerField {
+            source: None,
             id: "round".into(),
             index: 0,
             path: vec![],
@@ -1450,11 +1530,12 @@ fn unsupported_nested_call_does_not_expose_an_incomplete_trace() {
 #[test]
 fn unsupported_field_expression_does_not_expose_a_recorded_call() {
     let mut contract = Contract {
-        schema_version: 6,
+        schema_version: 7,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
         ledger_fields: vec![LedgerField {
+            source: None,
             id: "value".into(),
             index: 0,
             path: vec![],
@@ -1505,11 +1586,12 @@ fn unsupported_field_expression_does_not_expose_a_recorded_call() {
 #[test]
 fn stateful_parameters_are_checked_before_cell_writes() {
     let mut contract = Contract {
-        schema_version: 6,
+        schema_version: 7,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
         ledger_fields: vec![LedgerField {
+            source: None,
             id: "flag".into(),
             index: 0,
             path: vec![],
@@ -1560,11 +1642,12 @@ fn stateful_parameters_are_checked_before_cell_writes() {
 #[test]
 fn counter_parameter_requires_uint16_and_a_known_name() {
     let mut contract = Contract {
-        schema_version: 6,
+        schema_version: 7,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
         ledger_fields: vec![LedgerField {
+            source: None,
             id: "round".into(),
             index: 0,
             path: vec![],
@@ -1624,11 +1707,12 @@ fn counter_parameter_requires_uint16_and_a_known_name() {
 #[test]
 fn ledger_read_return_must_match_the_declared_cell() {
     let mut contract = Contract {
-        schema_version: 6,
+        schema_version: 7,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
         ledger_fields: vec![LedgerField {
+            source: None,
             id: "flag".into(),
             index: 0,
             path: vec![],
@@ -1673,11 +1757,12 @@ fn ledger_read_return_must_match_the_declared_cell() {
 #[test]
 fn counter_read_returns_uint64() {
     let mut contract = Contract {
-        schema_version: 6,
+        schema_version: 7,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
         ledger_fields: vec![LedgerField {
+            source: None,
             id: "round".into(),
             index: 0,
             path: vec![],
@@ -1720,11 +1805,12 @@ fn counter_read_returns_uint64() {
 #[test]
 fn set_actions_require_the_declared_element_type() {
     let mut contract = Contract {
-        schema_version: 6,
+        schema_version: 7,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
         ledger_fields: vec![LedgerField {
+            source: None,
             id: "seen".into(),
             index: 0,
             path: vec![],
@@ -1817,11 +1903,12 @@ fn set_actions_require_the_declared_element_type() {
 #[test]
 fn map_insert_and_lookup_require_key_and_value_types() {
     let mut contract = Contract {
-        schema_version: 6,
+        schema_version: 7,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
         ledger_fields: vec![LedgerField {
+            source: None,
             id: "table".into(),
             index: 0,
             path: vec![],
@@ -1963,11 +2050,12 @@ fn map_insert_and_lookup_require_key_and_value_types() {
 #[test]
 fn list_push_front_and_length_validate_declared_types() {
     let mut contract = Contract {
-        schema_version: 6,
+        schema_version: 7,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
         ledger_fields: vec![LedgerField {
+            source: None,
             id: "items".into(),
             index: 0,
             path: vec![],
@@ -2067,7 +2155,7 @@ fn struct_definitions_are_shared_by_name_and_must_match() {
         }],
     };
     let mut contract = Contract {
-        schema_version: 6,
+        schema_version: 7,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -2105,7 +2193,7 @@ fn struct_definitions_are_shared_by_name_and_must_match() {
 #[test]
 fn stateful_call_checks_target_and_arguments() {
     let mut contract = Contract {
-        schema_version: 6,
+        schema_version: 7,
         type_aliases: vec![],
         constructor: None,
         ledger_fields: vec![],

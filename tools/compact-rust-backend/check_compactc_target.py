@@ -396,6 +396,11 @@ def main() -> None:
         assert (rust / "contract/lib.rs").is_file()
         assert (rust / "contract/Cargo.toml").is_file()
         assert not (rust / "contract/index.js").exists()
+        rust_ir = json.loads((rust / "contract/compact-rust-ir.json").read_text())
+        assert rust_ir["schema_version"] == 7
+        round_field = next(field for field in rust_ir["ledger_fields"] if field["id"] == "round")
+        assert round_field["source"]["file"] == SOURCE.name
+        assert (round_field["source"]["line"], round_field["source"]["column"]) == (18, 1)
         check_manifest(rust)
         protected = base / "protected"
         protected.mkdir()

@@ -51,6 +51,10 @@ pub(crate) fn ledger_path_expr(field: &ir::LedgerField) -> syn::Expr {
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum RenderError {
+    Located {
+        location: ir::SourceLocation,
+        error: Box<RenderError>,
+    },
     SchemaVersion(u32),
     InvalidIdentifier(String),
     InvalidUnsignedMaximum(String),
@@ -101,6 +105,11 @@ pub enum RenderError {
 impl fmt::Display for RenderError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::Located { location, error } => write!(
+                f,
+                "{} line {} char {}: {}",
+                location.file, location.line, location.column, error
+            ),
             Self::SchemaVersion(version) => {
                 write!(f, "unsupported Rust backend IR schema {version}")
             }
@@ -190,7 +199,26 @@ impl fmt::Display for RenderError {
     }
 }
 
-impl Error for RenderError {}
+impl Error for RenderError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            Self::Located { error, .. } => Some(error),
+            _ => None,
+        }
+    }
+}
+
+impl RenderError {
+    fn at(self, location: Option<&ir::SourceLocation>) -> Self {
+        match location {
+            Some(location) => Self::Located {
+                location: location.clone(),
+                error: Box::new(self),
+            },
+            None => self,
+        }
+    }
+}
 
 fn ident(name: &str) -> Result<syn::Ident, RenderError> {
     let rust_name = name.replace('$', "_");
@@ -2252,15 +2280,19 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
             LedgerFieldKind::Cell { ty }
             | LedgerFieldKind::Set { ty }
             | LedgerFieldKind::List { ty } => {
-                collect_named_types(ty, &mut struct_definitions, &mut enum_definitions)?;
+                collect_named_types(ty, &mut struct_definitions, &mut enum_definitions)
+                    .map_err(|error| error.at(field.source.as_ref()))?;
             }
             LedgerFieldKind::Map { key, value } => {
-                collect_named_types(key, &mut struct_definitions, &mut enum_definitions)?;
-                collect_named_types(value, &mut struct_definitions, &mut enum_definitions)?;
+                collect_named_types(key, &mut struct_definitions, &mut enum_definitions)
+                    .map_err(|error| error.at(field.source.as_ref()))?;
+                collect_named_types(value, &mut struct_definitions, &mut enum_definitions)
+                    .map_err(|error| error.at(field.source.as_ref()))?;
             }
             LedgerFieldKind::MerkleTree { ty, .. }
             | LedgerFieldKind::HistoricMerkleTree { ty, .. } => {
-                collect_named_types(ty, &mut struct_definitions, &mut enum_definitions)?;
+                collect_named_types(ty, &mut struct_definitions, &mut enum_definitions)
+                    .map_err(|error| error.at(field.source.as_ref()))?;
             }
             LedgerFieldKind::Counter => {}
         }
@@ -2275,24 +2307,26 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
         let path = field.physical_path();
         if &path != expected_path || path.first() != Some(&field.index) {
             if field.path.is_empty() {
-                return Err(RenderError::InvalidLedgerIndex(field.index));
+                return Err(RenderError::InvalidLedgerIndex(field.index).at(field.source.as_ref()));
             }
-            return Err(RenderError::InvalidLedgerPath(path));
+            return Err(RenderError::InvalidLedgerPath(path).at(field.source.as_ref()));
         }
         if path.len() > 2
             || (path.len() > 1 && matches!(field.declaration, LedgerFieldKind::List { .. }))
         {
-            return Err(RenderError::UnsupportedLedgerPath(path));
+            return Err(RenderError::UnsupportedLedgerPath(path).at(field.source.as_ref()));
         }
         if let LedgerFieldKind::MerkleTree { depth, .. }
         | LedgerFieldKind::HistoricMerkleTree { depth, .. } = field.declaration
         {
             if !(2..=32).contains(&depth) {
-                return Err(RenderError::InvalidMerkleTreeDepth(depth));
+                return Err(RenderError::InvalidMerkleTreeDepth(depth).at(field.source.as_ref()));
             }
         }
         if ledger_fields.insert(field.id.as_str(), *field).is_some() {
-            return Err(RenderError::DuplicateLedgerField(field.id.clone()));
+            return Err(
+                RenderError::DuplicateLedgerField(field.id.clone()).at(field.source.as_ref())
+            );
         }
     }
     let callable_circuits: HashMap<&str, &PureCircuit> = contract

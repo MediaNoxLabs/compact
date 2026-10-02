@@ -26,8 +26,10 @@ pub mod pure_circuits {
 #[allow(non_upper_case_globals)]
 pub mod ledger_slots {
     use midnight_compact_runtime as runtime;
-    pub const stored: runtime::slots::CellSlot<runtime::Field> =
-        runtime::slots::CellSlot::new(&[0u8]);
+    pub const users_by_org: runtime::slots::MapSlot<
+        runtime::Field,
+        runtime::slots::MapNode<runtime::Field, runtime::BoundedUint<18446744073709551615>>,
+    > = runtime::slots::MapSlot::new(&[0u8]);
 }
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
@@ -41,44 +43,19 @@ pub mod ledger_contract {
     pub trait Witnesses<Private> {}
     pub fn initial_state<Private>(
         __compact_context: runtime::context::ConstructorContext<Private>,
-        __compact_constructor_param_0: bool,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
-        let state = runtime::ledger::contract_state(vec![runtime::ledger::constructor_cell::<
-            runtime::Field,
-            runtime::ledger::DefaultDB,
-        >(Default::default())]);
-        {
-            let mut context = runtime::context::ConstructorResult::new(__compact_context, state)
-                .into_circuit_context(runtime::ledger::ContractAddress::default());
-            let mut total_cost = runtime::context::RunningCost::default();
-            let __compact_constructor_local_0: runtime::Field = runtime::Field::from(
-                (if __compact_constructor_param_0 {
-                    runtime::BoundedUint::<2>::new(1u128)
-                        .expect("Compact Uint literal fits its maximum")
-                } else {
-                    runtime::BoundedUint::<2>::new(2u128)
-                        .expect("Compact Uint literal fits its maximum")
-                })
-                .value(),
-            );
-            if !(__compact_constructor_param_0) {
-                return Err(runtime::CompactError::AssertionFailed(
-                    "constructor rejected".to_owned(),
-                ));
-            }
-            let step = context.write_cell(0, (__compact_constructor_local_0).clone())?;
-            context = step.context;
-            let _ = total_cost;
-            Ok(context.into_constructor_result())
-        }
+        let state = runtime::ledger::contract_state(vec![runtime::ledger::constructor_map()]);
+        Ok(runtime::context::ConstructorResult::new(
+            __compact_context,
+            state,
+        ))
     }
-    pub fn read<Private>(
+    pub fn check_nested_empty<Private>(
         context: runtime::context::CircuitContext<Private>,
-    ) -> Result<runtime::context::CircuitResult<Private, runtime::Field>, runtime::CompactError>
-    {
+    ) -> Result<runtime::context::CircuitResult<Private, bool>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let read_step = crate::ledger_slots::stored.read(context)?;
+        let read_step = crate::ledger_slots::users_by_org.is_empty(context)?;
         let context = read_step.context;
         total_cost += read_step.gas_cost;
         let result = read_step.result;
@@ -92,28 +69,26 @@ pub mod ledger_contract {
     /// Circuits with a replayable ordered ledger program.
     pub mod recorded {
         use midnight_compact_runtime as runtime;
-        pub fn read<Private>(
+        pub fn check_nested_empty<Private>(
             context: runtime::context::CircuitContext<Private>,
-        ) -> Result<
-            runtime::recording::RecordedCircuitResult<Private, runtime::Field>,
-            runtime::CompactError,
-        > {
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
+        {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, observed): (_, runtime::Field) =
-                crate::ledger_slots::stored.record_read(frame)?;
+            let (frame, observed): (_, bool) =
+                crate::ledger_slots::users_by_org.record_is_empty(frame)?;
             Ok(frame.finish(observed))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
         impl Contract {
-            pub fn read<Private>(
+            pub fn check_nested_empty<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
             ) -> Result<
-                runtime::recording::RecordedCircuitResult<Private, runtime::Field>,
+                runtime::recording::RecordedCircuitResult<Private, bool>,
                 runtime::CompactError,
             > {
-                crate::ledger_contract::recorded::read(context)
+                crate::ledger_contract::recorded::check_nested_empty(context)
             }
         }
     }
@@ -140,12 +115,11 @@ pub mod ledger_contract {
         }
     }
     impl<W> Contract<W> {
-        pub fn read<Private>(
+        pub fn check_nested_empty<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-        ) -> Result<runtime::context::CircuitResult<Private, runtime::Field>, runtime::CompactError>
-        {
-            crate::ledger_contract::read(context)
+        ) -> Result<runtime::context::CircuitResult<Private, bool>, runtime::CompactError> {
+            crate::ledger_contract::check_nested_empty(context)
         }
     }
 }

@@ -54,8 +54,10 @@ stateful circuits are available as free functions and as methods on
 and typed circuit arguments; witness bounds apply only to methods that need
 them. The facade delegates to the existing functions, preserving state and
 witness behavior. `ledger_slots` exposes typed Cell, Counter, Set, scalar Map,
-and root List descriptors. Nested Map values retain their constructor support but have
-no scalar slot until they have a typed runtime value representation.
+and root List descriptors. Nested Maps have a typed structural slot with
+`MapNode<K, V>` values. Its `is_empty`, `size`, and `member` shape reads are
+available for native and recorded calls; scalar lookup and value mutations
+remain unavailable until nested value semantics are proven.
 The runtime's recording frame is opt-in. When a circuit has a complete recorded
 trace, the generated `contract.recording` handle exposes it as a typed method.
 For witnessed root Cell circuits, `contract.recording()` borrows the contract's
@@ -91,7 +93,7 @@ Compact spelling without warning in consumer builds.
 |---|---|---|
 | Compact compiler | Toolchain 0.31.133, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
 | Rust IR | Schema 8, private to this backend | The renderer rejects any other schema before writing `lib.rs`. Ledger, circuit, witness, constructor, and exported alias declarations carry optional Compact source locations for diagnostics. |
-| Generated code and Rust runtime | ABI 4 | Generated modules assert the ABI at Rust compile time. |
+| Generated code and Rust runtime | ABI 5 | Generated modules assert the ABI at Rust compile time. ABI 5 adds structural nested Map slots without a scalar value codec. |
 | Rust runtime source | Bundled runtime crates or an explicit shared source root | Cargo resolves the matching runtime and its pinned Midnight crates. |
 
 `--runtime-version` reports the TypeScript runtime version; the Rust runtime

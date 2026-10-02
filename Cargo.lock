@@ -1497,6 +1497,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-nested-map-shape-fixture"
+version = "0.1.0"
+dependencies = [
+ "midnight-compact-runtime",
+]
+
+[[package]]
 name = "compact-rust-nested-stateful-ternary-fixture"
 version = "0.1.0"
 dependencies = [
@@ -1588,6 +1595,7 @@ dependencies = [
  "compact-rust-counter-fixture",
  "compact-rust-list-field-fixture",
  "compact-rust-map-boolean-field-fixture",
+ "compact-rust-nested-map-shape-fixture",
  "compact-rust-nested-witness-call-oracle-fixture",
  "compact-rust-recorded-enum-cell-fixture",
  "compact-rust-set-boolean-fixture",

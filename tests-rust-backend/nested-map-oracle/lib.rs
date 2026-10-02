@@ -20,18 +20,22 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 4);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 5);
 }
 /// Typed descriptors for Compact Cell, Counter, Set, Map, and List declarations.
 #[allow(non_upper_case_globals)]
 pub mod ledger_slots {
     use midnight_compact_runtime as runtime;
     pub const flag: runtime::slots::CellSlot<bool> = runtime::slots::CellSlot::new(&[0u8]);
+    pub const users_by_org: runtime::slots::MapSlot<
+        runtime::Field,
+        runtime::slots::MapNode<runtime::Field, runtime::BoundedUint<18446744073709551615>>,
+    > = runtime::slots::MapSlot::new(&[1u8]);
 }
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 4);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 5);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,

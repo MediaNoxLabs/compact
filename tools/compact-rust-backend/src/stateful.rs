@@ -24,7 +24,7 @@ use crate::ir::{
 };
 use crate::{
     RenderError, UnsignedMaximum, coerce_expression, expression_with_calls, ident,
-    ledger_path_expr, rust_type, scalar_map_slot_types, unsigned_cast_syntax, unsigned_maximum,
+    ledger_path_expr, map_slot_types, rust_type, unsigned_cast_syntax, unsigned_maximum,
 };
 
 pub(crate) fn render_state_expression(
@@ -306,7 +306,7 @@ pub(crate) fn render_state_expression(
             let (valid_kind, use_slot) = match (value, &declaration.declaration) {
                 (Expr::SetIsEmpty { .. }, LedgerFieldKind::Set { .. }) => (true, true),
                 (Expr::MapIsEmpty { .. }, LedgerFieldKind::Map { key, value }) => {
-                    (true, scalar_map_slot_types(key, value)?.is_some())
+                    (true, map_slot_types(key, value)?.is_some())
                 }
                 _ => (false, false),
             };

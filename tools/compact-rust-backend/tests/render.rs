@@ -210,7 +210,7 @@ fn generated_unit_enum_uses_checked_derive_without_handwritten_codecs() {
     let source = render(&contract).unwrap();
     assert!(source.contains("CompactCellValue, CompactEnum"));
     assert!(source.contains("pub enum Choice"));
-    assert!(source.contains("RUST_RUNTIME_ABI == 4"));
+    assert!(source.contains("RUST_RUNTIME_ABI == 5"));
     assert!(!source.contains("impl FieldRepr for Choice"));
     assert!(!source.contains("impl BinaryHashRepr for Choice"));
     assert!(!source.contains("impl FromFieldRepr for Choice"));
@@ -869,7 +869,7 @@ fn nested_set_query_in_cell_write_checks_field_and_item_types() {
 }
 
 #[test]
-fn native_collection_emptiness_uses_slots_only_when_they_exist() {
+fn native_collection_emptiness_uses_typed_scalar_and_nested_slots() {
     let mut contract = identity(Type::Unit, Expr::Unit);
     contract.ledger_fields = vec![
         LedgerField {
@@ -931,8 +931,10 @@ fn native_collection_emptiness_uses_slots_only_when_they_exist() {
         },
     };
     let nested_source = render(&contract).unwrap();
-    assert!(nested_source.contains("context.is_empty_map(1)?"));
-    assert!(!nested_source.contains("pub const entries:"));
+    assert!(nested_source.contains("crate::ledger_slots::entries.is_empty(context)?"));
+    assert!(nested_source.contains("runtime::slots::MapNode<runtime::Field, runtime::Field>"));
+    assert!(nested_source.contains("pub const entries:"));
+    assert!(!nested_source.contains("context.is_empty_map(1)?"));
 }
 
 #[test]
@@ -2207,8 +2209,8 @@ fn map_insert_and_lookup_require_key_and_value_types() {
     }];
     assert!(!render(&contract).unwrap().contains("pub mod recorded"));
 
-    // A nested ledger Map is constructor-supported, but its value has no
-    // CellValue type for scalar MapSlot operations.
+    // A nested ledger Map has a structural slot, but its value still has no
+    // CellValue codec for scalar insert and lookup operations.
     contract.stateful_circuits.clear();
     contract.ledger_fields[0].declaration = LedgerFieldKind::Map {
         key: Type::Field,
@@ -2221,7 +2223,9 @@ fn map_insert_and_lookup_require_key_and_value_types() {
     };
     let source = render(&contract).unwrap();
     assert!(source.contains("constructor_map()"));
-    assert!(!source.contains("MapSlot<"));
+    assert!(source.contains("MapSlot<"));
+    assert!(source.contains("runtime::slots::MapNode<"));
+    assert!(source.contains("runtime::BoundedUint<18446744073709551615>"));
 }
 
 #[test]

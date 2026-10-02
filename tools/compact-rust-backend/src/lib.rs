@@ -5,7 +5,7 @@ mod recorded;
 mod stateful;
 mod witness;
 
-const RUNTIME_ABI_VERSION: u32 = 4;
+const RUNTIME_ABI_VERSION: u32 = 5;
 
 const GENERATED_HEADER: &str = r#"// This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
@@ -368,7 +368,23 @@ fn rust_type(ty: &Type) -> Result<syn::Type, RenderError> {
     })
 }
 
-pub(crate) fn scalar_map_slot_types(
+fn map_slot_value_type(value: &Type) -> Result<Option<syn::Type>, RenderError> {
+    if let Type::LedgerMap { key, value } = value {
+        let Some((key, value)) = map_slot_types(key, value)? else {
+            return Ok(None);
+        };
+        return Ok(Some(
+            syn::parse_quote!(runtime::slots::MapNode<#key, #value>),
+        ));
+    }
+    match rust_type(value) {
+        Ok(ty) => Ok(Some(ty)),
+        Err(RenderError::UnsupportedLedgerValueType(_)) => Ok(None),
+        Err(error) => Err(error),
+    }
+}
+
+pub(crate) fn map_slot_types(
     key: &Type,
     value: &Type,
 ) -> Result<Option<(syn::Type, syn::Type)>, RenderError> {
@@ -377,10 +393,9 @@ pub(crate) fn scalar_map_slot_types(
         Err(RenderError::UnsupportedLedgerValueType(_)) => return Ok(None),
         Err(error) => return Err(error),
     };
-    let value = match rust_type(value) {
-        Ok(ty) => ty,
-        Err(RenderError::UnsupportedLedgerValueType(_)) => return Ok(None),
-        Err(error) => return Err(error),
+    let value = match map_slot_value_type(value)? {
+        Some(ty) => ty,
+        None => return Ok(None),
     };
     Ok(Some((key, value)))
 }
@@ -2866,10 +2881,8 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                 });
             }
             LedgerFieldKind::Map { key, value } => {
-                // Nested ledger maps have no CellValue representation yet.
-                // Keep their constructor/native support without advertising
-                // scalar MapSlot operations that cannot type-check.
-                let Some((key, value)) = scalar_map_slot_types(key, value)? else {
+                // Nested Map values are structural markers, not CellValue.
+                let Some((key, value)) = map_slot_types(key, value)? else {
                     continue;
                 };
                 slot_items.push(syn::parse_quote! {

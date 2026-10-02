@@ -33,6 +33,7 @@ use compact_rust_constructor_map_actions_fixture::ledger_contract as constructor
 use compact_rust_counter_fixture::ledger_contract as counter_contract;
 use compact_rust_list_field_fixture::ledger_contract as list_contract;
 use compact_rust_map_boolean_field_fixture::ledger_contract as map_contract;
+use compact_rust_nested_map_shape_fixture::ledger_contract as nested_map_shape_contract;
 use compact_rust_nested_witness_call_oracle_fixture::ledger_contract as expression_contract;
 use compact_rust_recorded_enum_cell_fixture::ledger_contract as enum_cell_contract;
 use compact_rust_recorded_enum_cell_fixture::types::Choice;
@@ -324,9 +325,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     let constructor_list_root = arguments.next();
     let enum_cell_root = arguments.next();
     let tiny_root = arguments.next();
+    let nested_map_shape_root = arguments.next();
     if arguments.next().is_some() {
         return Err(
-            "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output> [witness-output] [nested-output] [nested-witness-output] [set-output] [set-oracle-output] [map-output] [constructor-map-output] [list-output] [constructor-list-output] [enum-cell-output] [tiny-output]"
+            "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output> [witness-output] [nested-output] [nested-witness-output] [set-output] [set-oracle-output] [map-output] [constructor-map-output] [list-output] [constructor-list-output] [enum-cell-output] [tiny-output] [nested-map-shape-output]"
                 .into(),
         );
     }
@@ -1206,6 +1208,36 @@ fn main() -> Result<(), Box<dyn Error>> {
             )? != compact_rust_tiny_oracle_fixture::types::STATE::unset
             {
                 return Err("proven tiny absent get changed the state".into());
+            }
+            Ok(())
+        })?;
+    }
+    if let Some(shape_root) = nested_map_shape_root.as_ref().map(Path::new) {
+        let circuit = "check_nested_empty";
+        let initial = nested_map_shape_contract::initial_state(ConstructorContext::new(()))?;
+        let deploy = make_deploy(
+            shape_root,
+            circuit,
+            initial.ledger_state.get_ref().clone(),
+            &mut rng,
+        )?;
+        let context = initial.into_circuit_context(deploy.address());
+        let recorded = nested_map_shape_contract::Contract::default()
+            .recording
+            .check_nested_empty(context)?;
+        if !recorded.execution.result {
+            return Err("new nested Map unexpectedly nonempty".into());
+        }
+        let call = check_generated_trace(shape_root, circuit, recorded, ())?;
+        check_transaction(shape_root, circuit, deploy, call, &mut rng, |contract| {
+            let StateValue::Array(fields) = contract.data.get_ref() else {
+                return Err("nested Map state is not an array".into());
+            };
+            let StateValue::Map(map) = fields.get(0).ok_or("nested Map field missing")? else {
+                return Err("nested Map field has wrong ledger shape".into());
+            };
+            if map.size() != 0 {
+                return Err("proven nested Map shape read changed the Map".into());
             }
             Ok(())
         })?;

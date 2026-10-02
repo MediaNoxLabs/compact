@@ -257,14 +257,21 @@ impl<T: CellValue> SetSlot<T> {
     }
 }
 
-/// A compiler-declared Map with fixed key/value types and a physical path.
+/// A ledger Map nested as another Map's value, rather than a scalar `CellValue`.
+///
+/// This marker has no value codec. It lets a generated slot name the nested
+/// structure while keeping scalar lookup and insert methods unavailable.
+#[derive(Clone, Copy, Debug)]
+pub struct MapNode<K, V>(PhantomData<fn() -> (K, V)>);
+
+/// A compiler-declared Map with fixed key/value shape and a physical path.
 #[derive(Clone, Copy)]
 pub struct MapSlot<K, V> {
     path: &'static [u8],
     types: PhantomData<fn() -> (K, V)>,
 }
 
-impl<K: CellValue, V: CellValue> MapSlot<K, V> {
+impl<K: CellValue, V> MapSlot<K, V> {
     pub const fn new(path: &'static [u8]) -> Self {
         Self {
             path,
@@ -276,6 +283,55 @@ impl<K: CellValue, V: CellValue> MapSlot<K, V> {
         self.path
     }
 
+    pub fn member<Private, D: DB>(
+        self,
+        context: CircuitContext<Private, D>,
+        key: K,
+    ) -> Result<CircuitResult<Private, bool, D>, CompactError> {
+        context.member_map(self.path, key)
+    }
+
+    pub fn size<Private, D: DB>(
+        self,
+        context: CircuitContext<Private, D>,
+    ) -> Result<CircuitResult<Private, u64, D>, CompactError> {
+        context.size_map(self.path)
+    }
+
+    pub fn is_empty<Private, D: DB>(
+        self,
+        context: CircuitContext<Private, D>,
+    ) -> Result<CircuitResult<Private, bool, D>, CompactError> {
+        context.is_empty_map(self.path)
+    }
+
+    pub fn record_member<Private, D: DB>(
+        self,
+        frame: RecordingFrame<Private, D>,
+        key: K,
+    ) -> Result<(RecordingFrame<Private, D>, bool), CompactError>
+    where
+        K: Clone,
+    {
+        frame.member_map(self.path, key)
+    }
+
+    pub fn record_size<Private, D: DB>(
+        self,
+        frame: RecordingFrame<Private, D>,
+    ) -> Result<(RecordingFrame<Private, D>, u64), CompactError> {
+        frame.size_map(self.path)
+    }
+
+    pub fn record_is_empty<Private, D: DB>(
+        self,
+        frame: RecordingFrame<Private, D>,
+    ) -> Result<(RecordingFrame<Private, D>, bool), CompactError> {
+        frame.is_empty_map(self.path)
+    }
+}
+
+impl<K: CellValue, V: CellValue> MapSlot<K, V> {
     pub fn insert<Private, D: DB>(
         self,
         context: CircuitContext<Private, D>,
@@ -311,34 +367,12 @@ impl<K: CellValue, V: CellValue> MapSlot<K, V> {
         context.reset_map(self.path)
     }
 
-    pub fn member<Private, D: DB>(
-        self,
-        context: CircuitContext<Private, D>,
-        key: K,
-    ) -> Result<CircuitResult<Private, bool, D>, CompactError> {
-        context.member_map(self.path, key)
-    }
-
     pub fn lookup<Private, D: DB>(
         self,
         context: CircuitContext<Private, D>,
         key: K,
     ) -> Result<CircuitResult<Private, V, D>, CompactError> {
         context.lookup_map(self.path, key)
-    }
-
-    pub fn size<Private, D: DB>(
-        self,
-        context: CircuitContext<Private, D>,
-    ) -> Result<CircuitResult<Private, u64, D>, CompactError> {
-        context.size_map(self.path)
-    }
-
-    pub fn is_empty<Private, D: DB>(
-        self,
-        context: CircuitContext<Private, D>,
-    ) -> Result<CircuitResult<Private, bool, D>, CompactError> {
-        context.is_empty_map(self.path)
     }
 
     pub fn record_insert<Private, D: DB>(
@@ -376,17 +410,6 @@ impl<K: CellValue, V: CellValue> MapSlot<K, V> {
         frame.reset_map(self.path)
     }
 
-    pub fn record_member<Private, D: DB>(
-        self,
-        frame: RecordingFrame<Private, D>,
-        key: K,
-    ) -> Result<(RecordingFrame<Private, D>, bool), CompactError>
-    where
-        K: Clone,
-    {
-        frame.member_map(self.path, key)
-    }
-
     pub fn record_lookup<Private, D: DB>(
         self,
         frame: RecordingFrame<Private, D>,
@@ -396,20 +419,6 @@ impl<K: CellValue, V: CellValue> MapSlot<K, V> {
         K: Clone,
     {
         frame.lookup_map(self.path, key)
-    }
-
-    pub fn record_size<Private, D: DB>(
-        self,
-        frame: RecordingFrame<Private, D>,
-    ) -> Result<(RecordingFrame<Private, D>, u64), CompactError> {
-        frame.size_map(self.path)
-    }
-
-    pub fn record_is_empty<Private, D: DB>(
-        self,
-        frame: RecordingFrame<Private, D>,
-    ) -> Result<(RecordingFrame<Private, D>, bool), CompactError> {
-        frame.is_empty_map(self.path)
     }
 }
 

@@ -6,6 +6,10 @@ midnight-zk primitives for fields, encoding, cryptography, state, and VM
 queries. Generated code checks `RUST_RUNTIME_ABI` at compile time. A generated
 crate bundles matching runtime sources by default or points to one shared
 source root when compiled with `--rust-runtime-root`.
+ABI 5 adds `slots::MapNode<K, V>` for nested ledger Map declarations. The
+marker is a type-level shape, not a FAB scalar value. A nested `MapSlot` permits
+`is_empty`, `size`, and `member` reads, including recording, while scalar
+lookup and mutations require a `CellValue` value type.
 
 For the compiler command, generated crate layout, and compatibility matrix,
 see the [Rust backend guide](https://github.com/MediaNoxLabs/compact/blob/codex/rust-backend-ast/tools/compact-rust-backend/README.md).

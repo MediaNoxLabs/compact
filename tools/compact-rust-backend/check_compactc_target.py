@@ -34,6 +34,8 @@ CELL_SOURCE = ROOT / "examples/rust_backend/cell_boolean.compact"
 SET_SOURCE = ROOT / "examples/rust_backend/set_oracle.compact"
 SET_BOOLEAN_SOURCE = ROOT / "examples/rust_backend/set_boolean.compact"
 MAP_BOOLEAN_SOURCE = ROOT / "examples/rust_backend/map_boolean_field.compact"
+NESTED_MAP_SOURCE = ROOT / "examples/rust_backend/nested_map_oracle.compact"
+NESTED_MAP_SHAPE_SOURCE = ROOT / "examples/rust_backend/nested_map_shape.compact"
 CONSTRUCTOR_MAP_SOURCE = ROOT / "examples/rust_backend/constructor_map_actions.compact"
 LIST_SOURCE = ROOT / "examples/rust_backend/list_field.compact"
 CONSTRUCTOR_LIST_SOURCE = ROOT / "examples/rust_backend/constructor_list_actions.compact"
@@ -159,6 +161,7 @@ def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
         ("counter", SOURCE), ("field_add", PURE_SOURCE),
         ("cell_boolean", CELL_SOURCE), ("set_oracle", SET_SOURCE),
         ("map_boolean_field", MAP_BOOLEAN_SOURCE),
+        ("nested_map_oracle", NESTED_MAP_SOURCE),
         ("list_field", LIST_SOURCE),
     ):
         output = base / f"shared-{name}"
@@ -191,6 +194,7 @@ def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
         "use compact_contract_field_add::pure_circuits::field_add;\n"
         "use compact_contract_set_oracle::ledger_contract::{Contract as SetContract, initial_state as initial_set_state};\n"
         "use compact_contract_map_boolean_field::ledger_contract::{Contract as MapContract, initial_state as initial_map_state};\n"
+        "use compact_contract_nested_map_oracle::ledger_contract::initial_state as initial_nested_map_state;\n"
         "use compact_contract_list_field::ledger_contract::{Contract as ListContract, initial_state as initial_list_state};\n"
         "use midnight_compact_runtime::context::ConstructorContext;\n"
         "use midnight_compact_runtime::ledger::ContractAddress;\n"
@@ -226,6 +230,11 @@ def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
         "    assert_eq!(map_replay.context.effects, map_call.execution.context.query.effects);\n"
         "    let lookup = MapContract::default().recording.get(map_call.execution.context, true).unwrap();\n"
         "    assert_eq!(lookup.execution.result, Field::from(9_u64));\n"
+        "    let nested = initial_nested_map_state(ConstructorContext::new(())).unwrap();\n"
+        "    let nested_context = nested.into_circuit_context(ContractAddress::default());\n"
+        "    let _: midnight_compact_runtime::slots::MapSlot<Field, midnight_compact_runtime::slots::MapNode<Field, midnight_compact_runtime::BoundedUint<18446744073709551615>>> = compact_contract_nested_map_oracle::ledger_slots::users_by_org;\n"
+        "    let nested_empty = compact_contract_nested_map_oracle::ledger_slots::users_by_org.is_empty(nested_context).unwrap();\n"
+        "    assert!(nested_empty.result);\n"
         "    let list = initial_list_state(ConstructorContext::new(())).unwrap();\n"
         "    let list_context = list.into_circuit_context(ContractAddress::default());\n"
         "    let _: midnight_compact_runtime::slots::ListSlot<Field> = compact_contract_list_field::ledger_slots::items;\n"
@@ -280,6 +289,22 @@ def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
     assert rejected.returncode != 0, "wrong Set element type unexpectedly compiled"
     assert "error[E0308]: mismatched types" in rejected.stderr, rejected.stderr
     assert "found `bool`" in rejected.stderr, rejected.stderr
+
+    (consumer / "examples/nested_map_scalar_lookup.rs").write_text(
+        "use compact_contract_nested_map_oracle::ledger_contract::initial_state;\n"
+        "use compact_contract_nested_map_oracle::runtime::{Field, context::ConstructorContext, ledger::ContractAddress};\n"
+        "fn main() {\n"
+        "    let state = initial_state(ConstructorContext::new(())).unwrap();\n"
+        "    let context = state.into_circuit_context(ContractAddress::default());\n"
+        "    let _ = compact_contract_nested_map_oracle::ledger_slots::users_by_org.lookup(context, Field::from(1_u64));\n"
+        "}\n"
+    )
+    rejected = subprocess.run(
+        ["cargo", "check", "--quiet", "--example", "nested_map_scalar_lookup"],
+        cwd=consumer, env=environment, capture_output=True, text=True,
+    )
+    assert rejected.returncode != 0, "nested Map scalar lookup unexpectedly compiled"
+    assert "lookup" in rejected.stderr and "MapNode" in rejected.stderr, rejected.stderr
 
 
     (consumer / "examples/wrong_list_element.rs").write_text(
@@ -569,6 +594,13 @@ def main() -> None:
                     assert (tiny_proof / "keys" / f"{circuit}.{extension}").is_file()
                 for extension in ("zkir", "bzkir"):
                     assert (tiny_proof / "zkir" / f"{circuit}.{extension}").is_file()
+            nested_map_shape_proof = base / "nested-map-shape-proof"
+            run(compiler, "--target", "rust", str(NESTED_MAP_SHAPE_SOURCE), str(nested_map_shape_proof))
+            check_manifest(nested_map_shape_proof)
+            for extension in ("prover", "verifier"):
+                assert (nested_map_shape_proof / "keys" / f"check_nested_empty.{extension}").is_file()
+            for extension in ("zkir", "bzkir"):
+                assert (nested_map_shape_proof / "zkir" / f"check_nested_empty.{extension}").is_file()
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 str(proof), str(cell_proof), str(cell_read_proof), str(witness_proof), str(nested_proof),
@@ -576,6 +608,7 @@ def main() -> None:
                 str(map_proof), str(constructor_map_proof), str(list_proof), str(constructor_list_proof),
                 str(enum_cell_proof),
                 str(tiny_proof),
+                str(nested_map_shape_proof),
             )
     print("compactc target boundary and manifest: passed")
 

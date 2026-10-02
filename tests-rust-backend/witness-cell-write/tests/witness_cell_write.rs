@@ -513,3 +513,50 @@ fn witness_read_meter_charges_each_successful_read() {
         midnight_compact_runtime::context::RunningCost::ZERO,
     );
 }
+
+#[test]
+fn gas_limit_guards_each_ledger_query_while_observed_cost_sums_queries() {
+    let mut context = initial_state(ConstructorContext::new(7_u64))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let (query, _) =
+        query_cell_at_path::<Field, _>(&context.query, &[0], None, &context.cost_model).unwrap();
+    let one_read = query.gas_cost;
+    assert!(one_read.read_time > RunningCost::ZERO.read_time);
+    let one_query_limit = RunningCost {
+        read_time: one_read.read_time,
+        compute_time: one_read.compute_time,
+        bytes_written: u64::MAX,
+        bytes_deleted: u64::MAX,
+    };
+    context.gas_limit = Some(one_query_limit);
+
+    let (frame, ()) = CircuitFrame::new(context)
+        .try_witness_metered(|context, meter| {
+            assert_eq!(meter.read_cell::<Field>(&[0])?, Field::from(0_u64));
+            assert_eq!(meter.read_cell::<Field>(&[0])?, Field::from(0_u64));
+            Ok((context.private_state, ()))
+        })
+        .unwrap();
+    let result = frame.finish(());
+    assert_eq!(result.gas_cost, one_read + one_read);
+    assert!(result.gas_cost.read_time > one_query_limit.read_time);
+
+    // Ordinary circuit reads use the same upstream per-query limit.
+    let first = read_cell(result.context).unwrap();
+    let second = read_cell(first.context).unwrap();
+    assert_eq!(first.gas_cost, one_read);
+    assert_eq!(second.gas_cost, one_read);
+
+    let mut rejected = initial_state(ConstructorContext::new(7_u64))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    rejected.gas_limit = Some(RunningCost {
+        read_time: RunningCost::ZERO.read_time,
+        ..one_query_limit
+    });
+    assert!(matches!(
+        write_secret(rejected, &FallibleSecret, Field::from(2_u64)),
+        Err(CompactError::LedgerQueryRejected(_))
+    ));
+}

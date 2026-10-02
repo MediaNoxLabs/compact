@@ -10,6 +10,10 @@ ABI 10 adds fallible `TryWitnesses` support in generated crates and
 `try_witness_metered` frame methods. Existing pair-returning `Witnesses`
 implementations work through the generated adapter; new implementations can
 return `Result` and propagate ledger read errors with `?`.
+`CircuitContext.gas_limit` is passed to each ledger-8 VM query, including
+witness-view reads. It does not limit the aggregate cost of a whole circuit;
+`CircuitResult.gas_cost` sums accepted query costs for native diagnostics.
+Transaction admission uses ledger replay and validation. See ADR-0020 / #121.
 ABI 9 adds `ledger::MeteredListView`, which runs canonical List `head`,
 `is_empty`, and `length` witness queries and maps the VM's Maybe pair to
 `Option<T>`. The methods return `Result` so failed queries remain visible.

@@ -75,6 +75,8 @@ pub struct CircuitContext<Private, D: DB = DefaultDB> {
     pub query: QueryContext<D>,
     pub zswap_state: ZswapLocalState<D>,
     pub cost_model: CostModel,
+    /// Ledger-8 VM guard for each individual query, including witness reads.
+    /// CircuitResult::gas_cost separately sums the accepted query costs.
     pub gas_limit: Option<RunningCost>,
 }
 
@@ -89,7 +91,8 @@ pub struct WitnessContext<'a, Private, Ledger = &'a StateValue<DefaultDB>> {
 ///
 /// The witness only borrows the current query state. Each projected Cell read
 /// runs the same ledger VM program as a circuit read and adds that query's cost
-/// without adding a public proof operation to the witness result.
+/// without adding a public proof operation to the witness result. The context's
+/// gas limit is applied to each query, matching ledger-8 and TypeScript.
 pub struct WitnessReadMeter<'a, D: DB = DefaultDB> {
     query: &'a QueryContext<D>,
     cost_model: &'a CostModel,

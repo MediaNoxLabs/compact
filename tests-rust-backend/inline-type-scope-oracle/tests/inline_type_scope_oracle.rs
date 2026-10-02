@@ -14,7 +14,7 @@
 // limitations under the License.
 
 use compact_rust_inline_type_scope_oracle_fixture::ledger_contract::{
-    checkAggScope, checkNoCollisionScope, checkScalarScope, initial_state, setHash,
+    checkAggScope, checkNoCollisionScope, checkScalarScope, initial_state, recorded, setHash,
 };
 use midnight_compact_runtime::context::{CircuitContext, CircuitResult, ConstructorContext};
 use midnight_compact_runtime::ledger::{ContractAddress, DefaultDB, StateValue};
@@ -22,6 +22,7 @@ use midnight_compact_runtime::{CompactError, Field, FixedBytes, FixedVector, per
 use midnight_onchain_state::state::{
     ContractMaintenanceAuthority, ContractOperation, ContractState, EntryPointBuf,
 };
+use midnight_onchain_vm::cost_model::INITIAL_COST_MODEL;
 use midnight_serialize::tagged_serialize;
 use midnight_storage::storage::HashMap;
 
@@ -117,4 +118,39 @@ fn internal_helper_formal_scopes_match_typescript() {
         .err()
         .unwrap();
     assert_eq!(error.to_string(), oracle["scalarMismatch"]);
+}
+
+#[test]
+fn bytes_cell_recording_matches_native_and_replays() {
+    let hash = persistent_hash(Field::from(5_u64));
+    let native = setHash(
+        initial_state(ConstructorContext::new(()))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default()),
+        hash,
+    )
+    .unwrap();
+    let recorded = recorded::setHash(
+        initial_state(ConstructorContext::new(()))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default()),
+        hash,
+    )
+    .unwrap();
+    assert_eq!(recorded.public.verify_ops().len(), 3);
+    assert_eq!(recorded.execution.gas_cost, native.gas_cost);
+    assert_eq!(
+        state_hex(recorded.execution.context.query.state.get_ref().clone()),
+        state_hex(native.context.query.state.get_ref().clone())
+    );
+    let replay = recorded
+        .public
+        .initial()
+        .query(recorded.public.verify_ops(), None, &INITIAL_COST_MODEL)
+        .unwrap();
+    assert_eq!(replay.gas_cost, recorded.execution.gas_cost);
+    assert_eq!(
+        state_hex(replay.context.state.get_ref().clone()),
+        state_hex(native.context.query.state.get_ref().clone())
+    );
 }

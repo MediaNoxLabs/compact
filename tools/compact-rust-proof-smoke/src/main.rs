@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Prove emitted Counter, Cell, Set, Map, and List artifacts in offline ledger-8 transactions.
+//! Prove emitted Counter, Cell, Set, Map, List, and enum Cell artifacts in offline ledger-8 transactions.
 //!
 //! The proof uses the ledger-derived statement from a generated counter VM
 //! program and checks it against the fixture's known ZKIR encoding. The call
@@ -34,6 +34,8 @@ use compact_rust_counter_fixture::ledger_contract as counter_contract;
 use compact_rust_list_field_fixture::ledger_contract as list_contract;
 use compact_rust_map_boolean_field_fixture::ledger_contract as map_contract;
 use compact_rust_nested_witness_call_oracle_fixture::ledger_contract as expression_contract;
+use compact_rust_recorded_enum_cell_fixture::ledger_contract as enum_cell_contract;
+use compact_rust_recorded_enum_cell_fixture::types::Choice;
 use compact_rust_set_boolean_fixture::ledger_contract as set_contract;
 use compact_rust_set_oracle_fixture::ledger_contract as set_oracle_contract;
 use compact_rust_stateful_circuit_call_fixture::ledger_contract as nested_contract;
@@ -308,9 +310,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     let constructor_map_root = arguments.next();
     let list_root = arguments.next();
     let constructor_list_root = arguments.next();
+    let enum_cell_root = arguments.next();
     if arguments.next().is_some() {
         return Err(
-            "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output> [witness-output] [nested-output] [nested-witness-output] [set-output] [set-oracle-output] [map-output] [constructor-map-output] [list-output] [constructor-list-output]"
+            "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output> [witness-output] [nested-output] [nested-witness-output] [set-output] [set-oracle-output] [map-output] [constructor-map-output] [list-output] [constructor-list-output] [enum-cell-output]"
                 .into(),
         );
     }
@@ -1031,6 +1034,37 @@ fn main() -> Result<(), Box<dyn Error>> {
                 },
             )?;
         }
+    }
+    if let Some(enum_cell_root) = enum_cell_root.as_ref().map(Path::new) {
+        let initial = enum_cell_contract::initial_state(ConstructorContext::new(()))?;
+        let deploy = make_deploy(
+            enum_cell_root,
+            "choose",
+            initial.ledger_state.get_ref().clone(),
+            &mut rng,
+        )?;
+        let context = initial.into_circuit_context(deploy.address());
+        let recorded = enum_cell_contract::Contract::default()
+            .recording
+            .choose(context, Choice::no)?;
+        let call = check_generated_trace(enum_cell_root, "choose", recorded, Choice::no)?;
+        check_transaction(
+            enum_cell_root,
+            "choose",
+            deploy,
+            call,
+            &mut rng,
+            |contract| {
+                let StateValue::Array(fields) = contract.data.get_ref() else {
+                    return Err("enum Cell state is not an array".into());
+                };
+                if read_cell::<Choice, _>(fields.get(0).ok_or("enum Cell missing")?)? != Choice::no
+                {
+                    return Err("proven enum Cell call did not write Choice::no".into());
+                }
+                Ok(())
+            },
+        )?;
     }
     Ok(())
 }

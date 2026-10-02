@@ -14,13 +14,14 @@
 // limitations under the License.
 
 use compact_rust_constructor_persistent_hash_fixture::ledger_contract::{
-    initial_state, read_digest,
+    initial_state, read_digest, recorded,
 };
 use midnight_compact_runtime::context::ConstructorContext;
 use midnight_compact_runtime::ledger::{ContractAddress, DefaultDB, StateValue};
 use midnight_onchain_state::state::{
     ContractMaintenanceAuthority, ContractOperation, ContractState, EntryPointBuf,
 };
+use midnight_onchain_vm::cost_model::INITIAL_COST_MODEL;
 use midnight_serialize::tagged_serialize;
 use midnight_storage::storage::HashMap;
 
@@ -49,5 +50,27 @@ fn constructor_persistent_hash_matches_typescript_state() {
         oracle["initialHex"]
     );
     let read = read_digest(constructor.into_circuit_context(ContractAddress::default())).unwrap();
+    let recorded = recorded::read_digest(
+        initial_state(ConstructorContext::new(()))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default()),
+    )
+    .unwrap();
     assert_eq!(hex::encode(read.result.into_array()), oracle["digestHex"]);
+    assert_eq!(
+        hex::encode(recorded.execution.result.into_array()),
+        oracle["digestHex"]
+    );
+    assert_eq!(recorded.execution.gas_cost, read.gas_cost);
+    assert_eq!(recorded.public.verify_ops().len(), 3);
+    let replay = recorded
+        .public
+        .initial()
+        .query(recorded.public.verify_ops(), None, &INITIAL_COST_MODEL)
+        .unwrap();
+    assert_eq!(replay.gas_cost, recorded.execution.gas_cost);
+    assert_eq!(
+        state_hex(replay.context.state.get_ref().clone()),
+        state_hex(recorded.execution.context.query.state.get_ref().clone())
+    );
 }

@@ -95,7 +95,10 @@ pub(crate) fn render_recorded_circuit(
         locals: &HashMap<String, syn::Expr>,
         parameters: &HashMap<&str, (&Type, syn::Ident)>,
     ) -> Option<syn::Expr> {
-        if !matches!(ty, Type::Boolean | Type::Field) {
+        if !matches!(
+            ty,
+            Type::Boolean | Type::Field | Type::Bytes { .. } | Type::Enum { .. }
+        ) {
             return None;
         }
         match value {
@@ -103,10 +106,32 @@ pub(crate) fn render_recorded_circuit(
                 cell_source(value, ty, locals, parameters)
             }
             Expr::Boolean { value } if *ty == Type::Boolean => Some(syn::parse_quote!(#value)),
-            Expr::Parameter { name } => locals.get(name).cloned().or_else(|| {
-                let (actual, rust_name) = parameters.get(name.as_str())?;
-                (actual == &ty).then(|| syn::parse_quote!(#rust_name))
-            }),
+            Expr::Parameter { name } => locals
+                .get(name)
+                .cloned()
+                .or_else(|| {
+                    let (actual, rust_name) = parameters.get(name.as_str())?;
+                    (actual == &ty).then(|| syn::parse_quote!(#rust_name))
+                })
+                .map(|source| {
+                    if matches!(ty, Type::Bytes { .. } | Type::Enum { .. }) {
+                        syn::parse_quote!((#source).clone())
+                    } else {
+                        source
+                    }
+                }),
+            Expr::EnumVariant {
+                ty: variant_ty,
+                variant,
+            } if variant_ty == ty => {
+                let rust_ty = rust_type(ty).ok()?;
+                let variant = ident(variant).ok()?;
+                Some(syn::parse_quote!(#rust_ty::#variant))
+            }
+            Expr::Default { ty: default_ty } if default_ty == ty => {
+                let rust_ty = rust_type(ty).ok()?;
+                Some(syn::parse_quote!(<#rust_ty as Default>::default()))
+            }
             _ => None,
         }
     }
@@ -995,7 +1020,10 @@ pub(crate) fn render_recorded_circuit(
                 let LedgerFieldKind::Cell { ty } = &declaration.declaration else {
                     return Ok(false);
                 };
-                if !matches!(ty, Type::Boolean | Type::Field) {
+                if !matches!(
+                    ty,
+                    Type::Boolean | Type::Field | Type::Bytes { .. } | Type::Enum { .. }
+                ) {
                     return Ok(false);
                 }
                 if declaration.index != *index || declaration.physical_path().len() != 1 {
@@ -1013,7 +1041,7 @@ pub(crate) fn render_recorded_circuit(
                         next_temp,
                         visiting,
                     )?
-                } else {
+                } else if *ty == Type::Boolean {
                     boolean_expression(
                         value,
                         locals,
@@ -1025,6 +1053,8 @@ pub(crate) fn render_recorded_circuit(
                         next_temp,
                         visiting,
                     )?
+                } else {
+                    cell_source(value, ty, locals, parameters)
                 };
                 let Some(value) = value else {
                     return Ok(false);
@@ -1090,7 +1120,10 @@ pub(crate) fn render_recorded_circuit(
             )
         }
         StateReturn::CellRead { field, index }
-            if matches!(circuit.result, Type::Boolean | Type::Field) =>
+            if matches!(
+                circuit.result,
+                Type::Boolean | Type::Field | Type::Bytes { .. } | Type::Enum { .. }
+            ) =>
         {
             let declaration = ledger_fields
                 .get(field.as_str())

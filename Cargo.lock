@@ -968,6 +968,7 @@ dependencies = [
  "hex",
  "midnight-compact-runtime",
  "midnight-onchain-state",
+ "midnight-onchain-vm",
  "midnight-serialize",
  "midnight-storage",
  "serde_json",
@@ -1223,6 +1224,7 @@ dependencies = [
  "hex",
  "midnight-compact-runtime",
  "midnight-onchain-state",
+ "midnight-onchain-vm",
  "midnight-serialize",
  "midnight-storage",
  "serde_json",
@@ -1587,6 +1589,7 @@ dependencies = [
  "compact-rust-list-field-fixture",
  "compact-rust-map-boolean-field-fixture",
  "compact-rust-nested-witness-call-oracle-fixture",
+ "compact-rust-recorded-enum-cell-fixture",
  "compact-rust-set-boolean-fixture",
  "compact-rust-set-oracle-fixture",
  "compact-rust-stateful-circuit-call-fixture",
@@ -1629,6 +1632,19 @@ dependencies = [
  "hex",
  "midnight-compact-runtime",
  "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde_json",
+]
+
+[[package]]
+name = "compact-rust-recorded-enum-cell-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-onchain-vm",
  "midnight-serialize",
  "midnight-storage",
  "serde_json",

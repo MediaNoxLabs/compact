@@ -14,12 +14,26 @@
 // limitations under the License.
 
 use compact_rust_witness_ledger_cell_fixture::ledger_contract::{
-    LedgerView, Witnesses, initial_state, private_check, set_flag,
+    LedgerView, TryWitnesses, Witnesses, initial_state, private_check, set_flag,
 };
+use midnight_compact_runtime::CompactError;
+use midnight_compact_runtime::context::RunningCost;
 use midnight_compact_runtime::context::{CircuitResult, ConstructorContext, WitnessContext};
 use midnight_compact_runtime::ledger::ContractAddress;
 
 struct ReadFlag;
+
+struct TryReadFlag;
+
+impl TryWitnesses<u64> for TryReadFlag {
+    fn read_flag(
+        &self,
+        context: WitnessContext<'_, u64, LedgerView<'_>>,
+    ) -> Result<(u64, bool), CompactError> {
+        let flag = context.ledger.flag()?;
+        Ok((*context.private_state + 1, flag))
+    }
+}
 
 impl Witnesses<u64> for ReadFlag {
     fn read_flag(&self, context: WitnessContext<'_, u64, LedgerView<'_>>) -> (u64, bool) {
@@ -67,4 +81,34 @@ fn witness_reads_current_typed_ledger_cell() {
     assert!(write.private_transcript_outputs.is_empty());
     let after = private_check(write.context, &ReadFlag).unwrap();
     assert_oracle_output(&after, &oracle["after"]);
+}
+
+#[test]
+fn fallible_witness_matches_legacy_general_emitter_result() {
+    let context = || {
+        initial_state(ConstructorContext::new(7_u64))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default())
+    };
+    let old = private_check(context(), &ReadFlag).unwrap();
+    let new = private_check(context(), &TryReadFlag).unwrap();
+    assert_eq!(new.result, old.result);
+    assert_eq!(new.context.private_state, old.context.private_state);
+    assert_eq!(new.gas_cost, old.gas_cost);
+    assert_eq!(
+        new.private_transcript_outputs,
+        old.private_transcript_outputs
+    );
+}
+
+#[test]
+fn fallible_witness_rejects_general_circuit_without_panic() {
+    let mut context = initial_state(ConstructorContext::new(7_u64))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    context.gas_limit = Some(RunningCost::ZERO);
+    assert!(matches!(
+        private_check(context, &TryReadFlag),
+        Err(CompactError::LedgerQueryRejected(_))
+    ));
 }

@@ -81,7 +81,7 @@ fn field_expression(
             );
             *next_id += 1;
             steps.push(syn::parse_quote! {
-                let (frame, #value_name) = frame.witness_metered(|context, meter| {
+                let (frame, #value_name) = frame.try_witness_metered(|context, meter| {
                     witnesses.#witness_name(
                         context.witness_context_with(LedgerView {
                             state: context.query.state.get_ref(),
@@ -89,7 +89,7 @@ fn field_expression(
                         }),
                         #(#args),*
                     )
-                });
+                })?;
             });
             Ok(Some(syn::parse_quote!(#value_name)))
         }
@@ -274,7 +274,7 @@ pub(crate) fn render_if_supported(
         syn::parse_quote!(pub)
     };
     Ok(Some(syn::parse_quote! {
-        #visibility fn #name<Private, W: Witnesses<Private>>(
+        #visibility fn #name<Private, W: TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
             witnesses: &W,
             #(#args),*

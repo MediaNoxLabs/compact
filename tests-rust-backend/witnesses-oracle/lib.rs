@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 9);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 10);
 }
 /// Typed descriptors for Compact Cell, Counter, Set, Map, and List declarations.
 #[allow(non_upper_case_globals)]
@@ -31,7 +31,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 9);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 10);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -49,6 +49,21 @@ pub mod ledger_contract {
             context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
         ) -> (Private, runtime::Field);
     }
+    /// Witness methods that can propagate ledger projection failures.
+    pub trait TryWitnesses<Private> {
+        fn fetch_field(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+        ) -> Result<(Private, runtime::Field), runtime::CompactError>;
+    }
+    impl<Private, W: Witnesses<Private>> TryWitnesses<Private> for W {
+        fn fetch_field(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+        ) -> Result<(Private, runtime::Field), runtime::CompactError> {
+            Ok(<W as Witnesses<Private>>::fetch_field(self, context))
+        }
+    }
     pub fn initial_state<Private>(
         __compact_context: runtime::context::ConstructorContext<Private>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
@@ -61,17 +76,17 @@ pub mod ledger_contract {
             state,
         ))
     }
-    pub fn pull<Private, W: Witnesses<Private>>(
+    pub fn pull<Private, W: TryWitnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,
         witnesses: &W,
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let frame = runtime::context::CircuitFrame::new(context);
-        let (frame, __compact_frame_witness_0) = frame.witness_metered(|context, meter| {
+        let (frame, __compact_frame_witness_0) = frame.try_witness_metered(|context, meter| {
             witnesses.fetch_field(context.witness_context_with(LedgerView {
                 state: context.query.state.get_ref(),
                 meter,
             }))
-        });
+        })?;
         let __compact_frame_local_1: runtime::Field = __compact_frame_witness_0;
         let (frame, ()) = frame
             .apply(|context| crate::ledger_slots::v.write(context, __compact_frame_local_1))?;
@@ -80,18 +95,18 @@ pub mod ledger_contract {
     /// Circuits with a replayable ordered ledger program.
     pub mod recorded {
         use midnight_compact_runtime as runtime;
-        pub fn pull<Private, W: super::Witnesses<Private>>(
+        pub fn pull<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
             witnesses: &W,
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, __compact_witness_0) = frame.witness_metered(|context, meter| {
+            let (frame, __compact_witness_0) = frame.try_witness_metered(|context, meter| {
                 witnesses.fetch_field(context.witness_context_with(super::LedgerView {
                     state: context.query.state.get_ref(),
                     meter,
                 }))
-            });
+            })?;
             let frame = crate::ledger_slots::v.record_write(frame, __compact_witness_0)?;
             Ok(frame.finish(()))
         }
@@ -108,7 +123,7 @@ pub mod ledger_contract {
                 context: runtime::context::CircuitContext<Private>,
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             where
-                W: super::Witnesses<Private>,
+                W: super::TryWitnesses<Private>,
             {
                 pull(context, self.witnesses)
             }
@@ -142,7 +157,7 @@ pub mod ledger_contract {
             context: runtime::context::CircuitContext<Private>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError>
         where
-            W: Witnesses<Private>,
+            W: TryWitnesses<Private>,
         {
             crate::ledger_contract::pull(context, &self.witnesses)
         }

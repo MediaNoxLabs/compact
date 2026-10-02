@@ -126,7 +126,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 9);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 10);
     pub fn assertRecordFreshEnough(
         policy: crate::types::FreshnessPolicy,
         record: crate::types::AssetRecord,
@@ -286,7 +286,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 9);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 10);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -441,7 +441,43 @@ pub mod ledger_contract {
             context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
         ) -> (Private, runtime::BoundedUint<18446744073709551615>);
     }
-    pub fn initial_state<Private, W: Witnesses<Private>>(
+    /// Witness methods that can propagate ledger projection failures.
+    pub trait TryWitnesses<Private> {
+        fn localOperatorKey(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+        ) -> Result<(Private, runtime::JubjubPoint), runtime::CompactError>;
+        fn localAuditorKey(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+        ) -> Result<(Private, runtime::JubjubPoint), runtime::CompactError>;
+        fn currentTimestamp(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+        ) -> Result<(Private, runtime::BoundedUint<18446744073709551615>), runtime::CompactError>;
+    }
+    impl<Private, W: Witnesses<Private>> TryWitnesses<Private> for W {
+        fn localOperatorKey(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+        ) -> Result<(Private, runtime::JubjubPoint), runtime::CompactError> {
+            Ok(<W as Witnesses<Private>>::localOperatorKey(self, context))
+        }
+        fn localAuditorKey(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+        ) -> Result<(Private, runtime::JubjubPoint), runtime::CompactError> {
+            Ok(<W as Witnesses<Private>>::localAuditorKey(self, context))
+        }
+        fn currentTimestamp(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+        ) -> Result<(Private, runtime::BoundedUint<18446744073709551615>), runtime::CompactError>
+        {
+            Ok(<W as Witnesses<Private>>::currentTimestamp(self, context))
+        }
+    }
+    pub fn initial_state<Private, W: TryWitnesses<Private>>(
         __compact_context: runtime::context::ConstructorContext<Private>,
         witnesses: &W,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
@@ -540,7 +576,7 @@ pub mod ledger_contract {
                 witnesses.localOperatorKey(context.witness_context_with(LedgerView {
                     state: context.query.state.get_ref(),
                     meter: &__compact_witness_meter_3,
-                }));
+                }))?;
             total_cost += __compact_witness_meter_3.gas_cost();
             context.private_state = __compact_next_private_3;
             private_transcript_outputs.push(runtime::fab::AlignedValue::from(
@@ -555,7 +591,7 @@ pub mod ledger_contract {
                 witnesses.localAuditorKey(context.witness_context_with(LedgerView {
                     state: context.query.state.get_ref(),
                     meter: &__compact_witness_meter_5,
-                }));
+                }))?;
             total_cost += __compact_witness_meter_5.gas_cost();
             context.private_state = __compact_next_private_5;
             private_transcript_outputs.push(runtime::fab::AlignedValue::from(
@@ -579,7 +615,7 @@ pub mod ledger_contract {
                 witnesses.currentTimestamp(context.witness_context_with(LedgerView {
                     state: context.query.state.get_ref(),
                     meter: &__compact_witness_meter_10,
-                }));
+                }))?;
             total_cost += __compact_witness_meter_10.gas_cost();
             context.private_state = __compact_next_private_10;
             private_transcript_outputs.push(runtime::fab::AlignedValue::from(
@@ -630,7 +666,7 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
-    pub(crate) fn recordWrite<Private, W: Witnesses<Private>>(
+    pub(crate) fn recordWrite<Private, W: TryWitnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,
         witnesses: &W,
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
@@ -656,7 +692,7 @@ pub mod ledger_contract {
             witnesses.currentTimestamp(context.witness_context_with(LedgerView {
                 state: context.query.state.get_ref(),
                 meter: &__compact_witness_meter_0,
-            }));
+            }))?;
         total_cost += __compact_witness_meter_0.gas_cost();
         context.private_state = __compact_next_private_0;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
@@ -737,7 +773,7 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
-    pub fn setCustodian<Private, W: Witnesses<Private>>(
+    pub fn setCustodian<Private, W: TryWitnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,
         witnesses: &W,
         __compact_param_0: crate::types::ContractAddress,
@@ -762,7 +798,7 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
-    pub fn setRecord<Private, W: Witnesses<Private>>(
+    pub fn setRecord<Private, W: TryWitnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,
         witnesses: &W,
         __compact_param_0: runtime::OpaqueString,
@@ -861,7 +897,7 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
-    pub fn removeRecord<Private, W: Witnesses<Private>>(
+    pub fn removeRecord<Private, W: TryWitnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,
         witnesses: &W,
         __compact_param_0: runtime::OpaqueString,
@@ -916,7 +952,7 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
-    pub fn setCustodyGrant<Private, W: Witnesses<Private>>(
+    pub fn setCustodyGrant<Private, W: TryWitnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,
         witnesses: &W,
         __compact_param_0: runtime::OpaqueString,
@@ -1007,7 +1043,7 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
-    pub fn setWatch<Private, W: Witnesses<Private>>(
+    pub fn setWatch<Private, W: TryWitnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,
         witnesses: &W,
         __compact_param_0: runtime::OpaqueString,
@@ -1107,7 +1143,7 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
-    pub fn tag<Private, W: Witnesses<Private>>(
+    pub fn tag<Private, W: TryWitnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,
         witnesses: &W,
         __compact_param_0: runtime::Field,
@@ -1206,7 +1242,7 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
-    pub fn acceptIfFresh<Private, W: Witnesses<Private>>(
+    pub fn acceptIfFresh<Private, W: TryWitnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,
         witnesses: &W,
         __compact_param_0: crate::types::FreshnessPolicy,
@@ -1232,7 +1268,7 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
-    pub fn close<Private, W: Witnesses<Private>>(
+    pub fn close<Private, W: TryWitnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,
         witnesses: &W,
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
@@ -1287,7 +1323,7 @@ pub mod ledger_contract {
             __compact_param_0: crate::types::ContractAddress,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError>
         where
-            W: Witnesses<Private>,
+            W: TryWitnesses<Private>,
         {
             crate::ledger_contract::setCustodian(context, &self.witnesses, __compact_param_0)
         }
@@ -1299,7 +1335,7 @@ pub mod ledger_contract {
             __compact_param_2: crate::types::RecordMutation,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError>
         where
-            W: Witnesses<Private>,
+            W: TryWitnesses<Private>,
         {
             crate::ledger_contract::setRecord(
                 context,
@@ -1315,7 +1351,7 @@ pub mod ledger_contract {
             __compact_param_0: runtime::OpaqueString,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError>
         where
-            W: Witnesses<Private>,
+            W: TryWitnesses<Private>,
         {
             crate::ledger_contract::removeRecord(context, &self.witnesses, __compact_param_0)
         }
@@ -1327,7 +1363,7 @@ pub mod ledger_contract {
             __compact_param_2: crate::types::RecordMutation,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError>
         where
-            W: Witnesses<Private>,
+            W: TryWitnesses<Private>,
         {
             crate::ledger_contract::setCustodyGrant(
                 context,
@@ -1344,7 +1380,7 @@ pub mod ledger_contract {
             __compact_param_1: crate::types::ListMutation,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError>
         where
-            W: Witnesses<Private>,
+            W: TryWitnesses<Private>,
         {
             crate::ledger_contract::setWatch(
                 context,
@@ -1359,7 +1395,7 @@ pub mod ledger_contract {
             __compact_param_0: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError>
         where
-            W: Witnesses<Private>,
+            W: TryWitnesses<Private>,
         {
             crate::ledger_contract::tag(context, &self.witnesses, __compact_param_0)
         }
@@ -1397,7 +1433,7 @@ pub mod ledger_contract {
             __compact_param_2: runtime::BoundedUint<18446744073709551615>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError>
         where
-            W: Witnesses<Private>,
+            W: TryWitnesses<Private>,
         {
             crate::ledger_contract::acceptIfFresh(
                 context,
@@ -1412,7 +1448,7 @@ pub mod ledger_contract {
             context: runtime::context::CircuitContext<Private>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError>
         where
-            W: Witnesses<Private>,
+            W: TryWitnesses<Private>,
         {
             crate::ledger_contract::close(context, &self.witnesses)
         }

@@ -47,7 +47,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 9);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 10);
     pub(crate) fn some(
         value: runtime::Field,
     ) -> Result<crate::types::Maybe, runtime::CompactError> {
@@ -89,7 +89,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 9);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 10);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -113,7 +113,22 @@ pub mod ledger_contract {
             context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
         ) -> (Private, runtime::FixedBytes<32>);
     }
-    pub fn initial_state<Private, W: Witnesses<Private>>(
+    /// Witness methods that can propagate ledger projection failures.
+    pub trait TryWitnesses<Private> {
+        fn private_secret_key(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+        ) -> Result<(Private, runtime::FixedBytes<32>), runtime::CompactError>;
+    }
+    impl<Private, W: Witnesses<Private>> TryWitnesses<Private> for W {
+        fn private_secret_key(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+        ) -> Result<(Private, runtime::FixedBytes<32>), runtime::CompactError> {
+            Ok(<W as Witnesses<Private>>::private_secret_key(self, context))
+        }
+    }
+    pub fn initial_state<Private, W: TryWitnesses<Private>>(
         __compact_context: runtime::context::ConstructorContext<Private>,
         witnesses: &W,
         __compact_constructor_param_0: runtime::Field,
@@ -139,7 +154,7 @@ pub mod ledger_contract {
                 witnesses.private_secret_key(context.witness_context_with(LedgerView {
                     state: context.query.state.get_ref(),
                     meter: &__compact_witness_meter_0,
-                }));
+                }))?;
             total_cost += __compact_witness_meter_0.gas_cost();
             context.private_state = __compact_next_private_0;
             private_transcript_outputs.push(runtime::fab::AlignedValue::from(
@@ -179,7 +194,7 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
-    pub fn set<Private, W: Witnesses<Private>>(
+    pub fn set<Private, W: TryWitnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,
         witnesses: &W,
         __compact_param_0: runtime::Field,
@@ -202,7 +217,7 @@ pub mod ledger_contract {
             witnesses.private_secret_key(context.witness_context_with(LedgerView {
                 state: context.query.state.get_ref(),
                 meter: &__compact_witness_meter_2,
-            }));
+            }))?;
         total_cost += __compact_witness_meter_2.gas_cost();
         context.private_state = __compact_next_private_2;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
@@ -256,7 +271,7 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
-    pub fn clear<Private, W: Witnesses<Private>>(
+    pub fn clear<Private, W: TryWitnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,
         witnesses: &W,
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
@@ -278,7 +293,7 @@ pub mod ledger_contract {
             witnesses.private_secret_key(context.witness_context_with(LedgerView {
                 state: context.query.state.get_ref(),
                 meter: &__compact_witness_meter_2,
-            }));
+            }))?;
         total_cost += __compact_witness_meter_2.gas_cost();
         context.private_state = __compact_next_private_2;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
@@ -320,7 +335,7 @@ pub mod ledger_contract {
     /// Circuits with a replayable ordered ledger program.
     pub mod recorded {
         use midnight_compact_runtime as runtime;
-        pub fn set<Private, W: super::Witnesses<Private>>(
+        pub fn set<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
             witnesses: &W,
             __compact_param_0: runtime::Field,
@@ -337,12 +352,12 @@ pub mod ledger_contract {
                     "set: attempted to overwrite recorded value".to_owned(),
                 ));
             }
-            let (frame, __compact_witness_3) = frame.witness_metered(|context, meter| {
+            let (frame, __compact_witness_3) = frame.try_witness_metered(|context, meter| {
                 witnesses.private_secret_key(context.witness_context_with(super::LedgerView {
                     state: context.query.state.get_ref(),
                     meter,
                 }))
-            });
+            })?;
             let __compact_recorded_pure_4: runtime::FixedBytes<32> =
                 crate::pure_circuits::public_key((__compact_witness_3).clone())?;
             let frame = crate::ledger_slots::authority
@@ -373,7 +388,7 @@ pub mod ledger_contract {
             };
             Ok(frame.finish(observed))
         }
-        pub fn clear<Private, W: super::Witnesses<Private>>(
+        pub fn clear<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
             witnesses: &W,
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
@@ -389,12 +404,12 @@ pub mod ledger_contract {
                     "clear: no value is currently recorded".to_owned(),
                 ));
             }
-            let (frame, __compact_witness_3) = frame.witness_metered(|context, meter| {
+            let (frame, __compact_witness_3) = frame.try_witness_metered(|context, meter| {
                 witnesses.private_secret_key(context.witness_context_with(super::LedgerView {
                     state: context.query.state.get_ref(),
                     meter,
                 }))
-            });
+            })?;
             let __compact_recorded_pure_4: runtime::FixedBytes<32> =
                 crate::pure_circuits::public_key((__compact_witness_3).clone())?;
             let (frame, __compact_recorded_value_5): (_, runtime::FixedBytes<32>) =
@@ -440,7 +455,7 @@ pub mod ledger_contract {
                 __compact_param_0: runtime::Field,
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             where
-                W: super::Witnesses<Private>,
+                W: super::TryWitnesses<Private>,
             {
                 set(context, self.witnesses, __compact_param_0)
             }
@@ -458,7 +473,7 @@ pub mod ledger_contract {
                 context: runtime::context::CircuitContext<Private>,
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             where
-                W: super::Witnesses<Private>,
+                W: super::TryWitnesses<Private>,
             {
                 clear(context, self.witnesses)
             }
@@ -493,7 +508,7 @@ pub mod ledger_contract {
             __compact_param_0: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError>
         where
-            W: Witnesses<Private>,
+            W: TryWitnesses<Private>,
         {
             crate::ledger_contract::set(context, &self.witnesses, __compact_param_0)
         }
@@ -511,7 +526,7 @@ pub mod ledger_contract {
             context: runtime::context::CircuitContext<Private>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError>
         where
-            W: Witnesses<Private>,
+            W: TryWitnesses<Private>,
         {
             crate::ledger_contract::clear(context, &self.witnesses)
         }

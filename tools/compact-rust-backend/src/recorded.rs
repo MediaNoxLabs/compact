@@ -238,7 +238,7 @@ pub(crate) fn render_recorded_circuit(
                 );
                 *next_temp += 1;
                 steps.push(syn::parse_quote! {
-                    let (frame, #observed) = frame.witness_metered(|context, meter| {
+                    let (frame, #observed) = frame.try_witness_metered(|context, meter| {
                         witnesses.#method(
                             context.witness_context_with(super::LedgerView {
                                 state: context.query.state.get_ref(),
@@ -246,7 +246,7 @@ pub(crate) fn render_recorded_circuit(
                             }),
                             #(#args),*
                         )
-                    });
+                    })?;
                 });
                 Ok(Some(syn::parse_quote!(#observed)))
             }
@@ -730,7 +730,7 @@ pub(crate) fn render_recorded_circuit(
                         );
                         *next_temp += 1;
                         steps.push(syn::parse_quote! {
-                            let (frame, #value) = frame.witness_metered(|context, meter| {
+                            let (frame, #value) = frame.try_witness_metered(|context, meter| {
                                 witnesses.#method(
                                     context.witness_context_with(super::LedgerView {
                                         state: context.query.state.get_ref(),
@@ -738,7 +738,7 @@ pub(crate) fn render_recorded_circuit(
                                     }),
                                     #(#args),*
                                 )
-                            });
+                            })?;
                         });
                         scoped.insert(binding.name.clone(), syn::parse_quote!(#value));
                     } else if let Expr::Call { name, arguments } = &binding.value {
@@ -1689,7 +1689,7 @@ pub(crate) fn render_recorded_circuit(
 
     let item = if circuit_uses_witness(circuit, circuits, &mut HashSet::new())? {
         syn::parse_quote! {
-            pub fn #name<Private, W: super::Witnesses<Private>>(
+            pub fn #name<Private, W: super::TryWitnesses<Private>>(
                 context: runtime::context::CircuitContext<Private>,
                 witnesses: &W,
                 #(#args),*
@@ -1738,7 +1738,7 @@ pub(crate) fn render_borrowed_recorded_contract_method(
                 context: runtime::context::CircuitContext<Private>,
                 #(#args),*
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, #result>, runtime::CompactError>
-            where W: super::Witnesses<Private> {
+            where W: super::TryWitnesses<Private> {
                 #name(context, self.witnesses, #(#call_args),*)
             }
         }

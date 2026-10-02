@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 9);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 10);
 }
 /// Typed descriptors for Compact Cell, Counter, Set, Map, and List declarations.
 #[allow(non_upper_case_globals)]
@@ -32,7 +32,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 9);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 10);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -50,6 +50,21 @@ pub mod ledger_contract {
             context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
         ) -> (Private, runtime::Field);
     }
+    /// Witness methods that can propagate ledger projection failures.
+    pub trait TryWitnesses<Private> {
+        fn secret(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+        ) -> Result<(Private, runtime::Field), runtime::CompactError>;
+    }
+    impl<Private, W: Witnesses<Private>> TryWitnesses<Private> for W {
+        fn secret(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+        ) -> Result<(Private, runtime::Field), runtime::CompactError> {
+            Ok(<W as Witnesses<Private>>::secret(self, context))
+        }
+    }
     pub fn initial_state<Private>(
         __compact_context: runtime::context::ConstructorContext<Private>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
@@ -62,25 +77,25 @@ pub mod ledger_contract {
             state,
         ))
     }
-    pub(crate) fn inner<Private, W: Witnesses<Private>>(
+    pub(crate) fn inner<Private, W: TryWitnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,
         witnesses: &W,
         __compact_param_0: runtime::Field,
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let frame = runtime::context::CircuitFrame::new(context);
-        let (frame, __compact_frame_witness_0) = frame.witness_metered(|context, meter| {
+        let (frame, __compact_frame_witness_0) = frame.try_witness_metered(|context, meter| {
             witnesses.secret(context.witness_context_with(LedgerView {
                 state: context.query.state.get_ref(),
                 meter,
             }))
-        });
+        })?;
         let __compact_frame_local_1: runtime::Field =
             (__compact_frame_witness_0) + (__compact_param_0);
         let (frame, ()) = frame
             .apply(|context| crate::ledger_slots::value.write(context, __compact_frame_local_1))?;
         Ok(frame.finish(()))
     }
-    pub(crate) fn middle<Private, W: Witnesses<Private>>(
+    pub(crate) fn middle<Private, W: TryWitnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,
         witnesses: &W,
         __compact_param_0: runtime::Field,
@@ -90,7 +105,7 @@ pub mod ledger_contract {
             frame.apply(|context| self::inner(context, witnesses, __compact_param_0))?;
         Ok(frame.finish(()))
     }
-    pub fn outer<Private, W: Witnesses<Private>>(
+    pub fn outer<Private, W: TryWitnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,
         witnesses: &W,
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
@@ -113,7 +128,7 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
-    pub(crate) fn innerValue<Private, W: Witnesses<Private>>(
+    pub(crate) fn innerValue<Private, W: TryWitnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,
         witnesses: &W,
     ) -> Result<runtime::context::CircuitResult<Private, runtime::Field>, runtime::CompactError>
@@ -126,7 +141,7 @@ pub mod ledger_contract {
             witnesses.secret(context.witness_context_with(LedgerView {
                 state: context.query.state.get_ref(),
                 meter: &__compact_witness_meter_0,
-            }));
+            }))?;
         total_cost += __compact_witness_meter_0.gas_cost();
         context.private_state = __compact_next_private_0;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
@@ -140,7 +155,7 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
-    pub fn outerValue<Private, W: Witnesses<Private>>(
+    pub fn outerValue<Private, W: TryWitnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,
         witnesses: &W,
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
@@ -166,7 +181,7 @@ pub mod ledger_contract {
     /// Circuits with a replayable ordered ledger program.
     pub mod recorded {
         use midnight_compact_runtime as runtime;
-        pub fn outer<Private, W: super::Witnesses<Private>>(
+        pub fn outer<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
             witnesses: &W,
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
@@ -176,29 +191,29 @@ pub mod ledger_contract {
                 crate::ledger_slots::value.record_read(frame)?;
             let __compact_recorded_arg_1 = __compact_recorded_value_0;
             let __compact_recorded_arg_2 = __compact_recorded_arg_1;
-            let (frame, __compact_witness_3) = frame.witness_metered(|context, meter| {
+            let (frame, __compact_witness_3) = frame.try_witness_metered(|context, meter| {
                 witnesses.secret(context.witness_context_with(super::LedgerView {
                     state: context.query.state.get_ref(),
                     meter,
                 }))
-            });
+            })?;
             let __compact_recorded_sum_4: runtime::Field =
                 __compact_witness_3 + __compact_recorded_arg_2;
             let frame = crate::ledger_slots::value.record_write(frame, __compact_recorded_sum_4)?;
             Ok(frame.finish(()))
         }
-        pub fn outerValue<Private, W: super::Witnesses<Private>>(
+        pub fn outerValue<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
             witnesses: &W,
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, __compact_witness_0) = frame.witness_metered(|context, meter| {
+            let (frame, __compact_witness_0) = frame.try_witness_metered(|context, meter| {
                 witnesses.secret(context.witness_context_with(super::LedgerView {
                     state: context.query.state.get_ref(),
                     meter,
                 }))
-            });
+            })?;
             let __compact_recorded_return_1: runtime::Field = __compact_witness_0;
             let frame =
                 crate::ledger_slots::value.record_write(frame, __compact_recorded_return_1)?;
@@ -217,7 +232,7 @@ pub mod ledger_contract {
                 context: runtime::context::CircuitContext<Private>,
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             where
-                W: super::Witnesses<Private>,
+                W: super::TryWitnesses<Private>,
             {
                 outer(context, self.witnesses)
             }
@@ -226,7 +241,7 @@ pub mod ledger_contract {
                 context: runtime::context::CircuitContext<Private>,
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             where
-                W: super::Witnesses<Private>,
+                W: super::TryWitnesses<Private>,
             {
                 outerValue(context, self.witnesses)
             }
@@ -260,7 +275,7 @@ pub mod ledger_contract {
             context: runtime::context::CircuitContext<Private>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError>
         where
-            W: Witnesses<Private>,
+            W: TryWitnesses<Private>,
         {
             crate::ledger_contract::outer(context, &self.witnesses)
         }
@@ -269,7 +284,7 @@ pub mod ledger_contract {
             context: runtime::context::CircuitContext<Private>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError>
         where
-            W: Witnesses<Private>,
+            W: TryWitnesses<Private>,
         {
             crate::ledger_contract::outerValue(context, &self.witnesses)
         }

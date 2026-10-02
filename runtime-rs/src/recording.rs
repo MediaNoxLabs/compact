@@ -109,6 +109,24 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         (self, value)
     }
 
+    /// Invoke a fallible witness and adopt its private effects only on success.
+    pub fn try_witness_metered<T, F>(mut self, call: F) -> Result<(Self, T), CompactError>
+    where
+        T: Clone,
+        AlignedValue: From<T>,
+        F: FnOnce(
+            &CircuitContext<Private, D>,
+            &WitnessReadMeter<'_, D>,
+        ) -> Result<(Private, T), CompactError>,
+    {
+        let meter = WitnessReadMeter::new(&self.context);
+        let (next_private, value) = call(&self.context, &meter)?;
+        self.observed_gas += meter.gas_cost();
+        self.context.private_state = next_private;
+        self.private_outputs.push(AlignedValue::from(value.clone()));
+        Ok((self, value))
+    }
+
     pub fn write_cell<T: CellValue>(
         self,
         path: impl Into<LedgerPath>,

@@ -104,7 +104,7 @@ pub use types::Schnorr_SchnorrSignature;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 9);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 10);
     pub fn attestationDigest(
         subject: runtime::FixedBytes<32>,
         epoch: runtime::BoundedUint<18446744073709551615>,
@@ -141,7 +141,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 9);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 10);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -182,7 +182,62 @@ pub mod ledger_contract {
             context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
         ) -> (Private, runtime::JubjubPoint);
     }
-    pub fn initial_state<Private, W: Witnesses<Private>>(
+    /// Witness methods that can propagate ledger projection failures.
+    pub trait TryWitnesses<Private> {
+        fn getSchnorrReduction(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+            __compact_param_0: runtime::Field,
+        ) -> Result<
+            (
+                Private,
+                (
+                    runtime::BoundedUint<127>,
+                    runtime::WideUint<
+                        1329227995784915872903807060280344575u128,
+                        340282366920938463463374607431768211455u128,
+                    >,
+                ),
+            ),
+            runtime::CompactError,
+        >;
+        fn localAttestorKey(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+        ) -> Result<(Private, runtime::JubjubPoint), runtime::CompactError>;
+    }
+    impl<Private, W: Witnesses<Private>> TryWitnesses<Private> for W {
+        fn getSchnorrReduction(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+            __compact_param_0: runtime::Field,
+        ) -> Result<
+            (
+                Private,
+                (
+                    runtime::BoundedUint<127>,
+                    runtime::WideUint<
+                        1329227995784915872903807060280344575u128,
+                        340282366920938463463374607431768211455u128,
+                    >,
+                ),
+            ),
+            runtime::CompactError,
+        > {
+            Ok(<W as Witnesses<Private>>::getSchnorrReduction(
+                self,
+                context,
+                __compact_param_0,
+            ))
+        }
+        fn localAttestorKey(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+        ) -> Result<(Private, runtime::JubjubPoint), runtime::CompactError> {
+            Ok(<W as Witnesses<Private>>::localAttestorKey(self, context))
+        }
+    }
+    pub fn initial_state<Private, W: TryWitnesses<Private>>(
         __compact_context: runtime::context::ConstructorContext<Private>,
         witnesses: &W,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
@@ -207,7 +262,7 @@ pub mod ledger_contract {
                 witnesses.localAttestorKey(context.witness_context_with(LedgerView {
                     state: context.query.state.get_ref(),
                     meter: &__compact_witness_meter_0,
-                }));
+                }))?;
             total_cost += __compact_witness_meter_0.gas_cost();
             context.private_state = __compact_next_private_0;
             private_transcript_outputs.push(runtime::fab::AlignedValue::from(
@@ -221,7 +276,7 @@ pub mod ledger_contract {
             Ok(context.into_constructor_result())
         }
     }
-    pub(crate) fn schnorrVerify<Private, W: Witnesses<Private>>(
+    pub(crate) fn schnorrVerify<Private, W: TryWitnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,
         witnesses: &W,
         __compact_param_0: runtime::FixedVector<runtime::Field, 4>,
@@ -257,7 +312,7 @@ pub mod ledger_contract {
                 meter: &__compact_witness_meter_1,
             }),
             __compact_argument_0,
-        );
+        )?;
         total_cost += __compact_witness_meter_1.gas_cost();
         context.private_state = __compact_next_private_1;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
@@ -335,7 +390,7 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
-    pub(crate) fn schnorrVerifyDigest<Private, W: Witnesses<Private>>(
+    pub(crate) fn schnorrVerifyDigest<Private, W: TryWitnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,
         witnesses: &W,
         __compact_param_0: runtime::FixedVector<runtime::Field, 4>,
@@ -365,7 +420,7 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
-    pub fn verifyAttestation<Private, W: Witnesses<Private>>(
+    pub fn verifyAttestation<Private, W: TryWitnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,
         witnesses: &W,
         __compact_param_0: runtime::FixedVector<runtime::Field, 4>,
@@ -407,7 +462,7 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
-    pub fn acceptAttestation<Private, W: Witnesses<Private>>(
+    pub fn acceptAttestation<Private, W: TryWitnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,
         witnesses: &W,
         __compact_param_0: runtime::FixedVector<runtime::Field, 4>,
@@ -479,7 +534,7 @@ pub mod ledger_contract {
             __compact_param_1: crate::types::SchnorrSignature,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError>
         where
-            W: Witnesses<Private>,
+            W: TryWitnesses<Private>,
         {
             crate::ledger_contract::verifyAttestation(
                 context,
@@ -495,7 +550,7 @@ pub mod ledger_contract {
             __compact_param_1: crate::types::SchnorrSignature,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError>
         where
-            W: Witnesses<Private>,
+            W: TryWitnesses<Private>,
         {
             crate::ledger_contract::acceptAttestation(
                 context,

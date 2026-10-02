@@ -20,12 +20,12 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 9);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 10);
 }
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 9);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 10);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -45,6 +45,43 @@ pub mod ledger_contract {
             __compact_param_0: runtime::Field,
         ) -> (Private, runtime::Field);
     }
+    /// Witness methods that can propagate ledger projection failures.
+    pub trait TryWitnesses<Private> {
+        fn secret_point(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+            __compact_param_0: runtime::Field,
+        ) -> Result<(Private, runtime::JubjubPoint), runtime::CompactError>;
+        fn secret_scalar(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+            __compact_param_0: runtime::Field,
+        ) -> Result<(Private, runtime::Field), runtime::CompactError>;
+    }
+    impl<Private, W: Witnesses<Private>> TryWitnesses<Private> for W {
+        fn secret_point(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+            __compact_param_0: runtime::Field,
+        ) -> Result<(Private, runtime::JubjubPoint), runtime::CompactError> {
+            Ok(<W as Witnesses<Private>>::secret_point(
+                self,
+                context,
+                __compact_param_0,
+            ))
+        }
+        fn secret_scalar(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+            __compact_param_0: runtime::Field,
+        ) -> Result<(Private, runtime::Field), runtime::CompactError> {
+            Ok(<W as Witnesses<Private>>::secret_scalar(
+                self,
+                context,
+                __compact_param_0,
+            ))
+        }
+    }
     pub fn initial_state<Private>(
         __compact_context: runtime::context::ConstructorContext<Private>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
@@ -54,7 +91,7 @@ pub mod ledger_contract {
             state,
         ))
     }
-    pub fn combine<Private, W: Witnesses<Private>>(
+    pub fn combine<Private, W: TryWitnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,
         witnesses: &W,
         __compact_param_0: runtime::Field,
@@ -71,7 +108,7 @@ pub mod ledger_contract {
                 meter: &__compact_witness_meter_1,
             }),
             __compact_argument_0,
-        );
+        )?;
         total_cost += __compact_witness_meter_1.gas_cost();
         context.private_state = __compact_next_private_1;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
@@ -86,7 +123,7 @@ pub mod ledger_contract {
                 meter: &__compact_witness_meter_4,
             }),
             __compact_argument_3,
-        );
+        )?;
         total_cost += __compact_witness_meter_4.gas_cost();
         context.private_state = __compact_next_private_4;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
@@ -100,7 +137,7 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
-    pub fn scale<Private, W: Witnesses<Private>>(
+    pub fn scale<Private, W: TryWitnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,
         witnesses: &W,
         __compact_param_0: runtime::Field,
@@ -117,7 +154,7 @@ pub mod ledger_contract {
                 meter: &__compact_witness_meter_1,
             }),
             __compact_argument_0,
-        );
+        )?;
         total_cost += __compact_witness_meter_1.gas_cost();
         context.private_state = __compact_next_private_1;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
@@ -132,7 +169,7 @@ pub mod ledger_contract {
                 meter: &__compact_witness_meter_4,
             }),
             __compact_argument_3,
-        );
+        )?;
         total_cost += __compact_witness_meter_4.gas_cost();
         context.private_state = __compact_next_private_4;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
@@ -146,7 +183,7 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
-    pub fn point_x<Private, W: Witnesses<Private>>(
+    pub fn point_x<Private, W: TryWitnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,
         witnesses: &W,
         __compact_param_0: runtime::Field,
@@ -163,7 +200,7 @@ pub mod ledger_contract {
                 meter: &__compact_witness_meter_1,
             }),
             __compact_argument_0,
-        );
+        )?;
         total_cost += __compact_witness_meter_1.gas_cost();
         context.private_state = __compact_next_private_1;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
@@ -177,7 +214,7 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
-    pub fn point_y<Private, W: Witnesses<Private>>(
+    pub fn point_y<Private, W: TryWitnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,
         witnesses: &W,
         __compact_param_0: runtime::Field,
@@ -194,7 +231,7 @@ pub mod ledger_contract {
                 meter: &__compact_witness_meter_1,
             }),
             __compact_argument_0,
-        );
+        )?;
         total_cost += __compact_witness_meter_1.gas_cost();
         context.private_state = __compact_next_private_1;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
@@ -208,7 +245,7 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
-    pub fn negate<Private, W: Witnesses<Private>>(
+    pub fn negate<Private, W: TryWitnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,
         witnesses: &W,
         __compact_param_0: runtime::Field,
@@ -225,7 +262,7 @@ pub mod ledger_contract {
                 meter: &__compact_witness_meter_1,
             }),
             __compact_argument_0,
-        );
+        )?;
         total_cost += __compact_witness_meter_1.gas_cost();
         context.private_state = __compact_next_private_1;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
@@ -239,7 +276,7 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
-    pub fn reveal<Private, W: Witnesses<Private>>(
+    pub fn reveal<Private, W: TryWitnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,
         witnesses: &W,
         __compact_param_0: runtime::Field,
@@ -256,7 +293,7 @@ pub mod ledger_contract {
                 meter: &__compact_witness_meter_1,
             }),
             __compact_argument_0,
-        );
+        )?;
         total_cost += __compact_witness_meter_1.gas_cost();
         context.private_state = __compact_next_private_1;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
@@ -270,7 +307,7 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
-    pub fn hash_scalar<Private, W: Witnesses<Private>>(
+    pub fn hash_scalar<Private, W: TryWitnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,
         witnesses: &W,
         __compact_param_0: runtime::Field,
@@ -287,7 +324,7 @@ pub mod ledger_contract {
                 meter: &__compact_witness_meter_1,
             }),
             __compact_argument_0,
-        );
+        )?;
         total_cost += __compact_witness_meter_1.gas_cost();
         context.private_state = __compact_next_private_1;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
@@ -301,7 +338,7 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
-    pub fn generator<Private, W: Witnesses<Private>>(
+    pub fn generator<Private, W: TryWitnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,
         witnesses: &W,
         __compact_param_0: runtime::Field,
@@ -318,7 +355,7 @@ pub mod ledger_contract {
                 meter: &__compact_witness_meter_1,
             }),
             __compact_argument_0,
-        );
+        )?;
         total_cost += __compact_witness_meter_1.gas_cost();
         context.private_state = __compact_next_private_1;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
@@ -358,7 +395,7 @@ pub mod ledger_contract {
             runtime::CompactError,
         >
         where
-            W: Witnesses<Private>,
+            W: TryWitnesses<Private>,
         {
             crate::ledger_contract::combine(context, &self.witnesses, __compact_param_0)
         }
@@ -371,7 +408,7 @@ pub mod ledger_contract {
             runtime::CompactError,
         >
         where
-            W: Witnesses<Private>,
+            W: TryWitnesses<Private>,
         {
             crate::ledger_contract::scale(context, &self.witnesses, __compact_param_0)
         }
@@ -381,7 +418,7 @@ pub mod ledger_contract {
             __compact_param_0: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, runtime::Field>, runtime::CompactError>
         where
-            W: Witnesses<Private>,
+            W: TryWitnesses<Private>,
         {
             crate::ledger_contract::point_x(context, &self.witnesses, __compact_param_0)
         }
@@ -391,7 +428,7 @@ pub mod ledger_contract {
             __compact_param_0: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, runtime::Field>, runtime::CompactError>
         where
-            W: Witnesses<Private>,
+            W: TryWitnesses<Private>,
         {
             crate::ledger_contract::point_y(context, &self.witnesses, __compact_param_0)
         }
@@ -404,7 +441,7 @@ pub mod ledger_contract {
             runtime::CompactError,
         >
         where
-            W: Witnesses<Private>,
+            W: TryWitnesses<Private>,
         {
             crate::ledger_contract::negate(context, &self.witnesses, __compact_param_0)
         }
@@ -417,7 +454,7 @@ pub mod ledger_contract {
             runtime::CompactError,
         >
         where
-            W: Witnesses<Private>,
+            W: TryWitnesses<Private>,
         {
             crate::ledger_contract::reveal(context, &self.witnesses, __compact_param_0)
         }
@@ -430,7 +467,7 @@ pub mod ledger_contract {
             runtime::CompactError,
         >
         where
-            W: Witnesses<Private>,
+            W: TryWitnesses<Private>,
         {
             crate::ledger_contract::hash_scalar(context, &self.witnesses, __compact_param_0)
         }
@@ -443,7 +480,7 @@ pub mod ledger_contract {
             runtime::CompactError,
         >
         where
-            W: Witnesses<Private>,
+            W: TryWitnesses<Private>,
         {
             crate::ledger_contract::generator(context, &self.witnesses, __compact_param_0)
         }

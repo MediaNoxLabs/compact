@@ -25,6 +25,8 @@ use crate::{RenderError, ident, located, rust_type};
 pub(crate) struct WitnessSyntax<'a> {
     pub declarations: HashMap<&'a str, &'a WitnessDeclaration>,
     pub trait_methods: Vec<syn::TraitItemFn>,
+    pub fallible_trait_methods: Vec<syn::TraitItemFn>,
+    pub adapter_methods: Vec<syn::ImplItemFn>,
     pub ledger_view_methods: Vec<syn::ImplItemFn>,
 }
 
@@ -34,6 +36,8 @@ pub(crate) fn build<'a>(
 ) -> Result<WitnessSyntax<'a>, RenderError> {
     let mut declarations = HashMap::new();
     let mut trait_methods = Vec::new();
+    let mut fallible_trait_methods = Vec::new();
+    let mut adapter_methods = Vec::new();
     for witness in witnesses {
         located(witness.source.as_ref(), || {
             let name = ident(&witness.name)?;
@@ -44,6 +48,7 @@ pub(crate) fn build<'a>(
                 return Err(RenderError::DuplicateWitness(witness.name.clone()));
             }
             let mut args = Vec::<syn::FnArg>::new();
+            let mut parameter_idents = Vec::new();
             let mut parameter_names = HashSet::new();
             for (index, parameter) in witness.parameters.iter().enumerate() {
                 ident(&parameter.name)?;
@@ -53,6 +58,7 @@ pub(crate) fn build<'a>(
                 let parameter_name =
                     syn::Ident::new(&format!("__compact_param_{index}"), Span::call_site());
                 let ty = rust_type(&parameter.ty)?;
+                parameter_idents.push(parameter_name.clone());
                 args.push(syn::parse_quote!(#parameter_name: #ty));
             }
             let result = rust_type(&witness.result)?;
@@ -62,6 +68,22 @@ pub(crate) fn build<'a>(
                     context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
                     #(#args),*
                 ) -> (Private, #result);
+            });
+            fallible_trait_methods.push(syn::parse_quote! {
+                fn #name(
+                    &self,
+                    context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+                    #(#args),*
+                ) -> Result<(Private, #result), runtime::CompactError>;
+            });
+            adapter_methods.push(syn::parse_quote! {
+                fn #name(
+                    &self,
+                    context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+                    #(#args),*
+                ) -> Result<(Private, #result), runtime::CompactError> {
+                    Ok(<W as Witnesses<Private>>::#name(self, context, #(#parameter_idents),*))
+                }
             });
             Ok(())
         })?;
@@ -144,6 +166,8 @@ pub(crate) fn build<'a>(
     Ok(WitnessSyntax {
         declarations,
         trait_methods,
+        fallible_trait_methods,
+        adapter_methods,
         ledger_view_methods,
     })
 }

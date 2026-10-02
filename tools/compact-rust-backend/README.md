@@ -93,13 +93,34 @@ Compact spelling without warning in consumer builds.
 |---|---|---|
 | Compact compiler | Toolchain 0.31.133, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
 | Rust IR | Schema 8, private to this backend | The renderer rejects any other schema before writing `lib.rs`. Ledger, circuit, witness, constructor, and exported alias declarations carry optional Compact source locations for diagnostics. |
-| Generated code and Rust runtime | ABI 9 | Generated modules assert the ABI at Rust compile time. ABI 9 meters List witness `head`, `is_empty`, and `length` with canonical VM queries, preserving `Option<T>` for head; ABI 8 meters Map views; ABI 7 meters Set views; ABI 6 meters Cell and Counter reads; ABI 5 added structural nested Map slots. |
+| Generated code and Rust runtime | ABI 10 | Generated modules assert the ABI at Rust compile time. ABI 10 adds fallible `TryWitnesses` and adapts existing pair-returning `Witnesses` implementations; ABI 9 meters List witness reads, ABI 8 Map, ABI 7 Set, ABI 6 Cell/Counter; ABI 5 added structural nested Map slots. |
 | Rust runtime source | Bundled runtime crates or an explicit shared source root | Cargo resolves the matching runtime and its pinned Midnight crates. |
 
 `--runtime-version` reports the TypeScript runtime version; the Rust runtime
 compatibility contract is the ABI assertion and matching source packages. The
 generated `Cargo.toml` has `publish = false` because it is a contract-specific
 artifact. Change the runtime source only alongside an ABI and consumer test review.
+
+### Fallible witnesses
+
+Generated crates expose `TryWitnesses<Private>` for witnesses that read the
+ledger. Implement its methods with `Result<(Private, T), CompactError>` so a
+projection read can use `?`:
+
+```rust
+impl TryWitnesses<u64> for ReadFlag {
+    fn read_flag(&self, context: WitnessContext<'_, u64, LedgerView<'_>>)
+        -> Result<(u64, bool), CompactError> {
+        let flag = context.ledger.flag()?;
+        Ok((*context.private_state + 1, flag))
+    }
+}
+```
+
+Existing pair-returning `Witnesses<Private>` implementations continue to work
+through a generated adapter. Choose one trait for each witness type; the
+adapter prevents implementing both traits on the same type. A rejected read
+returns `CompactError` from the generated circuit without a partial result.
 
 The backend directory has its own `Cargo.lock` for the isolated Nix
 `compact-rust-cli` package. The repository root lockfile governs workspace

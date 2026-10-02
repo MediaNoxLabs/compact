@@ -6,7 +6,7 @@ mod recorded;
 mod stateful;
 mod witness;
 
-const RUNTIME_ABI_VERSION: u32 = 9;
+const RUNTIME_ABI_VERSION: u32 = 10;
 
 const GENERATED_HEADER: &str = r#"// This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
@@ -2639,6 +2639,8 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
 
     let ledger_view_methods = &witness_syntax.ledger_view_methods;
     let witness_methods = &witness_syntax.trait_methods;
+    let fallible_witness_methods = &witness_syntax.fallible_trait_methods;
+    let witness_adapter_methods = &witness_syntax.adapter_methods;
     let constructor_return: syn::Expr = if constructor_uses_vm {
         let transcript_init: Option<syn::Stmt> = constructor_uses_witness
             .then(|| syn::parse_quote!(let mut private_transcript_outputs = Vec::new();));
@@ -2788,7 +2790,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
     };
     let initial_state: syn::Item = if constructor_uses_witness {
         syn::parse_quote! {
-            pub fn initial_state<Private, W: Witnesses<Private>>(
+            pub fn initial_state<Private, W: TryWitnesses<Private>>(
                 __compact_context: runtime::context::ConstructorContext<Private>,
                 witnesses: &W,
                 #(#constructor_args),*
@@ -2927,6 +2929,13 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                     }
                     pub trait Witnesses<Private> {
                     #(#witness_methods)*
+                }
+                    /// Witness methods that can propagate ledger projection failures.
+                    pub trait TryWitnesses<Private> {
+                    #(#fallible_witness_methods)*
+                }
+                    impl<Private, W: Witnesses<Private>> TryWitnesses<Private> for W {
+                    #(#witness_adapter_methods)*
                 }
                 #initial_state
                 #(#stateful_items)*

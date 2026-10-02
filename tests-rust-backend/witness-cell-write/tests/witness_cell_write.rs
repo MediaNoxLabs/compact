@@ -14,12 +14,12 @@
 // limitations under the License.
 
 use compact_rust_witness_cell_write_fixture::ledger_contract::{
-    Contract, LedgerView, Witnesses, initial_state, read_cell, write_nested_twice, write_secret,
-    write_twice,
+    Contract, LedgerView, TryWitnesses, Witnesses, initial_state, read_cell, write_nested_twice,
+    write_secret, write_twice,
 };
 use compact_rust_witness_cell_write_fixture::ledger_slots;
 use midnight_compact_runtime::context::{
-    CircuitFrame, CircuitResult, ConstructorContext, WitnessContext, WitnessReadMeter,
+    CircuitFrame, CircuitResult, ConstructorContext, RunningCost, WitnessContext, WitnessReadMeter,
 };
 use midnight_compact_runtime::ledger::StateValue;
 use midnight_compact_runtime::ledger::{
@@ -88,6 +88,19 @@ fn normalized_verify_ops(recorded: &RecordedCircuitResult<u64, ()>) -> serde_jso
 
 struct Secret;
 
+struct FallibleSecret;
+
+impl TryWitnesses<u64> for FallibleSecret {
+    fn secret(
+        &self,
+        context: WitnessContext<'_, u64, LedgerView<'_>>,
+        seed: Field,
+    ) -> Result<(u64, Field), CompactError> {
+        let current = context.ledger.cell()?;
+        Ok(secret_logic(*context.private_state, current, seed))
+    }
+}
+
 impl Witnesses<u64> for Secret {
     fn secret(
         &self,
@@ -103,6 +116,63 @@ fn secret_logic(private_state: u64, current_cell: Field, seed: Field) -> (u64, F
     let expected_cell = if private_state == 7 { 0 } else { 9 };
     assert_eq!(current_cell, Field::from(expected_cell));
     (private_state + 1, seed + Field::from(private_state))
+}
+
+#[test]
+fn fallible_witness_succeeds_in_native_recorded_and_facade_calls() {
+    let seed = Field::from(2_u64);
+    let context = || {
+        initial_state(ConstructorContext::new(7_u64))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default())
+    };
+    let legacy = write_secret(context(), &Secret, seed).unwrap();
+    let fallible = write_secret(context(), &FallibleSecret, seed).unwrap();
+    assert_eq!(fallible.context.private_state, legacy.context.private_state);
+    assert_eq!(fallible.gas_cost, legacy.gas_cost);
+    assert_eq!(
+        fallible.private_transcript_outputs,
+        legacy.private_transcript_outputs
+    );
+    assert_eq!(
+        state_hex(fallible.context.query.state.get_ref().clone()),
+        state_hex(legacy.context.query.state.get_ref().clone()),
+    );
+    let facade = Contract::from(FallibleSecret)
+        .write_secret(context(), seed)
+        .unwrap();
+    assert_eq!(facade.gas_cost, legacy.gas_cost);
+    let recorded = Contract::from(FallibleSecret)
+        .recording()
+        .write_secret(context(), seed)
+        .unwrap();
+    assert_eq!(recorded.execution.gas_cost, legacy.gas_cost);
+    assert_eq!(
+        recorded.execution.private_transcript_outputs,
+        legacy.private_transcript_outputs
+    );
+}
+
+#[test]
+fn fallible_witness_rejection_returns_error_in_native_and_recorded_calls() {
+    let context = || {
+        let mut context = initial_state(ConstructorContext::new(7_u64))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default());
+        context.gas_limit = Some(RunningCost::ZERO);
+        context
+    };
+    let seed = Field::from(2_u64);
+    assert!(matches!(
+        write_secret(context(), &FallibleSecret, seed),
+        Err(CompactError::LedgerQueryRejected(_))
+    ));
+    assert!(matches!(
+        Contract::from(FallibleSecret)
+            .recording()
+            .write_secret(context(), seed),
+        Err(CompactError::LedgerQueryRejected(_))
+    ));
 }
 
 fn assert_oracle_output(write: CircuitResult<u64, ()>, oracle: &serde_json::Value) {

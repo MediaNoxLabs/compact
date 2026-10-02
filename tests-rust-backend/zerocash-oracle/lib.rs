@@ -201,7 +201,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 9);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 10);
     pub(crate) fn merkleTreePathRoot(
         path: crate::types::MerkleTreePath,
     ) -> Result<crate::types::MerkleTreeDigest, runtime::CompactError> {
@@ -300,7 +300,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 9);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 10);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -370,6 +370,114 @@ pub mod ledger_contract {
             __compact_param_1: crate::types::coin_info,
         ) -> (Private, runtime::OpaqueBytes);
     }
+    /// Witness methods that can propagate ledger projection failures.
+    pub trait TryWitnesses<Private> {
+        fn private_zk_secret_key(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+        ) -> Result<(Private, crate::types::zk_secret_key), runtime::CompactError>;
+        fn private_remove_coin(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+            __compact_param_0: crate::types::coin_info,
+        ) -> Result<(Private, ()), runtime::CompactError>;
+        fn private_zk_public_key(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+        ) -> Result<(Private, crate::types::zk_public_key), runtime::CompactError>;
+        fn private_add_coin(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+            __compact_param_0: crate::types::coin_info,
+        ) -> Result<(Private, ()), runtime::CompactError>;
+        fn context_path_of(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+            __compact_param_0: crate::types::commitment,
+        ) -> Result<(Private, crate::types::MerkleTreePath), runtime::CompactError>;
+        fn context_new_coin_info(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+        ) -> Result<(Private, crate::types::coin_info), runtime::CompactError>;
+        fn context_encrypt(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+            __compact_param_0: runtime::OpaqueBytes,
+            __compact_param_1: crate::types::coin_info,
+        ) -> Result<(Private, runtime::OpaqueBytes), runtime::CompactError>;
+    }
+    impl<Private, W: Witnesses<Private>> TryWitnesses<Private> for W {
+        fn private_zk_secret_key(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+        ) -> Result<(Private, crate::types::zk_secret_key), runtime::CompactError> {
+            Ok(<W as Witnesses<Private>>::private_zk_secret_key(
+                self, context,
+            ))
+        }
+        fn private_remove_coin(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+            __compact_param_0: crate::types::coin_info,
+        ) -> Result<(Private, ()), runtime::CompactError> {
+            Ok(<W as Witnesses<Private>>::private_remove_coin(
+                self,
+                context,
+                __compact_param_0,
+            ))
+        }
+        fn private_zk_public_key(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+        ) -> Result<(Private, crate::types::zk_public_key), runtime::CompactError> {
+            Ok(<W as Witnesses<Private>>::private_zk_public_key(
+                self, context,
+            ))
+        }
+        fn private_add_coin(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+            __compact_param_0: crate::types::coin_info,
+        ) -> Result<(Private, ()), runtime::CompactError> {
+            Ok(<W as Witnesses<Private>>::private_add_coin(
+                self,
+                context,
+                __compact_param_0,
+            ))
+        }
+        fn context_path_of(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+            __compact_param_0: crate::types::commitment,
+        ) -> Result<(Private, crate::types::MerkleTreePath), runtime::CompactError> {
+            Ok(<W as Witnesses<Private>>::context_path_of(
+                self,
+                context,
+                __compact_param_0,
+            ))
+        }
+        fn context_new_coin_info(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+        ) -> Result<(Private, crate::types::coin_info), runtime::CompactError> {
+            Ok(<W as Witnesses<Private>>::context_new_coin_info(
+                self, context,
+            ))
+        }
+        fn context_encrypt(
+            &self,
+            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
+            __compact_param_0: runtime::OpaqueBytes,
+            __compact_param_1: crate::types::coin_info,
+        ) -> Result<(Private, runtime::OpaqueBytes), runtime::CompactError> {
+            Ok(<W as Witnesses<Private>>::context_encrypt(
+                self,
+                context,
+                __compact_param_0,
+                __compact_param_1,
+            ))
+        }
+    }
     pub fn initial_state<Private>(
         __compact_context: runtime::context::ConstructorContext<Private>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
@@ -385,7 +493,7 @@ pub mod ledger_contract {
             state,
         ))
     }
-    pub fn spend<Private, W: Witnesses<Private>>(
+    pub fn spend<Private, W: TryWitnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,
         witnesses: &W,
         __compact_param_0: crate::types::public_key,
@@ -399,7 +507,7 @@ pub mod ledger_contract {
             witnesses.private_zk_secret_key(context.witness_context_with(LedgerView {
                 state: context.query.state.get_ref(),
                 meter: &__compact_witness_meter_0,
-            }));
+            }))?;
         total_cost += __compact_witness_meter_0.gas_cost();
         context.private_state = __compact_next_private_0;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
@@ -450,7 +558,7 @@ pub mod ledger_contract {
                 meter: &__compact_witness_meter_8,
             }),
             __compact_argument_7,
-        );
+        )?;
         total_cost += __compact_witness_meter_8.gas_cost();
         context.private_state = __compact_next_private_8;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
@@ -481,7 +589,7 @@ pub mod ledger_contract {
             witnesses.context_new_coin_info(context.witness_context_with(LedgerView {
                 state: context.query.state.get_ref(),
                 meter: &__compact_witness_meter_13,
-            }));
+            }))?;
         total_cost += __compact_witness_meter_13.gas_cost();
         context.private_state = __compact_next_private_13;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
@@ -509,7 +617,7 @@ pub mod ledger_contract {
             }),
             __compact_argument_16,
             __compact_argument_17,
-        );
+        )?;
         total_cost += __compact_witness_meter_18.gas_cost();
         context.private_state = __compact_next_private_18;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
@@ -529,7 +637,7 @@ pub mod ledger_contract {
                 meter: &__compact_witness_meter_20,
             }),
             __compact_argument_19,
-        );
+        )?;
         total_cost += __compact_witness_meter_20.gas_cost();
         context.private_state = __compact_next_private_20;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
@@ -544,7 +652,7 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
-    pub fn zerocash_mint<Private, W: Witnesses<Private>>(
+    pub fn zerocash_mint<Private, W: TryWitnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,
         witnesses: &W,
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
@@ -556,7 +664,7 @@ pub mod ledger_contract {
             witnesses.context_new_coin_info(context.witness_context_with(LedgerView {
                 state: context.query.state.get_ref(),
                 meter: &__compact_witness_meter_0,
-            }));
+            }))?;
         total_cost += __compact_witness_meter_0.gas_cost();
         context.private_state = __compact_next_private_0;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
@@ -569,7 +677,7 @@ pub mod ledger_contract {
             witnesses.private_zk_public_key(context.witness_context_with(LedgerView {
                 state: context.query.state.get_ref(),
                 meter: &__compact_witness_meter_1,
-            }));
+            }))?;
         total_cost += __compact_witness_meter_1.gas_cost();
         context.private_state = __compact_next_private_1;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
@@ -585,7 +693,7 @@ pub mod ledger_contract {
                 meter: &__compact_witness_meter_3,
             }),
             __compact_argument_2,
-        );
+        )?;
         total_cost += __compact_witness_meter_3.gas_cost();
         context.private_state = __compact_next_private_3;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
@@ -633,7 +741,7 @@ pub mod ledger_contract {
             __compact_param_1: crate::types::coin_info,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError>
         where
-            W: Witnesses<Private>,
+            W: TryWitnesses<Private>,
         {
             crate::ledger_contract::spend(
                 context,
@@ -647,7 +755,7 @@ pub mod ledger_contract {
             context: runtime::context::CircuitContext<Private>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError>
         where
-            W: Witnesses<Private>,
+            W: TryWitnesses<Private>,
         {
             crate::ledger_contract::zerocash_mint(context, &self.witnesses)
         }

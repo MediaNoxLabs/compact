@@ -476,7 +476,7 @@ pub(crate) fn render_state_expression(
                         meter: &#meter_name,
                     }),
                     #(#rendered_arguments),*
-                );
+                )?;
             });
             statements.push(syn::parse_quote!(total_cost += #meter_name.gas_cost();));
             statements.push(syn::parse_quote!(context.private_state = #private_name;));
@@ -1348,7 +1348,7 @@ pub(crate) fn render_contract_method(
                 #(#args),*
             ) -> Result<runtime::context::CircuitResult<Private, #result_ty>, runtime::CompactError>
             where
-                W: Witnesses<Private>,
+                W: TryWitnesses<Private>,
             {
                 crate::ledger_contract::#name(context, &self.witnesses, #(#call_args),*)
             }
@@ -2976,7 +2976,7 @@ pub(crate) fn render_stateful_circuit(
     };
     let item: syn::Item = if uses_witness {
         syn::parse_quote! {
-            #visibility fn #name<Private, W: Witnesses<Private>>(
+            #visibility fn #name<Private, W: TryWitnesses<Private>>(
                 context: runtime::context::CircuitContext<Private>,
                 witnesses: &W,
                 #(#args),*

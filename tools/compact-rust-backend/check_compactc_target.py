@@ -374,9 +374,9 @@ def check_witness_consumer(compiler: str, base: Path) -> None:
         f'{package["package"]["name"]} = {{ path = {json.dumps(str(contract))}, features = ["ledger-transaction"] }}\n'
     )
     (consumer / "tests/witness.rs").write_text(
-        "use compact_contract_witness_cell_write::ledger_contract::{Contract, LedgerView, Witnesses, initial_state};\n"
-        "use compact_contract_witness_cell_write::runtime::Field;\n"
-        "use compact_contract_witness_cell_write::runtime::context::{ConstructorContext, WitnessContext};\n"
+        "use compact_contract_witness_cell_write::ledger_contract::{Contract, LedgerView, TryWitnesses, Witnesses, initial_state};\n"
+        "use compact_contract_witness_cell_write::runtime::{CompactError, Field};\n"
+        "use compact_contract_witness_cell_write::runtime::context::{ConstructorContext, RunningCost, WitnessContext};\n"
         "use compact_contract_witness_cell_write::runtime::ledger::ContractAddress;\n"
         "use compact_contract_witness_cell_write::runtime::transaction::CallSpec;\n"
         "struct Secret;\n"
@@ -386,6 +386,14 @@ def check_witness_consumer(compiler: str, base: Path) -> None:
         "        let cell = context.ledger.cell().unwrap();\n"
         "        assert_eq!(cell, Field::from(if private == 7 { 0_u64 } else { 9_u64 }));\n"
         "        (private + 1, seed + Field::from(private))\n"
+        "    }\n}\n"
+        "struct FallibleSecret;\n"
+        "impl TryWitnesses<u64> for FallibleSecret {\n"
+        "    fn secret(&self, context: WitnessContext<'_, u64, LedgerView<'_>>, seed: Field) -> Result<(u64, Field), CompactError> {\n"
+        "        let private = *context.private_state;\n"
+        "        let cell = context.ledger.cell()?;\n"
+        "        assert_eq!(cell, Field::from(if private == 7 { 0_u64 } else { 9_u64 }));\n"
+        "        Ok((private + 1, seed + Field::from(private)))\n"
         "    }\n}\n"
         "#[test]\nfn generated_witness_recording_works_with_one_crate_dependency() {\n"
         "    let _call_spec_type = core::mem::size_of::<CallSpec>();\n"
@@ -401,6 +409,15 @@ def check_witness_consumer(compiler: str, base: Path) -> None:
         "    assert_eq!(replay.context.effects, call.execution.context.query.effects);\n"
         "    let read = contract.recording().read_cell(call.execution.context).unwrap();\n"
         "    assert_eq!(read.execution.result, Field::from(10_u64));\n"
+        "}\n"
+        "#[test]\nfn generated_fallible_witness_propagates_rejection() {\n"
+        "    let contract = Contract::from(FallibleSecret);\n"
+        "    let context = initial_state(ConstructorContext::new(7_u64)).unwrap().into_circuit_context(ContractAddress::default());\n"
+        "    let call = contract.recording().write_twice(context, Field::from(2_u64)).unwrap();\n"
+        "    assert_eq!(call.execution.context.private_state, 9);\n"
+        "    let mut context = initial_state(ConstructorContext::new(7_u64)).unwrap().into_circuit_context(ContractAddress::default());\n"
+        "    context.gas_limit = Some(RunningCost::ZERO);\n"
+        "    assert!(contract.recording().write_twice(context, Field::from(2_u64)).is_err());\n"
         "}\n"
     )
     environment = os.environ.copy()

@@ -10,6 +10,10 @@ ABI 5 adds `slots::MapNode<K, V>` for nested ledger Map declarations. The
 marker is a type-level shape, not a FAB scalar value. A nested `MapSlot` permits
 `is_empty`, `size`, and `member` reads, including recording, while scalar
 lookup and mutations require a `CellValue` value type.
+`context::CircuitFrame` is an additive native composition probe: its consuming
+`witness`, `apply`, and `finish` methods accumulate successor context, total
+gas, and private FAB outputs. Generated native bodies do not yet use it; see
+the M2 design decision in ADR-0005 and issue #110.
 
 For the compiler command, generated crate layout, and compatibility matrix,
 see the [Rust backend guide](https://github.com/MediaNoxLabs/compact/blob/codex/rust-backend-ast/tools/compact-rust-backend/README.md).

@@ -17,9 +17,12 @@ use compact_rust_witness_cell_write_fixture::ledger_contract::{
     Contract, LedgerView, Witnesses, initial_state, read_cell, write_nested_twice, write_secret,
     write_twice,
 };
-use midnight_compact_runtime::Field;
-use midnight_compact_runtime::context::{CircuitResult, ConstructorContext, WitnessContext};
-use midnight_compact_runtime::ledger::{ContractAddress, read_root_cell};
+use compact_rust_witness_cell_write_fixture::ledger_slots;
+use midnight_compact_runtime::context::{
+    CircuitFrame, CircuitResult, ConstructorContext, WitnessContext,
+};
+use midnight_compact_runtime::ledger::{ContractAddress, DefaultDB, read_root_cell};
+use midnight_compact_runtime::{CompactError, Field};
 
 struct Secret;
 
@@ -197,4 +200,92 @@ fn contract_facade_exposes_witnessed_circuits_with_typed_arguments() {
         .into_circuit_context(ContractAddress::default());
     let result = contract.write_secret(context, Field::from(2_u64)).unwrap();
     assert_oracle_output(result, &oracle["single"]);
+}
+
+#[test]
+fn native_frame_preserves_witness_and_nested_call_order() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/witness-cell-write-ts-output.json"
+    ))
+    .unwrap();
+    let seed = Field::from(2_u64);
+    let context = initial_state(ConstructorContext::new(7_u64))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let (frame, secret) = CircuitFrame::new(context).witness(|context| {
+        let current = read_root_cell::<Field, _>(context.query.state.get_ref(), 0).unwrap();
+        secret_logic(context.private_state, current, seed)
+    });
+    let (frame, ()) = frame
+        .apply(|context| ledger_slots::cell.write(context, secret))
+        .unwrap();
+    let framed = frame.finish(());
+    let native = write_secret(
+        initial_state(ConstructorContext::new(7_u64))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default()),
+        &Secret,
+        seed,
+    )
+    .unwrap();
+    assert_eq!(framed.context.private_state, native.context.private_state);
+    assert_eq!(framed.context.query.state, native.context.query.state);
+    assert_eq!(framed.context.query.effects, native.context.query.effects);
+    assert_eq!(framed.gas_cost, native.gas_cost);
+    assert_eq!(
+        framed.private_transcript_outputs,
+        native.private_transcript_outputs
+    );
+    assert_oracle_output(framed, &oracle["single"]);
+
+    let context = initial_state(ConstructorContext::new(7_u64))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let (frame, ()) = CircuitFrame::new(context)
+        .apply(|context| write_secret(context, &Secret, seed))
+        .unwrap();
+    let (frame, ()) = frame
+        .apply(|context| write_secret(context, &Secret, seed))
+        .unwrap();
+    let framed = frame.finish(());
+    let native = write_nested_twice(
+        initial_state(ConstructorContext::new(7_u64))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default()),
+        &Secret,
+        seed,
+    )
+    .unwrap();
+    assert_eq!(framed.context.private_state, native.context.private_state);
+    assert_eq!(framed.context.query.state, native.context.query.state);
+    assert_eq!(framed.context.query.effects, native.context.query.effects);
+    assert_eq!(framed.gas_cost, native.gas_cost);
+    assert_eq!(
+        framed.private_transcript_outputs,
+        native.private_transcript_outputs
+    );
+    assert_oracle_output(framed, &oracle["twice"]);
+}
+
+#[test]
+fn native_frame_aborts_before_a_later_step_on_error() {
+    let context = initial_state(ConstructorContext::new(7_u64))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let mut later_step_ran = false;
+    let result = CircuitFrame::new(context)
+        .apply(|context| write_secret(context, &Secret, Field::from(2_u64)))
+        .and_then(|(frame, ())| {
+            frame.apply(
+                |_| -> Result<CircuitResult<u64, (), DefaultDB>, CompactError> {
+                    Err(CompactError::AssertionFailed("stop".into()))
+                },
+            )
+        })
+        .and_then(|(frame, ())| {
+            later_step_ran = true;
+            frame.apply(|context| ledger_slots::cell.write(context, Field::from(99_u64)))
+        });
+    assert!(matches!(result, Err(CompactError::AssertionFailed(message)) if message == "stop"));
+    assert!(!later_step_ran);
 }

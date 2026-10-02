@@ -93,6 +93,77 @@ pub struct CircuitResult<Private, Output, D: DB = DefaultDB> {
     pub private_transcript_outputs: Vec<AlignedValue>,
 }
 
+/// Accumulates native circuit steps while leaving Compact control flow in Rust.
+///
+/// Each `apply` consumes the current context and adopts exactly one successor
+/// result. A nested circuit can be passed to `apply` without special merging
+/// code in the generated body. Public Verify operations require a separate
+/// `RecordingFrame` when a replayable call is needed.
+pub struct CircuitFrame<Private, D: DB = DefaultDB> {
+    context: CircuitContext<Private, D>,
+    gas_cost: RunningCost,
+    private_outputs: Vec<AlignedValue>,
+}
+
+impl<Private, D: DB> CircuitFrame<Private, D> {
+    pub fn new(context: CircuitContext<Private, D>) -> Self {
+        Self {
+            context,
+            gas_cost: RunningCost::ZERO,
+            private_outputs: Vec::new(),
+        }
+    }
+
+    pub fn context(&self) -> &CircuitContext<Private, D> {
+        &self.context
+    }
+
+    /// Invoke a witness against the current state and append its private FAB.
+    pub fn witness<T, F>(mut self, call: F) -> (Self, T)
+    where
+        T: Clone,
+        AlignedValue: From<T>,
+        F: FnOnce(&CircuitContext<Private, D>) -> (Private, T),
+    {
+        let (next_private, value) = call(&self.context);
+        self.context.private_state = next_private;
+        self.private_outputs.push(AlignedValue::from(value.clone()));
+        (self, value)
+    }
+
+    /// Run a native ledger step or complete nested circuit in sequence.
+    pub fn apply<T, F>(self, operation: F) -> Result<(Self, T), CompactError>
+    where
+        F: FnOnce(CircuitContext<Private, D>) -> Result<CircuitResult<Private, T, D>, CompactError>,
+    {
+        let CircuitFrame {
+            context,
+            mut gas_cost,
+            mut private_outputs,
+        } = self;
+        let result = operation(context)?;
+        gas_cost += result.gas_cost;
+        private_outputs.extend(result.private_transcript_outputs);
+        Ok((
+            Self {
+                context: result.context,
+                gas_cost,
+                private_outputs,
+            },
+            result.result,
+        ))
+    }
+
+    pub fn finish<T>(self, result: T) -> CircuitResult<Private, T, D> {
+        CircuitResult {
+            context: self.context,
+            result,
+            gas_cost: self.gas_cost,
+            private_transcript_outputs: self.private_outputs,
+        }
+    }
+}
+
 impl<Private, D: DB> CircuitContext<Private, D> {
     pub fn into_constructor_result(self) -> ConstructorResult<Private, D> {
         ConstructorResult {

@@ -197,6 +197,55 @@ def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
     subprocess.run(["cargo", "test", "--quiet"], cwd=consumer, env=environment, check=True)
 
 
+def check_witness_consumer(compiler: str, base: Path) -> None:
+    output = base / "witness-contract"
+    run(compiler, "--target", "rust", "--skip-zk", str(WITNESS_CELL_SOURCE), str(output))
+    check_manifest(output)
+    contract = output / "contract"
+    package = tomllib.loads((contract / "Cargo.toml").read_text())
+    consumer = base / "witness-consumer"
+    consumer.mkdir()
+    (consumer / "tests").mkdir()
+    (consumer / "Cargo.toml").write_text(
+        "[package]\nname = \"compactc-witness-target-smoke\"\nversion = \"0.1.0\"\n"
+        "edition = \"2024\"\n\n[dependencies]\n"
+        f'{package["package"]["name"]} = {{ path = {json.dumps(str(contract))}, features = ["ledger-transaction"] }}\n'
+    )
+    (consumer / "tests/witness.rs").write_text(
+        "use compact_contract_witness_cell_write::ledger_contract::{Contract, LedgerView, Witnesses, initial_state};\n"
+        "use compact_contract_witness_cell_write::runtime::Field;\n"
+        "use compact_contract_witness_cell_write::runtime::context::{ConstructorContext, WitnessContext};\n"
+        "use compact_contract_witness_cell_write::runtime::ledger::ContractAddress;\n"
+        "use compact_contract_witness_cell_write::runtime::transaction::CallSpec;\n"
+        "struct Secret;\n"
+        "impl Witnesses<u64> for Secret {\n"
+        "    fn secret(&self, context: WitnessContext<'_, u64, LedgerView<'_>>, seed: Field) -> (u64, Field) {\n"
+        "        let private = *context.private_state;\n"
+        "        let cell = context.ledger.cell().unwrap();\n"
+        "        assert_eq!(cell, Field::from(if private == 7 { 0_u64 } else { 9_u64 }));\n"
+        "        (private + 1, seed + Field::from(private))\n"
+        "    }\n}\n"
+        "#[test]\nfn generated_witness_recording_works_with_one_crate_dependency() {\n"
+        "    let _call_spec_type = core::mem::size_of::<CallSpec>();\n"
+        "    let state = initial_state(ConstructorContext::new(7_u64)).unwrap();\n"
+        "    let context = state.into_circuit_context(ContractAddress::default());\n"
+        "    let contract = Contract::from(Secret);\n"
+        "    let call = contract.recording().write_twice(context, Field::from(2_u64)).unwrap();\n"
+        "    assert_eq!(call.execution.context.private_state, 9);\n"
+        "    assert_eq!(call.execution.private_transcript_outputs.len(), 2);\n"
+        "    let replay = call.public.initial().query(\n"
+        "        call.public.verify_ops(), None, &call.execution.context.cost_model,\n"
+        "    ).unwrap();\n"
+        "    assert_eq!(replay.context.effects, call.execution.context.query.effects);\n"
+        "    let read = contract.recording().read_cell(call.execution.context).unwrap();\n"
+        "    assert_eq!(read.execution.result, Field::from(10_u64));\n"
+        "}\n"
+    )
+    environment = os.environ.copy()
+    environment.setdefault("CARGO_TARGET_DIR", str(ROOT / "target/compactc-consumer"))
+    subprocess.run(["cargo", "test", "--quiet"], cwd=consumer, env=environment, check=True)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--consumer", action="store_true", help="build and run a separate consumer")
@@ -238,6 +287,7 @@ def main() -> None:
             run(compiler, "--target", "rust", "--skip-zk", str(PURE_SOURCE), str(pure))
             check_consumer(rust / "contract", pure / "contract", base / "consumer")
             check_shared_runtime_consumer(compiler, base)
+            check_witness_consumer(compiler, base)
         if args.proof:
             proof = base / "proof"
             run(compiler, "--target", "rust", str(SOURCE), str(proof))

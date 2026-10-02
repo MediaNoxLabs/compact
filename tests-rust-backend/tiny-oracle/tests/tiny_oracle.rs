@@ -62,10 +62,54 @@ fn assert_no_witness_secret(label: &str, state_hex: &str) {
     );
 }
 
+fn assert_total_gas_matches_typescript_queries(
+    label: &str,
+    actual: &runtime::context::RunningCost,
+    private_output_count: usize,
+    oracle: &serde_json::Value,
+) {
+    let queries = oracle["queries"].as_array().unwrap();
+    let reported = &oracle["reportedGas"];
+    let last = &queries.last().unwrap()["gasCost"];
+    let actual = serde_json::to_value(actual).unwrap();
+    for key in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+        let total: u64 = queries
+            .iter()
+            .map(|query| {
+                query["gasCost"][key]
+                    .as_str()
+                    .unwrap()
+                    .parse::<u64>()
+                    .unwrap()
+            })
+            .sum();
+        assert_eq!(actual[key].as_u64().unwrap(), total, "{label}: total {key}");
+        // Ledger-8 TypeScript currently reports only its final query's cost.
+        assert_eq!(reported[key], last[key], "{label}: TS reported {key}");
+    }
+    assert_eq!(
+        private_output_count,
+        oracle["privateOutputCount"].as_u64().unwrap() as usize,
+        "{label}: private output count"
+    );
+    assert_eq!(
+        queries
+            .iter()
+            .map(|query| query["opTags"].as_array().unwrap().len())
+            .sum::<usize>(),
+        oracle["publicTranscript"].as_array().unwrap().len(),
+        "{label}: TypeScript captured one public operation per query operation"
+    );
+}
+
 #[test]
 fn tiny_constructor_clear_set_and_get_match_typescript() {
     let oracle: serde_json::Value = serde_json::from_str(include_str!(
         "../../../runtime-rs/tests/fixtures/tiny-oracle.json"
+    ))
+    .unwrap();
+    let gas_oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/tiny-gas-oracle.json"
     ))
     .unwrap();
     let witness = FixedWitness;
@@ -80,14 +124,32 @@ fn tiny_constructor_clear_set_and_get_match_typescript() {
     assert_eq!(initial_hex, oracle["afterInit"]["stateHex"]);
     let context = initial.into_circuit_context(ContractAddress::default());
     let cleared = clear(context, &witness).unwrap();
+    assert_total_gas_matches_typescript_queries(
+        "clear",
+        &cleared.gas_cost,
+        cleared.private_transcript_outputs.len(),
+        &gas_oracle["clear"],
+    );
     let cleared_hex = state_hex(cleared.context.query.state.get_ref().clone());
     assert_no_witness_secret("clear", &cleared_hex);
     assert_eq!(cleared_hex, oracle["afterClear"]["stateHex"]);
     let set99 = set(cleared.context, &witness, runtime::Field::from(99u64)).unwrap();
+    assert_total_gas_matches_typescript_queries(
+        "set",
+        &set99.gas_cost,
+        set99.private_transcript_outputs.len(),
+        &gas_oracle["set"],
+    );
     let set_hex = state_hex(set99.context.query.state.get_ref().clone());
     assert_no_witness_secret("set", &set_hex);
     assert_eq!(set_hex, oracle["afterSet99"]["stateHex"]);
     let got = get(set99.context).unwrap();
+    assert_total_gas_matches_typescript_queries(
+        "get",
+        &got.gas_cost,
+        got.private_transcript_outputs.len(),
+        &gas_oracle["get"],
+    );
     assert_eq!(got.result.is_some, oracle["getResult"]["isSome"]);
     assert_eq!(got.result.value, runtime::Field::from(99u64));
     let got_hex = state_hex(got.context.query.state.get_ref().clone());

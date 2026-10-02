@@ -153,6 +153,15 @@ separate temporary harness before adding a `node_modules` link. The compiler
 cleans its output directories on each run, so links must stay outside them.
 The rejection checker verifies source-located failures for unsupported
 constructs and that no generated Rust library survives a rejected compile.
+The `tiny` gas fixture is captured with
+[`tiny_gas_capture.mjs`](oracles/tiny_gas_capture.mjs) from a TypeScript
+compilation with the matching runtime package available to Node. It records
+each VM query cost and the public transcript for `clear`, `set`, and `get`.
+The Rust fixture compares its generated circuit's total gas with the sum of
+those TypeScript query costs. The current TypeScript wrapper reports only
+the final query's cost in its `gasCost` field; compare the query sum when
+checking whole-circuit work. The captured transcript is a reference for
+future operation-by-operation Rust comparison.
 The `--proof` target check derives the Counter increment statement from the
 generated recorded trace, proves it against emitted ZKIR and keys, and rejects
 a changed binding input. It also validates offline ledger-8 deployments and

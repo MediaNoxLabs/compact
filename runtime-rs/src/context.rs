@@ -87,6 +87,8 @@ pub struct WitnessContext<'a, Private, Ledger = &'a StateValue<DefaultDB>> {
 pub struct CircuitResult<Private, Output, D: DB = DefaultDB> {
     pub context: CircuitContext<Private, D>,
     pub result: Output,
+    /// Cost of the operations represented by this result. Generated circuits
+    /// add the cost of each VM query rather than retaining only the last one.
     pub gas_cost: RunningCost,
     pub private_transcript_outputs: Vec<AlignedValue>,
 }

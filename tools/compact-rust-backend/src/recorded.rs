@@ -20,8 +20,8 @@ use proc_macro2::Span;
 use std::collections::{HashMap, HashSet};
 
 use crate::ir::{
-    CounterAmount, Expr, LedgerField, LedgerFieldKind, StateAction, StateReturn, StatefulCircuit,
-    StructField, Type, WitnessDeclaration,
+    CounterAmount, Expr, LedgerField, LedgerFieldKind, PureCircuit, StateAction, StateReturn,
+    StatefulCircuit, StructField, Type, WitnessDeclaration,
 };
 use crate::stateful::circuit_uses_witness;
 use crate::{RenderError, expression_with_calls, ident, rust_type};
@@ -33,6 +33,7 @@ pub(crate) fn render_recorded_circuit(
     circuit: &StatefulCircuit,
     ledger_fields: &HashMap<&str, &LedgerField>,
     witnesses: &HashMap<&str, &WitnessDeclaration>,
+    pure_circuits: &HashMap<&str, &PureCircuit>,
     circuits: &HashMap<&str, &StatefulCircuit>,
 ) -> Result<Option<syn::Item>, RenderError> {
     if circuit.internal {
@@ -406,6 +407,113 @@ pub(crate) fn render_recorded_circuit(
                 next_temp,
                 visiting,
             ),
+            Expr::Equal { left, right } | Expr::NotEqual { left, right } => {
+                let (field, index) = match (&**left, &**right) {
+                    (Expr::CellRead { field, index }, _) | (_, Expr::CellRead { field, index }) => {
+                        (field, index)
+                    }
+                    _ => return Ok(None),
+                };
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                let LedgerFieldKind::Cell { ty } = &declaration.declaration else {
+                    return Ok(None);
+                };
+                if declaration.index != *index || declaration.physical_path().len() != 1 {
+                    return Ok(None);
+                }
+                let mut operand = |value: &Expr| -> Result<Option<syn::Expr>, RenderError> {
+                    if let Expr::CellRead {
+                        field: read_field,
+                        index: read_index,
+                    } = value
+                    {
+                        if read_field != field || read_index != index {
+                            return Ok(None);
+                        }
+                        let slot = ident(field)?;
+                        let observed = syn::Ident::new(
+                            &format!("__compact_recorded_value_{}", *next_temp),
+                            Span::call_site(),
+                        );
+                        *next_temp += 1;
+                        let value_ty = rust_type(ty)?;
+                        steps.push(syn::parse_quote! {
+                            let (frame, #observed): (_, #value_ty) =
+                                crate::ledger_slots::#slot.record_read(frame)?;
+                        });
+                        return Ok(Some(syn::parse_quote!(#observed)));
+                    }
+                    Ok(cell_source(value, ty, locals, parameters))
+                };
+                let Some(left) = operand(left)? else {
+                    return Ok(None);
+                };
+                let Some(right) = operand(right)? else {
+                    return Ok(None);
+                };
+                let compared = syn::Ident::new(
+                    &format!("__compact_recorded_compare_{}", *next_temp),
+                    Span::call_site(),
+                );
+                *next_temp += 1;
+                if matches!(value, Expr::Equal { .. }) {
+                    steps.push(syn::parse_quote!(let #compared = #left == #right;));
+                } else {
+                    steps.push(syn::parse_quote!(let #compared = #left != #right;));
+                }
+                Ok(Some(syn::parse_quote!(#compared)))
+            }
+            Expr::Call { name, arguments } => {
+                let Some(callee) = circuits.get(name.as_str()) else {
+                    return Ok(None);
+                };
+                let StateReturn::Expression { value: result } = &callee.return_value else {
+                    return Ok(None);
+                };
+                if callee.result != Type::Boolean || !callee.actions.is_empty() {
+                    return Ok(None);
+                }
+                if arguments.len() != callee.parameters.len() {
+                    return Err(RenderError::ArgumentCount {
+                        circuit: name.clone(),
+                        expected: callee.parameters.len(),
+                        actual: arguments.len(),
+                    });
+                }
+                if !visiting.insert(name.clone()) {
+                    return Err(RenderError::UnsupportedStatefulCall(name.clone()));
+                }
+                let mut callee_locals = HashMap::new();
+                for (argument, parameter) in arguments.iter().zip(&callee.parameters) {
+                    let Some(value) = cell_source(argument, &parameter.ty, locals, parameters)
+                    else {
+                        visiting.remove(name);
+                        return Ok(None);
+                    };
+                    let arg = syn::Ident::new(
+                        &format!("__compact_recorded_arg_{}", *next_temp),
+                        Span::call_site(),
+                    );
+                    *next_temp += 1;
+                    steps.push(syn::parse_quote!(let #arg = #value;));
+                    callee_locals.insert(parameter.name.clone(), syn::parse_quote!(#arg));
+                }
+                let value = boolean_expression(
+                    result,
+                    &callee_locals,
+                    &HashMap::new(),
+                    ledger_fields,
+                    witnesses,
+                    circuits,
+                    steps,
+                    next_temp,
+                    visiting,
+                );
+                visiting.remove(name);
+                value
+            }
             Expr::SetMember {
                 field,
                 index,
@@ -586,7 +694,7 @@ pub(crate) fn render_recorded_circuit(
                         };
                         scoped.insert(binding.name.clone(), value);
                     } else if let Expr::WitnessCall { name, arguments } = &binding.value {
-                        if !matches!(binding.ty, Type::Boolean | Type::Field) {
+                        if !matches!(binding.ty, Type::Boolean | Type::Field | Type::Bytes { .. }) {
                             return Ok(false);
                         }
                         let declaration = witnesses
@@ -631,6 +739,40 @@ pub(crate) fn render_recorded_circuit(
                             });
                         });
                         scoped.insert(binding.name.clone(), syn::parse_quote!(#value));
+                    } else if let Expr::Call { name, arguments } = &binding.value {
+                        if !matches!(binding.ty, Type::Bytes { .. })
+                            || circuits.contains_key(name.as_str())
+                        {
+                            return Ok(false);
+                        }
+                        let mut args = Vec::new();
+                        for argument in arguments {
+                            let Expr::Coerce { ty, .. } = argument else {
+                                return Ok(false);
+                            };
+                            let Some(value) = cell_source(argument, ty, &scoped, parameters) else {
+                                return Ok(false);
+                            };
+                            args.push(value);
+                        }
+                        let method = ident(name)?;
+                        let value = syn::Ident::new(
+                            &format!("__compact_recorded_pure_{}", *next_temp),
+                            Span::call_site(),
+                        );
+                        *next_temp += 1;
+                        let value_ty = rust_type(&binding.ty)?;
+                        steps.push(syn::parse_quote! {
+                            let #value: #value_ty = crate::pure_circuits::#method(#(#args),*)?;
+                        });
+                        scoped.insert(binding.name.clone(), syn::parse_quote!(#value));
+                    } else if matches!(binding.ty, Type::Bytes { .. }) {
+                        let Some(value) =
+                            cell_source(&binding.value, &binding.ty, &scoped, parameters)
+                        else {
+                            return Ok(false);
+                        };
+                        scoped.insert(binding.name.clone(), value);
                     } else {
                         return Ok(false);
                     }
@@ -646,6 +788,28 @@ pub(crate) fn render_recorded_circuit(
                     next_temp,
                     visiting,
                 )
+            }
+            StateAction::Assert { condition, message } => {
+                let Some(condition) = boolean_expression(
+                    condition,
+                    locals,
+                    parameters,
+                    ledger_fields,
+                    witnesses,
+                    circuits,
+                    steps,
+                    next_temp,
+                    visiting,
+                )?
+                else {
+                    return Ok(false);
+                };
+                steps.push(syn::parse_quote! {
+                    if !(#condition) {
+                        return Err(runtime::CompactError::AssertionFailed(#message.to_owned()));
+                    }
+                });
+                Ok(true)
             }
             StateAction::CircuitCall { name, arguments } => {
                 let callee = circuits
@@ -1145,6 +1309,122 @@ pub(crate) fn render_recorded_circuit(
                 )],
                 syn::parse_quote!(observed),
             )
+        }
+        StateReturn::Expression {
+            value:
+                Expr::If {
+                    condition,
+                    then,
+                    otherwise,
+                },
+        } => {
+            fn pure_branch(
+                value: &Expr,
+                expected: &Type,
+                parameters: &HashMap<&str, (&Type, syn::Ident)>,
+                ledger_fields: &HashMap<&str, &LedgerField>,
+                witnesses: &HashMap<&str, &WitnessDeclaration>,
+                pure_circuits: &HashMap<&str, &PureCircuit>,
+                circuits: &HashMap<&str, &StatefulCircuit>,
+                next_temp: &mut usize,
+                visiting: &mut HashSet<String>,
+            ) -> Result<Option<(Vec<syn::Stmt>, syn::Expr)>, RenderError> {
+                let Expr::Call { name, arguments } = value else {
+                    return Ok(None);
+                };
+                let Some(callee) = pure_circuits.get(name.as_str()) else {
+                    return Ok(None);
+                };
+                if callee.result != *expected || arguments.len() != callee.parameters.len() {
+                    return Ok(None);
+                }
+                let mut steps = Vec::new();
+                let mut args = Vec::new();
+                for (argument, parameter) in arguments.iter().zip(&callee.parameters) {
+                    let value = if parameter.ty == Type::Field {
+                        field_expression(
+                            argument,
+                            &HashMap::new(),
+                            parameters,
+                            ledger_fields,
+                            witnesses,
+                            circuits,
+                            &mut steps,
+                            next_temp,
+                            visiting,
+                        )?
+                    } else {
+                        cell_source(argument, &parameter.ty, &HashMap::new(), parameters)
+                    };
+                    let Some(value) = value else { return Ok(None) };
+                    let arg = syn::Ident::new(
+                        &format!("__compact_recorded_arg_{}", *next_temp),
+                        Span::call_site(),
+                    );
+                    *next_temp += 1;
+                    steps.push(syn::parse_quote!(let #arg = #value;));
+                    args.push(arg);
+                }
+                let method = ident(name)?;
+                Ok(Some((
+                    steps,
+                    syn::parse_quote!(crate::pure_circuits::#method(#(#args),*)?),
+                )))
+            }
+
+            let mut return_steps = Vec::new();
+            let Some(condition) = boolean_expression(
+                condition,
+                &HashMap::new(),
+                &parameters,
+                ledger_fields,
+                witnesses,
+                circuits,
+                &mut return_steps,
+                &mut next_temp,
+                &mut visiting,
+            )?
+            else {
+                return Ok(None);
+            };
+            let Some((then_steps, then_result)) = pure_branch(
+                then,
+                &circuit.result,
+                &parameters,
+                ledger_fields,
+                witnesses,
+                pure_circuits,
+                circuits,
+                &mut next_temp,
+                &mut visiting,
+            )?
+            else {
+                return Ok(None);
+            };
+            let Some((otherwise_steps, otherwise_result)) = pure_branch(
+                otherwise,
+                &circuit.result,
+                &parameters,
+                ledger_fields,
+                witnesses,
+                pure_circuits,
+                circuits,
+                &mut next_temp,
+                &mut visiting,
+            )?
+            else {
+                return Ok(None);
+            };
+            return_steps.push(syn::parse_quote! {
+                let (frame, observed): (_, #result_ty) = if #condition {
+                    #(#then_steps)*
+                    (frame, #then_result)
+                } else {
+                    #(#otherwise_steps)*
+                    (frame, #otherwise_result)
+                };
+            });
+            (return_steps, syn::parse_quote!(observed))
         }
         StateReturn::SetMember {
             field,

@@ -68,6 +68,13 @@ mutation, membership, lookup, size, and emptiness calls have replayable recorded
 methods. Root Field/Boolean List push, pop, reset, length, emptiness, and head
 calls also have recorded methods. Other methods continue to
 return native execution results until their full transcript coverage is proven.
+The `tiny` fixture also records typed enum/Bytes Cell reads and writes,
+state-backed assertions, Bytes witnesses and pure calls, and a conditional
+`Maybe<Field>` return. Its generated `clear`, `set`, and `get` methods keep
+ordinary Rust control flow over the recording frame. For witnessed calls use
+`Contract::from(witness).recording().clear(context)`; the generated method
+borrows the witness implementation. Recorded entry points are emitted only
+when their complete circuit shape is supported.
 Enable the runtime's `ledger-transaction` feature in a consuming Cargo graph
 to use `transaction::prepare_call` with a recorded result and a `CallSpec`.
 That adapter builds a ledger-8 call prototype from the trace and emitted
@@ -160,14 +167,19 @@ each VM query cost and the public transcript for `clear`, `set`, and `get`.
 The Rust fixture compares its generated circuit's total gas with the sum of
 those TypeScript query costs. The current TypeScript wrapper reports only
 the final query's cost in its `gasCost` field; compare the query sum when
-checking whole-circuit work. The captured transcript is a reference for
-future operation-by-operation Rust comparison.
+checking whole-circuit work. The generated `tiny` test compares each
+normalized public Verify operation with this TypeScript transcript for
+`clear`, `set`, and `get`, as well as total gas, state, results, private
+outputs, and assertion failures. A single replay query has different gas
+from the sum of the compiler's separate queries; replay checks state and
+the query sums check gas.
 The `--proof` target check derives the Counter increment statement from the
 generated recorded trace, proves it against emitted ZKIR and keys, and rejects
 a changed binding input. It also validates offline ledger-8 deployments and
 proves, verifies, validates, and applies the supported Counter, Cell, Set,
-Map, and List call fixtures. Other circuit operations still need recording
-coverage before wallet submission.
+Map, List, enum Cell, and `tiny` call fixtures. `tiny` is proved in both
+present and absent `get` branches. Other circuit operations still need
+recording coverage before wallet submission.
 
 The fixture suite covers all 37 top-level `*_fixture.compact` contracts from
 the `codegen-rust` oracle branch, alongside smaller source contracts used to

@@ -38,6 +38,7 @@ CONSTRUCTOR_MAP_SOURCE = ROOT / "examples/rust_backend/constructor_map_actions.c
 LIST_SOURCE = ROOT / "examples/rust_backend/list_field.compact"
 CONSTRUCTOR_LIST_SOURCE = ROOT / "examples/rust_backend/constructor_list_actions.compact"
 RECORDED_ENUM_SOURCE = ROOT / "examples/rust_backend/recorded_enum_cell.compact"
+TINY_SOURCE = ROOT / "examples/rust_backend/tiny_oracle.compact"
 CELL_READ_SOURCE = ROOT / "examples/rust_backend/cell_read.compact"
 WITNESS_CELL_SOURCE = ROOT / "examples/rust_backend/witness_cell_write.compact"
 NESTED_COUNTER_SOURCE = ROOT / "examples/rust_backend/stateful_circuit_call.compact"
@@ -560,12 +561,21 @@ def main() -> None:
                 assert (enum_cell_proof / "keys" / f"choose.{extension}").is_file()
             for extension in ("zkir", "bzkir"):
                 assert (enum_cell_proof / "zkir" / f"choose.{extension}").is_file()
+            tiny_proof = base / "tiny-proof"
+            run(compiler, "--target", "rust", str(TINY_SOURCE), str(tiny_proof))
+            check_manifest(tiny_proof)
+            for circuit in ("clear", "set", "get"):
+                for extension in ("prover", "verifier"):
+                    assert (tiny_proof / "keys" / f"{circuit}.{extension}").is_file()
+                for extension in ("zkir", "bzkir"):
+                    assert (tiny_proof / "zkir" / f"{circuit}.{extension}").is_file()
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 str(proof), str(cell_proof), str(cell_read_proof), str(witness_proof), str(nested_proof),
                 str(nested_witness_proof), str(set_proof), str(set_oracle_proof),
                 str(map_proof), str(constructor_map_proof), str(list_proof), str(constructor_list_proof),
                 str(enum_cell_proof),
+                str(tiny_proof),
             )
     print("compactc target boundary and manifest: passed")
 

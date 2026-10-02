@@ -2441,6 +2441,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                 circuit,
                 &ledger_fields,
                 &witness_syntax.declarations,
+                &callable_circuits,
                 &callable_stateful_circuits,
             )? {
                 recorded_items.push(item);

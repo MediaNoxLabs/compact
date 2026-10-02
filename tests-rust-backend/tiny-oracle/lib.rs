@@ -306,19 +306,171 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
+    /// Circuits with a replayable ordered ledger program.
+    pub mod recorded {
+        use midnight_compact_runtime as runtime;
+        pub fn set<Private, W: super::Witnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: runtime::Field,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_arg_0 = crate::types::STATE::unset;
+            let (frame, __compact_recorded_value_1): (_, crate::types::STATE) =
+                crate::ledger_slots::state.record_read(frame)?;
+            let __compact_recorded_compare_2 =
+                __compact_recorded_value_1 == (__compact_recorded_arg_0).clone();
+            if !(__compact_recorded_compare_2) {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "set: attempted to overwrite recorded value".to_owned(),
+                ));
+            }
+            let (frame, __compact_witness_3) = frame.witness(|context| {
+                witnesses.private_secret_key(context.witness_context_with(super::LedgerView {
+                    state: context.query.state.get_ref(),
+                }))
+            });
+            let __compact_recorded_pure_4: runtime::FixedBytes<32> =
+                crate::pure_circuits::public_key((__compact_witness_3).clone())?;
+            let frame = crate::ledger_slots::authority
+                .record_write(frame, (__compact_recorded_pure_4).clone())?;
+            let frame = crate::ledger_slots::value.record_write(frame, __compact_param_0)?;
+            let frame = crate::ledger_slots::state.record_write(frame, crate::types::STATE::set)?;
+            Ok(frame.finish(()))
+        }
+        pub fn get<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<
+            runtime::recording::RecordedCircuitResult<Private, crate::types::Maybe>,
+            runtime::CompactError,
+        > {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_arg_0 = crate::types::STATE::set;
+            let (frame, __compact_recorded_value_1): (_, crate::types::STATE) =
+                crate::ledger_slots::state.record_read(frame)?;
+            let __compact_recorded_compare_2 =
+                __compact_recorded_value_1 == (__compact_recorded_arg_0).clone();
+            let (frame, observed): (_, crate::types::Maybe) = if __compact_recorded_compare_2 {
+                let (frame, __compact_recorded_value_3): (_, runtime::Field) =
+                    crate::ledger_slots::value.record_read(frame)?;
+                let __compact_recorded_arg_4 = __compact_recorded_value_3;
+                (frame, crate::pure_circuits::some(__compact_recorded_arg_4)?)
+            } else {
+                (frame, crate::pure_circuits::none()?)
+            };
+            Ok(frame.finish(observed))
+        }
+        pub fn clear<Private, W: super::Witnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_arg_0 = crate::types::STATE::set;
+            let (frame, __compact_recorded_value_1): (_, crate::types::STATE) =
+                crate::ledger_slots::state.record_read(frame)?;
+            let __compact_recorded_compare_2 =
+                __compact_recorded_value_1 == (__compact_recorded_arg_0).clone();
+            if !(__compact_recorded_compare_2) {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "clear: no value is currently recorded".to_owned(),
+                ));
+            }
+            let (frame, __compact_witness_3) = frame.witness(|context| {
+                witnesses.private_secret_key(context.witness_context_with(super::LedgerView {
+                    state: context.query.state.get_ref(),
+                }))
+            });
+            let __compact_recorded_pure_4: runtime::FixedBytes<32> =
+                crate::pure_circuits::public_key((__compact_witness_3).clone())?;
+            let (frame, __compact_recorded_value_5): (_, runtime::FixedBytes<32>) =
+                crate::ledger_slots::authority.record_read(frame)?;
+            let __compact_recorded_compare_6 =
+                (__compact_recorded_pure_4).clone() == __compact_recorded_value_5;
+            if !(__compact_recorded_compare_6) {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "clear: attempted clear without proper authorization".to_owned(),
+                ));
+            }
+            let frame = crate::ledger_slots::authority.record_write(
+                frame,
+                (<runtime::FixedBytes<32> as Default>::default()).clone(),
+            )?;
+            let frame =
+                crate::ledger_slots::value.record_write(frame, runtime::Field::from(0u128))?;
+            let frame =
+                crate::ledger_slots::state.record_write(frame, crate::types::STATE::unset)?;
+            Ok(frame.finish(()))
+        }
+        /// Typed handle for circuits with a complete recorded trace.
+        pub struct Contract;
+        impl Contract {
+            pub fn get<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, crate::types::Maybe>,
+                runtime::CompactError,
+            > {
+                crate::ledger_contract::recorded::get(context)
+            }
+        }
+        /// A recording handle with access to the contract's witnesses.
+        pub struct BorrowedContract<'a, W> {
+            pub(super) witnesses: &'a W,
+        }
+        impl<W> BorrowedContract<'_, W> {
+            pub fn set<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                __compact_param_0: runtime::Field,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            where
+                W: super::Witnesses<Private>,
+            {
+                set(context, self.witnesses, __compact_param_0)
+            }
+            pub fn get<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, crate::types::Maybe>,
+                runtime::CompactError,
+            > {
+                get(context)
+            }
+            pub fn clear<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            where
+                W: super::Witnesses<Private>,
+            {
+                clear(context, self.witnesses)
+            }
+        }
+    }
     /// Groups the contract's exported circuits for Rust consumers.
     pub struct Contract<W> {
         #[allow(dead_code)]
         witnesses: W,
+        pub recording: recorded::Contract,
     }
     impl<W> From<W> for Contract<W> {
         fn from(witnesses: W) -> Self {
-            Self { witnesses }
+            Self {
+                witnesses,
+                recording: recorded::Contract,
+            }
         }
     }
     impl Default for Contract<()> {
         fn default() -> Self {
-            Self { witnesses: () }
+            Self {
+                witnesses: (),
+                recording: recorded::Contract,
+            }
         }
     }
     impl<W> Contract<W> {
@@ -349,6 +501,12 @@ pub mod ledger_contract {
             W: Witnesses<Private>,
         {
             crate::ledger_contract::clear(context, &self.witnesses)
+        }
+        /// Borrow the contract's witnesses for a replayable circuit call.
+        pub fn recording(&self) -> recorded::BorrowedContract<'_, W> {
+            recorded::BorrowedContract {
+                witnesses: &self.witnesses,
+            }
         }
     }
 }

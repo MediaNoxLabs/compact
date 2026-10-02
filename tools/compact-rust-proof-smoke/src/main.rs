@@ -39,6 +39,7 @@ use compact_rust_recorded_enum_cell_fixture::types::Choice;
 use compact_rust_set_boolean_fixture::ledger_contract as set_contract;
 use compact_rust_set_oracle_fixture::ledger_contract as set_oracle_contract;
 use compact_rust_stateful_circuit_call_fixture::ledger_contract as nested_contract;
+use compact_rust_tiny_oracle_fixture::ledger_contract as tiny_contract;
 use compact_rust_witness_cell_write_fixture::ledger_contract as witness_contract;
 use midnight_base_crypto::data_provider::{FetchMode, MidnightDataProvider, OutputMode};
 use midnight_base_crypto::time::Timestamp;
@@ -281,6 +282,17 @@ impl witness_contract::Witnesses<u64> for Secret {
 
 struct NestedSecret;
 
+struct TinySecret;
+
+impl tiny_contract::Witnesses<()> for TinySecret {
+    fn private_secret_key(
+        &self,
+        _context: WitnessContext<'_, (), tiny_contract::LedgerView<'_>>,
+    ) -> ((), midnight_compact_runtime::FixedBytes<32>) {
+        ((), midnight_compact_runtime::FixedBytes::new([7; 32]))
+    }
+}
+
 impl expression_contract::Witnesses<u64> for NestedSecret {
     fn secret(
         &self,
@@ -311,9 +323,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     let list_root = arguments.next();
     let constructor_list_root = arguments.next();
     let enum_cell_root = arguments.next();
+    let tiny_root = arguments.next();
     if arguments.next().is_some() {
         return Err(
-            "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output> [witness-output] [nested-output] [nested-witness-output] [set-output] [set-oracle-output] [map-output] [constructor-map-output] [list-output] [constructor-list-output] [enum-cell-output]"
+            "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output> [witness-output] [nested-output] [nested-witness-output] [set-output] [set-oracle-output] [map-output] [constructor-map-output] [list-output] [constructor-list-output] [enum-cell-output] [tiny-output]"
                 .into(),
         );
     }
@@ -1065,6 +1078,137 @@ fn main() -> Result<(), Box<dyn Error>> {
                 Ok(())
             },
         )?;
+    }
+    if let Some(tiny_root) = tiny_root.as_ref().map(Path::new) {
+        let witness = TinySecret;
+        let initial = tiny_contract::initial_state(
+            ConstructorContext::new(()),
+            &witness,
+            Field::from(42u64),
+        )?;
+        let deploy = make_deploy(
+            tiny_root,
+            "clear",
+            initial.ledger_state.get_ref().clone(),
+            &mut rng,
+        )?;
+        let context = initial.into_circuit_context(deploy.address());
+        let recorded = tiny_contract::Contract::from(TinySecret)
+            .recording()
+            .clear(context)?;
+        let call = check_generated_trace(tiny_root, "clear", recorded, ())?;
+        check_transaction(tiny_root, "clear", deploy, call, &mut rng, |contract| {
+            let StateValue::Array(fields) = contract.data.get_ref() else {
+                return Err("tiny state is not an array".into());
+            };
+            if read_cell::<compact_rust_tiny_oracle_fixture::types::STATE, _>(
+                fields.get(2).ok_or("tiny state Cell missing")?,
+            )? != compact_rust_tiny_oracle_fixture::types::STATE::unset
+            {
+                return Err("proven tiny clear did not unset the state".into());
+            }
+            Ok(())
+        })?;
+
+        let initial = tiny_contract::initial_state(
+            ConstructorContext::new(()),
+            &witness,
+            Field::from(42u64),
+        )?;
+        let cleared = tiny_contract::clear(
+            initial
+                .into_circuit_context(midnight_compact_runtime::ledger::ContractAddress::default()),
+            &witness,
+        )?;
+        let deploy = make_deploy(
+            tiny_root,
+            "set",
+            cleared.context.query.state.get_ref().clone(),
+            &mut rng,
+        )?;
+        let context = cleared
+            .context
+            .into_constructor_result()
+            .into_circuit_context(deploy.address());
+        let recorded = tiny_contract::Contract::from(TinySecret)
+            .recording()
+            .set(context, Field::from(99u64))?;
+        let call = check_generated_trace(tiny_root, "set", recorded, Field::from(99u64))?;
+        check_transaction(tiny_root, "set", deploy, call, &mut rng, |contract| {
+            let StateValue::Array(fields) = contract.data.get_ref() else {
+                return Err("tiny state is not an array".into());
+            };
+            if read_cell::<Field, _>(fields.get(1).ok_or("tiny value Cell missing")?)?
+                != Field::from(99u64)
+            {
+                return Err("proven tiny set did not write 99".into());
+            }
+            Ok(())
+        })?;
+
+        let initial = tiny_contract::initial_state(
+            ConstructorContext::new(()),
+            &witness,
+            Field::from(42u64),
+        )?;
+        let deploy = make_deploy(
+            tiny_root,
+            "get",
+            initial.ledger_state.get_ref().clone(),
+            &mut rng,
+        )?;
+        let context = initial.into_circuit_context(deploy.address());
+        let recorded = tiny_contract::Contract::default().recording.get(context)?;
+        let call = check_generated_trace(tiny_root, "get", recorded, ())?;
+        check_transaction(tiny_root, "get", deploy, call, &mut rng, |contract| {
+            let StateValue::Array(fields) = contract.data.get_ref() else {
+                return Err("tiny state is not an array".into());
+            };
+            if read_cell::<Field, _>(fields.get(1).ok_or("tiny value Cell missing")?)?
+                != Field::from(42u64)
+            {
+                return Err("proven tiny get changed the value".into());
+            }
+            Ok(())
+        })?;
+
+        let initial = tiny_contract::initial_state(
+            ConstructorContext::new(()),
+            &witness,
+            Field::from(42u64),
+        )?;
+        let cleared = tiny_contract::clear(
+            initial
+                .into_circuit_context(midnight_compact_runtime::ledger::ContractAddress::default()),
+            &witness,
+        )?;
+        let deploy = make_deploy(
+            tiny_root,
+            "get",
+            cleared.context.query.state.get_ref().clone(),
+            &mut rng,
+        )?;
+        let context = cleared
+            .context
+            .into_constructor_result()
+            .into_circuit_context(deploy.address());
+        let recorded = tiny_contract::Contract::default().recording.get(context)?;
+        if recorded.execution.result.is_some {
+            return Err("tiny get returned Some for an unset value".into());
+        }
+        let call = check_generated_trace(tiny_root, "get", recorded, ())?;
+        check_transaction(tiny_root, "get", deploy, call, &mut rng, |contract| {
+            let StateValue::Array(fields) = contract.data.get_ref() else {
+                return Err("tiny state is not an array".into());
+            };
+            if read_cell::<compact_rust_tiny_oracle_fixture::types::STATE, _>(
+                fields.get(2).ok_or("tiny state Cell missing")?,
+            )? != compact_rust_tiny_oracle_fixture::types::STATE::unset
+            {
+                return Err("proven tiny absent get changed the state".into());
+            }
+            Ok(())
+        })?;
     }
     Ok(())
 }

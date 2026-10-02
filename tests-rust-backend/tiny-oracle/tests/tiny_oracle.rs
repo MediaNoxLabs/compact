@@ -14,12 +14,13 @@
 // limitations under the License.
 
 use compact_rust_tiny_oracle_fixture::ledger_contract::{
-    LedgerView, Witnesses, clear, get, initial_state, set,
+    LedgerView, Witnesses, clear, get, initial_state, recorded, set,
 };
 use midnight_compact_runtime as runtime;
 use midnight_onchain_state::state::{
     ContractMaintenanceAuthority, ContractOperation, ContractState, EntryPointBuf,
 };
+use midnight_onchain_vm::cost_model::INITIAL_COST_MODEL;
 use midnight_serialize::tagged_serialize;
 use midnight_storage::storage::HashMap;
 use runtime::context::{ConstructorContext, WitnessContext};
@@ -27,12 +28,23 @@ use runtime::ledger::{ContractAddress, DefaultDB, StateValue};
 
 struct FixedWitness;
 
+struct WrongWitness;
+
 impl Witnesses<()> for FixedWitness {
     fn private_secret_key(
         &self,
         _context: WitnessContext<'_, (), LedgerView<'_>>,
     ) -> ((), runtime::FixedBytes<32>) {
         ((), runtime::FixedBytes::new([7; 32]))
+    }
+}
+
+impl Witnesses<()> for WrongWitness {
+    fn private_secret_key(
+        &self,
+        _context: WitnessContext<'_, (), LedgerView<'_>>,
+    ) -> ((), runtime::FixedBytes<32>) {
+        ((), runtime::FixedBytes::new([8; 32]))
     }
 }
 
@@ -102,6 +114,56 @@ fn assert_total_gas_matches_typescript_queries(
     );
 }
 
+fn assert_replay<Output>(recorded: &runtime::recording::RecordedCircuitResult<(), Output>) {
+    let replay = recorded
+        .public
+        .initial()
+        .query(recorded.public.verify_ops(), None, &INITIAL_COST_MODEL)
+        .unwrap();
+    assert_eq!(
+        state_hex(replay.context.state.get_ref().clone()),
+        state_hex(recorded.execution.context.query.state.get_ref().clone())
+    );
+    // Replay runs the complete Verify program as one query. The generated
+    // circuit sums the separate compiler queries, which have different gas.
+}
+
+fn normalized_verify_ops<Output>(
+    recorded: &runtime::recording::RecordedCircuitResult<(), Output>,
+) -> serde_json::Value {
+    fn normalize(value: &mut serde_json::Value) {
+        match value {
+            serde_json::Value::Object(object) => {
+                if object.contains_key("alignment") {
+                    if let Some(serde_json::Value::Array(chunks)) = object.get_mut("value") {
+                        for chunk in chunks {
+                            if let serde_json::Value::Array(bytes) = chunk {
+                                let bytes = bytes
+                                    .iter()
+                                    .map(|byte| byte.as_u64().unwrap() as u8)
+                                    .collect::<Vec<_>>();
+                                *chunk = serde_json::json!({ "bytesHex": hex::encode(bytes) });
+                            }
+                        }
+                    }
+                }
+                for child in object.values_mut() {
+                    normalize(child);
+                }
+            }
+            serde_json::Value::Array(values) => {
+                for child in values {
+                    normalize(child);
+                }
+            }
+            _ => {}
+        }
+    }
+    let mut ops = serde_json::to_value(recorded.public.verify_ops()).unwrap();
+    normalize(&mut ops);
+    ops
+}
+
 #[test]
 fn tiny_constructor_clear_set_and_get_match_typescript() {
     let oracle: serde_json::Value = serde_json::from_str(include_str!(
@@ -155,4 +217,176 @@ fn tiny_constructor_clear_set_and_get_match_typescript() {
     let got_hex = state_hex(got.context.query.state.get_ref().clone());
     assert_no_witness_secret("get", &got_hex);
     assert_eq!(got_hex, oracle["afterSet99"]["stateHex"]);
+}
+
+#[test]
+fn tiny_recorded_clear_and_set_match_native_typescript_and_replay() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/tiny-oracle.json"
+    ))
+    .unwrap();
+    let gas_oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/tiny-gas-oracle.json"
+    ))
+    .unwrap();
+    let witness = FixedWitness;
+    let native = initial_state(
+        ConstructorContext::new(()),
+        &witness,
+        runtime::Field::from(42u64),
+    )
+    .unwrap();
+    let recorded = initial_state(
+        ConstructorContext::new(()),
+        &witness,
+        runtime::Field::from(42u64),
+    )
+    .unwrap();
+    let native = clear(
+        native.into_circuit_context(ContractAddress::default()),
+        &witness,
+    )
+    .unwrap();
+    let recorded = recorded::clear(
+        recorded.into_circuit_context(ContractAddress::default()),
+        &witness,
+    )
+    .unwrap();
+    assert_replay(&recorded);
+    assert_eq!(recorded.public.verify_ops().len(), 15);
+    assert_eq!(
+        normalized_verify_ops(&recorded),
+        gas_oracle["clear"]["publicTranscript"]
+    );
+    assert_eq!(native.gas_cost, recorded.execution.gas_cost);
+    assert_eq!(
+        native.private_transcript_outputs,
+        recorded.execution.private_transcript_outputs
+    );
+    assert_total_gas_matches_typescript_queries(
+        "recorded clear",
+        &recorded.execution.gas_cost,
+        recorded.execution.private_transcript_outputs.len(),
+        &gas_oracle["clear"],
+    );
+    assert_eq!(
+        state_hex(native.context.query.state.get_ref().clone()),
+        oracle["afterClear"]["stateHex"]
+    );
+    assert_eq!(
+        state_hex(recorded.execution.context.query.state.get_ref().clone()),
+        oracle["afterClear"]["stateHex"]
+    );
+
+    let native = get(native.context).unwrap();
+    let recorded = recorded::get(recorded.execution.context).unwrap();
+    assert_replay(&recorded);
+    assert_eq!(recorded.public.verify_ops().len(), 3);
+    assert!(!recorded.execution.result.is_some);
+    assert_eq!(native.result, recorded.execution.result);
+    assert_eq!(native.gas_cost, recorded.execution.gas_cost);
+
+    let native = set(native.context, &witness, runtime::Field::from(99u64)).unwrap();
+    let recorded = recorded::set(
+        recorded.execution.context,
+        &witness,
+        runtime::Field::from(99u64),
+    )
+    .unwrap();
+    assert_replay(&recorded);
+    assert_eq!(recorded.public.verify_ops().len(), 12);
+    assert_eq!(
+        normalized_verify_ops(&recorded),
+        gas_oracle["set"]["publicTranscript"]
+    );
+    assert_eq!(native.gas_cost, recorded.execution.gas_cost);
+    assert_eq!(
+        native.private_transcript_outputs,
+        recorded.execution.private_transcript_outputs
+    );
+    assert_total_gas_matches_typescript_queries(
+        "recorded set",
+        &recorded.execution.gas_cost,
+        recorded.execution.private_transcript_outputs.len(),
+        &gas_oracle["set"],
+    );
+    assert_eq!(
+        state_hex(native.context.query.state.get_ref().clone()),
+        oracle["afterSet99"]["stateHex"]
+    );
+    assert_eq!(
+        state_hex(recorded.execution.context.query.state.get_ref().clone()),
+        oracle["afterSet99"]["stateHex"]
+    );
+
+    let native = get(native.context).unwrap();
+    let recorded = recorded::get(recorded.execution.context).unwrap();
+    assert_replay(&recorded);
+    assert_eq!(native.result, recorded.execution.result);
+    assert_eq!(
+        recorded.execution.result.is_some,
+        oracle["getResult"]["isSome"]
+    );
+    assert_eq!(recorded.execution.result.value, runtime::Field::from(99u64));
+    assert_eq!(native.gas_cost, recorded.execution.gas_cost);
+    assert_eq!(recorded.public.verify_ops().len(), 6);
+    assert_eq!(
+        normalized_verify_ops(&recorded),
+        gas_oracle["get"]["publicTranscript"]
+    );
+    assert_total_gas_matches_typescript_queries(
+        "recorded get",
+        &recorded.execution.gas_cost,
+        recorded.execution.private_transcript_outputs.len(),
+        &gas_oracle["get"],
+    );
+}
+
+#[test]
+fn tiny_recorded_assertions_match_native_failures() {
+    let witness = FixedWitness;
+    let initial = || {
+        initial_state(
+            ConstructorContext::new(()),
+            &witness,
+            runtime::Field::from(42u64),
+        )
+        .unwrap()
+        .into_circuit_context(ContractAddress::default())
+    };
+    let native = set(initial(), &witness, runtime::Field::from(99u64))
+        .err()
+        .unwrap();
+    let recorded = recorded::set(initial(), &witness, runtime::Field::from(99u64))
+        .err()
+        .unwrap();
+    assert_eq!(native, recorded);
+    assert_eq!(
+        recorded,
+        runtime::CompactError::AssertionFailed(
+            "set: attempted to overwrite recorded value".to_owned()
+        )
+    );
+
+    let native = clear(initial(), &WrongWitness).err().unwrap();
+    let recorded = recorded::clear(initial(), &WrongWitness).err().unwrap();
+    assert_eq!(native, recorded);
+    assert_eq!(
+        recorded,
+        runtime::CompactError::AssertionFailed(
+            "clear: attempted clear without proper authorization".to_owned()
+        )
+    );
+
+    let native = clear(clear(initial(), &witness).unwrap().context, &witness)
+        .err()
+        .unwrap();
+    let recorded = recorded::clear(clear(initial(), &witness).unwrap().context, &witness)
+        .err()
+        .unwrap();
+    assert_eq!(native, recorded);
+    assert_eq!(
+        recorded,
+        runtime::CompactError::AssertionFailed("clear: no value is currently recorded".to_owned())
+    );
 }

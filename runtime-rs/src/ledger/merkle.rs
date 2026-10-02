@@ -970,21 +970,27 @@ mod query_program_tests {
     use crate::ledger::DefaultDB;
     use midnight_onchain_vm::result_mode::ResultMode;
 
-    fn tags<M: ResultMode<DefaultDB>>(program: &[Op<M, DefaultDB>]) -> Vec<String>
+    fn serialized_program<M: ResultMode<DefaultDB>>(
+        program: &[Op<M, DefaultDB>],
+    ) -> Vec<serde_json::Value>
     where
         Op<M, DefaultDB>: serde::Serialize,
     {
         program
             .iter()
-            .map(|operation| {
-                let value = serde_json::to_value(operation).unwrap();
-                match value {
-                    serde_json::Value::String(tag) => tag,
-                    serde_json::Value::Object(fields) if fields.len() == 1 => {
-                        fields.into_iter().next().unwrap().0
-                    }
-                    other => panic!("unexpected serialized VM operation: {other}"),
+            .map(|operation| serde_json::to_value(operation).unwrap())
+            .collect()
+    }
+
+    fn tags(program: &[serde_json::Value]) -> Vec<String> {
+        program
+            .iter()
+            .map(|value| match value {
+                serde_json::Value::String(tag) => tag.clone(),
+                serde_json::Value::Object(fields) if fields.len() == 1 => {
+                    fields.keys().next().unwrap().clone()
                 }
+                other => panic!("unexpected serialized VM operation: {other}"),
             })
             .collect()
     }
@@ -1000,6 +1006,24 @@ mod query_program_tests {
             .collect()
     }
 
+    fn assert_program<M: ResultMode<DefaultDB>>(
+        program: &[Op<M, DefaultDB>],
+        oracle: &serde_json::Value,
+        call: &str,
+    ) where
+        Op<M, DefaultDB>: serde::Serialize,
+    {
+        let queries = oracle["nativeQueries"][call]["queries"].as_array().unwrap();
+        assert_eq!(queries.len(), 1, "{call}: expected one ledger-8 query");
+        let actual = serialized_program(program);
+        assert_eq!(tags(&actual), expected_tags(oracle, call), "{call}: tags");
+        assert_eq!(
+            actual.as_slice(),
+            queries[0]["program"].as_array().unwrap().as_slice(),
+            "{call}: VM operands"
+        );
+    }
+
     #[test]
     fn native_merkle_programs_match_captured_ledger8_operation_order() {
         let plain: serde_json::Value =
@@ -1010,45 +1034,53 @@ mod query_program_tests {
                 .unwrap();
         let path = || LedgerPath::from(&[0_u8][..]);
         let hash = || AlignedValue::from(leaf_hash_for(BoundedUint::<255>::new(7).unwrap()));
+        let plain_state = StateValue::Array(vec![constructor_merkle_tree::<DefaultDB>(3)].into());
+        let plain_root = merkle_tree_view_at_path(&plain_state, &[0])
+            .unwrap()
+            .root()
+            .unwrap();
+        let historic_state =
+            StateValue::Array(vec![constructor_historic_merkle_tree::<DefaultDB>(3)].into());
+        let historic_root = historic_merkle_tree_view_at_path(&historic_state, &[0])
+            .unwrap()
+            .root()
+            .unwrap();
 
-        let full = tags(&is_full_program::<DefaultDB>(path(), 3).unwrap());
-        assert_eq!(full, expected_tags(&plain, "fullAtInit"));
-        assert_eq!(full, expected_tags(&historic, "fullAtInit"));
-        assert_eq!(
-            tags(&check_root_program::<_, DefaultDB>(
+        let full = is_full_program::<DefaultDB>(path(), 3).unwrap();
+        assert_program(&full, &plain, "fullAtInit");
+        assert_program(&full, &historic, "fullAtInit");
+        assert_program(
+            &check_root_program::<_, DefaultDB>(
                 path(),
-                Field::from(0_u64),
+                Field::from(plain_root.0),
                 MerkleHistory::CurrentOnly,
-            )),
-            expected_tags(&plain, "knownAtInit")
+            ),
+            &plain,
+            "knownAtInit",
         );
-        assert_eq!(
-            tags(&check_root_program::<_, DefaultDB>(
+        assert_program(
+            &check_root_program::<_, DefaultDB>(
                 path(),
-                Field::from(0_u64),
+                Field::from(historic_root.0),
                 MerkleHistory::Historic,
-            )),
-            expected_tags(&historic, "knownAtInit")
+            ),
+            &historic,
+            "knownAtInit",
         );
-        assert_eq!(
-            tags(&merkle_insert_hashed_program::<DefaultDB>(
-                path(),
-                hash(),
-                MerkleHistory::CurrentOnly,
-            )),
-            expected_tags(&plain, "append7")
+        assert_program(
+            &merkle_insert_hashed_program::<DefaultDB>(path(), hash(), MerkleHistory::CurrentOnly),
+            &plain,
+            "append7",
         );
-        assert_eq!(
-            tags(&merkle_insert_hashed_program::<DefaultDB>(
-                path(),
-                hash(),
-                MerkleHistory::Historic,
-            )),
-            expected_tags(&historic, "append7")
+        assert_program(
+            &merkle_insert_hashed_program::<DefaultDB>(path(), hash(), MerkleHistory::Historic),
+            &historic,
+            "append7",
         );
-        assert_eq!(
-            tags(&historic_reset_history_program::<DefaultDB>(path())),
-            expected_tags(&historic, "forgetHistory")
+        assert_program(
+            &historic_reset_history_program::<DefaultDB>(path()),
+            &historic,
+            "forgetHistory",
         );
     }
 }

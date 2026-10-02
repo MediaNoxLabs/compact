@@ -18,6 +18,7 @@
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { normalizeQueryProgram } from './normalize_query_program.mjs';
 
 if (process.argv.length !== 3) throw new Error('usage: node hmt_insert_capture.mjs <compiled-contract-dir>');
 const contractIndex = resolve(process.argv[2], 'index.js');
@@ -31,6 +32,7 @@ runtime.QueryContext.prototype.query = function (...args) {
   queryCosts.push({
     gasCost: result.gasCost,
     opTags: args[0].map((op) => typeof op === 'string' ? op : Object.keys(op)[0]),
+    program: normalizeQueryProgram(args[0]),
   });
   return result;
 };

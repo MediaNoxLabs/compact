@@ -1834,11 +1834,13 @@ fn map_insert_and_lookup_require_key_and_value_types() {
             return_value: StateReturn::Unit,
         }],
     };
+    let source = render(&contract).unwrap();
+    assert!(source.contains("MapSlot<bool, runtime::Field>"), "{source}");
     assert!(
-        render(&contract)
-            .unwrap()
-            .contains("context.insert_map(0, __compact_param_0, __compact_param_1)?")
+        source.contains(".insert(context, __compact_param_0, __compact_param_1)?"),
+        "{source}"
     );
+    assert!(source.contains(".record_insert(frame,"), "{source}");
     contract.stateful_circuits[0].parameters[1].ty = Type::Boolean;
     assert_eq!(
         render(&contract),
@@ -1855,11 +1857,9 @@ fn map_insert_and_lookup_require_key_and_value_types() {
         index: 0,
         key: Expr::Parameter { name: "key".into() },
     };
-    assert!(
-        render(&contract)
-            .unwrap()
-            .contains("context.lookup_map::<_, runtime::Field>(0, __compact_param_0)?")
-    );
+    let source = render(&contract).unwrap();
+    assert!(source.contains(".lookup(context, __compact_param_0)?"));
+    assert!(source.contains(".record_lookup(frame,"), "{source}");
     contract.stateful_circuits[0].result = Type::Boolean;
     assert_eq!(
         render(&contract),
@@ -1875,11 +1875,9 @@ fn map_insert_and_lookup_require_key_and_value_types() {
         index: 0,
         key: Expr::Parameter { name: "key".into() },
     }];
-    assert!(
-        render(&contract)
-            .unwrap()
-            .contains(".insert_map(0, __compact_param_0, <runtime::Field as Default>::default())?")
-    );
+    let source = render(&contract).unwrap();
+    assert!(source.contains(".insert_default(context, __compact_param_0)?"));
+    assert!(source.contains(".record_insert_default(frame,"), "{source}");
     contract.stateful_circuits[0].parameters[0].ty = Type::Field;
     assert_eq!(
         render(&contract),
@@ -1893,7 +1891,9 @@ fn map_insert_and_lookup_require_key_and_value_types() {
         field: "table".into(),
         index: 0,
     }];
-    assert!(render(&contract).unwrap().contains("context.reset_map(0)?"));
+    let source = render(&contract).unwrap();
+    assert!(source.contains(".reset(context)?"));
+    assert!(source.contains(".record_reset(frame)?"), "{source}");
     contract.stateful_circuits[0].actions.clear();
     contract.stateful_circuits[0].return_value = StateReturn::MapSize {
         field: "table".into(),
@@ -1908,6 +1908,34 @@ fn map_insert_and_lookup_require_key_and_value_types() {
             actual: Type::Unit,
         })
     );
+    contract.ledger_fields[0].declaration = LedgerFieldKind::Map {
+        key: Type::Boolean,
+        value: Type::Bytes { length: 32 },
+    };
+    contract.stateful_circuits[0].result = Type::Unit;
+    contract.stateful_circuits[0].return_value = StateReturn::Unit;
+    contract.stateful_circuits[0].actions = vec![StateAction::MapInsertDefault {
+        field: "table".into(),
+        index: 0,
+        key: Expr::Parameter { name: "key".into() },
+    }];
+    assert!(!render(&contract).unwrap().contains("pub mod recorded"));
+
+    // A nested ledger Map is constructor-supported, but its value has no
+    // CellValue type for scalar MapSlot operations.
+    contract.stateful_circuits.clear();
+    contract.ledger_fields[0].declaration = LedgerFieldKind::Map {
+        key: Type::Field,
+        value: Type::LedgerMap {
+            key: Box::new(Type::Field),
+            value: Box::new(Type::Unsigned {
+                max: u64::MAX.to_string(),
+            }),
+        },
+    };
+    let source = render(&contract).unwrap();
+    assert!(source.contains("constructor_map()"));
+    assert!(!source.contains("MapSlot<"));
 }
 
 #[test]

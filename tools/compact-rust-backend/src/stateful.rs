@@ -224,16 +224,15 @@ pub(crate) fn render_state_expression(
                 Span::call_site(),
             );
             *next_temp += 1;
-            let index = ledger_path_expr(declaration);
+            let slot = ident(&declaration.id)?;
             let result_ty = if matches!(value, Expr::MapMember { .. }) {
                 statements.push(syn::parse_quote!(
-                    let #step = context.member_map(#index, (#key).clone())?;
+                    let #step = crate::ledger_slots::#slot.member(context, (#key).clone())?;
                 ));
                 Type::Boolean
             } else {
-                let value_syntax = rust_type(value_ty)?;
                 statements.push(syn::parse_quote!(
-                    let #step = context.lookup_map::<_, #value_syntax>(#index, (#key).clone())?;
+                    let #step = crate::ledger_slots::#slot.lookup(context, (#key).clone())?;
                 ));
                 value_ty.clone()
             };
@@ -2157,9 +2156,9 @@ pub(crate) fn render_stateful_circuit(
                         actual: actual_value,
                     });
                 }
-                let index = ledger_path_expr(declaration);
+                let slot = ident(&declaration.id)?;
                 statements.push(syn::parse_quote! {
-                    let step = context.insert_map(#index, #key, #value)?;
+                    let step = crate::ledger_slots::#slot.insert(context, #key, #value)?;
                 });
                 statements.push(syn::parse_quote! {
                     let context = step.context;
@@ -2172,11 +2171,7 @@ pub(crate) fn render_stateful_circuit(
                 let declaration = ledger_fields
                     .get(field.as_str())
                     .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
-                let LedgerFieldKind::Map {
-                    key: key_ty,
-                    value: value_ty,
-                } = &declaration.declaration
-                else {
+                let LedgerFieldKind::Map { key: key_ty, .. } = &declaration.declaration else {
                     return Err(RenderError::UnknownLedgerField(field.clone()));
                 };
                 if declaration.index != *index {
@@ -2189,10 +2184,9 @@ pub(crate) fn render_stateful_circuit(
                         actual: actual_key,
                     });
                 }
-                let value_ty = rust_type(value_ty)?;
-                let index = ledger_path_expr(declaration);
+                let slot = ident(&declaration.id)?;
                 statements.push(syn::parse_quote! {
-                    let step = context.insert_map(#index, #key, <#value_ty as Default>::default())?;
+                    let step = crate::ledger_slots::#slot.insert_default(context, #key)?;
                 });
                 statements.push(syn::parse_quote! {
                     let context = step.context;
@@ -2218,9 +2212,9 @@ pub(crate) fn render_stateful_circuit(
                         actual: actual_key,
                     });
                 }
-                let index = ledger_path_expr(declaration);
+                let slot = ident(&declaration.id)?;
                 statements.push(syn::parse_quote! {
-                    let step = context.remove_map(#index, #key)?;
+                    let step = crate::ledger_slots::#slot.remove(context, #key)?;
                 });
                 statements.push(syn::parse_quote! {
                     let context = step.context;
@@ -2238,9 +2232,9 @@ pub(crate) fn render_stateful_circuit(
                 {
                     return Err(RenderError::UnknownLedgerField(field.clone()));
                 }
-                let index = ledger_path_expr(declaration);
+                let slot = ident(&declaration.id)?;
                 statements.push(syn::parse_quote! {
-                    let step = context.reset_map(#index)?;
+                    let step = crate::ledger_slots::#slot.reset(context)?;
                 });
                 statements.push(syn::parse_quote! {
                     let context = step.context;
@@ -2869,11 +2863,11 @@ pub(crate) fn render_stateful_circuit(
                 });
             }
             if is_map {
-                let index = ledger_path_expr(declaration);
-                let method = if is_size { "size_map" } else { "is_empty_map" };
+                let slot = ident(&declaration.id)?;
+                let method = if is_size { "size" } else { "is_empty" };
                 let method = syn::Ident::new(method, Span::call_site());
                 statements.push(syn::parse_quote!(
-                    let read_step = context.#method(#index)?;
+                    let read_step = crate::ledger_slots::#slot.#method(context)?;
                 ));
             } else {
                 let slot = ident(&declaration.id)?;
@@ -2930,14 +2924,14 @@ pub(crate) fn render_stateful_circuit(
                     actual: circuit.result.clone(),
                 });
             }
-            let index = ledger_path_expr(declaration);
+            let slot = ident(&declaration.id)?;
             if is_member {
                 statements.push(syn::parse_quote! {
-                    let read_step = context.member_map(#index, #key)?;
+                    let read_step = crate::ledger_slots::#slot.member(context, #key)?;
                 });
             } else {
                 statements.push(syn::parse_quote! {
-                    let read_step = context.lookup_map::<_, #result_ty>(#index, #key)?;
+                    let read_step = crate::ledger_slots::#slot.lookup(context, #key)?;
                 });
             }
             statements.push(syn::parse_quote! {

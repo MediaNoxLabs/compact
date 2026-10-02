@@ -5,7 +5,7 @@
 
 //! An opt-in path from native circuit execution to a replayable ledger program.
 //!
-//! Cell, Counter, and Set operations are supported so far. Generated contracts must
+//! Cell, Counter, Set, and Map operations are supported so far. Generated contracts must
 //! not claim a transaction-ready trace until every operation they use records
 //! its corresponding verifying VM instruction.
 
@@ -225,6 +225,69 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         self.observed_gas += result.gas_cost;
         self.verify_ops.extend(program);
         Ok((self, empty))
+    }
+
+    pub fn insert_map<K: CellValue, V: CellValue>(
+        self,
+        path: impl Into<LedgerPath>,
+        key: K,
+        value: V,
+    ) -> Result<Self, CompactError> {
+        let path = path.into();
+        self.apply_verify_program(ledger::map_insert_program(path.as_slice(), key, value))
+    }
+
+    pub fn remove_map<K: CellValue>(
+        self,
+        path: impl Into<LedgerPath>,
+        key: K,
+    ) -> Result<Self, CompactError> {
+        self.remove_set(path, key)
+    }
+
+    pub fn reset_map(self, path: impl Into<LedgerPath>) -> Result<Self, CompactError> {
+        self.reset_set(path)
+    }
+
+    pub fn member_map<K: CellValue + Clone>(
+        self,
+        path: impl Into<LedgerPath>,
+        key: K,
+    ) -> Result<(Self, bool), CompactError> {
+        self.member_set(path, key)
+    }
+
+    pub fn lookup_map<K: CellValue + Clone, V: CellValue>(
+        mut self,
+        path: impl Into<LedgerPath>,
+        key: K,
+    ) -> Result<(Self, V), CompactError> {
+        let path = path.into();
+        let (result, value) = ledger::lookup_map::<K, V, D>(
+            &self.context.query,
+            path.as_slice(),
+            key.clone(),
+            self.context.gas_limit,
+            &self.context.cost_model,
+        )?;
+        let Some(GatherEvent::Read(observed)) = result.events.last() else {
+            return Err(CompactError::InvalidLedgerCell(
+                "missing Map lookup event".into(),
+            ));
+        };
+        let program = ledger::map_lookup_program(path.as_slice(), key, observed.clone());
+        self.context.query = result.context;
+        self.observed_gas += result.gas_cost;
+        self.verify_ops.extend(program);
+        Ok((self, value))
+    }
+
+    pub fn size_map(self, path: impl Into<LedgerPath>) -> Result<(Self, u64), CompactError> {
+        self.size_set(path)
+    }
+
+    pub fn is_empty_map(self, path: impl Into<LedgerPath>) -> Result<(Self, bool), CompactError> {
+        self.is_empty_set(path)
     }
 
     pub fn read_cell<T: CellValue>(

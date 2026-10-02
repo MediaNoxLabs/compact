@@ -370,7 +370,7 @@ pub mod pure_circuits {
         })
     }
 }
-/// Typed descriptors for Compact Cell, Counter, and Set declarations.
+/// Typed descriptors for Compact Cell, Counter, Set, and Map declarations.
 #[allow(non_upper_case_globals)]
 pub mod ledger_slots {
     use midnight_compact_runtime as runtime;
@@ -401,6 +401,12 @@ pub mod ledger_slots {
     pub const revision: runtime::slots::CounterSlot = runtime::slots::CounterSlot::new(&[1u8, 8u8]);
     pub const writeCount: runtime::slots::CounterSlot =
         runtime::slots::CounterSlot::new(&[1u8, 9u8]);
+    pub const records: runtime::slots::MapSlot<runtime::OpaqueString, crate::types::AssetRecord> =
+        runtime::slots::MapSlot::new(&[1u8, 10u8]);
+    pub const custodyGrants: runtime::slots::MapSlot<
+        runtime::OpaqueString,
+        crate::types::CustodyGrant,
+    > = runtime::slots::MapSlot::new(&[1u8, 11u8]);
     pub const retiredKeys: runtime::slots::SetSlot<runtime::OpaqueString> =
         runtime::slots::SetSlot::new(&[1u8, 12u8]);
     pub const watchList: runtime::slots::SetSlot<runtime::OpaqueString> =
@@ -833,14 +839,14 @@ pub mod ledger_contract {
         let private_transcript_outputs = Vec::new();
         let mut context = context;
         let __compact_query_0 =
-            context.member_map(&[1, 10], (__compact_param_0.clone()).clone())?;
+            crate::ledger_slots::records.member(context, (__compact_param_0.clone()).clone())?;
         context = __compact_query_0.context;
         total_cost += __compact_query_0.gas_cost;
         let result = if __compact_query_0.result {
             true
         } else {
-            let __compact_query_1 =
-                context.member_map(&[1, 11], (__compact_param_0.clone()).clone())?;
+            let __compact_query_1 = crate::ledger_slots::custodyGrants
+                .member(context, (__compact_param_0.clone()).clone())?;
             context = __compact_query_1.context;
             total_cost += __compact_query_1.gas_cost;
             __compact_query_1.result
@@ -910,8 +916,8 @@ pub mod ledger_contract {
             #[allow(unused_mut)]
             let mut context = context;
             let mut context = context;
-            let __compact_query_3 =
-                context.member_map(&[1, 10], (__compact_action_local_0.clone()).clone())?;
+            let __compact_query_3 = crate::ledger_slots::records
+                .member(context, (__compact_action_local_0.clone()).clone())?;
             context = __compact_query_3.context;
             total_cost += __compact_query_3.gas_cost;
             if !(__compact_query_3.result) {
@@ -919,7 +925,8 @@ pub mod ledger_contract {
                     "record does not exist".to_owned(),
                 ));
             }
-            let step = context.remove_map(&[1, 10], __compact_action_local_0.clone())?;
+            let step =
+                crate::ledger_slots::records.remove(context, __compact_action_local_0.clone())?;
             let context = step.context;
             total_cost += step.gas_cost;
             context
@@ -956,8 +963,8 @@ pub mod ledger_contract {
             };
             context
         };
-        let step = context.insert_map(
-            &[1, 10],
+        let step = crate::ledger_slots::records.insert(
+            context,
             __compact_action_local_0.clone(),
             __compact_action_local_1.clone(),
         )?;
@@ -987,8 +994,8 @@ pub mod ledger_contract {
         let context = call_step.context;
         total_cost += call_step.gas_cost;
         let mut context = context;
-        let __compact_query_0 =
-            context.member_map(&[1, 10], (__compact_action_local_0.clone()).clone())?;
+        let __compact_query_0 = crate::ledger_slots::records
+            .member(context, (__compact_action_local_0.clone()).clone())?;
         context = __compact_query_0.context;
         total_cost += __compact_query_0.gas_cost;
         if !(__compact_query_0.result) {
@@ -1010,7 +1017,8 @@ pub mod ledger_contract {
                 "record is still watched".to_owned(),
             ));
         }
-        let step = context.remove_map(&[1, 10], __compact_action_local_0.clone())?;
+        let step =
+            crate::ledger_slots::records.remove(context, __compact_action_local_0.clone())?;
         let context = step.context;
         total_cost += step.gas_cost;
         let step =
@@ -1061,8 +1069,8 @@ pub mod ledger_contract {
             #[allow(unused_mut)]
             let mut context = context;
             let mut context = context;
-            let __compact_query_3 =
-                context.member_map(&[1, 11], (__compact_action_local_0.clone()).clone())?;
+            let __compact_query_3 = crate::ledger_slots::custodyGrants
+                .member(context, (__compact_action_local_0.clone()).clone())?;
             context = __compact_query_3.context;
             total_cost += __compact_query_3.gas_cost;
             if !(__compact_query_3.result) {
@@ -1070,7 +1078,8 @@ pub mod ledger_contract {
                     "grant does not exist".to_owned(),
                 ));
             }
-            let step = context.remove_map(&[1, 11], __compact_action_local_0.clone())?;
+            let step = crate::ledger_slots::custodyGrants
+                .remove(context, __compact_action_local_0.clone())?;
             let context = step.context;
             total_cost += step.gas_cost;
             context
@@ -1100,8 +1109,8 @@ pub mod ledger_contract {
             };
             context
         };
-        let step = context.insert_map(
-            &[1, 11],
+        let step = crate::ledger_slots::custodyGrants.insert(
+            context,
             __compact_action_local_0.clone(),
             __compact_action_local_1.clone(),
         )?;
@@ -1254,8 +1263,8 @@ pub mod ledger_contract {
         let private_transcript_outputs = Vec::new();
         let __compact_action_local_0: runtime::OpaqueString = __compact_param_0.clone();
         let mut context = context;
-        let __compact_query_0 =
-            context.member_map(&[1, 10], (__compact_action_local_0.clone()).clone())?;
+        let __compact_query_0 = crate::ledger_slots::records
+            .member(context, (__compact_action_local_0.clone()).clone())?;
         context = __compact_query_0.context;
         total_cost += __compact_query_0.gas_cost;
         if !(__compact_query_0.result) {
@@ -1264,10 +1273,8 @@ pub mod ledger_contract {
             ));
         }
         let mut context = context;
-        let __compact_query_1 = context.lookup_map::<_, crate::types::AssetRecord>(
-            &[1, 10],
-            (__compact_action_local_0.clone()).clone(),
-        )?;
+        let __compact_query_1 = crate::ledger_slots::records
+            .lookup(context, (__compact_action_local_0.clone()).clone())?;
         context = __compact_query_1.context;
         total_cost += __compact_query_1.gas_cost;
         let __compact_action_local_1: crate::types::AssetRecord = __compact_query_1.result;
@@ -1293,8 +1300,8 @@ pub mod ledger_contract {
         let private_transcript_outputs = Vec::new();
         let __compact_action_local_0: runtime::OpaqueString = __compact_param_0.clone();
         let mut context = context;
-        let __compact_query_0 =
-            context.member_map(&[1, 11], (__compact_action_local_0.clone()).clone())?;
+        let __compact_query_0 = crate::ledger_slots::custodyGrants
+            .member(context, (__compact_action_local_0.clone()).clone())?;
         context = __compact_query_0.context;
         total_cost += __compact_query_0.gas_cost;
         if !(__compact_query_0.result) {
@@ -1303,10 +1310,8 @@ pub mod ledger_contract {
             ));
         }
         let mut context = context;
-        let __compact_query_1 = context.lookup_map::<_, crate::types::CustodyGrant>(
-            &[1, 11],
-            (__compact_action_local_0.clone()).clone(),
-        )?;
+        let __compact_query_1 = crate::ledger_slots::custodyGrants
+            .lookup(context, (__compact_action_local_0.clone()).clone())?;
         context = __compact_query_1.context;
         total_cost += __compact_query_1.gas_cost;
         let __compact_action_local_1: crate::types::CustodyGrant = __compact_query_1.result;

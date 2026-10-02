@@ -14,7 +14,8 @@
 // limitations under the License.
 
 use compact_rust_map_boolean_field_fixture::ledger_contract::{
-    get, has, initial_state, put, put_default, remove_key, reset_table, table_is_empty, table_size,
+    Contract, get, has, initial_state, put, put_default, remove_key, reset_table, table_is_empty,
+    table_size,
 };
 use midnight_compact_runtime::Field;
 use midnight_compact_runtime::context::ConstructorContext;
@@ -77,4 +78,53 @@ fn generated_map_contract_inserts_and_looks_up_field_values() {
     assert_eq!(result.result.value(), 0);
     let result = table_is_empty(result.context).unwrap();
     assert!(result.result);
+}
+
+#[test]
+fn generated_map_recording_replays_native_calls() {
+    let contract = Contract::default();
+    let context = initial_state(ConstructorContext::new(()))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let native_context = initial_state(ConstructorContext::new(()))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let native = put(native_context, true, Field::from(42_u64)).unwrap();
+    let recorded = contract
+        .recording
+        .put(context, true, Field::from(42_u64))
+        .unwrap();
+    assert_eq!(recorded.execution.gas_cost, native.gas_cost);
+    assert_eq!(
+        recorded.execution.context.query.state.get_ref(),
+        native.context.query.state.get_ref()
+    );
+    let replay = recorded
+        .public
+        .initial()
+        .query(
+            recorded.public.verify_ops(),
+            None,
+            &recorded.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(replay.context.effects, native.context.query.effects);
+
+    let native = get(native.context, true).unwrap();
+    let recorded = contract
+        .recording
+        .get(recorded.execution.context, true)
+        .unwrap();
+    assert_eq!(recorded.execution.result, Field::from(42_u64));
+    assert_eq!(recorded.execution.gas_cost, native.gas_cost);
+    let replay = recorded
+        .public
+        .initial()
+        .query(
+            recorded.public.verify_ops(),
+            None,
+            &recorded.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(replay.context.effects, native.context.query.effects);
 }

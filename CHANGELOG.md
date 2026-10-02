@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Toolchain 0.31.129, language 0.23.105, runtime 0.16.101]
+
+### Added
+
+- Generate typed `MapSlot<K, V>` descriptors for scalar Map declarations and
+  use them in native and recorded Map circuit bodies. Preserve key/value type
+  checks and compiler-derived physical paths.
+- Prove, verify, validate, and apply generated Map operations and constructor
+  Map lookups through ledger-8 in the packaged offline gate.
+
+### Changed
+
+- Keep nested Map declarations on the existing constructor/runtime path until
+  nested values have a typed `CellValue` representation; do not emit a scalar
+  `MapSlot` for them.
+
 ## [Toolchain 0.31.128, language 0.23.105, runtime 0.16.101]
 
 ### Added

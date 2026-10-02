@@ -384,7 +384,7 @@ pub mod pure_circuits {
         Ok(runtime::persistent_hash((ballot, sk)))
     }
 }
-/// Typed descriptors for Compact Cell, Counter, and Set declarations.
+/// Typed descriptors for Compact Cell, Counter, Set, and Map declarations.
 #[allow(non_upper_case_globals)]
 pub mod ledger_slots {
     use midnight_compact_runtime as runtime;

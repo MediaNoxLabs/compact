@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Prove emitted Counter, Cell, and Set artifacts in offline ledger-8 transactions.
+//! Prove emitted Counter, Cell, Set, and Map artifacts in offline ledger-8 transactions.
 //!
 //! The proof uses the ledger-derived statement from a generated counter VM
 //! program and checks it against the fixture's known ZKIR encoding. The call
@@ -28,7 +28,9 @@ use std::path::{Path, PathBuf};
 
 use compact_rust_cell_boolean_fixture::ledger_contract as cell_contract;
 use compact_rust_cell_read_fixture::ledger_contract as cell_read_contract;
+use compact_rust_constructor_map_actions_fixture::ledger_contract as constructor_map_contract;
 use compact_rust_counter_fixture::ledger_contract as counter_contract;
+use compact_rust_map_boolean_field_fixture::ledger_contract as map_contract;
 use compact_rust_nested_witness_call_oracle_fixture::ledger_contract as expression_contract;
 use compact_rust_set_boolean_fixture::ledger_contract as set_contract;
 use compact_rust_set_oracle_fixture::ledger_contract as set_oracle_contract;
@@ -300,9 +302,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     let expression_root = arguments.next();
     let set_root = arguments.next();
     let set_oracle_root = arguments.next();
+    let map_root = arguments.next();
+    let constructor_map_root = arguments.next();
     if arguments.next().is_some() {
         return Err(
-            "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output> [witness-output] [nested-output] [nested-witness-output] [set-output] [set-oracle-output]"
+            "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output> [witness-output] [nested-output] [nested-witness-output] [set-output] [set-oracle-output] [map-output] [constructor-map-output]"
                 .into(),
         );
     }
@@ -707,6 +711,162 @@ fn main() -> Result<(), Box<dyn Error>> {
                 Ok(())
             },
         )?;
+    }
+    if let Some(map_root) = map_root {
+        let map_root = Path::new(&map_root);
+        for circuit in [
+            "put",
+            "put_default",
+            "has",
+            "remove_key",
+            "table_size",
+            "table_is_empty",
+            "reset_table",
+        ] {
+            let initial = map_contract::initial_state(ConstructorContext::new(()))?;
+            let deploy = make_deploy(
+                map_root,
+                circuit,
+                initial.ledger_state.get_ref().clone(),
+                &mut rng,
+            )?;
+            let context = initial.into_circuit_context(deploy.address());
+            let contract = map_contract::Contract::default();
+            let call = match circuit {
+                "put" => check_generated_trace(
+                    map_root,
+                    circuit,
+                    contract.recording.put(context, true, Field::from(42_u64))?,
+                    (true, Field::from(42_u64)),
+                )?,
+                "put_default" => check_generated_trace(
+                    map_root,
+                    circuit,
+                    contract.recording.put_default(context, true)?,
+                    true,
+                )?,
+                "has" => {
+                    let recorded = contract.recording.has(context, true)?;
+                    if recorded.execution.result {
+                        return Err("empty Map unexpectedly contains true".into());
+                    }
+                    check_generated_trace(map_root, circuit, recorded, true)?
+                }
+                "remove_key" => check_generated_trace(
+                    map_root,
+                    circuit,
+                    contract.recording.remove_key(context, true)?,
+                    true,
+                )?,
+                "table_size" => {
+                    let recorded = contract.recording.table_size(context)?;
+                    if recorded.execution.result.value() != 0 {
+                        return Err("empty Map unexpectedly has nonzero size".into());
+                    }
+                    check_generated_trace(map_root, circuit, recorded, ())?
+                }
+                "table_is_empty" => {
+                    let recorded = contract.recording.table_is_empty(context)?;
+                    if !recorded.execution.result {
+                        return Err("new Map unexpectedly nonempty".into());
+                    }
+                    check_generated_trace(map_root, circuit, recorded, ())?
+                }
+                "reset_table" => check_generated_trace(
+                    map_root,
+                    circuit,
+                    contract.recording.reset_table(context)?,
+                    (),
+                )?,
+                _ => unreachable!(),
+            };
+            check_transaction(map_root, circuit, deploy, call, &mut rng, |contract| {
+                let StateValue::Array(fields) = contract.data.get_ref() else {
+                    return Err("Map contract state is not an array".into());
+                };
+                let StateValue::Map(table) = fields.get(0).ok_or("Map table missing")? else {
+                    return Err("Map table field is not a map".into());
+                };
+                let expected = usize::from(matches!(circuit, "put" | "put_default"));
+                if table.size() != expected {
+                    return Err("proven Map call produced the wrong size".into());
+                }
+                Ok(())
+            })?;
+        }
+    }
+    if let Some(constructor_map_root) = constructor_map_root {
+        let constructor_map_root = Path::new(&constructor_map_root);
+        for circuit in [
+            "table_size",
+            "history_size",
+            "get_true",
+            "get_false_history",
+        ] {
+            let initial = constructor_map_contract::initial_state(ConstructorContext::new(()))?;
+            let deploy = make_deploy(
+                constructor_map_root,
+                circuit,
+                initial.ledger_state.get_ref().clone(),
+                &mut rng,
+            )?;
+            let context = initial.into_circuit_context(deploy.address());
+            let contract = constructor_map_contract::Contract::default();
+            let call = match circuit {
+                "table_size" => {
+                    let recorded = contract.recording.table_size(context)?;
+                    if recorded.execution.result.value() != 1 {
+                        return Err("constructor Map table size differs".into());
+                    }
+                    check_generated_trace(constructor_map_root, circuit, recorded, ())?
+                }
+                "history_size" => {
+                    let recorded = contract.recording.history_size(context)?;
+                    if recorded.execution.result.value() != 1 {
+                        return Err("constructor Map history size differs".into());
+                    }
+                    check_generated_trace(constructor_map_root, circuit, recorded, ())?
+                }
+                "get_true" => {
+                    let recorded = contract.recording.get_true(context)?;
+                    if recorded.execution.result != Field::from(1_u64) {
+                        return Err("constructor Map lookup of true differs".into());
+                    }
+                    check_generated_trace(constructor_map_root, circuit, recorded, ())?
+                }
+                "get_false_history" => {
+                    let recorded = contract.recording.get_false_history(context)?;
+                    if recorded.execution.result != Field::from(0_u64) {
+                        return Err("constructor Map default lookup differs".into());
+                    }
+                    check_generated_trace(constructor_map_root, circuit, recorded, ())?
+                }
+                _ => unreachable!(),
+            };
+            check_transaction(
+                constructor_map_root,
+                circuit,
+                deploy,
+                call,
+                &mut rng,
+                |contract| {
+                    let StateValue::Array(fields) = contract.data.get_ref() else {
+                        return Err("constructor Map state is not an array".into());
+                    };
+                    for index in 0..2 {
+                        let StateValue::Map(table) =
+                            fields.get(index).ok_or("constructor Map field missing")?
+                        else {
+                            return Err("constructor Map field is not a map".into());
+                        };
+                        if table.size() != 1 {
+                            return Err("constructor Map read changed state".into());
+                        }
+                    }
+                    Ok(())
+                },
+            )?;
+        }
     }
     Ok(())
 }

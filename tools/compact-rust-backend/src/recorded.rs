@@ -26,7 +26,7 @@ use crate::ir::{
 use crate::stateful::circuit_uses_witness;
 use crate::{RenderError, expression_with_calls, ident, rust_type};
 
-/// Emit a replayable public VM trace for supported root Cell, Counter, and Set
+/// Emit a replayable public VM trace for supported root Cell, Counter, Set, and Map
 /// operations, including witnessed Cell values. Unsupported circuits have no
 /// recorded entry point.
 pub(crate) fn render_recorded_circuit(
@@ -445,6 +445,45 @@ pub(crate) fn render_recorded_circuit(
         }
     }
 
+    fn scalar_expression(
+        value: &Expr,
+        ty: &Type,
+        locals: &HashMap<String, syn::Expr>,
+        parameters: &HashMap<&str, (&Type, syn::Ident)>,
+        ledger_fields: &HashMap<&str, &LedgerField>,
+        witnesses: &HashMap<&str, &WitnessDeclaration>,
+        circuits: &HashMap<&str, &StatefulCircuit>,
+        steps: &mut Vec<syn::Stmt>,
+        next_temp: &mut usize,
+        visiting: &mut HashSet<String>,
+    ) -> Result<Option<syn::Expr>, RenderError> {
+        match ty {
+            Type::Field => field_expression(
+                value,
+                locals,
+                parameters,
+                ledger_fields,
+                witnesses,
+                circuits,
+                steps,
+                next_temp,
+                visiting,
+            ),
+            Type::Boolean => boolean_expression(
+                value,
+                locals,
+                parameters,
+                ledger_fields,
+                witnesses,
+                circuits,
+                steps,
+                next_temp,
+                visiting,
+            ),
+            _ => Ok(None),
+        }
+    }
+
     fn append_steps(
         action: &StateAction,
         locals: &HashMap<String, syn::Expr>,
@@ -774,6 +813,122 @@ pub(crate) fn render_recorded_circuit(
                 ));
                 Ok(true)
             }
+            StateAction::MapInsert {
+                field,
+                index,
+                key,
+                value,
+            } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                let LedgerFieldKind::Map {
+                    key: key_ty,
+                    value: value_ty,
+                } = &declaration.declaration
+                else {
+                    return Ok(false);
+                };
+                if declaration.index != *index || declaration.physical_path().len() != 1 {
+                    return Ok(false);
+                }
+                let key = scalar_expression(
+                    key,
+                    key_ty,
+                    locals,
+                    parameters,
+                    ledger_fields,
+                    witnesses,
+                    circuits,
+                    steps,
+                    next_temp,
+                    visiting,
+                )?;
+                let Some(key) = key else { return Ok(false) };
+                let key_name = syn::Ident::new(
+                    &format!("__compact_recorded_key_{}", *next_temp),
+                    Span::call_site(),
+                );
+                *next_temp += 1;
+                steps.push(syn::parse_quote!(let #key_name = #key;));
+                let value = scalar_expression(
+                    value,
+                    value_ty,
+                    locals,
+                    parameters,
+                    ledger_fields,
+                    witnesses,
+                    circuits,
+                    steps,
+                    next_temp,
+                    visiting,
+                )?;
+                let Some(value) = value else { return Ok(false) };
+                let slot = ident(field)?;
+                steps.push(syn::parse_quote!(
+                    let frame = crate::ledger_slots::#slot.record_insert(frame, #key_name, #value)?;
+                ));
+                Ok(true)
+            }
+            StateAction::MapInsertDefault { field, index, key }
+            | StateAction::MapRemove { field, index, key } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                let LedgerFieldKind::Map {
+                    key: key_ty,
+                    value: value_ty,
+                } = &declaration.declaration
+                else {
+                    return Ok(false);
+                };
+                if declaration.index != *index
+                    || declaration.physical_path().len() != 1
+                    || (matches!(action, StateAction::MapInsertDefault { .. })
+                        && !matches!(value_ty, Type::Field | Type::Boolean))
+                {
+                    return Ok(false);
+                }
+                let key = scalar_expression(
+                    key,
+                    key_ty,
+                    locals,
+                    parameters,
+                    ledger_fields,
+                    witnesses,
+                    circuits,
+                    steps,
+                    next_temp,
+                    visiting,
+                )?;
+                let Some(key) = key else { return Ok(false) };
+                let slot = ident(field)?;
+                let method = if matches!(action, StateAction::MapInsertDefault { .. }) {
+                    syn::Ident::new("record_insert_default", Span::call_site())
+                } else {
+                    syn::Ident::new("record_remove", Span::call_site())
+                };
+                steps.push(syn::parse_quote!(
+                    let frame = crate::ledger_slots::#slot.#method(frame, #key)?;
+                ));
+                Ok(true)
+            }
+            StateAction::MapReset { field, index } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                if !matches!(declaration.declaration, LedgerFieldKind::Map { .. })
+                    || declaration.index != *index
+                    || declaration.physical_path().len() != 1
+                {
+                    return Ok(false);
+                }
+                let slot = ident(field)?;
+                steps.push(syn::parse_quote!(
+                    let frame = crate::ledger_slots::#slot.record_reset(frame)?;
+                ));
+                Ok(true)
+            }
             StateAction::CellWrite {
                 field,
                 index,
@@ -962,6 +1117,104 @@ pub(crate) fn render_recorded_circuit(
                 .get(field.as_str())
                 .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
             if !matches!(declaration.declaration, LedgerFieldKind::Set { .. })
+                || declaration.index != *index
+                || declaration.physical_path().len() != 1
+            {
+                return Ok(None);
+            }
+            let slot = ident(field)?;
+            (
+                vec![syn::parse_quote!(
+                    let (frame, observed): (_, bool) =
+                        crate::ledger_slots::#slot.record_is_empty(frame)?;
+                )],
+                syn::parse_quote!(observed),
+            )
+        }
+        StateReturn::MapMember { field, index, key }
+        | StateReturn::MapLookup { field, index, key } => {
+            let declaration = ledger_fields
+                .get(field.as_str())
+                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+            let LedgerFieldKind::Map {
+                key: key_ty,
+                value: value_ty,
+            } = &declaration.declaration
+            else {
+                return Ok(None);
+            };
+            let member = matches!(&circuit.return_value, StateReturn::MapMember { .. });
+            let expected = if member {
+                Type::Boolean
+            } else {
+                value_ty.clone()
+            };
+            if declaration.index != *index
+                || declaration.physical_path().len() != 1
+                || circuit.result != expected
+                || !matches!(expected, Type::Boolean | Type::Field)
+            {
+                return Ok(None);
+            }
+            let mut return_steps = Vec::new();
+            let key = scalar_expression(
+                key,
+                key_ty,
+                &HashMap::new(),
+                &parameters,
+                ledger_fields,
+                witnesses,
+                circuits,
+                &mut return_steps,
+                &mut next_temp,
+                &mut visiting,
+            )?;
+            let Some(key) = key else { return Ok(None) };
+            let slot = ident(field)?;
+            let method = if member {
+                "record_member"
+            } else {
+                "record_lookup"
+            };
+            let method = syn::Ident::new(method, Span::call_site());
+            return_steps.push(syn::parse_quote!(
+                let (frame, observed): (_, #result_ty) =
+                    crate::ledger_slots::#slot.#method(frame, #key)?;
+            ));
+            (return_steps, syn::parse_quote!(observed))
+        }
+        StateReturn::MapSize { field, index }
+            if circuit.result
+                == (Type::Unsigned {
+                    max: u64::MAX.to_string(),
+                }) =>
+        {
+            let declaration = ledger_fields
+                .get(field.as_str())
+                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+            if !matches!(declaration.declaration, LedgerFieldKind::Map { .. })
+                || declaration.index != *index
+                || declaration.physical_path().len() != 1
+            {
+                return Ok(None);
+            }
+            let slot = ident(field)?;
+            (
+                vec![syn::parse_quote!(
+                    let (frame, observed): (_, u64) =
+                        crate::ledger_slots::#slot.record_size(frame)?;
+                )],
+                syn::parse_quote!(
+                    runtime::BoundedUint::<18446744073709551615>::new(observed as u128)
+                        .expect("ledger Map size fits Uint<64>")
+                ),
+            )
+        }
+        StateReturn::MapIsEmpty { field, index } if circuit.result == Type::Boolean => {
+            let declaration = ledger_fields
+                .get(field.as_str())
+                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+            if !matches!(declaration.declaration, LedgerFieldKind::Map { .. })
                 || declaration.index != *index
                 || declaration.physical_path().len() != 1
             {

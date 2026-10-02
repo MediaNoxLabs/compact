@@ -33,6 +33,8 @@ PURE_SOURCE = ROOT / "examples/rust_backend/field_add.compact"
 CELL_SOURCE = ROOT / "examples/rust_backend/cell_boolean.compact"
 SET_SOURCE = ROOT / "examples/rust_backend/set_oracle.compact"
 SET_BOOLEAN_SOURCE = ROOT / "examples/rust_backend/set_boolean.compact"
+MAP_BOOLEAN_SOURCE = ROOT / "examples/rust_backend/map_boolean_field.compact"
+CONSTRUCTOR_MAP_SOURCE = ROOT / "examples/rust_backend/constructor_map_actions.compact"
 CELL_READ_SOURCE = ROOT / "examples/rust_backend/cell_read.compact"
 WITNESS_CELL_SOURCE = ROOT / "examples/rust_backend/witness_cell_write.compact"
 NESTED_COUNTER_SOURCE = ROOT / "examples/rust_backend/stateful_circuit_call.compact"
@@ -151,6 +153,7 @@ def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
     for name, source in (
         ("counter", SOURCE), ("field_add", PURE_SOURCE),
         ("cell_boolean", CELL_SOURCE), ("set_oracle", SET_SOURCE),
+        ("map_boolean_field", MAP_BOOLEAN_SOURCE),
     ):
         output = base / f"shared-{name}"
         run(
@@ -181,6 +184,7 @@ def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
         "use compact_contract_cell_boolean::ledger_contract::{Contract as CellContract, initial_state as initial_cell_state};\n"
         "use compact_contract_field_add::pure_circuits::field_add;\n"
         "use compact_contract_set_oracle::ledger_contract::{Contract as SetContract, initial_state as initial_set_state};\n"
+        "use compact_contract_map_boolean_field::ledger_contract::{Contract as MapContract, initial_state as initial_map_state};\n"
         "use midnight_compact_runtime::context::ConstructorContext;\n"
         "use midnight_compact_runtime::ledger::ContractAddress;\n"
         "use midnight_compact_runtime::Field;\n"
@@ -205,6 +209,16 @@ def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
         "    assert!(member.result);\n"
         "    let checked = SetContract::default().check(member.context, Field::from(7_u64)).unwrap();\n"
         "    assert!(compact_contract_set_oracle::runtime::ledger::read_root_cell::<bool, _>(checked.context.query.state.get_ref(), 0).unwrap());\n"
+        "    let map = initial_map_state(ConstructorContext::new(())).unwrap();\n"
+        "    let map_context = map.into_circuit_context(ContractAddress::default());\n"
+        "    let _: midnight_compact_runtime::slots::MapSlot<bool, Field> = compact_contract_map_boolean_field::ledger_slots::table;\n"
+        "    let map_call = MapContract::default().recording.put(map_context, true, Field::from(9_u64)).unwrap();\n"
+        "    let map_replay = map_call.public.initial().query(\n"
+        "        map_call.public.verify_ops(), None, &map_call.execution.context.cost_model,\n"
+        "    ).unwrap();\n"
+        "    assert_eq!(map_replay.context.effects, map_call.execution.context.query.effects);\n"
+        "    let lookup = MapContract::default().recording.get(map_call.execution.context, true).unwrap();\n"
+        "    assert_eq!(lookup.execution.result, Field::from(9_u64));\n"
         "    assert_eq!(field_add(2u64.into(), 3u64.into()).unwrap(), 5u64.into());\n"
         "}\n"
     )
@@ -246,6 +260,40 @@ def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
         cwd=consumer, env=environment, capture_output=True, text=True,
     )
     assert rejected.returncode != 0, "wrong Set element type unexpectedly compiled"
+    assert "error[E0308]: mismatched types" in rejected.stderr, rejected.stderr
+    assert "found `bool`" in rejected.stderr, rejected.stderr
+
+    (consumer / "examples/wrong_map_key.rs").write_text(
+        "use compact_contract_map_boolean_field::ledger_contract::initial_state;\n"
+        "use compact_contract_map_boolean_field::runtime::{Field, context::ConstructorContext, ledger::ContractAddress};\n"
+        "fn main() {\n"
+        "    let state = initial_state(ConstructorContext::new(())).unwrap();\n"
+        "    let context = state.into_circuit_context(ContractAddress::default());\n"
+        "    let _ = compact_contract_map_boolean_field::ledger_slots::table.insert(context, Field::from(1_u64), Field::from(2_u64));\n"
+        "}\n"
+    )
+    rejected = subprocess.run(
+        ["cargo", "check", "--quiet", "--example", "wrong_map_key"],
+        cwd=consumer, env=environment, capture_output=True, text=True,
+    )
+    assert rejected.returncode != 0, "wrong Map key type unexpectedly compiled"
+    assert "error[E0308]: mismatched types" in rejected.stderr, rejected.stderr
+    assert "expected `bool`" in rejected.stderr, rejected.stderr
+
+    (consumer / "examples/wrong_map_value.rs").write_text(
+        "use compact_contract_map_boolean_field::ledger_contract::initial_state;\n"
+        "use compact_contract_map_boolean_field::runtime::{context::ConstructorContext, ledger::ContractAddress};\n"
+        "fn main() {\n"
+        "    let state = initial_state(ConstructorContext::new(())).unwrap();\n"
+        "    let context = state.into_circuit_context(ContractAddress::default());\n"
+        "    let _ = compact_contract_map_boolean_field::ledger_slots::table.insert(context, true, false);\n"
+        "}\n"
+    )
+    rejected = subprocess.run(
+        ["cargo", "check", "--quiet", "--example", "wrong_map_value"],
+        cwd=consumer, env=environment, capture_output=True, text=True,
+    )
+    assert rejected.returncode != 0, "wrong Map value type unexpectedly compiled"
     assert "error[E0308]: mismatched types" in rejected.stderr, rejected.stderr
     assert "found `bool`" in rejected.stderr, rejected.stderr
 
@@ -406,10 +454,30 @@ def main() -> None:
                 assert (set_oracle_proof / "keys" / f"check.{extension}").is_file()
             for extension in ("zkir", "bzkir"):
                 assert (set_oracle_proof / "zkir" / f"check.{extension}").is_file()
+            map_proof = base / "map-proof"
+            run(compiler, "--target", "rust", str(MAP_BOOLEAN_SOURCE), str(map_proof))
+            check_manifest(map_proof)
+            for circuit in (
+                "put", "put_default", "has", "get", "remove_key",
+                "table_size", "table_is_empty", "reset_table",
+            ):
+                for extension in ("prover", "verifier"):
+                    assert (map_proof / "keys" / f"{circuit}.{extension}").is_file()
+                for extension in ("zkir", "bzkir"):
+                    assert (map_proof / "zkir" / f"{circuit}.{extension}").is_file()
+            constructor_map_proof = base / "constructor-map-proof"
+            run(compiler, "--target", "rust", str(CONSTRUCTOR_MAP_SOURCE), str(constructor_map_proof))
+            check_manifest(constructor_map_proof)
+            for circuit in ("table_size", "history_size", "get_true", "get_false_history"):
+                for extension in ("prover", "verifier"):
+                    assert (constructor_map_proof / "keys" / f"{circuit}.{extension}").is_file()
+                for extension in ("zkir", "bzkir"):
+                    assert (constructor_map_proof / "zkir" / f"{circuit}.{extension}").is_file()
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 str(proof), str(cell_proof), str(cell_read_proof), str(witness_proof), str(nested_proof),
                 str(nested_witness_proof), str(set_proof), str(set_oracle_proof),
+                str(map_proof), str(constructor_map_proof),
             )
     print("compactc target boundary and manifest: passed")
 

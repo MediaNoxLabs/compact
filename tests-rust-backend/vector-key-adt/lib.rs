@@ -22,12 +22,16 @@ pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
     const _: () = assert!(runtime::RUST_RUNTIME_ABI == 3);
 }
-/// Typed descriptors for Compact Cell, Counter, and Set declarations.
+/// Typed descriptors for Compact Cell, Counter, Set, and Map declarations.
 #[allow(non_upper_case_globals)]
 pub mod ledger_slots {
     use midnight_compact_runtime as runtime;
     pub const keys: runtime::slots::SetSlot<runtime::FixedVector<runtime::Field, 2>> =
         runtime::slots::SetSlot::new(&[0u8]);
+    pub const values: runtime::slots::MapSlot<
+        runtime::FixedVector<runtime::Field, 2>,
+        runtime::Field,
+    > = runtime::slots::MapSlot::new(&[1u8]);
     pub const present: runtime::slots::CellSlot<bool> = runtime::slots::CellSlot::new(&[2u8]);
     pub const stored: runtime::slots::CellSlot<runtime::Field> =
         runtime::slots::CellSlot::new(&[3u8]);
@@ -128,8 +132,8 @@ pub mod ledger_contract {
         let __compact_action_local_0: runtime::FixedVector<runtime::Field, 2> =
             runtime::FixedVector::new([runtime::Field::from(0u128), runtime::Field::from(1u128)]);
         let __compact_action_local_1: runtime::Field = runtime::Field::from(7u128);
-        let step = context.insert_map(
-            1,
+        let step = crate::ledger_slots::values.insert(
+            context,
             __compact_action_local_0.clone(),
             __compact_action_local_1,
         )?;
@@ -151,8 +155,8 @@ pub mod ledger_contract {
         let mut context = context;
         let __compact_expression_local_0: runtime::FixedVector<runtime::Field, 2> =
             runtime::FixedVector::new([runtime::Field::from(0u128), runtime::Field::from(1u128)]);
-        let __compact_query_1 =
-            context.member_map(1, (__compact_expression_local_0.clone()).clone())?;
+        let __compact_query_1 = crate::ledger_slots::values
+            .member(context, (__compact_expression_local_0.clone()).clone())?;
         context = __compact_query_1.context;
         total_cost += __compact_query_1.gas_cost;
         let __compact_action_local_0: bool = __compact_query_1.result;
@@ -175,8 +179,8 @@ pub mod ledger_contract {
         let mut context = context;
         let __compact_expression_local_0: runtime::FixedVector<runtime::Field, 2> =
             runtime::FixedVector::new([runtime::Field::from(0u128), runtime::Field::from(1u128)]);
-        let __compact_query_1 = context
-            .lookup_map::<_, runtime::Field>(1, (__compact_expression_local_0.clone()).clone())?;
+        let __compact_query_1 = crate::ledger_slots::values
+            .lookup(context, (__compact_expression_local_0.clone()).clone())?;
         context = __compact_query_1.context;
         total_cost += __compact_query_1.gas_cost;
         let __compact_action_local_0: runtime::Field = __compact_query_1.result;
@@ -198,7 +202,7 @@ pub mod ledger_contract {
         let private_transcript_outputs = Vec::new();
         let __compact_action_local_0: runtime::FixedVector<runtime::Field, 2> =
             runtime::FixedVector::new([runtime::Field::from(0u128), runtime::Field::from(1u128)]);
-        let step = context.remove_map(1, __compact_action_local_0.clone())?;
+        let step = crate::ledger_slots::values.remove(context, __compact_action_local_0.clone())?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();
@@ -216,11 +220,8 @@ pub mod ledger_contract {
         let private_transcript_outputs = Vec::new();
         let __compact_action_local_0: runtime::FixedVector<runtime::Field, 2> =
             runtime::FixedVector::new([runtime::Field::from(0u128), runtime::Field::from(1u128)]);
-        let step = context.insert_map(
-            1,
-            __compact_action_local_0.clone(),
-            <runtime::Field as Default>::default(),
-        )?;
+        let step = crate::ledger_slots::values
+            .insert_default(context, __compact_action_local_0.clone())?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();

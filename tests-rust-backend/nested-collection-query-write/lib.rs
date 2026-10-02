@@ -22,7 +22,7 @@ pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
     const _: () = assert!(runtime::RUST_RUNTIME_ABI == 3);
 }
-/// Typed descriptors for Compact Cell, Counter, and Set declarations.
+/// Typed descriptors for Compact Cell, Counter, Set, and Map declarations.
 #[allow(non_upper_case_globals)]
 pub mod ledger_slots {
     use midnight_compact_runtime as runtime;
@@ -30,6 +30,8 @@ pub mod ledger_slots {
     pub const setEmptyFlag: runtime::slots::CellSlot<bool> = runtime::slots::CellSlot::new(&[1u8]);
     pub const mapEmptyFlag: runtime::slots::CellSlot<bool> = runtime::slots::CellSlot::new(&[2u8]);
     pub const seen: runtime::slots::SetSlot<runtime::Field> = runtime::slots::SetSlot::new(&[3u8]);
+    pub const table: runtime::slots::MapSlot<runtime::Field, runtime::Field> =
+        runtime::slots::MapSlot::new(&[4u8]);
 }
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
@@ -71,7 +73,8 @@ pub mod ledger_contract {
         let step = crate::ledger_slots::seen.insert(context, __compact_param_0)?;
         let context = step.context;
         total_cost += step.gas_cost;
-        let step = context.insert_map(4, __compact_param_0, __compact_param_0)?;
+        let step =
+            crate::ledger_slots::table.insert(context, __compact_param_0, __compact_param_0)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();
@@ -198,6 +201,21 @@ pub mod ledger_contract {
     /// Circuits with a replayable ordered ledger program.
     pub mod recorded {
         use midnight_compact_runtime as runtime;
+        pub fn seed<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::Field,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let frame = crate::ledger_slots::seen.record_insert(frame, __compact_param_0)?;
+            let __compact_recorded_key_0 = __compact_param_0;
+            let frame = crate::ledger_slots::table.record_insert(
+                frame,
+                __compact_recorded_key_0,
+                __compact_param_0,
+            )?;
+            Ok(frame.finish(()))
+        }
         pub fn check_member<Private>(
             context: runtime::context::CircuitContext<Private>,
             __compact_param_0: runtime::Field,
@@ -241,6 +259,14 @@ pub mod ledger_contract {
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
         impl Contract {
+            pub fn seed<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                __compact_param_0: runtime::Field,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::seed(context, __compact_param_0)
+            }
             pub fn check_member<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,

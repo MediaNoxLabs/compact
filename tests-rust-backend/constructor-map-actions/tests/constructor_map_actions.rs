@@ -14,7 +14,7 @@
 // limitations under the License.
 
 use compact_rust_constructor_map_actions_fixture::ledger_contract::{
-    get_false_history, get_true, history_size, initial_state, table_size,
+    Contract, get_false_history, get_true, history_size, initial_state, table_size,
 };
 use midnight_compact_runtime::Field;
 use midnight_compact_runtime::context::ConstructorContext;
@@ -66,4 +66,29 @@ fn constructor_map_actions_match_typescript_state() {
     let history_value = get_false_history(table_value.context).unwrap();
     assert_eq!(history_value.result, Field::from(0_u64));
     assert_eq!(oracle["historyValue"], "0");
+}
+
+#[test]
+fn constructor_map_lookup_has_a_replayable_generated_call() {
+    let context = initial_state(ConstructorContext::new(()))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let native_context = initial_state(ConstructorContext::new(()))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let native = get_true(native_context).unwrap();
+    let recorded = Contract::default().recording.get_true(context).unwrap();
+    assert_eq!(recorded.execution.result, Field::from(1_u64));
+    assert_eq!(recorded.execution.result, native.result);
+    assert_eq!(recorded.execution.gas_cost, native.gas_cost);
+    let replay = recorded
+        .public
+        .initial()
+        .query(
+            recorded.public.verify_ops(),
+            None,
+            &recorded.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(replay.context.effects, native.context.query.effects);
 }

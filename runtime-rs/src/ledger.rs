@@ -1541,17 +1541,12 @@ pub fn reset_list<D: DB>(
     context.query(&program, gas_limit, cost_model)
 }
 
-pub fn insert_map<K: CellValue, V: CellValue, D: DB>(
-    context: &QueryContext<D>,
-    path: impl Into<LedgerPath>,
+pub(crate) fn map_insert_program<K: CellValue, V: CellValue, D: DB>(
+    path: &[u8],
     key: K,
     value: V,
-    gas_limit: Option<RunningCost>,
-    cost_model: &CostModel,
-) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
-    let path = path.into();
-    let path = path.as_slice();
-    let program = [
+) -> Vec<Op<ResultModeVerify, D>> {
+    vec![
         Op::Idx {
             cached: false,
             push_path: true,
@@ -1573,7 +1568,19 @@ pub fn insert_map<K: CellValue, V: CellValue, D: DB>(
             cached: true,
             n: path.len() as u8,
         },
-    ];
+    ]
+}
+
+pub fn insert_map<K: CellValue, V: CellValue, D: DB>(
+    context: &QueryContext<D>,
+    path: impl Into<LedgerPath>,
+    key: K,
+    value: V,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    let path = path.into();
+    let program = map_insert_program(path.as_slice(), key, value);
     context.query(&program, gas_limit, cost_model)
 }
 
@@ -1587,18 +1594,14 @@ pub fn member_map<K: CellValue, D: DB>(
     member_set(context, path, key, gas_limit, cost_model)
 }
 
-pub fn lookup_map<K: CellValue, V: CellValue, D: DB>(
-    context: &QueryContext<D>,
-    path: impl Into<LedgerPath>,
+pub(crate) fn map_lookup_program<K: CellValue, M: ResultMode<D>, D: DB>(
+    path: &[u8],
     key: K,
-    gas_limit: Option<RunningCost>,
-    cost_model: &CostModel,
-) -> Result<(QueryResults<ResultModeGather, D>, V), CompactError> {
-    let path = path.into();
-    let path = path.as_slice();
+    read_result: M::ReadResult,
+) -> Vec<Op<M, D>> {
     let key =
         AlignedValue::new(key.into(), K::alignment()).expect("CellValue must match its alignment");
-    let program = [
+    vec![
         Op::Dup { n: 0 },
         Op::Idx {
             cached: false,
@@ -1612,9 +1615,20 @@ pub fn lookup_map<K: CellValue, V: CellValue, D: DB>(
         },
         Op::Popeq {
             cached: false,
-            result: (),
+            result: read_result,
         },
-    ];
+    ]
+}
+
+pub fn lookup_map<K: CellValue, V: CellValue, D: DB>(
+    context: &QueryContext<D>,
+    path: impl Into<LedgerPath>,
+    key: K,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<(QueryResults<ResultModeGather, D>, V), CompactError> {
+    let path = path.into();
+    let program = map_lookup_program::<K, ResultModeGather, D>(path.as_slice(), key, ());
     let result = context
         .query(&program, gas_limit, cost_model)
         .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;

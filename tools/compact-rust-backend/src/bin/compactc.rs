@@ -41,9 +41,19 @@ struct Targets {
 
 fn select_targets(args: Vec<OsString>) -> Result<(Targets, Vec<OsString>), String> {
     let mut targets = Targets::default();
+    let mut legacy_rust = false;
+    let mut legacy_skip_ts = false;
     let mut forwarded = Vec::with_capacity(args.len());
     let mut arguments = args.into_iter();
     while let Some(argument) = arguments.next() {
+        if argument == "--rust" {
+            legacy_rust = true;
+            continue;
+        }
+        if argument == "--skip-ts" {
+            legacy_skip_ts = true;
+            continue;
+        }
         if argument == "--rust-runtime-root" {
             let root = arguments
                 .next()
@@ -88,7 +98,18 @@ fn select_targets(args: Vec<OsString>) -> Result<(Targets, Vec<OsString>), Strin
             forwarded.push(argument);
         }
     }
-    if !targets.explicit {
+    if targets.explicit && (legacy_rust || legacy_skip_ts) {
+        return Err(
+            "--target cannot be combined with --rust or --skip-ts; use --target alone".into(),
+        );
+    }
+    if legacy_skip_ts && !legacy_rust {
+        return Err("--skip-ts requires --rust; use --target rust for new callers".into());
+    }
+    if legacy_rust {
+        targets.rust = true;
+        targets.ts = !legacy_skip_ts;
+    } else if !targets.explicit {
         targets.ts = true;
     }
     if targets.runtime_root.is_some() && !targets.rust {
@@ -425,6 +446,48 @@ mod tests {
                 .collect(),
         );
         assert!(matches!(missing_root, Err(message) if message.contains("needs a directory")));
+    }
+
+    #[test]
+    fn legacy_rust_aliases_resolve_without_reaching_chez() {
+        let parse = |args: &[&str]| {
+            select_targets(args.iter().map(|arg| OsString::from(*arg)).collect()).unwrap()
+        };
+        let (both, forwarded) = parse(&["--rust", "--skip-zk", "in.compact", "out"]);
+        assert!(both.rust && both.ts);
+        assert_eq!(
+            forwarded,
+            ["--skip-zk", "in.compact", "out"].map(OsString::from)
+        );
+
+        for args in [
+            &["--rust", "--skip-ts", "in.compact", "out"][..],
+            &["--skip-ts", "--rust", "in.compact", "out"],
+            &["--rust", "--rust", "--skip-ts", "in.compact", "out"],
+        ] {
+            let (rust, forwarded) = parse(args);
+            assert!(rust.rust && !rust.ts);
+            assert!(
+                !forwarded
+                    .iter()
+                    .any(|arg| arg == "--rust" || arg == "--skip-ts")
+            );
+        }
+
+        for args in [
+            vec!["--target", "rust", "--rust", "in.compact", "out"],
+            vec!["--skip-ts", "--target=ts", "in.compact", "out"],
+        ] {
+            let error = select_targets(args.into_iter().map(OsString::from).collect());
+            assert!(matches!(error, Err(message) if message.contains("cannot be combined")));
+        }
+        let alone = select_targets(
+            ["--skip-ts", "in.compact", "out"]
+                .into_iter()
+                .map(OsString::from)
+                .collect(),
+        );
+        assert!(matches!(alone, Err(message) if message.contains("requires --rust")));
     }
 
     #[test]

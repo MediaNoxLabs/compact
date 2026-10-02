@@ -750,9 +750,34 @@ def main() -> None:
         assert (both / "contract/index.js").is_file()
         assert (both / "contract/lib.rs").is_file()
         check_manifest(both)
+        legacy_rust = base / "legacy-rust"
+        run(compiler, "--rust", "--skip-ts", "--skip-zk", str(SOURCE), str(legacy_rust))
+        assert (legacy_rust / "contract/lib.rs").read_bytes() == (rust / "contract/lib.rs").read_bytes()
+        assert (legacy_rust / "contract/Cargo.toml").read_bytes() == (rust / "contract/Cargo.toml").read_bytes()
+        assert not (legacy_rust / "contract/index.js").exists()
+        check_manifest(legacy_rust)
+        legacy_both = base / "legacy-both"
+        run(compiler, "--rust", "--skip-zk", str(SOURCE), str(legacy_both))
+        assert (legacy_both / "contract/index.js").read_bytes() == (both / "contract/index.js").read_bytes()
+        assert (legacy_both / "contract/lib.rs").read_bytes() == (both / "contract/lib.rs").read_bytes()
+        assert (legacy_both / "contract/Cargo.toml").read_bytes() == (both / "contract/Cargo.toml").read_bytes()
+        check_manifest(legacy_both)
+        for label, flags, message in (
+            ("mixed-rust", ("--target", "rust", "--rust"), "cannot be combined"),
+            ("mixed-skip-ts", ("--skip-ts", "--target=ts"), "cannot be combined"),
+            ("skip-ts-alone", ("--skip-ts",), "requires --rust"),
+        ):
+            rejected_output = base / label
+            rejected = subprocess.run(
+                [compiler, *flags, "--skip-zk", str(SOURCE), str(rejected_output)],
+                cwd=ROOT, capture_output=True, text=True,
+            )
+            assert rejected.returncode != 0, label
+            assert message in rejected.stderr, (label, rejected.stderr)
+            assert not rejected_output.exists(), f"{label}: invalid target selection created output"
         if args.consumer:
             run(compiler, "--target", "rust", "--skip-zk", str(PURE_SOURCE), str(pure))
-            check_consumer(rust / "contract", pure / "contract", base / "consumer")
+            check_consumer(legacy_rust / "contract", pure / "contract", base / "consumer")
             check_shared_runtime_consumer(compiler, base)
             check_witness_consumer(compiler, base)
             check_merkle_witness_consumer(compiler, base)

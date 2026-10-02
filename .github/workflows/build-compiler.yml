@@ -318,7 +318,19 @@ jobs:
           cargo test --workspace --exclude compact
 
       - name: Rehearse Rust runtime packages
-        run: python3 tools/compact-rust-backend/check_release_packages.py
+        run: |
+          python3 tools/compact-rust-backend/check_release_packages.py --manifest target/rust-runtime-release.json
+          python3 tools/compact-rust-backend/check_release_packages.py --verify-manifest target/rust-runtime-release.json
+
+      - name: Retain Rust runtime packages and manifest
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: rust-runtime-packages-${{ github.sha }}
+          path: |
+            target/rust-runtime-release.json
+            target/package/midnight-compact-runtime-macros-*.crate
+            target/package/midnight-compact-runtime-*.crate
+          if-no-files-found: error
 
       - name: Merge report as ZIP
         run: |

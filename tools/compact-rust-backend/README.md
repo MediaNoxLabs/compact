@@ -112,6 +112,19 @@ version is published, the runtime check supplies the local macro source through
 a temporary Cargo patch. Publication, remote CI, and an unpatched consumer are
 separate release gates tracked in [issue #106](https://github.com/MediaNoxLabs/compact/issues/106).
 
+To retain the exact local archives and their inputs for review, pass
+`--manifest target/rust-runtime-release.json`. The manifest records Git commit,
+tree and dirty state; package hashes, sizes and versions; Rust/Cargo versions;
+and hashes of both Cargo locks and `flake.lock`. Run the same script with
+`--verify-manifest target/rust-runtime-release.json` to repackage and compare
+the result. CI uploads the JSON and both `.crate` files as one artifact. For a
+release candidate, add `--candidate-tag <tag>` to require a clean checkout at
+a signed annotated tag. This gate does not publish crates or prove that an
+unpatched registry consumer can build; the manifest says that the local macro
+patch was used during archive verification. The `midnight` vault's ADR-0013
+records the decision; [issue #114](https://github.com/MediaNoxLabs/compact/issues/114)
+tracks the remaining gates.
+
 ## Source model
 
 The Scheme frontend lowers its analyzed program into a versioned JSON IR.

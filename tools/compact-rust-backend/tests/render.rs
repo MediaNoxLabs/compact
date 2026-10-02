@@ -1560,6 +1560,84 @@ fn witness_calls_require_a_declared_witness_and_matching_signature() {
 }
 
 #[test]
+fn witnessed_field_cell_and_nested_call_use_native_frame() {
+    let mut contract = identity(Type::Unit, Expr::Unit);
+    contract.circuits.clear();
+    contract.ledger_fields = vec![LedgerField {
+        source: None,
+        id: "cell".into(),
+        index: 0,
+        path: vec![],
+        declaration: LedgerFieldKind::Cell { ty: Type::Field },
+    }];
+    contract.witnesses = vec![WitnessDeclaration {
+        source: None,
+        name: "secret".into(),
+        parameters: vec![Parameter {
+            name: "seed".into(),
+            ty: Type::Field,
+        }],
+        result: Type::Field,
+    }];
+    let seed = Expr::Parameter {
+        name: "seed".into(),
+    };
+    contract.stateful_circuits = vec![
+        StatefulCircuit {
+            source: None,
+            internal: true,
+            name: "inner".into(),
+            parameters: vec![Parameter {
+                name: "seed".into(),
+                ty: Type::Field,
+            }],
+            actions: vec![StateAction::Let {
+                bindings: vec![LocalBinding {
+                    name: "value".into(),
+                    ty: Type::Field,
+                    value: Expr::WitnessCall {
+                        name: "secret".into(),
+                        arguments: vec![seed.clone()],
+                    },
+                }],
+                action: Box::new(StateAction::CellWrite {
+                    field: "cell".into(),
+                    index: 0,
+                    value: Expr::Parameter {
+                        name: "value".into(),
+                    },
+                }),
+            }],
+            result: Type::Unit,
+            return_value: StateReturn::Unit,
+        },
+        StatefulCircuit {
+            source: None,
+            internal: false,
+            name: "outer".into(),
+            parameters: vec![Parameter {
+                name: "seed".into(),
+                ty: Type::Field,
+            }],
+            actions: vec![StateAction::CircuitCall {
+                name: "inner".into(),
+                arguments: vec![seed],
+            }],
+            result: Type::Unit,
+            return_value: StateReturn::Unit,
+        },
+    ];
+    let source = render(&contract).unwrap();
+    syn::parse_file(&source).unwrap();
+    assert_eq!(source.matches("CircuitFrame::new(context)").count(), 2);
+    assert!(source.contains(".witness(|context|"));
+    assert!(source.contains("ledger_slots::cell.write(context"));
+    assert!(source.contains(".apply(|context|"));
+    assert!(source.contains("self::inner(context, witnesses"));
+    assert!(source.contains("Ok(frame.finish(()))"));
+}
+
+#[test]
 fn state_action_must_reference_the_declared_ledger_field_and_index() {
     let mut contract = Contract {
         schema_version: 8,

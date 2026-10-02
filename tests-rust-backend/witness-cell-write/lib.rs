@@ -66,134 +66,80 @@ pub mod ledger_contract {
         witnesses: &W,
         __compact_param_0: runtime::Field,
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-        let mut total_cost = runtime::context::RunningCost::default();
-        let mut private_transcript_outputs = Vec::new();
-        let mut context = context;
-        let __compact_argument_0 = __compact_param_0;
-        let (__compact_next_private_1, __compact_witness_1) = witnesses.secret(
-            context.witness_context_with(LedgerView {
-                state: context.query.state.get_ref(),
-            }),
-            __compact_argument_0,
-        );
-        context.private_state = __compact_next_private_1;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_1.clone(),
-        ));
-        let __compact_action_local_0: runtime::Field = __compact_witness_1;
-        let step = crate::ledger_slots::cell.write(context, __compact_action_local_0)?;
-        let context = step.context;
-        total_cost += step.gas_cost;
-        let result = ();
-        Ok(runtime::context::CircuitResult {
-            context,
-            result,
-            gas_cost: total_cost,
-            private_transcript_outputs,
-        })
+        let frame = runtime::context::CircuitFrame::new(context);
+        let (frame, __compact_frame_witness_0) = frame.witness(|context| {
+            witnesses.secret(
+                context.witness_context_with(LedgerView {
+                    state: context.query.state.get_ref(),
+                }),
+                __compact_param_0,
+            )
+        });
+        let __compact_frame_local_1: runtime::Field = __compact_frame_witness_0;
+        let (frame, ()) = frame
+            .apply(|context| crate::ledger_slots::cell.write(context, __compact_frame_local_1))?;
+        Ok(frame.finish(()))
     }
     pub fn write_twice<Private, W: Witnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,
         witnesses: &W,
         __compact_param_0: runtime::Field,
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-        let mut total_cost = runtime::context::RunningCost::default();
-        let mut private_transcript_outputs = Vec::new();
-        let mut context = context;
-        let __compact_argument_0 = __compact_param_0;
-        let (__compact_next_private_1, __compact_witness_1) = witnesses.secret(
-            context.witness_context_with(LedgerView {
-                state: context.query.state.get_ref(),
-            }),
-            __compact_argument_0,
-        );
-        context.private_state = __compact_next_private_1;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_1.clone(),
-        ));
-        let __compact_action_local_0: runtime::Field = __compact_witness_1;
-        let step = crate::ledger_slots::cell.write(context, __compact_action_local_0)?;
-        let context = step.context;
-        total_cost += step.gas_cost;
-        let mut context = context;
-        let __compact_argument_2 = __compact_param_0;
-        let (__compact_next_private_3, __compact_witness_3) = witnesses.secret(
-            context.witness_context_with(LedgerView {
-                state: context.query.state.get_ref(),
-            }),
-            __compact_argument_2,
-        );
-        context.private_state = __compact_next_private_3;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_3.clone(),
-        ));
-        let __compact_action_local_1: runtime::Field = __compact_witness_3;
-        let step = crate::ledger_slots::cell.write(context, __compact_action_local_1)?;
-        let context = step.context;
-        total_cost += step.gas_cost;
-        let result = ();
-        Ok(runtime::context::CircuitResult {
-            context,
-            result,
-            gas_cost: total_cost,
-            private_transcript_outputs,
-        })
+        let frame = runtime::context::CircuitFrame::new(context);
+        let (frame, __compact_frame_witness_0) = frame.witness(|context| {
+            witnesses.secret(
+                context.witness_context_with(LedgerView {
+                    state: context.query.state.get_ref(),
+                }),
+                __compact_param_0,
+            )
+        });
+        let __compact_frame_local_1: runtime::Field = __compact_frame_witness_0;
+        let (frame, ()) = frame
+            .apply(|context| crate::ledger_slots::cell.write(context, __compact_frame_local_1))?;
+        let (frame, __compact_frame_witness_2) = frame.witness(|context| {
+            witnesses.secret(
+                context.witness_context_with(LedgerView {
+                    state: context.query.state.get_ref(),
+                }),
+                __compact_param_0,
+            )
+        });
+        let __compact_frame_local_3: runtime::Field = __compact_frame_witness_2;
+        let (frame, ()) = frame
+            .apply(|context| crate::ledger_slots::cell.write(context, __compact_frame_local_3))?;
+        Ok(frame.finish(()))
     }
     pub(crate) fn write_inner<Private, W: Witnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,
         witnesses: &W,
         __compact_param_0: runtime::Field,
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-        let mut total_cost = runtime::context::RunningCost::default();
-        let mut private_transcript_outputs = Vec::new();
-        let mut context = context;
-        let __compact_argument_0 = __compact_param_0;
-        let (__compact_next_private_1, __compact_witness_1) = witnesses.secret(
-            context.witness_context_with(LedgerView {
-                state: context.query.state.get_ref(),
-            }),
-            __compact_argument_0,
-        );
-        context.private_state = __compact_next_private_1;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_1.clone(),
-        ));
-        let __compact_action_local_0: runtime::Field = __compact_witness_1;
-        let step = crate::ledger_slots::cell.write(context, __compact_action_local_0)?;
-        let context = step.context;
-        total_cost += step.gas_cost;
-        let result = ();
-        Ok(runtime::context::CircuitResult {
-            context,
-            result,
-            gas_cost: total_cost,
-            private_transcript_outputs,
-        })
+        let frame = runtime::context::CircuitFrame::new(context);
+        let (frame, __compact_frame_witness_0) = frame.witness(|context| {
+            witnesses.secret(
+                context.witness_context_with(LedgerView {
+                    state: context.query.state.get_ref(),
+                }),
+                __compact_param_0,
+            )
+        });
+        let __compact_frame_local_1: runtime::Field = __compact_frame_witness_0;
+        let (frame, ()) = frame
+            .apply(|context| crate::ledger_slots::cell.write(context, __compact_frame_local_1))?;
+        Ok(frame.finish(()))
     }
     pub fn write_nested_twice<Private, W: Witnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,
         witnesses: &W,
         __compact_param_0: runtime::Field,
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-        let mut total_cost = runtime::context::RunningCost::default();
-        let mut private_transcript_outputs = Vec::new();
-        let __compact_call_argument_0 = __compact_param_0;
-        let call_step = write_inner(context, witnesses, __compact_call_argument_0)?;
-        private_transcript_outputs.extend(call_step.private_transcript_outputs);
-        let context = call_step.context;
-        total_cost += call_step.gas_cost;
-        let __compact_call_argument_1 = __compact_param_0;
-        let call_step = write_inner(context, witnesses, __compact_call_argument_1)?;
-        private_transcript_outputs.extend(call_step.private_transcript_outputs);
-        let context = call_step.context;
-        total_cost += call_step.gas_cost;
-        let result = ();
-        Ok(runtime::context::CircuitResult {
-            context,
-            result,
-            gas_cost: total_cost,
-            private_transcript_outputs,
-        })
+        let frame = runtime::context::CircuitFrame::new(context);
+        let (frame, ()) =
+            frame.apply(|context| self::write_inner(context, witnesses, __compact_param_0))?;
+        let (frame, ()) =
+            frame.apply(|context| self::write_inner(context, witnesses, __compact_param_0))?;
+        Ok(frame.finish(()))
     }
     pub fn read_cell<Private>(
         context: runtime::context::CircuitContext<Private>,

@@ -1574,6 +1574,14 @@ pub(crate) fn render_stateful_circuit(
     circuits: &HashMap<&str, &PureCircuit>,
     stateful_circuits: &HashMap<&str, &StatefulCircuit>,
 ) -> Result<syn::Item, RenderError> {
+    if let Some(item) = crate::native_frame::render_if_supported(
+        circuit,
+        ledger_fields,
+        witnesses,
+        stateful_circuits,
+    )? {
+        return Ok(item);
+    }
     let name = ident(&circuit.name)?;
     let mut parameters = HashMap::new();
     let mut args = Vec::<syn::FnArg>::new();

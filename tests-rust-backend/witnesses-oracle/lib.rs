@@ -63,28 +63,16 @@ pub mod ledger_contract {
         context: runtime::context::CircuitContext<Private>,
         witnesses: &W,
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-        let mut total_cost = runtime::context::RunningCost::default();
-        let mut private_transcript_outputs = Vec::new();
-        let mut context = context;
-        let (__compact_next_private_0, __compact_witness_0) =
+        let frame = runtime::context::CircuitFrame::new(context);
+        let (frame, __compact_frame_witness_0) = frame.witness(|context| {
             witnesses.fetch_field(context.witness_context_with(LedgerView {
                 state: context.query.state.get_ref(),
-            }));
-        context.private_state = __compact_next_private_0;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_0.clone(),
-        ));
-        let __compact_action_local_0: runtime::Field = __compact_witness_0;
-        let step = crate::ledger_slots::v.write(context, __compact_action_local_0)?;
-        let context = step.context;
-        total_cost += step.gas_cost;
-        let result = ();
-        Ok(runtime::context::CircuitResult {
-            context,
-            result,
-            gas_cost: total_cost,
-            private_transcript_outputs,
-        })
+            }))
+        });
+        let __compact_frame_local_1: runtime::Field = __compact_frame_witness_0;
+        let (frame, ()) = frame
+            .apply(|context| crate::ledger_slots::v.write(context, __compact_frame_local_1))?;
+        Ok(frame.finish(()))
     }
     /// Circuits with a replayable ordered ledger program.
     pub mod recorded {

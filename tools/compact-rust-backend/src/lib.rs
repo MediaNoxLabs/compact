@@ -1,6 +1,7 @@
 //! Rust syntax construction from Compact's typed backend IR.
 
 pub mod ir;
+mod native_frame;
 mod recorded;
 mod stateful;
 mod witness;

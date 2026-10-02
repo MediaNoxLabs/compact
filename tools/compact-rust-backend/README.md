@@ -70,7 +70,11 @@ witness implementation and records private outputs in execution order. A
 supported Unit-returning stateful call uses one private, frame-taking Rust
 helper for each referenced callee. Calls evaluate typed arguments in source
 order and share the frame across nested witness and ledger operations. The
-separate recorded emitter still evaluates supported Field reads, witness
+recorded emitter also shares a private frame-taking helper for a supported
+parameterless Field-returning callee used in a Field action binding, preserving
+the witness result for the subsequent write. Parameterized value calls and
+value calls nested inside larger expressions still use inline lowering. The
+recorded emitter evaluates supported Field reads, witness
 calls, addition, and internal Field-returning calls in source order. Supported
 root Set and Map mutation, membership, lookup, size, and emptiness calls have
 replayable recorded methods, including declaration-typed `FixedVector` keys in

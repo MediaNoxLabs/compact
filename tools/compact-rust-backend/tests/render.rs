@@ -1756,6 +1756,81 @@ fn witnessed_field_cell_and_nested_call_use_native_frame() {
 }
 
 #[test]
+fn recorded_field_returning_helper_is_shared_across_callers() {
+    let mut contract = identity(Type::Unit, Expr::Unit);
+    contract.ledger_fields = vec![LedgerField {
+        source: None,
+        id: "cell".into(),
+        index: 0,
+        path: vec![],
+        declaration: LedgerFieldKind::Cell { ty: Type::Field },
+    }];
+    contract.witnesses = vec![WitnessDeclaration {
+        source: None,
+        name: "secret".into(),
+        parameters: vec![],
+        result: Type::Field,
+    }];
+    let caller = |name: &str| StatefulCircuit {
+        source: None,
+        internal: false,
+        name: name.into(),
+        parameters: vec![],
+        result: Type::Unit,
+        return_value: StateReturn::Unit,
+        actions: vec![StateAction::Let {
+            bindings: vec![LocalBinding {
+                name: "next".into(),
+                ty: Type::Field,
+                value: Expr::Call {
+                    name: "innerValue".into(),
+                    arguments: vec![],
+                },
+            }],
+            action: Box::new(StateAction::CellWrite {
+                field: "cell".into(),
+                index: 0,
+                value: Expr::Parameter {
+                    name: "next".into(),
+                },
+            }),
+        }],
+    };
+    contract.stateful_circuits = vec![
+        StatefulCircuit {
+            source: None,
+            internal: true,
+            name: "innerValue".into(),
+            parameters: vec![],
+            result: Type::Field,
+            return_value: StateReturn::Expression {
+                value: Expr::WitnessCall {
+                    name: "secret".into(),
+                    arguments: vec![],
+                },
+            },
+            actions: vec![],
+        },
+        caller("outerA"),
+        caller("outerB"),
+    ];
+    let source = render(&contract).unwrap();
+    syn::parse_file(&source).unwrap();
+    assert_eq!(
+        source
+            .matches("fn __compact_recorded_body_innerValue<")
+            .count(),
+        1
+    );
+    assert_eq!(
+        source.matches("__compact_recorded_body_innerValue").count(),
+        3
+    );
+    assert!(source.contains("pub fn outerA<Private"));
+    assert!(source.contains("pub fn outerB<Private"));
+}
+
+#[test]
 fn state_action_must_reference_the_declared_ledger_field_and_index() {
     let mut contract = Contract {
         schema_version: 8,

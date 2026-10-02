@@ -14,11 +14,11 @@
 // limitations under the License.
 
 use compact_rust_nested_witness_call_oracle_fixture::ledger_contract::{
-    Contract, LedgerView, Witnesses, initial_state, outer, outerValue,
+    Contract, LedgerView, TryWitnesses, Witnesses, initial_state, outer, outerValue,
 };
-use midnight_compact_runtime::Field;
 use midnight_compact_runtime::context::{ConstructorContext, WitnessContext};
 use midnight_compact_runtime::ledger::{ContractAddress, DefaultDB, StateValue};
+use midnight_compact_runtime::{CompactError, Field};
 use midnight_onchain_state::state::{
     ContractMaintenanceAuthority, ContractOperation, ContractState, EntryPointBuf,
 };
@@ -26,6 +26,17 @@ use midnight_serialize::tagged_serialize;
 use midnight_storage::storage::HashMap;
 
 struct OracleWitness;
+
+struct RejectingWitness;
+
+impl TryWitnesses<u64> for RejectingWitness {
+    fn secret(
+        &self,
+        _context: WitnessContext<'_, u64, LedgerView<'_>>,
+    ) -> Result<(u64, Field), CompactError> {
+        Err(CompactError::AssertionFailed("rejected witness".into()))
+    }
+}
 
 impl Witnesses<u64> for OracleWitness {
     fn secret(&self, context: WitnessContext<'_, u64, LedgerView<'_>>) -> (u64, Field) {
@@ -96,8 +107,14 @@ fn recorded_nested_expressions_match_typescript_and_replay() {
     let context = initial_state(ConstructorContext::new(7_u64))
         .unwrap()
         .into_circuit_context(ContractAddress::default());
+    let native_context = initial_state(ConstructorContext::new(7_u64))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let native_outer = outer(native_context, &OracleWitness).unwrap();
+    let native_outer_value = outerValue(native_outer.context, &OracleWitness).unwrap();
     let contract = Contract::from(OracleWitness);
     let outer = contract.recording().outer(context).unwrap();
+    assert_eq!(outer.execution.gas_cost, native_outer.gas_cost);
     assert_eq!(
         outer.execution.context.private_state,
         reference["privateState"].as_u64().unwrap()
@@ -128,6 +145,11 @@ fn recorded_nested_expressions_match_typescript_and_replay() {
         .recording()
         .outerValue(outer.execution.context)
         .unwrap();
+    assert_eq!(outer_value.execution.gas_cost, native_outer_value.gas_cost);
+    assert_eq!(
+        outer_value.execution.context.query.effects,
+        native_outer_value.context.query.effects
+    );
     assert_eq!(
         outer_value.execution.context.private_state,
         reference["afterOuterValuePrivateState"].as_u64().unwrap()
@@ -153,6 +175,18 @@ fn recorded_nested_expressions_match_typescript_and_replay() {
         replay.context.effects,
         outer_value.execution.context.query.effects
     );
+}
+
+#[test]
+fn recorded_value_helper_propagates_witness_rejection() {
+    let context = initial_state(ConstructorContext::new(7_u64))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let contract = Contract::from(RejectingWitness);
+    assert!(matches!(
+        contract.recording().outerValue(context),
+        Err(CompactError::AssertionFailed(message)) if message == "rejected witness"
+    ));
 }
 
 fn assert_transcript(

@@ -208,6 +208,21 @@ pub mod ledger_contract {
                 __compact_recorded_body_inner(frame, witnesses, __compact_recorded_arg_0)?;
             Ok((frame, ()))
         }
+        fn __compact_recorded_body_innerValue<Private, W: super::TryWitnesses<Private>>(
+            frame: runtime::recording::RecordingFrame<Private>,
+            witnesses: &W,
+        ) -> Result<
+            (runtime::recording::RecordingFrame<Private>, runtime::Field),
+            runtime::CompactError,
+        > {
+            let (frame, __compact_witness_0) = frame.try_witness_metered(|context, meter| {
+                witnesses.secret(context.witness_context_with(super::LedgerView {
+                    state: context.query.state.get_ref(),
+                    meter,
+                }))
+            })?;
+            Ok((frame, __compact_witness_0))
+        }
         pub fn outer<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
             witnesses: &W,
@@ -227,15 +242,10 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, __compact_witness_0) = frame.try_witness_metered(|context, meter| {
-                witnesses.secret(context.witness_context_with(super::LedgerView {
-                    state: context.query.state.get_ref(),
-                    meter,
-                }))
-            })?;
-            let __compact_recorded_return_1: runtime::Field = __compact_witness_0;
+            let (frame, __compact_recorded_value_0) =
+                __compact_recorded_body_innerValue(frame, witnesses)?;
             let frame =
-                crate::ledger_slots::value.record_write(frame, __compact_recorded_return_1)?;
+                crate::ledger_slots::value.record_write(frame, __compact_recorded_value_0)?;
             Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.

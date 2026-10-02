@@ -114,28 +114,37 @@ fn helper_ident(
     }
 }
 
-fn collect_unit_callees(action: &StateAction, names: &mut HashSet<String>) {
+fn collect_shared_callees(action: &StateAction, names: &mut HashSet<String>) {
     match action {
         StateAction::CircuitCall { name, .. } => {
             names.insert(name.clone());
         }
         StateAction::Sequence { actions } => {
             for action in actions {
-                collect_unit_callees(action, names);
+                collect_shared_callees(action, names);
             }
         }
         StateAction::If {
             then, otherwise, ..
         } => {
-            collect_unit_callees(then, names);
-            collect_unit_callees(otherwise, names);
+            collect_shared_callees(then, names);
+            collect_shared_callees(otherwise, names);
         }
-        StateAction::Let { action, .. } => collect_unit_callees(action, names),
+        StateAction::Let { bindings, action } => {
+            for binding in bindings {
+                if binding.ty == Type::Field {
+                    if let Expr::Call { name, .. } = &binding.value {
+                        names.insert(name.clone());
+                    }
+                }
+            }
+            collect_shared_callees(action, names);
+        }
         _ => {}
     }
 }
 
-/// Find recordable Unit callees before emitting any public entry point. Rendering each
+/// Find recordable Unit and direct Field-value callees before emitting public entry points. Rendering each
 /// candidate without sharing also checks transitive support and rejects recursion.
 pub(crate) fn plan_recorded_helpers(
     ordered_circuits: &[StatefulCircuit],
@@ -148,7 +157,7 @@ pub(crate) fn plan_recorded_helpers(
     for circuit in ordered_circuits.iter().filter(|circuit| !circuit.internal) {
         let mut calls = HashSet::new();
         for action in &circuit.actions {
-            collect_unit_callees(action, &mut calls);
+            collect_shared_callees(action, &mut calls);
         }
         if !calls.is_empty() {
             roots_with_calls.insert(circuit.name.as_str());
@@ -177,7 +186,7 @@ pub(crate) fn plan_recorded_helpers(
             continue;
         }
         for action in &circuit.actions {
-            collect_unit_callees(action, &mut candidates);
+            collect_shared_callees(action, &mut candidates);
         }
     }
     loop {
@@ -188,7 +197,7 @@ pub(crate) fn plan_recorded_helpers(
             .filter(|circuit| current.contains(&circuit.name))
         {
             for action in &circuit.actions {
-                collect_unit_callees(action, &mut candidates);
+                collect_shared_callees(action, &mut candidates);
             }
         }
         if candidates.len() == previous {
@@ -197,10 +206,12 @@ pub(crate) fn plan_recorded_helpers(
     }
     let mut names = HashSet::new();
     for circuit in ordered_circuits {
-        if !candidates.contains(&circuit.name)
-            || circuit.result != Type::Unit
-            || circuit.return_value != StateReturn::Unit
-        {
+        let unit_body = circuit.result == Type::Unit && circuit.return_value == StateReturn::Unit;
+        let direct_field_body = circuit.result == Type::Field
+            && circuit.parameters.is_empty()
+            && circuit.actions.is_empty()
+            && matches!(circuit.return_value, StateReturn::Expression { .. });
+        if !candidates.contains(&circuit.name) || !(unit_body || direct_field_body) {
             continue;
         }
         if crate::located(circuit.source.as_ref(), || {
@@ -1029,6 +1040,36 @@ fn render_recorded_item(
                         };
                         scoped.insert(binding.name.clone(), value);
                     } else if binding.ty == Type::Field {
+                        if let Expr::Call { name, arguments } = &binding.value {
+                            if shared_callees.contains(name) {
+                                let callee = circuits
+                                    .get(name.as_str())
+                                    .ok_or_else(|| RenderError::UnknownCircuit(name.clone()))?;
+                                if callee.result != Type::Field
+                                    || !callee.parameters.is_empty()
+                                    || !arguments.is_empty()
+                                {
+                                    return Ok(false);
+                                }
+                                let observed = syn::Ident::new(
+                                    &format!("__compact_recorded_value_{}", *next_temp),
+                                    Span::call_site(),
+                                );
+                                *next_temp += 1;
+                                let body_name = helper_ident(name, circuits)?;
+                                if circuit_uses_witness(callee, circuits, &mut HashSet::new())? {
+                                    steps.push(syn::parse_quote!(
+                                        let (frame, #observed) = #body_name(frame, witnesses)?;
+                                    ));
+                                } else {
+                                    steps.push(syn::parse_quote!(
+                                        let (frame, #observed) = #body_name(frame)?;
+                                    ));
+                                }
+                                scoped.insert(binding.name.clone(), syn::parse_quote!(#observed));
+                                continue;
+                            }
+                        }
                         let Some(value) = field_expression(
                             &binding.value,
                             &scoped,
@@ -1775,6 +1816,26 @@ fn render_recorded_item(
                 )],
                 syn::parse_quote!(observed),
             )
+        }
+        StateReturn::Expression { value }
+            if helper && circuit.result == Type::Field && circuit.actions.is_empty() =>
+        {
+            let mut return_steps = Vec::new();
+            let Some(result) = field_expression(
+                value,
+                &HashMap::new(),
+                &parameters,
+                ledger_fields,
+                witnesses,
+                circuits,
+                &mut return_steps,
+                &mut next_temp,
+                &mut visiting,
+            )?
+            else {
+                return Ok(None);
+            };
+            (return_steps, result)
         }
         StateReturn::Expression {
             value:

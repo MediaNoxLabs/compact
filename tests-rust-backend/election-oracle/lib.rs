@@ -139,7 +139,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 6);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 7);
     pub(crate) fn merkleTreePathRoot(
         path: crate::types::MerkleTreePath,
     ) -> Result<crate::types::MerkleTreeDigest, runtime::CompactError> {
@@ -276,7 +276,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 6);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 7);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -324,18 +324,32 @@ pub mod ledger_contract {
         pub fn committed(
             &self,
         ) -> Result<
-            runtime::ledger::SetView<'a, runtime::FixedBytes<32>, runtime::ledger::DefaultDB>,
+            runtime::ledger::MeteredSetView<
+                'a,
+                runtime::FixedBytes<32>,
+                runtime::ledger::DefaultDB,
+            >,
             runtime::CompactError,
         > {
-            runtime::ledger::set_view::<runtime::FixedBytes<32>, _>(self.state, 7)
+            runtime::ledger::metered_set_view_at_path::<runtime::FixedBytes<32>, _>(
+                self.meter,
+                &[7],
+            )
         }
         pub fn revealed(
             &self,
         ) -> Result<
-            runtime::ledger::SetView<'a, runtime::FixedBytes<32>, runtime::ledger::DefaultDB>,
+            runtime::ledger::MeteredSetView<
+                'a,
+                runtime::FixedBytes<32>,
+                runtime::ledger::DefaultDB,
+            >,
             runtime::CompactError,
         > {
-            runtime::ledger::set_view::<runtime::FixedBytes<32>, _>(self.state, 8)
+            runtime::ledger::metered_set_view_at_path::<runtime::FixedBytes<32>, _>(
+                self.meter,
+                &[8],
+            )
         }
     }
     pub trait Witnesses<Private> {

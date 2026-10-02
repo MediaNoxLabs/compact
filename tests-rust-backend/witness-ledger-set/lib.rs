@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 6);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 7);
 }
 /// Typed descriptors for Compact Cell, Counter, Set, Map, and List declarations.
 #[allow(non_upper_case_globals)]
@@ -31,7 +31,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 6);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 7);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -42,10 +42,10 @@ pub mod ledger_contract {
         pub fn seen(
             &self,
         ) -> Result<
-            runtime::ledger::SetView<'a, bool, runtime::ledger::DefaultDB>,
+            runtime::ledger::MeteredSetView<'a, bool, runtime::ledger::DefaultDB>,
             runtime::CompactError,
         > {
-            runtime::ledger::set_view::<bool, _>(self.state, 0)
+            runtime::ledger::metered_set_view_at_path::<bool, _>(self.meter, &[0])
         }
     }
     pub trait Witnesses<Private> {

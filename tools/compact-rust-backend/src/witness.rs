@@ -98,14 +98,9 @@ pub(crate) fn build<'a>(
                     }
                     LedgerFieldKind::Set { ty } => {
                         let ty = rust_type(ty)?;
-                        let view: syn::Expr = if path.len() == 1 {
-                            syn::parse_quote!(runtime::ledger::set_view::<#ty, _>(self.state, #index))
-                        } else {
-                            syn::parse_quote!(runtime::ledger::set_view_at_path::<#ty, _>(self.state, &[#(#path),*]))
-                        };
                         ledger_view_methods.push(syn::parse_quote! {
-                        pub fn #name(&self) -> Result<runtime::ledger::SetView<'a, #ty, runtime::ledger::DefaultDB>, runtime::CompactError> {
-                            #view
+                        pub fn #name(&self) -> Result<runtime::ledger::MeteredSetView<'a, #ty, runtime::ledger::DefaultDB>, runtime::CompactError> {
+                            runtime::ledger::metered_set_view_at_path::<#ty, _>(self.meter, &[#(#path),*])
                         }
                     });
                     }

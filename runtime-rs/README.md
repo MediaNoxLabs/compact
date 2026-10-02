@@ -6,9 +6,13 @@ midnight-zk primitives for fields, encoding, cryptography, state, and VM
 queries. Generated code checks `RUST_RUNTIME_ABI` at compile time. A generated
 crate bundles matching runtime sources by default or points to one shared
 source root when compiled with `--rust-runtime-root`.
-ABI 6 adds `context::WitnessReadMeter` and generated ledger projections that
-charge Cell and Counter reads made inside witnesses. Collection and Merkle
-witness views still need operation-level metering. ABI 5 added
+ABI 7 adds `ledger::MeteredSetView`, which runs canonical ledger queries for
+Set `member`, `size`, and `is_empty` calls inside witnesses. Those methods
+return `Result` so query rejection is visible at the call site. ABI 6 added
+`context::WitnessReadMeter` and generated Cell/Counter witness read metering.
+Map, List, and Merkle witness views still need operation-level metering.
+The witness trait still returns a value pair, so it cannot propagate a query
+error through `?` without a later API revision. ABI 5 added
 `slots::MapNode<K, V>` for nested ledger Map declarations. The
 marker is a type-level shape, not a FAB scalar value. A nested `MapSlot` permits
 `is_empty`, `size`, and `member` reads, including recording, while scalar

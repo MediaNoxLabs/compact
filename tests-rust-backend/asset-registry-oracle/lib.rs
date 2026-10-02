@@ -126,7 +126,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 6);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 7);
     pub fn assertRecordFreshEnough(
         policy: crate::types::FreshnessPolicy,
         record: crate::types::AssetRecord,
@@ -286,7 +286,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 6);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 7);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -397,26 +397,32 @@ pub mod ledger_contract {
         pub fn retiredKeys(
             &self,
         ) -> Result<
-            runtime::ledger::SetView<'a, runtime::OpaqueString, runtime::ledger::DefaultDB>,
+            runtime::ledger::MeteredSetView<'a, runtime::OpaqueString, runtime::ledger::DefaultDB>,
             runtime::CompactError,
         > {
-            runtime::ledger::set_view_at_path::<runtime::OpaqueString, _>(self.state, &[1, 12])
+            runtime::ledger::metered_set_view_at_path::<runtime::OpaqueString, _>(
+                self.meter,
+                &[1, 12],
+            )
         }
         pub fn watchList(
             &self,
         ) -> Result<
-            runtime::ledger::SetView<'a, runtime::OpaqueString, runtime::ledger::DefaultDB>,
+            runtime::ledger::MeteredSetView<'a, runtime::OpaqueString, runtime::ledger::DefaultDB>,
             runtime::CompactError,
         > {
-            runtime::ledger::set_view_at_path::<runtime::OpaqueString, _>(self.state, &[1, 13])
+            runtime::ledger::metered_set_view_at_path::<runtime::OpaqueString, _>(
+                self.meter,
+                &[1, 13],
+            )
         }
         pub fn tags(
             &self,
         ) -> Result<
-            runtime::ledger::SetView<'a, runtime::Field, runtime::ledger::DefaultDB>,
+            runtime::ledger::MeteredSetView<'a, runtime::Field, runtime::ledger::DefaultDB>,
             runtime::CompactError,
         > {
-            runtime::ledger::set_view_at_path::<runtime::Field, _>(self.state, &[1, 14])
+            runtime::ledger::metered_set_view_at_path::<runtime::Field, _>(self.meter, &[1, 14])
         }
     }
     pub trait Witnesses<Private> {

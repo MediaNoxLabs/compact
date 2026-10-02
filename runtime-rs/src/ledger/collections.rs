@@ -21,6 +21,7 @@ use super::{
     field_at_path, path_keys, read_cell, root_field,
 };
 use crate::BoundedUint;
+use crate::context::WitnessReadMeter;
 use midnight_base_crypto::cost_model::RunningCost;
 use midnight_base_crypto::fab::AlignedValue;
 use midnight_onchain_vm::cost_model::CostModel;
@@ -34,6 +35,40 @@ use std::marker::PhantomData;
 pub struct SetView<'a, T, D: DB> {
     map: &'a LedgerHashMap<AlignedValue, StateValue<D>, D>,
     marker: PhantomData<T>,
+}
+
+/// Witness-facing Set projection that charges the canonical ledger VM query
+/// for every read. Query failures are returned to the witness implementation.
+pub struct MeteredSetView<'a, T, D: DB> {
+    meter: &'a WitnessReadMeter<'a, D>,
+    path: LedgerPath,
+    marker: PhantomData<T>,
+}
+
+pub fn metered_set_view_at_path<'a, T: CellValue, D: DB>(
+    meter: &'a WitnessReadMeter<'a, D>,
+    path: &[u8],
+) -> Result<MeteredSetView<'a, T, D>, CompactError> {
+    let _ = set_view_at_path::<T, D>(meter.state(), path)?;
+    Ok(MeteredSetView {
+        meter,
+        path: path.into(),
+        marker: PhantomData,
+    })
+}
+
+impl<T: CellValue, D: DB> MeteredSetView<'_, T, D> {
+    pub fn member(&self, value: T) -> Result<bool, CompactError> {
+        self.meter.read_set_member(self.path.as_slice(), value)
+    }
+
+    pub fn size(&self) -> Result<BoundedUint<{ u64::MAX as u128 }>, CompactError> {
+        BoundedUint::new(self.meter.read_set_size(self.path.as_slice())? as u128)
+    }
+
+    pub fn is_empty(&self) -> Result<bool, CompactError> {
+        self.meter.read_set_is_empty(self.path.as_slice())
+    }
 }
 
 pub fn set_view<T: CellValue, D: DB>(

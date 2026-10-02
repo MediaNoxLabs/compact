@@ -107,6 +107,10 @@ impl<'a, D: DB> WitnessReadMeter<'a, D> {
         }
     }
 
+    pub(crate) fn state(&self) -> &StateValue<D> {
+        self.query.state.get_ref()
+    }
+
     pub fn read_cell<T: CellValue>(&self, path: &[u8]) -> Result<T, CompactError> {
         let (result, value) = ledger::query_cell_at_path::<T, D>(
             self.query,
@@ -116,6 +120,36 @@ impl<'a, D: DB> WitnessReadMeter<'a, D> {
         )?;
         *self.observed_gas.borrow_mut() += result.gas_cost;
         Ok(value)
+    }
+
+    pub fn read_set_member<T: CellValue>(
+        &self,
+        path: &[u8],
+        value: T,
+    ) -> Result<bool, CompactError> {
+        let (result, present) = ledger::member_set(
+            self.query,
+            path,
+            value,
+            self.gas_limit.clone(),
+            self.cost_model,
+        )?;
+        *self.observed_gas.borrow_mut() += result.gas_cost;
+        Ok(present)
+    }
+
+    pub fn read_set_size(&self, path: &[u8]) -> Result<u64, CompactError> {
+        let (result, size) =
+            ledger::size_set(self.query, path, self.gas_limit.clone(), self.cost_model)?;
+        *self.observed_gas.borrow_mut() += result.gas_cost;
+        Ok(size)
+    }
+
+    pub fn read_set_is_empty(&self, path: &[u8]) -> Result<bool, CompactError> {
+        let (result, empty) =
+            ledger::is_empty_set(self.query, path, self.gas_limit.clone(), self.cost_model)?;
+        *self.observed_gas.borrow_mut() += result.gas_cost;
+        Ok(empty)
     }
 
     pub fn gas_cost(&self) -> RunningCost {

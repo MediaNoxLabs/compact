@@ -24,7 +24,7 @@ use crate::ir::{
 };
 use crate::{
     RenderError, UnsignedMaximum, coerce_expression, expression_with_calls, ident,
-    ledger_path_expr, rust_type, unsigned_cast_syntax, unsigned_maximum,
+    ledger_path_expr, rust_type, scalar_map_slot_types, unsigned_cast_syntax, unsigned_maximum,
 };
 
 pub(crate) fn render_state_expression(
@@ -303,16 +303,12 @@ pub(crate) fn render_state_expression(
             let declaration = ledger_fields
                 .get(field.as_str())
                 .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
-            let (valid_kind, method) = if matches!(value, Expr::SetIsEmpty { .. }) {
-                (
-                    matches!(declaration.declaration, LedgerFieldKind::Set { .. }),
-                    syn::Ident::new("is_empty_set", Span::call_site()),
-                )
-            } else {
-                (
-                    matches!(declaration.declaration, LedgerFieldKind::Map { .. }),
-                    syn::Ident::new("is_empty_map", Span::call_site()),
-                )
+            let (valid_kind, use_slot) = match (value, &declaration.declaration) {
+                (Expr::SetIsEmpty { .. }, LedgerFieldKind::Set { .. }) => (true, true),
+                (Expr::MapIsEmpty { .. }, LedgerFieldKind::Map { key, value }) => {
+                    (true, scalar_map_slot_types(key, value)?.is_some())
+                }
+                _ => (false, false),
             };
             if !valid_kind || declaration.index != *index {
                 return Err(RenderError::UnknownLedgerField(field.clone()));
@@ -322,8 +318,17 @@ pub(crate) fn render_state_expression(
                 Span::call_site(),
             );
             *next_temp += 1;
-            let index = ledger_path_expr(declaration);
-            statements.push(syn::parse_quote!(let #step = context.#method(#index)?;));
+            if use_slot {
+                let slot = ident(&declaration.id)?;
+                statements.push(syn::parse_quote!(
+                    let #step = crate::ledger_slots::#slot.is_empty(context)?;
+                ));
+            } else {
+                let path = ledger_path_expr(declaration);
+                statements.push(syn::parse_quote!(
+                    let #step = context.is_empty_map(#path)?;
+                ));
+            }
             statements.push(syn::parse_quote!(context = #step.context;));
             statements.push(syn::parse_quote!(total_cost += #step.gas_cost;));
             *query_effect = true;

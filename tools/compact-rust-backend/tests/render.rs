@@ -869,6 +869,73 @@ fn nested_set_query_in_cell_write_checks_field_and_item_types() {
 }
 
 #[test]
+fn native_collection_emptiness_uses_slots_only_when_they_exist() {
+    let mut contract = identity(Type::Unit, Expr::Unit);
+    contract.ledger_fields = vec![
+        LedgerField {
+            source: None,
+            id: "flag".into(),
+            index: 0,
+            path: vec![],
+            declaration: LedgerFieldKind::Cell { ty: Type::Boolean },
+        },
+        LedgerField {
+            source: None,
+            id: "entries".into(),
+            index: 1,
+            path: vec![],
+            declaration: LedgerFieldKind::Set { ty: Type::Field },
+        },
+    ];
+    contract.stateful_circuits = vec![StatefulCircuit {
+        source: None,
+        internal: false,
+        name: "check".into(),
+        parameters: vec![],
+        actions: vec![StateAction::CellWrite {
+            field: "flag".into(),
+            index: 0,
+            value: Expr::SetIsEmpty {
+                field: "entries".into(),
+                index: 1,
+            },
+        }],
+        result: Type::Unit,
+        return_value: StateReturn::Unit,
+    }];
+
+    let set_source = render(&contract).unwrap();
+    assert!(set_source.contains("crate::ledger_slots::entries.is_empty(context)?"));
+    assert!(!set_source.contains("context.is_empty_set(1)?"));
+
+    contract.ledger_fields[1].declaration = LedgerFieldKind::Map {
+        key: Type::Field,
+        value: Type::Field,
+    };
+    let StateAction::CellWrite { value, .. } = &mut contract.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    *value = Expr::MapIsEmpty {
+        field: "entries".into(),
+        index: 1,
+    };
+    let map_source = render(&contract).unwrap();
+    assert!(map_source.contains("crate::ledger_slots::entries.is_empty(context)?"));
+    assert!(!map_source.contains("context.is_empty_map(1)?"));
+
+    contract.ledger_fields[1].declaration = LedgerFieldKind::Map {
+        key: Type::Field,
+        value: Type::LedgerMap {
+            key: Box::new(Type::Field),
+            value: Box::new(Type::Field),
+        },
+    };
+    let nested_source = render(&contract).unwrap();
+    assert!(nested_source.contains("context.is_empty_map(1)?"));
+    assert!(!nested_source.contains("pub const entries:"));
+}
+
+#[test]
 fn vector_expression_preserves_element_type() {
     let mut contract = identity(
         Type::Vector {

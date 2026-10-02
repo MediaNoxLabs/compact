@@ -368,6 +368,23 @@ fn rust_type(ty: &Type) -> Result<syn::Type, RenderError> {
     })
 }
 
+pub(crate) fn scalar_map_slot_types(
+    key: &Type,
+    value: &Type,
+) -> Result<Option<(syn::Type, syn::Type)>, RenderError> {
+    let key = match rust_type(key) {
+        Ok(ty) => ty,
+        Err(RenderError::UnsupportedLedgerValueType(_)) => return Ok(None),
+        Err(error) => return Err(error),
+    };
+    let value = match rust_type(value) {
+        Ok(ty) => ty,
+        Err(RenderError::UnsupportedLedgerValueType(_)) => return Ok(None),
+        Err(error) => return Err(error),
+    };
+    Ok(Some((key, value)))
+}
+
 fn collect_named_types(
     ty: &Type,
     structs: &mut BTreeMap<String, Vec<StructField>>,
@@ -2852,15 +2869,8 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                 // Nested ledger maps have no CellValue representation yet.
                 // Keep their constructor/native support without advertising
                 // scalar MapSlot operations that cannot type-check.
-                let key = match rust_type(key) {
-                    Ok(ty) => ty,
-                    Err(RenderError::UnsupportedLedgerValueType(_)) => continue,
-                    Err(error) => return Err(error),
-                };
-                let value = match rust_type(value) {
-                    Ok(ty) => ty,
-                    Err(RenderError::UnsupportedLedgerValueType(_)) => continue,
-                    Err(error) => return Err(error),
+                let Some((key, value)) = scalar_map_slot_types(key, value)? else {
+                    continue;
                 };
                 slot_items.push(syn::parse_quote! {
                     pub const #name: runtime::slots::MapSlot<#key, #value> =

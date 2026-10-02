@@ -66,7 +66,7 @@ pub mod ledger_contract {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
         let mut context = context;
-        let __compact_query_0 = context.is_empty_set(2)?;
+        let __compact_query_0 = crate::ledger_slots::s.is_empty(context)?;
         context = __compact_query_0.context;
         total_cost += __compact_query_0.gas_cost;
         let __compact_action_local_0: bool = __compact_query_0.result;
@@ -87,7 +87,7 @@ pub mod ledger_contract {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
         let mut context = context;
-        let __compact_query_0 = context.is_empty_map(3)?;
+        let __compact_query_0 = crate::ledger_slots::m.is_empty(context)?;
         context = __compact_query_0.context;
         total_cost += __compact_query_0.gas_cost;
         let __compact_action_local_0: bool = __compact_query_0.result;

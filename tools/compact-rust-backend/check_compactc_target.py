@@ -40,6 +40,7 @@ CONSTRUCTOR_MAP_SOURCE = ROOT / "examples/rust_backend/constructor_map_actions.c
 LIST_SOURCE = ROOT / "examples/rust_backend/list_field.compact"
 MERKLE_SOURCE = ROOT / "examples/rust_backend/merkle_tree_oracle.compact"
 HISTORIC_MERKLE_SOURCE = ROOT / "examples/rust_backend/hmt_insert_oracle.compact"
+VECTOR_KEY_SOURCE = ROOT / "examples/rust_backend/vector_key_adt.compact"
 CONSTRUCTOR_LIST_SOURCE = ROOT / "examples/rust_backend/constructor_list_actions.compact"
 RECORDED_ENUM_SOURCE = ROOT / "examples/rust_backend/recorded_enum_cell.compact"
 TINY_SOURCE = ROOT / "examples/rust_backend/tiny_oracle.compact"
@@ -169,6 +170,7 @@ def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
         ("list_field", LIST_SOURCE),
         ("merkle_tree_oracle", MERKLE_SOURCE),
         ("hmt_insert_oracle", HISTORIC_MERKLE_SOURCE),
+        ("vector_key_adt", VECTOR_KEY_SOURCE),
     ):
         output = base / f"shared-{name}"
         run(
@@ -204,6 +206,7 @@ def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
         "use compact_contract_list_field::ledger_contract::{Contract as ListContract, initial_state as initial_list_state};\n"
         "use compact_contract_merkle_tree_oracle::ledger_contract::initial_state as initial_merkle_state;\n"
         "use compact_contract_hmt_insert_oracle::ledger_contract::initial_state as initial_historic_merkle_state;\n"
+        "use compact_contract_vector_key_adt::ledger_contract::{Contract as VectorContract, initial_state as initial_vector_state};\n"
         "use midnight_compact_runtime::context::ConstructorContext;\n"
         "use midnight_compact_runtime::ledger::ContractAddress;\n"
         "use midnight_compact_runtime::Field;\n"
@@ -275,6 +278,13 @@ def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
         "    let recorded_historic = compact_contract_hmt_insert_oracle::ledger_contract::recorded::append(historic_context, midnight_compact_runtime::BoundedUint::<255>::new(7).unwrap()).unwrap();\n"
         "    let historic_replay = recorded_historic.public.initial().query(recorded_historic.public.verify_ops(), None, &recorded_historic.execution.context.cost_model).unwrap();\n"
         "    assert_eq!(historic_replay.context.effects, recorded_historic.execution.context.query.effects);\n"
+        "    let vector = initial_vector_state(ConstructorContext::new(())).unwrap();\n"
+        "    let vector_context = vector.into_circuit_context(ContractAddress::default());\n"
+        "    let vector_call = VectorContract::default().recording.setInsert(vector_context).unwrap();\n"
+        "    let vector_replay = vector_call.public.initial().query(vector_call.public.verify_ops(), None, &vector_call.execution.context.cost_model).unwrap();\n"
+        "    assert_eq!(vector_replay.context.effects, vector_call.execution.context.query.effects);\n"
+        "    let vector_member = VectorContract::default().recording.setMember(vector_call.execution.context).unwrap();\n"
+        "    assert!(midnight_compact_runtime::ledger::read_root_cell::<bool, _>(vector_member.execution.context.query.state.get_ref(), 2).unwrap());\n"
         "    assert_eq!(field_add(2u64.into(), 3u64.into()).unwrap(), 5u64.into());\n"
         "}\n"
     )
@@ -318,6 +328,23 @@ def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
     assert rejected.returncode != 0, "wrong Set element type unexpectedly compiled"
     assert "error[E0308]: mismatched types" in rejected.stderr, rejected.stderr
     assert "found `bool`" in rejected.stderr, rejected.stderr
+
+    (consumer / "examples/wrong_vector_key.rs").write_text(
+        "use compact_contract_vector_key_adt::ledger_contract::initial_state;\n"
+        "use compact_contract_vector_key_adt::runtime::{context::ConstructorContext, ledger::ContractAddress, recording::RecordingFrame};\n"
+        "fn main() {\n"
+        "    let state = initial_state(ConstructorContext::new(())).unwrap();\n"
+        "    let frame = RecordingFrame::new(state.into_circuit_context(ContractAddress::default()));\n"
+        "    let _ = compact_contract_vector_key_adt::ledger_slots::keys.record_insert(frame, [0u8, 1u8]);\n"
+        "}\n"
+    )
+    rejected = subprocess.run(
+        ["cargo", "check", "--quiet", "--example", "wrong_vector_key"],
+        cwd=consumer, env=environment, capture_output=True, text=True,
+    )
+    assert rejected.returncode != 0, "raw-byte vector key unexpectedly compiled"
+    assert "error[E0308]: mismatched types" in rejected.stderr, rejected.stderr
+    assert "FixedVector" in rejected.stderr, rejected.stderr
 
     (consumer / "examples/nested_map_scalar_lookup.rs").write_text(
         "use compact_contract_nested_map_oracle::ledger_contract::initial_state;\n"
@@ -844,6 +871,13 @@ def main() -> None:
                 assert (historic_merkle_proof / "keys" / f"append.{extension}").is_file()
             for extension in ("zkir", "bzkir"):
                 assert (historic_merkle_proof / "zkir" / f"append.{extension}").is_file()
+            vector_key_proof = base / "vector-key-proof"
+            run(compiler, "--target", "rust", str(VECTOR_KEY_SOURCE), str(vector_key_proof))
+            check_manifest(vector_key_proof)
+            for extension in ("prover", "verifier"):
+                assert (vector_key_proof / "keys" / f"setInsert.{extension}").is_file()
+            for extension in ("zkir", "bzkir"):
+                assert (vector_key_proof / "zkir" / f"setInsert.{extension}").is_file()
             constructor_list_proof = base / "constructor-list-proof"
             run(compiler, "--target", "rust", str(CONSTRUCTOR_LIST_SOURCE), str(constructor_list_proof))
             check_manifest(constructor_list_proof)
@@ -885,6 +919,7 @@ def main() -> None:
                 str(list_shapes_proof),
                 str(merkle_proof),
                 str(historic_merkle_proof),
+                str(vector_key_proof),
             )
     print("compactc target boundary and manifest: passed")
 

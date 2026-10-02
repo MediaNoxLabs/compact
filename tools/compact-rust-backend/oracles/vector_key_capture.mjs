@@ -16,12 +16,45 @@
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { normalizeQueryProgram } from './normalize_query_program.mjs';
 
 if (process.argv.length !== 3) throw new Error('usage: node vector_key_capture.mjs <compiled-contract-dir>');
 const contractIndex = resolve(process.argv[2], 'index.js');
 const requireFromContract = createRequire(contractIndex);
 const runtime = await import(pathToFileURL(requireFromContract.resolve('@midnight-ntwrk/compact-runtime')));
 const { Contract, ledger } = await import(pathToFileURL(contractIndex));
+const queryCosts = [];
+const originalQuery = runtime.QueryContext.prototype.query;
+runtime.QueryContext.prototype.query = function (...args) {
+  const result = originalQuery.call(this, ...args);
+  const program = normalizeQueryProgram(args[0]);
+  // The TypeScript query program leaves `popeq.result` undefined. The VM's
+  // independent read event carries the observed value required by ledger-8's
+  // Rust verification-mode Op; pair them in program order for exact comparison.
+  const reads = normalizeQueryProgram(result.events)
+    .filter((event) => event.tag === 'read')
+    .map((event) => event.content);
+  let readIndex = 0;
+  for (const operation of program) {
+    if (operation.popeq && operation.popeq.result == null) {
+      operation.popeq.result = reads[readIndex++];
+    }
+  }
+  if (readIndex !== reads.length) throw new Error('unmatched VM read event');
+  queryCosts.push({
+    gasCost: result.gasCost,
+    opTags: args[0].map((op) => typeof op === 'string' ? op : Object.keys(op)[0]),
+    program,
+  });
+  return result;
+};
+const nativeQueries = {};
+function call(label, circuit) {
+  const start = queryCosts.length;
+  const output = contract.circuits[circuit](context);
+  nativeQueries[label] = { reportedGas: output.gasCost, queries: queryCosts.slice(start) };
+  context = output.context;
+}
 const contract = new Contract({});
 const coinPublicKey = { bytes: new Uint8Array(32) };
 const initial = contract.initialState({
@@ -45,38 +78,47 @@ function snapshot() {
 }
 
 const afterInit = Buffer.from(initial.currentContractState.serialize()).toString('hex');
-context = contract.circuits.setInsert(context).context;
+call('setInsert', 'setInsert');
 const afterSetInsert = snapshot();
-context = contract.circuits.setMember(context).context;
+call('setMemberPresent', 'setMember');
 const afterSetMember = snapshot();
 const setPresent = ledger(context.currentQueryContext.state).present;
-context = contract.circuits.mapInsert(context).context;
+call('mapInsert', 'mapInsert');
 const afterMapInsert = snapshot();
-context = contract.circuits.mapMember(context).context;
+call('mapMemberPresent', 'mapMember');
 const afterMapMember = snapshot();
 const mapPresent = ledger(context.currentQueryContext.state).present;
-context = contract.circuits.mapLookup(context).context;
+call('mapLookupPresent', 'mapLookup');
 const afterMapLookup = snapshot();
 const stored = String(ledger(context.currentQueryContext.state).stored);
-context = contract.circuits.setRemove(context).context;
+call('setRemove', 'setRemove');
 const afterSetRemove = snapshot();
-context = contract.circuits.setMember(context).context;
+call('setMemberMissing', 'setMember');
 const afterSetMissing = snapshot();
 const setMissing = ledger(context.currentQueryContext.state).present;
-context = contract.circuits.mapRemove(context).context;
+call('mapRemove', 'mapRemove');
 const afterMapRemove = snapshot();
-context = contract.circuits.mapMember(context).context;
+call('mapMemberMissing', 'mapMember');
 const afterMapMissing = snapshot();
 const mapMissing = ledger(context.currentQueryContext.state).present;
-context = contract.circuits.mapInsertDefault(context).context;
+call('mapInsertDefault', 'mapInsertDefault');
 const afterMapInsertDefault = snapshot();
-context = contract.circuits.mapLookup(context).context;
+call('mapLookupDefault', 'mapLookup');
 const afterMapDefaultLookup = snapshot();
 const defaultStored = String(ledger(context.currentQueryContext.state).stored);
-process.stdout.write(JSON.stringify({
+function normalize(value) {
+  if (typeof value === 'bigint') return value.toString();
+  if (value instanceof Uint8Array) return { bytesHex: Buffer.from(value).toString('hex') };
+  if (Array.isArray(value)) return value.map(normalize);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([key, inner]) => [key, normalize(inner)]));
+  }
+  return value;
+}
+process.stdout.write(JSON.stringify(normalize({
   afterInit, afterSetInsert, afterSetMember, setPresent,
   afterMapInsert, afterMapMember, mapPresent, afterMapLookup, stored,
   afterSetRemove, afterSetMissing, setMissing,
   afterMapRemove, afterMapMissing, mapMissing,
-  afterMapInsertDefault, afterMapDefaultLookup, defaultStored,
-}, null, 2) + '\n');
+  afterMapInsertDefault, afterMapDefaultLookup, defaultStored, nativeQueries,
+}), null, 2) + '\n');

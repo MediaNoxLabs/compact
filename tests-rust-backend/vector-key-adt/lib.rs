@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 14);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 15);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -39,7 +39,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 14);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 15);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -237,19 +237,214 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
+    /// Circuits with a replayable ordered ledger program.
+    pub mod recorded {
+        use midnight_compact_runtime as runtime;
+        pub fn setInsert<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_vector_0: runtime::FixedVector<runtime::Field, 2> =
+                runtime::FixedVector::new([
+                    runtime::Field::from(0u128),
+                    runtime::Field::from(1u128),
+                ]);
+            let frame = crate::ledger_slots::keys
+                .record_insert(frame, (__compact_recorded_vector_0).clone())?;
+            Ok(frame.finish(()))
+        }
+        pub fn setMember<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_vector_0: runtime::FixedVector<runtime::Field, 2> =
+                runtime::FixedVector::new([
+                    runtime::Field::from(0u128),
+                    runtime::Field::from(1u128),
+                ]);
+            let __compact_recorded_key_1 = (__compact_recorded_vector_0).clone();
+            let (frame, __compact_recorded_member_2): (_, bool) =
+                crate::ledger_slots::keys.record_member(frame, __compact_recorded_key_1)?;
+            let frame =
+                crate::ledger_slots::present.record_write(frame, __compact_recorded_member_2)?;
+            Ok(frame.finish(()))
+        }
+        pub fn setRemove<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_vector_0: runtime::FixedVector<runtime::Field, 2> =
+                runtime::FixedVector::new([
+                    runtime::Field::from(0u128),
+                    runtime::Field::from(1u128),
+                ]);
+            let frame = crate::ledger_slots::keys
+                .record_remove(frame, (__compact_recorded_vector_0).clone())?;
+            Ok(frame.finish(()))
+        }
+        pub fn mapInsert<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_vector_0: runtime::FixedVector<runtime::Field, 2> =
+                runtime::FixedVector::new([
+                    runtime::Field::from(0u128),
+                    runtime::Field::from(1u128),
+                ]);
+            let __compact_recorded_key_1 = (__compact_recorded_vector_0).clone();
+            let frame = crate::ledger_slots::values.record_insert(
+                frame,
+                __compact_recorded_key_1,
+                runtime::Field::from(7u128),
+            )?;
+            Ok(frame.finish(()))
+        }
+        pub fn mapMember<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_vector_0: runtime::FixedVector<runtime::Field, 2> =
+                runtime::FixedVector::new([
+                    runtime::Field::from(0u128),
+                    runtime::Field::from(1u128),
+                ]);
+            let (frame, __compact_recorded_member_1): (_, bool) = crate::ledger_slots::values
+                .record_member(frame, (__compact_recorded_vector_0).clone())?;
+            let frame =
+                crate::ledger_slots::present.record_write(frame, __compact_recorded_member_1)?;
+            Ok(frame.finish(()))
+        }
+        pub fn mapLookup<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_vector_0: runtime::FixedVector<runtime::Field, 2> =
+                runtime::FixedVector::new([
+                    runtime::Field::from(0u128),
+                    runtime::Field::from(1u128),
+                ]);
+            let (frame, __compact_recorded_lookup_1): (_, runtime::Field) =
+                crate::ledger_slots::values
+                    .record_lookup(frame, (__compact_recorded_vector_0).clone())?;
+            let frame =
+                crate::ledger_slots::stored.record_write(frame, __compact_recorded_lookup_1)?;
+            Ok(frame.finish(()))
+        }
+        pub fn mapRemove<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_vector_0: runtime::FixedVector<runtime::Field, 2> =
+                runtime::FixedVector::new([
+                    runtime::Field::from(0u128),
+                    runtime::Field::from(1u128),
+                ]);
+            let frame = crate::ledger_slots::values
+                .record_remove(frame, (__compact_recorded_vector_0).clone())?;
+            Ok(frame.finish(()))
+        }
+        pub fn mapInsertDefault<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_vector_0: runtime::FixedVector<runtime::Field, 2> =
+                runtime::FixedVector::new([
+                    runtime::Field::from(0u128),
+                    runtime::Field::from(1u128),
+                ]);
+            let frame = crate::ledger_slots::values
+                .record_insert_default(frame, (__compact_recorded_vector_0).clone())?;
+            Ok(frame.finish(()))
+        }
+        /// Typed handle for circuits with a complete recorded trace.
+        pub struct Contract;
+        impl Contract {
+            pub fn setInsert<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::setInsert(context)
+            }
+            pub fn setMember<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::setMember(context)
+            }
+            pub fn setRemove<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::setRemove(context)
+            }
+            pub fn mapInsert<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::mapInsert(context)
+            }
+            pub fn mapMember<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::mapMember(context)
+            }
+            pub fn mapLookup<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::mapLookup(context)
+            }
+            pub fn mapRemove<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::mapRemove(context)
+            }
+            pub fn mapInsertDefault<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::mapInsertDefault(context)
+            }
+        }
+    }
     /// Groups the contract's exported circuits for Rust consumers.
     pub struct Contract<W> {
         #[allow(dead_code)]
         witnesses: W,
+        pub recording: recorded::Contract,
     }
     impl<W> From<W> for Contract<W> {
         fn from(witnesses: W) -> Self {
-            Self { witnesses }
+            Self {
+                witnesses,
+                recording: recorded::Contract,
+            }
         }
     }
     impl Default for Contract<()> {
         fn default() -> Self {
-            Self { witnesses: () }
+            Self {
+                witnesses: (),
+                recording: recorded::Contract,
+            }
         }
     }
     impl<W> Contract<W> {

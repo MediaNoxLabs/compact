@@ -43,6 +43,7 @@ use compact_rust_set_boolean_fixture::ledger_contract as set_contract;
 use compact_rust_set_oracle_fixture::ledger_contract as set_oracle_contract;
 use compact_rust_stateful_circuit_call_fixture::ledger_contract as nested_contract;
 use compact_rust_tiny_oracle_fixture::ledger_contract as tiny_contract;
+use compact_rust_vector_key_adt_fixture::ledger_contract as vector_key_contract;
 use compact_rust_witness_cell_write_fixture::ledger_contract as witness_contract;
 use compact_rust_witness_list_shapes_fixture::ledger_contract as list_shapes_contract;
 use compact_rust_witness_list_shapes_fixture::types::{Choice as ListChoice, Packet};
@@ -53,11 +54,11 @@ use midnight_compact_runtime::context::{ConstructorContext, WitnessContext};
 use midnight_compact_runtime::fab::AlignedValue;
 use midnight_compact_runtime::ledger::{
     DefaultDB, StateValue, historic_merkle_tree_view_at_path, merkle_tree_view_at_path, read_cell,
-    read_counter,
+    read_counter, set_view_at_path,
 };
 use midnight_compact_runtime::recording::RecordedCircuitResult;
 use midnight_compact_runtime::transaction::{CallSpec, prepare_call};
-use midnight_compact_runtime::{BoundedUint, FixedBytes};
+use midnight_compact_runtime::{BoundedUint, FixedBytes, FixedVector};
 use midnight_ledger::construct::{ContractCallExt, ContractCallPrototype};
 use midnight_ledger::semantics::{TransactionContext, TransactionResult};
 use midnight_ledger::structure::{
@@ -336,9 +337,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     let list_shapes_root = arguments.next();
     let merkle_root = arguments.next();
     let historic_merkle_root = arguments.next();
+    let vector_key_root = arguments.next();
     if arguments.next().is_some() {
         return Err(
-            "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output> [witness-output] [nested-output] [nested-witness-output] [set-output] [set-oracle-output] [map-output] [constructor-map-output] [list-output] [constructor-list-output] [enum-cell-output] [tiny-output] [nested-map-shape-output] [list-shapes-output] [merkle-output] [historic-merkle-output]"
+            "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output> [witness-output] [nested-output] [nested-witness-output] [set-output] [set-oracle-output] [map-output] [constructor-map-output] [list-output] [constructor-list-output] [enum-cell-output] [tiny-output] [nested-map-shape-output] [list-shapes-output] [merkle-output] [historic-merkle-output] [vector-key-output]"
                 .into(),
         );
     }
@@ -1481,6 +1483,35 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
             if tree.history()?.len() != 2 {
                 return Err("proven historic append did not retain both roots".into());
+            }
+            Ok(())
+        })?;
+    }
+    if let Some(vector_root) = vector_key_root.as_ref().map(Path::new) {
+        let circuit = "setInsert";
+        let initial = vector_key_contract::initial_state(ConstructorContext::new(()))?;
+        let deploy = make_deploy(
+            vector_root,
+            circuit,
+            initial.ledger_state.get_ref().clone(),
+            &mut rng,
+        )?;
+        let context = initial.into_circuit_context(deploy.address());
+        let recorded = vector_key_contract::Contract::default()
+            .recording
+            .setInsert(context)?;
+        let call = check_generated_trace(vector_root, circuit, recorded, ())?;
+        check_transaction(vector_root, circuit, deploy, call, &mut rng, |contract| {
+            let StateValue::Array(fields) = contract.data.get_ref() else {
+                return Err("vector-key contract state is not an array".into());
+            };
+            let StateValue::Map(set) = fields.get(0).ok_or("vector-key Set missing")? else {
+                return Err("vector-key Set has the wrong ledger shape".into());
+            };
+            let key = FixedVector::new([Field::from(0u64), Field::from(1u64)]);
+            let view = set_view_at_path::<FixedVector<Field, 2>, _>(contract.data.get_ref(), &[0])?;
+            if set.size() != 1 || !view.member(key) {
+                return Err("proven vector-key Set insert lost the declared key or size".into());
             }
             Ok(())
         })?;

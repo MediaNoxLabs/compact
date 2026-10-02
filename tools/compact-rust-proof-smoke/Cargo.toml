@@ -37,6 +37,7 @@ compact-rust-constructor-list-actions-fixture = { path = "../../tests-rust-backe
 compact-rust-tiny-oracle-fixture = { path = "../../tests-rust-backend/tiny-oracle" }
 compact-rust-merkle-tree-oracle-fixture = { path = "../../tests-rust-backend/merkle-tree-oracle" }
 compact-rust-hmt-insert-oracle-fixture = { path = "../../tests-rust-backend/hmt-insert-oracle" }
+compact-rust-vector-key-adt-fixture = { path = "../../tests-rust-backend/vector-key-adt" }
 compact-rust-recorded-enum-cell-fixture = { path = "../../tests-rust-backend/recorded-enum-cell" }
 compact-rust-witness-cell-write-fixture = { path = "../../tests-rust-backend/witness-cell-write" }
 compact-rust-stateful-circuit-call-fixture = { path = "../../tests-rust-backend/stateful-circuit-call" }

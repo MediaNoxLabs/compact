@@ -1613,6 +1613,7 @@ dependencies = [
  "compact-rust-set-oracle-fixture",
  "compact-rust-stateful-circuit-call-fixture",
  "compact-rust-tiny-oracle-fixture",
+ "compact-rust-vector-key-adt-fixture",
  "compact-rust-witness-cell-write-fixture",
  "compact-rust-witness-list-shapes-fixture",
  "futures-executor",

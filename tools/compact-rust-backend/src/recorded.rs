@@ -20,8 +20,8 @@ use proc_macro2::Span;
 use std::collections::{HashMap, HashSet};
 
 use crate::ir::{
-    CounterAmount, Expr, LedgerField, LedgerFieldKind, PureCircuit, StateAction, StateReturn,
-    StatefulCircuit, Type, WitnessDeclaration,
+    CounterAmount, Expr, LedgerField, LedgerFieldKind, LocalBinding, PureCircuit, StateAction,
+    StateReturn, StatefulCircuit, Type, WitnessDeclaration,
 };
 use crate::stateful::circuit_uses_witness;
 use crate::{RenderError, expression_with_calls, ident, list_head_result_type, rust_type};
@@ -317,6 +317,7 @@ fn render_recorded_item(
                 | Type::Unsigned { .. }
                 | Type::Enum { .. }
                 | Type::Struct { .. }
+                | Type::Vector { .. }
         ) {
             return None;
         }
@@ -335,7 +336,10 @@ fn render_recorded_item(
                 .map(|source| {
                     if matches!(
                         ty,
-                        Type::Bytes { .. } | Type::Enum { .. } | Type::Struct { .. }
+                        Type::Bytes { .. }
+                            | Type::Enum { .. }
+                            | Type::Struct { .. }
+                            | Type::Vector { .. }
                     ) {
                         syn::parse_quote!((#source).clone())
                     } else {
@@ -354,8 +358,40 @@ fn render_recorded_item(
                 let rust_ty = rust_type(ty).ok()?;
                 Some(syn::parse_quote!(<#rust_ty as Default>::default()))
             }
+            Expr::Vector { .. } if matches!(ty, Type::Vector { .. }) => {
+                let (rendered, actual) =
+                    expression_with_calls(value, parameters, &HashMap::new()).ok()?;
+                (actual == *ty).then_some(rendered)
+            }
             _ => None,
         }
+    }
+
+    fn vector_bindings(
+        bindings: &[LocalBinding],
+        locals: &HashMap<String, syn::Expr>,
+        parameters: &HashMap<&str, (&Type, syn::Ident)>,
+        steps: &mut Vec<syn::Stmt>,
+        next_temp: &mut usize,
+    ) -> Result<Option<HashMap<String, syn::Expr>>, RenderError> {
+        let mut scoped = locals.clone();
+        for binding in bindings {
+            if !matches!(binding.ty, Type::Vector { .. }) {
+                return Ok(None);
+            }
+            let Some(value) = cell_source(&binding.value, &binding.ty, &scoped, parameters) else {
+                return Ok(None);
+            };
+            let rust_ty = rust_type(&binding.ty)?;
+            let name = syn::Ident::new(
+                &format!("__compact_recorded_vector_{}", *next_temp),
+                Span::call_site(),
+            );
+            *next_temp += 1;
+            steps.push(syn::parse_quote!(let #name: #rust_ty = #value;));
+            scoped.insert(binding.name.clone(), syn::parse_quote!(#name));
+        }
+        Ok(Some(scoped))
     }
 
     /// Lower a Field expression together with its ordered recording effects.
@@ -372,6 +408,23 @@ fn render_recorded_item(
         visiting: &mut HashSet<String>,
     ) -> Result<Option<syn::Expr>, RenderError> {
         match value {
+            Expr::Let { bindings, body } => {
+                let Some(scoped) = vector_bindings(bindings, locals, parameters, steps, next_temp)?
+                else {
+                    return Ok(None);
+                };
+                field_expression(
+                    body,
+                    &scoped,
+                    parameters,
+                    ledger_fields,
+                    witnesses,
+                    circuits,
+                    steps,
+                    next_temp,
+                    visiting,
+                )
+            }
             Expr::Coerce { value, ty } if *ty == Type::Field => field_expression(
                 value,
                 locals,
@@ -603,6 +656,50 @@ fn render_recorded_item(
                 steps.push(syn::parse_quote!(let #returned: runtime::Field = #value;));
                 Ok(Some(syn::parse_quote!(#returned)))
             }
+            Expr::MapLookup { field, index, key } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                let LedgerFieldKind::Map {
+                    key: key_ty,
+                    value: value_ty,
+                } = &declaration.declaration
+                else {
+                    return Ok(None);
+                };
+                if *value_ty != Type::Field
+                    || declaration.index != *index
+                    || declaration.physical_path().len() != 1
+                {
+                    return Ok(None);
+                }
+                let Some(key) = scalar_expression(
+                    key,
+                    key_ty,
+                    locals,
+                    parameters,
+                    ledger_fields,
+                    witnesses,
+                    circuits,
+                    steps,
+                    next_temp,
+                    visiting,
+                )?
+                else {
+                    return Ok(None);
+                };
+                let slot = ident(field)?;
+                let observed = syn::Ident::new(
+                    &format!("__compact_recorded_lookup_{}", *next_temp),
+                    Span::call_site(),
+                );
+                *next_temp += 1;
+                steps.push(syn::parse_quote!(
+                    let (frame, #observed): (_, runtime::Field) =
+                        crate::ledger_slots::#slot.record_lookup(frame, #key)?;
+                ));
+                Ok(Some(syn::parse_quote!(#observed)))
+            }
             _ => Ok(None),
         }
     }
@@ -619,6 +716,23 @@ fn render_recorded_item(
         visiting: &mut HashSet<String>,
     ) -> Result<Option<syn::Expr>, RenderError> {
         match value {
+            Expr::Let { bindings, body } => {
+                let Some(scoped) = vector_bindings(bindings, locals, parameters, steps, next_temp)?
+                else {
+                    return Ok(None);
+                };
+                boolean_expression(
+                    body,
+                    &scoped,
+                    parameters,
+                    ledger_fields,
+                    witnesses,
+                    circuits,
+                    steps,
+                    next_temp,
+                    visiting,
+                )
+            }
             Expr::Coerce { value, ty } if *ty == Type::Boolean => boolean_expression(
                 value,
                 locals,
@@ -751,33 +865,21 @@ fn render_recorded_item(
                 if declaration.index != *index || declaration.physical_path().len() != 1 {
                     return Ok(None);
                 }
-                let key = if *ty == Type::Field {
-                    field_expression(
-                        value,
-                        locals,
-                        parameters,
-                        ledger_fields,
-                        witnesses,
-                        circuits,
-                        steps,
-                        next_temp,
-                        visiting,
-                    )?
-                } else if *ty == Type::Boolean {
-                    boolean_expression(
-                        value,
-                        locals,
-                        parameters,
-                        ledger_fields,
-                        witnesses,
-                        circuits,
-                        steps,
-                        next_temp,
-                        visiting,
-                    )?
-                } else {
+                if !matches!(ty, Type::Field | Type::Boolean | Type::Vector { .. }) {
                     return Ok(None);
-                };
+                }
+                let key = scalar_expression(
+                    value,
+                    ty,
+                    locals,
+                    parameters,
+                    ledger_fields,
+                    witnesses,
+                    circuits,
+                    steps,
+                    next_temp,
+                    visiting,
+                )?;
                 let Some(key) = key else { return Ok(None) };
                 let slot = ident(field)?;
                 let key_name = syn::Ident::new(
@@ -794,6 +896,43 @@ fn render_recorded_item(
                 steps.push(syn::parse_quote!(
                     let (frame, #observed): (_, bool) =
                         crate::ledger_slots::#slot.record_member(frame, #key_name)?;
+                ));
+                Ok(Some(syn::parse_quote!(#observed)))
+            }
+            Expr::MapMember { field, index, key } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                let LedgerFieldKind::Map { key: key_ty, .. } = &declaration.declaration else {
+                    return Ok(None);
+                };
+                if declaration.index != *index || declaration.physical_path().len() != 1 {
+                    return Ok(None);
+                }
+                let Some(key) = scalar_expression(
+                    key,
+                    key_ty,
+                    locals,
+                    parameters,
+                    ledger_fields,
+                    witnesses,
+                    circuits,
+                    steps,
+                    next_temp,
+                    visiting,
+                )?
+                else {
+                    return Ok(None);
+                };
+                let slot = ident(field)?;
+                let observed = syn::Ident::new(
+                    &format!("__compact_recorded_member_{}", *next_temp),
+                    Span::call_site(),
+                );
+                *next_temp += 1;
+                steps.push(syn::parse_quote!(
+                    let (frame, #observed): (_, bool) =
+                        crate::ledger_slots::#slot.record_member(frame, #key)?;
                 ));
                 Ok(Some(syn::parse_quote!(#observed)))
             }
@@ -839,7 +978,8 @@ fn render_recorded_item(
             Type::Bytes { .. }
             | Type::Unsigned { .. }
             | Type::Enum { .. }
-            | Type::Struct { .. } => Ok(cell_source(value, ty, locals, parameters)),
+            | Type::Struct { .. }
+            | Type::Vector { .. } => Ok(cell_source(value, ty, locals, parameters)),
             _ => Ok(None),
         }
     }
@@ -1003,6 +1143,18 @@ fn render_recorded_item(
                             return Ok(false);
                         };
                         scoped.insert(binding.name.clone(), value);
+                    } else if matches!(binding.ty, Type::Vector { .. }) {
+                        let Some(next) = vector_bindings(
+                            std::slice::from_ref(binding),
+                            &scoped,
+                            parameters,
+                            steps,
+                            next_temp,
+                        )?
+                        else {
+                            return Ok(false);
+                        };
+                        scoped = next;
                     } else {
                         return Ok(false);
                     }
@@ -1239,33 +1391,21 @@ fn render_recorded_item(
                 if declaration.index != *index || declaration.physical_path().len() != 1 {
                     return Ok(false);
                 }
-                let value = if *ty == Type::Field {
-                    field_expression(
-                        value,
-                        locals,
-                        parameters,
-                        ledger_fields,
-                        witnesses,
-                        circuits,
-                        steps,
-                        next_temp,
-                        visiting,
-                    )?
-                } else if *ty == Type::Boolean {
-                    boolean_expression(
-                        value,
-                        locals,
-                        parameters,
-                        ledger_fields,
-                        witnesses,
-                        circuits,
-                        steps,
-                        next_temp,
-                        visiting,
-                    )?
-                } else {
+                if !matches!(ty, Type::Field | Type::Boolean | Type::Vector { .. }) {
                     return Ok(false);
-                };
+                }
+                let value = scalar_expression(
+                    value,
+                    ty,
+                    locals,
+                    parameters,
+                    ledger_fields,
+                    witnesses,
+                    circuits,
+                    steps,
+                    next_temp,
+                    visiting,
+                )?;
                 let Some(value) = value else { return Ok(false) };
                 let slot = ident(field)?;
                 let method = if matches!(action, StateAction::SetInsert { .. }) {

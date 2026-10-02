@@ -82,8 +82,8 @@ Compact spelling without warning in consumer builds.
 
 | Boundary | Current contract | Failure behavior |
 |---|---|---|
-| Compact compiler | Toolchain 0.31.132, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
-| Rust IR | Schema 7, private to this backend | The renderer rejects any other schema before writing `lib.rs`. Ledger declarations carry optional Compact source locations for diagnostics. |
+| Compact compiler | Toolchain 0.31.133, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
+| Rust IR | Schema 8, private to this backend | The renderer rejects any other schema before writing `lib.rs`. Ledger, circuit, witness, constructor, and exported alias declarations carry optional Compact source locations for diagnostics. |
 | Generated code and Rust runtime | ABI 4 | Generated modules assert the ABI at Rust compile time. |
 | Rust runtime source | Bundled runtime crates or an explicit shared source root | Cargo resolves the matching runtime and its pinned Midnight crates. |
 

@@ -718,9 +718,10 @@
       (define (witness-declaration-ir pelt declarations)
         (nanopass-case (Lnodisclose Program-Element) pelt
           [(witness ,src ,function-name (,arg* ...) ,type)
-           (cons (object (cons "name" (rust-function-name function-name))
-                         (cons "parameters" (list->vector (map (lambda (arg) (argument-ir arg src)) arg*)))
-                         (cons "result" (type-ir type src)))
+           (cons (with-source src
+                   (object (cons "name" (rust-function-name function-name))
+                           (cons "parameters" (list->vector (map (lambda (arg) (argument-ir arg src)) arg*)))
+                           (cons "result" (type-ir type src))))
                  declarations)]
           [else declarations]))
 
@@ -782,18 +783,20 @@
                      (append
                    (map
                      (lambda (name)
-                       (object (cons "name" name)
-                               (cons "parameters" (list->vector (map (lambda (arg) (argument-ir arg src)) arg*)))
-                               (cons "result" (type-ir type src))
-                               (cons "body" (typed-expression-ir expr type src))))
+                       (with-source src
+                         (object (cons "name" name)
+                                 (cons "parameters" (list->vector (map (lambda (arg) (argument-ir arg src)) arg*)))
+                                 (cons "result" (type-ir type src))
+                                 (cons "body" (typed-expression-ir expr type src)))))
                      names)
                    (if (member internal-name names)
                        '()
-                       (list (object (cons "name" internal-name)
-                                     (cons "internal" #t)
-                                     (cons "parameters" (list->vector (map (lambda (arg) (argument-ir arg src)) arg*)))
-                                     (cons "result" (type-ir type src))
-                                     (cons "body" (typed-expression-ir expr type src)))))
+                       (list (with-source src
+                               (object (cons "name" internal-name)
+                                       (cons "internal" #t)
+                                       (cons "parameters" (list->vector (map (lambda (arg) (argument-ir arg src)) arg*)))
+                                       (cons "result" (type-ir type src))
+                                       (cons "body" (typed-expression-ir expr type src))))))
                    circuits)))
                  circuits))]
           [else circuits]))
@@ -1580,8 +1583,9 @@
                                      (append names (list internal-name)))])
                  (append
                    (map (lambda (name)
-                          (append
-                            (object (cons "name" name)
+                          (with-source src
+                            (append
+                              (object (cons "name" name)
                                     (cons "parameters" (list->vector (map (lambda (arg) (argument-ir arg src)) arg*)))
                                     (cons "result" (type-ir type src))
                                     (cons "return_value" (stateful-return-ir expr src witness-ids))
@@ -1594,7 +1598,7 @@
                                                             (object (cons "kind" "parameter")
                                                                     (cons "name" (rust-var-name var-name))))]))
                                                  arg*) witness-ids)))
-                            (if (member name names) '() (list (cons "internal" #t)))))
+                              (if (member name names) '() (list (cons "internal" #t))))))
                         all-names)
                    circuits)))]
           [else circuits]))
@@ -1889,7 +1893,9 @@
                             (or (string=? kind "struct") (string=? kind "enum"))
                             (string=? name (cdr defined-name)))
                        aliases
-                       (cons (object (cons "name" name) (cons "ty" ty)) aliases)))))]
+                       (cons (with-source src
+                               (object (cons "name" name) (cons "ty" ty)))
+                             aliases)))))]
           [else aliases]))
 
       (define (constructor-ir pelt witness-ids)
@@ -1900,13 +1906,14 @@
               (let ([steps (constructor-steps-ir expr (map id-sym var-name*) src witness-ids)])
                 (if (and (null? var-name*) (null? steps))
                     #f
-                    (object (cons "parameters"
+                    (with-source src
+                      (object (cons "parameters"
                                   (list->vector
                                     (map (lambda (name ty)
                                            (object (cons "name" (symbol->string (id-sym name)))
                                                    (cons "ty" (type-ir ty src))))
                                          var-name* type*)))
-                            (cons "steps" (list->vector steps)))))])]
+                              (cons "steps" (list->vector steps))))))])]
           [else #f])))
 
     (Program : Program (ir) -> Program ()
@@ -1925,7 +1932,7 @@
            (source-errorf src "Rust backend found multiple constructors"))
          (print-json
            (get-target-port 'rust.ir.json)
-           (append (object (cons "schema_version" 7)
+           (append (object (cons "schema_version" 8)
                    (cons "type_aliases"
                          (list->vector (fold-right type-alias-ir '() pelt*)))
                    (cons "ledger_fields"

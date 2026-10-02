@@ -22,7 +22,7 @@
 
 use serde::{Deserialize, Serialize};
 
-pub const SCHEMA_VERSION: u32 = 7;
+pub const SCHEMA_VERSION: u32 = 8;
 
 /// A Compact source position, independent of the compiler checkout path.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
@@ -51,6 +51,8 @@ pub struct Contract {
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct TypeAlias {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source: Option<SourceLocation>,
     pub name: String,
     pub ty: Type,
 }
@@ -58,6 +60,8 @@ pub struct TypeAlias {
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Constructor {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source: Option<SourceLocation>,
     pub parameters: Vec<Parameter>,
     pub steps: Vec<ConstructorStep>,
 }
@@ -155,6 +159,8 @@ pub enum ConstructorStep {
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct WitnessDeclaration {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source: Option<SourceLocation>,
     pub name: String,
     pub parameters: Vec<Parameter>,
     pub result: Type,
@@ -200,6 +206,8 @@ pub enum LedgerFieldKind {
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct StatefulCircuit {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source: Option<SourceLocation>,
     pub name: String,
     #[serde(default)]
     pub internal: bool,
@@ -465,6 +473,8 @@ pub enum CounterAmount {
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct PureCircuit {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source: Option<SourceLocation>,
     pub name: String,
     #[serde(default)]
     pub internal: bool,

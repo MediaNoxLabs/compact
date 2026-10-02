@@ -25,12 +25,13 @@ use compact_rust_backend::{RenderError, render};
 
 fn identity(result: Type, body: Expr) -> Contract {
     Contract {
-        schema_version: 7,
+        schema_version: 8,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
         ledger_fields: vec![],
         circuits: vec![PureCircuit {
+            source: None,
             internal: false,
             name: "identity".into(),
             parameters: vec![Parameter {
@@ -110,6 +111,90 @@ fn backend_cli_prints_source_diagnostic_instead_of_debug_structure() {
 }
 
 #[test]
+fn declaration_errors_retain_their_compact_owner_location() {
+    let location = SourceLocation {
+        file: "owners.compact".into(),
+        line: 7,
+        column: 1,
+    };
+    let located = |error| RenderError::Located {
+        location: location.clone(),
+        error: Box::new(error),
+    };
+
+    let mut pure = identity(Type::Field, Expr::Boolean { value: true });
+    pure.circuits[0].source = Some(location.clone());
+    assert_eq!(
+        render(&pure),
+        Err(located(RenderError::TypeMismatch {
+            expected: Type::Field,
+            actual: Type::Boolean,
+        }))
+    );
+
+    let mut stateful = identity(Type::Unit, Expr::Unit);
+    stateful.stateful_circuits.push(StatefulCircuit {
+        source: Some(location.clone()),
+        name: "write".into(),
+        internal: false,
+        parameters: vec![],
+        actions: vec![StateAction::CellWrite {
+            field: "missing".into(),
+            index: 0,
+            value: Expr::FieldLiteral { value: "1".into() },
+        }],
+        result: Type::Unit,
+        return_value: StateReturn::Unit,
+    });
+    assert_eq!(
+        render(&stateful),
+        Err(located(RenderError::UnknownLedgerField("missing".into())))
+    );
+
+    let mut witnesses = identity(Type::Unit, Expr::Unit);
+    for _ in 0..2 {
+        witnesses.witnesses.push(WitnessDeclaration {
+            source: Some(location.clone()),
+            name: "answer".into(),
+            parameters: vec![],
+            result: Type::Field,
+        });
+    }
+    assert_eq!(
+        render(&witnesses),
+        Err(located(RenderError::DuplicateWitness("answer".into())))
+    );
+
+    let mut constructor = identity(Type::Unit, Expr::Unit);
+    constructor.constructor = Some(Constructor {
+        source: Some(location.clone()),
+        parameters: vec![],
+        steps: vec![ConstructorStep::CellWrite {
+            field: "missing".into(),
+            index: 0,
+            value: Expr::FieldLiteral { value: "1".into() },
+        }],
+    });
+    assert_eq!(
+        render(&constructor),
+        Err(located(RenderError::UnknownLedgerField("missing".into())))
+    );
+
+    let mut aliases = identity(Type::Unit, Expr::Unit);
+    for _ in 0..2 {
+        aliases.type_aliases.push(TypeAlias {
+            source: Some(location.clone()),
+            name: "Amount".into(),
+            ty: Type::Field,
+        });
+    }
+    assert_eq!(
+        render(&aliases),
+        Err(located(RenderError::ConflictingTypeAlias("Amount".into())))
+    );
+}
+
+#[test]
 fn generated_unit_enum_uses_checked_derive_without_handwritten_codecs() {
     let choice = Type::Enum {
         name: "Choice".into(),
@@ -140,6 +225,7 @@ fn exported_alias_is_typed_and_reexported() {
         },
     );
     let alias = TypeAlias {
+        source: None,
         name: "Tag".into(),
         ty: Type::Bytes { length: 8 },
     };
@@ -356,6 +442,7 @@ fn constructor_cell_parameters_are_typed_and_validated() {
         declaration: LedgerFieldKind::Cell { ty: Type::Field },
     }];
     contract.constructor = Some(Constructor {
+        source: None,
         parameters: vec![Parameter {
             name: "seed".into(),
             ty: Type::Field,
@@ -421,6 +508,7 @@ fn constructor_counter_steps_use_typed_vm_calls() {
         declaration: LedgerFieldKind::Counter,
     }];
     contract.constructor = Some(Constructor {
+        source: None,
         parameters: vec![Parameter {
             name: "amount".into(),
             ty: Type::Unsigned {
@@ -485,6 +573,7 @@ fn constructor_for_each_checks_element_type_and_loop_binding() {
         declaration: LedgerFieldKind::Counter,
     }];
     contract.constructor = Some(Constructor {
+        source: None,
         parameters: vec![],
         steps: vec![ConstructorStep::ForEach {
             binding: Parameter {
@@ -557,6 +646,7 @@ fn constructor_set_steps_validate_values_and_use_vm_methods() {
         declaration: LedgerFieldKind::Set { ty: Type::Boolean },
     }];
     contract.constructor = Some(Constructor {
+        source: None,
         parameters: vec![],
         steps: vec![
             ConstructorStep::SetInsert {
@@ -610,6 +700,7 @@ fn constructor_list_steps_validate_values_and_use_vm_methods() {
         declaration: LedgerFieldKind::List { ty: Type::Field },
     }];
     contract.constructor = Some(Constructor {
+        source: None,
         parameters: vec![],
         steps: vec![
             ConstructorStep::ListPushFront {
@@ -665,6 +756,7 @@ fn constructor_map_steps_validate_keys_values_and_use_vm_methods() {
         },
     }];
     contract.constructor = Some(Constructor {
+        source: None,
         parameters: vec![],
         steps: vec![
             ConstructorStep::MapInsert {
@@ -733,6 +825,7 @@ fn nested_set_query_in_cell_write_checks_field_and_item_types() {
         },
     ];
     contract.stateful_circuits = vec![StatefulCircuit {
+        source: None,
         internal: false,
         name: "check".into(),
         parameters: vec![],
@@ -949,6 +1042,8 @@ fn rejects_bad_schema_and_unknown_references() {
     contract.schema_version = 6;
     assert_eq!(render(&contract), Err(RenderError::SchemaVersion(6)));
     contract.schema_version = 7;
+    assert_eq!(render(&contract), Err(RenderError::SchemaVersion(7)));
+    contract.schema_version = 8;
     contract.circuits[0].body = Expr::Parameter {
         name: "missing".into(),
     };
@@ -1146,6 +1241,7 @@ fn pure_call_checks_target_arity_and_argument_types() {
         Err(RenderError::UnknownCircuit("target".into()))
     );
     contract.circuits.push(PureCircuit {
+        source: None,
         internal: false,
         name: "target".into(),
         parameters: vec![Parameter {
@@ -1291,12 +1387,13 @@ fn rejects_noncanonical_or_unsupported_unsigned_maxima() {
         "452312848583266388373324160190187140051835877600158453279131187530910662656",
     ] {
         let contract = Contract {
-            schema_version: 7,
+            schema_version: 8,
             type_aliases: vec![],
             constructor: None,
             witnesses: vec![],
             ledger_fields: vec![],
             circuits: vec![PureCircuit {
+                source: None,
                 internal: false,
                 name: "id_u".into(),
                 parameters: vec![Parameter {
@@ -1329,11 +1426,12 @@ fn unknown_json_fields_are_rejected() {
 #[test]
 fn witness_calls_require_a_declared_witness_and_matching_signature() {
     let mut contract = Contract {
-        schema_version: 7,
+        schema_version: 8,
         type_aliases: vec![],
         constructor: None,
         ledger_fields: vec![],
         witnesses: vec![WitnessDeclaration {
+            source: None,
             name: "secret".into(),
             parameters: vec![Parameter {
                 name: "value".into(),
@@ -1343,6 +1441,7 @@ fn witness_calls_require_a_declared_witness_and_matching_signature() {
         }],
         circuits: vec![],
         stateful_circuits: vec![StatefulCircuit {
+            source: None,
             internal: false,
             name: "read_secret".into(),
             parameters: vec![Parameter {
@@ -1376,6 +1475,7 @@ fn witness_calls_require_a_declared_witness_and_matching_signature() {
         Err(RenderError::UnknownWitness("secret".into()))
     );
     contract.witnesses.push(WitnessDeclaration {
+        source: None,
         name: "secret".into(),
         parameters: vec![],
         result: Type::Field,
@@ -1393,7 +1493,7 @@ fn witness_calls_require_a_declared_witness_and_matching_signature() {
 #[test]
 fn state_action_must_reference_the_declared_ledger_field_and_index() {
     let mut contract = Contract {
-        schema_version: 7,
+        schema_version: 8,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -1406,6 +1506,7 @@ fn state_action_must_reference_the_declared_ledger_field_and_index() {
         }],
         circuits: vec![],
         stateful_circuits: vec![StatefulCircuit {
+            source: None,
             internal: false,
             name: "increment".into(),
             parameters: vec![],
@@ -1477,7 +1578,7 @@ fn state_action_must_reference_the_declared_ledger_field_and_index() {
 #[test]
 fn unsupported_nested_call_does_not_expose_an_incomplete_trace() {
     let mut contract = Contract {
-        schema_version: 7,
+        schema_version: 8,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -1491,6 +1592,7 @@ fn unsupported_nested_call_does_not_expose_an_incomplete_trace() {
         circuits: vec![],
         stateful_circuits: vec![
             StatefulCircuit {
+                source: None,
                 internal: true,
                 name: "inner".into(),
                 parameters: vec![],
@@ -1502,6 +1604,7 @@ fn unsupported_nested_call_does_not_expose_an_incomplete_trace() {
                 }],
             },
             StatefulCircuit {
+                source: None,
                 internal: false,
                 name: "outer".into(),
                 parameters: vec![],
@@ -1530,7 +1633,7 @@ fn unsupported_nested_call_does_not_expose_an_incomplete_trace() {
 #[test]
 fn unsupported_field_expression_does_not_expose_a_recorded_call() {
     let mut contract = Contract {
-        schema_version: 7,
+        schema_version: 8,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -1543,6 +1646,7 @@ fn unsupported_field_expression_does_not_expose_a_recorded_call() {
         }],
         circuits: vec![],
         stateful_circuits: vec![StatefulCircuit {
+            source: None,
             internal: false,
             name: "write".into(),
             parameters: vec![
@@ -1586,7 +1690,7 @@ fn unsupported_field_expression_does_not_expose_a_recorded_call() {
 #[test]
 fn stateful_parameters_are_checked_before_cell_writes() {
     let mut contract = Contract {
-        schema_version: 7,
+        schema_version: 8,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -1599,6 +1703,7 @@ fn stateful_parameters_are_checked_before_cell_writes() {
         }],
         circuits: vec![],
         stateful_circuits: vec![StatefulCircuit {
+            source: None,
             internal: false,
             name: "set_flag".into(),
             parameters: vec![Parameter {
@@ -1642,7 +1747,7 @@ fn stateful_parameters_are_checked_before_cell_writes() {
 #[test]
 fn counter_parameter_requires_uint16_and_a_known_name() {
     let mut contract = Contract {
-        schema_version: 7,
+        schema_version: 8,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -1655,6 +1760,7 @@ fn counter_parameter_requires_uint16_and_a_known_name() {
         }],
         circuits: vec![],
         stateful_circuits: vec![StatefulCircuit {
+            source: None,
             internal: false,
             name: "increment_by".into(),
             parameters: vec![Parameter {
@@ -1707,7 +1813,7 @@ fn counter_parameter_requires_uint16_and_a_known_name() {
 #[test]
 fn ledger_read_return_must_match_the_declared_cell() {
     let mut contract = Contract {
-        schema_version: 7,
+        schema_version: 8,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -1720,6 +1826,7 @@ fn ledger_read_return_must_match_the_declared_cell() {
         }],
         circuits: vec![],
         stateful_circuits: vec![StatefulCircuit {
+            source: None,
             internal: false,
             name: "read_flag".into(),
             parameters: vec![],
@@ -1757,7 +1864,7 @@ fn ledger_read_return_must_match_the_declared_cell() {
 #[test]
 fn counter_read_returns_uint64() {
     let mut contract = Contract {
-        schema_version: 7,
+        schema_version: 8,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -1770,6 +1877,7 @@ fn counter_read_returns_uint64() {
         }],
         circuits: vec![],
         stateful_circuits: vec![StatefulCircuit {
+            source: None,
             internal: false,
             name: "read_round".into(),
             parameters: vec![],
@@ -1805,7 +1913,7 @@ fn counter_read_returns_uint64() {
 #[test]
 fn set_actions_require_the_declared_element_type() {
     let mut contract = Contract {
-        schema_version: 7,
+        schema_version: 8,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -1818,6 +1926,7 @@ fn set_actions_require_the_declared_element_type() {
         }],
         circuits: vec![],
         stateful_circuits: vec![StatefulCircuit {
+            source: None,
             internal: false,
             name: "add".into(),
             parameters: vec![Parameter {
@@ -1903,7 +2012,7 @@ fn set_actions_require_the_declared_element_type() {
 #[test]
 fn map_insert_and_lookup_require_key_and_value_types() {
     let mut contract = Contract {
-        schema_version: 7,
+        schema_version: 8,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -1919,6 +2028,7 @@ fn map_insert_and_lookup_require_key_and_value_types() {
         }],
         circuits: vec![],
         stateful_circuits: vec![StatefulCircuit {
+            source: None,
             internal: false,
             name: "put".into(),
             parameters: vec![
@@ -2050,7 +2160,7 @@ fn map_insert_and_lookup_require_key_and_value_types() {
 #[test]
 fn list_push_front_and_length_validate_declared_types() {
     let mut contract = Contract {
-        schema_version: 7,
+        schema_version: 8,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -2063,6 +2173,7 @@ fn list_push_front_and_length_validate_declared_types() {
         }],
         circuits: vec![],
         stateful_circuits: vec![StatefulCircuit {
+            source: None,
             internal: false,
             name: "prepend".into(),
             parameters: vec![Parameter {
@@ -2155,12 +2266,13 @@ fn struct_definitions_are_shared_by_name_and_must_match() {
         }],
     };
     let mut contract = Contract {
-        schema_version: 7,
+        schema_version: 8,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
         ledger_fields: vec![],
         circuits: vec![PureCircuit {
+            source: None,
             internal: false,
             name: "identity".into(),
             parameters: vec![Parameter {
@@ -2193,7 +2305,7 @@ fn struct_definitions_are_shared_by_name_and_must_match() {
 #[test]
 fn stateful_call_checks_target_and_arguments() {
     let mut contract = Contract {
-        schema_version: 7,
+        schema_version: 8,
         type_aliases: vec![],
         constructor: None,
         ledger_fields: vec![],
@@ -2201,6 +2313,7 @@ fn stateful_call_checks_target_and_arguments() {
         circuits: vec![],
         stateful_circuits: vec![
             StatefulCircuit {
+                source: None,
                 internal: false,
                 name: "target".into(),
                 parameters: vec![Parameter {
@@ -2212,6 +2325,7 @@ fn stateful_call_checks_target_and_arguments() {
                 return_value: StateReturn::Unit,
             },
             StatefulCircuit {
+                source: None,
                 internal: false,
                 name: "caller".into(),
                 parameters: vec![Parameter {
@@ -2281,6 +2395,7 @@ fn pure_call_action_checks_arguments_and_discards_result() {
         },
     );
     contract.stateful_circuits = vec![StatefulCircuit {
+        source: None,
         internal: false,
         name: "caller".into(),
         parameters: vec![Parameter {

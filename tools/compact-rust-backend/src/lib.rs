@@ -209,7 +209,10 @@ impl Error for RenderError {
 }
 
 impl RenderError {
-    fn at(self, location: Option<&ir::SourceLocation>) -> Self {
+    pub(crate) fn at(self, location: Option<&ir::SourceLocation>) -> Self {
+        if matches!(&self, Self::Located { .. }) {
+            return self;
+        }
         match location {
             Some(location) => Self::Located {
                 location: location.clone(),
@@ -218,6 +221,13 @@ impl RenderError {
             None => self,
         }
     }
+}
+
+pub(crate) fn located<T>(
+    source: Option<&ir::SourceLocation>,
+    work: impl FnOnce() -> Result<T, RenderError>,
+) -> Result<T, RenderError> {
+    work().map_err(|error| error.at(source))
 }
 
 fn ident(name: &str) -> Result<syn::Ident, RenderError> {
@@ -2208,72 +2218,88 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
     let mut struct_definitions = BTreeMap::new();
     let mut enum_definitions = BTreeMap::new();
     if let Some(constructor) = &contract.constructor {
-        for parameter in &constructor.parameters {
-            collect_named_types(
-                &parameter.ty,
-                &mut struct_definitions,
-                &mut enum_definitions,
-            )?;
-        }
-        for step in &constructor.steps {
-            collect_constructor_step_types(step, &mut struct_definitions, &mut enum_definitions)?;
-        }
+        located(constructor.source.as_ref(), || {
+            for parameter in &constructor.parameters {
+                collect_named_types(
+                    &parameter.ty,
+                    &mut struct_definitions,
+                    &mut enum_definitions,
+                )?;
+            }
+            for step in &constructor.steps {
+                collect_constructor_step_types(
+                    step,
+                    &mut struct_definitions,
+                    &mut enum_definitions,
+                )?;
+            }
+            Ok(())
+        })?;
     }
     for circuit in &contract.circuits {
-        for parameter in &circuit.parameters {
+        located(circuit.source.as_ref(), || {
+            for parameter in &circuit.parameters {
+                collect_named_types(
+                    &parameter.ty,
+                    &mut struct_definitions,
+                    &mut enum_definitions,
+                )?;
+            }
             collect_named_types(
-                &parameter.ty,
+                &circuit.result,
                 &mut struct_definitions,
                 &mut enum_definitions,
             )?;
-        }
-        collect_named_types(
-            &circuit.result,
-            &mut struct_definitions,
-            &mut enum_definitions,
-        )?;
-        collect_expression_types(
-            &circuit.body,
-            &mut struct_definitions,
-            &mut enum_definitions,
-        )?;
+            collect_expression_types(
+                &circuit.body,
+                &mut struct_definitions,
+                &mut enum_definitions,
+            )?;
+            Ok(())
+        })?;
     }
     for witness in &contract.witnesses {
-        for parameter in &witness.parameters {
+        located(witness.source.as_ref(), || {
+            for parameter in &witness.parameters {
+                collect_named_types(
+                    &parameter.ty,
+                    &mut struct_definitions,
+                    &mut enum_definitions,
+                )?;
+            }
             collect_named_types(
-                &parameter.ty,
+                &witness.result,
                 &mut struct_definitions,
                 &mut enum_definitions,
             )?;
-        }
-        collect_named_types(
-            &witness.result,
-            &mut struct_definitions,
-            &mut enum_definitions,
-        )?;
+            Ok(())
+        })?;
     }
     for circuit in &contract.stateful_circuits {
-        for parameter in &circuit.parameters {
+        located(circuit.source.as_ref(), || {
+            for parameter in &circuit.parameters {
+                collect_named_types(
+                    &parameter.ty,
+                    &mut struct_definitions,
+                    &mut enum_definitions,
+                )?;
+            }
             collect_named_types(
-                &parameter.ty,
+                &circuit.result,
                 &mut struct_definitions,
                 &mut enum_definitions,
             )?;
-        }
-        collect_named_types(
-            &circuit.result,
-            &mut struct_definitions,
-            &mut enum_definitions,
-        )?;
-        if let ir::StateReturn::Expression { value }
-        | ir::StateReturn::HistoricMerkleCheckRoot { root: value, .. }
-        | ir::StateReturn::MerkleCheckRoot { root: value, .. } = &circuit.return_value
-        {
-            collect_expression_types(value, &mut struct_definitions, &mut enum_definitions)?;
-        }
-        for action in &circuit.actions {
-            collect_action_types(action, &mut struct_definitions, &mut enum_definitions)?;
-        }
+            if let ir::StateReturn::Expression { value }
+            | ir::StateReturn::HistoricMerkleCheckRoot { root: value, .. }
+            | ir::StateReturn::MerkleCheckRoot { root: value, .. } = &circuit.return_value
+            {
+                collect_expression_types(value, &mut struct_definitions, &mut enum_definitions)?;
+            }
+            for action in &circuit.actions {
+                collect_action_types(action, &mut struct_definitions, &mut enum_definitions)?;
+            }
+            Ok(())
+        })?;
     }
     for field in &contract.ledger_fields {
         match &field.declaration {
@@ -2337,45 +2363,49 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
     let witness_syntax = witness::build(&contract.witnesses, &ordered_fields)?;
     let mut items = Vec::new();
     for circuit in &contract.circuits {
-        let name = ident(&circuit.name)?;
-        if !names.insert(circuit.name.as_str()) {
-            return Err(RenderError::DuplicateCircuit(circuit.name.clone()));
-        }
-        let mut parameters = HashMap::new();
-        let mut args = Vec::<syn::FnArg>::new();
-        for parameter in &circuit.parameters {
-            let arg_name = ident(&parameter.name)?;
-            if parameters
-                .insert(parameter.name.as_str(), (&parameter.ty, arg_name.clone()))
-                .is_some()
-            {
-                return Err(RenderError::DuplicateParameter(parameter.name.clone()));
+        let item = located(circuit.source.as_ref(), || {
+            let name = ident(&circuit.name)?;
+            if !names.insert(circuit.name.as_str()) {
+                return Err(RenderError::DuplicateCircuit(circuit.name.clone()));
             }
-            let arg_ty = rust_type(&parameter.ty)?;
-            let arg: syn::FnArg = syn::parse_quote!(#arg_name: #arg_ty);
-            args.push(arg);
-        }
-        let (body, actual) = expression_with_calls(&circuit.body, &parameters, &callable_circuits)?;
-        if actual != circuit.result {
-            return Err(RenderError::TypeMismatch {
-                expected: circuit.result.clone(),
-                actual,
-            });
-        }
-        let result = rust_type(&circuit.result)?;
-        let item: syn::Item = if circuit.internal {
-            syn::parse_quote! {
-                pub(crate) fn #name(#(#args),*) -> Result<#result, runtime::CompactError> {
-                    Ok(#body)
+            let mut parameters = HashMap::new();
+            let mut args = Vec::<syn::FnArg>::new();
+            for parameter in &circuit.parameters {
+                let arg_name = ident(&parameter.name)?;
+                if parameters
+                    .insert(parameter.name.as_str(), (&parameter.ty, arg_name.clone()))
+                    .is_some()
+                {
+                    return Err(RenderError::DuplicateParameter(parameter.name.clone()));
                 }
+                let arg_ty = rust_type(&parameter.ty)?;
+                let arg: syn::FnArg = syn::parse_quote!(#arg_name: #arg_ty);
+                args.push(arg);
             }
-        } else {
-            syn::parse_quote! {
-                pub fn #name(#(#args),*) -> Result<#result, runtime::CompactError> {
-                    Ok(#body)
+            let (body, actual) =
+                expression_with_calls(&circuit.body, &parameters, &callable_circuits)?;
+            if actual != circuit.result {
+                return Err(RenderError::TypeMismatch {
+                    expected: circuit.result.clone(),
+                    actual,
+                });
+            }
+            let result = rust_type(&circuit.result)?;
+            let item: syn::Item = if circuit.internal {
+                syn::parse_quote! {
+                    pub(crate) fn #name(#(#args),*) -> Result<#result, runtime::CompactError> {
+                        Ok(#body)
+                    }
                 }
-            }
-        };
+            } else {
+                syn::parse_quote! {
+                    pub fn #name(#(#args),*) -> Result<#result, runtime::CompactError> {
+                        Ok(#body)
+                    }
+                }
+            };
+            Ok(item)
+        })?;
         items.push(item);
     }
 
@@ -2391,43 +2421,46 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
     let mut borrowed_recorded_methods = Vec::new();
     let mut witnessed_recorded = false;
     for circuit in &contract.stateful_circuits {
-        if !names.insert(circuit.name.as_str()) {
-            return Err(RenderError::DuplicateCircuit(circuit.name.clone()));
-        }
-        stateful_items.push(stateful::render_stateful_circuit(
-            circuit,
-            &ledger_fields,
-            &witness_syntax.declarations,
-            &callable_circuits,
-            &callable_stateful_circuits,
-        )?);
-        if let Some(method) =
-            stateful::render_contract_method(circuit, &callable_stateful_circuits)?
-        {
-            contract_methods.push(method);
-        }
-        if let Some(item) = recorded::render_recorded_circuit(
-            circuit,
-            &ledger_fields,
-            &witness_syntax.declarations,
-            &callable_stateful_circuits,
-        )? {
-            recorded_items.push(item);
-            let uses_witness = stateful::circuit_uses_witness(
-                circuit,
-                &callable_stateful_circuits,
-                &mut HashSet::new(),
-            )?;
-            if uses_witness {
-                witnessed_recorded = true;
-            } else {
-                recorded_methods.push(recorded::render_recorded_contract_method(circuit)?);
+        located(circuit.source.as_ref(), || {
+            if !names.insert(circuit.name.as_str()) {
+                return Err(RenderError::DuplicateCircuit(circuit.name.clone()));
             }
-            borrowed_recorded_methods.push(recorded::render_borrowed_recorded_contract_method(
+            stateful_items.push(stateful::render_stateful_circuit(
                 circuit,
-                uses_witness,
+                &ledger_fields,
+                &witness_syntax.declarations,
+                &callable_circuits,
+                &callable_stateful_circuits,
             )?);
-        }
+            if let Some(method) =
+                stateful::render_contract_method(circuit, &callable_stateful_circuits)?
+            {
+                contract_methods.push(method);
+            }
+            if let Some(item) = recorded::render_recorded_circuit(
+                circuit,
+                &ledger_fields,
+                &witness_syntax.declarations,
+                &callable_stateful_circuits,
+            )? {
+                recorded_items.push(item);
+                let uses_witness = stateful::circuit_uses_witness(
+                    circuit,
+                    &callable_stateful_circuits,
+                    &mut HashSet::new(),
+                )?;
+                if uses_witness {
+                    witnessed_recorded = true;
+                } else {
+                    recorded_methods.push(recorded::render_recorded_contract_method(circuit)?);
+                }
+                borrowed_recorded_methods.push(recorded::render_borrowed_recorded_contract_method(
+                    circuit,
+                    uses_witness,
+                )?);
+            }
+            Ok(())
+        })?;
     }
 
     let mut constructor_args = Vec::<syn::FnArg>::new();
@@ -2436,7 +2469,8 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
     let constructor_uses_witness = if let Some(constructor) = &contract.constructor {
         let mut uses_witness = false;
         for step in &constructor.steps {
-            uses_witness |= constructor_step_uses_witness(step, &callable_stateful_circuits)?;
+            uses_witness |= constructor_step_uses_witness(step, &callable_stateful_circuits)
+                .map_err(|error| error.at(constructor.source.as_ref()))?;
         }
         uses_witness
     } else {
@@ -2476,70 +2510,73 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
     let mut constructor_actions = Vec::<syn::Stmt>::new();
     let mut constructor_preparations = Vec::<syn::Stmt>::new();
     if let Some(constructor) = &contract.constructor {
-        for (index, parameter) in constructor.parameters.iter().enumerate() {
-            ident(&parameter.name)?;
-            let name = syn::Ident::new(
-                &format!("__compact_constructor_param_{index}"),
-                Span::call_site(),
-            );
-            if constructor_parameters
-                .insert(parameter.name.as_str(), (&parameter.ty, name.clone()))
-                .is_some()
-            {
-                return Err(RenderError::DuplicateParameter(parameter.name.clone()));
-            }
-            let ty = rust_type(&parameter.ty)?;
-            constructor_args.push(syn::parse_quote!(#name: #ty));
-        }
-        if constructor_uses_vm {
-            constructor_actions = render_constructor_vm_steps(
-                &constructor.steps,
-                &ledger_fields,
-                &constructor_parameters,
-                &witness_syntax.declarations,
-                &callable_circuits,
-                &callable_stateful_circuits,
-                &mut 0,
-                &mut 0,
-            )?;
-        } else {
-            for step in &constructor.steps {
-                let ConstructorStep::CellWrite {
-                    field,
-                    index,
-                    value,
-                } = step
-                else {
-                    unreachable!("VM constructor selection includes effects and loops")
-                };
-                let declaration = ledger_fields
-                    .get(field.as_str())
-                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
-                if declaration.index != *index {
-                    return Err(RenderError::InvalidLedgerIndex(*index));
-                }
-                let LedgerFieldKind::Cell { ty } = &declaration.declaration else {
-                    return Err(RenderError::InvalidConstructorInitializer(field.clone()));
-                };
-                let (value, actual) =
-                    expression_with_calls(value, &constructor_parameters, &callable_circuits)?;
-                if actual != *ty {
-                    return Err(RenderError::TypeMismatch {
-                        expected: ty.clone(),
-                        actual,
-                    });
-                }
+        located(constructor.source.as_ref(), || {
+            for (index, parameter) in constructor.parameters.iter().enumerate() {
+                ident(&parameter.name)?;
                 let name = syn::Ident::new(
-                    &format!(
-                        "__compact_constructor_value_{}",
-                        constructor_preparations.len()
-                    ),
+                    &format!("__compact_constructor_param_{index}"),
                     Span::call_site(),
                 );
-                constructor_preparations.push(syn::parse_quote!(let #name = #value;));
-                constructor_values.insert(field.as_str(), syn::parse_quote!(#name));
+                if constructor_parameters
+                    .insert(parameter.name.as_str(), (&parameter.ty, name.clone()))
+                    .is_some()
+                {
+                    return Err(RenderError::DuplicateParameter(parameter.name.clone()));
+                }
+                let ty = rust_type(&parameter.ty)?;
+                constructor_args.push(syn::parse_quote!(#name: #ty));
             }
-        }
+            if constructor_uses_vm {
+                constructor_actions = render_constructor_vm_steps(
+                    &constructor.steps,
+                    &ledger_fields,
+                    &constructor_parameters,
+                    &witness_syntax.declarations,
+                    &callable_circuits,
+                    &callable_stateful_circuits,
+                    &mut 0,
+                    &mut 0,
+                )?;
+            } else {
+                for step in &constructor.steps {
+                    let ConstructorStep::CellWrite {
+                        field,
+                        index,
+                        value,
+                    } = step
+                    else {
+                        unreachable!("VM constructor selection includes effects and loops")
+                    };
+                    let declaration = ledger_fields
+                        .get(field.as_str())
+                        .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                    if declaration.index != *index {
+                        return Err(RenderError::InvalidLedgerIndex(*index));
+                    }
+                    let LedgerFieldKind::Cell { ty } = &declaration.declaration else {
+                        return Err(RenderError::InvalidConstructorInitializer(field.clone()));
+                    };
+                    let (value, actual) =
+                        expression_with_calls(value, &constructor_parameters, &callable_circuits)?;
+                    if actual != *ty {
+                        return Err(RenderError::TypeMismatch {
+                            expected: ty.clone(),
+                            actual,
+                        });
+                    }
+                    let name = syn::Ident::new(
+                        &format!(
+                            "__compact_constructor_value_{}",
+                            constructor_preparations.len()
+                        ),
+                        Span::call_site(),
+                    );
+                    constructor_preparations.push(syn::parse_quote!(let #name = #value;));
+                    constructor_values.insert(field.as_str(), syn::parse_quote!(#name));
+                }
+            }
+            Ok(())
+        })?;
     }
     let constructor_fields = ordered_fields.iter().map(|field| match &field.declaration {
         LedgerFieldKind::Counter => Ok(syn::parse_quote!(runtime::ledger::constructor_counter())),
@@ -2663,20 +2700,24 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
     let mut alias_names = HashSet::new();
     let mut alias_reexports = Vec::new();
     for alias in &contract.type_aliases {
-        if !alias_names.insert(alias.name.as_str())
-            || struct_definitions.contains_key(&alias.name)
-            || enum_definitions.contains_key(&alias.name)
-            || matches!(
-                alias.name.as_str(),
-                "runtime" | "types" | "pure_circuits" | "ledger_contract"
-            )
-        {
-            return Err(RenderError::ConflictingTypeAlias(alias.name.clone()));
-        }
-        let name = ident(&alias.name)?;
-        let ty = rust_type(&alias.ty)?;
-        struct_items.push(syn::parse_quote!(#[allow(non_camel_case_types)] pub type #name = #ty;));
-        alias_reexports.push(name);
+        located(alias.source.as_ref(), || {
+            if !alias_names.insert(alias.name.as_str())
+                || struct_definitions.contains_key(&alias.name)
+                || enum_definitions.contains_key(&alias.name)
+                || matches!(
+                    alias.name.as_str(),
+                    "runtime" | "types" | "pure_circuits" | "ledger_contract"
+                )
+            {
+                return Err(RenderError::ConflictingTypeAlias(alias.name.clone()));
+            }
+            let name = ident(&alias.name)?;
+            let ty = rust_type(&alias.ty)?;
+            struct_items
+                .push(syn::parse_quote!(#[allow(non_camel_case_types)] pub type #name = #ty;));
+            alias_reexports.push(name);
+            Ok(())
+        })?;
     }
     let mut derive_imports = Vec::<syn::Item>::new();
     if !struct_definitions.is_empty() {

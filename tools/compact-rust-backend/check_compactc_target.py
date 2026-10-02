@@ -41,6 +41,7 @@ CELL_READ_SOURCE = ROOT / "examples/rust_backend/cell_read.compact"
 WITNESS_CELL_SOURCE = ROOT / "examples/rust_backend/witness_cell_write.compact"
 NESTED_COUNTER_SOURCE = ROOT / "examples/rust_backend/stateful_circuit_call.compact"
 NESTED_WITNESS_SOURCE = ROOT / "examples/rust_backend/nested_witness_call_oracle.compact"
+ALIAS_SOURCE = ROOT / "examples/rust_backend/aliases_oracle.compact"
 
 
 def run(*arguments: str, cwd: Path = ROOT) -> None:
@@ -397,10 +398,34 @@ def main() -> None:
         assert (rust / "contract/Cargo.toml").is_file()
         assert not (rust / "contract/index.js").exists()
         rust_ir = json.loads((rust / "contract/compact-rust-ir.json").read_text())
-        assert rust_ir["schema_version"] == 7
+        assert rust_ir["schema_version"] == 8
         round_field = next(field for field in rust_ir["ledger_fields"] if field["id"] == "round")
         assert round_field["source"]["file"] == SOURCE.name
         assert (round_field["source"]["line"], round_field["source"]["column"]) == (18, 1)
+        assert rust_ir["stateful_circuits"]
+        assert (rust_ir["stateful_circuits"][0]["source"]["line"], rust_ir["stateful_circuits"][0]["source"]["column"]) == (20, 1)
+        for circuit in rust_ir["stateful_circuits"]:
+            assert circuit["source"]["file"] == SOURCE.name
+            assert circuit["source"]["line"] > 0
+        for name, source, key, first_line in (
+            ("pure", PURE_SOURCE, "circuits", 18),
+            ("witness", WITNESS_CELL_SOURCE, "witnesses", 20),
+            ("constructor", CONSTRUCTOR_MAP_SOURCE, "constructor", 21),
+            ("alias", ALIAS_SOURCE, "type_aliases", 27),
+        ):
+            output = base / f"source-{name}"
+            run(compiler, "--target", "rust", "--skip-zk", str(source), str(output))
+            emitted = json.loads((output / "contract/compact-rust-ir.json").read_text())
+            assert emitted["schema_version"] == 8
+            owners = emitted[key]
+            if isinstance(owners, dict):
+                owners = [owners]
+            assert owners, f"{source.name}: missing {key}"
+            assert (owners[0]["source"]["line"], owners[0]["source"]["column"]) == (first_line, 1)
+            for owner in owners:
+                assert owner["source"]["file"] == source.name
+                assert owner["source"]["line"] > 0
+                assert owner["source"]["column"] > 0
         check_manifest(rust)
         protected = base / "protected"
         protected.mkdir()

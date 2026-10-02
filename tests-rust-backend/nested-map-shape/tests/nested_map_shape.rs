@@ -16,16 +16,52 @@
 use compact_rust_nested_map_shape_fixture::ledger_contract::{Contract, initial_state};
 use compact_rust_nested_map_shape_fixture::ledger_slots::users_by_org;
 use midnight_compact_runtime::context::ConstructorContext;
-use midnight_compact_runtime::ledger::ContractAddress;
+use midnight_compact_runtime::ledger::{ContractAddress, DefaultDB, StateValue};
+use midnight_onchain_state::state::{
+    ContractMaintenanceAuthority, ContractOperation, ContractState, EntryPointBuf,
+};
+use midnight_serialize::tagged_serialize;
+use midnight_storage::storage::HashMap;
+
+fn state_hex(state: StateValue<DefaultDB>) -> String {
+    let operations = HashMap::new().insert(
+        EntryPointBuf(b"check_nested_empty".to_vec()),
+        ContractOperation::new(None),
+    );
+    let state = ContractState::new(state, operations, ContractMaintenanceAuthority::default());
+    let mut bytes = Vec::new();
+    tagged_serialize(&state, &mut bytes).unwrap();
+    hex::encode(bytes)
+}
 
 #[test]
 fn nested_map_shape_query_is_typed_and_replayable() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/nested-map-shape.json"
+    ))
+    .unwrap();
     assert_eq!(users_by_org.path(), &[0]);
     let initial = initial_state(ConstructorContext::new(())).unwrap();
+    assert_eq!(
+        state_hex(initial.ledger_state.get_ref().clone()),
+        oracle["afterInit"]
+    );
     let native = Contract::default()
         .check_nested_empty(initial.into_circuit_context(ContractAddress::default()))
         .unwrap();
-    assert!(native.result);
+    assert_eq!(native.result, oracle["result"]);
+    assert_eq!(
+        state_hex(native.context.query.state.get_ref().clone()),
+        oracle["afterCall"]
+    );
+    let native_gas = serde_json::to_value(native.gas_cost).unwrap();
+    for key in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+        assert_eq!(
+            native_gas[key].as_u64().unwrap().to_string(),
+            oracle["gas"][key],
+            "{key} TypeScript gas mismatch"
+        );
+    }
 
     let initial = initial_state(ConstructorContext::new(())).unwrap();
     let recorded = Contract::default()
@@ -33,6 +69,10 @@ fn nested_map_shape_query_is_typed_and_replayable() {
         .check_nested_empty(initial.into_circuit_context(ContractAddress::default()))
         .unwrap();
     assert!(recorded.execution.result);
+    assert_eq!(
+        recorded.execution.private_transcript_outputs.len(),
+        oracle["privateOutputCount"].as_u64().unwrap() as usize
+    );
     assert_eq!(recorded.execution.gas_cost, native.gas_cost);
     assert_eq!(
         recorded.execution.context.query.state.get_ref(),

@@ -23,7 +23,7 @@ description = "Derived ledger FAB codecs for generated Compact Rust types"
 repository = "https://github.com/MediaNoxLabs/compact"
 homepage = "https://github.com/MediaNoxLabs/compact"
 readme = "README.md"
-include = ["Cargo.toml", "README.md", "src/**"]
+include = ["Cargo.toml", "LICENSE", "README.md", "src/**"]
 
 [lib]
 proc-macro = true

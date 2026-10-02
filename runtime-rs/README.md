@@ -10,14 +10,18 @@ source root when compiled with `--rust-runtime-root`.
 For the compiler command, generated crate layout, and compatibility matrix,
 see the [Rust backend guide](https://github.com/MediaNoxLabs/compact/blob/codex/rust-backend-ast/tools/compact-rust-backend/README.md).
 
-The macro crate must be packaged and published first if crates.io distribution
-is chosen.
+The macro crate must be published first if crates.io distribution is chosen.
+Run `python3 tools/compact-rust-backend/check_release_packages.py` from this
+repository to rehearse both crate packages and verify the unpacked builds. The
+rehearsal supplies the local macro crate as a temporary Cargo patch while the
+exact `0.1.0` macro dependency is absent from crates.io. It does not publish
+either crate or verify a remote consumer against published artifacts.
 
 ## Recording ledger programs
 
-`recording::RecordingFrame` is an opt-in bridge for Cell reads, writes, and
-Counter updates. It executes each operation and retains the initial ledger
-query context plus the ordered ledger-8 Verify instructions.
+`recording::RecordingFrame` is an opt-in bridge for Cell, Counter, Set, Map,
+and List operations. It executes each operation and retains the initial
+ledger query context plus the ordered ledger-8 Verify instructions.
 `RecordingFrame::witness` updates private state and preserves each witness FAB
 result in call order.
 With the `ledger-transaction` feature, `transaction::prepare_call` replays and

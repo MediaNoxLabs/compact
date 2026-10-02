@@ -97,6 +97,14 @@ The backend directory has its own `Cargo.lock` for the isolated Nix
 tests. A dependency change to this package must update both lockfiles and pass
 the Nix package build and workspace tests.
 
+For the local runtime crate release rehearsal, run
+`python3 tools/compact-rust-backend/check_release_packages.py` from the
+repository root. It verifies the macro and runtime crate archives, including
+their license files, and compiles each unpacked package. Until the exact macro
+version is published, the runtime check supplies the local macro source through
+a temporary Cargo patch. Publication, remote CI, and an unpatched consumer are
+separate release gates tracked in [issue #106](https://github.com/MediaNoxLabs/compact/issues/106).
+
 ## Source model
 
 The Scheme frontend lowers its analyzed program into a versioned JSON IR.

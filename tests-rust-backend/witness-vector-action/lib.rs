@@ -92,7 +92,7 @@ pub mod ledger_contract {
             __compact_witness_3.clone(),
         ));
         let __compact_action_local_0: runtime::Field = __compact_witness_3;
-        let step = context.write_cell(0, __compact_action_local_0)?;
+        let step = crate::ledger_slots::stored.write(context, __compact_action_local_0)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();
@@ -129,7 +129,7 @@ pub mod ledger_contract {
         ));
         let _ = __compact_witness_3;
         let __compact_action_local_0: runtime::Field = runtime::Field::from(7u128);
-        let step = context.write_cell(0, __compact_action_local_0)?;
+        let step = crate::ledger_slots::stored.write(context, __compact_action_local_0)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();
@@ -165,13 +165,13 @@ pub mod ledger_contract {
             __compact_witness_3.clone(),
         ));
         let __compact_action_local_0: runtime::Field = __compact_witness_3;
-        let step = context.write_cell(0, __compact_action_local_0)?;
+        let step = crate::ledger_slots::stored.write(context, __compact_action_local_0)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let __compact_value_4 = __compact_action_local_0;
         let __compact_value_5 = runtime::Field::from(1u128);
         let __compact_action_local_1: runtime::Field = __compact_value_4 + __compact_value_5;
-        let step = context.write_cell(0, __compact_action_local_1)?;
+        let step = crate::ledger_slots::stored.write(context, __compact_action_local_1)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();

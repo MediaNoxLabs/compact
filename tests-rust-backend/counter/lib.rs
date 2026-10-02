@@ -55,7 +55,8 @@ pub mod ledger_contract {
         let __compact_action_local_0: runtime::BoundedUint<65535> =
             runtime::BoundedUint::<65535>::new(1u128)
                 .expect("Compact Uint literal fits its maximum");
-        let step = context.increment_counter(0, __compact_action_local_0.value() as u16)?;
+        let step = crate::ledger_slots::round
+            .increment(context, __compact_action_local_0.value() as u16)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();
@@ -74,7 +75,7 @@ pub mod ledger_contract {
     > {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let read_step = context.read_cell::<u64>(0)?;
+        let read_step = crate::ledger_slots::round.read(context)?;
         let context = read_step.context;
         total_cost += read_step.gas_cost;
         let result = runtime::BoundedUint::<18446744073709551615>::new(read_step.result as u128)

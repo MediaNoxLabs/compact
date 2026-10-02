@@ -53,7 +53,8 @@ pub mod ledger_contract {
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let step = context.increment_counter(0, __compact_param_0.value() as u16)?;
+        let step =
+            crate::ledger_slots::round.increment(context, __compact_param_0.value() as u16)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();
@@ -70,7 +71,8 @@ pub mod ledger_contract {
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let step = context.decrement_counter(0, __compact_param_0.value() as u16)?;
+        let step =
+            crate::ledger_slots::round.decrement(context, __compact_param_0.value() as u16)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();
@@ -86,7 +88,7 @@ pub mod ledger_contract {
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let step = context.write_cell(0, 0_u64)?;
+        let step = crate::ledger_slots::round.reset(context)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();

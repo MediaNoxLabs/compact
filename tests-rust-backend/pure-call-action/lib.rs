@@ -70,7 +70,7 @@ pub mod ledger_contract {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
         crate::pure_circuits::require_positive(__compact_param_0)?;
-        let step = context.write_cell(0, __compact_param_0)?;
+        let step = crate::ledger_slots::stored.write(context, __compact_param_0)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();

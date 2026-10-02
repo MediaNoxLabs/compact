@@ -198,7 +198,7 @@ pub mod ledger_contract {
             crate::pure_circuits::makeAlpha(__compact_call_argument_0)?;
         let __compact_action_local_1: runtime::Field =
             (__compact_action_local_0.clone()).alpha.clone();
-        let step = context.write_cell(0, __compact_action_local_1)?;
+        let step = crate::ledger_slots::lastAlpha.write(context, __compact_action_local_1)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();
@@ -220,7 +220,7 @@ pub mod ledger_contract {
             crate::pure_circuits::makeBeta(__compact_call_argument_0)?;
         let __compact_action_local_1: runtime::Field =
             (__compact_action_local_0.clone()).beta.clone();
-        let step = context.write_cell(1, __compact_action_local_1)?;
+        let step = crate::ledger_slots::lastBeta.write(context, __compact_action_local_1)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();

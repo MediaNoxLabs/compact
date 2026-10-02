@@ -59,7 +59,7 @@ pub mod ledger_contract {
             let __compact_constructor_local_0: runtime::Field = runtime::Field::from(7u128);
             let step = context.write_cell(0, (__compact_constructor_local_0).clone())?;
             context = step.context;
-            let __compact_query_1 = context.read_cell::<runtime::Field>(0)?;
+            let __compact_query_1 = crate::ledger_slots::first.read(context)?;
             context = __compact_query_1.context;
             total_cost += __compact_query_1.gas_cost;
             let __compact_call_argument_2 = __compact_query_1.result;
@@ -81,7 +81,7 @@ pub mod ledger_contract {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
         let mut context = context;
-        let __compact_query_0 = context.read_cell::<runtime::Field>(0)?;
+        let __compact_query_0 = crate::ledger_slots::first.read(context)?;
         context = __compact_query_0.context;
         total_cost += __compact_query_0.gas_cost;
         let __compact_value_1 = __compact_query_0.result;
@@ -104,7 +104,7 @@ pub mod ledger_contract {
     {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let read_step = context.read_cell::<runtime::Field>(1)?;
+        let read_step = crate::ledger_slots::second.read(context)?;
         let context = read_step.context;
         total_cost += read_step.gas_cost;
         let result = read_step.result;

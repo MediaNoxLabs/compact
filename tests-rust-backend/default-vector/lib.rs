@@ -76,7 +76,7 @@ pub mod ledger_contract {
     > {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let read_step = context.read_cell::<runtime::FixedVector<runtime::Field, 2>>(0)?;
+        let read_step = crate::ledger_slots::values.read(context)?;
         let context = read_step.context;
         total_cost += read_step.gas_cost;
         let result = read_step.result;

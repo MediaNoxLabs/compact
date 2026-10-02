@@ -103,6 +103,13 @@ impl CounterSlot {
         context.decrement_counter(self.path, amount)
     }
 
+    pub fn reset<Private, D: DB>(
+        self,
+        context: CircuitContext<Private, D>,
+    ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        context.write_cell_at_path(self.path, 0_u64)
+    }
+
     pub fn record_read<Private, D: DB>(
         self,
         frame: RecordingFrame<Private, D>,

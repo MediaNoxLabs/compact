@@ -680,7 +680,7 @@ pub mod ledger_contract {
             let step =
                 context.write_cell_at_path(&[0, 4], (__compact_constructor_local_6).clone())?;
             context = step.context;
-            let __compact_query_7 = context.read_cell_at_path::<runtime::JubjubPoint>(&[0, 3])?;
+            let __compact_query_7 = crate::ledger_slots::operatorKey.read(context)?;
             context = __compact_query_7.context;
             total_cost += __compact_query_7.gas_cost;
             let __compact_call_argument_8 = __compact_query_7.result;
@@ -718,14 +718,14 @@ pub mod ledger_contract {
         let private_transcript_outputs = Vec::new();
         let mut context = context;
         let __compact_value_0 = runtime::jubjub_point_x(__compact_param_0);
-        let __compact_query_1 = context.read_cell_at_path::<runtime::JubjubPoint>(&[0, 4])?;
+        let __compact_query_1 = crate::ledger_slots::auditorKey.read(context)?;
         context = __compact_query_1.context;
         total_cost += __compact_query_1.gas_cost;
         if !(if __compact_value_0 != runtime::jubjub_point_x(__compact_query_1.result) {
             true
         } else {
             let __compact_value_2 = runtime::jubjub_point_y(__compact_param_0);
-            let __compact_query_3 = context.read_cell_at_path::<runtime::JubjubPoint>(&[0, 4])?;
+            let __compact_query_3 = crate::ledger_slots::auditorKey.read(context)?;
             context = __compact_query_3.context;
             total_cost += __compact_query_3.gas_cost;
             __compact_value_2 != runtime::jubjub_point_y(__compact_query_3.result)
@@ -751,13 +751,15 @@ pub mod ledger_contract {
         let __compact_action_local_0: runtime::BoundedUint<65535> =
             runtime::BoundedUint::<65535>::new(1u128)
                 .expect("Compact Uint literal fits its maximum");
-        let step = context.increment_counter(&[1, 9], __compact_action_local_0.value() as u16)?;
+        let step = crate::ledger_slots::writeCount
+            .increment(context, __compact_action_local_0.value() as u16)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let __compact_action_local_1: runtime::BoundedUint<65535> =
             runtime::BoundedUint::<65535>::new(1u128)
                 .expect("Compact Uint literal fits its maximum");
-        let step = context.increment_counter(&[1, 8], __compact_action_local_1.value() as u16)?;
+        let step = crate::ledger_slots::revision
+            .increment(context, __compact_action_local_1.value() as u16)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let mut context = context;
@@ -771,7 +773,7 @@ pub mod ledger_contract {
         ));
         let __compact_action_local_2: runtime::BoundedUint<18446744073709551615> =
             __compact_witness_0;
-        let step = context.write_cell_at_path(&[1, 3], __compact_action_local_2)?;
+        let step = crate::ledger_slots::updatedAt.write(context, __compact_action_local_2)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();
@@ -788,7 +790,7 @@ pub mod ledger_contract {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
         let mut context = context;
-        let __compact_query_0 = context.read_cell_at_path::<bool>(&[1, 6])?;
+        let __compact_query_0 = crate::ledger_slots::open.read(context)?;
         context = __compact_query_0.context;
         total_cost += __compact_query_0.gas_cost;
         if !(__compact_query_0.result) {
@@ -797,7 +799,7 @@ pub mod ledger_contract {
             ));
         }
         let mut context = context;
-        let __compact_query_1 = context.read_cell_at_path::<bool>(&[1, 7])?;
+        let __compact_query_1 = crate::ledger_slots::frozen.read(context)?;
         context = __compact_query_1.context;
         total_cost += __compact_query_1.gas_cost;
         if !(if __compact_query_1.result {
@@ -854,7 +856,7 @@ pub mod ledger_contract {
         let call_step = assertWritable(context)?;
         let context = call_step.context;
         total_cost += call_step.gas_cost;
-        let step = context.write_cell_at_path(&[0, 2], __compact_param_0.clone())?;
+        let step = crate::ledger_slots::custodian.write(context, __compact_param_0.clone())?;
         let context = step.context;
         total_cost += step.gas_cost;
         let call_step = recordWrite(context, witnesses)?;
@@ -936,8 +938,8 @@ pub mod ledger_contract {
                 let __compact_action_local_3: runtime::BoundedUint<65535> =
                     runtime::BoundedUint::<65535>::new(1u128)
                         .expect("Compact Uint literal fits its maximum");
-                let step =
-                    context.increment_counter(&[1, 5], __compact_action_local_3.value() as u16)?;
+                let step = crate::ledger_slots::recordCount
+                    .increment(context, __compact_action_local_3.value() as u16)?;
                 let context = step.context;
                 total_cost += step.gas_cost;
                 context
@@ -1344,7 +1346,7 @@ pub mod ledger_contract {
         let mut total_cost = runtime::context::RunningCost::default();
         let mut private_transcript_outputs = Vec::new();
         let mut context = context;
-        let __compact_query_0 = context.read_cell_at_path::<bool>(&[1, 6])?;
+        let __compact_query_0 = crate::ledger_slots::open.read(context)?;
         context = __compact_query_0.context;
         total_cost += __compact_query_0.gas_cost;
         if !(__compact_query_0.result) {
@@ -1352,10 +1354,10 @@ pub mod ledger_contract {
                 "registry is already closed".to_owned(),
             ));
         }
-        let step = context.write_cell_at_path(&[1, 6], false)?;
+        let step = crate::ledger_slots::open.write(context, false)?;
         let context = step.context;
         total_cost += step.gas_cost;
-        let step = context.write_cell_at_path(&[1, 7], true)?;
+        let step = crate::ledger_slots::frozen.write(context, true)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let call_step = recordWrite(context, witnesses)?;

@@ -63,7 +63,7 @@ pub mod ledger_contract {
         context = __compact_query_0.context;
         total_cost += __compact_query_0.gas_cost;
         let __compact_action_local_0: bool = __compact_query_0.result;
-        let step = context.write_cell(0, __compact_action_local_0)?;
+        let step = crate::ledger_slots::flag.write(context, __compact_action_local_0)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();

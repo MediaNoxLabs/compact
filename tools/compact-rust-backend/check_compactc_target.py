@@ -198,6 +198,25 @@ def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
     environment.setdefault("CARGO_TARGET_DIR", str(ROOT / "target/compactc-consumer"))
     subprocess.run(["cargo", "test", "--quiet"], cwd=consumer, env=environment, check=True)
 
+    # Check the generated slot type from a separate consumer crate.
+    (consumer / "examples").mkdir()
+    (consumer / "examples/wrong_cell_value.rs").write_text(
+        "use compact_contract_cell_boolean::ledger_contract::initial_state;\n"
+        "use compact_contract_cell_boolean::runtime::context::ConstructorContext;\n"
+        "use compact_contract_cell_boolean::runtime::ledger::ContractAddress;\n"
+        "fn main() {\n"
+        "    let state = initial_state(ConstructorContext::new(())).unwrap();\n"
+        "    let context = state.into_circuit_context(ContractAddress::default());\n"
+        "    let _ = compact_contract_cell_boolean::ledger_slots::flag.write(context, 7_u64);\n"
+        "}\n"
+    )
+    rejected = subprocess.run(
+        ["cargo", "check", "--quiet", "--example", "wrong_cell_value"],
+        cwd=consumer, env=environment, capture_output=True, text=True,
+    )
+    assert rejected.returncode != 0, "wrong Cell value type unexpectedly compiled"
+    assert "expected `bool`, found `u64`" in rejected.stderr, rejected.stderr
+
 
 def check_witness_consumer(compiler: str, base: Path) -> None:
     output = base / "witness-contract"

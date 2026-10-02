@@ -83,7 +83,7 @@ pub mod ledger_contract {
         let private_transcript_outputs = Vec::new();
         let mut context = context;
         let __compact_value_0 = runtime::persistent_hash(__compact_param_0);
-        let __compact_query_1 = context.read_cell::<runtime::FixedBytes<32>>(1)?;
+        let __compact_query_1 = crate::ledger_slots::hashCell.read(context)?;
         context = __compact_query_1.context;
         total_cost += __compact_query_1.gas_cost;
         let result = __compact_value_0 == __compact_query_1.result;
@@ -102,7 +102,7 @@ pub mod ledger_contract {
         let private_transcript_outputs = Vec::new();
         let mut context = context;
         let __compact_value_0 = runtime::persistent_hash(__compact_param_0.clone());
-        let __compact_query_1 = context.read_cell::<runtime::FixedBytes<32>>(1)?;
+        let __compact_query_1 = crate::ledger_slots::hashCell.read(context)?;
         context = __compact_query_1.context;
         total_cost += __compact_query_1.gas_cost;
         let result = __compact_value_0 == __compact_query_1.result;
@@ -121,7 +121,7 @@ pub mod ledger_contract {
         let private_transcript_outputs = Vec::new();
         let mut context = context;
         let __compact_value_0 = runtime::persistent_hash(__compact_param_0.clone());
-        let __compact_query_1 = context.read_cell::<runtime::FixedBytes<32>>(1)?;
+        let __compact_query_1 = crate::ledger_slots::hashCell.read(context)?;
         context = __compact_query_1.context;
         total_cost += __compact_query_1.gas_cost;
         let result = __compact_value_0 == __compact_query_1.result;
@@ -138,7 +138,7 @@ pub mod ledger_contract {
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let step = context.write_cell(1, __compact_param_0)?;
+        let step = crate::ledger_slots::hashCell.write(context, __compact_param_0)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();
@@ -166,7 +166,7 @@ pub mod ledger_contract {
                 "scalar helper formal took the caller's vector type".to_owned(),
             ));
         }
-        let step = context.write_cell(0, __compact_param_0.clone())?;
+        let step = crate::ledger_slots::fieldVec.write(context, __compact_param_0.clone())?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();
@@ -194,7 +194,7 @@ pub mod ledger_contract {
                 "aggregate helper formal took the caller's shorter vector type".to_owned(),
             ));
         }
-        let step = context.write_cell(0, __compact_param_0.clone())?;
+        let step = crate::ledger_slots::fieldVec.write(context, __compact_param_0.clone())?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();
@@ -221,7 +221,7 @@ pub mod ledger_contract {
                 "aggregate helper formal was not recovered".to_owned(),
             ));
         }
-        let step = context.write_cell(0, __compact_param_0.clone())?;
+        let step = crate::ledger_slots::fieldVec.write(context, __compact_param_0.clone())?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();

@@ -113,7 +113,7 @@ pub mod ledger_contract {
     > {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let read_step = context.read_cell::<u64>(0)?;
+        let read_step = crate::ledger_slots::c.read(context)?;
         let context = read_step.context;
         total_cost += read_step.gas_cost;
         let result = runtime::BoundedUint::<18446744073709551615>::new(read_step.result as u128)

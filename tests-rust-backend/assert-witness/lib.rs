@@ -138,7 +138,7 @@ pub mod ledger_contract {
                 "write denied".to_owned(),
             ));
         }
-        let step = context.write_cell(0, __compact_param_1)?;
+        let step = crate::ledger_slots::cell.write(context, __compact_param_1)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();
@@ -155,7 +155,7 @@ pub mod ledger_contract {
     {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let read_step = context.read_cell::<runtime::Field>(0)?;
+        let read_step = crate::ledger_slots::cell.read(context)?;
         let context = read_step.context;
         total_cost += read_step.gas_cost;
         let result = read_step.result;

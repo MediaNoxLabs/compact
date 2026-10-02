@@ -75,7 +75,7 @@ pub mod ledger_contract {
             __compact_witness_0.clone(),
         ));
         let __compact_action_local_0: runtime::Field = __compact_witness_0;
-        let step = context.write_cell(0, __compact_action_local_0)?;
+        let step = crate::ledger_slots::v.write(context, __compact_action_local_0)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();

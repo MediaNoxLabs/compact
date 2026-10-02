@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Toolchain 0.31.126, language 0.23.105, runtime 0.16.101]
+
+### Changed
+
+- Generate native Cell and Counter reads/writes/updates through the same named,
+  typed ledger descriptors used by recorded methods. Counter reset now has a
+  typed slot operation. Physical paths remain compiler-derived.
+- Check from an external consumer that a wrong Cell value type is rejected by
+  Rust, while existing compiler-backed fixtures and ledger proof flows retain
+  their behavior.
+
 ## [Toolchain 0.31.125, language 0.23.105, runtime 0.16.101]
 
 ### Added

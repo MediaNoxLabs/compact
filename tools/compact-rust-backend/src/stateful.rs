@@ -72,24 +72,16 @@ pub(crate) fn render_state_expression(
             let LedgerFieldKind::Cell { ty } = &declaration.declaration else {
                 return Err(RenderError::UnknownLedgerField(field.clone()));
             };
-            let value_ty = rust_type(ty)?;
+            let _value_ty = rust_type(ty)?;
             let step = syn::Ident::new(
                 &format!("__compact_query_{}", *next_temp),
                 Span::call_site(),
             );
             *next_temp += 1;
-            let index = syn::LitInt::new(&index.to_string(), Span::call_site());
-            let path = declaration.physical_path();
-            let read: syn::Stmt = if path.len() == 1 {
-                syn::parse_quote!(let #step = context.read_cell::<#value_ty>(#index)?;)
-            } else {
-                let path = path
-                    .iter()
-                    .map(|part| syn::LitInt::new(&part.to_string(), Span::call_site()))
-                    .collect::<Vec<_>>();
-                syn::parse_quote!(let #step = context.read_cell_at_path::<#value_ty>(&[#(#path),*])?;)
-            };
-            statements.push(read);
+            let slot = ident(&declaration.id)?;
+            statements.push(syn::parse_quote!(
+                let #step = crate::ledger_slots::#slot.read(context)?;
+            ));
             statements.push(syn::parse_quote!(context = #step.context;));
             statements.push(syn::parse_quote!(total_cost += #step.gas_cost;));
             *query_effect = true;
@@ -1902,7 +1894,7 @@ pub(crate) fn render_stateful_circuit(
                 {
                     return Err(RenderError::UnknownLedgerField(field.clone()));
                 }
-                let index = ledger_path_expr(declaration);
+                let slot = ident(&declaration.id)?;
                 let amount: syn::Expr = match amount {
                     CounterAmount::Literal { value } => {
                         let value = syn::LitInt::new(&value.to_string(), Span::call_site());
@@ -1925,12 +1917,12 @@ pub(crate) fn render_stateful_circuit(
                     }
                 };
                 let method = if matches!(action, StateAction::CounterIncrement { .. }) {
-                    syn::Ident::new("increment_counter", Span::call_site())
+                    syn::Ident::new("increment", Span::call_site())
                 } else {
-                    syn::Ident::new("decrement_counter", Span::call_site())
+                    syn::Ident::new("decrement", Span::call_site())
                 };
                 statements.push(syn::parse_quote! {
-                    let step = context.#method(#index, #amount)?;
+                    let step = crate::ledger_slots::#slot.#method(context, #amount)?;
                 });
                 statements.push(syn::parse_quote! {
                     let context = step.context;
@@ -1948,9 +1940,9 @@ pub(crate) fn render_stateful_circuit(
                 {
                     return Err(RenderError::UnknownLedgerField(field.clone()));
                 }
-                let index = ledger_path_expr(declaration);
+                let slot = ident(&declaration.id)?;
                 statements.push(syn::parse_quote! {
-                    let step = context.write_cell(#index, 0_u64)?;
+                    let step = crate::ledger_slots::#slot.reset(context)?;
                 });
                 statements.push(syn::parse_quote! {
                     let context = step.context;
@@ -1999,18 +1991,10 @@ pub(crate) fn render_stateful_circuit(
                     statements.push(syn::parse_quote!(let mut context = context;));
                 }
                 statements.extend(value_statements);
-                let index = syn::LitInt::new(&index.to_string(), Span::call_site());
-                let path = declaration.physical_path();
-                let write: syn::Stmt = if path.len() == 1 {
-                    syn::parse_quote!(let step = context.write_cell(#index, #value)?;)
-                } else {
-                    let path = path
-                        .iter()
-                        .map(|part| syn::LitInt::new(&part.to_string(), Span::call_site()))
-                        .collect::<Vec<_>>();
-                    syn::parse_quote!(let step = context.write_cell_at_path(&[#(#path),*], #value)?;)
-                };
-                statements.push(write);
+                let slot = ident(&declaration.id)?;
+                statements.push(syn::parse_quote!(
+                    let step = crate::ledger_slots::#slot.write(context, #value)?;
+                ));
                 statements.push(syn::parse_quote! {
                     let context = step.context;
                 });
@@ -2581,18 +2565,10 @@ pub(crate) fn render_stateful_circuit(
                     actual: ty.clone(),
                 });
             }
-            let index = syn::LitInt::new(&index.to_string(), Span::call_site());
-            let path = declaration.physical_path();
-            let read: syn::Stmt = if path.len() == 1 {
-                syn::parse_quote!(let read_step = context.read_cell::<#result_ty>(#index)?;)
-            } else {
-                let path = path
-                    .iter()
-                    .map(|part| syn::LitInt::new(&part.to_string(), Span::call_site()))
-                    .collect::<Vec<_>>();
-                syn::parse_quote!(let read_step = context.read_cell_at_path::<#result_ty>(&[#(#path),*])?;)
-            };
-            statements.push(read);
+            let slot = ident(&declaration.id)?;
+            statements.push(syn::parse_quote!(
+                let read_step = crate::ledger_slots::#slot.read(context)?;
+            ));
             statements.push(syn::parse_quote! {
                 let context = read_step.context;
             });
@@ -2617,10 +2593,10 @@ pub(crate) fn render_stateful_circuit(
                     actual: circuit.result.clone(),
                 });
             }
-            let index = ledger_path_expr(declaration);
+            let slot = ident(&declaration.id)?;
             let max = syn::LitInt::new(&u64::MAX.to_string(), Span::call_site());
             statements.push(syn::parse_quote! {
-                let read_step = context.read_cell::<u64>(#index)?;
+                let read_step = crate::ledger_slots::#slot.read(context)?;
             });
             statements.push(syn::parse_quote! {
                 let context = read_step.context;

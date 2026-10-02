@@ -492,7 +492,8 @@ pub mod ledger_contract {
             __compact_witness_18.clone(),
         ));
         let __compact_action_local_7: runtime::OpaqueBytes = __compact_witness_18;
-        let step = context.write_cell(2, __compact_action_local_7.clone())?;
+        let step =
+            crate::ledger_slots::ciphertexts.write(context, __compact_action_local_7.clone())?;
         let context = step.context;
         total_cost += step.gas_cost;
         let mut context = context;

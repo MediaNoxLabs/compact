@@ -135,7 +135,7 @@ pub mod ledger_contract {
                     .expect("Vector map preserves its length"),
             )
         };
-        let step = context.write_cell(0, __compact_action_local_0.clone())?;
+        let step = crate::ledger_slots::doubled.write(context, __compact_action_local_0.clone())?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();

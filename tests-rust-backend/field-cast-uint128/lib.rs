@@ -65,10 +65,10 @@ pub mod ledger_contract {
         let private_transcript_outputs = Vec::new();
         let __compact_action_local_0: runtime::Field =
             runtime::Field::from((__compact_param_0).value());
-        let step = context.write_cell(0, __compact_action_local_0)?;
+        let step = crate::ledger_slots::stored.write(context, __compact_action_local_0)?;
         let context = step.context;
         total_cost += step.gas_cost;
-        let read_step = context.read_cell::<runtime::Field>(0)?;
+        let read_step = crate::ledger_slots::stored.read(context)?;
         let context = read_step.context;
         total_cost += read_step.gas_cost;
         let result = read_step.result;

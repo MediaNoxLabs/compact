@@ -123,7 +123,7 @@ pub mod ledger_contract {
             1329227995784915872903807060280344575u128,
             340282366920938463463374607431768211455u128,
         > = __compact_witness_0;
-        let step = context.write_cell(0, __compact_action_local_0)?;
+        let step = crate::ledger_slots::wide.write(context, __compact_action_local_0)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();
@@ -148,10 +148,7 @@ pub mod ledger_contract {
     > {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let read_step = context.read_cell::<runtime::WideUint<
-            1329227995784915872903807060280344575u128,
-            340282366920938463463374607431768211455u128,
-        >>(0)?;
+        let read_step = crate::ledger_slots::wide.read(context)?;
         let context = read_step.context;
         total_cost += read_step.gas_cost;
         let result = read_step.result;

@@ -82,7 +82,8 @@ pub mod ledger_contract {
         let __compact_action_local_0: runtime::BoundedUint<65535> =
             runtime::BoundedUint::<65535>::new(0u128)
                 .expect("Compact Uint literal fits its maximum");
-        let step = context.increment_counter(0, __compact_action_local_0.value() as u16)?;
+        let step =
+            crate::ledger_slots::c.increment(context, __compact_action_local_0.value() as u16)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();

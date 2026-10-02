@@ -64,7 +64,7 @@ pub mod ledger_contract {
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let step = context.write_cell(0, __compact_param_0.clone())?;
+        let step = crate::ledger_slots::values.write(context, __compact_param_0.clone())?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();
@@ -83,7 +83,7 @@ pub mod ledger_contract {
     > {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let read_step = context.read_cell::<runtime::FixedVector<runtime::Field, 3>>(0)?;
+        let read_step = crate::ledger_slots::values.read(context)?;
         let context = read_step.context;
         total_cost += read_step.gas_cost;
         let result = read_step.result;
@@ -100,7 +100,7 @@ pub mod ledger_contract {
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let step = context.write_cell(1, __compact_param_0)?;
+        let step = crate::ledger_slots::pair.write(context, __compact_param_0)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();
@@ -119,7 +119,7 @@ pub mod ledger_contract {
     > {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let read_step = context.read_cell::<(runtime::Field, bool)>(1)?;
+        let read_step = crate::ledger_slots::pair.read(context)?;
         let context = read_step.context;
         total_cost += read_step.gas_cost;
         let result = read_step.result;

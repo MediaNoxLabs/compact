@@ -56,8 +56,8 @@ pub mod ledger_contract {
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let step = context.write_cell(
-            0,
+        let step = crate::ledger_slots::n.write(
+            context,
             runtime::BoundedUint::<18446744073709551615>::new(0u128)
                 .expect("Compact Uint literal fits its maximum"),
         )?;
@@ -80,7 +80,7 @@ pub mod ledger_contract {
         let call_step = reset(context)?;
         let context = call_step.context;
         total_cost += call_step.gas_cost;
-        let step = context.write_cell(0, __compact_param_0)?;
+        let step = crate::ledger_slots::n.write(context, __compact_param_0)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();

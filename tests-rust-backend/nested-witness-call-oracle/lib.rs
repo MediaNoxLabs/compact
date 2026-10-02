@@ -79,7 +79,7 @@ pub mod ledger_contract {
         let __compact_value_1 = __compact_witness_0;
         let __compact_value_2 = __compact_param_0;
         let __compact_action_local_0: runtime::Field = __compact_value_1 + __compact_value_2;
-        let step = context.write_cell(0, __compact_action_local_0)?;
+        let step = crate::ledger_slots::value.write(context, __compact_action_local_0)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();
@@ -117,7 +117,7 @@ pub mod ledger_contract {
         let mut total_cost = runtime::context::RunningCost::default();
         let mut private_transcript_outputs = Vec::new();
         let mut context = context;
-        let __compact_query_0 = context.read_cell::<runtime::Field>(0)?;
+        let __compact_query_0 = crate::ledger_slots::value.read(context)?;
         context = __compact_query_0.context;
         total_cost += __compact_query_0.gas_cost;
         let __compact_call_argument_1 = __compact_query_0.result;
@@ -169,7 +169,7 @@ pub mod ledger_contract {
         context = __compact_call_0.context;
         total_cost += __compact_call_0.gas_cost;
         let __compact_action_local_0: runtime::Field = __compact_call_0.result;
-        let step = context.write_cell(0, __compact_action_local_0)?;
+        let step = crate::ledger_slots::value.write(context, __compact_action_local_0)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();

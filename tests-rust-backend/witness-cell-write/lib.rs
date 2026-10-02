@@ -81,7 +81,7 @@ pub mod ledger_contract {
             __compact_witness_1.clone(),
         ));
         let __compact_action_local_0: runtime::Field = __compact_witness_1;
-        let step = context.write_cell(0, __compact_action_local_0)?;
+        let step = crate::ledger_slots::cell.write(context, __compact_action_local_0)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();
@@ -112,7 +112,7 @@ pub mod ledger_contract {
             __compact_witness_1.clone(),
         ));
         let __compact_action_local_0: runtime::Field = __compact_witness_1;
-        let step = context.write_cell(0, __compact_action_local_0)?;
+        let step = crate::ledger_slots::cell.write(context, __compact_action_local_0)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let mut context = context;
@@ -128,7 +128,7 @@ pub mod ledger_contract {
             __compact_witness_3.clone(),
         ));
         let __compact_action_local_1: runtime::Field = __compact_witness_3;
-        let step = context.write_cell(0, __compact_action_local_1)?;
+        let step = crate::ledger_slots::cell.write(context, __compact_action_local_1)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();
@@ -159,7 +159,7 @@ pub mod ledger_contract {
             __compact_witness_1.clone(),
         ));
         let __compact_action_local_0: runtime::Field = __compact_witness_1;
-        let step = context.write_cell(0, __compact_action_local_0)?;
+        let step = crate::ledger_slots::cell.write(context, __compact_action_local_0)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();
@@ -201,7 +201,7 @@ pub mod ledger_contract {
     {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let read_step = context.read_cell::<runtime::Field>(0)?;
+        let read_step = crate::ledger_slots::cell.read(context)?;
         let context = read_step.context;
         total_cost += read_step.gas_cost;
         let result = read_step.result;

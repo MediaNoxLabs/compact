@@ -1316,7 +1316,7 @@ fn state_action_must_reference_the_declared_ledger_field_and_index() {
         }],
     };
     let source = render(&contract).unwrap();
-    assert!(source.contains("context.increment_counter(0, 1)?"));
+    assert!(source.contains("crate::ledger_slots::round.increment(context, 1)?"));
     assert!(source.contains("pub mod recorded"));
     assert!(source.contains("crate::ledger_slots::round.record_increment(frame, 1u16)?"));
     assert!(source.contains("Ok(frame.finish(()))"));
@@ -1329,7 +1329,7 @@ fn state_action_must_reference_the_declared_ledger_field_and_index() {
     assert!(
         render(&contract)
             .unwrap()
-            .contains("context.decrement_counter(0, 1)?")
+            .contains("crate::ledger_slots::round.decrement(context, 1)?")
     );
     assert!(
         render(&contract)
@@ -1343,7 +1343,7 @@ fn state_action_must_reference_the_declared_ledger_field_and_index() {
     assert!(
         render(&contract)
             .unwrap()
-            .contains("context.write_cell(0, 0_u64)?")
+            .contains("crate::ledger_slots::round.reset(context)?")
     );
     assert!(!render(&contract).unwrap().contains("pub mod recorded"));
 
@@ -1513,7 +1513,7 @@ fn stateful_parameters_are_checked_before_cell_writes() {
     let source = render(&contract).unwrap();
     syn::parse_file(&source).unwrap();
     assert!(source.contains("__compact_param_0: bool"));
-    assert!(source.contains("context.write_cell(0, __compact_param_0)?"));
+    assert!(source.contains("crate::ledger_slots::flag.write(context, __compact_param_0)?"));
 
     contract.stateful_circuits[0].parameters[0].ty = Type::Field;
     assert_eq!(
@@ -1624,7 +1624,7 @@ fn ledger_read_return_must_match_the_declared_cell() {
         }],
     };
     let source = render(&contract).unwrap();
-    assert!(source.contains("context.read_cell::<bool>(0)?"));
+    assert!(source.contains("crate::ledger_slots::flag.read(context)?"));
     assert!(source.contains("let result = read_step.result"));
 
     contract.stateful_circuits[0].result = Type::Field;
@@ -1675,7 +1675,7 @@ fn counter_read_returns_uint64() {
         }],
     };
     let source = render(&contract).unwrap();
-    assert!(source.contains("context.read_cell::<u64>(0)?"));
+    assert!(source.contains("crate::ledger_slots::round.read(context)?"));
     assert!(source.contains("crate::ledger_slots::round"));
     assert!(source.contains(".record_read(frame)?"));
     assert!(source.contains("pub struct Contract<W>"));

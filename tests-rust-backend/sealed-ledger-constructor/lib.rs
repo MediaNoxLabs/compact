@@ -93,7 +93,7 @@ pub mod ledger_contract {
     ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
-        let step = context.write_cell(3, true)?;
+        let step = crate::ledger_slots::flag.write(context, true)?;
         let context = step.context;
         total_cost += step.gas_cost;
         let result = ();

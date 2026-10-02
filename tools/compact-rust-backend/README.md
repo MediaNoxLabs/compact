@@ -73,9 +73,11 @@ order and share the frame across nested witness and ledger operations. The
 separate recorded emitter still evaluates supported Field reads, witness
 calls, addition, and internal Field-returning calls in source order. Supported
 root Set and Map mutation, membership, lookup, size, and emptiness calls have
-replayable recorded methods. Root typed List push, pop, reset, length, emptiness, and head
-calls also have recorded methods. Merkle calls remain native until a complete
-recorded trace is supported. Other methods continue to
+replayable recorded methods, including declaration-typed `FixedVector` keys in
+supported circuits. Root typed List push, pop, reset, length, emptiness, and head
+calls also have recorded methods. Plain and historic Merkle append circuits
+have recorded methods when their complete trace is supported; other Merkle
+operations remain native. Other methods continue to
 return native execution results until their full transcript coverage is proven.
 The `tiny` fixture also records typed enum/Bytes Cell reads and writes,
 state-backed assertions, Bytes witnesses and pure calls, and a conditional
@@ -100,7 +102,7 @@ Compact spelling without warning in consumer builds.
 |---|---|---|
 | Compact compiler | Toolchain 0.31.133, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
 | Rust IR | Schema 8, private to this backend | The renderer rejects any other schema before writing `lib.rs`. Ledger, circuit, witness, constructor, and exported alias declarations carry optional Compact source locations for diagnostics. |
-| Generated code and Rust runtime | ABI 14 | Generated modules assert the ABI at Rust compile time. ABI 14 records historic Merkle append with root-history VM semantics; ABI 13 records plain Merkle append through the typed slot and shared VM builder; ABI 12 adds typed plain/historic Merkle slots for native calls; ABI 11 meters Merkle witness VM reads while keeping local projections uncharged; ABI 10 adds fallible `TryWitnesses` and adapts existing pair-returning `Witnesses` implementations; ABI 9 meters List witness reads, ABI 8 Map, ABI 7 Set, ABI 6 Cell/Counter; ABI 5 added structural nested Map slots. |
+| Generated code and Rust runtime | ABI 15 | Generated modules assert the ABI at Rust compile time. ABI 15 records supported Set/Map circuits with declaration-typed vector keys through existing `FixedVector` and typed slots; ABI 14 records historic Merkle append with root-history VM semantics; ABI 13 records plain Merkle append through the typed slot and shared VM builder; ABI 12 adds typed plain/historic Merkle slots for native calls; ABI 11 meters Merkle witness VM reads while keeping local projections uncharged; ABI 10 adds fallible `TryWitnesses` and adapts existing pair-returning `Witnesses` implementations; ABI 9 meters List witness reads, ABI 8 Map, ABI 7 Set, ABI 6 Cell/Counter; ABI 5 added structural nested Map slots. |
 | Rust runtime source | Bundled runtime crates or an explicit shared source root | Cargo resolves the matching runtime and its pinned Midnight crates. |
 
 `--runtime-version` reports the TypeScript runtime version; the Rust runtime
@@ -223,12 +225,14 @@ against the TypeScript query sums while preserving the existing state and
 result oracles. A runtime unit test compares the complete serialized VM
 programs for those seven captured queries, including ordered operations,
 path keys, cache flags, pushed values, and the inserted leaf hash. These
-native circuits do not yet emit recorded proof traces.
+native Merkle queries do not imply recorded proof coverage for every operation;
+supported plain and historic append circuits have separate recorded traces.
 The `--proof` target check derives the Counter increment statement from the
 generated recorded trace, proves it against emitted ZKIR and keys, and rejects
 a changed binding input. It also validates offline ledger-8 deployments and
 proves, verifies, validates, and applies the supported Counter, Cell, Set,
-Map, List, enum Cell, and `tiny` call fixtures. `tiny` is proved in both
+Map, List, enum Cell, `tiny`, plain/historic Merkle append, and vector-key Set
+insert call fixtures (55 offline calls). `tiny` is proved in both
 present and absent `get` branches. Other circuit operations still need
 recording coverage before wallet submission.
 

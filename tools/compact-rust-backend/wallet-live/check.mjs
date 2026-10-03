@@ -229,6 +229,8 @@ try {
       const ttl = Math.floor(Date.now() / 1000) + 45 * 60;
       const result = await execFileAsync(confirmedCallBuilder, [
         statePath, deployPath, counterArtifacts, outputPath, networkId, String(ttl), address,
+        called.transaction.hash, called.transaction.block.hash,
+        String(called.transaction.block.height),
       ], { timeout: 300_000 });
       console.log(result.stdout.trim());
       const secondCall = ledger.Transaction.deserialize(

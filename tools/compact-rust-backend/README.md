@@ -289,14 +289,15 @@ export COMPACT_RUST_CONFIRMED_CALL_BUILDER=target/debug/examples/record_from_con
 export COMPACT_RUST_COUNTER_ARTIFACTS=target/compact-rust-counter-live
 ```
 
-The driver writes the indexed `ContractState` to a temporary file, invokes
-the Rust builder with the confirmed address, proves and submits a new call,
-and requires a second indexed `ContractCall` with `round` equal to 2. The
-runtime `CircuitContext::from_contract_state` uses the upstream state type;
-the caller remains responsible for the indexer/address association and chain
-finality. The builder checks the installed verifier against the generated
-artifact, validates the call on a local projection, and rejects replay against
-the projected `round = 2` state before wallet balancing. ADR-0041 and
+The driver writes the indexed `ContractState` to a temporary file, passes the
+action's transaction hash, block hash and height, then invokes the ABI-20 Rust
+builder. Its generated `increment_call` method records from
+`ObservedContractState`, and `RecordedCall::prepare` checks the installed
+verifier against the emitted artifact. The builder proves and submits a new
+call and requires a second indexed `ContractCall` with `round` equal to 2.
+It validates the call on a local projection and rejects replay against the
+projected `round = 2` state before wallet balancing. The caller remains
+responsible for the indexer/address association and chain finality. ADR-0041 and
 [issue #140](https://github.com/MediaNoxLabs/compact/issues/140) record this
 Counter-specific decision and its broader production limits.
 

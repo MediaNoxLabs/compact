@@ -25,12 +25,12 @@ use std::path::{Component, Path, PathBuf};
 use std::process::{self, Command};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use compact_rust_backend::{ir::Contract, render};
+use compact_rust_backend::{ir::Contract, render_with_capabilities};
 use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
 use toml_edit::{Array, DocumentMut, InlineTable, Item, Table, Value as TomlValue, value};
 
-const TARGET_HELP: &str = "\n  --target <ts|rust> selects contract code. Repeat to emit both.\n    With no --target, TypeScript remains the default. Rust emits a standalone\n    contract/Cargo.toml, source, and matching runtime crates; ZKIR and keys are independent.\n  --rust-runtime-root <path> uses one shared runtime source root for generated\n    Rust crates. The root must contain runtime-rs/ and runtime-rs-macros/.\n  --rust-runtime-registry pins the compiler's matching runtime package version\n    without copying runtime sources. That version must be published to build.\n";
+const TARGET_HELP: &str = "\n  --target <ts|rust> selects contract code. Repeat to emit both.\n    With no --target, TypeScript remains the default. Rust emits a standalone\n    contract/Cargo.toml, source, capability report, and matching runtime crates.\n    ZKIR and keys are independent.\n  --rust-require-recording rejects exported stateful circuits without both\n    replayable recording and typed observed-call APIs.\n  --rust-runtime-root <path> uses one shared runtime source root for generated\n    Rust crates. The root must contain runtime-rs/ and runtime-rs-macros/.\n  --rust-runtime-registry pins the compiler's matching runtime package version\n    without copying runtime sources. That version must be published to build.\n";
 
 #[derive(Default)]
 struct Targets {
@@ -39,6 +39,7 @@ struct Targets {
     rust: bool,
     runtime_root: Option<PathBuf>,
     runtime_registry: bool,
+    require_recording: bool,
 }
 
 fn select_targets(args: Vec<OsString>) -> Result<(Targets, Vec<OsString>), String> {
@@ -62,6 +63,19 @@ fn select_targets(args: Vec<OsString>) -> Result<(Targets, Vec<OsString>), Strin
             }
             targets.runtime_registry = true;
             continue;
+        }
+        if argument == "--rust-require-recording" {
+            if targets.require_recording {
+                return Err("--rust-require-recording may be given only once".into());
+            }
+            targets.require_recording = true;
+            continue;
+        }
+        if argument
+            .to_str()
+            .is_some_and(|arg| arg.starts_with("--rust-require-recording="))
+        {
+            return Err("--rust-require-recording takes no value".into());
         }
         if argument
             .to_str()
@@ -132,6 +146,9 @@ fn select_targets(args: Vec<OsString>) -> Result<(Targets, Vec<OsString>), Strin
     }
     if targets.runtime_registry && !targets.rust {
         return Err("--rust-runtime-registry requires --target rust".into());
+    }
+    if targets.require_recording && !targets.rust {
+        return Err("--rust-require-recording requires --target rust".into());
     }
     if targets.runtime_registry && targets.runtime_root.is_some() {
         return Err("--rust-runtime-registry cannot be combined with --rust-runtime-root".into());
@@ -550,8 +567,47 @@ fn run() -> Result<i32, Box<dyn Error>> {
     let contract_dir = staging.path().join("contract");
     let ir: Contract =
         serde_json::from_slice(&fs::read(contract_dir.join("compact-rust-ir.json"))?)?;
-    let source_code = render(&ir)?;
-    fs::write(contract_dir.join("lib.rs"), source_code)?;
+    let rendered = render_with_capabilities(&ir)?;
+    if targets.require_recording {
+        let unavailable = rendered
+            .capabilities
+            .circuits
+            .iter()
+            .filter(|circuit| !circuit.recorded || !circuit.observed_call)
+            .map(|circuit| {
+                let position = circuit.source.as_ref().map_or_else(
+                    || "unknown source".to_owned(),
+                    |source| {
+                        format!(
+                            "{} line {} char {}",
+                            source.file, source.line, source.column
+                        )
+                    },
+                );
+                format!(
+                    "{position}: exported circuit {:?} has no complete {} API",
+                    circuit.name,
+                    if !circuit.recorded {
+                        "recorded"
+                    } else {
+                        "observed-call"
+                    }
+                )
+            })
+            .collect::<Vec<_>>();
+        if !unavailable.is_empty() {
+            return Err(format!(
+                "--rust-require-recording failed:\n{}",
+                unavailable.join("\n")
+            )
+            .into());
+        }
+    }
+    fs::write(contract_dir.join("lib.rs"), rendered.source)?;
+    fs::write(
+        contract_dir.join("rust-capabilities.json"),
+        serde_json::to_vec_pretty(&rendered.capabilities)?,
+    )?;
     let runtime = if let Some(version) = registry_version.as_deref() {
         RuntimeDependency::Registry(version)
     } else if let Some(runtime) = shared_runtime.as_deref() {
@@ -733,6 +789,49 @@ mod tests {
                 vec![
                     "--target=rust",
                     "--rust-runtime-registry=0.1.0",
+                    "in.compact",
+                    "out",
+                ],
+                "takes no value",
+            ),
+        ] {
+            let error = parse(&args);
+            assert!(matches!(error, Err(message) if message.contains(expected)));
+        }
+    }
+
+    #[test]
+    fn requiring_recording_is_explicit_and_removed_before_scheme() {
+        let parse =
+            |args: &[&str]| select_targets(args.iter().map(|arg| OsString::from(*arg)).collect());
+        let (targets, forwarded) = parse(&[
+            "--target=rust",
+            "--rust-require-recording",
+            "in.compact",
+            "out",
+        ])
+        .unwrap();
+        assert!(targets.require_recording);
+        assert_eq!(forwarded, ["in.compact", "out"].map(OsString::from));
+        for (args, expected) in [
+            (
+                vec!["--rust-require-recording", "in.compact", "out"],
+                "requires --target rust",
+            ),
+            (
+                vec![
+                    "--target=rust",
+                    "--rust-require-recording",
+                    "--rust-require-recording",
+                    "in.compact",
+                    "out",
+                ],
+                "may be given only once",
+            ),
+            (
+                vec![
+                    "--target=rust",
+                    "--rust-require-recording=true",
                     "in.compact",
                     "out",
                 ],

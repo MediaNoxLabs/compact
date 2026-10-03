@@ -25,6 +25,7 @@ or replace a previously complete directory.
 """
 
 import hashlib
+import json
 import os
 from pathlib import Path
 import shutil
@@ -114,6 +115,95 @@ def check_output_publication(compactc: str, directory: Path) -> list[str]:
     return failures
 
 
+def check_proof_capabilities(compactc: str, directory: Path) -> list[str]:
+    failures = []
+    source = directory / "product.compact"
+    source.write_text(
+        "import CompactStandardLibrary;\n"
+        "export ledger value: Field;\n"
+        "export circuit write(left: Field, right: Field): [] {\n"
+        "  value = disclose(left * right);\n"
+        "}\n"
+    )
+    output = directory / "product-output"
+
+    def compile_source(path: Path, destination: Path, strict: bool) -> subprocess.CompletedProcess[str]:
+        command = [compactc, "--target", "rust", "--skip-zk"]
+        if strict:
+            command.append("--rust-require-recording")
+        return subprocess.run(
+            [*command, str(path), str(destination)],
+            capture_output=True, text=True, check=False,
+        )
+
+    default = compile_source(source, output, False)
+    if default.returncode:
+        return [f"native-only product did not compile normally:\n{default.stderr}"]
+    report_path = output / "contract/rust-capabilities.json"
+    manifest_path = output / "compiler/contract-manifest.json"
+    try:
+        report_bytes = report_path.read_bytes()
+        report = json.loads(report_bytes)
+        manifest = json.loads(manifest_path.read_bytes())
+        assert report["schema_version"] == 1
+        assert report["circuits"] == [{
+            "name": "write",
+            "source": {"file": "product.compact", "line": 3, "column": 1},
+            "recorded": False,
+            "observed_call": False,
+        }]
+        assert manifest["contract"]["rust-capabilities.json"]["hash"] == hashlib.sha256(report_bytes).hexdigest()
+    except (AssertionError, FileNotFoundError, KeyError, ValueError) as error:
+        failures.append(f"native-only capability report or manifest is wrong: {error}")
+    before = snapshot(output)
+    rejected = compile_source(source, output, True)
+    if rejected.returncode == 0 or "product.compact line 3 char 1" not in rejected.stderr:
+        failures.append(f"strict rebuild did not reject at source:\n{rejected.stderr}")
+    if snapshot(output) != before:
+        failures.append("strict rebuild changed the prior native-only output")
+    fresh = directory / "product-strict-output"
+    rejected = compile_source(source, fresh, True)
+    if rejected.returncode == 0 or fresh.exists() or any(directory.glob(f".{fresh.name}.compactc-stage-*")):
+        failures.append("strict fresh rejection published output or left staging debris")
+
+    for name in ("counter", "cell_boolean"):
+        path = ROOT / f"examples/rust_backend/{name}.compact"
+        destination = directory / f"{name}-strict-output"
+        accepted = compile_source(path, destination, True)
+        if accepted.returncode:
+            failures.append(f"strict {name} compile failed:\n{accepted.stderr}")
+            continue
+        report = json.loads((destination / "contract/rust-capabilities.json").read_text())
+        if not report["circuits"] or any(
+            not item["recorded"] or not item["observed_call"] for item in report["circuits"]
+        ):
+            failures.append(f"strict {name} report overstates proving support")
+
+    collision_source = directory / "call-collision.compact"
+    collision_source.write_text(
+        "import CompactStandardLibrary;\n"
+        "export ledger round: Counter;\n"
+        "export circuit bump(): [] { round.increment(1); }\n"
+        "export circuit bump_call(): [] { round.increment(1); }\n"
+    )
+    collision_output = directory / "call-collision-output"
+    accepted = compile_source(collision_source, collision_output, False)
+    if accepted.returncode:
+        failures.append(f"call-name collision did not compile normally:\n{accepted.stderr}")
+    else:
+        report = json.loads((collision_output / "contract/rust-capabilities.json").read_text())
+        actual = [(item["name"], item["recorded"], item["observed_call"]) for item in report["circuits"]]
+        if actual != [("bump", True, False), ("bump_call", True, True)]:
+            failures.append(f"call-name collision capability report is wrong: {actual}")
+        before = snapshot(collision_output)
+        rejected = compile_source(collision_source, collision_output, True)
+        if rejected.returncode == 0 or "call-collision.compact line 3 char 1" not in rejected.stderr:
+            failures.append(f"strict call-name collision did not reject at source:\n{rejected.stderr}")
+        if snapshot(collision_output) != before:
+            failures.append("strict call-name collision changed the prior output")
+    return failures
+
+
 def main() -> int:
     compactc = os.environ.get("COMPACTC")
     if not compactc or shutil.which(compactc) is None:
@@ -149,10 +239,11 @@ def main() -> int:
             if output_path.exists() or any(directory.glob(f".{name}.compactc-stage-*")):
                 failures.append(f"{name}: rejected source left output or staging debris")
         failures.extend(check_output_publication(compactc, directory))
+        failures.extend(check_proof_capabilities(compactc, directory))
 
     for failure in failures:
         print(f"FAIL {failure}", file=sys.stderr)
-    print(f"Checked {len(CASES)} source rejections and output publication; {len(failures)} failed")
+    print(f"Checked {len(CASES)} source rejections, output publication and proof capabilities; {len(failures)} failed")
     return 1 if failures else 0
 
 

@@ -21,7 +21,7 @@ use compact_rust_backend::ir::{
     LocalBinding, Parameter, PureCircuit, SourceLocation, StateAction, StateReturn,
     StatefulCircuit, StructField, Type, TypeAlias, WitnessDeclaration,
 };
-use compact_rust_backend::{RenderError, render};
+use compact_rust_backend::{RenderError, render, render_with_capabilities};
 
 fn identity(result: Type, body: Expr) -> Contract {
     Contract {
@@ -2238,7 +2238,12 @@ fn unsupported_nested_call_does_not_expose_an_incomplete_trace() {
             },
         ],
     };
-    assert!(!render(&contract).unwrap().contains("pub mod recorded"));
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(!rendered.source.contains("pub mod recorded"));
+    assert_eq!(rendered.capabilities.circuits.len(), 1);
+    assert_eq!(rendered.capabilities.circuits[0].name, "outer");
+    assert!(!rendered.capabilities.circuits[0].recorded);
+    assert!(!rendered.capabilities.circuits[0].observed_call);
 
     contract.stateful_circuits[0].actions.clear();
     contract.stateful_circuits[0].result = Type::Unsigned {
@@ -2267,7 +2272,11 @@ fn unsupported_field_expression_does_not_expose_a_recorded_call() {
         }],
         circuits: vec![],
         stateful_circuits: vec![StatefulCircuit {
-            source: None,
+            source: Some(SourceLocation {
+                file: "product.compact".into(),
+                line: 3,
+                column: 1,
+            }),
             internal: false,
             name: "write".into(),
             parameters: vec![
@@ -2296,8 +2305,16 @@ fn unsupported_field_expression_does_not_expose_a_recorded_call() {
             }],
         }],
     };
-    assert!(!render(&contract).unwrap().contains("pub mod recorded"));
-    assert!(!render(&contract).unwrap().contains("pub fn write_call"));
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(!rendered.source.contains("pub mod recorded"));
+    assert!(!rendered.source.contains("pub fn write_call"));
+    let report = serde_json::to_value(&rendered.capabilities).unwrap();
+    assert_eq!(report["schema_version"], 1);
+    assert_eq!(report["circuits"][0]["name"], "write");
+    assert_eq!(report["circuits"][0]["source"]["file"], "product.compact");
+    assert_eq!(report["circuits"][0]["source"]["line"], 3);
+    assert_eq!(report["circuits"][0]["recorded"], false);
+    assert_eq!(report["circuits"][0]["observed_call"], false);
 
     let StateAction::CellWrite { value, .. } = &mut contract.stateful_circuits[0].actions[0] else {
         unreachable!()
@@ -2306,7 +2323,10 @@ fn unsupported_field_expression_does_not_expose_a_recorded_call() {
         unreachable!()
     };
     *value = Expr::Add { left, right };
-    assert!(render(&contract).unwrap().contains("pub mod recorded"));
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.source.contains("pub mod recorded"));
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.capabilities.circuits[0].observed_call);
 }
 
 #[test]
@@ -2459,10 +2479,27 @@ fn counter_parameter_requires_uint16_and_a_known_name() {
         amount: CounterAmount::Literal { value: 1 },
     };
     collision.stateful_circuits.push(exported);
+    let rendered = render_with_capabilities(&collision).unwrap();
     assert!(
-        !render(&collision)
-            .unwrap()
+        !rendered
+            .source
             .contains("pub fn increment_by_call<'observed")
+    );
+    assert_eq!(
+        rendered
+            .capabilities
+            .circuits
+            .iter()
+            .map(|circuit| (
+                circuit.name.as_str(),
+                circuit.recorded,
+                circuit.observed_call
+            ))
+            .collect::<Vec<_>>(),
+        [
+            ("increment_by", true, false),
+            ("increment_by_call", true, true)
+        ]
     );
 
     contract.stateful_circuits[0].parameters[0].ty = Type::Unsigned { max: "255".into() };

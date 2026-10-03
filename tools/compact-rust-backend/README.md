@@ -22,7 +22,7 @@ compactc --target rust \
 ```
 
 The output contains `contract/Cargo.toml`, `contract/lib.rs`,
-`contract/compact-rust-ir.json`, and source copies of the matching runtime and
+`contract/compact-rust-ir.json`, `contract/rust-capabilities.json`, and source copies of the matching runtime and
 derive-macro crates, along with the compiler metadata, ZKIR, and proof
 artifacts produced by the Scheme compiler. The Cargo library uses the bundled
 runtime as a path dependency. A separate Rust
@@ -32,6 +32,25 @@ languages. `--skip-zk` skips proving keys for a quicker local build.
 Rust-target output is assembled in a sibling staging directory and published
 only after the compiler, Rust renderer, runtime packaging and output manifest
 complete. A failed run removes that stage and keeps any previous output.
+The version-1 capability report lists each exported stateful circuit in
+source order with its Compact source position and whether the generated crate
+has a replayable `recorded` method and a typed observed-state `*_call` method.
+Pure circuits have no ledger call and are omitted. The report is included in
+the hashed compiler output manifest. A native-only method can be useful, but
+does not by itself supply a proof-ready ledger call. To require both APIs for
+every exported stateful circuit, use:
+
+```sh
+compactc --target rust --rust-require-recording \
+  examples/rust_backend/counter.compact /tmp/compact-rust-output
+```
+
+The strict option reports an unsupported circuit at its Compact source
+position and publishes no partial output. The capability report describes
+generated API availability; proof, transcript parity, and wallet admission
+still require the corresponding acceptance tests. Internal circuits are
+omitted, and the report schema is separate from the private IR schema and
+runtime ABI.
 The generated `ledger_slots` module exposes named typed descriptors for Cell,
 Counter, Set, Map, List, and Merkle declarations. For example,
 `ledger_slots::tree.insert(context, value)` accepts the declared Merkle leaf

@@ -65,6 +65,8 @@ def run(*arguments: str, cwd: Path = ROOT) -> None:
 
 def check_manifest(output: Path, *, require_zkir: bool = True) -> None:
     manifest = json.loads((output / "compiler/contract-manifest.json").read_text())
+    if (output / "contract/lib.rs").is_file():
+        assert (output / "contract/rust-capabilities.json").is_file()
     def check_tree(path: Path, entries: dict) -> None:
         for name, entry in entries.items():
             if name == "type":
@@ -1021,6 +1023,11 @@ def main() -> None:
         assert (rust / "contract/lib.rs").is_file()
         assert (rust / "contract/Cargo.toml").is_file()
         assert not (rust / "contract/index.js").exists()
+        capabilities = json.loads((rust / "contract/rust-capabilities.json").read_text())
+        assert capabilities["schema_version"] == 1
+        assert [(c["name"], c["recorded"], c["observed_call"]) for c in capabilities["circuits"]] == [
+            ("increment", True, True), ("read_round", True, True)
+        ]
         rust_ir = json.loads((rust / "contract/compact-rust-ir.json").read_text())
         assert rust_ir["schema_version"] == 8
         round_field = next(field for field in rust_ir["ledger_fields"] if field["id"] == "round")
@@ -1075,6 +1082,9 @@ def main() -> None:
         run(compiler, "--rust", "--skip-ts", "--skip-zk", str(SOURCE), str(legacy_rust))
         assert (legacy_rust / "contract/lib.rs").read_bytes() == (rust / "contract/lib.rs").read_bytes()
         assert (legacy_rust / "contract/Cargo.toml").read_bytes() == (rust / "contract/Cargo.toml").read_bytes()
+        assert (legacy_rust / "contract/rust-capabilities.json").read_bytes() == (
+            rust / "contract/rust-capabilities.json"
+        ).read_bytes()
         assert not (legacy_rust / "contract/index.js").exists()
         check_manifest(legacy_rust)
         legacy_both = base / "legacy-both"
@@ -1105,7 +1115,7 @@ def main() -> None:
             check_list_shapes_consumer(compiler, base)
         if args.proof:
             proof = base / "proof"
-            run(compiler, "--target", "rust", str(SOURCE), str(proof))
+            run(compiler, "--target", "rust", "--rust-require-recording", str(SOURCE), str(proof))
             check_manifest(proof)
             for circuit in ("increment", "read_round"):
                 for extension in ("prover", "verifier"):

@@ -218,32 +218,60 @@ addresses, and byte-for-byte reserialization. The proof gate applies the
 deployment with ledger semantics before checking and applying the call. These
 exported transactions are **offline fixtures**: their network ID is
 `local-test`, their intent TTL is timestamp zero, and fee balancing is disabled.
-An application using a real network must build the deployment with that
-network ID and a current TTL, balance/finalize/validate/submit it, then wait for
-confirmed deployment before building and submitting the call against the new
-contract state. The wallet facade owns `balanceFinalizedTransaction`,
-`finalizeRecipe`, and `submitTransaction` with application keys and funds. The
-wallet facade recommends structural validation before balancing and full
-validation before submission:
+For an isolated ledger-8 devnet, opt in to that network ID and a future Unix
+expiry no more than one hour ahead. The proof smoke applies each transaction
+with a matching block timestamp and still checks all 57 offline calls:
+
+```sh
+COMPACT_RUST_HANDOFF_TTL_SECS=$(python3 -c 'import time; print(int(time.time()) + 1800)')
+nix develop .#compiler --command env COMPACTC=compactc \
+  COMPACT_RUST_HANDOFF_NETWORK_ID=undeployed \
+  COMPACT_RUST_HANDOFF_TTL_SECS="$COMPACT_RUST_HANDOFF_TTL_SECS" \
+  COMPACT_RUST_DEPLOY_HANDOFF=target/compact-rust-live-deploy.bin \
+  COMPACT_RUST_WALLET_HANDOFF=target/compact-rust-live-call.bin \
+  python3 tools/compact-rust-backend/check_compactc_target.py --proof
+```
+
+The ledger-8.0.3 wallet facade owns balancing, finalization, and submission
+with application keys and funds. Its pinned 3.0.0 API has no
+`validateTransaction` method. A version-pinned local integration driver is in
+`wallet-live`; it uses node 0.22.3, indexer 4.0.1, proof server 8.0.3,
+wallet facade 3.0.0, and `undeployed` network. The tested stack matches
+[`midnight-local-dev` at `c16aa4f`](https://github.com/midnightntwrk/midnight-local-dev/tree/c16aa4ff57374a3b8519e90d6f003227f8041996).
+Run it against a fresh, funded local devnet, supplying its 32-byte wallet seed
+through the environment:
+
+```sh
+npm ci --prefix tools/compact-rust-backend/wallet-live --ignore-scripts
+COMPACT_RUST_WALLET_SEED_HEX=<local-devnet-seed> \
+COMPACT_RUST_HANDOFF_NETWORK_ID=undeployed \
+COMPACT_RUST_INDEXER_URL=http://127.0.0.1:8088/api/v3/graphql \
+COMPACT_RUST_NODE_URL=http://127.0.0.1:9944 \
+COMPACT_RUST_PROOF_SERVER_URL=http://127.0.0.1:6300 \
+node tools/compact-rust-backend/wallet-live/check.mjs \
+  target/compact-rust-live-deploy.bin target/compact-rust-live-call.bin
+```
+
+The driver syncs the wallet, registers NIGHT for DUST when necessary, rejects
+an already used contract address, then balances, finalizes and submits the
+deployment. It waits for the indexer to report `ContractDeploy` at the exact
+address before balancing and submitting the call. It requires an indexed
+`ContractCall` at the same address with a different transaction hash. The
+wallet operations are equivalent to:
 
 ```ts
 const tx = ledger.Transaction.deserialize('signature', 'proof', 'binding', bytes);
-await facade.validateTransaction(tx, {
-  flags: { enforceBalancing: false, verifySignatures: true, enforceLimits: false },
-});
 const recipe = await facade.balanceFinalizedTransaction(tx, keys, { ttl });
 const finalTx = await facade.finalizeRecipe(recipe);
-await facade.validateTransaction(finalTx, {
-  flags: { enforceBalancing: true, verifySignatures: true, enforceLimits: true },
-  blockData: recipe.blockData,
-});
 await facade.submitTransaction(finalTx);
 ```
 
-The byte checks do not establish network admission. ADR-0033 and
+The default byte checks alone do not establish network admission. ADR-0040 and
+[issue #139](https://github.com/MediaNoxLabs/compact/issues/139) track this
+local admission gate and its remaining production limits. ADR-0033 and
 [issue #132](https://github.com/MediaNoxLabs/compact/issues/132) track the
 call boundary; ADR-0035 and [issue #134](https://github.com/MediaNoxLabs/compact/issues/134)
-track the paired deployment. Parent #105 retains actual wallet/node submission.
+track the paired deployment. Parent #105 retains broader wallet/node release readiness.
 
 The fixture checker compiles every source in
 [`examples/rust_backend`](../../examples/rust_backend), formats the output,

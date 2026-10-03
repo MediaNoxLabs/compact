@@ -25,6 +25,7 @@ use std::error::Error;
 use std::fs::{self, File};
 use std::io::{self, BufReader};
 use std::path::{Path, PathBuf};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use compact_rust_cell_boolean_fixture::ledger_contract as cell_contract;
 use compact_rust_cell_read_fixture::ledger_contract as cell_read_contract;
@@ -87,6 +88,55 @@ use rand_chacha::ChaCha20Rng;
 struct ArtifactResolver {
     root: PathBuf,
     circuit: &'static str,
+}
+
+struct HandoffConfig {
+    network_id: String,
+    ttl: Timestamp,
+    validation_time: Timestamp,
+}
+
+impl HandoffConfig {
+    fn offline() -> Self {
+        Self {
+            network_id: "local-test".into(),
+            ttl: Timestamp::from_secs(0),
+            validation_time: Timestamp::from_secs(0),
+        }
+    }
+
+    fn from_env() -> Result<Self, Box<dyn Error>> {
+        match (
+            env::var("COMPACT_RUST_HANDOFF_NETWORK_ID"),
+            env::var("COMPACT_RUST_HANDOFF_TTL_SECS"),
+        ) {
+            (Err(env::VarError::NotPresent), Err(env::VarError::NotPresent)) => Ok(Self::offline()),
+            (Ok(network_id), Ok(ttl)) => {
+                if network_id.is_empty() || network_id.trim() != network_id {
+                    return Err(
+                        "handoff network ID must be nonempty and have no surrounding whitespace"
+                            .into(),
+                    );
+                }
+                let ttl: u64 = ttl.parse()?;
+                let now = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
+                if ttl <= now + 60 {
+                    return Err("handoff TTL must be at least 60 seconds in the future".into());
+                }
+                if ttl > now + 3_600 {
+                    return Err("handoff TTL exceeds ledger-8's one-hour global TTL".into());
+                }
+                Ok(Self {
+                    network_id,
+                    ttl: Timestamp::from_secs(ttl),
+                    validation_time: Timestamp::from_secs(now),
+                })
+            }
+            _ => Err(
+                "set both COMPACT_RUST_HANDOFF_NETWORK_ID and COMPACT_RUST_HANDOFF_TTL_SECS".into(),
+            ),
+        }
+    }
 }
 
 impl Resolver for ArtifactResolver {
@@ -244,6 +294,7 @@ fn check_transaction_with_handoff<F>(
     rng: &mut StdRng,
     handoff_path: Option<&Path>,
     deploy_handoff_path: Option<&Path>,
+    handoff: &HandoffConfig,
     check_state: F,
 ) -> Result<(), Box<dyn Error>>
 where
@@ -251,10 +302,12 @@ where
 {
     let address = deploy.address();
     let deploy_intent: Intent<Signature, ProofPreimageMarker, PedersenRandomness, DefaultDB> =
-        Intent::empty(rng, Timestamp::from_secs(0)).add_deploy(deploy.clone());
-    let deploy_tx =
-        Transaction::from_intents("local-test", HashMap::new().insert(1_u16, deploy_intent));
-    let empty_ledger = LedgerState::<DefaultDB>::new("local-test");
+        Intent::empty(rng, handoff.ttl).add_deploy(deploy.clone());
+    let deploy_tx = Transaction::from_intents(
+        handoff.network_id.as_str(),
+        HashMap::new().insert(1_u16, deploy_intent),
+    );
+    let empty_ledger = LedgerState::<DefaultDB>::new(handoff.network_id.as_str());
     let mut strictness = WellFormedStrictness::default();
     strictness.enforce_balancing = false;
     let sealed_deploy = if deploy_handoff_path.is_some() {
@@ -286,13 +339,17 @@ where
     };
     let verified_deploy = match &sealed_deploy {
         Some(transaction) => {
-            transaction.well_formed(&empty_ledger, strictness, Timestamp::from_secs(0))?
+            transaction.well_formed(&empty_ledger, strictness, handoff.validation_time)?
         }
-        None => deploy_tx.well_formed(&empty_ledger, strictness, Timestamp::from_secs(0))?,
+        None => deploy_tx.well_formed(&empty_ledger, strictness, handoff.validation_time)?,
     };
     let deploy_context = TransactionContext {
         ref_state: empty_ledger.clone(),
-        block_context: BlockContext::default(),
+        block_context: BlockContext {
+            tblock: handoff.validation_time,
+            last_block_time: handoff.validation_time,
+            ..BlockContext::default()
+        },
         whitelist: None,
     };
     let (ledger, deploy_outcome) = empty_ledger.apply(&verified_deploy, &deploy_context);
@@ -306,10 +363,12 @@ where
         write_sealed_handoff(path, transaction, "deployment")?;
     }
     let call_intent: Intent<Signature, ProofPreimageMarker, PedersenRandomness, DefaultDB> =
-        Intent::empty(rng, Timestamp::from_secs(0)).add_call::<ProofPreimage>(call);
-    let call_tx =
-        Transaction::from_intents("local-test", HashMap::new().insert(1_u16, call_intent));
-    call_tx.well_formed(&ledger, strictness, Timestamp::from_secs(0))?;
+        Intent::empty(rng, handoff.ttl).add_call::<ProofPreimage>(call);
+    let call_tx = Transaction::from_intents(
+        handoff.network_id.as_str(),
+        HashMap::new().insert(1_u16, call_intent),
+    );
+    call_tx.well_formed(&ledger, strictness, handoff.validation_time)?;
     let resolver = ArtifactResolver {
         root: root.to_owned(),
         circuit,
@@ -323,10 +382,10 @@ where
     let proven = futures_executor::block_on(
         call_tx.prove(provider, &INITIAL_PARAMETERS.cost_model.runtime_cost_model),
     )?;
-    let verified = proven.well_formed(&ledger, strictness, Timestamp::from_secs(0))?;
+    let verified = proven.well_formed(&ledger, strictness, handoff.validation_time)?;
     if let Some(path) = handoff_path {
         let sealed = proven.seal(StdRng::seed_from_u64(0x57414c4c4554));
-        sealed.well_formed(&ledger, strictness, Timestamp::from_secs(0))?;
+        sealed.well_formed(&ledger, strictness, handoff.validation_time)?;
         if sealed
             .calls()
             .map(|(_, action)| action.address)
@@ -339,7 +398,11 @@ where
     }
     let context = TransactionContext {
         ref_state: ledger.clone(),
-        block_context: BlockContext::default(),
+        block_context: BlockContext {
+            tblock: handoff.validation_time,
+            last_block_time: handoff.validation_time,
+            ..BlockContext::default()
+        },
         whitelist: None,
     };
     let (updated, outcome) = ledger.apply(&verified, &context);
@@ -366,7 +429,17 @@ fn check_transaction<F>(
 where
     F: FnOnce(&ContractState<DefaultDB>) -> Result<(), Box<dyn Error>>,
 {
-    check_transaction_with_handoff(root, circuit, deploy, call, rng, None, None, check_state)
+    check_transaction_with_handoff(
+        root,
+        circuit,
+        deploy,
+        call,
+        rng,
+        None,
+        None,
+        &HandoffConfig::offline(),
+        check_state,
+    )
 }
 
 struct Secret;
@@ -450,6 +523,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let counter_root = Path::new(&counter_root);
     let cell_root = Path::new(&cell_root);
     let cell_read_root = Path::new(&cell_read_root);
+    let handoff_config = HandoffConfig::from_env()?;
     let mut rng = StdRng::seed_from_u64(0x434f4d50414354);
     let counter_initial = counter_contract::initial_state(ConstructorContext::new(()))?;
     let counter_deploy = make_deploy(
@@ -474,6 +548,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         &mut rng,
         counter_handoff.as_deref(),
         counter_deploy_handoff.as_deref(),
+        &handoff_config,
         |contract| {
             let StateValue::Array(fields) = contract.data.get_ref() else {
                 return Err("counter contract state is not an array".into());

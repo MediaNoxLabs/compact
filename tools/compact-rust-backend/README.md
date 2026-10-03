@@ -43,6 +43,23 @@ points to that one runtime source package, allowing the contracts to share a
 Cargo graph. This mode depends on the chosen local path; the default bundled
 mode keeps each individual generated contract self-contained.
 
+Use `--rust-runtime-registry` to generate a crate that depends on the
+compiler-distributed runtime version exactly, without copying runtime or macro
+sources:
+
+```sh
+compactc --target rust --rust-runtime-registry \
+  examples/rust_backend/counter.compact /tmp/compact-counter-registry
+```
+
+The generated dependency is
+`midnight-compact-runtime = { version = "=0.1.0", package = "midnight-compact-runtime" }`
+for this compiler. The option cannot be combined with `--rust-runtime-root`.
+The package is not yet published, so use this mode with the local archive-only
+release rehearsal below until macro and runtime crates are available from a
+registry. The default bundled mode remains the way to build one generated
+crate without a registry release.
+
 The packaged command keeps the ledger-8 Scheme compiler as a sibling named
 `compactc-scheme`. For compiler development, set `COMPACTC_SCHEME` to a local
 Scheme executable and run `cargo run -p compact-rust-backend --bin compactc --`.
@@ -192,8 +209,8 @@ nix develop .#compiler --command python3 \
 
 This isolated gate vendors the pinned upstream crates and installs the macro
 and runtime from their `.crate` bytes. It compiles both contracts independently
-with `compactc --target rust`, replaces each disposable bundled runtime with a
-version-only dependency, and runs both from one external consumer. It checks
+with `compactc --target rust --rust-runtime-registry` and runs their untouched
+generated crates from one external consumer. It checks
 that Cargo resolves exactly one shared runtime and macro as registry-style
 packages from the archive source, including direct dependencies from both
 generated crates. No local path patch is used for the final consumer. Source

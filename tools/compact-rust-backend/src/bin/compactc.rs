@@ -29,7 +29,7 @@ use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
 use toml_edit::{Array, DocumentMut, InlineTable, Item, Table, Value as TomlValue, value};
 
-const TARGET_HELP: &str = "\n  --target <ts|rust> selects contract code. Repeat to emit both.\n    With no --target, TypeScript remains the default. Rust emits a standalone\n    contract/Cargo.toml, source, and matching runtime crates; ZKIR and keys are independent.\n  --rust-runtime-root <path> uses one shared runtime source root for generated\n    Rust crates. The root must contain runtime-rs/ and runtime-rs-macros/.\n";
+const TARGET_HELP: &str = "\n  --target <ts|rust> selects contract code. Repeat to emit both.\n    With no --target, TypeScript remains the default. Rust emits a standalone\n    contract/Cargo.toml, source, and matching runtime crates; ZKIR and keys are independent.\n  --rust-runtime-root <path> uses one shared runtime source root for generated\n    Rust crates. The root must contain runtime-rs/ and runtime-rs-macros/.\n  --rust-runtime-registry pins the compiler's matching runtime package version\n    without copying runtime sources. That version must be published to build.\n";
 
 #[derive(Default)]
 struct Targets {
@@ -37,6 +37,7 @@ struct Targets {
     ts: bool,
     rust: bool,
     runtime_root: Option<PathBuf>,
+    runtime_registry: bool,
 }
 
 fn select_targets(args: Vec<OsString>) -> Result<(Targets, Vec<OsString>), String> {
@@ -53,6 +54,19 @@ fn select_targets(args: Vec<OsString>) -> Result<(Targets, Vec<OsString>), Strin
         if argument == "--skip-ts" {
             legacy_skip_ts = true;
             continue;
+        }
+        if argument == "--rust-runtime-registry" {
+            if targets.runtime_registry {
+                return Err("--rust-runtime-registry may be given only once".into());
+            }
+            targets.runtime_registry = true;
+            continue;
+        }
+        if argument
+            .to_str()
+            .is_some_and(|arg| arg.starts_with("--rust-runtime-registry="))
+        {
+            return Err("--rust-runtime-registry takes no value".into());
         }
         if argument == "--rust-runtime-root" {
             let root = arguments
@@ -115,6 +129,12 @@ fn select_targets(args: Vec<OsString>) -> Result<(Targets, Vec<OsString>), Strin
     if targets.runtime_root.is_some() && !targets.rust {
         return Err("--rust-runtime-root requires --target rust".into());
     }
+    if targets.runtime_registry && !targets.rust {
+        return Err("--rust-runtime-registry requires --target rust".into());
+    }
+    if targets.runtime_registry && targets.runtime_root.is_some() {
+        return Err("--rust-runtime-registry cannot be combined with --rust-runtime-root".into());
+    }
     Ok((targets, forwarded))
 }
 
@@ -148,7 +168,12 @@ fn package_name(source: &Path) -> String {
     name.trim_end_matches('-').to_owned()
 }
 
-fn crate_manifest(source: &Path, runtime: &Path) -> Result<String, Box<dyn Error>> {
+enum RuntimeDependency<'a> {
+    Path(&'a Path),
+    Registry(&'a str),
+}
+
+fn crate_manifest(source: &Path, runtime: RuntimeDependency<'_>) -> Result<String, Box<dyn Error>> {
     let mut document = DocumentMut::new();
     let mut package = Table::new();
     package["name"] = value(package_name(source));
@@ -169,14 +194,20 @@ fn crate_manifest(source: &Path, runtime: &Path) -> Result<String, Box<dyn Error
     document["lib"] = Item::Table(library);
 
     let mut dependency = InlineTable::new();
-    dependency.insert(
-        "path",
-        TomlValue::from(
-            runtime
-                .to_str()
-                .ok_or("Rust runtime path is not valid UTF-8 for Cargo.toml")?,
-        ),
-    );
+    match runtime {
+        RuntimeDependency::Path(path) => {
+            dependency.insert(
+                "path",
+                TomlValue::from(
+                    path.to_str()
+                        .ok_or("Rust runtime path is not valid UTF-8 for Cargo.toml")?,
+                ),
+            );
+        }
+        RuntimeDependency::Registry(version) => {
+            dependency.insert("version", TomlValue::from(format!("={version}")));
+        }
+    }
     dependency.insert("package", TomlValue::from("midnight-compact-runtime"));
     let mut dependencies = Table::new();
     dependencies["midnight-compact-runtime"] = Item::Value(TomlValue::InlineTable(dependency));
@@ -225,6 +256,24 @@ fn runtime_source_root() -> Result<PathBuf, Box<dyn Error>> {
         return Ok(checkout);
     }
     Err("compactc cannot locate its Rust runtime sources; set COMPACT_RUST_RUNTIME_DIR".into())
+}
+
+fn runtime_package_version() -> Result<String, Box<dyn Error>> {
+    let manifest = runtime_source_root()?.join("runtime-rs/Cargo.toml");
+    let document: DocumentMut = fs::read_to_string(&manifest)?.parse()?;
+    let package = document
+        .get("package")
+        .and_then(Item::as_table)
+        .ok_or("matching Rust runtime manifest has no [package] table")?;
+    if package.get("name").and_then(Item::as_str) != Some("midnight-compact-runtime") {
+        return Err("matching Rust runtime manifest has an unexpected package name".into());
+    }
+    let version = package
+        .get("version")
+        .and_then(Item::as_str)
+        .filter(|version| !version.is_empty())
+        .ok_or("matching Rust runtime manifest has no package version")?;
+    Ok(version.to_owned())
 }
 
 fn copy_source_tree(source: &Path, destination: &Path) -> Result<(), Box<dyn Error>> {
@@ -357,6 +406,10 @@ fn run() -> Result<i32, Box<dyn Error>> {
         .as_deref()
         .map(shared_runtime_path)
         .transpose()?;
+    let registry_version = targets
+        .runtime_registry
+        .then(runtime_package_version)
+        .transpose()?;
     let source = PathBuf::from(args[args.len() - 2].clone());
     let output = PathBuf::from(args[args.len() - 1].clone());
     let insert_at = args.len() - 2;
@@ -374,15 +427,17 @@ fn run() -> Result<i32, Box<dyn Error>> {
         serde_json::from_slice(&fs::read(contract_dir.join("compact-rust-ir.json"))?)?;
     let source_code = render(&ir)?;
     fs::write(contract_dir.join("lib.rs"), source_code)?;
-    let runtime = if let Some(runtime) = shared_runtime {
-        runtime
+    let runtime = if let Some(version) = registry_version.as_deref() {
+        RuntimeDependency::Registry(version)
+    } else if let Some(runtime) = shared_runtime.as_deref() {
+        RuntimeDependency::Path(runtime)
     } else {
         copy_runtime_sources(&contract_dir)?;
-        PathBuf::from("runtime-rs")
+        RuntimeDependency::Path(Path::new("runtime-rs"))
     };
     fs::write(
         contract_dir.join("Cargo.toml"),
-        crate_manifest(&source, &runtime)?,
+        crate_manifest(&source, runtime)?,
     )?;
     refresh_manifest(&output)?;
     Ok(0)
@@ -400,7 +455,9 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use super::{package_name, select_targets};
+    use super::{
+        RuntimeDependency, crate_manifest, package_name, runtime_package_version, select_targets,
+    };
     use std::ffi::OsString;
     use std::path::Path;
 
@@ -506,6 +563,73 @@ mod tests {
         .unwrap();
         assert_eq!(targets.runtime_root.as_deref(), Some(Path::new("/shared")));
         assert_eq!(forwarded, ["in.compact", "out"].map(OsString::from));
+    }
+
+    #[test]
+    fn registry_runtime_option_is_exclusive_and_removed_before_scheme() {
+        let parse =
+            |args: &[&str]| select_targets(args.iter().map(|arg| OsString::from(*arg)).collect());
+        let (targets, forwarded) = parse(&[
+            "--target=rust",
+            "--rust-runtime-registry",
+            "in.compact",
+            "out",
+        ])
+        .unwrap();
+        assert!(targets.runtime_registry);
+        assert_eq!(forwarded, ["in.compact", "out"].map(OsString::from));
+        for (args, expected) in [
+            (
+                vec!["--rust-runtime-registry", "in.compact", "out"],
+                "requires --target rust",
+            ),
+            (
+                vec![
+                    "--target=rust",
+                    "--rust-runtime-registry",
+                    "--rust-runtime-registry",
+                    "in.compact",
+                    "out",
+                ],
+                "may be given only once",
+            ),
+            (
+                vec![
+                    "--target=rust",
+                    "--rust-runtime-registry",
+                    "--rust-runtime-root=/shared",
+                    "in.compact",
+                    "out",
+                ],
+                "cannot be combined",
+            ),
+            (
+                vec![
+                    "--target=rust",
+                    "--rust-runtime-registry=0.1.0",
+                    "in.compact",
+                    "out",
+                ],
+                "takes no value",
+            ),
+        ] {
+            let error = parse(&args);
+            assert!(matches!(error, Err(message) if message.contains(expected)));
+        }
+    }
+
+    #[test]
+    fn registry_manifest_pins_the_matching_runtime_version() {
+        let version = runtime_package_version().unwrap();
+        let source = Path::new("counter.compact");
+        let manifest = crate_manifest(source, RuntimeDependency::Registry(&version)).unwrap();
+        let document: toml_edit::DocumentMut = manifest.parse().unwrap();
+        let dependency = &document["dependencies"]["midnight-compact-runtime"];
+        assert_eq!(
+            dependency.get("version").and_then(toml_edit::Item::as_str),
+            Some(format!("={version}").as_str())
+        );
+        assert!(dependency.get("path").is_none());
     }
 
     #[test]

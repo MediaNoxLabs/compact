@@ -22,7 +22,6 @@ import hashlib
 import json
 import os
 from pathlib import Path
-import shutil
 import subprocess
 import tarfile
 import tempfile
@@ -156,22 +155,27 @@ def main() -> None:
             install_archive(vendor, entry, macro_version)
 
         contracts = {}
-        before = 'midnight-compact-runtime = { path = "runtime-rs", package = "midnight-compact-runtime" }'
-        after = (
-            'midnight-compact-runtime = '
-            f'{{ version = "={runtime_version}", package = "midnight-compact-runtime" }}'
-        )
         for name, source in CONTRACTS:
             artifact = temporary / name
-            run([args.compiler, "--target", "rust", "--skip-zk", str(source), str(artifact)])
+            run([args.compiler, "--target", "rust", "--rust-runtime-registry",
+                 "--skip-zk", str(source), str(artifact)])
             contract = artifact / "contract"
             manifest_path = contract / "Cargo.toml"
-            generated = manifest_path.read_text()
-            if generated.count(before) != 1:
+            generated = tomllib.loads(manifest_path.read_text())
+            dependency = generated["dependencies"]["midnight-compact-runtime"]
+            if dependency != {
+                "version": f"={runtime_version}",
+                "package": "midnight-compact-runtime",
+            }:
                 raise RuntimeError(f"generated {name} manifest has an unexpected runtime dependency")
-            manifest_path.write_text(generated.replace(before, after))
-            shutil.rmtree(contract / "runtime-rs")
-            shutil.rmtree(contract / "runtime-rs-macros")
+            if (contract / "runtime-rs").exists() or (contract / "runtime-rs-macros").exists():
+                raise RuntimeError(f"generated {name} contract copied runtime sources in registry mode")
+            output_manifest = json.loads(
+                (artifact / "compiler/contract-manifest.json").read_text()
+            )
+            recorded = output_manifest["contract"]["Cargo.toml"]
+            if recorded["hash"] != sha256(manifest_path) or recorded["size"] != manifest_path.stat().st_size:
+                raise RuntimeError(f"generated {name} Cargo manifest was not recorded accurately")
             contracts[name] = contract
 
         consumer = temporary / "consumer"

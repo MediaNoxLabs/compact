@@ -1,5 +1,6 @@
 {
   "vector": {
+    "result": [],
     "valueAtoms": [
       [
         3
@@ -50,6 +51,7 @@
     ]
   },
   "tuple": {
+    "result": [],
     "valueAtoms": [
       [
         42
@@ -101,6 +103,7 @@
     ]
   },
   "struct": {
+    "result": [],
     "valueAtoms": [
       [
         3
@@ -166,6 +169,214 @@
         "kind": "ins",
         "cached": true,
         "n": 1
+      }
+    ]
+  },
+  "tupleRoundtrip": {
+    "result": false,
+    "valueAtoms": [
+      [
+        42
+      ],
+      [
+        1
+      ]
+    ],
+    "alignment": [
+      {
+        "tag": "atom",
+        "value": {
+          "tag": "field"
+        }
+      },
+      {
+        "tag": "atom",
+        "value": {
+          "tag": "bytes",
+          "length": 1
+        }
+      }
+    ],
+    "publicTranscriptShape": [
+      {
+        "kind": "idx",
+        "cached": false,
+        "pushPath": true,
+        "pathLength": 1
+      },
+      {
+        "kind": "push",
+        "storage": false
+      },
+      {
+        "kind": "push",
+        "storage": true
+      },
+      {
+        "kind": "ins",
+        "cached": false,
+        "n": 1
+      },
+      {
+        "kind": "ins",
+        "cached": true,
+        "n": 1
+      },
+      {
+        "kind": "idx",
+        "cached": false,
+        "pushPath": true,
+        "pathLength": 1
+      },
+      {
+        "kind": "push",
+        "storage": false
+      },
+      {
+        "kind": "rem",
+        "cached": false
+      },
+      {
+        "kind": "ins",
+        "cached": true,
+        "n": 1
+      },
+      {
+        "kind": "dup",
+        "n": 0
+      },
+      {
+        "kind": "idx",
+        "cached": false,
+        "pushPath": false,
+        "pathLength": 1
+      },
+      {
+        "kind": "push",
+        "storage": false
+      },
+      {
+        "kind": "member"
+      },
+      {
+        "kind": "popeq",
+        "cached": true,
+        "resultAtoms": [
+          []
+        ]
+      }
+    ]
+  },
+  "structRoundtrip": {
+    "result": false,
+    "valueAtoms": [
+      [
+        3
+      ],
+      [
+        5
+      ],
+      [
+        42
+      ],
+      [
+        1
+      ]
+    ],
+    "alignment": [
+      {
+        "tag": "atom",
+        "value": {
+          "tag": "field"
+        }
+      },
+      {
+        "tag": "atom",
+        "value": {
+          "tag": "field"
+        }
+      },
+      {
+        "tag": "atom",
+        "value": {
+          "tag": "field"
+        }
+      },
+      {
+        "tag": "atom",
+        "value": {
+          "tag": "bytes",
+          "length": 1
+        }
+      }
+    ],
+    "publicTranscriptShape": [
+      {
+        "kind": "idx",
+        "cached": false,
+        "pushPath": true,
+        "pathLength": 1
+      },
+      {
+        "kind": "push",
+        "storage": false
+      },
+      {
+        "kind": "push",
+        "storage": true
+      },
+      {
+        "kind": "ins",
+        "cached": false,
+        "n": 1
+      },
+      {
+        "kind": "ins",
+        "cached": true,
+        "n": 1
+      },
+      {
+        "kind": "idx",
+        "cached": false,
+        "pushPath": true,
+        "pathLength": 1
+      },
+      {
+        "kind": "push",
+        "storage": false
+      },
+      {
+        "kind": "rem",
+        "cached": false
+      },
+      {
+        "kind": "ins",
+        "cached": true,
+        "n": 1
+      },
+      {
+        "kind": "dup",
+        "n": 0
+      },
+      {
+        "kind": "idx",
+        "cached": false,
+        "pushPath": false,
+        "pathLength": 1
+      },
+      {
+        "kind": "push",
+        "storage": false
+      },
+      {
+        "kind": "member"
+      },
+      {
+        "kind": "popeq",
+        "cached": true,
+        "resultAtoms": [
+          []
+        ]
       }
     ]
   }

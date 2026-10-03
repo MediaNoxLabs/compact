@@ -35,3 +35,15 @@ export circuit insert_tuple(key: [Field, Boolean]): [] {
 export circuit insert_struct(key: CompositeKey): [] {
   structKeys.insert(disclose(key));
 }
+
+export circuit roundtrip_tuple(key: [Field, Boolean]): Boolean {
+  tupleKeys.insert(disclose(key));
+  tupleKeys.remove(disclose(key));
+  return tupleKeys.member(disclose(key));
+}
+
+export circuit roundtrip_struct(key: CompositeKey): Boolean {
+  structKeys.insert(disclose(key));
+  structKeys.remove(disclose(key));
+  return structKeys.member(disclose(key));
+}

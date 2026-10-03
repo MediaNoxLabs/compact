@@ -37,6 +37,7 @@ function capture(name, input) {
   const output = contract.circuits[name](context, input);
   const proofData = output.proofData;
   const publicTranscriptShape = proofData.publicTranscript.map((operation) => {
+    if (typeof operation === 'string') return { kind: operation };
     if (operation.idx) {
       const { cached, pushPath, path } = operation.idx;
       return { kind: 'idx', cached, pushPath, pathLength: path.length };
@@ -46,9 +47,19 @@ function capture(name, input) {
       const { cached, n } = operation.ins;
       return { kind: 'ins', cached, n };
     }
+    if (operation.rem) return { kind: 'rem', cached: operation.rem.cached };
+    if (operation.dup) return { kind: 'dup', n: operation.dup.n };
+    if (operation.popeq) {
+      const { cached, result } = operation.popeq;
+      return {
+        kind: 'popeq', cached,
+        resultAtoms: result.value.map((atom) => Array.from(atom)),
+      };
+    }
     throw new Error(`unexpected ${name} operation: ${Object.keys(operation)}`);
   });
   return {
+    result: output.result,
     valueAtoms: proofData.input.value.map((atom) => Array.from(atom)),
     alignment: proofData.input.alignment,
     publicTranscriptShape,
@@ -59,4 +70,6 @@ process.stdout.write(JSON.stringify({
   vector: capture('insert_vector', [3n, 5n]),
   tuple: capture('insert_tuple', [42n, true]),
   struct: capture('insert_struct', { vector: [3n, 5n], pair: [42n, true] }),
+  tupleRoundtrip: capture('roundtrip_tuple', [42n, true]),
+  structRoundtrip: capture('roundtrip_struct', { vector: [3n, 5n], pair: [42n, true] }),
 }, null, 2) + '\n');

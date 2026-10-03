@@ -131,6 +131,53 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
+    pub fn roundtrip_tuple<Private>(
+        context: runtime::context::CircuitContext<Private>,
+        __compact_param_0: (runtime::Field, bool),
+    ) -> Result<runtime::context::CircuitResult<Private, bool>, runtime::CompactError> {
+        let mut total_cost = runtime::context::RunningCost::default();
+        let private_transcript_outputs = Vec::new();
+        let step = crate::ledger_slots::tupleKeys.insert(context, __compact_param_0)?;
+        let context = step.context;
+        total_cost += step.gas_cost;
+        let step = crate::ledger_slots::tupleKeys.remove(context, __compact_param_0)?;
+        let context = step.context;
+        total_cost += step.gas_cost;
+        let read_step = crate::ledger_slots::tupleKeys.member(context, __compact_param_0)?;
+        let context = read_step.context;
+        total_cost += read_step.gas_cost;
+        let result = read_step.result;
+        Ok(runtime::context::CircuitResult {
+            context,
+            result,
+            gas_cost: total_cost,
+            private_transcript_outputs,
+        })
+    }
+    pub fn roundtrip_struct<Private>(
+        context: runtime::context::CircuitContext<Private>,
+        __compact_param_0: crate::types::CompositeKey,
+    ) -> Result<runtime::context::CircuitResult<Private, bool>, runtime::CompactError> {
+        let mut total_cost = runtime::context::RunningCost::default();
+        let private_transcript_outputs = Vec::new();
+        let step = crate::ledger_slots::structKeys.insert(context, __compact_param_0.clone())?;
+        let context = step.context;
+        total_cost += step.gas_cost;
+        let step = crate::ledger_slots::structKeys.remove(context, __compact_param_0.clone())?;
+        let context = step.context;
+        total_cost += step.gas_cost;
+        let read_step =
+            crate::ledger_slots::structKeys.member(context, __compact_param_0.clone())?;
+        let context = read_step.context;
+        total_cost += read_step.gas_cost;
+        let result = read_step.result;
+        Ok(runtime::context::CircuitResult {
+            context,
+            result,
+            gas_cost: total_cost,
+            private_transcript_outputs,
+        })
+    }
     /// Circuits with a replayable ordered ledger program.
     pub mod recorded {
         use midnight_compact_runtime as runtime;
@@ -163,6 +210,36 @@ pub mod ledger_contract {
             let frame = crate::ledger_slots::structKeys
                 .record_insert(frame, (__compact_param_0).clone())?;
             Ok(frame.finish(()))
+        }
+        pub fn roundtrip_tuple<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: (runtime::Field, bool),
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let frame =
+                crate::ledger_slots::tupleKeys.record_insert(frame, (__compact_param_0).clone())?;
+            let frame =
+                crate::ledger_slots::tupleKeys.record_remove(frame, (__compact_param_0).clone())?;
+            let __compact_recorded_key_0 = (__compact_param_0).clone();
+            let (frame, __compact_recorded_member_1): (_, bool) =
+                crate::ledger_slots::tupleKeys.record_member(frame, __compact_recorded_key_0)?;
+            Ok(frame.finish(__compact_recorded_member_1))
+        }
+        pub fn roundtrip_struct<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: crate::types::CompositeKey,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let frame = crate::ledger_slots::structKeys
+                .record_insert(frame, (__compact_param_0).clone())?;
+            let frame = crate::ledger_slots::structKeys
+                .record_remove(frame, (__compact_param_0).clone())?;
+            let __compact_recorded_key_0 = (__compact_param_0).clone();
+            let (frame, __compact_recorded_member_1): (_, bool) =
+                crate::ledger_slots::structKeys.record_member(frame, __compact_recorded_key_0)?;
+            Ok(frame.finish(__compact_recorded_member_1))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
@@ -251,6 +328,66 @@ pub mod ledger_contract {
                     input,
                 ))
             }
+            pub fn roundtrip_tuple<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                __compact_param_0: (runtime::Field, bool),
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, bool>,
+                runtime::CompactError,
+            > {
+                crate::ledger_contract::recorded::roundtrip_tuple(context, __compact_param_0)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn roundtrip_tuple_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                __compact_param_0: (runtime::Field, bool),
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, bool>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
+                let recorded = self
+                    .roundtrip_tuple(observed.circuit_context(private_state), __compact_param_0)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "roundtrip_tuple",
+                    input,
+                ))
+            }
+            pub fn roundtrip_struct<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                __compact_param_0: crate::types::CompositeKey,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, bool>,
+                runtime::CompactError,
+            > {
+                crate::ledger_contract::recorded::roundtrip_struct(context, __compact_param_0)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn roundtrip_struct_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                __compact_param_0: crate::types::CompositeKey,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, bool>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
+                let recorded = self
+                    .roundtrip_struct(observed.circuit_context(private_state), __compact_param_0)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "roundtrip_struct",
+                    input,
+                ))
+            }
         }
     }
     /// Groups the contract's exported circuits for Rust consumers.
@@ -296,6 +433,20 @@ pub mod ledger_contract {
             __compact_param_0: crate::types::CompositeKey,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
             crate::ledger_contract::insert_struct(context, __compact_param_0)
+        }
+        pub fn roundtrip_tuple<Private>(
+            &self,
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: (runtime::Field, bool),
+        ) -> Result<runtime::context::CircuitResult<Private, bool>, runtime::CompactError> {
+            crate::ledger_contract::roundtrip_tuple(context, __compact_param_0)
+        }
+        pub fn roundtrip_struct<Private>(
+            &self,
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: crate::types::CompositeKey,
+        ) -> Result<runtime::context::CircuitResult<Private, bool>, runtime::CompactError> {
+            crate::ledger_contract::roundtrip_struct(context, __compact_param_0)
         }
         /// Access replayable circuit calls for this contract.
         pub fn recording(&self) -> &recorded::Contract {

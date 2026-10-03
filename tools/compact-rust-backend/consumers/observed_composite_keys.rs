@@ -50,7 +50,7 @@ fn vector_tuple_and_struct_calls_need_only_the_generated_crate() {
             "insert_vector",
             contract
                 .recording
-                .insert_vector_call(&observed, (), vector)
+                .insert_vector_call(&observed, (), vector.clone())
                 .unwrap(),
         ),
         (
@@ -64,12 +64,37 @@ fn vector_tuple_and_struct_calls_need_only_the_generated_crate() {
             "insert_struct",
             contract
                 .recording
-                .insert_struct_call(&observed, (), struct_key)
+                .insert_struct_call(&observed, (), struct_key.clone())
                 .unwrap(),
         ),
     ];
     let root = std::env::var("COMPACT_RUST_COMPOSITE_KEY_PROOF").unwrap();
     for (name, call) in calls {
+        let verifier =
+            decode_verifier_key(&std::fs::read(format!("{root}/keys/{name}.verifier")).unwrap())
+                .unwrap();
+        assert!(matches!(
+            call.prepare(verifier, Field::from(0_u64)),
+            Err(ObservedCallError::MissingOperation(actual)) if actual == name
+        ));
+    }
+    let roundtrips = [
+        (
+            "roundtrip_tuple",
+            contract
+                .recording
+                .roundtrip_tuple_call(&observed, (), pair)
+                .unwrap(),
+        ),
+        (
+            "roundtrip_struct",
+            contract
+                .recording
+                .roundtrip_struct_call(&observed, (), struct_key)
+                .unwrap(),
+        ),
+    ];
+    for (name, call) in roundtrips {
         let verifier =
             decode_verifier_key(&std::fs::read(format!("{root}/keys/{name}.verifier")).unwrap())
                 .unwrap();

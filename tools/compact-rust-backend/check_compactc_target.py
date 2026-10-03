@@ -1045,7 +1045,10 @@ def main() -> None:
             composite_key_proof = base / "composite-key-proof"
             run(compiler, "--target", "rust", str(COMPOSITE_KEY_SOURCE), str(composite_key_proof))
             check_manifest(composite_key_proof)
-            for circuit in ("insert_vector", "insert_tuple", "insert_struct"):
+            for circuit in (
+                "insert_vector", "insert_tuple", "insert_struct",
+                "roundtrip_tuple", "roundtrip_struct",
+            ):
                 for extension in ("prover", "verifier"):
                     assert (composite_key_proof / "keys" / f"{circuit}.{extension}").is_file()
                 for extension in ("zkir", "bzkir"):

@@ -2167,6 +2167,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             ("insert_vector", 0_u8),
             ("insert_tuple", 1_u8),
             ("insert_struct", 2_u8),
+            ("roundtrip_tuple", 1_u8),
+            ("roundtrip_struct", 2_u8),
         ] {
             let initial = composite_key_contract::initial_state(ConstructorContext::new(()))?;
             let deploy = make_deploy(
@@ -2218,6 +2220,31 @@ fn main() -> Result<(), Box<dyn Error>> {
                         .prepare(verifier, Fr::from(0_u64))?;
                     (manual, typed)
                 }
+                "roundtrip_tuple" => {
+                    let recorded = contract.recording.roundtrip_tuple(context, pair)?;
+                    if recorded.execution.result {
+                        return Err("tuple roundtrip unexpectedly found a removed key".into());
+                    }
+                    let manual = check_generated_trace(composite_root, circuit, recorded, pair)?;
+                    let typed = contract
+                        .recording
+                        .roundtrip_tuple_call(&observed, (), pair)?
+                        .prepare(verifier, Fr::from(0_u64))?;
+                    (manual, typed)
+                }
+                "roundtrip_struct" => {
+                    let recorded = contract.recording.roundtrip_struct(context, key.clone())?;
+                    if recorded.execution.result {
+                        return Err("struct roundtrip unexpectedly found a removed key".into());
+                    }
+                    let manual =
+                        check_generated_trace(composite_root, circuit, recorded, key.clone())?;
+                    let typed = contract
+                        .recording
+                        .roundtrip_struct_call(&observed, (), key.clone())?
+                        .prepare(verifier, Fr::from(0_u64))?;
+                    (manual, typed)
+                }
                 _ => unreachable!(),
             };
             check_observed_call_parity(composite_root, circuit, &deploy, &manual, &typed)?;
@@ -2236,18 +2263,19 @@ fn main() -> Result<(), Box<dyn Error>> {
                         set_view_at_path::<FixedVector<Field, 2>, _>(state.data.get_ref(), &[path])?
                             .member(vector.clone())
                     }
-                    "insert_tuple" => {
+                    "insert_tuple" | "roundtrip_tuple" => {
                         set_view_at_path::<(Field, bool), _>(state.data.get_ref(), &[path])?
                             .member(pair)
                     }
-                    "insert_struct" => {
+                    "insert_struct" | "roundtrip_struct" => {
                         set_view_at_path::<CompositeKey, _>(state.data.get_ref(), &[path])?
                             .member(key.clone())
                     }
                     _ => unreachable!(),
                 };
-                if set.size() != 1 || !present {
-                    return Err("proven composite-key Set insert lost its declared key".into());
+                let should_exist = !circuit.starts_with("roundtrip_");
+                if set.size() != usize::from(should_exist) || present != should_exist {
+                    return Err("proven composite-key Set differs from expected state".into());
                 }
                 Ok(())
             })?;

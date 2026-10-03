@@ -82,7 +82,38 @@ fn vector_tuple_and_nested_struct_inputs_match_typescript_fab() {
             .concat(),
         ),
     );
-    for (name, field_count) in [("vector", 2), ("tuple", 1), ("struct", 3)] {
+    check_input(
+        &oracle["tupleRoundtrip"],
+        AlignedValue::from(pair),
+        Alignment(
+            [
+                field_alignment(1),
+                vec![AlignmentSegment::Atom(AlignmentAtom::Bytes { length: 1 })],
+            ]
+            .concat(),
+        ),
+    );
+    check_input(
+        &oracle["structRoundtrip"],
+        AlignedValue::from(CompositeKey {
+            vector: FixedVector::new([Field::from(3_u64), Field::from(5_u64)]),
+            pair,
+        }),
+        Alignment(
+            [
+                field_alignment(3),
+                vec![AlignmentSegment::Atom(AlignmentAtom::Bytes { length: 1 })],
+            ]
+            .concat(),
+        ),
+    );
+    for (name, field_count) in [
+        ("vector", 2),
+        ("tuple", 1),
+        ("struct", 3),
+        ("tupleRoundtrip", 1),
+        ("structRoundtrip", 3),
+    ] {
         let alignment = oracle[name]["alignment"].as_array().unwrap();
         assert_eq!(alignment.len(), field_count + usize::from(name != "vector"));
         assert!(
@@ -99,12 +130,13 @@ fn vector_tuple_and_nested_struct_inputs_match_typescript_fab() {
     }
 }
 
-fn check_recorded(
+fn check_recorded<Output: std::fmt::Debug + PartialEq>(
     name: &str,
-    native: CircuitResult<(), (), DefaultDB>,
-    recorded: RecordedCircuitResult<(), (), DefaultDB>,
+    native: CircuitResult<(), Output, DefaultDB>,
+    recorded: RecordedCircuitResult<(), Output, DefaultDB>,
 ) {
     let oracle = oracle();
+    assert_eq!(recorded.execution.result, native.result, "{name}: result");
     assert_eq!(recorded.execution.gas_cost, native.gas_cost, "{name}: gas");
     assert_eq!(
         recorded.execution.context.query.effects, native.context.query.effects,
@@ -135,6 +167,9 @@ fn check_recorded(
         .unwrap()
         .iter()
         .map(|operation| {
+            if let Some(kind) = operation.as_str() {
+                return serde_json::json!({"kind": kind});
+            }
             if let Some(idx) = operation.get("idx") {
                 serde_json::json!({
                     "kind": "idx",
@@ -146,6 +181,16 @@ fn check_recorded(
                 serde_json::json!({"kind": "push", "storage": push["storage"]})
             } else if let Some(ins) = operation.get("ins") {
                 serde_json::json!({"kind": "ins", "cached": ins["cached"], "n": ins["n"]})
+            } else if let Some(rem) = operation.get("rem") {
+                serde_json::json!({"kind": "rem", "cached": rem["cached"]})
+            } else if let Some(dup) = operation.get("dup") {
+                serde_json::json!({"kind": "dup", "n": dup["n"]})
+            } else if let Some(popeq) = operation.get("popeq") {
+                serde_json::json!({
+                    "kind": "popeq",
+                    "cached": popeq["cached"],
+                    "resultAtoms": popeq["result"]["value"],
+                })
             } else {
                 panic!("{name}: unexpected VM operation: {operation}");
             }
@@ -187,4 +232,19 @@ fn vector_tuple_and_nested_struct_recorded_set_inserts_replay() {
         ledger_contract::insert_struct(context(), key.clone()).unwrap(),
         contract.recording.insert_struct(context(), key).unwrap(),
     );
+    let tuple_native = ledger_contract::roundtrip_tuple(context(), pair).unwrap();
+    let tuple_recorded = contract.recording.roundtrip_tuple(context(), pair).unwrap();
+    assert!(!tuple_native.result && !tuple_recorded.execution.result);
+    check_recorded("tupleRoundtrip", tuple_native, tuple_recorded);
+    let struct_key = CompositeKey {
+        vector: FixedVector::new([Field::from(3_u64), Field::from(5_u64)]),
+        pair,
+    };
+    let struct_native = ledger_contract::roundtrip_struct(context(), struct_key.clone()).unwrap();
+    let struct_recorded = contract
+        .recording
+        .roundtrip_struct(context(), struct_key)
+        .unwrap();
+    assert!(!struct_native.result && !struct_recorded.execution.result);
+    check_recorded("structRoundtrip", struct_native, struct_recorded);
 }

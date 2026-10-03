@@ -181,8 +181,8 @@ patch was used during archive verification. The `midnight` vault's ADR-0013
 records the decision; [issue #114](https://github.com/MediaNoxLabs/compact/issues/114)
 tracks the remaining gates.
 
-After packaging, rehearse a generated Counter consumer against the two exact
-archives in that manifest:
+After packaging, rehearse separately generated Counter and Boolean Cell
+contracts together against the two exact archives in that manifest:
 
 ```sh
 nix develop .#compiler --command python3 \
@@ -190,14 +190,15 @@ nix develop .#compiler --command python3 \
   --manifest target/rust-runtime-release.json
 ```
 
-This isolated gate vendors the pinned upstream crates, installs the macro and
-runtime from their `.crate` bytes, and compiles a fresh `compactc --target rust`
-contract with a version-only runtime dependency. It removes the disposable
-bundled runtime copy, exercises a Counter call from a one-dependency external
-consumer, and checks that Cargo resolved both release crates as registry-style
-packages from the archive source. No local path patch is used for the final
-consumer. Source replacement is a local release rehearsal; crates.io
-publication, a public registry consumer, and remote CI remain #106 exit gates.
+This isolated gate vendors the pinned upstream crates and installs the macro
+and runtime from their `.crate` bytes. It compiles both contracts independently
+with `compactc --target rust`, replaces each disposable bundled runtime with a
+version-only dependency, and runs both from one external consumer. It checks
+that Cargo resolves exactly one shared runtime and macro as registry-style
+packages from the archive source, including direct dependencies from both
+generated crates. No local path patch is used for the final consumer. Source
+replacement is a local release rehearsal; crates.io publication, a public
+registry consumer, and remote CI remain #106 exit gates.
 
 ## Source model
 

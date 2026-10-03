@@ -324,7 +324,7 @@ jobs:
           python3 tools/compact-rust-backend/check_release_packages.py --manifest target/rust-runtime-release.json
           python3 tools/compact-rust-backend/check_release_packages.py --verify-manifest target/rust-runtime-release.json
 
-      - name: Build generated Rust consumer from runtime archives
+      - name: Build generated Rust contracts from shared runtime archives
         run: |
           nix develop .#compiler --command python3 tools/compact-rust-backend/check_archive_consumer.py --manifest target/rust-runtime-release.json
 

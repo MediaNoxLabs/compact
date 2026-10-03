@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Build a generated Counter consumer using only the two runtime archives."""
+"""Build two generated contracts together using only the runtime archives."""
 
 import argparse
 import hashlib
@@ -30,7 +30,10 @@ import tomllib
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / "examples/rust_backend/counter.compact"
+CONTRACTS = (
+    ("counter", ROOT / "examples/rust_backend/counter.compact"),
+    ("cell-boolean", ROOT / "examples/rust_backend/cell_boolean.compact"),
+)
 PACKAGE_NAMES = ("midnight-compact-runtime-macros", "midnight-compact-runtime")
 
 
@@ -88,6 +91,7 @@ def install_archive(vendor: Path, entry: dict, macro_version: str) -> Path:
 
 def check_graph(metadata: dict, consumer: Path, vendor: Path, entries: list[dict]) -> None:
     packages = metadata["packages"]
+    runtime_id = None
     for name in PACKAGE_NAMES:
         found = [package for package in packages if package["name"] == name]
         if len(found) != 1:
@@ -98,6 +102,19 @@ def check_graph(metadata: dict, consumer: Path, vendor: Path, entries: list[dict
         path = Path(package["manifest_path"]).resolve()
         if not path.is_relative_to(vendor.resolve()):
             raise RuntimeError(f"{name} did not come from the archive vendor source")
+        if name == "midnight-compact-runtime":
+            runtime_id = package["id"]
+    if runtime_id is None:
+        raise RuntimeError("runtime package missing from resolved graph")
+    nodes = {node["id"]: node for node in metadata["resolve"]["nodes"]}
+    for name, _ in CONTRACTS:
+        package_name = f"compact-contract-{name}"
+        found = [package for package in packages if package["name"] == package_name]
+        if len(found) != 1:
+            raise RuntimeError(f"expected one generated {package_name}")
+        direct = {dependency["pkg"] for dependency in nodes[found[0]["id"]]["deps"]}
+        if runtime_id not in direct:
+            raise RuntimeError(f"{package_name} did not resolve the shared archived runtime")
     lock = (consumer / "Cargo.lock").read_text()
     for entry in entries:
         name = entry["name"]
@@ -138,21 +155,24 @@ def main() -> None:
         for entry in entries:
             install_archive(vendor, entry, macro_version)
 
-        artifact = temporary / "artifact"
-        run([args.compiler, "--target", "rust", "--skip-zk", str(SOURCE), str(artifact)])
-        contract = artifact / "contract"
-        manifest_path = contract / "Cargo.toml"
+        contracts = {}
         before = 'midnight-compact-runtime = { path = "runtime-rs", package = "midnight-compact-runtime" }'
         after = (
             'midnight-compact-runtime = '
             f'{{ version = "={runtime_version}", package = "midnight-compact-runtime" }}'
         )
-        source = manifest_path.read_text()
-        if source.count(before) != 1:
-            raise RuntimeError("generated Counter manifest has an unexpected runtime dependency")
-        manifest_path.write_text(source.replace(before, after))
-        shutil.rmtree(contract / "runtime-rs")
-        shutil.rmtree(contract / "runtime-rs-macros")
+        for name, source in CONTRACTS:
+            artifact = temporary / name
+            run([args.compiler, "--target", "rust", "--skip-zk", str(source), str(artifact)])
+            contract = artifact / "contract"
+            manifest_path = contract / "Cargo.toml"
+            generated = manifest_path.read_text()
+            if generated.count(before) != 1:
+                raise RuntimeError(f"generated {name} manifest has an unexpected runtime dependency")
+            manifest_path.write_text(generated.replace(before, after))
+            shutil.rmtree(contract / "runtime-rs")
+            shutil.rmtree(contract / "runtime-rs-macros")
+            contracts[name] = contract
 
         consumer = temporary / "consumer"
         (consumer / "tests").mkdir(parents=True)
@@ -160,22 +180,36 @@ def main() -> None:
         (consumer / "Cargo.toml").write_text(
             '[package]\nname = "compact-rust-archive-consumer"\nversion = "0.1.0"\n'
             'edition = "2024"\n\n[workspace]\n\n[dependencies]\n'
-            f'compact-contract-counter = {{ path = "{contract}", features = ["ledger-transaction"] }}\n'
+            + "".join(
+                f'compact-contract-{name} = {{ path = "{contract}", features = ["ledger-transaction"] }}\n'
+                for name, contract in contracts.items()
+            )
         )
         (consumer / ".cargo/config.toml").write_text(
             '[source.crates-io]\nreplace-with = "archive-vendor"\n'
             f'[source.archive-vendor]\ndirectory = "{vendor}"\n'
         )
         (consumer / "tests/counter.rs").write_text(
-            'use compact_contract_counter::ledger_contract::{initial_state, Contract};\n'
+            'use compact_contract_counter as counter;\n'
+            'use compact_contract_cell_boolean as cell;\n'
             'use compact_contract_counter::runtime::context::ConstructorContext;\n'
-            'use compact_contract_counter::runtime::ledger::ContractAddress;\n'
+            'use compact_contract_counter::runtime::ledger::{ContractAddress, StateValue, read_cell};\n'
             '#[test]\nfn archived_runtime_executes_generated_counter() {\n'
-            '    let state = initial_state(ConstructorContext::new(())).unwrap();\n'
+            '    let state = counter::ledger_contract::initial_state(ConstructorContext::new(())).unwrap();\n'
             '    let context = state.into_circuit_context(ContractAddress::default());\n'
-            '    let call = Contract::default().increment(context).unwrap();\n'
-            '    let read = Contract::default().read_round(call.context).unwrap();\n'
+            '    let call = counter::ledger_contract::Contract::default().increment(context).unwrap();\n'
+            '    let read = counter::ledger_contract::Contract::default().read_round(call.context).unwrap();\n'
             '    assert_eq!(read.result.value(), 1);\n}\n'
+            '#[test]\nfn archived_runtime_executes_generated_cell() {\n'
+            '    let address: counter::runtime::ledger::ContractAddress =\n'
+            '        cell::runtime::ledger::ContractAddress::default();\n'
+            '    let state = cell::ledger_contract::initial_state(ConstructorContext::new(())).unwrap();\n'
+            '    let context = state.into_circuit_context(address);\n'
+            '    let call = cell::ledger_contract::Contract::default().set_flag(context).unwrap();\n'
+            '    let StateValue::Array(fields) = call.context.query.state.get_ref() else {\n'
+            '        panic!("expected generated Cell field array");\n'
+            '    };\n'
+            '    assert!(read_cell::<bool, _>(&fields.get(0).unwrap()).unwrap());\n}\n'
         )
         environment = os.environ.copy()
         environment.setdefault("CARGO_TARGET_DIR", str(ROOT / "target/compactc-consumer"))
@@ -185,7 +219,7 @@ def main() -> None:
         metadata = json.loads(run(["cargo", "metadata", "--offline", "--format-version", "1"],
                                   cwd=consumer, env=environment))
         check_graph(metadata, consumer, vendor, entries)
-    print("archive-only generated Counter consumer passed; public registry publication remains unverified")
+    print("archive-only Counter + Cell consumer passed with one shared runtime; public registry publication remains unverified")
 
 
 if __name__ == "__main__":

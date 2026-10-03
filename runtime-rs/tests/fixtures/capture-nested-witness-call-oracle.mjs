@@ -60,6 +60,13 @@ const outerValue2 = contract.circuits.outerValue2(outerValue.context);
 initial.currentContractState.data = new runtime.ChargedState(
   outerValue2.context.currentQueryContext.state.state,
 );
+const afterOuterValue2Hex = Buffer.from(initial.currentContractState.serialize()).toString('hex');
+const outerValue2Queries = queryCosts.slice(outerValue2QueryStart);
+const outerValueExprQueryStart = queryCosts.length;
+const outerValueExpr = contract.circuits.outerValueExpr(outerValue2.context);
+initial.currentContractState.data = new runtime.ChargedState(
+  outerValueExpr.context.currentQueryContext.state.state,
+);
 function normalize(value) {
   if (typeof value === 'bigint') return value.toString();
   if (value instanceof Uint8Array) return { bytesHex: Buffer.from(value).toString('hex') };
@@ -73,10 +80,12 @@ process.stdout.write(JSON.stringify({
   initialHex,
   afterOuterHex,
   afterOuterValueHex,
-  afterOuterValue2Hex: Buffer.from(initial.currentContractState.serialize()).toString('hex'),
+  afterOuterValue2Hex,
+  afterOuterValueExprHex: Buffer.from(initial.currentContractState.serialize()).toString('hex'),
   privateState: outer.context.currentPrivateState,
   afterOuterValuePrivateState: outerValue.context.currentPrivateState,
   afterOuterValue2PrivateState: outerValue2.context.currentPrivateState,
+  afterOuterValueExprPrivateState: outerValueExpr.context.currentPrivateState,
   privateTranscriptOutputs: outer.proofData.privateTranscriptOutputs.map(
     ({ value, alignment }) => ({
       valueAtoms: value.map((atom) => Array.from(atom)),
@@ -95,7 +104,16 @@ process.stdout.write(JSON.stringify({
       alignment,
     }),
   ),
+  outerValueExprTranscript: outerValueExpr.proofData.privateTranscriptOutputs.map(
+    ({ value, alignment }) => ({
+      valueAtoms: value.map((atom) => Array.from(atom)),
+      alignment,
+    }),
+  ),
   outerValue2Gas: normalize(outerValue2.gasCost),
-  outerValue2Queries: normalize(queryCosts.slice(outerValue2QueryStart)),
+  outerValue2Queries: normalize(outerValue2Queries),
   outerValue2PublicTranscript: normalize(outerValue2.proofData.publicTranscript),
+  outerValueExprGas: normalize(outerValueExpr.gasCost),
+  outerValueExprQueries: normalize(queryCosts.slice(outerValueExprQueryStart)),
+  outerValueExprPublicTranscript: normalize(outerValueExpr.proofData.publicTranscript),
 }, null, 2) + '\n');

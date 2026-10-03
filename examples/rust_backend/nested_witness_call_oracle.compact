@@ -46,3 +46,7 @@ circuit innerValue2(first: Field, second: Field): Field {
 export circuit outerValue2(): [] {
   value = innerValue2(disclose(ordered()), disclose(ordered()));
 }
+
+export circuit outerValueExpr(): [] {
+  value = innerValue() + disclose(ordered());
+}

@@ -619,7 +619,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
     if let Some(expression_root) = expression_root {
         let expression_root = Path::new(&expression_root);
-        for circuit in ["outer", "outerValue", "outerValue2"] {
+        for circuit in ["outer", "outerValue", "outerValue2", "outerValueExpr"] {
             let initial = expression_contract::initial_state(ConstructorContext::new(7_u64))?;
             let deploy = make_deploy(
                 expression_root,
@@ -633,9 +633,14 @@ fn main() -> Result<(), Box<dyn Error>> {
                 "outer" => contract.recording().outer(context)?,
                 "outerValue" => contract.recording().outerValue(context)?,
                 "outerValue2" => contract.recording().outerValue2(context)?,
+                "outerValueExpr" => contract.recording().outerValueExpr(context)?,
                 _ => unreachable!(),
             };
-            let expected_outputs = if circuit == "outerValue2" { 3 } else { 1 };
+            let expected_outputs = match circuit {
+                "outerValue2" => 3,
+                "outerValueExpr" => 2,
+                _ => 1,
+            };
             if recorded.execution.private_transcript_outputs.len() != expected_outputs {
                 return Err(
                     format!("{circuit} did not record {expected_outputs} private values").into(),
@@ -652,10 +657,10 @@ fn main() -> Result<(), Box<dyn Error>> {
                     let StateValue::Array(fields) = contract.data.get_ref() else {
                         return Err("nested expression state is not an array".into());
                     };
-                    let expected = if circuit == "outerValue2" {
-                        24_u64
-                    } else {
-                        7_u64
+                    let expected = match circuit {
+                        "outerValue2" => 24_u64,
+                        "outerValueExpr" => 15_u64,
+                        _ => 7_u64,
                     };
                     if read_cell::<Field, _>(fields.get(0).ok_or("Field Cell missing")?)?
                         != Field::from(expected)

@@ -15,6 +15,7 @@
 
 use compact_rust_nested_witness_call_oracle_fixture::ledger_contract::{
     Contract, LedgerView, TryWitnesses, Witnesses, initial_state, outer, outerValue, outerValue2,
+    outerValueExpr,
 };
 use midnight_compact_runtime::context::{ConstructorContext, WitnessContext};
 use midnight_compact_runtime::ledger::{ContractAddress, DefaultDB, StateValue};
@@ -24,12 +25,37 @@ use midnight_onchain_state::state::{
 };
 use midnight_serialize::tagged_serialize;
 use midnight_storage::storage::HashMap;
+use std::cell::Cell;
+use std::rc::Rc;
 
 struct OracleWitness;
 
 struct RejectingWitness;
 
 struct RejectThirdOrderedWitness;
+
+struct RejectExpressionLeftWitness {
+    ordered_calls: Rc<Cell<usize>>,
+}
+
+impl TryWitnesses<u64> for RejectExpressionLeftWitness {
+    fn secret(
+        &self,
+        _context: WitnessContext<'_, u64, LedgerView<'_>>,
+    ) -> Result<(u64, Field), CompactError> {
+        Err(CompactError::AssertionFailed(
+            "left witness rejected".into(),
+        ))
+    }
+
+    fn ordered(
+        &self,
+        context: WitnessContext<'_, u64, LedgerView<'_>>,
+    ) -> Result<(u64, Field), CompactError> {
+        self.ordered_calls.set(self.ordered_calls.get() + 1);
+        Ok((*context.private_state + 1, Field::from(99_u64)))
+    }
+}
 
 impl TryWitnesses<u64> for RejectingWitness {
     fn secret(
@@ -86,7 +112,7 @@ impl Witnesses<u64> for OracleWitness {
 
 fn state_hex(state: StateValue<DefaultDB>) -> String {
     let mut operations: HashMap<EntryPointBuf, ContractOperation, DefaultDB> = HashMap::new();
-    for name in ["outer", "outerValue", "outerValue2"] {
+    for name in ["outer", "outerValue", "outerValue2", "outerValueExpr"] {
         operations = operations.insert(
             EntryPointBuf(name.as_bytes().to_vec()),
             ContractOperation::new(None),
@@ -310,6 +336,117 @@ fn parameterized_value_helper_preserves_argument_order_and_verify_program() {
         replay.context.effects,
         recorded.execution.context.query.effects
     );
+}
+
+#[test]
+fn expression_nested_value_helper_matches_typescript_and_replays() {
+    let reference: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/nested-witness-call-oracle.json"
+    ))
+    .unwrap();
+
+    let native_context = initial_state(ConstructorContext::new(7_u64))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let native_outer = outer(native_context, &OracleWitness).unwrap();
+    let native_value = outerValue(native_outer.context, &OracleWitness).unwrap();
+    let native_value2 = outerValue2(native_value.context, &OracleWitness).unwrap();
+    let native = outerValueExpr(native_value2.context, &OracleWitness).unwrap();
+
+    let recorded_context = initial_state(ConstructorContext::new(7_u64))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let contract = Contract::from(OracleWitness);
+    let recorded_outer = contract.recording().outer(recorded_context).unwrap();
+    let recorded_value = contract
+        .recording()
+        .outerValue(recorded_outer.execution.context)
+        .unwrap();
+    let recorded_value2 = contract
+        .recording()
+        .outerValue2(recorded_value.execution.context)
+        .unwrap();
+    let recorded = contract
+        .recording()
+        .outerValueExpr(recorded_value2.execution.context)
+        .unwrap();
+
+    assert_eq!(recorded.execution.gas_cost, native.gas_cost);
+    assert_eq!(
+        recorded.execution.context.query.effects,
+        native.context.query.effects
+    );
+    assert_eq!(
+        recorded.execution.context.private_state,
+        reference["afterOuterValueExprPrivateState"]
+            .as_u64()
+            .unwrap()
+    );
+    assert_eq!(
+        state_hex(recorded.execution.context.query.state.get_ref().clone()),
+        reference["afterOuterValueExprHex"]
+    );
+    assert_eq!(
+        midnight_compact_runtime::ledger::read_root_cell::<Field, _>(
+            recorded.execution.context.query.state.get_ref(),
+            0,
+        )
+        .unwrap(),
+        Field::from(20_u64)
+    );
+    assert_transcript(
+        &recorded.execution.private_transcript_outputs,
+        &reference["outerValueExprTranscript"],
+    );
+    let queries = reference["outerValueExprQueries"].as_array().unwrap();
+    assert_eq!(queries.len(), 1, "only the Cell write queries the ledger");
+    let actual_gas = serde_json::to_value(&recorded.execution.gas_cost).unwrap();
+    for key in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+        let expected = queries[0]["gasCost"][key]
+            .as_str()
+            .unwrap()
+            .parse::<u64>()
+            .unwrap();
+        assert_eq!(actual_gas[key].as_u64().unwrap(), expected, "{key}");
+        assert_eq!(
+            reference["outerValueExprGas"][key],
+            queries[0]["gasCost"][key]
+        );
+    }
+    assert_eq!(
+        normalized_verify_ops(&recorded),
+        reference["outerValueExprPublicTranscript"]
+    );
+    let replay = recorded
+        .public
+        .initial()
+        .query(
+            recorded.public.verify_ops(),
+            None,
+            &recorded.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(
+        replay.context.effects,
+        recorded.execution.context.query.effects
+    );
+}
+
+#[test]
+fn expression_nested_value_helper_stops_before_right_witness_on_left_error() {
+    let context = initial_state(ConstructorContext::new(7_u64))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let ordered_calls = Rc::new(Cell::new(0));
+    let witness = RejectExpressionLeftWitness {
+        ordered_calls: Rc::clone(&ordered_calls),
+    };
+    let contract = Contract::from(witness);
+    assert!(matches!(
+        contract.recording().outerValueExpr(context),
+        Err(CompactError::AssertionFailed(message)) if message == "left witness rejected"
+    ));
+    assert_eq!(ordered_calls.get(), 0);
 }
 
 #[test]

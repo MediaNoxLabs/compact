@@ -1881,6 +1881,88 @@ fn recorded_field_returning_helper_is_shared_across_callers() {
     );
     assert!(source.contains("__compact_param_0: runtime::Field"));
     assert!(source.contains("__compact_param_1: runtime::Field"));
+
+    // The compiler lowers `value = innerValue(1, 2) + 3` to a Field
+    // action binding with an expression-nested call. Reuse the same body.
+    let mut nested = contract.stateful_circuits[1].clone();
+    nested.name = "outerNested".into();
+    let StateAction::Let { bindings, .. } = &mut nested.actions[0] else {
+        unreachable!()
+    };
+    bindings[0].value = Expr::Add {
+        left: Box::new(Expr::Call {
+            name: "innerValue".into(),
+            arguments: vec![
+                Expr::FieldLiteral { value: "1".into() },
+                Expr::FieldLiteral { value: "2".into() },
+            ],
+        }),
+        right: Box::new(Expr::FieldLiteral { value: "3".into() }),
+    };
+    contract.stateful_circuits.push(nested);
+    let source = render(&contract).unwrap();
+    syn::parse_file(&source).unwrap();
+    assert_eq!(
+        source
+            .matches("fn __compact_recorded_body_innerValue<")
+            .count(),
+        1
+    );
+    assert_eq!(
+        source.matches("__compact_recorded_body_innerValue").count(),
+        4
+    );
+    assert!(source.contains("pub fn outerNested<Private"));
+
+    contract
+        .stateful_circuits
+        .retain(|circuit| circuit.internal || circuit.name == "outerNested");
+    let nested_only = render(&contract).unwrap();
+    assert_eq!(
+        nested_only
+            .matches("fn __compact_recorded_body_innerValue<")
+            .count(),
+        1
+    );
+    assert_eq!(
+        nested_only
+            .matches("__compact_recorded_body_innerValue")
+            .count(),
+        2
+    );
+
+    contract.stateful_circuits[0].return_value = StateReturn::Expression {
+        value: Expr::Multiply {
+            left: Box::new(Expr::Parameter {
+                name: "first".into(),
+            }),
+            right: Box::new(Expr::Parameter {
+                name: "second".into(),
+            }),
+        },
+    };
+    assert!(!render(&contract).unwrap().contains("pub mod recorded"));
+
+    contract.stateful_circuits[0].return_value = StateReturn::Expression {
+        value: Expr::Add {
+            left: Box::new(Expr::Call {
+                name: "innerValue".into(),
+                arguments: vec![
+                    Expr::Parameter {
+                        name: "first".into(),
+                    },
+                    Expr::Parameter {
+                        name: "second".into(),
+                    },
+                ],
+            }),
+            right: Box::new(Expr::FieldLiteral { value: "1".into() }),
+        },
+    };
+    assert!(matches!(
+        render(&contract),
+        Err(RenderError::UnsupportedStatefulCall(name)) if name == "innerValue"
+    ));
 }
 
 #[test]

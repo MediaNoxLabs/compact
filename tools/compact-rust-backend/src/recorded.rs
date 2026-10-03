@@ -114,6 +114,22 @@ fn helper_ident(
     }
 }
 
+fn collect_field_callees(value: &Expr, names: &mut HashSet<String>) {
+    match value {
+        Expr::Call { name, .. } => {
+            names.insert(name.clone());
+        }
+        Expr::Add { left, right } => {
+            collect_field_callees(left, names);
+            collect_field_callees(right, names);
+        }
+        Expr::Coerce { value, ty } if *ty == Type::Field => {
+            collect_field_callees(value, names);
+        }
+        _ => {}
+    }
+}
+
 fn collect_shared_callees(action: &StateAction, names: &mut HashSet<String>) {
     match action {
         StateAction::CircuitCall { name, .. } => {
@@ -133,18 +149,17 @@ fn collect_shared_callees(action: &StateAction, names: &mut HashSet<String>) {
         StateAction::Let { bindings, action } => {
             for binding in bindings {
                 if binding.ty == Type::Field {
-                    if let Expr::Call { name, .. } = &binding.value {
-                        names.insert(name.clone());
-                    }
+                    collect_field_callees(&binding.value, names);
                 }
             }
             collect_shared_callees(action, names);
         }
+        StateAction::CellWrite { value, .. } => collect_field_callees(value, names),
         _ => {}
     }
 }
 
-/// Find recordable Unit and direct Field-value callees before emitting public entry points. Rendering each
+/// Find recordable Unit and Field-value callees before emitting public entry points. Rendering each
 /// candidate without sharing also checks transitive support and rejects recursion.
 pub(crate) fn plan_recorded_helpers(
     ordered_circuits: &[StatefulCircuit],
@@ -413,6 +428,7 @@ fn render_recorded_item(
         ledger_fields: &HashMap<&str, &LedgerField>,
         witnesses: &HashMap<&str, &WitnessDeclaration>,
         circuits: &HashMap<&str, &StatefulCircuit>,
+        shared_callees: &HashSet<String>,
         steps: &mut Vec<syn::Stmt>,
         next_temp: &mut usize,
         visiting: &mut HashSet<String>,
@@ -430,6 +446,7 @@ fn render_recorded_item(
                     ledger_fields,
                     witnesses,
                     circuits,
+                    shared_callees,
                     steps,
                     next_temp,
                     visiting,
@@ -442,6 +459,7 @@ fn render_recorded_item(
                 ledger_fields,
                 witnesses,
                 circuits,
+                shared_callees,
                 steps,
                 next_temp,
                 visiting,
@@ -497,6 +515,7 @@ fn render_recorded_item(
                             ledger_fields,
                             witnesses,
                             circuits,
+                            shared_callees,
                             steps,
                             next_temp,
                             visiting,
@@ -542,6 +561,7 @@ fn render_recorded_item(
                     ledger_fields,
                     witnesses,
                     circuits,
+                    shared_callees,
                     steps,
                     next_temp,
                     visiting,
@@ -556,6 +576,7 @@ fn render_recorded_item(
                     ledger_fields,
                     witnesses,
                     circuits,
+                    shared_callees,
                     steps,
                     next_temp,
                     visiting,
@@ -588,6 +609,23 @@ fn render_recorded_item(
                         actual: arguments.len(),
                     });
                 }
+                if visiting.contains(name) {
+                    return Err(RenderError::UnsupportedStatefulCall(name.clone()));
+                }
+                if shared_callees.contains(name) {
+                    return shared_field_call(
+                        name,
+                        arguments,
+                        locals,
+                        parameters,
+                        ledger_fields,
+                        witnesses,
+                        circuits,
+                        steps,
+                        next_temp,
+                        visiting,
+                    );
+                }
                 if !visiting.insert(name.clone()) {
                     return Err(RenderError::UnsupportedStatefulCall(name.clone()));
                 }
@@ -601,6 +639,7 @@ fn render_recorded_item(
                             ledger_fields,
                             witnesses,
                             circuits,
+                            shared_callees,
                             steps,
                             next_temp,
                             visiting,
@@ -634,7 +673,7 @@ fn render_recorded_item(
                         ledger_fields,
                         witnesses,
                         circuits,
-                        &HashSet::new(),
+                        shared_callees,
                         steps,
                         next_temp,
                         visiting,
@@ -650,6 +689,7 @@ fn render_recorded_item(
                     ledger_fields,
                     witnesses,
                     circuits,
+                    shared_callees,
                     steps,
                     next_temp,
                     visiting,
@@ -970,6 +1010,7 @@ fn render_recorded_item(
                 ledger_fields,
                 witnesses,
                 circuits,
+                &HashSet::new(),
                 steps,
                 next_temp,
                 visiting,
@@ -1016,6 +1057,7 @@ fn render_recorded_item(
                 ledger_fields,
                 witnesses,
                 circuits,
+                &HashSet::new(),
                 steps,
                 next_temp,
                 visiting,
@@ -1043,6 +1085,69 @@ fn render_recorded_item(
             });
         }
         Ok(cell_source(argument, ty, locals, parameters))
+    }
+
+    /// Reuse one typed callee body without opening or finishing another frame.
+    fn shared_field_call(
+        name: &str,
+        arguments: &[Expr],
+        locals: &HashMap<String, syn::Expr>,
+        parameters: &HashMap<&str, (&Type, syn::Ident)>,
+        ledger_fields: &HashMap<&str, &LedgerField>,
+        witnesses: &HashMap<&str, &WitnessDeclaration>,
+        circuits: &HashMap<&str, &StatefulCircuit>,
+        steps: &mut Vec<syn::Stmt>,
+        next_temp: &mut usize,
+        visiting: &mut HashSet<String>,
+    ) -> Result<Option<syn::Expr>, RenderError> {
+        let callee = circuits
+            .get(name)
+            .ok_or_else(|| RenderError::UnknownCircuit(name.to_owned()))?;
+        if callee.result != Type::Field || arguments.len() != callee.parameters.len() {
+            return Ok(None);
+        }
+        let mut args = Vec::new();
+        for (argument, parameter) in arguments.iter().zip(&callee.parameters) {
+            let Some(value) = shared_call_argument(
+                argument,
+                &parameter.ty,
+                locals,
+                parameters,
+                ledger_fields,
+                witnesses,
+                circuits,
+                steps,
+                next_temp,
+                visiting,
+            )?
+            else {
+                return Ok(None);
+            };
+            let arg = syn::Ident::new(
+                &format!("__compact_recorded_arg_{}", *next_temp),
+                Span::call_site(),
+            );
+            *next_temp += 1;
+            let arg_ty = rust_type(&parameter.ty)?;
+            steps.push(syn::parse_quote!(let #arg: #arg_ty = #value;));
+            args.push(arg);
+        }
+        let observed = syn::Ident::new(
+            &format!("__compact_recorded_value_{}", *next_temp),
+            Span::call_site(),
+        );
+        *next_temp += 1;
+        let helper = helper_ident(name, circuits)?;
+        if circuit_uses_witness(callee, circuits, &mut HashSet::new())? {
+            steps.push(syn::parse_quote!(
+                let (frame, #observed) = #helper(frame, witnesses, #(#args),*)?;
+            ));
+        } else {
+            steps.push(syn::parse_quote!(
+                let (frame, #observed) = #helper(frame, #(#args),*)?;
+            ));
+        }
+        Ok(Some(syn::parse_quote!(#observed)))
     }
 
     fn append_steps(
@@ -1092,56 +1197,22 @@ fn render_recorded_item(
                     } else if binding.ty == Type::Field {
                         if let Expr::Call { name, arguments } = &binding.value {
                             if shared_callees.contains(name) {
-                                let callee = circuits
-                                    .get(name.as_str())
-                                    .ok_or_else(|| RenderError::UnknownCircuit(name.clone()))?;
-                                if callee.result != Type::Field
-                                    || arguments.len() != callee.parameters.len()
-                                {
+                                let Some(observed) = shared_field_call(
+                                    name,
+                                    arguments,
+                                    &scoped,
+                                    parameters,
+                                    ledger_fields,
+                                    witnesses,
+                                    circuits,
+                                    steps,
+                                    next_temp,
+                                    visiting,
+                                )?
+                                else {
                                     return Ok(false);
-                                }
-                                let mut args = Vec::new();
-                                for (argument, parameter) in
-                                    arguments.iter().zip(&callee.parameters)
-                                {
-                                    let value = shared_call_argument(
-                                        argument,
-                                        &parameter.ty,
-                                        &scoped,
-                                        parameters,
-                                        ledger_fields,
-                                        witnesses,
-                                        circuits,
-                                        steps,
-                                        next_temp,
-                                        visiting,
-                                    )?;
-                                    let Some(value) = value else { return Ok(false) };
-                                    let arg = syn::Ident::new(
-                                        &format!("__compact_recorded_arg_{}", *next_temp),
-                                        Span::call_site(),
-                                    );
-                                    *next_temp += 1;
-                                    let arg_ty = rust_type(&parameter.ty)?;
-                                    steps.push(syn::parse_quote!(let #arg: #arg_ty = #value;));
-                                    args.push(arg);
-                                }
-                                let observed = syn::Ident::new(
-                                    &format!("__compact_recorded_value_{}", *next_temp),
-                                    Span::call_site(),
-                                );
-                                *next_temp += 1;
-                                let body_name = helper_ident(name, circuits)?;
-                                if circuit_uses_witness(callee, circuits, &mut HashSet::new())? {
-                                    steps.push(syn::parse_quote!(
-                                        let (frame, #observed) = #body_name(frame, witnesses, #(#args),*)?;
-                                    ));
-                                } else {
-                                    steps.push(syn::parse_quote!(
-                                        let (frame, #observed) = #body_name(frame, #(#args),*)?;
-                                    ));
-                                }
-                                scoped.insert(binding.name.clone(), syn::parse_quote!(#observed));
+                                };
+                                scoped.insert(binding.name.clone(), observed);
                                 continue;
                             }
                         }
@@ -1152,6 +1223,7 @@ fn render_recorded_item(
                             ledger_fields,
                             witnesses,
                             circuits,
+                            shared_callees,
                             steps,
                             next_temp,
                             visiting,
@@ -1374,6 +1446,7 @@ fn render_recorded_item(
                             ledger_fields,
                             witnesses,
                             circuits,
+                            shared_callees,
                             steps,
                             next_temp,
                             visiting,
@@ -1759,6 +1832,7 @@ fn render_recorded_item(
                         ledger_fields,
                         witnesses,
                         circuits,
+                        shared_callees,
                         steps,
                         next_temp,
                         visiting,
@@ -1880,6 +1954,7 @@ fn render_recorded_item(
                 ledger_fields,
                 witnesses,
                 circuits,
+                shared_callees,
                 &mut return_steps,
                 &mut next_temp,
                 &mut visiting,
@@ -1928,6 +2003,7 @@ fn render_recorded_item(
                             ledger_fields,
                             witnesses,
                             circuits,
+                            &HashSet::new(),
                             &mut steps,
                             next_temp,
                             visiting,

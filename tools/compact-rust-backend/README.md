@@ -215,7 +215,24 @@ This exported transaction is an **offline fixture**: its network ID is
 An application using a real network must build with that network ID and a
 current TTL, then use the wallet facade's `balanceFinalizedTransaction`,
 `finalizeRecipe`, and `submitTransaction` with its own keys and funds. The
-byte check does not establish network admission. ADR-0033 and
+wallet facade recommends structural validation before balancing and full
+validation before submission:
+
+```ts
+const tx = ledger.Transaction.deserialize('signature', 'proof', 'binding', bytes);
+await facade.validateTransaction(tx, {
+  flags: { enforceBalancing: false, verifySignatures: true, enforceLimits: false },
+});
+const recipe = await facade.balanceFinalizedTransaction(tx, keys, { ttl });
+const finalTx = await facade.finalizeRecipe(recipe);
+await facade.validateTransaction(finalTx, {
+  flags: { enforceBalancing: true, verifySignatures: true, enforceLimits: true },
+  blockData: recipe.blockData,
+});
+await facade.submitTransaction(finalTx);
+```
+
+The byte check does not establish network admission. ADR-0033 and
 [issue #132](https://github.com/MediaNoxLabs/compact/issues/132) track the
 handoff and remaining submission work.
 

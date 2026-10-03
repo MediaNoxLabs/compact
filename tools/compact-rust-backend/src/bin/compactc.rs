@@ -21,8 +21,9 @@ use std::error::Error;
 use std::ffi::{OsStr, OsString};
 use std::fs;
 use std::io;
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 use std::process::{self, Command};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use compact_rust_backend::{ir::Contract, render};
 use serde_json::{Map, Value};
@@ -367,6 +368,127 @@ fn refresh_manifest(output: &Path) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+/// Keep failed Rust-target runs out of the requested output directory.
+struct StagedOutput {
+    path: PathBuf,
+    published: bool,
+}
+
+impl StagedOutput {
+    fn new(output: &Path) -> Result<Self, Box<dyn Error>> {
+        let Some(Component::Normal(name)) = output.components().next_back() else {
+            return Err(
+                "Rust output must name a directory, not current or parent directory".into(),
+            );
+        };
+        let parent = output
+            .parent()
+            .filter(|parent| !parent.as_os_str().is_empty())
+            .unwrap_or_else(|| Path::new("."));
+        fs::create_dir_all(parent)?;
+        match fs::symlink_metadata(output) {
+            Ok(metadata) if !metadata.is_dir() || metadata.file_type().is_symlink() => {
+                return Err(format!(
+                    "Rust output must be a directory, not a file or symlink: {}",
+                    output.display()
+                )
+                .into());
+            }
+            Err(error) if error.kind() != io::ErrorKind::NotFound => return Err(error.into()),
+            _ => {}
+        }
+        let nonce = SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos();
+        for attempt in 0..100 {
+            let path = parent.join(format!(
+                ".{}.compactc-stage-{}-{nonce}-{attempt}",
+                name.to_string_lossy(),
+                process::id()
+            ));
+            match fs::create_dir(&path) {
+                Ok(()) => {
+                    return Ok(Self {
+                        path,
+                        published: false,
+                    });
+                }
+                Err(error) if error.kind() == io::ErrorKind::AlreadyExists => continue,
+                Err(error) => return Err(error.into()),
+            }
+        }
+        Err("could not create a unique Rust output staging directory".into())
+    }
+
+    fn path(&self) -> &Path {
+        &self.path
+    }
+
+    fn publish(mut self, output: &Path) -> Result<(), Box<dyn Error>> {
+        match fs::symlink_metadata(output) {
+            Ok(metadata) => {
+                if !metadata.is_dir() || metadata.file_type().is_symlink() {
+                    return Err(format!(
+                        "Rust output changed to a file or symlink before publication: {}",
+                        output.display()
+                    )
+                    .into());
+                }
+                let backup = self.path.with_file_name(format!(
+                    "{}-previous",
+                    self.path
+                        .file_name()
+                        .expect("staged output has a filename")
+                        .to_string_lossy()
+                ));
+                match fs::symlink_metadata(&backup) {
+                    Ok(_) => {
+                        return Err(format!(
+                            "Rust output backup path already exists: {}",
+                            backup.display()
+                        )
+                        .into());
+                    }
+                    Err(error) if error.kind() != io::ErrorKind::NotFound => {
+                        return Err(error.into());
+                    }
+                    Err(_) => {}
+                }
+                fs::rename(output, &backup)?;
+                if let Err(error) = fs::rename(&self.path, output) {
+                    if let Err(restore) = fs::rename(&backup, output) {
+                        return Err(format!(
+                            "could not publish Rust output: {error}; previous output remains at {} (restore failed: {restore})",
+                            backup.display()
+                        )
+                        .into());
+                    }
+                    return Err(error.into());
+                }
+                self.published = true;
+                if let Err(error) = fs::remove_dir_all(&backup) {
+                    eprintln!(
+                        "compactc: warning: generated output is complete, but could not remove previous output at {}: {error}",
+                        backup.display()
+                    );
+                }
+            }
+            Err(error) if error.kind() == io::ErrorKind::NotFound => {
+                fs::rename(&self.path, output)?;
+                self.published = true;
+            }
+            Err(error) => return Err(error.into()),
+        }
+        Ok(())
+    }
+}
+
+impl Drop for StagedOutput {
+    fn drop(&mut self) {
+        if !self.published {
+            let _ = fs::remove_dir_all(&self.path);
+        }
+    }
+}
+
 fn run() -> Result<i32, Box<dyn Error>> {
     let (targets, mut args) = select_targets(env::args_os().skip(1).collect())?;
     let compiler = scheme_compiler()?;
@@ -412,6 +534,9 @@ fn run() -> Result<i32, Box<dyn Error>> {
         .transpose()?;
     let source = PathBuf::from(args[args.len() - 2].clone());
     let output = PathBuf::from(args[args.len() - 1].clone());
+    let staging = StagedOutput::new(&output)?;
+    let output_index = args.len() - 1;
+    args[output_index] = staging.path().as_os_str().to_os_string();
     let insert_at = args.len() - 2;
     args.insert(insert_at, OsString::from("--emit-rust-ir"));
     if !targets.ts {
@@ -422,7 +547,7 @@ fn run() -> Result<i32, Box<dyn Error>> {
         return Ok(status.code().unwrap_or(1));
     }
 
-    let contract_dir = output.join("contract");
+    let contract_dir = staging.path().join("contract");
     let ir: Contract =
         serde_json::from_slice(&fs::read(contract_dir.join("compact-rust-ir.json"))?)?;
     let source_code = render(&ir)?;
@@ -439,7 +564,8 @@ fn run() -> Result<i32, Box<dyn Error>> {
         contract_dir.join("Cargo.toml"),
         crate_manifest(&source, runtime)?,
     )?;
-    refresh_manifest(&output)?;
+    refresh_manifest(staging.path())?;
+    staging.publish(&output)?;
     Ok(0)
 }
 

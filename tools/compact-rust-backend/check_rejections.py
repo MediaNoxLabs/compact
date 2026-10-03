@@ -19,9 +19,12 @@
 
 The positive fixture checker cannot detect an unsupported construct that
 quietly emits a plausible Rust library. This gate pins two source-level
-refusals and verifies that no generated Cargo library survives.
+refusals and verifies that no generated Cargo library survives. It also
+checks that a later packaging failure cannot publish partial Rust output
+or replace a previously complete directory.
 """
 
+import hashlib
 import os
 from pathlib import Path
 import shutil
@@ -43,6 +46,72 @@ CASES = {
         "Rust backend does not yet support Field-to-Uint downcasts",
     ),
 }
+
+ROOT = Path(__file__).resolve().parents[2]
+
+
+def snapshot(path: Path) -> dict[str, str]:
+    return {
+        item.relative_to(path).as_posix(): hashlib.sha256(item.read_bytes()).hexdigest()
+        for item in path.rglob("*") if item.is_file()
+    }
+
+
+def check_output_publication(compactc: str, directory: Path) -> list[str]:
+    failures = []
+    source = ROOT / "examples/rust_backend/counter.compact"
+    output = directory / "publication"
+    invalid_environment = os.environ.copy()
+    invalid_environment["COMPACT_RUST_RUNTIME_DIR"] = str(directory / "missing-runtime")
+
+    def run_compiler(environment: dict[str, str]) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            [compactc, "--target", "rust", "--skip-zk", str(source), str(output)],
+            capture_output=True, text=True, env=environment, check=False,
+        )
+
+    def leaked_stage() -> bool:
+        return any(directory.glob(f".{output.name}.compactc-stage-*"))
+
+    rejected = run_compiler(invalid_environment)
+    if rejected.returncode == 0 or "runtime source directory is invalid" not in rejected.stderr:
+        failures.append(f"post-render failure was not reported:\n{rejected.stderr}")
+    if output.exists() or leaked_stage():
+        failures.append("failed fresh compile published partial output or left staging debris")
+
+    valid = run_compiler(os.environ.copy())
+    if valid.returncode or not (output / "contract/lib.rs").is_file() or not (
+        output / "contract/Cargo.toml"
+    ).is_file():
+        failures.append(f"valid output for replacement test was not complete:\n{valid.stderr}")
+        return failures
+    before = snapshot(output)
+    rejected = run_compiler(invalid_environment)
+    if rejected.returncode == 0 or snapshot(output) != before or leaked_stage():
+        failures.append("failed rebuild changed previously complete output or left staging debris")
+
+    (output / "stale-marker").write_text("previous generated directory")
+    valid = run_compiler(os.environ.copy())
+    if valid.returncode or (output / "stale-marker").exists() or leaked_stage():
+        failures.append(f"successful rebuild did not replace output cleanly:\n{valid.stderr}")
+
+    preserved = snapshot(output)
+    file_output = directory / "output-file"
+    file_output.write_text("keep this file")
+    link_output = directory / "output-link"
+    link_output.symlink_to(output, target_is_directory=True)
+    for candidate in (file_output, link_output):
+        result = subprocess.run(
+            [compactc, "--target", "rust", "--skip-zk", str(source), str(candidate)],
+            capture_output=True, text=True, env=os.environ.copy(), check=False,
+        )
+        if result.returncode == 0 or "file or symlink" not in result.stderr:
+            failures.append(f"{candidate.name}: unsafe output root was accepted:\n{result.stderr}")
+    if file_output.read_text() != "keep this file" or not link_output.is_symlink():
+        failures.append("unsafe output root check changed an existing file or symlink")
+    if snapshot(output) != preserved:
+        failures.append("unsafe output root check changed the valid generated directory")
+    return failures
 
 
 def main() -> int:
@@ -77,10 +146,13 @@ def main() -> int:
                 failures.append(f"{name}: rejected source left a generated Rust library")
             if (output_path / "contract" / "Cargo.toml").exists():
                 failures.append(f"{name}: rejected source left a generated Cargo manifest")
+            if output_path.exists() or any(directory.glob(f".{name}.compactc-stage-*")):
+                failures.append(f"{name}: rejected source left output or staging debris")
+        failures.extend(check_output_publication(compactc, directory))
 
     for failure in failures:
         print(f"FAIL {failure}", file=sys.stderr)
-    print(f"Checked {len(CASES)} rejection probes; {len(failures)} failed")
+    print(f"Checked {len(CASES)} source rejections and output publication; {len(failures)} failed")
     return 1 if failures else 0
 
 

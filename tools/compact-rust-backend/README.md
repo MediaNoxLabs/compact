@@ -29,6 +29,9 @@ runtime as a path dependency. A separate Rust
 project can depend on `contract/` by path without copying generated source or
 editing its manifest. Run with `--target ts --target rust` to emit both contract
 languages. `--skip-zk` skips proving keys for a quicker local build.
+Rust-target output is assembled in a sibling staging directory and published
+only after the compiler, Rust renderer, runtime packaging and output manifest
+complete. A failed run removes that stage and keeps any previous output.
 The generated `ledger_slots` module exposes named typed descriptors for Cell,
 Counter, Set, Map, List, and Merkle declarations. For example,
 `ledger_slots::tree.insert(context, value)` accepts the declared Merkle leaf

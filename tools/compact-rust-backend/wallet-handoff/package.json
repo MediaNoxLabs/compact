@@ -1,0 +1,8 @@
+{
+  "name": "compact-rust-wallet-handoff-check",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "@midnight-ntwrk/ledger-v8": "8.0.2"
+  }
+}

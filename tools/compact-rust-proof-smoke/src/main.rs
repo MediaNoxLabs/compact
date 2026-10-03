@@ -48,6 +48,7 @@ use compact_rust_witness_cell_write_fixture::ledger_contract as witness_contract
 use compact_rust_witness_list_shapes_fixture::ledger_contract as list_shapes_contract;
 use compact_rust_witness_list_shapes_fixture::types::{Choice as ListChoice, Packet};
 use midnight_base_crypto::data_provider::{FetchMode, MidnightDataProvider, OutputMode};
+use midnight_base_crypto::signatures::Signature;
 use midnight_base_crypto::time::Timestamp;
 use midnight_compact_runtime::Field;
 use midnight_compact_runtime::context::{ConstructorContext, WitnessContext};
@@ -62,7 +63,7 @@ use midnight_compact_runtime::{BoundedUint, FixedBytes, FixedVector};
 use midnight_ledger::construct::{ContractCallExt, ContractCallPrototype};
 use midnight_ledger::semantics::{TransactionContext, TransactionResult};
 use midnight_ledger::structure::{
-    ContractDeploy, INITIAL_PARAMETERS, Intent, LedgerState, ProofPreimageMarker,
+    ContractDeploy, INITIAL_PARAMETERS, Intent, LedgerState, ProofMarker, ProofPreimageMarker,
     ProofPreimageVersioned, Transaction,
 };
 use midnight_ledger::verify::WellFormedStrictness;
@@ -70,9 +71,9 @@ use midnight_onchain_runtime::context::BlockContext;
 use midnight_onchain_state::state::{
     ContractMaintenanceAuthority, ContractOperation, ContractState, EntryPointBuf,
 };
-use midnight_serialize::tagged_deserialize;
+use midnight_serialize::{tagged_deserialize, tagged_serialize};
 use midnight_storage::storage::HashMap;
-use midnight_transient_crypto::commitment::PedersenRandomness;
+use midnight_transient_crypto::commitment::{PedersenRandomness, PureGeneratorPedersen};
 use midnight_transient_crypto::curve::Fr;
 use midnight_transient_crypto::fab::AlignedValueExt;
 use midnight_transient_crypto::hash::transient_commit;
@@ -213,19 +214,20 @@ fn make_deploy(
     Ok(ContractDeploy::new(rng, contract))
 }
 
-fn check_transaction<F>(
+fn check_transaction_with_handoff<F>(
     root: &Path,
     circuit: &'static str,
     deploy: ContractDeploy<DefaultDB>,
     call: ContractCallPrototype<DefaultDB>,
     rng: &mut StdRng,
+    handoff_path: Option<&Path>,
     check_state: F,
 ) -> Result<(), Box<dyn Error>>
 where
     F: FnOnce(&ContractState<DefaultDB>) -> Result<(), Box<dyn Error>>,
 {
     let address = deploy.address();
-    let deploy_intent: Intent<(), ProofPreimageMarker, PedersenRandomness, DefaultDB> =
+    let deploy_intent: Intent<Signature, ProofPreimageMarker, PedersenRandomness, DefaultDB> =
         Intent::empty(rng, Timestamp::from_secs(0)).add_deploy(deploy.clone());
     let deploy_tx =
         Transaction::from_intents("local-test", HashMap::new().insert(1_u16, deploy_intent));
@@ -237,7 +239,7 @@ where
     // Model the state after the separately validated deployment. The call is
     // checked against a ledger that contains its target contract.
     ledger.contract = ledger.contract.insert(address, deploy.initial_state);
-    let call_intent: Intent<(), ProofPreimageMarker, PedersenRandomness, DefaultDB> =
+    let call_intent: Intent<Signature, ProofPreimageMarker, PedersenRandomness, DefaultDB> =
         Intent::empty(rng, Timestamp::from_secs(0)).add_call::<ProofPreimage>(call);
     let call_tx =
         Transaction::from_intents("local-test", HashMap::new().insert(1_u16, call_intent));
@@ -256,6 +258,24 @@ where
         call_tx.prove(provider, &INITIAL_PARAMETERS.cost_model.runtime_cost_model),
     )?;
     let verified = proven.well_formed(&ledger, strictness, Timestamp::from_secs(0))?;
+    if let Some(path) = handoff_path {
+        let sealed = proven.seal(StdRng::seed_from_u64(0x57414c4c4554));
+        sealed.well_formed(&ledger, strictness, Timestamp::from_secs(0))?;
+        let mut bytes = Vec::new();
+        tagged_serialize(&sealed, &mut bytes)?;
+        let roundtrip: Transaction<Signature, ProofMarker, PureGeneratorPedersen, DefaultDB> =
+            tagged_deserialize(&mut bytes.as_slice())?;
+        let mut roundtrip_bytes = Vec::new();
+        tagged_serialize(&roundtrip, &mut roundtrip_bytes)?;
+        if bytes != roundtrip_bytes {
+            return Err("sealed transaction changed across Rust serialization".into());
+        }
+        fs::write(path, bytes)?;
+        println!(
+            "{circuit} sealed ledger-v8 transaction written to {}",
+            path.display()
+        );
+    }
     let context = TransactionContext {
         ref_state: ledger.clone(),
         block_context: BlockContext::default(),
@@ -272,6 +292,20 @@ where
     check_state(&contract)?;
     println!("{circuit} deployment and proven call validated and applied at address {address:?}");
     Ok(())
+}
+
+fn check_transaction<F>(
+    root: &Path,
+    circuit: &'static str,
+    deploy: ContractDeploy<DefaultDB>,
+    call: ContractCallPrototype<DefaultDB>,
+    rng: &mut StdRng,
+    check_state: F,
+) -> Result<(), Box<dyn Error>>
+where
+    F: FnOnce(&ContractState<DefaultDB>) -> Result<(), Box<dyn Error>>,
+{
+    check_transaction_with_handoff(root, circuit, deploy, call, rng, None, check_state)
 }
 
 struct Secret;
@@ -369,12 +403,14 @@ fn main() -> Result<(), Box<dyn Error>> {
         .increment(counter_context)?;
     let counter_call = check_generated_trace(counter_root, "increment", counter_recorded, ())?;
     prove_counter(counter_root, &counter_call)?;
-    check_transaction(
+    let counter_handoff = env::var_os("COMPACT_RUST_WALLET_HANDOFF").map(PathBuf::from);
+    check_transaction_with_handoff(
         counter_root,
         "increment",
         counter_deploy,
         counter_call,
         &mut rng,
+        counter_handoff.as_deref(),
         |contract| {
             let StateValue::Array(fields) = contract.data.get_ref() else {
                 return Err("counter contract state is not an array".into());

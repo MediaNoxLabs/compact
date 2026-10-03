@@ -80,7 +80,7 @@ async function indexedAction() {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
-      query: 'query ($address: HexEncoded!) { contractAction(address: $address) { __typename address transaction { hash block { height } } } }',
+      query: 'query ($address: HexEncoded!) { contractAction(address: $address) { __typename address state transaction { hash block { height } } } }',
       variables: { address },
     }),
   });
@@ -88,6 +88,24 @@ async function indexedAction() {
   const body = await response.json();
   if (body.errors?.length) throw new Error(`indexer: ${JSON.stringify(body.errors)}`);
   return body.data.contractAction;
+}
+
+function assertCounterIncremented(action) {
+  const state = ledger.ContractState.deserialize(Buffer.from(action.state, 'hex'));
+  const fields = state.data.state.asArray();
+  if (fields?.length !== 1 || fields[0].type() !== 'cell') {
+    throw new Error('indexed call has no single Counter field');
+  }
+  const cell = fields[0].asCell();
+  const alignment = cell.alignment[0];
+  const bytes = cell.value[0];
+  if (cell.alignment.length !== 1 || alignment?.tag !== 'atom' ||
+      alignment.value.tag !== 'bytes' || alignment.value.length !== 8 ||
+      cell.value.length !== 1 || !(bytes instanceof Uint8Array) ||
+      bytes.length === 0 || bytes.length > 8 || bytes[0] !== 1 ||
+      bytes.slice(1).some(byte => byte !== 0)) {
+    throw new Error('indexed call did not increment Counter to 1');
+  }
 }
 
 async function waitForAction(type, previousHash) {
@@ -155,7 +173,9 @@ try {
   console.log(`deployment indexed: block ${deployed.transaction.block.height}, address ${address}`);
   await submit(call, 'call');
   const called = await waitForAction('ContractCall', deployed.transaction.hash);
+  assertCounterIncremented(called);
   console.log(`call indexed: block ${called.transaction.block.height}, address ${address}`);
+  console.log('indexed contract state: round = 1');
 } finally {
   await wallet.stop();
 }

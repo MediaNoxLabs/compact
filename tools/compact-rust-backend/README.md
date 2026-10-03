@@ -256,7 +256,8 @@ The driver syncs the wallet, registers NIGHT for DUST when necessary, rejects
 an already used contract address, then balances, finalizes and submits the
 deployment. It waits for the indexer to report `ContractDeploy` at the exact
 address before balancing and submitting the call. It requires an indexed
-`ContractCall` at the same address with a different transaction hash. The
+`ContractCall` at the same address with a different transaction hash and
+decodes its ledger-v8 contract state to check that `round` is 1. The
 wallet operations are equivalent to:
 
 ```ts

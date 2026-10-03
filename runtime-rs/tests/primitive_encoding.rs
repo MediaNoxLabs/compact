@@ -118,6 +118,42 @@ fn two_argument_fab_matches_independent_typescript_put_input() {
 }
 
 #[test]
+fn witnessed_two_argument_fab_matches_independent_typescript_input() {
+    let oracle: serde_json::Value =
+        serde_json::from_str(include_str!("fixtures/witness-offset-input.json")).unwrap();
+    let captured_atoms: Vec<Vec<u8>> =
+        serde_json::from_value(oracle["valueAtoms"].clone()).unwrap();
+    let encoded = AlignedValue::from((Field::from(2_u64), Field::from(5_u64)));
+    assert_eq!(
+        encoded.value,
+        Value(captured_atoms.into_iter().map(ValueAtom).collect())
+    );
+    assert_eq!(
+        encoded.alignment,
+        Alignment(vec![
+            AlignmentSegment::Atom(AlignmentAtom::Field),
+            AlignmentSegment::Atom(AlignmentAtom::Field),
+        ])
+    );
+    assert_eq!(
+        oracle["alignment"],
+        serde_json::json!([
+            {"tag": "atom", "value": {"tag": "field"}},
+            {"tag": "atom", "value": {"tag": "field"}}
+        ])
+    );
+    assert_eq!(oracle["privateOutputAtoms"], serde_json::json!([[[9]]]));
+    assert_eq!(
+        oracle["publicTranscriptShape"],
+        serde_json::json!([
+            {"kind": "push", "storage": false},
+            {"kind": "push", "storage": true},
+            {"kind": "ins", "cached": false, "n": 1}
+        ])
+    );
+}
+
+#[test]
 fn fixed_bytes_use_upstream_alignment_value_and_field_encoding() {
     let bytes = FixedBytes::<4>::new([1, 2, 0, 0]);
     assert_eq!(FixedBytes::<4>::alignment(), <[u8; 4]>::alignment());

@@ -219,6 +219,26 @@ def check_observed_map_call_consumer(proof: Path, base: Path) -> None:
     assert "expected `bool`" in rejected.stderr, rejected.stderr
 
 
+def check_observed_witness_call_consumer(proof: Path, base: Path) -> None:
+    """Compile and run a borrowed two-argument witness call from one dependency."""
+    contract = proof / "contract"
+    package = tomllib.loads((contract / "Cargo.toml").read_text())
+    consumer = base / "observed-witness-call-consumer"
+    (consumer / "tests").mkdir(parents=True)
+    (consumer / "Cargo.toml").write_text(
+        "[package]\nname = \"compactc-observed-witness-call-smoke\"\nversion = \"0.1.0\"\n"
+        "edition = \"2024\"\n\n[dependencies]\n"
+        f'{package["package"]["name"]} = {{ path = {json.dumps(str(contract))}, features = ["ledger-transaction"] }}\n'
+    )
+    (consumer / "tests/observed.rs").write_bytes(
+        (ROOT / "tools/compact-rust-backend/consumers/witnessed_two_argument_call.rs").read_bytes()
+    )
+    environment = os.environ.copy()
+    environment.setdefault("CARGO_TARGET_DIR", str(ROOT / "target/compactc-consumer"))
+    environment["COMPACT_RUST_WITNESS_OFFSET_VERIFIER"] = str(proof / "keys/write_offset.verifier")
+    subprocess.run(["cargo", "test", "--quiet"], cwd=consumer, env=environment, check=True)
+
+
 def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
     contracts = []
     for name, source in (
@@ -875,7 +895,8 @@ def main() -> None:
             witness_proof = base / "witness-proof"
             run(compiler, "--target", "rust", str(WITNESS_CELL_SOURCE), str(witness_proof))
             check_manifest(witness_proof)
-            for circuit in ("write_twice", "write_nested_twice"):
+            check_observed_witness_call_consumer(witness_proof, base)
+            for circuit in ("write_twice", "write_offset", "write_nested_twice"):
                 for extension in ("prover", "verifier"):
                     assert (witness_proof / "keys" / f"{circuit}.{extension}").is_file()
                 for extension in ("zkir", "bzkir"):

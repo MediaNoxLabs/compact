@@ -28,6 +28,10 @@ export circuit write_twice(seed: Field): [] {
   cell = disclose(secret(seed));
 }
 
+export circuit write_offset(seed: Field, offset: Field): [] {
+  cell = disclose(secret(seed) + offset);
+}
+
 circuit write_inner(seed: Field): [] {
   cell = disclose(secret(seed));
 }

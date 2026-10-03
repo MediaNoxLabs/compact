@@ -1,0 +1,46 @@
+{
+  "valueAtoms": [
+    [
+      2
+    ],
+    [
+      5
+    ]
+  ],
+  "alignment": [
+    {
+      "tag": "atom",
+      "value": {
+        "tag": "field"
+      }
+    },
+    {
+      "tag": "atom",
+      "value": {
+        "tag": "field"
+      }
+    }
+  ],
+  "privateOutputAtoms": [
+    [
+      [
+        9
+      ]
+    ]
+  ],
+  "publicTranscriptShape": [
+    {
+      "kind": "push",
+      "storage": false
+    },
+    {
+      "kind": "push",
+      "storage": true
+    },
+    {
+      "kind": "ins",
+      "cached": false,
+      "n": 1
+    }
+  ]
+}

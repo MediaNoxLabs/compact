@@ -117,6 +117,28 @@ pub mod ledger_contract {
             .apply(|context| crate::ledger_slots::cell.write(context, __compact_frame_local_3))?;
         Ok(frame.finish(()))
     }
+    pub fn write_offset<Private, W: TryWitnesses<Private>>(
+        context: runtime::context::CircuitContext<Private>,
+        witnesses: &W,
+        __compact_param_0: runtime::Field,
+        __compact_param_1: runtime::Field,
+    ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
+        let frame = runtime::context::CircuitFrame::new(context);
+        let (frame, __compact_frame_witness_0) = frame.try_witness_metered(|context, meter| {
+            witnesses.secret(
+                context.witness_context_with(LedgerView {
+                    state: context.query.state.get_ref(),
+                    meter,
+                }),
+                __compact_param_0,
+            )
+        })?;
+        let __compact_frame_local_1: runtime::Field =
+            (__compact_frame_witness_0) + (__compact_param_1);
+        let (frame, ()) = frame
+            .apply(|context| crate::ledger_slots::cell.write(context, __compact_frame_local_1))?;
+        Ok(frame.finish(()))
+    }
     pub(crate) fn write_inner<Private, W: TryWitnesses<Private>>(
         context: runtime::context::CircuitContext<Private>,
         witnesses: &W,
@@ -237,6 +259,28 @@ pub mod ledger_contract {
                 )
             })?;
             let frame = crate::ledger_slots::cell.record_write(frame, __compact_witness_3)?;
+            Ok(frame.finish(()))
+        }
+        pub fn write_offset<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: runtime::Field,
+            __compact_param_1: runtime::Field,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_arg_0 = __compact_param_0;
+            let (frame, __compact_witness_1) = frame.try_witness_metered(|context, meter| {
+                witnesses.secret(
+                    context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                        meter,
+                    }),
+                    __compact_recorded_arg_0,
+                )
+            })?;
+            let __compact_recorded_sum_2: runtime::Field = __compact_witness_1 + __compact_param_1;
+            let frame = crate::ledger_slots::cell.record_write(frame, __compact_recorded_sum_2)?;
             Ok(frame.finish(()))
         }
         pub fn write_nested_twice<Private, W: super::TryWitnesses<Private>>(
@@ -367,6 +411,52 @@ pub mod ledger_contract {
                     input,
                 ))
             }
+            pub fn write_offset<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                __compact_param_0: runtime::Field,
+                __compact_param_1: runtime::Field,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                write_offset(
+                    context,
+                    self.witnesses,
+                    __compact_param_0,
+                    __compact_param_1,
+                )
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn write_offset_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                __compact_param_0: runtime::Field,
+                __compact_param_1: runtime::Field,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from((
+                    __compact_param_0.clone(),
+                    __compact_param_1.clone(),
+                ));
+                let recorded = self.write_offset(
+                    observed.circuit_context(private_state),
+                    __compact_param_0,
+                    __compact_param_1,
+                )?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "write_offset",
+                    input,
+                ))
+            }
             pub fn write_nested_twice<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
@@ -473,6 +563,22 @@ pub mod ledger_contract {
             W: TryWitnesses<Private>,
         {
             crate::ledger_contract::write_twice(context, &self.witnesses, __compact_param_0)
+        }
+        pub fn write_offset<Private>(
+            &self,
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::Field,
+            __compact_param_1: runtime::Field,
+        ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError>
+        where
+            W: TryWitnesses<Private>,
+        {
+            crate::ledger_contract::write_offset(
+                context,
+                &self.witnesses,
+                __compact_param_0,
+                __compact_param_1,
+            )
         }
         pub fn write_nested_twice<Private>(
             &self,

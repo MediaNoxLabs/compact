@@ -40,7 +40,7 @@ compact-rust-merkle-tree-oracle-fixture = { path = "../../tests-rust-backend/mer
 compact-rust-hmt-insert-oracle-fixture = { path = "../../tests-rust-backend/hmt-insert-oracle" }
 compact-rust-vector-key-adt-fixture = { path = "../../tests-rust-backend/vector-key-adt" }
 compact-rust-recorded-enum-cell-fixture = { path = "../../tests-rust-backend/recorded-enum-cell" }
-compact-rust-witness-cell-write-fixture = { path = "../../tests-rust-backend/witness-cell-write" }
+compact-rust-witness-cell-write-fixture = { path = "../../tests-rust-backend/witness-cell-write", features = ["ledger-transaction"] }
 compact-rust-stateful-circuit-call-fixture = { path = "../../tests-rust-backend/stateful-circuit-call", features = ["ledger-transaction"] }
 compact-rust-nested-witness-call-oracle-fixture = { path = "../../tests-rust-backend/nested-witness-call-oracle" }
 midnight-compact-runtime = { path = "../../runtime-rs", features = ["ledger-transaction"] }

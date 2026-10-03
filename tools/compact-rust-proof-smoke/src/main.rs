@@ -902,6 +902,86 @@ fn main() -> Result<(), Box<dyn Error>> {
             },
         )?;
 
+        let offset_initial = witness_contract::initial_state(ConstructorContext::new(7_u64))?;
+        let offset_deploy = make_deploy(
+            witness_root,
+            "write_offset",
+            offset_initial.ledger_state.get_ref().clone(),
+            &mut rng,
+        )?;
+        let offset_context = offset_initial.into_circuit_context(offset_deploy.address());
+        let offset = Field::from(5_u64);
+        let offset_contract = witness_contract::Contract::from(Secret);
+        let offset_recorded =
+            offset_contract
+                .recording()
+                .write_offset(offset_context, seed, offset)?;
+        if offset_recorded.execution.context.private_state != 8
+            || offset_recorded.execution.private_transcript_outputs
+                != [AlignedValue::from(Field::from(9_u64))]
+        {
+            return Err("witnessed offset private output differs from TypeScript oracle".into());
+        }
+        if !matches!(
+            offset_recorded.public.verify_ops(),
+            [
+                Op::Push { storage: false, .. },
+                Op::Push { storage: true, .. },
+                Op::Ins {
+                    cached: false,
+                    n: 1
+                },
+            ]
+        ) {
+            return Err("witnessed offset VM shape differs from TypeScript oracle".into());
+        }
+        let manual_offset = check_generated_trace(
+            witness_root,
+            "write_offset",
+            offset_recorded,
+            (seed, offset),
+        )?;
+        let observed_offset = ObservedContractState::new(
+            offset_deploy.address(),
+            offset_deploy.initial_state.clone(),
+            Observation {
+                transaction_hash: [0; 32],
+                block_hash: [0; 32],
+                block_height: 0,
+            },
+        );
+        let verifier =
+            decode_verifier_key(&fs::read(witness_root.join("keys/write_offset.verifier"))?)?;
+        let typed_offset = offset_contract
+            .recording()
+            .write_offset_call(&observed_offset, 7_u64, seed, offset)?
+            .prepare(verifier, Fr::from(0_u64))?;
+        check_observed_call_parity(
+            witness_root,
+            "write_offset",
+            &offset_deploy,
+            &manual_offset,
+            &typed_offset,
+        )?;
+        check_transaction(
+            witness_root,
+            "write_offset",
+            offset_deploy,
+            typed_offset,
+            &mut rng,
+            |contract| {
+                let StateValue::Array(fields) = contract.data.get_ref() else {
+                    return Err("witnessed offset state is not an array".into());
+                };
+                if read_cell::<Field, _>(fields.get(0).ok_or("witnessed offset Cell missing")?)?
+                    != Field::from(14_u64)
+                {
+                    return Err("proven witnessed offset call wrote the wrong Cell value".into());
+                }
+                Ok(())
+            },
+        )?;
+
         let nested_initial = witness_contract::initial_state(ConstructorContext::new(7_u64))?;
         let nested_deploy = make_deploy(
             witness_root,

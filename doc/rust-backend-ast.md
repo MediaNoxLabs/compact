@@ -5,13 +5,14 @@ This branch starts from the plain `ledger-8` compiler. The Rust backend reads
 `compiler/rust-ir-passes.ss` converts supported Compact constructs into a
 versioned JSON domain model. `compact-rust-backend` validates that model,
 constructs `syn` syntax, and formats the result with `prettyplease`.
-`compact-rustc` joins the two processes without a shell command: it invokes
-`compactc --skip-zk --emit-rust-ir` and writes `contract/lib.rs`.
+`compactc --target rust` runs the shared Scheme analysis, requests typed Rust
+IR, and writes `contract/lib.rs` and a Cargo package alongside the compiler's
+proof artifacts. `compact-rustc` remains a compatibility wrapper.
 Stateful circuit emission lives in `tools/compact-rust-backend/src/stateful.rs`
 so ledger action and return variants are handled away from the top-level
 contract assembly.
 
-The version 6 JSON schema is defined in
+The private schema-8 JSON model is defined in
 `tools/compact-rust-backend/src/ir.rs`. It has no Rust-source escape hatch.
 Adding an expression or type requires an explicit IR variant, conversion in
 the Scheme pass, type validation in the renderer, and an executing fixture.
@@ -40,35 +41,32 @@ same version. The explicit `--rust-runtime-root` compiler option lets several
 generated contracts use one local runtime package. A shared versioned runtime
 distribution is still required for portable multi-contract Rust applications.
 
-The Rust runtime has an opt-in `RecordingFrame` for Cell, Counter, and witness
-operations. It preserves the initial ledger query context, ordered verifying
-VM operations, and private witness outputs. Replay and `PreTranscript`
-partitioning pass for the supported slice. The compiler now emits
-`ledger_contract::recorded` functions for exported circuits consisting of
-Counter increments, decrements, and optional Counter reads, or simple root
-Boolean Cell writes and reads. These functions return native execution and an
-ordered public program. The generated `Contract` facade exposes these calls
-through `contract.recording` with typed methods. Other generated circuit
-methods return native `CircuitResult`; broader operation recording and wallet
-submission remain Milestone 2 work.
+The Rust runtime has an opt-in `RecordingFrame` that preserves the initial
+ledger query context, ordered verifying VM operations, and private witness
+outputs. The compiler emits `ledger_contract::recorded` methods only for
+circuits whose complete trace it can capture. Current bounded slices include
+root Cell and Counter operations, typed Set/Map/List operations, plain and
+historic Merkle append, vector-key Set/Map calls, and nested witnessed Field
+calls. They return native execution together with an ordered public program;
+`Contract::recording` exposes the typed methods. Other generated methods return
+native `CircuitResult`. Eligibility depends on the circuit body, so support
+for one ADT operation does not imply support for every expression or path.
 
 The runtime's opt-in `ledger-transaction` feature exposes
 `transaction::prepare_call`. It replays a recorded result, checks the effects,
 partitions the Verify program, and constructs a ledger-8
 `ContractCallPrototype`. A `CallSpec` supplies the verifier artifact, public
-input, and commitment randomness. The proof gate uses this adapter for its
-Counter and Cell calls instead of assembling transcripts in the test harness.
+input, and commitment randomness. The proof gate uses this adapter for every
+recorded call that it proves, rather than assembling transcripts in the test
+harness.
 
-The counter proof smoke now builds its public statement from ledger-8's
-`ContractCallPrototype` and confirms it matches the emitted ZKIR. It uses
-the value-field communication commitment calculated by `Intent::add_call`,
-proves the resulting call transaction, and validates the proven transaction
-against a ledger containing the generated contract. The smoke applies the
-proven call and checks the resulting Counter value. The same gate proves,
-validates, and applies generated Boolean Cell write and read calls, then checks
-the flag and the read output.
-These are offline slices; other operations and a wallet or node submission
-path remain Milestone 2 work.
+The packaged gate checks ZKIR and verifier artifacts, proves 57 supported call
+shapes, validates and applies each against an offline ledger, and checks the
+resulting contract state. Its counter call also seals a transaction and
+round-trips its bytes through the pinned JavaScript ledger-v8 decoder. The
+fixture uses a local test network, TTL zero, and disabled balancing. Wallet
+balancing, live node submission, remote CI, and a published runtime remain
+Milestone 2 work.
 
 ## Implemented slices
 
@@ -218,10 +216,10 @@ write evaluates its witness before the ledger VM write; two writes in one
 circuit preserve the intervening ledger state, private state, and transcript
 order against TypeScript. The same typed binding IR also carries a literal
 Field into `Map.insert`, covering the compiler's generated temporary rather
-than treating it as an undeclared circuit parameter. Witness calls in the
-remaining primitive expression forms and other ledger action values, and
-complete proof data remain future slices.
-The generated runtime ABI is 3.
+than treating it as an undeclared circuit parameter. Other witnessed
+expression forms and ledger action values still need independent recording
+and parity gates.
+The current generated/runtime ABI is 15.
 
 The runtime can now construct and decode ledger Cells and Counters, and it
 runs Cell writes plus Counter increments/decrements through the ledger VM.

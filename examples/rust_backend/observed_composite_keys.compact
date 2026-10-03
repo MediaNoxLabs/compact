@@ -23,6 +23,7 @@ struct CompositeKey {
 export ledger vectorKeys: Set<Vector<2, Field>>;
 export ledger tupleKeys: Set<[Field, Boolean]>;
 export ledger structKeys: Set<CompositeKey>;
+export ledger sums: Set<Field>;
 
 export circuit insert_vector(key: Vector<2, Field>): [] {
   vectorKeys.insert(disclose(key));
@@ -46,4 +47,10 @@ export circuit roundtrip_struct(key: CompositeKey): Boolean {
   structKeys.insert(disclose(key));
   structKeys.remove(disclose(key));
   return structKeys.member(disclose(key));
+}
+
+export circuit record_twelve(a: Field, b: Field, c: Field, d: Field,
+                             e: Field, f: Field, g: Field, h: Field,
+                             i: Field, j: Field, k: Field, l: Field): [] {
+  sums.insert(disclose(a + b + c + d + e + f + g + h + i + j + k + l));
 }

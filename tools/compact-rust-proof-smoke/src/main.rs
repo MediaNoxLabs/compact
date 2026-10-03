@@ -2169,6 +2169,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             ("insert_struct", 2_u8),
             ("roundtrip_tuple", 1_u8),
             ("roundtrip_struct", 2_u8),
+            ("record_twelve", 3_u8),
         ] {
             let initial = composite_key_contract::initial_state(ConstructorContext::new(()))?;
             let deploy = make_deploy(
@@ -2245,6 +2246,49 @@ fn main() -> Result<(), Box<dyn Error>> {
                         .prepare(verifier, Fr::from(0_u64))?;
                     (manual, typed)
                 }
+                "record_twelve" => {
+                    let recorded = contract.recording.record_twelve(
+                        context,
+                        1_u64.into(),
+                        2_u64.into(),
+                        3_u64.into(),
+                        4_u64.into(),
+                        5_u64.into(),
+                        6_u64.into(),
+                        7_u64.into(),
+                        8_u64.into(),
+                        9_u64.into(),
+                        10_u64.into(),
+                        11_u64.into(),
+                        12_u64.into(),
+                    )?;
+                    let input = AlignedValue::concat(
+                        &(1_u64..=12)
+                            .map(|value| AlignedValue::from(Field::from(value)))
+                            .collect::<Vec<_>>(),
+                    );
+                    let manual = check_generated_trace(composite_root, circuit, recorded, input)?;
+                    let typed = contract
+                        .recording
+                        .record_twelve_call(
+                            &observed,
+                            (),
+                            1_u64.into(),
+                            2_u64.into(),
+                            3_u64.into(),
+                            4_u64.into(),
+                            5_u64.into(),
+                            6_u64.into(),
+                            7_u64.into(),
+                            8_u64.into(),
+                            9_u64.into(),
+                            10_u64.into(),
+                            11_u64.into(),
+                            12_u64.into(),
+                        )?
+                        .prepare(verifier, Fr::from(0_u64))?;
+                    (manual, typed)
+                }
                 _ => unreachable!(),
             };
             check_observed_call_parity(composite_root, circuit, &deploy, &manual, &typed)?;
@@ -2271,6 +2315,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                         set_view_at_path::<CompositeKey, _>(state.data.get_ref(), &[path])?
                             .member(key.clone())
                     }
+                    "record_twelve" => set_view_at_path::<Field, _>(state.data.get_ref(), &[path])?
+                        .member(Field::from(78_u64)),
                     _ => unreachable!(),
                 };
                 let should_exist = !circuit.starts_with("roundtrip_");

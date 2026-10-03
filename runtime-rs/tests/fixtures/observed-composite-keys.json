@@ -379,5 +379,146 @@
         ]
       }
     ]
+  },
+  "twelve": {
+    "result": [],
+    "valueAtoms": [
+      [
+        1
+      ],
+      [
+        2
+      ],
+      [
+        3
+      ],
+      [
+        4
+      ],
+      [
+        5
+      ],
+      [
+        6
+      ],
+      [
+        7
+      ],
+      [
+        8
+      ],
+      [
+        9
+      ],
+      [
+        10
+      ],
+      [
+        11
+      ],
+      [
+        12
+      ]
+    ],
+    "alignment": [
+      {
+        "tag": "atom",
+        "value": {
+          "tag": "field"
+        }
+      },
+      {
+        "tag": "atom",
+        "value": {
+          "tag": "field"
+        }
+      },
+      {
+        "tag": "atom",
+        "value": {
+          "tag": "field"
+        }
+      },
+      {
+        "tag": "atom",
+        "value": {
+          "tag": "field"
+        }
+      },
+      {
+        "tag": "atom",
+        "value": {
+          "tag": "field"
+        }
+      },
+      {
+        "tag": "atom",
+        "value": {
+          "tag": "field"
+        }
+      },
+      {
+        "tag": "atom",
+        "value": {
+          "tag": "field"
+        }
+      },
+      {
+        "tag": "atom",
+        "value": {
+          "tag": "field"
+        }
+      },
+      {
+        "tag": "atom",
+        "value": {
+          "tag": "field"
+        }
+      },
+      {
+        "tag": "atom",
+        "value": {
+          "tag": "field"
+        }
+      },
+      {
+        "tag": "atom",
+        "value": {
+          "tag": "field"
+        }
+      },
+      {
+        "tag": "atom",
+        "value": {
+          "tag": "field"
+        }
+      }
+    ],
+    "publicTranscriptShape": [
+      {
+        "kind": "idx",
+        "cached": false,
+        "pushPath": true,
+        "pathLength": 1
+      },
+      {
+        "kind": "push",
+        "storage": false
+      },
+      {
+        "kind": "push",
+        "storage": true
+      },
+      {
+        "kind": "ins",
+        "cached": false,
+        "n": 1
+      },
+      {
+        "kind": "ins",
+        "cached": true,
+        "n": 1
+      }
+    ]
   }
 }

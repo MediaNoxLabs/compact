@@ -1047,7 +1047,7 @@ def main() -> None:
             check_manifest(composite_key_proof)
             for circuit in (
                 "insert_vector", "insert_tuple", "insert_struct",
-                "roundtrip_tuple", "roundtrip_struct",
+                "roundtrip_tuple", "roundtrip_struct", "record_twelve",
             ):
                 for extension in ("prover", "verifier"):
                     assert (composite_key_proof / "keys" / f"{circuit}.{extension}").is_file()

@@ -67,6 +67,28 @@ fn vector_tuple_and_struct_calls_need_only_the_generated_crate() {
                 .insert_struct_call(&observed, (), struct_key.clone())
                 .unwrap(),
         ),
+        (
+            "record_twelve",
+            contract
+                .recording
+                .record_twelve_call(
+                    &observed,
+                    (),
+                    1_u64.into(),
+                    2_u64.into(),
+                    3_u64.into(),
+                    4_u64.into(),
+                    5_u64.into(),
+                    6_u64.into(),
+                    7_u64.into(),
+                    8_u64.into(),
+                    9_u64.into(),
+                    10_u64.into(),
+                    11_u64.into(),
+                    12_u64.into(),
+                )
+                .unwrap(),
+        ),
     ];
     let root = std::env::var("COMPACT_RUST_COMPOSITE_KEY_PROOF").unwrap();
     for (name, call) in calls {

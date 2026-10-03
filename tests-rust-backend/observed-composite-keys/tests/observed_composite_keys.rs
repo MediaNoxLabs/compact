@@ -107,6 +107,15 @@ fn vector_tuple_and_nested_struct_inputs_match_typescript_fab() {
             .concat(),
         ),
     );
+    check_input(
+        &oracle["twelve"],
+        AlignedValue::concat(
+            &(1_u64..=12)
+                .map(|value| AlignedValue::from(Field::from(value)))
+                .collect::<Vec<_>>(),
+        ),
+        Alignment(field_alignment(12)),
+    );
     for (name, field_count) in [
         ("vector", 2),
         ("tuple", 1),
@@ -247,4 +256,41 @@ fn vector_tuple_and_nested_struct_recorded_set_inserts_replay() {
         .unwrap();
     assert!(!struct_native.result && !struct_recorded.execution.result);
     check_recorded("structRoundtrip", struct_native, struct_recorded);
+    check_recorded(
+        "twelve",
+        ledger_contract::record_twelve(
+            context(),
+            1_u64.into(),
+            2_u64.into(),
+            3_u64.into(),
+            4_u64.into(),
+            5_u64.into(),
+            6_u64.into(),
+            7_u64.into(),
+            8_u64.into(),
+            9_u64.into(),
+            10_u64.into(),
+            11_u64.into(),
+            12_u64.into(),
+        )
+        .unwrap(),
+        contract
+            .recording
+            .record_twelve(
+                context(),
+                1_u64.into(),
+                2_u64.into(),
+                3_u64.into(),
+                4_u64.into(),
+                5_u64.into(),
+                6_u64.into(),
+                7_u64.into(),
+                8_u64.into(),
+                9_u64.into(),
+                10_u64.into(),
+                11_u64.into(),
+                12_u64.into(),
+            )
+            .unwrap(),
+    );
 }

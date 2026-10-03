@@ -29,12 +29,12 @@ const initial = contract.initialState({
   initialZswapLocalState: runtime.emptyZswapLocalState(coinPublicKey),
 });
 
-function capture(name, input) {
+function capture(name, ...inputs) {
   const context = runtime.createCircuitContext(
     runtime.dummyContractAddress(), coinPublicKey,
     initial.currentContractState.data, initial.currentPrivateState,
   );
-  const output = contract.circuits[name](context, input);
+  const output = contract.circuits[name](context, ...inputs);
   const proofData = output.proofData;
   const publicTranscriptShape = proofData.publicTranscript.map((operation) => {
     if (typeof operation === 'string') return { kind: operation };
@@ -72,4 +72,5 @@ process.stdout.write(JSON.stringify({
   struct: capture('insert_struct', { vector: [3n, 5n], pair: [42n, true] }),
   tupleRoundtrip: capture('roundtrip_tuple', [42n, true]),
   structRoundtrip: capture('roundtrip_struct', { vector: [3n, 5n], pair: [42n, true] }),
+  twelve: capture('record_twelve', 1n, 2n, 3n, 4n, 5n, 6n, 7n, 8n, 9n, 10n, 11n, 12n),
 }, null, 2) + '\n');

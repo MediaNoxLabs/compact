@@ -77,7 +77,9 @@ the subsequent write. Value calls nested inside larger expressions still use
 inline lowering. The recorded emitter evaluates supported Field reads, witness
 calls, addition, and internal Field-returning calls in source order. Supported
 Cell reads, writes, assertions and Field read expressions can record at
-compiler-assigned chunked paths through typed slots. Set and scalar Map
+compiler-assigned chunked paths through typed slots. Action-free Boolean and
+Field returns with an explicit Cell read also use the same recorded frame;
+witness-only returned expressions still need separate proof acceptance. Set and scalar Map
 mutation, membership, lookup, size, and emptiness calls have
 replayable recorded methods, including declaration-typed `FixedVector` keys in
 supported circuits and compiler-assigned chunked paths. Typed List push, pop,

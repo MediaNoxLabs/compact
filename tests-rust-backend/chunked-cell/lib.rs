@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 27);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 28);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -65,7 +65,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 27);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 28);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -280,6 +280,46 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
+    pub fn active_equals<Private>(
+        context: runtime::context::CircuitContext<Private>,
+        __compact_param_0: bool,
+    ) -> Result<runtime::context::CircuitResult<Private, bool>, runtime::CompactError> {
+        let mut total_cost = runtime::context::RunningCost::default();
+        let private_transcript_outputs = Vec::new();
+        let mut context = context;
+        let __compact_query_0 = crate::ledger_slots::active.read(context)?;
+        context = __compact_query_0.context;
+        total_cost += __compact_query_0.gas_cost;
+        let __compact_value_1 = __compact_query_0.result;
+        let result = __compact_value_1 == __compact_param_0;
+        Ok(runtime::context::CircuitResult {
+            context,
+            result,
+            gas_cost: total_cost,
+            private_transcript_outputs,
+        })
+    }
+    pub fn plus_amount<Private>(
+        context: runtime::context::CircuitContext<Private>,
+        __compact_param_0: runtime::Field,
+    ) -> Result<runtime::context::CircuitResult<Private, runtime::Field>, runtime::CompactError>
+    {
+        let mut total_cost = runtime::context::RunningCost::default();
+        let private_transcript_outputs = Vec::new();
+        let mut context = context;
+        let __compact_query_0 = crate::ledger_slots::amount.read(context)?;
+        context = __compact_query_0.context;
+        total_cost += __compact_query_0.gas_cost;
+        let __compact_value_1 = __compact_query_0.result;
+        let __compact_value_2 = __compact_param_0;
+        let result = __compact_value_1 + __compact_value_2;
+        Ok(runtime::context::CircuitResult {
+            context,
+            result,
+            gas_cost: total_cost,
+            private_transcript_outputs,
+        })
+    }
     /// Circuits with a replayable ordered ledger program.
     pub mod recorded {
         use midnight_compact_runtime as runtime;
@@ -349,6 +389,31 @@ pub mod ledger_contract {
             let frame =
                 crate::ledger_slots::amount.record_write(frame, __compact_recorded_sum_1)?;
             Ok(frame.finish(()))
+        }
+        pub fn active_equals<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: bool,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_recorded_value_0): (_, bool) =
+                crate::ledger_slots::active.record_read(frame)?;
+            let __compact_recorded_compare_1 = __compact_recorded_value_0 == __compact_param_0;
+            Ok(frame.finish(__compact_recorded_compare_1))
+        }
+        pub fn plus_amount<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::Field,
+        ) -> Result<
+            runtime::recording::RecordedCircuitResult<Private, runtime::Field>,
+            runtime::CompactError,
+        > {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_recorded_value_0): (_, runtime::Field) =
+                crate::ledger_slots::amount.record_read(frame)?;
+            let __compact_recorded_sum_1: runtime::Field =
+                __compact_recorded_value_0 + __compact_param_0;
+            Ok(frame.finish(__compact_recorded_sum_1))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
@@ -519,6 +584,66 @@ pub mod ledger_contract {
                     input,
                 ))
             }
+            pub fn active_equals<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                __compact_param_0: bool,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, bool>,
+                runtime::CompactError,
+            > {
+                crate::ledger_contract::recorded::active_equals(context, __compact_param_0)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn active_equals_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                __compact_param_0: bool,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, bool>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
+                let recorded =
+                    self.active_equals(observed.circuit_context(private_state), __compact_param_0)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "active_equals",
+                    input,
+                ))
+            }
+            pub fn plus_amount<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                __compact_param_0: runtime::Field,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, runtime::Field>,
+                runtime::CompactError,
+            > {
+                crate::ledger_contract::recorded::plus_amount(context, __compact_param_0)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn plus_amount_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                __compact_param_0: runtime::Field,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, runtime::Field>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
+                let recorded =
+                    self.plus_amount(observed.circuit_context(private_state), __compact_param_0)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "plus_amount",
+                    input,
+                ))
+            }
         }
     }
     /// Groups the contract's exported circuits for Rust consumers.
@@ -584,6 +709,21 @@ pub mod ledger_contract {
             __compact_param_0: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
             crate::ledger_contract::add_amount(context, __compact_param_0)
+        }
+        pub fn active_equals<Private>(
+            &self,
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: bool,
+        ) -> Result<runtime::context::CircuitResult<Private, bool>, runtime::CompactError> {
+            crate::ledger_contract::active_equals(context, __compact_param_0)
+        }
+        pub fn plus_amount<Private>(
+            &self,
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::Field,
+        ) -> Result<runtime::context::CircuitResult<Private, runtime::Field>, runtime::CompactError>
+        {
+            crate::ledger_contract::plus_amount(context, __compact_param_0)
         }
         /// Access replayable circuit calls for this contract.
         pub fn recording(&self) -> &recorded::Contract {

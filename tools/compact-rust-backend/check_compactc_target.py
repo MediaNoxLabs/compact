@@ -453,6 +453,32 @@ def check_chunked_cell_consumer(proof: Path, base: Path) -> None:
     )
     assert rejected.returncode != 0, "wrong-typed chunked Cell Field unexpectedly compiled"
     assert "error[E0308]" in rejected.stderr, rejected.stderr
+    (consumer / "examples/wrong_equals.rs").write_text(
+        "use compact_contract_chunked_cell::ledger_contract::Contract;\n"
+        "use compact_contract_chunked_cell::runtime::{Field, transaction::ObservedContractState};\n"
+        "fn wrong(observed: &ObservedContractState) {\n"
+        "    let _ = Contract::default().recording.active_equals_call(observed, (), Field::from(1_u64));\n"
+        "}\nfn main() {}\n"
+    )
+    rejected = subprocess.run(
+        ["cargo", "check", "--quiet", "--example", "wrong_equals"],
+        cwd=consumer, env=environment, capture_output=True, text=True,
+    )
+    assert rejected.returncode != 0, "wrong-typed Cell equality unexpectedly compiled"
+    assert "error[E0308]" in rejected.stderr, rejected.stderr
+    (consumer / "examples/wrong_sum.rs").write_text(
+        "use compact_contract_chunked_cell::ledger_contract::Contract;\n"
+        "use compact_contract_chunked_cell::runtime::transaction::ObservedContractState;\n"
+        "fn wrong(observed: &ObservedContractState) {\n"
+        "    let _ = Contract::default().recording.plus_amount_call(observed, (), true);\n"
+        "}\nfn main() {}\n"
+    )
+    rejected = subprocess.run(
+        ["cargo", "check", "--quiet", "--example", "wrong_sum"],
+        cwd=consumer, env=environment, capture_output=True, text=True,
+    )
+    assert rejected.returncode != 0, "wrong-typed Cell sum unexpectedly compiled"
+    assert "error[E0308]" in rejected.stderr, rejected.stderr
 
 
 def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
@@ -1257,7 +1283,7 @@ def main() -> None:
             check_manifest(chunked_cell_proof)
             for circuit in (
                 "set_active", "get_active", "assert_active",
-                "set_amount", "get_amount", "add_amount",
+                "set_amount", "get_amount", "add_amount", "active_equals", "plus_amount",
             ):
                 for extension in ("prover", "verifier"):
                     assert (chunked_cell_proof / "keys" / f"{circuit}.{extension}").is_file()

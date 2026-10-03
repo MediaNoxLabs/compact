@@ -52,4 +52,6 @@ fn chunked_cell_calls_need_only_the_generated_crate() {
     missing!("set_amount", contract.recording.set_amount_call(&observed, (), Field::from(11_u64)).unwrap());
     missing!("get_amount", contract.recording.get_amount_call(&observed, ()).unwrap());
     missing!("add_amount", contract.recording.add_amount_call(&observed, (), Field::from(7_u64)).unwrap());
+    missing!("active_equals", contract.recording.active_equals_call(&observed, (), true).unwrap());
+    missing!("plus_amount", contract.recording.plus_amount_call(&observed, (), Field::from(7_u64)).unwrap());
 }

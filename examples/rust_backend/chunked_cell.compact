@@ -50,3 +50,10 @@ export circuit get_amount(): Field { return amount.read(); }
 export circuit add_amount(delta: Field): [] {
   amount = amount.read() + disclose(delta);
 }
+
+export circuit active_equals(expected: Boolean): Boolean {
+  return active.read() == disclose(expected);
+}
+export circuit plus_amount(delta: Field): Field {
+  return amount.read() + disclose(delta);
+}

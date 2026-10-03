@@ -2721,6 +2721,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             "set_amount",
             "get_amount",
             "add_amount",
+            "active_equals",
+            "plus_amount",
         ] {
             let initial = chunked_cell_contract::initial_state(ConstructorContext::new(()))?;
             let deploy = make_deploy(
@@ -2808,6 +2810,33 @@ fn main() -> Result<(), Box<dyn Error>> {
                     let typed = contract
                         .recording
                         .add_amount_call(&observed, (), Field::from(7_u64))?
+                        .prepare(verifier, Fr::from(0_u64))?;
+                    (manual, typed)
+                }
+                "active_equals" => {
+                    let recorded = contract.recording.active_equals(context, true)?;
+                    if !recorded.execution.result {
+                        return Err("seeded chunked Cell equality differs".into());
+                    }
+                    let manual = check_generated_trace(chunked_root, circuit, recorded, true)?;
+                    let typed = contract
+                        .recording
+                        .active_equals_call(&observed, (), true)?
+                        .prepare(verifier, Fr::from(0_u64))?;
+                    (manual, typed)
+                }
+                "plus_amount" => {
+                    let recorded = contract
+                        .recording
+                        .plus_amount(context, Field::from(7_u64))?;
+                    if recorded.execution.result != Field::from(10_u64) {
+                        return Err("seeded chunked Cell sum differs".into());
+                    }
+                    let manual =
+                        check_generated_trace(chunked_root, circuit, recorded, Field::from(7_u64))?;
+                    let typed = contract
+                        .recording
+                        .plus_amount_call(&observed, (), Field::from(7_u64))?
                         .prepare(verifier, Fr::from(0_u64))?;
                     (manual, typed)
                 }

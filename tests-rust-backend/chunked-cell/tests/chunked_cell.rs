@@ -44,6 +44,8 @@ fn state_hex(state: StateValue<DefaultDB>) -> String {
         "set_amount",
         "get_amount",
         "add_amount",
+        "active_equals",
+        "plus_amount",
     ] {
         operations = operations.insert(
             EntryPointBuf(name.as_bytes().to_vec()),
@@ -191,6 +193,8 @@ fn chunked_cell_calls_match_typescript_and_replay() {
     check_input("assert_active", true, &reference["assertActive"]);
     check_input("set_amount", Field::from(11_u64), &reference["setAmount"]);
     check_input("add_amount", Field::from(7_u64), &reference["addAmount"]);
+    check_input("active_equals", true, &reference["activeEquals"]);
+    check_input("plus_amount", Field::from(7_u64), &reference["plusAmount"]);
     check(
         "set_active",
         ledger_contract::set_active(context(), false).unwrap(),
@@ -232,6 +236,27 @@ fn chunked_cell_calls_match_typescript_and_replay() {
             .add_amount(context(), Field::from(7_u64))
             .unwrap(),
         &reference["addAmount"],
+    );
+    let equals = contract.recording.active_equals(context(), true).unwrap();
+    assert!(equals.execution.result);
+    assert_eq!(reference["activeEquals"]["result"], "true");
+    check(
+        "active_equals",
+        ledger_contract::active_equals(context(), true).unwrap(),
+        equals,
+        &reference["activeEquals"],
+    );
+    let sum = contract
+        .recording
+        .plus_amount(context(), Field::from(7_u64))
+        .unwrap();
+    assert_eq!(sum.execution.result, Field::from(10_u64));
+    assert_eq!(reference["plusAmount"]["result"], "10");
+    check(
+        "plus_amount",
+        ledger_contract::plus_amount(context(), Field::from(7_u64)).unwrap(),
+        sum,
+        &reference["plusAmount"],
     );
 
     let first = amount.read(context()).unwrap();

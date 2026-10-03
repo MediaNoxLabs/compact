@@ -6,6 +6,9 @@ midnight-zk primitives for fields, encoding, cryptography, state, and VM
 queries. Generated code checks `RUST_RUNTIME_ABI` at compile time. A generated
 crate bundles matching runtime sources by default or points to one shared
 source root when compiled with `--rust-runtime-root`.
+ABI 28 emits recorded and observed calls for supported action-free Boolean
+and Field return expressions with an explicit Cell read. The generated methods reuse the typed scalar
+expression lowerers and existing ledger VM programs.
 ABI 27 emits recorded and observed Cell calls at compiler-chunked ledger
 paths. Existing typed Cell slots, recording frames and ledger VM builders carry
 the complete path; the runtime VM semantics are unchanged.

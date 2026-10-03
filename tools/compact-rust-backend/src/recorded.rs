@@ -26,6 +26,39 @@ use crate::ir::{
 use crate::stateful::circuit_uses_witness;
 use crate::{RenderError, expression_with_calls, ident, list_head_result_type, rust_type};
 
+/// Keep exported scalar-expression recording tied to a ledger read. Other
+/// action-free expressions may still be lowered as private shared helpers.
+fn contains_cell_read(value: &Expr) -> bool {
+    match value {
+        Expr::CellRead { .. } => true,
+        Expr::Coerce { value, .. } | Expr::FieldCast { value } => contains_cell_read(value),
+        Expr::Add { left, right }
+        | Expr::Subtract { left, right }
+        | Expr::Multiply { left, right }
+        | Expr::Equal { left, right }
+        | Expr::NotEqual { left, right } => contains_cell_read(left) || contains_cell_read(right),
+        Expr::Let { bindings, body } => {
+            bindings
+                .iter()
+                .any(|binding| contains_cell_read(&binding.value))
+                || contains_cell_read(body)
+        }
+        Expr::If {
+            condition,
+            then,
+            otherwise,
+        } => {
+            contains_cell_read(condition)
+                || contains_cell_read(then)
+                || contains_cell_read(otherwise)
+        }
+        Expr::Sequence { steps, value } => {
+            steps.iter().any(contains_cell_read) || contains_cell_read(value)
+        }
+        _ => false,
+    }
+}
+
 /// Emit a replayable public VM trace for supported root Cell, Counter, Set, Map, List,
 /// and plain/historic Merkle append
 /// operations, including witnessed Cell values. Unsupported circuits have no
@@ -1953,7 +1986,9 @@ fn render_recorded_item(
             )
         }
         StateReturn::Expression { value }
-            if helper && circuit.result == Type::Field && circuit.actions.is_empty() =>
+            if circuit.result == Type::Field
+                && circuit.actions.is_empty()
+                && (helper || (contains_cell_read(value) && !matches!(value, Expr::If { .. }))) =>
         {
             let mut return_steps = Vec::new();
             let Some(result) = field_expression(
@@ -1964,6 +1999,29 @@ fn render_recorded_item(
                 witnesses,
                 circuits,
                 shared_callees,
+                &mut return_steps,
+                &mut next_temp,
+                &mut visiting,
+            )?
+            else {
+                return Ok(None);
+            };
+            (return_steps, result)
+        }
+        StateReturn::Expression { value }
+            if contains_cell_read(value)
+                && circuit.result == Type::Boolean
+                && circuit.actions.is_empty()
+                && !matches!(value, Expr::If { .. }) =>
+        {
+            let mut return_steps = Vec::new();
+            let Some(result) = boolean_expression(
+                value,
+                &HashMap::new(),
+                &parameters,
+                ledger_fields,
+                witnesses,
+                circuits,
                 &mut return_steps,
                 &mut next_temp,
                 &mut visiting,

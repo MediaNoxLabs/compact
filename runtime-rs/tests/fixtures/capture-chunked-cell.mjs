@@ -100,4 +100,6 @@ process.stdout.write(JSON.stringify({
   setAmount: capture('set_amount', 11n),
   getAmount: capture('get_amount'),
   addAmount: capture('add_amount', 7n),
+  activeEquals: capture('active_equals', true),
+  plusAmount: capture('plus_amount', 7n),
 }, null, 2) + '\n');

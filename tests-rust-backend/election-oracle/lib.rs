@@ -139,7 +139,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 16);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 17);
     pub(crate) fn merkleTreePathRoot(
         path: crate::types::MerkleTreePath,
     ) -> Result<crate::types::MerkleTreeDigest, runtime::CompactError> {
@@ -280,7 +280,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 16);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 17);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -289,24 +289,24 @@ pub mod ledger_contract {
     }
     impl<'a> LedgerView<'a> {
         pub fn authority(&self) -> Result<runtime::FixedBytes<32>, runtime::CompactError> {
-            self.meter.read_cell::<runtime::FixedBytes<32>>(&[0])
+            crate::ledger_slots::authority.witness_read(self.meter)
         }
         pub fn state(&self) -> Result<crate::types::PublicState, runtime::CompactError> {
-            self.meter.read_cell::<crate::types::PublicState>(&[1])
+            crate::ledger_slots::state.witness_read(self.meter)
         }
         pub fn topic(&self) -> Result<crate::types::Maybe, runtime::CompactError> {
-            self.meter.read_cell::<crate::types::Maybe>(&[2])
+            crate::ledger_slots::topic.witness_read(self.meter)
         }
         pub fn tally_yes(
             &self,
         ) -> Result<runtime::BoundedUint<18446744073709551615>, runtime::CompactError> {
-            let value = self.meter.read_cell::<u64>(&[3])?;
+            let value = crate::ledger_slots::tally_yes.witness_read(self.meter)?;
             runtime::BoundedUint::<18446744073709551615>::new(value as u128)
         }
         pub fn tally_no(
             &self,
         ) -> Result<runtime::BoundedUint<18446744073709551615>, runtime::CompactError> {
-            let value = self.meter.read_cell::<u64>(&[4])?;
+            let value = crate::ledger_slots::tally_no.witness_read(self.meter)?;
             runtime::BoundedUint::<18446744073709551615>::new(value as u128)
         }
         pub fn committed_votes(

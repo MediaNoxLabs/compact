@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 16);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 17);
     pub fn idf(x: runtime::Field) -> Result<runtime::Field, runtime::CompactError> {
         Ok(x)
     }
@@ -99,7 +99,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 16);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 17);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -108,30 +108,30 @@ pub mod ledger_contract {
     }
     impl<'a> LedgerView<'a> {
         pub fn opening(&self) -> Result<runtime::FixedBytes<32>, runtime::CompactError> {
-            self.meter.read_cell::<runtime::FixedBytes<32>>(&[0])
+            crate::ledger_slots::opening.witness_read(self.meter)
         }
         pub fn commitCell(&self) -> Result<runtime::FixedBytes<32>, runtime::CompactError> {
-            self.meter.read_cell::<runtime::FixedBytes<32>>(&[1])
+            crate::ledger_slots::commitCell.witness_read(self.meter)
         }
         pub fn hashCell(&self) -> Result<runtime::FixedBytes<32>, runtime::CompactError> {
-            self.meter.read_cell::<runtime::FixedBytes<32>>(&[2])
+            crate::ledger_slots::hashCell.witness_read(self.meter)
         }
         pub fn fieldCell(&self) -> Result<runtime::Field, runtime::CompactError> {
-            self.meter.read_cell::<runtime::Field>(&[3])
+            crate::ledger_slots::fieldCell.witness_read(self.meter)
         }
         pub fn armCell(&self) -> Result<runtime::Field, runtime::CompactError> {
-            self.meter.read_cell::<runtime::Field>(&[4])
+            crate::ledger_slots::armCell.witness_read(self.meter)
         }
         pub fn condCell(&self) -> Result<runtime::Field, runtime::CompactError> {
-            self.meter.read_cell::<runtime::Field>(&[5])
+            crate::ledger_slots::condCell.witness_read(self.meter)
         }
         pub fn flag(&self) -> Result<bool, runtime::CompactError> {
-            self.meter.read_cell::<bool>(&[6])
+            crate::ledger_slots::flag.witness_read(self.meter)
         }
         pub fn asserts(
             &self,
         ) -> Result<runtime::BoundedUint<18446744073709551615>, runtime::CompactError> {
-            let value = self.meter.read_cell::<u64>(&[7])?;
+            let value = crate::ledger_slots::asserts.witness_read(self.meter)?;
             runtime::BoundedUint::<18446744073709551615>::new(value as u128)
         }
     }

@@ -47,7 +47,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 16);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 17);
     pub(crate) fn some(
         value: runtime::Field,
     ) -> Result<crate::types::Maybe, runtime::CompactError> {
@@ -89,7 +89,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 16);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 17);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -98,13 +98,13 @@ pub mod ledger_contract {
     }
     impl<'a> LedgerView<'a> {
         pub fn authority(&self) -> Result<runtime::FixedBytes<32>, runtime::CompactError> {
-            self.meter.read_cell::<runtime::FixedBytes<32>>(&[0])
+            crate::ledger_slots::authority.witness_read(self.meter)
         }
         pub fn value(&self) -> Result<runtime::Field, runtime::CompactError> {
-            self.meter.read_cell::<runtime::Field>(&[1])
+            crate::ledger_slots::value.witness_read(self.meter)
         }
         pub fn state(&self) -> Result<crate::types::STATE, runtime::CompactError> {
-            self.meter.read_cell::<crate::types::STATE>(&[2])
+            crate::ledger_slots::state.witness_read(self.meter)
         }
     }
     /// Implement for infallible callbacks; use TryWitnesses for fallible ledger reads.

@@ -62,7 +62,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 16);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 17);
     pub(crate) fn some(
         value: runtime::Field,
     ) -> Result<crate::types::Maybe, runtime::CompactError> {
@@ -417,7 +417,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 16);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 17);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -426,27 +426,25 @@ pub mod ledger_contract {
     }
     impl<'a> LedgerView<'a> {
         pub fn flag(&self) -> Result<bool, runtime::CompactError> {
-            self.meter.read_cell::<bool>(&[0])
+            crate::ledger_slots::flag.witness_read(self.meter)
         }
         pub fn fieldCell(&self) -> Result<runtime::Field, runtime::CompactError> {
-            self.meter.read_cell::<runtime::Field>(&[1])
+            crate::ledger_slots::fieldCell.witness_read(self.meter)
         }
         pub fn wideCell(
             &self,
         ) -> Result<runtime::BoundedUint<18446744073709551615>, runtime::CompactError> {
-            self.meter
-                .read_cell::<runtime::BoundedUint<18446744073709551615>>(&[2])
+            crate::ledger_slots::wideCell.witness_read(self.meter)
         }
         pub fn vecCell(
             &self,
         ) -> Result<runtime::FixedVector<runtime::Field, 2>, runtime::CompactError> {
-            self.meter
-                .read_cell::<runtime::FixedVector<runtime::Field, 2>>(&[3])
+            crate::ledger_slots::vecCell.witness_read(self.meter)
         }
         pub fn ops(
             &self,
         ) -> Result<runtime::BoundedUint<18446744073709551615>, runtime::CompactError> {
-            let value = self.meter.read_cell::<u64>(&[4])?;
+            let value = crate::ledger_slots::ops.witness_read(self.meter)?;
             runtime::BoundedUint::<18446744073709551615>::new(value as u128)
         }
     }

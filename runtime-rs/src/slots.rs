@@ -23,7 +23,7 @@
 use std::marker::PhantomData;
 
 use crate::CompactError;
-use crate::context::{CircuitContext, CircuitResult};
+use crate::context::{CircuitContext, CircuitResult, WitnessReadMeter};
 use crate::ledger::{CellValue, DB};
 use crate::recording::RecordingFrame;
 
@@ -194,6 +194,11 @@ impl<T: CellValue> CellSlot<T> {
         self.path
     }
 
+    /// Read this declared Cell through the witness read meter.
+    pub fn witness_read<D: DB>(self, meter: &WitnessReadMeter<'_, D>) -> Result<T, CompactError> {
+        meter.read_cell::<T>(self.path)
+    }
+
     pub fn read<Private, D: DB>(
         self,
         context: CircuitContext<Private, D>,
@@ -237,6 +242,11 @@ impl CounterSlot {
 
     pub const fn path(self) -> &'static [u8] {
         self.path
+    }
+
+    /// Read the raw ledger Counter through the witness read meter.
+    pub fn witness_read<D: DB>(self, meter: &WitnessReadMeter<'_, D>) -> Result<u64, CompactError> {
+        meter.read_cell::<u64>(self.path)
     }
 
     pub fn read<Private, D: DB>(

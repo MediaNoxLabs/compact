@@ -83,7 +83,7 @@ pub(crate) fn build<'a>(
                         let ty = rust_type(ty)?;
                         ledger_view_methods.push(syn::parse_quote! {
                             pub fn #name(&self) -> Result<#ty, runtime::CompactError> {
-                                self.meter.read_cell::<#ty>(&[#(#path),*])
+                                crate::ledger_slots::#name.witness_read(self.meter)
                             }
                         });
                     }
@@ -91,7 +91,7 @@ pub(crate) fn build<'a>(
                         let max = syn::LitInt::new(&u64::MAX.to_string(), Span::call_site());
                         ledger_view_methods.push(syn::parse_quote! {
                         pub fn #name(&self) -> Result<runtime::BoundedUint<#max>, runtime::CompactError> {
-                            let value = self.meter.read_cell::<u64>(&[#(#path),*])?;
+                            let value = crate::ledger_slots::#name.witness_read(self.meter)?;
                             runtime::BoundedUint::<#max>::new(value as u128)
                         }
                     });

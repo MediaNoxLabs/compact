@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 16);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 17);
     pub fn maxWide() -> Result<
         runtime::WideUint<
             1329227995784915872903807060280344575u128,
@@ -53,7 +53,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 16);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 17);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -70,10 +70,7 @@ pub mod ledger_contract {
             >,
             runtime::CompactError,
         > {
-            self.meter.read_cell::<runtime::WideUint<
-                1329227995784915872903807060280344575u128,
-                340282366920938463463374607431768211455u128,
-            >>(&[0])
+            crate::ledger_slots::wide.witness_read(self.meter)
         }
     }
     /// Implement for infallible callbacks; use TryWitnesses for fallible ledger reads.

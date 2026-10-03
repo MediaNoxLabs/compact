@@ -126,7 +126,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 16);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 17);
     pub fn assertRecordFreshEnough(
         policy: crate::types::FreshnessPolicy,
         record: crate::types::AssetRecord,
@@ -286,7 +286,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 16);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 17);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -297,69 +297,63 @@ pub mod ledger_contract {
         pub fn schemaVersion(
             &self,
         ) -> Result<runtime::BoundedUint<4294967295>, runtime::CompactError> {
-            self.meter
-                .read_cell::<runtime::BoundedUint<4294967295>>(&[0, 0])
+            crate::ledger_slots::schemaVersion.witness_read(self.meter)
         }
         pub fn registryId(&self) -> Result<crate::types::ContractAddress, runtime::CompactError> {
-            self.meter
-                .read_cell::<crate::types::ContractAddress>(&[0, 1])
+            crate::ledger_slots::registryId.witness_read(self.meter)
         }
         pub fn custodian(&self) -> Result<crate::types::ContractAddress, runtime::CompactError> {
-            self.meter
-                .read_cell::<crate::types::ContractAddress>(&[0, 2])
+            crate::ledger_slots::custodian.witness_read(self.meter)
         }
         pub fn operatorKey(&self) -> Result<runtime::JubjubPoint, runtime::CompactError> {
-            self.meter.read_cell::<runtime::JubjubPoint>(&[0, 3])
+            crate::ledger_slots::operatorKey.witness_read(self.meter)
         }
         pub fn auditorKey(&self) -> Result<runtime::JubjubPoint, runtime::CompactError> {
-            self.meter.read_cell::<runtime::JubjubPoint>(&[0, 4])
+            crate::ledger_slots::auditorKey.witness_read(self.meter)
         }
         pub fn salt(&self) -> Result<runtime::FixedBytes<32>, runtime::CompactError> {
-            self.meter.read_cell::<runtime::FixedBytes<32>>(&[1, 0])
+            crate::ledger_slots::salt.witness_read(self.meter)
         }
         pub fn label(&self) -> Result<runtime::FixedBytes<32>, runtime::CompactError> {
-            self.meter.read_cell::<runtime::FixedBytes<32>>(&[1, 1])
+            crate::ledger_slots::label.witness_read(self.meter)
         }
         pub fn createdAt(
             &self,
         ) -> Result<runtime::BoundedUint<18446744073709551615>, runtime::CompactError> {
-            self.meter
-                .read_cell::<runtime::BoundedUint<18446744073709551615>>(&[1, 2])
+            crate::ledger_slots::createdAt.witness_read(self.meter)
         }
         pub fn updatedAt(
             &self,
         ) -> Result<runtime::BoundedUint<18446744073709551615>, runtime::CompactError> {
-            self.meter
-                .read_cell::<runtime::BoundedUint<18446744073709551615>>(&[1, 3])
+            crate::ledger_slots::updatedAt.witness_read(self.meter)
         }
         pub fn maxAgeSeconds(
             &self,
         ) -> Result<runtime::BoundedUint<18446744073709551615>, runtime::CompactError> {
-            self.meter
-                .read_cell::<runtime::BoundedUint<18446744073709551615>>(&[1, 4])
+            crate::ledger_slots::maxAgeSeconds.witness_read(self.meter)
         }
         pub fn recordCount(
             &self,
         ) -> Result<runtime::BoundedUint<18446744073709551615>, runtime::CompactError> {
-            let value = self.meter.read_cell::<u64>(&[1, 5])?;
+            let value = crate::ledger_slots::recordCount.witness_read(self.meter)?;
             runtime::BoundedUint::<18446744073709551615>::new(value as u128)
         }
         pub fn open(&self) -> Result<bool, runtime::CompactError> {
-            self.meter.read_cell::<bool>(&[1, 6])
+            crate::ledger_slots::open.witness_read(self.meter)
         }
         pub fn frozen(&self) -> Result<bool, runtime::CompactError> {
-            self.meter.read_cell::<bool>(&[1, 7])
+            crate::ledger_slots::frozen.witness_read(self.meter)
         }
         pub fn revision(
             &self,
         ) -> Result<runtime::BoundedUint<18446744073709551615>, runtime::CompactError> {
-            let value = self.meter.read_cell::<u64>(&[1, 8])?;
+            let value = crate::ledger_slots::revision.witness_read(self.meter)?;
             runtime::BoundedUint::<18446744073709551615>::new(value as u128)
         }
         pub fn writeCount(
             &self,
         ) -> Result<runtime::BoundedUint<18446744073709551615>, runtime::CompactError> {
-            let value = self.meter.read_cell::<u64>(&[1, 9])?;
+            let value = crate::ledger_slots::writeCount.witness_read(self.meter)?;
             runtime::BoundedUint::<18446744073709551615>::new(value as u128)
         }
         pub fn records(

@@ -210,7 +210,7 @@ fn generated_unit_enum_uses_checked_derive_without_handwritten_codecs() {
     let source = render(&contract).unwrap();
     assert!(source.contains("CompactCellValue, CompactEnum"));
     assert!(source.contains("pub enum Choice"));
-    assert!(source.contains("RUST_RUNTIME_ABI == 16"));
+    assert!(source.contains("RUST_RUNTIME_ABI == 17"));
     assert!(!source.contains("impl FieldRepr for Choice"));
     assert!(!source.contains("impl BinaryHashRepr for Choice"));
     assert!(!source.contains("impl FromFieldRepr for Choice"));
@@ -1635,6 +1635,60 @@ fn witness_calls_require_a_declared_witness_and_matching_signature() {
 }
 
 #[test]
+fn witness_cell_and_counter_getters_use_declared_composite_slots() {
+    let contract = Contract {
+        schema_version: 8,
+        type_aliases: vec![],
+        constructor: None,
+        witnesses: vec![WitnessDeclaration {
+            source: None,
+            name: "observe".into(),
+            parameters: vec![],
+            result: Type::Unit,
+        }],
+        ledger_fields: (0..16)
+            .map(|position| LedgerField {
+                source: None,
+                id: match position {
+                    0 => "flag".into(),
+                    1 => "round".into(),
+                    _ => format!("filler_{position}"),
+                },
+                index: u8::from(position != 0),
+                path: if position == 0 {
+                    vec![0, 0]
+                } else {
+                    vec![1, position - 1]
+                },
+                declaration: if position == 1 {
+                    LedgerFieldKind::Counter
+                } else {
+                    LedgerFieldKind::Cell { ty: Type::Boolean }
+                },
+            })
+            .collect(),
+        circuits: vec![],
+        stateful_circuits: vec![],
+    };
+
+    let source = render(&contract).unwrap();
+    syn::parse_file(&source).unwrap();
+    let compact = source
+        .chars()
+        .filter(|ch| !ch.is_whitespace())
+        .collect::<String>();
+    assert!(compact.contains(
+        "pubconstflag:runtime::slots::CellSlot<bool>=runtime::slots::CellSlot::new(&[0u8,0u8]"
+    ));
+    assert!(compact.contains(
+        "pubconstround:runtime::slots::CounterSlot=runtime::slots::CounterSlot::new(&[1u8,0u8]"
+    ));
+    assert!(source.contains("crate::ledger_slots::flag.witness_read(self.meter)"));
+    assert!(source.contains("crate::ledger_slots::round.witness_read(self.meter)?"));
+    assert!(!source.contains("self.meter.read_cell::<"));
+}
+
+#[test]
 fn witnessed_field_cell_and_nested_call_use_native_frame() {
     let mut contract = identity(Type::Unit, Expr::Unit);
     contract.circuits.clear();
@@ -1707,7 +1761,7 @@ fn witnessed_field_cell_and_nested_call_use_native_frame() {
     assert!(source.contains("pub fn recording(&self) -> recorded::BorrowedContract<'_, W>"));
     assert_eq!(source.matches("CircuitFrame::new(context)").count(), 2);
     assert!(source.contains("meter: &'a runtime::context::WitnessReadMeter<'a>"));
-    assert!(source.contains("self.meter.read_cell::<runtime::Field>(&[0])"));
+    assert!(source.contains("crate::ledger_slots::cell.witness_read(self.meter)"));
     assert!(source.contains(".try_witness_metered(|context, meter|"));
     assert!(source.contains("#[runtime::compact_witness_bridge]"));
     assert!(!source.contains("pub trait TryWitnesses<Private>"));

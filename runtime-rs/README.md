@@ -6,6 +6,10 @@ midnight-zk primitives for fields, encoding, cryptography, state, and VM
 queries. Generated code checks `RUST_RUNTIME_ABI` at compile time. A generated
 crate bundles matching runtime sources by default or points to one shared
 source root when compiled with `--rust-runtime-root`.
+ABI 17 routes generated witness Cell and Counter getters through their typed
+ledger slots, so the declared slot owns each physical path for native,
+recorded, and witness reads. It keeps the existing VM, gas, error, and public
+getter behavior.
 ABI 16 derives the public `TryWitnesses` trait and its infallible adapter from
 one visible generated `Witnesses` trait. The `compact_witness_bridge` attribute
 changes generated source shape without changing witness, ledger, or VM behavior.

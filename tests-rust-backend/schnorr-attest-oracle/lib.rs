@@ -104,7 +104,7 @@ pub use types::Schnorr_SchnorrSignature;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 16);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 17);
     pub fn attestationDigest(
         subject: runtime::FixedBytes<32>,
         epoch: runtime::BoundedUint<18446744073709551615>,
@@ -141,7 +141,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 16);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 17);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -150,16 +150,16 @@ pub mod ledger_contract {
     }
     impl<'a> LedgerView<'a> {
         pub fn attestorKey(&self) -> Result<runtime::JubjubPoint, runtime::CompactError> {
-            self.meter.read_cell::<runtime::JubjubPoint>(&[0])
+            crate::ledger_slots::attestorKey.witness_read(self.meter)
         }
         pub fn acceptedCount(
             &self,
         ) -> Result<runtime::BoundedUint<18446744073709551615>, runtime::CompactError> {
-            let value = self.meter.read_cell::<u64>(&[1])?;
+            let value = crate::ledger_slots::acceptedCount.witness_read(self.meter)?;
             runtime::BoundedUint::<18446744073709551615>::new(value as u128)
         }
         pub fn open(&self) -> Result<bool, runtime::CompactError> {
-            self.meter.read_cell::<bool>(&[2])
+            crate::ledger_slots::open.witness_read(self.meter)
         }
     }
     /// Implement for infallible callbacks; use TryWitnesses for fallible ledger reads.

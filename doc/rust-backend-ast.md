@@ -59,6 +59,13 @@ partitions the Verify program, and constructs a ledger-8
 input, and commitment randomness. The proof gate uses this adapter for every
 recorded call that it proves, rather than assembling transcripts in the test
 harness.
+ABI 19 also emits a typed `*_call` method for complete recorded exports with
+zero or one parameter. It accepts an `ObservedContractState` and preserves the
+Compact entry point and public FAB input in a `RecordedCall`; `prepare` checks
+the observed state and installed verifier before using the same adapter. The
+observation metadata is caller supplied and does not prove finality. Circuits
+with multiple parameters retain the explicit `CallSpec` path pending exact
+FAB encoding checks.
 
 The packaged gate checks ZKIR and verifier artifacts, proves 57 supported call
 shapes, validates and applies each against an offline ledger, and checks the
@@ -219,7 +226,7 @@ Field into `Map.insert`, covering the compiler's generated temporary rather
 than treating it as an undeclared circuit parameter. Other witnessed
 expression forms and ledger action values still need independent recording
 and parity gates.
-The current generated/runtime ABI is 15.
+The current generated/runtime ABI is 19.
 
 The runtime can now construct and decode ledger Cells and Counters, and it
 runs Cell writes plus Counter increments/decrements through the ledger VM.

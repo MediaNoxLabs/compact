@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 18);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 19);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -32,7 +32,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 18);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 19);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -277,6 +277,24 @@ pub mod ledger_contract {
             > {
                 crate::ledger_contract::recorded::read_cell(context)
             }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn read_cell_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, runtime::Field>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.read_cell(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "read_cell",
+                    input,
+                ))
+            }
         }
         /// A recording handle with access to the contract's witnesses.
         pub struct BorrowedContract<'a, W> {
@@ -293,6 +311,29 @@ pub mod ledger_contract {
             {
                 write_secret(context, self.witnesses, __compact_param_0)
             }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn write_secret_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                __compact_param_0: runtime::Field,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
+                let recorded =
+                    self.write_secret(observed.circuit_context(private_state), __compact_param_0)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "write_secret",
+                    input,
+                ))
+            }
             pub fn write_twice<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
@@ -302,6 +343,29 @@ pub mod ledger_contract {
                 W: super::TryWitnesses<Private>,
             {
                 write_twice(context, self.witnesses, __compact_param_0)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn write_twice_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                __compact_param_0: runtime::Field,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
+                let recorded =
+                    self.write_twice(observed.circuit_context(private_state), __compact_param_0)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "write_twice",
+                    input,
+                ))
             }
             pub fn write_nested_twice<Private>(
                 &self,
@@ -313,6 +377,31 @@ pub mod ledger_contract {
             {
                 write_nested_twice(context, self.witnesses, __compact_param_0)
             }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn write_nested_twice_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                __compact_param_0: runtime::Field,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
+                let recorded = self.write_nested_twice(
+                    observed.circuit_context(private_state),
+                    __compact_param_0,
+                )?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "write_nested_twice",
+                    input,
+                ))
+            }
             pub fn read_cell<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
@@ -321,6 +410,24 @@ pub mod ledger_contract {
                 runtime::CompactError,
             > {
                 read_cell(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn read_cell_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, runtime::Field>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.read_cell(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "read_cell",
+                    input,
+                ))
             }
         }
     }

@@ -31,7 +31,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 18);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 19);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -43,7 +43,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 18);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 19);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -160,12 +160,44 @@ pub mod ledger_contract {
             {
                 crate::ledger_contract::recorded::choose(context, __compact_param_0)
             }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn choose_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                __compact_param_0: crate::types::Choice,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
+                let recorded =
+                    self.choose(observed.circuit_context(private_state), __compact_param_0)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "choose", input,
+                ))
+            }
             pub fn selectNo<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             {
                 crate::ledger_contract::recorded::selectNo(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn selectNo_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.selectNo(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "selectNo", input,
+                ))
             }
             pub fn current<Private>(
                 &self,
@@ -175,6 +207,21 @@ pub mod ledger_contract {
                 runtime::CompactError,
             > {
                 crate::ledger_contract::recorded::current(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn current_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, crate::types::Choice>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.current(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "current", input,
+                ))
             }
         }
     }

@@ -97,6 +97,14 @@ verifier artifact.
 The generated crate forwards the feature as `ledger-transaction` and reexports
 its exact runtime as `contract_crate::runtime`, so a consumer can depend only on
 the generated crate for these types.
+For a complete recorded circuit with zero or one parameter, the generated
+`recording` handle also has a `*_call(&ObservedContractState, private_state, ...args)`
+method. It carries the Compact entry point and FAB input into
+`RecordedCall::prepare(verifier, commitment_randomness)`, which checks the
+observed address, state, and installed verifier. The observation metadata is
+supplied by the caller; it does not authenticate finality. Circuits with
+multiple parameters retain the explicit `prepare_call` path until their
+input encoding has parity evidence. See ADR-0043 / issue #142.
 Generated modules suppress Rust's naming lint so public names retain their
 Compact spelling without warning in consumer builds.
 
@@ -106,7 +114,7 @@ Compact spelling without warning in consumer builds.
 |---|---|---|
 | Compact compiler | Toolchain 0.31.133, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
 | Rust IR | Schema 8, private to this backend | The renderer rejects any other schema before writing `lib.rs`. Ledger, circuit, witness, constructor, and exported alias declarations carry optional Compact source locations for diagnostics. |
-| Generated code and Rust runtime | ABI 18 | Generated modules assert the ABI at Rust compile time. ABI 18 routes witness Set/Map/List/plain and historic Merkle getters through typed slots and existing metered views; ABI 17 routes witness Cell/Counter getters through typed slots for a single physical-path owner; ABI 16 derives `TryWitnesses` and its infallible adapter from one visible `Witnesses` trait through the runtime attribute macro; ABI 15 records supported Set/Map circuits with declaration-typed vector keys through existing `FixedVector` and typed slots; ABI 14 records historic Merkle append with root-history VM semantics; ABI 13 records plain Merkle append through the typed slot and shared VM builder; ABI 12 adds typed plain/historic Merkle slots for native calls; ABI 11 meters Merkle witness VM reads while keeping local projections uncharged; ABI 10 adds fallible `TryWitnesses` and adapts existing pair-returning `Witnesses` implementations; ABI 9 meters List witness reads, ABI 8 Map, ABI 7 Set, ABI 6 Cell/Counter; ABI 5 added structural nested Map slots. |
+| Generated code and Rust runtime | ABI 19 | Generated modules assert the ABI at Rust compile time. ABI 19 adds typed observed-state recorded calls for zero and one parameter with installed-verifier checks. ABI 18 routes witness Set/Map/List/plain and historic Merkle getters through typed slots and existing metered views; ABI 17 routes witness Cell/Counter getters through typed slots for a single physical-path owner; ABI 16 derives `TryWitnesses` and its infallible adapter from one visible `Witnesses` trait through the runtime attribute macro; ABI 15 records supported Set/Map circuits with declaration-typed vector keys through existing `FixedVector` and typed slots; ABI 14 records historic Merkle append with root-history VM semantics; ABI 13 records plain Merkle append through the typed slot and shared VM builder; ABI 12 adds typed plain/historic Merkle slots for native calls; ABI 11 meters Merkle witness VM reads while keeping local projections uncharged; ABI 10 adds fallible `TryWitnesses` and adapts existing pair-returning `Witnesses` implementations; ABI 9 meters List witness reads, ABI 8 Map, ABI 7 Set, ABI 6 Cell/Counter; ABI 5 added structural nested Map slots. |
 | Rust runtime source | Bundled runtime crates or an explicit shared source root | Cargo resolves the matching runtime and its pinned Midnight crates. |
 
 `--runtime-version` reports the TypeScript runtime version; the Rust runtime

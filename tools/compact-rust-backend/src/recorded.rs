@@ -2483,3 +2483,61 @@ pub(crate) fn render_recorded_contract_method(
         }
     })
 }
+
+/// A generated call handle carries the circuit's declared input and entry
+/// point into ledger preparation, so consumers cannot repeat them incorrectly.
+pub(crate) fn render_observed_call_method(
+    circuit: &StatefulCircuit,
+    uses_witness: bool,
+) -> Result<syn::ImplItemFn, RenderError> {
+    let name = ident(&circuit.name)?;
+    let call_name = ident(&format!("{}_call", circuit.name))?;
+    let entry_point = syn::LitStr::new(&circuit.name, Span::call_site());
+    let mut args = Vec::<syn::FnArg>::new();
+    let mut call_args = Vec::<syn::Ident>::new();
+    let mut input_args = Vec::<syn::Expr>::new();
+    for (index, parameter) in circuit.parameters.iter().enumerate() {
+        let arg = syn::Ident::new(&format!("__compact_param_{index}"), Span::call_site());
+        let ty = rust_type(&parameter.ty)?;
+        args.push(syn::parse_quote!(#arg: #ty));
+        input_args.push(syn::parse_quote!(#arg.clone()));
+        call_args.push(arg);
+    }
+    let input: syn::Expr = match input_args.as_slice() {
+        [] => syn::parse_quote!(()),
+        [single] => single.clone(),
+        _ => return Err(RenderError::UnsupportedStatefulCall(circuit.name.clone())),
+    };
+    let result = rust_type(&circuit.result)?;
+    let method = if uses_witness {
+        syn::parse_quote! {
+            #[cfg(feature = "ledger-transaction")]
+            pub fn #call_name<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                #(#args),*
+            ) -> Result<runtime::transaction::RecordedCall<'observed, Private, #result>, runtime::CompactError>
+            where W: super::TryWitnesses<Private> {
+                let input = runtime::fab::AlignedValue::from(#input);
+                let recorded = self.#name(observed.circuit_context(private_state), #(#call_args),*)?;
+                Ok(runtime::transaction::RecordedCall::new(observed, recorded, #entry_point, input))
+            }
+        }
+    } else {
+        syn::parse_quote! {
+            #[cfg(feature = "ledger-transaction")]
+            pub fn #call_name<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                #(#args),*
+            ) -> Result<runtime::transaction::RecordedCall<'observed, Private, #result>, runtime::CompactError> {
+                let input = runtime::fab::AlignedValue::from(#input);
+                let recorded = self.#name(observed.circuit_context(private_state), #(#call_args),*)?;
+                Ok(runtime::transaction::RecordedCall::new(observed, recorded, #entry_point, input))
+            }
+        }
+    };
+    Ok(method)
+}

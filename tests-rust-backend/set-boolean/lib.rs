@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 18);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 19);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -33,7 +33,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 18);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 19);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -335,6 +335,23 @@ pub mod ledger_contract {
             {
                 crate::ledger_contract::recorded::add(context, __compact_param_0)
             }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn add_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                __compact_param_0: bool,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
+                let recorded =
+                    self.add(observed.circuit_context(private_state), __compact_param_0)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "add", input,
+                ))
+            }
             pub fn contains<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
@@ -345,6 +362,23 @@ pub mod ledger_contract {
             > {
                 crate::ledger_contract::recorded::contains(context, __compact_param_0)
             }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn contains_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                __compact_param_0: bool,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, bool>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
+                let recorded =
+                    self.contains(observed.circuit_context(private_state), __compact_param_0)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "contains", input,
+                ))
+            }
             pub fn add_field<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
@@ -352,6 +386,26 @@ pub mod ledger_contract {
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             {
                 crate::ledger_contract::recorded::add_field(context, __compact_param_0)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn add_field_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                __compact_param_0: runtime::Field,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
+                let recorded =
+                    self.add_field(observed.circuit_context(private_state), __compact_param_0)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "add_field",
+                    input,
+                ))
             }
             pub fn contains_field<Private>(
                 &self,
@@ -363,6 +417,26 @@ pub mod ledger_contract {
             > {
                 crate::ledger_contract::recorded::contains_field(context, __compact_param_0)
             }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn contains_field_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                __compact_param_0: runtime::Field,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, bool>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
+                let recorded = self
+                    .contains_field(observed.circuit_context(private_state), __compact_param_0)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "contains_field",
+                    input,
+                ))
+            }
             pub fn remove<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
@@ -370,6 +444,23 @@ pub mod ledger_contract {
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             {
                 crate::ledger_contract::recorded::remove(context, __compact_param_0)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn remove_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                __compact_param_0: bool,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
+                let recorded =
+                    self.remove(observed.circuit_context(private_state), __compact_param_0)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "remove", input,
+                ))
             }
             pub fn seen_size<Private>(
                 &self,
@@ -383,6 +474,28 @@ pub mod ledger_contract {
             > {
                 crate::ledger_contract::recorded::seen_size(context)
             }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn seen_size_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<
+                    'observed,
+                    Private,
+                    runtime::BoundedUint<18446744073709551615>,
+                >,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.seen_size(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "seen_size",
+                    input,
+                ))
+            }
             pub fn seen_is_empty<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
@@ -392,12 +505,48 @@ pub mod ledger_contract {
             > {
                 crate::ledger_contract::recorded::seen_is_empty(context)
             }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn seen_is_empty_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, bool>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.seen_is_empty(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "seen_is_empty",
+                    input,
+                ))
+            }
             pub fn reset_fields<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             {
                 crate::ledger_contract::recorded::reset_fields(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn reset_fields_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.reset_fields(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "reset_fields",
+                    input,
+                ))
             }
         }
     }

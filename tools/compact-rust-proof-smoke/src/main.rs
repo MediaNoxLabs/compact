@@ -59,7 +59,9 @@ use midnight_compact_runtime::ledger::{
     read_counter, set_view_at_path,
 };
 use midnight_compact_runtime::recording::RecordedCircuitResult;
-use midnight_compact_runtime::transaction::{CallSpec, prepare_call};
+use midnight_compact_runtime::transaction::{
+    CallSpec, Observation, ObservedCallError, ObservedContractState, RecordedCall, prepare_call,
+};
 use midnight_compact_runtime::{BoundedUint, FixedBytes, FixedVector};
 use midnight_ledger::construct::{ContractCallExt, ContractCallPrototype};
 use midnight_ledger::semantics::{TransactionContext, TransactionResult};
@@ -244,6 +246,20 @@ fn check_generated_trace<Private, Output: Into<AlignedValue>, Input: Into<Aligne
     )?;
     println!("generated {circuit} trace replayed and partitioned");
     Ok(call)
+}
+
+fn check_observed_call_parity(
+    manual: &ContractCallPrototype<DefaultDB>,
+    observed: &ContractCallPrototype<DefaultDB>,
+    name: &str,
+) -> Result<(), Box<dyn Error>> {
+    // The prototype Debug representation includes the complete public and
+    // private transcripts, effects, gas, input/output and key location.
+    if format!("{manual:?}") != format!("{observed:?}") {
+        return Err(format!("{name} observed call differs from manual adapter").into());
+    }
+    println!("{name} observed call matches manual ledger prototype");
+    Ok(())
 }
 
 fn make_deploy(
@@ -536,7 +552,117 @@ fn main() -> Result<(), Box<dyn Error>> {
     let counter_recorded = counter_contract::Contract::default()
         .recording
         .increment(counter_context)?;
-    let counter_call = check_generated_trace(counter_root, "increment", counter_recorded, ())?;
+    let counter_manual = check_generated_trace(counter_root, "increment", counter_recorded, ())?;
+    let counter_observed = ObservedContractState::new(
+        counter_deploy.address(),
+        counter_deploy.initial_state.clone(),
+        Observation {
+            transaction_hash: [0; 32],
+            block_hash: [0; 32],
+            block_height: 0,
+        },
+    );
+    let counter_verifier: VerifierKey = tagged_deserialize(&mut BufReader::new(File::open(
+        counter_root.join("keys/increment.verifier"),
+    )?))?;
+    let mut state_bytes = Vec::new();
+    tagged_serialize(counter_observed.contract(), &mut state_bytes)?;
+    let decoded = ObservedContractState::decode(
+        counter_observed.address(),
+        &state_bytes,
+        counter_observed.observation(),
+    )?;
+    if decoded.contract() != counter_observed.contract() {
+        return Err("observed state decoder changed ledger state".into());
+    }
+    state_bytes.push(0);
+    if ObservedContractState::decode(
+        counter_observed.address(),
+        &state_bytes,
+        counter_observed.observation(),
+    )
+    .is_ok()
+    {
+        return Err("observed state decoder accepted trailing bytes".into());
+    }
+    let missing_operation = ObservedContractState::new(
+        counter_observed.address(),
+        ContractState::new(
+            counter_deploy.initial_state.data.get_ref().clone(),
+            HashMap::new(),
+            ContractMaintenanceAuthority::default(),
+        ),
+        counter_observed.observation(),
+    );
+    let missing_call = counter_contract::Contract::default()
+        .recording
+        .increment_call(&missing_operation, ())?;
+    if !matches!(
+        missing_call.prepare(counter_verifier.clone(), Fr::from(0u64)),
+        Err(ObservedCallError::MissingOperation(_))
+    ) {
+        return Err("observed call accepted a missing operation".into());
+    }
+    let wrong_verifier: VerifierKey = tagged_deserialize(&mut BufReader::new(File::open(
+        cell_root.join("keys/set_flag.verifier"),
+    )?))?;
+    let wrong_key_call = counter_contract::Contract::default()
+        .recording
+        .increment_call(&counter_observed, ())?;
+    if !matches!(
+        wrong_key_call.prepare(wrong_verifier, Fr::from(0u64)),
+        Err(ObservedCallError::VerifierMismatch(_))
+    ) {
+        return Err("observed call accepted a different verifier".into());
+    }
+    let mut bad_address = counter_observed.address();
+    bad_address.0.0[0] ^= 1;
+    let wrong_address = ObservedContractState::new(
+        bad_address,
+        counter_deploy.initial_state.clone(),
+        counter_observed.observation(),
+    );
+    let recorded_at_address = counter_contract::Contract::default()
+        .recording
+        .increment(counter_observed.circuit_context(()))?;
+    if !matches!(
+        RecordedCall::new(&wrong_address, recorded_at_address, "increment", ())
+            .prepare(counter_verifier.clone(), Fr::from(0u64)),
+        Err(ObservedCallError::AddressMismatch)
+    ) {
+        return Err("observed call accepted a different address".into());
+    }
+    let recorded_for_stale = counter_contract::Contract::default()
+        .recording
+        .increment(counter_observed.circuit_context(()))?;
+    let stale_state = ContractState::new(
+        recorded_for_stale
+            .execution
+            .context
+            .query
+            .state
+            .get_ref()
+            .clone(),
+        counter_deploy.initial_state.operations.clone(),
+        ContractMaintenanceAuthority::default(),
+    );
+    let stale_observed = ObservedContractState::new(
+        counter_observed.address(),
+        stale_state,
+        counter_observed.observation(),
+    );
+    if !matches!(
+        RecordedCall::new(&stale_observed, recorded_for_stale, "increment", ())
+            .prepare(counter_verifier.clone(), Fr::from(0u64)),
+        Err(ObservedCallError::StateMismatch)
+    ) {
+        return Err("observed call accepted a stale state".into());
+    }
+    let counter_call = counter_contract::Contract::default()
+        .recording
+        .increment_call(&counter_observed, ())?
+        .prepare(counter_verifier, Fr::from(0u64))?;
+    check_observed_call_parity(&counter_manual, &counter_call, "increment")?;
     prove_counter(counter_root, &counter_call)?;
     let counter_handoff = env::var_os("COMPACT_RUST_WALLET_HANDOFF").map(PathBuf::from);
     let counter_deploy_handoff = env::var_os("COMPACT_RUST_DEPLOY_HANDOFF").map(PathBuf::from);
@@ -737,7 +863,25 @@ fn main() -> Result<(), Box<dyn Error>> {
         let recorded = nested_contract::Contract::default()
             .recording
             .add_twice(context, amount)?;
-        let parameterized_call = check_generated_trace(nested_root, "add_twice", recorded, amount)?;
+        let parameterized_manual =
+            check_generated_trace(nested_root, "add_twice", recorded, amount)?;
+        let parameterized_observed = ObservedContractState::new(
+            parameterized_deploy.address(),
+            parameterized_deploy.initial_state.clone(),
+            Observation {
+                transaction_hash: [0; 32],
+                block_hash: [0; 32],
+                block_height: 0,
+            },
+        );
+        let parameterized_verifier: VerifierKey = tagged_deserialize(&mut BufReader::new(
+            File::open(nested_root.join("keys/add_twice.verifier"))?,
+        ))?;
+        let parameterized_call = nested_contract::Contract::default()
+            .recording
+            .add_twice_call(&parameterized_observed, (), amount)?
+            .prepare(parameterized_verifier, Fr::from(0u64))?;
+        check_observed_call_parity(&parameterized_manual, &parameterized_call, "add_twice")?;
         check_transaction(
             nested_root,
             "add_twice",

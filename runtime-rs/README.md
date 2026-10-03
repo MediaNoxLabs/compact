@@ -6,6 +6,11 @@ midnight-zk primitives for fields, encoding, cryptography, state, and VM
 queries. Generated code checks `RUST_RUNTIME_ABI` at compile time. A generated
 crate bundles matching runtime sources by default or points to one shared
 source root when compiled with `--rust-runtime-root`.
+ABI 19 adds `transaction::ObservedContractState` and `RecordedCall` for
+source-typed zero- and one-argument calls. The generated `*_call` method
+retains the entry point and FAB input, checks the installed ledger verifier,
+and delegates to the existing trace replay and partitioner. Observation
+metadata is caller supplied and does not authenticate finality.
 ABI 18 routes generated Set, Map, List, plain Merkle and historic Merkle witness
 getters through their typed ledger slots. The slots delegate to the existing
 metered views, preserving validation, gas, errors and the public getter API.
@@ -81,6 +86,14 @@ partitions a `RecordedCircuitResult`, checks its effects, and returns a ledger-8
 public input, and commitment randomness. The ledger partitioner computes the
 actual transaction transcript, including its gas and effects.
 The frame's observed gas is only a native execution diagnostic.
+
+For an observed ledger-8 `ContractState`, the generated crate also exposes
+`contract.recording.increment_call(&observed, private_state)` (and typed
+one-argument equivalents). Call `.prepare(verifier, commitment_randomness)`
+on its `RecordedCall` to obtain the same `ContractCallPrototype`. The helper
+checks the recorded address, initial state, and installed operation verifier.
+The caller must still validate the indexer response and handle intent,
+proof, sealing, and submission through ledger and wallet APIs.
 
 Generated `contract.recording` methods are available only for circuits whose
 operations are fully captured by the backend. Other methods use the native

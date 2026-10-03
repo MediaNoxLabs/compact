@@ -23,16 +23,185 @@
 use std::borrow::Cow;
 use std::error::Error;
 use std::fmt;
+use std::io::{self, Cursor};
 
 use midnight_base_crypto::fab::AlignedValue;
 use midnight_ledger::construct::{ContractCallPrototype, PreTranscript, partition_transcripts};
 use midnight_ledger::structure::INITIAL_PARAMETERS;
 use midnight_onchain_state::state::{ContractOperation, EntryPointBuf};
+use midnight_serialize::tagged_deserialize;
 use midnight_transient_crypto::curve::Fr;
 use midnight_transient_crypto::proofs::{KeyLocation, VerifierKey};
 
-use crate::ledger::DB;
+use crate::context::CircuitContext;
+use crate::ledger::{ContractAddress, ContractState, DB, DefaultDB};
 use crate::recording::RecordedCircuitResult;
+
+/// Where a caller observed public contract state. These values do not prove
+/// finality or authenticate the response from an indexer.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Observation {
+    pub transaction_hash: [u8; 32],
+    pub block_hash: [u8; 32],
+    pub block_height: u64,
+}
+
+/// An upstream ledger contract state paired with its explicit address and
+/// caller-supplied observation metadata.
+pub struct ObservedContractState<D: DB = DefaultDB> {
+    address: ContractAddress,
+    contract: ContractState<D>,
+    observation: Observation,
+}
+
+impl<D: DB> ObservedContractState<D> {
+    pub fn new(
+        address: ContractAddress,
+        contract: ContractState<D>,
+        observation: Observation,
+    ) -> Self {
+        Self {
+            address,
+            contract,
+            observation,
+        }
+    }
+
+    pub fn address(&self) -> ContractAddress {
+        self.address
+    }
+
+    pub fn contract(&self) -> &ContractState<D> {
+        &self.contract
+    }
+
+    pub fn observation(&self) -> Observation {
+        self.observation
+    }
+
+    pub fn circuit_context<Private>(&self, private_state: Private) -> CircuitContext<Private, D> {
+        CircuitContext::from_contract_state(private_state, self.address, &self.contract)
+    }
+}
+
+impl ObservedContractState<DefaultDB> {
+    /// Decode exact ledger-8 tagged `ContractState` bytes from an indexer.
+    pub fn decode(
+        address: ContractAddress,
+        bytes: &[u8],
+        observation: Observation,
+    ) -> io::Result<Self> {
+        let mut cursor = Cursor::new(bytes);
+        let contract = tagged_deserialize(&mut cursor)?;
+        if cursor.position() != bytes.len() as u64 {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "trailing contract-state bytes",
+            ));
+        }
+        Ok(Self::new(address, contract, observation))
+    }
+}
+
+/// A generated circuit's recorded trace with its source-owned entry point and
+/// input, tied to the state from which the trace was recorded.
+pub struct RecordedCall<'a, Private, Output, D: DB = DefaultDB> {
+    observed: &'a ObservedContractState<D>,
+    recorded: RecordedCircuitResult<Private, Output, D>,
+    entry_point: &'static str,
+    input: AlignedValue,
+}
+
+impl<'a, Private, Output, D: DB> RecordedCall<'a, Private, Output, D> {
+    pub fn new<Input: Into<AlignedValue>>(
+        observed: &'a ObservedContractState<D>,
+        recorded: RecordedCircuitResult<Private, Output, D>,
+        entry_point: &'static str,
+        input: Input,
+    ) -> Self {
+        Self {
+            observed,
+            recorded,
+            entry_point,
+            input: input.into(),
+        }
+    }
+
+    pub fn recorded(&self) -> &RecordedCircuitResult<Private, Output, D> {
+        &self.recorded
+    }
+}
+
+#[derive(Debug)]
+pub enum ObservedCallError {
+    AddressMismatch,
+    StateMismatch,
+    MissingOperation(String),
+    VerifierMismatch(String),
+    Prepare(PrepareCallError),
+}
+
+impl fmt::Display for ObservedCallError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::AddressMismatch => {
+                formatter.write_str("recorded call address differs from observation")
+            }
+            Self::StateMismatch => {
+                formatter.write_str("recorded call initial state differs from observation")
+            }
+            Self::MissingOperation(name) => {
+                write!(formatter, "observed contract has no {name} operation")
+            }
+            Self::VerifierMismatch(name) => write!(
+                formatter,
+                "observed {name} verifier differs from call artifact"
+            ),
+            Self::Prepare(error) => error.fmt(formatter),
+        }
+    }
+}
+
+impl Error for ObservedCallError {}
+
+impl<'a, Private, Output: Into<AlignedValue>, D: DB> RecordedCall<'a, Private, Output, D> {
+    /// Check the observed state and installed verifier, then replay and
+    /// partition the trace through the ordinary ledger-8 call adapter.
+    pub fn prepare(
+        self,
+        verifier: VerifierKey,
+        communication_commitment_rand: Fr,
+    ) -> Result<ContractCallPrototype<D>, ObservedCallError> {
+        let initial = self.recorded.public.initial();
+        if initial.address != self.observed.address {
+            return Err(ObservedCallError::AddressMismatch);
+        }
+        if initial.state.get_ref() != self.observed.contract.data.get_ref() {
+            return Err(ObservedCallError::StateMismatch);
+        }
+        let operation = self
+            .observed
+            .contract
+            .operations
+            .get(&EntryPointBuf(self.entry_point.as_bytes().to_vec()))
+            .ok_or_else(|| ObservedCallError::MissingOperation(self.entry_point.to_owned()))?;
+        if operation.latest() != Some(&verifier) {
+            return Err(ObservedCallError::VerifierMismatch(
+                self.entry_point.to_owned(),
+            ));
+        }
+        prepare_call(
+            self.recorded,
+            CallSpec::new(
+                self.entry_point,
+                verifier,
+                self.input,
+                communication_commitment_rand,
+            ),
+        )
+        .map_err(ObservedCallError::Prepare)
+    }
+}
 
 /// The entry point artifacts and public input for one recorded call.
 pub struct CallSpec {

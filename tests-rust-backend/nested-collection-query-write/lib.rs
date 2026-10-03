@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 18);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 19);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -36,7 +36,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 18);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 19);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -271,6 +271,23 @@ pub mod ledger_contract {
             {
                 crate::ledger_contract::recorded::seed(context, __compact_param_0)
             }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn seed_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                __compact_param_0: runtime::Field,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
+                let recorded =
+                    self.seed(observed.circuit_context(private_state), __compact_param_0)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "seed", input,
+                ))
+            }
             pub fn check_member<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
@@ -278,6 +295,26 @@ pub mod ledger_contract {
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             {
                 crate::ledger_contract::recorded::check_member(context, __compact_param_0)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn check_member_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                __compact_param_0: runtime::Field,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
+                let recorded =
+                    self.check_member(observed.circuit_context(private_state), __compact_param_0)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "check_member",
+                    input,
+                ))
             }
             pub fn member_flag<Private>(
                 &self,
@@ -288,6 +325,24 @@ pub mod ledger_contract {
             > {
                 crate::ledger_contract::recorded::member_flag(context)
             }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn member_flag_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, bool>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.member_flag(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "member_flag",
+                    input,
+                ))
+            }
             pub fn set_empty_flag<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
@@ -297,6 +352,24 @@ pub mod ledger_contract {
             > {
                 crate::ledger_contract::recorded::set_empty_flag(context)
             }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn set_empty_flag_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, bool>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.set_empty_flag(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "set_empty_flag",
+                    input,
+                ))
+            }
             pub fn map_empty_flag<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
@@ -305,6 +378,24 @@ pub mod ledger_contract {
                 runtime::CompactError,
             > {
                 crate::ledger_contract::recorded::map_empty_flag(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn map_empty_flag_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, bool>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.map_empty_flag(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "map_empty_flag",
+                    input,
+                ))
             }
         }
     }

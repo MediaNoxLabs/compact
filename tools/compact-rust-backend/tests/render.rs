@@ -210,7 +210,7 @@ fn generated_unit_enum_uses_checked_derive_without_handwritten_codecs() {
     let source = render(&contract).unwrap();
     assert!(source.contains("CompactCellValue, CompactEnum"));
     assert!(source.contains("pub enum Choice"));
-    assert!(source.contains("RUST_RUNTIME_ABI == 18"));
+    assert!(source.contains("RUST_RUNTIME_ABI == 19"));
     assert!(!source.contains("impl FieldRepr for Choice"));
     assert!(!source.contains("impl BinaryHashRepr for Choice"));
     assert!(!source.contains("impl FromFieldRepr for Choice"));
@@ -2123,6 +2123,9 @@ fn state_action_must_reference_the_declared_ledger_field_and_index() {
     assert!(source.contains("&self.recording"));
     assert!(source.contains("crate::ledger_slots::round.record_increment(frame, 1u16)?"));
     assert!(source.contains("Ok(frame.finish(()))"));
+    assert!(source.contains("pub fn increment_call<'observed, Private>("));
+    assert!(source.contains("runtime::transaction::RecordedCall::new("));
+    assert!(source.contains("\"increment\","));
 
     let mut recording_circuit = contract.clone();
     recording_circuit.stateful_circuits[0].name = "recording".into();
@@ -2281,6 +2284,7 @@ fn unsupported_field_expression_does_not_expose_a_recorded_call() {
         }],
     };
     assert!(!render(&contract).unwrap().contains("pub mod recorded"));
+    assert!(!render(&contract).unwrap().contains("pub fn write_call"));
 
     let StateAction::CellWrite { value, .. } = &mut contract.stateful_circuits[0].actions[0] else {
         unreachable!()
@@ -2387,6 +2391,21 @@ fn counter_parameter_requires_uint16_and_a_known_name() {
     };
     let source = render(&contract).unwrap();
     assert!(source.contains("__compact_param_0.value() as u16"));
+    assert!(source.contains("pub fn increment_by_call<'observed, Private>("));
+    assert!(
+        source.contains("let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());")
+    );
+
+    let mut two_parameters = contract.clone();
+    two_parameters.stateful_circuits[0]
+        .parameters
+        .push(Parameter {
+            name: "unused".into(),
+            ty: Type::Boolean,
+        });
+    let two_parameter_source = render(&two_parameters).unwrap();
+    assert!(two_parameter_source.contains("pub mod recorded"));
+    assert!(!two_parameter_source.contains("pub fn increment_by_call<'observed"));
 
     contract.stateful_circuits[0].parameters[0].ty = Type::Unsigned { max: "255".into() };
     assert_eq!(

@@ -23,7 +23,7 @@ description = "Ledger-8 proof compatibility gate for Rust Compact output"
 
 [dependencies]
 # Match midnight-ledger ledger-8.0.3's ZKIR and crypto graph.
-compact-rust-counter-fixture = { path = "../../tests-rust-backend/counter" }
+compact-rust-counter-fixture = { path = "../../tests-rust-backend/counter", features = ["ledger-transaction"] }
 compact-rust-cell-boolean-fixture = { path = "../../tests-rust-backend/cell-boolean" }
 compact-rust-cell-read-fixture = { path = "../../tests-rust-backend/cell-read" }
 compact-rust-set-boolean-fixture = { path = "../../tests-rust-backend/set-boolean" }
@@ -40,7 +40,7 @@ compact-rust-hmt-insert-oracle-fixture = { path = "../../tests-rust-backend/hmt-
 compact-rust-vector-key-adt-fixture = { path = "../../tests-rust-backend/vector-key-adt" }
 compact-rust-recorded-enum-cell-fixture = { path = "../../tests-rust-backend/recorded-enum-cell" }
 compact-rust-witness-cell-write-fixture = { path = "../../tests-rust-backend/witness-cell-write" }
-compact-rust-stateful-circuit-call-fixture = { path = "../../tests-rust-backend/stateful-circuit-call" }
+compact-rust-stateful-circuit-call-fixture = { path = "../../tests-rust-backend/stateful-circuit-call", features = ["ledger-transaction"] }
 compact-rust-nested-witness-call-oracle-fixture = { path = "../../tests-rust-backend/nested-witness-call-oracle" }
 midnight-compact-runtime = { path = "../../runtime-rs", features = ["ledger-transaction"] }
 midnight-ledger = "=8.0.3"

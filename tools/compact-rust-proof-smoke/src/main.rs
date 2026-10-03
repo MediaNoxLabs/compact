@@ -39,6 +39,8 @@ use compact_rust_map_boolean_field_fixture::ledger_contract as map_contract;
 use compact_rust_merkle_tree_oracle_fixture::ledger_contract as merkle_contract;
 use compact_rust_nested_map_shape_fixture::ledger_contract as nested_map_shape_contract;
 use compact_rust_nested_witness_call_oracle_fixture::ledger_contract as expression_contract;
+use compact_rust_observed_composite_keys_fixture::ledger_contract as composite_key_contract;
+use compact_rust_observed_composite_keys_fixture::types::CompositeKey;
 use compact_rust_recorded_enum_cell_fixture::ledger_contract as enum_cell_contract;
 use compact_rust_recorded_enum_cell_fixture::types::Choice;
 use compact_rust_set_boolean_fixture::ledger_contract as set_contract;
@@ -599,9 +601,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     let historic_merkle_root = arguments.next();
     let vector_key_root = arguments.next();
     let counter_parameter_root = arguments.next();
+    let composite_key_root = arguments.next();
     if arguments.next().is_some() {
         return Err(
-            "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output> [witness-output] [nested-output] [nested-witness-output] [set-output] [set-oracle-output] [map-output] [constructor-map-output] [list-output] [constructor-list-output] [enum-cell-output] [tiny-output] [nested-map-shape-output] [list-shapes-output] [merkle-output] [historic-merkle-output] [vector-key-output] [counter-parameter-output]"
+            "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output> [witness-output] [nested-output] [nested-witness-output] [set-output] [set-oracle-output] [map-output] [constructor-map-output] [list-output] [constructor-list-output] [enum-cell-output] [tiny-output] [nested-map-shape-output] [list-shapes-output] [merkle-output] [historic-merkle-output] [vector-key-output] [counter-parameter-output] [composite-key-output]"
                 .into(),
         );
     }
@@ -2151,6 +2154,104 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
             Ok(())
         })?;
+    }
+    if let Some(composite_root) = composite_key_root.as_ref().map(Path::new) {
+        let contract = composite_key_contract::Contract::default();
+        let vector = FixedVector::new([Field::from(3_u64), Field::from(5_u64)]);
+        let pair = (Field::from(42_u64), true);
+        let key = CompositeKey {
+            vector: vector.clone(),
+            pair,
+        };
+        for (circuit, path) in [
+            ("insert_vector", 0_u8),
+            ("insert_tuple", 1_u8),
+            ("insert_struct", 2_u8),
+        ] {
+            let initial = composite_key_contract::initial_state(ConstructorContext::new(()))?;
+            let deploy = make_deploy(
+                composite_root,
+                circuit,
+                initial.ledger_state.get_ref().clone(),
+                &mut rng,
+            )?;
+            let context = initial.into_circuit_context(deploy.address());
+            let observed = ObservedContractState::new(
+                deploy.address(),
+                deploy.initial_state.clone(),
+                Observation {
+                    transaction_hash: [0; 32],
+                    block_hash: [0; 32],
+                    block_height: 0,
+                },
+            );
+            let verifier = decode_verifier_key(&fs::read(
+                composite_root.join(format!("keys/{circuit}.verifier")),
+            )?)?;
+            let (manual, typed) = match circuit {
+                "insert_vector" => {
+                    let recorded = contract.recording.insert_vector(context, vector.clone())?;
+                    let manual =
+                        check_generated_trace(composite_root, circuit, recorded, vector.clone())?;
+                    let typed = contract
+                        .recording
+                        .insert_vector_call(&observed, (), vector.clone())?
+                        .prepare(verifier, Fr::from(0_u64))?;
+                    (manual, typed)
+                }
+                "insert_tuple" => {
+                    let recorded = contract.recording.insert_tuple(context, pair)?;
+                    let manual = check_generated_trace(composite_root, circuit, recorded, pair)?;
+                    let typed = contract
+                        .recording
+                        .insert_tuple_call(&observed, (), pair)?
+                        .prepare(verifier, Fr::from(0_u64))?;
+                    (manual, typed)
+                }
+                "insert_struct" => {
+                    let recorded = contract.recording.insert_struct(context, key.clone())?;
+                    let manual =
+                        check_generated_trace(composite_root, circuit, recorded, key.clone())?;
+                    let typed = contract
+                        .recording
+                        .insert_struct_call(&observed, (), key.clone())?
+                        .prepare(verifier, Fr::from(0_u64))?;
+                    (manual, typed)
+                }
+                _ => unreachable!(),
+            };
+            check_observed_call_parity(composite_root, circuit, &deploy, &manual, &typed)?;
+            check_transaction(composite_root, circuit, deploy, typed, &mut rng, |state| {
+                let StateValue::Array(fields) = state.data.get_ref() else {
+                    return Err("composite-key contract state is not an array".into());
+                };
+                let StateValue::Map(set) = fields
+                    .get(path as usize)
+                    .ok_or("composite-key Set missing")?
+                else {
+                    return Err("composite-key Set has the wrong ledger shape".into());
+                };
+                let present = match circuit {
+                    "insert_vector" => {
+                        set_view_at_path::<FixedVector<Field, 2>, _>(state.data.get_ref(), &[path])?
+                            .member(vector.clone())
+                    }
+                    "insert_tuple" => {
+                        set_view_at_path::<(Field, bool), _>(state.data.get_ref(), &[path])?
+                            .member(pair)
+                    }
+                    "insert_struct" => {
+                        set_view_at_path::<CompositeKey, _>(state.data.get_ref(), &[path])?
+                            .member(key.clone())
+                    }
+                    _ => unreachable!(),
+                };
+                if set.size() != 1 || !present {
+                    return Err("proven composite-key Set insert lost its declared key".into());
+                }
+                Ok(())
+            })?;
+        }
     }
     Ok(())
 }

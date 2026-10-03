@@ -342,6 +342,7 @@ fn render_recorded_item(
                 | Type::Unsigned { .. }
                 | Type::Enum { .. }
                 | Type::Struct { .. }
+                | Type::Tuple { .. }
                 | Type::Vector { .. }
         ) {
             return None;
@@ -364,6 +365,7 @@ fn render_recorded_item(
                         Type::Bytes { .. }
                             | Type::Enum { .. }
                             | Type::Struct { .. }
+                            | Type::Tuple { .. }
                             | Type::Vector { .. }
                     ) {
                         syn::parse_quote!((#source).clone())
@@ -915,7 +917,14 @@ fn render_recorded_item(
                 if declaration.index != *index || declaration.physical_path().len() != 1 {
                     return Ok(None);
                 }
-                if !matches!(ty, Type::Field | Type::Boolean | Type::Vector { .. }) {
+                if !matches!(
+                    ty,
+                    Type::Field
+                        | Type::Boolean
+                        | Type::Tuple { .. }
+                        | Type::Struct { .. }
+                        | Type::Vector { .. }
+                ) {
                     return Ok(None);
                 }
                 let key = scalar_expression(
@@ -1030,6 +1039,7 @@ fn render_recorded_item(
             | Type::Unsigned { .. }
             | Type::Enum { .. }
             | Type::Struct { .. }
+            | Type::Tuple { .. }
             | Type::Vector { .. } => Ok(cell_source(value, ty, locals, parameters)),
             _ => Ok(None),
         }
@@ -1557,7 +1567,14 @@ fn render_recorded_item(
                 if declaration.index != *index || declaration.physical_path().len() != 1 {
                     return Ok(false);
                 }
-                if !matches!(ty, Type::Field | Type::Boolean | Type::Vector { .. }) {
+                if !matches!(
+                    ty,
+                    Type::Field
+                        | Type::Boolean
+                        | Type::Tuple { .. }
+                        | Type::Struct { .. }
+                        | Type::Vector { .. }
+                ) {
                     return Ok(false);
                 }
                 let value = scalar_expression(

@@ -42,6 +42,7 @@ LIST_SOURCE = ROOT / "examples/rust_backend/list_field.compact"
 MERKLE_SOURCE = ROOT / "examples/rust_backend/merkle_tree_oracle.compact"
 HISTORIC_MERKLE_SOURCE = ROOT / "examples/rust_backend/hmt_insert_oracle.compact"
 VECTOR_KEY_SOURCE = ROOT / "examples/rust_backend/vector_key_adt.compact"
+COMPOSITE_KEY_SOURCE = ROOT / "examples/rust_backend/observed_composite_keys.compact"
 CONSTRUCTOR_LIST_SOURCE = ROOT / "examples/rust_backend/constructor_list_actions.compact"
 RECORDED_ENUM_SOURCE = ROOT / "examples/rust_backend/recorded_enum_cell.compact"
 TINY_SOURCE = ROOT / "examples/rust_backend/tiny_oracle.compact"
@@ -252,6 +253,40 @@ def check_observed_witness_call_consumer(proof: Path, base: Path) -> None:
     environment.setdefault("CARGO_TARGET_DIR", str(ROOT / "target/compactc-consumer"))
     environment["COMPACT_RUST_WITNESS_OFFSET_VERIFIER"] = str(proof / "keys/write_offset.verifier")
     subprocess.run(["cargo", "test", "--quiet"], cwd=consumer, env=environment, check=True)
+
+
+def check_observed_composite_key_consumer(proof: Path, base: Path) -> None:
+    """Type-check nested input methods through only the generated crate."""
+    contract = proof / "contract"
+    package = tomllib.loads((contract / "Cargo.toml").read_text())
+    consumer = base / "observed-composite-key-consumer"
+    (consumer / "tests").mkdir(parents=True)
+    (consumer / "Cargo.toml").write_text(
+        "[package]\nname = \"compactc-observed-composite-key-smoke\"\n"
+        "version = \"0.1.0\"\nedition = \"2024\"\n\n[dependencies]\n"
+        f'{package["package"]["name"]} = {{ path = {json.dumps(str(contract))}, features = ["ledger-transaction"] }}\n'
+    )
+    (consumer / "tests/observed.rs").write_bytes(
+        (ROOT / "tools/compact-rust-backend/consumers/observed_composite_keys.rs").read_bytes()
+    )
+    environment = os.environ.copy()
+    environment.setdefault("CARGO_TARGET_DIR", str(ROOT / "target/compactc-consumer"))
+    environment["COMPACT_RUST_COMPOSITE_KEY_PROOF"] = str(proof)
+    subprocess.run(["cargo", "test", "--quiet"], cwd=consumer, env=environment, check=True)
+    (consumer / "examples").mkdir()
+    (consumer / "examples/wrong_tuple_key.rs").write_text(
+        "use compact_contract_observed_composite_keys::ledger_contract::Contract;\n"
+        "use compact_contract_observed_composite_keys::runtime::{Field, transaction::ObservedContractState};\n"
+        "fn wrong(observed: &ObservedContractState) {\n"
+        "    let _ = Contract::default().recording.insert_tuple_call(observed, (), (true, Field::from(42_u64)));\n"
+        "}\nfn main() {}\n"
+    )
+    rejected = subprocess.run(
+        ["cargo", "check", "--quiet", "--example", "wrong_tuple_key"],
+        cwd=consumer, env=environment, capture_output=True, text=True,
+    )
+    assert rejected.returncode != 0, "wrong-typed tuple key unexpectedly compiled"
+    assert "error[E0308]" in rejected.stderr, rejected.stderr
 
 
 def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
@@ -1007,6 +1042,15 @@ def main() -> None:
                 assert (vector_key_proof / "keys" / f"setInsert.{extension}").is_file()
             for extension in ("zkir", "bzkir"):
                 assert (vector_key_proof / "zkir" / f"setInsert.{extension}").is_file()
+            composite_key_proof = base / "composite-key-proof"
+            run(compiler, "--target", "rust", str(COMPOSITE_KEY_SOURCE), str(composite_key_proof))
+            check_manifest(composite_key_proof)
+            for circuit in ("insert_vector", "insert_tuple", "insert_struct"):
+                for extension in ("prover", "verifier"):
+                    assert (composite_key_proof / "keys" / f"{circuit}.{extension}").is_file()
+                for extension in ("zkir", "bzkir"):
+                    assert (composite_key_proof / "zkir" / f"{circuit}.{extension}").is_file()
+            check_observed_composite_key_consumer(composite_key_proof, base)
             constructor_list_proof = base / "constructor-list-proof"
             run(compiler, "--target", "rust", str(CONSTRUCTOR_LIST_SOURCE), str(constructor_list_proof))
             check_manifest(constructor_list_proof)
@@ -1050,6 +1094,7 @@ def main() -> None:
                 str(historic_merkle_proof),
                 str(vector_key_proof),
                 str(counter_parameter_proof),
+                str(composite_key_proof),
             )
     print("compactc target boundary and manifest: passed")
 

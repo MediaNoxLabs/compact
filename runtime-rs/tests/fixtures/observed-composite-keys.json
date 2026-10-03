@@ -1,0 +1,172 @@
+{
+  "vector": {
+    "valueAtoms": [
+      [
+        3
+      ],
+      [
+        5
+      ]
+    ],
+    "alignment": [
+      {
+        "tag": "atom",
+        "value": {
+          "tag": "field"
+        }
+      },
+      {
+        "tag": "atom",
+        "value": {
+          "tag": "field"
+        }
+      }
+    ],
+    "publicTranscriptShape": [
+      {
+        "kind": "idx",
+        "cached": false,
+        "pushPath": true,
+        "pathLength": 1
+      },
+      {
+        "kind": "push",
+        "storage": false
+      },
+      {
+        "kind": "push",
+        "storage": true
+      },
+      {
+        "kind": "ins",
+        "cached": false,
+        "n": 1
+      },
+      {
+        "kind": "ins",
+        "cached": true,
+        "n": 1
+      }
+    ]
+  },
+  "tuple": {
+    "valueAtoms": [
+      [
+        42
+      ],
+      [
+        1
+      ]
+    ],
+    "alignment": [
+      {
+        "tag": "atom",
+        "value": {
+          "tag": "field"
+        }
+      },
+      {
+        "tag": "atom",
+        "value": {
+          "tag": "bytes",
+          "length": 1
+        }
+      }
+    ],
+    "publicTranscriptShape": [
+      {
+        "kind": "idx",
+        "cached": false,
+        "pushPath": true,
+        "pathLength": 1
+      },
+      {
+        "kind": "push",
+        "storage": false
+      },
+      {
+        "kind": "push",
+        "storage": true
+      },
+      {
+        "kind": "ins",
+        "cached": false,
+        "n": 1
+      },
+      {
+        "kind": "ins",
+        "cached": true,
+        "n": 1
+      }
+    ]
+  },
+  "struct": {
+    "valueAtoms": [
+      [
+        3
+      ],
+      [
+        5
+      ],
+      [
+        42
+      ],
+      [
+        1
+      ]
+    ],
+    "alignment": [
+      {
+        "tag": "atom",
+        "value": {
+          "tag": "field"
+        }
+      },
+      {
+        "tag": "atom",
+        "value": {
+          "tag": "field"
+        }
+      },
+      {
+        "tag": "atom",
+        "value": {
+          "tag": "field"
+        }
+      },
+      {
+        "tag": "atom",
+        "value": {
+          "tag": "bytes",
+          "length": 1
+        }
+      }
+    ],
+    "publicTranscriptShape": [
+      {
+        "kind": "idx",
+        "cached": false,
+        "pushPath": true,
+        "pathLength": 1
+      },
+      {
+        "kind": "push",
+        "storage": false
+      },
+      {
+        "kind": "push",
+        "storage": true
+      },
+      {
+        "kind": "ins",
+        "cached": false,
+        "n": 1
+      },
+      {
+        "kind": "ins",
+        "cached": true,
+        "n": 1
+      }
+    ]
+  }
+}

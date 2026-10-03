@@ -1544,6 +1544,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-observed-composite-keys-fixture"
+version = "0.1.0"
+dependencies = [
+ "midnight-base-crypto",
+ "midnight-compact-runtime",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-one-tuple-fixture"
 version = "0.1.0"
 dependencies = [
@@ -1609,6 +1618,7 @@ dependencies = [
  "compact-rust-merkle-tree-oracle-fixture",
  "compact-rust-nested-map-shape-fixture",
  "compact-rust-nested-witness-call-oracle-fixture",
+ "compact-rust-observed-composite-keys-fixture",
  "compact-rust-recorded-enum-cell-fixture",
  "compact-rust-set-boolean-fixture",
  "compact-rust-set-oracle-fixture",

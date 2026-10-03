@@ -4,8 +4,12 @@
 
 // Submit a fresh Rust-exported counter deploy/call pair against a funded
 // ledger-8 devnet wallet. The wallet owns fee balancing and submission.
-import { readFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { Buffer } from 'node:buffer';
+import { execFile } from 'node:child_process';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { promisify } from 'node:util';
 import * as ledger from '@midnight-ntwrk/ledger-v8';
 import { setNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
 import { HDWallet, Roles } from '@midnight-ntwrk/wallet-sdk-hd';
@@ -27,6 +31,11 @@ const networkId = process.env.COMPACT_RUST_HANDOFF_NETWORK_ID;
 const indexer = process.env.COMPACT_RUST_INDEXER_URL;
 const node = process.env.COMPACT_RUST_NODE_URL;
 const proofServer = process.env.COMPACT_RUST_PROOF_SERVER_URL;
+const confirmedCallBuilder = process.env.COMPACT_RUST_CONFIRMED_CALL_BUILDER;
+const counterArtifacts = process.env.COMPACT_RUST_COUNTER_ARTIFACTS;
+if (Boolean(confirmedCallBuilder) !== Boolean(counterArtifacts)) {
+  throw new Error('set both COMPACT_RUST_CONFIRMED_CALL_BUILDER and COMPACT_RUST_COUNTER_ARTIFACTS');
+}
 if (!deployPath || !callPath || !seedHex || !networkId || !indexer || !node || !proofServer) {
   throw new Error('usage: set COMPACT_RUST_WALLET_SEED_HEX, COMPACT_RUST_HANDOFF_NETWORK_ID, COMPACT_RUST_INDEXER_URL, COMPACT_RUST_NODE_URL and COMPACT_RUST_PROOF_SERVER_URL; then run node check.mjs <deploy.bin> <call.bin>');
 }
@@ -51,6 +60,20 @@ if (!(deployTtl instanceof Date) || !(callTtl instanceof Date) ||
   throw new Error('deploy and call need the same future intent TTL');
 }
 const address = deployAction.address;
+const execFileAsync = promisify(execFile);
+
+async function waitForProofServer() {
+  const deadline = Date.now() + 300_000;
+  while (Date.now() < deadline) {
+    try {
+      await fetch(proofServer, { signal: AbortSignal.timeout(3_000) });
+      return;
+    } catch {
+      await new Promise(resolve => setTimeout(resolve, 5_000));
+    }
+  }
+  throw new Error(`proof server did not accept HTTP connections at ${proofServer}`);
+}
 
 const hd = HDWallet.fromSeed(Buffer.from(seedHex, 'hex'));
 if (hd.type !== 'seedOk') throw new Error('wallet seed was rejected');
@@ -90,7 +113,7 @@ async function indexedAction() {
   return body.data.contractAction;
 }
 
-function assertCounterIncremented(action) {
+function assertCounterValue(action, expected) {
   const state = ledger.ContractState.deserialize(Buffer.from(action.state, 'hex'));
   const fields = state.data.state.asArray();
   if (fields?.length !== 1 || fields[0].type() !== 'cell') {
@@ -102,9 +125,14 @@ function assertCounterIncremented(action) {
   if (cell.alignment.length !== 1 || alignment?.tag !== 'atom' ||
       alignment.value.tag !== 'bytes' || alignment.value.length !== 8 ||
       cell.value.length !== 1 || !(bytes instanceof Uint8Array) ||
-      bytes.length === 0 || bytes.length > 8 || bytes[0] !== 1 ||
-      bytes.slice(1).some(byte => byte !== 0)) {
-    throw new Error('indexed call did not increment Counter to 1');
+      bytes.length === 0 || bytes.length > 8) {
+    throw new Error('indexed call has an invalid Counter cell');
+  }
+  const actual = bytes.reduce(
+    (value, byte, index) => value + (BigInt(byte) << BigInt(index * 8)), 0n,
+  );
+  if (actual !== BigInt(expected)) {
+    throw new Error(`indexed Counter is ${actual}, expected ${expected}`);
   }
 }
 
@@ -140,6 +168,7 @@ async function submit(tx, label) {
   console.log(`${label} submitted: ${identifier}`);
 }
 
+await waitForProofServer();
 try {
   await wallet.start(shieldedSecretKeys, dustSecretKey);
   let state = await firstValueFrom(wallet.state().pipe(
@@ -173,9 +202,36 @@ try {
   console.log(`deployment indexed: block ${deployed.transaction.block.height}, address ${address}`);
   await submit(call, 'call');
   const called = await waitForAction('ContractCall', deployed.transaction.hash);
-  assertCounterIncremented(called);
+  assertCounterValue(called, 1);
   console.log(`call indexed: block ${called.transaction.block.height}, address ${address}`);
   console.log('indexed contract state: round = 1');
+  if (confirmedCallBuilder) {
+    const workspace = await mkdtemp(join(tmpdir(), 'compact-rust-confirmed-call-'));
+    try {
+      const statePath = join(workspace, 'state.bin');
+      const outputPath = join(workspace, 'second-call.bin');
+      await writeFile(statePath, Buffer.from(called.state, 'hex'));
+      const ttl = Math.floor(Date.now() / 1000) + 45 * 60;
+      const result = await execFileAsync(confirmedCallBuilder, [
+        statePath, deployPath, counterArtifacts, outputPath, networkId, String(ttl), address,
+      ], { timeout: 300_000 });
+      console.log(result.stdout.trim());
+      const secondCall = ledger.Transaction.deserialize(
+        'signature', 'proof', 'binding', await readFile(outputPath),
+      );
+      const secondAction = secondCall.intents.get(1)?.actions[0];
+      if (!(secondAction instanceof ledger.ContractCall) || secondAction.address !== address) {
+        throw new Error('confirmed-state builder produced a call for the wrong contract');
+      }
+      await submit(secondCall, 'confirmed-state call');
+      const second = await waitForAction('ContractCall', called.transaction.hash);
+      assertCounterValue(second, 2);
+      console.log(`confirmed-state call indexed: block ${second.transaction.block.height}, address ${address}`);
+      console.log('indexed contract state: round = 2');
+    } finally {
+      await rm(workspace, { recursive: true, force: true });
+    }
+  }
 } finally {
   await wallet.stop();
 }

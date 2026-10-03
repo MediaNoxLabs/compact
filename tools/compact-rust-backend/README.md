@@ -257,8 +257,32 @@ an already used contract address, then balances, finalizes and submits the
 deployment. It waits for the indexer to report `ContractDeploy` at the exact
 address before balancing and submitting the call. It requires an indexed
 `ContractCall` at the same address with a different transaction hash and
-decodes its ledger-v8 contract state to check that `round` is 1. The
-wallet operations are equivalent to:
+decodes its ledger-v8 contract state to check that `round` is 1.
+
+To prove a subsequent call from the indexed `round = 1` state, compile the
+Counter artifacts and Rust builder, export both opt-in environment variables,
+then rerun the wallet command above against a fresh devnet:
+
+```sh
+nix develop .#compiler --command compactc --target rust \
+  examples/rust_backend/counter.compact target/compact-rust-counter-live
+cargo build -p compact-rust-proof-smoke --example record_from_confirmed
+export COMPACT_RUST_CONFIRMED_CALL_BUILDER=target/debug/examples/record_from_confirmed
+export COMPACT_RUST_COUNTER_ARTIFACTS=target/compact-rust-counter-live
+```
+
+The driver writes the indexed `ContractState` to a temporary file, invokes
+the Rust builder with the confirmed address, proves and submits a new call,
+and requires a second indexed `ContractCall` with `round` equal to 2. The
+runtime `CircuitContext::from_contract_state` uses the upstream state type;
+the caller remains responsible for the indexer/address association and chain
+finality. The builder checks the installed verifier against the generated
+artifact, validates the call on a local projection, and rejects replay against
+the projected `round = 2` state before wallet balancing. ADR-0041 and
+[issue #140](https://github.com/MediaNoxLabs/compact/issues/140) record this
+Counter-specific decision and its broader production limits.
+
+The wallet operations are equivalent to:
 
 ```ts
 const tx = ledger.Transaction.deserialize('signature', 'proof', 'binding', bytes);

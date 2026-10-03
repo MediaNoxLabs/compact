@@ -26,7 +26,8 @@ use midnight_zswap::local::State as ZswapLocalState;
 use std::cell::RefCell;
 
 use crate::ledger::{
-    CellValue, ChargedState, ContractAddress, DB, DefaultDB, QueryContext, StateValue,
+    CellValue, ChargedState, ContractAddress, ContractState, DB, DefaultDB, QueryContext,
+    StateValue,
 };
 use crate::{CompactError, ledger};
 
@@ -395,6 +396,25 @@ impl<Private, D: DB> CircuitFrame<Private, D> {
 }
 
 impl<Private, D: DB> CircuitContext<Private, D> {
+    /// Start a new circuit call from an upstream ledger contract snapshot.
+    ///
+    /// The caller must associate this state with `address` and establish its
+    /// network provenance. This conversion does not attest finality or fetch a
+    /// full ledger snapshot.
+    pub fn from_contract_state(
+        private_state: Private,
+        address: ContractAddress,
+        contract: &ContractState<D>,
+    ) -> Self {
+        Self {
+            private_state,
+            query: QueryContext::new(contract.data.clone(), address),
+            zswap_state: ZswapLocalState::default(),
+            cost_model: INITIAL_COST_MODEL.clone(),
+            gas_limit: None,
+        }
+    }
+
     pub fn into_constructor_result(self) -> ConstructorResult<Private, D> {
         ConstructorResult {
             ledger_state: self.query.state,

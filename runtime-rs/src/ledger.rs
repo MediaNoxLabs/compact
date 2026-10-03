@@ -22,7 +22,7 @@ pub use midnight_coin_structure::contract::ContractAddress;
 pub use midnight_onchain_runtime::context::QueryContext;
 pub use midnight_onchain_runtime::context::QueryResults;
 pub use midnight_onchain_runtime::error::TranscriptRejected;
-pub use midnight_onchain_state::state::{ChargedState, StateValue};
+pub use midnight_onchain_state::state::{ChargedState, ContractState, StateValue};
 pub use midnight_storage::DefaultDB;
 pub use midnight_storage::db::DB;
 pub use midnight_storage::storage::Array as LedgerArray;

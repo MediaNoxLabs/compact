@@ -1628,7 +1628,7 @@ fn render_recorded_item(
                 let LedgerFieldKind::List { ty } = &declaration.declaration else {
                     return Ok(false);
                 };
-                if declaration.index != *index || declaration.physical_path().len() != 1 {
+                if declaration.index != *index {
                     return Ok(false);
                 }
                 let value = scalar_expression(
@@ -1657,7 +1657,6 @@ fn render_recorded_item(
                     .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
                 if !matches!(declaration.declaration, LedgerFieldKind::List { .. })
                     || declaration.index != *index
-                    || declaration.physical_path().len() != 1
                 {
                     return Ok(false);
                 }
@@ -2180,7 +2179,6 @@ fn render_recorded_item(
                 .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
             if !matches!(declaration.declaration, LedgerFieldKind::List { .. })
                 || declaration.index != *index
-                || declaration.physical_path().len() != 1
             {
                 return Ok(None);
             }
@@ -2202,7 +2200,6 @@ fn render_recorded_item(
                 .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
             if !matches!(declaration.declaration, LedgerFieldKind::List { .. })
                 || declaration.index != *index
-                || declaration.physical_path().len() != 1
             {
                 return Ok(None);
             }
@@ -2223,10 +2220,7 @@ fn render_recorded_item(
                 return Ok(None);
             };
             let expected = list_head_result_type(ty, &circuit.result);
-            if declaration.index != *index
-                || declaration.physical_path().len() != 1
-                || circuit.result != expected
-            {
+            if declaration.index != *index || circuit.result != expected {
                 return Ok(None);
             }
             let slot = ident(field)?;

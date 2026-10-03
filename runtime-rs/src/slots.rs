@@ -27,7 +27,7 @@ use crate::context::{CircuitContext, CircuitResult, WitnessReadMeter};
 use crate::ledger::{
     CellValue, DB, MeteredHistoricMerkleTreeView, MeteredListView, MeteredMapView,
     MeteredMerkleTreeView, MeteredSetView, metered_historic_merkle_tree_view_at_path,
-    metered_list_view, metered_map_view_at_path, metered_merkle_tree_view_at_path,
+    metered_list_view_at_path, metered_map_view_at_path, metered_merkle_tree_view_at_path,
     metered_set_view_at_path,
 };
 use crate::recording::RecordingFrame;
@@ -618,31 +618,31 @@ impl<K: CellValue, V: CellValue> MapSlot<K, V> {
     }
 }
 
-/// A compiler-declared root List with a fixed element type.
+/// A compiler-declared List with a fixed element type and physical path.
 #[derive(Clone, Copy)]
 pub struct ListSlot<T> {
-    index: u8,
+    path: &'static [u8],
     element: PhantomData<fn() -> T>,
 }
 
 impl<T: CellValue> ListSlot<T> {
-    pub const fn new(index: u8) -> Self {
+    pub const fn new(path: &'static [u8]) -> Self {
         Self {
-            index,
+            path,
             element: PhantomData,
         }
     }
 
-    pub const fn index(self) -> u8 {
-        self.index
+    pub const fn path(self) -> &'static [u8] {
+        self.path
     }
 
-    /// Project this root List through the existing metered witness view.
+    /// Project this List through the metered witness view.
     pub fn witness_view<'a, D: DB>(
         self,
         meter: &'a WitnessReadMeter<'a, D>,
     ) -> Result<MeteredListView<'a, T, D>, CompactError> {
-        metered_list_view(meter, self.index)
+        metered_list_view_at_path(meter, self.path)
     }
 
     pub fn push_front<Private, D: DB>(
@@ -650,35 +650,35 @@ impl<T: CellValue> ListSlot<T> {
         context: CircuitContext<Private, D>,
         value: T,
     ) -> Result<CircuitResult<Private, (), D>, CompactError> {
-        context.push_front_list(self.index, value)
+        context.push_front_list(self.path, value)
     }
 
     pub fn pop_front<Private, D: DB>(
         self,
         context: CircuitContext<Private, D>,
     ) -> Result<CircuitResult<Private, (), D>, CompactError> {
-        context.pop_front_list(self.index)
+        context.pop_front_list(self.path)
     }
 
     pub fn reset<Private, D: DB>(
         self,
         context: CircuitContext<Private, D>,
     ) -> Result<CircuitResult<Private, (), D>, CompactError> {
-        context.reset_list(self.index)
+        context.reset_list(self.path)
     }
 
     pub fn length<Private, D: DB>(
         self,
         context: CircuitContext<Private, D>,
     ) -> Result<CircuitResult<Private, u64, D>, CompactError> {
-        context.length_list(self.index)
+        context.length_list(self.path)
     }
 
     pub fn is_empty<Private, D: DB>(
         self,
         context: CircuitContext<Private, D>,
     ) -> Result<CircuitResult<Private, bool, D>, CompactError> {
-        context.is_empty_list(self.index)
+        context.is_empty_list(self.path)
     }
 
     pub fn head<M: CellValue, Private, D: DB>(
@@ -688,7 +688,7 @@ impl<T: CellValue> ListSlot<T> {
     where
         T: Default,
     {
-        context.head_list::<T, M>(self.index)
+        context.head_list::<T, M>(self.path)
     }
 
     pub fn record_push_front<Private, D: DB>(
@@ -696,35 +696,35 @@ impl<T: CellValue> ListSlot<T> {
         frame: RecordingFrame<Private, D>,
         value: T,
     ) -> Result<RecordingFrame<Private, D>, CompactError> {
-        frame.push_front_list(self.index, value)
+        frame.push_front_list(self.path, value)
     }
 
     pub fn record_pop_front<Private, D: DB>(
         self,
         frame: RecordingFrame<Private, D>,
     ) -> Result<RecordingFrame<Private, D>, CompactError> {
-        frame.pop_front_list(self.index)
+        frame.pop_front_list(self.path)
     }
 
     pub fn record_reset<Private, D: DB>(
         self,
         frame: RecordingFrame<Private, D>,
     ) -> Result<RecordingFrame<Private, D>, CompactError> {
-        frame.reset_list(self.index)
+        frame.reset_list(self.path)
     }
 
     pub fn record_length<Private, D: DB>(
         self,
         frame: RecordingFrame<Private, D>,
     ) -> Result<(RecordingFrame<Private, D>, u64), CompactError> {
-        frame.length_list(self.index)
+        frame.length_list(self.path)
     }
 
     pub fn record_is_empty<Private, D: DB>(
         self,
         frame: RecordingFrame<Private, D>,
     ) -> Result<(RecordingFrame<Private, D>, bool), CompactError> {
-        frame.is_empty_list(self.index)
+        frame.is_empty_list(self.path)
     }
 
     pub fn record_head<M: CellValue, Private, D: DB>(
@@ -734,6 +734,6 @@ impl<T: CellValue> ListSlot<T> {
     where
         T: Default,
     {
-        frame.head_list::<T, M>(self.index)
+        frame.head_list::<T, M>(self.path)
     }
 }

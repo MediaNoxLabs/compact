@@ -18,7 +18,7 @@
 use super::{
     CellValue, CompactError, LedgerArray, LedgerHashMap, LedgerPath, QueryContext, QueryResults,
     StateValue, TranscriptRejected, aligned_cell_value, constructor_cell, decode_last_read,
-    field_at_path, path_keys, read_cell, root_field,
+    field_at_path, path_keys, read_cell,
 };
 use crate::BoundedUint;
 use crate::context::WitnessReadMeter;
@@ -203,7 +203,7 @@ pub struct ListView<'a, T, D: DB> {
 /// Witness-facing List projection that charges each canonical ledger VM query.
 pub struct MeteredListView<'a, T, D: DB> {
     meter: &'a WitnessReadMeter<'a, D>,
-    index: u8,
+    path: LedgerPath,
     marker: PhantomData<T>,
 }
 
@@ -211,10 +211,17 @@ pub fn metered_list_view<'a, T: CellValue, D: DB>(
     meter: &'a WitnessReadMeter<'a, D>,
     index: u8,
 ) -> Result<MeteredListView<'a, T, D>, CompactError> {
-    let _ = list_view::<T, D>(meter.state(), index)?;
+    metered_list_view_at_path(meter, &[index])
+}
+
+pub fn metered_list_view_at_path<'a, T: CellValue, D: DB>(
+    meter: &'a WitnessReadMeter<'a, D>,
+    path: &[u8],
+) -> Result<MeteredListView<'a, T, D>, CompactError> {
+    let _ = list_view_at_path::<T, D>(meter.state(), path)?;
     Ok(MeteredListView {
         meter,
-        index,
+        path: path.into(),
         marker: PhantomData,
     })
 }
@@ -225,15 +232,15 @@ impl<T: CellValue, D: DB> MeteredListView<'_, T, D> {
         T: Default,
         midnight_base_crypto::fab::Value: From<T>,
     {
-        self.meter.read_list_head::<T>(self.index)
+        self.meter.read_list_head::<T>(self.path.as_slice())
     }
 
     pub fn length(&self) -> Result<BoundedUint<{ u64::MAX as u128 }>, CompactError> {
-        BoundedUint::new(self.meter.read_list_length(self.index)? as u128)
+        BoundedUint::new(self.meter.read_list_length(self.path.as_slice())? as u128)
     }
 
     pub fn is_empty(&self) -> Result<bool, CompactError> {
-        self.meter.read_list_is_empty(self.index)
+        self.meter.read_list_is_empty(self.path.as_slice())
     }
 }
 
@@ -241,7 +248,14 @@ pub fn list_view<T: CellValue, D: DB>(
     state: &StateValue<D>,
     index: u8,
 ) -> Result<ListView<'_, T, D>, CompactError> {
-    let StateValue::Array(fields) = root_field(state, index)? else {
+    list_view_at_path(state, &[index])
+}
+
+pub fn list_view_at_path<'a, T: CellValue, D: DB>(
+    state: &'a StateValue<D>,
+    path: &[u8],
+) -> Result<ListView<'a, T, D>, CompactError> {
+    let StateValue::Array(fields) = field_at_path(state, path)? else {
         return Err(CompactError::InvalidLedgerCell(
             "expected List array".into(),
         ));
@@ -290,15 +304,16 @@ pub fn constructor_list<D: DB>() -> StateValue<D> {
 }
 
 pub(crate) fn list_length_program<M: ResultMode<D>, D: DB>(
-    field_index: u8,
+    path: impl Into<LedgerPath>,
     read_result: M::ReadResult,
 ) -> Vec<Op<M, D>> {
+    let path = path.into();
     vec![
         Op::Dup { n: 0 },
         Op::Idx {
             cached: false,
             push_path: false,
-            path: vec![Key::Value(AlignedValue::from(field_index))].into(),
+            path: path_keys(path.as_slice()).into(),
         },
         Op::Idx {
             cached: false,
@@ -314,11 +329,11 @@ pub(crate) fn list_length_program<M: ResultMode<D>, D: DB>(
 
 pub fn length_list<D: DB>(
     context: &QueryContext<D>,
-    field_index: u8,
+    path: impl Into<LedgerPath>,
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<(QueryResults<ResultModeGather, D>, u64), CompactError> {
-    let program = list_length_program::<ResultModeGather, D>(field_index, ());
+    let program = list_length_program::<ResultModeGather, D>(path, ());
     let result = context
         .query(&program, gas_limit, cost_model)
         .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
@@ -327,15 +342,16 @@ pub fn length_list<D: DB>(
 }
 
 pub(crate) fn list_is_empty_program<M: ResultMode<D>, D: DB>(
-    field_index: u8,
+    path: impl Into<LedgerPath>,
     read_result: M::ReadResult,
 ) -> Vec<Op<M, D>> {
+    let path = path.into();
     vec![
         Op::Dup { n: 0 },
         Op::Idx {
             cached: false,
             push_path: false,
-            path: vec![Key::Value(AlignedValue::from(field_index))].into(),
+            path: path_keys(path.as_slice()).into(),
         },
         Op::Idx {
             cached: false,
@@ -357,11 +373,11 @@ pub(crate) fn list_is_empty_program<M: ResultMode<D>, D: DB>(
 
 pub fn is_empty_list<D: DB>(
     context: &QueryContext<D>,
-    field_index: u8,
+    path: impl Into<LedgerPath>,
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<(QueryResults<ResultModeGather, D>, bool), CompactError> {
-    let program = list_is_empty_program::<ResultModeGather, D>(field_index, ());
+    let program = list_is_empty_program::<ResultModeGather, D>(path, ());
     let result = context
         .query(&program, gas_limit, cost_model)
         .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
@@ -370,9 +386,10 @@ pub fn is_empty_list<D: DB>(
 }
 
 pub(crate) fn list_head_program<T: CellValue + Default, R: ResultMode<D>, D: DB>(
-    field_index: u8,
+    path: impl Into<LedgerPath>,
     read_result: R::ReadResult,
 ) -> Vec<Op<R, D>> {
+    let path = path.into();
     let alignment = T::alignment();
     let default = AlignedValue::new(T::default().into(), alignment.clone())
         .expect("default CellValue must match its alignment");
@@ -385,7 +402,7 @@ pub(crate) fn list_head_program<T: CellValue + Default, R: ResultMode<D>, D: DB>
         Op::Idx {
             cached: false,
             push_path: false,
-            path: vec![Key::Value(AlignedValue::from(field_index))].into(),
+            path: path_keys(path.as_slice()).into(),
         },
         Op::Idx {
             cached: false,
@@ -424,11 +441,11 @@ pub(crate) fn list_head_program<T: CellValue + Default, R: ResultMode<D>, D: DB>
 
 pub fn head_list<T: CellValue + Default, M: CellValue, D: DB>(
     context: &QueryContext<D>,
-    field_index: u8,
+    path: impl Into<LedgerPath>,
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<(QueryResults<ResultModeGather, D>, M), CompactError> {
-    let program = list_head_program::<T, ResultModeGather, D>(field_index, ());
+    let program = list_head_program::<T, ResultModeGather, D>(path, ());
     let result = context
         .query(&program, gas_limit, cost_model)
         .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
@@ -437,14 +454,15 @@ pub fn head_list<T: CellValue + Default, M: CellValue, D: DB>(
 }
 
 pub(crate) fn list_push_front_program<T: CellValue, D: DB>(
-    field_index: u8,
+    path: impl Into<LedgerPath>,
     value: T,
 ) -> Vec<Op<ResultModeVerify, D>> {
+    let path = path.into();
     vec![
         Op::Idx {
             cached: false,
             push_path: true,
-            path: vec![Key::Value(AlignedValue::from(field_index))].into(),
+            path: path_keys(path.as_slice()).into(),
         },
         Op::Dup { n: 0 },
         Op::Idx {
@@ -472,52 +490,73 @@ pub(crate) fn list_push_front_program<T: CellValue, D: DB>(
             value: constructor_cell(1_u8),
         },
         Op::Swap { n: 0 },
-        Op::Ins { cached: true, n: 2 },
+        Op::Ins {
+            cached: true,
+            n: path.as_slice().len() as u8 + 1,
+        },
     ]
 }
 
 pub fn push_front_list<T: CellValue, D: DB>(
     context: &QueryContext<D>,
-    field_index: u8,
+    path: impl Into<LedgerPath>,
     value: T,
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
-    let program = list_push_front_program(field_index, value);
+    let program = list_push_front_program(path, value);
     context.query(&program, gas_limit, cost_model)
 }
 
-pub(crate) fn list_pop_front_program<D: DB>(field_index: u8) -> Vec<Op<ResultModeVerify, D>> {
+pub(crate) fn list_pop_front_program<D: DB>(
+    path: impl Into<LedgerPath>,
+) -> Vec<Op<ResultModeVerify, D>> {
+    let path = path.into();
     vec![
         Op::Idx {
             cached: false,
             push_path: true,
-            path: vec![Key::Value(AlignedValue::from(field_index))].into(),
+            path: path_keys(path.as_slice()).into(),
         },
         Op::Idx {
             cached: false,
             push_path: false,
             path: vec![Key::Value(AlignedValue::from(1_u8))].into(),
         },
-        Op::Ins { cached: true, n: 1 },
+        Op::Ins {
+            cached: true,
+            n: path.as_slice().len() as u8,
+        },
     ]
 }
 
 pub fn pop_front_list<D: DB>(
     context: &QueryContext<D>,
-    field_index: u8,
+    path: impl Into<LedgerPath>,
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
-    let program = list_pop_front_program(field_index);
+    let program = list_pop_front_program(path);
     context.query(&program, gas_limit, cost_model)
 }
 
-pub(crate) fn list_reset_program<D: DB>(field_index: u8) -> Vec<Op<ResultModeVerify, D>> {
-    vec![
+pub(crate) fn list_reset_program<D: DB>(
+    path: impl Into<LedgerPath>,
+) -> Vec<Op<ResultModeVerify, D>> {
+    let path = path.into();
+    let (field_index, parent) = path.as_slice().split_last().expect("List path is nonempty");
+    let mut program = Vec::new();
+    if !parent.is_empty() {
+        program.push(Op::Idx {
+            cached: false,
+            push_path: true,
+            path: path_keys(parent).into(),
+        });
+    }
+    program.extend([
         Op::Push {
             storage: false,
-            value: constructor_cell(field_index),
+            value: constructor_cell(*field_index),
         },
         Op::Push {
             storage: true,
@@ -527,16 +566,23 @@ pub(crate) fn list_reset_program<D: DB>(field_index: u8) -> Vec<Op<ResultModeVer
             cached: false,
             n: 1,
         },
-    ]
+    ]);
+    if !parent.is_empty() {
+        program.push(Op::Ins {
+            cached: true,
+            n: parent.len() as u8,
+        });
+    }
+    program
 }
 
 pub fn reset_list<D: DB>(
     context: &QueryContext<D>,
-    field_index: u8,
+    path: impl Into<LedgerPath>,
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
-    let program = list_reset_program(field_index);
+    let program = list_reset_program(path);
     context.query(&program, gas_limit, cost_model)
 }
 

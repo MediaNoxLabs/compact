@@ -27,7 +27,7 @@ use midnight_onchain_vm::cost_model::INITIAL_COST_MODEL;
 use midnight_onchain_vm::ops::Op;
 use midnight_serialize::tagged_serialize;
 
-const ITEMS: ListSlot<Field> = ListSlot::new(0);
+const ITEMS: ListSlot<Field> = ListSlot::new(&[0]);
 
 fn context() -> midnight_compact_runtime::context::CircuitContext<()> {
     let state = StateValue::Array(vec![constructor_list::<DefaultDB>()].into());

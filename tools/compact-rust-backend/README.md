@@ -59,7 +59,7 @@ stateful circuits are available as free functions and as methods on
 and typed circuit arguments; witness bounds apply only to methods that need
 them. The facade delegates to the existing functions, preserving state and
 witness behavior. `ledger_slots` exposes typed Cell, Counter, Set, scalar Map,
-root List, and plain/historic Merkle descriptors. Nested Maps have a typed structural slot with
+List, and plain/historic Merkle descriptors. Nested Maps have a typed structural slot with
 `MapNode<K, V>` values. Its `is_empty`, `size`, and `member` shape reads are
 available for native and recorded calls; scalar lookup and value mutations
 remain unavailable until nested value semantics are proven.
@@ -78,7 +78,7 @@ inline lowering. The recorded emitter evaluates supported Field reads, witness
 calls, addition, and internal Field-returning calls in source order. Supported
 root Set and Map mutation, membership, lookup, size, and emptiness calls have
 replayable recorded methods, including declaration-typed `FixedVector` keys in
-supported circuits. Root typed List push, pop, reset, length, emptiness, and head
+supported circuits. Typed List push, pop, reset, length, emptiness, and head
 calls also have recorded methods. Plain and historic Merkle append circuits
 have recorded methods when their complete trace is supported; other Merkle
 operations remain native. Other methods continue to

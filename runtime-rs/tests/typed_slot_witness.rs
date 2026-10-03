@@ -111,7 +111,7 @@ fn typed_witness_views_preserve_validation_reads_and_cost() {
             .unwrap()
     );
     assert_eq!(
-        ListSlot::<bool>::new(2)
+        ListSlot::<bool>::new(&[2])
             .witness_view(&meter)
             .unwrap()
             .length()
@@ -154,7 +154,7 @@ fn typed_witness_views_preserve_validation_reads_and_cost() {
         Err(CompactError::InvalidLedgerCell(_))
     ));
     assert!(matches!(
-        ListSlot::<bool>::new(0).witness_view(&meter),
+        ListSlot::<bool>::new(&[0]).witness_view(&meter),
         Err(CompactError::InvalidLedgerCell(_))
     ));
     assert!(matches!(

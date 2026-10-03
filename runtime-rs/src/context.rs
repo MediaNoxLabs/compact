@@ -200,14 +200,14 @@ impl<'a, D: DB> WitnessReadMeter<'a, D> {
 
     pub fn read_list_head<T: CellValue + Default>(
         &self,
-        field_index: u8,
+        path: impl Into<ledger::LedgerPath>,
     ) -> Result<Option<T>, CompactError>
     where
         midnight_base_crypto::fab::Value: From<T>,
     {
         let (result, (present, value)) = ledger::head_list::<T, (bool, T), D>(
             self.query,
-            field_index,
+            path,
             self.gas_limit.clone(),
             self.cost_model,
         )?;
@@ -215,24 +215,22 @@ impl<'a, D: DB> WitnessReadMeter<'a, D> {
         Ok(present.then_some(value))
     }
 
-    pub fn read_list_is_empty(&self, field_index: u8) -> Result<bool, CompactError> {
-        let (result, empty) = ledger::is_empty_list(
-            self.query,
-            field_index,
-            self.gas_limit.clone(),
-            self.cost_model,
-        )?;
+    pub fn read_list_is_empty(
+        &self,
+        path: impl Into<ledger::LedgerPath>,
+    ) -> Result<bool, CompactError> {
+        let (result, empty) =
+            ledger::is_empty_list(self.query, path, self.gas_limit.clone(), self.cost_model)?;
         *self.observed_gas.borrow_mut() += result.gas_cost;
         Ok(empty)
     }
 
-    pub fn read_list_length(&self, field_index: u8) -> Result<u64, CompactError> {
-        let (result, length) = ledger::length_list(
-            self.query,
-            field_index,
-            self.gas_limit.clone(),
-            self.cost_model,
-        )?;
+    pub fn read_list_length(
+        &self,
+        path: impl Into<ledger::LedgerPath>,
+    ) -> Result<u64, CompactError> {
+        let (result, length) =
+            ledger::length_list(self.query, path, self.gas_limit.clone(), self.cost_model)?;
         *self.observed_gas.borrow_mut() += result.gas_cost;
         Ok(length)
     }
@@ -444,11 +442,11 @@ impl<Private, D: DB> CircuitContext<Private, D> {
 
     pub fn head_list<T: CellValue + Default, M: CellValue>(
         mut self,
-        field_index: u8,
+        path: impl Into<ledger::LedgerPath>,
     ) -> Result<CircuitResult<Private, M, D>, CompactError> {
         let (result, value) = ledger::head_list::<T, M, D>(
             &self.query,
-            field_index,
+            path,
             self.gas_limit.clone(),
             &self.cost_model,
         )?;
@@ -463,15 +461,11 @@ impl<Private, D: DB> CircuitContext<Private, D> {
 
     pub fn pop_front_list(
         mut self,
-        field_index: u8,
+        path: impl Into<ledger::LedgerPath>,
     ) -> Result<CircuitResult<Private, (), D>, CompactError> {
-        let result = ledger::pop_front_list(
-            &self.query,
-            field_index,
-            self.gas_limit.clone(),
-            &self.cost_model,
-        )
-        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+        let result =
+            ledger::pop_front_list(&self.query, path, self.gas_limit.clone(), &self.cost_model)
+                .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
         self.query = result.context;
         Ok(CircuitResult {
             context: self,
@@ -483,15 +477,11 @@ impl<Private, D: DB> CircuitContext<Private, D> {
 
     pub fn reset_list(
         mut self,
-        field_index: u8,
+        path: impl Into<ledger::LedgerPath>,
     ) -> Result<CircuitResult<Private, (), D>, CompactError> {
-        let result = ledger::reset_list(
-            &self.query,
-            field_index,
-            self.gas_limit.clone(),
-            &self.cost_model,
-        )
-        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+        let result =
+            ledger::reset_list(&self.query, path, self.gas_limit.clone(), &self.cost_model)
+                .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
         self.query = result.context;
         Ok(CircuitResult {
             context: self,
@@ -503,12 +493,12 @@ impl<Private, D: DB> CircuitContext<Private, D> {
 
     pub fn push_front_list<T: CellValue>(
         mut self,
-        field_index: u8,
+        path: impl Into<ledger::LedgerPath>,
         value: T,
     ) -> Result<CircuitResult<Private, (), D>, CompactError> {
         let result = ledger::push_front_list(
             &self.query,
-            field_index,
+            path,
             value,
             self.gas_limit.clone(),
             &self.cost_model,
@@ -525,14 +515,10 @@ impl<Private, D: DB> CircuitContext<Private, D> {
 
     pub fn is_empty_list(
         mut self,
-        field_index: u8,
+        path: impl Into<ledger::LedgerPath>,
     ) -> Result<CircuitResult<Private, bool, D>, CompactError> {
-        let (result, value) = ledger::is_empty_list(
-            &self.query,
-            field_index,
-            self.gas_limit.clone(),
-            &self.cost_model,
-        )?;
+        let (result, value) =
+            ledger::is_empty_list(&self.query, path, self.gas_limit.clone(), &self.cost_model)?;
         self.query = result.context;
         Ok(CircuitResult {
             context: self,
@@ -544,14 +530,10 @@ impl<Private, D: DB> CircuitContext<Private, D> {
 
     pub fn length_list(
         mut self,
-        field_index: u8,
+        path: impl Into<ledger::LedgerPath>,
     ) -> Result<CircuitResult<Private, u64, D>, CompactError> {
-        let (result, value) = ledger::length_list(
-            &self.query,
-            field_index,
-            self.gas_limit.clone(),
-            &self.cost_model,
-        )?;
+        let (result, value) =
+            ledger::length_list(&self.query, path, self.gas_limit.clone(), &self.cost_model)?;
         self.query = result.context;
         Ok(CircuitResult {
             context: self,

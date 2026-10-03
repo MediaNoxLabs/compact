@@ -207,17 +207,6 @@ fn field_at_path<'a, D: DB>(
     Ok(current)
 }
 
-fn root_field<D: DB>(state: &StateValue<D>, index: u8) -> Result<&StateValue<D>, CompactError> {
-    let StateValue::Array(fields) = state else {
-        return Err(CompactError::InvalidLedgerCell(
-            "expected root ledger field array".into(),
-        ));
-    };
-    fields.get(index as usize).ok_or_else(|| {
-        CompactError::InvalidLedgerCell(format!("missing root ledger field {index}"))
-    })
-}
-
 mod cell;
 mod collections;
 mod counter;
@@ -233,10 +222,11 @@ pub use cell::{
 pub use collections::{
     ListView, MapView, MeteredListView, MeteredMapView, MeteredSetView, SetView, constructor_list,
     constructor_map, constructor_set, head_list, insert_map, insert_set, is_empty_list,
-    is_empty_map, is_empty_set, length_list, list_view, lookup_map, map_view, map_view_at_path,
-    member_map, member_set, metered_list_view, metered_map_view_at_path, metered_set_view_at_path,
-    pop_front_list, push_front_list, remove_map, remove_set, reset_list, reset_map, reset_set,
-    set_view, set_view_at_path, size_map, size_set,
+    is_empty_map, is_empty_set, length_list, list_view, list_view_at_path, lookup_map, map_view,
+    map_view_at_path, member_map, member_set, metered_list_view, metered_list_view_at_path,
+    metered_map_view_at_path, metered_set_view_at_path, pop_front_list, push_front_list,
+    remove_map, remove_set, reset_list, reset_map, reset_set, set_view, set_view_at_path, size_map,
+    size_set,
 };
 pub(crate) use collections::{
     list_head_program, list_is_empty_program, list_length_program, list_pop_front_program,

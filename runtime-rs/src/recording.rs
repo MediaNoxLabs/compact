@@ -353,24 +353,25 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
 
     pub fn push_front_list<T: CellValue>(
         self,
-        field_index: u8,
+        path: impl Into<LedgerPath>,
         value: T,
     ) -> Result<Self, CompactError> {
-        self.apply_verify_program(ledger::list_push_front_program(field_index, value))
+        self.apply_verify_program(ledger::list_push_front_program(path, value))
     }
 
-    pub fn pop_front_list(self, field_index: u8) -> Result<Self, CompactError> {
-        self.apply_verify_program(ledger::list_pop_front_program(field_index))
+    pub fn pop_front_list(self, path: impl Into<LedgerPath>) -> Result<Self, CompactError> {
+        self.apply_verify_program(ledger::list_pop_front_program(path))
     }
 
-    pub fn reset_list(self, field_index: u8) -> Result<Self, CompactError> {
-        self.apply_verify_program(ledger::list_reset_program(field_index))
+    pub fn reset_list(self, path: impl Into<LedgerPath>) -> Result<Self, CompactError> {
+        self.apply_verify_program(ledger::list_reset_program(path))
     }
 
-    pub fn length_list(mut self, field_index: u8) -> Result<(Self, u64), CompactError> {
+    pub fn length_list(mut self, path: impl Into<LedgerPath>) -> Result<(Self, u64), CompactError> {
+        let path = path.into();
         let (result, length) = ledger::length_list(
             &self.context.query,
-            field_index,
+            path.as_slice(),
             self.context.gas_limit,
             &self.context.cost_model,
         )?;
@@ -379,17 +380,21 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
                 "missing List length event".into(),
             ));
         };
-        let program = ledger::list_length_program(field_index, observed.clone());
+        let program = ledger::list_length_program(path.as_slice(), observed.clone());
         self.context.query = result.context;
         self.observed_gas += result.gas_cost;
         self.verify_ops.extend(program);
         Ok((self, length))
     }
 
-    pub fn is_empty_list(mut self, field_index: u8) -> Result<(Self, bool), CompactError> {
+    pub fn is_empty_list(
+        mut self,
+        path: impl Into<LedgerPath>,
+    ) -> Result<(Self, bool), CompactError> {
+        let path = path.into();
         let (result, empty) = ledger::is_empty_list(
             &self.context.query,
-            field_index,
+            path.as_slice(),
             self.context.gas_limit,
             &self.context.cost_model,
         )?;
@@ -398,7 +403,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
                 "missing List emptiness event".into(),
             ));
         };
-        let program = ledger::list_is_empty_program(field_index, observed.clone());
+        let program = ledger::list_is_empty_program(path.as_slice(), observed.clone());
         self.context.query = result.context;
         self.observed_gas += result.gas_cost;
         self.verify_ops.extend(program);
@@ -407,11 +412,12 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
 
     pub fn head_list<T: CellValue + Default, M: CellValue>(
         mut self,
-        field_index: u8,
+        path: impl Into<LedgerPath>,
     ) -> Result<(Self, M), CompactError> {
+        let path = path.into();
         let (result, head) = ledger::head_list::<T, M, D>(
             &self.context.query,
-            field_index,
+            path.as_slice(),
             self.context.gas_limit,
             &self.context.cost_model,
         )?;
@@ -421,7 +427,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
             ));
         };
         let program =
-            ledger::list_head_program::<T, ResultModeVerify, D>(field_index, observed.clone());
+            ledger::list_head_program::<T, ResultModeVerify, D>(path.as_slice(), observed.clone());
         self.context.query = result.context;
         self.observed_gas += result.gas_cost;
         self.verify_ops.extend(program);

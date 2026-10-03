@@ -871,6 +871,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-chunked-list-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-base-crypto",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-chunked-set-observed-fixture"
 version = "0.1.0"
 dependencies = [
@@ -1621,6 +1634,7 @@ version = "0.1.0"
 dependencies = [
  "compact-rust-cell-boolean-fixture",
  "compact-rust-cell-read-fixture",
+ "compact-rust-chunked-list-fixture",
  "compact-rust-chunked-set-observed-fixture",
  "compact-rust-constructor-list-actions-fixture",
  "compact-rust-constructor-map-actions-fixture",

@@ -6,7 +6,7 @@ mod recorded;
 mod stateful;
 mod witness;
 
-const RUNTIME_ABI_VERSION: u32 = 24;
+const RUNTIME_ABI_VERSION: u32 = 25;
 
 const GENERATED_HEADER: &str = r#"// This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
@@ -2037,7 +2037,7 @@ fn render_constructor_vm_steps<'a>(
                         actual,
                     });
                 }
-                let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+                let index = ledger_path_expr(declaration);
                 actions.push(syn::parse_quote!(let step = context.push_front_list(#index, (#value).clone())?;));
                 actions.push(syn::parse_quote!(context = step.context;));
             }
@@ -2056,7 +2056,7 @@ fn render_constructor_vm_steps<'a>(
                 } else {
                     syn::Ident::new("reset_list", Span::call_site())
                 };
-                let index = syn::LitInt::new(&index.to_string(), Span::call_site());
+                let index = ledger_path_expr(declaration);
                 actions.push(syn::parse_quote!(let step = context.#method(#index)?;));
                 actions.push(syn::parse_quote!(context = step.context;));
             }
@@ -2393,9 +2393,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
             }
             return Err(RenderError::InvalidLedgerPath(path).at(field.source.as_ref()));
         }
-        if path.len() > 2
-            || (path.len() > 1 && matches!(field.declaration, LedgerFieldKind::List { .. }))
-        {
+        if path.len() > 2 {
             return Err(RenderError::UnsupportedLedgerPath(path).at(field.source.as_ref()));
         }
         if let LedgerFieldKind::MerkleTree { depth, .. }
@@ -2935,10 +2933,9 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
             }
             LedgerFieldKind::List { ty } => {
                 let ty = rust_type(ty)?;
-                let index = field.index;
                 slot_items.push(syn::parse_quote! {
                     pub const #name: runtime::slots::ListSlot<#ty> =
-                        runtime::slots::ListSlot::new(#index);
+                        runtime::slots::ListSlot::new(&[#(#path),*]);
                 });
             }
             LedgerFieldKind::Map { key, value } => {

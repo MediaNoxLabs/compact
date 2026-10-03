@@ -24,6 +24,7 @@ import {
 } from '@midnight-ntwrk/wallet-sdk-unshielded-wallet';
 import { firstValueFrom, filter, timeout } from 'rxjs';
 import { WebSocket } from 'ws';
+import { hasFinalizedCanonicalBlock, isExpectedAction, normalizeHash } from './provenance.mjs';
 
 const [deployPath, callPath] = process.argv.slice(2);
 const seedHex = process.env.COMPACT_RUST_WALLET_SEED_HEX;
@@ -103,7 +104,7 @@ async function indexedAction() {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
-      query: 'query ($address: HexEncoded!) { contractAction(address: $address) { __typename address state transaction { hash block { height } } } }',
+      query: 'query ($address: HexEncoded!) { contractAction(address: $address) { __typename address state transaction { hash block { height hash } } } }',
       variables: { address },
     }),
   });
@@ -136,15 +137,27 @@ function assertCounterValue(action, expected) {
   }
 }
 
-async function waitForAction(type, previousHash) {
+async function nodeRpc(method, params) {
+  const response = await fetch(node, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
+  });
+  if (!response.ok) throw new Error(`node RPC HTTP ${response.status}`);
+  const body = await response.json();
+  if (body.error) throw new Error(`node RPC ${method}: ${JSON.stringify(body.error)}`);
+  return body.result;
+}
+
+async function waitForAction(type, submittedHash) {
   const deadline = Date.now() + 180_000;
   while (Date.now() < deadline) {
     const action = await indexedAction();
-    if (action?.__typename === type && action.address === address &&
-        action.transaction.hash !== previousHash) return action;
+    if (isExpectedAction(action, type, address, submittedHash) &&
+        await hasFinalizedCanonicalBlock(action.transaction.block, nodeRpc)) return action;
     await new Promise(resolve => setTimeout(resolve, 3_000));
   }
-  throw new Error(`timed out waiting for indexed ${type} at ${address}`);
+  throw new Error(`timed out waiting for finalized indexed ${type} ${submittedHash} at ${address}`);
 }
 
 async function submit(tx, label) {
@@ -164,8 +177,10 @@ async function submit(tx, label) {
     }
   }
   const finalized = await wallet.finalizeRecipe(recipe);
+  const hash = normalizeHash(finalized.transactionHash());
   const identifier = await wallet.submitTransaction(finalized);
-  console.log(`${label} submitted: ${identifier}`);
+  console.log(`${label} submitted: ${identifier}, final transaction hash ${hash}`);
+  return hash;
 }
 
 await waitForProofServer();
@@ -197,11 +212,11 @@ try {
   }
   const existing = await indexedAction();
   if (existing) throw new Error(`contract ${address} already exists; export a fresh pair on a new devnet`);
-  await submit(deploy, 'deployment');
-  const deployed = await waitForAction('ContractDeploy');
+  const deployedHash = await submit(deploy, 'deployment');
+  const deployed = await waitForAction('ContractDeploy', deployedHash);
   console.log(`deployment indexed: block ${deployed.transaction.block.height}, address ${address}`);
-  await submit(call, 'call');
-  const called = await waitForAction('ContractCall', deployed.transaction.hash);
+  const calledHash = await submit(call, 'call');
+  const called = await waitForAction('ContractCall', calledHash);
   assertCounterValue(called, 1);
   console.log(`call indexed: block ${called.transaction.block.height}, address ${address}`);
   console.log('indexed contract state: round = 1');
@@ -223,8 +238,8 @@ try {
       if (!(secondAction instanceof ledger.ContractCall) || secondAction.address !== address) {
         throw new Error('confirmed-state builder produced a call for the wrong contract');
       }
-      await submit(secondCall, 'confirmed-state call');
-      const second = await waitForAction('ContractCall', called.transaction.hash);
+      const secondHash = await submit(secondCall, 'confirmed-state call');
+      const second = await waitForAction('ContractCall', secondHash);
       assertCounterValue(second, 2);
       console.log(`confirmed-state call indexed: block ${second.transaction.block.height}, address ${address}`);
       console.log('indexed contract state: round = 2');

@@ -255,9 +255,16 @@ node tools/compact-rust-backend/wallet-live/check.mjs \
 The driver syncs the wallet, registers NIGHT for DUST when necessary, rejects
 an already used contract address, then balances, finalizes and submits the
 deployment. It waits for the indexer to report `ContractDeploy` at the exact
-address before balancing and submitting the call. It requires an indexed
-`ContractCall` at the same address with a different transaction hash and
-decodes its ledger-v8 contract state to check that `round` is 1.
+address and final merged transaction hash before balancing and submitting the
+call. It requires the same exact transaction identity for each indexed
+`ContractCall`, then decodes ledger-v8 state to check `round` is 1 and, in the
+opt-in second call, 2. For every action, the driver checks that the indexer's
+block hash matches the node's canonical hash at a height no greater than its
+finalized head. The wallet's returned intent identifier can differ from the
+merged transaction hash. This check trusts the connected node and indexer; it
+does not verify a consensus finality proof. ADR-0042 and
+[issue #141](https://github.com/MediaNoxLabs/compact/issues/141) track the
+identity and finalized-block gate.
 
 To prove a subsequent call from the indexed `round = 1` state, compile the
 Counter artifacts and Rust builder, export both opt-in environment variables,

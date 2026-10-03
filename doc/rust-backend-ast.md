@@ -66,8 +66,11 @@ the observed state and installed verifier before using the same adapter. The
 observation metadata is caller supplied and does not prove finality. Circuits
 with multiple parameters retain the explicit `CallSpec` path pending exact
 FAB encoding checks.
+ABI 20 exposes exact `.verifier` artifact decoding through the runtime facade
+so a separate consumer can prepare the generated call with only the generated
+crate as a direct dependency.
 
-The packaged gate checks ZKIR and verifier artifacts, proves 57 supported call
+The packaged gate checks ZKIR and verifier artifacts, proves 58 supported call
 shapes, validates and applies each against an offline ledger, and checks the
 resulting contract state. Its counter call also seals a transaction and
 round-trips its bytes through the pinned JavaScript ledger-v8 decoder. The
@@ -226,7 +229,7 @@ Field into `Map.insert`, covering the compiler's generated temporary rather
 than treating it as an undeclared circuit parameter. Other witnessed
 expression forms and ledger action values still need independent recording
 and parity gates.
-The current generated/runtime ABI is 19.
+The current generated/runtime ABI is 20.
 
 The runtime can now construct and decode ledger Cells and Counters, and it
 runs Cell writes plus Counter increments/decrements through the ledger VM.

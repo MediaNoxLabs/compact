@@ -29,6 +29,7 @@ import tomllib
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "examples/rust_backend/counter.compact"
+COUNTER_PARAMETER_SOURCE = ROOT / "examples/rust_backend/counter_parameter.compact"
 PURE_SOURCE = ROOT / "examples/rust_backend/field_add.compact"
 CELL_SOURCE = ROOT / "examples/rust_backend/cell_boolean.compact"
 SET_SOURCE = ROOT / "examples/rust_backend/set_oracle.compact"
@@ -158,6 +159,29 @@ def check_consumer(contract: Path, pure_contract: Path, consumer: Path) -> None:
         "    assert_eq!(sum, 5u64.into());\n}\n"
     )
     subprocess.run(["cargo", "test", "--quiet"], cwd=pure_consumer, env=environment, check=True)
+
+
+def check_observed_call_consumer(proof: Path, base: Path) -> None:
+    """Compile and prepare a call with only the generated crate as a dependency."""
+    contract = proof / "contract"
+    package = tomllib.loads((contract / "Cargo.toml").read_text())
+    consumer = base / "observed-call-consumer"
+    (consumer / "tests").mkdir(parents=True)
+    (consumer / "Cargo.toml").write_text(
+        "[package]\nname = \"compactc-observed-call-smoke\"\nversion = \"0.1.0\"\n"
+        "edition = \"2024\"\n\n[dependencies]\n"
+        f'{package["package"]["name"]} = {{ path = {json.dumps(str(contract))}, features = ["ledger-transaction"] }}\n'
+    )
+    (consumer / "tests/observed.rs").write_bytes(
+        (ROOT / "tools/compact-rust-backend/consumers/observed_call.rs").read_bytes()
+    )
+    environment = os.environ.copy()
+    environment.setdefault("CARGO_TARGET_DIR", str(ROOT / "target/compactc-consumer"))
+    environment["COMPACT_RUST_OBSERVED_STATE"] = str(
+        ROOT / "tools/compact-rust-proof-smoke/tests/fixtures/confirmed-counter-state-abi18.bin"
+    )
+    environment["COMPACT_RUST_OBSERVED_VERIFIER"] = str(proof / "keys/increment.verifier")
+    subprocess.run(["cargo", "test", "--quiet"], cwd=consumer, env=environment, check=True)
 
 
 def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
@@ -791,6 +815,14 @@ def main() -> None:
                     assert (proof / "keys" / f"{circuit}.{extension}").is_file()
                 for extension in ("zkir", "bzkir"):
                     assert (proof / "zkir" / f"{circuit}.{extension}").is_file()
+            check_observed_call_consumer(proof, base)
+            counter_parameter_proof = base / "counter-parameter-proof"
+            run(compiler, "--target", "rust", str(COUNTER_PARAMETER_SOURCE), str(counter_parameter_proof))
+            check_manifest(counter_parameter_proof)
+            for extension in ("prover", "verifier"):
+                assert (counter_parameter_proof / "keys" / f"increment_by.{extension}").is_file()
+            for extension in ("zkir", "bzkir"):
+                assert (counter_parameter_proof / "zkir" / f"increment_by.{extension}").is_file()
             cell_proof = base / "cell-proof"
             run(compiler, "--target", "rust", str(CELL_SOURCE), str(cell_proof))
             check_manifest(cell_proof)
@@ -945,6 +977,7 @@ def main() -> None:
                 str(merkle_proof),
                 str(historic_merkle_proof),
                 str(vector_key_proof),
+                str(counter_parameter_proof),
             )
     print("compactc target boundary and manifest: passed")
 

@@ -32,6 +32,7 @@ use compact_rust_cell_read_fixture::ledger_contract as cell_read_contract;
 use compact_rust_constructor_list_actions_fixture::ledger_contract as constructor_list_contract;
 use compact_rust_constructor_map_actions_fixture::ledger_contract as constructor_map_contract;
 use compact_rust_counter_fixture::ledger_contract as counter_contract;
+use compact_rust_counter_parameter_fixture::ledger_contract as counter_parameter_contract;
 use compact_rust_hmt_insert_oracle_fixture::ledger_contract as historic_merkle_contract;
 use compact_rust_list_field_fixture::ledger_contract as list_contract;
 use compact_rust_map_boolean_field_fixture::ledger_contract as map_contract;
@@ -249,16 +250,81 @@ fn check_generated_trace<Private, Output: Into<AlignedValue>, Input: Into<Aligne
 }
 
 fn check_observed_call_parity(
+    root: &Path,
+    circuit: &'static str,
+    deploy: &ContractDeploy<DefaultDB>,
     manual: &ContractCallPrototype<DefaultDB>,
     observed: &ContractCallPrototype<DefaultDB>,
-    name: &str,
 ) -> Result<(), Box<dyn Error>> {
     // The prototype Debug representation includes the complete public and
     // private transcripts, effects, gas, input/output and key location.
     if format!("{manual:?}") != format!("{observed:?}") {
-        return Err(format!("{name} observed call differs from manual adapter").into());
+        return Err(format!("{circuit} observed call differs from manual adapter").into());
     }
-    println!("{name} observed call matches manual ledger prototype");
+    let prove_and_apply = |call: ContractCallPrototype<DefaultDB>| -> Result<(Vec<u8>, ContractState<DefaultDB>), Box<dyn Error>> {
+        let mut intent_rng = StdRng::seed_from_u64(0x4144_5234_33);
+        let intent: Intent<Signature, ProofPreimageMarker, PedersenRandomness, DefaultDB> =
+            Intent::empty(&mut intent_rng, Timestamp::from_secs(0)).add_call::<ProofPreimage>(call);
+        let transaction =
+            Transaction::from_intents("local-test", HashMap::new().insert(1_u16, intent));
+        let mut preproof_bytes = Vec::new();
+        tagged_serialize(&transaction, &mut preproof_bytes)?;
+        let resolver = ArtifactResolver {
+            root: root.to_owned(),
+            circuit,
+        };
+        let params = MidnightDataProvider::new(FetchMode::OnDemand, OutputMode::Log, vec![])?;
+        let provider = LocalProvingProvider {
+            rng: StdRng::seed_from_u64(0x5052_4f56_45),
+            resolver: &resolver,
+            params: &params,
+        };
+        let proven = futures_executor::block_on(
+            transaction.prove(provider, &INITIAL_PARAMETERS.cost_model.runtime_cost_model),
+        )?;
+        let sealed = proven.seal(StdRng::seed_from_u64(0x5345_414c));
+        let mut ledger = LedgerState::<DefaultDB>::new("local-test");
+        ledger.contract = ledger
+            .contract
+            .insert(deploy.address(), deploy.initial_state.clone());
+        let mut strictness = WellFormedStrictness::default();
+        strictness.enforce_balancing = false;
+        let validation_time = Timestamp::from_secs(0);
+        let verified = sealed.well_formed(&ledger, strictness, validation_time)?;
+        let context = TransactionContext {
+            ref_state: ledger.clone(),
+            block_context: BlockContext {
+                tblock: validation_time,
+                last_block_time: validation_time,
+                ..BlockContext::default()
+            },
+            whitelist: None,
+        };
+        let (updated, outcome) = ledger.apply(&verified, &context);
+        if !matches!(outcome, TransactionResult::Success(_)) {
+            return Err(format!("{circuit} parity call application failed: {outcome:?}").into());
+        }
+        let state = updated
+            .contract
+            .get(&deploy.address())
+            .ok_or("parity call removed the contract")?
+            .clone();
+        Ok((preproof_bytes, state))
+    };
+    let manual_result = prove_and_apply(manual.clone())?;
+    let observed_result = prove_and_apply(observed.clone())?;
+    if manual_result.0 != observed_result.0 {
+        return Err(format!("{circuit} observed call changed pre-proof transaction bytes").into());
+    }
+    if manual_result.1 != observed_result.1 {
+        return Err(format!("{circuit} observed call changed applied contract state").into());
+    }
+    // midnight-proofs 0.7.0 blinds quotient limbs with OsRng, so proof and
+    // sealed bytes from two independent valid runs need not match exactly.
+    println!(
+        "{circuit} observed call matches manual prototype, {} pre-proof bytes and independently applied state",
+        observed_result.0.len()
+    );
     Ok(())
 }
 
@@ -530,9 +596,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     let merkle_root = arguments.next();
     let historic_merkle_root = arguments.next();
     let vector_key_root = arguments.next();
+    let counter_parameter_root = arguments.next();
     if arguments.next().is_some() {
         return Err(
-            "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output> [witness-output] [nested-output] [nested-witness-output] [set-output] [set-oracle-output] [map-output] [constructor-map-output] [list-output] [constructor-list-output] [enum-cell-output] [tiny-output] [nested-map-shape-output] [list-shapes-output] [merkle-output] [historic-merkle-output] [vector-key-output]"
+            "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output> [witness-output] [nested-output] [nested-witness-output] [set-output] [set-oracle-output] [map-output] [constructor-map-output] [list-output] [constructor-list-output] [enum-cell-output] [tiny-output] [nested-map-shape-output] [list-shapes-output] [merkle-output] [historic-merkle-output] [vector-key-output] [counter-parameter-output]"
                 .into(),
         );
     }
@@ -662,7 +729,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         .recording
         .increment_call(&counter_observed, ())?
         .prepare(counter_verifier, Fr::from(0u64))?;
-    check_observed_call_parity(&counter_manual, &counter_call, "increment")?;
+    check_observed_call_parity(
+        counter_root,
+        "increment",
+        &counter_deploy,
+        &counter_manual,
+        &counter_call,
+    )?;
     prove_counter(counter_root, &counter_call)?;
     let counter_handoff = env::var_os("COMPACT_RUST_WALLET_HANDOFF").map(PathBuf::from);
     let counter_deploy_handoff = env::var_os("COMPACT_RUST_DEPLOY_HANDOFF").map(PathBuf::from);
@@ -685,6 +758,48 @@ fn main() -> Result<(), Box<dyn Error>> {
             Ok(())
         },
     )?;
+
+    if let Some(root) = counter_parameter_root.as_ref() {
+        let root = Path::new(root);
+        let initial = counter_parameter_contract::initial_state(ConstructorContext::new(()))?;
+        let deploy = make_deploy(
+            root,
+            "increment_by",
+            initial.ledger_state.get_ref().clone(),
+            &mut rng,
+        )?;
+        let amount = BoundedUint::<65535>::new(3)?;
+        let recorded = counter_parameter_contract::Contract::default()
+            .recording
+            .increment_by(initial.into_circuit_context(deploy.address()), amount)?;
+        let manual = check_generated_trace(root, "increment_by", recorded, amount)?;
+        let observed = ObservedContractState::new(
+            deploy.address(),
+            deploy.initial_state.clone(),
+            Observation {
+                transaction_hash: [0; 32],
+                block_hash: [0; 32],
+                block_height: 0,
+            },
+        );
+        let verifier: VerifierKey = tagged_deserialize(&mut BufReader::new(File::open(
+            root.join("keys/increment_by.verifier"),
+        )?))?;
+        let call = counter_parameter_contract::Contract::default()
+            .recording
+            .increment_by_call(&observed, (), amount)?
+            .prepare(verifier, Fr::from(0u64))?;
+        check_observed_call_parity(root, "increment_by", &deploy, &manual, &call)?;
+        check_transaction(root, "increment_by", deploy, call, &mut rng, |contract| {
+            let StateValue::Array(fields) = contract.data.get_ref() else {
+                return Err("counter-parameter state is not an array".into());
+            };
+            if read_counter(fields.get(0).ok_or("counter-parameter field missing")?)? != 3 {
+                return Err("proven typed counter call did not add the parameter".into());
+            }
+            Ok(())
+        })?;
+    }
 
     let cell_initial = cell_contract::initial_state(ConstructorContext::new(()))?;
     let cell_deploy = make_deploy(
@@ -881,7 +996,13 @@ fn main() -> Result<(), Box<dyn Error>> {
             .recording
             .add_twice_call(&parameterized_observed, (), amount)?
             .prepare(parameterized_verifier, Fr::from(0u64))?;
-        check_observed_call_parity(&parameterized_manual, &parameterized_call, "add_twice")?;
+        check_observed_call_parity(
+            nested_root,
+            "add_twice",
+            &parameterized_deploy,
+            &parameterized_manual,
+            &parameterized_call,
+        )?;
         check_transaction(
             nested_root,
             "add_twice",

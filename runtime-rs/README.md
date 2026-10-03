@@ -6,6 +6,9 @@ midnight-zk primitives for fields, encoding, cryptography, state, and VM
 queries. Generated code checks `RUST_RUNTIME_ABI` at compile time. A generated
 crate bundles matching runtime sources by default or points to one shared
 source root when compiled with `--rust-runtime-root`.
+ABI 20 reexports the ledger-8 verifier key and decodes exact compiler-emitted
+`.verifier` bytes through `transaction::decode_verifier_key`. A generated crate
+consumer can prepare a typed call without a direct serializer dependency.
 ABI 19 adds `transaction::ObservedContractState` and `RecordedCall` for
 source-typed zero- and one-argument calls. The generated `*_call` method
 retains the entry point and FAB input, checks the installed ledger verifier,

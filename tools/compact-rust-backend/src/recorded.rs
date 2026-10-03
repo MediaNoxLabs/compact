@@ -477,7 +477,6 @@ fn render_recorded_item(
                     .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
                 if declaration.declaration != (LedgerFieldKind::Cell { ty: Type::Field })
                     || declaration.index != *index
-                    || declaration.physical_path().len() != 1
                 {
                     return Ok(None);
                 }
@@ -806,7 +805,7 @@ fn render_recorded_item(
                 let LedgerFieldKind::Cell { ty } = &declaration.declaration else {
                     return Ok(None);
                 };
-                if declaration.index != *index || declaration.physical_path().len() != 1 {
+                if declaration.index != *index {
                     return Ok(None);
                 }
                 let mut operand = |value: &Expr| -> Result<Option<syn::Expr>, RenderError> {
@@ -1832,7 +1831,7 @@ fn render_recorded_item(
                 ) {
                     return Ok(false);
                 }
-                if declaration.index != *index || declaration.physical_path().len() != 1 {
+                if declaration.index != *index {
                     return Ok(false);
                 }
                 let value = if *ty == Type::Field {
@@ -1941,7 +1940,6 @@ fn render_recorded_item(
                     ty: circuit.result.clone(),
                 })
                 || declaration.index != *index
-                || declaration.physical_path().len() != 1
             {
                 return Ok(None);
             }

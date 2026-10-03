@@ -6,6 +6,9 @@ midnight-zk primitives for fields, encoding, cryptography, state, and VM
 queries. Generated code checks `RUST_RUNTIME_ABI` at compile time. A generated
 crate bundles matching runtime sources by default or points to one shared
 source root when compiled with `--rust-runtime-root`.
+ABI 27 emits recorded and observed Cell calls at compiler-chunked ledger
+paths. Existing typed Cell slots, recording frames and ledger VM builders carry
+the complete path; the runtime VM semantics are unchanged.
 ABI 26 emits recorded and observed scalar Map calls for compiler-chunked
 ledger fields. Generated `MapSlot<K, V>` descriptors use their complete
 physical path through the existing runtime VM programs.

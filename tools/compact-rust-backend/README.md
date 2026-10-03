@@ -76,7 +76,9 @@ evaluates typed arguments in source order and preserves the witness result for
 the subsequent write. Value calls nested inside larger expressions still use
 inline lowering. The recorded emitter evaluates supported Field reads, witness
 calls, addition, and internal Field-returning calls in source order. Supported
-Set and scalar Map mutation, membership, lookup, size, and emptiness calls have
+Cell reads, writes, assertions and Field read expressions can record at
+compiler-assigned chunked paths through typed slots. Set and scalar Map
+mutation, membership, lookup, size, and emptiness calls have
 replayable recorded methods, including declaration-typed `FixedVector` keys in
 supported circuits and compiler-assigned chunked paths. Typed List push, pop,
 reset, length, emptiness, and head

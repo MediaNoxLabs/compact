@@ -29,6 +29,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use compact_rust_cell_boolean_fixture::ledger_contract as cell_contract;
 use compact_rust_cell_read_fixture::ledger_contract as cell_read_contract;
+use compact_rust_chunked_cell_fixture::ledger_contract as chunked_cell_contract;
 use compact_rust_chunked_list_fixture::ledger_contract as chunked_list_contract;
 use compact_rust_chunked_map_fixture::ledger_contract as chunked_map_contract;
 use compact_rust_chunked_set_observed_fixture::ledger_contract as chunked_set_contract;
@@ -62,7 +63,7 @@ use midnight_compact_runtime::context::{ConstructorContext, WitnessContext};
 use midnight_compact_runtime::fab::AlignedValue;
 use midnight_compact_runtime::ledger::{
     DefaultDB, StateValue, historic_merkle_tree_view_at_path, list_view_at_path, map_view_at_path,
-    merkle_tree_view_at_path, read_cell, read_counter, set_view_at_path,
+    merkle_tree_view_at_path, read_cell, read_cell_at_path, read_counter, set_view_at_path,
 };
 use midnight_compact_runtime::recording::RecordedCircuitResult;
 use midnight_compact_runtime::transaction::{
@@ -608,9 +609,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     let chunked_set_root = arguments.next();
     let chunked_list_root = arguments.next();
     let chunked_map_root = arguments.next();
+    let chunked_cell_root = arguments.next();
     if arguments.next().is_some() {
         return Err(
-            "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output> [witness-output] [nested-output] [nested-witness-output] [set-output] [set-oracle-output] [map-output] [constructor-map-output] [list-output] [constructor-list-output] [enum-cell-output] [tiny-output] [nested-map-shape-output] [list-shapes-output] [merkle-output] [historic-merkle-output] [vector-key-output] [counter-parameter-output] [composite-key-output] [chunked-set-output] [chunked-list-output] [chunked-map-output]"
+            "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output> [witness-output] [nested-output] [nested-witness-output] [set-output] [set-oracle-output] [map-output] [constructor-map-output] [list-output] [constructor-list-output] [enum-cell-output] [tiny-output] [nested-map-shape-output] [list-shapes-output] [merkle-output] [historic-merkle-output] [vector-key-output] [counter-parameter-output] [composite-key-output] [chunked-set-output] [chunked-list-output] [chunked-map-output] [chunked-cell-output]"
                 .into(),
         );
     }
@@ -2705,6 +2707,124 @@ fn main() -> Result<(), Box<dyn Error>> {
                     if view.lookup(true)? != value {
                         return Err("proven chunked Map value differs".into());
                     }
+                }
+                Ok(())
+            })?;
+        }
+    }
+    if let Some(chunked_root) = chunked_cell_root.as_ref().map(Path::new) {
+        let contract = chunked_cell_contract::Contract::default();
+        for circuit in [
+            "set_active",
+            "get_active",
+            "assert_active",
+            "set_amount",
+            "get_amount",
+            "add_amount",
+        ] {
+            let initial = chunked_cell_contract::initial_state(ConstructorContext::new(()))?;
+            let deploy = make_deploy(
+                chunked_root,
+                circuit,
+                initial.ledger_state.get_ref().clone(),
+                &mut rng,
+            )?;
+            let context = initial.into_circuit_context(deploy.address());
+            let observed = ObservedContractState::new(
+                deploy.address(),
+                deploy.initial_state.clone(),
+                Observation {
+                    transaction_hash: [0; 32],
+                    block_hash: [0; 32],
+                    block_height: 0,
+                },
+            );
+            let verifier = decode_verifier_key(&fs::read(
+                chunked_root.join(format!("keys/{circuit}.verifier")),
+            )?)?;
+            let (manual, typed) = match circuit {
+                "set_active" => {
+                    let recorded = contract.recording.set_active(context, false)?;
+                    let manual = check_generated_trace(chunked_root, circuit, recorded, false)?;
+                    let typed = contract
+                        .recording
+                        .set_active_call(&observed, (), false)?
+                        .prepare(verifier, Fr::from(0_u64))?;
+                    (manual, typed)
+                }
+                "get_active" => {
+                    let recorded = contract.recording.get_active(context)?;
+                    if !recorded.execution.result {
+                        return Err("seeded chunked Cell Boolean differs".into());
+                    }
+                    let manual = check_generated_trace(chunked_root, circuit, recorded, ())?;
+                    let typed = contract
+                        .recording
+                        .get_active_call(&observed, ())?
+                        .prepare(verifier, Fr::from(0_u64))?;
+                    (manual, typed)
+                }
+                "assert_active" => {
+                    let recorded = contract.recording.assert_active(context, true)?;
+                    let manual = check_generated_trace(chunked_root, circuit, recorded, true)?;
+                    let typed = contract
+                        .recording
+                        .assert_active_call(&observed, (), true)?
+                        .prepare(verifier, Fr::from(0_u64))?;
+                    (manual, typed)
+                }
+                "set_amount" => {
+                    let recorded = contract
+                        .recording
+                        .set_amount(context, Field::from(11_u64))?;
+                    let manual = check_generated_trace(
+                        chunked_root,
+                        circuit,
+                        recorded,
+                        Field::from(11_u64),
+                    )?;
+                    let typed = contract
+                        .recording
+                        .set_amount_call(&observed, (), Field::from(11_u64))?
+                        .prepare(verifier, Fr::from(0_u64))?;
+                    (manual, typed)
+                }
+                "get_amount" => {
+                    let recorded = contract.recording.get_amount(context)?;
+                    if recorded.execution.result != Field::from(3_u64) {
+                        return Err("seeded chunked Cell Field differs".into());
+                    }
+                    let manual = check_generated_trace(chunked_root, circuit, recorded, ())?;
+                    let typed = contract
+                        .recording
+                        .get_amount_call(&observed, ())?
+                        .prepare(verifier, Fr::from(0_u64))?;
+                    (manual, typed)
+                }
+                "add_amount" => {
+                    let recorded = contract.recording.add_amount(context, Field::from(7_u64))?;
+                    let manual =
+                        check_generated_trace(chunked_root, circuit, recorded, Field::from(7_u64))?;
+                    let typed = contract
+                        .recording
+                        .add_amount_call(&observed, (), Field::from(7_u64))?
+                        .prepare(verifier, Fr::from(0_u64))?;
+                    (manual, typed)
+                }
+                _ => unreachable!(),
+            };
+            check_observed_call_parity(chunked_root, circuit, &deploy, &manual, &typed)?;
+            check_transaction(chunked_root, circuit, deploy, typed, &mut rng, |state| {
+                let actual_active = read_cell_at_path::<bool, _>(state.data.get_ref(), &[1, 14])?;
+                let actual_amount = read_cell_at_path::<Field, _>(state.data.get_ref(), &[1, 13])?;
+                let expected_active = circuit != "set_active";
+                let expected_amount = match circuit {
+                    "set_amount" => Field::from(11_u64),
+                    "add_amount" => Field::from(10_u64),
+                    _ => Field::from(3_u64),
+                };
+                if actual_active != expected_active || actual_amount != expected_amount {
+                    return Err("proven chunked Cell state differs".into());
                 }
                 Ok(())
             })?;

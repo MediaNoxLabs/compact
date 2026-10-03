@@ -61,7 +61,8 @@ use midnight_compact_runtime::ledger::{
 };
 use midnight_compact_runtime::recording::RecordedCircuitResult;
 use midnight_compact_runtime::transaction::{
-    CallSpec, Observation, ObservedCallError, ObservedContractState, RecordedCall, prepare_call,
+    CallSpec, Observation, ObservedCallError, ObservedContractState, RecordedCall,
+    decode_verifier_key, prepare_call,
 };
 use midnight_compact_runtime::{BoundedUint, FixedBytes, FixedVector};
 use midnight_ledger::construct::{ContractCallExt, ContractCallPrototype};
@@ -75,6 +76,7 @@ use midnight_onchain_runtime::context::BlockContext;
 use midnight_onchain_state::state::{
     ContractMaintenanceAuthority, ContractOperation, ContractState, EntryPointBuf,
 };
+use midnight_onchain_vm::ops::Op;
 use midnight_serialize::{tagged_deserialize, tagged_serialize};
 use midnight_storage::storage::HashMap;
 use midnight_transient_crypto::commitment::{PedersenRandomness, PureGeneratorPedersen};
@@ -1231,12 +1233,47 @@ fn main() -> Result<(), Box<dyn Error>> {
             let context = initial.into_circuit_context(deploy.address());
             let contract = map_contract::Contract::default();
             let call = match circuit {
-                "put" => check_generated_trace(
-                    map_root,
-                    circuit,
-                    contract.recording.put(context, true, Field::from(42_u64))?,
-                    (true, Field::from(42_u64)),
-                )?,
+                "put" => {
+                    let recorded = contract.recording.put(context, true, Field::from(42_u64))?;
+                    // Independently captured in map-boolean-put-input.json.
+                    if !matches!(
+                        recorded.public.verify_ops(),
+                        [
+                            Op::Idx { cached: false, push_path: true, path },
+                            Op::Push { storage: false, .. },
+                            Op::Push { storage: true, .. },
+                            Op::Ins { cached: false, n: 1 },
+                            Op::Ins { cached: true, n: 1 },
+                        ] if path.len() == 1
+                    ) {
+                        return Err(
+                            "Map put VM operation shape differs from TypeScript oracle".into()
+                        );
+                    }
+                    let manual = check_generated_trace(
+                        map_root,
+                        circuit,
+                        recorded,
+                        (true, Field::from(42_u64)),
+                    )?;
+                    let observed = ObservedContractState::new(
+                        deploy.address(),
+                        deploy.initial_state.clone(),
+                        Observation {
+                            transaction_hash: [0; 32],
+                            block_hash: [0; 32],
+                            block_height: 0,
+                        },
+                    );
+                    let verifier =
+                        decode_verifier_key(&fs::read(map_root.join("keys/put.verifier"))?)?;
+                    let typed = contract
+                        .recording
+                        .put_call(&observed, (), true, Field::from(42_u64))?
+                        .prepare(verifier, Fr::from(0u64))?;
+                    check_observed_call_parity(map_root, "put", &deploy, &manual, &typed)?;
+                    typed
+                }
                 "put_default" => check_generated_trace(
                     map_root,
                     circuit,

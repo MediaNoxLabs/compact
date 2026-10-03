@@ -1,0 +1,51 @@
+{
+  "valueAtoms": [
+    [
+      1
+    ],
+    [
+      42
+    ]
+  ],
+  "alignment": [
+    {
+      "tag": "atom",
+      "value": {
+        "tag": "bytes",
+        "length": 1
+      }
+    },
+    {
+      "tag": "atom",
+      "value": {
+        "tag": "field"
+      }
+    }
+  ],
+  "publicTranscriptShape": [
+    {
+      "kind": "idx",
+      "cached": false,
+      "pushPath": true,
+      "pathLength": 1
+    },
+    {
+      "kind": "push",
+      "storage": false
+    },
+    {
+      "kind": "push",
+      "storage": true
+    },
+    {
+      "kind": "ins",
+      "cached": false,
+      "n": 1
+    },
+    {
+      "kind": "ins",
+      "cached": true,
+      "n": 1
+    }
+  ]
+}

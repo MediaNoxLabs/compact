@@ -2506,6 +2506,7 @@ pub(crate) fn render_observed_call_method(
     let input: syn::Expr = match input_args.as_slice() {
         [] => syn::parse_quote!(()),
         [single] => single.clone(),
+        [first, second] => syn::parse_quote!((#first, #second)),
         _ => return Err(RenderError::UnsupportedStatefulCall(circuit.name.clone())),
     };
     let result = rust_type(&circuit.result)?;

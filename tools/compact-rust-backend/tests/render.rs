@@ -210,7 +210,7 @@ fn generated_unit_enum_uses_checked_derive_without_handwritten_codecs() {
     let source = render(&contract).unwrap();
     assert!(source.contains("CompactCellValue, CompactEnum"));
     assert!(source.contains("pub enum Choice"));
-    assert!(source.contains("RUST_RUNTIME_ABI == 20"));
+    assert!(source.contains("RUST_RUNTIME_ABI == 21"));
     assert!(!source.contains("impl FieldRepr for Choice"));
     assert!(!source.contains("impl BinaryHashRepr for Choice"));
     assert!(!source.contains("impl FromFieldRepr for Choice"));
@@ -1835,6 +1835,19 @@ fn witnessed_field_cell_and_nested_call_use_native_frame() {
     assert!(source.contains("self::inner(context, witnesses"));
     assert!(source.contains("Ok(frame.finish(()))"));
 
+    let mut two_parameter_witness = contract.clone();
+    two_parameter_witness.stateful_circuits[1]
+        .parameters
+        .push(Parameter {
+            name: "extra".into(),
+            ty: Type::Boolean,
+        });
+    let witnessed_source = render(&two_parameter_witness).unwrap();
+    syn::parse_file(&witnessed_source).unwrap();
+    assert!(witnessed_source.contains("pub fn outer_call<'observed, Private>("));
+    assert!(witnessed_source.contains("let input = runtime::fab::AlignedValue::from(("));
+    assert!(witnessed_source.contains("W: super::TryWitnesses<Private>"));
+
     let mut second_caller = contract.stateful_circuits[1].clone();
     second_caller.name = "outer_again".into();
     contract.stateful_circuits.push(second_caller);
@@ -2405,7 +2418,39 @@ fn counter_parameter_requires_uint16_and_a_known_name() {
         });
     let two_parameter_source = render(&two_parameters).unwrap();
     assert!(two_parameter_source.contains("pub mod recorded"));
-    assert!(!two_parameter_source.contains("pub fn increment_by_call<'observed"));
+    assert!(two_parameter_source.contains("pub fn increment_by_call<'observed"));
+    assert!(two_parameter_source.contains("let input = runtime::fab::AlignedValue::from(("));
+    assert!(two_parameter_source.contains("__compact_param_0.clone(),"));
+    assert!(two_parameter_source.contains("__compact_param_1.clone(),"));
+
+    let mut three_parameters = two_parameters.clone();
+    three_parameters.stateful_circuits[0]
+        .parameters
+        .push(Parameter {
+            name: "another_unused".into(),
+            ty: Type::Field,
+        });
+    assert!(
+        !render(&three_parameters)
+            .unwrap()
+            .contains("pub fn increment_by_call<'observed")
+    );
+
+    let mut collision = two_parameters.clone();
+    let mut exported = collision.stateful_circuits[0].clone();
+    exported.name = "increment_by_call".into();
+    exported.parameters.clear();
+    exported.actions[0] = StateAction::CounterIncrement {
+        field: "round".into(),
+        index: 0,
+        amount: CounterAmount::Literal { value: 1 },
+    };
+    collision.stateful_circuits.push(exported);
+    assert!(
+        !render(&collision)
+            .unwrap()
+            .contains("pub fn increment_by_call<'observed")
+    );
 
     contract.stateful_circuits[0].parameters[0].ty = Type::Unsigned { max: "255".into() };
     assert_eq!(

@@ -1625,6 +1625,7 @@ dependencies = [
  "midnight-ledger",
  "midnight-onchain-runtime",
  "midnight-onchain-state",
+ "midnight-onchain-vm",
  "midnight-proofs",
  "midnight-serialize",
  "midnight-storage",

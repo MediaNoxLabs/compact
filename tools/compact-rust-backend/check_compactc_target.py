@@ -184,6 +184,41 @@ def check_observed_call_consumer(proof: Path, base: Path) -> None:
     subprocess.run(["cargo", "test", "--quiet"], cwd=consumer, env=environment, check=True)
 
 
+def check_observed_map_call_consumer(proof: Path, base: Path) -> None:
+    """Invoke the two-argument generated method with no direct runtime dependency."""
+    contract = proof / "contract"
+    package = tomllib.loads((contract / "Cargo.toml").read_text())
+    consumer = base / "observed-map-call-consumer"
+    (consumer / "tests").mkdir(parents=True)
+    (consumer / "Cargo.toml").write_text(
+        "[package]\nname = \"compactc-observed-map-call-smoke\"\nversion = \"0.1.0\"\n"
+        "edition = \"2024\"\n\n[dependencies]\n"
+        f'{package["package"]["name"]} = {{ path = {json.dumps(str(contract))}, features = ["ledger-transaction"] }}\n'
+    )
+    (consumer / "tests/observed.rs").write_bytes(
+        (ROOT / "tools/compact-rust-backend/consumers/observed_map_call.rs").read_bytes()
+    )
+    environment = os.environ.copy()
+    environment.setdefault("CARGO_TARGET_DIR", str(ROOT / "target/compactc-consumer"))
+    environment["COMPACT_RUST_OBSERVED_MAP_VERIFIER"] = str(proof / "keys/put.verifier")
+    subprocess.run(["cargo", "test", "--quiet"], cwd=consumer, env=environment, check=True)
+    (consumer / "examples").mkdir()
+    (consumer / "examples/wrong_put_arguments.rs").write_text(
+        "use compact_contract_map_boolean_field::ledger_contract::Contract;\n"
+        "use compact_contract_map_boolean_field::runtime::{Field, transaction::ObservedContractState};\n"
+        "fn wrong(observed: &ObservedContractState) {\n"
+        "    let _ = Contract::default().recording.put_call(observed, (), Field::from(1_u64), true);\n"
+        "}\nfn main() {}\n"
+    )
+    rejected = subprocess.run(
+        ["cargo", "check", "--quiet", "--example", "wrong_put_arguments"],
+        cwd=consumer, env=environment, capture_output=True, text=True,
+    )
+    assert rejected.returncode != 0, "swapped put arguments unexpectedly compiled"
+    assert "error[E0308]" in rejected.stderr, rejected.stderr
+    assert "expected `bool`" in rejected.stderr, rejected.stderr
+
+
 def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
     contracts = []
     for name, source in (
@@ -882,6 +917,7 @@ def main() -> None:
             map_proof = base / "map-proof"
             run(compiler, "--target", "rust", str(MAP_BOOLEAN_SOURCE), str(map_proof))
             check_manifest(map_proof)
+            check_observed_map_call_consumer(map_proof, base)
             for circuit in (
                 "put", "put_default", "has", "get", "remove_key",
                 "table_size", "table_is_empty", "reset_table",

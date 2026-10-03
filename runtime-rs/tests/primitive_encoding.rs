@@ -14,7 +14,7 @@
 // limitations under the License.
 
 use midnight_base_crypto::fab::{
-    Aligned, AlignedValue, Alignment, AlignmentAtom, Value, ValueAtom,
+    Aligned, AlignedValue, Alignment, AlignmentAtom, AlignmentSegment, Value, ValueAtom,
 };
 use midnight_compact_runtime::{
     BinaryHashRepr, Field, FieldRepr, FixedBytes, FixedVector, FromFieldRepr, JubjubPoint,
@@ -77,6 +77,43 @@ fn field_uses_ledger_field_alignment_and_field_value() {
     assert_eq!(
         AlignedValue::from(value).value,
         Value(vec![ValueAtom(vec![42])])
+    );
+}
+
+#[test]
+fn two_argument_fab_matches_independent_typescript_put_input() {
+    let oracle: serde_json::Value =
+        serde_json::from_str(include_str!("fixtures/map-boolean-put-input.json")).unwrap();
+    let captured_atoms: Vec<Vec<u8>> =
+        serde_json::from_value(oracle["valueAtoms"].clone()).unwrap();
+    let encoded = AlignedValue::from((true, Field::from(42_u64)));
+    assert_eq!(
+        encoded.value,
+        Value(captured_atoms.into_iter().map(ValueAtom).collect())
+    );
+    assert_eq!(
+        oracle["alignment"],
+        serde_json::json!([
+            {"tag": "atom", "value": {"tag": "bytes", "length": 1}},
+            {"tag": "atom", "value": {"tag": "field"}}
+        ])
+    );
+    assert_eq!(
+        encoded.alignment,
+        Alignment(vec![
+            AlignmentSegment::Atom(AlignmentAtom::Bytes { length: 1 }),
+            AlignmentSegment::Atom(AlignmentAtom::Field),
+        ])
+    );
+    assert_eq!(
+        oracle["publicTranscriptShape"],
+        serde_json::json!([
+            {"kind": "idx", "cached": false, "pushPath": true, "pathLength": 1},
+            {"kind": "push", "storage": false},
+            {"kind": "push", "storage": true},
+            {"kind": "ins", "cached": false, "n": 1},
+            {"kind": "ins", "cached": true, "n": 1}
+        ])
     );
 }
 

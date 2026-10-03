@@ -40,7 +40,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 20);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 21);
     pub fn composite_identity(
         value: crate::types::Composite,
     ) -> Result<crate::types::Composite, runtime::CompactError> {

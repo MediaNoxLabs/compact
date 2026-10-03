@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 20);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 21);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -32,7 +32,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 20);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 21);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -294,6 +294,30 @@ pub mod ledger_contract {
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             {
                 crate::ledger_contract::recorded::put(context, __compact_param_0, __compact_param_1)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn put_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                __compact_param_0: bool,
+                __compact_param_1: runtime::Field,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from((
+                    __compact_param_0.clone(),
+                    __compact_param_1.clone(),
+                ));
+                let recorded = self.put(
+                    observed.circuit_context(private_state),
+                    __compact_param_0,
+                    __compact_param_1,
+                )?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "put", input,
+                ))
             }
             pub fn put_default<Private>(
                 &self,

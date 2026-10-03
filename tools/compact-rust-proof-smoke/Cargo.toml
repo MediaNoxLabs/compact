@@ -29,7 +29,7 @@ compact-rust-cell-boolean-fixture = { path = "../../tests-rust-backend/cell-bool
 compact-rust-cell-read-fixture = { path = "../../tests-rust-backend/cell-read" }
 compact-rust-set-boolean-fixture = { path = "../../tests-rust-backend/set-boolean" }
 compact-rust-set-oracle-fixture = { path = "../../tests-rust-backend/set-oracle" }
-compact-rust-map-boolean-field-fixture = { path = "../../tests-rust-backend/map-boolean-field" }
+compact-rust-map-boolean-field-fixture = { path = "../../tests-rust-backend/map-boolean-field", features = ["ledger-transaction"] }
 compact-rust-nested-map-shape-fixture = { path = "../../tests-rust-backend/nested-map-shape" }
 compact-rust-constructor-map-actions-fixture = { path = "../../tests-rust-backend/constructor-map-actions" }
 compact-rust-list-field-fixture = { path = "../../tests-rust-backend/list-field" }
@@ -47,6 +47,7 @@ midnight-compact-runtime = { path = "../../runtime-rs", features = ["ledger-tran
 midnight-ledger = "=8.0.3"
 midnight-onchain-state = "=3.0.0"
 midnight-onchain-runtime = "=3.0.0"
+midnight-onchain-vm = "=3.0.0"
 midnight-storage = "=2.0.1"
 midnight-zkir = "=2.1.0"
 midnight-serialize = "=1.0.0"

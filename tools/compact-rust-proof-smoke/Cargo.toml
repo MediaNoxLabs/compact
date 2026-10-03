@@ -42,6 +42,7 @@ compact-rust-vector-key-adt-fixture = { path = "../../tests-rust-backend/vector-
 compact-rust-observed-composite-keys-fixture = { path = "../../tests-rust-backend/observed-composite-keys", features = ["ledger-transaction"] }
 compact-rust-chunked-set-observed-fixture = { path = "../../tests-rust-backend/chunked-set-observed", features = ["ledger-transaction"] }
 compact-rust-chunked-list-fixture = { path = "../../tests-rust-backend/chunked-list", features = ["ledger-transaction"] }
+compact-rust-chunked-map-fixture = { path = "../../tests-rust-backend/chunked-map", features = ["ledger-transaction"] }
 compact-rust-recorded-enum-cell-fixture = { path = "../../tests-rust-backend/recorded-enum-cell" }
 compact-rust-witness-cell-write-fixture = { path = "../../tests-rust-backend/witness-cell-write", features = ["ledger-transaction"] }
 compact-rust-stateful-circuit-call-fixture = { path = "../../tests-rust-backend/stateful-circuit-call", features = ["ledger-transaction"] }

@@ -1,0 +1,67 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//   http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import CompactStandardLibrary;
+
+// The sixteenth declaration occupies physical ledger path [1, 14].
+export ledger f00: Uint<64>;
+export ledger f01: Uint<64>;
+export ledger f02: Uint<64>;
+export ledger f03: Uint<64>;
+export ledger f04: Uint<64>;
+export ledger f05: Uint<64>;
+export ledger f06: Uint<64>;
+export ledger f07: Uint<64>;
+export ledger f08: Uint<64>;
+export ledger f09: Uint<64>;
+export ledger f10: Uint<64>;
+export ledger f11: Uint<64>;
+export ledger f12: Uint<64>;
+export ledger f13: Uint<64>;
+export ledger f14: Uint<64>;
+export ledger table: Map<Boolean, Field>;
+
+constructor() {
+  table.insert(true, 1 as Field);
+}
+
+export circuit put(key: Boolean, value: Field): [] {
+  table.insert(disclose(key), disclose(value));
+}
+
+export circuit put_pair(left: Boolean, right: Boolean, value: Field): [] {
+  table.insert(disclose(left), disclose(value));
+  table.insert(disclose(right), disclose(value));
+}
+
+export circuit put_default(key: Boolean): [] {
+  table.insertDefault(disclose(key));
+}
+
+export circuit has(key: Boolean): Boolean {
+  return table.member(disclose(key));
+}
+
+export circuit get(key: Boolean): Field {
+  return table.lookup(disclose(key));
+}
+
+export circuit remove_key(key: Boolean): [] {
+  table.remove(disclose(key));
+}
+
+export circuit table_size(): Uint<64> { return table.size(); }
+export circuit table_is_empty(): Boolean { return table.isEmpty(); }
+export circuit reset_table(): [] { table.resetToDefault(); }

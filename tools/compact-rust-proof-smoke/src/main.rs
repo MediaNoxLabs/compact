@@ -30,6 +30,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use compact_rust_cell_boolean_fixture::ledger_contract as cell_contract;
 use compact_rust_cell_read_fixture::ledger_contract as cell_read_contract;
 use compact_rust_chunked_list_fixture::ledger_contract as chunked_list_contract;
+use compact_rust_chunked_map_fixture::ledger_contract as chunked_map_contract;
 use compact_rust_chunked_set_observed_fixture::ledger_contract as chunked_set_contract;
 use compact_rust_constructor_list_actions_fixture::ledger_contract as constructor_list_contract;
 use compact_rust_constructor_map_actions_fixture::ledger_contract as constructor_map_contract;
@@ -60,7 +61,7 @@ use midnight_compact_runtime::Field;
 use midnight_compact_runtime::context::{ConstructorContext, WitnessContext};
 use midnight_compact_runtime::fab::AlignedValue;
 use midnight_compact_runtime::ledger::{
-    DefaultDB, StateValue, historic_merkle_tree_view_at_path, list_view_at_path,
+    DefaultDB, StateValue, historic_merkle_tree_view_at_path, list_view_at_path, map_view_at_path,
     merkle_tree_view_at_path, read_cell, read_counter, set_view_at_path,
 };
 use midnight_compact_runtime::recording::RecordedCircuitResult;
@@ -606,9 +607,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     let composite_key_root = arguments.next();
     let chunked_set_root = arguments.next();
     let chunked_list_root = arguments.next();
+    let chunked_map_root = arguments.next();
     if arguments.next().is_some() {
         return Err(
-            "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output> [witness-output] [nested-output] [nested-witness-output] [set-output] [set-oracle-output] [map-output] [constructor-map-output] [list-output] [constructor-list-output] [enum-cell-output] [tiny-output] [nested-map-shape-output] [list-shapes-output] [merkle-output] [historic-merkle-output] [vector-key-output] [counter-parameter-output] [composite-key-output] [chunked-set-output] [chunked-list-output]"
+            "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output> [witness-output] [nested-output] [nested-witness-output] [set-output] [set-oracle-output] [map-output] [constructor-map-output] [list-output] [constructor-list-output] [enum-cell-output] [tiny-output] [nested-map-shape-output] [list-shapes-output] [merkle-output] [historic-merkle-output] [vector-key-output] [counter-parameter-output] [composite-key-output] [chunked-set-output] [chunked-list-output] [chunked-map-output]"
                 .into(),
         );
     }
@@ -2533,6 +2535,176 @@ fn main() -> Result<(), Box<dyn Error>> {
                 };
                 if view.head()? != expected_head {
                     return Err("proven chunked List head differs".into());
+                }
+                Ok(())
+            })?;
+        }
+    }
+    if let Some(chunked_root) = chunked_map_root.as_ref().map(Path::new) {
+        let contract = chunked_map_contract::Contract::default();
+        for circuit in [
+            "put",
+            "put_pair",
+            "put_default",
+            "has",
+            "get",
+            "remove_key",
+            "table_size",
+            "table_is_empty",
+            "reset_table",
+        ] {
+            let initial = chunked_map_contract::initial_state(ConstructorContext::new(()))?;
+            let deploy = make_deploy(
+                chunked_root,
+                circuit,
+                initial.ledger_state.get_ref().clone(),
+                &mut rng,
+            )?;
+            let context = initial.into_circuit_context(deploy.address());
+            let observed = ObservedContractState::new(
+                deploy.address(),
+                deploy.initial_state.clone(),
+                Observation {
+                    transaction_hash: [0; 32],
+                    block_hash: [0; 32],
+                    block_height: 0,
+                },
+            );
+            let verifier = decode_verifier_key(&fs::read(
+                chunked_root.join(format!("keys/{circuit}.verifier")),
+            )?)?;
+            let (manual, typed) = match circuit {
+                "put" => {
+                    let recorded = contract.recording.put(context, false, Field::from(7_u64))?;
+                    let manual = check_generated_trace(
+                        chunked_root,
+                        circuit,
+                        recorded,
+                        (false, Field::from(7_u64)),
+                    )?;
+                    let typed = contract
+                        .recording
+                        .put_call(&observed, (), false, Field::from(7_u64))?
+                        .prepare(verifier, Fr::from(0_u64))?;
+                    (manual, typed)
+                }
+                "put_pair" => {
+                    let recorded =
+                        contract
+                            .recording
+                            .put_pair(context, true, false, Field::from(42_u64))?;
+                    let manual = check_generated_trace(
+                        chunked_root,
+                        circuit,
+                        recorded,
+                        (true, false, Field::from(42_u64)),
+                    )?;
+                    let typed = contract
+                        .recording
+                        .put_pair_call(&observed, (), true, false, Field::from(42_u64))?
+                        .prepare(verifier, Fr::from(0_u64))?;
+                    (manual, typed)
+                }
+                "put_default" => {
+                    let recorded = contract.recording.put_default(context, false)?;
+                    let manual = check_generated_trace(chunked_root, circuit, recorded, false)?;
+                    let typed = contract
+                        .recording
+                        .put_default_call(&observed, (), false)?
+                        .prepare(verifier, Fr::from(0_u64))?;
+                    (manual, typed)
+                }
+                "has" => {
+                    let recorded = contract.recording.has(context, true)?;
+                    if !recorded.execution.result {
+                        return Err("seeded chunked Map key is absent".into());
+                    }
+                    let manual = check_generated_trace(chunked_root, circuit, recorded, true)?;
+                    let typed = contract
+                        .recording
+                        .has_call(&observed, (), true)?
+                        .prepare(verifier, Fr::from(0_u64))?;
+                    (manual, typed)
+                }
+                "get" => {
+                    let recorded = contract.recording.get(context, true)?;
+                    if recorded.execution.result != Field::from(1_u64) {
+                        return Err("seeded chunked Map value differs".into());
+                    }
+                    let manual = check_generated_trace(chunked_root, circuit, recorded, true)?;
+                    let typed = contract
+                        .recording
+                        .get_call(&observed, (), true)?
+                        .prepare(verifier, Fr::from(0_u64))?;
+                    (manual, typed)
+                }
+                "remove_key" => {
+                    let recorded = contract.recording.remove_key(context, true)?;
+                    let manual = check_generated_trace(chunked_root, circuit, recorded, true)?;
+                    let typed = contract
+                        .recording
+                        .remove_key_call(&observed, (), true)?
+                        .prepare(verifier, Fr::from(0_u64))?;
+                    (manual, typed)
+                }
+                "table_size" => {
+                    let recorded = contract.recording.table_size(context)?;
+                    if recorded.execution.result.value() != 1 {
+                        return Err("seeded chunked Map size differs".into());
+                    }
+                    let manual = check_generated_trace(chunked_root, circuit, recorded, ())?;
+                    let typed = contract
+                        .recording
+                        .table_size_call(&observed, ())?
+                        .prepare(verifier, Fr::from(0_u64))?;
+                    (manual, typed)
+                }
+                "table_is_empty" => {
+                    let recorded = contract.recording.table_is_empty(context)?;
+                    if recorded.execution.result {
+                        return Err("seeded chunked Map is empty".into());
+                    }
+                    let manual = check_generated_trace(chunked_root, circuit, recorded, ())?;
+                    let typed = contract
+                        .recording
+                        .table_is_empty_call(&observed, ())?
+                        .prepare(verifier, Fr::from(0_u64))?;
+                    (manual, typed)
+                }
+                "reset_table" => {
+                    let recorded = contract.recording.reset_table(context)?;
+                    let manual = check_generated_trace(chunked_root, circuit, recorded, ())?;
+                    let typed = contract
+                        .recording
+                        .reset_table_call(&observed, ())?
+                        .prepare(verifier, Fr::from(0_u64))?;
+                    (manual, typed)
+                }
+                _ => unreachable!(),
+            };
+            check_observed_call_parity(chunked_root, circuit, &deploy, &manual, &typed)?;
+            check_transaction(chunked_root, circuit, deploy, typed, &mut rng, |state| {
+                let view = map_view_at_path::<bool, Field, _>(state.data.get_ref(), &[1, 14])?;
+                let expected_size = match circuit {
+                    "put" | "put_pair" | "put_default" => 2,
+                    "remove_key" | "reset_table" => 0,
+                    _ => 1,
+                };
+                if view.size()?.value() != expected_size {
+                    return Err("proven chunked Map size differs".into());
+                }
+                let expected_true = match circuit {
+                    "put_pair" => Some(Field::from(42_u64)),
+                    "remove_key" | "reset_table" => None,
+                    _ => Some(Field::from(1_u64)),
+                };
+                if view.member(true) != expected_true.is_some() {
+                    return Err("proven chunked Map membership differs".into());
+                }
+                if let Some(value) = expected_true {
+                    if view.lookup(true)? != value {
+                        return Err("proven chunked Map value differs".into());
+                    }
                 }
                 Ok(())
             })?;

@@ -719,10 +719,7 @@ fn render_recorded_item(
                 else {
                     return Ok(None);
                 };
-                if *value_ty != Type::Field
-                    || declaration.index != *index
-                    || declaration.physical_path().len() != 1
-                {
+                if *value_ty != Type::Field || declaration.index != *index {
                     return Ok(None);
                 }
                 let Some(key) = scalar_expression(
@@ -965,7 +962,7 @@ fn render_recorded_item(
                 let LedgerFieldKind::Map { key: key_ty, .. } = &declaration.declaration else {
                     return Ok(None);
                 };
-                if declaration.index != *index || declaration.physical_path().len() != 1 {
+                if declaration.index != *index {
                     return Ok(None);
                 }
                 let Some(key) = scalar_expression(
@@ -1687,7 +1684,7 @@ fn render_recorded_item(
                 else {
                     return Ok(false);
                 };
-                if declaration.index != *index || declaration.physical_path().len() != 1 {
+                if declaration.index != *index {
                     return Ok(false);
                 }
                 let key = scalar_expression(
@@ -1741,7 +1738,6 @@ fn render_recorded_item(
                     return Ok(false);
                 };
                 if declaration.index != *index
-                    || declaration.physical_path().len() != 1
                     || (matches!(action, StateAction::MapInsertDefault { .. })
                         && !matches!(value_ty, Type::Field | Type::Boolean))
                 {
@@ -1777,7 +1773,6 @@ fn render_recorded_item(
                     .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
                 if !matches!(declaration.declaration, LedgerFieldKind::Map { .. })
                     || declaration.index != *index
-                    || declaration.physical_path().len() != 1
                 {
                     return Ok(false);
                 }
@@ -2251,7 +2246,6 @@ fn render_recorded_item(
                 value_ty.clone()
             };
             if declaration.index != *index
-                || declaration.physical_path().len() != 1
                 || circuit.result != expected
                 || !matches!(expected, Type::Boolean | Type::Field)
             {
@@ -2295,7 +2289,6 @@ fn render_recorded_item(
                 .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
             if !matches!(declaration.declaration, LedgerFieldKind::Map { .. })
                 || declaration.index != *index
-                || declaration.physical_path().len() != 1
             {
                 return Ok(None);
             }
@@ -2317,7 +2310,6 @@ fn render_recorded_item(
                 .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
             if !matches!(declaration.declaration, LedgerFieldKind::Map { .. })
                 || declaration.index != *index
-                || declaration.physical_path().len() != 1
             {
                 return Ok(None);
             }

@@ -214,6 +214,28 @@ fn make_deploy(
     Ok(ContractDeploy::new(rng, contract))
 }
 
+fn write_sealed_handoff(
+    path: &Path,
+    transaction: &Transaction<Signature, ProofMarker, PureGeneratorPedersen, DefaultDB>,
+    label: &str,
+) -> Result<(), Box<dyn Error>> {
+    let mut bytes = Vec::new();
+    tagged_serialize(transaction, &mut bytes)?;
+    let roundtrip: Transaction<Signature, ProofMarker, PureGeneratorPedersen, DefaultDB> =
+        tagged_deserialize(&mut bytes.as_slice())?;
+    let mut roundtrip_bytes = Vec::new();
+    tagged_serialize(&roundtrip, &mut roundtrip_bytes)?;
+    if bytes != roundtrip_bytes {
+        return Err(format!("sealed {label} changed across Rust serialization").into());
+    }
+    fs::write(path, bytes)?;
+    println!(
+        "sealed {label} ledger-v8 transaction written to {}",
+        path.display()
+    );
+    Ok(())
+}
+
 fn check_transaction_with_handoff<F>(
     root: &Path,
     circuit: &'static str,
@@ -221,6 +243,7 @@ fn check_transaction_with_handoff<F>(
     call: ContractCallPrototype<DefaultDB>,
     rng: &mut StdRng,
     handoff_path: Option<&Path>,
+    deploy_handoff_path: Option<&Path>,
     check_state: F,
 ) -> Result<(), Box<dyn Error>>
 where
@@ -231,14 +254,57 @@ where
         Intent::empty(rng, Timestamp::from_secs(0)).add_deploy(deploy.clone());
     let deploy_tx =
         Transaction::from_intents("local-test", HashMap::new().insert(1_u16, deploy_intent));
-    let mut ledger = LedgerState::<DefaultDB>::new("local-test");
+    let empty_ledger = LedgerState::<DefaultDB>::new("local-test");
     let mut strictness = WellFormedStrictness::default();
     strictness.enforce_balancing = false;
-    deploy_tx.well_formed(&ledger, strictness, Timestamp::from_secs(0))?;
-
-    // Model the state after the separately validated deployment. The call is
-    // checked against a ledger that contains its target contract.
-    ledger.contract = ledger.contract.insert(address, deploy.initial_state);
+    let sealed_deploy = if deploy_handoff_path.is_some() {
+        let resolver = ArtifactResolver {
+            root: root.to_owned(),
+            circuit,
+        };
+        let params = MidnightDataProvider::new(FetchMode::OnDemand, OutputMode::Log, vec![])?;
+        let provider = LocalProvingProvider {
+            rng: StdRng::seed_from_u64(0x4445504c4f59),
+            resolver: &resolver,
+            params: &params,
+        };
+        let proven_deploy = futures_executor::block_on(
+            deploy_tx.prove(provider, &INITIAL_PARAMETERS.cost_model.runtime_cost_model),
+        )?;
+        let sealed_deploy = proven_deploy.seal(StdRng::seed_from_u64(0x4445504c4f59));
+        if sealed_deploy
+            .deploys()
+            .map(|(_, action)| action.address())
+            .collect::<Vec<_>>()
+            != vec![address]
+        {
+            return Err("sealed deployment address changed".into());
+        }
+        Some(sealed_deploy)
+    } else {
+        None
+    };
+    let verified_deploy = match &sealed_deploy {
+        Some(transaction) => {
+            transaction.well_formed(&empty_ledger, strictness, Timestamp::from_secs(0))?
+        }
+        None => deploy_tx.well_formed(&empty_ledger, strictness, Timestamp::from_secs(0))?,
+    };
+    let deploy_context = TransactionContext {
+        ref_state: empty_ledger.clone(),
+        block_context: BlockContext::default(),
+        whitelist: None,
+    };
+    let (ledger, deploy_outcome) = empty_ledger.apply(&verified_deploy, &deploy_context);
+    if !matches!(deploy_outcome, TransactionResult::Success(_)) {
+        return Err(format!("{circuit} deployment application failed: {deploy_outcome:?}").into());
+    }
+    if !ledger.contract.contains_key(&address) {
+        return Err(format!("{circuit} deployed contract is absent at {address:?}").into());
+    }
+    if let (Some(path), Some(transaction)) = (deploy_handoff_path, sealed_deploy.as_ref()) {
+        write_sealed_handoff(path, transaction, "deployment")?;
+    }
     let call_intent: Intent<Signature, ProofPreimageMarker, PedersenRandomness, DefaultDB> =
         Intent::empty(rng, Timestamp::from_secs(0)).add_call::<ProofPreimage>(call);
     let call_tx =
@@ -261,20 +327,15 @@ where
     if let Some(path) = handoff_path {
         let sealed = proven.seal(StdRng::seed_from_u64(0x57414c4c4554));
         sealed.well_formed(&ledger, strictness, Timestamp::from_secs(0))?;
-        let mut bytes = Vec::new();
-        tagged_serialize(&sealed, &mut bytes)?;
-        let roundtrip: Transaction<Signature, ProofMarker, PureGeneratorPedersen, DefaultDB> =
-            tagged_deserialize(&mut bytes.as_slice())?;
-        let mut roundtrip_bytes = Vec::new();
-        tagged_serialize(&roundtrip, &mut roundtrip_bytes)?;
-        if bytes != roundtrip_bytes {
-            return Err("sealed transaction changed across Rust serialization".into());
+        if sealed
+            .calls()
+            .map(|(_, action)| action.address)
+            .collect::<Vec<_>>()
+            != vec![address]
+        {
+            return Err("sealed call address changed".into());
         }
-        fs::write(path, bytes)?;
-        println!(
-            "{circuit} sealed ledger-v8 transaction written to {}",
-            path.display()
-        );
+        write_sealed_handoff(path, &sealed, "call")?;
     }
     let context = TransactionContext {
         ref_state: ledger.clone(),
@@ -305,7 +366,7 @@ fn check_transaction<F>(
 where
     F: FnOnce(&ContractState<DefaultDB>) -> Result<(), Box<dyn Error>>,
 {
-    check_transaction_with_handoff(root, circuit, deploy, call, rng, None, check_state)
+    check_transaction_with_handoff(root, circuit, deploy, call, rng, None, None, check_state)
 }
 
 struct Secret;
@@ -404,6 +465,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let counter_call = check_generated_trace(counter_root, "increment", counter_recorded, ())?;
     prove_counter(counter_root, &counter_call)?;
     let counter_handoff = env::var_os("COMPACT_RUST_WALLET_HANDOFF").map(PathBuf::from);
+    let counter_deploy_handoff = env::var_os("COMPACT_RUST_DEPLOY_HANDOFF").map(PathBuf::from);
     check_transaction_with_handoff(
         counter_root,
         "increment",
@@ -411,6 +473,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         counter_call,
         &mut rng,
         counter_handoff.as_deref(),
+        counter_deploy_handoff.as_deref(),
         |contract| {
             let StateValue::Array(fields) = contract.data.get_ref() else {
                 return Err("counter contract state is not an array".into());

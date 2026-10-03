@@ -194,27 +194,34 @@ cargo test --workspace --exclude compact
 
 ### Ledger-v8 wallet byte handoff
 
-The proof smoke can export its proven counter call as a sealed ledger
-transaction. The matching JavaScript ledger package must accept the exact
-bytes that Rust writes:
+The proof smoke can export its sealed counter deployment and proven call as
+two sequential ledger transactions. The matching JavaScript ledger package
+must accept the exact bytes that Rust writes and confirm that the call targets
+the deployment address:
 
 ```sh
 nix develop .#compiler --command env COMPACTC=compactc \
   COMPACT_RUST_WALLET_HANDOFF=/tmp/compact-counter-wallet-handoff.bin \
+  COMPACT_RUST_DEPLOY_HANDOFF=/tmp/compact-counter-deploy-handoff.bin \
   python3 tools/compact-rust-backend/check_compactc_target.py --proof
 npm ci --prefix tools/compact-rust-backend/wallet-handoff --ignore-scripts
 node tools/compact-rust-backend/check_wallet_handoff.mjs \
+  /tmp/compact-counter-deploy-handoff.bin \
   /tmp/compact-counter-wallet-handoff.bin \
   tools/compact-rust-backend/wallet-handoff/node_modules/@midnight-ntwrk/ledger-v8
 ```
 
-The pinned `@midnight-ntwrk/ledger-v8@8.0.2` decoder checks the signature,
-proof and binding markers, one counter call, and byte-for-byte reserialization.
-This exported transaction is an **offline fixture**: its network ID is
-`local-test`, its intent TTL is timestamp zero, and fee balancing is disabled.
-An application using a real network must build with that network ID and a
-current TTL, then use the wallet facade's `balanceFinalizedTransaction`,
-`finalizeRecipe`, and `submitTransaction` with its own keys and funds. The
+The pinned `@midnight-ntwrk/ledger-v8@8.0.2` decoder checks both transactions'
+signature, proof and binding markers, one deploy and one call, matching
+addresses, and byte-for-byte reserialization. The proof gate applies the
+deployment with ledger semantics before checking and applying the call. These
+exported transactions are **offline fixtures**: their network ID is
+`local-test`, their intent TTL is timestamp zero, and fee balancing is disabled.
+An application using a real network must build the deployment with that
+network ID and a current TTL, balance/finalize/validate/submit it, then wait for
+confirmed deployment before building and submitting the call against the new
+contract state. The wallet facade owns `balanceFinalizedTransaction`,
+`finalizeRecipe`, and `submitTransaction` with application keys and funds. The
 wallet facade recommends structural validation before balancing and full
 validation before submission:
 
@@ -232,9 +239,10 @@ await facade.validateTransaction(finalTx, {
 await facade.submitTransaction(finalTx);
 ```
 
-The byte check does not establish network admission. ADR-0033 and
+The byte checks do not establish network admission. ADR-0033 and
 [issue #132](https://github.com/MediaNoxLabs/compact/issues/132) track the
-handoff and remaining submission work.
+call boundary; ADR-0035 and [issue #134](https://github.com/MediaNoxLabs/compact/issues/134)
+track the paired deployment. Parent #105 retains actual wallet/node submission.
 
 The fixture checker compiles every source in
 [`examples/rust_backend`](../../examples/rust_backend), formats the output,

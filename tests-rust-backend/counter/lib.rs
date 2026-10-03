@@ -181,5 +181,9 @@ pub mod ledger_contract {
         > {
             crate::ledger_contract::read_round(context)
         }
+        /// Access replayable circuit calls for this contract.
+        pub fn recording(&self) -> &recorded::Contract {
+            &self.recording
+        }
     }
 }

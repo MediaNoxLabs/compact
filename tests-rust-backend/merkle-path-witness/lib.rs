@@ -466,5 +466,9 @@ pub mod ledger_contract {
         {
             crate::ledger_contract::check_witness_history(context, &self.witnesses)
         }
+        /// Access replayable circuit calls for this contract.
+        pub fn recording(&self) -> &recorded::Contract {
+            &self.recording
+        }
     }
 }

@@ -1703,6 +1703,7 @@ fn witnessed_field_cell_and_nested_call_use_native_frame() {
     ];
     let source = render(&contract).unwrap();
     syn::parse_file(&source).unwrap();
+    assert!(source.contains("pub fn recording(&self) -> recorded::BorrowedContract<'_, W>"));
     assert_eq!(source.matches("CircuitFrame::new(context)").count(), 2);
     assert!(source.contains("meter: &'a runtime::context::WitnessReadMeter<'a>"));
     assert!(source.contains("self.meter.read_cell::<runtime::Field>(&[0])"));
@@ -1997,8 +1998,16 @@ fn state_action_must_reference_the_declared_ledger_field_and_index() {
     let source = render(&contract).unwrap();
     assert!(source.contains("crate::ledger_slots::round.increment(context, 1)?"));
     assert!(source.contains("pub mod recorded"));
+    assert!(source.contains("pub fn recording(&self) -> &recorded::Contract"));
+    assert!(source.contains("&self.recording"));
     assert!(source.contains("crate::ledger_slots::round.record_increment(frame, 1u16)?"));
     assert!(source.contains("Ok(frame.finish(()))"));
+
+    let mut recording_circuit = contract.clone();
+    recording_circuit.stateful_circuits[0].name = "recording".into();
+    let source = render(&recording_circuit).unwrap();
+    assert!(source.contains("pub fn recording<Private>("));
+    assert!(!source.contains("pub fn recording(&self) -> &recorded::Contract"));
 
     contract.stateful_circuits[0].actions[0] = StateAction::CounterDecrement {
         field: "round".into(),

@@ -191,5 +191,9 @@ pub mod ledger_contract {
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
             crate::ledger_contract::reset_round(context)
         }
+        /// Access replayable circuit calls for this contract.
+        pub fn recording(&self) -> &recorded::Contract {
+            &self.recording
+        }
     }
 }

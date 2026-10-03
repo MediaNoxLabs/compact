@@ -2879,14 +2879,27 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
         (!recorded_items.is_empty()).then(|| quote!(pub recording: recorded::Contract,));
     let recording_init =
         (!recorded_items.is_empty()).then(|| quote!(recording: recorded::Contract,));
-    let borrowed_recording_method: Option<syn::ImplItemFn> = witnessed_recorded.then(|| {
-        syn::parse_quote! {
+    let recording_name_is_exported = contract
+        .stateful_circuits
+        .iter()
+        .any(|circuit| !circuit.internal && circuit.name == "recording");
+    let recording_method: Option<syn::ImplItemFn> = if witnessed_recorded {
+        Some(syn::parse_quote! {
             /// Borrow the contract's witnesses for a replayable circuit call.
             pub fn recording(&self) -> recorded::BorrowedContract<'_, W> {
                 recorded::BorrowedContract { witnesses: &self.witnesses }
             }
-        }
-    });
+        })
+    } else if !recorded_items.is_empty() && !recording_name_is_exported {
+        Some(syn::parse_quote! {
+            /// Access replayable circuit calls for this contract.
+            pub fn recording(&self) -> &recorded::Contract {
+                &self.recording
+            }
+        })
+    } else {
+        None
+    };
     let mut slot_items = Vec::<syn::Item>::new();
     for field in &contract.ledger_fields {
         let name = ident(&field.id)?;
@@ -3004,7 +3017,7 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                 }
                 impl<W> Contract<W> {
                     #(#contract_methods)*
-                    #borrowed_recording_method
+                    #recording_method
                 }
             }
         })

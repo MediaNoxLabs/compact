@@ -67,6 +67,35 @@ fn generated_counter_state_can_enter_a_replayable_ledger_trace() {
 }
 
 #[test]
+fn generated_counter_contract_supports_both_recording_access_forms() {
+    let constructor = initial_state(ConstructorContext::new(())).unwrap();
+    let context = constructor.into_circuit_context(ContractAddress::default());
+    let via_field = Contract::default().recording.increment(context).unwrap();
+
+    let constructor = initial_state(ConstructorContext::new(())).unwrap();
+    let context = constructor.into_circuit_context(ContractAddress::default());
+    let via_method = Contract::default().recording().increment(context).unwrap();
+
+    assert_eq!(
+        via_method.public.verify_ops(),
+        via_field.public.verify_ops()
+    );
+    assert_eq!(
+        via_method.execution.context.query.state.get_ref(),
+        via_field.execution.context.query.state.get_ref()
+    );
+    assert_eq!(
+        via_method.execution.context.query.effects,
+        via_field.execution.context.query.effects
+    );
+    assert_eq!(via_method.execution.gas_cost, via_field.execution.gas_cost);
+    assert_eq!(
+        via_method.execution.private_transcript_outputs,
+        via_field.execution.private_transcript_outputs
+    );
+}
+
+#[test]
 fn generated_counter_read_has_a_replayable_observation() {
     let constructor = initial_state(ConstructorContext::new(())).unwrap();
     let context = constructor.into_circuit_context(ContractAddress::default());

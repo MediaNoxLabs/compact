@@ -21,6 +21,11 @@ export circuit put(key: Boolean, value: Field): [] {
   table.insert(disclose(key), disclose(value));
 }
 
+export circuit put_pair(left: Boolean, right: Boolean, value: Field): [] {
+  table.insert(disclose(left), disclose(value));
+  table.insert(disclose(right), disclose(value));
+}
+
 export circuit put_default(key: Boolean): [] {
   table.insertDefault(disclose(key));
 }

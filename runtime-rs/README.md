@@ -6,10 +6,12 @@ midnight-zk primitives for fields, encoding, cryptography, state, and VM
 queries. Generated code checks `RUST_RUNTIME_ABI` at compile time. A generated
 crate bundles matching runtime sources by default or points to one shared
 source root when compiled with `--rust-runtime-root`.
+ABI 22 extends generated observed call handles to three or more parameters
+using upstream `AlignedValue::concat` over each declared argument's typed FAB
+value and alignment. The runtime transaction, VM and prover logic is unchanged.
 ABI 21 emits source-typed observed call handles for two-parameter recorded
 exports after Boolean/Field public FAB input parity. It reuses the ABI-20
-runtime transaction types and ledger tuple encoding; circuits with three or
-more parameters still use the explicit adapter pending parity evidence.
+runtime transaction types and ledger tuple encoding.
 ABI 20 reexports the ledger-8 verifier key and decodes exact compiler-emitted
 `.verifier` bytes through `transaction::decode_verifier_key`. A generated crate
 consumer can prepare a typed call without a direct serializer dependency.

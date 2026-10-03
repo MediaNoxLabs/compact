@@ -2504,10 +2504,14 @@ pub(crate) fn render_observed_call_method(
         call_args.push(arg);
     }
     let input: syn::Expr = match input_args.as_slice() {
-        [] => syn::parse_quote!(()),
-        [single] => single.clone(),
-        [first, second] => syn::parse_quote!((#first, #second)),
-        _ => return Err(RenderError::UnsupportedStatefulCall(circuit.name.clone())),
+        [] => syn::parse_quote!(runtime::fab::AlignedValue::from(())),
+        [single] => syn::parse_quote!(runtime::fab::AlignedValue::from(#single)),
+        [first, second] => {
+            syn::parse_quote!(runtime::fab::AlignedValue::from((#first, #second)))
+        }
+        _ => syn::parse_quote!(runtime::fab::AlignedValue::concat(&[
+            #(runtime::fab::AlignedValue::from(#input_args)),*
+        ])),
     };
     let result = rust_type(&circuit.result)?;
     let method = if uses_witness {
@@ -2520,7 +2524,7 @@ pub(crate) fn render_observed_call_method(
                 #(#args),*
             ) -> Result<runtime::transaction::RecordedCall<'observed, Private, #result>, runtime::CompactError>
             where W: super::TryWitnesses<Private> {
-                let input = runtime::fab::AlignedValue::from(#input);
+                let input = #input;
                 let recorded = self.#name(observed.circuit_context(private_state), #(#call_args),*)?;
                 Ok(runtime::transaction::RecordedCall::new(observed, recorded, #entry_point, input))
             }
@@ -2534,7 +2538,7 @@ pub(crate) fn render_observed_call_method(
                 private_state: Private,
                 #(#args),*
             ) -> Result<runtime::transaction::RecordedCall<'observed, Private, #result>, runtime::CompactError> {
-                let input = runtime::fab::AlignedValue::from(#input);
+                let input = #input;
                 let recorded = self.#name(observed.circuit_context(private_state), #(#call_args),*)?;
                 Ok(runtime::transaction::RecordedCall::new(observed, recorded, #entry_point, input))
             }

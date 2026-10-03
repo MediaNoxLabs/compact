@@ -201,6 +201,7 @@ def check_observed_map_call_consumer(proof: Path, base: Path) -> None:
     environment = os.environ.copy()
     environment.setdefault("CARGO_TARGET_DIR", str(ROOT / "target/compactc-consumer"))
     environment["COMPACT_RUST_OBSERVED_MAP_VERIFIER"] = str(proof / "keys/put.verifier")
+    environment["COMPACT_RUST_OBSERVED_MAP_PAIR_VERIFIER"] = str(proof / "keys/put_pair.verifier")
     subprocess.run(["cargo", "test", "--quiet"], cwd=consumer, env=environment, check=True)
     (consumer / "examples").mkdir()
     (consumer / "examples/wrong_put_arguments.rs").write_text(
@@ -215,6 +216,20 @@ def check_observed_map_call_consumer(proof: Path, base: Path) -> None:
         cwd=consumer, env=environment, capture_output=True, text=True,
     )
     assert rejected.returncode != 0, "swapped put arguments unexpectedly compiled"
+    assert "error[E0308]" in rejected.stderr, rejected.stderr
+    assert "expected `bool`" in rejected.stderr, rejected.stderr
+    (consumer / "examples/wrong_put_pair_arguments.rs").write_text(
+        "use compact_contract_map_boolean_field::ledger_contract::Contract;\n"
+        "use compact_contract_map_boolean_field::runtime::{Field, transaction::ObservedContractState};\n"
+        "fn wrong(observed: &ObservedContractState) {\n"
+        "    let _ = Contract::default().recording.put_pair_call(observed, (), true, Field::from(1_u64), false);\n"
+        "}\nfn main() {}\n"
+    )
+    rejected = subprocess.run(
+        ["cargo", "check", "--quiet", "--example", "wrong_put_pair_arguments"],
+        cwd=consumer, env=environment, capture_output=True, text=True,
+    )
+    assert rejected.returncode != 0, "wrong-typed put_pair arguments unexpectedly compiled"
     assert "error[E0308]" in rejected.stderr, rejected.stderr
     assert "expected `bool`" in rejected.stderr, rejected.stderr
 
@@ -940,7 +955,7 @@ def main() -> None:
             check_manifest(map_proof)
             check_observed_map_call_consumer(map_proof, base)
             for circuit in (
-                "put", "put_default", "has", "get", "remove_key",
+                "put", "put_pair", "put_default", "has", "get", "remove_key",
                 "table_size", "table_is_empty", "reset_table",
             ):
                 for extension in ("prover", "verifier"):

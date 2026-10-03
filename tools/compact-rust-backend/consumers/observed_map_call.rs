@@ -49,4 +49,18 @@ fn two_argument_observed_call_uses_only_the_generated_crate() {
         call.prepare(verifier, Field::from(0_u64)),
         Err(ObservedCallError::MissingOperation(name)) if name == "put"
     ));
+
+    let pair_call = Contract::default()
+        .recording
+        .put_pair_call(&observed, (), true, false, Field::from(42_u64))
+        .unwrap();
+    let pair_verifier = decode_verifier_key(
+        &std::fs::read(std::env::var("COMPACT_RUST_OBSERVED_MAP_PAIR_VERIFIER").unwrap())
+            .unwrap(),
+    )
+    .unwrap();
+    assert!(matches!(
+        pair_call.prepare(pair_verifier, Field::from(0_u64)),
+        Err(ObservedCallError::MissingOperation(name)) if name == "put_pair"
+    ));
 }

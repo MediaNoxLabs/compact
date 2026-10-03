@@ -210,7 +210,7 @@ fn generated_unit_enum_uses_checked_derive_without_handwritten_codecs() {
     let source = render(&contract).unwrap();
     assert!(source.contains("CompactCellValue, CompactEnum"));
     assert!(source.contains("pub enum Choice"));
-    assert!(source.contains("RUST_RUNTIME_ABI == 21"));
+    assert!(source.contains("RUST_RUNTIME_ABI == 22"));
     assert!(!source.contains("impl FieldRepr for Choice"));
     assert!(!source.contains("impl BinaryHashRepr for Choice"));
     assert!(!source.contains("impl FromFieldRepr for Choice"));
@@ -2430,11 +2430,24 @@ fn counter_parameter_requires_uint16_and_a_known_name() {
             name: "another_unused".into(),
             ty: Type::Field,
         });
-    assert!(
-        !render(&three_parameters)
-            .unwrap()
-            .contains("pub fn increment_by_call<'observed")
-    );
+    let three_parameter_source = render(&three_parameters).unwrap();
+    assert!(three_parameter_source.contains("pub fn increment_by_call<'observed"));
+    assert!(three_parameter_source.contains("runtime::fab::AlignedValue::concat"));
+    assert!(three_parameter_source.contains("AlignedValue::from(__compact_param_2.clone())"));
+
+    let mut twelve_parameters = three_parameters.clone();
+    for index in 3..12 {
+        twelve_parameters.stateful_circuits[0]
+            .parameters
+            .push(Parameter {
+                name: format!("unused_{index}"),
+                ty: Type::Field,
+            });
+    }
+    let twelve_parameter_source = render(&twelve_parameters).unwrap();
+    syn::parse_file(&twelve_parameter_source).unwrap();
+    assert!(twelve_parameter_source.contains("pub fn increment_by_call<'observed"));
+    assert!(twelve_parameter_source.contains("AlignedValue::from(__compact_param_11.clone())"));
 
     let mut collision = two_parameters.clone();
     let mut exported = collision.stateful_circuits[0].clone();

@@ -1296,6 +1296,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         let map_root = Path::new(&map_root);
         for circuit in [
             "put",
+            "put_pair",
             "put_default",
             "has",
             "remove_key",
@@ -1354,6 +1355,56 @@ fn main() -> Result<(), Box<dyn Error>> {
                     check_observed_call_parity(map_root, "put", &deploy, &manual, &typed)?;
                     typed
                 }
+                "put_pair" => {
+                    let recorded =
+                        contract
+                            .recording
+                            .put_pair(context, true, false, Field::from(42_u64))?;
+                    // Two ordered Map insertions captured independently in
+                    // map-three-parameter-input.json.
+                    if !matches!(
+                        recorded.public.verify_ops(),
+                        [
+                            Op::Idx { cached: false, push_path: true, path: first },
+                            Op::Push { storage: false, .. },
+                            Op::Push { storage: true, .. },
+                            Op::Ins { cached: false, n: 1 },
+                            Op::Ins { cached: true, n: 1 },
+                            Op::Idx { cached: false, push_path: true, path: second },
+                            Op::Push { storage: false, .. },
+                            Op::Push { storage: true, .. },
+                            Op::Ins { cached: false, n: 1 },
+                            Op::Ins { cached: true, n: 1 },
+                        ] if first.len() == 1 && second.len() == 1
+                    ) {
+                        return Err(
+                            "Map put_pair VM operation shape differs from TypeScript oracle".into(),
+                        );
+                    }
+                    let manual = check_generated_trace(
+                        map_root,
+                        circuit,
+                        recorded,
+                        (true, false, Field::from(42_u64)),
+                    )?;
+                    let observed = ObservedContractState::new(
+                        deploy.address(),
+                        deploy.initial_state.clone(),
+                        Observation {
+                            transaction_hash: [0; 32],
+                            block_hash: [0; 32],
+                            block_height: 0,
+                        },
+                    );
+                    let verifier =
+                        decode_verifier_key(&fs::read(map_root.join("keys/put_pair.verifier"))?)?;
+                    let typed = contract
+                        .recording
+                        .put_pair_call(&observed, (), true, false, Field::from(42_u64))?
+                        .prepare(verifier, Fr::from(0_u64))?;
+                    check_observed_call_parity(map_root, "put_pair", &deploy, &manual, &typed)?;
+                    typed
+                }
                 "put_default" => check_generated_trace(
                     map_root,
                     circuit,
@@ -1402,7 +1453,11 @@ fn main() -> Result<(), Box<dyn Error>> {
                 let StateValue::Map(table) = fields.get(0).ok_or("Map table missing")? else {
                     return Err("Map table field is not a map".into());
                 };
-                let expected = usize::from(matches!(circuit, "put" | "put_default"));
+                let expected = match circuit {
+                    "put_pair" => 2,
+                    "put" | "put_default" => 1,
+                    _ => 0,
+                };
                 if table.size() != expected {
                     return Err("proven Map call produced the wrong size".into());
                 }

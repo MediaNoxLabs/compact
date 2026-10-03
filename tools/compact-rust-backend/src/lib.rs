@@ -6,7 +6,7 @@ mod recorded;
 mod stateful;
 mod witness;
 
-const RUNTIME_ABI_VERSION: u32 = 21;
+const RUNTIME_ABI_VERSION: u32 = 22;
 
 const GENERATED_HEADER: &str = r#"// This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
@@ -2528,11 +2528,10 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                     uses_witness,
                 )?);
                 let call_name = format!("{}_call", circuit.name);
-                if circuit.parameters.len() <= 2
-                    && !contract
-                        .stateful_circuits
-                        .iter()
-                        .any(|other| !other.internal && other.name == call_name)
+                if !contract
+                    .stateful_circuits
+                    .iter()
+                    .any(|other| !other.internal && other.name == call_name)
                 {
                     let observed = recorded::render_observed_call_method(circuit, uses_witness)?;
                     if !uses_witness {

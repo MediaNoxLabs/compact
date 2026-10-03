@@ -126,7 +126,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 17);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 18);
     pub fn assertRecordFreshEnough(
         policy: crate::types::FreshnessPolicy,
         record: crate::types::AssetRecord,
@@ -286,7 +286,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 17);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 18);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -367,11 +367,7 @@ pub mod ledger_contract {
             >,
             runtime::CompactError,
         > {
-            runtime::ledger::metered_map_view_at_path::<
-                runtime::OpaqueString,
-                crate::types::AssetRecord,
-                _,
-            >(self.meter, &[1, 10])
+            crate::ledger_slots::records.witness_view(self.meter)
         }
         pub fn custodyGrants(
             &self,
@@ -384,11 +380,7 @@ pub mod ledger_contract {
             >,
             runtime::CompactError,
         > {
-            runtime::ledger::metered_map_view_at_path::<
-                runtime::OpaqueString,
-                crate::types::CustodyGrant,
-                _,
-            >(self.meter, &[1, 11])
+            crate::ledger_slots::custodyGrants.witness_view(self.meter)
         }
         pub fn retiredKeys(
             &self,
@@ -396,10 +388,7 @@ pub mod ledger_contract {
             runtime::ledger::MeteredSetView<'a, runtime::OpaqueString, runtime::ledger::DefaultDB>,
             runtime::CompactError,
         > {
-            runtime::ledger::metered_set_view_at_path::<runtime::OpaqueString, _>(
-                self.meter,
-                &[1, 12],
-            )
+            crate::ledger_slots::retiredKeys.witness_view(self.meter)
         }
         pub fn watchList(
             &self,
@@ -407,10 +396,7 @@ pub mod ledger_contract {
             runtime::ledger::MeteredSetView<'a, runtime::OpaqueString, runtime::ledger::DefaultDB>,
             runtime::CompactError,
         > {
-            runtime::ledger::metered_set_view_at_path::<runtime::OpaqueString, _>(
-                self.meter,
-                &[1, 13],
-            )
+            crate::ledger_slots::watchList.witness_view(self.meter)
         }
         pub fn tags(
             &self,
@@ -418,7 +404,7 @@ pub mod ledger_contract {
             runtime::ledger::MeteredSetView<'a, runtime::Field, runtime::ledger::DefaultDB>,
             runtime::CompactError,
         > {
-            runtime::ledger::metered_set_view_at_path::<runtime::Field, _>(self.meter, &[1, 14])
+            crate::ledger_slots::tags.witness_view(self.meter)
         }
     }
     /// Implement for infallible callbacks; use TryWitnesses for fallible ledger reads.

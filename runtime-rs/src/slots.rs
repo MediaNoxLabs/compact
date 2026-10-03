@@ -24,7 +24,12 @@ use std::marker::PhantomData;
 
 use crate::CompactError;
 use crate::context::{CircuitContext, CircuitResult, WitnessReadMeter};
-use crate::ledger::{CellValue, DB};
+use crate::ledger::{
+    CellValue, DB, MeteredHistoricMerkleTreeView, MeteredListView, MeteredMapView,
+    MeteredMerkleTreeView, MeteredSetView, metered_historic_merkle_tree_view_at_path,
+    metered_list_view, metered_map_view_at_path, metered_merkle_tree_view_at_path,
+    metered_set_view_at_path,
+};
 use crate::recording::RecordingFrame;
 
 /// A compiler-declared Merkle tree. The leaf type, depth, and historic kind
@@ -148,6 +153,14 @@ impl<T: CellValue, const DEPTH: u8, const HISTORIC: bool> MerkleSlot<T, DEPTH, H
 }
 
 impl<T: CellValue, const DEPTH: u8> MerkleSlot<T, DEPTH, false> {
+    /// Project the declared plain tree through the existing metered witness view.
+    pub fn witness_view<'a, Root: CellValue, D: DB>(
+        self,
+        meter: &'a WitnessReadMeter<'a, D>,
+    ) -> Result<MeteredMerkleTreeView<'a, Root, D>, CompactError> {
+        metered_merkle_tree_view_at_path(meter, self.path, DEPTH)
+    }
+
     /// Record a complete plain-tree append trace for replay and proof.
     pub fn record_insert<Private, D: DB>(
         self,
@@ -159,6 +172,14 @@ impl<T: CellValue, const DEPTH: u8> MerkleSlot<T, DEPTH, false> {
 }
 
 impl<T: CellValue, const DEPTH: u8> MerkleSlot<T, DEPTH, true> {
+    /// Project the declared historic tree through the existing metered witness view.
+    pub fn witness_view<'a, Root: CellValue, D: DB>(
+        self,
+        meter: &'a WitnessReadMeter<'a, D>,
+    ) -> Result<MeteredHistoricMerkleTreeView<'a, Root, D>, CompactError> {
+        metered_historic_merkle_tree_view_at_path(meter, self.path, DEPTH)
+    }
+
     /// Record a complete historic-tree append, including the root-history update.
     pub fn record_insert<Private, D: DB>(
         self,
@@ -320,6 +341,14 @@ impl<T: CellValue> SetSlot<T> {
 
     pub const fn path(self) -> &'static [u8] {
         self.path
+    }
+
+    /// Project this Set through the existing metered witness view.
+    pub fn witness_view<'a, D: DB>(
+        self,
+        meter: &'a WitnessReadMeter<'a, D>,
+    ) -> Result<MeteredSetView<'a, T, D>, CompactError> {
+        metered_set_view_at_path(meter, self.path)
     }
 
     pub fn insert<Private, D: DB>(
@@ -491,6 +520,14 @@ impl<K: CellValue, V> MapSlot<K, V> {
 }
 
 impl<K: CellValue, V: CellValue> MapSlot<K, V> {
+    /// Project this scalar-valued Map through the existing metered witness view.
+    pub fn witness_view<'a, D: DB>(
+        self,
+        meter: &'a WitnessReadMeter<'a, D>,
+    ) -> Result<MeteredMapView<'a, K, V, D>, CompactError> {
+        metered_map_view_at_path(meter, self.path)
+    }
+
     pub fn insert<Private, D: DB>(
         self,
         context: CircuitContext<Private, D>,
@@ -598,6 +635,14 @@ impl<T: CellValue> ListSlot<T> {
 
     pub const fn index(self) -> u8 {
         self.index
+    }
+
+    /// Project this root List through the existing metered witness view.
+    pub fn witness_view<'a, D: DB>(
+        self,
+        meter: &'a WitnessReadMeter<'a, D>,
+    ) -> Result<MeteredListView<'a, T, D>, CompactError> {
+        metered_list_view(meter, self.index)
     }
 
     pub fn push_front<Private, D: DB>(

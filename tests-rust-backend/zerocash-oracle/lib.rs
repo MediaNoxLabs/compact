@@ -201,7 +201,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 17);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 18);
     pub(crate) fn merkleTreePathRoot(
         path: crate::types::MerkleTreePath,
     ) -> Result<crate::types::MerkleTreeDigest, runtime::CompactError> {
@@ -302,7 +302,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 17);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 18);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -320,10 +320,7 @@ pub mod ledger_contract {
             >,
             runtime::CompactError,
         > {
-            runtime::ledger::metered_set_view_at_path::<crate::types::nullifier, _>(
-                self.meter,
-                &[0],
-            )
+            crate::ledger_slots::nullifiers.witness_view(self.meter)
         }
         pub fn commitments(
             &self,
@@ -335,10 +332,7 @@ pub mod ledger_contract {
             >,
             runtime::CompactError,
         > {
-            runtime::ledger::metered_historic_merkle_tree_view_at_path::<
-                crate::types::MerkleTreeDigest,
-                _,
-            >(self.meter, &[1], 32)
+            crate::ledger_slots::commitments.witness_view(self.meter)
         }
         pub fn ciphertexts(&self) -> Result<runtime::OpaqueBytes, runtime::CompactError> {
             crate::ledger_slots::ciphertexts.witness_read(self.meter)

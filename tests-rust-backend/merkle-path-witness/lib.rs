@@ -72,7 +72,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 17);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 18);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -86,7 +86,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 17);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 18);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -104,11 +104,7 @@ pub mod ledger_contract {
             >,
             runtime::CompactError,
         > {
-            runtime::ledger::metered_merkle_tree_view_at_path::<crate::types::MerkleTreeDigest, _>(
-                self.meter,
-                &[0],
-                3,
-            )
+            crate::ledger_slots::t.witness_view(self.meter)
         }
         pub fn h(
             &self,
@@ -120,10 +116,7 @@ pub mod ledger_contract {
             >,
             runtime::CompactError,
         > {
-            runtime::ledger::metered_historic_merkle_tree_view_at_path::<
-                crate::types::MerkleTreeDigest,
-                _,
-            >(self.meter, &[1], 3)
+            crate::ledger_slots::h.witness_view(self.meter)
         }
     }
     /// Implement for infallible callbacks; use TryWitnesses for fallible ledger reads.

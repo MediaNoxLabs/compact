@@ -210,10 +210,75 @@ fn generated_unit_enum_uses_checked_derive_without_handwritten_codecs() {
     let source = render(&contract).unwrap();
     assert!(source.contains("CompactCellValue, CompactEnum"));
     assert!(source.contains("pub enum Choice"));
-    assert!(source.contains("RUST_RUNTIME_ABI == 17"));
+    assert!(source.contains("RUST_RUNTIME_ABI == 18"));
     assert!(!source.contains("impl FieldRepr for Choice"));
     assert!(!source.contains("impl BinaryHashRepr for Choice"));
     assert!(!source.contains("impl FromFieldRepr for Choice"));
+}
+
+#[test]
+fn witness_collection_and_merkle_getters_use_declared_slots() {
+    let mut contract = identity(Type::Unit, Expr::Unit);
+    contract.witnesses.push(WitnessDeclaration {
+        source: None,
+        name: "observe".into(),
+        parameters: vec![],
+        result: Type::Unit,
+    });
+    contract.ledger_fields = vec![
+        LedgerField {
+            source: None,
+            id: "seen".into(),
+            index: 0,
+            path: vec![],
+            declaration: LedgerFieldKind::Set { ty: Type::Boolean },
+        },
+        LedgerField {
+            source: None,
+            id: "values".into(),
+            index: 1,
+            path: vec![],
+            declaration: LedgerFieldKind::Map {
+                key: Type::Boolean,
+                value: Type::Boolean,
+            },
+        },
+        LedgerField {
+            source: None,
+            id: "queue".into(),
+            index: 2,
+            path: vec![],
+            declaration: LedgerFieldKind::List { ty: Type::Boolean },
+        },
+        LedgerField {
+            source: None,
+            id: "plain".into(),
+            index: 3,
+            path: vec![],
+            declaration: LedgerFieldKind::MerkleTree {
+                depth: 3,
+                ty: Type::Boolean,
+            },
+        },
+        LedgerField {
+            source: None,
+            id: "historic".into(),
+            index: 4,
+            path: vec![],
+            declaration: LedgerFieldKind::HistoricMerkleTree {
+                depth: 4,
+                ty: Type::Boolean,
+            },
+        },
+    ];
+    let source = render(&contract).unwrap();
+    syn::parse_file(&source).unwrap();
+    for field in ["seen", "values", "queue", "plain", "historic"] {
+        assert!(source.contains(&format!(
+            "crate::ledger_slots::{field}.witness_view(self.meter)"
+        )));
+    }
+    assert!(!source.contains("runtime::ledger::metered_"));
 }
 
 #[test]

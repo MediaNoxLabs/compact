@@ -6,6 +6,9 @@ midnight-zk primitives for fields, encoding, cryptography, state, and VM
 queries. Generated code checks `RUST_RUNTIME_ABI` at compile time. A generated
 crate bundles matching runtime sources by default or points to one shared
 source root when compiled with `--rust-runtime-root`.
+ABI 18 routes generated Set, Map, List, plain Merkle and historic Merkle witness
+getters through their typed ledger slots. The slots delegate to the existing
+metered views, preserving validation, gas, errors and the public getter API.
 ABI 17 routes generated witness Cell and Counter getters through their typed
 ledger slots, so the declared slot owns each physical path for native,
 recorded, and witness reads. It keeps the existing VM, gas, error, and public

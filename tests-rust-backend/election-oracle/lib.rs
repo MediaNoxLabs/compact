@@ -139,7 +139,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 17);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 18);
     pub(crate) fn merkleTreePathRoot(
         path: crate::types::MerkleTreePath,
     ) -> Result<crate::types::MerkleTreeDigest, runtime::CompactError> {
@@ -280,7 +280,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 17);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 18);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -319,11 +319,7 @@ pub mod ledger_contract {
             >,
             runtime::CompactError,
         > {
-            runtime::ledger::metered_merkle_tree_view_at_path::<crate::types::MerkleTreeDigest, _>(
-                self.meter,
-                &[5],
-                10,
-            )
+            crate::ledger_slots::committed_votes.witness_view(self.meter)
         }
         pub fn eligible_voters(
             &self,
@@ -335,11 +331,7 @@ pub mod ledger_contract {
             >,
             runtime::CompactError,
         > {
-            runtime::ledger::metered_merkle_tree_view_at_path::<crate::types::MerkleTreeDigest, _>(
-                self.meter,
-                &[6],
-                10,
-            )
+            crate::ledger_slots::eligible_voters.witness_view(self.meter)
         }
         pub fn committed(
             &self,
@@ -351,10 +343,7 @@ pub mod ledger_contract {
             >,
             runtime::CompactError,
         > {
-            runtime::ledger::metered_set_view_at_path::<runtime::FixedBytes<32>, _>(
-                self.meter,
-                &[7],
-            )
+            crate::ledger_slots::committed.witness_view(self.meter)
         }
         pub fn revealed(
             &self,
@@ -366,10 +355,7 @@ pub mod ledger_contract {
             >,
             runtime::CompactError,
         > {
-            runtime::ledger::metered_set_view_at_path::<runtime::FixedBytes<32>, _>(
-                self.meter,
-                &[8],
-            )
+            crate::ledger_slots::revealed.witness_view(self.meter)
         }
     }
     /// Implement for infallible callbacks; use TryWitnesses for fallible ledger reads.

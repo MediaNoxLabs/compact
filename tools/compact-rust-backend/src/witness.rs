@@ -72,12 +72,6 @@ pub(crate) fn build<'a>(
         for field in ledger_fields {
             located(field.source.as_ref(), || {
                 let name = ident(&field.id)?;
-                let index = syn::LitInt::new(&field.index.to_string(), Span::call_site());
-                let path = field
-                    .physical_path()
-                    .iter()
-                    .map(|part| syn::LitInt::new(&part.to_string(), Span::call_site()))
-                    .collect::<Vec<_>>();
                 match &field.declaration {
                     LedgerFieldKind::Cell { ty } => {
                         let ty = rust_type(ty)?;
@@ -100,7 +94,7 @@ pub(crate) fn build<'a>(
                         let ty = rust_type(ty)?;
                         ledger_view_methods.push(syn::parse_quote! {
                         pub fn #name(&self) -> Result<runtime::ledger::MeteredSetView<'a, #ty, runtime::ledger::DefaultDB>, runtime::CompactError> {
-                            runtime::ledger::metered_set_view_at_path::<#ty, _>(self.meter, &[#(#path),*])
+                            crate::ledger_slots::#name.witness_view(self.meter)
                         }
                     });
                     }
@@ -109,7 +103,7 @@ pub(crate) fn build<'a>(
                         let value = rust_type(value)?;
                         ledger_view_methods.push(syn::parse_quote! {
                         pub fn #name(&self) -> Result<runtime::ledger::MeteredMapView<'a, #key, #value, runtime::ledger::DefaultDB>, runtime::CompactError> {
-                            runtime::ledger::metered_map_view_at_path::<#key, #value, _>(self.meter, &[#(#path),*])
+                            crate::ledger_slots::#name.witness_view(self.meter)
                         }
                     });
                     }
@@ -117,23 +111,21 @@ pub(crate) fn build<'a>(
                         let ty = rust_type(ty)?;
                         ledger_view_methods.push(syn::parse_quote! {
                         pub fn #name(&self) -> Result<runtime::ledger::MeteredListView<'a, #ty, runtime::ledger::DefaultDB>, runtime::CompactError> {
-                            runtime::ledger::metered_list_view::<#ty, _>(self.meter, #index)
+                            crate::ledger_slots::#name.witness_view(self.meter)
                         }
                     });
                     }
-                    LedgerFieldKind::HistoricMerkleTree { depth, .. } => {
-                        let depth = syn::LitInt::new(&depth.to_string(), Span::call_site());
+                    LedgerFieldKind::HistoricMerkleTree { .. } => {
                         ledger_view_methods.push(syn::parse_quote! {
                         pub fn #name(&self) -> Result<runtime::ledger::MeteredHistoricMerkleTreeView<'a, crate::types::MerkleTreeDigest, runtime::ledger::DefaultDB>, runtime::CompactError> {
-                            runtime::ledger::metered_historic_merkle_tree_view_at_path::<crate::types::MerkleTreeDigest, _>(self.meter, &[#(#path),*], #depth)
+                            crate::ledger_slots::#name.witness_view(self.meter)
                         }
                     });
                     }
-                    LedgerFieldKind::MerkleTree { depth, .. } => {
-                        let depth = syn::LitInt::new(&depth.to_string(), Span::call_site());
+                    LedgerFieldKind::MerkleTree { .. } => {
                         ledger_view_methods.push(syn::parse_quote! {
                         pub fn #name(&self) -> Result<runtime::ledger::MeteredMerkleTreeView<'a, crate::types::MerkleTreeDigest, runtime::ledger::DefaultDB>, runtime::CompactError> {
-                            runtime::ledger::metered_merkle_tree_view_at_path::<crate::types::MerkleTreeDigest, _>(self.meter, &[#(#path),*], #depth)
+                            crate::ledger_slots::#name.witness_view(self.meter)
                         }
                     });
                     }

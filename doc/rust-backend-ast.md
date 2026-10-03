@@ -59,23 +59,29 @@ partitions the Verify program, and constructs a ledger-8
 input, and commitment randomness. The proof gate uses this adapter for every
 recorded call that it proves, rather than assembling transcripts in the test
 harness.
-ABI 19 also emits a typed `*_call` method for complete recorded exports with
-zero or one parameter. It accepts an `ObservedContractState` and preserves the
+ABI 19 introduced typed `*_call` methods for complete recorded exports with
+zero or one parameter. They accept an `ObservedContractState` and preserve the
 Compact entry point and public FAB input in a `RecordedCall`; `prepare` checks
-the observed state and installed verifier before using the same adapter. The
-observation metadata is caller supplied and does not prove finality. Circuits
-with multiple parameters retain the explicit `CallSpec` path pending exact
-FAB encoding checks.
+the observed state and installed verifier before using the same adapter. ABI
+21–22 extend the typed calls to multiple parameters using verified FAB order
+and alignment. The observation metadata is caller supplied and does not prove
+finality.
 ABI 20 exposes exact `.verifier` artifact decoding through the runtime facade
 so a separate consumer can prepare the generated call with only the generated
-crate as a direct dependency.
+crate as a direct dependency. ABI 23–28 add bounded typed recording for
+composite Set keys, chunked Set/List/Map/Cell paths, and action-free scalar
+returns that read a Cell. The generated/runtime ABI is 28; the private Rust IR
+schema remains 8. See the backend and runtime guides for the exact supported
+shapes and exclusions.
 
-The packaged gate checks ZKIR and verifier artifacts, proves 58 supported call
+The packaged gate checks ZKIR and verifier artifacts, proves 93 supported call
 shapes, validates and applies each against an offline ledger, and checks the
 resulting contract state. Its counter call also seals a transaction and
 round-trips its bytes through the pinned JavaScript ledger-v8 decoder. The
-fixture uses a local test network, TTL zero, and disabled balancing. Wallet
-balancing, live node submission, remote CI, and a published runtime remain
+default fixture uses a local test network, TTL zero, and disabled balancing.
+Earlier ABI-20 work admitted a deploy and two calls on a funded local devnet;
+the current ABI-28 head still needs a same-head wallet/node run. Remote CI,
+runtime publication and a portable multi-contract distribution remain
 Milestone 2 work.
 
 ## Implemented slices

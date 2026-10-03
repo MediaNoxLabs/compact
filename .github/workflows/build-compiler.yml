@@ -324,6 +324,10 @@ jobs:
           python3 tools/compact-rust-backend/check_release_packages.py --manifest target/rust-runtime-release.json
           python3 tools/compact-rust-backend/check_release_packages.py --verify-manifest target/rust-runtime-release.json
 
+      - name: Build generated Rust consumer from runtime archives
+        run: |
+          nix develop .#compiler --command python3 tools/compact-rust-backend/check_archive_consumer.py --manifest target/rust-runtime-release.json
+
       - name: Retain Rust runtime packages and manifest
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:

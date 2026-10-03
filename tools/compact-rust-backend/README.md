@@ -125,7 +125,7 @@ Compact spelling without warning in consumer builds.
 |---|---|---|
 | Compact compiler | Toolchain 0.31.133, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
 | Rust IR | Schema 8, private to this backend | The renderer rejects any other schema before writing `lib.rs`. Ledger, circuit, witness, constructor, and exported alias declarations carry optional Compact source locations for diagnostics. |
-| Generated code and Rust runtime | ABI 24 | Generated modules assert the ABI at Rust compile time. ABI 24 records supported Set calls through compiler-chunked physical paths using the existing typed slot and recording frame; ABI 23 adds recorded/observed Set calls for tuple and generated-struct keys through typed slots and upstream FAB traits; ABI 22 adds observed-state calls for three-plus parameters using upstream FAB concatenation; ABI 21 adds typed observed-state calls for two-parameter recorded exports using the pinned ledger tuple FAB; ABI 20 exposes exact verifier artifact decoding for generated-crate-only consumers; ABI 19 adds typed observed-state recorded calls for zero and one parameter with installed-verifier checks. ABI 18 routes witness Set/Map/List/plain and historic Merkle getters through typed slots and existing metered views; ABI 17 routes witness Cell/Counter getters through typed slots for a single physical-path owner; ABI 16 derives `TryWitnesses` and its infallible adapter from one visible `Witnesses` trait through the runtime attribute macro; ABI 15 records supported Set/Map circuits with declaration-typed vector keys through existing `FixedVector` values and typed slots; ABI 14 records historic Merkle append with root-history VM semantics; ABI 13 records plain Merkle append through the typed slot and shared VM builder; ABI 12 adds typed plain/historic Merkle slots for native calls; ABI 11 meters Merkle witness VM reads while keeping local projections uncharged; ABI 10 adds fallible `TryWitnesses` and adapts existing pair-returning `Witnesses` implementations; ABI 9 meters List, ABI 8 Map, ABI 7 Set, ABI 6 Cell/Counter; ABI 5 added structural nested Map slots. |
+| Generated code and Rust runtime | ABI 28 | Generated modules assert the ABI at Rust compile time. ABI 25–28 add physical List paths, chunked Map and Cell calls, and Cell-read scalar returns; ABI 21–24 add typed multi-argument observed calls and composite/chunked Set calls. The [runtime guide](../../runtime-rs/README.md) records earlier ABI changes. |
 | Rust runtime source | Bundled runtime crates or an explicit shared source root | Cargo resolves the matching runtime and its pinned Midnight crates. |
 
 `--runtime-version` reports the TypeScript runtime version; the Rust runtime
@@ -180,6 +180,24 @@ unpatched registry consumer can build; the manifest says that the local macro
 patch was used during archive verification. The `midnight` vault's ADR-0013
 records the decision; [issue #114](https://github.com/MediaNoxLabs/compact/issues/114)
 tracks the remaining gates.
+
+After packaging, rehearse a generated Counter consumer against the two exact
+archives in that manifest:
+
+```sh
+nix develop .#compiler --command python3 \
+  tools/compact-rust-backend/check_archive_consumer.py \
+  --manifest target/rust-runtime-release.json
+```
+
+This isolated gate vendors the pinned upstream crates, installs the macro and
+runtime from their `.crate` bytes, and compiles a fresh `compactc --target rust`
+contract with a version-only runtime dependency. It removes the disposable
+bundled runtime copy, exercises a Counter call from a one-dependency external
+consumer, and checks that Cargo resolved both release crates as registry-style
+packages from the archive source. No local path patch is used for the final
+consumer. Source replacement is a local release rehearsal; crates.io
+publication, a public registry consumer, and remote CI remain #106 exit gates.
 
 ## Source model
 

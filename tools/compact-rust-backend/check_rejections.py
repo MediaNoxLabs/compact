@@ -117,15 +117,14 @@ def check_output_publication(compactc: str, directory: Path) -> list[str]:
 
 def check_proof_capabilities(compactc: str, directory: Path) -> list[str]:
     failures = []
-    source = directory / "product.compact"
+    source = directory / "pure-call.compact"
     source.write_text(
         "import CompactStandardLibrary;\n"
         "export ledger value: Field;\n"
-        "export circuit write(left: Field, right: Field): [] {\n"
-        "  value = disclose(left * right);\n"
-        "}\n"
+        "export pure circuit square(x: Field): Field { return x * x; }\n"
+        "export circuit write(input: Field): [] { value = disclose(square(input)); }\n"
     )
-    output = directory / "product-output"
+    output = directory / "pure-call-output"
 
     def compile_source(path: Path, destination: Path, strict: bool) -> subprocess.CompletedProcess[str]:
         command = [compactc, "--target", "rust", "--skip-zk"]
@@ -138,7 +137,7 @@ def check_proof_capabilities(compactc: str, directory: Path) -> list[str]:
 
     default = compile_source(source, output, False)
     if default.returncode:
-        return [f"native-only product did not compile normally:\n{default.stderr}"]
+        return [f"native-only pure call did not compile normally:\n{default.stderr}"]
     report_path = output / "contract/rust-capabilities.json"
     manifest_path = output / "compiler/contract-manifest.json"
     try:
@@ -148,20 +147,20 @@ def check_proof_capabilities(compactc: str, directory: Path) -> list[str]:
         assert report["schema_version"] == 1
         assert report["circuits"] == [{
             "name": "write",
-            "source": {"file": "product.compact", "line": 3, "column": 1},
+            "source": {"file": "pure-call.compact", "line": 4, "column": 1},
             "recorded": False,
             "observed_call": False,
         }]
         assert manifest["contract"]["rust-capabilities.json"]["hash"] == hashlib.sha256(report_bytes).hexdigest()
     except (AssertionError, FileNotFoundError, KeyError, ValueError) as error:
-        failures.append(f"native-only capability report or manifest is wrong: {error}")
+        failures.append(f"native-only pure-call report or manifest is wrong: {error}")
     before = snapshot(output)
     rejected = compile_source(source, output, True)
-    if rejected.returncode == 0 or "product.compact line 3 char 1" not in rejected.stderr:
+    if rejected.returncode == 0 or "pure-call.compact line 4 char 1" not in rejected.stderr:
         failures.append(f"strict rebuild did not reject at source:\n{rejected.stderr}")
     if snapshot(output) != before:
         failures.append("strict rebuild changed the prior native-only output")
-    fresh = directory / "product-strict-output"
+    fresh = directory / "pure-call-strict-output"
     rejected = compile_source(source, fresh, True)
     if rejected.returncode == 0 or fresh.exists() or any(directory.glob(f".{fresh.name}.compactc-stage-*")):
         failures.append("strict fresh rejection published output or left staging debris")

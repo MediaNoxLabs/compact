@@ -2723,6 +2723,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             "add_amount",
             "active_equals",
             "plus_amount",
+            "subtract_amount",
+            "multiply_amount",
         ] {
             let initial = chunked_cell_contract::initial_state(ConstructorContext::new(()))?;
             let deploy = make_deploy(
@@ -2840,6 +2842,30 @@ fn main() -> Result<(), Box<dyn Error>> {
                         .prepare(verifier, Fr::from(0_u64))?;
                     (manual, typed)
                 }
+                "subtract_amount" => {
+                    let recorded = contract
+                        .recording
+                        .subtract_amount(context, Field::from(2_u64))?;
+                    let manual =
+                        check_generated_trace(chunked_root, circuit, recorded, Field::from(2_u64))?;
+                    let typed = contract
+                        .recording
+                        .subtract_amount_call(&observed, (), Field::from(2_u64))?
+                        .prepare(verifier, Fr::from(0_u64))?;
+                    (manual, typed)
+                }
+                "multiply_amount" => {
+                    let recorded = contract
+                        .recording
+                        .multiply_amount(context, Field::from(7_u64))?;
+                    let manual =
+                        check_generated_trace(chunked_root, circuit, recorded, Field::from(7_u64))?;
+                    let typed = contract
+                        .recording
+                        .multiply_amount_call(&observed, (), Field::from(7_u64))?
+                        .prepare(verifier, Fr::from(0_u64))?;
+                    (manual, typed)
+                }
                 _ => unreachable!(),
             };
             check_observed_call_parity(chunked_root, circuit, &deploy, &manual, &typed)?;
@@ -2850,6 +2876,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                 let expected_amount = match circuit {
                     "set_amount" => Field::from(11_u64),
                     "add_amount" => Field::from(10_u64),
+                    "subtract_amount" => Field::from(1_u64),
+                    "multiply_amount" => Field::from(21_u64),
                     _ => Field::from(3_u64),
                 };
                 if actual_active != expected_active || actual_amount != expected_amount {

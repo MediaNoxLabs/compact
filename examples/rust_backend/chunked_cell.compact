@@ -57,3 +57,11 @@ export circuit active_equals(expected: Boolean): Boolean {
 export circuit plus_amount(delta: Field): Field {
   return amount.read() + disclose(delta);
 }
+
+export circuit subtract_amount(delta: Field): [] {
+  amount = amount.read() - disclose(delta);
+}
+
+export circuit multiply_amount(factor: Field): [] {
+  amount = amount.read() * disclose(factor);
+}

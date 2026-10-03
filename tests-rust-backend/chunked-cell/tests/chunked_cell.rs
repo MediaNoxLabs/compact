@@ -46,6 +46,8 @@ fn state_hex(state: StateValue<DefaultDB>) -> String {
         "add_amount",
         "active_equals",
         "plus_amount",
+        "subtract_amount",
+        "multiply_amount",
     ] {
         operations = operations.insert(
             EntryPointBuf(name.as_bytes().to_vec()),
@@ -195,6 +197,16 @@ fn chunked_cell_calls_match_typescript_and_replay() {
     check_input("add_amount", Field::from(7_u64), &reference["addAmount"]);
     check_input("active_equals", true, &reference["activeEquals"]);
     check_input("plus_amount", Field::from(7_u64), &reference["plusAmount"]);
+    check_input(
+        "subtract_amount",
+        Field::from(2_u64),
+        &reference["subtractAmount"],
+    );
+    check_input(
+        "multiply_amount",
+        Field::from(7_u64),
+        &reference["multiplyAmount"],
+    );
     check(
         "set_active",
         ledger_contract::set_active(context(), false).unwrap(),
@@ -258,6 +270,24 @@ fn chunked_cell_calls_match_typescript_and_replay() {
         sum,
         &reference["plusAmount"],
     );
+    check(
+        "subtract_amount",
+        ledger_contract::subtract_amount(context(), Field::from(2_u64)).unwrap(),
+        contract
+            .recording
+            .subtract_amount(context(), Field::from(2_u64))
+            .unwrap(),
+        &reference["subtractAmount"],
+    );
+    check(
+        "multiply_amount",
+        ledger_contract::multiply_amount(context(), Field::from(7_u64)).unwrap(),
+        contract
+            .recording
+            .multiply_amount(context(), Field::from(7_u64))
+            .unwrap(),
+        &reference["multiplyAmount"],
+    );
 
     let first = amount.read(context()).unwrap();
     let second = amount
@@ -276,6 +306,28 @@ fn chunked_cell_calls_match_typescript_and_replay() {
                     .unwrap(),
                 "add_amount query {index}: {dimension} TypeScript gas"
             );
+        }
+    }
+    for (name, expected_value) in [
+        ("subtractAmount", Field::from(1_u64)),
+        ("multiplyAmount", Field::from(21_u64)),
+    ] {
+        let first = amount.read(context()).unwrap();
+        let second = amount.write(first.context, expected_value).unwrap();
+        for (index, gas) in [first.gas_cost, second.gas_cost].into_iter().enumerate() {
+            let actual = serde_json::to_value(gas).unwrap();
+            let expected = &reference[name]["queries"][index]["gasCost"];
+            for dimension in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+                assert_eq!(
+                    actual[dimension].as_u64().unwrap(),
+                    expected[dimension]
+                        .as_str()
+                        .unwrap()
+                        .parse::<u64>()
+                        .unwrap(),
+                    "{name} query {index}: {dimension} TypeScript gas"
+                );
+            }
         }
     }
     assert_eq!(

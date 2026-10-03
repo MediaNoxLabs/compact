@@ -481,6 +481,20 @@ def check_chunked_cell_consumer(proof: Path, base: Path) -> None:
     )
     assert rejected.returncode != 0, "wrong-typed Cell sum unexpectedly compiled"
     assert "error[E0308]" in rejected.stderr, rejected.stderr
+    for name in ("subtract_amount", "multiply_amount"):
+        (consumer / "examples" / f"wrong_{name}.rs").write_text(
+            "use compact_contract_chunked_cell::ledger_contract::Contract;\n"
+            "use compact_contract_chunked_cell::runtime::transaction::ObservedContractState;\n"
+            "fn wrong(observed: &ObservedContractState) {\n"
+            f"    let _ = Contract::default().recording.{name}_call(observed, (), true);\n"
+            "}\nfn main() {}\n"
+        )
+        rejected = subprocess.run(
+            ["cargo", "check", "--quiet", "--example", f"wrong_{name}"],
+            cwd=consumer, env=environment, capture_output=True, text=True,
+        )
+        assert rejected.returncode != 0, f"wrong-typed {name} unexpectedly compiled"
+        assert "error[E0308]" in rejected.stderr, rejected.stderr
 
 
 def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
@@ -1289,11 +1303,14 @@ def main() -> None:
                     assert (chunked_map_proof / "zkir" / f"{circuit}.{extension}").is_file()
             check_chunked_map_consumer(chunked_map_proof, base)
             chunked_cell_proof = base / "chunked-cell-proof"
-            run(compiler, "--target", "rust", str(CHUNKED_CELL_SOURCE), str(chunked_cell_proof))
+            run(compiler, "--target", "rust", "--rust-require-recording", str(CHUNKED_CELL_SOURCE), str(chunked_cell_proof))
             check_manifest(chunked_cell_proof)
+            capabilities = json.loads((chunked_cell_proof / "contract/rust-capabilities.json").read_text())
+            assert all(c["recorded"] and c["observed_call"] for c in capabilities["circuits"])
             for circuit in (
                 "set_active", "get_active", "assert_active",
                 "set_amount", "get_amount", "add_amount", "active_equals", "plus_amount",
+                "subtract_amount", "multiply_amount",
             ):
                 for extension in ("prover", "verifier"):
                     assert (chunked_cell_proof / "keys" / f"{circuit}.{extension}").is_file()

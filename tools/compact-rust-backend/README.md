@@ -114,7 +114,9 @@ Field-returning callee with no actions used in a Field action binding. It
 evaluates typed arguments in source order and preserves the witness result for
 the subsequent write. Value calls nested inside larger expressions still use
 inline lowering. The recorded emitter evaluates supported Field reads, witness
-calls, addition, and internal Field-returning calls in source order. Supported
+calls, addition, subtraction, multiplication, and internal Field-returning
+calls in source order. Field arithmetic reuses the upstream ledger-8 `Field`
+operators; only its ledger and witness operands contribute recording effects. Supported
 Cell reads, writes, assertions and Field read expressions can record at
 compiler-assigned chunked paths through typed slots. Action-free Boolean and
 Field returns with an explicit Cell read also use the same recorded frame;

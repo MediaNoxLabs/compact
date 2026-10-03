@@ -587,7 +587,9 @@ fn render_recorded_item(
                 });
                 Ok(Some(syn::parse_quote!(#observed)))
             }
-            Expr::Add { left, right } => {
+            Expr::Add { left, right }
+            | Expr::Subtract { left, right }
+            | Expr::Multiply { left, right } => {
                 let Some(left) = field_expression(
                     left,
                     locals,
@@ -618,13 +620,19 @@ fn render_recorded_item(
                 else {
                     return Ok(None);
                 };
-                let sum = syn::Ident::new(
-                    &format!("__compact_recorded_sum_{}", *next_temp),
+                let (name, arithmetic): (&str, syn::Expr) = match value {
+                    Expr::Add { .. } => ("sum", syn::parse_quote!(#left + #right)),
+                    Expr::Subtract { .. } => ("difference", syn::parse_quote!(#left - #right)),
+                    Expr::Multiply { .. } => ("product", syn::parse_quote!(#left * #right)),
+                    _ => unreachable!(),
+                };
+                let result = syn::Ident::new(
+                    &format!("__compact_recorded_{name}_{}", *next_temp),
                     Span::call_site(),
                 );
                 *next_temp += 1;
-                steps.push(syn::parse_quote!(let #sum: runtime::Field = #left + #right;));
-                Ok(Some(syn::parse_quote!(#sum)))
+                steps.push(syn::parse_quote!(let #result: runtime::Field = #arithmetic;));
+                Ok(Some(syn::parse_quote!(#result)))
             }
             Expr::Call { name, arguments } => {
                 let Some(callee) = circuits.get(name.as_str()) else {

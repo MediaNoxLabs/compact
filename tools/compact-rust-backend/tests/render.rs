@@ -2076,7 +2076,9 @@ fn recorded_field_returning_helper_is_shared_across_callers() {
             }),
         },
     };
-    assert!(!render(&contract).unwrap().contains("pub mod recorded"));
+    let multiplied = render(&contract).unwrap();
+    assert!(multiplied.contains("pub mod recorded"));
+    assert!(multiplied.contains("__compact_recorded_product_"));
 
     contract.stateful_circuits[0].return_value = StateReturn::Expression {
         value: Expr::Add {
@@ -2257,7 +2259,7 @@ fn unsupported_nested_call_does_not_expose_an_incomplete_trace() {
 }
 
 #[test]
-fn unsupported_field_expression_does_not_expose_a_recorded_call() {
+fn unsupported_pure_call_and_supported_field_arithmetic_have_exact_capabilities() {
     let mut contract = Contract {
         schema_version: 8,
         type_aliases: vec![],
@@ -2270,11 +2272,28 @@ fn unsupported_field_expression_does_not_expose_a_recorded_call() {
             path: vec![],
             declaration: LedgerFieldKind::Cell { ty: Type::Field },
         }],
-        circuits: vec![],
+        circuits: vec![PureCircuit {
+            source: None,
+            internal: false,
+            name: "square".into(),
+            parameters: vec![Parameter {
+                name: "input".into(),
+                ty: Type::Field,
+            }],
+            result: Type::Field,
+            body: Expr::Multiply {
+                left: Box::new(Expr::Parameter {
+                    name: "input".into(),
+                }),
+                right: Box::new(Expr::Parameter {
+                    name: "input".into(),
+                }),
+            },
+        }],
         stateful_circuits: vec![StatefulCircuit {
             source: Some(SourceLocation {
-                file: "product.compact".into(),
-                line: 3,
+                file: "pure-call.compact".into(),
+                line: 4,
                 column: 1,
             }),
             internal: false,
@@ -2294,13 +2313,11 @@ fn unsupported_field_expression_does_not_expose_a_recorded_call() {
             actions: vec![StateAction::CellWrite {
                 field: "value".into(),
                 index: 0,
-                value: Expr::Multiply {
-                    left: Box::new(Expr::Parameter {
+                value: Expr::Call {
+                    name: "square".into(),
+                    arguments: vec![Expr::Parameter {
                         name: "left".into(),
-                    }),
-                    right: Box::new(Expr::Parameter {
-                        name: "right".into(),
-                    }),
+                    }],
                 },
             }],
         }],
@@ -2311,20 +2328,35 @@ fn unsupported_field_expression_does_not_expose_a_recorded_call() {
     let report = serde_json::to_value(&rendered.capabilities).unwrap();
     assert_eq!(report["schema_version"], 1);
     assert_eq!(report["circuits"][0]["name"], "write");
-    assert_eq!(report["circuits"][0]["source"]["file"], "product.compact");
-    assert_eq!(report["circuits"][0]["source"]["line"], 3);
+    assert_eq!(report["circuits"][0]["source"]["file"], "pure-call.compact");
+    assert_eq!(report["circuits"][0]["source"]["line"], 4);
     assert_eq!(report["circuits"][0]["recorded"], false);
     assert_eq!(report["circuits"][0]["observed_call"], false);
 
     let StateAction::CellWrite { value, .. } = &mut contract.stateful_circuits[0].actions[0] else {
         unreachable!()
     };
-    let Expr::Multiply { left, right } = value.clone() else {
-        unreachable!()
+    let left = Box::new(Expr::Parameter {
+        name: "left".into(),
+    });
+    let right = Box::new(Expr::Parameter {
+        name: "right".into(),
+    });
+    *value = Expr::Subtract {
+        left: left.clone(),
+        right: right.clone(),
     };
-    *value = Expr::Add { left, right };
     let rendered = render_with_capabilities(&contract).unwrap();
     assert!(rendered.source.contains("pub mod recorded"));
+    assert!(rendered.source.contains("__compact_recorded_difference_0"));
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.capabilities.circuits[0].observed_call);
+    let StateAction::CellWrite { value, .. } = &mut contract.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    *value = Expr::Multiply { left, right };
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.source.contains("__compact_recorded_product_0"));
     assert!(rendered.capabilities.circuits[0].recorded);
     assert!(rendered.capabilities.circuits[0].observed_call);
 }

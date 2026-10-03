@@ -208,7 +208,6 @@ pub(crate) fn plan_recorded_helpers(
     for circuit in ordered_circuits {
         let unit_body = circuit.result == Type::Unit && circuit.return_value == StateReturn::Unit;
         let direct_field_body = circuit.result == Type::Field
-            && circuit.parameters.is_empty()
             && circuit.actions.is_empty()
             && matches!(circuit.return_value, StateReturn::Expression { .. });
         if !candidates.contains(&circuit.name) || !(unit_body || direct_field_body) {
@@ -995,6 +994,57 @@ fn render_recorded_item(
         }
     }
 
+    /// Keep shared Unit and value-returning helpers on the same typed argument path.
+    /// `field_expression` appends effects before the caller binds each argument.
+    fn shared_call_argument(
+        argument: &Expr,
+        ty: &Type,
+        locals: &HashMap<String, syn::Expr>,
+        parameters: &HashMap<&str, (&Type, syn::Ident)>,
+        ledger_fields: &HashMap<&str, &LedgerField>,
+        witnesses: &HashMap<&str, &WitnessDeclaration>,
+        circuits: &HashMap<&str, &StatefulCircuit>,
+        steps: &mut Vec<syn::Stmt>,
+        next_temp: &mut usize,
+        visiting: &mut HashSet<String>,
+    ) -> Result<Option<syn::Expr>, RenderError> {
+        if *ty == Type::Field {
+            return field_expression(
+                argument,
+                locals,
+                parameters,
+                ledger_fields,
+                witnesses,
+                circuits,
+                steps,
+                next_temp,
+                visiting,
+            );
+        }
+        if *ty
+            == (Type::Unsigned {
+                max: "65535".into(),
+            })
+        {
+            let uncoerced = match argument {
+                Expr::Coerce { value, ty: target } if target == ty => value.as_ref(),
+                _ => argument,
+            };
+            return Ok(match uncoerced {
+                Expr::Parameter { name } if !locals.contains_key(name) => {
+                    cell_source(argument, ty, locals, parameters)
+                }
+                _ => amount_source(argument, locals, parameters).map(|value| {
+                    syn::parse_quote!(
+                        runtime::BoundedUint::<65535>::new((#value) as u128)
+                            .expect("Compact Uint argument fits its maximum")
+                    )
+                }),
+            });
+        }
+        Ok(cell_source(argument, ty, locals, parameters))
+    }
+
     fn append_steps(
         action: &StateAction,
         locals: &HashMap<String, syn::Expr>,
@@ -1046,10 +1096,35 @@ fn render_recorded_item(
                                     .get(name.as_str())
                                     .ok_or_else(|| RenderError::UnknownCircuit(name.clone()))?;
                                 if callee.result != Type::Field
-                                    || !callee.parameters.is_empty()
-                                    || !arguments.is_empty()
+                                    || arguments.len() != callee.parameters.len()
                                 {
                                     return Ok(false);
+                                }
+                                let mut args = Vec::new();
+                                for (argument, parameter) in
+                                    arguments.iter().zip(&callee.parameters)
+                                {
+                                    let value = shared_call_argument(
+                                        argument,
+                                        &parameter.ty,
+                                        &scoped,
+                                        parameters,
+                                        ledger_fields,
+                                        witnesses,
+                                        circuits,
+                                        steps,
+                                        next_temp,
+                                        visiting,
+                                    )?;
+                                    let Some(value) = value else { return Ok(false) };
+                                    let arg = syn::Ident::new(
+                                        &format!("__compact_recorded_arg_{}", *next_temp),
+                                        Span::call_site(),
+                                    );
+                                    *next_temp += 1;
+                                    let arg_ty = rust_type(&parameter.ty)?;
+                                    steps.push(syn::parse_quote!(let #arg: #arg_ty = #value;));
+                                    args.push(arg);
                                 }
                                 let observed = syn::Ident::new(
                                     &format!("__compact_recorded_value_{}", *next_temp),
@@ -1059,11 +1134,11 @@ fn render_recorded_item(
                                 let body_name = helper_ident(name, circuits)?;
                                 if circuit_uses_witness(callee, circuits, &mut HashSet::new())? {
                                     steps.push(syn::parse_quote!(
-                                        let (frame, #observed) = #body_name(frame, witnesses)?;
+                                        let (frame, #observed) = #body_name(frame, witnesses, #(#args),*)?;
                                     ));
                                 } else {
                                     steps.push(syn::parse_quote!(
-                                        let (frame, #observed) = #body_name(frame)?;
+                                        let (frame, #observed) = #body_name(frame, #(#args),*)?;
                                     ));
                                 }
                                 scoped.insert(binding.name.clone(), syn::parse_quote!(#observed));
@@ -1252,41 +1327,18 @@ fn render_recorded_item(
                 if shared_callees.contains(name) {
                     let mut args = Vec::new();
                     for (argument, parameter) in arguments.iter().zip(&callee.parameters) {
-                        let value = if parameter.ty == Type::Field {
-                            field_expression(
-                                argument,
-                                locals,
-                                parameters,
-                                ledger_fields,
-                                witnesses,
-                                circuits,
-                                steps,
-                                next_temp,
-                                visiting,
-                            )?
-                        } else if parameter.ty
-                            == (Type::Unsigned {
-                                max: "65535".into(),
-                            })
-                        {
-                            let uncoerced = match argument {
-                                Expr::Coerce { value, ty } if *ty == parameter.ty => value.as_ref(),
-                                _ => argument,
-                            };
-                            match uncoerced {
-                                Expr::Parameter { name } if !locals.contains_key(name) => {
-                                    cell_source(argument, &parameter.ty, locals, parameters)
-                                }
-                                _ => amount_source(argument, locals, parameters).map(|value| {
-                                    syn::parse_quote!(
-                                        runtime::BoundedUint::<65535>::new((#value) as u128)
-                                            .expect("Compact Uint argument fits its maximum")
-                                    )
-                                }),
-                            }
-                        } else {
-                            cell_source(argument, &parameter.ty, locals, parameters)
-                        };
+                        let value = shared_call_argument(
+                            argument,
+                            &parameter.ty,
+                            locals,
+                            parameters,
+                            ledger_fields,
+                            witnesses,
+                            circuits,
+                            steps,
+                            next_temp,
+                            visiting,
+                        )?;
                         let Some(value) = value else { return Ok(false) };
                         let arg = syn::Ident::new(
                             &format!("__compact_recorded_arg_{}", *next_temp),

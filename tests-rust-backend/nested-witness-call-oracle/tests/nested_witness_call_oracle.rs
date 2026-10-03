@@ -14,7 +14,7 @@
 // limitations under the License.
 
 use compact_rust_nested_witness_call_oracle_fixture::ledger_contract::{
-    Contract, LedgerView, TryWitnesses, Witnesses, initial_state, outer, outerValue,
+    Contract, LedgerView, TryWitnesses, Witnesses, initial_state, outer, outerValue, outerValue2,
 };
 use midnight_compact_runtime::context::{ConstructorContext, WitnessContext};
 use midnight_compact_runtime::ledger::{ContractAddress, DefaultDB, StateValue};
@@ -29,6 +29,8 @@ struct OracleWitness;
 
 struct RejectingWitness;
 
+struct RejectThirdOrderedWitness;
+
 impl TryWitnesses<u64> for RejectingWitness {
     fn secret(
         &self,
@@ -36,17 +38,55 @@ impl TryWitnesses<u64> for RejectingWitness {
     ) -> Result<(u64, Field), CompactError> {
         Err(CompactError::AssertionFailed("rejected witness".into()))
     }
+
+    fn ordered(
+        &self,
+        _context: WitnessContext<'_, u64, LedgerView<'_>>,
+    ) -> Result<(u64, Field), CompactError> {
+        Err(CompactError::AssertionFailed(
+            "rejected ordered witness".into(),
+        ))
+    }
+}
+
+impl TryWitnesses<u64> for RejectThirdOrderedWitness {
+    fn secret(
+        &self,
+        _context: WitnessContext<'_, u64, LedgerView<'_>>,
+    ) -> Result<(u64, Field), CompactError> {
+        Err(CompactError::AssertionFailed(
+            "unexpected secret witness".into(),
+        ))
+    }
+
+    fn ordered(
+        &self,
+        context: WitnessContext<'_, u64, LedgerView<'_>>,
+    ) -> Result<(u64, Field), CompactError> {
+        let private = *context.private_state;
+        if private == 9 {
+            return Err(CompactError::AssertionFailed(
+                "third witness rejected".into(),
+            ));
+        }
+        Ok((private + 1, Field::from(private)))
+    }
 }
 
 impl Witnesses<u64> for OracleWitness {
     fn secret(&self, context: WitnessContext<'_, u64, LedgerView<'_>>) -> (u64, Field) {
         (*context.private_state + 1, Field::from(7_u64))
     }
+
+    fn ordered(&self, context: WitnessContext<'_, u64, LedgerView<'_>>) -> (u64, Field) {
+        let private = *context.private_state;
+        (private + 1, Field::from(private))
+    }
 }
 
 fn state_hex(state: StateValue<DefaultDB>) -> String {
     let mut operations: HashMap<EntryPointBuf, ContractOperation, DefaultDB> = HashMap::new();
-    for name in ["outer", "outerValue"] {
+    for name in ["outer", "outerValue", "outerValue2"] {
         operations = operations.insert(
             EntryPointBuf(name.as_bytes().to_vec()),
             ContractOperation::new(None),
@@ -187,6 +227,137 @@ fn recorded_value_helper_propagates_witness_rejection() {
         contract.recording().outerValue(context),
         Err(CompactError::AssertionFailed(message)) if message == "rejected witness"
     ));
+}
+
+#[test]
+fn parameterized_value_helper_preserves_argument_order_and_verify_program() {
+    let reference: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/nested-witness-call-oracle.json"
+    ))
+    .unwrap();
+    let native_context = initial_state(ConstructorContext::new(7_u64))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let native_outer = outer(native_context, &OracleWitness).unwrap();
+    let native_outer_value = outerValue(native_outer.context, &OracleWitness).unwrap();
+    let native = outerValue2(native_outer_value.context, &OracleWitness).unwrap();
+
+    let recorded_context = initial_state(ConstructorContext::new(7_u64))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let contract = Contract::from(OracleWitness);
+    let outer = contract.recording().outer(recorded_context).unwrap();
+    let outer_value = contract
+        .recording()
+        .outerValue(outer.execution.context)
+        .unwrap();
+    let recorded = contract
+        .recording()
+        .outerValue2(outer_value.execution.context)
+        .unwrap();
+
+    assert_eq!(recorded.execution.gas_cost, native.gas_cost);
+    assert_eq!(
+        recorded.execution.context.query.effects,
+        native.context.query.effects
+    );
+    assert_eq!(
+        recorded.execution.context.private_state,
+        reference["afterOuterValue2PrivateState"].as_u64().unwrap()
+    );
+    assert_eq!(
+        state_hex(recorded.execution.context.query.state.get_ref().clone()),
+        reference["afterOuterValue2Hex"]
+    );
+    assert_transcript(
+        &recorded.execution.private_transcript_outputs,
+        &reference["outerValue2Transcript"],
+    );
+    let queries = reference["outerValue2Queries"].as_array().unwrap();
+    assert_eq!(
+        queries.len(),
+        1,
+        "only the final Cell write queries the ledger"
+    );
+    let actual_gas = serde_json::to_value(&recorded.execution.gas_cost).unwrap();
+    for key in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+        let expected = queries[0]["gasCost"][key]
+            .as_str()
+            .unwrap()
+            .parse::<u64>()
+            .unwrap();
+        assert_eq!(actual_gas[key].as_u64().unwrap(), expected, "{key}");
+        assert_eq!(reference["outerValue2Gas"][key], queries[0]["gasCost"][key]);
+    }
+    assert_eq!(
+        recorded.public.verify_ops().len(),
+        queries[0]["opTags"].as_array().unwrap().len()
+    );
+    assert_eq!(
+        normalized_verify_ops(&recorded),
+        reference["outerValue2PublicTranscript"]
+    );
+    let replay = recorded
+        .public
+        .initial()
+        .query(
+            recorded.public.verify_ops(),
+            None,
+            &recorded.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(
+        replay.context.effects,
+        recorded.execution.context.query.effects
+    );
+}
+
+#[test]
+fn parameterized_value_helper_short_circuits_on_callee_witness_error() {
+    let context = initial_state(ConstructorContext::new(7_u64))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let contract = Contract::from(RejectThirdOrderedWitness);
+    assert!(matches!(
+        contract.recording().outerValue2(context),
+        Err(CompactError::AssertionFailed(message)) if message == "third witness rejected"
+    ));
+}
+
+fn normalized_verify_ops(
+    recorded: &midnight_compact_runtime::recording::RecordedCircuitResult<u64, ()>,
+) -> serde_json::Value {
+    fn normalize(value: &mut serde_json::Value) {
+        match value {
+            serde_json::Value::Object(object) => {
+                if object.contains_key("alignment") {
+                    if let Some(serde_json::Value::Array(chunks)) = object.get_mut("value") {
+                        for chunk in chunks {
+                            if let serde_json::Value::Array(bytes) = chunk {
+                                let bytes = bytes
+                                    .iter()
+                                    .map(|byte| byte.as_u64().unwrap() as u8)
+                                    .collect::<Vec<_>>();
+                                *chunk = serde_json::json!({ "bytesHex": hex::encode(bytes) });
+                            }
+                        }
+                    }
+                }
+                for child in object.values_mut() {
+                    normalize(child);
+                }
+            }
+            serde_json::Value::Array(values) => {
+                for child in values {
+                    normalize(child);
+                }
+            }
+            _ => {}
+        }
+    }
+    let mut ops = serde_json::to_value(recorded.public.verify_ops()).unwrap();
+    normalize(&mut ops);
+    ops
 }
 
 fn assert_transcript(

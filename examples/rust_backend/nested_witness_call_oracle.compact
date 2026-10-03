@@ -16,6 +16,7 @@
 import CompactStandardLibrary;
 
 witness secret(): Field;
+witness ordered(): Field;
 export ledger value: Field;
 
 circuit inner(next: Field): [] {
@@ -36,4 +37,12 @@ circuit innerValue(): Field {
 
 export circuit outerValue(): [] {
   value = innerValue();
+}
+
+circuit innerValue2(first: Field, second: Field): Field {
+  return disclose(ordered()) + first + second;
+}
+
+export circuit outerValue2(): [] {
+  value = innerValue2(disclose(ordered()), disclose(ordered()));
 }

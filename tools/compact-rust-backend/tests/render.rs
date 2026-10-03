@@ -1828,6 +1828,59 @@ fn recorded_field_returning_helper_is_shared_across_callers() {
     );
     assert!(source.contains("pub fn outerA<Private"));
     assert!(source.contains("pub fn outerB<Private"));
+
+    contract.stateful_circuits[0].parameters = vec![
+        Parameter {
+            name: "first".into(),
+            ty: Type::Field,
+        },
+        Parameter {
+            name: "second".into(),
+            ty: Type::Field,
+        },
+    ];
+    contract.stateful_circuits[0].return_value = StateReturn::Expression {
+        value: Expr::Add {
+            left: Box::new(Expr::WitnessCall {
+                name: "secret".into(),
+                arguments: vec![],
+            }),
+            right: Box::new(Expr::Add {
+                left: Box::new(Expr::Parameter {
+                    name: "first".into(),
+                }),
+                right: Box::new(Expr::Parameter {
+                    name: "second".into(),
+                }),
+            }),
+        },
+    };
+    for circuit in &mut contract.stateful_circuits[1..] {
+        let StateAction::Let { bindings, .. } = &mut circuit.actions[0] else {
+            unreachable!()
+        };
+        bindings[0].value = Expr::Call {
+            name: "innerValue".into(),
+            arguments: vec![
+                Expr::FieldLiteral { value: "1".into() },
+                Expr::FieldLiteral { value: "2".into() },
+            ],
+        };
+    }
+    let source = render(&contract).unwrap();
+    syn::parse_file(&source).unwrap();
+    assert_eq!(
+        source
+            .matches("fn __compact_recorded_body_innerValue<")
+            .count(),
+        1
+    );
+    assert_eq!(
+        source.matches("__compact_recorded_body_innerValue").count(),
+        3
+    );
+    assert!(source.contains("__compact_param_0: runtime::Field"));
+    assert!(source.contains("__compact_param_1: runtime::Field"));
 }
 
 #[test]

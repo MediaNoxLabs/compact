@@ -309,6 +309,14 @@ impl expression_contract::Witnesses<u64> for NestedSecret {
     ) -> (u64, Field) {
         (*context.private_state + 1, Field::from(7_u64))
     }
+
+    fn ordered(
+        &self,
+        context: WitnessContext<'_, u64, expression_contract::LedgerView<'_>>,
+    ) -> (u64, Field) {
+        let private = *context.private_state;
+        (private + 1, Field::from(private))
+    }
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -575,7 +583,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
     if let Some(expression_root) = expression_root {
         let expression_root = Path::new(&expression_root);
-        for circuit in ["outer", "outerValue"] {
+        for circuit in ["outer", "outerValue", "outerValue2"] {
             let initial = expression_contract::initial_state(ConstructorContext::new(7_u64))?;
             let deploy = make_deploy(
                 expression_root,
@@ -588,10 +596,14 @@ fn main() -> Result<(), Box<dyn Error>> {
             let recorded = match circuit {
                 "outer" => contract.recording().outer(context)?,
                 "outerValue" => contract.recording().outerValue(context)?,
+                "outerValue2" => contract.recording().outerValue2(context)?,
                 _ => unreachable!(),
             };
-            if recorded.execution.private_transcript_outputs.len() != 1 {
-                return Err(format!("{circuit} did not record one private value").into());
+            let expected_outputs = if circuit == "outerValue2" { 3 } else { 1 };
+            if recorded.execution.private_transcript_outputs.len() != expected_outputs {
+                return Err(
+                    format!("{circuit} did not record {expected_outputs} private values").into(),
+                );
             }
             let call = check_generated_trace(expression_root, circuit, recorded, ())?;
             check_transaction(
@@ -604,10 +616,18 @@ fn main() -> Result<(), Box<dyn Error>> {
                     let StateValue::Array(fields) = contract.data.get_ref() else {
                         return Err("nested expression state is not an array".into());
                     };
+                    let expected = if circuit == "outerValue2" {
+                        24_u64
+                    } else {
+                        7_u64
+                    };
                     if read_cell::<Field, _>(fields.get(0).ok_or("Field Cell missing")?)?
-                        != Field::from(7_u64)
+                        != Field::from(expected)
                     {
-                        return Err("proven nested expression did not write Field 7".into());
+                        return Err(format!(
+                            "proven nested expression did not write Field {expected}"
+                        )
+                        .into());
                     }
                     Ok(())
                 },

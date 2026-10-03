@@ -71,10 +71,10 @@ supported Unit-returning stateful call uses one private, frame-taking Rust
 helper for each referenced callee. Calls evaluate typed arguments in source
 order and share the frame across nested witness and ledger operations. The
 recorded emitter also shares a private frame-taking helper for a supported
-parameterless Field-returning callee used in a Field action binding, preserving
-the witness result for the subsequent write. Parameterized value calls and
-value calls nested inside larger expressions still use inline lowering. The
-recorded emitter evaluates supported Field reads, witness
+Field-returning callee with no actions used in a Field action binding. It
+evaluates typed arguments in source order and preserves the witness result for
+the subsequent write. Value calls nested inside larger expressions still use
+inline lowering. The recorded emitter evaluates supported Field reads, witness
 calls, addition, and internal Field-returning calls in source order. Supported
 root Set and Map mutation, membership, lookup, size, and emptiness calls have
 replayable recorded methods, including declaration-typed `FixedVector` keys in
@@ -236,7 +236,7 @@ generated recorded trace, proves it against emitted ZKIR and keys, and rejects
 a changed binding input. It also validates offline ledger-8 deployments and
 proves, verifies, validates, and applies the supported Counter, Cell, Set,
 Map, List, enum Cell, `tiny`, plain/historic Merkle append, and vector-key Set
-insert call fixtures (55 offline calls). `tiny` is proved in both
+insert call fixtures (56 offline calls). `tiny` is proved in both
 present and absent `get` branches. Other circuit operations still need
 recording coverage before wallet submission.
 

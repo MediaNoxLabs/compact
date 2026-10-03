@@ -21,8 +21,19 @@ import * as runtime from '../../../runtime/dist/index.js';
 const [contractPath] = process.argv.slice(2);
 if (!contractPath) throw new Error('expected contract/index.js');
 const { Contract } = await import(pathToFileURL(contractPath).href);
+const queryCosts = [];
+const originalQuery = runtime.QueryContext.prototype.query;
+runtime.QueryContext.prototype.query = function (...args) {
+  const result = originalQuery.call(this, ...args);
+  queryCosts.push({
+    gasCost: result.gasCost,
+    opTags: args[0].map((op) => Object.keys(op)[0]),
+  });
+  return result;
+};
 const contract = new Contract({
   secret: ({ privateState }) => [privateState + 1, 7n],
+  ordered: ({ privateState }) => [privateState + 1, BigInt(privateState)],
 });
 const coinPublicKey = { bytes: new Uint8Array(32) };
 const initial = contract.initialState({
@@ -43,12 +54,29 @@ const outerValue = contract.circuits.outerValue(outer.context);
 initial.currentContractState.data = new runtime.ChargedState(
   outerValue.context.currentQueryContext.state.state,
 );
+const afterOuterValueHex = Buffer.from(initial.currentContractState.serialize()).toString('hex');
+const outerValue2QueryStart = queryCosts.length;
+const outerValue2 = contract.circuits.outerValue2(outerValue.context);
+initial.currentContractState.data = new runtime.ChargedState(
+  outerValue2.context.currentQueryContext.state.state,
+);
+function normalize(value) {
+  if (typeof value === 'bigint') return value.toString();
+  if (value instanceof Uint8Array) return { bytesHex: Buffer.from(value).toString('hex') };
+  if (Array.isArray(value)) return value.map(normalize);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([key, inner]) => [key, normalize(inner)]));
+  }
+  return value;
+}
 process.stdout.write(JSON.stringify({
   initialHex,
   afterOuterHex,
-  afterOuterValueHex: Buffer.from(initial.currentContractState.serialize()).toString('hex'),
+  afterOuterValueHex,
+  afterOuterValue2Hex: Buffer.from(initial.currentContractState.serialize()).toString('hex'),
   privateState: outer.context.currentPrivateState,
   afterOuterValuePrivateState: outerValue.context.currentPrivateState,
+  afterOuterValue2PrivateState: outerValue2.context.currentPrivateState,
   privateTranscriptOutputs: outer.proofData.privateTranscriptOutputs.map(
     ({ value, alignment }) => ({
       valueAtoms: value.map((atom) => Array.from(atom)),
@@ -61,4 +89,13 @@ process.stdout.write(JSON.stringify({
       alignment,
     }),
   ),
+  outerValue2Transcript: outerValue2.proofData.privateTranscriptOutputs.map(
+    ({ value, alignment }) => ({
+      valueAtoms: value.map((atom) => Array.from(atom)),
+      alignment,
+    }),
+  ),
+  outerValue2Gas: normalize(outerValue2.gasCost),
+  outerValue2Queries: normalize(queryCosts.slice(outerValue2QueryStart)),
+  outerValue2PublicTranscript: normalize(outerValue2.proofData.publicTranscript),
 }, null, 2) + '\n');

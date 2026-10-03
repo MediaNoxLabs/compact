@@ -824,7 +824,7 @@ def main() -> None:
             nested_witness_proof = base / "nested-witness-proof"
             run(compiler, "--target", "rust", str(NESTED_WITNESS_SOURCE), str(nested_witness_proof))
             check_manifest(nested_witness_proof)
-            for circuit in ("outer", "outerValue"):
+            for circuit in ("outer", "outerValue", "outerValue2"):
                 for extension in ("prover", "verifier"):
                     assert (nested_witness_proof / "keys" / f"{circuit}.{extension}").is_file()
                 for extension in ("zkir", "bzkir"):

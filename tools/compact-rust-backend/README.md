@@ -316,8 +316,8 @@ export COMPACT_RUST_COUNTER_ARTIFACTS=target/compact-rust-counter-live
 ```
 
 The driver writes the indexed `ContractState` to a temporary file, passes the
-action's transaction hash, block hash and height, then invokes the ABI-20 Rust
-builder. Its generated `increment_call` method records from
+action's transaction hash, block hash and height, then invokes the Rust
+builder introduced at ABI 20. Its generated `increment_call` method records from
 `ObservedContractState`, and `RecordedCall::prepare` checks the installed
 verifier against the emitted artifact. The builder proves and submits a new
 call and requires a second indexed `ContractCall` with `round` equal to 2.
@@ -326,6 +326,14 @@ projected `round = 2` state before wallet balancing. The caller remains
 responsible for the indexer/address association and chain finality. ADR-0041 and
 [issue #140](https://github.com/MediaNoxLabs/compact/issues/140) record this
 Counter-specific decision and its broader production limits.
+
+At signed/DCO ABI-28 commit `e75f13ba`, this pinned local stack admitted the
+Rust-exported deployment, first call, and generated confirmed-state second
+call through wallet facade 3.0.0. The indexed Counter state advanced from
+`round = 1` to `round = 2`; the last call's block matched the node's canonical
+hash under finalized head. The [same-head delivery record](https://github.com/MediaNoxLabs/compact/issues/105#issuecomment-5972867741)
+gives the exact source, versions, proof and transaction evidence. This result
+uses a trusted local node and indexer; remote CI and release gates remain open.
 
 The wallet operations are equivalent to:
 

@@ -79,10 +79,15 @@ shapes, validates and applies each against an offline ledger, and checks the
 resulting contract state. Its counter call also seals a transaction and
 round-trips its bytes through the pinned JavaScript ledger-v8 decoder. The
 default fixture uses a local test network, TTL zero, and disabled balancing.
-Earlier ABI-20 work admitted a deploy and two calls on a funded local devnet;
-the current ABI-28 head still needs a same-head wallet/node run. Remote CI,
-runtime publication and a portable multi-contract distribution remain
-Milestone 2 work.
+At signed/DCO ABI-28 commit `e75f13ba`, a funded isolated node 0.22.3,
+indexer 4.0.1 and proof server 8.0.3 admitted the Rust-exported deploy and
+call through wallet facade 3.0.0. A generated call built from the finalized
+indexed Counter state then advanced `round` from 1 to 2. The wallet driver
+matched each submitted transaction to an indexed action and checked its block
+against the connected node's canonical hash under finalized head. This local
+observation trusts that node and indexer. Remote CI, authenticated finality,
+runtime publication and portable multi-contract distribution remain Milestone
+2 work.
 
 ## Implemented slices
 

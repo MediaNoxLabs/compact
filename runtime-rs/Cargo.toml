@@ -30,7 +30,7 @@ ledger-transaction = ["dep:midnight-ledger"]
 
 [dependencies]
 midnight-compact-runtime-macros = { version = "=0.1.0", path = "../runtime-rs-macros" }
-# Exact crates published with midnight-ledger's ledger-8.0.2 tag. They share
+# Exact crates published with midnight-ledger's ledger-8.0.3 tag. They share
 # representation and VM APIs; minor-version mixing has already broken the VM.
 midnight-base-crypto = "=1.0.0"
 midnight-coin-structure = "=2.0.1"
@@ -39,22 +39,20 @@ midnight-onchain-state = "=3.0.0"
 midnight-onchain-vm = "=3.0.0"
 midnight-serialize = "=1.0.0"
 midnight-storage = "=2.0.1"
-midnight-storage-core = "=1.0.2"
+midnight-storage-core = "=1.1.0"
 midnight-transient-crypto = "=2.0.1"
 
-# The matching midnight-zk graph from ledger-8.0.2's Cargo.lock.
+# The matching midnight-zk graph from ledger-8.0.3's Cargo.lock.
 midnight-circuits = "=6.0.0"
 midnight-curves = "=0.2.0"
 midnight-proofs = "=0.7.0"
 midnight-zk-stdlib = "=1.0.0"
-# The ledger-8.0.2 lock names 8.0.1, which is no longer available on
-# crates.io. 8.0.0 is the published 8.0 line used for the context envelope.
-midnight-zswap = "=8.0.0"
-midnight-ledger = { version = "=8.0.2", optional = true }
+midnight-zswap = "=8.0.3"
+midnight-ledger = { version = "=8.0.3", optional = true }
 sha3 = "=0.10.8"
 
 [dev-dependencies]
 hex = "0.4"
-midnight-ledger = "=8.0.2"
+midnight-ledger = "=8.0.3"
 serde = "1"
 serde_json = "1"

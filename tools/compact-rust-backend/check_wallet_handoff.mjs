@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Check the exact ledger-v8 binary boundary used by the Midnight wallet SDK.
-// The caller installs @midnight-ntwrk/ledger-v8@8.0.2 into a temporary prefix.
+// The caller installs @midnight-ntwrk/ledger-v8@8.0.3 into a temporary prefix.
 
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -19,8 +19,8 @@ const [deployPath, transactionPath, packageRoot] = arguments_.length === 3
 
 const packageDirectory = resolve(packageRoot);
 const manifest = JSON.parse(await readFile(resolve(packageDirectory, 'package.json'), 'utf8'));
-if (manifest.name !== '@midnight-ntwrk/ledger-v8' || manifest.version !== '8.0.2') {
-  throw new Error(`expected @midnight-ntwrk/ledger-v8@8.0.2, got ${manifest.name}@${manifest.version}`);
+if (manifest.name !== '@midnight-ntwrk/ledger-v8' || manifest.version !== '8.0.3') {
+  throw new Error(`expected @midnight-ntwrk/ledger-v8@8.0.3, got ${manifest.name}@${manifest.version}`);
 }
 
 const ledger = await import(pathToFileURL(resolve(packageDirectory, 'midnight_ledger_wasm_fs.js')).href);
@@ -50,7 +50,7 @@ if (deployPath) {
   if (deployAddress !== callAddress) {
     throw new Error(`deployment and call addresses differ: ${deployAddress} != ${callAddress}`);
   }
-  console.log(`ledger-v8 8.0.2 decoded ${deployBytes.length} deployment and ${bytes.length} call bytes at ${deployAddress}`);
+  console.log(`ledger-v8 8.0.3 decoded ${deployBytes.length} deployment and ${bytes.length} call bytes at ${deployAddress}`);
 } else {
-  console.log(`ledger-v8 8.0.2 decoded and reserialized ${bytes.length} proven transaction bytes`);
+  console.log(`ledger-v8 8.0.3 decoded and reserialized ${bytes.length} proven transaction bytes`);
 }

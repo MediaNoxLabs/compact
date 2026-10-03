@@ -211,7 +211,7 @@ node tools/compact-rust-backend/check_wallet_handoff.mjs \
   tools/compact-rust-backend/wallet-handoff/node_modules/@midnight-ntwrk/ledger-v8
 ```
 
-The pinned `@midnight-ntwrk/ledger-v8@8.0.2` decoder checks both transactions'
+The pinned `@midnight-ntwrk/ledger-v8@8.0.3` decoder checks both transactions'
 signature, proof and binding markers, one deploy and one call, matching
 addresses, and byte-for-byte reserialization. The proof gate applies the
 deployment with ledger semantics before checking and applying the call. These

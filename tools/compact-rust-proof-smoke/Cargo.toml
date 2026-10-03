@@ -22,7 +22,7 @@ publish = false
 description = "Ledger-8 proof compatibility gate for Rust Compact output"
 
 [dependencies]
-# Match midnight-ledger ledger-8.0.2's ZKIR and crypto graph.
+# Match midnight-ledger ledger-8.0.3's ZKIR and crypto graph.
 compact-rust-counter-fixture = { path = "../../tests-rust-backend/counter" }
 compact-rust-cell-boolean-fixture = { path = "../../tests-rust-backend/cell-boolean" }
 compact-rust-cell-read-fixture = { path = "../../tests-rust-backend/cell-read" }
@@ -43,7 +43,7 @@ compact-rust-witness-cell-write-fixture = { path = "../../tests-rust-backend/wit
 compact-rust-stateful-circuit-call-fixture = { path = "../../tests-rust-backend/stateful-circuit-call" }
 compact-rust-nested-witness-call-oracle-fixture = { path = "../../tests-rust-backend/nested-witness-call-oracle" }
 midnight-compact-runtime = { path = "../../runtime-rs", features = ["ledger-transaction"] }
-midnight-ledger = "=8.0.2"
+midnight-ledger = "=8.0.3"
 midnight-onchain-state = "=3.0.0"
 midnight-onchain-runtime = "=3.0.0"
 midnight-storage = "=2.0.1"
@@ -55,7 +55,7 @@ midnight-circuits = "=6.0.0"
 midnight-curves = "=0.2.0"
 midnight-proofs = "=0.7.0"
 midnight-zk-stdlib = "=1.0.0"
-midnight-storage-core = "=1.0.2"
+midnight-storage-core = "=1.1.0"
 rand = "=0.8.5"
 rand_chacha = "=0.3.1"
 futures-executor = "=0.3.32"

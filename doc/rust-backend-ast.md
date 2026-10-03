@@ -120,7 +120,7 @@ with generated TypeScript, including private state and transcript order.
 The runtime facade in `runtime-rs` reexports `Fr` from
 `midnight-transient-crypto` 2.0.1 as Compact `Field`. It also reexports the
 ledger's `FieldRepr` and `FromFieldRepr` traits and derive macros, and the
-`MemWrite` trait they use. This preserves the ledger-8.0.2 field and encoding
+`MemWrite` trait they use. This preserves the ledger-8.0.3 field and encoding
 line instead of introducing another field implementation. The transitive
 midnight-zk crates supply curves and proof primitives.
 The transient natives take a typed Compact value, encode only its value through
@@ -167,9 +167,9 @@ those because its point type represents a valid ledger point.
 The runtime also exposes ledger-owned `ChargedState`, `QueryContext`, and
 Zswap state through constructor and circuit context envelopes. Its FAB tests
 compare Field, Boolean, Bytes, and Uint alignment and normalized values with
-the ledger-8 implementations. The ledger-8.0.2 lock references
-`midnight-zswap` 8.0.1, which is no longer published; the runtime pins 8.0.0
-from the same 8.0 line.
+the ledger-8 implementations. The ledger-8.0.3 dependency graph pins
+`midnight-zswap` 8.0.3 and `midnight-storage-core` 1.1.0 alongside
+`midnight-ledger` 8.0.3.
 
 A direct witness return now has a typed declaration and call in the IR. The
 generated `Witnesses<Private>` trait receives a borrowed context with a

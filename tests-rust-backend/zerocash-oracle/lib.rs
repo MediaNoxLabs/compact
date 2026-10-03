@@ -201,7 +201,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 15);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 16);
     pub(crate) fn merkleTreePathRoot(
         path: crate::types::MerkleTreePath,
     ) -> Result<crate::types::MerkleTreeDigest, runtime::CompactError> {
@@ -302,7 +302,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 15);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 16);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -344,6 +344,8 @@ pub mod ledger_contract {
             self.meter.read_cell::<runtime::OpaqueBytes>(&[2])
         }
     }
+    /// Implement for infallible callbacks; use TryWitnesses for fallible ledger reads.
+    #[runtime::compact_witness_bridge]
     pub trait Witnesses<Private> {
         fn private_zk_secret_key(
             &self,
@@ -378,114 +380,6 @@ pub mod ledger_contract {
             __compact_param_0: runtime::OpaqueBytes,
             __compact_param_1: crate::types::coin_info,
         ) -> (Private, runtime::OpaqueBytes);
-    }
-    /// Witness methods that can propagate ledger projection failures.
-    pub trait TryWitnesses<Private> {
-        fn private_zk_secret_key(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-        ) -> Result<(Private, crate::types::zk_secret_key), runtime::CompactError>;
-        fn private_remove_coin(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-            __compact_param_0: crate::types::coin_info,
-        ) -> Result<(Private, ()), runtime::CompactError>;
-        fn private_zk_public_key(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-        ) -> Result<(Private, crate::types::zk_public_key), runtime::CompactError>;
-        fn private_add_coin(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-            __compact_param_0: crate::types::coin_info,
-        ) -> Result<(Private, ()), runtime::CompactError>;
-        fn context_path_of(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-            __compact_param_0: crate::types::commitment,
-        ) -> Result<(Private, crate::types::MerkleTreePath), runtime::CompactError>;
-        fn context_new_coin_info(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-        ) -> Result<(Private, crate::types::coin_info), runtime::CompactError>;
-        fn context_encrypt(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-            __compact_param_0: runtime::OpaqueBytes,
-            __compact_param_1: crate::types::coin_info,
-        ) -> Result<(Private, runtime::OpaqueBytes), runtime::CompactError>;
-    }
-    impl<Private, W: Witnesses<Private>> TryWitnesses<Private> for W {
-        fn private_zk_secret_key(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-        ) -> Result<(Private, crate::types::zk_secret_key), runtime::CompactError> {
-            Ok(<W as Witnesses<Private>>::private_zk_secret_key(
-                self, context,
-            ))
-        }
-        fn private_remove_coin(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-            __compact_param_0: crate::types::coin_info,
-        ) -> Result<(Private, ()), runtime::CompactError> {
-            Ok(<W as Witnesses<Private>>::private_remove_coin(
-                self,
-                context,
-                __compact_param_0,
-            ))
-        }
-        fn private_zk_public_key(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-        ) -> Result<(Private, crate::types::zk_public_key), runtime::CompactError> {
-            Ok(<W as Witnesses<Private>>::private_zk_public_key(
-                self, context,
-            ))
-        }
-        fn private_add_coin(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-            __compact_param_0: crate::types::coin_info,
-        ) -> Result<(Private, ()), runtime::CompactError> {
-            Ok(<W as Witnesses<Private>>::private_add_coin(
-                self,
-                context,
-                __compact_param_0,
-            ))
-        }
-        fn context_path_of(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-            __compact_param_0: crate::types::commitment,
-        ) -> Result<(Private, crate::types::MerkleTreePath), runtime::CompactError> {
-            Ok(<W as Witnesses<Private>>::context_path_of(
-                self,
-                context,
-                __compact_param_0,
-            ))
-        }
-        fn context_new_coin_info(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-        ) -> Result<(Private, crate::types::coin_info), runtime::CompactError> {
-            Ok(<W as Witnesses<Private>>::context_new_coin_info(
-                self, context,
-            ))
-        }
-        fn context_encrypt(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-            __compact_param_0: runtime::OpaqueBytes,
-            __compact_param_1: crate::types::coin_info,
-        ) -> Result<(Private, runtime::OpaqueBytes), runtime::CompactError> {
-            Ok(<W as Witnesses<Private>>::context_encrypt(
-                self,
-                context,
-                __compact_param_0,
-                __compact_param_1,
-            ))
-        }
     }
     pub fn initial_state<Private>(
         __compact_context: runtime::context::ConstructorContext<Private>,

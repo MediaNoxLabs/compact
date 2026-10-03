@@ -40,7 +40,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 15);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 16);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -54,7 +54,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 15);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 16);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -62,10 +62,9 @@ pub mod ledger_contract {
         meter: &'a runtime::context::WitnessReadMeter<'a>,
     }
     impl<'a> LedgerView<'a> {}
+    /// Implement for infallible callbacks; use TryWitnesses for fallible ledger reads.
+    #[runtime::compact_witness_bridge]
     pub trait Witnesses<Private> {}
-    /// Witness methods that can propagate ledger projection failures.
-    pub trait TryWitnesses<Private> {}
-    impl<Private, W: Witnesses<Private>> TryWitnesses<Private> for W {}
     pub fn initial_state<Private>(
         __compact_context: runtime::context::ConstructorContext<Private>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {

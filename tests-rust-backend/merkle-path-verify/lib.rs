@@ -87,7 +87,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 15);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 16);
     pub(crate) fn merkleTreePathRoot(
         path: crate::types::MerkleTreePath,
     ) -> Result<crate::types::MerkleTreeDigest, runtime::CompactError> {
@@ -143,7 +143,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 15);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 16);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -168,26 +168,13 @@ pub mod ledger_contract {
             )
         }
     }
+    /// Implement for infallible callbacks; use TryWitnesses for fallible ledger reads.
+    #[runtime::compact_witness_bridge]
     pub trait Witnesses<Private> {
         fn leaf_path(
             &self,
             context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
         ) -> (Private, crate::types::MerkleTreePath);
-    }
-    /// Witness methods that can propagate ledger projection failures.
-    pub trait TryWitnesses<Private> {
-        fn leaf_path(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-        ) -> Result<(Private, crate::types::MerkleTreePath), runtime::CompactError>;
-    }
-    impl<Private, W: Witnesses<Private>> TryWitnesses<Private> for W {
-        fn leaf_path(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-        ) -> Result<(Private, crate::types::MerkleTreePath), runtime::CompactError> {
-            Ok(<W as Witnesses<Private>>::leaf_path(self, context))
-        }
     }
     pub fn initial_state<Private>(
         __compact_context: runtime::context::ConstructorContext<Private>,

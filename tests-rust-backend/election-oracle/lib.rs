@@ -139,7 +139,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 15);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 16);
     pub(crate) fn merkleTreePathRoot(
         path: crate::types::MerkleTreePath,
     ) -> Result<crate::types::MerkleTreeDigest, runtime::CompactError> {
@@ -280,7 +280,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 15);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 16);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -372,6 +372,8 @@ pub mod ledger_contract {
             )
         }
     }
+    /// Implement for infallible callbacks; use TryWitnesses for fallible ledger reads.
+    #[runtime::compact_witness_bridge]
     pub trait Witnesses<Private> {
         fn private_secret_key(
             &self,
@@ -404,101 +406,6 @@ pub mod ledger_contract {
             context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
             __compact_param_0: runtime::FixedBytes<32>,
         ) -> (Private, crate::types::MaybeCompact1);
-    }
-    /// Witness methods that can propagate ledger projection failures.
-    pub trait TryWitnesses<Private> {
-        fn private_secret_key(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-        ) -> Result<(Private, runtime::FixedBytes<32>), runtime::CompactError>;
-        fn private_state(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-        ) -> Result<(Private, crate::types::PrivateState), runtime::CompactError>;
-        fn private_state_advance(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-        ) -> Result<(Private, ()), runtime::CompactError>;
-        fn private_vote_record(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-            __compact_param_0: crate::types::PermissibleVotes,
-        ) -> Result<(Private, ()), runtime::CompactError>;
-        fn private_vote(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-        ) -> Result<(Private, crate::types::PermissibleVotes), runtime::CompactError>;
-        fn context_eligible_voters_path_of(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-            __compact_param_0: runtime::FixedBytes<32>,
-        ) -> Result<(Private, crate::types::MaybeCompact1), runtime::CompactError>;
-        fn context_committed_votes_path_of(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-            __compact_param_0: runtime::FixedBytes<32>,
-        ) -> Result<(Private, crate::types::MaybeCompact1), runtime::CompactError>;
-    }
-    impl<Private, W: Witnesses<Private>> TryWitnesses<Private> for W {
-        fn private_secret_key(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-        ) -> Result<(Private, runtime::FixedBytes<32>), runtime::CompactError> {
-            Ok(<W as Witnesses<Private>>::private_secret_key(self, context))
-        }
-        fn private_state(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-        ) -> Result<(Private, crate::types::PrivateState), runtime::CompactError> {
-            Ok(<W as Witnesses<Private>>::private_state(self, context))
-        }
-        fn private_state_advance(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-        ) -> Result<(Private, ()), runtime::CompactError> {
-            Ok(<W as Witnesses<Private>>::private_state_advance(
-                self, context,
-            ))
-        }
-        fn private_vote_record(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-            __compact_param_0: crate::types::PermissibleVotes,
-        ) -> Result<(Private, ()), runtime::CompactError> {
-            Ok(<W as Witnesses<Private>>::private_vote_record(
-                self,
-                context,
-                __compact_param_0,
-            ))
-        }
-        fn private_vote(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-        ) -> Result<(Private, crate::types::PermissibleVotes), runtime::CompactError> {
-            Ok(<W as Witnesses<Private>>::private_vote(self, context))
-        }
-        fn context_eligible_voters_path_of(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-            __compact_param_0: runtime::FixedBytes<32>,
-        ) -> Result<(Private, crate::types::MaybeCompact1), runtime::CompactError> {
-            Ok(<W as Witnesses<Private>>::context_eligible_voters_path_of(
-                self,
-                context,
-                __compact_param_0,
-            ))
-        }
-        fn context_committed_votes_path_of(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-            __compact_param_0: runtime::FixedBytes<32>,
-        ) -> Result<(Private, crate::types::MaybeCompact1), runtime::CompactError> {
-            Ok(<W as Witnesses<Private>>::context_committed_votes_path_of(
-                self,
-                context,
-                __compact_param_0,
-            ))
-        }
     }
     pub fn initial_state<Private>(
         __compact_context: runtime::context::ConstructorContext<Private>,

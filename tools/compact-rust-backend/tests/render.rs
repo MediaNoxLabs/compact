@@ -210,7 +210,7 @@ fn generated_unit_enum_uses_checked_derive_without_handwritten_codecs() {
     let source = render(&contract).unwrap();
     assert!(source.contains("CompactCellValue, CompactEnum"));
     assert!(source.contains("pub enum Choice"));
-    assert!(source.contains("RUST_RUNTIME_ABI == 15"));
+    assert!(source.contains("RUST_RUNTIME_ABI == 16"));
     assert!(!source.contains("impl FieldRepr for Choice"));
     assert!(!source.contains("impl BinaryHashRepr for Choice"));
     assert!(!source.contains("impl FromFieldRepr for Choice"));
@@ -1606,9 +1606,10 @@ fn witness_calls_require_a_declared_witness_and_matching_signature() {
     let source = render(&contract).unwrap();
     syn::parse_file(&source).unwrap();
     assert!(source.contains("pub trait Witnesses<Private>"));
+    assert!(source.contains("#[runtime::compact_witness_bridge]"));
     assert!(source.contains("private_transcript_outputs"));
     assert!(source.contains("pub struct Contract<W>"));
-    assert!(source.contains("W: Witnesses<Private>"));
+    assert!(source.contains("W: TryWitnesses<Private>"));
     assert!(source.contains("crate::ledger_contract::read_secret("));
     assert!(source.contains("&self.witnesses"));
 
@@ -1708,7 +1709,8 @@ fn witnessed_field_cell_and_nested_call_use_native_frame() {
     assert!(source.contains("meter: &'a runtime::context::WitnessReadMeter<'a>"));
     assert!(source.contains("self.meter.read_cell::<runtime::Field>(&[0])"));
     assert!(source.contains(".try_witness_metered(|context, meter|"));
-    assert!(source.contains("pub trait TryWitnesses<Private>"));
+    assert!(source.contains("#[runtime::compact_witness_bridge]"));
+    assert!(!source.contains("pub trait TryWitnesses<Private>"));
     assert!(source.contains("ledger_slots::cell.write(context"));
     assert!(source.contains(".apply(|context|"));
     assert!(source.contains("self::inner(context, witnesses"));

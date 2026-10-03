@@ -104,7 +104,7 @@ pub use types::Schnorr_SchnorrSignature;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 15);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 16);
     pub fn attestationDigest(
         subject: runtime::FixedBytes<32>,
         epoch: runtime::BoundedUint<18446744073709551615>,
@@ -141,7 +141,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 15);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 16);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -162,6 +162,8 @@ pub mod ledger_contract {
             self.meter.read_cell::<bool>(&[2])
         }
     }
+    /// Implement for infallible callbacks; use TryWitnesses for fallible ledger reads.
+    #[runtime::compact_witness_bridge]
     pub trait Witnesses<Private> {
         fn getSchnorrReduction(
             &self,
@@ -181,61 +183,6 @@ pub mod ledger_contract {
             &self,
             context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
         ) -> (Private, runtime::JubjubPoint);
-    }
-    /// Witness methods that can propagate ledger projection failures.
-    pub trait TryWitnesses<Private> {
-        fn getSchnorrReduction(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-            __compact_param_0: runtime::Field,
-        ) -> Result<
-            (
-                Private,
-                (
-                    runtime::BoundedUint<127>,
-                    runtime::WideUint<
-                        1329227995784915872903807060280344575u128,
-                        340282366920938463463374607431768211455u128,
-                    >,
-                ),
-            ),
-            runtime::CompactError,
-        >;
-        fn localAttestorKey(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-        ) -> Result<(Private, runtime::JubjubPoint), runtime::CompactError>;
-    }
-    impl<Private, W: Witnesses<Private>> TryWitnesses<Private> for W {
-        fn getSchnorrReduction(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-            __compact_param_0: runtime::Field,
-        ) -> Result<
-            (
-                Private,
-                (
-                    runtime::BoundedUint<127>,
-                    runtime::WideUint<
-                        1329227995784915872903807060280344575u128,
-                        340282366920938463463374607431768211455u128,
-                    >,
-                ),
-            ),
-            runtime::CompactError,
-        > {
-            Ok(<W as Witnesses<Private>>::getSchnorrReduction(
-                self,
-                context,
-                __compact_param_0,
-            ))
-        }
-        fn localAttestorKey(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-        ) -> Result<(Private, runtime::JubjubPoint), runtime::CompactError> {
-            Ok(<W as Witnesses<Private>>::localAttestorKey(self, context))
-        }
     }
     pub fn initial_state<Private, W: TryWitnesses<Private>>(
         __compact_context: runtime::context::ConstructorContext<Private>,

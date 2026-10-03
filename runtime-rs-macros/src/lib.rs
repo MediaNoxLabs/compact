@@ -21,6 +21,24 @@ use quote::quote;
 use syn::{Data, DeriveInput, Fields, LitInt, parse_macro_input};
 
 mod merkle;
+mod witness_bridge;
+
+/// Derive the fallible witness trait and infallible adapter from one signature list.
+#[proc_macro_attribute]
+pub fn compact_witness_bridge(attr: TokenStream, item: TokenStream) -> TokenStream {
+    if !attr.is_empty() {
+        return syn::Error::new(
+            Span::call_site(),
+            "compact_witness_bridge takes no arguments",
+        )
+        .into_compile_error()
+        .into();
+    }
+    let input = parse_macro_input!(item as syn::ItemTrait);
+    witness_bridge::expand(input)
+        .unwrap_or_else(syn::Error::into_compile_error)
+        .into()
+}
 
 #[proc_macro_derive(CompactMerkleTreeDigest)]
 pub fn compact_merkle_tree_digest(input: TokenStream) -> TokenStream {

@@ -6,6 +6,9 @@ midnight-zk primitives for fields, encoding, cryptography, state, and VM
 queries. Generated code checks `RUST_RUNTIME_ABI` at compile time. A generated
 crate bundles matching runtime sources by default or points to one shared
 source root when compiled with `--rust-runtime-root`.
+ABI 16 derives the public `TryWitnesses` trait and its infallible adapter from
+one visible generated `Witnesses` trait. The `compact_witness_bridge` attribute
+changes generated source shape without changing witness, ledger, or VM behavior.
 ABI 15 exposes recorded Set/Map circuits with declaration-typed vector keys
 through existing `FixedVector` values and typed slots; it adds no new VM
 builder or representation macro. Recorded entry points are emitted only for

@@ -64,8 +64,8 @@ root List, and plain/historic Merkle descriptors. Nested Maps have a typed struc
 available for native and recorded calls; scalar lookup and value mutations
 remain unavailable until nested value semantics are proven.
 The runtime's recording frame is opt-in. When a circuit has a complete recorded
-trace, the generated `contract.recording` handle exposes it as a typed method.
-For witnessed root Cell circuits, `contract.recording()` borrows the contract's
+trace, the generated `contract.recording()` handle exposes it as a typed method.
+For witnessed root Cell circuits, this handle borrows the contract's
 witness implementation and records private outputs in execution order. A
 supported Unit-returning stateful call uses one private, frame-taking Rust
 helper for each referenced callee. Calls evaluate typed arguments in source
@@ -106,7 +106,7 @@ Compact spelling without warning in consumer builds.
 |---|---|---|
 | Compact compiler | Toolchain 0.31.133, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
 | Rust IR | Schema 8, private to this backend | The renderer rejects any other schema before writing `lib.rs`. Ledger, circuit, witness, constructor, and exported alias declarations carry optional Compact source locations for diagnostics. |
-| Generated code and Rust runtime | ABI 15 | Generated modules assert the ABI at Rust compile time. ABI 15 records supported Set/Map circuits with declaration-typed vector keys through existing `FixedVector` and typed slots; ABI 14 records historic Merkle append with root-history VM semantics; ABI 13 records plain Merkle append through the typed slot and shared VM builder; ABI 12 adds typed plain/historic Merkle slots for native calls; ABI 11 meters Merkle witness VM reads while keeping local projections uncharged; ABI 10 adds fallible `TryWitnesses` and adapts existing pair-returning `Witnesses` implementations; ABI 9 meters List witness reads, ABI 8 Map, ABI 7 Set, ABI 6 Cell/Counter; ABI 5 added structural nested Map slots. |
+| Generated code and Rust runtime | ABI 16 | Generated modules assert the ABI at Rust compile time. ABI 16 derives `TryWitnesses` and its infallible adapter from one visible `Witnesses` trait through the runtime attribute macro; ABI 15 records supported Set/Map circuits with declaration-typed vector keys through existing `FixedVector` and typed slots; ABI 14 records historic Merkle append with root-history VM semantics; ABI 13 records plain Merkle append through the typed slot and shared VM builder; ABI 12 adds typed plain/historic Merkle slots for native calls; ABI 11 meters Merkle witness VM reads while keeping local projections uncharged; ABI 10 adds fallible `TryWitnesses` and adapts existing pair-returning `Witnesses` implementations; ABI 9 meters List witness reads, ABI 8 Map, ABI 7 Set, ABI 6 Cell/Counter; ABI 5 added structural nested Map slots. |
 | Rust runtime source | Bundled runtime crates or an explicit shared source root | Cargo resolves the matching runtime and its pinned Midnight crates. |
 
 `--runtime-version` reports the TypeScript runtime version; the Rust runtime
@@ -116,8 +116,9 @@ artifact. Change the runtime source only alongside an ABI and consumer test revi
 
 ### Fallible witnesses
 
-Generated crates expose `TryWitnesses<Private>` for witnesses that read the
-ledger. Implement its methods with `Result<(Private, T), CompactError>` so a
+Generated crates derive the public `TryWitnesses<Private>` companion from their
+visible `Witnesses<Private>` signatures. Implement its methods with
+`Result<(Private, T), CompactError>` so a
 projection read can use `?`:
 
 ```rust
@@ -131,7 +132,7 @@ impl TryWitnesses<u64> for ReadFlag {
 ```
 
 Existing pair-returning `Witnesses<Private>` implementations continue to work
-through a generated adapter. Choose one trait for each witness type; the
+through the derived adapter. Choose one trait for each witness type; the
 adapter prevents implementing both traits on the same type. A rejected read
 returns `CompactError` from the generated circuit without a partial result.
 

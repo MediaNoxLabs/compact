@@ -6,7 +6,7 @@ mod recorded;
 mod stateful;
 mod witness;
 
-const RUNTIME_ABI_VERSION: u32 = 15;
+const RUNTIME_ABI_VERSION: u32 = 16;
 
 const GENERATED_HEADER: &str = r#"// This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
@@ -2674,8 +2674,6 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
 
     let ledger_view_methods = &witness_syntax.ledger_view_methods;
     let witness_methods = &witness_syntax.trait_methods;
-    let fallible_witness_methods = &witness_syntax.fallible_trait_methods;
-    let witness_adapter_methods = &witness_syntax.adapter_methods;
     let constructor_return: syn::Expr = if constructor_uses_vm {
         let transcript_init: Option<syn::Stmt> = constructor_uses_witness
             .then(|| syn::parse_quote!(let mut private_transcript_outputs = Vec::new();));
@@ -2986,15 +2984,10 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
                     impl<'a> LedgerView<'a> {
                         #(#ledger_view_methods)*
                     }
+                    /// Implement for infallible callbacks; use TryWitnesses for fallible ledger reads.
+                    #[runtime::compact_witness_bridge]
                     pub trait Witnesses<Private> {
                     #(#witness_methods)*
-                }
-                    /// Witness methods that can propagate ledger projection failures.
-                    pub trait TryWitnesses<Private> {
-                    #(#fallible_witness_methods)*
-                }
-                    impl<Private, W: Witnesses<Private>> TryWitnesses<Private> for W {
-                    #(#witness_adapter_methods)*
                 }
                 #initial_state
                 #(#stateful_items)*

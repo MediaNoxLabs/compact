@@ -77,7 +77,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 15);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 16);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -96,7 +96,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 15);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 16);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -153,6 +153,8 @@ pub mod ledger_contract {
             runtime::ledger::metered_list_view::<crate::types::Packet, _>(self.meter, 4)
         }
     }
+    /// Implement for infallible callbacks; use TryWitnesses for fallible ledger reads.
+    #[runtime::compact_witness_bridge]
     pub trait Witnesses<Private> {
         fn inspect_flags(
             &self,
@@ -174,61 +176,6 @@ pub mod ledger_contract {
             &self,
             context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
         ) -> (Private, bool);
-    }
-    /// Witness methods that can propagate ledger projection failures.
-    pub trait TryWitnesses<Private> {
-        fn inspect_flags(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-        ) -> Result<(Private, bool), runtime::CompactError>;
-        fn inspect_counts(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-        ) -> Result<(Private, bool), runtime::CompactError>;
-        fn inspect_tags(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-        ) -> Result<(Private, bool), runtime::CompactError>;
-        fn inspect_choices(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-        ) -> Result<(Private, bool), runtime::CompactError>;
-        fn inspect_packets(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-        ) -> Result<(Private, bool), runtime::CompactError>;
-    }
-    impl<Private, W: Witnesses<Private>> TryWitnesses<Private> for W {
-        fn inspect_flags(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-        ) -> Result<(Private, bool), runtime::CompactError> {
-            Ok(<W as Witnesses<Private>>::inspect_flags(self, context))
-        }
-        fn inspect_counts(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-        ) -> Result<(Private, bool), runtime::CompactError> {
-            Ok(<W as Witnesses<Private>>::inspect_counts(self, context))
-        }
-        fn inspect_tags(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-        ) -> Result<(Private, bool), runtime::CompactError> {
-            Ok(<W as Witnesses<Private>>::inspect_tags(self, context))
-        }
-        fn inspect_choices(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-        ) -> Result<(Private, bool), runtime::CompactError> {
-            Ok(<W as Witnesses<Private>>::inspect_choices(self, context))
-        }
-        fn inspect_packets(
-            &self,
-            context: runtime::context::WitnessContext<'_, Private, LedgerView<'_>>,
-        ) -> Result<(Private, bool), runtime::CompactError> {
-            Ok(<W as Witnesses<Private>>::inspect_packets(self, context))
-        }
     }
     pub fn initial_state<Private>(
         __compact_context: runtime::context::ConstructorContext<Private>,

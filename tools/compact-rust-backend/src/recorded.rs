@@ -914,7 +914,7 @@ fn render_recorded_item(
                 let LedgerFieldKind::Set { ty } = &declaration.declaration else {
                     return Ok(None);
                 };
-                if declaration.index != *index || declaration.physical_path().len() != 1 {
+                if declaration.index != *index {
                     return Ok(None);
                 }
                 if !matches!(
@@ -1564,7 +1564,7 @@ fn render_recorded_item(
                 let LedgerFieldKind::Set { ty } = &declaration.declaration else {
                     return Ok(false);
                 };
-                if declaration.index != *index || declaration.physical_path().len() != 1 {
+                if declaration.index != *index {
                     return Ok(false);
                 }
                 if !matches!(
@@ -2136,7 +2136,6 @@ fn render_recorded_item(
                 .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
             if !matches!(declaration.declaration, LedgerFieldKind::Set { .. })
                 || declaration.index != *index
-                || declaration.physical_path().len() != 1
             {
                 return Ok(None);
             }
@@ -2158,7 +2157,6 @@ fn render_recorded_item(
                 .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
             if !matches!(declaration.declaration, LedgerFieldKind::Set { .. })
                 || declaration.index != *index
-                || declaration.physical_path().len() != 1
             {
                 return Ok(None);
             }

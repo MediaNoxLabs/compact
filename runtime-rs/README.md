@@ -6,6 +6,9 @@ midnight-zk primitives for fields, encoding, cryptography, state, and VM
 queries. Generated code checks `RUST_RUNTIME_ABI` at compile time. A generated
 crate bundles matching runtime sources by default or points to one shared
 source root when compiled with `--rust-runtime-root`.
+ABI 24 emits recorded and observed Set calls for compiler-chunked ledger
+fields. Generated `SetSlot<T>` descriptors pass the complete physical path to
+the existing recording frame; no new ledger VM or FAB encoder is introduced.
 ABI 23 emits recorded and observed call methods for Set circuits whose keys
 are tuples or generated structs, including structs containing vectors and
 tuples. The runtime reuses its existing typed Set slot and upstream FAB traits;

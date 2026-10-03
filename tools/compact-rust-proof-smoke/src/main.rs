@@ -29,6 +29,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use compact_rust_cell_boolean_fixture::ledger_contract as cell_contract;
 use compact_rust_cell_read_fixture::ledger_contract as cell_read_contract;
+use compact_rust_chunked_set_observed_fixture::ledger_contract as chunked_set_contract;
 use compact_rust_constructor_list_actions_fixture::ledger_contract as constructor_list_contract;
 use compact_rust_constructor_map_actions_fixture::ledger_contract as constructor_map_contract;
 use compact_rust_counter_fixture::ledger_contract as counter_contract;
@@ -602,9 +603,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     let vector_key_root = arguments.next();
     let counter_parameter_root = arguments.next();
     let composite_key_root = arguments.next();
+    let chunked_set_root = arguments.next();
     if arguments.next().is_some() {
         return Err(
-            "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output> [witness-output] [nested-output] [nested-witness-output] [set-output] [set-oracle-output] [map-output] [constructor-map-output] [list-output] [constructor-list-output] [enum-cell-output] [tiny-output] [nested-map-shape-output] [list-shapes-output] [merkle-output] [historic-merkle-output] [vector-key-output] [counter-parameter-output] [composite-key-output]"
+            "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output> [witness-output] [nested-output] [nested-witness-output] [set-output] [set-oracle-output] [map-output] [constructor-map-output] [list-output] [constructor-list-output] [enum-cell-output] [tiny-output] [nested-map-shape-output] [list-shapes-output] [merkle-output] [historic-merkle-output] [vector-key-output] [counter-parameter-output] [composite-key-output] [chunked-set-output]"
                 .into(),
         );
     }
@@ -2322,6 +2324,91 @@ fn main() -> Result<(), Box<dyn Error>> {
                 let should_exist = !circuit.starts_with("roundtrip_");
                 if set.size() != usize::from(should_exist) || present != should_exist {
                     return Err("proven composite-key Set differs from expected state".into());
+                }
+                Ok(())
+            })?;
+        }
+    }
+    if let Some(chunked_root) = chunked_set_root.as_ref().map(Path::new) {
+        let contract = chunked_set_contract::Contract::default();
+        let key = (Field::from(42_u64), true);
+        for circuit in ["insert_key", "roundtrip_key", "key_count", "empty"] {
+            let initial = chunked_set_contract::initial_state(ConstructorContext::new(()))?;
+            let deploy = make_deploy(
+                chunked_root,
+                circuit,
+                initial.ledger_state.get_ref().clone(),
+                &mut rng,
+            )?;
+            let context = initial.into_circuit_context(deploy.address());
+            let observed = ObservedContractState::new(
+                deploy.address(),
+                deploy.initial_state.clone(),
+                Observation {
+                    transaction_hash: [0; 32],
+                    block_hash: [0; 32],
+                    block_height: 0,
+                },
+            );
+            let verifier = decode_verifier_key(&fs::read(
+                chunked_root.join(format!("keys/{circuit}.verifier")),
+            )?)?;
+            let (manual, typed) = match circuit {
+                "insert_key" => {
+                    let recorded = contract.recording.insert_key(context, key)?;
+                    let manual = check_generated_trace(chunked_root, circuit, recorded, key)?;
+                    let typed = contract
+                        .recording
+                        .insert_key_call(&observed, (), key)?
+                        .prepare(verifier, Fr::from(0_u64))?;
+                    (manual, typed)
+                }
+                "roundtrip_key" => {
+                    let recorded = contract.recording.roundtrip_key(context, key)?;
+                    if recorded.execution.result {
+                        return Err("chunked Set roundtrip found a removed key".into());
+                    }
+                    let manual = check_generated_trace(chunked_root, circuit, recorded, key)?;
+                    let typed = contract
+                        .recording
+                        .roundtrip_key_call(&observed, (), key)?
+                        .prepare(verifier, Fr::from(0_u64))?;
+                    (manual, typed)
+                }
+                "key_count" => {
+                    let recorded = contract.recording.key_count(context)?;
+                    if recorded.execution.result.value() != 0 {
+                        return Err("fresh chunked Set count is not zero".into());
+                    }
+                    let manual = check_generated_trace(chunked_root, circuit, recorded, ())?;
+                    let typed = contract
+                        .recording
+                        .key_count_call(&observed, ())?
+                        .prepare(verifier, Fr::from(0_u64))?;
+                    (manual, typed)
+                }
+                "empty" => {
+                    let recorded = contract.recording.empty(context)?;
+                    if !recorded.execution.result {
+                        return Err("fresh chunked Set is not empty".into());
+                    }
+                    let manual = check_generated_trace(chunked_root, circuit, recorded, ())?;
+                    let typed = contract
+                        .recording
+                        .empty_call(&observed, ())?
+                        .prepare(verifier, Fr::from(0_u64))?;
+                    (manual, typed)
+                }
+                _ => unreachable!(),
+            };
+            check_observed_call_parity(chunked_root, circuit, &deploy, &manual, &typed)?;
+            check_transaction(chunked_root, circuit, deploy, typed, &mut rng, |state| {
+                let view = set_view_at_path::<(Field, bool), _>(state.data.get_ref(), &[1, 14])?;
+                let should_exist = circuit == "insert_key";
+                if view.size()?.value() != u128::from(should_exist)
+                    || view.member(key) != should_exist
+                {
+                    return Err("proven chunked Set differs from expected state".into());
                 }
                 Ok(())
             })?;

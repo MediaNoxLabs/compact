@@ -43,6 +43,7 @@ MERKLE_SOURCE = ROOT / "examples/rust_backend/merkle_tree_oracle.compact"
 HISTORIC_MERKLE_SOURCE = ROOT / "examples/rust_backend/hmt_insert_oracle.compact"
 VECTOR_KEY_SOURCE = ROOT / "examples/rust_backend/vector_key_adt.compact"
 COMPOSITE_KEY_SOURCE = ROOT / "examples/rust_backend/observed_composite_keys.compact"
+CHUNKED_SET_SOURCE = ROOT / "examples/rust_backend/chunked_set_observed.compact"
 CONSTRUCTOR_LIST_SOURCE = ROOT / "examples/rust_backend/constructor_list_actions.compact"
 RECORDED_ENUM_SOURCE = ROOT / "examples/rust_backend/recorded_enum_cell.compact"
 TINY_SOURCE = ROOT / "examples/rust_backend/tiny_oracle.compact"
@@ -286,6 +287,40 @@ def check_observed_composite_key_consumer(proof: Path, base: Path) -> None:
         cwd=consumer, env=environment, capture_output=True, text=True,
     )
     assert rejected.returncode != 0, "wrong-typed tuple key unexpectedly compiled"
+    assert "error[E0308]" in rejected.stderr, rejected.stderr
+
+
+def check_chunked_set_consumer(proof: Path, base: Path) -> None:
+    """Build the physical-path Set API through the generated crate alone."""
+    contract = proof / "contract"
+    package = tomllib.loads((contract / "Cargo.toml").read_text())
+    consumer = base / "chunked-set-consumer"
+    (consumer / "tests").mkdir(parents=True)
+    (consumer / "Cargo.toml").write_text(
+        "[package]\nname = \"compactc-chunked-set-smoke\"\n"
+        "version = \"0.1.0\"\nedition = \"2024\"\n\n[dependencies]\n"
+        f'{package["package"]["name"]} = {{ path = {json.dumps(str(contract))}, features = ["ledger-transaction"] }}\n'
+    )
+    (consumer / "tests/observed.rs").write_bytes(
+        (ROOT / "tools/compact-rust-backend/consumers/chunked_set_observed.rs").read_bytes()
+    )
+    environment = os.environ.copy()
+    environment.setdefault("CARGO_TARGET_DIR", str(ROOT / "target/compactc-consumer"))
+    environment["COMPACT_RUST_CHUNKED_SET_PROOF"] = str(proof)
+    subprocess.run(["cargo", "test", "--quiet"], cwd=consumer, env=environment, check=True)
+    (consumer / "examples").mkdir()
+    (consumer / "examples/wrong_key.rs").write_text(
+        "use compact_contract_chunked_set_observed::ledger_contract::Contract;\n"
+        "use compact_contract_chunked_set_observed::runtime::{Field, transaction::ObservedContractState};\n"
+        "fn wrong(observed: &ObservedContractState) {\n"
+        "    let _ = Contract::default().recording.insert_key_call(observed, (), (true, Field::from(42_u64)));\n"
+        "}\nfn main() {}\n"
+    )
+    rejected = subprocess.run(
+        ["cargo", "check", "--quiet", "--example", "wrong_key"],
+        cwd=consumer, env=environment, capture_output=True, text=True,
+    )
+    assert rejected.returncode != 0, "wrong-typed chunked Set key unexpectedly compiled"
     assert "error[E0308]" in rejected.stderr, rejected.stderr
 
 
@@ -1054,6 +1089,15 @@ def main() -> None:
                 for extension in ("zkir", "bzkir"):
                     assert (composite_key_proof / "zkir" / f"{circuit}.{extension}").is_file()
             check_observed_composite_key_consumer(composite_key_proof, base)
+            chunked_set_proof = base / "chunked-set-proof"
+            run(compiler, "--target", "rust", str(CHUNKED_SET_SOURCE), str(chunked_set_proof))
+            check_manifest(chunked_set_proof)
+            for circuit in ("insert_key", "roundtrip_key", "key_count", "empty"):
+                for extension in ("prover", "verifier"):
+                    assert (chunked_set_proof / "keys" / f"{circuit}.{extension}").is_file()
+                for extension in ("zkir", "bzkir"):
+                    assert (chunked_set_proof / "zkir" / f"{circuit}.{extension}").is_file()
+            check_chunked_set_consumer(chunked_set_proof, base)
             constructor_list_proof = base / "constructor-list-proof"
             run(compiler, "--target", "rust", str(CONSTRUCTOR_LIST_SOURCE), str(constructor_list_proof))
             check_manifest(constructor_list_proof)
@@ -1098,6 +1142,7 @@ def main() -> None:
                 str(vector_key_proof),
                 str(counter_parameter_proof),
                 str(composite_key_proof),
+                str(chunked_set_proof),
             )
     print("compactc target boundary and manifest: passed")
 

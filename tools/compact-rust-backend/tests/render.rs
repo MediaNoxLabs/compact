@@ -247,7 +247,7 @@ fn generated_unit_enum_uses_checked_derive_without_handwritten_codecs() {
     let source = render(&contract).unwrap();
     assert!(source.contains("CompactCellValue, CompactEnum"));
     assert!(source.contains("pub enum Choice"));
-    assert!(source.contains("RUST_RUNTIME_ABI == 30"));
+    assert!(source.contains("RUST_RUNTIME_ABI == 31"));
     assert!(!source.contains("impl FieldRepr for Choice"));
     assert!(!source.contains("impl BinaryHashRepr for Choice"));
     assert!(!source.contains("impl FromFieldRepr for Choice"));
@@ -2847,6 +2847,10 @@ fn map_insert_and_lookup_require_key_and_value_types() {
     };
     let source = render(&contract).unwrap();
     assert!(source.contains("MapSlot<bool, runtime::Field>"), "{source}");
+    assert!(source.contains("pub struct PublicStateView<'a, D:"));
+    assert!(source.contains("pub fn table("));
+    assert!(source.contains("runtime::ledger::MapView<'a, bool, runtime::Field, D>"));
+    assert!(source.contains("crate::ledger_slots::table.inspect(self.state)"));
     assert!(
         source.contains(".insert(context, __compact_param_0, __compact_param_1)?"),
         "{source}"
@@ -2949,6 +2953,7 @@ fn map_insert_and_lookup_require_key_and_value_types() {
     assert!(source.contains("MapSlot<"));
     assert!(source.contains("runtime::slots::MapNode<"));
     assert!(source.contains("runtime::BoundedUint<18446744073709551615>"));
+    assert!(!source.contains("pub struct PublicStateView<'a, D:"));
 }
 
 #[test]

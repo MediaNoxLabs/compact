@@ -14,16 +14,22 @@
 // limitations under the License.
 
 use compact_rust_map_boolean_field_fixture::ledger_contract::{
-    Contract, get, has, initial_state, put, put_default, remove_key, reset_table, table_is_empty,
-    table_size,
+    Contract, PublicStateView, get, has, initial_state, put, put_default, remove_key, reset_table,
+    table_is_empty, table_size,
 };
 use midnight_compact_runtime::Field;
 use midnight_compact_runtime::context::ConstructorContext;
-use midnight_compact_runtime::ledger::{ContractAddress, StateValue};
+use midnight_compact_runtime::ledger::{ContractAddress, StateValue, map_view_at_path};
 
 #[test]
 fn generated_map_contract_inserts_and_looks_up_field_values() {
     let constructor = initial_state(ConstructorContext::new(())).unwrap();
+    assert!(
+        PublicStateView::from(&constructor)
+            .table()
+            .unwrap()
+            .is_empty()
+    );
     let StateValue::Array(fields) = constructor.ledger_state.get_ref() else {
         panic!("expected ledger field array")
     };
@@ -51,6 +57,12 @@ fn generated_map_contract_inserts_and_looks_up_field_values() {
     assert!(result.result);
     let result = get(result.context, true).unwrap();
     assert_eq!(result.result, Field::from(42_u64));
+    let view = PublicStateView::from(&result).table().unwrap();
+    let raw =
+        map_view_at_path::<bool, Field, _>(result.context.query.state.get_ref(), &[0]).unwrap();
+    assert_eq!(view.lookup(true).unwrap(), raw.lookup(true).unwrap());
+    assert_eq!(view.size().unwrap(), raw.size().unwrap());
+    assert!(!view.member(false));
     let result = put(result.context, true, Field::from(7_u64)).unwrap();
     let result = get(result.context, true).unwrap();
     assert_eq!(result.result, Field::from(7_u64));
@@ -78,6 +90,51 @@ fn generated_map_contract_inserts_and_looks_up_field_values() {
     assert_eq!(result.result.value(), 0);
     let result = table_is_empty(result.context).unwrap();
     assert!(result.result);
+    assert!(PublicStateView::from(&result).table().unwrap().is_empty());
+}
+
+#[test]
+fn public_map_view_preserves_raw_errors() {
+    use midnight_compact_runtime::ledger::{constructor_cell, contract_state};
+
+    let empty = contract_state::<midnight_compact_runtime::ledger::DefaultDB>(vec![]);
+    assert_eq!(
+        PublicStateView::from(empty.get_ref())
+            .table()
+            .err()
+            .unwrap(),
+        map_view_at_path::<bool, Field, _>(empty.get_ref(), &[0])
+            .err()
+            .unwrap(),
+    );
+    let wrong_shape =
+        contract_state::<midnight_compact_runtime::ledger::DefaultDB>(vec![constructor_cell(
+            false,
+        )]);
+    assert_eq!(
+        PublicStateView::from(wrong_shape.get_ref())
+            .table()
+            .err()
+            .unwrap(),
+        map_view_at_path::<bool, Field, _>(wrong_shape.get_ref(), &[0])
+            .err()
+            .unwrap(),
+    );
+
+    let initial = initial_state(ConstructorContext::new(())).unwrap();
+    let context = initial.into_circuit_context(ContractAddress::default());
+    let wrong_value = context.insert_map(&[0][..], true, false).unwrap();
+    let typed = PublicStateView::from(&wrong_value).table().unwrap();
+    let raw = map_view_at_path::<bool, Field, _>(wrong_value.context.query.state.get_ref(), &[0])
+        .unwrap();
+    assert_eq!(
+        typed.lookup(false).unwrap_err(),
+        raw.lookup(false).unwrap_err()
+    );
+    assert_eq!(
+        typed.lookup(true).unwrap_err(),
+        raw.lookup(true).unwrap_err()
+    );
 }
 
 #[test]
@@ -96,6 +153,14 @@ fn generated_map_recording_replays_native_calls() {
         .unwrap();
     assert_eq!(recorded.execution.gas_cost, native.gas_cost);
     assert_eq!(
+        PublicStateView::from(&recorded)
+            .table()
+            .unwrap()
+            .lookup(true)
+            .unwrap(),
+        Field::from(42_u64),
+    );
+    assert_eq!(
         recorded.execution.context.query.state.get_ref(),
         native.context.query.state.get_ref()
     );
@@ -109,6 +174,14 @@ fn generated_map_recording_replays_native_calls() {
         )
         .unwrap();
     assert_eq!(replay.context.effects, native.context.query.effects);
+    assert_eq!(
+        PublicStateView::from(&replay)
+            .table()
+            .unwrap()
+            .lookup(true)
+            .unwrap(),
+        Field::from(42_u64),
+    );
 
     let native = get(native.context, true).unwrap();
     let recorded = contract

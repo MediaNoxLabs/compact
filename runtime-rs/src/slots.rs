@@ -25,8 +25,8 @@ use std::marker::PhantomData;
 use crate::CompactError;
 use crate::context::{CircuitContext, CircuitResult, WitnessReadMeter};
 use crate::ledger::{
-    CellValue, DB, MeteredHistoricMerkleTreeView, MeteredListView, MeteredMapView,
-    MeteredMerkleTreeView, MeteredSetView, SetView, StateValue,
+    CellValue, DB, MapView, MeteredHistoricMerkleTreeView, MeteredListView, MeteredMapView,
+    MeteredMerkleTreeView, MeteredSetView, SetView, StateValue, map_view_at_path,
     metered_historic_merkle_tree_view_at_path, metered_list_view_at_path, metered_map_view_at_path,
     metered_merkle_tree_view_at_path, metered_set_view_at_path, set_view_at_path,
 };
@@ -538,6 +538,14 @@ impl<K: CellValue, V> MapSlot<K, V> {
 }
 
 impl<K: CellValue, V: CellValue> MapSlot<K, V> {
+    /// Inspect an already held public Map without a VM query or gas charge.
+    pub fn inspect<'a, D: DB>(
+        self,
+        state: &'a StateValue<D>,
+    ) -> Result<MapView<'a, K, V, D>, CompactError> {
+        map_view_at_path(state, self.path)
+    }
+
     /// Project this scalar-valued Map through the existing metered witness view.
     pub fn witness_view<'a, D: DB>(
         self,

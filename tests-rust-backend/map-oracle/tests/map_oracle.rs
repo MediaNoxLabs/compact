@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use compact_rust_map_oracle_fixture::ledger_contract::{initial_state, put};
+use compact_rust_map_oracle_fixture::ledger_contract::{PublicStateView, initial_state, put};
 use midnight_compact_runtime as runtime;
 use midnight_onchain_state::state::{
     ContractMaintenanceAuthority, ContractOperation, ContractState, EntryPointBuf,
@@ -40,6 +40,7 @@ fn exact_map_oracle_matches_typescript_insertion_and_replacement() {
     ))
     .unwrap();
     let initial = initial_state(ConstructorContext::new(())).unwrap();
+    assert!(PublicStateView::from(&initial).table().unwrap().is_empty());
     assert_eq!(
         state_hex(initial.ledger_state.get_ref().clone()),
         oracle["afterInit"]
@@ -87,5 +88,11 @@ fn exact_map_oracle_matches_typescript_insertion_and_replacement() {
     assert_eq!(
         view.lookup(runtime::Field::from(8_u64)).unwrap(),
         runtime::Field::from(13_u64)
+    );
+    let typed = PublicStateView::from(&distinct).table().unwrap();
+    assert_eq!(typed.size().unwrap(), view.size().unwrap());
+    assert_eq!(
+        typed.lookup(runtime::Field::from(7_u64)).unwrap(),
+        view.lookup(runtime::Field::from(7_u64)).unwrap(),
     );
 }

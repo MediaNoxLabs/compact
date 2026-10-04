@@ -6,7 +6,7 @@ mod recorded;
 mod stateful;
 mod witness;
 
-const RUNTIME_ABI_VERSION: u32 = 30;
+const RUNTIME_ABI_VERSION: u32 = 31;
 pub const RUST_CAPABILITY_SCHEMA_VERSION: u32 = 1;
 
 const GENERATED_HEADER: &str = r#"// This file is part of Compact.
@@ -3000,9 +3000,18 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
             }
             LedgerFieldKind::Map { key, value } => {
                 // Nested Map values are structural markers, not CellValue.
+                let has_cell_value = !matches!(value, Type::LedgerMap { .. });
                 let Some((key, value)) = map_slot_types(key, value)? else {
                     continue;
                 };
+                if has_cell_value {
+                    public_state_getters.push(syn::parse_quote! {
+                        /// Inspect this declared Map in the borrowed public state.
+                        pub fn #name(&self) -> Result<runtime::ledger::MapView<'a, #key, #value, D>, runtime::CompactError> {
+                            crate::ledger_slots::#name.inspect(self.state)
+                        }
+                    });
+                }
                 slot_items.push(syn::parse_quote! {
                     pub const #name: runtime::slots::MapSlot<#key, #value> =
                         runtime::slots::MapSlot::new(&[#(#path),*]);

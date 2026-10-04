@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Build three generated contracts together using only the runtime archives."""
+"""Build four generated contracts together using only the runtime archives."""
 
 import argparse
 import hashlib
@@ -33,6 +33,7 @@ CONTRACTS = (
     ("counter", ROOT / "examples/rust_backend/counter.compact"),
     ("cell-boolean", ROOT / "examples/rust_backend/cell_boolean.compact"),
     ("set-boolean", ROOT / "examples/rust_backend/set_boolean.compact"),
+    ("map-boolean-field", ROOT / "examples/rust_backend/map_boolean_field.compact"),
 )
 PACKAGE_NAMES = ("midnight-compact-runtime-macros", "midnight-compact-runtime")
 
@@ -198,6 +199,7 @@ def main() -> None:
             'use compact_contract_counter as counter;\n'
             'use compact_contract_cell_boolean as cell;\n'
             'use compact_contract_set_boolean as set;\n'
+            'use compact_contract_map_boolean_field as map;\n'
             'use compact_contract_counter::runtime::context::ConstructorContext;\n'
             'use compact_contract_counter::runtime::ledger::{ContractAddress, StateValue, read_cell};\n'
             '#[test]\nfn archived_runtime_executes_generated_counter() {\n'
@@ -228,6 +230,16 @@ def main() -> None:
             '    let view = set::ledger_contract::PublicStateView::from(&call);\n'
             '    assert!(view.seen().unwrap().member(true));\n'
             '    assert_eq!(view.seen().unwrap().size().unwrap().value(), 1);\n}\n'
+            '#[test]\nfn archived_runtime_executes_generated_map() {\n'
+            '    let state = map::ledger_contract::initial_state(ConstructorContext::new(())).unwrap();\n'
+            '    let initial = map::ledger_contract::PublicStateView::from(&state);\n'
+            '    assert!(initial.table().unwrap().is_empty());\n'
+            '    let context = state.into_circuit_context(ContractAddress::default());\n'
+            '    let call = map::ledger_contract::Contract::default().put('
+            'context, true, map::runtime::Field::from(7_u64)).unwrap();\n'
+            '    let view = map::ledger_contract::PublicStateView::from(&call);\n'
+            '    assert_eq!(view.table().unwrap().lookup(true).unwrap(), '
+            'map::runtime::Field::from(7_u64));\n}\n'
         )
         environment = os.environ.copy()
         environment.setdefault("CARGO_TARGET_DIR", str(ROOT / "target/compactc-consumer"))
@@ -242,6 +254,11 @@ def main() -> None:
             'set::runtime::context::ConstructorContext::new(())).unwrap();\n'
             '    let view = set::ledger_contract::PublicStateView::from(&state);\n'
             '    view.seen().unwrap().member(set::runtime::Field::from(42_u64));\n}\n'
+            '#[test]\nfn wrong_map_key_is_rejected() {\n'
+            '    let state = map::ledger_contract::initial_state('
+            'map::runtime::context::ConstructorContext::new(())).unwrap();\n'
+            '    let view = map::ledger_contract::PublicStateView::from(&state);\n'
+            '    view.table().unwrap().member(map::runtime::Field::from(42_u64));\n}\n'
         )
         rejection = subprocess.run(
             ["cargo", "check", "--offline", "--tests", "--quiet"],
@@ -249,11 +266,11 @@ def main() -> None:
         )
         wrong_key.unlink()
         if rejection.returncode == 0 or "mismatched types" not in rejection.stderr:
-            raise RuntimeError("wrong Set key type was not rejected by the archive-only consumer")
+            raise RuntimeError("wrong Set/Map key types were not rejected by the archive-only consumer")
         metadata = json.loads(run(["cargo", "metadata", "--offline", "--format-version", "1"],
                                   cwd=consumer, env=environment))
         check_graph(metadata, consumer, vendor, entries)
-    print("archive-only Counter + Cell + Set consumer passed with one shared runtime; public registry publication remains unverified")
+    print("archive-only Counter + Cell + Set + Map consumer passed with one shared runtime; public registry publication remains unverified")
 
 
 if __name__ == "__main__":

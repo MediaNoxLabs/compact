@@ -2691,6 +2691,16 @@ fn main() -> Result<(), Box<dyn Error>> {
             check_observed_call_parity(chunked_root, circuit, &deploy, &manual, &typed)?;
             check_transaction(chunked_root, circuit, deploy, typed, &mut rng, |state| {
                 let view = map_view_at_path::<bool, Field, _>(state.data.get_ref(), &[1, 14])?;
+                let generated = chunked_map_contract::PublicStateView::from(state).table()?;
+                if generated.size()? != view.size()?
+                    || generated.member(true) != view.member(true)
+                    || generated.is_empty() != view.is_empty()
+                {
+                    return Err("generated chunked Map view differs from raw applied state".into());
+                }
+                if view.member(true) && generated.lookup(true)? != view.lookup(true)? {
+                    return Err("generated chunked Map value differs from raw applied state".into());
+                }
                 let expected_size = match circuit {
                     "put" | "put_pair" | "put_default" => 2,
                     "remove_key" | "reset_table" => 0,

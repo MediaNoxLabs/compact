@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 30);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 31);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -35,7 +35,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 30);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 31);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -62,6 +62,15 @@ pub mod ledger_contract {
         ) -> Result<runtime::ledger::SetView<'a, runtime::Field, D>, runtime::CompactError>
         {
             crate::ledger_slots::s.inspect(self.state)
+        }
+        /// Inspect this declared Map in the borrowed public state.
+        pub fn m(
+            &self,
+        ) -> Result<
+            runtime::ledger::MapView<'a, runtime::Field, runtime::Field, D>,
+            runtime::CompactError,
+        > {
+            crate::ledger_slots::m.inspect(self.state)
         }
     }
     impl<'a, S: runtime::public_state::PublicStateSource> From<&'a S>

@@ -741,7 +741,7 @@ pub use types::{
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 30);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 31);
     pub fn noSchemaFamilyResolverHint() -> Result<runtime::FixedBytes<32>, runtime::CompactError> {
         Ok(runtime::FixedBytes::new([
             109u8, 105u8, 100u8, 110u8, 105u8, 103u8, 104u8, 116u8, 58u8, 118u8, 99u8, 58u8, 115u8,

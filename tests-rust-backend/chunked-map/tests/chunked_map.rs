@@ -280,8 +280,13 @@ fn chunked_map_calls_match_typescript_and_replay() {
     let after = ledger_contract::put(context(), false, Field::from(7_u64)).unwrap();
     let view =
         map_view_at_path::<bool, Field, _>(after.context.query.state.get_ref(), &[1, 14]).unwrap();
+    let typed = ledger_contract::PublicStateView::from(&after)
+        .table()
+        .unwrap();
     assert_eq!(view.size().unwrap().value(), 2);
     assert_eq!(view.lookup(false).unwrap(), Field::from(7_u64));
+    assert_eq!(typed.size().unwrap(), view.size().unwrap());
+    assert_eq!(typed.lookup(false).unwrap(), view.lookup(false).unwrap());
 
     let witness_context = context();
     let meter = WitnessReadMeter::new(&witness_context);

@@ -126,7 +126,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 30);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 31);
     pub fn assertRecordFreshEnough(
         policy: crate::types::FreshnessPolicy,
         record: crate::types::AssetRecord,
@@ -286,7 +286,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 30);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 31);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -497,6 +497,24 @@ pub mod ledger_contract {
                 runtime::BoundedUint::<{ u64::MAX as u128 }>::new(value as u128)
                     .expect("ledger Counter fits Uint<64>"),
             )
+        }
+        /// Inspect this declared Map in the borrowed public state.
+        pub fn records(
+            &self,
+        ) -> Result<
+            runtime::ledger::MapView<'a, runtime::OpaqueString, crate::types::AssetRecord, D>,
+            runtime::CompactError,
+        > {
+            crate::ledger_slots::records.inspect(self.state)
+        }
+        /// Inspect this declared Map in the borrowed public state.
+        pub fn custodyGrants(
+            &self,
+        ) -> Result<
+            runtime::ledger::MapView<'a, runtime::OpaqueString, crate::types::CustodyGrant, D>,
+            runtime::CompactError,
+        > {
+            crate::ledger_slots::custodyGrants.inspect(self.state)
         }
         /// Inspect this declared Set in the borrowed public state.
         pub fn retiredKeys(

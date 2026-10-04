@@ -166,7 +166,7 @@ Compact spelling without warning in consumer builds.
 |---|---|---|
 | Compact compiler | Toolchain 0.31.133, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
 | Rust IR | Schema 8, private to this backend | The renderer rejects any other schema before writing `lib.rs`. Ledger, circuit, witness, constructor, and exported alias declarations carry optional Compact source locations for diagnostics. |
-| Generated code and Rust runtime | ABI 30 | Generated modules assert the ABI at Rust compile time. ABI 30 adds read-only typed public Set views; ABI 29 adds Cell/Counter views; ABI 25–28 add physical List paths, chunked Map and Cell calls, and Cell-read scalar returns; ABI 21–24 add typed multi-argument observed calls and composite/chunked Set calls. The [runtime guide](../../runtime-rs/README.md) records earlier ABI changes. |
+| Generated code and Rust runtime | ABI 31 | Generated modules assert the ABI at Rust compile time. ABI 31 adds read-only typed public cell-valued Map views; ABI 30 adds Set views; ABI 29 adds Cell/Counter views; ABI 25–28 add physical List paths, chunked Map and Cell calls, and Cell-read scalar returns; ABI 21–24 add typed multi-argument observed calls and composite/chunked Set calls. The [runtime guide](../../runtime-rs/README.md) records earlier ABI changes. |
 | Rust runtime source | Bundled runtime crates or an explicit shared source root | Cargo resolves the matching runtime and its pinned Midnight crates. |
 
 `--runtime-version` reports the TypeScript runtime version; the Rust runtime
@@ -176,12 +176,15 @@ artifact. Change the runtime source only alongside an ABI and consumer test revi
 
 ### Inspecting public state
 
-For a contract with declared Cell, Counter or Set fields, `ledger_contract::PublicStateView`
+For a contract with declared Cell, Counter, Set or cell-valued Map fields,
+`ledger_contract::PublicStateView`
 borrows existing ledger state and exposes fallible getters with the declaration's
 Rust type. Counter getters return Compact `BoundedUint<2^64-1>`; Cell getters
 return the declared type. A Set getter returns the runtime's borrowed `SetView`,
 whose `member` and `is_empty` inspect local state and whose `size` is fallible.
-For example, a generated Counter named `round` can
+Map getters return the runtime's borrowed `MapView`; `lookup` fails when a key
+is absent and retains the declared value decoder. Nested Maps have no scalar
+getter. For example, a generated Counter named `round` can
 be read after a call without copying its physical ledger index:
 
 ```rust
@@ -195,7 +198,7 @@ query results,
 `ObservedContractState`. It only decodes local state;
 the caller remains responsible for the origin and freshness of an observation.
 If a Compact field is named `from`, use `let view: PublicStateView<'_> = state.into();`
-so its generated getter does not shadow trait method syntax. Map, List and
+so its generated getter does not shadow trait method syntax. List and
 Merkle inspection are still available through the lower-level ledger APIs.
 
 ### Fallible witnesses

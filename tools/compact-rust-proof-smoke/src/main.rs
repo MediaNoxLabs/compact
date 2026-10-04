@@ -20,6 +20,7 @@
 //! commitment uses the value-field encoding from ledger-8's Intent::add_call.
 //! Deployment combines the generated constructor state with the emitted key.
 
+mod closed_pure_field;
 mod merkle_verify;
 mod persistent_commit;
 mod witness_assert;
@@ -756,6 +757,17 @@ fn check_conditional_counter_proof(root: &Path) -> Result<(), Box<dyn Error>> {
 fn main() -> Result<(), Box<dyn Error>> {
     let mut arguments = env::args_os().skip(1);
     let first = arguments.next();
+    if first.as_deref() == Some(OsStr::new("--closed-pure-field")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --closed-pure-field <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err(
+                "usage: compact-rust-proof-smoke --closed-pure-field <proof-output>".into(),
+            );
+        }
+        return closed_pure_field::run(Path::new(&root));
+    }
     if first.as_deref() == Some(OsStr::new("--persistent-commit")) {
         let root = arguments
             .next()

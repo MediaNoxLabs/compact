@@ -3168,6 +3168,97 @@ fn nested_call_exposes_a_trace_only_when_every_step_is_supported() {
 }
 
 #[test]
+fn closed_pure_field_call_records_let_value_without_admitting_hashes() {
+    let mut contract = Contract {
+        schema_version: 11,
+        type_aliases: vec![],
+        constructor: None,
+        witnesses: vec![],
+        ledger_fields: vec![LedgerField {
+            source: None,
+            id: "value".into(),
+            index: 0,
+            path: vec![],
+            declaration: LedgerFieldKind::Cell { ty: Type::Field },
+        }],
+        circuits: vec![
+            PureCircuit {
+                source: None,
+                internal: false,
+                name: "identityField".into(),
+                parameters: vec![Parameter {
+                    name: "input".into(),
+                    ty: Type::Field,
+                }],
+                result: Type::Field,
+                body: Expr::Parameter {
+                    name: "input".into(),
+                },
+            },
+            PureCircuit {
+                source: None,
+                internal: false,
+                name: "literalField".into(),
+                parameters: vec![],
+                result: Type::Field,
+                body: Expr::Call {
+                    name: "identityField".into(),
+                    arguments: vec![Expr::FieldLiteral {
+                        value: "819310549611346726241370945440405716213240158234039660170669895299022906775".into(),
+                    }],
+                },
+            },
+        ],
+        stateful_circuits: vec![StatefulCircuit {
+            source: None,
+            internal: false,
+            name: "writeLiteral".into(),
+            parameters: vec![],
+            result: Type::Unit,
+            return_value: StateReturn::Unit,
+            actions: vec![StateAction::Let {
+                bindings: vec![LocalBinding {
+                    name: "computed".into(),
+                    ty: Type::Field,
+                    value: Expr::Call {
+                        name: "literalField".into(),
+                        arguments: vec![],
+                    },
+                }],
+                action: Box::new(StateAction::CellWrite {
+                    field: "value".into(),
+                    index: 0,
+                    value: Expr::Parameter {
+                        name: "computed".into(),
+                    },
+                }),
+            }],
+        }],
+    };
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.capabilities.circuits[0].observed_call);
+    assert!(rendered
+        .source
+        .contains("let __compact_recorded_pure_field_0: runtime::Field = crate::pure_circuits::literalField()?;"));
+    assert!(rendered.source.contains("record_write(frame"));
+
+    contract.circuits[1].body = Expr::TransientHash {
+        value: Box::new(Expr::FieldLiteral { value: "5".into() }),
+    };
+    let rejected = render_with_capabilities(&contract).unwrap();
+    assert!(!rejected.capabilities.circuits[0].recorded);
+    assert_eq!(
+        rejected.capabilities.circuits[0]
+            .recording_unavailable
+            .as_ref()
+            .unwrap()
+            .ir_node,
+        "Expr::Call"
+    );
+}
+
+#[test]
 fn unsupported_pure_call_and_supported_field_arithmetic_have_exact_capabilities() {
     let mut contract = Contract {
         schema_version: 11,

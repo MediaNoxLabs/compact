@@ -168,3 +168,39 @@ fn recorded_persistent_commitments_match_typescript_trace_and_gas() {
         );
     }
 }
+
+#[test]
+fn recorded_closed_pure_field_call_matches_typescript_trace_and_gas() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/call-arg-declared-type.json"
+    ))
+    .unwrap();
+    let native_context = initial_state(ConstructorContext::new(()))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let recording_context = initial_state(ConstructorContext::new(()))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let native = pureBodyFieldOnly(native_context).unwrap();
+    let recorded =
+        compact_rust_call_arg_declared_type_fixture::ledger_contract::recorded::pureBodyFieldOnly(
+            recording_context,
+        )
+        .unwrap();
+    boolean_observation_assertions::assert_ts_trace(
+        "pureBodyFieldOnly",
+        &native,
+        &recorded,
+        &oracle["circuits"]["pureBodyFieldOnly"]["trace"],
+    );
+    assert_eq!(
+        recorded.execution.context.query.state.get_ref(),
+        native.context.query.state.get_ref(),
+        "recorded state"
+    );
+    assert_eq!(
+        state_hex(recorded.execution.context.query.state.get_ref().clone()),
+        oracle["circuits"]["pureBodyFieldOnly"]["stateHex"],
+        "TypeScript state"
+    );
+}

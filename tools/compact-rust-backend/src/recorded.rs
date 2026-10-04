@@ -258,6 +258,72 @@ fn recordable_cell_type(ty: &Type) -> bool {
     }
 }
 
+/// A pure Field call may be evaluated while recording only when its whole
+/// transitive body is scalar arithmetic. Hashes and other primitives need
+/// their own VM/gas parity decision before they can join this path.
+fn closed_pure_field_call(
+    name: &str,
+    pure_circuits: &HashMap<&str, &PureCircuit>,
+    visiting: &mut HashSet<String>,
+) -> bool {
+    fn scalar_body(
+        value: &Expr,
+        parameters: &HashSet<&str>,
+        pure_circuits: &HashMap<&str, &PureCircuit>,
+        visiting: &mut HashSet<String>,
+    ) -> bool {
+        match value {
+            Expr::FieldLiteral { .. } => true,
+            Expr::Parameter { name } => parameters.contains(name.as_str()),
+            Expr::Coerce { value, ty } if *ty == Type::Field => {
+                scalar_body(value, parameters, pure_circuits, visiting)
+            }
+            Expr::Add { left, right }
+            | Expr::Subtract { left, right }
+            | Expr::Multiply { left, right } => {
+                scalar_body(left, parameters, pure_circuits, visiting)
+                    && scalar_body(right, parameters, pure_circuits, visiting)
+            }
+            Expr::Call { name, arguments } => {
+                let Some(callee) = pure_circuits.get(name.as_str()) else {
+                    return false;
+                };
+                arguments.len() == callee.parameters.len()
+                    && arguments
+                        .iter()
+                        .zip(&callee.parameters)
+                        .all(|(argument, parameter)| {
+                            parameter.ty == Type::Field
+                                && scalar_body(argument, parameters, pure_circuits, visiting)
+                        })
+                    && closed_pure_field_call(name, pure_circuits, visiting)
+            }
+            _ => false,
+        }
+    }
+
+    let Some(callee) = pure_circuits.get(name) else {
+        return false;
+    };
+    if callee.result != Type::Field
+        || callee
+            .parameters
+            .iter()
+            .any(|parameter| parameter.ty != Type::Field)
+        || !visiting.insert(name.to_owned())
+    {
+        return false;
+    }
+    let parameters = callee
+        .parameters
+        .iter()
+        .map(|parameter| parameter.name.as_str())
+        .collect();
+    let allowed = scalar_body(&callee.body, &parameters, pure_circuits, visiting);
+    visiting.remove(name);
+    allowed
+}
+
 /// Emit a replayable public VM trace for supported root Cell, Counter, Set, Map, List,
 /// and plain/historic Merkle append
 /// operations, including witnessed Cell values. Unsupported circuits have no
@@ -999,6 +1065,10 @@ fn render_recorded_item(
                         &HashMap::new(),
                         ledger_fields,
                         witnesses,
+                        // This Field-returning stateful inlining path has no
+                        // pure-circuit context. Keep nested pure calls
+                        // unavailable until that context is threaded through.
+                        &HashMap::new(),
                         circuits,
                         shared_callees,
                         steps,
@@ -1666,6 +1736,7 @@ fn render_recorded_item(
         parameters: &HashMap<&str, (&Type, syn::Ident)>,
         ledger_fields: &HashMap<&str, &LedgerField>,
         witnesses: &HashMap<&str, &WitnessDeclaration>,
+        pure_circuits: &HashMap<&str, &PureCircuit>,
         circuits: &HashMap<&str, &StatefulCircuit>,
         shared_callees: &HashSet<String>,
         steps: &mut Vec<syn::Stmt>,
@@ -1682,6 +1753,7 @@ fn render_recorded_item(
                         parameters,
                         ledger_fields,
                         witnesses,
+                        pure_circuits,
                         circuits,
                         shared_callees,
                         steps,
@@ -1729,6 +1801,25 @@ fn render_recorded_item(
                         ));
                         scoped.insert(binding.name.clone(), syn::parse_quote!(#local));
                     } else if binding.ty == Type::Field {
+                        if let Expr::Call { name, arguments } = &binding.value
+                            && arguments.is_empty()
+                            && pure_circuits.get(name.as_str()).is_some_and(|callee| {
+                                callee.parameters.is_empty() && callee.result == Type::Field
+                            })
+                            && closed_pure_field_call(name, pure_circuits, &mut HashSet::new())
+                        {
+                            let method = ident(name)?;
+                            let value = syn::Ident::new(
+                                &format!("__compact_recorded_pure_field_{}", *next_temp),
+                                Span::call_site(),
+                            );
+                            *next_temp += 1;
+                            steps.push(syn::parse_quote! {
+                                let #value: runtime::Field = crate::pure_circuits::#method()?;
+                            });
+                            scoped.insert(binding.name.clone(), syn::parse_quote!(#value));
+                            continue;
+                        }
                         if let Expr::Call { name, arguments } = &binding.value
                             && shared_callees.contains(name)
                         {
@@ -1971,6 +2062,7 @@ fn render_recorded_item(
                     parameters,
                     ledger_fields,
                     witnesses,
+                    pure_circuits,
                     circuits,
                     shared_callees,
                     steps,
@@ -2101,6 +2193,7 @@ fn render_recorded_item(
                         &HashMap::new(),
                         ledger_fields,
                         witnesses,
+                        pure_circuits,
                         circuits,
                         shared_callees,
                         steps,
@@ -2534,6 +2627,7 @@ fn render_recorded_item(
             &parameters,
             ledger_fields,
             witnesses,
+            pure_circuits,
             circuits,
             shared_callees,
             &mut steps,

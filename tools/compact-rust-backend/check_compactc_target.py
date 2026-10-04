@@ -1376,7 +1376,8 @@ def main() -> None:
             capabilities = json.loads(
                 (persistent_commit_proof / "contract/rust-capabilities.json").read_text()
             )
-            for name in ("commitSmall", "commitU128", "commitFieldOnly"):
+            for name in ("commitSmall", "commitU128", "commitFieldOnly",
+                         "pureBodyFieldOnly"):
                 capability = next(circuit for circuit in capabilities["circuits"]
                                   if circuit["name"] == name)
                 assert capability["proof_required"] and capability["recorded"] \
@@ -1521,6 +1522,10 @@ def main() -> None:
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 "--persistent-commit", str(persistent_commit_proof),
+            )
+            run(
+                "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--closed-pure-field", str(persistent_commit_proof),
             )
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",

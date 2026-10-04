@@ -19,8 +19,9 @@
 // (tests/call_arg_declared_type.rs) compares FULL `ContractState` bytes per
 // circuit — a call argument rendered at the wrong Rust type changes the
 // value written (e.g. a commitment to an `i32` instead of a `Field`) even
-// when the generated crate builds. The three persistent commitments also
-// retain their ordered VM transcript, per-query gas, and private output count.
+// when the generated crate builds. The persistent commitments and closed pure
+// Field call retain their ordered VM transcript, per-query gas, and private
+// output count.
 //
 // Usage:
 //   compactc --target ts --skip-zk examples/rust_backend/call_arg_declared_type.compact /tmp/call-arg-declared-type-ts-driver/
@@ -134,7 +135,7 @@ for (const name of CIRCUITS) {
   const out = contract.circuits[name](ctx);
   const state = new cr.ChargedState(out.context.currentQueryContext.state.state);
   fixture.circuits[name] = { stateHex: hexOf(rewrapEnvelope(afterInit, state)) };
-  if (['commitSmall', 'commitU128', 'commitFieldOnly'].includes(name)) {
+  if (['commitSmall', 'commitU128', 'commitFieldOnly', 'pureBodyFieldOnly'].includes(name)) {
     fixture.circuits[name].trace = {
       publicTranscriptShape: out.proofData.publicTranscript.map(operationShape),
       privateTranscriptCount: out.proofData.privateTranscriptOutputs.length,

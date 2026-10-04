@@ -785,6 +785,17 @@ pub mod ledger_contract {
                 .record_write(frame, __compact_recorded_commitment_1)?;
             Ok(frame.finish(()))
         }
+        pub fn pureBodyFieldOnly<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_pure_field_0: runtime::Field =
+                crate::pure_circuits::fieldOnlyFromPureBody()?;
+            let frame = crate::ledger_slots::fieldCell
+                .record_write(frame, __compact_recorded_pure_field_0)?;
+            Ok(frame.finish(()))
+        }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
         impl Contract {
@@ -860,6 +871,31 @@ pub mod ledger_contract {
                     observed,
                     recorded,
                     "commitFieldOnly",
+                    input,
+                ))
+            }
+            pub fn pureBodyFieldOnly<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::pureBodyFieldOnly(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn pureBodyFieldOnly_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.pureBodyFieldOnly(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "pureBodyFieldOnly",
                     input,
                 ))
             }

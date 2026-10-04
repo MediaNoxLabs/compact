@@ -1396,6 +1396,23 @@ pub mod ledger_contract {
     /// Circuits with a replayable ordered ledger program.
     pub mod recorded {
         use midnight_compact_runtime as runtime;
+        pub fn walkerCallPure<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: bool,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_arg_0: runtime::Field = if __compact_param_0 {
+                runtime::Field::from(1u64)
+            } else {
+                runtime::Field::from(2u64)
+            };
+            let __compact_recorded_pure_field_1: runtime::Field =
+                crate::pure_circuits::idf(__compact_recorded_arg_0)?;
+            let frame = crate::ledger_slots::fieldCell
+                .record_write(frame, __compact_recorded_pure_field_1)?;
+            Ok(frame.finish(()))
+        }
         pub fn walkerWrite<Private>(
             context: runtime::context::CircuitContext<Private>,
             __compact_param_0: bool,
@@ -1410,6 +1427,30 @@ pub mod ledger_contract {
             };
             let frame = crate::ledger_slots::fieldCell
                 .record_write(frame, __compact_recorded_conditional_field_0)?;
+            Ok(frame.finish(()))
+        }
+        pub fn witnessArg<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: bool,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_arg_0 = if __compact_param_0 {
+                runtime::Field::from(1u64)
+            } else {
+                runtime::Field::from(2u64)
+            };
+            let (frame, __compact_witness_1) = frame.try_witness_metered(|context, meter| {
+                witnesses.echoField(
+                    context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                        meter,
+                    }),
+                    __compact_recorded_arg_0,
+                )
+            })?;
+            let frame = crate::ledger_slots::fieldCell.record_write(frame, __compact_witness_1)?;
             Ok(frame.finish(()))
         }
         pub fn streamIncrement<Private>(
@@ -1490,6 +1531,49 @@ pub mod ledger_contract {
                 .record_increment(frame, if __compact_param_0 { 1u16 } else { 2u16 })?;
             Ok(frame.finish(()))
         }
+        pub fn streamCallPure<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_recorded_bool_0): (_, bool) =
+                crate::ledger_slots::flag.record_read(frame)?;
+            let __compact_recorded_arg_1: runtime::Field = if __compact_recorded_bool_0 {
+                runtime::Field::from(1u64)
+            } else {
+                runtime::Field::from(2u64)
+            };
+            let __compact_recorded_pure_field_2: runtime::Field =
+                crate::pure_circuits::idf(__compact_recorded_arg_1)?;
+            let frame = crate::ledger_slots::fieldCell
+                .record_write(frame, __compact_recorded_pure_field_2)?;
+            Ok(frame.finish(()))
+        }
+        pub fn streamCallWitness<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_recorded_bool_0): (_, bool) =
+                crate::ledger_slots::flag.record_read(frame)?;
+            let __compact_recorded_arg_1 = if __compact_recorded_bool_0 {
+                runtime::Field::from(1u64)
+            } else {
+                runtime::Field::from(2u64)
+            };
+            let (frame, __compact_witness_2) = frame.try_witness_metered(|context, meter| {
+                witnesses.echoField(
+                    context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                        meter,
+                    }),
+                    __compact_recorded_arg_1,
+                )
+            })?;
+            let frame = crate::ledger_slots::fieldCell.record_write(frame, __compact_witness_2)?;
+            Ok(frame.finish(()))
+        }
         pub fn streamConstAnnotated<Private>(
             context: runtime::context::CircuitContext<Private>,
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
@@ -1512,6 +1596,33 @@ pub mod ledger_contract {
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
         impl Contract {
+            pub fn walkerCallPure<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                c: bool,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::walkerCallPure(context, c)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn walkerCallPure_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                c: bool,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(c);
+                let recorded = self.walkerCallPure(observed.circuit_context(private_state), c)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "walkerCallPure",
+                    input,
+                ))
+            }
             pub fn walkerWrite<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
@@ -1651,12 +1762,322 @@ pub mod ledger_contract {
                     input,
                 ))
             }
+            pub fn streamCallPure<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::streamCallPure(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn streamCallPure_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.streamCallPure(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "streamCallPure",
+                    input,
+                ))
+            }
             pub fn streamConstAnnotated<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             {
                 crate::ledger_contract::recorded::streamConstAnnotated(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn streamConstAnnotated_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded =
+                    self.streamConstAnnotated(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "streamConstAnnotated",
+                    input,
+                ))
+            }
+        }
+        /// A recording handle with access to the contract's witnesses.
+        pub struct BorrowedContract<'a, W> {
+            pub(super) witnesses: &'a W,
+        }
+        impl<W> BorrowedContract<'_, W> {
+            pub fn walkerCallPure<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                c: bool,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                walkerCallPure(context, c)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn walkerCallPure_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                c: bool,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(c);
+                let recorded = self.walkerCallPure(observed.circuit_context(private_state), c)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "walkerCallPure",
+                    input,
+                ))
+            }
+            pub fn walkerWrite<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                c: bool,
+                x: runtime::Field,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                walkerWrite(context, c, x)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn walkerWrite_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                c: bool,
+                x: runtime::Field,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from((c, x));
+                let recorded = self.walkerWrite(observed.circuit_context(private_state), c, x)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "walkerWrite",
+                    input,
+                ))
+            }
+            pub fn witnessArg<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                c: bool,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                witnessArg(context, self.witnesses, c)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn witnessArg_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                c: bool,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(c);
+                let recorded = self.witnessArg(observed.circuit_context(private_state), c)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "witnessArg",
+                    input,
+                ))
+            }
+            pub fn streamIncrement<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                streamIncrement(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn streamIncrement_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.streamIncrement(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "streamIncrement",
+                    input,
+                ))
+            }
+            pub fn streamWrite<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                c: bool,
+                x: runtime::Field,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                streamWrite(context, c, x)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn streamWrite_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                c: bool,
+                x: runtime::Field,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from((c, x));
+                let recorded = self.streamWrite(observed.circuit_context(private_state), c, x)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "streamWrite",
+                    input,
+                ))
+            }
+            pub fn walkerVectorElement<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                c: bool,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                walkerVectorElement(context, c)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn walkerVectorElement_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                c: bool,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(c);
+                let recorded =
+                    self.walkerVectorElement(observed.circuit_context(private_state), c)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "walkerVectorElement",
+                    input,
+                ))
+            }
+            pub fn walkerInlineWrite<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                c: bool,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                walkerInlineWrite(context, c)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn walkerInlineWrite_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                c: bool,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(c);
+                let recorded =
+                    self.walkerInlineWrite(observed.circuit_context(private_state), c)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "walkerInlineWrite",
+                    input,
+                ))
+            }
+            pub fn streamCallPure<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                streamCallPure(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn streamCallPure_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.streamCallPure(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "streamCallPure",
+                    input,
+                ))
+            }
+            pub fn streamCallWitness<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                streamCallWitness(context, self.witnesses)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn streamCallWitness_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.streamCallWitness(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "streamCallWitness",
+                    input,
+                ))
+            }
+            pub fn streamConstAnnotated<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                streamConstAnnotated(context)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn streamConstAnnotated_call<'observed, Private>(
@@ -1849,9 +2270,11 @@ pub mod ledger_contract {
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
             crate::ledger_contract::streamNestedIf(context)
         }
-        /// Access replayable circuit calls for this contract.
-        pub fn recording(&self) -> &recorded::Contract {
-            &self.recording
+        /// Borrow the contract's witnesses for a replayable circuit call.
+        pub fn recording(&self) -> recorded::BorrowedContract<'_, W> {
+            recorded::BorrowedContract {
+                witnesses: &self.witnesses,
+            }
         }
     }
 }

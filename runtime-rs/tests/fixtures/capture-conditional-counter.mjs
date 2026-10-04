@@ -23,7 +23,11 @@ import * as runtime from '../../../runtime/dist/index.js';
 const [contractPath] = process.argv.slice(2);
 if (!contractPath) throw new Error('expected contract/index.js');
 const { Contract } = await import(pathToFileURL(contractPath).href);
-const contract = new Contract({ echoField: (ctx, value) => [ctx.privateState, value] });
+let witnessCalls = [];
+const contract = new Contract({ echoField: (ctx, value) => {
+  witnessCalls.push({ privateState: ctx.privateState, value: value.toString() });
+  return [typeof ctx.privateState === 'number' ? ctx.privateState + 1 : ctx.privateState, value];
+} });
 const coinPublicKey = { bytes: new Uint8Array(32) };
 const queries = [];
 const originalQuery = runtime.QueryContext.prototype.query;
@@ -58,9 +62,10 @@ function shape(operation) {
   throw new Error(`unexpected operation: ${Object.keys(operation)}`);
 }
 
-function capture(name, args, flag) {
+function capture(name, args, flag, privateState = null) {
+  witnessCalls = [];
   const initial = contract.initialState({
-    initialPrivateState: null,
+    initialPrivateState: privateState,
     initialZswapLocalState: runtime.emptyZswapLocalState(coinPublicKey),
   }, true, true, 111n);
   const context = runtime.createCircuitContext(
@@ -84,7 +89,7 @@ function capture(name, args, flag) {
   initial.currentContractState.data = new runtime.ChargedState(
     output.context.currentQueryContext.state.state,
   );
-  return {
+  const captured = {
     stateHex: Buffer.from(initial.currentContractState.serialize()).toString('hex'),
     publicTranscriptShape: output.proofData.publicTranscript.map(shape),
     privateTranscriptCount: output.proofData.privateTranscriptOutputs.length,
@@ -94,6 +99,16 @@ function capture(name, args, flag) {
       Object.entries(output.gasCost).map(([key, value]) => [key, value.toString()]),
     ),
   };
+  if (privateState !== null) {
+    captured.privateState = output.context.currentPrivateState;
+    captured.witnessCalls = witnessCalls;
+    captured.privateTranscriptOutputs = output.proofData.privateTranscriptOutputs.map(
+      ({ value, alignment }) => ({
+        valueAtoms: value.map((atom) => Array.from(atom)), alignment,
+      }),
+    );
+  }
+  return captured;
 }
 
 process.stdout.write(JSON.stringify({
@@ -107,4 +122,12 @@ process.stdout.write(JSON.stringify({
   streamConstAnnotatedTrue: capture('streamConstAnnotated', [], true),
   streamIncrementFalse: capture('streamIncrement', [], false),
   streamIncrementTrue: capture('streamIncrement', [], true),
+  walkerCallPureFalse: capture('walkerCallPure', [false], false, 7),
+  walkerCallPureTrue: capture('walkerCallPure', [true], false, 7),
+  streamCallPureFalse: capture('streamCallPure', [], false, 7),
+  streamCallPureTrue: capture('streamCallPure', [], true, 7),
+  witnessArgFalse: capture('witnessArg', [false], false, 7),
+  witnessArgTrue: capture('witnessArg', [true], false, 7),
+  streamCallWitnessFalse: capture('streamCallWitness', [], false, 7),
+  streamCallWitnessTrue: capture('streamCallWitness', [], true, 7),
 }, null, 2) + '\n');

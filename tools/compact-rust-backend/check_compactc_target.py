@@ -51,6 +51,7 @@ LIST_SOURCE = ROOT / "examples/rust_backend/list_field.compact"
 MERKLE_SOURCE = ROOT / "examples/rust_backend/merkle_tree_oracle.compact"
 MERKLE_VERIFY_SOURCE = ROOT / "examples/rust_backend/merkle_path_verify.compact"
 PERSISTENT_COMMIT_SOURCE = ROOT / "examples/rust_backend/call_arg_declared_type.compact"
+INTERNAL_PURE_CALL_SOURCE = ROOT / "examples/rust_backend/internal_pure_call.compact"
 TERNARY_COND_SOURCE = ROOT / "examples/rust_backend/ternary_cond_oracle.compact"
 HISTORIC_MERKLE_SOURCE = ROOT / "examples/rust_backend/hmt_insert_oracle.compact"
 VECTOR_KEY_SOURCE = ROOT / "examples/rust_backend/vector_key_adt.compact"
@@ -1390,21 +1391,37 @@ def main() -> None:
                 assert (persistent_commit_proof / "keys" / f"commitSmall.{extension}").is_file()
             for extension in ("zkir", "bzkir"):
                 assert (persistent_commit_proof / "zkir" / f"commitSmall.{extension}").is_file()
-            conditional_field_proof = base / "conditional-field-proof"
-            run(compiler, "--target", "rust", str(TERNARY_COND_SOURCE),
-                str(conditional_field_proof))
-            check_manifest(conditional_field_proof)
+            internal_pure_call_proof = base / "internal-pure-call-proof"
+            run(compiler, "--target", "rust", str(INTERNAL_PURE_CALL_SOURCE),
+                str(internal_pure_call_proof))
+            check_manifest(internal_pure_call_proof)
             capabilities = json.loads(
-                (conditional_field_proof / "contract/rust-capabilities.json").read_text()
+                (internal_pure_call_proof / "contract/rust-capabilities.json").read_text()
             )
-            walker_write = next(circuit for circuit in capabilities["circuits"]
-                                if circuit["name"] == "walkerWrite")
-            assert walker_write["proof_required"] and walker_write["recorded"] \
-                and walker_write["observed_call"]
+            save = next(circuit for circuit in capabilities["circuits"]
+                        if circuit["name"] == "save")
+            assert save["proof_required"] and save["recorded"] and save["observed_call"]
             for extension in ("prover", "verifier"):
-                assert (conditional_field_proof / "keys" / f"walkerWrite.{extension}").is_file()
+                assert (internal_pure_call_proof / "keys" / f"save.{extension}").is_file()
             for extension in ("zkir", "bzkir"):
-                assert (conditional_field_proof / "zkir" / f"walkerWrite.{extension}").is_file()
+                assert (internal_pure_call_proof / "zkir" / f"save.{extension}").is_file()
+            ternary_cond_proof = base / "ternary-cond-proof"
+            run(compiler, "--target", "rust", str(TERNARY_COND_SOURCE), str(ternary_cond_proof))
+            check_manifest(ternary_cond_proof)
+            capabilities = json.loads(
+                (ternary_cond_proof / "contract/rust-capabilities.json").read_text()
+            )
+            for name in ("walkerWrite", "walkerCallPure", "streamCallPure",
+                         "witnessArg", "streamCallWitness"):
+                circuit = next(circuit for circuit in capabilities["circuits"]
+                               if circuit["name"] == name)
+                assert circuit["proof_required"] and circuit["recorded"] \
+                    and circuit["observed_call"]
+            for name in ("walkerWrite", "streamCallPure", "streamCallWitness"):
+                for extension in ("prover", "verifier"):
+                    assert (ternary_cond_proof / "keys" / f"{name}.{extension}").is_file()
+                for extension in ("zkir", "bzkir"):
+                    assert (ternary_cond_proof / "zkir" / f"{name}.{extension}").is_file()
             historic_merkle_proof = base / "historic-merkle-proof"
             run(compiler, "--target", "rust", str(HISTORIC_MERKLE_SOURCE), str(historic_merkle_proof))
             check_manifest(historic_merkle_proof)
@@ -1548,7 +1565,11 @@ def main() -> None:
             )
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
-                "--conditional-field", str(conditional_field_proof),
+                "--conditional-field", str(ternary_cond_proof),
+            )
+            run(
+                "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--pure-field-arguments", str(internal_pure_call_proof), str(ternary_cond_proof),
             )
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",

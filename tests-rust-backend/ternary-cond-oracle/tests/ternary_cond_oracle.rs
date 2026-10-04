@@ -14,8 +14,9 @@
 // limitations under the License.
 
 use compact_rust_ternary_cond_oracle_fixture::ledger_contract::{
-    initial_state, recorded, streamCompareEq, streamIncrement, streamWrite, walkerCallPure,
-    walkerCompareEq, walkerConstAnnotated, walkerInlineWrite, walkerStructMember, walkerWrite,
+    LedgerView, Witnesses, initial_state, recorded, streamCallPure, streamCallWitness,
+    streamCompareEq, streamIncrement, streamWrite, walkerCallPure, walkerCompareEq,
+    walkerConstAnnotated, walkerInlineWrite, walkerStructMember, walkerWrite, witnessArg,
 };
 #[path = "../../boolean_observation_assertions.rs"]
 mod boolean_observation_assertions;
@@ -23,7 +24,7 @@ use compact_rust_ternary_cond_oracle_fixture::pure_circuits::{
     constAnnotatedBothLiteral, constUnannotatedSeqLifted, enumValued, returnTailNested,
 };
 use compact_rust_ternary_cond_oracle_fixture::types::Color;
-use midnight_compact_runtime::context::ConstructorContext;
+use midnight_compact_runtime::context::{ConstructorContext, WitnessContext};
 use midnight_compact_runtime::ledger::{ContractAddress, DefaultDB, StateValue};
 use midnight_compact_runtime::{BoundedUint, Field};
 use midnight_onchain_state::state::{
@@ -31,6 +32,32 @@ use midnight_onchain_state::state::{
 };
 use midnight_serialize::tagged_serialize;
 use midnight_storage::storage::HashMap;
+use std::cell::RefCell;
+
+#[derive(Default)]
+struct Echo {
+    calls: RefCell<Vec<(u64, String)>>,
+}
+
+impl Witnesses<u64> for Echo {
+    fn echoField(
+        &self,
+        context: WitnessContext<'_, u64, LedgerView<'_>>,
+        value: Field,
+    ) -> (u64, Field) {
+        let decimal = if value == Field::from(1_u64) {
+            "1"
+        } else if value == Field::from(2_u64) {
+            "2"
+        } else {
+            panic!("unexpected conditional Field witness argument")
+        };
+        self.calls
+            .borrow_mut()
+            .push((*context.private_state, decimal.to_owned()));
+        (*context.private_state + 1, value)
+    }
+}
 
 const EXPORTED: &[&str] = &[
     "walkerConstAnnotated",
@@ -76,6 +103,116 @@ fn oracle() -> serde_json::Value {
         "../../../runtime-rs/tests/fixtures/ternary-cond-oracle.json"
     ))
     .unwrap()
+}
+
+#[test]
+fn recorded_scalar_pure_and_witness_conditional_arguments_match_typescript() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/conditional-counter-oracle.json"
+    ))
+    .unwrap();
+    for (label, conditional, seed_flag) in [
+        ("walkerCallPureFalse", false, false),
+        ("walkerCallPureTrue", true, false),
+        ("streamCallPureFalse", false, false),
+        ("streamCallPureTrue", false, true),
+        ("witnessArgFalse", false, false),
+        ("witnessArgTrue", true, false),
+        ("streamCallWitnessFalse", false, false),
+        ("streamCallWitnessTrue", false, true),
+    ] {
+        let make_context = || {
+            let context = initial_state(
+                ConstructorContext::new(7_u64),
+                true,
+                true,
+                Field::from(111_u64),
+            )
+            .unwrap()
+            .into_circuit_context(ContractAddress::default());
+            if seed_flag {
+                context.write_cell(0, true).unwrap().context
+            } else {
+                context
+            }
+        };
+        let native_witnesses = Echo::default();
+        let recording_witnesses = Echo::default();
+        let native = match label {
+            "walkerCallPureFalse" | "walkerCallPureTrue" => {
+                walkerCallPure(make_context(), conditional).unwrap()
+            }
+            "streamCallPureFalse" | "streamCallPureTrue" => streamCallPure(make_context()).unwrap(),
+            "witnessArgFalse" | "witnessArgTrue" => {
+                witnessArg(make_context(), &native_witnesses, conditional).unwrap()
+            }
+            "streamCallWitnessFalse" | "streamCallWitnessTrue" => {
+                streamCallWitness(make_context(), &native_witnesses).unwrap()
+            }
+            _ => unreachable!(),
+        };
+        let recorded = match label {
+            "walkerCallPureFalse" | "walkerCallPureTrue" => {
+                recorded::walkerCallPure(make_context(), conditional).unwrap()
+            }
+            "streamCallPureFalse" | "streamCallPureTrue" => {
+                recorded::streamCallPure(make_context()).unwrap()
+            }
+            "witnessArgFalse" | "witnessArgTrue" => {
+                recorded::witnessArg(make_context(), &recording_witnesses, conditional).unwrap()
+            }
+            "streamCallWitnessFalse" | "streamCallWitnessTrue" => {
+                recorded::streamCallWitness(make_context(), &recording_witnesses).unwrap()
+            }
+            _ => unreachable!(),
+        };
+        let expected = &oracle[label];
+        boolean_observation_assertions::assert_ts_trace(label, &native, &recorded, expected);
+        assert_eq!(native.context.private_state, expected["privateState"]);
+        assert_eq!(
+            recorded.execution.context.private_state,
+            expected["privateState"]
+        );
+        assert_eq!(
+            native.context.query.state.get_ref(),
+            recorded.execution.context.query.state.get_ref(),
+        );
+        assert_eq!(
+            state_hex(recorded.execution.context.query.state.get_ref().clone()),
+            expected["stateHex"],
+        );
+        for calls in [&native_witnesses.calls, &recording_witnesses.calls] {
+            let actual = calls
+                .borrow()
+                .iter()
+                .map(|(private_state, value)| {
+                    serde_json::json!({"privateState": private_state, "value": value})
+                })
+                .collect::<Vec<_>>();
+            assert_eq!(
+                serde_json::to_value(actual).unwrap(),
+                expected["witnessCalls"]
+            );
+        }
+        for outputs in [
+            &native.private_transcript_outputs,
+            &recorded.execution.private_transcript_outputs,
+        ] {
+            let actual = outputs
+                .iter()
+                .map(|output| {
+                    serde_json::json!({
+                        "valueAtoms": output.value.0.iter().map(|atom| &atom.0).collect::<Vec<_>>(),
+                        "alignment": output.alignment,
+                    })
+                })
+                .collect::<Vec<_>>();
+            assert_eq!(
+                serde_json::to_value(actual).unwrap(),
+                expected["privateTranscriptOutputs"],
+            );
+        }
+    }
 }
 
 fn initial(c: bool, d: bool, x: u64) -> midnight_compact_runtime::context::ConstructorResult<()> {

@@ -24,6 +24,7 @@ mod adt_set_enum;
 mod closed_pure_field;
 mod merkle_verify;
 mod persistent_commit;
+mod pure_field_arguments;
 mod witness_assert;
 mod witness_vector_let;
 
@@ -835,6 +836,32 @@ fn main() -> Result<(), Box<dyn Error>> {
             );
         }
         return closed_pure_field::run(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--pure-field-arguments")) {
+        let internal = arguments.next().ok_or(
+            "usage: compact-rust-proof-smoke --pure-field-arguments <internal-proof> <ternary-proof>",
+        )?;
+        let ternary = arguments.next().ok_or(
+            "usage: compact-rust-proof-smoke --pure-field-arguments <internal-proof> <ternary-proof>",
+        )?;
+        if arguments.next().is_some() {
+            return Err("usage: compact-rust-proof-smoke --pure-field-arguments <internal-proof> <ternary-proof>".into());
+        }
+        // Ledger proof composition exceeds macOS's default main-thread stack.
+        // Keep the larger stack scoped to this proof smoke, rather than raising
+        // the stack limit for every target-gate process.
+        let proof = std::thread::Builder::new()
+            .name("pure-field-arguments-proof".into())
+            .stack_size(64 * 1024 * 1024)
+            .spawn(move || {
+                pure_field_arguments::run(Path::new(&internal), Path::new(&ternary))
+                    .map_err(|error| error.to_string())
+            })?;
+        return match proof.join() {
+            Ok(Ok(())) => Ok(()),
+            Ok(Err(error)) => Err(error.into()),
+            Err(_) => Err("pure Field argument proof thread panicked".into()),
+        };
     }
     if first.as_deref() == Some(OsStr::new("--persistent-commit")) {
         let root = arguments

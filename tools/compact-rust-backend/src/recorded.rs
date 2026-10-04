@@ -864,6 +864,65 @@ fn render_recorded_item(
                 next_temp,
                 visiting,
             ),
+            Expr::FieldCast { value } => {
+                fn bounded_arm(value: &Expr) -> Option<syn::Expr> {
+                    let Expr::Coerce {
+                        value,
+                        ty: Type::Unsigned { max },
+                    } = value
+                    else {
+                        return None;
+                    };
+                    let Expr::UnsignedLiteral {
+                        value: literal,
+                        max: literal_max,
+                    } = value.as_ref()
+                    else {
+                        return None;
+                    };
+                    if max != "2" || literal_max != max {
+                        return None;
+                    }
+                    let literal = literal.parse::<u64>().ok()?;
+                    if literal > 2 {
+                        return None;
+                    }
+                    let literal = syn::LitInt::new(&format!("{literal}u64"), Span::call_site());
+                    Some(syn::parse_quote!(runtime::Field::from(#literal)))
+                }
+
+                let Expr::If {
+                    condition,
+                    then,
+                    otherwise,
+                } = value.as_ref()
+                else {
+                    return Ok(None);
+                };
+                let (Some(then), Some(otherwise)) = (bounded_arm(then), bounded_arm(otherwise))
+                else {
+                    return Ok(None);
+                };
+                let Some(condition) = boolean_expression(
+                    condition,
+                    locals,
+                    parameters,
+                    ledger_fields,
+                    witnesses,
+                    circuits,
+                    steps,
+                    next_temp,
+                    visiting,
+                )?
+                else {
+                    return Ok(None);
+                };
+                Ok(Some(syn::parse_quote!(if #condition {
+                    #then
+                } else {
+                    #otherwise
+                })))
+            }
             Expr::Parameter { .. } => Ok(cell_source(value, &Type::Field, locals, parameters)),
             Expr::FieldLiteral { .. } => {
                 let (literal, ty) = expression_with_calls(value, parameters, &HashMap::new())?;
@@ -1848,12 +1907,62 @@ fn render_recorded_item(
                         scoped.insert(binding.name.clone(), syn::parse_quote!(#local));
                     } else if binding.ty == Type::Field {
                         if let Expr::Call { name, arguments } = &binding.value
-                            && arguments.is_empty()
-                            && pure_circuits.get(name.as_str()).is_some_and(|callee| {
-                                callee.parameters.is_empty() && callee.result == Type::Field
-                            })
+                            && let Some(callee) = pure_circuits.get(name.as_str())
+                            && callee.result == Type::Field
                             && closed_pure_field_call(name, pure_circuits, &mut HashSet::new())
                         {
+                            if arguments.len() != callee.parameters.len() {
+                                return Err(RenderError::ArgumentCount {
+                                    circuit: name.clone(),
+                                    expected: callee.parameters.len(),
+                                    actual: arguments.len(),
+                                });
+                            }
+                            let mut args = Vec::new();
+                            for (argument_index, (argument, parameter)) in
+                                arguments.iter().zip(&callee.parameters).enumerate()
+                            {
+                                if parameter.ty != Type::Field {
+                                    return Ok(RecordingOutcome::Unsupported(
+                                        RecordingGap::expression(
+                                            argument,
+                                            format!(
+                                                "{path}.bindings[{binding_index}].value.arguments[{argument_index}]"
+                                            ),
+                                        ),
+                                    ));
+                                }
+                                let Some(argument) = field_expression(
+                                    argument,
+                                    &scoped,
+                                    parameters,
+                                    ledger_fields,
+                                    witnesses,
+                                    circuits,
+                                    shared_callees,
+                                    steps,
+                                    next_temp,
+                                    visiting,
+                                )?
+                                else {
+                                    return Ok(RecordingOutcome::Unsupported(
+                                        RecordingGap::expression(
+                                            argument,
+                                            format!(
+                                                "{path}.bindings[{binding_index}].value.arguments[{argument_index}]"
+                                            ),
+                                        ),
+                                    ));
+                                };
+                                let arg = syn::Ident::new(
+                                    &format!("__compact_recorded_arg_{}", *next_temp),
+                                    Span::call_site(),
+                                );
+                                *next_temp += 1;
+                                steps
+                                    .push(syn::parse_quote!(let #arg: runtime::Field = #argument;));
+                                args.push(arg);
+                            }
                             let method = ident(name)?;
                             let value = syn::Ident::new(
                                 &format!("__compact_recorded_pure_field_{}", *next_temp),
@@ -1861,7 +1970,7 @@ fn render_recorded_item(
                             );
                             *next_temp += 1;
                             steps.push(syn::parse_quote! {
-                                let #value: runtime::Field = crate::pure_circuits::#method()?;
+                                let #value: runtime::Field = crate::pure_circuits::#method(#(#args),*)?;
                             });
                             scoped.insert(binding.name.clone(), syn::parse_quote!(#value));
                             continue;

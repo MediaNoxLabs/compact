@@ -578,6 +578,11 @@ Map, List, enum Cell, `tiny`, plain/historic Merkle append and fullness, and vec
 insert call fixtures. `tiny` is proved in both
 present and absent `get` branches. Other circuit operations still need
 recording coverage before wallet submission.
+The scalar pure Field argument check also proves, verifies, validates, and
+applies `internal_pure_call.save`, `ternary_cond_oracle.streamCallPure`, and
+`streamCallWitness` from their emitted artifacts. Its proof smoke runs on a
+dedicated 64 MiB thread because ledger proof composition overflows macOS's
+default main-thread stack; the shell's stack limit need not be raised.
 
 The fixture suite covers all 37 top-level `*_fixture.compact` contracts from
 the `codegen-rust` oracle branch, alongside smaller source contracts used to

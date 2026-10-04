@@ -13,7 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use compact_rust_internal_pure_call_fixture::ledger_contract::{initial_state, read_stored, save};
+use compact_rust_internal_pure_call_fixture::ledger_contract::{
+    initial_state, read_stored, recorded, save,
+};
+#[path = "../../boolean_observation_assertions.rs"]
+mod boolean_observation_assertions;
 use compact_rust_internal_pure_call_fixture::pure_circuits::double_increment;
 use midnight_compact_runtime::Field;
 use midnight_compact_runtime::context::ConstructorContext;
@@ -60,5 +64,45 @@ fn local_pure_helper_is_callable_without_becoming_an_export() {
     assert_eq!(
         state_hex(read.context.query.state.get_ref().clone()),
         oracle["stateHex"]
+    );
+}
+
+#[test]
+fn recorded_scalar_pure_argument_matches_typescript_trace_and_gas() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/internal-pure-call.json"
+    ))
+    .unwrap();
+    let native = save(
+        initial_state(ConstructorContext::new(()))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default()),
+        Field::from(7_u64),
+    )
+    .unwrap();
+    let recorded = recorded::save(
+        initial_state(ConstructorContext::new(()))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default()),
+        Field::from(7_u64),
+    )
+    .unwrap();
+    boolean_observation_assertions::assert_ts_trace(
+        "save",
+        &native,
+        &recorded,
+        &oracle["saveTrace"],
+    );
+    assert_eq!(native.context.private_state, ());
+    assert_eq!(recorded.execution.context.private_state, ());
+    assert!(native.private_transcript_outputs.is_empty());
+    assert!(recorded.execution.private_transcript_outputs.is_empty());
+    assert_eq!(
+        native.context.query.state.get_ref(),
+        recorded.execution.context.query.state.get_ref(),
+    );
+    assert_eq!(
+        state_hex(recorded.execution.context.query.state.get_ref().clone()),
+        oracle["stateHex"],
     );
 }

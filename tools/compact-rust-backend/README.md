@@ -62,6 +62,22 @@ frontend `contract-info.json` value, validates one proof flag per exported
 circuit, permits extra nonexported helper entries, and produces the published
 schema-3 report. The CLI uses this validated path; unknown applicability never
 defaults to `false`.
+
+The checked parity inventory also includes the 18 TypeScript-positive
+PM-19252 Compact sources listed in `parity_positive_sources.json`. Its one
+expected-rejection source, `example_fourteen.compact`, is pinned in that
+manifest but excluded from the positive inventory. Run
+`check_positive_source_scope.py --compiler /path/to/immutable/compactc --output
+/tmp/pm19252-scope.json` with `COMPACTC_SCHEME` set for source-built compilers
+to verify TypeScript/Rust compile outcomes and authoritative contract-info
+proof flags. Compiler-backed inventory also joins capabilities from the 17
+currently Rust-compileable PM-19252 sources; `example_ten.compact` remains a
+checked TypeScript-positive source with a measured Rust rejection, recorded
+in the separate acceptance receipt. The inventory's lexical scanner still
+omits `pure circuit` declaration identities, including three in this cohort;
+issue #184 tracks a
+separate parser/baseline correction. The current declaration baseline is
+therefore incomplete even when source membership has no drift.
 The generated `ledger_slots` module exposes named typed descriptors for Cell,
 Counter, Set, Map, List, and Merkle declarations. For example,
 `ledger_slots::tree.insert(context, value)` accepts the declared Merkle leaf

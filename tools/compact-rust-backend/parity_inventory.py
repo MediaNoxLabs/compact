@@ -37,11 +37,19 @@ import tomllib
 
 ROOT = Path(__file__).resolve().parents[2]
 ORACLE_MANIFEST = Path(__file__).with_name("oracle_acceptance.json")
+POSITIVE_SOURCE_MANIFEST = Path(__file__).with_name("parity_positive_sources.json")
 DEFAULT_BASELINE = Path(__file__).with_name("parity_baseline.json")
 DECLARATION = re.compile(r"(?m)^[ \t]*(export[ \t]+)?(circuit|witness|constructor|module)\b")
 IMPORT = re.compile(r"(?m)^[ \t]*(include|import)\s+(.+?);", re.DOTALL)
 EXPORT_LIST = re.compile(r"(?m)^[ \t]*export[ \t]*\{([^}]*)\}")
 NAME = re.compile(r"[A-Za-z_$][A-Za-z0-9_$]*")
+PURE_DECLARATION = re.compile(r"(?m)^[ \t]*(export[ \t]+)?pure[ \t]+circuit\b")
+
+
+def positive_scope(root: Path) -> dict | None:
+    if root.resolve() != ROOT.resolve() or not POSITIVE_SOURCE_MANIFEST.is_file():
+        return None
+    return json.loads(POSITIVE_SOURCE_MANIFEST.read_text())
 
 
 def without_comments(source: str) -> str:
@@ -138,6 +146,9 @@ def source_paths(root: Path, extra_dirs: list[Path] | None = None) -> list[Path]
     if ORACLE_MANIFEST.is_file() and root.resolve() == ROOT.resolve():
         manifest = json.loads(ORACLE_MANIFEST.read_text())
         paths.update(root / item["source"] for item in manifest["fixtures"])
+    scope = positive_scope(root)
+    if scope:
+        paths.update(root / item["source"] for item in scope["positive_sources"])
     for directory in extra_dirs or []:
         directory = directory if directory.is_absolute() else root / directory
         if not directory.is_dir() or not directory.resolve().is_relative_to(root.resolve()):
@@ -244,6 +255,8 @@ def receipt_metadata(root: Path, compiler: Path | None, contracts: list[dict]) -
         "source_manifest_sha256": hashlib.sha256(
             json.dumps(source_hashes, sort_keys=True, separators=(",", ":")).encode()
         ).hexdigest(),
+        "positive_scope_sha256": sha256_file(POSITIVE_SOURCE_MANIFEST)
+        if root.resolve() == ROOT.resolve() else None,
         "upstream_packages": upstream_packages(lock_file),
     }
 
@@ -267,16 +280,23 @@ def make_inventory(root: Path, extra_dirs: list[Path], compiler: Path | None,
     if only is not None:
         paths = [path for path in paths if relative_source(path, root) in only]
     contracts = [parse_source(path, root) for path in paths]
+    scope = positive_scope(root)
+    expected_proof = {(entry["source"], circuit["name"]): circuit["proof"]
+                      for entry in scope["positive_sources"] for circuit in entry["proof_circuits"]} if scope else {}
     rows = [{"source": contract["source"], **item,
              "ts_source_declaration": True, "rust_recorded": None, "rust_observed_call": None,
-             "proof_required": None, "rust_recording_status": None}
+             "proof_required": None, "rust_recording_status": None,
+             "ts_expected_proof": expected_proof.get((contract["source"], item["name"]))}
             for contract in contracts for item in contract["declarations"]]
     by_source = {contract["source"]: contract for contract in contracts}
     unmatched = []
     compiled = []
     if compiler:
+        acceptance_rust_success = {entry["source"] for entry in scope["positive_sources"]
+                                   if entry["expected_rust"] == "success"} if scope else set()
         roots = [path for path in paths if path.parent == root / "examples/rust_backend"
-                 or path == root / "examples/rust_backend/digital-passport-credential/src/digital-passport-credential.compact"]
+                 or path == root / "examples/rust_backend/digital-passport-credential/src/digital-passport-credential.compact"
+                 or relative_source(path, root) in acceptance_rust_success]
         for path in roots:
             source = relative_source(path, root)
             report = compile_capabilities(compiler, path, root)
@@ -306,11 +326,14 @@ def make_inventory(root: Path, extra_dirs: list[Path], compiler: Path | None,
     missing = Counter(row["source"] for row in rows if row["kind"] == "circuit"
                       and row["visibility"] == "export" and row["proof_required"] is True
                       and row["rust_recording_status"] == "unavailable")
+    pure_omissions = [match for path in paths
+                      for match in PURE_DECLARATION.finditer(without_comments(path.read_text()))]
     return {
         "format_version": 1,
-        "scope": "repository source declarations; TS behavior parity requires executing tests",
+        "scope": "lexical repository declarations; pure-circuit declarations remain omitted pending issue #184; TS behavior parity requires executing tests",
         "contracts": contracts,
         "rows": rows,
+        "positive_acceptance_scope": scope,
         "summary": {
             "sources": len(contracts),
             "declarations": len(rows),
@@ -324,6 +347,8 @@ def make_inventory(root: Path, extra_dirs: list[Path], compiler: Path | None,
             "nonproof": sum(row["proof_required"] is False for row in rows),
             "unassessed_exported_circuits": sum(row["kind"] == "circuit" and row["visibility"] == "export"
                                                 and row["proof_required"] is None for row in rows),
+            "known_lexical_pure_omissions": len(pure_omissions),
+            "known_exported_pure_omissions": sum(bool(match.group(1)) for match in pure_omissions),
             "ranked_missing_sources": [{"source": source, "count": count}
                                        for source, count in sorted(missing.items(), key=lambda pair: (-pair[1], pair[0]))],
             "unmatched_compiler_circuits": unmatched,

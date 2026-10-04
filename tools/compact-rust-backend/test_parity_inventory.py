@@ -18,6 +18,7 @@
 import importlib.util
 import json
 from pathlib import Path
+import re
 import subprocess
 import sys
 import tempfile
@@ -31,6 +32,38 @@ SPEC.loader.exec_module(inventory)
 
 
 class ParityInventoryTests(unittest.TestCase):
+    def test_pm19252_positive_scope_is_complete_and_excludes_rejection(self):
+        scope = json.loads(inventory.POSITIVE_SOURCE_MANIFEST.read_text())
+        positive = scope["positive_sources"]
+        negative = scope["expected_rejections"]
+        self.assertEqual((len(positive), len(negative)), (18, 1))
+        all_paths = [entry["source"] for entry in positive + negative]
+        self.assertEqual(len(all_paths), len(set(all_paths)))
+        self.assertEqual(sorted(all_paths), sorted(path.relative_to(inventory.ROOT).as_posix()
+                                                  for path in (inventory.ROOT / "examples/bugs/pm-19252").glob("*.compact")))
+        scanned = {path.relative_to(inventory.ROOT).as_posix()
+                   for path in inventory.source_paths(inventory.ROOT)}
+        self.assertTrue({entry["source"] for entry in positive} <= scanned)
+        self.assertTrue({entry["source"] for entry in negative}.isdisjoint(scanned))
+        suite = (inventory.ROOT / scope["suite"]).read_text()
+        for entry in positive:
+            name = Path(entry["source"]).name
+            self.assertRegex(suite, re.escape(name) + r"(?:(?!const filePath)[\s\S])*?toBeSuccess")
+            self.assertEqual(entry["expected_ts"], "success")
+            self.assertEqual(entry["expected_rust"] in ("success", "rejection"), True)
+            self.assertEqual(len(entry["proof_circuits"]),
+                             len({circuit["name"] for circuit in entry["proof_circuits"]}))
+            self.assertTrue(all(isinstance(circuit["proof"], bool)
+                                and isinstance(circuit["pure"], bool)
+                                for circuit in entry["proof_circuits"]))
+            source = inventory.without_comments((inventory.ROOT / entry["source"]).read_text())
+            omissions = list(inventory.PURE_DECLARATION.finditer(source))
+            self.assertEqual(len(omissions), entry["known_lexical_pure_omissions"])
+            self.assertEqual(sum(bool(match.group(1)) for match in omissions),
+                             entry["known_exported_pure_omissions"])
+        self.assertEqual(negative[0]["source"], "examples/bugs/pm-19252/example_fourteen.compact")
+        self.assertRegex(suite, r"example_fourteen\.compact(?:(?!const filePath)[\s\S])*?toBeFailure")
+
     def test_checked_baseline_roundtrip_and_known_bad_drift(self):
         current = inventory.baseline_rows(inventory.make_inventory(inventory.ROOT, [], None)["rows"])
         checked = json.loads(inventory.DEFAULT_BASELINE.read_text())

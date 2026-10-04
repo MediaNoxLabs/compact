@@ -1,0 +1,240 @@
+{
+  "format_version": 1,
+  "suite": "tests-e2e/src/tests/bugs/compiler.bugs.pm19252.e2e.test.ts",
+  "purpose": "PM-19252 compiler proof-applicability acceptance; positive Compact source entrypoints only",
+  "positive_sources": [
+    {
+      "source": "examples/bugs/pm-19252/example_eight.compact",
+      "expected_ts": "success",
+      "expected_rust": "success",
+      "proof_circuits": [
+        {
+          "name": "test",
+          "pure": false,
+          "proof": true
+        },
+        {
+          "name": "test1",
+          "pure": true,
+          "proof": false
+        }
+      ],
+      "known_lexical_pure_omissions": 0,
+      "known_exported_pure_omissions": 0
+    },
+    {
+      "source": "examples/bugs/pm-19252/example_eight_a.compact",
+      "expected_ts": "success",
+      "expected_rust": "success",
+      "proof_circuits": [
+        {
+          "name": "test",
+          "pure": false,
+          "proof": true
+        },
+        {
+          "name": "test1",
+          "pure": false,
+          "proof": true
+        }
+      ],
+      "known_lexical_pure_omissions": 0,
+      "known_exported_pure_omissions": 0
+    },
+    {
+      "source": "examples/bugs/pm-19252/example_eight_b.compact",
+      "expected_ts": "success",
+      "expected_rust": "success",
+      "proof_circuits": [
+        {
+          "name": "test",
+          "pure": false,
+          "proof": true
+        },
+        {
+          "name": "test1",
+          "pure": false,
+          "proof": true
+        }
+      ],
+      "known_lexical_pure_omissions": 0,
+      "known_exported_pure_omissions": 0
+    },
+    {
+      "source": "examples/bugs/pm-19252/example_eleven.compact",
+      "expected_ts": "success",
+      "expected_rust": "success",
+      "proof_circuits": [
+        {
+          "name": "test1",
+          "pure": false,
+          "proof": false
+        }
+      ],
+      "known_lexical_pure_omissions": 0,
+      "known_exported_pure_omissions": 0
+    },
+    {
+      "source": "examples/bugs/pm-19252/example_five.compact",
+      "expected_ts": "success",
+      "expected_rust": "success",
+      "proof_circuits": [
+        {
+          "name": "test",
+          "pure": true,
+          "proof": false
+        }
+      ],
+      "known_lexical_pure_omissions": 0,
+      "known_exported_pure_omissions": 0
+    },
+    {
+      "source": "examples/bugs/pm-19252/example_four.compact",
+      "expected_ts": "success",
+      "expected_rust": "success",
+      "proof_circuits": [],
+      "known_lexical_pure_omissions": 0,
+      "known_exported_pure_omissions": 0
+    },
+    {
+      "source": "examples/bugs/pm-19252/example_four_a.compact",
+      "expected_ts": "success",
+      "expected_rust": "success",
+      "proof_circuits": [],
+      "known_lexical_pure_omissions": 0,
+      "known_exported_pure_omissions": 0
+    },
+    {
+      "source": "examples/bugs/pm-19252/example_four_b.compact",
+      "expected_ts": "success",
+      "expected_rust": "success",
+      "proof_circuits": [],
+      "known_lexical_pure_omissions": 0,
+      "known_exported_pure_omissions": 0
+    },
+    {
+      "source": "examples/bugs/pm-19252/example_nine.compact",
+      "expected_ts": "success",
+      "expected_rust": "success",
+      "proof_circuits": [
+        {
+          "name": "test1",
+          "pure": true,
+          "proof": false
+        }
+      ],
+      "known_lexical_pure_omissions": 0,
+      "known_exported_pure_omissions": 0
+    },
+    {
+      "source": "examples/bugs/pm-19252/example_one.compact",
+      "expected_ts": "success",
+      "expected_rust": "success",
+      "proof_circuits": [],
+      "known_lexical_pure_omissions": 0,
+      "known_exported_pure_omissions": 0
+    },
+    {
+      "source": "examples/bugs/pm-19252/example_one_a.compact",
+      "expected_ts": "success",
+      "expected_rust": "success",
+      "proof_circuits": [],
+      "known_lexical_pure_omissions": 1,
+      "known_exported_pure_omissions": 0
+    },
+    {
+      "source": "examples/bugs/pm-19252/example_seven.compact",
+      "expected_ts": "success",
+      "expected_rust": "success",
+      "proof_circuits": [
+        {
+          "name": "test",
+          "pure": false,
+          "proof": true
+        }
+      ],
+      "known_lexical_pure_omissions": 0,
+      "known_exported_pure_omissions": 0
+    },
+    {
+      "source": "examples/bugs/pm-19252/example_six.compact",
+      "expected_ts": "success",
+      "expected_rust": "success",
+      "proof_circuits": [
+        {
+          "name": "test",
+          "pure": false,
+          "proof": true
+        }
+      ],
+      "known_lexical_pure_omissions": 0,
+      "known_exported_pure_omissions": 0
+    },
+    {
+      "source": "examples/bugs/pm-19252/example_ten.compact",
+      "expected_ts": "success",
+      "expected_rust": "rejection",
+      "proof_circuits": [
+        {
+          "name": "test1",
+          "pure": false,
+          "proof": false
+        }
+      ],
+      "known_lexical_pure_omissions": 0,
+      "known_exported_pure_omissions": 0,
+      "rust_diagnostic_contains": "unknown circuit \"ownPublicKey\""
+    },
+    {
+      "source": "examples/bugs/pm-19252/example_thirteen.compact",
+      "expected_ts": "success",
+      "expected_rust": "success",
+      "proof_circuits": [
+        {
+          "name": "test1",
+          "pure": true,
+          "proof": false
+        }
+      ],
+      "known_lexical_pure_omissions": 2,
+      "known_exported_pure_omissions": 1
+    },
+    {
+      "source": "examples/bugs/pm-19252/example_three.compact",
+      "expected_ts": "success",
+      "expected_rust": "success",
+      "proof_circuits": [],
+      "known_lexical_pure_omissions": 0,
+      "known_exported_pure_omissions": 0
+    },
+    {
+      "source": "examples/bugs/pm-19252/example_twelve.compact",
+      "expected_ts": "success",
+      "expected_rust": "success",
+      "proof_circuits": [
+        {
+          "name": "test1",
+          "pure": false,
+          "proof": false
+        }
+      ],
+      "known_lexical_pure_omissions": 0,
+      "known_exported_pure_omissions": 0
+    },
+    {
+      "source": "examples/bugs/pm-19252/example_two.compact",
+      "expected_ts": "success",
+      "expected_rust": "success",
+      "proof_circuits": [],
+      "known_lexical_pure_omissions": 0,
+      "known_exported_pure_omissions": 0
+    }
+  ],
+  "expected_rejections": [
+    {
+      "source": "examples/bugs/pm-19252/example_fourteen.compact",
+      "expected_ts": "rejection",
+      "diagnostic_contains": "marked pure but is actually impure"
+    }
+  ]
+}

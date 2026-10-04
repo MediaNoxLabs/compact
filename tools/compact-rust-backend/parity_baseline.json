@@ -3702,6 +3702,214 @@
     "visibility": "export"
   },
   {
+    "source": "examples/bugs/pm-19252/example_eleven.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "test",
+    "signature": "circuit test(): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/bugs/pm-19252/example_twelve.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "test",
+    "signature": "circuit test(): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/bugs/pm-19252/example_one.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "test",
+    "signature": "circuit test(): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/bugs/pm-19252/example_ten.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "test",
+    "signature": "circuit test(): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/bugs/pm-19252/example_four.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "test",
+    "signature": "circuit test(a: Field): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/bugs/pm-19252/example_four_a.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "test",
+    "signature": "circuit test(a: Field): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/bugs/pm-19252/example_four_b.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "test",
+    "signature": "circuit test(a: Field): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/bugs/pm-19252/example_nine.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "test",
+    "signature": "circuit test(a: Field): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/bugs/pm-19252/example_three.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "test",
+    "signature": "circuit test(a: Field): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/bugs/pm-19252/example_two.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "test",
+    "signature": "circuit test(a: Field): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/bugs/pm-19252/example_eight_b.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "test",
+    "signature": "export circuit test(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/bugs/pm-19252/example_five.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "test",
+    "signature": "export circuit test(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/bugs/pm-19252/example_eight.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "test",
+    "signature": "export circuit test(a: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/bugs/pm-19252/example_eight_a.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "test",
+    "signature": "export circuit test(a: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/bugs/pm-19252/example_seven.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "test",
+    "signature": "export circuit test(a: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/bugs/pm-19252/example_six.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "test",
+    "signature": "export circuit test(a: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/bugs/pm-19252/example_four.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "test1",
+    "signature": "circuit test1(): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/bugs/pm-19252/example_four_a.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "test1",
+    "signature": "circuit test1(): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/bugs/pm-19252/example_four_b.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "test1",
+    "signature": "circuit test1(): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/bugs/pm-19252/example_eight.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "test1",
+    "signature": "export circuit test1(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/bugs/pm-19252/example_eight_a.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "test1",
+    "signature": "export circuit test1(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/bugs/pm-19252/example_ten.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "test1",
+    "signature": "export circuit test1(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/bugs/pm-19252/example_eight_b.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "test1",
+    "signature": "export circuit test1(a : Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/bugs/pm-19252/example_eleven.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "test1",
+    "signature": "export circuit test1(a: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/bugs/pm-19252/example_twelve.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "test1",
+    "signature": "export circuit test1(a: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/bugs/pm-19252/example_nine.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "test1",
+    "signature": "export circuit test1(b: Field): []",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/assert_parity_oracle.compact",
     "module_path": [],
     "kind": "circuit",
@@ -4414,6 +4622,16 @@
     "visibility": "internal"
   },
   {
+    "source": "examples/bugs/pm-19252/example_twelve.compact",
+    "module_path": [
+      "T"
+    ],
+    "kind": "module",
+    "name": "T1",
+    "signature": "module T1",
+    "visibility": "internal"
+  },
+  {
     "source": "examples/rust_backend/struct_collision_oracle.compact",
     "module_path": [],
     "kind": "module",
@@ -4470,6 +4688,14 @@
     "visibility": "internal"
   },
   {
+    "source": "examples/bugs/pm-19252/example_twelve.compact",
+    "module_path": [],
+    "kind": "module",
+    "name": "T",
+    "signature": "module T",
+    "visibility": "internal"
+  },
+  {
     "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/vc.compact",
     "module_path": [],
     "kind": "module",
@@ -4494,6 +4720,17 @@
     "name": "getSchnorrReduction",
     "signature": "witness getSchnorrReduction(challengeHash: Field): [Uint<7>, Uint<248>]",
     "visibility": "internal"
+  },
+  {
+    "source": "examples/bugs/pm-19252/example_twelve.compact",
+    "module_path": [
+      "T",
+      "T1"
+    ],
+    "kind": "witness",
+    "name": "test2",
+    "signature": "export witness test2(a: Field): Field",
+    "visibility": "export"
   },
   {
     "source": "examples/rust_backend/witness_ledger_set.compact",
@@ -5197,6 +5434,14 @@
     "kind": "witness",
     "name": "sumWitness",
     "signature": "witness sumWitness(values: Vector<2, Field>): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/bugs/pm-19252/example_eleven.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "test2",
+    "signature": "witness test2(a: Field): Field",
     "visibility": "internal"
   }
 ]

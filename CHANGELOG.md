@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Toolchain 0.31.133, language 0.23.105, runtime 0.16.101]
+
+### Added
+
+- Preserve circuit, witness, constructor, and type-alias declaration locations
+  in the private Rust IR so renderer diagnostics can name the Compact source.
+
+## [Toolchain 0.31.132, language 0.23.105, runtime 0.16.101]
+
+### Added
+
+- Preserve ledger declaration locations in the private Rust IR and report them
+  when Rust backend rendering rejects a declaration.
+
+## [Toolchain 0.31.131, language 0.23.105, runtime 0.16.101]
+
+### Added
+
+- Derive checked Compact unit-enum codecs for generated Rust, preserving the
+  existing representation and rejecting invalid ordinal tags.
+
 ## [Toolchain 0.31.130, language 0.23.105, runtime 0.16.101]
 
 ### Added

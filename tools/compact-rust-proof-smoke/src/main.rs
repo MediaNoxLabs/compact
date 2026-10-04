@@ -21,6 +21,7 @@
 //! Deployment combines the generated constructor state with the emitted key.
 
 mod merkle_verify;
+mod persistent_commit;
 
 use std::env;
 use std::error::Error;
@@ -754,6 +755,17 @@ fn check_conditional_counter_proof(root: &Path) -> Result<(), Box<dyn Error>> {
 fn main() -> Result<(), Box<dyn Error>> {
     let mut arguments = env::args_os().skip(1);
     let first = arguments.next();
+    if first.as_deref() == Some(OsStr::new("--persistent-commit")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --persistent-commit <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err(
+                "usage: compact-rust-proof-smoke --persistent-commit <proof-output>".into(),
+            );
+        }
+        return persistent_commit::run(Path::new(&root));
+    }
     if first.as_deref() == Some(OsStr::new("--composite-cell")) {
         let root = arguments
             .next()

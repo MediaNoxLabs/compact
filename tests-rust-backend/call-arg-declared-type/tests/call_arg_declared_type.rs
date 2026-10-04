@@ -19,6 +19,8 @@ use compact_rust_call_arg_declared_type_fixture::ledger_contract::{
     initial_state, inlinedAssert, pureBodyFieldOnly, pureBodyVec, pureFromImpure, witnessBare,
     witnessConst,
 };
+#[path = "../../boolean_observation_assertions.rs"]
+mod boolean_observation_assertions;
 use midnight_compact_runtime::context::{ConstructorContext, WitnessContext};
 use midnight_compact_runtime::ledger::{ContractAddress, DefaultDB, StateValue};
 use midnight_compact_runtime::{Field, FixedVector};
@@ -119,6 +121,50 @@ fn declared_call_arguments_match_typescript_state_bytes() {
             state_hex(result.query.state.get_ref().clone()),
             oracle["circuits"][name]["stateHex"],
             "{name}"
+        );
+    }
+}
+
+#[test]
+fn recorded_persistent_commitments_match_typescript_trace_and_gas() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/call-arg-declared-type.json"
+    ))
+    .unwrap();
+    for name in ["commitSmall", "commitU128", "commitFieldOnly"] {
+        let native = initial_state(ConstructorContext::new(()))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default());
+        let recording = initial_state(ConstructorContext::new(()))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default());
+        let native = match name {
+            "commitSmall" => commitSmall(native).unwrap(),
+            "commitU128" => commitU128(native).unwrap(),
+            "commitFieldOnly" => commitFieldOnly(native).unwrap(),
+            _ => unreachable!(),
+        };
+        let recorded = match name {
+            "commitSmall" => compact_rust_call_arg_declared_type_fixture::ledger_contract::recorded::commitSmall(recording).unwrap(),
+            "commitU128" => compact_rust_call_arg_declared_type_fixture::ledger_contract::recorded::commitU128(recording).unwrap(),
+            "commitFieldOnly" => compact_rust_call_arg_declared_type_fixture::ledger_contract::recorded::commitFieldOnly(recording).unwrap(),
+            _ => unreachable!(),
+        };
+        boolean_observation_assertions::assert_ts_trace(
+            name,
+            &native,
+            &recorded,
+            &oracle["circuits"][name]["trace"],
+        );
+        assert_eq!(
+            recorded.execution.context.query.state.get_ref(),
+            native.context.query.state.get_ref(),
+            "{name}: recorded state"
+        );
+        assert_eq!(
+            state_hex(recorded.execution.context.query.state.get_ref().clone()),
+            oracle["circuits"][name]["stateHex"],
+            "{name}: TypeScript state"
         );
     }
 }

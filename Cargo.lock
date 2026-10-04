@@ -1683,6 +1683,7 @@ dependencies = [
 name = "compact-rust-proof-smoke"
 version = "0.1.0"
 dependencies = [
+ "compact-rust-call-arg-declared-type-fixture",
  "compact-rust-cell-boolean-fixture",
  "compact-rust-cell-read-fixture",
  "compact-rust-cell-struct-fixture",

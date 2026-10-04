@@ -63,6 +63,7 @@ RECORDED_ENUM_SOURCE = ROOT / "examples/rust_backend/recorded_enum_cell.compact"
 TINY_SOURCE = ROOT / "examples/rust_backend/tiny_oracle.compact"
 CELL_READ_SOURCE = ROOT / "examples/rust_backend/cell_read.compact"
 WITNESS_CELL_SOURCE = ROOT / "examples/rust_backend/witness_cell_write.compact"
+ASSERT_WITNESS_SOURCE = ROOT / "examples/rust_backend/assert_witness.compact"
 MERKLE_WITNESS_SOURCE = ROOT / "examples/rust_backend/merkle_path_witness.compact"
 LIST_SHAPES_SOURCE = ROOT / "examples/rust_backend/witness_list_shapes.compact"
 NESTED_COUNTER_SOURCE = ROOT / "examples/rust_backend/stateful_circuit_call.compact"
@@ -1265,6 +1266,21 @@ def main() -> None:
                     assert (witness_proof / "keys" / f"{circuit}.{extension}").is_file()
                 for extension in ("zkir", "bzkir"):
                     assert (witness_proof / "zkir" / f"{circuit}.{extension}").is_file()
+            assert_witness_proof = base / "assert-witness-proof"
+            run(compiler, "--target", "rust", str(ASSERT_WITNESS_SOURCE),
+                str(assert_witness_proof))
+            check_manifest(assert_witness_proof)
+            capabilities = json.loads(
+                (assert_witness_proof / "contract/rust-capabilities.json").read_text()
+            )
+            checked_write = next(circuit for circuit in capabilities["circuits"]
+                                 if circuit["name"] == "checked_write")
+            assert checked_write["proof_required"] and checked_write["recorded"] \
+                and checked_write["observed_call"]
+            for extension in ("prover", "verifier"):
+                assert (assert_witness_proof / "keys" / f"checked_write.{extension}").is_file()
+            for extension in ("zkir", "bzkir"):
+                assert (assert_witness_proof / "zkir" / f"checked_write.{extension}").is_file()
             nested_proof = base / "nested-proof"
             run(compiler, "--target", "rust", str(NESTED_COUNTER_SOURCE), str(nested_proof))
             check_manifest(nested_proof)
@@ -1505,6 +1521,10 @@ def main() -> None:
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 "--persistent-commit", str(persistent_commit_proof),
+            )
+            run(
+                "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--assert-witness", str(assert_witness_proof),
             )
     print("compactc target boundary and manifest: passed")
 

@@ -1886,6 +1886,76 @@ fn recorded_set_assertions_preserve_boolean_queries_and_pure_field_bindings() {
 }
 
 #[test]
+fn direct_boolean_witness_assertion_records_before_cell_write() {
+    let mut contract = identity(Type::Unit, Expr::Unit);
+    contract.circuits.clear();
+    contract.ledger_fields = vec![LedgerField {
+        source: None,
+        id: "cell".into(),
+        index: 0,
+        path: vec![],
+        declaration: LedgerFieldKind::Cell { ty: Type::Field },
+    }];
+    contract.witnesses = vec![WitnessDeclaration {
+        source: None,
+        name: "echo".into(),
+        parameters: vec![Parameter {
+            name: "flag".into(),
+            ty: Type::Boolean,
+        }],
+        result: Type::Boolean,
+    }];
+    contract.stateful_circuits = vec![StatefulCircuit {
+        source: None,
+        internal: false,
+        name: "checked_write".into(),
+        parameters: vec![
+            Parameter {
+                name: "flag".into(),
+                ty: Type::Boolean,
+            },
+            Parameter {
+                name: "value".into(),
+                ty: Type::Field,
+            },
+        ],
+        actions: vec![
+            StateAction::Assert {
+                condition: Expr::WitnessCall {
+                    name: "echo".into(),
+                    arguments: vec![Expr::Parameter {
+                        name: "flag".into(),
+                    }],
+                },
+                message: "write denied".into(),
+            },
+            StateAction::CellWrite {
+                field: "cell".into(),
+                index: 0,
+                value: Expr::Parameter {
+                    name: "value".into(),
+                },
+            },
+        ],
+        result: Type::Unit,
+        return_value: StateReturn::Unit,
+    }];
+
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.capabilities.circuits[0].observed_call);
+    let recorded = rendered.source.split("pub mod recorded").nth(1).unwrap();
+    let witness = recorded
+        .find(".try_witness_metered(|context, meter|")
+        .unwrap();
+    let assertion = recorded.find("AssertionFailed(\"write denied\"").unwrap();
+    let write = recorded.find(".record_write(frame,").unwrap();
+    assert!(witness < assertion && assertion < write);
+    assert!(recorded.contains("let __compact_recorded_arg_0: bool = __compact_param_0;"));
+    assert!(recorded.contains("pub fn checked_write_call<'observed, Private>"));
+}
+
+#[test]
 fn vector_expression_preserves_element_type() {
     let mut contract = identity(
         Type::Vector {

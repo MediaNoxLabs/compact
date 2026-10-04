@@ -22,6 +22,7 @@
 
 mod merkle_verify;
 mod persistent_commit;
+mod witness_assert;
 
 use std::env;
 use std::error::Error;
@@ -765,6 +766,15 @@ fn main() -> Result<(), Box<dyn Error>> {
             );
         }
         return persistent_commit::run(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--assert-witness")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --assert-witness <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err("usage: compact-rust-proof-smoke --assert-witness <proof-output>".into());
+        }
+        return witness_assert::run(Path::new(&root));
     }
     if first.as_deref() == Some(OsStr::new("--composite-cell")) {
         let root = arguments

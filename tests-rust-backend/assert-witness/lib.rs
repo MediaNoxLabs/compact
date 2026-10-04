@@ -195,6 +195,33 @@ pub mod ledger_contract {
     /// Circuits with a replayable ordered ledger program.
     pub mod recorded {
         use midnight_compact_runtime as runtime;
+        pub fn checked_write<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: bool,
+            __compact_param_1: runtime::Field,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_arg_0: bool = __compact_param_0;
+            let (frame, __compact_recorded_bool_1): (_, bool) =
+                frame.try_witness_metered(|context, meter| {
+                    witnesses.echo(
+                        context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }),
+                        __compact_recorded_arg_0,
+                    )
+                })?;
+            if !(__compact_recorded_bool_1) {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "write denied".to_owned(),
+                ));
+            }
+            let frame = crate::ledger_slots::cell.record_write(frame, __compact_param_1)?;
+            Ok(frame.finish(()))
+        }
         pub fn read_cell<Private>(
             context: runtime::context::CircuitContext<Private>,
         ) -> Result<
@@ -217,6 +244,74 @@ pub mod ledger_contract {
                 runtime::CompactError,
             > {
                 crate::ledger_contract::recorded::read_cell(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn read_cell_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, runtime::Field>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.read_cell(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "read_cell",
+                    input,
+                ))
+            }
+        }
+        /// A recording handle with access to the contract's witnesses.
+        pub struct BorrowedContract<'a, W> {
+            pub(super) witnesses: &'a W,
+        }
+        impl<W> BorrowedContract<'_, W> {
+            pub fn checked_write<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                flag: bool,
+                value: runtime::Field,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                checked_write(context, self.witnesses, flag, value)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn checked_write_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                flag: bool,
+                value: runtime::Field,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from((flag, value));
+                let recorded =
+                    self.checked_write(observed.circuit_context(private_state), flag, value)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "checked_write",
+                    input,
+                ))
+            }
+            pub fn read_cell<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, runtime::Field>,
+                runtime::CompactError,
+            > {
+                read_cell(context)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn read_cell_call<'observed, Private>(
@@ -291,9 +386,11 @@ pub mod ledger_contract {
         {
             crate::ledger_contract::read_cell(context)
         }
-        /// Access replayable circuit calls for this contract.
-        pub fn recording(&self) -> &recorded::Contract {
-            &self.recording
+        /// Borrow the contract's witnesses for a replayable circuit call.
+        pub fn recording(&self) -> recorded::BorrowedContract<'_, W> {
+            recorded::BorrowedContract {
+                witnesses: &self.witnesses,
+            }
         }
     }
 }

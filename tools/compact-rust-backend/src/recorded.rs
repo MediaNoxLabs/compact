@@ -1124,6 +1124,54 @@ fn render_recorded_item(
                 next_temp,
                 visiting,
             ),
+            Expr::WitnessCall { name, arguments } => {
+                let declaration = witnesses
+                    .get(name.as_str())
+                    .ok_or_else(|| RenderError::UnknownWitness(name.clone()))?;
+                if declaration.result != Type::Boolean {
+                    return Ok(None);
+                }
+                if arguments.len() != declaration.parameters.len() {
+                    return Err(RenderError::ArgumentCount {
+                        circuit: name.clone(),
+                        expected: declaration.parameters.len(),
+                        actual: arguments.len(),
+                    });
+                }
+                let mut args = Vec::new();
+                for (argument, parameter) in arguments.iter().zip(&declaration.parameters) {
+                    let Some(value) = cell_source(argument, &parameter.ty, locals, parameters)
+                    else {
+                        return Ok(None);
+                    };
+                    let ty = rust_type(&parameter.ty)?;
+                    let arg = syn::Ident::new(
+                        &format!("__compact_recorded_arg_{}", *next_temp),
+                        Span::call_site(),
+                    );
+                    *next_temp += 1;
+                    steps.push(syn::parse_quote!(let #arg: #ty = #value;));
+                    args.push(arg);
+                }
+                let method = ident(name)?;
+                let observed = syn::Ident::new(
+                    &format!("__compact_recorded_bool_{}", *next_temp),
+                    Span::call_site(),
+                );
+                *next_temp += 1;
+                steps.push(syn::parse_quote! {
+                    let (frame, #observed): (_, bool) = frame.try_witness_metered(|context, meter| {
+                        witnesses.#method(
+                            context.witness_context_with(super::LedgerView {
+                                state: context.query.state.get_ref(),
+                                meter,
+                            }),
+                            #(#args),*
+                        )
+                    })?;
+                });
+                Ok(Some(syn::parse_quote!(#observed)))
+            }
             Expr::CellRead { field, index } => {
                 let declaration = ledger_fields
                     .get(field.as_str())

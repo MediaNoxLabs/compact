@@ -733,7 +733,12 @@ dependencies = [
 name = "compact-rust-assert-witness-fixture"
 version = "0.1.0"
 dependencies = [
+ "hex",
  "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde",
  "serde_json",
 ]
 
@@ -1695,6 +1700,7 @@ dependencies = [
 name = "compact-rust-proof-smoke"
 version = "0.1.0"
 dependencies = [
+ "compact-rust-assert-witness-fixture",
  "compact-rust-call-arg-declared-type-fixture",
  "compact-rust-cell-boolean-fixture",
  "compact-rust-cell-read-fixture",

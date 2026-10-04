@@ -1124,6 +1124,43 @@ pub(crate) fn condition_needs_statement(condition: &Expr) -> bool {
     !matches!(condition, Expr::Boolean { .. } | Expr::Parameter { .. })
 }
 
+fn lift_block_condition(
+    condition: syn::Expr,
+    parameters: &HashMap<&str, (&Type, syn::Ident)>,
+) -> (Vec<syn::Stmt>, syn::Expr) {
+    fn contains_local(expression: &syn::Expr) -> bool {
+        match expression {
+            syn::Expr::Block(block) => block
+                .block
+                .stmts
+                .iter()
+                .any(|statement| matches!(statement, syn::Stmt::Local(_))),
+            syn::Expr::Paren(paren) => contains_local(&paren.expr),
+            syn::Expr::Group(group) => contains_local(&group.expr),
+            _ => false,
+        }
+    }
+    if !contains_local(&condition) {
+        return (Vec::new(), condition);
+    }
+    let mut suffix = 0;
+    let name = loop {
+        let candidate = if suffix == 0 {
+            "__compact_condition".to_owned()
+        } else {
+            format!("__compact_condition_{suffix}")
+        };
+        if parameters.values().all(|(_, name)| *name != candidate) {
+            break syn::Ident::new(&candidate, Span::call_site());
+        }
+        suffix += 1;
+    };
+    (
+        vec![syn::parse_quote!(let #name: bool = #condition;)],
+        syn::parse_quote!(#name),
+    )
+}
+
 #[cfg(test)]
 mod discarded_expression_tests {
     use super::{Type, discard_expression};
@@ -1178,9 +1215,11 @@ fn unit_statements(
                     actual,
                 });
             }
-            Ok(vec![syn::parse_quote!(if !(#condition) {
+            let (mut statements, condition) = lift_block_condition(condition, parameters);
+            statements.push(syn::parse_quote!(if !(#condition) {
                 return Err(runtime::CompactError::AssertionFailed(#message.to_owned()));
-            })])
+            }));
+            Ok(statements)
         }
         Expr::If {
             condition,
@@ -1195,12 +1234,11 @@ fn unit_statements(
                     actual,
                 });
             }
+            let (mut statements, condition) = lift_block_condition(condition, parameters);
             if then == otherwise {
-                let mut statements = if evaluate_condition {
-                    vec![syn::parse_quote!(let _ = #condition;)]
-                } else {
-                    Vec::new()
-                };
+                if evaluate_condition && statements.is_empty() {
+                    statements.push(syn::parse_quote!(let _ = #condition;));
+                }
                 statements.extend(unit_statements(then, parameters, circuits)?);
                 return Ok(statements);
             }
@@ -1212,23 +1250,26 @@ fn unit_statements(
             {
                 let inner_condition = &inner.cond;
                 let inner_body = &inner.then_branch;
-                return Ok(vec![
-                    syn::parse_quote!(if (#condition) && (#inner_condition) #inner_body),
-                ]);
+                statements
+                    .push(syn::parse_quote!(if (#condition) && (#inner_condition) #inner_body));
+                return Ok(statements);
             }
             if otherwise.is_empty() && then.is_empty() {
-                Ok(vec![syn::parse_quote!(let _ = #condition;)])
+                if statements.is_empty() && evaluate_condition {
+                    statements.push(syn::parse_quote!(let _ = #condition;));
+                }
             } else if otherwise.is_empty() {
-                Ok(vec![syn::parse_quote!(if #condition { #(#then)* })])
+                statements.push(syn::parse_quote!(if #condition { #(#then)* }));
             } else if then.is_empty() {
-                Ok(vec![syn::parse_quote!(if !(#condition) { #(#otherwise)* })])
+                statements.push(syn::parse_quote!(if !(#condition) { #(#otherwise)* }));
             } else {
-                Ok(vec![syn::parse_quote!(if #condition {
+                statements.push(syn::parse_quote!(if #condition {
                     #(#then)*
                 } else {
                     #(#otherwise)*
-                })])
+                }));
             }
+            Ok(statements)
         }
         Expr::Let { bindings, body } => {
             let mut locals = parameters.clone();
@@ -1450,8 +1491,10 @@ fn expression_with_calls(
                     actual,
                 });
             }
+            let (prefix, condition) = lift_block_condition(condition, parameters);
             Ok((
                 syn::parse_quote!({
+                    #(#prefix)*
                     if !(#condition) {
                         return Err(runtime::CompactError::AssertionFailed(#message.to_owned()));
                     }
@@ -1615,13 +1658,17 @@ fn expression_with_calls(
                     actual: condition_ty,
                 });
             }
+            let (mut prefix, condition) = lift_block_condition(condition, parameters);
             if then == otherwise {
                 let (value, ty) = expression_with_calls(then, parameters, circuits)?;
+                if evaluate_condition && prefix.is_empty() {
+                    prefix.push(syn::parse_quote!(let _ = #condition;));
+                }
                 return Ok((
-                    if evaluate_condition {
-                        syn::parse_quote!({ let _ = #condition; #value })
-                    } else {
+                    if prefix.is_empty() {
                         value
+                    } else {
+                        syn::parse_quote!({ #(#prefix)* #value })
                     },
                     ty,
                 ));
@@ -1634,8 +1681,14 @@ fn expression_with_calls(
                     actual: otherwise_ty,
                 });
             }
+            let conditional: syn::Expr =
+                syn::parse_quote!(if #condition { #then } else { #otherwise });
             Ok((
-                syn::parse_quote!(if #condition { #then } else { #otherwise }),
+                if prefix.is_empty() {
+                    conditional
+                } else {
+                    syn::parse_quote!({ #(#prefix)* #conditional })
+                },
                 then_ty,
             ))
         }

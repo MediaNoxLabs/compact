@@ -82,8 +82,8 @@ pub mod pure_circuits {
                 "attestation creation time cannot be in the future".to_owned(),
             ));
         }
-        if ((policy.clone()).enforceMaxAge)
-            && (!({
+        if (policy.clone()).enforceMaxAge {
+            let __compact_condition: bool = {
                 let __compact_local_t_19: runtime::BoundedUint<18446744073709551615> = {
                     let __compact_local_t_20: runtime::BoundedUint<18446744073709551615> =
                         (((attestation.clone()).proof).clone()).createdAt;
@@ -94,11 +94,12 @@ pub mod pure_circuits {
                     >(currentTime, __compact_local_t_20)?
                 };
                 __compact_local_t_19.value() <= (policy.clone()).maxAge.value()
-            }))
-        {
-            return Err(runtime::CompactError::AssertionFailed(
-                "attestation exceeds the max-age policy".to_owned(),
-            ));
+            };
+            if !(__compact_condition) {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "attestation exceeds the max-age policy".to_owned(),
+                ));
+            }
         }
         Ok(())
     }
@@ -107,7 +108,7 @@ pub mod pure_circuits {
         currentTime: runtime::BoundedUint<18446744073709551615>,
         limit: runtime::BoundedUint<18446744073709551615>,
     ) -> Result<(), runtime::CompactError> {
-        if !({
+        let __compact_condition: bool = {
             let __compact_local_t_17: runtime::BoundedUint<18446744073709551615> = {
                 let __compact_local_t_18: runtime::BoundedUint<18446744073709551615> =
                     (((attestation.clone()).proof).clone()).createdAt;
@@ -118,7 +119,8 @@ pub mod pure_circuits {
                 >(currentTime, __compact_local_t_18)?
             };
             __compact_local_t_17.value() <= limit.value()
-        }) {
+        };
+        if !(__compact_condition) {
             return Err(runtime::CompactError::AssertionFailed(
                 "attestation age exceeds the limit".to_owned(),
             ));
@@ -130,11 +132,12 @@ pub mod pure_circuits {
         older: crate::types::Attestation,
     ) -> Result<runtime::BoundedUint<18446744073709551615>, runtime::CompactError> {
         Ok({
-            if !({
+            let __compact_condition: bool = {
                 let __compact_local_t_14: runtime::BoundedUint<18446744073709551615> =
                     (((newer.clone()).proof).clone()).createdAt;
                 __compact_local_t_14.value() >= (((older.clone()).proof).clone()).createdAt.value()
-            }) {
+            };
+            if !(__compact_condition) {
                 return Err(runtime::CompactError::AssertionFailed(
                     "newer attestation must not predate the older one".to_owned(),
                 ));

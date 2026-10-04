@@ -137,8 +137,8 @@ pub mod pure_circuits {
                 "registration time cannot be in the future".to_owned(),
             ));
         }
-        if ((policy.clone()).enforceMaxAge)
-            && (!({
+        if (policy.clone()).enforceMaxAge {
+            let __compact_condition: bool = {
                 let __compact_local_t_114: runtime::BoundedUint<18446744073709551615> = {
                     let __compact_local_t_115: runtime::BoundedUint<18446744073709551615> =
                         (((record.clone()).provenance).clone()).registeredAt;
@@ -149,11 +149,12 @@ pub mod pure_circuits {
                     >(currentTime, __compact_local_t_115)?
                 };
                 __compact_local_t_114.value() <= (policy.clone()).maxAge.value()
-            }))
-        {
-            return Err(runtime::CompactError::AssertionFailed(
-                "record exceeds the max-age policy".to_owned(),
-            ));
+            };
+            if !(__compact_condition) {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "record exceeds the max-age policy".to_owned(),
+                ));
+            }
         }
         Ok(())
     }
@@ -162,12 +163,13 @@ pub mod pure_circuits {
         older: crate::types::AssetRecord,
     ) -> Result<runtime::BoundedUint<18446744073709551615>, runtime::CompactError> {
         Ok({
-            if !({
+            let __compact_condition: bool = {
                 let __compact_local_t_111: runtime::BoundedUint<18446744073709551615> =
                     (((newer.clone()).provenance).clone()).registeredAt;
                 __compact_local_t_111.value()
                     >= (((older.clone()).provenance).clone()).registeredAt.value()
-            }) {
+            };
+            if !(__compact_condition) {
                 return Err(runtime::CompactError::AssertionFailed(
                     "newer record must not predate the older one".to_owned(),
                 ));
@@ -201,11 +203,12 @@ pub mod pure_circuits {
         grant: crate::types::CustodyGrant,
         asOf: runtime::BoundedUint<18446744073709551615>,
     ) -> Result<(), runtime::CompactError> {
-        if !({
+        let __compact_condition: bool = {
             let __compact_local_t_110: runtime::BoundedUint<18446744073709551615> =
                 (grant.clone()).grantedAt;
             __compact_local_t_110.value() <= asOf.value()
-        }) {
+        };
+        if !(__compact_condition) {
             return Err(runtime::CompactError::AssertionFailed(
                 "grant is not yet effective".to_owned(),
             ));

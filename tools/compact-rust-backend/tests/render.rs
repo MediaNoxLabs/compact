@@ -304,6 +304,81 @@ fn identical_if_arms_keep_one_condition_and_one_arm() {
 }
 
 #[test]
+fn pure_block_conditions_are_lifted_before_if_and_assertions() {
+    let block_condition = || Expr::Let {
+        bindings: vec![LocalBinding {
+            name: "flag".into(),
+            ty: Type::Boolean,
+            value: Expr::Parameter {
+                name: "value".into(),
+            },
+        }],
+        body: Box::new(Expr::Parameter {
+            name: "flag".into(),
+        }),
+    };
+    let mut contract = identity(
+        Type::Boolean,
+        Expr::If {
+            condition: Box::new(block_condition()),
+            then: Box::new(Expr::Boolean { value: true }),
+            otherwise: Box::new(Expr::Boolean { value: false }),
+        },
+    );
+    contract.circuits[0].parameters[0].ty = Type::Boolean;
+    let conditional = render(&contract).unwrap();
+    assert!(conditional.contains("let __compact_condition: bool = {"));
+    assert!(!conditional.contains("if {"));
+
+    contract.circuits[0].result = Type::Unit;
+    contract.circuits[0].body = Expr::Assert {
+        condition: Box::new(Expr::If {
+            condition: Box::new(block_condition()),
+            then: Box::new(Expr::Boolean { value: false }),
+            otherwise: Box::new(Expr::Boolean { value: true }),
+        }),
+        message: "lifted".into(),
+    };
+    let assertion = render(&contract).unwrap();
+    assert!(assertion.contains("let __compact_condition: bool = {"));
+    assert!(assertion.contains("AssertionFailed(\"lifted\".to_owned())"));
+    assert!(!assertion.contains("if {"));
+
+    contract.circuits[0].parameters[0].name = "__compact_condition".into();
+    contract.circuits[0].body = Expr::If {
+        condition: Box::new(Expr::Let {
+            bindings: vec![LocalBinding {
+                name: "flag".into(),
+                ty: Type::Boolean,
+                value: Expr::Parameter {
+                    name: "__compact_condition".into(),
+                },
+            }],
+            body: Box::new(Expr::Parameter {
+                name: "flag".into(),
+            }),
+        }),
+        then: Box::new(Expr::Unit),
+        otherwise: Box::new(Expr::Unit),
+    };
+    let collision = render(&contract).unwrap();
+    assert!(collision.contains("let __compact_condition_1: bool = {"));
+
+    contract.circuits[0].result = Type::Boolean;
+    contract.circuits[0].body = Expr::If {
+        condition: Box::new(Expr::Parameter {
+            name: "__compact_condition".into(),
+        }),
+        then: Box::new(Expr::Parameter {
+            name: "__compact_condition".into(),
+        }),
+        otherwise: Box::new(Expr::Boolean { value: false }),
+    };
+    let simple = render(&contract).unwrap();
+    assert!(!simple.contains("let __compact_condition_1"));
+}
+
+#[test]
 fn public_state_getters_follow_declared_types_and_escaped_names() {
     let mut contract = identity(Type::Unit, Expr::Unit);
     contract.ledger_fields = vec![

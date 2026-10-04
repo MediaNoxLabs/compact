@@ -772,13 +772,14 @@ pub mod pure_circuits {
                 "Schema id must be set".to_owned(),
             ));
         }
-        if !({
+        let __compact_condition: bool = {
             let __compact_local_t_41: runtime::BoundedUint<65535> = (schema.clone()).majorVersion;
             __compact_local_t_41.value()
                 > runtime::BoundedUint::<65535>::new(0u128)
                     .expect("Compact Uint literal fits its maximum")
                     .value()
-        }) {
+        };
+        if !(__compact_condition) {
             return Err(runtime::CompactError::AssertionFailed(
                 "Schema major version must be positive".to_owned(),
             ));
@@ -1044,16 +1045,17 @@ pub mod pure_circuits {
                 "Credential claim root mismatch".to_owned(),
             ));
         }
-        if ((credential.clone()).hasExpiration)
-            && (!({
+        if (credential.clone()).hasExpiration {
+            let __compact_condition: bool = {
                 let __compact_local_t_40: runtime::BoundedUint<18446744073709551615> =
                     (credential.clone()).expiresAt;
                 __compact_local_t_40.value() >= (credential.clone()).issuedAt.value()
-            }))
-        {
-            return Err(runtime::CompactError::AssertionFailed(
-                "Expiration must not precede issuance".to_owned(),
-            ));
+            };
+            if !(__compact_condition) {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Expiration must not precede issuance".to_owned(),
+                ));
+            }
         }
         Ok(())
     }
@@ -1682,16 +1684,17 @@ pub mod pure_circuits {
                     ));
                 }
             }
-            if ((envelope.clone()).hasExpiresAt)
-                && (!({
+            if (envelope.clone()).hasExpiresAt {
+                let __compact_condition: bool = {
                     let __compact_local_t_39: runtime::BoundedUint<18446744073709551615> =
                         (envelope.clone()).expiresAt;
                     __compact_local_t_39.value() >= (envelope.clone()).createdAt.value()
-                }))
-            {
-                return Err(runtime::CompactError::AssertionFailed(
-                    "Protocol message expiration must not precede creation".to_owned(),
-                ));
+                };
+                if !(__compact_condition) {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "Protocol message expiration must not precede creation".to_owned(),
+                    ));
+                }
             }
         }
         Ok(())
@@ -1718,11 +1721,12 @@ pub mod pure_circuits {
                 "Protocol response does not reference the request message id".to_owned(),
             ));
         }
-        if !({
+        let __compact_condition: bool = {
             let __compact_local_t_38: runtime::BoundedUint<18446744073709551615> =
                 (responseEnvelope.clone()).createdAt;
             __compact_local_t_38.value() >= (requestEnvelope.clone()).createdAt.value()
-        }) {
+        };
+        if !(__compact_condition) {
             return Err(runtime::CompactError::AssertionFailed(
                 "Protocol response creation time must not precede the request".to_owned(),
             ));
@@ -2225,14 +2229,15 @@ pub mod pure_circuits {
             ((request.clone()).issuerVerificationMethodRef).clone(),
         )?;
         if (request.clone()).requireAgeOverThreshold {
-            if !({
+            let __compact_condition: bool = {
                 let __compact_local_t_37: runtime::BoundedUint<255> =
                     (request.clone()).requestedAgeThresholdYears;
                 __compact_local_t_37.value()
                     > runtime::BoundedUint::<255>::new(0u128)
                         .expect("Compact Uint literal fits its maximum")
                         .value()
-            }) {
+            };
+            if !(__compact_condition) {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Requested age threshold must be positive".to_owned(),
                 ));
@@ -2378,19 +2383,20 @@ pub mod pure_circuits {
                 "Presentation issuing-state disclosure does not match the credential".to_owned(),
             ));
         }
-        if ((((presentation.clone()).disclosed).clone()).proveAgeOverThreshold)
-            && (!({
+        if (((presentation.clone()).disclosed).clone()).proveAgeOverThreshold {
+            let __compact_condition: bool = {
                 let __compact_local_t_36: runtime::BoundedUint<255> =
                     (((presentation.clone()).disclosed).clone()).ageThresholdYears;
                 __compact_local_t_36.value()
                     > runtime::BoundedUint::<255>::new(0u128)
                         .expect("Compact Uint literal fits its maximum")
                         .value()
-            }))
-        {
-            return Err(runtime::CompactError::AssertionFailed(
-                "Age threshold must be positive".to_owned(),
-            ));
+            };
+            if !(__compact_condition) {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Age threshold must be positive".to_owned(),
+                ));
+            }
         }
         crate::pure_circuits::assertProofMatchesExplicitHolderBinding(
             ((presentation.clone()).holderBinding).clone(),
@@ -2490,184 +2496,212 @@ pub mod pure_circuits {
         date: crate::types::DigitalPassportCivilDate,
         epochDays: runtime::BoundedUint<4294967295>,
     ) -> Result<(), runtime::CompactError> {
-        if !({
+        let __compact_condition: bool = {
             let __compact_local_t_14: runtime::BoundedUint<4294967295> = (date.clone()).year;
             __compact_local_t_14.value()
                 >= runtime::BoundedUint::<4294967295>::new(1970u128)
                     .expect("Compact Uint literal fits its maximum")
                     .value()
-        }) {
+        };
+        if !(__compact_condition) {
             return Err(runtime::CompactError::AssertionFailed(
                 "Civil date year must be at least 1970".to_owned(),
             ));
         }
-        if !({
+        let __compact_condition: bool = {
             let __compact_local_t_15: runtime::BoundedUint<4294967295> = (date.clone()).month;
             __compact_local_t_15.value()
                 >= runtime::BoundedUint::<4294967295>::new(1u128)
                     .expect("Compact Uint literal fits its maximum")
                     .value()
-        }) {
+        };
+        if !(__compact_condition) {
             return Err(runtime::CompactError::AssertionFailed(
                 "Civil date month must be at least 1".to_owned(),
             ));
         }
-        if !({
+        let __compact_condition: bool = {
             let __compact_local_t_12: runtime::BoundedUint<4294967295> = (date.clone()).month;
             __compact_local_t_12.value()
                 <= runtime::BoundedUint::<4294967295>::new(12u128)
                     .expect("Compact Uint literal fits its maximum")
                     .value()
-        }) {
+        };
+        if !(__compact_condition) {
             return Err(runtime::CompactError::AssertionFailed(
                 "Civil date month must be at most 12".to_owned(),
             ));
         }
-        if !({
+        let __compact_condition: bool = {
             let __compact_local_t_13: runtime::BoundedUint<4294967295> = (date.clone()).day;
             __compact_local_t_13.value()
                 >= runtime::BoundedUint::<4294967295>::new(1u128)
                     .expect("Compact Uint literal fits its maximum")
                     .value()
-        }) {
+        };
+        if !(__compact_condition) {
             return Err(runtime::CompactError::AssertionFailed(
                 "Civil date day must be at least 1".to_owned(),
             ));
         }
         {
-            let __compact_local_yearAdjusted: runtime::BoundedUint<4294967295> = if {
-                let __compact_local_t_16: runtime::BoundedUint<4294967295> = (date.clone()).month;
-                __compact_local_t_16.value()
-                    <= runtime::BoundedUint::<4294967295>::new(2u128)
-                        .expect("Compact Uint literal fits its maximum")
-                        .value()
-            } {
-                {
-                    let __compact_local_t_17: runtime::BoundedUint<4294967295> =
-                        (date.clone()).year;
-                    runtime::subtract_unsigned::<4294967295, 4294967295, 4294967295>(
-                        __compact_local_t_17,
-                        runtime::BoundedUint::<4294967295>::new(1u128)
-                            .expect("Compact Uint literal fits its maximum"),
-                    )?
+            let __compact_local_yearAdjusted: runtime::BoundedUint<4294967295> = {
+                let __compact_condition: bool = {
+                    let __compact_local_t_16: runtime::BoundedUint<4294967295> =
+                        (date.clone()).month;
+                    __compact_local_t_16.value()
+                        <= runtime::BoundedUint::<4294967295>::new(2u128)
+                            .expect("Compact Uint literal fits its maximum")
+                            .value()
+                };
+                if __compact_condition {
+                    {
+                        let __compact_local_t_17: runtime::BoundedUint<4294967295> =
+                            (date.clone()).year;
+                        runtime::subtract_unsigned::<4294967295, 4294967295, 4294967295>(
+                            __compact_local_t_17,
+                            runtime::BoundedUint::<4294967295>::new(1u128)
+                                .expect("Compact Uint literal fits its maximum"),
+                        )?
+                    }
+                } else {
+                    (date.clone()).year
                 }
-            } else {
-                (date.clone()).year
             };
-            if !(if {
-                let __compact_local_t_19: runtime::BoundedUint<17179869180> =
-                    runtime::multiply_unsigned::<17179869180, 17179869180, 17179869180>(
-                        runtime::cast_unsigned::<4294967295, 17179869180>(
-                            (date.clone()).yearAdjustedQuotient4,
-                        )?,
-                        runtime::BoundedUint::<17179869180>::new(4u128)
-                            .expect("Compact Uint literal fits its maximum"),
-                    )?;
-                __compact_local_t_19.value()
-                    <= runtime::cast_unsigned::<4294967295, 17179869180>(
-                        __compact_local_yearAdjusted,
-                    )?
-                    .value()
-            } {
-                runtime::cast_unsigned::<4294967295, 17179869184>(__compact_local_yearAdjusted)?
-                    .value()
-                    < runtime::add_unsigned::<17179869184, 17179869184, 34359738367>(
-                        runtime::cast_unsigned::<17179869180, 17179869184>(
-                            runtime::multiply_unsigned::<17179869180, 17179869180, 17179869180>(
-                                runtime::cast_unsigned::<4294967295, 17179869180>(
-                                    (date.clone()).yearAdjustedQuotient4,
-                                )?,
-                                runtime::BoundedUint::<17179869180>::new(4u128)
-                                    .expect("Compact Uint literal fits its maximum"),
+            let __compact_condition: bool = {
+                let __compact_condition: bool = {
+                    let __compact_local_t_19: runtime::BoundedUint<17179869180> =
+                        runtime::multiply_unsigned::<17179869180, 17179869180, 17179869180>(
+                            runtime::cast_unsigned::<4294967295, 17179869180>(
+                                (date.clone()).yearAdjustedQuotient4,
                             )?,
-                        )?,
-                        runtime::BoundedUint::<17179869184>::new(4u128)
-                            .expect("Compact Uint literal fits its maximum"),
-                    )?
-                    .value()
-            } else {
-                false
-            }) {
+                            runtime::BoundedUint::<17179869180>::new(4u128)
+                                .expect("Compact Uint literal fits its maximum"),
+                        )?;
+                    __compact_local_t_19.value()
+                        <= runtime::cast_unsigned::<4294967295, 17179869180>(
+                            __compact_local_yearAdjusted,
+                        )?
+                        .value()
+                };
+                if __compact_condition {
+                    runtime::cast_unsigned::<4294967295, 17179869184>(__compact_local_yearAdjusted)?
+                        .value()
+                        < runtime::add_unsigned::<17179869184, 17179869184, 34359738367>(
+                            runtime::cast_unsigned::<17179869180, 17179869184>(
+                                runtime::multiply_unsigned::<17179869180, 17179869180, 17179869180>(
+                                    runtime::cast_unsigned::<4294967295, 17179869180>(
+                                        (date.clone()).yearAdjustedQuotient4,
+                                    )?,
+                                    runtime::BoundedUint::<17179869180>::new(4u128)
+                                        .expect("Compact Uint literal fits its maximum"),
+                                )?,
+                            )?,
+                            runtime::BoundedUint::<17179869184>::new(4u128)
+                                .expect("Compact Uint literal fits its maximum"),
+                        )?
+                        .value()
+                } else {
+                    false
+                }
+            };
+            if !(__compact_condition) {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Civil date quotient for 4 is invalid".to_owned(),
                 ));
             }
-            if !(if {
-                let __compact_local_t_20: runtime::BoundedUint<429496729500> =
-                    runtime::multiply_unsigned::<429496729500, 429496729500, 429496729500>(
-                        runtime::cast_unsigned::<4294967295, 429496729500>(
-                            (date.clone()).yearAdjustedQuotient100,
-                        )?,
-                        runtime::BoundedUint::<429496729500>::new(100u128)
-                            .expect("Compact Uint literal fits its maximum"),
-                    )?;
-                __compact_local_t_20.value()
-                    <= runtime::cast_unsigned::<4294967295, 429496729500>(
+            let __compact_condition: bool = {
+                let __compact_condition: bool = {
+                    let __compact_local_t_20: runtime::BoundedUint<429496729500> =
+                        runtime::multiply_unsigned::<429496729500, 429496729500, 429496729500>(
+                            runtime::cast_unsigned::<4294967295, 429496729500>(
+                                (date.clone()).yearAdjustedQuotient100,
+                            )?,
+                            runtime::BoundedUint::<429496729500>::new(100u128)
+                                .expect("Compact Uint literal fits its maximum"),
+                        )?;
+                    __compact_local_t_20.value()
+                        <= runtime::cast_unsigned::<4294967295, 429496729500>(
+                            __compact_local_yearAdjusted,
+                        )?
+                        .value()
+                };
+                if __compact_condition {
+                    runtime::cast_unsigned::<4294967295, 429496729600>(
                         __compact_local_yearAdjusted,
                     )?
                     .value()
-            } {
-                runtime::cast_unsigned::<4294967295, 429496729600>(__compact_local_yearAdjusted)?
-                    .value()
-                    < runtime::add_unsigned::<429496729600, 429496729600, 549755813887>(
-                        runtime::cast_unsigned::<429496729500, 429496729600>(
-                            runtime::multiply_unsigned::<429496729500, 429496729500, 429496729500>(
-                                runtime::cast_unsigned::<4294967295, 429496729500>(
-                                    (date.clone()).yearAdjustedQuotient100,
+                        < runtime::add_unsigned::<429496729600, 429496729600, 549755813887>(
+                            runtime::cast_unsigned::<429496729500, 429496729600>(
+                                runtime::multiply_unsigned::<
+                                    429496729500,
+                                    429496729500,
+                                    429496729500,
+                                >(
+                                    runtime::cast_unsigned::<4294967295, 429496729500>(
+                                        (date.clone()).yearAdjustedQuotient100,
+                                    )?,
+                                    runtime::BoundedUint::<429496729500>::new(100u128)
+                                        .expect("Compact Uint literal fits its maximum"),
                                 )?,
-                                runtime::BoundedUint::<429496729500>::new(100u128)
-                                    .expect("Compact Uint literal fits its maximum"),
                             )?,
-                        )?,
-                        runtime::BoundedUint::<429496729600>::new(100u128)
-                            .expect("Compact Uint literal fits its maximum"),
-                    )?
-                    .value()
-            } else {
-                false
-            }) {
+                            runtime::BoundedUint::<429496729600>::new(100u128)
+                                .expect("Compact Uint literal fits its maximum"),
+                        )?
+                        .value()
+                } else {
+                    false
+                }
+            };
+            if !(__compact_condition) {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Civil date quotient for 100 is invalid".to_owned(),
                 ));
             }
-            if !(if {
-                let __compact_local_t_18: runtime::BoundedUint<1717986918000> =
-                    runtime::multiply_unsigned::<1717986918000, 1717986918000, 1717986918000>(
-                        runtime::cast_unsigned::<4294967295, 1717986918000>(
-                            (date.clone()).yearAdjustedQuotient400,
-                        )?,
-                        runtime::BoundedUint::<1717986918000>::new(400u128)
-                            .expect("Compact Uint literal fits its maximum"),
-                    )?;
-                __compact_local_t_18.value()
-                    <= runtime::cast_unsigned::<4294967295, 1717986918000>(
+            let __compact_condition: bool = {
+                let __compact_condition: bool = {
+                    let __compact_local_t_18: runtime::BoundedUint<1717986918000> =
+                        runtime::multiply_unsigned::<1717986918000, 1717986918000, 1717986918000>(
+                            runtime::cast_unsigned::<4294967295, 1717986918000>(
+                                (date.clone()).yearAdjustedQuotient400,
+                            )?,
+                            runtime::BoundedUint::<1717986918000>::new(400u128)
+                                .expect("Compact Uint literal fits its maximum"),
+                        )?;
+                    __compact_local_t_18.value()
+                        <= runtime::cast_unsigned::<4294967295, 1717986918000>(
+                            __compact_local_yearAdjusted,
+                        )?
+                        .value()
+                };
+                if __compact_condition {
+                    runtime::cast_unsigned::<4294967295, 1717986918400>(
                         __compact_local_yearAdjusted,
                     )?
                     .value()
-            } {
-                runtime::cast_unsigned::<4294967295, 1717986918400>(__compact_local_yearAdjusted)?
-                    .value()
-                    < runtime::add_unsigned::<1717986918400, 1717986918400, 2199023255551>(
-                        runtime::cast_unsigned::<1717986918000, 1717986918400>(
-                            runtime::multiply_unsigned::<
-                                1717986918000,
-                                1717986918000,
-                                1717986918000,
-                            >(
-                                runtime::cast_unsigned::<4294967295, 1717986918000>(
-                                    (date.clone()).yearAdjustedQuotient400,
+                        < runtime::add_unsigned::<1717986918400, 1717986918400, 2199023255551>(
+                            runtime::cast_unsigned::<1717986918000, 1717986918400>(
+                                runtime::multiply_unsigned::<
+                                    1717986918000,
+                                    1717986918000,
+                                    1717986918000,
+                                >(
+                                    runtime::cast_unsigned::<4294967295, 1717986918000>(
+                                        (date.clone()).yearAdjustedQuotient400,
+                                    )?,
+                                    runtime::BoundedUint::<1717986918000>::new(400u128)
+                                        .expect("Compact Uint literal fits its maximum"),
                                 )?,
-                                runtime::BoundedUint::<1717986918000>::new(400u128)
-                                    .expect("Compact Uint literal fits its maximum"),
                             )?,
-                        )?,
-                        runtime::BoundedUint::<1717986918400>::new(400u128)
-                            .expect("Compact Uint literal fits its maximum"),
-                    )?
-                    .value()
-            } else {
-                false
-            }) {
+                            runtime::BoundedUint::<1717986918400>::new(400u128)
+                                .expect("Compact Uint literal fits its maximum"),
+                        )?
+                        .value()
+                } else {
+                    false
+                }
+            };
+            if !(__compact_condition) {
                 return Err(runtime::CompactError::AssertionFailed(
                     "Civil date quotient for 400 is invalid".to_owned(),
                 ));
@@ -2764,58 +2798,62 @@ pub mod pure_circuits {
                             }
                         };
                         {
-                            let __compact_local_isLeap: bool = if {
-                                let __compact_local_t_24: runtime::BoundedUint<4294967295> =
-                                    (date.clone()).month;
-                                __compact_local_t_24.value()
-                                    >= runtime::BoundedUint::<4294967295>::new(3u128)
-                                        .expect("Compact Uint literal fits its maximum")
-                                        .value()
-                            } {
-                                if if __compact_local_remainder4
-                                    == runtime::BoundedUint::<4294967295>::new(0u128)
-                                        .expect("Compact Uint literal fits its maximum")
-                                {
-                                    __compact_local_remainder100
-                                        != runtime::BoundedUint::<4294967295>::new(0u128)
+                            let __compact_local_isLeap: bool = {
+                                let __compact_condition: bool = {
+                                    let __compact_local_t_24: runtime::BoundedUint<4294967295> =
+                                        (date.clone()).month;
+                                    __compact_local_t_24.value()
+                                        >= runtime::BoundedUint::<4294967295>::new(3u128)
                                             .expect("Compact Uint literal fits its maximum")
-                                } else {
-                                    false
-                                } {
-                                    true
-                                } else {
-                                    __compact_local_remainder400
+                                            .value()
+                                };
+                                if __compact_condition {
+                                    if if __compact_local_remainder4
                                         == runtime::BoundedUint::<4294967295>::new(0u128)
                                             .expect("Compact Uint literal fits its maximum")
-                                }
-                            } else {
-                                if if __compact_local_remainder4
-                                    == runtime::BoundedUint::<4294967295>::new(3u128)
-                                        .expect("Compact Uint literal fits its maximum")
-                                {
-                                    __compact_local_remainder100
-                                        != runtime::BoundedUint::<4294967295>::new(99u128)
-                                            .expect("Compact Uint literal fits its maximum")
+                                    {
+                                        __compact_local_remainder100
+                                            != runtime::BoundedUint::<4294967295>::new(0u128)
+                                                .expect("Compact Uint literal fits its maximum")
+                                    } else {
+                                        false
+                                    } {
+                                        true
+                                    } else {
+                                        __compact_local_remainder400
+                                            == runtime::BoundedUint::<4294967295>::new(0u128)
+                                                .expect("Compact Uint literal fits its maximum")
+                                    }
                                 } else {
-                                    false
-                                } {
-                                    true
-                                } else {
-                                    __compact_local_remainder400
-                                        == runtime::BoundedUint::<4294967295>::new(399u128)
+                                    if if __compact_local_remainder4
+                                        == runtime::BoundedUint::<4294967295>::new(3u128)
                                             .expect("Compact Uint literal fits its maximum")
+                                    {
+                                        __compact_local_remainder100
+                                            != runtime::BoundedUint::<4294967295>::new(99u128)
+                                                .expect("Compact Uint literal fits its maximum")
+                                    } else {
+                                        false
+                                    } {
+                                        true
+                                    } else {
+                                        __compact_local_remainder400
+                                            == runtime::BoundedUint::<4294967295>::new(399u128)
+                                                .expect("Compact Uint literal fits its maximum")
+                                    }
                                 }
                             };
                             {
-                                let __compact_local_shiftedMonth: runtime::BoundedUint<4294967304> =
-                                    if {
+                                let __compact_local_shiftedMonth: runtime::BoundedUint<4294967304> = {
+                                    let __compact_condition: bool = {
                                         let __compact_local_t_25: runtime::BoundedUint<4294967295> =
                                             (date.clone()).month;
                                         __compact_local_t_25.value()
                                             >= runtime::BoundedUint::<4294967295>::new(3u128)
                                                 .expect("Compact Uint literal fits its maximum")
                                                 .value()
-                                    } {
+                                    };
+                                    if __compact_condition {
                                         runtime::cast_unsigned::<4294967295, 4294967304>({
                                             let __compact_local_t_26: runtime::BoundedUint<
                                                 4294967295,
@@ -2840,7 +2878,8 @@ pub mod pure_circuits {
                                             runtime::BoundedUint::<4294967304>::new(9u128)
                                                 .expect("Compact Uint literal fits its maximum"),
                                         )?
-                                    };
+                                    }
+                                };
                                 {
                                     let __compact_local_monthNumerator: runtime::BoundedUint<
                                         657129997514,
@@ -2867,61 +2906,67 @@ pub mod pure_circuits {
                                         runtime::BoundedUint::<657129997514>::new(2u128)
                                             .expect("Compact Uint literal fits its maximum"),
                                     )?;
-                                    if !(if {
-                                        let __compact_local_t_27: runtime::BoundedUint<
-                                            21474836475,
-                                        > = runtime::multiply_unsigned::<
-                                            21474836475,
-                                            21474836475,
-                                            21474836475,
-                                        >(
-                                            runtime::cast_unsigned::<4294967295, 21474836475>(
-                                                (date.clone()).marchBasedMonthDayOffset,
-                                            )?,
-                                            runtime::BoundedUint::<21474836475>::new(5u128)
-                                                .expect("Compact Uint literal fits its maximum"),
-                                        )?;
-                                        runtime::cast_unsigned::<21474836475, 657129997514>(
-                                            __compact_local_t_27,
-                                        )?
-                                        .value()
-                                            <= __compact_local_monthNumerator.value()
-                                    } {
-                                        __compact_local_monthNumerator.value()
-                                            < runtime::cast_unsigned::<
-                                                21474836480,
-                                                657129997514,
+                                    let __compact_condition: bool = {
+                                        let __compact_condition: bool = {
+                                            let __compact_local_t_27: runtime::BoundedUint<
+                                                21474836475,
+                                            > = runtime::multiply_unsigned::<
+                                                21474836475,
+                                                21474836475,
+                                                21474836475,
                                             >(
-                                                    runtime::add_unsigned::<
-                                                        21474836480,
-                                                        21474836480,
-                                                        21474836480,
-                                                    >(
-                                                        runtime::cast_unsigned::<
-                                                            21474836475,
+                                                runtime::cast_unsigned::<4294967295, 21474836475>(
+                                                    (date.clone()).marchBasedMonthDayOffset,
+                                                )?,
+                                                runtime::BoundedUint::<21474836475>::new(5u128)
+                                                    .expect(
+                                                        "Compact Uint literal fits its maximum",
+                                                    ),
+                                            )?;
+                                            runtime::cast_unsigned::<21474836475, 657129997514>(
+                                                __compact_local_t_27,
+                                            )?
+                                            .value()
+                                                <= __compact_local_monthNumerator.value()
+                                        };
+                                        if __compact_condition {
+                                            __compact_local_monthNumerator.value()
+                                                < runtime::cast_unsigned::<
+                                                    21474836480,
+                                                    657129997514,
+                                                >(
+                                                        runtime::add_unsigned::<
+                                                            21474836480,
+                                                            21474836480,
                                                             21474836480,
                                                         >(
-                                                            runtime::multiply_unsigned::<
+                                                            runtime::cast_unsigned::<
                                                                 21474836475,
-                                                                21474836475,
-                                                                21474836475,
+                                                                21474836480,
                                                             >(
-                                                                runtime::cast_unsigned::<
-                                                                    4294967295,
+                                                                runtime::multiply_unsigned::<
                                                                     21474836475,
-                                                                >((date.clone()).marchBasedMonthDayOffset)?,
-                                                                runtime::BoundedUint::<21474836475>::new(5u128)
-                                                                    .expect("Compact Uint literal fits its maximum"),
+                                                                    21474836475,
+                                                                    21474836475,
+                                                                >(
+                                                                    runtime::cast_unsigned::<
+                                                                        4294967295,
+                                                                        21474836475,
+                                                                    >((date.clone()).marchBasedMonthDayOffset)?,
+                                                                    runtime::BoundedUint::<21474836475>::new(5u128)
+                                                                        .expect("Compact Uint literal fits its maximum"),
+                                                                )?,
                                                             )?,
+                                                            runtime::BoundedUint::<21474836480>::new(5u128)
+                                                                .expect("Compact Uint literal fits its maximum"),
                                                         )?,
-                                                        runtime::BoundedUint::<21474836480>::new(5u128)
-                                                            .expect("Compact Uint literal fits its maximum"),
-                                                    )?,
-                                                )?
-                                                .value()
-                                    } else {
-                                        false
-                                    }) {
+                                                    )?
+                                                    .value()
+                                        } else {
+                                            false
+                                        }
+                                    };
+                                    if !(__compact_condition) {
                                         return Err(runtime::CompactError::AssertionFailed(
                                             "Civil date month day offset is invalid".to_owned(),
                                         ));
@@ -2966,7 +3011,7 @@ pub mod pure_circuits {
                                             == runtime::BoundedUint::<4294967295>::new(12u128)
                                                 .expect("Compact Uint literal fits its maximum")
                                     } {
-                                        if !({
+                                        let __compact_condition: bool = {
                                             let __compact_local_t_28: runtime::BoundedUint<
                                                 4294967295,
                                             > = (date.clone()).day;
@@ -2974,7 +3019,8 @@ pub mod pure_circuits {
                                                 <= runtime::BoundedUint::<4294967295>::new(31u128)
                                                     .expect("Compact Uint literal fits its maximum")
                                                     .value()
-                                        }) {
+                                        };
+                                        if !(__compact_condition) {
                                             return Err(runtime::CompactError::AssertionFailed(
                                                 "Civil date day exceeds the 31-day month length"
                                                     .to_owned(),
@@ -3022,7 +3068,7 @@ pub mod pure_circuits {
                                                 );
                                             }
                                         } else {
-                                            if !({
+                                            let __compact_condition: bool = {
                                                 let __compact_local_t_31: runtime::BoundedUint<
                                                     4294967295,
                                                 > = (date.clone()).day;
@@ -3032,7 +3078,8 @@ pub mod pure_circuits {
                                                     )
                                                     .expect("Compact Uint literal fits its maximum")
                                                     .value()
-                                            }) {
+                                            };
+                                            if !(__compact_condition) {
                                                 return Err(
                                                     runtime::CompactError::AssertionFailed(
                                                         "Civil date day exceeds the 30-day month length".to_owned(),
@@ -3212,21 +3259,24 @@ pub mod pure_circuits {
             dateOfBirthDays,
         )?;
         {
-            let __compact_local_beforeBirthdayThisYear: bool = if {
-                let __compact_local_t_6: runtime::BoundedUint<4294967295> =
-                    (currentDate.clone()).month;
-                __compact_local_t_6.value() < (dateOfBirthDate.clone()).month.value()
-            } {
-                true
-            } else {
-                if (currentDate.clone()).month == (dateOfBirthDate.clone()).month {
-                    {
-                        let __compact_local_t_7: runtime::BoundedUint<4294967295> =
-                            (currentDate.clone()).day;
-                        __compact_local_t_7.value() < (dateOfBirthDate.clone()).day.value()
-                    }
+            let __compact_local_beforeBirthdayThisYear: bool = {
+                let __compact_condition: bool = {
+                    let __compact_local_t_6: runtime::BoundedUint<4294967295> =
+                        (currentDate.clone()).month;
+                    __compact_local_t_6.value() < (dateOfBirthDate.clone()).month.value()
+                };
+                if __compact_condition {
+                    true
                 } else {
-                    false
+                    if (currentDate.clone()).month == (dateOfBirthDate.clone()).month {
+                        {
+                            let __compact_local_t_7: runtime::BoundedUint<4294967295> =
+                                (currentDate.clone()).day;
+                            __compact_local_t_7.value() < (dateOfBirthDate.clone()).day.value()
+                        }
+                    } else {
+                        false
+                    }
                 }
             };
             {
@@ -3287,14 +3337,15 @@ pub mod pure_circuits {
             ));
         }
         if (((offer.clone()).body).clone()).supportsExpiration {
-            if !({
+            let __compact_condition: bool = {
                 let __compact_local_t_5: runtime::BoundedUint<65535> =
                     (((offer.clone()).body).clone()).defaultExpirationDays;
                 __compact_local_t_5.value()
                     > runtime::BoundedUint::<65535>::new(0u128)
                         .expect("Compact Uint literal fits its maximum")
                         .value()
-            }) {
+            };
+            if !(__compact_condition) {
                 return Err(
                     runtime::CompactError::AssertionFailed(
                         "Digital-passport issuance offer default expiration must be positive when supported"
@@ -3342,14 +3393,15 @@ pub mod pure_circuits {
             ));
         }
         if (((request.clone()).body).clone()).requestExpiration {
-            if !({
+            let __compact_condition: bool = {
                 let __compact_local_t_4: runtime::BoundedUint<65535> =
                     (((request.clone()).body).clone()).requestedExpirationDays;
                 __compact_local_t_4.value()
                     > runtime::BoundedUint::<65535>::new(0u128)
                         .expect("Compact Uint literal fits its maximum")
                         .value()
-            }) {
+            };
+            if !(__compact_condition) {
                 return Err(
                     runtime::CompactError::AssertionFailed(
                         "Digital-passport issuance request expiration days must be positive when requested"

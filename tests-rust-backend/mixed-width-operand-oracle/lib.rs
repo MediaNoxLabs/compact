@@ -25,7 +25,7 @@ pub mod pure_circuits {
         q: runtime::BoundedUint<4294967295>,
         y: runtime::BoundedUint<4294967295>,
     ) -> Result<(), runtime::CompactError> {
-        if !({
+        let __compact_condition: bool = {
             let __compact_local_t_13: runtime::BoundedUint<17179869180> =
                 runtime::multiply_unsigned::<17179869180, 17179869180, 17179869180>(
                     runtime::cast_unsigned::<4294967295, 17179869180>(q)?,
@@ -34,7 +34,8 @@ pub mod pure_circuits {
                 )?;
             __compact_local_t_13.value()
                 <= runtime::cast_unsigned::<4294967295, 17179869180>(y)?.value()
-        }) {
+        };
+        if !(__compact_condition) {
             return Err(runtime::CompactError::AssertionFailed(
                 "product must not exceed the bound".to_owned(),
             ));
@@ -45,7 +46,7 @@ pub mod pure_circuits {
         q: runtime::BoundedUint<4294967295>,
         y: runtime::BoundedUint<4294967295>,
     ) -> Result<(), runtime::CompactError> {
-        if !({
+        let __compact_condition: bool = {
             let __compact_local_t_12: runtime::BoundedUint<17179869180> =
                 runtime::multiply_unsigned::<17179869180, 17179869180, 17179869180>(
                     runtime::cast_unsigned::<4294967295, 17179869180>(q)?,
@@ -54,7 +55,8 @@ pub mod pure_circuits {
                 )?;
             __compact_local_t_12.value()
                 < runtime::cast_unsigned::<4294967295, 17179869180>(y)?.value()
-        }) {
+        };
+        if !(__compact_condition) {
             return Err(runtime::CompactError::AssertionFailed(
                 "product must stay below the bound".to_owned(),
             ));
@@ -65,7 +67,7 @@ pub mod pure_circuits {
         q: runtime::BoundedUint<4294967295>,
         y: runtime::BoundedUint<4294967295>,
     ) -> Result<(), runtime::CompactError> {
-        if !({
+        let __compact_condition: bool = {
             let __compact_local_t_11: runtime::BoundedUint<17179869180> =
                 runtime::multiply_unsigned::<17179869180, 17179869180, 17179869180>(
                     runtime::cast_unsigned::<4294967295, 17179869180>(q)?,
@@ -74,7 +76,8 @@ pub mod pure_circuits {
                 )?;
             __compact_local_t_11.value()
                 > runtime::cast_unsigned::<4294967295, 17179869180>(y)?.value()
-        }) {
+        };
+        if !(__compact_condition) {
             return Err(runtime::CompactError::AssertionFailed(
                 "product must exceed the bound".to_owned(),
             ));
@@ -85,7 +88,7 @@ pub mod pure_circuits {
         q: runtime::BoundedUint<4294967295>,
         y: runtime::BoundedUint<4294967295>,
     ) -> Result<(), runtime::CompactError> {
-        if !({
+        let __compact_condition: bool = {
             let __compact_local_t_10: runtime::BoundedUint<17179869180> =
                 runtime::multiply_unsigned::<17179869180, 17179869180, 17179869180>(
                     runtime::cast_unsigned::<4294967295, 17179869180>(q)?,
@@ -94,7 +97,8 @@ pub mod pure_circuits {
                 )?;
             __compact_local_t_10.value()
                 >= runtime::cast_unsigned::<4294967295, 17179869180>(y)?.value()
-        }) {
+        };
+        if !(__compact_condition) {
             return Err(runtime::CompactError::AssertionFailed(
                 "product must reach the bound".to_owned(),
             ));

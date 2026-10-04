@@ -506,8 +506,11 @@ distinct `--cargo-target-dir` paths.
 
 `--full` is an explicit broader local gate: all checked Rust fixtures and
 curated declaration identities, Rust formatting, compiler rejection checks,
-the pinned TypeScript oracle source inventory, workspace tests and Clippy,
-then the consumer and proof checks. It can take substantially longer. Neither mode
+the pinned TypeScript oracle source inventory, backend workspace tests and
+Clippy, Compact CLI unit tests, then the consumer and proof checks. The legacy
+compactup integration tests depend on the host-installed compiler and live
+GitHub release data; run those separately when validating compactup. The full
+backend gate can take substantially longer. Neither mode
 pushes commits, starts remote CI, or interprets fixture coverage as full
 TypeScript parity across the repository's Compact corpus.
 

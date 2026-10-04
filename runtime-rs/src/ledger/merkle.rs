@@ -1001,7 +1001,6 @@ pub fn historic_check_root<T: CellValue, D: DB>(
 #[cfg(test)]
 mod query_program_tests {
     use super::*;
-    use crate::Field;
     use crate::ledger::DefaultDB;
     use midnight_onchain_vm::result_mode::ResultMode;
 
@@ -1085,20 +1084,12 @@ mod query_program_tests {
         assert_program(&full, &plain, "fullAtInit");
         assert_program(&full, &historic, "fullAtInit");
         assert_program(
-            &check_root_program::<_, DefaultDB>(
-                path(),
-                Field::from(plain_root.0),
-                MerkleHistory::CurrentOnly,
-            ),
+            &check_root_program::<_, DefaultDB>(path(), plain_root.0, MerkleHistory::CurrentOnly),
             &plain,
             "knownAtInit",
         );
         assert_program(
-            &check_root_program::<_, DefaultDB>(
-                path(),
-                Field::from(historic_root.0),
-                MerkleHistory::Historic,
-            ),
+            &check_root_program::<_, DefaultDB>(path(), historic_root.0, MerkleHistory::Historic),
             &historic,
             "knownAtInit",
         );

@@ -57,18 +57,30 @@ def proof_map(circuits: list[dict]) -> dict[str, tuple[bool, bool]]:
     return {item["name"]: (item["pure"], item["proof"]) for item in circuits}
 
 
-def check(compiler: Path) -> tuple[dict, list[str]]:
-    manifest = json.loads(MANIFEST.read_text())
+def cohort_membership_failures(manifest: dict, root: Path = ROOT) -> list[str]:
+    if "source_glob" not in manifest:
+        return []
+    actual = {path.relative_to(root).as_posix() for path in root.glob(manifest["source_glob"])}
+    expected = {entry["source"] for entry in manifest["positive_sources"]}
+    if actual == expected:
+        return []
+    return [f"{manifest['source_glob']}: source cohort membership changed "
+            f"(added={sorted(actual - expected)}, removed={sorted(expected - actual)})"]
+
+
+def check(compiler: Path, manifest_path: Path = MANIFEST) -> tuple[dict, list[str]]:
+    manifest = json.loads(manifest_path.read_text())
     receipt = {
         "format_version": 1,
-        "scope": "PM-19252 compiler acceptance/proof metadata; no executing parity",
+        "scope": "checked positive source compiler acceptance/proof metadata; no executing parity",
         "git_head": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
         "compiler": {"path": str(compiler), "sha256": sha256(compiler)},
-        "manifest_sha256": sha256(MANIFEST),
+        "manifest": str(manifest_path),
+        "manifest_sha256": sha256(manifest_path),
         "suite": manifest["suite"],
         "sources": [],
     }
-    failures = []
+    failures = cohort_membership_failures(manifest)
     for expected in [*manifest["positive_sources"], *manifest["expected_rejections"]]:
         source = ROOT / expected["source"]
         row = {"source": expected["source"], "source_sha256": sha256(source),
@@ -134,7 +146,7 @@ def check(compiler: Path) -> tuple[dict, list[str]]:
         "compiler_proof_false": sum(circuit["proof"] is False for row in receipt["sources"]
                                     for circuit in row.get("proof_circuits", [])),
         "declared_pure_circuits": sum(item["pure_declarations"]
-                                           for item in manifest["positive_sources"]),
+                                      for item in manifest["positive_sources"]),
     }
     receipt["failures"] = failures
     return receipt, failures
@@ -143,12 +155,17 @@ def check(compiler: Path) -> tuple[dict, list[str]]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--compiler", type=Path, required=True)
+    parser.add_argument("--manifest", type=Path, default=MANIFEST,
+                        help="checked source cohort manifest (defaults to PM-19252)")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     compiler = args.compiler.resolve()
     if not compiler.is_file():
         parser.error(f"compiler not found: {compiler}")
-    receipt, failures = check(compiler)
+    manifest = args.manifest.resolve()
+    if not manifest.is_file():
+        parser.error(f"manifest not found: {manifest}")
+    receipt, failures = check(compiler, manifest)
     args.output.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n")
     print(json.dumps(receipt["summary"], sort_keys=True))
     for failure in failures:

@@ -29,9 +29,34 @@ SCRIPT = Path(__file__).with_name("parity_inventory.py")
 SPEC = importlib.util.spec_from_file_location("parity_inventory", SCRIPT)
 inventory = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(inventory)
+SCOPE_SPEC = importlib.util.spec_from_file_location(
+    "check_positive_source_scope", SCRIPT.with_name("check_positive_source_scope.py"))
+source_scope = importlib.util.module_from_spec(SCOPE_SPEC)
+SCOPE_SPEC.loader.exec_module(source_scope)
 
 
 class ParityInventoryTests(unittest.TestCase):
+    def test_adt_set_positive_cohort_is_checked_and_glob_locked(self):
+        manifest = json.loads(inventory.ADT_SET_SOURCE_MANIFEST.read_text())
+        entries = manifest["positive_sources"]
+        self.assertEqual(len(entries), 5)
+        self.assertEqual(source_scope.cohort_membership_failures(manifest), [])
+        self.assertEqual({entry["expected_rust"] for entry in entries}, {"success", "rejection"})
+        self.assertEqual(sum(entry["expected_rust"] == "success" for entry in entries), 1)
+        self.assertEqual(sum(len(entry["proof_circuits"]) for entry in entries), 5)
+        self.assertTrue(all(circuit == {"name": circuit["name"], "pure": False, "proof": True}
+                            for entry in entries for circuit in entry["proof_circuits"]))
+        suite = (inventory.ROOT / manifest["suite"]).read_text()
+        self.assertIn("buildPathTo('/adt/tests')", suite)
+        self.assertIn("files.forEach", suite)
+        self.assertIn("toBeSuccess", suite)
+        scanned = {path.relative_to(inventory.ROOT).as_posix()
+                   for path in inventory.source_paths(inventory.ROOT)}
+        self.assertTrue({entry["source"] for entry in entries} <= scanned)
+        bad_manifest = {**manifest, "positive_sources": entries[:-1]}
+        self.assertIn("source cohort membership changed",
+                      source_scope.cohort_membership_failures(bad_manifest)[0])
+
     def test_pm19252_positive_scope_is_complete_and_excludes_rejection(self):
         scope = json.loads(inventory.POSITIVE_SOURCE_MANIFEST.read_text())
         positive = scope["positive_sources"]

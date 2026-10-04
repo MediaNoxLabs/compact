@@ -2346,6 +2346,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/adt/tests/set_vector.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "getVector",
+    "signature": "circuit getVector(): Vector<2, Field>",
+    "visibility": "internal"
+  },
+  {
     "source": "examples/rust_backend/chunked_cell.compact",
     "module_path": [],
     "kind": "circuit",
@@ -5578,6 +5586,30 @@
     "visibility": "internal"
   },
   {
+    "source": "examples/adt/tests/set_enum.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "test",
+    "signature": "export circuit test(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/adt/tests/set_field.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "test",
+    "signature": "export circuit test(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/adt/tests/set_vector.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "test",
+    "signature": "export circuit test(): []",
+    "visibility": "export"
+  },
+  {
     "source": "examples/bugs/pm-19252/example_eight_b.compact",
     "module_path": [],
     "kind": "circuit",
@@ -5728,6 +5760,22 @@
     "name": "test1",
     "signature": "pure circuit test1(a: Field): []",
     "visibility": "internal"
+  },
+  {
+    "source": "examples/adt/tests/set_qualified_coin_info.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "test_QualifiedShieldedCoinInfo",
+    "signature": "export circuit test_QualifiedShieldedCoinInfo(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/adt/tests/set_qualified_coin_info.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "test_ShieldedCoinInfo",
+    "signature": "export circuit test_ShieldedCoinInfo(): []",
+    "visibility": "export"
   },
   {
     "source": "examples/rust_backend/assert_parity_oracle.compact",

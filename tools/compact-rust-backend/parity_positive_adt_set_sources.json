@@ -1,0 +1,82 @@
+{
+  "format_version": 1,
+  "suite": "tests-e2e/src/tests/compiler/compiler.adt.e2e.test.ts",
+  "purpose": "Bounded ADT Set source-acceptance cohort from the dynamic TypeScript ADT test suite; no behavioral parity",
+  "source_glob": "examples/adt/tests/set_*.compact",
+  "positive_sources": [
+    {
+      "source": "examples/adt/tests/set_enum.compact",
+      "expected_ts": "success",
+      "expected_rust": "rejection",
+      "rust_diagnostic_contains": "Rust backend does not yet support this nested ledger query",
+      "proof_circuits": [
+        {
+          "name": "test",
+          "pure": false,
+          "proof": true
+        }
+      ],
+      "pure_declarations": 0,
+      "exported_pure_declarations": 0
+    },
+    {
+      "source": "examples/adt/tests/set_field.compact",
+      "expected_ts": "success",
+      "expected_rust": "rejection",
+      "rust_diagnostic_contains": "Rust backend does not yet support this nested ledger query",
+      "proof_circuits": [
+        {
+          "name": "test",
+          "pure": false,
+          "proof": true
+        }
+      ],
+      "pure_declarations": 0,
+      "exported_pure_declarations": 0
+    },
+    {
+      "source": "examples/adt/tests/set_qualified_coin_info.compact",
+      "expected_ts": "success",
+      "expected_rust": "rejection",
+      "rust_diagnostic_contains": "Rust backend does not yet support this nested ledger query",
+      "proof_circuits": [
+        {
+          "name": "test_QualifiedShieldedCoinInfo",
+          "pure": false,
+          "proof": true
+        },
+        {
+          "name": "test_ShieldedCoinInfo",
+          "pure": false,
+          "proof": true
+        }
+      ],
+      "pure_declarations": 0,
+      "exported_pure_declarations": 0
+    },
+    {
+      "source": "examples/adt/tests/set_struct.compact",
+      "expected_ts": "success",
+      "expected_rust": "success",
+      "proof_circuits": [],
+      "pure_declarations": 0,
+      "exported_pure_declarations": 0
+    },
+    {
+      "source": "examples/adt/tests/set_vector.compact",
+      "expected_ts": "success",
+      "expected_rust": "rejection",
+      "rust_diagnostic_contains": "Rust backend does not yet support this nested ledger query",
+      "proof_circuits": [
+        {
+          "name": "test",
+          "pure": false,
+          "proof": true
+        }
+      ],
+      "pure_declarations": 0,
+      "exported_pure_declarations": 0
+    }
+  ],
+  "expected_rejections": []
+}

@@ -38,6 +38,8 @@ import tomllib
 ROOT = Path(__file__).resolve().parents[2]
 ORACLE_MANIFEST = Path(__file__).with_name("oracle_acceptance.json")
 POSITIVE_SOURCE_MANIFEST = Path(__file__).with_name("parity_positive_sources.json")
+ADT_SET_SOURCE_MANIFEST = Path(__file__).with_name("parity_positive_adt_set_sources.json")
+POSITIVE_SOURCE_MANIFESTS = (POSITIVE_SOURCE_MANIFEST, ADT_SET_SOURCE_MANIFEST)
 DEFAULT_BASELINE = Path(__file__).with_name("parity_baseline.json")
 DECLARATION = re.compile(
     r"(?m)^[ \t]*(?P<export>export[ \t]+)?(?P<pure>pure[ \t]+)?"
@@ -50,9 +52,16 @@ PURE_DECLARATION = re.compile(r"(?m)^[ \t]*(export[ \t]+)?pure[ \t]+circuit\b")
 
 
 def positive_scope(root: Path) -> dict | None:
-    if root.resolve() != ROOT.resolve() or not POSITIVE_SOURCE_MANIFEST.is_file():
+    if root.resolve() != ROOT.resolve():
         return None
-    return json.loads(POSITIVE_SOURCE_MANIFEST.read_text())
+    cohorts = [json.loads(path.read_text()) for path in POSITIVE_SOURCE_MANIFESTS]
+    positive = [entry for cohort in cohorts for entry in cohort["positive_sources"]]
+    rejections = [entry for cohort in cohorts for entry in cohort["expected_rejections"]]
+    sources = [entry["source"] for entry in positive + rejections]
+    if len(sources) != len(set(sources)):
+        raise ValueError("positive source manifests contain duplicate paths")
+    return {"cohorts": cohorts, "positive_sources": positive,
+            "expected_rejections": rejections}
 
 
 def without_comments(source: str) -> str:
@@ -269,6 +278,9 @@ def receipt_metadata(root: Path, compiler: Path | None, contracts: list[dict]) -
         ).hexdigest(),
         "positive_scope_sha256": sha256_file(POSITIVE_SOURCE_MANIFEST)
         if root.resolve() == ROOT.resolve() else None,
+        "positive_cohort_manifest_sha256s": {
+            path.name: sha256_file(path) for path in POSITIVE_SOURCE_MANIFESTS
+        } if root.resolve() == ROOT.resolve() else None,
         "upstream_packages": upstream_packages(lock_file),
     }
 

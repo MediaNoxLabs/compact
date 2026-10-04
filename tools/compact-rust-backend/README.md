@@ -74,6 +74,16 @@ proof flags. Compiler-backed inventory also joins capabilities from the 17
 currently Rust-compileable PM-19252 sources; `example_ten.compact` remains a
 checked TypeScript-positive source with a measured Rust rejection, recorded
 in the separate acceptance receipt and tracked for implementation in #186.
+The checked ADT Set cohort in `parity_positive_adt_set_sources.json` pins all
+five `examples/adt/tests/set_*.compact` sources from the TypeScript ADT
+acceptance suite. Run `check_positive_source_scope.py --manifest
+tools/compact-rust-backend/parity_positive_adt_set_sources.json --compiler
+/path/to/immutable/compactc --output /tmp/adt-set-scope.json` for its separate
+compiler receipt. The manifest locks glob membership and authoritative proof
+flags; four sources currently reject in the Rust backend at nested ledger
+queries, while `set_struct` compiles with no contract circuit/capability rows.
+This is a TypeScript-positive compiler coverage gap, tracked in #188; neither
+acceptance receipt establishes executing behavior parity.
 The lexical scanner includes `pure circuit` and `export pure circuit`
 declarations, with compiler `contract-info.json` supplying proof applicability
 even when the Rust capability report has no recorded method for a pure circuit.

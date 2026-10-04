@@ -143,6 +143,15 @@
           [(single ,src ,expr) (expression-ir expr owner-src)]
           [else (source-errorf owner-src "Rust backend does not yet support tuple spreads")]))
 
+      (define (reject-spreads tuple-arg* kind)
+        (for-each
+          (lambda (arg)
+            (nanopass-case (Lnodisclose Tuple-Argument) arg
+              [(spread ,src ,nat ,expr)
+               (source-errorf src "Rust backend does not yet support ~a spreads" kind)]
+              [else (void)]))
+          tuple-arg*))
+
       (define (maybe-nonnegative-integer-literal expr owner-src)
         (nanopass-case (Lnodisclose Expression) expr
           [(return ,src ,expr) (maybe-nonnegative-integer-literal expr src)]
@@ -300,12 +309,16 @@
                    (cons "max" (number->string nat))
                    (cons "value" (expression-ir expr src)))]
           [(tuple ,src ,tuple-arg* ...)
+           (reject-spreads tuple-arg* "tuple")
            (if (null? tuple-arg*)
                (kind "unit")
                (object (cons "kind" "tuple")
                        (cons "elements"
                              (list->vector
                                (map (lambda (arg) (tuple-argument-ir arg owner-src)) tuple-arg*)))))]
+          [(vector ,src ,tuple-arg* ...)
+           (reject-spreads tuple-arg* "vector")
+           (source-errorf src "Rust backend does not yet support this Vector construction")]
           [(map ,src ,len ,fun ,map-arg ,map-arg* ...)
            (unless (null? map-arg*)
              (source-errorf src "Rust backend supports unary Vector map only"))
@@ -586,6 +599,7 @@
           [(tuple ,src ,tuple-arg* ...)
            (nanopass-case (Lnodisclose Type) expected-type
              [(tvector ,src^ ,len ,type)
+              (reject-spreads tuple-arg* "vector")
               (unless (= (length tuple-arg*) len)
                 (source-errorf src "Rust vector literal length does not match its type"))
               (object (cons "kind" "vector")
@@ -599,6 +613,7 @@
                                        [else (source-errorf src "Rust backend does not yet support vector spreads")]))
                                    tuple-arg*))))]
              [(ttuple ,src^ ,type* ...)
+              (reject-spreads tuple-arg* "tuple")
               (unless (= (length tuple-arg*) (length type*))
                 (source-errorf src "Rust tuple literal length does not match its type"))
               (if (null? type*)
@@ -1124,6 +1139,7 @@
           [(tuple ,src ,tuple-arg* ...)
            (nanopass-case (Lnodisclose Type) expected-type
              [(tvector ,src^ ,len ,type)
+              (reject-spreads tuple-arg* "vector")
               (unless (= (length tuple-arg*) len)
                 (source-errorf src "Rust vector literal length does not match its type"))
               (object (cons "kind" "vector")
@@ -1137,6 +1153,7 @@
                                        [else (source-errorf src "Rust backend does not yet support vector spreads")]))
                                    tuple-arg*))))]
              [(ttuple ,src^ ,type* ...)
+              (reject-spreads tuple-arg* "tuple")
               (unless (= (length tuple-arg*) (length type*))
                 (source-errorf src "Rust tuple literal length does not match its type"))
               (if (null? type*)
@@ -1367,6 +1384,7 @@
                        (cons "steps" (list->vector (map (lambda (step) (stateful-expression-ir step src witness-ids)) expr*)))
                        (cons "value" (stateful-expression-ir expr src witness-ids))))]
           [(tuple ,src ,tuple-arg* ...)
+           (reject-spreads tuple-arg* "tuple")
            (if (null? tuple-arg*)
                (kind "unit")
                (object (cons "kind" "tuple")

@@ -40,11 +40,27 @@ CASES = {
         'export ledger thing: Opaque<"NotAThing">;\n'
         'constructor() {}\n',
         "Rust backend does not yet support this opaque type",
+        None,
     ),
     "field-to-uint": (
         'export ledger n: Uint<64>;\n'
         'export circuit narrow(f: Field): Uint<64> { return f as Uint<64>; }\n',
         "Rust backend does not yet support Field-to-Uint downcasts",
+        None,
+    ),
+    "vector-spread": (
+        'export pure circuit spread(v: Vector<2, Field>): Vector<2, Field> {\n'
+        '  return [...v];\n'
+        '}\n',
+        "Rust backend does not yet support vector spreads",
+        (2, 10),
+    ),
+    "tuple-spread": (
+        'export pure circuit pair(v: [Field, Field]): [Field, Field] {\n'
+        '  return [...v];\n'
+        '}\n',
+        "Rust backend does not yet support tuple spreads",
+        (2, 10),
     ),
 }
 
@@ -211,7 +227,7 @@ def main() -> int:
     failures = []
     with tempfile.TemporaryDirectory(prefix="compact-rust-rejections-") as temp:
         directory = Path(temp)
-        for name, (source, diagnostic) in CASES.items():
+        for name, (source, diagnostic, position) in CASES.items():
             source_path = directory / f"{name}.compact"
             output_path = directory / name
             source_path.write_text(source)
@@ -229,6 +245,7 @@ def main() -> int:
                 diagnostic not in message
                 or f"{name}.compact line " not in message
                 or " char " not in message
+                or (position is not None and f"{name}.compact line {position[0]} char {position[1]}" not in message)
             ):
                 failures.append(f"{name}: missing source diagnostic:\n{message}")
             if (output_path / "contract" / "lib.rs").exists():
@@ -237,6 +254,31 @@ def main() -> int:
                 failures.append(f"{name}: rejected source left a generated Cargo manifest")
             if output_path.exists() or any(directory.glob(f".{name}.compactc-stage-*")):
                 failures.append(f"{name}: rejected source left output or staging debris")
+        for name, source in (
+            ("vector", 'export pure circuit values(): Vector<2, Field> { return [1, 2]; }\n'),
+            ("tuple", 'export pure circuit values(): [Field, Field] { return [1, 2]; }\n'),
+        ):
+            control_source = directory / f"{name}-without-spread.compact"
+            control_output = directory / f"{name}-without-spread"
+            control_source.write_text(source)
+            control = subprocess.run(
+                [compactc, "--target", "rust", "--skip-zk", str(control_source), str(control_output)],
+                capture_output=True, text=True, env=os.environ.copy(), check=False,
+            )
+            if control.returncode or not (control_output / "contract/lib.rs").is_file():
+                failures.append(f"no-spread {name} control did not build:\n{control.stderr}")
+        existing_output = directory / "vector-without-spread"
+        if (existing_output / "contract/lib.rs").is_file():
+            before = snapshot(existing_output)
+            rejected = subprocess.run(
+                [compactc, "--target", "rust", "--skip-zk",
+                 str(directory / "vector-spread.compact"), str(existing_output)],
+                capture_output=True, text=True, env=os.environ.copy(), check=False,
+            )
+            if rejected.returncode == 0 or snapshot(existing_output) != before or any(
+                directory.glob(f".{existing_output.name}.compactc-stage-*")
+            ):
+                failures.append("spread rejection changed a complete existing output")
         failures.extend(check_output_publication(compactc, directory))
         failures.extend(check_proof_capabilities(compactc, directory))
 

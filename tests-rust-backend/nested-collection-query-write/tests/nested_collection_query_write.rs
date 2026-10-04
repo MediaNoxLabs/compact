@@ -15,11 +15,14 @@
 
 use compact_rust_nested_collection_query_write_fixture::ledger_contract::{
     check_map_empty, check_member, check_set_empty, initial_state, map_empty_flag, member_flag,
-    seed, set_empty_flag,
+    recorded, seed, set_empty_flag,
 };
+#[path = "../../boolean_observation_assertions.rs"]
+mod boolean_observation_assertions;
 use midnight_compact_runtime::Field;
 use midnight_compact_runtime::context::ConstructorContext;
 use midnight_compact_runtime::ledger::{ContractAddress, DefaultDB, StateValue};
+use midnight_compact_runtime::recording::RecordedCircuitResult;
 use midnight_onchain_state::state::{
     ContractMaintenanceAuthority, ContractOperation, ContractState, EntryPointBuf,
 };
@@ -47,6 +50,92 @@ fn state_hex(state: StateValue<DefaultDB>) -> String {
     let mut bytes = Vec::new();
     tagged_serialize(&contract_state, &mut bytes).unwrap();
     hex::encode(bytes)
+}
+
+fn assert_replay(call: &RecordedCircuitResult<(), ()>) {
+    let replay = call
+        .public
+        .initial()
+        .query(
+            call.public.verify_ops(),
+            None,
+            &call.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(
+        replay.context.state.get_ref(),
+        call.execution.context.query.state.get_ref()
+    );
+    assert_eq!(replay.context.effects, call.execution.context.query.effects);
+}
+
+#[test]
+fn recorded_empty_queries_match_native_oracle_and_replay_in_both_states() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/nested-collection-query-write.json"
+    ))
+    .unwrap();
+    let trace: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/nested-boolean-observation.json"
+    ))
+    .unwrap();
+    for (seeded, expected) in [(false, &oracle["before"]), (true, &oracle["after"])] {
+        let traces = if seeded {
+            &trace["seeded"]
+        } else {
+            &trace["empty"]
+        };
+        let native = initial_state(ConstructorContext::new(())).unwrap();
+        let recording = initial_state(ConstructorContext::new(())).unwrap();
+        let mut native = native.into_circuit_context(ContractAddress::default());
+        let mut recording = recording.into_circuit_context(ContractAddress::default());
+        if seeded {
+            native = seed(native, Field::from(42_u64)).unwrap().context;
+            recording = seed(recording, Field::from(42_u64)).unwrap().context;
+        }
+        native = check_member(native, Field::from(42_u64)).unwrap().context;
+        recording = check_member(recording, Field::from(42_u64))
+            .unwrap()
+            .context;
+
+        let native_set = check_set_empty(native).unwrap();
+        let recorded_set = recorded::check_set_empty(recording).unwrap();
+        boolean_observation_assertions::assert_ts_trace(
+            "nested Set",
+            &native_set,
+            &recorded_set,
+            &traces["set"],
+        );
+        assert_replay(&recorded_set);
+        assert_eq!(recorded_set.execution.gas_cost, native_set.gas_cost);
+        assert_eq!(
+            recorded_set.execution.context.query.effects,
+            native_set.context.query.effects
+        );
+
+        let native_map = check_map_empty(native_set.context).unwrap();
+        let recorded_map = recorded::check_map_empty(recorded_set.execution.context).unwrap();
+        boolean_observation_assertions::assert_ts_trace(
+            "nested Map",
+            &native_map,
+            &recorded_map,
+            &traces["map"],
+        );
+        assert_replay(&recorded_map);
+        assert_eq!(recorded_map.execution.gas_cost, native_map.gas_cost);
+        assert_eq!(
+            recorded_map.execution.context.query.effects,
+            native_map.context.query.effects
+        );
+        assert_eq!(
+            state_hex(recorded_map.execution.context.query.state.get_ref().clone()),
+            expected["stateHex"]
+        );
+        let set = set_empty_flag(recorded_map.execution.context).unwrap();
+        assert_eq!(set.result, expected["flags"]["setEmpty"]);
+        let map = map_empty_flag(set.context).unwrap();
+        assert_eq!(map.result, expected["flags"]["mapEmpty"]);
+    }
 }
 
 #[test]

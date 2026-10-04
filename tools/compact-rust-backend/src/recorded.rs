@@ -1003,6 +1003,53 @@ fn render_recorded_item(
                 next_temp,
                 visiting,
             ),
+            Expr::CellRead { field, index } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                if !matches!(
+                    declaration.declaration,
+                    LedgerFieldKind::Cell { ty: Type::Boolean }
+                ) || declaration.index != *index
+                {
+                    return Ok(None);
+                }
+                let slot = ident(field)?;
+                let observed = syn::Ident::new(
+                    &format!("__compact_recorded_bool_{}", *next_temp),
+                    Span::call_site(),
+                );
+                *next_temp += 1;
+                steps.push(syn::parse_quote!(
+                    let (frame, #observed): (_, bool) =
+                        crate::ledger_slots::#slot.record_read(frame)?;
+                ));
+                Ok(Some(syn::parse_quote!(#observed)))
+            }
+            Expr::SetIsEmpty { field, index } | Expr::MapIsEmpty { field, index } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                let matching_kind = matches!(
+                    (value, &declaration.declaration),
+                    (Expr::SetIsEmpty { .. }, LedgerFieldKind::Set { .. })
+                        | (Expr::MapIsEmpty { .. }, LedgerFieldKind::Map { .. })
+                );
+                if !matching_kind || declaration.index != *index {
+                    return Ok(None);
+                }
+                let slot = ident(field)?;
+                let observed = syn::Ident::new(
+                    &format!("__compact_recorded_empty_{}", *next_temp),
+                    Span::call_site(),
+                );
+                *next_temp += 1;
+                steps.push(syn::parse_quote!(
+                    let (frame, #observed): (_, bool) =
+                        crate::ledger_slots::#slot.record_is_empty(frame)?;
+                ));
+                Ok(Some(syn::parse_quote!(#observed)))
+            }
             Expr::Equal { left, right } | Expr::NotEqual { left, right } => {
                 let (field, index) = match (&**left, &**right) {
                     (Expr::CellRead { field, index }, _) | (_, Expr::CellRead { field, index }) => {

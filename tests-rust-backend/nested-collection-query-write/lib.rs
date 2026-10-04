@@ -275,6 +275,28 @@ pub mod ledger_contract {
                 crate::ledger_slots::memberFlag.record_write(frame, __compact_recorded_member_1)?;
             Ok(frame.finish(()))
         }
+        pub fn check_set_empty<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_recorded_empty_0): (_, bool) =
+                crate::ledger_slots::seen.record_is_empty(frame)?;
+            let frame = crate::ledger_slots::setEmptyFlag
+                .record_write(frame, __compact_recorded_empty_0)?;
+            Ok(frame.finish(()))
+        }
+        pub fn check_map_empty<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_recorded_empty_0): (_, bool) =
+                crate::ledger_slots::table.record_is_empty(frame)?;
+            let frame = crate::ledger_slots::mapEmptyFlag
+                .record_write(frame, __compact_recorded_empty_0)?;
+            Ok(frame.finish(()))
+        }
         pub fn member_flag<Private>(
             context: runtime::context::CircuitContext<Private>,
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
@@ -353,6 +375,56 @@ pub mod ledger_contract {
                     observed,
                     recorded,
                     "check_member",
+                    input,
+                ))
+            }
+            pub fn check_set_empty<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::check_set_empty(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn check_set_empty_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.check_set_empty(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "check_set_empty",
+                    input,
+                ))
+            }
+            pub fn check_map_empty<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::check_map_empty(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn check_map_empty_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.check_map_empty(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "check_map_empty",
                     input,
                 ))
             }

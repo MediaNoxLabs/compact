@@ -16,7 +16,7 @@
 // limitations under the License.
 
 use compact_rust_asset_registry_oracle_fixture::ledger_contract::{
-    LedgerView, Witnesses, initial_state, removeRecord, setRecord, setWatch, tag,
+    LedgerView, Witnesses, close, initial_state, recorded, removeRecord, setRecord, setWatch, tag,
 };
 use compact_rust_asset_registry_oracle_fixture::types::{
     AssetClass, AssetRecord, ListMutation, RecordMutation,
@@ -29,6 +29,47 @@ use midnight_serialize::tagged_serialize;
 use midnight_storage::storage::HashMap;
 use runtime::context::{ConstructorContext, WitnessContext};
 use runtime::ledger::{ContractAddress, DefaultDB, StateValue};
+
+#[test]
+fn recorded_close_matches_native_assertion_and_replay() {
+    let native = initial_state(ConstructorContext::new(()), &Stub).unwrap();
+    let recording = initial_state(ConstructorContext::new(()), &Stub).unwrap();
+    let native = close(
+        native.into_circuit_context(ContractAddress::default()),
+        &Stub,
+    )
+    .unwrap();
+    let recorded = recorded::close(
+        recording.into_circuit_context(ContractAddress::default()),
+        &Stub,
+    )
+    .unwrap();
+    let replay = recorded
+        .public
+        .initial()
+        .query(
+            recorded.public.verify_ops(),
+            None,
+            &recorded.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(recorded.execution.gas_cost, native.gas_cost);
+    assert_eq!(
+        recorded.execution.context.query.effects,
+        native.context.query.effects
+    );
+    assert_eq!(replay.context.effects, native.context.query.effects);
+    assert_eq!(
+        recorded.execution.context.query.state.get_ref(),
+        native.context.query.state.get_ref()
+    );
+    assert_eq!(
+        replay.context.state.get_ref(),
+        native.context.query.state.get_ref()
+    );
+    assert!(close(native.context, &Stub).is_err());
+    assert!(recorded::close(recorded.execution.context, &Stub).is_err());
+}
 
 fn state_hex(state: StateValue<DefaultDB>) -> String {
     let mut operations: HashMap<EntryPointBuf, ContractOperation, DefaultDB> = HashMap::new();

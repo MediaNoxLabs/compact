@@ -1693,6 +1693,7 @@ dependencies = [
  "compact-rust-recorded-enum-cell-fixture",
  "compact-rust-set-boolean-fixture",
  "compact-rust-set-oracle-fixture",
+ "compact-rust-set-size-oracle-fixture",
  "compact-rust-stateful-circuit-call-fixture",
  "compact-rust-tiny-oracle-fixture",
  "compact-rust-uints-oracle-fixture",

@@ -54,6 +54,7 @@ use compact_rust_recorded_enum_cell_fixture::ledger_contract as enum_cell_contra
 use compact_rust_recorded_enum_cell_fixture::types::Choice;
 use compact_rust_set_boolean_fixture::ledger_contract as set_contract;
 use compact_rust_set_oracle_fixture::ledger_contract as set_oracle_contract;
+use compact_rust_set_size_oracle_fixture::ledger_contract as set_size_contract;
 use compact_rust_stateful_circuit_call_fixture::ledger_contract as nested_contract;
 use compact_rust_tiny_oracle_fixture::ledger_contract as tiny_contract;
 use compact_rust_uints_oracle_fixture::ledger_contract as uints_contract;
@@ -655,6 +656,36 @@ fn check_composite_cell_proof(root: &Path) -> Result<(), Box<dyn Error>> {
     })
 }
 
+fn check_boolean_observation_proof(root: &Path) -> Result<(), Box<dyn Error>> {
+    let mut rng = StdRng::seed_from_u64(0x424f_4f4c_4f42_5301);
+    for (circuit, flag_index) in [("check_set_empty", 0), ("check_map_empty", 1)] {
+        let initial = set_size_contract::initial_state(ConstructorContext::new(()))?;
+        let deploy = make_deploy(
+            root,
+            circuit,
+            initial.ledger_state.get_ref().clone(),
+            &mut rng,
+        )?;
+        let context = initial.into_circuit_context(deploy.address());
+        let recorded = match circuit {
+            "check_set_empty" => set_size_contract::recorded::check_set_empty(context)?,
+            "check_map_empty" => set_size_contract::recorded::check_map_empty(context)?,
+            _ => unreachable!(),
+        };
+        let call = check_generated_trace(root, circuit, recorded, ())?;
+        check_transaction(root, circuit, deploy, call, &mut rng, |state| {
+            let StateValue::Array(fields) = state.data.get_ref() else {
+                return Err("Boolean observation state is not an array".into());
+            };
+            if !read_cell::<bool, _>(fields.get(flag_index).ok_or("flag Cell missing")?)? {
+                return Err(format!("{circuit} proof did not store true").into());
+            }
+            Ok(())
+        })?;
+    }
+    Ok(())
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     let mut arguments = env::args_os().skip(1);
     let first = arguments.next();
@@ -666,6 +697,17 @@ fn main() -> Result<(), Box<dyn Error>> {
             return Err("usage: compact-rust-proof-smoke --composite-cell <proof-output>".into());
         }
         return check_composite_cell_proof(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--boolean-observation")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --boolean-observation <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err(
+                "usage: compact-rust-proof-smoke --boolean-observation <proof-output>".into(),
+            );
+        }
+        return check_boolean_observation_proof(Path::new(&root));
     }
     if first.as_deref() == Some(OsStr::new("--merkle-verify")) {
         let root = arguments

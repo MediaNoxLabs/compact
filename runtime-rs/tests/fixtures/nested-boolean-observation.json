@@ -1,0 +1,338 @@
+{
+  "empty": {
+    "set": {
+      "publicTranscriptShape": [
+        {
+          "kind": "dup",
+          "n": 0
+        },
+        {
+          "kind": "idx",
+          "cached": false,
+          "pushPath": false,
+          "pathLength": 1
+        },
+        {
+          "kind": "size"
+        },
+        {
+          "kind": "push",
+          "storage": false
+        },
+        {
+          "kind": "eq"
+        },
+        {
+          "kind": "popeq",
+          "cached": true,
+          "resultAtoms": [
+            [
+              1
+            ]
+          ]
+        },
+        {
+          "kind": "push",
+          "storage": false
+        },
+        {
+          "kind": "push",
+          "storage": true
+        },
+        {
+          "kind": "ins",
+          "cached": false,
+          "n": 1
+        }
+      ],
+      "privateTranscriptCount": 0,
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1252757404",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "size",
+            "push",
+            "eq",
+            "popeq"
+          ]
+        },
+        {
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1233942932",
+            "bytesWritten": "250",
+            "bytesDeleted": "250"
+          },
+          "opTags": [
+            "push",
+            "push",
+            "ins"
+          ]
+        }
+      ],
+      "reportedGas": {
+        "readTime": "85000000",
+        "computeTime": "1233942932",
+        "bytesWritten": "250",
+        "bytesDeleted": "250"
+      }
+    },
+    "map": {
+      "publicTranscriptShape": [
+        {
+          "kind": "dup",
+          "n": 0
+        },
+        {
+          "kind": "idx",
+          "cached": false,
+          "pushPath": false,
+          "pathLength": 1
+        },
+        {
+          "kind": "size"
+        },
+        {
+          "kind": "push",
+          "storage": false
+        },
+        {
+          "kind": "eq"
+        },
+        {
+          "kind": "popeq",
+          "cached": true,
+          "resultAtoms": [
+            [
+              1
+            ]
+          ]
+        },
+        {
+          "kind": "push",
+          "storage": false
+        },
+        {
+          "kind": "push",
+          "storage": true
+        },
+        {
+          "kind": "ins",
+          "cached": false,
+          "n": 1
+        }
+      ],
+      "privateTranscriptCount": 0,
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1252757404",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "size",
+            "push",
+            "eq",
+            "popeq"
+          ]
+        },
+        {
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1233942932",
+            "bytesWritten": "250",
+            "bytesDeleted": "250"
+          },
+          "opTags": [
+            "push",
+            "push",
+            "ins"
+          ]
+        }
+      ],
+      "reportedGas": {
+        "readTime": "85000000",
+        "computeTime": "1233942932",
+        "bytesWritten": "250",
+        "bytesDeleted": "250"
+      }
+    }
+  },
+  "seeded": {
+    "set": {
+      "publicTranscriptShape": [
+        {
+          "kind": "dup",
+          "n": 0
+        },
+        {
+          "kind": "idx",
+          "cached": false,
+          "pushPath": false,
+          "pathLength": 1
+        },
+        {
+          "kind": "size"
+        },
+        {
+          "kind": "push",
+          "storage": false
+        },
+        {
+          "kind": "eq"
+        },
+        {
+          "kind": "popeq",
+          "cached": true,
+          "resultAtoms": [
+            []
+          ]
+        },
+        {
+          "kind": "push",
+          "storage": false
+        },
+        {
+          "kind": "push",
+          "storage": true
+        },
+        {
+          "kind": "ins",
+          "cached": false,
+          "n": 1
+        }
+      ],
+      "privateTranscriptCount": 0,
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1252757404",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "size",
+            "push",
+            "eq",
+            "popeq"
+          ]
+        },
+        {
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1168248299",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "push",
+            "push",
+            "ins"
+          ]
+        }
+      ],
+      "reportedGas": {
+        "readTime": "85000000",
+        "computeTime": "1168248299",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      }
+    },
+    "map": {
+      "publicTranscriptShape": [
+        {
+          "kind": "dup",
+          "n": 0
+        },
+        {
+          "kind": "idx",
+          "cached": false,
+          "pushPath": false,
+          "pathLength": 1
+        },
+        {
+          "kind": "size"
+        },
+        {
+          "kind": "push",
+          "storage": false
+        },
+        {
+          "kind": "eq"
+        },
+        {
+          "kind": "popeq",
+          "cached": true,
+          "resultAtoms": [
+            []
+          ]
+        },
+        {
+          "kind": "push",
+          "storage": false
+        },
+        {
+          "kind": "push",
+          "storage": true
+        },
+        {
+          "kind": "ins",
+          "cached": false,
+          "n": 1
+        }
+      ],
+      "privateTranscriptCount": 0,
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1252757404",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "dup",
+            "idx",
+            "size",
+            "push",
+            "eq",
+            "popeq"
+          ]
+        },
+        {
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1168248299",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "push",
+            "push",
+            "ins"
+          ]
+        }
+      ],
+      "reportedGas": {
+        "readTime": "85000000",
+        "computeTime": "1168248299",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      }
+    }
+  }
+}

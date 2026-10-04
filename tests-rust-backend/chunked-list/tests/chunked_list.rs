@@ -212,7 +212,10 @@ fn chunked_list_calls_match_typescript_and_replay() {
     assert_eq!(view.is_empty(), raw.is_empty());
 
     let initial_view = ledger_contract::PublicStateView::from(&initial);
-    assert_eq!(initial_view.items().unwrap().head().unwrap(), None);
+    assert_eq!(
+        initial_view.items().unwrap().head().unwrap(),
+        Some(Field::from(1_u64))
+    );
     assert_eq!(initial_view.items().unwrap().length().unwrap().value(), 1);
 
     let witness_context = context();
@@ -236,6 +239,6 @@ fn chunked_list_calls_match_typescript_and_replay() {
             .unwrap()
             .head()
             .unwrap(),
-        None
+        Some(Field::from(1_u64))
     );
 }

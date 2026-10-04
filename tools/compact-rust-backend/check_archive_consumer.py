@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Build four generated contracts together using only the runtime archives."""
+"""Build five generated contracts together using only the runtime archives."""
 
 import argparse
 import hashlib

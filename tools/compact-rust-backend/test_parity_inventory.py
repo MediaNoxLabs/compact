@@ -70,6 +70,11 @@ class ParityInventoryTests(unittest.TestCase):
                    for path in inventory.source_paths(inventory.ROOT)}
         self.assertTrue({entry["source"] for entry in positive} <= scanned)
         self.assertTrue({entry["source"] for entry in negative}.isdisjoint(scanned))
+        own_public_key = next(entry for entry in positive
+                              if entry["source"].endswith("/example_ten.compact"))
+        self.assertEqual(own_public_key["expected_rust"], "success")
+        self.assertEqual(own_public_key["proof_circuits"],
+                         [{"name": "test1", "pure": False, "proof": False}])
         suite = (inventory.ROOT / scope["suite"]).read_text()
         for entry in positive:
             name = Path(entry["source"]).name

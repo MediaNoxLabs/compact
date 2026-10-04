@@ -173,7 +173,7 @@
     {
       "source": "examples/bugs/pm-19252/example_ten.compact",
       "expected_ts": "success",
-      "expected_rust": "rejection",
+      "expected_rust": "success",
       "proof_circuits": [
         {
           "name": "test1",
@@ -181,7 +181,6 @@
           "proof": false
         }
       ],
-      "rust_diagnostic_contains": "unknown circuit \"ownPublicKey\"",
       "pure_declarations": 0,
       "exported_pure_declarations": 0
     },

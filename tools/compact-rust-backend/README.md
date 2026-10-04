@@ -70,10 +70,11 @@ manifest but excluded from the positive inventory. Run
 `check_positive_source_scope.py --compiler /path/to/immutable/compactc --output
 /tmp/pm19252-scope.json` with `COMPACTC_SCHEME` set for source-built compilers
 to verify TypeScript/Rust compile outcomes and authoritative contract-info
-proof flags. Compiler-backed inventory also joins capabilities from the 17
-currently Rust-compileable PM-19252 sources; `example_ten.compact` remains a
-checked TypeScript-positive source with a measured Rust rejection, recorded
-in the separate acceptance receipt and tracked for implementation in #186.
+proof flags. Compiler-backed inventory joins capabilities from all 18
+TypeScript-positive PM-19252 sources. ADR-0085/#186 makes
+`example_ten.compact` compile for Rust and tests its native
+`ownPublicKey()` private output in a generated consumer. Its exported circuit
+is proof-false and adds no recorded proof API.
 The checked ADT Set cohort in `parity_positive_adt_set_sources.json` pins all
 five `examples/adt/tests/set_*.compact` sources from the TypeScript ADT
 acceptance suite. Run `check_positive_source_scope.py --manifest

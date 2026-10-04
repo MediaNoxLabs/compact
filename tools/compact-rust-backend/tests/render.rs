@@ -27,7 +27,7 @@ use compact_rust_backend::{
 
 fn identity(result: Type, body: Expr) -> Contract {
     Contract {
-        schema_version: 9,
+        schema_version: 10,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -50,7 +50,7 @@ fn identity(result: Type, body: Expr) -> Contract {
 #[test]
 fn native_own_public_key_is_a_private_effect_without_a_user_witness() {
     let contract = Contract {
-        schema_version: 9,
+        schema_version: 10,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -103,7 +103,7 @@ fn native_private_output_flows_through_a_stateful_caller() {
         }],
     };
     let contract = Contract {
-        schema_version: 9,
+        schema_version: 10,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -1714,6 +1714,128 @@ fn native_collection_emptiness_uses_typed_scalar_and_nested_slots() {
 }
 
 #[test]
+fn nested_set_size_assertion_records_one_ordered_query() {
+    let mut contract = identity(Type::Unit, Expr::Unit);
+    contract.ledger_fields = vec![LedgerField {
+        source: None,
+        id: "entries".into(),
+        index: 0,
+        path: vec![],
+        declaration: LedgerFieldKind::Set { ty: Type::Field },
+    }];
+    contract.stateful_circuits = vec![StatefulCircuit {
+        source: None,
+        internal: false,
+        name: "check_size".into(),
+        parameters: vec![],
+        actions: vec![
+            StateAction::SetReset {
+                field: "entries".into(),
+                index: 0,
+            },
+            StateAction::Assert {
+                condition: Expr::Equal {
+                    left: Box::new(Expr::SetSize {
+                        field: "entries".into(),
+                        index: 0,
+                    }),
+                    right: Box::new(Expr::UnsignedLiteral {
+                        value: "0".into(),
+                        max: u64::MAX.to_string(),
+                    }),
+                },
+                message: "empty after reset".into(),
+            },
+        ],
+        result: Type::Unit,
+        return_value: StateReturn::Unit,
+    }];
+
+    let rendered = render(&contract).unwrap();
+    assert!(rendered.contains("crate::ledger_slots::entries.size(context)?"));
+    assert!(rendered.contains(".record_size(frame)?"));
+    assert!(rendered.contains("pub fn check_size<Private>"));
+    assert!(rendered.contains("pub mod recorded"));
+    let reset = rendered.find("record_reset(frame)?").unwrap();
+    let size = rendered.find("record_size(frame)?").unwrap();
+    assert!(reset < size);
+
+    contract.stateful_circuits[0].actions[1] = StateAction::Assert {
+        condition: Expr::Equal {
+            left: Box::new(Expr::SetSize {
+                field: "entries".into(),
+                index: 1,
+            }),
+            right: Box::new(Expr::UnsignedLiteral {
+                value: "0".into(),
+                max: u64::MAX.to_string(),
+            }),
+        },
+        message: "wrong path".into(),
+    };
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::UnknownLedgerField("entries".into()))
+    );
+}
+
+#[test]
+fn recorded_set_assertions_preserve_boolean_queries_and_pure_field_bindings() {
+    let mut contract = identity(Type::Unit, Expr::Unit);
+    contract.ledger_fields = vec![LedgerField {
+        source: None,
+        id: "entries".into(),
+        index: 0,
+        path: vec![],
+        declaration: LedgerFieldKind::Set { ty: Type::Field },
+    }];
+    contract.stateful_circuits = vec![StatefulCircuit {
+        source: None,
+        internal: false,
+        name: "check_queries".into(),
+        parameters: vec![],
+        actions: vec![
+            StateAction::Assert {
+                condition: Expr::Equal {
+                    left: Box::new(Expr::SetIsEmpty {
+                        field: "entries".into(),
+                        index: 0,
+                    }),
+                    right: Box::new(Expr::Boolean { value: true }),
+                },
+                message: "initially empty".into(),
+            },
+            StateAction::Assert {
+                condition: Expr::Equal {
+                    left: Box::new(Expr::Let {
+                        bindings: vec![LocalBinding {
+                            name: "key".into(),
+                            ty: Type::Field,
+                            value: Expr::FieldLiteral { value: "0".into() },
+                        }],
+                        body: Box::new(Expr::SetMember {
+                            field: "entries".into(),
+                            index: 0,
+                            value: Box::new(Expr::Parameter { name: "key".into() }),
+                        }),
+                    }),
+                    right: Box::new(Expr::Boolean { value: false }),
+                },
+                message: "no member".into(),
+            },
+        ],
+        result: Type::Unit,
+        return_value: StateReturn::Unit,
+    }];
+
+    let rendered = render(&contract).unwrap();
+    assert!(rendered.contains("record_is_empty(frame)?"));
+    assert!(rendered.contains("record_member(frame,"));
+    assert!(rendered.contains("__compact_recorded_static_"));
+    assert!(rendered.find("record_is_empty(frame)?") < rendered.find("record_member(frame,"));
+}
+
+#[test]
 fn vector_expression_preserves_element_type() {
     let mut contract = identity(
         Type::Vector {
@@ -1891,6 +2013,8 @@ fn rejects_bad_schema_and_unknown_references() {
     contract.schema_version = 8;
     assert_eq!(render(&contract), Err(RenderError::SchemaVersion(8)));
     contract.schema_version = 9;
+    assert_eq!(render(&contract), Err(RenderError::SchemaVersion(9)));
+    contract.schema_version = 10;
     contract.circuits[0].body = Expr::Parameter {
         name: "missing".into(),
     };
@@ -2234,7 +2358,7 @@ fn rejects_noncanonical_or_unsupported_unsigned_maxima() {
         "452312848583266388373324160190187140051835877600158453279131187530910662656",
     ] {
         let contract = Contract {
-            schema_version: 9,
+            schema_version: 10,
             type_aliases: vec![],
             constructor: None,
             witnesses: vec![],
@@ -2273,7 +2397,7 @@ fn unknown_json_fields_are_rejected() {
 #[test]
 fn witness_calls_require_a_declared_witness_and_matching_signature() {
     let mut contract = Contract {
-        schema_version: 9,
+        schema_version: 10,
         type_aliases: vec![],
         constructor: None,
         ledger_fields: vec![],
@@ -2341,7 +2465,7 @@ fn witness_calls_require_a_declared_witness_and_matching_signature() {
 #[test]
 fn witness_cell_and_counter_getters_use_declared_composite_slots() {
     let contract = Contract {
-        schema_version: 9,
+        schema_version: 10,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![WitnessDeclaration {
@@ -2744,7 +2868,7 @@ fn recorded_field_returning_helper_is_shared_across_callers() {
 #[test]
 fn state_action_must_reference_the_declared_ledger_field_and_index() {
     let mut contract = Contract {
-        schema_version: 9,
+        schema_version: 10,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -2864,7 +2988,7 @@ fn state_action_must_reference_the_declared_ledger_field_and_index() {
 #[test]
 fn nested_call_exposes_a_trace_only_when_every_step_is_supported() {
     let mut contract = Contract {
-        schema_version: 9,
+        schema_version: 10,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -2924,7 +3048,7 @@ fn nested_call_exposes_a_trace_only_when_every_step_is_supported() {
 #[test]
 fn unsupported_pure_call_and_supported_field_arithmetic_have_exact_capabilities() {
     let mut contract = Contract {
-        schema_version: 9,
+        schema_version: 10,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -3059,7 +3183,7 @@ fn unsupported_pure_call_and_supported_field_arithmetic_have_exact_capabilities(
 #[test]
 fn recording_gaps_follow_the_first_definite_ir_failure() {
     let mut contract = Contract {
-        schema_version: 9,
+        schema_version: 10,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -3127,7 +3251,7 @@ fn recording_gaps_follow_the_first_definite_ir_failure() {
 fn recording_gaps_include_unsupported_type_and_called_callee_path() {
     let unsupported_cell_type = Type::OpaqueString;
     let mut contract = Contract {
-        schema_version: 9,
+        schema_version: 10,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -3194,7 +3318,7 @@ fn recording_gaps_include_unsupported_type_and_called_callee_path() {
 #[test]
 fn stateful_parameters_are_checked_before_cell_writes() {
     let mut contract = Contract {
-        schema_version: 9,
+        schema_version: 10,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -3251,7 +3375,7 @@ fn stateful_parameters_are_checked_before_cell_writes() {
 #[test]
 fn counter_parameter_requires_uint16_and_a_known_name() {
     let mut contract = Contract {
-        schema_version: 9,
+        schema_version: 10,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -3424,7 +3548,7 @@ fn counter_parameter_requires_uint16_and_a_known_name() {
 #[test]
 fn ledger_read_return_must_match_the_declared_cell() {
     let mut contract = Contract {
-        schema_version: 9,
+        schema_version: 10,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -3475,7 +3599,7 @@ fn ledger_read_return_must_match_the_declared_cell() {
 #[test]
 fn counter_read_returns_uint64() {
     let mut contract = Contract {
-        schema_version: 9,
+        schema_version: 10,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -3524,7 +3648,7 @@ fn counter_read_returns_uint64() {
 #[test]
 fn set_actions_require_the_declared_element_type() {
     let mut contract = Contract {
-        schema_version: 9,
+        schema_version: 10,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -3627,7 +3751,7 @@ fn set_actions_require_the_declared_element_type() {
 #[test]
 fn map_insert_and_lookup_require_key_and_value_types() {
     let mut contract = Contract {
-        schema_version: 9,
+        schema_version: 10,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -3782,7 +3906,7 @@ fn map_insert_and_lookup_require_key_and_value_types() {
 #[test]
 fn list_push_front_and_length_validate_declared_types() {
     let mut contract = Contract {
-        schema_version: 9,
+        schema_version: 10,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -3955,7 +4079,7 @@ fn struct_definitions_are_shared_by_name_and_must_match() {
         }],
     };
     let mut contract = Contract {
-        schema_version: 9,
+        schema_version: 10,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -3994,7 +4118,7 @@ fn struct_definitions_are_shared_by_name_and_must_match() {
 #[test]
 fn stateful_call_checks_target_and_arguments() {
     let mut contract = Contract {
-        schema_version: 9,
+        schema_version: 10,
         type_aliases: vec![],
         constructor: None,
         ledger_fields: vec![],

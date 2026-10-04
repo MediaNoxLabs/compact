@@ -299,6 +299,38 @@ pub(crate) fn render_state_expression(
                 witness_effect,
             ))
         }
+        Expr::SetSize { field, index } => {
+            let declaration = ledger_fields
+                .get(field.as_str())
+                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+            if !matches!(declaration.declaration, LedgerFieldKind::Set { .. })
+                || declaration.index != *index
+            {
+                return Err(RenderError::UnknownLedgerField(field.clone()));
+            }
+            let step = syn::Ident::new(
+                &format!("__compact_query_{}", *next_temp),
+                Span::call_site(),
+            );
+            *next_temp += 1;
+            let slot = ident(&declaration.id)?;
+            statements.push(syn::parse_quote!(
+                let #step = crate::ledger_slots::#slot.size(context)?;
+            ));
+            statements.push(syn::parse_quote!(context = #step.context;));
+            statements.push(syn::parse_quote!(total_cost += #step.gas_cost;));
+            *query_effect = true;
+            Ok((
+                syn::parse_quote!(
+                    runtime::BoundedUint::<18446744073709551615>::new(#step.result as u128)
+                        .expect("ledger Set size fits Uint<64>")
+                ),
+                Type::Unsigned {
+                    max: u64::MAX.to_string(),
+                },
+                false,
+            ))
+        }
         Expr::SetIsEmpty { field, index } | Expr::MapIsEmpty { field, index } => {
             let declaration = ledger_fields
                 .get(field.as_str())
@@ -1523,6 +1555,7 @@ fn expression_contains(expression: &Expr, predicate: &impl Fn(&Expr) -> bool) ->
         | Expr::Parameter { .. }
         | Expr::CellRead { .. }
         | Expr::KernelSelf { .. }
+        | Expr::SetSize { .. }
         | Expr::SetIsEmpty { .. }
         | Expr::MapIsEmpty { .. } => false,
     }

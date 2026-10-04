@@ -1335,6 +1335,10 @@
                  (object (cons "kind" "set_is_empty")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*)))]
+                [(and (eq? adt-name 'Set) (eq? ledger-op 'size) (null? expr*))
+                 (object (cons "kind" "set_size")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*)))]
                 [(and (eq? adt-name 'Map) (eq? ledger-op 'isEmpty) (null? expr*))
                  (object (cons "kind" "map_is_empty")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
@@ -1972,7 +1976,7 @@
            (source-errorf src "Rust backend found multiple constructors"))
          (print-json
            (get-target-port 'rust.ir.json)
-           (append (object (cons "schema_version" 9)
+           (append (object (cons "schema_version" 10)
                    (cons "type_aliases"
                          (list->vector (fold-right type-alias-ir '() pelt*)))
                    (cons "ledger_fields"

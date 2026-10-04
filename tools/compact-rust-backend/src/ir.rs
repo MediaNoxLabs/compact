@@ -22,7 +22,7 @@
 
 use serde::{Deserialize, Serialize};
 
-pub const SCHEMA_VERSION: u32 = 9;
+pub const SCHEMA_VERSION: u32 = 10;
 
 /// A Compact source position, independent of the compiler checkout path.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
@@ -635,6 +635,10 @@ pub enum Expr {
     },
     KernelSelf {
         ty: Type,
+    },
+    SetSize {
+        field: String,
+        index: u8,
     },
     SetIsEmpty {
         field: String,

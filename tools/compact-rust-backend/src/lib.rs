@@ -803,7 +803,10 @@ fn collect_expression_types(
         | Expr::UnsignedLiteral { .. }
         | Expr::Parameter { .. } => {}
         Expr::KernelSelf { ty } => collect_named_types(ty, structs, enums)?,
-        Expr::SetIsEmpty { .. } | Expr::MapIsEmpty { .. } | Expr::CellRead { .. } => {}
+        Expr::SetSize { .. }
+        | Expr::SetIsEmpty { .. }
+        | Expr::MapIsEmpty { .. }
+        | Expr::CellRead { .. } => {}
     }
     Ok(())
 }
@@ -2016,6 +2019,7 @@ fn expression_with_calls(
         | Expr::MerkleCheckRoot { .. }
         | Expr::HistoricMerkleCheckRoot { .. }
         | Expr::SetIsEmpty { .. }
+        | Expr::SetSize { .. }
         | Expr::MapIsEmpty { .. }
         | Expr::CellRead { .. }
         | Expr::KernelSelf { .. } => Err(RenderError::EffectfulExpression),

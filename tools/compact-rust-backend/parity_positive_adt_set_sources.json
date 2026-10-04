@@ -7,8 +7,7 @@
     {
       "source": "examples/adt/tests/set_enum.compact",
       "expected_ts": "success",
-      "expected_rust": "rejection",
-      "rust_diagnostic_contains": "Rust backend does not yet support this nested ledger query",
+      "expected_rust": "success",
       "proof_circuits": [
         {
           "name": "test",
@@ -22,8 +21,7 @@
     {
       "source": "examples/adt/tests/set_field.compact",
       "expected_ts": "success",
-      "expected_rust": "rejection",
-      "rust_diagnostic_contains": "Rust backend does not yet support this nested ledger query",
+      "expected_rust": "success",
       "proof_circuits": [
         {
           "name": "test",
@@ -38,7 +36,7 @@
       "source": "examples/adt/tests/set_qualified_coin_info.compact",
       "expected_ts": "success",
       "expected_rust": "rejection",
-      "rust_diagnostic_contains": "Rust backend does not yet support this nested ledger query",
+      "rust_diagnostic_contains": "Rust backend does not yet support this ledger operation",
       "proof_circuits": [
         {
           "name": "test_QualifiedShieldedCoinInfo",
@@ -65,8 +63,7 @@
     {
       "source": "examples/adt/tests/set_vector.compact",
       "expected_ts": "success",
-      "expected_rust": "rejection",
-      "rust_diagnostic_contains": "Rust backend does not yet support this nested ledger query",
+      "expected_rust": "success",
       "proof_circuits": [
         {
           "name": "test",

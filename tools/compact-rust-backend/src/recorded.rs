@@ -173,6 +173,39 @@ fn unavailable_action(action: &StateAction, path: &str) -> RecordingOutcome<()> 
     RecordingOutcome::Unsupported(RecordingGap::action(action, path.to_owned()))
 }
 
+fn set_size_operand(value: &Expr) -> Option<(&str, u8)> {
+    match value {
+        Expr::SetSize { field, index } => Some((field, *index)),
+        Expr::Coerce { value, ty }
+            if *ty
+                == (Type::Unsigned {
+                    max: u64::MAX.to_string(),
+                }) =>
+        {
+            set_size_operand(value)
+        }
+        _ => None,
+    }
+}
+
+fn uint64_literal(value: &Expr) -> Option<u64> {
+    match value {
+        Expr::UnsignedLiteral { value, max } => {
+            let value = value.parse::<u64>().ok()?;
+            (value as u128 <= max.parse::<u128>().ok()?).then_some(value)
+        }
+        Expr::Coerce { value, ty }
+            if *ty
+                == (Type::Unsigned {
+                    max: u64::MAX.to_string(),
+                }) =>
+        {
+            uint64_literal(value)
+        }
+        _ => None,
+    }
+}
+
 /// Keep exported scalar-expression recording tied to a ledger read. Other
 /// action-free expressions may still be lowered as private shared helpers.
 fn contains_cell_read(value: &Expr) -> bool {
@@ -657,6 +690,11 @@ fn render_recorded_item(
                     expression_with_calls(value, parameters, &HashMap::new()).ok()?;
                 (actual == *ty).then_some(rendered)
             }
+            Expr::FieldLiteral { .. } if *ty == Type::Field => {
+                let (rendered, actual) =
+                    expression_with_calls(value, parameters, &HashMap::new()).ok()?;
+                (actual == *ty).then_some(rendered)
+            }
             Expr::Vector { .. } if matches!(ty, Type::Vector { .. }) => {
                 let (rendered, actual) =
                     expression_with_calls(value, parameters, &HashMap::new()).ok()?;
@@ -666,7 +704,7 @@ fn render_recorded_item(
         }
     }
 
-    fn vector_bindings(
+    fn static_bindings(
         bindings: &[LocalBinding],
         locals: &HashMap<String, syn::Expr>,
         parameters: &HashMap<&str, (&Type, syn::Ident)>,
@@ -675,7 +713,10 @@ fn render_recorded_item(
     ) -> Result<Option<HashMap<String, syn::Expr>>, RenderError> {
         let mut scoped = locals.clone();
         for binding in bindings {
-            if !matches!(binding.ty, Type::Vector { .. }) {
+            if !matches!(binding.ty, Type::Vector { .. })
+                && !(binding.ty == Type::Field
+                    && matches!(binding.value, Expr::FieldLiteral { .. }))
+            {
                 return Ok(None);
             }
             let Some(value) = cell_source(&binding.value, &binding.ty, &scoped, parameters) else {
@@ -683,7 +724,7 @@ fn render_recorded_item(
             };
             let rust_ty = rust_type(&binding.ty)?;
             let name = syn::Ident::new(
-                &format!("__compact_recorded_vector_{}", *next_temp),
+                &format!("__compact_recorded_static_{}", *next_temp),
                 Span::call_site(),
             );
             *next_temp += 1;
@@ -713,7 +754,7 @@ fn render_recorded_item(
     ) -> Result<Option<syn::Expr>, RenderError> {
         match value {
             Expr::Let { bindings, body } => {
-                let Some(scoped) = vector_bindings(bindings, locals, parameters, steps, next_temp)?
+                let Some(scoped) = static_bindings(bindings, locals, parameters, steps, next_temp)?
                 else {
                     return Ok(None);
                 };
@@ -1056,7 +1097,7 @@ fn render_recorded_item(
     ) -> Result<Option<syn::Expr>, RenderError> {
         match value {
             Expr::Let { bindings, body } => {
-                let Some(scoped) = vector_bindings(bindings, locals, parameters, steps, next_temp)?
+                let Some(scoped) = static_bindings(bindings, locals, parameters, steps, next_temp)?
                 else {
                     return Ok(None);
                 };
@@ -1131,6 +1172,66 @@ fn render_recorded_item(
                 Ok(Some(syn::parse_quote!(#observed)))
             }
             Expr::Equal { left, right } | Expr::NotEqual { left, right } => {
+                let boolean_literal = match (&**left, &**right) {
+                    (Expr::Boolean { value }, other) => Some((other, *value)),
+                    (other, Expr::Boolean { value }) => Some((other, *value)),
+                    _ => None,
+                };
+                if let Some((other, expected)) = boolean_literal {
+                    let Some(observed) = boolean_expression(
+                        other,
+                        locals,
+                        parameters,
+                        ledger_fields,
+                        witnesses,
+                        circuits,
+                        steps,
+                        next_temp,
+                        visiting,
+                    )?
+                    else {
+                        return Ok(None);
+                    };
+                    return if matches!(value, Expr::Equal { .. }) {
+                        Ok(Some(syn::parse_quote!(#observed == #expected)))
+                    } else {
+                        Ok(Some(syn::parse_quote!(#observed != #expected)))
+                    };
+                }
+                let size_comparison = set_size_operand(left)
+                    .and_then(|(field, index)| {
+                        uint64_literal(right).map(|value| (field, index, value))
+                    })
+                    .or_else(|| {
+                        set_size_operand(right).and_then(|(field, index)| {
+                            uint64_literal(left).map(|value| (field, index, value))
+                        })
+                    });
+                if let Some((field, index, expected)) = size_comparison {
+                    let declaration = ledger_fields
+                        .get(field)
+                        .ok_or_else(|| RenderError::UnknownLedgerField(field.to_owned()))?;
+                    if !matches!(declaration.declaration, LedgerFieldKind::Set { .. })
+                        || declaration.index != index
+                    {
+                        return Ok(None);
+                    }
+                    let slot = ident(&declaration.id)?;
+                    let observed = syn::Ident::new(
+                        &format!("__compact_recorded_size_{}", *next_temp),
+                        Span::call_site(),
+                    );
+                    *next_temp += 1;
+                    steps.push(syn::parse_quote!(
+                        let (frame, #observed): (_, u64) =
+                            crate::ledger_slots::#slot.record_size(frame)?;
+                    ));
+                    return if matches!(value, Expr::Equal { .. }) {
+                        Ok(Some(syn::parse_quote!(#observed == #expected)))
+                    } else {
+                        Ok(Some(syn::parse_quote!(#observed != #expected)))
+                    };
+                }
                 let (field, index) = match (&**left, &**right) {
                     (Expr::CellRead { field, index }, _) | (_, Expr::CellRead { field, index }) => {
                         (field, index)
@@ -1800,7 +1901,7 @@ fn render_recorded_item(
                         };
                         scoped.insert(binding.name.clone(), value);
                     } else if matches!(binding.ty, Type::Vector { .. }) {
-                        let Some(next) = vector_bindings(
+                        let Some(next) = static_bindings(
                             std::slice::from_ref(binding),
                             &scoped,
                             parameters,

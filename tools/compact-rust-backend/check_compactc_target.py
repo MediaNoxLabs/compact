@@ -49,6 +49,7 @@ CONSTRUCTOR_MAP_SOURCE = ROOT / "examples/rust_backend/constructor_map_actions.c
 LIST_SOURCE = ROOT / "examples/rust_backend/list_field.compact"
 MERKLE_SOURCE = ROOT / "examples/rust_backend/merkle_tree_oracle.compact"
 MERKLE_VERIFY_SOURCE = ROOT / "examples/rust_backend/merkle_path_verify.compact"
+PERSISTENT_COMMIT_SOURCE = ROOT / "examples/rust_backend/call_arg_declared_type.compact"
 HISTORIC_MERKLE_SOURCE = ROOT / "examples/rust_backend/hmt_insert_oracle.compact"
 VECTOR_KEY_SOURCE = ROOT / "examples/rust_backend/vector_key_adt.compact"
 COMPOSITE_KEY_SOURCE = ROOT / "examples/rust_backend/observed_composite_keys.compact"
@@ -1328,6 +1329,22 @@ def main() -> None:
                 assert (merkle_verify_proof / "keys" / f"verify.{extension}").is_file()
             for extension in ("zkir", "bzkir"):
                 assert (merkle_verify_proof / "zkir" / f"verify.{extension}").is_file()
+            persistent_commit_proof = base / "persistent-commit-proof"
+            run(compiler, "--target", "rust", str(PERSISTENT_COMMIT_SOURCE),
+                str(persistent_commit_proof))
+            check_manifest(persistent_commit_proof)
+            capabilities = json.loads(
+                (persistent_commit_proof / "contract/rust-capabilities.json").read_text()
+            )
+            for name in ("commitSmall", "commitU128", "commitFieldOnly"):
+                capability = next(circuit for circuit in capabilities["circuits"]
+                                  if circuit["name"] == name)
+                assert capability["proof_required"] and capability["recorded"] \
+                    and capability["observed_call"]
+            for extension in ("prover", "verifier"):
+                assert (persistent_commit_proof / "keys" / f"commitSmall.{extension}").is_file()
+            for extension in ("zkir", "bzkir"):
+                assert (persistent_commit_proof / "zkir" / f"commitSmall.{extension}").is_file()
             historic_merkle_proof = base / "historic-merkle-proof"
             run(compiler, "--target", "rust", str(HISTORIC_MERKLE_SOURCE), str(historic_merkle_proof))
             check_manifest(historic_merkle_proof)
@@ -1460,6 +1477,10 @@ def main() -> None:
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 "--merkle-verify", str(merkle_verify_proof),
+            )
+            run(
+                "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--persistent-commit", str(persistent_commit_proof),
             )
     print("compactc target boundary and manifest: passed")
 

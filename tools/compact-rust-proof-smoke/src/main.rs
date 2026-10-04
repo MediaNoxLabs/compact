@@ -826,6 +826,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             return Err("usage: compact-rust-proof-smoke --adt-set-enum <proof-output>".into());
         }
         return adt_set_enum::run(Path::new(&root));
+    }
     if first.as_deref() == Some(OsStr::new("--asset-writable")) {
         let root = arguments
             .next()

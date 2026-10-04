@@ -34,6 +34,7 @@ CONTRACTS = (
     ("cell-boolean", ROOT / "examples/rust_backend/cell_boolean.compact"),
     ("set-boolean", ROOT / "examples/rust_backend/set_boolean.compact"),
     ("map-boolean-field", ROOT / "examples/rust_backend/map_boolean_field.compact"),
+    ("list-field", ROOT / "examples/rust_backend/list_field.compact"),
 )
 PACKAGE_NAMES = ("midnight-compact-runtime-macros", "midnight-compact-runtime")
 
@@ -200,6 +201,7 @@ def main() -> None:
             'use compact_contract_cell_boolean as cell;\n'
             'use compact_contract_set_boolean as set;\n'
             'use compact_contract_map_boolean_field as map;\n'
+            'use compact_contract_list_field as list;\n'
             'use compact_contract_counter::runtime::context::ConstructorContext;\n'
             'use compact_contract_counter::runtime::ledger::{ContractAddress, StateValue, read_cell};\n'
             '#[test]\nfn archived_runtime_executes_generated_counter() {\n'
@@ -240,37 +242,62 @@ def main() -> None:
             '    let view = map::ledger_contract::PublicStateView::from(&call);\n'
             '    assert_eq!(view.table().unwrap().lookup(true).unwrap(), '
             'map::runtime::Field::from(7_u64));\n}\n'
+            '#[test]\nfn archived_runtime_executes_generated_list() {\n'
+            '    let state = list::ledger_contract::initial_state(ConstructorContext::new(())).unwrap();\n'
+            '    let initial = list::ledger_contract::PublicStateView::from(&state);\n'
+            '    assert_eq!(initial.items().unwrap().head().unwrap(), None);\n'
+            '    assert_eq!(initial.items().unwrap().length().unwrap().value(), 0);\n'
+            '    let context = state.into_circuit_context(ContractAddress::default());\n'
+            '    let call = list::ledger_contract::prepend(context, list::runtime::Field::from(7_u64)).unwrap();\n'
+            '    let view = list::ledger_contract::PublicStateView::from(&call);\n'
+            '    assert_eq!(view.items().unwrap().head().unwrap(), Some(list::runtime::Field::from(7_u64)));\n'
+            '    assert_eq!(view.items().unwrap().length().unwrap().value(), 1);\n}\n'
         )
         environment = os.environ.copy()
         environment.setdefault("CARGO_TARGET_DIR", str(ROOT / "target/compactc-consumer"))
         environment.setdefault("CARGO_INCREMENTAL", "0")
         environment.setdefault("CARGO_BUILD_JOBS", "2")
         run(["cargo", "test", "--offline", "--quiet"], cwd=consumer, env=environment)
-        wrong_key = consumer / "tests/wrong_set_key.rs"
-        wrong_key.write_text(
-            'use compact_contract_set_boolean as set;\n'
-            '#[test]\nfn wrong_set_key_is_rejected() {\n'
-            '    let state = set::ledger_contract::initial_state('
-            'set::runtime::context::ConstructorContext::new(())).unwrap();\n'
-            '    let view = set::ledger_contract::PublicStateView::from(&state);\n'
-            '    view.seen().unwrap().member(set::runtime::Field::from(42_u64));\n}\n'
-            '#[test]\nfn wrong_map_key_is_rejected() {\n'
-            '    let state = map::ledger_contract::initial_state('
-            'map::runtime::context::ConstructorContext::new(())).unwrap();\n'
-            '    let view = map::ledger_contract::PublicStateView::from(&state);\n'
-            '    view.table().unwrap().member(map::runtime::Field::from(42_u64));\n}\n'
-        )
-        rejection = subprocess.run(
-            ["cargo", "check", "--offline", "--tests", "--quiet"],
-            cwd=consumer, env=environment, capture_output=True, text=True,
-        )
-        wrong_key.unlink()
-        if rejection.returncode == 0 or "mismatched types" not in rejection.stderr:
-            raise RuntimeError("wrong Set/Map key types were not rejected by the archive-only consumer")
+        compile_rejections = {
+            "wrong_set_key": (
+                'use compact_contract_set_boolean as set;\n'
+                'fn main() {\n'
+                '    let state = set::ledger_contract::initial_state('
+                'set::runtime::context::ConstructorContext::new(())).unwrap();\n'
+                '    let view = set::ledger_contract::PublicStateView::from(&state);\n'
+                '    view.seen().unwrap().member(set::runtime::Field::from(42_u64));\n}\n'
+            ),
+            "wrong_map_key": (
+                'use compact_contract_map_boolean_field as map;\n'
+                'fn main() {\n'
+                '    let state = map::ledger_contract::initial_state('
+                'map::runtime::context::ConstructorContext::new(())).unwrap();\n'
+                '    let view = map::ledger_contract::PublicStateView::from(&state);\n'
+                '    view.table().unwrap().member(map::runtime::Field::from(42_u64));\n}\n'
+            ),
+            "wrong_list_element": (
+                'use compact_contract_list_field as list;\n'
+                'fn main() {\n'
+                '    let state = list::ledger_contract::initial_state('
+                'list::runtime::context::ConstructorContext::new(())).unwrap();\n'
+                '    let view = list::ledger_contract::PublicStateView::from(&state);\n'
+                '    let _: Option<bool> = view.items().unwrap().head().unwrap();\n}\n'
+            ),
+        }
+        for name, source in compile_rejections.items():
+            negative = consumer / f"tests/{name}.rs"
+            negative.write_text(source)
+            rejection = subprocess.run(
+                ["cargo", "check", "--offline", "--test", name, "--quiet"],
+                cwd=consumer, env=environment, capture_output=True, text=True,
+            )
+            negative.unlink()
+            if rejection.returncode == 0 or "mismatched types" not in rejection.stderr:
+                raise RuntimeError(f"{name} was not rejected by the archive-only consumer: {rejection.stderr[-1200:]}")
         metadata = json.loads(run(["cargo", "metadata", "--offline", "--format-version", "1"],
                                   cwd=consumer, env=environment))
         check_graph(metadata, consumer, vendor, entries)
-    print("archive-only Counter + Cell + Set + Map consumer passed with one shared runtime; public registry publication remains unverified")
+    print("archive-only Counter + Cell + Set + Map + List consumer passed with one shared runtime; public registry publication remains unverified")
 
 
 if __name__ == "__main__":

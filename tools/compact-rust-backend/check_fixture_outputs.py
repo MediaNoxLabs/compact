@@ -22,6 +22,7 @@ stale generated fixture libraries after reviewing the backend changes.
 """
 
 import argparse
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -47,10 +48,12 @@ def main() -> int:
     parser.add_argument("--update", action="store_true", help="write fresh generated fixtures")
     args = parser.parse_args()
 
-    build = run(["cargo", "build", "-q", "-p", "compact-rust-backend", "--bin", "compact-rustc"])
-    if build.returncode:
-        sys.stderr.write(build.stderr)
-        return build.returncode
+    compiler = os.environ.get("COMPACTC")
+    if compiler is None:
+        build = run(["cargo", "build", "-q", "-p", "compact-rust-backend", "--bin", "compact-rustc"])
+        if build.returncode:
+            sys.stderr.write(build.stderr)
+            return build.returncode
 
     checked = 0
     changed = []
@@ -65,7 +68,12 @@ def main() -> int:
             failures.append(f"{source.name}: missing {fixture.relative_to(ROOT)}")
             continue
         with tempfile.TemporaryDirectory(prefix="compact-rust-fixture-") as output:
-            compile_result = run([str(BACKEND), str(source), output])
+            compile_command = (
+                [compiler, "--target", "rust", "--skip-zk", str(source), output]
+                if compiler is not None
+                else [str(BACKEND), str(source), output]
+            )
+            compile_result = run(compile_command)
             if compile_result.returncode:
                 failures.append(f"{source.name}: {compile_result.stderr.strip()}")
                 continue

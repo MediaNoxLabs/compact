@@ -6,6 +6,12 @@ midnight-zk primitives for fields, encoding, cryptography, state, and VM
 queries. Generated code checks `RUST_RUNTIME_ABI` at compile time. A generated
 crate bundles matching runtime sources by default or points to one shared
 source root when compiled with `--rust-runtime-root`.
+ABI 32 adds generated read-only `PublicStateView` getters for declared Lists.
+`ListSlot<T>::inspect` delegates to the existing structural List decoder and
+returns a local `ListView` with `Option<T>` head, bounded length and empty flag.
+The local projection is distinct from the circuit's metered `Maybe` result;
+it does not query the VM or charge gas. The structural view checks array shape
+and decodes fields on access, but does not validate every List invariant.
 ABI 31 adds generated read-only `PublicStateView` getters for Maps with
 `CellValue` keys and values. `MapSlot<K,V>::inspect` delegates to the existing
 structural Map decoder; nested Map nodes retain their lower-level descriptor

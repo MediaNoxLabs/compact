@@ -202,10 +202,18 @@ fn chunked_list_calls_match_typescript_and_replay() {
         &reference["reset"],
     );
     let after = ledger_contract::prepend(context(), Field::from(7_u64)).unwrap();
-    let view =
-        list_view_at_path::<Field, _>(after.context.query.state.get_ref(), &[1, 14]).unwrap();
+    let generated = ledger_contract::PublicStateView::from(&after);
+    let view = generated.items().unwrap();
+    let raw = list_view_at_path::<Field, _>(after.context.query.state.get_ref(), &[1, 14]).unwrap();
     assert_eq!(view.length().unwrap().value(), 2);
     assert_eq!(view.head().unwrap(), Some(Field::from(7_u64)));
+    assert_eq!(view.head().unwrap(), raw.head().unwrap());
+    assert_eq!(view.length().unwrap(), raw.length().unwrap());
+    assert_eq!(view.is_empty(), raw.is_empty());
+
+    let initial_view = ledger_contract::PublicStateView::from(&initial);
+    assert_eq!(initial_view.items().unwrap().head().unwrap(), None);
+    assert_eq!(initial_view.items().unwrap().length().unwrap().value(), 1);
 
     let witness_context = context();
     let meter = WitnessReadMeter::new(&witness_context);
@@ -221,5 +229,13 @@ fn chunked_list_calls_match_typescript_and_replay() {
     assert_eq!(meter.gas_cost(), direct.gas_cost());
     assert!(
         list_view_at_path::<Field, _>(witness_context.query.state.get_ref(), &[1, 13]).is_err()
+    );
+    assert_eq!(
+        items
+            .inspect(witness_context.query.state.get_ref())
+            .unwrap()
+            .head()
+            .unwrap(),
+        None
     );
 }

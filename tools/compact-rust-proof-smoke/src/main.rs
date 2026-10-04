@@ -2526,6 +2526,13 @@ fn main() -> Result<(), Box<dyn Error>> {
             check_observed_call_parity(chunked_root, circuit, &deploy, &manual, &typed)?;
             check_transaction(chunked_root, circuit, deploy, typed, &mut rng, |state| {
                 let view = list_view_at_path::<Field, _>(state.data.get_ref(), &[1, 14])?;
+                let generated = chunked_list_contract::PublicStateView::from(state).items()?;
+                if generated.head()? != view.head()?
+                    || generated.length()? != view.length()?
+                    || generated.is_empty() != view.is_empty()
+                {
+                    return Err("generated proven chunked List view differs from raw view".into());
+                }
                 let expected_length = match circuit {
                     "prepend" => 2,
                     "drop_first" | "clear_items" => 0,

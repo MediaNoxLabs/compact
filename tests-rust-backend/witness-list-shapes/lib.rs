@@ -77,7 +77,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 31);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 32);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -96,7 +96,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 31);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 32);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -151,6 +151,57 @@ pub mod ledger_contract {
             runtime::CompactError,
         > {
             crate::ledger_slots::packets.witness_view(self.meter)
+        }
+    }
+    /// Read-only projection of an existing ledger-8 public state.
+    pub struct PublicStateView<'a, D: runtime::ledger::DB = runtime::ledger::DefaultDB> {
+        state: &'a runtime::ledger::StateValue<D>,
+    }
+    impl<'a, D: runtime::ledger::DB> PublicStateView<'a, D> {
+        /// Inspect this declared List in the borrowed public state.
+        pub fn flags(
+            &self,
+        ) -> Result<runtime::ledger::ListView<'a, bool, D>, runtime::CompactError> {
+            crate::ledger_slots::flags.inspect(self.state)
+        }
+        /// Inspect this declared List in the borrowed public state.
+        pub fn counts(
+            &self,
+        ) -> Result<
+            runtime::ledger::ListView<'a, runtime::BoundedUint<65535>, D>,
+            runtime::CompactError,
+        > {
+            crate::ledger_slots::counts.inspect(self.state)
+        }
+        /// Inspect this declared List in the borrowed public state.
+        pub fn tags(
+            &self,
+        ) -> Result<runtime::ledger::ListView<'a, runtime::FixedBytes<3>, D>, runtime::CompactError>
+        {
+            crate::ledger_slots::tags.inspect(self.state)
+        }
+        /// Inspect this declared List in the borrowed public state.
+        pub fn choices(
+            &self,
+        ) -> Result<runtime::ledger::ListView<'a, crate::types::Choice, D>, runtime::CompactError>
+        {
+            crate::ledger_slots::choices.inspect(self.state)
+        }
+        /// Inspect this declared List in the borrowed public state.
+        pub fn packets(
+            &self,
+        ) -> Result<runtime::ledger::ListView<'a, crate::types::Packet, D>, runtime::CompactError>
+        {
+            crate::ledger_slots::packets.inspect(self.state)
+        }
+    }
+    impl<'a, S: runtime::public_state::PublicStateSource> From<&'a S>
+        for PublicStateView<'a, S::Database>
+    {
+        fn from(source: &'a S) -> Self {
+            Self {
+                state: source.public_state(),
+            }
         }
     }
     /// Implement for infallible callbacks; use TryWitnesses for fallible ledger reads.

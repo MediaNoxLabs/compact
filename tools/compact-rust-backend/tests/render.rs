@@ -2993,6 +2993,24 @@ fn list_push_front_and_length_validate_declared_types() {
     let source = render(&contract).unwrap();
     assert!(source.contains("ListSlot<runtime::Field>"), "{source}");
     assert!(
+        source.contains("pub struct PublicStateView<'a, D:"),
+        "{source}"
+    );
+    assert!(source.contains("pub fn items("), "{source}");
+    assert!(
+        source.contains("crate::ledger_slots::items.inspect(self.state)"),
+        "{source}"
+    );
+    assert!(
+        source.contains("runtime::ledger::ListView<'a, runtime::Field, D>"),
+        "{source}"
+    );
+    let mut list_only = contract.clone();
+    list_only.stateful_circuits.clear();
+    let list_only_source = render(&list_only).unwrap();
+    assert!(list_only_source.contains("pub struct PublicStateView<'a, D:"));
+    assert!(list_only_source.contains("pub fn items("));
+    assert!(
         source.contains(".push_front(context, __compact_param_0)?"),
         "{source}"
     );

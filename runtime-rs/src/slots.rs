@@ -25,10 +25,11 @@ use std::marker::PhantomData;
 use crate::CompactError;
 use crate::context::{CircuitContext, CircuitResult, WitnessReadMeter};
 use crate::ledger::{
-    CellValue, DB, MapView, MeteredHistoricMerkleTreeView, MeteredListView, MeteredMapView,
-    MeteredMerkleTreeView, MeteredSetView, SetView, StateValue, map_view_at_path,
-    metered_historic_merkle_tree_view_at_path, metered_list_view_at_path, metered_map_view_at_path,
-    metered_merkle_tree_view_at_path, metered_set_view_at_path, set_view_at_path,
+    CellValue, DB, ListView, MapView, MeteredHistoricMerkleTreeView, MeteredListView,
+    MeteredMapView, MeteredMerkleTreeView, MeteredSetView, SetView, StateValue, list_view_at_path,
+    map_view_at_path, metered_historic_merkle_tree_view_at_path, metered_list_view_at_path,
+    metered_map_view_at_path, metered_merkle_tree_view_at_path, metered_set_view_at_path,
+    set_view_at_path,
 };
 use crate::recording::RecordingFrame;
 
@@ -661,6 +662,14 @@ impl<T: CellValue> ListSlot<T> {
 
     pub const fn path(self) -> &'static [u8] {
         self.path
+    }
+
+    /// Inspect this List in an already held public state without metering.
+    pub fn inspect<'a, D: DB>(
+        self,
+        state: &'a StateValue<D>,
+    ) -> Result<ListView<'a, T, D>, CompactError> {
+        list_view_at_path(state, self.path)
     }
 
     /// Project this List through the metered witness view.

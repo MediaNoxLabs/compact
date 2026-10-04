@@ -29,6 +29,7 @@ use midnight_onchain_state::state::{
 };
 use midnight_serialize::tagged_serialize;
 use midnight_storage::storage::HashMap;
+use std::cell::RefCell;
 
 const CIRCUITS: &[&str] = &[
     "commitSmall",
@@ -58,6 +59,23 @@ impl Witnesses<()> for SumWitness {
         values: FixedVector<Field, 2>,
     ) -> ((), Field) {
         ((), values.0[0] + values.0[1])
+    }
+}
+
+#[derive(Default)]
+struct AdvancingWitness {
+    calls: RefCell<Vec<u64>>,
+}
+
+impl Witnesses<u64> for AdvancingWitness {
+    fn sumWitness(
+        &self,
+        context: WitnessContext<'_, u64, LedgerView<'_>>,
+        values: FixedVector<Field, 2>,
+    ) -> (u64, Field) {
+        assert_eq!(values.0, [Field::from(0_u64), Field::from(1_u64)]);
+        self.calls.borrow_mut().push(*context.private_state);
+        (*context.private_state + 1, values.0[0] + values.0[1])
     }
 }
 
@@ -203,4 +221,71 @@ fn recorded_closed_pure_field_call_matches_typescript_trace_and_gas() {
         oracle["circuits"]["pureBodyFieldOnly"]["stateHex"],
         "TypeScript state"
     );
+}
+
+#[test]
+fn recorded_vector_witness_let_matches_typescript_and_advances_private_state_once() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/call-arg-declared-type.json"
+    ))
+    .unwrap();
+    let expected = &oracle["witnessConstAdvanced"];
+    let native_witness = AdvancingWitness::default();
+    let recorded_witness = AdvancingWitness::default();
+    let native = witnessConst(
+        initial_state(ConstructorContext::new(7_u64))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default()),
+        &native_witness,
+    )
+    .unwrap();
+    let recorded =
+        compact_rust_call_arg_declared_type_fixture::ledger_contract::recorded::witnessConst(
+            initial_state(ConstructorContext::new(7_u64))
+                .unwrap()
+                .into_circuit_context(ContractAddress::default()),
+            &recorded_witness,
+        )
+        .unwrap();
+    assert_eq!(&*native_witness.calls.borrow(), &[7]);
+    assert_eq!(&*recorded_witness.calls.borrow(), &[7]);
+    assert_eq!(
+        expected["witnessCalls"],
+        serde_json::json!([{"privateState": 7, "values": ["0", "1"]}])
+    );
+    assert_eq!(native.context.private_state, 8);
+    assert_eq!(recorded.execution.context.private_state, 8);
+    assert_eq!(expected["privateState"], 8);
+    boolean_observation_assertions::assert_ts_trace(
+        "witnessConst",
+        &native,
+        &recorded,
+        &expected["trace"],
+    );
+    assert_eq!(
+        recorded.execution.context.query.state.get_ref(),
+        native.context.query.state.get_ref(),
+    );
+    assert_eq!(
+        state_hex(recorded.execution.context.query.state.get_ref().clone()),
+        expected["stateHex"],
+    );
+    for output in [
+        &native.private_transcript_outputs,
+        &recorded.execution.private_transcript_outputs,
+    ] {
+        let actual = output
+            .iter()
+            .map(|item| {
+                serde_json::json!({
+                    "valueAtoms": item.value.0.iter().map(|atom| &atom.0).collect::<Vec<_>>(),
+                    "alignment": item.alignment,
+                })
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(
+            serde_json::to_value(actual).unwrap(),
+            expected["privateTranscriptOutputs"]
+        );
+    }
 }

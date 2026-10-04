@@ -18,10 +18,10 @@ use midnight_compact_runtime::ledger::DefaultDB;
 use midnight_compact_runtime::recording::RecordedCircuitResult;
 use serde_json::{Value, json};
 
-pub fn assert_ts_trace(
+pub fn assert_ts_trace<Private>(
     name: &str,
-    native: &CircuitResult<(), (), DefaultDB>,
-    recorded: &RecordedCircuitResult<(), (), DefaultDB>,
+    native: &CircuitResult<Private, (), DefaultDB>,
+    recorded: &RecordedCircuitResult<Private, (), DefaultDB>,
     reference: &Value,
 ) {
     let actual = serde_json::to_value(recorded.public.verify_ops()).unwrap();

@@ -14,7 +14,7 @@
 // limitations under the License.
 
 use compact_rust_witness_vector_action_fixture::ledger_contract::{
-    LedgerView, Witnesses, discardResult, initial_state, keepResult, reuseResult,
+    LedgerView, Witnesses, discardResult, initial_state, keepResult, recorded, reuseResult,
 };
 use midnight_compact_runtime::context::{CircuitResult, ConstructorContext, WitnessContext};
 use midnight_compact_runtime::ledger::{ContractAddress, DefaultDB, StateValue};
@@ -123,4 +123,73 @@ fn witness_vector_actions_evaluate_once_and_preserve_transcript() {
         .into_circuit_context(ContractAddress::default());
     let reused = reuseResult(reuse_context, &reuse_witness).unwrap();
     assert_oracle(reused, reuse_witness.calls.get(), &oracle["reuseResult"]);
+}
+
+#[test]
+fn recorded_vector_let_witnesses_match_typescript_and_evaluate_once() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/witness-vector-action.json"
+    ))
+    .unwrap();
+    for name in ["keepResult", "reuseResult"] {
+        let native_witness = SumWitness {
+            calls: Cell::new(0),
+        };
+        let recording_witness = SumWitness {
+            calls: Cell::new(0),
+        };
+        let native_context = initial_state(ConstructorContext::new(7_u64))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default());
+        let recording_context = initial_state(ConstructorContext::new(7_u64))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default());
+        let native = match name {
+            "keepResult" => keepResult(native_context, &native_witness).unwrap(),
+            "reuseResult" => reuseResult(native_context, &native_witness).unwrap(),
+            _ => unreachable!(),
+        };
+        let recorded = match name {
+            "keepResult" => recorded::keepResult(recording_context, &recording_witness).unwrap(),
+            "reuseResult" => recorded::reuseResult(recording_context, &recording_witness).unwrap(),
+            _ => unreachable!(),
+        };
+        assert_eq!(
+            native_witness.calls.get(),
+            1,
+            "{name}: native witness calls"
+        );
+        assert_eq!(
+            recording_witness.calls.get(),
+            1,
+            "{name}: recorded witness calls"
+        );
+        assert_eq!(native.context.private_state, 8);
+        assert_eq!(recorded.execution.context.private_state, 8);
+        assert_eq!(native.gas_cost, recorded.execution.gas_cost);
+        assert_eq!(
+            native.context.query.state.get_ref(),
+            recorded.execution.context.query.state.get_ref(),
+        );
+        assert_eq!(
+            state_hex(recorded.execution.context.query.state.get_ref().clone()),
+            oracle[name]["stateHex"],
+        );
+        let expected = &oracle[name]["privateTranscriptOutputs"];
+        for outputs in [
+            &native.private_transcript_outputs,
+            &recorded.execution.private_transcript_outputs,
+        ] {
+            let actual = outputs
+                .iter()
+                .map(|output| {
+                    serde_json::json!({
+                        "valueAtoms": output.value.0.iter().map(|atom| &atom.0).collect::<Vec<_>>(),
+                        "alignment": output.alignment,
+                    })
+                })
+                .collect::<Vec<_>>();
+            assert_eq!(serde_json::to_value(actual).unwrap(), *expected, "{name}");
+        }
+    }
 }

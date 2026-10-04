@@ -727,8 +727,23 @@ fn render_recorded_item(
             return None;
         }
         match value {
-            Expr::Coerce { value, ty: target } if target == ty => {
-                cell_source(value, ty, locals, parameters)
+            Expr::Coerce {
+                value: source,
+                ty: target,
+            } if target == ty => {
+                if let (Type::Vector { length, element }, Expr::Tuple { elements }) =
+                    (ty, source.as_ref())
+                    && **element == Type::Field
+                    && *length == elements.len()
+                    && elements
+                        .iter()
+                        .all(|element| matches!(element, Expr::FieldLiteral { .. }))
+                {
+                    let (rendered, actual) =
+                        expression_with_calls(value, parameters, &HashMap::new()).ok()?;
+                    return (actual == *ty).then_some(rendered);
+                }
+                cell_source(source, ty, locals, parameters)
             }
             Expr::Boolean { value } if *ty == Type::Boolean => Some(syn::parse_quote!(#value)),
             Expr::Parameter { name } => locals

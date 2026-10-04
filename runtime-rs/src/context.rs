@@ -106,7 +106,7 @@ impl<'a, D: DB> WitnessReadMeter<'a, D> {
         Self {
             query: &context.query,
             cost_model: &context.cost_model,
-            gas_limit: context.gas_limit.clone(),
+            gas_limit: context.gas_limit,
             observed_gas: RefCell::new(RunningCost::ZERO),
         }
     }
@@ -116,12 +116,8 @@ impl<'a, D: DB> WitnessReadMeter<'a, D> {
     }
 
     pub fn read_cell<T: CellValue>(&self, path: &[u8]) -> Result<T, CompactError> {
-        let (result, value) = ledger::query_cell_at_path::<T, D>(
-            self.query,
-            path,
-            self.gas_limit.clone(),
-            self.cost_model,
-        )?;
+        let (result, value) =
+            ledger::query_cell_at_path::<T, D>(self.query, path, self.gas_limit, self.cost_model)?;
         *self.observed_gas.borrow_mut() += result.gas_cost;
         Ok(value)
     }
@@ -131,39 +127,28 @@ impl<'a, D: DB> WitnessReadMeter<'a, D> {
         path: &[u8],
         value: T,
     ) -> Result<bool, CompactError> {
-        let (result, present) = ledger::member_set(
-            self.query,
-            path,
-            value,
-            self.gas_limit.clone(),
-            self.cost_model,
-        )?;
+        let (result, present) =
+            ledger::member_set(self.query, path, value, self.gas_limit, self.cost_model)?;
         *self.observed_gas.borrow_mut() += result.gas_cost;
         Ok(present)
     }
 
     pub fn read_set_size(&self, path: &[u8]) -> Result<u64, CompactError> {
-        let (result, size) =
-            ledger::size_set(self.query, path, self.gas_limit.clone(), self.cost_model)?;
+        let (result, size) = ledger::size_set(self.query, path, self.gas_limit, self.cost_model)?;
         *self.observed_gas.borrow_mut() += result.gas_cost;
         Ok(size)
     }
 
     pub fn read_set_is_empty(&self, path: &[u8]) -> Result<bool, CompactError> {
         let (result, empty) =
-            ledger::is_empty_set(self.query, path, self.gas_limit.clone(), self.cost_model)?;
+            ledger::is_empty_set(self.query, path, self.gas_limit, self.cost_model)?;
         *self.observed_gas.borrow_mut() += result.gas_cost;
         Ok(empty)
     }
 
     pub fn read_map_member<K: CellValue>(&self, path: &[u8], key: K) -> Result<bool, CompactError> {
-        let (result, present) = ledger::member_map(
-            self.query,
-            path,
-            key,
-            self.gas_limit.clone(),
-            self.cost_model,
-        )?;
+        let (result, present) =
+            ledger::member_map(self.query, path, key, self.gas_limit, self.cost_model)?;
         *self.observed_gas.borrow_mut() += result.gas_cost;
         Ok(present)
     }
@@ -173,27 +158,21 @@ impl<'a, D: DB> WitnessReadMeter<'a, D> {
         path: &[u8],
         key: K,
     ) -> Result<V, CompactError> {
-        let (result, value) = ledger::lookup_map(
-            self.query,
-            path,
-            key,
-            self.gas_limit.clone(),
-            self.cost_model,
-        )?;
+        let (result, value) =
+            ledger::lookup_map(self.query, path, key, self.gas_limit, self.cost_model)?;
         *self.observed_gas.borrow_mut() += result.gas_cost;
         Ok(value)
     }
 
     pub fn read_map_size(&self, path: &[u8]) -> Result<u64, CompactError> {
-        let (result, size) =
-            ledger::size_map(self.query, path, self.gas_limit.clone(), self.cost_model)?;
+        let (result, size) = ledger::size_map(self.query, path, self.gas_limit, self.cost_model)?;
         *self.observed_gas.borrow_mut() += result.gas_cost;
         Ok(size)
     }
 
     pub fn read_map_is_empty(&self, path: &[u8]) -> Result<bool, CompactError> {
         let (result, empty) =
-            ledger::is_empty_map(self.query, path, self.gas_limit.clone(), self.cost_model)?;
+            ledger::is_empty_map(self.query, path, self.gas_limit, self.cost_model)?;
         *self.observed_gas.borrow_mut() += result.gas_cost;
         Ok(empty)
     }
@@ -208,7 +187,7 @@ impl<'a, D: DB> WitnessReadMeter<'a, D> {
         let (result, (present, value)) = ledger::head_list::<T, (bool, T), D>(
             self.query,
             path,
-            self.gas_limit.clone(),
+            self.gas_limit,
             self.cost_model,
         )?;
         *self.observed_gas.borrow_mut() += result.gas_cost;
@@ -220,7 +199,7 @@ impl<'a, D: DB> WitnessReadMeter<'a, D> {
         path: impl Into<ledger::LedgerPath>,
     ) -> Result<bool, CompactError> {
         let (result, empty) =
-            ledger::is_empty_list(self.query, path, self.gas_limit.clone(), self.cost_model)?;
+            ledger::is_empty_list(self.query, path, self.gas_limit, self.cost_model)?;
         *self.observed_gas.borrow_mut() += result.gas_cost;
         Ok(empty)
     }
@@ -230,7 +209,7 @@ impl<'a, D: DB> WitnessReadMeter<'a, D> {
         path: impl Into<ledger::LedgerPath>,
     ) -> Result<u64, CompactError> {
         let (result, length) =
-            ledger::length_list(self.query, path, self.gas_limit.clone(), self.cost_model)?;
+            ledger::length_list(self.query, path, self.gas_limit, self.cost_model)?;
         *self.observed_gas.borrow_mut() += result.gas_cost;
         Ok(length)
     }
@@ -276,7 +255,7 @@ impl<'a, D: DB> WitnessReadMeter<'a, D> {
     }
 
     pub fn gas_cost(&self) -> RunningCost {
-        self.observed_gas.borrow().clone()
+        *self.observed_gas.borrow()
     }
 }
 
@@ -444,12 +423,8 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         mut self,
         path: impl Into<ledger::LedgerPath>,
     ) -> Result<CircuitResult<Private, M, D>, CompactError> {
-        let (result, value) = ledger::head_list::<T, M, D>(
-            &self.query,
-            path,
-            self.gas_limit.clone(),
-            &self.cost_model,
-        )?;
+        let (result, value) =
+            ledger::head_list::<T, M, D>(&self.query, path, self.gas_limit, &self.cost_model)?;
         self.query = result.context;
         Ok(CircuitResult {
             context: self,
@@ -463,9 +438,8 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         mut self,
         path: impl Into<ledger::LedgerPath>,
     ) -> Result<CircuitResult<Private, (), D>, CompactError> {
-        let result =
-            ledger::pop_front_list(&self.query, path, self.gas_limit.clone(), &self.cost_model)
-                .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+        let result = ledger::pop_front_list(&self.query, path, self.gas_limit, &self.cost_model)
+            .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
         self.query = result.context;
         Ok(CircuitResult {
             context: self,
@@ -479,9 +453,8 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         mut self,
         path: impl Into<ledger::LedgerPath>,
     ) -> Result<CircuitResult<Private, (), D>, CompactError> {
-        let result =
-            ledger::reset_list(&self.query, path, self.gas_limit.clone(), &self.cost_model)
-                .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+        let result = ledger::reset_list(&self.query, path, self.gas_limit, &self.cost_model)
+            .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
         self.query = result.context;
         Ok(CircuitResult {
             context: self,
@@ -496,14 +469,9 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         path: impl Into<ledger::LedgerPath>,
         value: T,
     ) -> Result<CircuitResult<Private, (), D>, CompactError> {
-        let result = ledger::push_front_list(
-            &self.query,
-            path,
-            value,
-            self.gas_limit.clone(),
-            &self.cost_model,
-        )
-        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+        let result =
+            ledger::push_front_list(&self.query, path, value, self.gas_limit, &self.cost_model)
+                .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
         self.query = result.context;
         Ok(CircuitResult {
             context: self,
@@ -518,7 +486,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         path: impl Into<ledger::LedgerPath>,
     ) -> Result<CircuitResult<Private, bool, D>, CompactError> {
         let (result, value) =
-            ledger::is_empty_list(&self.query, path, self.gas_limit.clone(), &self.cost_model)?;
+            ledger::is_empty_list(&self.query, path, self.gas_limit, &self.cost_model)?;
         self.query = result.context;
         Ok(CircuitResult {
             context: self,
@@ -533,7 +501,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         path: impl Into<ledger::LedgerPath>,
     ) -> Result<CircuitResult<Private, u64, D>, CompactError> {
         let (result, value) =
-            ledger::length_list(&self.query, path, self.gas_limit.clone(), &self.cost_model)?;
+            ledger::length_list(&self.query, path, self.gas_limit, &self.cost_model)?;
         self.query = result.context;
         Ok(CircuitResult {
             context: self,
@@ -554,7 +522,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
             path,
             key,
             value,
-            self.gas_limit.clone(),
+            self.gas_limit,
             &self.cost_model,
         )
         .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
@@ -572,13 +540,8 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         path: impl Into<ledger::LedgerPath>,
         key: K,
     ) -> Result<CircuitResult<Private, bool, D>, CompactError> {
-        let (result, present) = ledger::member_map(
-            &self.query,
-            path,
-            key,
-            self.gas_limit.clone(),
-            &self.cost_model,
-        )?;
+        let (result, present) =
+            ledger::member_map(&self.query, path, key, self.gas_limit, &self.cost_model)?;
         self.query = result.context;
         Ok(CircuitResult {
             context: self,
@@ -593,13 +556,8 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         path: impl Into<ledger::LedgerPath>,
         key: K,
     ) -> Result<CircuitResult<Private, V, D>, CompactError> {
-        let (result, value) = ledger::lookup_map(
-            &self.query,
-            path,
-            key,
-            self.gas_limit.clone(),
-            &self.cost_model,
-        )?;
+        let (result, value) =
+            ledger::lookup_map(&self.query, path, key, self.gas_limit, &self.cost_model)?;
         self.query = result.context;
         Ok(CircuitResult {
             context: self,
@@ -642,14 +600,8 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         path: impl Into<ledger::LedgerPath>,
         value: T,
     ) -> Result<CircuitResult<Private, (), D>, CompactError> {
-        let result = ledger::insert_set(
-            &self.query,
-            path,
-            value,
-            self.gas_limit.clone(),
-            &self.cost_model,
-        )
-        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+        let result = ledger::insert_set(&self.query, path, value, self.gas_limit, &self.cost_model)
+            .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
         self.query = result.context;
         Ok(CircuitResult {
             context: self,
@@ -664,13 +616,8 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         path: impl Into<ledger::LedgerPath>,
         value: T,
     ) -> Result<CircuitResult<Private, bool, D>, CompactError> {
-        let (result, member) = ledger::member_set(
-            &self.query,
-            path,
-            value,
-            self.gas_limit.clone(),
-            &self.cost_model,
-        )?;
+        let (result, member) =
+            ledger::member_set(&self.query, path, value, self.gas_limit, &self.cost_model)?;
         self.query = result.context;
         Ok(CircuitResult {
             context: self,
@@ -685,14 +632,8 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         path: impl Into<ledger::LedgerPath>,
         value: T,
     ) -> Result<CircuitResult<Private, (), D>, CompactError> {
-        let result = ledger::remove_set(
-            &self.query,
-            path,
-            value,
-            self.gas_limit.clone(),
-            &self.cost_model,
-        )
-        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+        let result = ledger::remove_set(&self.query, path, value, self.gas_limit, &self.cost_model)
+            .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
         self.query = result.context;
         Ok(CircuitResult {
             context: self,
@@ -706,7 +647,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         mut self,
         path: impl Into<ledger::LedgerPath>,
     ) -> Result<CircuitResult<Private, (), D>, CompactError> {
-        let result = ledger::reset_set(&self.query, path, self.gas_limit.clone(), &self.cost_model)
+        let result = ledger::reset_set(&self.query, path, self.gas_limit, &self.cost_model)
             .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
         self.query = result.context;
         Ok(CircuitResult {
@@ -721,8 +662,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         mut self,
         path: impl Into<ledger::LedgerPath>,
     ) -> Result<CircuitResult<Private, u64, D>, CompactError> {
-        let (result, size) =
-            ledger::size_set(&self.query, path, self.gas_limit.clone(), &self.cost_model)?;
+        let (result, size) = ledger::size_set(&self.query, path, self.gas_limit, &self.cost_model)?;
         self.query = result.context;
         Ok(CircuitResult {
             context: self,
@@ -737,7 +677,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         path: impl Into<ledger::LedgerPath>,
     ) -> Result<CircuitResult<Private, bool, D>, CompactError> {
         let (result, empty) =
-            ledger::is_empty_set(&self.query, path, self.gas_limit.clone(), &self.cost_model)?;
+            ledger::is_empty_set(&self.query, path, self.gas_limit, &self.cost_model)?;
         self.query = result.context;
         Ok(CircuitResult {
             context: self,
@@ -756,7 +696,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
             &self.query,
             path,
             position.value() as u64,
-            self.gas_limit.clone(),
+            self.gas_limit,
             &self.cost_model,
         )
         .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
@@ -780,7 +720,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
             path,
             item,
             position.value() as u64,
-            self.gas_limit.clone(),
+            self.gas_limit,
             &self.cost_model,
         )
         .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
@@ -804,7 +744,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
             path,
             hash,
             position.value() as u64,
-            self.gas_limit.clone(),
+            self.gas_limit,
             &self.cost_model,
         )
         .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
@@ -822,14 +762,9 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         path: impl Into<ledger::LedgerPath>,
         item: T,
     ) -> Result<CircuitResult<Private, (), D>, CompactError> {
-        let result = ledger::merkle_insert(
-            &self.query,
-            path,
-            item,
-            self.gas_limit.clone(),
-            &self.cost_model,
-        )
-        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+        let result =
+            ledger::merkle_insert(&self.query, path, item, self.gas_limit, &self.cost_model)
+                .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
         self.query = result.context;
         Ok(CircuitResult {
             context: self,
@@ -844,14 +779,9 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         path: impl Into<ledger::LedgerPath>,
         hash: crate::FixedBytes<32>,
     ) -> Result<CircuitResult<Private, (), D>, CompactError> {
-        let result = ledger::merkle_insert_hash(
-            &self.query,
-            path,
-            hash,
-            self.gas_limit.clone(),
-            &self.cost_model,
-        )
-        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+        let result =
+            ledger::merkle_insert_hash(&self.query, path, hash, self.gas_limit, &self.cost_model)
+                .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
         self.query = result.context;
         Ok(CircuitResult {
             context: self,
@@ -870,7 +800,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
             &self.query,
             path,
             position.value() as u64,
-            self.gas_limit.clone(),
+            self.gas_limit,
             &self.cost_model,
         )
         .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
@@ -894,7 +824,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
             path,
             item,
             position.value() as u64,
-            self.gas_limit.clone(),
+            self.gas_limit,
             &self.cost_model,
         )
         .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
@@ -918,7 +848,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
             path,
             hash,
             position.value() as u64,
-            self.gas_limit.clone(),
+            self.gas_limit,
             &self.cost_model,
         )
         .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
@@ -936,14 +866,9 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         path: impl Into<ledger::LedgerPath>,
         item: T,
     ) -> Result<CircuitResult<Private, (), D>, CompactError> {
-        let result = ledger::historic_insert(
-            &self.query,
-            path,
-            item,
-            self.gas_limit.clone(),
-            &self.cost_model,
-        )
-        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+        let result =
+            ledger::historic_insert(&self.query, path, item, self.gas_limit, &self.cost_model)
+                .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
         self.query = result.context;
         Ok(CircuitResult {
             context: self,
@@ -958,14 +883,9 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         path: impl Into<ledger::LedgerPath>,
         hash: crate::FixedBytes<32>,
     ) -> Result<CircuitResult<Private, (), D>, CompactError> {
-        let result = ledger::historic_insert_hash(
-            &self.query,
-            path,
-            hash,
-            self.gas_limit.clone(),
-            &self.cost_model,
-        )
-        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+        let result =
+            ledger::historic_insert_hash(&self.query, path, hash, self.gas_limit, &self.cost_model)
+                .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
         self.query = result.context;
         Ok(CircuitResult {
             context: self,
@@ -979,13 +899,9 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         mut self,
         path: impl Into<ledger::LedgerPath>,
     ) -> Result<CircuitResult<Private, (), D>, CompactError> {
-        let result = ledger::historic_reset_history(
-            &self.query,
-            path,
-            self.gas_limit.clone(),
-            &self.cost_model,
-        )
-        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+        let result =
+            ledger::historic_reset_history(&self.query, path, self.gas_limit, &self.cost_model)
+                .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
         self.query = result.context;
         Ok(CircuitResult {
             context: self,
@@ -1004,7 +920,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
             &self.query,
             path,
             depth,
-            self.gas_limit.clone(),
+            self.gas_limit,
             &self.cost_model,
         )
         .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
@@ -1026,7 +942,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
             &self.query,
             path,
             depth,
-            self.gas_limit.clone(),
+            self.gas_limit,
             &self.cost_model,
         )
         .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
@@ -1044,13 +960,8 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         path: impl Into<ledger::LedgerPath>,
         depth: u8,
     ) -> Result<CircuitResult<Private, bool, D>, CompactError> {
-        let (result, full) = ledger::historic_is_full(
-            &self.query,
-            path,
-            depth,
-            self.gas_limit.clone(),
-            &self.cost_model,
-        )?;
+        let (result, full) =
+            ledger::historic_is_full(&self.query, path, depth, self.gas_limit, &self.cost_model)?;
         self.query = result.context;
         Ok(CircuitResult {
             context: self,
@@ -1065,13 +976,8 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         path: impl Into<ledger::LedgerPath>,
         depth: u8,
     ) -> Result<CircuitResult<Private, bool, D>, CompactError> {
-        let (result, full) = ledger::merkle_is_full(
-            &self.query,
-            path,
-            depth,
-            self.gas_limit.clone(),
-            &self.cost_model,
-        )?;
+        let (result, full) =
+            ledger::merkle_is_full(&self.query, path, depth, self.gas_limit, &self.cost_model)?;
         self.query = result.context;
         Ok(CircuitResult {
             context: self,
@@ -1086,13 +992,8 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         path: impl Into<ledger::LedgerPath>,
         root: T,
     ) -> Result<CircuitResult<Private, bool, D>, CompactError> {
-        let (result, found) = ledger::merkle_check_root(
-            &self.query,
-            path,
-            root,
-            self.gas_limit.clone(),
-            &self.cost_model,
-        )?;
+        let (result, found) =
+            ledger::merkle_check_root(&self.query, path, root, self.gas_limit, &self.cost_model)?;
         self.query = result.context;
         Ok(CircuitResult {
             context: self,
@@ -1107,13 +1008,8 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         path: impl Into<ledger::LedgerPath>,
         root: T,
     ) -> Result<CircuitResult<Private, bool, D>, CompactError> {
-        let (result, found) = ledger::historic_check_root(
-            &self.query,
-            path,
-            root,
-            self.gas_limit.clone(),
-            &self.cost_model,
-        )?;
+        let (result, found) =
+            ledger::historic_check_root(&self.query, path, root, self.gas_limit, &self.cost_model)?;
         self.query = result.context;
         Ok(CircuitResult {
             context: self,
@@ -1137,7 +1033,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         let (result, value) = ledger::query_cell_at_path::<T, D>(
             &self.query,
             path,
-            self.gas_limit.clone(),
+            self.gas_limit,
             &self.cost_model,
         )?;
         self.query = result.context;
@@ -1162,14 +1058,9 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         path: &[u8],
         value: T,
     ) -> Result<CircuitResult<Private, (), D>, CompactError> {
-        let result = ledger::write_cell_at_path(
-            &self.query,
-            path,
-            value,
-            self.gas_limit.clone(),
-            &self.cost_model,
-        )
-        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+        let result =
+            ledger::write_cell_at_path(&self.query, path, value, self.gas_limit, &self.cost_model)
+                .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
         self.query = result.context;
         Ok(CircuitResult {
             context: self,
@@ -1184,14 +1075,9 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         path: impl Into<ledger::LedgerPath>,
         amount: u16,
     ) -> Result<CircuitResult<Private, (), D>, CompactError> {
-        let result = ledger::increment_counter(
-            &self.query,
-            path,
-            amount,
-            self.gas_limit.clone(),
-            &self.cost_model,
-        )
-        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+        let result =
+            ledger::increment_counter(&self.query, path, amount, self.gas_limit, &self.cost_model)
+                .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
         self.query = result.context;
         Ok(CircuitResult {
             context: self,
@@ -1206,14 +1092,9 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         path: impl Into<ledger::LedgerPath>,
         amount: u16,
     ) -> Result<CircuitResult<Private, (), D>, CompactError> {
-        let result = ledger::decrement_counter(
-            &self.query,
-            path,
-            amount,
-            self.gas_limit.clone(),
-            &self.cost_model,
-        )
-        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+        let result =
+            ledger::decrement_counter(&self.query, path, amount, self.gas_limit, &self.cost_model)
+                .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
         self.query = result.context;
         Ok(CircuitResult {
             context: self,

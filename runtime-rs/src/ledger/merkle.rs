@@ -115,7 +115,7 @@ impl<D: DB> MerkleTreeView<'_, D> {
     }
 
     pub fn first_free(&self) -> Result<BoundedUint<{ u64::MAX as u128 }>, CompactError> {
-        let value = read_cell::<u64, _>(&self.fields.get(1).expect("tree shape checked"))?;
+        let value = read_cell::<u64, _>(self.fields.get(1).expect("tree shape checked"))?;
         BoundedUint::new(value as u128)
     }
 
@@ -258,7 +258,7 @@ impl<D: DB> HistoricMerkleTreeView<'_, D> {
     }
 
     pub fn first_free(&self) -> Result<BoundedUint<{ u64::MAX as u128 }>, CompactError> {
-        let value = read_cell::<u64, _>(&self.fields.get(1).expect("tree shape checked"))?;
+        let value = read_cell::<u64, _>(self.fields.get(1).expect("tree shape checked"))?;
         BoundedUint::new(value as u128)
     }
 

@@ -275,13 +275,13 @@ impl<T: CellValue, D: DB> ListView<'_, T, D> {
     pub fn head(&self) -> Result<Option<T>, CompactError> {
         match self.fields.get(0) {
             Some(StateValue::Null) => Ok(None),
-            Some(value) => read_cell(&value).map(Some),
+            Some(value) => read_cell(value).map(Some),
             None => unreachable!("List shape checked at construction"),
         }
     }
 
     pub fn length(&self) -> Result<BoundedUint<{ u64::MAX as u128 }>, CompactError> {
-        let length = read_cell::<u64, _>(&self.fields.get(2).expect("List shape checked"))?;
+        let length = read_cell::<u64, _>(self.fields.get(2).expect("List shape checked"))?;
         BoundedUint::new(length as u128)
     }
 

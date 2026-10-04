@@ -2410,7 +2410,11 @@ fn main() -> Result<(), Box<dyn Error>> {
             check_observed_call_parity(chunked_root, circuit, &deploy, &manual, &typed)?;
             check_transaction(chunked_root, circuit, deploy, typed, &mut rng, |state| {
                 let view = set_view_at_path::<(Field, bool), _>(state.data.get_ref(), &[1, 14])?;
+                let generated = chunked_set_contract::PublicStateView::from(state).keySet()?;
                 let should_exist = circuit == "insert_key";
+                if generated.size()? != view.size()? || generated.member(key) != view.member(key) {
+                    return Err("generated chunked Set view differs from raw applied state".into());
+                }
                 if view.size()?.value() != u128::from(should_exist)
                     || view.member(key) != should_exist
                 {

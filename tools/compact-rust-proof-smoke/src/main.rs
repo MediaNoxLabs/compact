@@ -21,6 +21,7 @@
 //! Deployment combines the generated constructor state with the emitted key.
 
 mod adt_set_enum;
+mod asset_writable;
 mod closed_pure_field;
 mod merkle_verify;
 mod persistent_commit;
@@ -825,6 +826,14 @@ fn main() -> Result<(), Box<dyn Error>> {
             return Err("usage: compact-rust-proof-smoke --adt-set-enum <proof-output>".into());
         }
         return adt_set_enum::run(Path::new(&root));
+    if first.as_deref() == Some(OsStr::new("--asset-writable")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --asset-writable <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err("usage: compact-rust-proof-smoke --asset-writable <proof-output>".into());
+        }
+        return asset_writable::run(Path::new(&root));
     }
     if first.as_deref() == Some(OsStr::new("--closed-pure-field")) {
         let root = arguments

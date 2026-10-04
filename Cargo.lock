@@ -1715,6 +1715,7 @@ version = "0.1.0"
 dependencies = [
  "compact-rust-adt-set-enum-fixture",
  "compact-rust-assert-witness-fixture",
+ "compact-rust-asset-registry-oracle-fixture",
  "compact-rust-call-arg-declared-type-fixture",
  "compact-rust-cell-boolean-fixture",
  "compact-rust-cell-read-fixture",

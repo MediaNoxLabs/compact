@@ -53,6 +53,7 @@ MERKLE_VERIFY_SOURCE = ROOT / "examples/rust_backend/merkle_path_verify.compact"
 PERSISTENT_COMMIT_SOURCE = ROOT / "examples/rust_backend/call_arg_declared_type.compact"
 INTERNAL_PURE_CALL_SOURCE = ROOT / "examples/rust_backend/internal_pure_call.compact"
 TERNARY_COND_SOURCE = ROOT / "examples/rust_backend/ternary_cond_oracle.compact"
+ASSET_REGISTRY_SOURCE = ROOT / "examples/rust_backend/asset_registry_oracle.compact"
 HISTORIC_MERKLE_SOURCE = ROOT / "examples/rust_backend/hmt_insert_oracle.compact"
 VECTOR_KEY_SOURCE = ROOT / "examples/rust_backend/vector_key_adt.compact"
 COMPOSITE_KEY_SOURCE = ROOT / "examples/rust_backend/observed_composite_keys.compact"
@@ -1422,6 +1423,22 @@ def main() -> None:
                     assert (ternary_cond_proof / "keys" / f"{name}.{extension}").is_file()
                 for extension in ("zkir", "bzkir"):
                     assert (ternary_cond_proof / "zkir" / f"{name}.{extension}").is_file()
+            asset_writable_proof = base / "asset-writable-proof"
+            run(compiler, "--target", "rust", str(ASSET_REGISTRY_SOURCE),
+                str(asset_writable_proof))
+            check_manifest(asset_writable_proof)
+            capabilities = json.loads(
+                (asset_writable_proof / "contract/rust-capabilities.json").read_text()
+            )
+            for circuit in ("setCustodian", "tag"):
+                capability = next(item for item in capabilities["circuits"]
+                                  if item["name"] == circuit)
+                assert capability["proof_required"] and capability["recorded"] \
+                    and capability["observed_call"]
+                for extension in ("prover", "verifier"):
+                    assert (asset_writable_proof / "keys" / f"{circuit}.{extension}").is_file()
+                for extension in ("zkir", "bzkir"):
+                    assert (asset_writable_proof / "zkir" / f"{circuit}.{extension}").is_file()
             historic_merkle_proof = base / "historic-merkle-proof"
             run(compiler, "--target", "rust", str(HISTORIC_MERKLE_SOURCE), str(historic_merkle_proof))
             check_manifest(historic_merkle_proof)
@@ -1570,6 +1587,10 @@ def main() -> None:
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 "--pure-field-arguments", str(internal_pure_call_proof), str(ternary_cond_proof),
+            )
+            run(
+                "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--asset-writable", str(asset_writable_proof),
             )
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",

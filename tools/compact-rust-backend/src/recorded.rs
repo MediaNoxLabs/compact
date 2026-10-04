@@ -1298,6 +1298,45 @@ fn render_recorded_item(
                 next_temp,
                 visiting,
             ),
+            // The condition may record an existing Boolean observation, but
+            // both branches must be effect-free scalar sources. Bind the
+            // selected value after that observation and before the Assert.
+            Expr::If {
+                condition,
+                then,
+                otherwise,
+            } => {
+                let Some(condition) = boolean_expression(
+                    condition,
+                    locals,
+                    parameters,
+                    ledger_fields,
+                    witnesses,
+                    circuits,
+                    steps,
+                    next_temp,
+                    visiting,
+                )?
+                else {
+                    return Ok(None);
+                };
+                let Some(then) = cell_source(then, &Type::Boolean, locals, parameters) else {
+                    return Ok(None);
+                };
+                let Some(otherwise) = cell_source(otherwise, &Type::Boolean, locals, parameters)
+                else {
+                    return Ok(None);
+                };
+                let selected = syn::Ident::new(
+                    &format!("__compact_recorded_conditional_bool_{}", *next_temp),
+                    Span::call_site(),
+                );
+                *next_temp += 1;
+                steps.push(syn::parse_quote! {
+                    let #selected: bool = if #condition { #then } else { #otherwise };
+                });
+                Ok(Some(syn::parse_quote!(#selected)))
+            }
             Expr::WitnessCall { name, arguments } => {
                 let declaration = witnesses
                     .get(name.as_str())

@@ -1355,6 +1355,52 @@ pub mod ledger_contract {
             let frame = crate::ledger_slots::updatedAt.record_write(frame, __compact_witness_0)?;
             Ok((frame, ()))
         }
+        fn __compact_recorded_body_assertWritable<Private>(
+            frame: runtime::recording::RecordingFrame<Private>,
+        ) -> Result<(runtime::recording::RecordingFrame<Private>, ()), runtime::CompactError>
+        {
+            let (frame, __compact_recorded_bool_0): (_, bool) =
+                crate::ledger_slots::open.record_read(frame)?;
+            if !(__compact_recorded_bool_0) {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "registry is closed".to_owned(),
+                ));
+            }
+            let (frame, __compact_recorded_bool_1): (_, bool) =
+                crate::ledger_slots::frozen.record_read(frame)?;
+            let __compact_recorded_conditional_bool_2: bool = !(__compact_recorded_bool_1);
+            if !(__compact_recorded_conditional_bool_2) {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "registry is frozen".to_owned(),
+                ));
+            }
+            Ok((frame, ()))
+        }
+        pub fn setCustodian<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: crate::types::ContractAddress,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, _) = __compact_recorded_body_assertWritable(frame)?;
+            let frame =
+                crate::ledger_slots::custodian.record_write(frame, (__compact_param_0).clone())?;
+            let (frame, _) = __compact_recorded_body_recordWrite(frame, witnesses)?;
+            Ok(frame.finish(()))
+        }
+        pub fn tag<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: runtime::Field,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, _) = __compact_recorded_body_assertWritable(frame)?;
+            let frame = crate::ledger_slots::tags.record_insert(frame, __compact_param_0)?;
+            let (frame, _) = __compact_recorded_body_recordWrite(frame, witnesses)?;
+            Ok(frame.finish(()))
+        }
         pub fn close<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
             witnesses: &W,
@@ -1381,6 +1427,68 @@ pub mod ledger_contract {
             pub(super) witnesses: &'a W,
         }
         impl<W> BorrowedContract<'_, W> {
+            pub fn setCustodian<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                holder: crate::types::ContractAddress,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                setCustodian(context, self.witnesses, holder)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn setCustodian_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                holder: crate::types::ContractAddress,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from((holder).clone());
+                let recorded =
+                    self.setCustodian(observed.circuit_context(private_state), holder)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "setCustodian",
+                    input,
+                ))
+            }
+            pub fn tag<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                value: runtime::Field,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                tag(context, self.witnesses, value)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn tag_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                value: runtime::Field,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(value);
+                let recorded = self.tag(observed.circuit_context(private_state), value)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "tag", input,
+                ))
+            }
             pub fn close<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,

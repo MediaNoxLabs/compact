@@ -53,3 +53,14 @@ The following flags, if present, affect the compiler's behavior as follows:
 
   --trace-passes causes the compiler to print tracing information that is
     generally useful only to compiler developers.
+
+  --target <ts|rust> selects contract code. Repeat to emit both.
+    With no --target, TypeScript remains the default. Rust emits a standalone
+    contract/Cargo.toml, source, capability report, and matching runtime crates.
+    ZKIR and keys are independent.
+  --rust-require-recording rejects exported stateful circuits without both
+    replayable recording and typed observed-call APIs.
+  --rust-runtime-root <path> uses one shared runtime source root for generated
+    Rust crates. The root must contain runtime-rs/ and runtime-rs-macros/.
+  --rust-runtime-registry pins the compiler's matching runtime package version
+    without copying runtime sources. That version must be published to build.

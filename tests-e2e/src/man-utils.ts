@@ -13,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { isRelease } from './test-utils';
 import { getFileContent } from './file-utils';
 
 export const VERSION_REGEX = /(\d+)\.(\d+).(\d+)/;
@@ -37,11 +36,7 @@ export function compilerDefaultOutput(): string {
 }
 
 export function compilerUsageMessageHeader(): string {
-    if (isRelease()) {
-        return 'Usage: compactc.bin';
-    } else {
-        return `Usage: compactc`;
-    }
+    return 'Usage: compactc';
 }
 
 export function compilerManualPage(): string {

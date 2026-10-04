@@ -509,7 +509,18 @@ impl Drop for StagedOutput {
 fn run() -> Result<i32, Box<dyn Error>> {
     let (targets, mut args) = select_targets(env::args_os().skip(1).collect())?;
     let compiler = scheme_compiler()?;
-    if args.iter().any(|arg| arg == "--help") {
+    let first_query = args.iter().find(|arg| {
+        *arg == "--help"
+            || [
+                "--version",
+                "--language-version",
+                "--ledger-version",
+                "--runtime-version",
+            ]
+            .iter()
+            .any(|query| *arg == query)
+    });
+    if first_query.is_some_and(|arg| arg == "--help") {
         let output = Command::new(compiler).arg("--help").output()?;
         io::Write::write_all(&mut io::stdout(), &output.stdout)?;
         io::Write::write_all(&mut io::stderr(), &output.stderr)?;
@@ -518,16 +529,7 @@ fn run() -> Result<i32, Box<dyn Error>> {
         }
         return Ok(output.status.code().unwrap_or(1));
     }
-    if args.iter().any(|arg| {
-        [
-            "--version",
-            "--language-version",
-            "--ledger-version",
-            "--runtime-version",
-        ]
-        .iter()
-        .any(|query| arg == *query)
-    }) {
+    if first_query.is_some() {
         let status = Command::new(compiler).args(&args).status()?;
         return Ok(status.code().unwrap_or(1));
     }

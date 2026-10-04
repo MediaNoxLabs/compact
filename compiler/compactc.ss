@@ -19,9 +19,15 @@
 (import (except (chezscheme) errorf)
         (command-line-parsing)
         (config-params)
-        (program-common)
+        (except (program-common) print-usage)
         (passes)
         (utils))
+
+(define (print-usage err?)
+  (let ([port (if err? (current-error-port) (current-output-port))])
+    (fprintf port "Usage: compactc ~a\n" (assert (usage)))
+    (when err?
+      (fprintf port "       --help displays detailed usage information\n"))))
 
 (define (print-help)
   (print-usage #f)
@@ -56,13 +62,6 @@ The following flags, if present, affect the compiler's behavior as follows:
     printing a warning message, the generation of proving keys when it cannot
     find zkir.
 
-  --emit-rust-ir writes contract/compact-rust-ir.json for the independent
-    Rust backend. Supported typed expressions, ledger operations, and direct
-    witness returns are emitted; unsupported constructs fail explicitly.
-
-  --skip-ts omits TypeScript contract files. This is used by the Rust target
-    launcher together with --emit-rust-ir.
-
   --no-communications-commitment omits the contract communications commitment
     that enables data integrity for contract-to-contract calls.
 
@@ -91,7 +90,7 @@ The following flags, if present, affect the compiler's behavior as follows:
 (usage "<flag> ... <source-pathname> <target-directory-pathname>")
 
 (parameterize ([reset-handler abort])
-  (command-line-case (command-line)
+  (command-line-case (cons "compactc" (cdr (command-line)))
     [((flags [(--help) $ (begin (print-help) (exit))]
              [(--version) $ (begin (print-compiler-version) (exit))]
              [(--language-version) $ (begin (print-language-version) (exit))]

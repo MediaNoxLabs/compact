@@ -6,7 +6,7 @@ mod recorded;
 mod stateful;
 mod witness;
 
-const RUNTIME_ABI_VERSION: u32 = 34;
+const RUNTIME_ABI_VERSION: u32 = 35;
 pub const RUST_CAPABILITY_SCHEMA_VERSION: u32 = 1;
 
 const GENERATED_HEADER: &str = r#"// This file is part of Compact.

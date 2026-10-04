@@ -18,7 +18,29 @@ use compact_rust_counter_parameter_fixture::ledger_contract::{
 };
 use midnight_compact_runtime::BoundedUint;
 use midnight_compact_runtime::context::ConstructorContext;
+use midnight_compact_runtime::ledger::DefaultDB;
 use midnight_compact_runtime::ledger::{ContractAddress, StateValue, read_counter};
+use midnight_onchain_state::state::{
+    ContractMaintenanceAuthority, ContractOperation, ContractState, EntryPointBuf,
+};
+use midnight_onchain_vm::ops::Op;
+use midnight_serialize::tagged_serialize;
+use midnight_storage::storage::HashMap;
+
+fn state_hex(state: StateValue<DefaultDB>) -> String {
+    let mut operations: HashMap<EntryPointBuf, ContractOperation, DefaultDB> = HashMap::new();
+    for name in ["decrement_by", "increment_by", "reset_round"] {
+        operations = operations.insert(
+            EntryPointBuf(name.as_bytes().to_vec()),
+            ContractOperation::new(None),
+        );
+    }
+    let contract_state =
+        ContractState::new(state, operations, ContractMaintenanceAuthority::default());
+    let mut bytes = Vec::new();
+    tagged_serialize(&contract_state, &mut bytes).unwrap();
+    hex::encode(bytes)
+}
 
 #[test]
 fn generated_counter_uses_bounded_parameter() {
@@ -74,4 +96,117 @@ fn recorded_counter_parameter_replays_the_generated_amount() {
         };
         assert_eq!(read_counter(fields.get(0).unwrap()).unwrap(), 7);
     }
+}
+
+#[test]
+fn recorded_reset_matches_native_and_replays_from_a_nonzero_counter() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/counter-parameter-reset-oracle.json"
+    ))
+    .unwrap();
+    let initial = initial_state(ConstructorContext::new(())).unwrap();
+    assert_eq!(
+        state_hex(initial.ledger_state.get_ref().clone()),
+        oracle["before"]
+    );
+    let native = increment_by(
+        initial.into_circuit_context(ContractAddress::default()),
+        BoundedUint::<65535>::new(7).unwrap(),
+    )
+    .unwrap();
+    let initial = initial_state(ConstructorContext::new(())).unwrap();
+    let recorded = increment_by(
+        initial.into_circuit_context(ContractAddress::default()),
+        BoundedUint::<65535>::new(7).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(
+        state_hex(native.context.query.state.get_ref().clone()),
+        oracle["afterIncrement"]
+    );
+    let native = reset_round(native.context).unwrap();
+    let recorded = recorded::reset_round(recorded.context).unwrap();
+    let replay = recorded
+        .public
+        .initial()
+        .query(
+            recorded.public.verify_ops(),
+            None,
+            &recorded.execution.context.cost_model,
+        )
+        .unwrap();
+
+    assert_eq!(recorded.public.verify_ops().len(), 3);
+    assert!(matches!(
+        recorded.public.verify_ops(),
+        [
+            Op::Push { storage: false, .. },
+            Op::Push { storage: true, .. },
+            Op::Ins {
+                cached: false,
+                n: 1
+            },
+        ]
+    ));
+    assert_eq!(
+        oracle["resetTranscript"],
+        serde_json::json!([
+            { "kind": "push", "storage": false },
+            { "kind": "push", "storage": true },
+            { "kind": "ins", "cached": false, "n": 1 },
+        ])
+    );
+    let reported_gas = &oracle["resetGas"];
+    assert_eq!(
+        recorded
+            .execution
+            .gas_cost
+            .read_time
+            .into_picoseconds()
+            .to_string(),
+        reported_gas["readTime"]
+    );
+    assert_eq!(
+        recorded
+            .execution
+            .gas_cost
+            .compute_time
+            .into_picoseconds()
+            .to_string(),
+        reported_gas["computeTime"]
+    );
+    assert_eq!(
+        recorded.execution.gas_cost.bytes_written.to_string(),
+        reported_gas["bytesWritten"]
+    );
+    assert_eq!(
+        recorded.execution.gas_cost.bytes_deleted.to_string(),
+        reported_gas["bytesDeleted"]
+    );
+    assert_eq!(native.gas_cost, recorded.execution.gas_cost);
+    assert_eq!(recorded.execution.gas_cost, replay.gas_cost);
+    assert_eq!(
+        native.context.query.effects,
+        recorded.execution.context.query.effects
+    );
+    assert_eq!(native.context.query.effects, replay.context.effects);
+    assert_eq!(
+        native.context.query.state.get_ref(),
+        recorded.execution.context.query.state.get_ref()
+    );
+    assert_eq!(
+        native.context.query.state.get_ref(),
+        replay.context.state.get_ref()
+    );
+    assert_eq!(
+        state_hex(native.context.query.state.get_ref().clone()),
+        oracle["afterReset"]
+    );
+    assert_eq!(oracle["before"], oracle["afterReset"]);
+    let StateValue::Array(fields) = replay.context.state.get_ref() else {
+        panic!("expected ledger field array")
+    };
+    assert_eq!(read_counter(fields.get(0).unwrap()).unwrap(), 0);
+    assert!(recorded.execution.private_transcript_outputs.is_empty());
+    assert_eq!(oracle["resetPrivateTranscriptCount"], 0);
 }

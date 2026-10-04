@@ -580,7 +580,7 @@ fn generated_unit_enum_uses_checked_derive_without_handwritten_codecs() {
     let source = render(&contract).unwrap();
     assert!(source.contains("CompactCellValue, CompactEnum"));
     assert!(source.contains("pub enum Choice"));
-    assert!(source.contains("RUST_RUNTIME_ABI == 34"));
+    assert!(source.contains("RUST_RUNTIME_ABI == 35"));
     assert!(!source.contains("impl FieldRepr for Choice"));
     assert!(!source.contains("impl BinaryHashRepr for Choice"));
     assert!(!source.contains("impl FromFieldRepr for Choice"));
@@ -2737,7 +2737,31 @@ fn state_action_must_reference_the_declared_ledger_field_and_index() {
             .unwrap()
             .contains("crate::ledger_slots::round.reset(context)?")
     );
-    assert!(!render(&contract).unwrap().contains("pub mod recorded"));
+    assert!(
+        render(&contract)
+            .unwrap()
+            .contains("crate::ledger_slots::round.record_reset(frame)?")
+    );
+    assert!(render(&contract).unwrap().contains("pub fn increment_call"));
+
+    contract.stateful_circuits[0].actions[0] = StateAction::CounterReset {
+        field: "round".into(),
+        index: 1,
+    };
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::UnknownLedgerField("round".into()))
+    );
+    contract.ledger_fields[0].declaration = LedgerFieldKind::Cell { ty: Type::Boolean };
+    contract.stateful_circuits[0].actions[0] = StateAction::CounterReset {
+        field: "round".into(),
+        index: 0,
+    };
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::UnknownLedgerField("round".into()))
+    );
+    contract.ledger_fields[0].declaration = LedgerFieldKind::Counter;
 
     contract.stateful_circuits[0].actions[0] = StateAction::CounterIncrement {
         field: "missing".into(),
@@ -2764,7 +2788,7 @@ fn state_action_must_reference_the_declared_ledger_field_and_index() {
 }
 
 #[test]
-fn unsupported_nested_call_does_not_expose_an_incomplete_trace() {
+fn nested_call_exposes_a_trace_only_when_every_step_is_supported() {
     let mut contract = Contract {
         schema_version: 8,
         type_aliases: vec![],
@@ -2806,11 +2830,11 @@ fn unsupported_nested_call_does_not_expose_an_incomplete_trace() {
         ],
     };
     let rendered = render_with_capabilities(&contract).unwrap();
-    assert!(!rendered.source.contains("pub mod recorded"));
+    assert!(rendered.source.contains("pub mod recorded"));
     assert_eq!(rendered.capabilities.circuits.len(), 1);
     assert_eq!(rendered.capabilities.circuits[0].name, "outer");
-    assert!(!rendered.capabilities.circuits[0].recorded);
-    assert!(!rendered.capabilities.circuits[0].observed_call);
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.capabilities.circuits[0].observed_call);
 
     contract.stateful_circuits[0].actions.clear();
     contract.stateful_circuits[0].result = Type::Unsigned {

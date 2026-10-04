@@ -463,6 +463,13 @@ impl CounterSlot {
     ) -> Result<RecordingFrame<Private, D>, CompactError> {
         frame.decrement_counter(self.path, amount)
     }
+
+    pub fn record_reset<Private, D: DB>(
+        self,
+        frame: RecordingFrame<Private, D>,
+    ) -> Result<RecordingFrame<Private, D>, CompactError> {
+        frame.write_cell(self.path, 0_u64)
+    }
 }
 
 /// A compiler-declared Set with a fixed element type and physical path.

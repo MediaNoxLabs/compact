@@ -1599,6 +1599,21 @@ fn render_recorded_item(
                 ));
                 Ok(true)
             }
+            StateAction::CounterReset { field, index } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                if declaration.declaration != LedgerFieldKind::Counter
+                    || declaration.index != *index
+                {
+                    return Err(RenderError::UnknownLedgerField(field.clone()));
+                }
+                let slot = ident(field)?;
+                steps.push(syn::parse_quote!(
+                    let frame = crate::ledger_slots::#slot.record_reset(frame)?;
+                ));
+                Ok(true)
+            }
             StateAction::SetInsert {
                 field,
                 index,

@@ -816,6 +816,60 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
             Ok(())
         })?;
+
+        let initial = counter_parameter_contract::initial_state(ConstructorContext::new(()))?;
+        let seeded = counter_parameter_contract::increment_by(
+            initial.into_circuit_context(Default::default()),
+            BoundedUint::<65535>::new(3)?,
+        )?;
+        let reset_deploy = make_deploy(
+            root,
+            "reset_round",
+            seeded.context.query.state.get_ref().clone(),
+            &mut rng,
+        )?;
+        let reset_context = midnight_compact_runtime::context::CircuitContext::from_contract_state(
+            (),
+            reset_deploy.address(),
+            &reset_deploy.initial_state,
+        );
+        let recorded = counter_parameter_contract::Contract::default()
+            .recording
+            .reset_round(reset_context)?;
+        let manual = check_generated_trace(root, "reset_round", recorded, ())?;
+        let observed = ObservedContractState::new(
+            reset_deploy.address(),
+            reset_deploy.initial_state.clone(),
+            Observation {
+                transaction_hash: [0; 32],
+                block_hash: [0; 32],
+                block_height: 0,
+            },
+        );
+        let verifier: VerifierKey = tagged_deserialize(&mut BufReader::new(File::open(
+            root.join("keys/reset_round.verifier"),
+        )?))?;
+        let call = counter_parameter_contract::Contract::default()
+            .recording
+            .reset_round_call(&observed, ())?
+            .prepare(verifier, Fr::from(0u64))?;
+        check_observed_call_parity(root, "reset_round", &reset_deploy, &manual, &call)?;
+        check_transaction(
+            root,
+            "reset_round",
+            reset_deploy,
+            call,
+            &mut rng,
+            |contract| {
+                let StateValue::Array(fields) = contract.data.get_ref() else {
+                    return Err("reset-round state is not an array".into());
+                };
+                if read_counter(fields.get(0).ok_or("reset-round field missing")?)? != 0 {
+                    return Err("proven typed Counter reset did not clear the seeded value".into());
+                }
+                Ok(())
+            },
+        )?;
     }
 
     let cell_initial = cell_contract::initial_state(ConstructorContext::new(()))?;

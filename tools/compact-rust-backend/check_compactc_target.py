@@ -1148,12 +1148,13 @@ def main() -> None:
                     assert (proof / "zkir" / f"{circuit}.{extension}").is_file()
             check_observed_call_consumer(proof, base)
             counter_parameter_proof = base / "counter-parameter-proof"
-            run(compiler, "--target", "rust", str(COUNTER_PARAMETER_SOURCE), str(counter_parameter_proof))
+            run(compiler, "--target", "rust", "--rust-require-recording", str(COUNTER_PARAMETER_SOURCE), str(counter_parameter_proof))
             check_manifest(counter_parameter_proof)
-            for extension in ("prover", "verifier"):
-                assert (counter_parameter_proof / "keys" / f"increment_by.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (counter_parameter_proof / "zkir" / f"increment_by.{extension}").is_file()
+            for circuit in ("increment_by", "reset_round"):
+                for extension in ("prover", "verifier"):
+                    assert (counter_parameter_proof / "keys" / f"{circuit}.{extension}").is_file()
+                for extension in ("zkir", "bzkir"):
+                    assert (counter_parameter_proof / "zkir" / f"{circuit}.{extension}").is_file()
             cell_proof = base / "cell-proof"
             run(compiler, "--target", "rust", str(CELL_SOURCE), str(cell_proof))
             check_manifest(cell_proof)

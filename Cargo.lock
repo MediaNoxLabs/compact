@@ -1695,6 +1695,7 @@ dependencies = [
  "compact-rust-set-oracle-fixture",
  "compact-rust-set-size-oracle-fixture",
  "compact-rust-stateful-circuit-call-fixture",
+ "compact-rust-ternary-cond-oracle-fixture",
  "compact-rust-tiny-oracle-fixture",
  "compact-rust-uints-oracle-fixture",
  "compact-rust-vector-key-adt-fixture",

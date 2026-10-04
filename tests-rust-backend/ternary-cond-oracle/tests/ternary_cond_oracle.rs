@@ -14,9 +14,11 @@
 // limitations under the License.
 
 use compact_rust_ternary_cond_oracle_fixture::ledger_contract::{
-    initial_state, streamCompareEq, streamIncrement, streamWrite, walkerCallPure, walkerCompareEq,
-    walkerConstAnnotated, walkerStructMember, walkerWrite,
+    initial_state, recorded, streamCompareEq, streamIncrement, streamWrite, walkerCallPure,
+    walkerCompareEq, walkerConstAnnotated, walkerInlineWrite, walkerStructMember, walkerWrite,
 };
+#[path = "../../boolean_observation_assertions.rs"]
+mod boolean_observation_assertions;
 use compact_rust_ternary_cond_oracle_fixture::pure_circuits::{
     constAnnotatedBothLiteral, constUnannotatedSeqLifted, enumValued, returnTailNested,
 };
@@ -78,6 +80,86 @@ fn oracle() -> serde_json::Value {
 
 fn initial(c: bool, d: bool, x: u64) -> midnight_compact_runtime::context::ConstructorResult<()> {
     initial_state(ConstructorContext::new(()), c, d, Field::from(x)).unwrap()
+}
+
+#[test]
+fn conditional_counter_recordings_match_both_typescript_branches_and_replay() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/conditional-counter-oracle.json"
+    ))
+    .unwrap();
+    for (name, conditional, seed_flag) in [
+        ("streamWriteFalse", false, false),
+        ("streamWriteTrue", true, false),
+        ("walkerInlineWriteFalse", false, false),
+        ("walkerInlineWriteTrue", true, false),
+        ("streamConstAnnotatedFalse", false, false),
+        ("streamConstAnnotatedTrue", true, true),
+    ] {
+        let native = initial(true, true, 111).into_circuit_context(ContractAddress::default());
+        let recording = initial(true, true, 111).into_circuit_context(ContractAddress::default());
+        let native = if seed_flag {
+            native.write_cell(0, true).unwrap().context
+        } else {
+            native
+        };
+        let recording = if seed_flag {
+            recording.write_cell(0, true).unwrap().context
+        } else {
+            recording
+        };
+        let (native, recorded) = match name {
+            "streamWriteFalse" | "streamWriteTrue" => (
+                streamWrite(native, conditional, Field::from(777_u64)).unwrap(),
+                recorded::streamWrite(recording, conditional, Field::from(777_u64)).unwrap(),
+            ),
+            "walkerInlineWriteFalse" | "walkerInlineWriteTrue" => (
+                walkerInlineWrite(native, conditional).unwrap(),
+                recorded::walkerInlineWrite(recording, conditional).unwrap(),
+            ),
+            "streamConstAnnotatedFalse" | "streamConstAnnotatedTrue" => (
+                compact_rust_ternary_cond_oracle_fixture::ledger_contract::streamConstAnnotated(
+                    native,
+                )
+                .unwrap(),
+                recorded::streamConstAnnotated(recording).unwrap(),
+            ),
+            _ => unreachable!(),
+        };
+        boolean_observation_assertions::assert_ts_trace(name, &native, &recorded, &oracle[name]);
+        assert_eq!(
+            recorded.execution.context.query.effects, native.context.query.effects,
+            "{name}: effects"
+        );
+        assert_eq!(
+            recorded.execution.context.query.state.get_ref(),
+            native.context.query.state.get_ref(),
+            "{name}: state"
+        );
+        assert_eq!(
+            state_hex(recorded.execution.context.query.state.get_ref().clone()),
+            oracle[name]["stateHex"],
+            "{name}: TypeScript state"
+        );
+        let replay = recorded
+            .public
+            .initial()
+            .query(
+                recorded.public.verify_ops(),
+                None,
+                &recorded.execution.context.cost_model,
+            )
+            .unwrap();
+        assert_eq!(
+            replay.context.state.get_ref(),
+            native.context.query.state.get_ref(),
+            "{name}: replay state"
+        );
+        assert_eq!(
+            replay.context.effects, native.context.query.effects,
+            "{name}: replay effects"
+        );
+    }
 }
 
 #[test]

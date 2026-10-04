@@ -499,6 +499,11 @@ fn render_recorded_item(
         parameters: &HashMap<&str, (&Type, syn::Ident)>,
     ) -> Option<syn::Expr> {
         match value {
+            Expr::UnsignedCast { max, value }
+                if max == "65535" && matches!(value.as_ref(), Expr::If { .. }) =>
+            {
+                amount_source(value, locals, parameters)
+            }
             Expr::Coerce { value, ty }
                 if *ty
                     == (Type::Unsigned {
@@ -507,8 +512,32 @@ fn render_recorded_item(
             {
                 amount_source(value, locals, parameters)
             }
+            Expr::Coerce {
+                value,
+                ty: Type::Unsigned { max },
+            } if max.parse::<u128>().ok()? <= u16::MAX as u128 => {
+                amount_source(value, locals, parameters)
+            }
+            Expr::If {
+                condition,
+                then,
+                otherwise,
+            } => {
+                let condition = cell_source(condition, &Type::Boolean, locals, parameters)?;
+                let then = amount_source(then, locals, parameters)?;
+                let otherwise = amount_source(otherwise, locals, parameters)?;
+                Some(syn::parse_quote!(if #condition { #then } else { #otherwise }))
+            }
             Expr::UnsignedLiteral { value, max } if max == "65535" => {
                 let value = value.parse::<u16>().ok()?;
+                let literal = syn::LitInt::new(&format!("{value}u16"), Span::call_site());
+                Some(syn::parse_quote!(#literal))
+            }
+            Expr::UnsignedLiteral { value, max } => {
+                let value = value.parse::<u16>().ok()?;
+                if value as u128 > max.parse::<u128>().ok()? {
+                    return None;
+                }
                 let literal = syn::LitInt::new(&format!("{value}u16"), Span::call_site());
                 Some(syn::parse_quote!(#literal))
             }

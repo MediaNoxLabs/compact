@@ -47,6 +47,8 @@ pub fn assert_ts_trace(
                     json!({ "kind": "rem", "cached": rem["cached"] })
                 } else if let Some(dup) = operation.get("dup") {
                     json!({ "kind": "dup", "n": dup["n"] })
+                } else if let Some(addi) = operation.get("addi") {
+                    json!({ "kind": "addi", "immediate": addi["immediate"] })
                 } else if let Some(popeq) = operation.get("popeq") {
                     json!({
                         "kind": "popeq", "cached": popeq["cached"],

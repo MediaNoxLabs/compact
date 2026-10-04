@@ -56,6 +56,7 @@ use compact_rust_set_boolean_fixture::ledger_contract as set_contract;
 use compact_rust_set_oracle_fixture::ledger_contract as set_oracle_contract;
 use compact_rust_set_size_oracle_fixture::ledger_contract as set_size_contract;
 use compact_rust_stateful_circuit_call_fixture::ledger_contract as nested_contract;
+use compact_rust_ternary_cond_oracle_fixture::ledger_contract as conditional_counter_contract;
 use compact_rust_tiny_oracle_fixture::ledger_contract as tiny_contract;
 use compact_rust_uints_oracle_fixture::ledger_contract as uints_contract;
 use compact_rust_vector_key_adt_fixture::ledger_contract as vector_key_contract;
@@ -686,6 +687,56 @@ fn check_boolean_observation_proof(root: &Path) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+fn check_conditional_counter_proof(root: &Path) -> Result<(), Box<dyn Error>> {
+    let mut rng = StdRng::seed_from_u64(0x434f_4e44_434e_5452);
+    for (circuit, condition, expected_counter) in [
+        ("streamWrite", false, 2),
+        ("streamWrite", true, 1),
+        ("streamConstAnnotated", false, 2),
+    ] {
+        let initial = conditional_counter_contract::initial_state(
+            ConstructorContext::new(()),
+            true,
+            true,
+            Field::from(111_u64),
+        )?;
+        let deploy = make_deploy(
+            root,
+            circuit,
+            initial.ledger_state.get_ref().clone(),
+            &mut rng,
+        )?;
+        let context = initial.into_circuit_context(deploy.address());
+        let call = if circuit == "streamWrite" {
+            let recorded = conditional_counter_contract::recorded::streamWrite(
+                context,
+                condition,
+                Field::from(777_u64),
+            )?;
+            check_generated_trace(root, circuit, recorded, (condition, Field::from(777_u64)))?
+        } else {
+            let recorded = conditional_counter_contract::recorded::streamConstAnnotated(context)?;
+            check_generated_trace(root, circuit, recorded, ())?
+        };
+        check_transaction(root, circuit, deploy, call, &mut rng, |state| {
+            let StateValue::Array(fields) = state.data.get_ref() else {
+                return Err("conditional Counter state is not an array".into());
+            };
+            let expected_field: u64 = if circuit == "streamWrite" { 777 } else { 1 };
+            if read_cell::<Field, _>(fields.get(1).ok_or("Field Cell missing")?)?
+                != Field::from(expected_field)
+            {
+                return Err(format!("{circuit} proof stored the wrong Field").into());
+            }
+            if read_counter(fields.get(4).ok_or("Counter missing")?)? != expected_counter {
+                return Err(format!("{circuit} proof used the wrong Counter amount").into());
+            }
+            Ok(())
+        })?;
+    }
+    Ok(())
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     let mut arguments = env::args_os().skip(1);
     let first = arguments.next();
@@ -708,6 +759,17 @@ fn main() -> Result<(), Box<dyn Error>> {
             );
         }
         return check_boolean_observation_proof(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--conditional-counter")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --conditional-counter <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err(
+                "usage: compact-rust-proof-smoke --conditional-counter <proof-output>".into(),
+            );
+        }
+        return check_conditional_counter_proof(Path::new(&root));
     }
     if first.as_deref() == Some(OsStr::new("--merkle-verify")) {
         let root = arguments

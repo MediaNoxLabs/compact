@@ -1244,7 +1244,10 @@
                                                  (cons "ty" (type-ir formal-type src))))
                                        expr* formal-types)))))]
                [(eq-hashtable-ref native-witness-ids function-name #f)
-                (source-errorf src "Rust backend does not yet support value-bearing native witness calls")]
+                (unless (and (eq? name 'ownPublicKey) (null? expr*))
+                  (source-errorf src "Rust backend does not yet support this native witness expression"))
+                (object (cons "kind" "native_witness_call")
+                        (cons "builtin" "own_public_key"))]
                [(memq name '(transientHash persistentHash keccak256 degradeToTransient upgradeFromTransient
                               hashToCurve jubjubPointX jubjubPointY ecNeg jubjubScalarFromNative))
                 (unless (= (length expr*) 1)
@@ -1456,6 +1459,9 @@
           [(var-ref ,src ,var-name)
            (object (cons "kind" "expression")
                    (cons "value" (expression-ir return-expr src)))]
+          [(elt-ref ,src ,expr ,elt-name ,nat)
+           (object (cons "kind" "expression")
+                   (cons "value" (stateful-expression-ir return-expr src witness-ids)))]
           [(call ,src ,function-name ,expr* ...)
            (if (or (eq-hashtable-ref witness-ids function-name #f)
                    (memq (id-sym function-name)
@@ -1976,7 +1982,7 @@
            (source-errorf src "Rust backend found multiple constructors"))
          (print-json
            (get-target-port 'rust.ir.json)
-           (append (object (cons "schema_version" 10)
+           (append (object (cons "schema_version" 11)
                    (cons "type_aliases"
                          (list->vector (fold-right type-alias-ir '() pelt*)))
                    (cons "ledger_fields"

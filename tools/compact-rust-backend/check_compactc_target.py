@@ -30,6 +30,7 @@ import tomllib
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "examples/rust_backend/counter.compact"
 PM_19252_SOURCE = ROOT / "examples/bugs/pm-19252/example_ten.compact"
+NATIVE_KEY_VALUE_SOURCE = ROOT / "examples/rust_backend/native_own_public_key_value.compact"
 COUNTER_PARAMETER_SOURCE = ROOT / "examples/rust_backend/counter_parameter.compact"
 BOUNDED_UINT_SOURCE = ROOT / "examples/rust_backend/bounded_uint_oracle.compact"
 UINTS_SOURCE = ROOT / "examples/rust_backend/uints_oracle.compact"
@@ -1065,7 +1066,7 @@ def main() -> None:
         assert all(c["proof_required"] is True and c["recording_status"] == "available"
                    for c in capabilities["circuits"])
         rust_ir = json.loads((rust / "contract/compact-rust-ir.json").read_text())
-        assert rust_ir["schema_version"] == 9
+        assert rust_ir["schema_version"] == 10
         native_output = base / "native-own-public-key"
         run(compiler, "--target", "rust", "--skip-zk", str(PM_19252_SOURCE), str(native_output))
         native_contract = native_output / "contract"
@@ -1088,6 +1089,29 @@ def main() -> None:
         assert "context.own_coin_public_key()?" in native_source
         assert "pub fn test1<Private>(" in native_source
         assert "pub fn test1<Private, W:" not in native_source
+        native_value_output = base / "native-own-public-key-value"
+        run(compiler, "--target", "rust", "--skip-zk", str(NATIVE_KEY_VALUE_SOURCE),
+            str(native_value_output))
+        native_value_contract = native_value_output / "contract"
+        native_value_ir = json.loads((native_value_contract / "compact-rust-ir.json").read_text())
+        assert native_value_ir["schema_version"] == 10
+        assert native_value_ir["witnesses"] == []
+        assert [(c["name"], c["return_value"]["value"]["kind"])
+                for c in native_value_ir["stateful_circuits"]] == [
+            ("key", "native_witness_call"), ("key_bytes", "struct_field")
+        ]
+        assert native_value_ir["stateful_circuits"][1]["return_value"]["value"]["value"] == {
+            "kind": "native_witness_call", "builtin": "own_public_key"
+        }
+        native_value_capability = json.loads((native_value_contract / "rust-capabilities.json").read_text())
+        assert [(c["name"], c["proof_required"], c["recording_status"])
+                for c in native_value_capability["circuits"]] == [
+            ("key", False, "not_applicable"), ("key_bytes", False, "not_applicable")
+        ]
+        native_value_source = (native_value_contract / "lib.rs").read_text()
+        assert native_value_source.count("context.own_coin_public_key()?") == 2
+        assert "pub fn key<Private, W:" not in native_value_source
+        assert "pub fn key_bytes<Private, W:" not in native_value_source
         round_field = next(field for field in rust_ir["ledger_fields"] if field["id"] == "round")
         assert round_field["source"]["file"] == SOURCE.name
         assert (round_field["source"]["line"], round_field["source"]["column"]) == (18, 1)
@@ -1105,7 +1129,7 @@ def main() -> None:
             output = base / f"source-{name}"
             run(compiler, "--target", "rust", "--skip-zk", str(source), str(output))
             emitted = json.loads((output / "contract/compact-rust-ir.json").read_text())
-            assert emitted["schema_version"] == 9
+            assert emitted["schema_version"] == 10
             owners = emitted[key]
             if isinstance(owners, dict):
                 owners = [owners]

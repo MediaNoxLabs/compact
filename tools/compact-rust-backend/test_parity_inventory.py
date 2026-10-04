@@ -42,7 +42,7 @@ class ParityInventoryTests(unittest.TestCase):
         self.assertEqual(len(entries), 5)
         self.assertEqual(source_scope.cohort_membership_failures(manifest), [])
         self.assertEqual({entry["expected_rust"] for entry in entries}, {"success", "rejection"})
-        self.assertEqual(sum(entry["expected_rust"] == "success" for entry in entries), 1)
+        self.assertEqual(sum(entry["expected_rust"] == "success" for entry in entries), 4)
         self.assertEqual(sum(len(entry["proof_circuits"]) for entry in entries), 5)
         self.assertTrue(all(circuit == {"name": circuit["name"], "pure": False, "proof": True}
                             for entry in entries for circuit in entry["proof_circuits"]))
@@ -417,14 +417,14 @@ metadata.mkdir()
             (root / "Cargo.lock").write_text('''[[package]]\nname = "midnight-ledger"\nversion = "8.0.3"\nchecksum = "abc"\n''')
             ir = root / "tools/compact-rust-backend/src/ir.rs"
             ir.parent.mkdir(parents=True)
-            ir.write_text("pub const SCHEMA_VERSION: u32 = 9;\n")
+            ir.write_text("pub const SCHEMA_VERSION: u32 = 11;\n")
             runtime = root / "runtime-rs/src/lib.rs"
             runtime.parent.mkdir(parents=True)
             runtime.write_text("pub const RUST_RUNTIME_ABI: u32 = 37;\n")
             result = inventory.make_inventory(root, [], None)
             self.assertNotIn("receipt_metadata", result)
             metadata = inventory.receipt_metadata(root, None, result["contracts"])
-            self.assertEqual(metadata["rust_ir_schema"], 9)
+            self.assertEqual(metadata["rust_ir_schema"], 11)
             self.assertEqual(metadata["rust_runtime_abi"], 37)
             self.assertEqual(metadata["upstream_packages"]["midnight-ledger"],
                              {"version": "8.0.3", "checksum": "abc"})

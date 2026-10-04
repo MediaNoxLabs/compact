@@ -22,7 +22,7 @@
 
 use serde::{Deserialize, Serialize};
 
-pub const SCHEMA_VERSION: u32 = 10;
+pub const SCHEMA_VERSION: u32 = 11;
 
 /// A Compact source position, independent of the compiler checkout path.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
@@ -472,6 +472,20 @@ pub enum NativeWitnessBuiltin {
     OwnPublicKey,
 }
 
+impl NativeWitnessBuiltin {
+    pub fn result_type(self) -> Type {
+        match self {
+            Self::OwnPublicKey => Type::Struct {
+                name: "ZswapCoinPublicKey".into(),
+                fields: vec![StructField {
+                    name: "bytes".into(),
+                    ty: Type::Bytes { length: 32 },
+                }],
+            },
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum CounterAmount {
@@ -760,6 +774,9 @@ pub enum Expr {
     WitnessCall {
         name: String,
         arguments: Vec<Expr>,
+    },
+    NativeWitnessCall {
+        builtin: NativeWitnessBuiltin,
     },
     Add {
         left: Box<Expr>,

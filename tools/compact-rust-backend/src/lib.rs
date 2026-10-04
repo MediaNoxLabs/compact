@@ -802,6 +802,9 @@ fn collect_expression_types(
         | Expr::BytesLiteral { .. }
         | Expr::UnsignedLiteral { .. }
         | Expr::Parameter { .. } => {}
+        Expr::NativeWitnessCall { builtin } => {
+            collect_named_types(&builtin.result_type(), structs, enums)?;
+        }
         Expr::KernelSelf { ty } => collect_named_types(ty, structs, enums)?,
         Expr::SetSize { .. }
         | Expr::SetIsEmpty { .. }
@@ -2013,6 +2016,7 @@ fn expression_with_calls(
             ))
         }
         Expr::WitnessCall { .. }
+        | Expr::NativeWitnessCall { .. }
         | Expr::SetMember { .. }
         | Expr::MapMember { .. }
         | Expr::MapLookup { .. }

@@ -530,6 +530,26 @@ pub(crate) fn render_state_expression(
                 true,
             ))
         }
+        Expr::NativeWitnessCall {
+            builtin: NativeWitnessBuiltin::OwnPublicKey,
+        } => {
+            let value_name = syn::Ident::new(
+                &format!("__compact_native_key_{}", *next_temp),
+                Span::call_site(),
+            );
+            *next_temp += 1;
+            statements.push(syn::parse_quote! {
+                let #value_name = context.own_coin_public_key()?;
+            });
+            statements.push(syn::parse_quote! {
+                private_transcript_outputs.extend([runtime::fab::AlignedValue::from(#value_name)]);
+            });
+            Ok((
+                syn::parse_quote!(crate::types::ZswapCoinPublicKey { bytes: runtime::FixedBytes::new(#value_name) }),
+                NativeWitnessBuiltin::OwnPublicKey.result_type(),
+                false,
+            ))
+        }
         Expr::TransientHash { value: input }
         | Expr::PersistentHash { value: input }
         | Expr::Keccak256 { value: input }
@@ -1385,12 +1405,84 @@ fn action_emits_native_private_output(action: &StateAction) -> bool {
         StateAction::NativeWitnessCall { .. } => true,
         StateAction::Sequence { actions } => actions.iter().any(action_emits_native_private_output),
         StateAction::If {
-            then, otherwise, ..
+            condition,
+            then,
+            otherwise,
         } => {
-            action_emits_native_private_output(then)
+            expression_contains_native_witness(condition)
+                || action_emits_native_private_output(then)
                 || action_emits_native_private_output(otherwise)
         }
-        StateAction::Let { action, .. } => action_emits_native_private_output(action),
+        StateAction::Let { bindings, action } => {
+            bindings
+                .iter()
+                .any(|binding| expression_contains_native_witness(&binding.value))
+                || action_emits_native_private_output(action)
+        }
+        StateAction::Expression { value }
+        | StateAction::CellWrite { value, .. }
+        | StateAction::SetInsert { value, .. }
+        | StateAction::SetRemove { value, .. }
+        | StateAction::ListPushFront { value, .. }
+        | StateAction::MerkleInsert { value, .. }
+        | StateAction::MerkleInsertHash { hash: value, .. }
+        | StateAction::MerkleInsertIndexDefault {
+            position: value, ..
+        }
+        | StateAction::HistoricMerkleInsert { value, .. }
+        | StateAction::HistoricMerkleInsertHash { hash: value, .. }
+        | StateAction::HistoricMerkleInsertIndexDefault {
+            position: value, ..
+        }
+        | StateAction::MapInsertDefault { key: value, .. }
+        | StateAction::MapRemove { key: value, .. } => expression_contains_native_witness(value),
+        StateAction::PureCall { arguments, .. } | StateAction::CircuitCall { arguments, .. } => {
+            arguments.iter().any(expression_contains_native_witness)
+        }
+        StateAction::Assert { condition, .. } => expression_contains_native_witness(condition),
+        StateAction::MapInsert { key, value, .. } => {
+            expression_contains_native_witness(key) || expression_contains_native_witness(value)
+        }
+        StateAction::MerkleInsertIndex {
+            value, position, ..
+        }
+        | StateAction::MerkleInsertHashIndex {
+            hash: value,
+            position,
+            ..
+        }
+        | StateAction::HistoricMerkleInsertIndex {
+            value, position, ..
+        }
+        | StateAction::HistoricMerkleInsertHashIndex {
+            hash: value,
+            position,
+            ..
+        } => {
+            expression_contains_native_witness(value)
+                || expression_contains_native_witness(position)
+        }
+        _ => false,
+    }
+}
+
+fn expression_contains_native_witness(expression: &Expr) -> bool {
+    expression_contains(expression, &|value| {
+        matches!(value, Expr::NativeWitnessCall { .. })
+    })
+}
+
+fn return_contains_native_witness(value: &StateReturn) -> bool {
+    match value {
+        StateReturn::Expression { value }
+        | StateReturn::SetMember { value, .. }
+        | StateReturn::HistoricMerkleCheckRoot { root: value, .. }
+        | StateReturn::MerkleCheckRoot { root: value, .. } => {
+            expression_contains_native_witness(value)
+        }
+        StateReturn::MapMember { key, .. } | StateReturn::MapLookup { key, .. } => {
+            expression_contains_native_witness(key)
+        }
         _ => false,
     }
 }
@@ -1406,7 +1498,8 @@ fn circuit_emits_native_private_output(
     let mut effect = circuit
         .actions
         .iter()
-        .any(action_emits_native_private_output);
+        .any(action_emits_native_private_output)
+        || return_contains_native_witness(&circuit.return_value);
     for (name, callee) in circuits {
         if circuit
             .actions
@@ -1546,6 +1639,7 @@ fn expression_contains(expression: &Expr, predicate: &impl Fn(&Expr) -> bool) ->
         | Expr::UnsignedSubtract { left, right, .. }
         | Expr::UnsignedMultiply { left, right, .. } => visit(left) || visit(right),
         Expr::Unit
+        | Expr::NativeWitnessCall { .. }
         | Expr::Default { .. }
         | Expr::Boolean { .. }
         | Expr::FieldLiteral { .. }

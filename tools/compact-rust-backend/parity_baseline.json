@@ -3058,6 +3058,22 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/native_own_public_key_value.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "key",
+    "signature": "export circuit key(): ZswapCoinPublicKey",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/native_own_public_key_value.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "key_bytes",
+    "signature": "export circuit key_bytes(): Bytes<32>",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/chunked_set_observed.compact",
     "module_path": [],
     "kind": "circuit",

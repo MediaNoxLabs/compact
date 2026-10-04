@@ -214,7 +214,7 @@ Compact spelling without warning in consumer builds.
 | Boundary | Current contract | Failure behavior |
 |---|---|---|
 | Compact compiler | Toolchain 0.31.133, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
-| Rust IR | Schema 9, private to this backend | The renderer rejects any other schema before writing `lib.rs`. Schema 9 distinguishes native witness actions from user circuit calls. Ledger, circuit, witness, constructor, and exported alias declarations carry optional Compact source locations for diagnostics. |
+| Rust IR | Schema 10, private to this backend | The renderer rejects any other schema before writing `lib.rs`. Schema 10 distinguishes native witness expressions from user witness calls, and schema 9 distinguishes native witness actions from user circuit calls. Ledger, circuit, witness, constructor, and exported alias declarations carry optional Compact source locations for diagnostics. |
 | Generated code and Rust runtime | ABI 37 | Generated modules assert the ABI at Rust compile time. ABI 37 adds a caller coin key for native `ownPublicKey()` and its private output; ABI 36 adds recorded plain Merkle root checks through typed slots; ABI 35 adds recorded Counter reset through typed slots; ABI 34 adds recorded direct plain/historic Merkle fullness reads; ABI 33 adds typed local plain/historic Merkle views with checked depth; ABI 32 adds List views; ABI 31 adds cell-valued Map views; ABI 30 adds Set views; ABI 29 adds Cell/Counter views; ABI 25–28 add physical List paths, chunked Map and Cell calls, and Cell-read scalar returns; ABI 21–24 add typed multi-argument observed calls and composite/chunked Set calls. The [runtime guide](../../runtime-rs/README.md) records earlier ABI changes. |
 | Rust runtime source | Bundled runtime crates or an explicit shared source root | Cargo resolves the matching runtime and its pinned Midnight crates. |
 
@@ -222,6 +222,14 @@ Compact spelling without warning in consumer builds.
 compatibility contract is the ABI assertion and matching source packages. The
 generated `Cargo.toml` has `publish = false` because it is a contract-specific
 artifact. Change the runtime source only alongside an ABI and consumer test review.
+
+`ownPublicKey()` can be used as a returned value or inside an expression such
+as `ownPublicKey().bytes`. The generated circuit reads the key from its
+`CircuitContext`, returns the named `ZswapCoinPublicKey` type where applicable,
+and emits one aligned private FAB output per call. Callers pass the key with
+`context.with_coin_public_key_bytes(key)`; they do not implement a user witness
+for this native. These circuits are proof false in the pinned TypeScript
+compiler, so recording and observed calls are not applicable.
 
 ### Inspecting public state
 

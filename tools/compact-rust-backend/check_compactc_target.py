@@ -1048,6 +1048,9 @@ def main() -> None:
     args = parser.parse_args()
     # Captured Rust errors are asserted below; runner color settings must not split their text.
     os.environ["CARGO_TERM_COLOR"] = "never"
+    # Proof-smoke cargo invocations also need the isolated consumer target when
+    # this check runs directly rather than through local_parity_gate.py.
+    os.environ.setdefault("CARGO_TARGET_DIR", str(ROOT / "target/compactc-consumer"))
     compiler = os.environ.get("COMPACTC", "compactc")
     with tempfile.TemporaryDirectory(prefix="compactc-target-") as temporary:
         base = Path(temporary)

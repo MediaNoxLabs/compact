@@ -1096,7 +1096,7 @@ fn expression_with_calls(
             };
             let result = elements
                 .get(*index)
-                .ok_or_else(|| RenderError::InvalidTupleIndex(*index))?
+                .ok_or(RenderError::InvalidTupleIndex(*index))?
                 .clone();
             let index = syn::Index::from(*index);
             Ok((syn::parse_quote!((#value).#index), result))
@@ -1850,6 +1850,10 @@ fn constructor_step_uses_witness(
     }
 }
 
+#[expect(
+    clippy::too_many_arguments,
+    reason = "constructor VM lowering threads declarations and ordered loop and temporary state explicitly"
+)]
 fn render_constructor_vm_steps<'a>(
     steps: &'a [ConstructorStep],
     ledger_fields: &HashMap<&str, &ir::LedgerField>,
@@ -2514,10 +2518,9 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
         }
         if let LedgerFieldKind::MerkleTree { depth, .. }
         | LedgerFieldKind::HistoricMerkleTree { depth, .. } = field.declaration
+            && !(2..=32).contains(&depth)
         {
-            if !(2..=32).contains(&depth) {
-                return Err(RenderError::InvalidMerkleTreeDepth(depth).at(field.source.as_ref()));
-            }
+            return Err(RenderError::InvalidMerkleTreeDepth(depth).at(field.source.as_ref()));
         }
         if ledger_fields.insert(field.id.as_str(), *field).is_some() {
             return Err(

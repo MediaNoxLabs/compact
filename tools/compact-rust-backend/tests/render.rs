@@ -1119,7 +1119,7 @@ fn nested_set_query_in_cell_write_checks_field_and_item_types() {
         let Expr::SetMember { value: item, .. } = value else {
             unreachable!()
         };
-        *item = Box::new(Expr::Boolean { value: true });
+        **item = Expr::Boolean { value: true };
         value.clone()
     };
     assert_eq!(
@@ -1682,8 +1682,8 @@ fn conditional_requires_boolean_condition_and_equal_branch_types() {
     else {
         unreachable!()
     };
-    *condition = Box::new(Expr::Boolean { value: true });
-    *otherwise = Box::new(Expr::Boolean { value: false });
+    **condition = Expr::Boolean { value: true };
+    **otherwise = Expr::Boolean { value: false };
     assert_eq!(
         render(&contract),
         Err(RenderError::TypeMismatch {

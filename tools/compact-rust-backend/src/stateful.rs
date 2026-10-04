@@ -28,6 +28,10 @@ use crate::{
     unsigned_cast_syntax, unsigned_maximum,
 };
 
+#[expect(
+    clippy::too_many_arguments,
+    reason = "state expression lowering threads typed declarations and ordered query effects explicitly"
+)]
 pub(crate) fn render_state_expression(
     value: &Expr,
     parameters: &HashMap<&str, (&Type, syn::Ident)>,
@@ -135,7 +139,7 @@ pub(crate) fn render_state_expression(
             };
             let result = elements
                 .get(*index)
-                .ok_or_else(|| RenderError::InvalidTupleIndex(*index))?
+                .ok_or(RenderError::InvalidTupleIndex(*index))?
                 .clone();
             let index = syn::Index::from(*index);
             Ok((syn::parse_quote!((#value).#index), result, witness_effect))
@@ -2838,21 +2842,12 @@ pub(crate) fn render_stateful_circuit(
                     actual: circuit.result.clone(),
                 });
             }
-            if is_map {
-                let slot = ident(&declaration.id)?;
-                let method = if is_size { "size" } else { "is_empty" };
-                let method = syn::Ident::new(method, Span::call_site());
-                statements.push(syn::parse_quote!(
-                    let read_step = crate::ledger_slots::#slot.#method(context)?;
-                ));
-            } else {
-                let slot = ident(&declaration.id)?;
-                let method = if is_size { "size" } else { "is_empty" };
-                let method = syn::Ident::new(method, Span::call_site());
-                statements.push(syn::parse_quote!(
-                    let read_step = crate::ledger_slots::#slot.#method(context)?;
-                ));
-            }
+            let slot = ident(&declaration.id)?;
+            let method = if is_size { "size" } else { "is_empty" };
+            let method = syn::Ident::new(method, Span::call_site());
+            statements.push(syn::parse_quote!(
+                let read_step = crate::ledger_slots::#slot.#method(context)?;
+            ));
             statements.push(syn::parse_quote! {
                 let context = read_step.context;
             });

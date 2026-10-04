@@ -459,6 +459,10 @@ fn render_recorded_item(
 
     /// Lower a Field expression together with its ordered recording effects.
     /// The returned syntax refers only to values already evaluated in `steps`.
+    #[expect(
+        clippy::too_many_arguments,
+        reason = "recursive expression lowering threads typed lookups and ordered recording state explicitly"
+    )]
     fn field_expression(
         value: &Expr,
         locals: &HashMap<String, syn::Expr>,
@@ -796,6 +800,10 @@ fn render_recorded_item(
         }
     }
 
+    #[expect(
+        clippy::too_many_arguments,
+        reason = "recursive expression lowering threads typed lookups and ordered recording state explicitly"
+    )]
     fn boolean_expression(
         value: &Expr,
         locals: &HashMap<String, syn::Expr>,
@@ -1039,6 +1047,10 @@ fn render_recorded_item(
         }
     }
 
+    #[expect(
+        clippy::too_many_arguments,
+        reason = "recursive expression lowering threads typed lookups and ordered recording state explicitly"
+    )]
     fn scalar_expression(
         value: &Expr,
         ty: &Type,
@@ -1087,6 +1099,10 @@ fn render_recorded_item(
 
     /// Keep shared Unit and value-returning helpers on the same typed argument path.
     /// `field_expression` appends effects before the caller binds each argument.
+    #[expect(
+        clippy::too_many_arguments,
+        reason = "shared callee arguments reuse recursive lowering context and ordered recording state"
+    )]
     fn shared_call_argument(
         argument: &Expr,
         ty: &Type,
@@ -1138,6 +1154,10 @@ fn render_recorded_item(
     }
 
     /// Reuse one typed callee body without opening or finishing another frame.
+    #[expect(
+        clippy::too_many_arguments,
+        reason = "shared callee lowering keeps declaration context and ordered recording state explicit"
+    )]
     fn shared_field_call(
         name: &str,
         arguments: &[Expr],
@@ -1200,6 +1220,10 @@ fn render_recorded_item(
         Ok(Some(syn::parse_quote!(#observed)))
     }
 
+    #[expect(
+        clippy::too_many_arguments,
+        reason = "recursive action lowering keeps typed declarations and ordered recording state explicit"
+    )]
     fn append_steps(
         action: &StateAction,
         locals: &HashMap<String, syn::Expr>,
@@ -1245,26 +1269,26 @@ fn render_recorded_item(
                         };
                         scoped.insert(binding.name.clone(), value);
                     } else if binding.ty == Type::Field {
-                        if let Expr::Call { name, arguments } = &binding.value {
-                            if shared_callees.contains(name) {
-                                let Some(observed) = shared_field_call(
-                                    name,
-                                    arguments,
-                                    &scoped,
-                                    parameters,
-                                    ledger_fields,
-                                    witnesses,
-                                    circuits,
-                                    steps,
-                                    next_temp,
-                                    visiting,
-                                )?
-                                else {
-                                    return Ok(false);
-                                };
-                                scoped.insert(binding.name.clone(), observed);
-                                continue;
-                            }
+                        if let Expr::Call { name, arguments } = &binding.value
+                            && shared_callees.contains(name)
+                        {
+                            let Some(observed) = shared_field_call(
+                                name,
+                                arguments,
+                                &scoped,
+                                parameters,
+                                ledger_fields,
+                                witnesses,
+                                circuits,
+                                steps,
+                                next_temp,
+                                visiting,
+                            )?
+                            else {
+                                return Ok(false);
+                            };
+                            scoped.insert(binding.name.clone(), observed);
+                            continue;
                         }
                         let Some(value) = field_expression(
                             &binding.value,
@@ -2050,6 +2074,10 @@ fn render_recorded_item(
                     otherwise,
                 },
         } => {
+            #[expect(
+                clippy::too_many_arguments,
+                reason = "branch lowering threads typed circuit context and recursive state explicitly"
+            )]
             fn pure_branch(
                 value: &Expr,
                 expected: &Type,

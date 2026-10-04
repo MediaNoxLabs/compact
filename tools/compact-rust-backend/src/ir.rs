@@ -498,9 +498,10 @@ pub struct LocalBinding {
     pub value: Expr,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Type {
+    #[default]
     Unit,
     Boolean,
     Field,
@@ -534,12 +535,6 @@ pub enum Type {
         key: Box<Type>,
         value: Box<Type>,
     },
-}
-
-impl Default for Type {
-    fn default() -> Self {
-        Self::Unit
-    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]

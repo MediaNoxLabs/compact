@@ -106,10 +106,11 @@ fn select_targets(args: Vec<OsString>) -> Result<(Targets, Vec<OsString>), Strin
         }
         let selected = if argument == "--target" {
             Some(arguments.next().ok_or("--target needs ts or rust")?)
-        } else if let Some(value) = argument.to_str().and_then(|s| s.strip_prefix("--target=")) {
-            Some(OsString::from(value))
         } else {
-            None
+            argument
+                .to_str()
+                .and_then(|s| s.strip_prefix("--target="))
+                .map(OsString::from)
         };
         if let Some(selected) = selected {
             targets.explicit = true;

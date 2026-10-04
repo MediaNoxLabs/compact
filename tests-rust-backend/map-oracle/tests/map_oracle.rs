@@ -40,7 +40,7 @@ fn exact_map_oracle_matches_typescript_insertion_and_replacement() {
     ))
     .unwrap();
     let initial = initial_state(ConstructorContext::new(())).unwrap();
-    assert!(PublicStateView::from(&initial).table().unwrap().is_empty());
+    assert!(PublicStateView::from(&initial).m().unwrap().is_empty());
     assert_eq!(
         state_hex(initial.ledger_state.get_ref().clone()),
         oracle["afterInit"]
@@ -89,7 +89,7 @@ fn exact_map_oracle_matches_typescript_insertion_and_replacement() {
         view.lookup(runtime::Field::from(8_u64)).unwrap(),
         runtime::Field::from(13_u64)
     );
-    let typed = PublicStateView::from(&distinct).table().unwrap();
+    let typed = PublicStateView::from(&distinct).m().unwrap();
     assert_eq!(typed.size().unwrap(), view.size().unwrap());
     assert_eq!(
         typed.lookup(runtime::Field::from(7_u64)).unwrap(),

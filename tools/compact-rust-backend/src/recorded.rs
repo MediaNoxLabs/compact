@@ -1696,6 +1696,75 @@ fn render_recorded_item(
                             })?;
                         });
                         scoped.insert(binding.name.clone(), syn::parse_quote!(#value));
+                    } else if let (
+                        Type::Bytes { length: 32 },
+                        Expr::PersistentCommit { value, opening },
+                    ) = (&binding.ty, &binding.value)
+                    {
+                        if !matches!(value.as_ref(), Expr::FieldLiteral { .. }) {
+                            return Ok(RecordingOutcome::Unsupported(RecordingGap::expression(
+                                value,
+                                format!("{path}.bindings[{binding_index}].value.value"),
+                            )));
+                        }
+                        let Expr::CellRead { field, index } = opening.as_ref() else {
+                            return Ok(RecordingOutcome::Unsupported(RecordingGap::expression(
+                                opening,
+                                format!("{path}.bindings[{binding_index}].value.opening"),
+                            )));
+                        };
+                        let declaration = ledger_fields
+                            .get(field.as_str())
+                            .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                        if declaration.declaration
+                            != (LedgerFieldKind::Cell {
+                                ty: Type::Bytes { length: 32 },
+                            })
+                            || declaration.index != *index
+                        {
+                            return Ok(RecordingOutcome::Unsupported(RecordingGap::expression(
+                                opening,
+                                format!("{path}.bindings[{binding_index}].value.opening"),
+                            )));
+                        }
+                        let Some(field_value) = field_expression(
+                            value,
+                            &scoped,
+                            parameters,
+                            ledger_fields,
+                            witnesses,
+                            circuits,
+                            shared_callees,
+                            steps,
+                            next_temp,
+                            visiting,
+                        )?
+                        else {
+                            return Ok(RecordingOutcome::Unsupported(RecordingGap::expression(
+                                value,
+                                format!("{path}.bindings[{binding_index}].value.value"),
+                            )));
+                        };
+                        let slot = ident(field)?;
+                        let opening_value = syn::Ident::new(
+                            &format!("__compact_recorded_opening_{}", *next_temp),
+                            Span::call_site(),
+                        );
+                        *next_temp += 1;
+                        let committed = syn::Ident::new(
+                            &format!("__compact_recorded_commitment_{}", *next_temp),
+                            Span::call_site(),
+                        );
+                        *next_temp += 1;
+                        steps.push(syn::parse_quote! {
+                            let (frame, #opening_value): (_, runtime::FixedBytes<32>) =
+                                crate::ledger_slots::#slot.record_read(frame)?;
+                        });
+                        steps.push(syn::parse_quote! {
+                            let #committed: runtime::FixedBytes<32> =
+                                runtime::persistent_commit(#field_value, #opening_value);
+                        });
+                        scoped.insert(binding.name.clone(), syn::parse_quote!(#committed));
                     } else if let Expr::Call { name, arguments } = &binding.value {
                         if !matches!(binding.ty, Type::Bytes { .. })
                             || circuits.contains_key(name.as_str())

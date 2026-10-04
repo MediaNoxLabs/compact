@@ -729,19 +729,162 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
+    /// Circuits with a replayable ordered ledger program.
+    pub mod recorded {
+        use midnight_compact_runtime as runtime;
+        pub fn commitSmall<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_recorded_opening_0): (_, runtime::FixedBytes<32>) =
+                crate::ledger_slots::opening.record_read(frame)?;
+            let __compact_recorded_commitment_1: runtime::FixedBytes<32> =
+                runtime::persistent_commit(
+                    runtime::Field::from(5u128),
+                    __compact_recorded_opening_0,
+                );
+            let frame = crate::ledger_slots::commitCell
+                .record_write(frame, __compact_recorded_commitment_1)?;
+            Ok(frame.finish(()))
+        }
+        pub fn commitU128<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_recorded_opening_0): (_, runtime::FixedBytes<32>) =
+                crate::ledger_slots::opening.record_read(frame)?;
+            let __compact_recorded_commitment_1: runtime::FixedBytes<32> =
+                runtime::persistent_commit(
+                    runtime::Field::from(1267650600228229401496703205376u128),
+                    __compact_recorded_opening_0,
+                );
+            let frame = crate::ledger_slots::commitCell
+                .record_write(frame, __compact_recorded_commitment_1)?;
+            Ok(frame.finish(()))
+        }
+        pub fn commitFieldOnly<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_recorded_opening_0): (_, runtime::FixedBytes<32>) =
+                crate::ledger_slots::opening.record_read(frame)?;
+            let __compact_recorded_commitment_1: runtime::FixedBytes<32> =
+                runtime::persistent_commit(
+                    runtime::Field::from_le_bytes(&[
+                        151u8, 229u8, 222u8, 218u8, 203u8, 225u8, 18u8, 90u8, 16u8, 2u8, 153u8,
+                        121u8, 18u8, 4u8, 205u8, 20u8, 96u8, 135u8, 38u8, 32u8, 96u8, 231u8, 204u8,
+                        32u8, 245u8, 117u8, 166u8, 76u8, 157u8, 182u8, 207u8, 1u8,
+                    ])
+                    .expect("validated Compact Field literal"),
+                    __compact_recorded_opening_0,
+                );
+            let frame = crate::ledger_slots::commitCell
+                .record_write(frame, __compact_recorded_commitment_1)?;
+            Ok(frame.finish(()))
+        }
+        /// Typed handle for circuits with a complete recorded trace.
+        pub struct Contract;
+        impl Contract {
+            pub fn commitSmall<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::commitSmall(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn commitSmall_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.commitSmall(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "commitSmall",
+                    input,
+                ))
+            }
+            pub fn commitU128<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::commitU128(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn commitU128_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.commitU128(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "commitU128",
+                    input,
+                ))
+            }
+            pub fn commitFieldOnly<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::commitFieldOnly(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn commitFieldOnly_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.commitFieldOnly(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "commitFieldOnly",
+                    input,
+                ))
+            }
+        }
+    }
     /// Groups the contract's exported circuits for Rust consumers.
     pub struct Contract<W> {
         #[allow(dead_code)]
         witnesses: W,
+        pub recording: recorded::Contract,
     }
     impl<W> From<W> for Contract<W> {
         fn from(witnesses: W) -> Self {
-            Self { witnesses }
+            Self {
+                witnesses,
+                recording: recorded::Contract,
+            }
         }
     }
     impl Default for Contract<()> {
         fn default() -> Self {
-            Self { witnesses: () }
+            Self {
+                witnesses: (),
+                recording: recorded::Contract,
+            }
         }
     }
     impl<W> Contract<W> {
@@ -846,6 +989,10 @@ pub mod ledger_contract {
             context: runtime::context::CircuitContext<Private>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
             crate::ledger_contract::hashTransientVec(context)
+        }
+        /// Access replayable circuit calls for this contract.
+        pub fn recording(&self) -> &recorded::Contract {
+            &self.recording
         }
     }
 }

@@ -290,13 +290,13 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_vector_0: runtime::FixedVector<runtime::Field, 2> =
+            let __compact_recorded_static_0: runtime::FixedVector<runtime::Field, 2> =
                 runtime::FixedVector::new([
                     runtime::Field::from(0u128),
                     runtime::Field::from(1u128),
                 ]);
             let frame = crate::ledger_slots::keys
-                .record_insert(frame, (__compact_recorded_vector_0).clone())?;
+                .record_insert(frame, (__compact_recorded_static_0).clone())?;
             Ok(frame.finish(()))
         }
         pub fn setMember<Private>(
@@ -304,12 +304,12 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_vector_0: runtime::FixedVector<runtime::Field, 2> =
+            let __compact_recorded_static_0: runtime::FixedVector<runtime::Field, 2> =
                 runtime::FixedVector::new([
                     runtime::Field::from(0u128),
                     runtime::Field::from(1u128),
                 ]);
-            let __compact_recorded_key_1 = (__compact_recorded_vector_0).clone();
+            let __compact_recorded_key_1 = (__compact_recorded_static_0).clone();
             let (frame, __compact_recorded_member_2): (_, bool) =
                 crate::ledger_slots::keys.record_member(frame, __compact_recorded_key_1)?;
             let frame =
@@ -321,13 +321,13 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_vector_0: runtime::FixedVector<runtime::Field, 2> =
+            let __compact_recorded_static_0: runtime::FixedVector<runtime::Field, 2> =
                 runtime::FixedVector::new([
                     runtime::Field::from(0u128),
                     runtime::Field::from(1u128),
                 ]);
             let frame = crate::ledger_slots::keys
-                .record_remove(frame, (__compact_recorded_vector_0).clone())?;
+                .record_remove(frame, (__compact_recorded_static_0).clone())?;
             Ok(frame.finish(()))
         }
         pub fn mapInsert<Private>(
@@ -335,12 +335,12 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_vector_0: runtime::FixedVector<runtime::Field, 2> =
+            let __compact_recorded_static_0: runtime::FixedVector<runtime::Field, 2> =
                 runtime::FixedVector::new([
                     runtime::Field::from(0u128),
                     runtime::Field::from(1u128),
                 ]);
-            let __compact_recorded_key_1 = (__compact_recorded_vector_0).clone();
+            let __compact_recorded_key_1 = (__compact_recorded_static_0).clone();
             let frame = crate::ledger_slots::values.record_insert(
                 frame,
                 __compact_recorded_key_1,
@@ -353,13 +353,13 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_vector_0: runtime::FixedVector<runtime::Field, 2> =
+            let __compact_recorded_static_0: runtime::FixedVector<runtime::Field, 2> =
                 runtime::FixedVector::new([
                     runtime::Field::from(0u128),
                     runtime::Field::from(1u128),
                 ]);
             let (frame, __compact_recorded_member_1): (_, bool) = crate::ledger_slots::values
-                .record_member(frame, (__compact_recorded_vector_0).clone())?;
+                .record_member(frame, (__compact_recorded_static_0).clone())?;
             let frame =
                 crate::ledger_slots::present.record_write(frame, __compact_recorded_member_1)?;
             Ok(frame.finish(()))
@@ -369,14 +369,14 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_vector_0: runtime::FixedVector<runtime::Field, 2> =
+            let __compact_recorded_static_0: runtime::FixedVector<runtime::Field, 2> =
                 runtime::FixedVector::new([
                     runtime::Field::from(0u128),
                     runtime::Field::from(1u128),
                 ]);
             let (frame, __compact_recorded_lookup_1): (_, runtime::Field) =
                 crate::ledger_slots::values
-                    .record_lookup(frame, (__compact_recorded_vector_0).clone())?;
+                    .record_lookup(frame, (__compact_recorded_static_0).clone())?;
             let frame =
                 crate::ledger_slots::stored.record_write(frame, __compact_recorded_lookup_1)?;
             Ok(frame.finish(()))
@@ -386,13 +386,13 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_vector_0: runtime::FixedVector<runtime::Field, 2> =
+            let __compact_recorded_static_0: runtime::FixedVector<runtime::Field, 2> =
                 runtime::FixedVector::new([
                     runtime::Field::from(0u128),
                     runtime::Field::from(1u128),
                 ]);
             let frame = crate::ledger_slots::values
-                .record_remove(frame, (__compact_recorded_vector_0).clone())?;
+                .record_remove(frame, (__compact_recorded_static_0).clone())?;
             Ok(frame.finish(()))
         }
         pub fn mapInsertDefault<Private>(
@@ -400,13 +400,13 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_vector_0: runtime::FixedVector<runtime::Field, 2> =
+            let __compact_recorded_static_0: runtime::FixedVector<runtime::Field, 2> =
                 runtime::FixedVector::new([
                     runtime::Field::from(0u128),
                     runtime::Field::from(1u128),
                 ]);
             let frame = crate::ledger_slots::values
-                .record_insert_default(frame, (__compact_recorded_vector_0).clone())?;
+                .record_insert_default(frame, (__compact_recorded_static_0).clone())?;
             Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.

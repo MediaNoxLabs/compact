@@ -1439,7 +1439,7 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let __compact_recorded_vector_0: runtime::FixedVector<runtime::Field, 2> =
+            let __compact_recorded_static_0: runtime::FixedVector<runtime::Field, 2> =
                 runtime::FixedVector::new([
                     if __compact_param_0 {
                         runtime::Field::from(
@@ -1461,7 +1461,7 @@ pub mod ledger_contract {
                     },
                 ]);
             let frame = crate::ledger_slots::vecCell
-                .record_write(frame, (__compact_recorded_vector_0).clone())?;
+                .record_write(frame, (__compact_recorded_static_0).clone())?;
             Ok(frame.finish(()))
         }
         pub fn walkerInlineWrite<Private>(

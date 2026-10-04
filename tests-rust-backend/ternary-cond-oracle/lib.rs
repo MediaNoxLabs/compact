@@ -120,7 +120,7 @@ pub mod pure_circuits {
         c: bool,
         d: bool,
     ) -> Result<runtime::BoundedUint<255>, runtime::CompactError> {
-        Ok(runtime::cast_unsigned::<4, 255>(if c {
+        runtime::cast_unsigned::<4, 255>(if c {
             runtime::cast_unsigned::<2, 4>(if d {
                 runtime::BoundedUint::<2>::new(1u128)
                     .expect("Compact Uint literal fits its maximum")
@@ -136,7 +136,7 @@ pub mod pure_circuits {
                 runtime::BoundedUint::<4>::new(4u128)
                     .expect("Compact Uint literal fits its maximum")
             }
-        })?)
+        })
     }
     pub fn assertArg(c: bool, x: runtime::BoundedUint<255>) -> Result<(), runtime::CompactError> {
         if !(if c {
@@ -160,17 +160,15 @@ pub mod pure_circuits {
         c: bool,
         n: runtime::BoundedUint<255>,
     ) -> Result<runtime::BoundedUint<18446744073709551615>, runtime::CompactError> {
-        Ok(runtime::cast_unsigned::<256, 18446744073709551615>(
-            runtime::add_unsigned::<256, 256, 256>(
-                runtime::cast_unsigned::<255, 256>(n)?,
-                runtime::cast_unsigned::<1, 256>(if c {
-                    runtime::BoundedUint::<1>::new(1u128)
-                        .expect("Compact Uint literal fits its maximum")
-                } else {
-                    runtime::BoundedUint::<1>::new(0u128)
-                        .expect("Compact Uint literal fits its maximum")
-                })?,
-            )?,
+        runtime::cast_unsigned::<256, 18446744073709551615>(runtime::add_unsigned::<256, 256, 256>(
+            runtime::cast_unsigned::<255, 256>(n)?,
+            runtime::cast_unsigned::<1, 256>(if c {
+                runtime::BoundedUint::<1>::new(1u128)
+                    .expect("Compact Uint literal fits its maximum")
+            } else {
+                runtime::BoundedUint::<1>::new(0u128)
+                    .expect("Compact Uint literal fits its maximum")
+            })?,
         )?)
     }
     pub fn cmpOperand(
@@ -188,14 +186,14 @@ pub mod pure_circuits {
         a: runtime::Field,
         b: runtime::Field,
     ) -> Result<runtime::Field, runtime::CompactError> {
-        Ok(crate::pure_circuits::idf(if c { a } else { b })?)
+        crate::pure_circuits::idf(if c { a } else { b })
     }
     pub fn callArgCtor(
         c: bool,
         a: runtime::Field,
         b: runtime::Field,
     ) -> Result<crate::types::Maybe, runtime::CompactError> {
-        Ok(crate::pure_circuits::some(if c { a } else { b })?)
+        crate::pure_circuits::some(if c { a } else { b })
     }
     pub fn structMember(c: bool) -> Result<crate::types::Box, runtime::CompactError> {
         Ok(crate::types::Box {
@@ -346,7 +344,7 @@ pub mod pure_circuits {
         ))
     }
     pub fn walkerCallCtor(c: bool) -> Result<crate::types::Maybe, runtime::CompactError> {
-        Ok(crate::pure_circuits::some(runtime::Field::from(
+        crate::pure_circuits::some(runtime::Field::from(
             (if c {
                 runtime::BoundedUint::<2>::new(1u128)
                     .expect("Compact Uint literal fits its maximum")
@@ -355,7 +353,7 @@ pub mod pure_circuits {
                     .expect("Compact Uint literal fits its maximum")
             })
             .value(),
-        ))?)
+        ))
     }
     pub fn nativeVectorElemTernary(
         c: bool,
@@ -378,23 +376,22 @@ pub mod pure_circuits {
         n: runtime::BoundedUint<18446744073709551615>,
     ) -> Result<runtime::BoundedUint<340282366920938463463374607431768211455>, runtime::CompactError>
     {
-        Ok(runtime::cast_unsigned::<
-            18446744076709551615,
-            340282366920938463463374607431768211455,
-        >(runtime::add_unsigned::<
-            18446744076709551615,
-            18446744076709551615,
-            18446744076709551615,
-        >(
-            runtime::cast_unsigned::<18446744073709551615, 18446744076709551615>(n)?,
-            runtime::cast_unsigned::<3000000000, 18446744076709551615>(if c {
-                runtime::BoundedUint::<3000000000>::new(3000000000u128)
-                    .expect("Compact Uint literal fits its maximum")
-            } else {
-                runtime::BoundedUint::<3000000000>::new(3000000000u128)
-                    .expect("Compact Uint literal fits its maximum")
-            })?,
-        )?)?)
+        runtime::cast_unsigned::<18446744076709551615, 340282366920938463463374607431768211455>(
+            runtime::add_unsigned::<
+                18446744076709551615,
+                18446744076709551615,
+                18446744076709551615,
+            >(
+                runtime::cast_unsigned::<18446744073709551615, 18446744076709551615>(n)?,
+                runtime::cast_unsigned::<3000000000, 18446744076709551615>(if c {
+                    runtime::BoundedUint::<3000000000>::new(3000000000u128)
+                        .expect("Compact Uint literal fits its maximum")
+                } else {
+                    runtime::BoundedUint::<3000000000>::new(3000000000u128)
+                        .expect("Compact Uint literal fits its maximum")
+                })?,
+            )?,
+        )
     }
 }
 /// Typed descriptors for Compact ledger declarations.

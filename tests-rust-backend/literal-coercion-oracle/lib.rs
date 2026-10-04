@@ -95,7 +95,7 @@ pub mod pure_circuits {
         })
     }
     pub fn someFieldLiteral() -> Result<crate::types::Maybe, runtime::CompactError> {
-        Ok(crate::pure_circuits::some(runtime::Field::from(0u128))?)
+        crate::pure_circuits::some(runtime::Field::from(0u128))
     }
     pub fn hashZeroLiteral() -> Result<runtime::FixedBytes<32>, runtime::CompactError> {
         Ok(runtime::persistent_hash(runtime::FixedVector::new([
@@ -147,13 +147,13 @@ pub mod pure_circuits {
         })
     }
     pub fn callArgHugeFieldLiteral() -> Result<runtime::Field, runtime::CompactError> {
-        Ok(crate::pure_circuits::idf(
+        crate::pure_circuits::idf(
             runtime::Field::from_le_bytes(&[
                 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
                 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 1u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
             ])
             .expect("validated Compact Field literal"),
-        )?)
+        )
     }
     pub fn structMemberHugeFieldLiteral() -> Result<crate::types::Box, runtime::CompactError> {
         Ok(crate::types::Box {
@@ -304,7 +304,7 @@ pub mod pure_circuits {
     pub fn nativeArgFieldOnlyLiteral(
         p: runtime::JubjubPoint,
     ) -> Result<runtime::JubjubPoint, runtime::CompactError> {
-        Ok(runtime::ec_mul(
+        runtime::ec_mul(
             p,
             runtime::Field::from_le_bytes(&[
                 151u8, 229u8, 222u8, 218u8, 203u8, 225u8, 18u8, 90u8, 16u8, 2u8, 153u8, 121u8,
@@ -312,17 +312,17 @@ pub mod pure_circuits {
                 117u8, 166u8, 76u8, 157u8, 182u8, 207u8, 1u8,
             ])
             .expect("validated Compact Field literal"),
-        )?)
+        )
     }
     pub fn callArgFieldOnlyLiteral() -> Result<runtime::Field, runtime::CompactError> {
-        Ok(crate::pure_circuits::idf(
+        crate::pure_circuits::idf(
             runtime::Field::from_le_bytes(&[
                 151u8, 229u8, 222u8, 218u8, 203u8, 225u8, 18u8, 90u8, 16u8, 2u8, 153u8, 121u8,
                 18u8, 4u8, 205u8, 20u8, 96u8, 135u8, 38u8, 32u8, 96u8, 231u8, 204u8, 32u8, 245u8,
                 117u8, 166u8, 76u8, 157u8, 182u8, 207u8, 1u8,
             ])
             .expect("validated Compact Field literal"),
-        )?)
+        )
     }
     pub fn constFieldOnlyLiteral() -> Result<runtime::Field, runtime::CompactError> {
         Ok({
@@ -360,16 +360,16 @@ pub mod pure_circuits {
         .expect("validated Compact Field literal"))
     }
     pub fn callArgMaxUnsignedPlusOne() -> Result<runtime::Field, runtime::CompactError> {
-        Ok(crate::pure_circuits::idf(
+        crate::pure_circuits::idf(
             runtime::Field::from_le_bytes(&[
                 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
                 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 1u8,
             ])
             .expect("validated Compact Field literal"),
-        )?)
+        )
     }
     pub fn subgroupCheck() -> Result<runtime::JubjubPoint, runtime::CompactError> {
-        Ok(runtime::ec_mul(
+        runtime::ec_mul(
             runtime::ec_mul(
                 runtime::ec_mul_generator(runtime::Field::from(1u128))?,
                 runtime::Field::from_le_bytes(&[
@@ -380,7 +380,7 @@ pub mod pure_circuits {
                 .expect("validated Compact Field literal"),
             )?,
             runtime::Field::from(8u128),
-        )?)
+        )
     }
 }
 /// Typed descriptors for Compact ledger declarations.

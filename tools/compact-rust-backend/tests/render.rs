@@ -104,6 +104,46 @@ fn pure_unit_circuits_keep_effects_in_statement_order() {
 }
 
 #[test]
+fn pure_fallible_tail_returns_its_result_without_an_extra_try() {
+    let mut contract = identity(
+        Type::Field,
+        Expr::Call {
+            name: "target".into(),
+            arguments: vec![Expr::Parameter {
+                name: "value".into(),
+            }],
+        },
+    );
+    contract.circuits.push(PureCircuit {
+        source: None,
+        internal: false,
+        name: "target".into(),
+        parameters: contract.circuits[0].parameters.clone(),
+        result: Type::Field,
+        body: Expr::Parameter {
+            name: "value".into(),
+        },
+    });
+    let called = render(&contract).unwrap();
+    assert!(called.contains("crate::pure_circuits::target(value)\n"));
+    assert!(!called.contains("Ok(crate::pure_circuits::target(value)?)"));
+    assert!(called.contains("Ok(value)"));
+
+    contract.circuits.pop();
+    contract.circuits[0].parameters[0].ty = Type::Unsigned { max: "4".into() };
+    contract.circuits[0].result = Type::Unsigned { max: "255".into() };
+    contract.circuits[0].body = Expr::UnsignedCast {
+        max: "255".into(),
+        value: Box::new(Expr::Parameter {
+            name: "value".into(),
+        }),
+    };
+    let cast = render(&contract).unwrap();
+    assert!(cast.contains("runtime::cast_unsigned::<4, 255>(value)"));
+    assert!(!cast.contains("runtime::cast_unsigned::<4, 255>(value)?"));
+}
+
+#[test]
 fn public_state_getters_follow_declared_types_and_escaped_names() {
     let mut contract = identity(Type::Unit, Expr::Unit);
     contract.ledger_fields = vec![
@@ -1778,7 +1818,7 @@ fn pure_call_checks_target_arity_and_argument_types() {
     assert!(
         render(&contract)
             .unwrap()
-            .contains("crate::pure_circuits::target(value)?")
+            .contains("crate::pure_circuits::target(value)")
     );
 }
 

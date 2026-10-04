@@ -114,8 +114,6 @@ pub mod pure_circuits {
     pub fn root_of_hash(
         path: crate::types::MerkleTreePath,
     ) -> Result<crate::types::MerkleTreeDigest, runtime::CompactError> {
-        Ok(crate::pure_circuits::merkleTreePathRootNoLeafHash(
-            path.clone(),
-        )?)
+        crate::pure_circuits::merkleTreePathRootNoLeafHash(path.clone())
     }
 }

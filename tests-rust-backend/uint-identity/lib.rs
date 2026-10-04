@@ -40,11 +40,9 @@ pub mod pure_circuits {
         left: runtime::BoundedUint<255>,
         right: runtime::BoundedUint<255>,
     ) -> Result<runtime::BoundedUint<511>, runtime::CompactError> {
-        Ok(runtime::cast_unsigned::<510, 511>(
-            runtime::add_unsigned::<510, 510, 510>(
-                runtime::cast_unsigned::<255, 510>(left)?,
-                runtime::cast_unsigned::<255, 510>(right)?,
-            )?,
+        runtime::cast_unsigned::<510, 511>(runtime::add_unsigned::<510, 510, 510>(
+            runtime::cast_unsigned::<255, 510>(left)?,
+            runtime::cast_unsigned::<255, 510>(right)?,
         )?)
     }
 }

@@ -964,41 +964,41 @@ pub mod pure_circuits {
         bodyRoot: runtime::FixedBytes<32>,
         proof: crate::types::Proof,
     ) -> Result<runtime::FixedBytes<32>, runtime::CompactError> {
-        Ok(crate::pure_circuits::proofPayloadRootForContext(
+        crate::pure_circuits::proofPayloadRootForContext(
             bodyRoot,
             crate::pure_circuits::issuanceContextTag()?,
             proof.clone(),
-        )?)
+        )
     }
     pub fn presentationProofPayloadRoot(
         bodyRoot: runtime::FixedBytes<32>,
         proof: crate::types::Proof,
     ) -> Result<runtime::FixedBytes<32>, runtime::CompactError> {
-        Ok(crate::pure_circuits::proofPayloadRootForContext(
+        crate::pure_circuits::proofPayloadRootForContext(
             bodyRoot,
             crate::pure_circuits::presentationContextTag()?,
             proof.clone(),
-        )?)
+        )
     }
     pub fn issuanceProofChallenge(
         bodyRoot: runtime::FixedBytes<32>,
         proof: crate::types::Proof,
     ) -> Result<runtime::Field, runtime::CompactError> {
-        Ok(crate::pure_circuits::proofChallengeForContext(
+        crate::pure_circuits::proofChallengeForContext(
             bodyRoot,
             crate::pure_circuits::issuanceContextTag()?,
             proof.clone(),
-        )?)
+        )
     }
     pub fn presentationProofChallenge(
         bodyRoot: runtime::FixedBytes<32>,
         proof: crate::types::Proof,
     ) -> Result<runtime::Field, runtime::CompactError> {
-        Ok(crate::pure_circuits::proofChallengeForContext(
+        crate::pure_circuits::proofChallengeForContext(
             bodyRoot,
             crate::pure_circuits::presentationContextTag()?,
             proof.clone(),
-        )?)
+        )
     }
     pub fn assertValidIssuanceContextProof(
         bodyRoot: runtime::FixedBytes<32>,
@@ -2172,16 +2172,12 @@ pub mod pure_circuits {
     pub fn digitalPassportCredentialBodyRoot(
         credential: crate::types::Credential,
     ) -> Result<runtime::FixedBytes<32>, runtime::CompactError> {
-        Ok(crate::pure_circuits::credentialBodyRoot(
-            credential.clone(),
-        )?)
+        crate::pure_circuits::credentialBodyRoot(credential.clone())
     }
     pub fn digitalPassportPresentationBodyRoot(
         presentation: crate::types::Presentation,
     ) -> Result<runtime::FixedBytes<32>, runtime::CompactError> {
-        Ok(crate::pure_circuits::presentationBodyRoot(
-            presentation.clone(),
-        )?)
+        crate::pure_circuits::presentationBodyRoot(presentation.clone())
     }
     pub fn digitalPassportPresentationRequestBodyRoot(
         request: crate::types::DigitalPassportPresentationRequest,

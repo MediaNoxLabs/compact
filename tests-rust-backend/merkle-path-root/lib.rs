@@ -135,6 +135,6 @@ pub mod pure_circuits {
     pub fn root_of(
         path: crate::types::MerkleTreePath,
     ) -> Result<crate::types::MerkleTreeDigest, runtime::CompactError> {
-        Ok(crate::pure_circuits::merkleTreePathRoot(path.clone())?)
+        crate::pure_circuits::merkleTreePathRoot(path.clone())
     }
 }

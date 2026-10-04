@@ -137,25 +137,27 @@ pub mod pure_circuits {
         q: runtime::BoundedUint<4294967295>,
         n: runtime::BoundedUint<255>,
     ) -> Result<runtime::BoundedUint<18446744073709551615>, runtime::CompactError> {
-        Ok(runtime::cast_unsigned::<4294967550, 18446744073709551615>(
-            runtime::add_unsigned::<4294967550, 4294967550, 4294967550>(
-                runtime::cast_unsigned::<4294967295, 4294967550>(q)?,
-                runtime::cast_unsigned::<255, 4294967550>(n)?,
-            )?,
+        runtime::cast_unsigned::<4294967550, 18446744073709551615>(runtime::add_unsigned::<
+            4294967550,
+            4294967550,
+            4294967550,
+        >(
+            runtime::cast_unsigned::<4294967295, 4294967550>(q)?,
+            runtime::cast_unsigned::<255, 4294967550>(n)?,
         )?)
     }
     pub fn productMixed(
         q: runtime::BoundedUint<4294967295>,
         m: runtime::BoundedUint<255>,
     ) -> Result<runtime::BoundedUint<18446744073709551615>, runtime::CompactError> {
-        Ok(
-            runtime::cast_unsigned::<1095216660225, 18446744073709551615>(
-                runtime::multiply_unsigned::<1095216660225, 1095216660225, 1095216660225>(
-                    runtime::cast_unsigned::<4294967295, 1095216660225>(q)?,
-                    runtime::cast_unsigned::<255, 1095216660225>(m)?,
-                )?,
-            )?,
-        )
+        runtime::cast_unsigned::<1095216660225, 18446744073709551615>(runtime::multiply_unsigned::<
+            1095216660225,
+            1095216660225,
+            1095216660225,
+        >(
+            runtime::cast_unsigned::<4294967295, 1095216660225>(q)?,
+            runtime::cast_unsigned::<255, 1095216660225>(m)?,
+        )?)
     }
     pub fn guardedDiff(
         y: runtime::BoundedUint<4294967295>,

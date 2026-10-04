@@ -25,7 +25,7 @@ pub mod pure_circuits {
         x: runtime::Field,
         y: runtime::Field,
     ) -> Result<runtime::JubjubPoint, runtime::CompactError> {
-        Ok(runtime::construct_jubjub_point(x, y)?)
+        runtime::construct_jubjub_point(x, y)
     }
     pub fn construct_y(
         x: runtime::Field,

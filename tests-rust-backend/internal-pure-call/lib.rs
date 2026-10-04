@@ -29,9 +29,7 @@ pub mod pure_circuits {
     pub fn double_increment(
         value: runtime::Field,
     ) -> Result<runtime::Field, runtime::CompactError> {
-        Ok(crate::pure_circuits::increment(
-            crate::pure_circuits::increment(value)?,
-        )?)
+        crate::pure_circuits::increment(crate::pure_circuits::increment(value)?)
     }
 }
 /// Typed descriptors for Compact ledger declarations.

@@ -1055,16 +1055,15 @@ fn unit_statements(
             }
             let then = unit_statements(then, parameters, circuits)?;
             let otherwise = unit_statements(otherwise, parameters, circuits)?;
-            if otherwise.is_empty() {
-                if let [syn::Stmt::Expr(syn::Expr::If(inner), _)] = then.as_slice() {
-                    if inner.else_branch.is_none() {
-                        let inner_condition = &inner.cond;
-                        let inner_body = &inner.then_branch;
-                        return Ok(vec![
-                            syn::parse_quote!(if (#condition) && (#inner_condition) #inner_body),
-                        ]);
-                    }
-                }
+            if otherwise.is_empty()
+                && let [syn::Stmt::Expr(syn::Expr::If(inner), _)] = then.as_slice()
+                && inner.else_branch.is_none()
+            {
+                let inner_condition = &inner.cond;
+                let inner_body = &inner.then_branch;
+                return Ok(vec![
+                    syn::parse_quote!(if (#condition) && (#inner_condition) #inner_body),
+                ]);
             }
             if otherwise.is_empty() && then.is_empty() {
                 Ok(vec![syn::parse_quote!(let _ = #condition;)])
@@ -2738,6 +2737,11 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
             } else {
                 Vec::new()
             };
+            let value_tail: syn::Expr = if let syn::Expr::Try(fallible) = &body {
+                (*fallible.expr).clone()
+            } else {
+                syn::parse_quote!(Ok(#body))
+            };
             let item: syn::Item = if circuit.internal && actual == Type::Unit {
                 syn::parse_quote! {
                     pub(crate) fn #name(#(#args),*) -> Result<#result, runtime::CompactError> {
@@ -2755,13 +2759,13 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
             } else if circuit.internal {
                 syn::parse_quote! {
                     pub(crate) fn #name(#(#args),*) -> Result<#result, runtime::CompactError> {
-                        Ok(#body)
+                        #value_tail
                     }
                 }
             } else {
                 syn::parse_quote! {
                     pub fn #name(#(#args),*) -> Result<#result, runtime::CompactError> {
-                        Ok(#body)
+                        #value_tail
                     }
                 }
             };

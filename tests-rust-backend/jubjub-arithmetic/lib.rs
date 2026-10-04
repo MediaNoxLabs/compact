@@ -39,12 +39,12 @@ pub mod pure_circuits {
         value: runtime::Field,
         scalar: runtime::Field,
     ) -> Result<runtime::JubjubPoint, runtime::CompactError> {
-        Ok(runtime::ec_mul(runtime::hash_to_curve(value), scalar)?)
+        runtime::ec_mul(runtime::hash_to_curve(value), scalar)
     }
     pub fn generator_point(
         scalar: runtime::Field,
     ) -> Result<runtime::JubjubPoint, runtime::CompactError> {
-        Ok(runtime::ec_mul_generator(scalar)?)
+        runtime::ec_mul_generator(scalar)
     }
     pub fn reduce_scalar(value: runtime::Field) -> Result<runtime::Field, runtime::CompactError> {
         Ok(runtime::jubjub_scalar_from_native(value))
@@ -52,8 +52,6 @@ pub mod pure_circuits {
     pub fn generator_reduced(
         value: runtime::Field,
     ) -> Result<runtime::JubjubPoint, runtime::CompactError> {
-        Ok(runtime::ec_mul_generator(
-            runtime::jubjub_scalar_from_native(value),
-        )?)
+        runtime::ec_mul_generator(runtime::jubjub_scalar_from_native(value))
     }
 }

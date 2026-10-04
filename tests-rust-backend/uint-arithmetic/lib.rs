@@ -25,17 +25,15 @@ pub mod pure_circuits {
         left: runtime::BoundedUint<255>,
         right: runtime::BoundedUint<255>,
     ) -> Result<runtime::BoundedUint<255>, runtime::CompactError> {
-        Ok(runtime::subtract_unsigned::<255, 255, 255>(left, right)?)
+        runtime::subtract_unsigned::<255, 255, 255>(left, right)
     }
     pub fn multiply_uint(
         left: runtime::BoundedUint<255>,
         right: runtime::BoundedUint<255>,
     ) -> Result<runtime::BoundedUint<65535>, runtime::CompactError> {
-        Ok(runtime::cast_unsigned::<65025, 65535>(
-            runtime::multiply_unsigned::<65025, 65025, 65025>(
-                runtime::cast_unsigned::<255, 65025>(left)?,
-                runtime::cast_unsigned::<255, 65025>(right)?,
-            )?,
+        runtime::cast_unsigned::<65025, 65535>(runtime::multiply_unsigned::<65025, 65025, 65025>(
+            runtime::cast_unsigned::<255, 65025>(left)?,
+            runtime::cast_unsigned::<255, 65025>(right)?,
         )?)
     }
 }

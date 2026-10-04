@@ -25,44 +25,44 @@ pub mod pure_circuits {
         a: runtime::BoundedUint<255>,
         b: runtime::BoundedUint<255>,
     ) -> Result<runtime::BoundedUint<65535>, runtime::CompactError> {
-        Ok(runtime::cast_unsigned::<510, 65535>(
-            runtime::add_unsigned::<510, 510, 510>(
-                runtime::cast_unsigned::<255, 510>(a)?,
-                runtime::cast_unsigned::<255, 510>(b)?,
-            )?,
+        runtime::cast_unsigned::<510, 65535>(runtime::add_unsigned::<510, 510, 510>(
+            runtime::cast_unsigned::<255, 510>(a)?,
+            runtime::cast_unsigned::<255, 510>(b)?,
         )?)
     }
     pub fn ageThresholdDays(
         years: runtime::BoundedUint<255>,
     ) -> Result<runtime::BoundedUint<4294967295>, runtime::CompactError> {
-        Ok(runtime::cast_unsigned::<93075, 4294967295>(
-            runtime::multiply_unsigned::<93075, 93075, 93075>(
-                runtime::cast_unsigned::<255, 93075>(years)?,
-                runtime::BoundedUint::<93075>::new(365u128)
-                    .expect("Compact Uint literal fits its maximum"),
-            )?,
+        runtime::cast_unsigned::<93075, 4294967295>(runtime::multiply_unsigned::<
+            93075,
+            93075,
+            93075,
+        >(
+            runtime::cast_unsigned::<255, 93075>(years)?,
+            runtime::BoundedUint::<93075>::new(365u128)
+                .expect("Compact Uint literal fits its maximum"),
         )?)
     }
     pub fn productBytes(
         a: runtime::BoundedUint<255>,
         b: runtime::BoundedUint<255>,
     ) -> Result<runtime::BoundedUint<65535>, runtime::CompactError> {
-        Ok(runtime::cast_unsigned::<65025, 65535>(
-            runtime::multiply_unsigned::<65025, 65025, 65025>(
-                runtime::cast_unsigned::<255, 65025>(a)?,
-                runtime::cast_unsigned::<255, 65025>(b)?,
-            )?,
+        runtime::cast_unsigned::<65025, 65535>(runtime::multiply_unsigned::<65025, 65025, 65025>(
+            runtime::cast_unsigned::<255, 65025>(a)?,
+            runtime::cast_unsigned::<255, 65025>(b)?,
         )?)
     }
     pub fn areaOf(
         w: runtime::BoundedUint<65535>,
         h: runtime::BoundedUint<65535>,
     ) -> Result<runtime::BoundedUint<4294967295>, runtime::CompactError> {
-        Ok(runtime::cast_unsigned::<4294836225, 4294967295>(
-            runtime::multiply_unsigned::<4294836225, 4294836225, 4294836225>(
-                runtime::cast_unsigned::<65535, 4294836225>(w)?,
-                runtime::cast_unsigned::<65535, 4294836225>(h)?,
-            )?,
+        runtime::cast_unsigned::<4294836225, 4294967295>(runtime::multiply_unsigned::<
+            4294836225,
+            4294836225,
+            4294836225,
+        >(
+            runtime::cast_unsigned::<65535, 4294836225>(w)?,
+            runtime::cast_unsigned::<65535, 4294836225>(h)?,
         )?)
     }
 }

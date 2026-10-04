@@ -45,7 +45,7 @@ pub mod pure_circuits {
         left: runtime::Field,
         right: runtime::Field,
     ) -> Result<runtime::Field, runtime::CompactError> {
-        Ok(crate::pure_circuits::sum_with_local(left, right)?)
+        crate::pure_circuits::sum_with_local(left, right)
     }
     pub fn answer() -> Result<runtime::Field, runtime::CompactError> {
         Ok(runtime::Field::from(42u128))

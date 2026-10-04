@@ -1886,6 +1886,94 @@ fn recorded_set_assertions_preserve_boolean_queries_and_pure_field_bindings() {
 }
 
 #[test]
+fn enum_set_locals_record_typed_keys_in_source_order() {
+    let mut contract = identity(Type::Unit, Expr::Unit);
+    contract.circuits.clear();
+    let names = Type::Enum {
+        name: "Names".into(),
+        variants: vec!["bill".into(), "sally".into()],
+    };
+    contract.ledger_fields = vec![LedgerField {
+        source: None,
+        id: "c".into(),
+        index: 0,
+        path: vec![],
+        declaration: LedgerFieldKind::Set { ty: names.clone() },
+    }];
+    let key = Expr::Parameter { name: "one".into() };
+    contract.stateful_circuits = vec![StatefulCircuit {
+        source: None,
+        internal: false,
+        name: "test".into(),
+        parameters: vec![],
+        actions: vec![StateAction::Let {
+            bindings: vec![LocalBinding {
+                name: "one".into(),
+                ty: names.clone(),
+                value: Expr::EnumVariant {
+                    ty: names.clone(),
+                    variant: "bill".into(),
+                },
+            }],
+            action: Box::new(StateAction::Sequence {
+                actions: vec![
+                    StateAction::SetInsert {
+                        field: "c".into(),
+                        index: 0,
+                        value: key.clone(),
+                    },
+                    StateAction::Assert {
+                        condition: Expr::Equal {
+                            left: Box::new(Expr::SetMember {
+                                field: "c".into(),
+                                index: 0,
+                                value: Box::new(key.clone()),
+                            }),
+                            right: Box::new(Expr::Boolean { value: true }),
+                        },
+                        message: "member".into(),
+                    },
+                    StateAction::SetRemove {
+                        field: "c".into(),
+                        index: 0,
+                        value: key,
+                    },
+                ],
+            }),
+        }],
+        result: Type::Unit,
+        return_value: StateReturn::Unit,
+    }];
+
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.capabilities.circuits[0].observed_call);
+    let body = rendered.source.split("pub mod recorded").nth(1).unwrap();
+    let bound = body.find("__compact_recorded_enum_").unwrap();
+    let inserted = body.find("record_insert(frame,").unwrap();
+    let observed = body.find("record_member(frame,").unwrap();
+    let removed = body.find("record_remove(frame,").unwrap();
+    assert!(bound < inserted && inserted < observed && observed < removed);
+
+    // Other native enum bindings keep an explicit recording gap until their
+    // source shape has its own replay and proof coverage.
+    let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[0] else {
+        unreachable!();
+    };
+    bindings[0].value = Expr::Default { ty: names };
+    let defaulted = render_with_capabilities(&contract).unwrap();
+    assert!(!defaulted.capabilities.circuits[0].recorded);
+    assert_eq!(
+        defaulted.capabilities.circuits[0]
+            .recording_unavailable
+            .as_ref()
+            .unwrap()
+            .ir_node,
+        "StateAction::Let",
+    );
+}
+
+#[test]
 fn direct_boolean_witness_assertion_records_before_cell_write() {
     let mut contract = identity(Type::Unit, Expr::Unit);
     contract.circuits.clear();

@@ -39,6 +39,8 @@ EXTRA_SOURCES = {
         FIXTURES / "passport-dogfood" / "lib.rs",
     ROOT / "examples" / "bugs" / "pm-19252" / "example_ten.compact":
         FIXTURES / "pm-19252-own-public-key" / "lib.rs",
+    ROOT / "examples" / "adt" / "tests" / "set_enum.compact":
+        FIXTURES / "adt-set-enum" / "lib.rs",
 }
 
 

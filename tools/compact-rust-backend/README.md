@@ -81,10 +81,14 @@ acceptance suite. Run `check_positive_source_scope.py --manifest
 tools/compact-rust-backend/parity_positive_adt_set_sources.json --compiler
 /path/to/immutable/compactc --output /tmp/adt-set-scope.json` for its separate
 compiler receipt. The manifest locks glob membership and authoritative proof
-flags; four sources currently reject in the Rust backend at nested ledger
-queries, while `set_struct` compiles with no contract circuit/capability rows.
-This is a TypeScript-positive compiler coverage gap, tracked in #188; neither
-acceptance receipt establishes executing behavior parity.
+flags. Four of the five sources compile for Rust; `set_qualified_coin_info`
+still rejects at a separate nested ledger operation, and `set_struct` has no
+contract circuit. The proof-required `set_field.test` and `set_enum.test` have
+recorded and observed-call APIs. `set_enum` has TypeScript/native/recorded
+state, gas, VM, and proof application coverage through its generated fixture.
+`set_vector` compiles but its pure `getVector()` local binding still prevents
+recording. The cohort is tracked in #188, #190, and #196; source acceptance
+alone does not establish executing parity for the other circuits.
 The lexical scanner includes `pure circuit` and `export pure circuit`
 declarations, with compiler `contract-info.json` supplying proof applicability
 even when the Rust capability report has no recorded method for a pure circuit.

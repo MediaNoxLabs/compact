@@ -1519,6 +1519,7 @@ fn render_recorded_item(
                     ty,
                     Type::Field
                         | Type::Boolean
+                        | Type::Enum { .. }
                         | Type::Tuple { .. }
                         | Type::Struct { .. }
                         | Type::Vector { .. }
@@ -1928,6 +1929,28 @@ fn render_recorded_item(
                             return Ok(unavailable_action(whole, path));
                         };
                         scoped.insert(binding.name.clone(), value);
+                    } else if matches!(binding.ty, Type::Enum { .. })
+                        && matches!(
+                            binding.value,
+                            Expr::EnumVariant { .. } | Expr::Parameter { .. }
+                        )
+                    {
+                        let Some(value) =
+                            cell_source(&binding.value, &binding.ty, &scoped, parameters)
+                        else {
+                            return Ok(RecordingOutcome::Unsupported(RecordingGap::expression(
+                                &binding.value,
+                                format!("{path}.bindings[{binding_index}].value"),
+                            )));
+                        };
+                        let value_ty = rust_type(&binding.ty)?;
+                        let local = syn::Ident::new(
+                            &format!("__compact_recorded_enum_{}", *next_temp),
+                            Span::call_site(),
+                        );
+                        *next_temp += 1;
+                        steps.push(syn::parse_quote!(let #local: #value_ty = #value;));
+                        scoped.insert(binding.name.clone(), syn::parse_quote!(#local));
                     } else if let Expr::WitnessCall { name, arguments } = &binding.value {
                         if !matches!(
                             binding.ty,
@@ -2338,6 +2361,7 @@ fn render_recorded_item(
                     ty,
                     Type::Field
                         | Type::Boolean
+                        | Type::Enum { .. }
                         | Type::Tuple { .. }
                         | Type::Struct { .. }
                         | Type::Vector { .. }

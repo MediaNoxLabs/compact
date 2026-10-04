@@ -209,6 +209,15 @@ fn crate_manifest(source: &Path, runtime: RuntimeDependency<'_>) -> Result<Strin
     ));
     document["package"] = Item::Table(package);
 
+    // Compact retains explicit Boolean comparisons in source assertions.
+    // This stylistic lint should not make an otherwise valid generated crate
+    // fail a consumer's `clippy -D warnings` gate.
+    let mut clippy = Table::new();
+    clippy["bool_comparison"] = value("allow");
+    let mut lints = Table::new();
+    lints["clippy"] = Item::Table(clippy);
+    document["lints"] = Item::Table(lints);
+
     let mut library = Table::new();
     library["path"] = value("lib.rs");
     document["lib"] = Item::Table(library);
@@ -1078,6 +1087,10 @@ mod tests {
             Some(format!("={version}").as_str())
         );
         assert!(dependency.get("path").is_none());
+        assert_eq!(
+            document["lints"]["clippy"]["bool_comparison"].as_str(),
+            Some("allow")
+        );
     }
 
     #[test]

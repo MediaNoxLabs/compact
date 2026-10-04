@@ -216,6 +216,94 @@ fn opposite_boolean_literal_branches_share_one_ast_normalization() {
 }
 
 #[test]
+fn identical_if_arms_keep_one_condition_and_one_arm() {
+    let mut contract = identity(
+        Type::Boolean,
+        Expr::If {
+            condition: Box::new(Expr::Call {
+                name: "probe".into(),
+                arguments: vec![Expr::Parameter {
+                    name: "value".into(),
+                }],
+            }),
+            then: Box::new(Expr::Boolean { value: true }),
+            otherwise: Box::new(Expr::Boolean { value: true }),
+        },
+    );
+    contract.circuits[0].parameters[0].ty = Type::Boolean;
+    contract.circuits.push(PureCircuit {
+        source: None,
+        internal: false,
+        name: "probe".into(),
+        parameters: contract.circuits[0].parameters.clone(),
+        result: Type::Boolean,
+        body: Expr::Parameter {
+            name: "value".into(),
+        },
+    });
+    let pure = render(&contract).unwrap();
+    assert_eq!(
+        pure.matches("crate::pure_circuits::probe(value)?").count(),
+        1
+    );
+    assert!(!pure.contains("if crate::pure_circuits::probe(value)?"));
+
+    contract.circuits[0].body = Expr::If {
+        condition: Box::new(Expr::Parameter {
+            name: "value".into(),
+        }),
+        then: Box::new(Expr::Boolean { value: true }),
+        otherwise: Box::new(Expr::Boolean { value: true }),
+    };
+    let effect_free = render(&contract).unwrap();
+    assert!(effect_free.contains("Ok(true)"));
+    assert!(!effect_free.contains("let _ = value;"));
+
+    contract.circuits[0].body = Expr::If {
+        condition: Box::new(Expr::Call {
+            name: "probe".into(),
+            arguments: vec![Expr::Parameter {
+                name: "value".into(),
+            }],
+        }),
+        then: Box::new(Expr::Parameter {
+            name: "value".into(),
+        }),
+        otherwise: Box::new(Expr::Boolean { value: false }),
+    };
+    let different = render(&contract).unwrap();
+    assert!(different.contains("if crate::pure_circuits::probe(value)?"));
+
+    contract.witnesses.push(WitnessDeclaration {
+        source: None,
+        name: "observed".into(),
+        parameters: vec![],
+        result: Type::Boolean,
+    });
+    contract.stateful_circuits.push(StatefulCircuit {
+        source: None,
+        internal: false,
+        name: "record".into(),
+        parameters: vec![],
+        actions: vec![StateAction::Expression {
+            value: Expr::If {
+                condition: Box::new(Expr::WitnessCall {
+                    name: "observed".into(),
+                    arguments: vec![],
+                }),
+                then: Box::new(Expr::Boolean { value: true }),
+                otherwise: Box::new(Expr::Boolean { value: true }),
+            },
+        }],
+        result: Type::Unit,
+        return_value: StateReturn::Unit,
+    });
+    let stateful = render(&contract).unwrap();
+    assert_eq!(stateful.matches(".observed(").count(), 1);
+    assert!(stateful.contains("private_transcript_outputs"));
+}
+
+#[test]
 fn public_state_getters_follow_declared_types_and_escaped_names() {
     let mut contract = identity(Type::Unit, Expr::Unit);
     contract.ledger_fields = vec![

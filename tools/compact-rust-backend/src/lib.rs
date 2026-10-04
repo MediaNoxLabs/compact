@@ -1119,6 +1119,11 @@ pub(crate) fn discard_expression(value: syn::Expr, ty: &Type) -> Vec<syn::Stmt> 
     }
 }
 
+/// Only a Boolean literal or Copy Boolean parameter is effect-free by itself.
+pub(crate) fn condition_needs_statement(condition: &Expr) -> bool {
+    !matches!(condition, Expr::Boolean { .. } | Expr::Parameter { .. })
+}
+
 #[cfg(test)]
 mod discarded_expression_tests {
     use super::{Type, discard_expression};
@@ -1182,12 +1187,22 @@ fn unit_statements(
             then,
             otherwise,
         } => {
+            let evaluate_condition = condition_needs_statement(condition);
             let (condition, actual) = expression_with_calls(condition, parameters, circuits)?;
             if actual != Type::Boolean {
                 return Err(RenderError::TypeMismatch {
                     expected: Type::Boolean,
                     actual,
                 });
+            }
+            if then == otherwise {
+                let mut statements = if evaluate_condition {
+                    vec![syn::parse_quote!(let _ = #condition;)]
+                } else {
+                    Vec::new()
+                };
+                statements.extend(unit_statements(then, parameters, circuits)?);
+                return Ok(statements);
             }
             let then = unit_statements(then, parameters, circuits)?;
             let otherwise = unit_statements(otherwise, parameters, circuits)?;
@@ -1592,12 +1607,24 @@ fn expression_with_calls(
             then,
             otherwise,
         } => {
+            let evaluate_condition = condition_needs_statement(condition);
             let (condition, condition_ty) = expression_with_calls(condition, parameters, circuits)?;
             if condition_ty != Type::Boolean {
                 return Err(RenderError::TypeMismatch {
                     expected: Type::Boolean,
                     actual: condition_ty,
                 });
+            }
+            if then == otherwise {
+                let (value, ty) = expression_with_calls(then, parameters, circuits)?;
+                return Ok((
+                    if evaluate_condition {
+                        syn::parse_quote!({ let _ = #condition; #value })
+                    } else {
+                        value
+                    },
+                    ty,
+                ));
             }
             let (then, then_ty) = expression_with_calls(then, parameters, circuits)?;
             let (otherwise, otherwise_ty) = expression_with_calls(otherwise, parameters, circuits)?;

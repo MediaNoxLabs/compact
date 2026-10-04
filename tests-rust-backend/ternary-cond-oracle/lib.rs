@@ -383,13 +383,10 @@ pub mod pure_circuits {
                 18446744076709551615,
             >(
                 runtime::cast_unsigned::<18446744073709551615, 18446744076709551615>(n)?,
-                runtime::cast_unsigned::<3000000000, 18446744076709551615>(if c {
+                runtime::cast_unsigned::<3000000000, 18446744076709551615>(
                     runtime::BoundedUint::<3000000000>::new(3000000000u128)
-                        .expect("Compact Uint literal fits its maximum")
-                } else {
-                    runtime::BoundedUint::<3000000000>::new(3000000000u128)
-                        .expect("Compact Uint literal fits its maximum")
-                })?,
+                        .expect("Compact Uint literal fits its maximum"),
+                )?,
             )?,
         )
     }
@@ -598,29 +595,24 @@ pub mod ledger_contract {
                     runtime::BoundedUint::<1>::new(0u128)
                         .expect("Compact Uint literal fits its maximum")
                 };
-            if !(if __compact_constructor_param_0 {
-                let __compact_value_9 = __compact_constructor_param_2;
-                __compact_value_9 == __compact_constructor_param_2
-            } else {
-                let __compact_value_10 = __compact_constructor_param_2;
-                __compact_value_10 == __compact_constructor_param_2
-            }) {
+            let __compact_value_9 = __compact_constructor_param_2;
+            if !(__compact_value_9 == __compact_constructor_param_2) {
                 return Err(runtime::CompactError::AssertionFailed(
                     "ctor ternary assert".to_owned(),
                 ));
             }
-            let __compact_value_11 = __compact_constructor_local_1;
-            let __compact_value_12 = (__compact_constructor_local_2.clone()).f;
-            let __compact_value_13 = __compact_value_11 + __compact_value_12;
-            let __compact_value_14 = runtime::Field::from((__compact_constructor_local_3).value());
-            let __compact_value_15 = __compact_value_13 + __compact_value_14;
-            let __compact_value_16 = runtime::jubjub_point_x(__compact_constructor_local_4);
-            let __compact_value_17 = __compact_value_15 + __compact_value_16;
-            let __compact_value_18 = runtime::Field::from((__compact_constructor_local_0).value());
-            let __compact_value_19 = __compact_value_17 + __compact_value_18;
-            let __compact_value_20 = __compact_constructor_local_6;
-            let __compact_value_21 = __compact_value_19 + __compact_value_20;
-            let __compact_value_22 = runtime::Field::from(
+            let __compact_value_10 = __compact_constructor_local_1;
+            let __compact_value_11 = (__compact_constructor_local_2.clone()).f;
+            let __compact_value_12 = __compact_value_10 + __compact_value_11;
+            let __compact_value_13 = runtime::Field::from((__compact_constructor_local_3).value());
+            let __compact_value_14 = __compact_value_12 + __compact_value_13;
+            let __compact_value_15 = runtime::jubjub_point_x(__compact_constructor_local_4);
+            let __compact_value_16 = __compact_value_14 + __compact_value_15;
+            let __compact_value_17 = runtime::Field::from((__compact_constructor_local_0).value());
+            let __compact_value_18 = __compact_value_16 + __compact_value_17;
+            let __compact_value_19 = __compact_constructor_local_6;
+            let __compact_value_20 = __compact_value_18 + __compact_value_19;
+            let __compact_value_21 = runtime::Field::from(
                 (if __compact_constructor_local_8 {
                     runtime::BoundedUint::<1>::new(1u128)
                         .expect("Compact Uint literal fits its maximum")
@@ -630,11 +622,11 @@ pub mod ledger_contract {
                 })
                 .value(),
             );
-            let __compact_constructor_local_23: runtime::Field =
-                __compact_value_21 + __compact_value_22;
-            let step = context.write_cell(1, __compact_constructor_local_23)?;
+            let __compact_constructor_local_22: runtime::Field =
+                __compact_value_20 + __compact_value_21;
+            let step = context.write_cell(1, __compact_constructor_local_22)?;
             context = step.context;
-            let __compact_constructor_local_24: runtime::BoundedUint<18446744073709551615> =
+            let __compact_constructor_local_23: runtime::BoundedUint<18446744073709551615> =
                 runtime::cast_unsigned::<20, 18446744073709551615>(
                     if __compact_constructor_param_0 {
                         runtime::BoundedUint::<20>::new(10u128)
@@ -644,9 +636,9 @@ pub mod ledger_contract {
                             .expect("Compact Uint literal fits its maximum")
                     },
                 )?;
-            let step = context.write_cell(2, __compact_constructor_local_24)?;
+            let step = context.write_cell(2, __compact_constructor_local_23)?;
             context = step.context;
-            let __compact_constructor_local_25: runtime::FixedVector<runtime::Field, 2> =
+            let __compact_constructor_local_24: runtime::FixedVector<runtime::Field, 2> =
                 runtime::FixedVector::new([
                     if __compact_constructor_param_0 {
                         runtime::Field::from(
@@ -667,7 +659,7 @@ pub mod ledger_contract {
                         runtime::Field::from(4u128)
                     },
                 ]);
-            let step = context.write_cell(3, (__compact_constructor_local_25.clone()).clone())?;
+            let step = context.write_cell(3, (__compact_constructor_local_24.clone()).clone())?;
             context = step.context;
             let _ = total_cost;
             Ok(context.into_constructor_result())

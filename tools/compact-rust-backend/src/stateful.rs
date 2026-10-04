@@ -23,9 +23,9 @@ use crate::ir::{
     StateAction, StateReturn, StatefulCircuit, StructField, Type, WitnessDeclaration,
 };
 use crate::{
-    RenderError, UnsignedMaximum, coerce_expression, discard_expression, expression_with_calls,
-    ident, ledger_path_expr, list_head_result_type, map_slot_types, public_parameter_idents,
-    retained_value, rust_type, unsigned_cast_syntax, unsigned_maximum,
+    RenderError, UnsignedMaximum, coerce_expression, condition_needs_statement, discard_expression,
+    expression_with_calls, ident, ledger_path_expr, list_head_result_type, map_slot_types,
+    public_parameter_idents, retained_value, rust_type, unsigned_cast_syntax, unsigned_maximum,
 };
 
 #[expect(
@@ -800,6 +800,7 @@ pub(crate) fn render_state_expression(
             then,
             otherwise,
         } => {
+            let evaluate_condition = condition_needs_statement(condition);
             let (condition, condition_ty, condition_effect) = render_state_expression(
                 condition,
                 parameters,
@@ -816,6 +817,23 @@ pub(crate) fn render_state_expression(
                     expected: Type::Boolean,
                     actual: condition_ty,
                 });
+            }
+            if then == otherwise {
+                if evaluate_condition {
+                    statements.push(syn::parse_quote!(let _ = #condition;));
+                }
+                let (value, ty, effect) = render_state_expression(
+                    then,
+                    parameters,
+                    witnesses,
+                    statements,
+                    next_temp,
+                    circuits,
+                    stateful_circuits,
+                    ledger_fields,
+                    query_effect,
+                )?;
+                return Ok((value, ty, condition_effect || effect));
             }
             let mut then_statements = Vec::new();
             let (then_value, then_ty, then_effect) = render_state_expression(

@@ -15,7 +15,7 @@
 
 //! An opt-in path from native circuit execution to a replayable ledger program.
 //!
-//! Cell, Counter, Set, Map, List, and plain/historic Merkle append are supported so far. Generated contracts must
+//! Cell, Counter, Set, Map, List, and plain/historic Merkle append and fullness reads are supported so far. Generated contracts must
 //! not claim a transaction-ready trace until every operation they use records
 //! its corresponding verifying VM instruction.
 
@@ -204,6 +204,61 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         value: T,
     ) -> Result<Self, CompactError> {
         self.apply_verify_program(ledger::historic_merkle_insert_program(path, value))
+    }
+
+    /// Read plain-tree fullness through the ledger VM and retain the observed
+    /// read value in the verifying program.
+    pub fn merkle_is_full(
+        self,
+        path: impl Into<LedgerPath>,
+        depth: u8,
+    ) -> Result<(Self, bool), CompactError> {
+        self.read_merkle_is_full(path.into(), depth, false)
+    }
+
+    /// Historic trees use the same ledger fullness VM program.
+    pub fn historic_merkle_is_full(
+        self,
+        path: impl Into<LedgerPath>,
+        depth: u8,
+    ) -> Result<(Self, bool), CompactError> {
+        self.read_merkle_is_full(path.into(), depth, true)
+    }
+
+    fn read_merkle_is_full(
+        mut self,
+        path: LedgerPath,
+        depth: u8,
+        historic: bool,
+    ) -> Result<(Self, bool), CompactError> {
+        let (result, full) = if historic {
+            ledger::historic_is_full(
+                &self.context.query,
+                path.as_slice(),
+                depth,
+                self.context.gas_limit,
+                &self.context.cost_model,
+            )?
+        } else {
+            ledger::merkle_is_full(
+                &self.context.query,
+                path.as_slice(),
+                depth,
+                self.context.gas_limit,
+                &self.context.cost_model,
+            )?
+        };
+        let Some(GatherEvent::Read(observed)) = result.events.last() else {
+            return Err(CompactError::InvalidLedgerCell(
+                "missing Merkle fullness event".into(),
+            ));
+        };
+        let program =
+            ledger::is_full_program::<ResultModeVerify, D>(path, depth, observed.clone())?;
+        self.context.query = result.context;
+        self.observed_gas += result.gas_cost;
+        self.verify_ops.extend(program);
+        Ok((self, full))
     }
 
     pub fn remove_set<T: CellValue>(

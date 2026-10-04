@@ -2389,6 +2389,34 @@ fn render_recorded_item(
                 syn::parse_quote!(observed),
             )
         }
+        StateReturn::MerkleIsFull { field, index }
+        | StateReturn::HistoricMerkleIsFull { field, index }
+            if circuit.result == Type::Boolean && circuit.actions.is_empty() =>
+        {
+            let declaration = ledger_fields
+                .get(field.as_str())
+                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+            let historic = matches!(
+                circuit.return_value,
+                StateReturn::HistoricMerkleIsFull { .. }
+            );
+            let declaration_historic = match declaration.declaration {
+                LedgerFieldKind::MerkleTree { .. } => false,
+                LedgerFieldKind::HistoricMerkleTree { .. } => true,
+                _ => return Err(RenderError::UnknownLedgerField(field.clone())),
+            };
+            if declaration.index != *index || historic != declaration_historic {
+                return Err(RenderError::UnknownLedgerField(field.clone()));
+            }
+            let slot = ident(field)?;
+            (
+                vec![syn::parse_quote!(
+                    let (frame, observed): (_, bool) =
+                        crate::ledger_slots::#slot.record_is_full(frame)?;
+                )],
+                syn::parse_quote!(observed),
+            )
+        }
         _ => return Ok(None),
     };
     if steps.is_empty() && return_steps.is_empty() {

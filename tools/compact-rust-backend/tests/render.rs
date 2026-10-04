@@ -247,7 +247,7 @@ fn generated_unit_enum_uses_checked_derive_without_handwritten_codecs() {
     let source = render(&contract).unwrap();
     assert!(source.contains("CompactCellValue, CompactEnum"));
     assert!(source.contains("pub enum Choice"));
-    assert!(source.contains("RUST_RUNTIME_ABI == 33"));
+    assert!(source.contains("RUST_RUNTIME_ABI == 34"));
     assert!(!source.contains("impl FieldRepr for Choice"));
     assert!(!source.contains("impl BinaryHashRepr for Choice"));
     assert!(!source.contains("impl FromFieldRepr for Choice"));
@@ -397,6 +397,88 @@ fn native_merkle_calls_use_declared_typed_slots() {
     assert!(source.contains("crate::ledger_slots::historic.reset_history(context)?"));
     assert!(source.contains("crate::ledger_slots::historic.is_full(context)?"));
     assert!(!source.contains("context.merkle_insert(0,"));
+}
+
+#[test]
+fn direct_merkle_fullness_reads_record_only_matching_declared_slots() {
+    let mut contract = identity(Type::Unit, Expr::Unit);
+    contract.ledger_fields = vec![
+        LedgerField {
+            source: None,
+            id: "plain".into(),
+            index: 0,
+            path: vec![],
+            declaration: LedgerFieldKind::MerkleTree {
+                ty: Type::Boolean,
+                depth: 3,
+            },
+        },
+        LedgerField {
+            source: None,
+            id: "historic".into(),
+            index: 1,
+            path: vec![],
+            declaration: LedgerFieldKind::HistoricMerkleTree {
+                ty: Type::Boolean,
+                depth: 3,
+            },
+        },
+    ];
+    contract.stateful_circuits = vec![
+        StatefulCircuit {
+            source: None,
+            internal: false,
+            name: "plain_full".into(),
+            parameters: vec![],
+            actions: vec![],
+            result: Type::Boolean,
+            return_value: StateReturn::MerkleIsFull {
+                field: "plain".into(),
+                index: 0,
+            },
+        },
+        StatefulCircuit {
+            source: None,
+            internal: false,
+            name: "historic_full".into(),
+            parameters: vec![],
+            actions: vec![],
+            result: Type::Boolean,
+            return_value: StateReturn::HistoricMerkleIsFull {
+                field: "historic".into(),
+                index: 1,
+            },
+        },
+    ];
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert_eq!(rendered.source.matches("record_is_full(frame)?").count(), 2);
+    let fullness = rendered
+        .capabilities
+        .circuits
+        .iter()
+        .filter(|circuit| circuit.name.ends_with("_full"))
+        .collect::<Vec<_>>();
+    assert_eq!(fullness.len(), 2);
+    for circuit in fullness {
+        assert!(circuit.recorded && circuit.observed_call);
+    }
+
+    contract.stateful_circuits[0].return_value = StateReturn::HistoricMerkleIsFull {
+        field: "plain".into(),
+        index: 0,
+    };
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::UnknownLedgerField("plain".into()))
+    );
+    contract.stateful_circuits[0].return_value = StateReturn::MerkleIsFull {
+        field: "plain".into(),
+        index: 1,
+    };
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::UnknownLedgerField("plain".into()))
+    );
 }
 
 #[test]

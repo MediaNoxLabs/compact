@@ -125,8 +125,8 @@ mutation, membership, lookup, size, and emptiness calls have
 replayable recorded methods, including declaration-typed `FixedVector` keys in
 supported circuits and compiler-assigned chunked paths. Typed List push, pop,
 reset, length, emptiness, and head
-calls also have recorded methods. Plain and historic Merkle append circuits
-have recorded methods when their complete trace is supported; other Merkle
+calls also have recorded methods. Plain and historic Merkle append circuits,
+and direct `isFull()` Boolean returns, have recorded methods when their complete trace is supported; other Merkle
 operations remain native. Other methods continue to
 return native execution results until their full transcript coverage is proven.
 The `tiny` fixture also records typed enum/Bytes Cell reads and writes,
@@ -166,7 +166,7 @@ Compact spelling without warning in consumer builds.
 |---|---|---|
 | Compact compiler | Toolchain 0.31.133, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
 | Rust IR | Schema 8, private to this backend | The renderer rejects any other schema before writing `lib.rs`. Ledger, circuit, witness, constructor, and exported alias declarations carry optional Compact source locations for diagnostics. |
-| Generated code and Rust runtime | ABI 33 | Generated modules assert the ABI at Rust compile time. ABI 33 adds typed local plain/historic Merkle views with checked depth; ABI 32 adds List views; ABI 31 adds cell-valued Map views; ABI 30 adds Set views; ABI 29 adds Cell/Counter views; ABI 25–28 add physical List paths, chunked Map and Cell calls, and Cell-read scalar returns; ABI 21–24 add typed multi-argument observed calls and composite/chunked Set calls. The [runtime guide](../../runtime-rs/README.md) records earlier ABI changes. |
+| Generated code and Rust runtime | ABI 34 | Generated modules assert the ABI at Rust compile time. ABI 34 adds recorded direct plain/historic Merkle fullness reads through typed slots; ABI 33 adds typed local plain/historic Merkle views with checked depth; ABI 32 adds List views; ABI 31 adds cell-valued Map views; ABI 30 adds Set views; ABI 29 adds Cell/Counter views; ABI 25–28 add physical List paths, chunked Map and Cell calls, and Cell-read scalar returns; ABI 21–24 add typed multi-argument observed calls and composite/chunked Set calls. The [runtime guide](../../runtime-rs/README.md) records earlier ABI changes. |
 | Rust runtime source | Bundled runtime crates or an explicit shared source root | Cargo resolves the matching runtime and its pinned Midnight crates. |
 
 `--runtime-version` reports the TypeScript runtime version; the Rust runtime
@@ -458,13 +458,13 @@ result oracles. A runtime unit test compares the complete serialized VM
 programs for those seven captured queries, including ordered operations,
 path keys, cache flags, pushed values, and the inserted leaf hash. These
 native Merkle queries do not imply recorded proof coverage for every operation;
-supported plain and historic append circuits have separate recorded traces.
+supported plain and historic append and direct fullness circuits have separate recorded traces.
 The `--proof` target check derives the Counter increment statement from the
 generated recorded trace, proves it against emitted ZKIR and keys, and rejects
 a changed binding input. It also validates offline ledger-8 deployments and
 proves, verifies, validates, and applies the supported Counter, Cell, Set,
-Map, List, enum Cell, `tiny`, plain/historic Merkle append, and vector-key Set
-insert call fixtures (56 offline calls). `tiny` is proved in both
+Map, List, enum Cell, `tiny`, plain/historic Merkle append and fullness, and vector-key Set
+insert call fixtures. `tiny` is proved in both
 present and absent `get` branches. Other circuit operations still need
 recording coverage before wallet submission.
 

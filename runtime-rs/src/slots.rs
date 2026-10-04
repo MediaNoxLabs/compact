@@ -222,6 +222,18 @@ impl<T: CellValue, const DEPTH: u8, const HISTORIC: bool> MerkleSlot<T, DEPTH, H
         }
     }
 
+    /// Record a metered fullness read for proof and ledger replay.
+    pub fn record_is_full<Private, D: DB>(
+        self,
+        frame: RecordingFrame<Private, D>,
+    ) -> Result<(RecordingFrame<Private, D>, bool), CompactError> {
+        if HISTORIC {
+            frame.historic_merkle_is_full(self.path, DEPTH)
+        } else {
+            frame.merkle_is_full(self.path, DEPTH)
+        }
+    }
+
     pub fn check_root<Private, D: DB, R: CellValue>(
         self,
         context: CircuitContext<Private, D>,

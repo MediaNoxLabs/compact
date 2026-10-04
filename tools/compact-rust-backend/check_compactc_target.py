@@ -605,6 +605,10 @@ def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
         "    let recorded_merkle = compact_contract_merkle_tree_oracle::ledger_contract::recorded::append(merkle_context, midnight_compact_runtime::BoundedUint::<255>::new(7).unwrap()).unwrap();\n"
         "    let merkle_replay = recorded_merkle.public.initial().query(recorded_merkle.public.verify_ops(), None, &recorded_merkle.execution.context.cost_model).unwrap();\n"
         "    assert_eq!(merkle_replay.context.effects, recorded_merkle.execution.context.query.effects);\n"
+        "    let recorded_merkle_full = compact_contract_merkle_tree_oracle::ledger_contract::recorded::full(recorded_merkle.execution.context).unwrap();\n"
+        "    assert!(!recorded_merkle_full.execution.result);\n"
+        "    let merkle_full_replay = recorded_merkle_full.public.initial().query(recorded_merkle_full.public.verify_ops(), None, &recorded_merkle_full.execution.context.cost_model).unwrap();\n"
+        "    assert_eq!(merkle_full_replay.context.effects, recorded_merkle_full.execution.context.query.effects);\n"
         "    let historic = initial_historic_merkle_state(ConstructorContext::new(())).unwrap();\n"
         "    let historic_context = historic.into_circuit_context(ContractAddress::default());\n"
         "    let _: midnight_compact_runtime::slots::MerkleSlot<midnight_compact_runtime::BoundedUint<255>, 3, true> = compact_contract_hmt_insert_oracle::ledger_slots::t;\n"
@@ -615,6 +619,10 @@ def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
         "    let recorded_historic = compact_contract_hmt_insert_oracle::ledger_contract::recorded::append(historic_context, midnight_compact_runtime::BoundedUint::<255>::new(7).unwrap()).unwrap();\n"
         "    let historic_replay = recorded_historic.public.initial().query(recorded_historic.public.verify_ops(), None, &recorded_historic.execution.context.cost_model).unwrap();\n"
         "    assert_eq!(historic_replay.context.effects, recorded_historic.execution.context.query.effects);\n"
+        "    let recorded_historic_full = compact_contract_hmt_insert_oracle::ledger_contract::recorded::full(recorded_historic.execution.context).unwrap();\n"
+        "    assert!(!recorded_historic_full.execution.result);\n"
+        "    let historic_full_replay = recorded_historic_full.public.initial().query(recorded_historic_full.public.verify_ops(), None, &recorded_historic_full.execution.context.cost_model).unwrap();\n"
+        "    assert_eq!(historic_full_replay.context.effects, recorded_historic_full.execution.context.query.effects);\n"
         "    let vector = initial_vector_state(ConstructorContext::new(())).unwrap();\n"
         "    let vector_context = vector.into_circuit_context(ContractAddress::default());\n"
         "    let vector_call = VectorContract::default().recording.setInsert(vector_context).unwrap();\n"
@@ -1242,17 +1250,19 @@ def main() -> None:
             merkle_proof = base / "merkle-proof"
             run(compiler, "--target", "rust", str(MERKLE_SOURCE), str(merkle_proof))
             check_manifest(merkle_proof)
-            for extension in ("prover", "verifier"):
-                assert (merkle_proof / "keys" / f"append.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (merkle_proof / "zkir" / f"append.{extension}").is_file()
+            for circuit in ("append", "full"):
+                for extension in ("prover", "verifier"):
+                    assert (merkle_proof / "keys" / f"{circuit}.{extension}").is_file()
+                for extension in ("zkir", "bzkir"):
+                    assert (merkle_proof / "zkir" / f"{circuit}.{extension}").is_file()
             historic_merkle_proof = base / "historic-merkle-proof"
             run(compiler, "--target", "rust", str(HISTORIC_MERKLE_SOURCE), str(historic_merkle_proof))
             check_manifest(historic_merkle_proof)
-            for extension in ("prover", "verifier"):
-                assert (historic_merkle_proof / "keys" / f"append.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (historic_merkle_proof / "zkir" / f"append.{extension}").is_file()
+            for circuit in ("append", "full"):
+                for extension in ("prover", "verifier"):
+                    assert (historic_merkle_proof / "keys" / f"{circuit}.{extension}").is_file()
+                for extension in ("zkir", "bzkir"):
+                    assert (historic_merkle_proof / "zkir" / f"{circuit}.{extension}").is_file()
             vector_key_proof = base / "vector-key-proof"
             run(compiler, "--target", "rust", str(VECTOR_KEY_SOURCE), str(vector_key_proof))
             check_manifest(vector_key_proof)

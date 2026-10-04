@@ -27,7 +27,7 @@ use midnight_base_crypto::fab::AlignedValue;
 use midnight_base_crypto::repr::BinaryHashRepr;
 use midnight_onchain_vm::cost_model::CostModel;
 use midnight_onchain_vm::ops::{Key, Op};
-use midnight_onchain_vm::result_mode::{ResultModeGather, ResultModeVerify};
+use midnight_onchain_vm::result_mode::{ResultMode, ResultModeGather, ResultModeVerify};
 use midnight_storage::arena::Sp;
 use midnight_storage::db::DB;
 use midnight_transient_crypto::fab::ValueReprAlignedValue;
@@ -868,7 +868,7 @@ pub fn historic_is_full<D: DB>(
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<(QueryResults<ResultModeGather, D>, bool), CompactError> {
-    let program = is_full_program::<D>(path.into(), depth)?;
+    let program = is_full_program::<ResultModeGather, D>(path.into(), depth, ())?;
     let result = context
         .query(&program, gas_limit, cost_model)
         .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
@@ -876,10 +876,11 @@ pub fn historic_is_full<D: DB>(
     Ok((result, decoded))
 }
 
-fn is_full_program<D: DB>(
+pub(crate) fn is_full_program<M: ResultMode<D>, D: DB>(
     path: LedgerPath,
     depth: u8,
-) -> Result<Vec<Op<ResultModeGather, D>>, CompactError> {
+    read_result: M::ReadResult,
+) -> Result<Vec<Op<M, D>>, CompactError> {
     let capacity = 1_u64.checked_shl(depth as u32).ok_or_else(|| {
         CompactError::InvalidLedgerCell(format!("invalid HistoricMerkleTree depth {depth}"))
     })?;
@@ -904,7 +905,7 @@ fn is_full_program<D: DB>(
         Op::Neg,
         Op::Popeq {
             cached: true,
-            result: (),
+            result: read_result,
         },
     ])
 }
@@ -1080,7 +1081,7 @@ mod query_program_tests {
             .root()
             .unwrap();
 
-        let full = is_full_program::<DefaultDB>(path(), 3).unwrap();
+        let full = is_full_program::<ResultModeGather, DefaultDB>(path(), 3, ()).unwrap();
         assert_program(&full, &plain, "fullAtInit");
         assert_program(&full, &historic, "fullAtInit");
         assert_program(

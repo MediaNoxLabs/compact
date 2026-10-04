@@ -191,6 +191,84 @@ fn recorded_historic_append_preserves_root_history_and_replays() {
 }
 
 #[test]
+fn recorded_historic_fullness_matches_native_vm_and_preserves_history() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/hmt-insert-oracle.json"
+    ))
+    .unwrap();
+    let expected_program = &oracle["nativeQueries"]["fullAtInit"]["queries"][0]["program"];
+    for (count, expected) in [(0_u128, false), (1, false), (8, true)] {
+        let context = || {
+            let mut context = initial_state(ConstructorContext::new(()))
+                .unwrap()
+                .into_circuit_context(ContractAddress::default());
+            for value in 1..=count {
+                context = append(context, bounded::<255>(value)).unwrap().context;
+            }
+            context
+        };
+        let native = full(context()).unwrap();
+        let recorded = recorded::full(context()).unwrap();
+        assert_eq!(recorded.execution.result, expected);
+        assert_eq!(recorded.execution.result, native.result);
+        assert_eq!(recorded.execution.gas_cost, native.gas_cost);
+        assert_eq!(
+            recorded.execution.context.query.effects,
+            native.context.query.effects
+        );
+        assert_eq!(
+            state_hex(recorded.public.initial().state.get_ref().clone()),
+            state_hex(recorded.execution.context.query.state.get_ref().clone())
+        );
+        assert_eq!(
+            state_hex(native.context.query.state.get_ref().clone()),
+            state_hex(recorded.execution.context.query.state.get_ref().clone())
+        );
+        let mut verify = serde_json::to_value(recorded.public.verify_ops()).unwrap();
+        let read = &mut verify.as_array_mut().unwrap().last_mut().unwrap()["popeq"]["result"];
+        assert!(!read.is_null());
+        *read = serde_json::Value::Null;
+        assert_eq!(&verify, expected_program);
+        let replay = recorded
+            .public
+            .initial()
+            .query(
+                recorded.public.verify_ops(),
+                None,
+                &recorded.execution.context.cost_model,
+            )
+            .unwrap();
+        assert_eq!(replay.gas_cost, recorded.execution.gas_cost);
+        assert_eq!(
+            replay.context.effects,
+            recorded.execution.context.query.effects
+        );
+        assert_eq!(
+            state_hex(replay.context.state.get_ref().clone()),
+            state_hex(recorded.execution.context.query.state.get_ref().clone())
+        );
+        assert_eq!(
+            runtime::ledger::historic_merkle_tree_view_at_path(
+                replay.context.state.get_ref(),
+                &[0],
+            )
+            .unwrap()
+            .history()
+            .unwrap(),
+            runtime::ledger::historic_merkle_tree_view_at_path(
+                recorded.public.initial().state.get_ref(),
+                &[0],
+            )
+            .unwrap()
+            .history()
+            .unwrap()
+        );
+    }
+    assert_eq!(oracle["fullAtInit"], false);
+    assert_eq!(oracle["fullAtCapacity"], true);
+}
+
+#[test]
 fn historic_merkle_insert_modes_match_typescript_state_bytes() {
     let oracle: serde_json::Value = serde_json::from_str(include_str!(
         "../../../runtime-rs/tests/fixtures/hmt-insert-oracle.json"

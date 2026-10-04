@@ -2112,6 +2112,30 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
             Ok(())
         })?;
+
+        let circuit = "full";
+        let initial = merkle_contract::initial_state(ConstructorContext::new(()))?;
+        let deploy = make_deploy(
+            merkle_root,
+            circuit,
+            initial.ledger_state.get_ref().clone(),
+            &mut rng,
+        )?;
+        let context = initial.into_circuit_context(deploy.address());
+        let recorded = merkle_contract::Contract::default()
+            .recording
+            .full(context)?;
+        if recorded.execution.result {
+            return Err("new plain Merkle tree unexpectedly full".into());
+        }
+        let call = check_generated_trace(merkle_root, circuit, recorded, ())?;
+        check_transaction(merkle_root, circuit, deploy, call, &mut rng, |contract| {
+            let tree = merkle_tree_view_at_path(contract.data.get_ref(), &[0])?;
+            if tree.first_free()?.value() != 0 {
+                return Err("proven plain Merkle fullness read changed the tree".into());
+            }
+            Ok(())
+        })?;
     }
     if let Some(historic_root) = historic_merkle_root.as_ref().map(Path::new) {
         let circuit = "append";
@@ -2147,6 +2171,30 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
             if tree.history()?.len() != 2 {
                 return Err("proven historic append did not retain both roots".into());
+            }
+            Ok(())
+        })?;
+
+        let circuit = "full";
+        let initial = historic_merkle_contract::initial_state(ConstructorContext::new(()))?;
+        let deploy = make_deploy(
+            historic_root,
+            circuit,
+            initial.ledger_state.get_ref().clone(),
+            &mut rng,
+        )?;
+        let context = initial.into_circuit_context(deploy.address());
+        let recorded = historic_merkle_contract::Contract::default()
+            .recording
+            .full(context)?;
+        if recorded.execution.result {
+            return Err("new historic Merkle tree unexpectedly full".into());
+        }
+        let call = check_generated_trace(historic_root, circuit, recorded, ())?;
+        check_transaction(historic_root, circuit, deploy, call, &mut rng, |contract| {
+            let tree = historic_merkle_tree_view_at_path(contract.data.get_ref(), &[0])?;
+            if tree.first_free()?.value() != 0 || tree.history()?.len() != 1 {
+                return Err("proven historic Merkle fullness read changed the tree".into());
             }
             Ok(())
         })?;

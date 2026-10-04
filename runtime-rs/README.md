@@ -6,6 +6,10 @@ midnight-zk primitives for fields, encoding, cryptography, state, and VM
 queries. Generated code checks `RUST_RUNTIME_ABI` at compile time. A generated
 crate bundles matching runtime sources by default or points to one shared
 source root when compiled with `--rust-runtime-root`.
+ABI 34 records direct plain/historic Merkle `isFull()` reads through typed
+`MerkleSlot::record_is_full`. The recording frame uses the native ledger-8
+query, preserves its observed read in a verifying VM program, and exposes a
+Boolean recorded/observed call without changing local structural views.
 ABI 33 adds declaration-named local views for plain and historic Merkle trees.
 Their slot-backed wrappers preserve the declared leaf type and depth, validate
 the actual tree height, and expose structural root, first-free and typed path

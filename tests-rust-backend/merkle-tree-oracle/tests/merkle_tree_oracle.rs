@@ -156,6 +156,93 @@ fn recorded_plain_append_matches_ledger8_program_and_replays() {
 }
 
 #[test]
+fn recorded_plain_fullness_matches_native_vm_and_replays_without_a_write() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/merkle-tree-oracle.json"
+    ))
+    .unwrap();
+    let expected_program = &oracle["nativeQueries"]["fullAtInit"]["queries"][0]["program"];
+    for (count, expected) in [(0_u128, false), (1, false), (8, true)] {
+        let context = || {
+            let mut context = initial_state(ConstructorContext::new(()))
+                .unwrap()
+                .into_circuit_context(ContractAddress::default());
+            for value in 1..=count {
+                context = append(context, bounded::<255>(value)).unwrap().context;
+            }
+            context
+        };
+        let native = full(context()).unwrap();
+        let recorded = recorded::full(context()).unwrap();
+        assert_eq!(recorded.execution.result, expected);
+        assert_eq!(recorded.execution.result, native.result);
+        assert_eq!(recorded.execution.gas_cost, native.gas_cost);
+        assert_eq!(
+            recorded.execution.context.query.effects,
+            native.context.query.effects
+        );
+        assert_eq!(
+            state_hex(recorded.public.initial().state.get_ref().clone()),
+            state_hex(recorded.execution.context.query.state.get_ref().clone())
+        );
+        assert_eq!(
+            state_hex(native.context.query.state.get_ref().clone()),
+            state_hex(recorded.execution.context.query.state.get_ref().clone())
+        );
+
+        let mut verify = serde_json::to_value(recorded.public.verify_ops()).unwrap();
+        let read = &mut verify.as_array_mut().unwrap().last_mut().unwrap()["popeq"]["result"];
+        assert!(!read.is_null());
+        *read = serde_json::Value::Null;
+        assert_eq!(&verify, expected_program);
+        let replay = recorded
+            .public
+            .initial()
+            .query(
+                recorded.public.verify_ops(),
+                None,
+                &recorded.execution.context.cost_model,
+            )
+            .unwrap();
+        assert_eq!(replay.gas_cost, recorded.execution.gas_cost);
+        assert_eq!(
+            replay.context.effects,
+            recorded.execution.context.query.effects
+        );
+        assert_eq!(
+            state_hex(replay.context.state.get_ref().clone()),
+            state_hex(recorded.execution.context.query.state.get_ref().clone())
+        );
+    }
+    assert_eq!(oracle["fullAtInit"], false);
+    assert_eq!(oracle["fullAtCapacity"], true);
+
+    let context = initial_state(ConstructorContext::new(()))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let wrong_path = runtime::slots::MerkleSlot::<runtime::BoundedUint<255>, 3, false>::new(&[9]);
+    assert!(
+        wrong_path
+            .record_is_full(runtime::recording::RecordingFrame::new(context))
+            .is_err()
+    );
+    let context = initial_state(ConstructorContext::new(()))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let wrong_depth = runtime::slots::MerkleSlot::<runtime::BoundedUint<255>, 64, false>::new(&[0]);
+    assert!(
+        wrong_depth
+            .record_is_full(runtime::recording::RecordingFrame::new(context))
+            .is_err()
+    );
+    let mut context = initial_state(ConstructorContext::new(()))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    context.gas_limit = Some(runtime::context::RunningCost::ZERO);
+    assert!(recorded::full(context).is_err());
+}
+
+#[test]
 fn merkle_tree_operations_match_typescript_state_bytes() {
     let oracle: serde_json::Value = serde_json::from_str(include_str!(
         "../../../runtime-rs/tests/fixtures/merkle-tree-oracle.json"

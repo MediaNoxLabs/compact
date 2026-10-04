@@ -133,7 +133,7 @@ def check(compiler: Path) -> tuple[dict, list[str]]:
                                    for circuit in row.get("proof_circuits", [])),
         "compiler_proof_false": sum(circuit["proof"] is False for row in receipt["sources"]
                                     for circuit in row.get("proof_circuits", [])),
-        "known_lexical_pure_omissions": sum(item["known_lexical_pure_omissions"]
+        "declared_pure_circuits": sum(item["pure_declarations"]
                                            for item in manifest["positive_sources"]),
     }
     receipt["failures"] = failures

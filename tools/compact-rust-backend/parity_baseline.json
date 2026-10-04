@@ -40,6 +40,66 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/relations.compact",
+    "module_path": [
+      "CredentialPresentationRelations"
+    ],
+    "kind": "circuit",
+    "name": "assertMatchingCredentialPresentation",
+    "signature": "export pure circuit assertMatchingCredentialPresentation( credential: VC_Credential, presentation: VP_Presentation ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/issue.compact",
+    "module_path": [
+      "Issue"
+    ],
+    "kind": "circuit",
+    "name": "assertOfferRequestAlignment",
+    "signature": "export pure circuit assertOfferRequestAlignment( offer: OfferMessage, request: RequestMessage ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/issue.compact",
+    "module_path": [
+      "Issue"
+    ],
+    "kind": "circuit",
+    "name": "assertRequestResultAlignment",
+    "signature": "export pure circuit assertRequestResultAlignment( request: RequestMessage, result: ResultMessage ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/issue.compact",
+    "module_path": [
+      "Issue"
+    ],
+    "kind": "circuit",
+    "name": "assertValidOfferMessage",
+    "signature": "export pure circuit assertValidOfferMessage( offer: OfferMessage ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/issue.compact",
+    "module_path": [
+      "Issue"
+    ],
+    "kind": "circuit",
+    "name": "assertValidRequestMessage",
+    "signature": "export pure circuit assertValidRequestMessage( request: RequestMessage ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/issue.compact",
+    "module_path": [
+      "Issue"
+    ],
+    "kind": "circuit",
+    "name": "assertValidResultMessage",
+    "signature": "export pure circuit assertValidResultMessage( result: ResultMessage ): []",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/module_boolean_constructor.compact",
     "module_path": [
       "M"
@@ -47,6 +107,66 @@
     "kind": "circuit",
     "name": "bump_inner",
     "signature": "export circuit bump_inner(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/present.compact",
+    "module_path": [
+      "Present"
+    ],
+    "kind": "circuit",
+    "name": "assertRequestSubmissionAlignment",
+    "signature": "export pure circuit assertRequestSubmissionAlignment( request: RequestMessage, submission: SubmissionMessage ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/present.compact",
+    "module_path": [
+      "Present"
+    ],
+    "kind": "circuit",
+    "name": "assertSubmissionResultAlignment",
+    "signature": "export pure circuit assertSubmissionResultAlignment( submission: SubmissionMessage, result: ResultMessage ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/present.compact",
+    "module_path": [
+      "Present"
+    ],
+    "kind": "circuit",
+    "name": "assertValidRequestMessage",
+    "signature": "export pure circuit assertValidRequestMessage( request: RequestMessage ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/present.compact",
+    "module_path": [
+      "Present"
+    ],
+    "kind": "circuit",
+    "name": "assertValidResultMessage",
+    "signature": "export pure circuit assertValidResultMessage( result: ResultMessage ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/present.compact",
+    "module_path": [
+      "Present"
+    ],
+    "kind": "circuit",
+    "name": "assertValidSubmissionMessage",
+    "signature": "export pure circuit assertValidSubmissionMessage( submission: SubmissionMessage ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/schnorr_attest_oracle.compact",
+    "module_path": [
+      "Schnorr"
+    ],
+    "kind": "circuit",
+    "name": "schnorrChallengeDigest",
+    "signature": "export pure circuit schnorrChallengeDigest( ann_x: Field, ann_y: Field, pk_x: Field, pk_y: Field, digest: Vector<4, Field> ): Field",
     "visibility": "export"
   },
   {
@@ -67,6 +187,66 @@
     "kind": "circuit",
     "name": "schnorrVerifyDigest",
     "signature": "export circuit schnorrVerifyDigest( digest: Vector<4, Field>, signature: SchnorrSignature, pk: JubjubPoint ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/vc.compact",
+    "module_path": [
+      "VC"
+    ],
+    "kind": "circuit",
+    "name": "assertValidCredentialEnvelope",
+    "signature": "export pure circuit assertValidCredentialEnvelope( credential: Credential, expectedClaimRoot: Bytes<32> ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/vc.compact",
+    "module_path": [
+      "VC"
+    ],
+    "kind": "circuit",
+    "name": "assertValidCredentialProof",
+    "signature": "export pure circuit assertValidCredentialProof( credential: Credential, proof: Proof ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/vc.compact",
+    "module_path": [
+      "VC"
+    ],
+    "kind": "circuit",
+    "name": "assertValidCredentialProofForBodyRoot",
+    "signature": "export pure circuit assertValidCredentialProofForBodyRoot( credential: Credential, proof: Proof, bodyRoot: Bytes<32> ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/vc.compact",
+    "module_path": [
+      "VC"
+    ],
+    "kind": "circuit",
+    "name": "credentialBodyRoot",
+    "signature": "export pure circuit credentialBodyRoot(credential: Credential): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/vp.compact",
+    "module_path": [
+      "VP"
+    ],
+    "kind": "circuit",
+    "name": "assertValidPresentationEnvelope",
+    "signature": "export pure circuit assertValidPresentationEnvelope( presentation: Presentation ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/vp.compact",
+    "module_path": [
+      "VP"
+    ],
+    "kind": "circuit",
+    "name": "presentationBodyRoot",
+    "signature": "export pure circuit presentationBodyRoot(presentation: Presentation): Bytes<32>",
     "visibility": "export"
   },
   {
@@ -110,11 +290,43 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "addFieldLiteral",
+    "signature": "export pure circuit addFieldLiteral(x: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "addFieldOnlyLiteral",
+    "signature": "export pure circuit addFieldOnlyLiteral(x: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "addHugeFieldLiteral",
+    "signature": "export pure circuit addHugeFieldLiteral(x: Field): Field",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/opaque_string_set_oracle.compact",
     "module_path": [],
     "kind": "circuit",
     "name": "addName",
     "signature": "export circuit addName(name: Opaque<\"string\">): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "addUintFieldOperand",
+    "signature": "export pure circuit addUintFieldOperand(x: Field, u: Uint<8>): Field",
     "visibility": "export"
   },
   {
@@ -246,12 +458,36 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/guarded_assert_arith_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "ageGap",
+    "signature": "export pure circuit ageGap(newer: Attestation, older: Attestation): Uint<64>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/widening_arith_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "ageThresholdDays",
+    "signature": "export pure circuit ageThresholdDays(years: Uint<8>): Uint<32>",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/inline_type_scope_oracle.compact",
     "module_path": [],
     "kind": "circuit",
     "name": "aggHelper",
     "signature": "circuit aggHelper(w: Vector<4, Field>): Boolean",
     "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/pure_circuit_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "and_b",
+    "signature": "export pure circuit and_b(a: Boolean, b: Boolean): Boolean",
+    "visibility": "export"
   },
   {
     "source": "examples/rust_backend/choose_field.compact",
@@ -326,6 +562,142 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/widening_arith_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "areaOf",
+    "signature": "export pure circuit areaOf(w: Uint<16>, h: Uint<16>): Uint<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "arithOperand",
+    "signature": "export pure circuit arithOperand(c: Boolean, n: Uint<8>): Uint<64>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/field_cast_uint128.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "as_field",
+    "signature": "export pure circuit as_field(value: Uint<128>): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/tuple_destructure.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "as_tuple",
+    "signature": "export pure circuit as_tuple(x: Field): [Field, Field]",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/tuple_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "as_tuple",
+    "signature": "export pure circuit as_tuple(x: Field): [Field, Field]",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/tuple_destructure.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "as_vector",
+    "signature": "export pure circuit as_vector(x: Field): Vector<2, Field>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/tuple_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "as_vector",
+    "signature": "export pure circuit as_vector(x: Field): Vector<2, Field>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/guarded_assert_arith_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertAgeWithin",
+    "signature": "export pure circuit assertAgeWithin( attestation: Attestation, currentTime: Uint<64>, limit: Uint<64> ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertArg",
+    "signature": "export pure circuit assertArg(c: Boolean, x: Uint<8>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/holder-bindings.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertBlindedSecretHolderBindingWitness",
+    "signature": "export pure circuit assertBlindedSecretHolderBindingWitness( binding: BlindedSecretHolderBinding, verifierChallengeHash: Bytes<32>, holderSecret: Bytes<32>, opening: Bytes<32>, blindingFactor: Bytes<32> ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/src/digital-passport-credential/helpers.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertCivilDateMatchesEpochDays",
+    "signature": "pure circuit assertCivilDateMatchesEpochDays( date: DigitalPassportCivilDate, epochDays: Uint<32> ): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/src/digital-passport-credential/validation.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertDigitalPassportIssuanceRequestMatchesOffer",
+    "signature": "export pure circuit assertDigitalPassportIssuanceRequestMatchesOffer( offer: DigitalPassportIssuanceOffer, request: DigitalPassportIssuanceRequest ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/src/digital-passport-credential/validation.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertDigitalPassportIssuanceResultMatchesRequest",
+    "signature": "export pure circuit assertDigitalPassportIssuanceResultMatchesRequest( request: DigitalPassportIssuanceRequest, result: DigitalPassportIssuanceResult ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/src/digital-passport-credential/helpers.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertDigitalPassportPresentationSatisfiesRequest",
+    "signature": "export pure circuit assertDigitalPassportPresentationSatisfiesRequest( credential: DigitalPassportCredential, request: DigitalPassportPresentationRequest, presentation: DigitalPassportPresentation, presentationProof: Proof ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/src/digital-passport-credential/validation.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertDigitalPassportVerificationResultMatchesSubmission",
+    "signature": "export pure circuit assertDigitalPassportVerificationResultMatchesSubmission( submission: DigitalPassportVerificationSubmission, result: DigitalPassportVerificationResult ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/src/digital-passport-credential/validation.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertDigitalPassportVerificationSubmissionMatchesRequest",
+    "signature": "export pure circuit assertDigitalPassportVerificationSubmissionMatchesRequest( request: DigitalPassportVerificationRequest, submission: DigitalPassportVerificationSubmission ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/guarded_assert_arith_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertFreshEnough",
+    "signature": "export pure circuit assertFreshEnough( policy: VerifierPolicy, attestation: Attestation, currentTime: Uint<64> ): []",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/asset_registry_oracle.compact",
     "module_path": [],
     "kind": "circuit",
@@ -337,9 +709,185 @@
     "source": "examples/rust_backend/asset_registry_oracle.compact",
     "module_path": [],
     "kind": "circuit",
+    "name": "assertGrantNotFuture",
+    "signature": "export pure circuit assertGrantNotFuture(grant: CustodyGrant, asOf: Uint<64>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/holder-bindings.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertMatchingBlindedSecretHolderBindings",
+    "signature": "export pure circuit assertMatchingBlindedSecretHolderBindings( credentialBinding: BlindedSecretHolderBinding, presentationBinding: BlindedSecretHolderBinding ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/holder-bindings.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertMatchingExplicitHolderBindings",
+    "signature": "export pure circuit assertMatchingExplicitHolderBindings( credentialBinding: ExplicitHolderBinding, presentationBinding: ExplicitHolderBinding ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/holder-bindings.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertMatchingJubjubHolderBindings",
+    "signature": "export pure circuit assertMatchingJubjubHolderBindings( credentialBinding: JubjubHolderBinding, presentationBinding: JubjubHolderBinding ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/holder-bindings.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertMatchingOffchainMidnightHolderBindings",
+    "signature": "export pure circuit assertMatchingOffchainMidnightHolderBindings( credentialBinding: OffchainMidnightHolderBinding, presentationBinding: OffchainMidnightHolderBinding ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/types.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertMatchingSchemaCapabilities",
+    "signature": "export pure circuit assertMatchingSchemaCapabilities( expected: SchemaCapabilities, actual: SchemaCapabilities ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/protocols.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertMatchingSchemaRefs",
+    "signature": "export pure circuit assertMatchingSchemaRefs( expected: SchemaRef, actual: SchemaRef ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/holder-bindings.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertMatchingSecretHolderBindings",
+    "signature": "export pure circuit assertMatchingSecretHolderBindings( credentialBinding: SecretHolderBinding, presentationBinding: SecretHolderBinding ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/asset_registry_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
     "name": "assertOperatorDistinctFromAuditor",
     "signature": "circuit assertOperatorDistinctFromAuditor(candidate: JubjubPoint): []",
     "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/mixed_width_operand_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertProductEQ",
+    "signature": "export pure circuit assertProductEQ(q: Uint<32>, y: Uint<32>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/mixed_width_operand_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertProductGE",
+    "signature": "export pure circuit assertProductGE(q: Uint<32>, y: Uint<32>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/mixed_width_operand_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertProductGT",
+    "signature": "export pure circuit assertProductGT(q: Uint<32>, y: Uint<32>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/mixed_width_operand_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertProductLE",
+    "signature": "export pure circuit assertProductLE(q: Uint<32>, y: Uint<32>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/mixed_width_operand_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertProductLT",
+    "signature": "export pure circuit assertProductLT(q: Uint<32>, y: Uint<32>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/mixed_width_operand_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertProductNE",
+    "signature": "export pure circuit assertProductNE(q: Uint<32>, y: Uint<32>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/holder-bindings.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertProofMatchesExplicitHolderBinding",
+    "signature": "export pure circuit assertProofMatchesExplicitHolderBinding( binding: ExplicitHolderBinding, presentationProof: Proof ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/holder-bindings.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertProofMatchesJubjubHolderBinding",
+    "signature": "export pure circuit assertProofMatchesJubjubHolderBinding( binding: JubjubHolderBinding, presentationProof: Proof ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/holder-bindings.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertProofMatchesOffchainMidnightHolderBinding",
+    "signature": "export pure circuit assertProofMatchesOffchainMidnightHolderBinding( binding: OffchainMidnightHolderBinding, presentationProof: Proof ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/protocols.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertProtocolFeaturesMatchSchemaCapabilities",
+    "signature": "export pure circuit assertProtocolFeaturesMatchSchemaCapabilities( features: CredentialProtocolFeatures, capabilities: SchemaCapabilities ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/protocols.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertProtocolResponseEnvelope",
+    "signature": "export pure circuit assertProtocolResponseEnvelope( requestEnvelope: ProtocolMessageEnvelope, responseEnvelope: ProtocolMessageEnvelope ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/asset_registry_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertRecordClassKnown",
+    "signature": "export pure circuit assertRecordClassKnown(record: AssetRecord): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/asset_registry_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertRecordFreshEnough",
+    "signature": "export pure circuit assertRecordFreshEnough( policy: FreshnessPolicy, record: AssetRecord, currentTime: Uint<64> ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/holder-bindings.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertSecretHolderBindingWitness",
+    "signature": "export pure circuit assertSecretHolderBindingWitness( binding: SecretHolderBinding, verifierChallengeHash: Bytes<32>, holderSecret: Bytes<32>, opening: Bytes<32> ): []",
+    "visibility": "export"
   },
   {
     "source": "examples/rust_backend/asset_registry_oracle.compact",
@@ -347,6 +895,262 @@
     "kind": "circuit",
     "name": "assertStoredRecordFresh",
     "signature": "export circuit assertStoredRecordFresh( recordId: Opaque<\"string\">, policy: FreshnessPolicy, currentTime: Uint<64> ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/holder-bindings.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertValidBlindedSecretHolderCredentialBinding",
+    "signature": "export pure circuit assertValidBlindedSecretHolderCredentialBinding( binding: BlindedSecretHolderBinding ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/holder-bindings.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertValidBlindedSecretHolderPresentationBinding",
+    "signature": "export pure circuit assertValidBlindedSecretHolderPresentationBinding( binding: BlindedSecretHolderBinding ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/src/digital-passport-credential/helpers.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertValidDigitalPassportAgePredicate",
+    "signature": "export pure circuit assertValidDigitalPassportAgePredicate( credential: DigitalPassportCredential, presentation: DigitalPassportPresentation, currentDay: Uint<32>, dateOfBirthDays: Uint<32>, dateOfBirthOpening: Bytes<32>, currentDate: DigitalPassportCivilDate, dateOfBirthDate: DigitalPassportCivilDate ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/src/digital-passport-credential/helpers.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertValidDigitalPassportCredential",
+    "signature": "export pure circuit assertValidDigitalPassportCredential( credential: DigitalPassportCredential, proof: Proof ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/src/digital-passport-credential/claims.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertValidDigitalPassportCredentialPrivateParts",
+    "signature": "export pure circuit assertValidDigitalPassportCredentialPrivateParts( claimCommitments: DigitalPassportClaimCommitments, claimRoot: Bytes<32>, privateParts: DigitalPassportCredentialPrivateParts ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/src/digital-passport-credential/validation.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertValidDigitalPassportIssuanceOffer",
+    "signature": "export pure circuit assertValidDigitalPassportIssuanceOffer(offer: DigitalPassportIssuanceOffer): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/src/digital-passport-credential/validation.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertValidDigitalPassportIssuanceRequest",
+    "signature": "export pure circuit assertValidDigitalPassportIssuanceRequest( request: DigitalPassportIssuanceRequest ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/src/digital-passport-credential/validation.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertValidDigitalPassportIssuanceResult",
+    "signature": "export pure circuit assertValidDigitalPassportIssuanceResult( result: DigitalPassportIssuanceResult ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/src/digital-passport-credential/helpers.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertValidDigitalPassportPresentation",
+    "signature": "export pure circuit assertValidDigitalPassportPresentation( credential: DigitalPassportCredential, credentialProof: Proof, presentation: DigitalPassportPresentation, presentationProof: Proof ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/src/digital-passport-credential/helpers.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertValidDigitalPassportPresentationRequest",
+    "signature": "export pure circuit assertValidDigitalPassportPresentationRequest( request: DigitalPassportPresentationRequest ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/src/digital-passport-credential/helpers.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertValidDigitalPassportSchemaRef",
+    "signature": "export pure circuit assertValidDigitalPassportSchemaRef(schema: SchemaRef): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/src/digital-passport-credential/validation.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertValidDigitalPassportVerificationRequestMessage",
+    "signature": "export pure circuit assertValidDigitalPassportVerificationRequestMessage( request: DigitalPassportVerificationRequest ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/src/digital-passport-credential/validation.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertValidDigitalPassportVerificationResultMessage",
+    "signature": "export pure circuit assertValidDigitalPassportVerificationResultMessage( result: DigitalPassportVerificationResult ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/src/digital-passport-credential/validation.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertValidDigitalPassportVerificationSubmissionMessage",
+    "signature": "export pure circuit assertValidDigitalPassportVerificationSubmissionMessage( submission: DigitalPassportVerificationSubmission ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/holder-bindings.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertValidExplicitHolderBinding",
+    "signature": "export pure circuit assertValidExplicitHolderBinding( binding: ExplicitHolderBinding ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/proofs.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertValidIssuanceContextProof",
+    "signature": "export pure circuit assertValidIssuanceContextProof( bodyRoot: Bytes<32>, proof: Proof ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/holder-bindings.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertValidJubjubHolderBinding",
+    "signature": "export pure circuit assertValidJubjubHolderBinding( binding: JubjubHolderBinding ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/status-bindings.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertValidNoStatusBinding",
+    "signature": "export pure circuit assertValidNoStatusBinding( binding: NoStatusBinding ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/holder-bindings.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertValidOffchainMidnightHolderBinding",
+    "signature": "export pure circuit assertValidOffchainMidnightHolderBinding( binding: OffchainMidnightHolderBinding ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/proofs.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertValidPresentationContextProof",
+    "signature": "export pure circuit assertValidPresentationContextProof( bodyRoot: Bytes<32>, proof: Proof ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/proofs.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertValidProofForContext",
+    "signature": "pure circuit assertValidProofForContext( bodyRoot: Bytes<32>, contextTag: Bytes<32>, proof: Proof ): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/protocols.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertValidProtocolMessageEnvelope",
+    "signature": "export pure circuit assertValidProtocolMessageEnvelope( envelope: ProtocolMessageEnvelope ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/status-bindings.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertValidRegistryBoundStatusBinding",
+    "signature": "export pure circuit assertValidRegistryBoundStatusBinding( binding: RegistryBoundStatusBinding ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/types.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertValidSchemaCapabilities",
+    "signature": "export pure circuit assertValidSchemaCapabilities( capabilities: SchemaCapabilities ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/types.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertValidSchemaDescriptor",
+    "signature": "export pure circuit assertValidSchemaDescriptor( descriptor: SchemaDescriptor ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/types.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertValidSchemaFamilyResolutionHint",
+    "signature": "export pure circuit assertValidSchemaFamilyResolutionHint( hint: SchemaFamilyResolutionHint ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/types.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertValidSchemaRef",
+    "signature": "export pure circuit assertValidSchemaRef(schema: SchemaRef): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/holder-bindings.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertValidSecretHolderCredentialBinding",
+    "signature": "export pure circuit assertValidSecretHolderCredentialBinding( binding: SecretHolderBinding ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/holder-bindings.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertValidSecretHolderPresentationBinding",
+    "signature": "export pure circuit assertValidSecretHolderPresentationBinding( binding: SecretHolderBinding ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/status-bindings.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertValidStatusRegistryRef",
+    "signature": "export pure circuit assertValidStatusRegistryRef( registryRef: StatusRegistryRef ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/protocols.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertValidVerificationMethodRef",
+    "signature": "export pure circuit assertValidVerificationMethodRef( verificationMethodRef: VerificationMethodRef ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/holder-bindings.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertVerifierScopedPseudonym",
+    "signature": "export pure circuit assertVerifierScopedPseudonym( pseudonym: Bytes<32>, holderSecret: Bytes<32>, verifierDomainHash: Bytes<32> ): []",
     "visibility": "export"
   },
   {
@@ -366,6 +1170,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/schnorr_attest_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "attestationDigest",
+    "signature": "export pure circuit attestationDigest( subject: Bytes<32>, epoch: Uint<64>, payloadHash: Field ): Vector<4, Field>",
+    "visibility": "export"
+  },
+  {
     "source": "examples/election.compact",
     "module_path": [],
     "kind": "circuit",
@@ -380,6 +1192,14 @@
     "name": "ballot_repr",
     "signature": "circuit ballot_repr(ballot: PermissibleVotes): Bytes<32>",
     "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/holder-bindings.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "blindedSecretHolderCommitment",
+    "signature": "export pure circuit blindedSecretHolderCommitment( holderSecretCommitment: Bytes<32>, issuerNonce: Bytes<32>, blindingFactor: Bytes<32> ): Bytes<32>",
+    "visibility": "export"
   },
   {
     "source": "test-center/test-contracts/coracle.compact",
@@ -467,6 +1287,46 @@
     "kind": "circuit",
     "name": "bytes_identity",
     "signature": "export circuit bytes_identity(value: Bytes<4>): Bytes<4>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "callArgCtor",
+    "signature": "export pure circuit callArgCtor(c: Boolean, a: Field, b: Field): Maybe<Field>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "callArgFieldOnlyLiteral",
+    "signature": "export pure circuit callArgFieldOnlyLiteral(): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "callArgHugeFieldLiteral",
+    "signature": "export pure circuit callArgHugeFieldLiteral(): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "callArgMaxUnsignedPlusOne",
+    "signature": "export pure circuit callArgMaxUnsignedPlusOne(): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "callArgPure",
+    "signature": "export pure circuit callArgPure(c: Boolean, a: Field, b: Field): Field",
     "visibility": "export"
   },
   {
@@ -646,11 +1506,27 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/enum_identity.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "choose",
+    "signature": "export pure circuit choose(c: Boolean): Choice",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/witness_conditional.compact",
     "module_path": [],
     "kind": "circuit",
     "name": "choose_secret",
     "signature": "export circuit choose_secret(flag: Boolean, left: Field, right: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/if_stmt_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "classify",
+    "signature": "export pure circuit classify(b: Boolean): Boolean",
     "visibility": "export"
   },
   {
@@ -699,6 +1575,30 @@
     "kind": "circuit",
     "name": "close",
     "signature": "export circuit close(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "cmpFieldOnlyLiteral",
+    "signature": "export pure circuit cmpFieldOnlyLiteral(x: Field): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "cmpHugeFieldLiteral",
+    "signature": "export pure circuit cmpHugeFieldLiteral(x: Field): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "cmpOperand",
+    "signature": "export pure circuit cmpOperand(c: Boolean, x: Uint<8>): Boolean",
     "visibility": "export"
   },
   {
@@ -854,6 +1754,62 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "constAnnotatedBothLiteral",
+    "signature": "export pure circuit constAnnotatedBothLiteral(c: Boolean): Uint<8>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "constFieldOnlyLiteral",
+    "signature": "export pure circuit constFieldOnlyLiteral(): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "constHugeFieldLiteral",
+    "signature": "export pure circuit constHugeFieldLiteral(): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "constThenCall",
+    "signature": "export pure circuit constThenCall(): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "constUnannotatedSeqLifted",
+    "signature": "export pure circuit constUnannotatedSeqLifted(c: Boolean, a: Uint<8>): Uint<8>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/wide_field_literal.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "constant",
+    "signature": "export pure circuit constant(): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/constructor_tuple_coercion.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "constant",
+    "signature": "export pure circuit constant(): [Field, Field]",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/jubjub_construct.compact",
     "module_path": [],
     "kind": "circuit",
@@ -934,6 +1890,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/digital-passport-credential/src/digital-passport-credential/claims.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "dateOfBirthCommitment",
+    "signature": "export pure circuit dateOfBirthCommitment(dateOfBirthDays: Uint<32>, opening: Bytes<32>): Bytes<32>",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/counter_parameter.compact",
     "module_path": [],
     "kind": "circuit",
@@ -998,11 +1962,83 @@
     "visibility": "internal"
   },
   {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "differingUintWidths",
+    "signature": "export pure circuit differingUintWidths(c: Boolean, a: Uint<8>, b: Uint<32>): Uint<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/src/digital-passport-credential/claims.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "digitalPassportClaimRoot",
+    "signature": "export pure circuit digitalPassportClaimRoot( commitments: DigitalPassportClaimCommitments ): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/src/digital-passport-credential/helpers.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "digitalPassportCredentialBodyRoot",
+    "signature": "export pure circuit digitalPassportCredentialBodyRoot( credential: DigitalPassportCredential ): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/src/digital-passport-credential/helpers.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "digitalPassportPresentationBodyRoot",
+    "signature": "export pure circuit digitalPassportPresentationBodyRoot( presentation: DigitalPassportPresentation ): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/src/digital-passport-credential/helpers.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "digitalPassportPresentationRequestBodyRoot",
+    "signature": "export pure circuit digitalPassportPresentationRequestBodyRoot( request: DigitalPassportPresentationRequest ): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/src/digital-passport-credential/helpers.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "digitalPassportPresentationRequestFromProtocol",
+    "signature": "export pure circuit digitalPassportPresentationRequestFromProtocol( request: DigitalPassportVerificationRequest ): DigitalPassportPresentationRequest",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/witness_vector_action.compact",
     "module_path": [],
     "kind": "circuit",
     "name": "discardResult",
     "signature": "export circuit discardResult(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/src/digital-passport-credential/claims.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "documentNumberCommitment",
+    "signature": "export pure circuit documentNumberCommitment( documentNumberValue: Bytes<32>, opening: Bytes<32> ): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/src/digital-passport-credential/claims.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "documentNumberNullCommitment",
+    "signature": "export pure circuit documentNumberNullCommitment(): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/internal_pure_call.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "double_increment",
+    "signature": "export pure circuit double_increment(value: Field): Field",
     "visibility": "export"
   },
   {
@@ -1054,6 +2090,38 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/default_vector.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "empty_hash",
+    "signature": "export pure circuit empty_hash(): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/tuple_destructure.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "empty_tuple",
+    "signature": "export pure circuit empty_tuple(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/tuple_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "empty_tuple",
+    "signature": "export pure circuit empty_tuple(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/default_vector.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "empty_vector",
+    "signature": "export pure circuit empty_vector(): Vector<2, Field>",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/opaque_string_map_query_oracle.compact",
     "module_path": [],
     "kind": "circuit",
@@ -1068,6 +2136,14 @@
     "name": "ensureFirst",
     "signature": "circuit ensureFirst(value: Field): []",
     "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "enumValued",
+    "signature": "export pure circuit enumValued(c: Boolean): Color",
+    "visibility": "export"
   },
   {
     "source": "test-center/test-contracts/coracle.compact",
@@ -1110,11 +2186,35 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/call_arg_declared_type.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "fieldOnlyFromPureBody",
+    "signature": "export pure circuit fieldOnlyFromPureBody(): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "fieldTypedArms",
+    "signature": "export pure circuit fieldTypedArms(c: Boolean, f1: Field, f2: Field): Field",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/field_add.compact",
     "module_path": [],
     "kind": "circuit",
     "name": "field_add",
     "signature": "export circuit field_add(left: Field, right: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/src/digital-passport-credential/claims.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "firstNameCommitment",
+    "signature": "export pure circuit firstNameCommitment( firstNameValuePadded: Bytes<64>, opening: Bytes<32> ): Bytes<32>",
     "visibility": "export"
   },
   {
@@ -1310,6 +2410,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/mixed_width_operand_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "guardedDiff",
+    "signature": "export pure circuit guardedDiff(y: Uint<32>, q: Uint<32>): Uint<32>",
+    "visibility": "export"
+  },
+  {
     "source": "test-center/test-contracts/coracle.compact",
     "module_path": [],
     "kind": "circuit",
@@ -1342,6 +2450,46 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "hashCallVectorArg",
+    "signature": "export pure circuit hashCallVectorArg(): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "hashConstVectorArg",
+    "signature": "export pure circuit hashConstVectorArg(): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "hashDefaultVectorArg",
+    "signature": "export pure circuit hashDefaultVectorArg(): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "hashNestedUintVarRefElem",
+    "signature": "export pure circuit hashNestedUintVarRefElem(x: Uint<8>): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "hashNestedVarRefVectorArg",
+    "signature": "export pure circuit hashNestedVarRefVectorArg(w: Vector<2, Uint<8>>): Bytes<32>",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/call_arg_declared_type.compact",
     "module_path": [],
     "kind": "circuit",
@@ -1350,11 +2498,59 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "hashSameTypeNestedArg",
+    "signature": "export pure circuit hashSameTypeNestedArg(w: Vector<2, Field>): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "hashSameTypeVectorArg",
+    "signature": "export pure circuit hashSameTypeVectorArg(w: Vector<2, Field>): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "hashStructFieldVectorArg",
+    "signature": "export pure circuit hashStructFieldVectorArg(b: VecBox): Bytes<32>",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/call_arg_declared_type.compact",
     "module_path": [],
     "kind": "circuit",
     "name": "hashTransientVec",
     "signature": "export circuit hashTransientVec(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "hashUintVarRefElem",
+    "signature": "export pure circuit hashUintVarRefElem(x: Uint<8>): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "hashVarRefVectorArg",
+    "signature": "export pure circuit hashVarRefVectorArg(w: Vector<2, Uint<8>>): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "hashZeroLiteral",
+    "signature": "export pure circuit hashZeroLiteral(): Bytes<32>",
     "visibility": "export"
   },
   {
@@ -1414,6 +2610,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/vector_widen.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "hash_nested",
+    "signature": "export pure circuit hash_nested(values: Vector<2, Uint<8>>): Bytes<32>",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/keccak.compact",
     "module_path": [],
     "kind": "circuit",
@@ -1438,11 +2642,43 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/struct_field_projection.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "hash_projected",
+    "signature": "export pure circuit hash_projected(item: VecBox): Bytes<32>",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/witness_jubjub.compact",
     "module_path": [],
     "kind": "circuit",
     "name": "hash_scalar",
     "signature": "export circuit hash_scalar(seed: Field): JubjubPoint",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/vector_widen.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "hash_widened",
+    "signature": "export pure circuit hash_widened(values: Vector<2, Uint<8>>): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/tuple_destructure.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "hetero",
+    "signature": "export pure circuit hetero(x: Uint<8>): [Field, Uint<16>]",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/tuple_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "hetero",
+    "signature": "export pure circuit hetero(x: Uint<8>): [Field, Uint<16>]",
     "visibility": "export"
   },
   {
@@ -1467,6 +2703,30 @@
     "kind": "circuit",
     "name": "identity",
     "signature": "export circuit identity(value: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/call_arg_declared_type.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "idf",
+    "signature": "export pure circuit idf(x: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "idf",
+    "signature": "export pure circuit idf(x: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "idf",
+    "signature": "export pure circuit idf(x: Field): Field",
     "visibility": "export"
   },
   {
@@ -1532,6 +2792,14 @@
     "name": "increment",
     "signature": "export circuit increment(): []",
     "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/internal_pure_call.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "increment",
+    "signature": "pure circuit increment(value: Field): Field",
+    "visibility": "internal"
   },
   {
     "source": "examples/rust_backend/counter_parameter.compact",
@@ -1702,6 +2970,38 @@
     "visibility": "internal"
   },
   {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/proofs.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "issuanceContextTag",
+    "signature": "export pure circuit issuanceContextTag(): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/proofs.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "issuanceProofChallenge",
+    "signature": "export pure circuit issuanceProofChallenge( bodyRoot: Bytes<32>, proof: Proof ): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/proofs.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "issuanceProofPayloadRoot",
+    "signature": "export pure circuit issuanceProofPayloadRoot( bodyRoot: Bytes<32>, proof: Proof ): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/src/digital-passport-credential/claims.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "issuingStateCommitment",
+    "signature": "export pure circuit issuingStateCommitment( issuingStateValue: Bytes<32>, opening: Bytes<32> ): Bytes<32>",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/chunked_list.compact",
     "module_path": [],
     "kind": "circuit",
@@ -1774,6 +3074,22 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "largeLiteralArithOperand",
+    "signature": "export pure circuit largeLiteralArithOperand(c: Boolean, n: Uint<64>): Uint<128>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/src/digital-passport-credential/claims.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "lastNameCommitment",
+    "signature": "export pure circuit lastNameCommitment( lastNameValuePadded: Bytes<64>, opening: Bytes<32> ): Bytes<32>",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/uint_compare.compact",
     "module_path": [],
     "kind": "circuit",
@@ -1787,6 +3103,30 @@
     "kind": "circuit",
     "name": "less_equal",
     "signature": "export circuit less_equal(left: Uint<16>, right: Uint<16>): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "litLhsFieldLiteral",
+    "signature": "export pure circuit litLhsFieldLiteral(x: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "literalAboveI32",
+    "signature": "export pure circuit literalAboveI32(c: Boolean): Uint<64>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "literalAboveU64",
+    "signature": "export pure circuit literalAboveU64(c: Boolean): Uint<128>",
     "visibility": "export"
   },
   {
@@ -1811,6 +3151,14 @@
     "kind": "circuit",
     "name": "lookup_true",
     "signature": "export circuit lookup_true(): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/struct_field_projection.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "make",
+    "signature": "export pure circuit make(): VecBox",
     "visibility": "export"
   },
   {
@@ -1862,6 +3210,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/wide_uint_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "maxWide",
+    "signature": "export pure circuit maxWide(): Uint<248>",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/uint_identity.compact",
     "module_path": [],
     "kind": "circuit",
@@ -1891,6 +3247,14 @@
     "kind": "circuit",
     "name": "mixed_width",
     "signature": "export circuit mixed_width(left: Uint<8>, right: Uint<16>): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "mulHugeFieldLiteral",
+    "signature": "export pure circuit mulHugeFieldLiteral(x: Field): Field",
     "visibility": "export"
   },
   {
@@ -1934,6 +3298,38 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "nativeArg",
+    "signature": "export pure circuit nativeArg(c: Boolean, a: Field, b: Field): JubjubPoint",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "nativeArgFieldOnlyLiteral",
+    "signature": "export pure circuit nativeArgFieldOnlyLiteral(p: JubjubPoint): JubjubPoint",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "nativeArgLiteral",
+    "signature": "export pure circuit nativeArgLiteral(): JubjubPoint",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "nativeVectorElemTernary",
+    "signature": "export pure circuit nativeVectorElemTernary(c: Boolean): Bytes<32>",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/witness_jubjub.compact",
     "module_path": [],
     "kind": "circuit",
@@ -1947,6 +3343,14 @@
     "kind": "circuit",
     "name": "negate_point",
     "signature": "export circuit negate_point(value: Field): JubjubPoint",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "nestedFieldArith",
+    "signature": "export pure circuit nestedFieldArith(x: Field): Field",
     "visibility": "export"
   },
   {
@@ -1974,6 +3378,30 @@
     "visibility": "internal"
   },
   {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/protocols.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "noProtocolResponseReference",
+    "signature": "export pure circuit noProtocolResponseReference(): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/types.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "noSchemaFamilyResolverHint",
+    "signature": "export pure circuit noSchemaFamilyResolverHint(): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/holder-bindings.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "noSecretHolderChallengeResponse",
+    "signature": "export pure circuit noSecretHolderChallengeResponse(): Bytes<32>",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/equality.compact",
     "module_path": [],
     "kind": "circuit",
@@ -1987,6 +3415,22 @@
     "kind": "circuit",
     "name": "one_tuple",
     "signature": "export circuit one_tuple(value: Field): [Field]",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/tuple_destructure.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "one_tuple",
+    "signature": "export pure circuit one_tuple(x: Field): [Field]",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/tuple_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "one_tuple",
+    "signature": "export pure circuit one_tuple(x: Field): [Field]",
     "visibility": "export"
   },
   {
@@ -2067,6 +3511,14 @@
     "kind": "circuit",
     "name": "persistent_hash_echo",
     "signature": "export circuit persistent_hash_echo(value: Field): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "pick",
+    "signature": "export pure circuit pick(c: Uint<8>): Uint<8>",
     "visibility": "export"
   },
   {
@@ -2171,6 +3623,14 @@
     "kind": "circuit",
     "name": "ping",
     "signature": "export circuit ping(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/chunked_ledger_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "ping",
+    "signature": "export pure circuit ping(b: Boolean): Boolean",
     "visibility": "export"
   },
   {
@@ -2294,6 +3754,30 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/proofs.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "presentationContextTag",
+    "signature": "export pure circuit presentationContextTag(): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/proofs.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "presentationProofChallenge",
+    "signature": "export pure circuit presentationProofChallenge( bodyRoot: Bytes<32>, proof: Proof ): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/proofs.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "presentationProofPayloadRoot",
+    "signature": "export pure circuit presentationProofPayloadRoot( bodyRoot: Bytes<32>, proof: Proof ): Bytes<32>",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/witness_ledger_cell.compact",
     "module_path": [],
     "kind": "circuit",
@@ -2331,6 +3815,54 @@
     "kind": "circuit",
     "name": "private_round",
     "signature": "export circuit private_round(): Uint<64>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/widening_arith_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "productBytes",
+    "signature": "export pure circuit productBytes(a: Uint<8>, b: Uint<8>): Uint<16>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/mixed_width_operand_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "productMixed",
+    "signature": "export pure circuit productMixed(q: Uint<32>, m: Uint<8>): Uint<64>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/struct_field_projection.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "project",
+    "signature": "export pure circuit project(item: VecBox): Vector<2, Field>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/proofs.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "proofChallengeForContext",
+    "signature": "pure circuit proofChallengeForContext( bodyRoot: Bytes<32>, contextTag: Bytes<32>, proof: Proof ): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/proofs.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "proofPayloadRootForContext",
+    "signature": "pure circuit proofPayloadRootForContext( bodyRoot: Bytes<32>, contextTag: Bytes<32>, proof: Proof ): Bytes<32>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/protocols.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "protocolFeaturesAsSchemaCapabilities",
+    "signature": "export pure circuit protocolFeaturesAsSchemaCapabilities( features: CredentialProtocolFeatures ): SchemaCapabilities",
     "visibility": "export"
   },
   {
@@ -2902,6 +4434,22 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/asset_registry_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "registrationGap",
+    "signature": "export pure circuit registrationGap(newer: AssetRecord, older: AssetRecord): Uint<64>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/status-bindings.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "registryBoundStatusBindingRoot",
+    "signature": "export pure circuit registryBoundStatusBindingRoot( binding: RegistryBoundStatusBinding ): Bytes<32>",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/set_boolean.compact",
     "module_path": [],
     "kind": "circuit",
@@ -2939,6 +4487,22 @@
     "kind": "circuit",
     "name": "replace",
     "signature": "export circuit replace(value: Uint<8>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/pure_call_action.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "require_positive",
+    "signature": "export pure circuit require_positive(value: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/assert_parity_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "require_true",
+    "signature": "export pure circuit require_true(b: Boolean): Boolean",
     "visibility": "export"
   },
   {
@@ -3014,6 +4578,54 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "retFieldLiteral",
+    "signature": "export pure circuit retFieldLiteral(): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "retFieldOnlyLiteral",
+    "signature": "export pure circuit retFieldOnlyLiteral(): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "retHugeFieldLiteral",
+    "signature": "export pure circuit retHugeFieldLiteral(): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "retU128FieldLiteral",
+    "signature": "export pure circuit retU128FieldLiteral(): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "returnTailMixed",
+    "signature": "export pure circuit returnTailMixed(c: Boolean, x: Uint<8>): Uint<8>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "returnTailNested",
+    "signature": "export pure circuit returnTailNested(c: Boolean, d: Boolean): Uint<8>",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/witness_vector_action.compact",
     "module_path": [],
     "kind": "circuit",
@@ -3052,6 +4664,38 @@
     "name": "reveal_nullifier",
     "signature": "circuit reveal_nullifier(sk: Bytes<32>): Bytes<32>",
     "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/merkle_multi_path.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "root_hash",
+    "signature": "export pure circuit root_hash(path: MerkleTreePath<3, Bytes<32>>): MerkleTreeDigest",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/merkle_path_root.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "root_of",
+    "signature": "export pure circuit root_of(path: MerkleTreePath<3, Uint<8>>): MerkleTreeDigest",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/merkle_path_root_no_leaf_hash.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "root_of_hash",
+    "signature": "export pure circuit root_of_hash(path: MerkleTreePath<3, Bytes<32>>): MerkleTreeDigest",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/merkle_multi_path.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "root_u8",
+    "signature": "export pure circuit root_u8(path: MerkleTreePath<3, Uint<8>>): MerkleTreeDigest",
+    "visibility": "export"
   },
   {
     "source": "examples/rust_backend/chunked_set_observed.compact",
@@ -3118,6 +4762,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "sameTypeVec",
+    "signature": "export pure circuit sameTypeVec(): Vector<2, Field>",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/stateful_pure_call.compact",
     "module_path": [],
     "kind": "circuit",
@@ -3163,6 +4815,22 @@
     "kind": "circuit",
     "name": "scale",
     "signature": "export circuit scale(seed: Field): JubjubPoint",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/holder-bindings.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "secretHolderBindingChallengeResponse",
+    "signature": "export pure circuit secretHolderBindingChallengeResponse( holderSecret: Bytes<32>, verifierChallengeHash: Bytes<32> ): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/holder-bindings.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "secretHolderBindingCommitment",
+    "signature": "export pure circuit secretHolderBindingCommitment( holderSecret: Bytes<32>, opening: Bytes<32> ): Bytes<32>",
     "visibility": "export"
   },
   {
@@ -3438,6 +5106,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "someFieldLiteral",
+    "signature": "export pure circuit someFieldLiteral(): Maybe<Field>",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/zerocash_oracle.compact",
     "module_path": [],
     "kind": "circuit",
@@ -3451,6 +5127,14 @@
     "kind": "circuit",
     "name": "spend",
     "signature": "circuit spend(dest_public_key: public_key, input_coin: coin_info): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/stateful_pure_call.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "square",
+    "signature": "export pure circuit square(value: Field): Field",
     "visibility": "export"
   },
   {
@@ -3558,6 +5242,86 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "structLiteral",
+    "signature": "export pure circuit structLiteral(): Box",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "structMember",
+    "signature": "export pure circuit structMember(c: Boolean): Box",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "structMemberHugeFieldLiteral",
+    "signature": "export pure circuit structMemberHugeFieldLiteral(): Box",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "structValuedArms",
+    "signature": "export pure circuit structValuedArms(c: Boolean, s1: Box, s2: Box): Box",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/tuple_destructure.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "struct_vector_return",
+    "signature": "export pure circuit struct_vector_return(x: Field): [Pair, Pair]",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/tuple_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "struct_vector_return",
+    "signature": "export pure circuit struct_vector_return(x: Field): [Pair, Pair]",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/tuple_destructure.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "struct_vector_to_tuple",
+    "signature": "export pure circuit struct_vector_to_tuple(x: Field): [Pair, Pair]",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/tuple_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "struct_vector_to_tuple",
+    "signature": "export pure circuit struct_vector_to_tuple(x: Field): [Pair, Pair]",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "subFieldLiteral",
+    "signature": "export pure circuit subFieldLiteral(x: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "subgroupCheck",
+    "signature": "export pure circuit subgroupCheck(): JubjubPoint",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/field_arithmetic.compact",
     "module_path": [],
     "kind": "circuit",
@@ -3612,6 +5376,38 @@
     "name": "successor",
     "signature": "circuit successor(state: PublicState): PublicState",
     "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/widening_arith_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "sumBytes",
+    "signature": "export pure circuit sumBytes(a: Uint<8>, b: Uint<8>): Uint<16>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/mixed_width_operand_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "sumMixed",
+    "signature": "export pure circuit sumMixed(q: Uint<32>, n: Uint<8>): Uint<64>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/call_arg_declared_type.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "sumTup",
+    "signature": "export pure circuit sumTup(t: [Field, Field]): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/call_arg_declared_type.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "sumVec",
+    "signature": "export pure circuit sumVec(v: Vector<2, Field>): Field",
+    "visibility": "export"
   },
   {
     "source": "examples/rust_backend/call_arg_declared_type.compact",
@@ -3830,6 +5626,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/bugs/pm-19252/example_thirteen.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "test",
+    "signature": "pure circuit test(a: Field): []",
+    "visibility": "internal"
+  },
+  {
     "source": "examples/bugs/pm-19252/example_four.compact",
     "module_path": [],
     "kind": "circuit",
@@ -3910,6 +5714,22 @@
     "visibility": "export"
   },
   {
+    "source": "examples/bugs/pm-19252/example_thirteen.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "test1",
+    "signature": "export pure circuit test1(a: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/bugs/pm-19252/example_one_a.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "test1",
+    "signature": "pure circuit test1(a: Field): []",
+    "visibility": "internal"
+  },
+  {
     "source": "examples/rust_backend/assert_parity_oracle.compact",
     "module_path": [],
     "kind": "circuit",
@@ -3931,6 +5751,102 @@
     "kind": "circuit",
     "name": "truth",
     "signature": "export circuit truth(): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/call_arg_declared_type.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "tupleIntoVec",
+    "signature": "export pure circuit tupleIntoVec(): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/tuple_destructure.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "tuple_coerce",
+    "signature": "export pure circuit tuple_coerce(x: Uint<8>): [Field, Field]",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/tuple_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "tuple_coerce",
+    "signature": "export pure circuit tuple_coerce(x: Uint<8>): [Field, Field]",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/tuple_destructure.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "tuple_first",
+    "signature": "export pure circuit tuple_first(x: Field, flag: Boolean): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/tuple_destructure.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "tuple_second",
+    "signature": "export pure circuit tuple_second(x: Field, flag: Boolean): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/tuple_destructure.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "tuple_to_vector",
+    "signature": "export pure circuit tuple_to_vector(x: Field): Vector<2, Field>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/tuple_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "tuple_to_vector",
+    "signature": "export pure circuit tuple_to_vector(x: Field): Vector<2, Field>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/tuple_destructure.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "tuple_var_ref",
+    "signature": "export pure circuit tuple_var_ref(x: Uint<8>): [Field, Field]",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/tuple_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "tuple_var_ref",
+    "signature": "export pure circuit tuple_var_ref(x: Uint<8>): [Field, Field]",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "u128Rung",
+    "signature": "export pure circuit u128Rung(x: Uint<128>): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "uintArmIntoField",
+    "signature": "export pure circuit uintArmIntoField(c: Boolean, a: Uint<8>, b: Uint<8>): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "uintToField",
+    "signature": "export pure circuit uintToField(x: Uint<8>): Field",
     "visibility": "export"
   },
   {
@@ -3966,6 +5882,54 @@
     "visibility": "internal"
   },
   {
+    "source": "examples/rust_backend/call_arg_declared_type.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "vecFromPureBody",
+    "signature": "export pure circuit vecFromPureBody(): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/call_arg_declared_type.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "vecIntoTuple",
+    "signature": "export pure circuit vecIntoTuple(): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "vectorElement",
+    "signature": "export pure circuit vectorElement(c: Boolean): Vector<2, Field>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "vectorEltHugeFieldLiteral",
+    "signature": "export pure circuit vectorEltHugeFieldLiteral(): Vector<1, Field>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "vectorEltWise",
+    "signature": "export pure circuit vectorEltWise(x: Uint<32>): Vector<2, Field>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/holder-bindings.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "verifierScopedPseudonym",
+    "signature": "export pure circuit verifierScopedPseudonym( holderSecret: Bytes<32>, verifierDomainHash: Bytes<32> ): Bytes<32>",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/merkle_path_verify.compact",
     "module_path": [],
     "kind": "circuit",
@@ -3979,6 +5943,14 @@
     "kind": "circuit",
     "name": "verifyAttestation",
     "signature": "export circuit verifyAttestation( digest: Vector<4, Field>, signature: Schnorr_SchnorrSignature ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/proofs.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "verifySignature",
+    "signature": "export pure circuit verifySignature( pk: JubjubPoint, signature: Signature, challenge: Field ): Boolean",
     "visibility": "export"
   },
   {
@@ -4118,11 +6090,35 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/pure_circuit_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "which_u32",
+    "signature": "export pure circuit which_u32(b: Boolean): Uint<32>",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/choose_field.compact",
     "module_path": [],
     "kind": "circuit",
     "name": "wide_constant",
     "signature": "export circuit wide_constant(): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/vector_widen.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "widen",
+    "signature": "export pure circuit widen(values: Vector<2, Uint<8>>): Vector<2, Field>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/vector_widen.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "widen_elements",
+    "signature": "export pure circuit widen_elements(value: Uint<32>): Vector<2, Field>",
     "visibility": "export"
   },
   {

@@ -58,9 +58,9 @@ class ParityInventoryTests(unittest.TestCase):
                                 for circuit in entry["proof_circuits"]))
             source = inventory.without_comments((inventory.ROOT / entry["source"]).read_text())
             omissions = list(inventory.PURE_DECLARATION.finditer(source))
-            self.assertEqual(len(omissions), entry["known_lexical_pure_omissions"])
+            self.assertEqual(len(omissions), entry["pure_declarations"])
             self.assertEqual(sum(bool(match.group(1)) for match in omissions),
-                             entry["known_exported_pure_omissions"])
+                             entry["exported_pure_declarations"])
         self.assertEqual(negative[0]["source"], "examples/bugs/pm-19252/example_fourteen.compact")
         self.assertRegex(suite, r"example_fourteen\.compact(?:(?!const filePath)[\s\S])*?toBeFailure")
 
@@ -105,6 +105,29 @@ export circuit live(value: Field): Field { return value; }
                              [{"kind": "import", "expression": "CompactStandardLibrary"},
                               {"kind": "include", "expression": '"./part"'}])
 
+    def test_pure_circuits_preserve_visibility_signature_and_module(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "examples/rust_backend/pure.compact"
+            source.parent.mkdir(parents=True)
+            source.write_text("""// export pure circuit fake(): [];
+export { named };
+pure circuit named(): Boolean { return true; }
+module Inner {
+  pure circuit hidden(): Boolean { return false; }
+  export pure circuit visible(): Boolean { return true; }
+}
+""")
+            rows = inventory.parse_source(source, root)["declarations"]
+            self.assertEqual([(row["name"], row["kind"], row["visibility"], row["module_path"])
+                              for row in rows],
+                             [("named", "circuit", "export", []),
+                              ("Inner", "module", "internal", []),
+                              ("hidden", "circuit", "internal", ["Inner"]),
+                              ("visible", "circuit", "export", ["Inner"])])
+            self.assertEqual([row["declared_pure"] for row in rows], [True, False, True, True])
+            self.assertEqual(rows[3]["signature"], "export pure circuit visible(): Boolean")
+
     def test_baseline_detects_additions_and_removals(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -121,6 +144,24 @@ export circuit live(value: Field): Field { return value; }
             self.assertEqual(run("--baseline", str(baseline)).returncode, 0)
             source.write_text("export circuit second(): Field { return 2; }\n")
             self.assertEqual(run("--baseline", str(baseline)).returncode, 1)
+            diff = json.loads(output.read_text())["baseline_diff"]
+            self.assertEqual([row["name"] for row in diff["added"]], ["second"])
+            self.assertEqual([row["name"] for row in diff["removed"]], ["first"])
+
+    def test_baseline_detects_pure_circuit_rename(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "examples/rust_backend/pure.compact"
+            source.parent.mkdir(parents=True)
+            source.write_text("export pure circuit first(): Boolean { return true; }\n")
+            baseline = root / "baseline.json"
+            output = root / "receipt.json"
+            command = [sys.executable, str(SCRIPT), "--root", str(root), "--output", str(output)]
+            self.assertEqual(subprocess.run([*command, "--write-baseline", str(baseline)],
+                                            capture_output=True).returncode, 0)
+            source.write_text("export pure circuit second(): Boolean { return true; }\n")
+            result = subprocess.run([*command, "--baseline", str(baseline)], capture_output=True)
+            self.assertEqual(result.returncode, 1, result.stderr)
             diff = json.loads(output.read_text())["baseline_diff"]
             self.assertEqual([row["name"] for row in diff["added"]], ["second"])
             self.assertEqual([row["name"] for row in diff["removed"]], ["first"])
@@ -142,6 +183,11 @@ report = {"schema_version": 3, "circuits": [
   {"name": "missing", "recorded": False, "observed_call": False,
    "proof_required": True, "recording_status": "unavailable"}]}
 (contract / "rust-capabilities.json").write_text(json.dumps(report))
+compiler = contract.parent / "compiler"
+compiler.mkdir()
+(compiler / "contract-info.json").write_text(json.dumps({"circuits": [
+  {"name": "available", "pure": False, "proof": True},
+  {"name": "missing", "pure": False, "proof": True}]}))
 """)
             compiler.chmod(0o755)
             output = root / "receipt.json"
@@ -172,6 +218,10 @@ report = {"schema_version": 3, "circuits": [
   {"name": "private_only", "recorded": False, "observed_call": False,
    "proof_required": False, "recording_status": "not_applicable"}]}
 (contract / "rust-capabilities.json").write_text(json.dumps(report))
+compiler = contract.parent / "compiler"
+compiler.mkdir()
+(compiler / "contract-info.json").write_text(json.dumps({"circuits": [
+  {"name": "private_only", "pure": False, "proof": False}]}))
 """)
             compiler.chmod(0o755)
             output = root / "receipt.json"
@@ -183,6 +233,71 @@ report = {"schema_version": 3, "circuits": [
             self.assertEqual(summary["recorded_missing"], 1)
             self.assertEqual(summary["nonproof"], 1)
             self.assertEqual(summary["proof_missing"], 0)
+
+    def test_pure_compiler_metadata_needs_no_recorded_api(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "examples/rust_backend/pure.compact"
+            source.parent.mkdir(parents=True)
+            source.write_text("export pure circuit constant(): Boolean { return true; }\n")
+            compiler = root / "compiler.py"
+            compiler.write_text("""#!/usr/bin/env python3
+import json, pathlib, sys
+output = pathlib.Path(sys.argv[-1])
+contract = output / "contract"
+contract.mkdir(parents=True)
+(contract / "rust-capabilities.json").write_text(json.dumps({"schema_version": 3, "circuits": []}))
+metadata = output / "compiler"
+metadata.mkdir()
+(metadata / "contract-info.json").write_text(json.dumps({"circuits": [
+  {"name": "constant", "pure": True, "proof": False}]}))
+""")
+            compiler.chmod(0o755)
+            output = root / "receipt.json"
+            result = subprocess.run([sys.executable, str(SCRIPT), "--root", str(root),
+                                     "--compiler", str(compiler), "--require-full", "--output", str(output)],
+                                    capture_output=True, text=True, check=False)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            receipt = json.loads(output.read_text())
+            self.assertEqual(receipt["summary"]["declared_pure_circuits"], 1)
+            self.assertEqual(receipt["summary"]["known_lexical_pure_omissions"], 0)
+            self.assertEqual(receipt["summary"]["unassessed_exported_circuits"], 0)
+            self.assertEqual(receipt["summary"]["nonproof"], 1)
+            row = receipt["rows"][0]
+            self.assertEqual((row["proof_required"], row["compiler_pure"],
+                              row["rust_recorded"], row["rust_recording_status"]),
+                             (False, True, None, "not_applicable"))
+
+    def test_missing_pure_proof_metadata_is_reported_and_fails_full_gate(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "examples/rust_backend/pure.compact"
+            source.parent.mkdir(parents=True)
+            source.write_text("export pure circuit missing(): Boolean { return true; }\n")
+            compiler = root / "compiler.py"
+            compiler.write_text("""#!/usr/bin/env python3
+import json, pathlib, sys
+output = pathlib.Path(sys.argv[-1])
+contract = output / "contract"
+contract.mkdir(parents=True)
+(contract / "rust-capabilities.json").write_text(json.dumps({"schema_version": 3, "circuits": []}))
+metadata = output / "compiler"
+metadata.mkdir()
+(metadata / "contract-info.json").write_text(json.dumps({"circuits": []}))
+""")
+            compiler.chmod(0o755)
+            output = root / "receipt.json"
+            command = [sys.executable, str(SCRIPT), "--root", str(root),
+                       "--compiler", str(compiler), "--output", str(output)]
+            result = subprocess.run(command, capture_output=True, text=True, check=False)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            receipt = json.loads(output.read_text())
+            self.assertEqual(receipt["summary"]["missing_compiler_proof_rows"],
+                             [{"source": "examples/rust_backend/pure.compact", "name": "missing",
+                               "module_path": [], "declared_pure": True}])
+            self.assertIsNone(receipt["rows"][0]["proof_required"])
+            self.assertEqual(subprocess.run([*command, "--require-full"],
+                                            capture_output=True).returncode, 1)
 
     def test_receipt_metadata_is_exact_and_optional(self):
         with tempfile.TemporaryDirectory() as directory:

@@ -39,7 +39,10 @@ ROOT = Path(__file__).resolve().parents[2]
 ORACLE_MANIFEST = Path(__file__).with_name("oracle_acceptance.json")
 POSITIVE_SOURCE_MANIFEST = Path(__file__).with_name("parity_positive_sources.json")
 DEFAULT_BASELINE = Path(__file__).with_name("parity_baseline.json")
-DECLARATION = re.compile(r"(?m)^[ \t]*(export[ \t]+)?(circuit|witness|constructor|module)\b")
+DECLARATION = re.compile(
+    r"(?m)^[ \t]*(?P<export>export[ \t]+)?(?P<pure>pure[ \t]+)?"
+    r"(?P<kind>circuit|witness|constructor|module)\b"
+)
 IMPORT = re.compile(r"(?m)^[ \t]*(include|import)\s+(.+?);", re.DOTALL)
 EXPORT_LIST = re.compile(r"(?m)^[ \t]*export[ \t]*\{([^}]*)\}")
 NAME = re.compile(r"[A-Za-z_$][A-Za-z0-9_$]*")
@@ -165,7 +168,7 @@ def parse_source(path: Path, root: Path) -> dict:
     modules = []
     declarations = []
     for match in DECLARATION.finditer(source):
-        kind = match.group(2)
+        kind = match.group("kind")
         end, terminator = declaration_end(source, match.end())
         tail = source[match.end():end].strip()
         name_match = NAME.match(tail)
@@ -177,7 +180,8 @@ def parse_source(path: Path, root: Path) -> dict:
             "kind": kind,
             "name": name,
             "signature": signature,
-            "visibility": "export" if match.group(1) or name in named_exports else "internal",
+            "visibility": "export" if match.group("export") or name in named_exports else "internal",
+            "declared_pure": bool(match.group("pure")),
             "line": source.count("\n", 0, match.start()) + 1,
             "offset": match.start(),
         })
@@ -261,7 +265,7 @@ def receipt_metadata(root: Path, compiler: Path | None, contracts: list[dict]) -
     }
 
 
-def compile_capabilities(compiler: Path, source: Path, root: Path) -> dict:
+def compile_capabilities(compiler: Path, source: Path, root: Path) -> tuple[dict, dict]:
     with tempfile.TemporaryDirectory(prefix="compact-parity-inventory-") as output:
         command = [str(compiler), "--target", "rust", "--skip-zk", "--rust-runtime-root",
                    str(root), str(source), output]
@@ -269,9 +273,12 @@ def compile_capabilities(compiler: Path, source: Path, root: Path) -> dict:
         if result.returncode:
             raise RuntimeError(f"{source.relative_to(root)}: compiler failed: {result.stderr.strip()}")
         report = Path(output) / "contract/rust-capabilities.json"
+        contract_info = Path(output) / "compiler/contract-info.json"
         if not report.is_file():
             raise RuntimeError(f"{source.relative_to(root)}: missing Rust capability report")
-        return json.loads(report.read_text())
+        if not contract_info.is_file():
+            raise RuntimeError(f"{source.relative_to(root)}: missing compiler contract-info")
+        return json.loads(report.read_text()), json.loads(contract_info.read_text())
 
 
 def make_inventory(root: Path, extra_dirs: list[Path], compiler: Path | None,
@@ -285,11 +292,12 @@ def make_inventory(root: Path, extra_dirs: list[Path], compiler: Path | None,
                       for entry in scope["positive_sources"] for circuit in entry["proof_circuits"]} if scope else {}
     rows = [{"source": contract["source"], **item,
              "ts_source_declaration": True, "rust_recorded": None, "rust_observed_call": None,
-             "proof_required": None, "rust_recording_status": None,
+             "proof_required": None, "compiler_pure": None, "rust_recording_status": None,
              "ts_expected_proof": expected_proof.get((contract["source"], item["name"]))}
             for contract in contracts for item in contract["declarations"]]
     by_source = {contract["source"]: contract for contract in contracts}
     unmatched = []
+    missing_compiler_proof_rows = []
     compiled = []
     if compiler:
         acceptance_rust_success = {entry["source"] for entry in scope["positive_sources"]
@@ -299,11 +307,33 @@ def make_inventory(root: Path, extra_dirs: list[Path], compiler: Path | None,
                  or relative_source(path, root) in acceptance_rust_success]
         for path in roots:
             source = relative_source(path, root)
-            report = compile_capabilities(compiler, path, root)
+            report, contract_info = compile_capabilities(compiler, path, root)
             if report.get("schema_version") != 3:
                 raise ValueError(f"{source}: expected Rust capability schema 3")
             compiled.append(source)
             by_source[source]["rust_capability_schema"] = report.get("schema_version")
+            compiler_circuits = contract_info.get("circuits")
+            if not isinstance(compiler_circuits, list):
+                raise ValueError(f"{source}: compiler contract-info has no circuits array")
+            for row in rows:
+                if row["source"] != source or row["kind"] != "circuit" or row["visibility"] != "export":
+                    continue
+                matches = [item for item in compiler_circuits if item.get("name") == row["name"]]
+                if not matches:
+                    missing_compiler_proof_rows.append({
+                        "source": source, "name": row["name"], "module_path": row["module_path"],
+                        "declared_pure": row["declared_pure"],
+                    })
+                    continue
+                if len(matches) != 1:
+                    raise ValueError(f"{source}: ambiguous compiler proof rows for {row['name']}")
+                metadata = matches[0]
+                if type(metadata.get("proof")) is not bool or type(metadata.get("pure")) is not bool:
+                    raise ValueError(f"{source}: invalid compiler proof/pure metadata for {row['name']}")
+                row["proof_required"] = metadata["proof"]
+                row["compiler_pure"] = metadata["pure"]
+                if not metadata["proof"]:
+                    row["rust_recording_status"] = "not_applicable"
             for capability in report["circuits"]:
                 matches = [row for row in rows if row["source"] == source
                            and row["kind"] == "circuit" and row["name"] == capability["name"]
@@ -316,21 +346,25 @@ def make_inventory(root: Path, extra_dirs: list[Path], compiler: Path | None,
                                        "unavailable")
                     if capability.get("recording_status") != expected_status:
                         raise ValueError(f"{source}: invalid recording status for {capability['name']}")
+                    if matches[0]["proof_required"] is not capability["proof_required"]:
+                        raise ValueError(f"{source}: capability proof flag disagrees with contract-info for {capability['name']}")
                     matches[0]["rust_recorded"] = capability["recorded"]
                     matches[0]["rust_observed_call"] = capability["observed_call"]
-                    matches[0]["proof_required"] = capability["proof_required"]
                     matches[0]["rust_recording_status"] = expected_status
                 else:
                     unmatched.append({"source": source, "name": capability["name"]})
     rows.sort(key=lambda row: (row["source"], row["line"], row["kind"], row["name"]))
     missing = Counter(row["source"] for row in rows if row["kind"] == "circuit"
                       and row["visibility"] == "export" and row["proof_required"] is True
-                      and row["rust_recording_status"] == "unavailable")
-    pure_omissions = [match for path in paths
-                      for match in PURE_DECLARATION.finditer(without_comments(path.read_text()))]
+                      and (row["rust_recorded"] is not True or row["rust_observed_call"] is not True))
+    pure_detected = [match for path in paths
+                     for match in PURE_DECLARATION.finditer(without_comments(path.read_text()))]
+    pure_rows = [row for row in rows if row["kind"] == "circuit" and row["declared_pure"]]
+    if len(pure_detected) != len(pure_rows):
+        raise ValueError("pure circuit declarations were not all inventoried")
     return {
         "format_version": 1,
-        "scope": "lexical repository declarations; pure-circuit declarations remain omitted pending issue #184; TS behavior parity requires executing tests",
+        "scope": "lexical repository declarations including explicit pure circuits; TS behavior parity requires executing tests",
         "contracts": contracts,
         "rows": rows,
         "positive_acceptance_scope": scope,
@@ -342,16 +376,22 @@ def make_inventory(root: Path, extra_dirs: list[Path], compiler: Path | None,
             "recorded_available": sum(row["rust_recorded"] is True for row in rows),
             "recorded_missing": sum(row["rust_recorded"] is False for row in rows),
             "proof_required": sum(row["proof_required"] is True for row in rows),
-            "proof_available": sum(row["rust_recording_status"] == "available" for row in rows),
-            "proof_missing": sum(row["rust_recording_status"] == "unavailable" for row in rows),
+            "proof_available": sum(row["proof_required"] is True and row["rust_recorded"] is True
+                                   and row["rust_observed_call"] is True for row in rows),
+            "proof_missing": sum(row["proof_required"] is True and
+                                 (row["rust_recorded"] is not True or row["rust_observed_call"] is not True)
+                                 for row in rows),
             "nonproof": sum(row["proof_required"] is False for row in rows),
             "unassessed_exported_circuits": sum(row["kind"] == "circuit" and row["visibility"] == "export"
                                                 and row["proof_required"] is None for row in rows),
-            "known_lexical_pure_omissions": len(pure_omissions),
-            "known_exported_pure_omissions": sum(bool(match.group(1)) for match in pure_omissions),
+            "declared_pure_circuits": len(pure_rows),
+            "exported_declared_pure_circuits": sum(row["visibility"] == "export" for row in pure_rows),
+            "known_lexical_pure_omissions": 0,
+            "known_exported_pure_omissions": 0,
             "ranked_missing_sources": [{"source": source, "count": count}
                                        for source, count in sorted(missing.items(), key=lambda pair: (-pair[1], pair[0]))],
             "unmatched_compiler_circuits": unmatched,
+            "missing_compiler_proof_rows": missing_compiler_proof_rows,
         },
     }
 
@@ -402,7 +442,8 @@ def main() -> int:
         if args.require_full:
             failure |= bool(inventory["summary"]["proof_missing"]
                             or inventory["summary"]["unassessed_exported_circuits"]
-                            or inventory["summary"]["unmatched_compiler_circuits"])
+                            or inventory["summary"]["unmatched_compiler_circuits"]
+                            or inventory["summary"]["missing_compiler_proof_rows"])
             if not compiler:
                 raise ValueError("--require-full requires --compiler")
             failure |= any(row["kind"] == "circuit" and row["visibility"] == "export"

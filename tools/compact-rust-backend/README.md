@@ -73,11 +73,15 @@ to verify TypeScript/Rust compile outcomes and authoritative contract-info
 proof flags. Compiler-backed inventory also joins capabilities from the 17
 currently Rust-compileable PM-19252 sources; `example_ten.compact` remains a
 checked TypeScript-positive source with a measured Rust rejection, recorded
-in the separate acceptance receipt. The inventory's lexical scanner still
-omits `pure circuit` declaration identities, including three in this cohort;
-issue #184 tracks a
-separate parser/baseline correction. The current declaration baseline is
-therefore incomplete even when source membership has no drift.
+in the separate acceptance receipt and tracked for implementation in #186.
+The lexical scanner includes `pure circuit` and `export pure circuit`
+declarations, with compiler `contract-info.json` supplying proof applicability
+even when the Rust capability report has no recorded method for a pure circuit.
+This fixes the earlier pure-declaration omission (#184); the scanner remains a
+source inventory, not a full Compact parser or executing parity gate.
+Lexically exported module-local circuits absent from the compiled contract's
+`contract-info.json` remain explicitly unknown in `missing_compiler_proof_rows`;
+the full gate does not assume that they are nonprovable.
 The generated `ledger_slots` module exposes named typed descriptors for Cell,
 Counter, Set, Map, List, and Merkle declarations. For example,
 `ledger_slots::tree.insert(context, value)` accepts the declared Merkle leaf

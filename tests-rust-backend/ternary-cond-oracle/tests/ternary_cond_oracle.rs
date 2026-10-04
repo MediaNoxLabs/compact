@@ -95,6 +95,8 @@ fn conditional_counter_recordings_match_both_typescript_branches_and_replay() {
         ("walkerInlineWriteTrue", true, false),
         ("streamConstAnnotatedFalse", false, false),
         ("streamConstAnnotatedTrue", true, true),
+        ("streamIncrementFalse", false, false),
+        ("streamIncrementTrue", true, true),
     ] {
         let native = initial(true, true, 111).into_circuit_context(ContractAddress::default());
         let recording = initial(true, true, 111).into_circuit_context(ContractAddress::default());
@@ -123,6 +125,10 @@ fn conditional_counter_recordings_match_both_typescript_branches_and_replay() {
                 )
                 .unwrap(),
                 recorded::streamConstAnnotated(recording).unwrap(),
+            ),
+            "streamIncrementFalse" | "streamIncrementTrue" => (
+                streamIncrement(native).unwrap(),
+                recorded::streamIncrement(recording).unwrap(),
             ),
             _ => unreachable!(),
         };

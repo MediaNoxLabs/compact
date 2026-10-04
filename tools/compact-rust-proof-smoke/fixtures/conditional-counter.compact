@@ -18,6 +18,7 @@ import CompactStandardLibrary;
 export ledger flag: Boolean;
 export ledger value: Field;
 export ledger ops: Counter;
+export ledger wideCell: Uint<64>;
 
 export circuit streamWrite(c: Boolean, x: Field): [] {
   ops.increment(disclose(c ? 1 : 2));
@@ -29,4 +30,10 @@ export circuit streamConstAnnotated(): [] {
   const amount: Uint<16> = f ? 1 : 2;
   ops.increment(amount);
   value = disclose(1 as Field);
+}
+
+export circuit streamIncrement(): [] {
+  const f = flag.read();
+  ops.increment(f ? 3 : 4);
+  wideCell = f ? 10 : 20;
 }

@@ -693,6 +693,7 @@ fn check_conditional_counter_proof(root: &Path) -> Result<(), Box<dyn Error>> {
         ("streamWrite", false, 2),
         ("streamWrite", true, 1),
         ("streamConstAnnotated", false, 2),
+        ("streamIncrement", false, 4),
     ] {
         let initial = conditional_counter_contract::initial_state(
             ConstructorContext::new(()),
@@ -714,19 +715,32 @@ fn check_conditional_counter_proof(root: &Path) -> Result<(), Box<dyn Error>> {
                 Field::from(777_u64),
             )?;
             check_generated_trace(root, circuit, recorded, (condition, Field::from(777_u64)))?
-        } else {
+        } else if circuit == "streamConstAnnotated" {
             let recorded = conditional_counter_contract::recorded::streamConstAnnotated(context)?;
+            check_generated_trace(root, circuit, recorded, ())?
+        } else {
+            let recorded = conditional_counter_contract::recorded::streamIncrement(context)?;
             check_generated_trace(root, circuit, recorded, ())?
         };
         check_transaction(root, circuit, deploy, call, &mut rng, |state| {
             let StateValue::Array(fields) = state.data.get_ref() else {
                 return Err("conditional Counter state is not an array".into());
             };
-            let expected_field: u64 = if circuit == "streamWrite" { 777 } else { 1 };
-            if read_cell::<Field, _>(fields.get(1).ok_or("Field Cell missing")?)?
-                != Field::from(expected_field)
-            {
-                return Err(format!("{circuit} proof stored the wrong Field").into());
+            if circuit == "streamIncrement" {
+                let wide = read_cell::<
+                    midnight_compact_runtime::BoundedUint<18446744073709551615>,
+                    _,
+                >(fields.get(2).ok_or("Uint64 Cell missing")?)?;
+                if wide.value() != 20 {
+                    return Err("streamIncrement proof stored the wrong Uint64 Cell".into());
+                }
+            } else {
+                let expected_field: u64 = if circuit == "streamWrite" { 777 } else { 1 };
+                if read_cell::<Field, _>(fields.get(1).ok_or("Field Cell missing")?)?
+                    != Field::from(expected_field)
+                {
+                    return Err(format!("{circuit} proof stored the wrong Field").into());
+                }
             }
             if read_counter(fields.get(4).ok_or("Counter missing")?)? != expected_counter {
                 return Err(format!("{circuit} proof used the wrong Counter amount").into());

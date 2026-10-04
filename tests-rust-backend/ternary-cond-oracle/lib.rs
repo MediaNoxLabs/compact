@@ -1396,6 +1396,31 @@ pub mod ledger_contract {
     /// Circuits with a replayable ordered ledger program.
     pub mod recorded {
         use midnight_compact_runtime as runtime;
+        pub fn streamIncrement<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_recorded_bool_0): (_, bool) =
+                crate::ledger_slots::flag.record_read(frame)?;
+            let frame = crate::ledger_slots::ops.record_increment(
+                frame,
+                if __compact_recorded_bool_0 {
+                    3u16
+                } else {
+                    4u16
+                },
+            )?;
+            let __compact_recorded_uint64_1 =
+                runtime::BoundedUint::<18446744073709551615>::new(if __compact_recorded_bool_0 {
+                    10u128
+                } else {
+                    20u128
+                })?;
+            let frame =
+                crate::ledger_slots::wideCell.record_write(frame, __compact_recorded_uint64_1)?;
+            Ok(frame.finish(()))
+        }
         pub fn streamWrite<Private>(
             context: runtime::context::CircuitContext<Private>,
             __compact_param_0: bool,
@@ -1471,6 +1496,31 @@ pub mod ledger_contract {
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
         impl Contract {
+            pub fn streamIncrement<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::streamIncrement(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn streamIncrement_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.streamIncrement(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "streamIncrement",
+                    input,
+                ))
+            }
             pub fn streamWrite<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,

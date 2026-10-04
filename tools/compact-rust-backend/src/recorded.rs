@@ -556,6 +556,57 @@ fn render_recorded_item(
         }
     }
 
+    // The Uint64 Cell write after a conditional Counter increment uses this
+    // exact cast shape. Keep it separate from Counter amounts: a Cell retains
+    // the Compact bounded value, while Counter increments consume a u16.
+    fn conditional_uint64_source(
+        value: &Expr,
+        locals: &HashMap<String, syn::Expr>,
+        parameters: &HashMap<&str, (&Type, syn::Ident)>,
+    ) -> Option<syn::Expr> {
+        const UINT64_MAX: &str = "18446744073709551615";
+
+        fn literal_arm(value: &Expr, ceiling: u64) -> Option<syn::Expr> {
+            match value {
+                Expr::Coerce {
+                    value,
+                    ty: Type::Unsigned { max },
+                } => {
+                    let max = max.parse::<u64>().ok()?;
+                    literal_arm(value, ceiling.min(max))
+                }
+                Expr::UnsignedLiteral { value, max } => {
+                    let max = max.parse::<u64>().ok()?;
+                    let value = value.parse::<u64>().ok()?;
+                    (value <= ceiling.min(max)).then(|| {
+                        let literal = syn::LitInt::new(&format!("{value}u128"), Span::call_site());
+                        syn::parse_quote!(#literal)
+                    })
+                }
+                _ => None,
+            }
+        }
+
+        let Expr::UnsignedCast { max, value } = value else {
+            return None;
+        };
+        if max != UINT64_MAX {
+            return None;
+        }
+        let Expr::If {
+            condition,
+            then,
+            otherwise,
+        } = value.as_ref()
+        else {
+            return None;
+        };
+        let condition = cell_source(condition, &Type::Boolean, locals, parameters)?;
+        let then = literal_arm(then, u64::MAX)?;
+        let otherwise = literal_arm(otherwise, u64::MAX)?;
+        Some(syn::parse_quote!(if #condition { #then } else { #otherwise }))
+    }
+
     fn cell_source(
         value: &Expr,
         ty: &Type,
@@ -1508,6 +1559,26 @@ fn render_recorded_item(
                             return Ok(unavailable_action(whole, path));
                         };
                         scoped.insert(binding.name.clone(), value);
+                    } else if binding.ty
+                        == (Type::Unsigned {
+                            max: "18446744073709551615".into(),
+                        })
+                        && !matches!(binding.value, Expr::WitnessCall { .. })
+                    {
+                        let Some(value) =
+                            conditional_uint64_source(&binding.value, &scoped, parameters)
+                        else {
+                            return Ok(unavailable_action(whole, path));
+                        };
+                        let local = syn::Ident::new(
+                            &format!("__compact_recorded_uint64_{}", *next_temp),
+                            Span::call_site(),
+                        );
+                        *next_temp += 1;
+                        steps.push(syn::parse_quote!(
+                            let #local = runtime::BoundedUint::<18446744073709551615>::new(#value)?;
+                        ));
+                        scoped.insert(binding.name.clone(), syn::parse_quote!(#local));
                     } else if binding.ty == Type::Field {
                         if let Expr::Call { name, arguments } = &binding.value
                             && shared_callees.contains(name)

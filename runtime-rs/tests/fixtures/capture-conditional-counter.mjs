@@ -102,4 +102,6 @@ process.stdout.write(JSON.stringify({
   walkerInlineWriteTrue: capture('walkerInlineWrite', [true], false),
   streamConstAnnotatedFalse: capture('streamConstAnnotated', [], false),
   streamConstAnnotatedTrue: capture('streamConstAnnotated', [], true),
+  streamIncrementFalse: capture('streamIncrement', [], false),
+  streamIncrementTrue: capture('streamIncrement', [], true),
 }, null, 2) + '\n');

@@ -23,6 +23,21 @@ if (!contractPath) throw new Error('expected contract/index.js');
 const { Contract, pureCircuits } = await import(pathToFileURL(contractPath).href);
 const contract = new Contract({});
 const coinPublicKey = { bytes: new Uint8Array(32) };
+const queries = [];
+const originalQuery = runtime.QueryContext.prototype.query;
+runtime.QueryContext.prototype.query = function (...args) {
+  const result = originalQuery.call(this, ...args);
+  queries.push({ gasCost: Object.fromEntries(
+    Object.entries(result.gasCost).map(([name, value]) => [name, value.toString()]),
+  ) });
+  return result;
+};
+function shape(operation) {
+  if (typeof operation === 'string') return { kind: operation };
+  if (operation.push) return { kind: 'push', storage: operation.push.storage };
+  if (operation.ins) return { kind: 'ins', cached: operation.ins.cached, n: operation.ins.n };
+  throw new Error(`unexpected operation: ${Object.keys(operation)}`);
+}
 const initial = contract.initialState({
   initialPrivateState: null,
   initialZswapLocalState: runtime.emptyZswapLocalState(coinPublicKey),
@@ -31,7 +46,9 @@ let context = runtime.createCircuitContext(
   runtime.dummyContractAddress(), coinPublicKey,
   initial.currentContractState.data, initial.currentPrivateState,
 );
+const queryStart = queries.length;
 const saved = contract.circuits.save(context, 7n);
+const saveQueryEnd = queries.length;
 context = saved.context;
 const read = contract.circuits.read_stored(context);
 initial.currentContractState.data = new runtime.ChargedState(read.context.currentQueryContext.state.state);
@@ -40,4 +57,13 @@ process.stdout.write(JSON.stringify({
   returned: saved.result.toString(),
   stored: read.result.toString(),
   stateHex: Buffer.from(initial.currentContractState.serialize()).toString('hex'),
+  saveTrace: {
+    publicTranscriptShape: saved.proofData.publicTranscript.map(shape),
+    privateTranscriptCount: saved.proofData.privateTranscriptOutputs.length,
+    privateState: saved.context.currentPrivateState,
+    queries: queries.slice(queryStart, saveQueryEnd),
+    reportedGas: Object.fromEntries(
+      Object.entries(saved.gasCost).map(([key, value]) => [key, value.toString()]),
+    ),
+  },
 }, null, 2) + '\n');

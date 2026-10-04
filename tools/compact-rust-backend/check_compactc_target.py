@@ -52,6 +52,7 @@ MERKLE_SOURCE = ROOT / "examples/rust_backend/merkle_tree_oracle.compact"
 MERKLE_VERIFY_SOURCE = ROOT / "examples/rust_backend/merkle_path_verify.compact"
 PERSISTENT_COMMIT_SOURCE = ROOT / "examples/rust_backend/call_arg_declared_type.compact"
 INTERNAL_PURE_CALL_SOURCE = ROOT / "examples/rust_backend/internal_pure_call.compact"
+STATEFUL_PURE_CALL_SOURCE = ROOT / "examples/rust_backend/stateful_pure_call.compact"
 TERNARY_COND_SOURCE = ROOT / "examples/rust_backend/ternary_cond_oracle.compact"
 ASSET_REGISTRY_SOURCE = ROOT / "examples/rust_backend/asset_registry_oracle.compact"
 HISTORIC_MERKLE_SOURCE = ROOT / "examples/rust_backend/hmt_insert_oracle.compact"
@@ -1406,6 +1407,20 @@ def main() -> None:
                 assert (internal_pure_call_proof / "keys" / f"save.{extension}").is_file()
             for extension in ("zkir", "bzkir"):
                 assert (internal_pure_call_proof / "zkir" / f"save.{extension}").is_file()
+            stateful_pure_call_proof = base / "stateful-pure-call-proof"
+            run(compiler, "--target", "rust", str(STATEFUL_PURE_CALL_SOURCE),
+                str(stateful_pure_call_proof))
+            check_manifest(stateful_pure_call_proof)
+            capabilities = json.loads(
+                (stateful_pure_call_proof / "contract/rust-capabilities.json").read_text()
+            )
+            save = next(circuit for circuit in capabilities["circuits"]
+                        if circuit["name"] == "save")
+            assert save["proof_required"] and save["recorded"] and save["observed_call"]
+            for extension in ("prover", "verifier"):
+                assert (stateful_pure_call_proof / "keys" / f"save.{extension}").is_file()
+            for extension in ("zkir", "bzkir"):
+                assert (stateful_pure_call_proof / "zkir" / f"save.{extension}").is_file()
             ternary_cond_proof = base / "ternary-cond-proof"
             run(compiler, "--target", "rust", str(TERNARY_COND_SOURCE), str(ternary_cond_proof))
             check_manifest(ternary_cond_proof)
@@ -1595,6 +1610,10 @@ def main() -> None:
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 "--asset-writable", str(asset_writable_proof),
+            )
+            run(
+                "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--stateful-pure-return", str(stateful_pure_call_proof),
             )
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",

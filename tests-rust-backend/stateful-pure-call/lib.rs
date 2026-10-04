@@ -119,6 +119,24 @@ pub mod ledger_contract {
     /// Circuits with a replayable ordered ledger program.
     pub mod recorded {
         use midnight_compact_runtime as runtime;
+        pub fn save<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::Field,
+        ) -> Result<
+            runtime::recording::RecordedCircuitResult<Private, runtime::Field>,
+            runtime::CompactError,
+        > {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_arg_0: runtime::Field = __compact_param_0;
+            let __compact_recorded_pure_field_1: runtime::Field =
+                crate::pure_circuits::square(__compact_recorded_arg_0)?;
+            let frame =
+                crate::ledger_slots::stored.record_write(frame, __compact_recorded_pure_field_1)?;
+            let __compact_recorded_arg_2: runtime::Field = __compact_param_0;
+            let __compact_recorded_pure_return_3: runtime::Field =
+                crate::pure_circuits::square(__compact_recorded_arg_2)?;
+            Ok(frame.finish(__compact_recorded_pure_return_3))
+        }
         pub fn read_stored<Private>(
             context: runtime::context::CircuitContext<Private>,
         ) -> Result<
@@ -133,6 +151,32 @@ pub mod ledger_contract {
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
         impl Contract {
+            pub fn save<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                value: runtime::Field,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, runtime::Field>,
+                runtime::CompactError,
+            > {
+                crate::ledger_contract::recorded::save(context, value)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn save_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                value: runtime::Field,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, runtime::Field>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(value);
+                let recorded = self.save(observed.circuit_context(private_state), value)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "save", input,
+                ))
+            }
             pub fn read_stored<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,

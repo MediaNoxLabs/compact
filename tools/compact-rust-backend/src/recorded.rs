@@ -3007,6 +3007,75 @@ fn render_recorded_item(
                 syn::parse_quote!(observed),
             )
         }
+        StateReturn::Expression {
+            value: Expr::Call { name, arguments },
+        } if circuit.result == Type::Field && !circuit.actions.is_empty() => {
+            let Some(callee) = pure_circuits.get(name.as_str()) else {
+                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
+                    &circuit.return_value,
+                )));
+            };
+            if callee.result != Type::Field
+                || !closed_pure_field_call(name, pure_circuits, &mut HashSet::new())
+            {
+                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
+                    &circuit.return_value,
+                )));
+            }
+            if arguments.len() != callee.parameters.len() {
+                return Err(RenderError::ArgumentCount {
+                    circuit: name.clone(),
+                    expected: callee.parameters.len(),
+                    actual: arguments.len(),
+                });
+            }
+            let mut return_steps = Vec::new();
+            let mut args = Vec::new();
+            for (index, (argument, parameter)) in
+                arguments.iter().zip(&callee.parameters).enumerate()
+            {
+                if parameter.ty != Type::Field {
+                    return Ok(RecordingOutcome::Unsupported(RecordingGap::expression(
+                        argument,
+                        format!("return_value.value.arguments[{index}]"),
+                    )));
+                }
+                let Some(value) = field_expression(
+                    argument,
+                    &HashMap::new(),
+                    &parameters,
+                    ledger_fields,
+                    witnesses,
+                    circuits,
+                    shared_callees,
+                    &mut return_steps,
+                    &mut next_temp,
+                    &mut visiting,
+                )?
+                else {
+                    return Ok(RecordingOutcome::Unsupported(RecordingGap::expression(
+                        argument,
+                        format!("return_value.value.arguments[{index}]"),
+                    )));
+                };
+                let arg = syn::Ident::new(
+                    &format!("__compact_recorded_arg_{}", next_temp),
+                    Span::call_site(),
+                );
+                next_temp += 1;
+                return_steps.push(syn::parse_quote!(let #arg: runtime::Field = #value;));
+                args.push(arg);
+            }
+            let method = ident(name)?;
+            let result = syn::Ident::new(
+                &format!("__compact_recorded_pure_return_{}", next_temp),
+                Span::call_site(),
+            );
+            return_steps.push(syn::parse_quote! {
+                let #result: runtime::Field = crate::pure_circuits::#method(#(#args),*)?;
+            });
+            (return_steps, syn::parse_quote!(#result))
+        }
         StateReturn::Expression { value }
             if circuit.result == Type::Field
                 && circuit.actions.is_empty()

@@ -3441,6 +3441,25 @@ fn closed_pure_field_call_records_let_value_without_admitting_hashes() {
         .contains("let __compact_recorded_pure_field_0: runtime::Field = crate::pure_circuits::literalField()?;"));
     assert!(rendered.source.contains("record_write(frame"));
 
+    contract.stateful_circuits[0].result = Type::Field;
+    contract.stateful_circuits[0].return_value = StateReturn::Expression {
+        value: Expr::Call {
+            name: "literalField".into(),
+            arguments: vec![],
+        },
+    };
+    let returned = render_with_capabilities(&contract).unwrap();
+    assert!(returned.capabilities.circuits[0].recorded);
+    assert!(returned
+        .source
+        .contains("let __compact_recorded_pure_return_1: runtime::Field = crate::pure_circuits::literalField()?;"));
+
+    contract.stateful_circuits[0].actions = vec![StateAction::CellWrite {
+        field: "value".into(),
+        index: 0,
+        value: Expr::FieldLiteral { value: "7".into() },
+    }];
+
     contract.circuits[1].body = Expr::TransientHash {
         value: Box::new(Expr::FieldLiteral { value: "5".into() }),
     };
@@ -3452,7 +3471,7 @@ fn closed_pure_field_call_records_let_value_without_admitting_hashes() {
             .as_ref()
             .unwrap()
             .ir_node,
-        "Expr::Call"
+        "StateReturn::Expression"
     );
 }
 

@@ -31,7 +31,7 @@ impl conditional::Witnesses<u64> for Echo {
     }
 }
 
-fn observed_state(deploy: &ContractDeploy<DefaultDB>) -> ObservedContractState {
+pub(super) fn observed_state(deploy: &ContractDeploy<DefaultDB>) -> ObservedContractState {
     ObservedContractState::new(
         deploy.address(),
         deploy.initial_state.clone(),
@@ -43,13 +43,13 @@ fn observed_state(deploy: &ContractDeploy<DefaultDB>) -> ObservedContractState {
     )
 }
 
-fn verifier(root: &Path, circuit: &str) -> Result<VerifierKey, Box<dyn Error>> {
+pub(super) fn verifier(root: &Path, circuit: &str) -> Result<VerifierKey, Box<dyn Error>> {
     Ok(tagged_deserialize(&mut BufReader::new(File::open(
         root.join(format!("keys/{circuit}.verifier")),
     )?))?)
 }
 
-fn check_stored_field(
+pub(super) fn check_stored_field(
     state: &ContractState<DefaultDB>,
     expected_state: &StateValue<DefaultDB>,
     index: usize,

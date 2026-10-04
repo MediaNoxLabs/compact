@@ -26,6 +26,7 @@ description = "Ledger-8 proof compatibility gate for Rust Compact output"
 compact-rust-counter-fixture = { path = "../../tests-rust-backend/counter", features = ["ledger-transaction"] }
 compact-rust-call-arg-declared-type-fixture = { path = "../../tests-rust-backend/call-arg-declared-type", features = ["ledger-transaction"] }
 compact-rust-internal-pure-call-fixture = { path = "../../tests-rust-backend/internal-pure-call", features = ["ledger-transaction"] }
+compact-rust-stateful-pure-call-fixture = { path = "../../tests-rust-backend/stateful-pure-call", features = ["ledger-transaction"] }
 compact-rust-assert-witness-fixture = { path = "../../tests-rust-backend/assert-witness", features = ["ledger-transaction"] }
 compact-rust-asset-registry-oracle-fixture = { path = "../../tests-rust-backend/asset-registry-oracle", features = ["ledger-transaction"] }
 compact-rust-counter-parameter-fixture = { path = "../../tests-rust-backend/counter-parameter", features = ["ledger-transaction"] }

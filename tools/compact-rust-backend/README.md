@@ -583,6 +583,8 @@ applies `internal_pure_call.save`, `ternary_cond_oracle.streamCallPure`, and
 `streamCallWitness` from their emitted artifacts. Its proof smoke runs on a
 dedicated 64 MiB thread because ledger proof composition overflows macOS's
 default main-thread stack; the shell's stack limit need not be raised.
+The same scoped proof stack covers `stateful_pure_call.save`, whose recorded
+Field result is evaluated after its Cell write.
 
 The fixture suite covers all 37 top-level `*_fixture.compact` contracts from
 the `codegen-rust` oracle branch, alongside smaller source contracts used to

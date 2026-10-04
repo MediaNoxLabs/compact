@@ -27,6 +27,7 @@ mod closed_pure_field;
 mod merkle_verify;
 mod persistent_commit;
 mod pure_field_arguments;
+mod stateful_pure_return;
 mod witness_assert;
 mod witness_vector_let;
 
@@ -939,6 +940,27 @@ fn main() -> Result<(), Box<dyn Error>> {
             Ok(Ok(())) => Ok(()),
             Ok(Err(error)) => Err(error.into()),
             Err(_) => Err("pure Field argument proof thread panicked".into()),
+        };
+    }
+    if first.as_deref() == Some(OsStr::new("--stateful-pure-return")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --stateful-pure-return <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err(
+                "usage: compact-rust-proof-smoke --stateful-pure-return <proof-output>".into(),
+            );
+        }
+        let proof = std::thread::Builder::new()
+            .name("stateful-pure-return-proof".into())
+            .stack_size(64 * 1024 * 1024)
+            .spawn(move || {
+                stateful_pure_return::run(Path::new(&root)).map_err(|e| e.to_string())
+            })?;
+        return match proof.join() {
+            Ok(Ok(())) => Ok(()),
+            Ok(Err(error)) => Err(error.into()),
+            Err(_) => Err("stateful pure return proof thread panicked".into()),
         };
     }
     if first.as_deref() == Some(OsStr::new("--persistent-commit")) {

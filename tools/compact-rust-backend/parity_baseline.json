@@ -7,7 +7,7 @@
     "kind": "circuit",
     "name": "makeAlpha",
     "signature": "export circuit makeAlpha(x: Field): Rec",
-    "visibility": "export"
+    "visibility": "module_export"
   },
   {
     "source": "examples/rust_backend/struct_collision_oracle.compact",
@@ -17,7 +17,7 @@
     "kind": "circuit",
     "name": "wrapAlpha",
     "signature": "export circuit wrapAlpha(x: Field): Wrap",
-    "visibility": "export"
+    "visibility": "module_export"
   },
   {
     "source": "examples/rust_backend/struct_collision_oracle.compact",
@@ -27,7 +27,7 @@
     "kind": "circuit",
     "name": "makeBeta",
     "signature": "export circuit makeBeta(y: Field): Rec",
-    "visibility": "export"
+    "visibility": "module_export"
   },
   {
     "source": "examples/rust_backend/struct_collision_oracle.compact",
@@ -37,7 +37,7 @@
     "kind": "circuit",
     "name": "wrapBeta",
     "signature": "export circuit wrapBeta(y: Boolean): Wrap",
-    "visibility": "export"
+    "visibility": "module_export"
   },
   {
     "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/relations.compact",
@@ -47,7 +47,7 @@
     "kind": "circuit",
     "name": "assertMatchingCredentialPresentation",
     "signature": "export pure circuit assertMatchingCredentialPresentation( credential: VC_Credential, presentation: VP_Presentation ): []",
-    "visibility": "export"
+    "visibility": "module_export"
   },
   {
     "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/issue.compact",
@@ -57,7 +57,7 @@
     "kind": "circuit",
     "name": "assertOfferRequestAlignment",
     "signature": "export pure circuit assertOfferRequestAlignment( offer: OfferMessage, request: RequestMessage ): []",
-    "visibility": "export"
+    "visibility": "module_export"
   },
   {
     "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/issue.compact",
@@ -67,7 +67,7 @@
     "kind": "circuit",
     "name": "assertRequestResultAlignment",
     "signature": "export pure circuit assertRequestResultAlignment( request: RequestMessage, result: ResultMessage ): []",
-    "visibility": "export"
+    "visibility": "module_export"
   },
   {
     "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/issue.compact",
@@ -77,7 +77,7 @@
     "kind": "circuit",
     "name": "assertValidOfferMessage",
     "signature": "export pure circuit assertValidOfferMessage( offer: OfferMessage ): []",
-    "visibility": "export"
+    "visibility": "module_export"
   },
   {
     "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/issue.compact",
@@ -87,7 +87,7 @@
     "kind": "circuit",
     "name": "assertValidRequestMessage",
     "signature": "export pure circuit assertValidRequestMessage( request: RequestMessage ): []",
-    "visibility": "export"
+    "visibility": "module_export"
   },
   {
     "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/issue.compact",
@@ -97,7 +97,7 @@
     "kind": "circuit",
     "name": "assertValidResultMessage",
     "signature": "export pure circuit assertValidResultMessage( result: ResultMessage ): []",
-    "visibility": "export"
+    "visibility": "module_export"
   },
   {
     "source": "examples/rust_backend/module_boolean_constructor.compact",
@@ -117,7 +117,7 @@
     "kind": "circuit",
     "name": "assertRequestSubmissionAlignment",
     "signature": "export pure circuit assertRequestSubmissionAlignment( request: RequestMessage, submission: SubmissionMessage ): []",
-    "visibility": "export"
+    "visibility": "module_export"
   },
   {
     "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/present.compact",
@@ -127,7 +127,7 @@
     "kind": "circuit",
     "name": "assertSubmissionResultAlignment",
     "signature": "export pure circuit assertSubmissionResultAlignment( submission: SubmissionMessage, result: ResultMessage ): []",
-    "visibility": "export"
+    "visibility": "module_export"
   },
   {
     "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/present.compact",
@@ -137,7 +137,7 @@
     "kind": "circuit",
     "name": "assertValidRequestMessage",
     "signature": "export pure circuit assertValidRequestMessage( request: RequestMessage ): []",
-    "visibility": "export"
+    "visibility": "module_export"
   },
   {
     "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/present.compact",
@@ -147,7 +147,7 @@
     "kind": "circuit",
     "name": "assertValidResultMessage",
     "signature": "export pure circuit assertValidResultMessage( result: ResultMessage ): []",
-    "visibility": "export"
+    "visibility": "module_export"
   },
   {
     "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/present.compact",
@@ -157,7 +157,7 @@
     "kind": "circuit",
     "name": "assertValidSubmissionMessage",
     "signature": "export pure circuit assertValidSubmissionMessage( submission: SubmissionMessage ): []",
-    "visibility": "export"
+    "visibility": "module_export"
   },
   {
     "source": "examples/rust_backend/schnorr_attest_oracle.compact",
@@ -167,7 +167,7 @@
     "kind": "circuit",
     "name": "schnorrChallengeDigest",
     "signature": "export pure circuit schnorrChallengeDigest( ann_x: Field, ann_y: Field, pk_x: Field, pk_y: Field, digest: Vector<4, Field> ): Field",
-    "visibility": "export"
+    "visibility": "module_export"
   },
   {
     "source": "examples/rust_backend/schnorr_attest_oracle.compact",
@@ -177,7 +177,7 @@
     "kind": "circuit",
     "name": "schnorrVerify",
     "signature": "export circuit schnorrVerify<#n>( msg: Vector<n, Field>, signature: SchnorrSignature, pk: JubjubPoint ): []",
-    "visibility": "export"
+    "visibility": "module_export"
   },
   {
     "source": "examples/rust_backend/schnorr_attest_oracle.compact",
@@ -187,7 +187,7 @@
     "kind": "circuit",
     "name": "schnorrVerifyDigest",
     "signature": "export circuit schnorrVerifyDigest( digest: Vector<4, Field>, signature: SchnorrSignature, pk: JubjubPoint ): []",
-    "visibility": "export"
+    "visibility": "module_export"
   },
   {
     "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/vc.compact",
@@ -197,7 +197,7 @@
     "kind": "circuit",
     "name": "assertValidCredentialEnvelope",
     "signature": "export pure circuit assertValidCredentialEnvelope( credential: Credential, expectedClaimRoot: Bytes<32> ): []",
-    "visibility": "export"
+    "visibility": "module_export"
   },
   {
     "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/vc.compact",
@@ -207,7 +207,7 @@
     "kind": "circuit",
     "name": "assertValidCredentialProof",
     "signature": "export pure circuit assertValidCredentialProof( credential: Credential, proof: Proof ): []",
-    "visibility": "export"
+    "visibility": "module_export"
   },
   {
     "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/vc.compact",
@@ -217,7 +217,7 @@
     "kind": "circuit",
     "name": "assertValidCredentialProofForBodyRoot",
     "signature": "export pure circuit assertValidCredentialProofForBodyRoot( credential: Credential, proof: Proof, bodyRoot: Bytes<32> ): []",
-    "visibility": "export"
+    "visibility": "module_export"
   },
   {
     "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/vc.compact",
@@ -227,7 +227,7 @@
     "kind": "circuit",
     "name": "credentialBodyRoot",
     "signature": "export pure circuit credentialBodyRoot(credential: Credential): Bytes<32>",
-    "visibility": "export"
+    "visibility": "module_export"
   },
   {
     "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/vp.compact",
@@ -237,7 +237,7 @@
     "kind": "circuit",
     "name": "assertValidPresentationEnvelope",
     "signature": "export pure circuit assertValidPresentationEnvelope( presentation: Presentation ): []",
-    "visibility": "export"
+    "visibility": "module_export"
   },
   {
     "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/vp.compact",
@@ -247,7 +247,7 @@
     "kind": "circuit",
     "name": "presentationBodyRoot",
     "signature": "export pure circuit presentationBodyRoot(presentation: Presentation): Bytes<32>",
-    "visibility": "export"
+    "visibility": "module_export"
   },
   {
     "source": "examples/rust_backend/schnorr_attest_oracle.compact",
@@ -6726,7 +6726,7 @@
     "kind": "witness",
     "name": "test2",
     "signature": "export witness test2(a: Field): Field",
-    "visibility": "export"
+    "visibility": "module_export"
   },
   {
     "source": "examples/rust_backend/witness_ledger_set.compact",

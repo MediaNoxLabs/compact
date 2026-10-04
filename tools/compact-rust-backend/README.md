@@ -79,9 +79,16 @@ declarations, with compiler `contract-info.json` supplying proof applicability
 even when the Rust capability report has no recorded method for a pure circuit.
 This fixes the earlier pure-declaration omission (#184); the scanner remains a
 source inventory, not a full Compact parser or executing parity gate.
-Lexically exported module-local circuits absent from the compiled contract's
-`contract-info.json` remain explicitly unknown in `missing_compiler_proof_rows`;
-the full gate does not assume that they are nonprovable.
+The inventory distinguishes a module member's `module_export` from a contract
+`export`: only a top-level export or top-level `export { name }` makes the
+declaration a contract API candidate. For example, `Schnorr.schnorrVerify`
+and `Alpha.makeAlpha` are module exports but not contract circuits; the
+re-exported `M.bump_inner` is a contract circuit. The checked baseline includes
+both scopes, while `--require-full` gates only contract exports. Compiler
+`contract-info.json` remains authoritative for those exported APIs. Any
+contract export absent from that metadata remains explicitly unknown in
+`missing_compiler_proof_rows`; the full gate does not assume that it is
+nonprovable.
 The generated `ledger_slots` module exposes named typed descriptors for Cell,
 Counter, Set, Map, List, and Merkle declarations. For example,
 `ledger_slots::tree.insert(context, value)` accepts the declared Merkle leaf

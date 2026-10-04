@@ -124,9 +124,88 @@ module Inner {
                              [("named", "circuit", "export", []),
                               ("Inner", "module", "internal", []),
                               ("hidden", "circuit", "internal", ["Inner"]),
-                              ("visible", "circuit", "export", ["Inner"])])
+                              ("visible", "circuit", "module_export", ["Inner"])])
             self.assertEqual([row["declared_pure"] for row in rows], [True, False, True, True])
             self.assertEqual(rows[3]["signature"], "export pure circuit visible(): Boolean")
+
+    def test_module_member_export_requires_top_level_reexport(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "examples/rust_backend/module.compact"
+            source.parent.mkdir(parents=True)
+            source.write_text("""module M {
+  export circuit promoted(): [] { }
+  export pure circuit helper(): Boolean { return true; }
+  export { helper };
+}
+import M;
+export { promoted };
+""")
+            contract = inventory.parse_source(source, root)
+            rows = [row for row in contract["declarations"] if row["kind"] == "circuit"]
+            self.assertEqual(contract["named_exports"], ["promoted"])
+            self.assertEqual([(row["name"], row["module_path"], row["visibility"])
+                              for row in rows],
+                             [("promoted", ["M"], "export"),
+                              ("helper", ["M"], "module_export")])
+
+    def test_module_only_export_is_not_unassessed_contract_circuit(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "examples/rust_backend/module.compact"
+            source.parent.mkdir(parents=True)
+            source.write_text("""module M {
+  export pure circuit helper(): Boolean { return true; }
+  export circuit promoted(): [] { }
+}
+import M;
+export { promoted };
+""")
+            compiler = root / "compiler.py"
+            compiler.write_text("""#!/usr/bin/env python3
+import json, pathlib, sys
+output = pathlib.Path(sys.argv[-1])
+contract = output / "contract"
+contract.mkdir(parents=True)
+(contract / "rust-capabilities.json").write_text(json.dumps({"schema_version": 3, "circuits": [
+  {"name": "promoted", "recorded": True, "observed_call": True,
+   "proof_required": True, "recording_status": "available"}]}))
+metadata = output / "compiler"
+metadata.mkdir()
+(metadata / "contract-info.json").write_text(json.dumps({"circuits": [
+  {"name": "promoted", "pure": False, "proof": True}]}))
+""")
+            compiler.chmod(0o755)
+            output = root / "receipt.json"
+            result = subprocess.run([sys.executable, str(SCRIPT), "--root", str(root),
+                                     "--compiler", str(compiler), "--require-full", "--output", str(output)],
+                                    capture_output=True, text=True, check=False)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            receipt = json.loads(output.read_text())
+            self.assertEqual(receipt["summary"]["exported_circuits"], 1)
+            self.assertEqual(receipt["summary"]["module_exported_circuits"], 1)
+            self.assertEqual(receipt["summary"]["unassessed_exported_circuits"], 0)
+            self.assertEqual(receipt["summary"]["missing_compiler_proof_rows"], [])
+            self.assertEqual([(row["name"], row["proof_required"])
+                              for row in receipt["rows"] if row["kind"] == "circuit"],
+                             [("helper", None), ("promoted", True)])
+
+    def test_checked_module_fixtures_have_distinct_export_scopes(self):
+        source_dir = inventory.ROOT / "examples/rust_backend"
+        promoted = inventory.parse_source(source_dir / "module_boolean_constructor.compact",
+                                          inventory.ROOT)["declarations"]
+        self.assertEqual([(row["name"], row["visibility"])
+                          for row in promoted if row["name"] == "bump_inner"],
+                         [("bump_inner", "export")])
+        for filename, members in (
+            ("schnorr_attest_oracle.compact",
+             {"schnorrVerify", "schnorrVerifyDigest", "schnorrChallengeDigest"}),
+            ("struct_collision_oracle.compact",
+             {"makeAlpha", "wrapAlpha", "makeBeta", "wrapBeta"}),
+        ):
+            rows = inventory.parse_source(source_dir / filename, inventory.ROOT)["declarations"]
+            self.assertEqual({row["name"] for row in rows if row["visibility"] == "module_export"
+                              and row["kind"] == "circuit"}, members)
 
     def test_baseline_detects_additions_and_removals(self):
         with tempfile.TemporaryDirectory() as directory:

@@ -163,8 +163,6 @@ def source_paths(root: Path, extra_dirs: list[Path] | None = None) -> list[Path]
 def parse_source(path: Path, root: Path) -> dict:
     source = without_comments(path.read_text())
     relative = relative_source(path, root)
-    named_exports = {name.strip() for match in EXPORT_LIST.finditer(source)
-                     for name in match.group(1).split(",")}
     modules = []
     declarations = []
     for match in DECLARATION.finditer(source):
@@ -180,7 +178,7 @@ def parse_source(path: Path, root: Path) -> dict:
             "kind": kind,
             "name": name,
             "signature": signature,
-            "visibility": "export" if match.group("export") or name in named_exports else "internal",
+            "explicit_export": bool(match.group("export")),
             "declared_pure": bool(match.group("pure")),
             "line": source.count("\n", 0, match.start()) + 1,
             "offset": match.start(),
@@ -188,9 +186,19 @@ def parse_source(path: Path, root: Path) -> dict:
         if kind == "module" and terminator == "{":
             modules.append((match.start(), closing_brace(source, end), name))
     modules.sort()
+    named_exports = {name.strip() for match in EXPORT_LIST.finditer(source)
+                     if not any(module[0] < match.start() < module[1] for module in modules)
+                     for name in match.group(1).split(",")}
     for item in declarations:
         enclosing = [module for module in modules if module[0] < item["offset"] < module[1]]
         item["module_path"] = [module[2] for module in enclosing]
+        if item["name"] in named_exports or (item["explicit_export"] and not enclosing):
+            item["visibility"] = "export"
+        elif item["explicit_export"]:
+            item["visibility"] = "module_export"
+        else:
+            item["visibility"] = "internal"
+        del item["explicit_export"]
         del item["offset"]
     imports = [{"kind": match.group(1), "expression": normalized(match.group(2))}
                for match in IMPORT.finditer(source)]
@@ -364,7 +372,7 @@ def make_inventory(root: Path, extra_dirs: list[Path], compiler: Path | None,
         raise ValueError("pure circuit declarations were not all inventoried")
     return {
         "format_version": 1,
-        "scope": "lexical repository declarations including explicit pure circuits; TS behavior parity requires executing tests",
+        "scope": "lexical repository declarations including pure and module exports; contract proof applicability requires compiler metadata; TS behavior parity requires executing tests",
         "contracts": contracts,
         "rows": rows,
         "positive_acceptance_scope": scope,
@@ -372,6 +380,8 @@ def make_inventory(root: Path, extra_dirs: list[Path], compiler: Path | None,
             "sources": len(contracts),
             "declarations": len(rows),
             "exported_circuits": sum(row["kind"] == "circuit" and row["visibility"] == "export" for row in rows),
+            "module_exported_circuits": sum(row["kind"] == "circuit" and row["visibility"] == "module_export"
+                                            for row in rows),
             "compiled_rust_sources": len(compiled),
             "recorded_available": sum(row["rust_recorded"] is True for row in rows),
             "recorded_missing": sum(row["rust_recorded"] is False for row in rows),
@@ -386,6 +396,8 @@ def make_inventory(root: Path, extra_dirs: list[Path], compiler: Path | None,
                                                 and row["proof_required"] is None for row in rows),
             "declared_pure_circuits": len(pure_rows),
             "exported_declared_pure_circuits": sum(row["visibility"] == "export" for row in pure_rows),
+            "module_exported_declared_pure_circuits": sum(row["visibility"] == "module_export"
+                                                          for row in pure_rows),
             "known_lexical_pure_omissions": 0,
             "known_exported_pure_omissions": 0,
             "ranked_missing_sources": [{"source": source, "count": count}

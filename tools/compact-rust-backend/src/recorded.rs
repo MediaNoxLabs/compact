@@ -854,6 +854,36 @@ fn render_recorded_item(
                 let (literal, ty) = expression_with_calls(value, parameters, &HashMap::new())?;
                 Ok((ty == Type::Field).then_some(literal))
             }
+            // A pure conditional has no recording effects in either arm. Bind
+            // the selected Field once, before the following ledger action.
+            // Effectful arms stay unavailable until they can be lowered with
+            // branch-local RecordingFrame state.
+            Expr::If {
+                condition,
+                then,
+                otherwise,
+            } => {
+                let Some(condition) = cell_source(condition, &Type::Boolean, locals, parameters)
+                else {
+                    return Ok(None);
+                };
+                let Some(then) = cell_source(then, &Type::Field, locals, parameters) else {
+                    return Ok(None);
+                };
+                let Some(otherwise) = cell_source(otherwise, &Type::Field, locals, parameters)
+                else {
+                    return Ok(None);
+                };
+                let selected = syn::Ident::new(
+                    &format!("__compact_recorded_conditional_field_{}", *next_temp),
+                    Span::call_site(),
+                );
+                *next_temp += 1;
+                steps.push(syn::parse_quote! {
+                    let #selected: runtime::Field = if #condition { #then } else { #otherwise };
+                });
+                Ok(Some(syn::parse_quote!(#selected)))
+            }
             Expr::CellRead { field, index } => {
                 let declaration = ledger_fields
                     .get(field.as_str())

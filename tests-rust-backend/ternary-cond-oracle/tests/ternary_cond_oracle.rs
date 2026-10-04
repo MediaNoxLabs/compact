@@ -83,12 +83,14 @@ fn initial(c: bool, d: bool, x: u64) -> midnight_compact_runtime::context::Const
 }
 
 #[test]
-fn conditional_counter_recordings_match_both_typescript_branches_and_replay() {
+fn conditional_scalar_recordings_match_both_typescript_branches_and_replay() {
     let oracle: serde_json::Value = serde_json::from_str(include_str!(
         "../../../runtime-rs/tests/fixtures/conditional-counter-oracle.json"
     ))
     .unwrap();
     for (name, conditional, seed_flag) in [
+        ("walkerWriteFalse", false, false),
+        ("walkerWriteTrue", true, false),
         ("streamWriteFalse", false, false),
         ("streamWriteTrue", true, false),
         ("walkerInlineWriteFalse", false, false),
@@ -111,6 +113,10 @@ fn conditional_counter_recordings_match_both_typescript_branches_and_replay() {
             recording
         };
         let (native, recorded) = match name {
+            "walkerWriteFalse" | "walkerWriteTrue" => (
+                walkerWrite(native, conditional, Field::from(777_u64)).unwrap(),
+                recorded::walkerWrite(recording, conditional, Field::from(777_u64)).unwrap(),
+            ),
             "streamWriteFalse" | "streamWriteTrue" => (
                 streamWrite(native, conditional, Field::from(777_u64)).unwrap(),
                 recorded::streamWrite(recording, conditional, Field::from(777_u64)).unwrap(),
@@ -133,6 +139,10 @@ fn conditional_counter_recordings_match_both_typescript_branches_and_replay() {
             _ => unreachable!(),
         };
         boolean_observation_assertions::assert_ts_trace(name, &native, &recorded, &oracle[name]);
+        assert_eq!(
+            oracle[name]["privateStateNull"], true,
+            "{name}: TypeScript private state"
+        );
         assert_eq!(
             recorded.execution.context.query.effects, native.context.query.effects,
             "{name}: effects"

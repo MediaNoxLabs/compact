@@ -754,6 +754,63 @@ fn check_conditional_counter_proof(root: &Path) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+fn check_conditional_field_proof(root: &Path) -> Result<(), Box<dyn Error>> {
+    let mut rng = StdRng::seed_from_u64(0x434f_4e44_4649_454c);
+    for (condition, expected_field) in [(false, 0_u64), (true, 777_u64)] {
+        let circuit = "walkerWrite";
+        let initial = conditional_counter_contract::initial_state(
+            ConstructorContext::new(()),
+            true,
+            true,
+            Field::from(111_u64),
+        )?;
+        let deploy = make_deploy(
+            root,
+            circuit,
+            initial.ledger_state.get_ref().clone(),
+            &mut rng,
+        )?;
+        let context = initial.into_circuit_context(deploy.address());
+        let input = (condition, Field::from(777_u64));
+        let recorded =
+            conditional_counter_contract::recorded::walkerWrite(context, input.0, input.1)?;
+        let manual = check_generated_trace(root, circuit, recorded, input)?;
+        let observed = ObservedContractState::new(
+            deploy.address(),
+            deploy.initial_state.clone(),
+            Observation {
+                transaction_hash: [0; 32],
+                block_hash: [0; 32],
+                block_height: 0,
+            },
+        );
+        let verifier: VerifierKey = tagged_deserialize(&mut BufReader::new(File::open(
+            root.join("keys/walkerWrite.verifier"),
+        )?))?;
+        let call = conditional_counter_contract::Contract::default()
+            .recording
+            .walkerWrite_call(&observed, (), input.0, input.1)?
+            .prepare(verifier, Fr::from(0u64))?;
+        if format!("{manual:?}") != format!("{call:?}") {
+            return Err("walkerWrite typed observed call differs from the manual prototype".into());
+        }
+        check_transaction(root, circuit, deploy, call, &mut rng, |state| {
+            let StateValue::Array(fields) = state.data.get_ref() else {
+                return Err("conditional Field state is not an array".into());
+            };
+            let field = read_cell::<Field, _>(fields.get(1).ok_or("Field Cell missing")?)?;
+            if field != Field::from(expected_field) {
+                return Err("conditional Field proof stored the wrong branch value".into());
+            }
+            if read_counter(fields.get(4).ok_or("Counter missing")?)? != 0 {
+                return Err("conditional Field proof changed the Counter".into());
+            }
+            Ok(())
+        })?;
+    }
+    Ok(())
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     let mut arguments = env::args_os().skip(1);
     let first = arguments.next();
@@ -818,6 +875,17 @@ fn main() -> Result<(), Box<dyn Error>> {
             );
         }
         return check_conditional_counter_proof(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--conditional-field")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --conditional-field <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err(
+                "usage: compact-rust-proof-smoke --conditional-field <proof-output>".into(),
+            );
+        }
+        return check_conditional_field_proof(Path::new(&root));
     }
     if first.as_deref() == Some(OsStr::new("--merkle-verify")) {
         let root = arguments

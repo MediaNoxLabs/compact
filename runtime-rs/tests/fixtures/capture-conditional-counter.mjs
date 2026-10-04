@@ -88,6 +88,7 @@ function capture(name, args, flag) {
     stateHex: Buffer.from(initial.currentContractState.serialize()).toString('hex'),
     publicTranscriptShape: output.proofData.publicTranscript.map(shape),
     privateTranscriptCount: output.proofData.privateTranscriptOutputs.length,
+    privateStateNull: output.context.currentPrivateState === null,
     queries: queries.slice(start),
     reportedGas: Object.fromEntries(
       Object.entries(output.gasCost).map(([key, value]) => [key, value.toString()]),
@@ -96,6 +97,8 @@ function capture(name, args, flag) {
 }
 
 process.stdout.write(JSON.stringify({
+  walkerWriteFalse: capture('walkerWrite', [false, 777n], false),
+  walkerWriteTrue: capture('walkerWrite', [true, 777n], false),
   streamWriteFalse: capture('streamWrite', [false, 777n], false),
   streamWriteTrue: capture('streamWrite', [true, 777n], false),
   walkerInlineWriteFalse: capture('walkerInlineWrite', [false], false),

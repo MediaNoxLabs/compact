@@ -17,6 +17,7 @@
 //! Unsupported effect shapes have no generated recorded entry point.
 
 use proc_macro2::Span;
+use serde::Serialize;
 use std::collections::{HashMap, HashSet};
 
 use crate::ir::{
@@ -28,6 +29,149 @@ use crate::{
     RenderError, expression_with_calls, ident, list_head_result_type, public_parameter_idents,
     retained_value, rust_type,
 };
+
+/// The first definite reason an exported circuit has no recorded Rust API.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct RecordingGap {
+    pub code: RecordingGapCode,
+    pub ir_node: String,
+    pub path: String,
+    pub detail: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum RecordingGapCode {
+    UnsupportedAction,
+    UnsupportedExpression,
+    UnsupportedType,
+    UnsupportedReturn,
+    NoRecordedEffect,
+    RecordingUnavailable,
+    NameCollision,
+}
+
+impl RecordingGapCode {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::UnsupportedAction => "unsupported_action",
+            Self::UnsupportedExpression => "unsupported_expression",
+            Self::UnsupportedType => "unsupported_type",
+            Self::UnsupportedReturn => "unsupported_return",
+            Self::NoRecordedEffect => "no_recorded_effect",
+            Self::RecordingUnavailable => "recording_unavailable",
+            Self::NameCollision => "name_collision",
+        }
+    }
+}
+
+impl RecordingGap {
+    fn action(action: &StateAction, path: String) -> Self {
+        let ir_node = node_name(action, "StateAction");
+        Self {
+            code: RecordingGapCode::UnsupportedAction,
+            ir_node: ir_node.clone(),
+            path,
+            detail: format!("{ir_node} is not supported by recorded Rust lowering"),
+        }
+    }
+
+    fn returned(value: &StateReturn) -> Self {
+        let ir_node = node_name(value, "StateReturn");
+        Self {
+            code: RecordingGapCode::UnsupportedReturn,
+            ir_node: ir_node.clone(),
+            path: "return_value".to_owned(),
+            detail: format!("{ir_node} is not supported by recorded Rust lowering"),
+        }
+    }
+
+    fn expression(value: &Expr, path: String) -> Self {
+        let ir_node = node_name(value, "Expr");
+        Self {
+            code: RecordingGapCode::UnsupportedExpression,
+            ir_node: ir_node.clone(),
+            path,
+            detail: format!("{ir_node} is not supported in this recorded expression"),
+        }
+    }
+
+    fn unsupported_type(action: &StateAction, ty: &Type, path: String) -> Self {
+        Self {
+            code: RecordingGapCode::UnsupportedType,
+            ir_node: node_name(action, "StateAction"),
+            path,
+            detail: format!("{ty:?} Cell recording is unsupported"),
+        }
+    }
+
+    fn no_effect() -> Self {
+        Self {
+            code: RecordingGapCode::NoRecordedEffect,
+            ir_node: "StatefulCircuit".to_owned(),
+            path: "actions".to_owned(),
+            detail: "the circuit has no replayable ledger read or write".to_owned(),
+        }
+    }
+
+    pub(crate) fn recording_dependency(gap: Self) -> Self {
+        Self {
+            code: RecordingGapCode::RecordingUnavailable,
+            ir_node: gap.ir_node,
+            path: gap.path,
+            detail: "the observed-call API requires a recorded circuit".to_owned(),
+        }
+    }
+
+    pub(crate) fn name_collision(name: &str) -> Self {
+        Self {
+            code: RecordingGapCode::NameCollision,
+            ir_node: "StatefulCircuit".to_owned(),
+            path: "name".to_owned(),
+            detail: format!("observed-call method {name:?} collides with an exported circuit"),
+        }
+    }
+}
+
+fn node_name(value: &impl Serialize, prefix: &str) -> String {
+    // The tagged IR enum is the source of the stable machine discriminator.
+    // This is only invoked on a failed lowering branch, never on supported output.
+    let node = serde_json::to_value(value).expect("typed IR serializes");
+    let kind = node["kind"].as_str().expect("tagged IR variant has kind");
+    let variant = kind
+        .split('_')
+        .map(|part| {
+            let mut chars = part.chars();
+            chars
+                .next()
+                .map(|first| first.to_ascii_uppercase().to_string() + chars.as_str())
+                .unwrap_or_default()
+        })
+        .collect::<String>();
+    format!("{prefix}::{variant}")
+}
+
+pub(crate) enum RecordingOutcome<T> {
+    Supported(T),
+    Unsupported(RecordingGap),
+}
+
+impl<T> RecordingOutcome<T> {
+    pub(crate) fn is_supported(&self) -> bool {
+        matches!(self, Self::Supported(_))
+    }
+
+    pub(crate) fn gap(&self) -> Option<&RecordingGap> {
+        match self {
+            Self::Supported(_) => None,
+            Self::Unsupported(gap) => Some(gap),
+        }
+    }
+}
+
+fn unavailable_action(action: &StateAction, path: &str) -> RecordingOutcome<()> {
+    RecordingOutcome::Unsupported(RecordingGap::action(action, path.to_owned()))
+}
 
 /// Keep exported scalar-expression recording tied to a ledger read. Other
 /// action-free expressions may still be lowered as private shared helpers.
@@ -73,7 +217,7 @@ pub(crate) fn render_recorded_circuit(
     pure_circuits: &HashMap<&str, &PureCircuit>,
     circuits: &HashMap<&str, &StatefulCircuit>,
     shared_callees: &HashSet<String>,
-) -> Result<Option<syn::Item>, RenderError> {
+) -> Result<RecordingOutcome<syn::Item>, RenderError> {
     render_recorded_item(
         circuit,
         ledger_fields,
@@ -92,7 +236,7 @@ pub(crate) fn render_recorded_helper(
     pure_circuits: &HashMap<&str, &PureCircuit>,
     circuits: &HashMap<&str, &StatefulCircuit>,
     shared_callees: &HashSet<String>,
-) -> Result<Option<syn::Item>, RenderError> {
+) -> Result<RecordingOutcome<syn::Item>, RenderError> {
     render_recorded_item(
         circuit,
         ledger_fields,
@@ -233,7 +377,7 @@ pub(crate) fn plan_recorded_helpers(
                 &HashSet::new(),
             )
         })?;
-        if recorded.is_none() {
+        if !recorded.is_supported() {
             continue;
         }
         for action in &circuit.actions {
@@ -274,7 +418,7 @@ pub(crate) fn plan_recorded_helpers(
                 &HashSet::new(),
             )
         })?
-        .is_some()
+        .is_supported()
         {
             names.insert(circuit.name.clone());
         }
@@ -294,7 +438,7 @@ pub(crate) fn plan_recorded_helpers(
                 &names,
             )
         })?;
-        if let Some(item) = item {
+        if let RecordingOutcome::Supported(item) = item {
             items.push(item);
         }
     }
@@ -309,9 +453,9 @@ fn render_recorded_item(
     circuits: &HashMap<&str, &StatefulCircuit>,
     shared_callees: &HashSet<String>,
     helper: bool,
-) -> Result<Option<syn::Item>, RenderError> {
+) -> Result<RecordingOutcome<syn::Item>, RenderError> {
     if circuit.internal && !helper {
-        return Ok(None);
+        return Ok(RecordingOutcome::Unsupported(RecordingGap::no_effect()));
     }
 
     let name = ident(&circuit.name)?;
@@ -706,9 +850,10 @@ fn render_recorded_item(
                     steps.push(syn::parse_quote!(let #arg = #value;));
                     callee_locals.insert(parameter.name.clone(), syn::parse_quote!(#arg));
                 }
-                for action in &callee.actions {
+                for (index, action) in callee.actions.iter().enumerate() {
                     if !append_steps(
                         action,
+                        &format!("callee[{name}].actions[{index}]"),
                         &callee_locals,
                         &HashMap::new(),
                         ledger_fields,
@@ -718,7 +863,9 @@ fn render_recorded_item(
                         steps,
                         next_temp,
                         visiting,
-                    )? {
+                    )?
+                    .is_supported()
+                    {
                         visiting.remove(name);
                         return Ok(None);
                     }
@@ -1218,6 +1365,7 @@ fn render_recorded_item(
     )]
     fn append_steps(
         action: &StateAction,
+        path: &str,
         locals: &HashMap<String, syn::Expr>,
         parameters: &HashMap<&str, (&Type, syn::Ident)>,
         ledger_fields: &HashMap<&str, &LedgerField>,
@@ -1227,12 +1375,13 @@ fn render_recorded_item(
         steps: &mut Vec<syn::Stmt>,
         next_temp: &mut usize,
         visiting: &mut HashSet<String>,
-    ) -> Result<bool, RenderError> {
+    ) -> Result<RecordingOutcome<()>, RenderError> {
         match action {
             StateAction::Sequence { actions } => {
-                for action in actions {
-                    if !append_steps(
+                for (index, action) in actions.iter().enumerate() {
+                    if let RecordingOutcome::Unsupported(gap) = append_steps(
                         action,
+                        &format!("{path}.actions[{index}]"),
                         locals,
                         parameters,
                         ledger_fields,
@@ -1243,21 +1392,24 @@ fn render_recorded_item(
                         next_temp,
                         visiting,
                     )? {
-                        return Ok(false);
+                        return Ok(RecordingOutcome::Unsupported(gap));
                     }
                 }
-                Ok(true)
+                Ok(RecordingOutcome::Supported(()))
             }
-            StateAction::Let { bindings, action } => {
+            whole @ StateAction::Let {
+                bindings,
+                action: nested_action,
+            } => {
                 let mut scoped = locals.clone();
-                for binding in bindings {
+                for (binding_index, binding) in bindings.iter().enumerate() {
                     if binding.ty
                         == (Type::Unsigned {
                             max: "65535".into(),
                         })
                     {
                         let Some(value) = amount_source(&binding.value, &scoped, parameters) else {
-                            return Ok(false);
+                            return Ok(unavailable_action(whole, path));
                         };
                         scoped.insert(binding.name.clone(), value);
                     } else if binding.ty == Type::Field {
@@ -1277,7 +1429,12 @@ fn render_recorded_item(
                                 visiting,
                             )?
                             else {
-                                return Ok(false);
+                                return Ok(RecordingOutcome::Unsupported(
+                                    RecordingGap::expression(
+                                        &binding.value,
+                                        format!("{path}.bindings[{binding_index}].value"),
+                                    ),
+                                ));
                             };
                             scoped.insert(binding.name.clone(), observed);
                             continue;
@@ -1295,7 +1452,10 @@ fn render_recorded_item(
                             visiting,
                         )?
                         else {
-                            return Ok(false);
+                            return Ok(RecordingOutcome::Unsupported(RecordingGap::expression(
+                                &binding.value,
+                                format!("{path}.bindings[{binding_index}].value"),
+                            )));
                         };
                         scoped.insert(binding.name.clone(), value);
                     } else if binding.ty == Type::Boolean
@@ -1313,7 +1473,7 @@ fn render_recorded_item(
                             visiting,
                         )?
                         else {
-                            return Ok(false);
+                            return Ok(unavailable_action(whole, path));
                         };
                         scoped.insert(binding.name.clone(), value);
                     } else if let Expr::WitnessCall { name, arguments } = &binding.value {
@@ -1324,7 +1484,7 @@ fn render_recorded_item(
                                 | Type::Bytes { .. }
                                 | Type::Unsigned { .. }
                         ) {
-                            return Ok(false);
+                            return Ok(unavailable_action(whole, path));
                         }
                         let declaration = witnesses
                             .get(name.as_str())
@@ -1347,7 +1507,7 @@ fn render_recorded_item(
                             let Some(arg) =
                                 cell_source(argument, &parameter.ty, &scoped, parameters)
                             else {
-                                return Ok(false);
+                                return Ok(unavailable_action(whole, path));
                             };
                             args.push(arg);
                         }
@@ -1373,15 +1533,15 @@ fn render_recorded_item(
                         if !matches!(binding.ty, Type::Bytes { .. })
                             || circuits.contains_key(name.as_str())
                         {
-                            return Ok(false);
+                            return Ok(unavailable_action(whole, path));
                         }
                         let mut args = Vec::new();
                         for argument in arguments {
                             let Expr::Coerce { ty, .. } = argument else {
-                                return Ok(false);
+                                return Ok(unavailable_action(whole, path));
                             };
                             let Some(value) = cell_source(argument, ty, &scoped, parameters) else {
-                                return Ok(false);
+                                return Ok(unavailable_action(whole, path));
                             };
                             args.push(value);
                         }
@@ -1400,7 +1560,7 @@ fn render_recorded_item(
                         let Some(value) =
                             cell_source(&binding.value, &binding.ty, &scoped, parameters)
                         else {
-                            return Ok(false);
+                            return Ok(unavailable_action(whole, path));
                         };
                         scoped.insert(binding.name.clone(), value);
                     } else if matches!(binding.ty, Type::Vector { .. }) {
@@ -1412,15 +1572,16 @@ fn render_recorded_item(
                             next_temp,
                         )?
                         else {
-                            return Ok(false);
+                            return Ok(unavailable_action(whole, path));
                         };
                         scoped = next;
                     } else {
-                        return Ok(false);
+                        return Ok(unavailable_action(action, path));
                     }
                 }
                 append_steps(
-                    action,
+                    nested_action,
+                    &format!("{path}.action"),
                     &scoped,
                     parameters,
                     ledger_fields,
@@ -1445,21 +1606,21 @@ fn render_recorded_item(
                     visiting,
                 )?
                 else {
-                    return Ok(false);
+                    return Ok(unavailable_action(action, path));
                 };
                 steps.push(syn::parse_quote! {
                     if !(#condition) {
                         return Err(runtime::CompactError::AssertionFailed(#message.to_owned()));
                     }
                 });
-                Ok(true)
+                Ok(RecordingOutcome::Supported(()))
             }
             StateAction::CircuitCall { name, arguments } => {
                 let callee = circuits
                     .get(name.as_str())
                     .ok_or_else(|| RenderError::UnsupportedStatefulCall(name.clone()))?;
                 if callee.result != Type::Unit || callee.return_value != StateReturn::Unit {
-                    return Ok(false);
+                    return Ok(unavailable_action(action, path));
                 }
                 if arguments.len() != callee.parameters.len() {
                     return Err(RenderError::ArgumentCount {
@@ -1483,7 +1644,9 @@ fn render_recorded_item(
                             next_temp,
                             visiting,
                         )?;
-                        let Some(value) = value else { return Ok(false) };
+                        let Some(value) = value else {
+                            return Ok(unavailable_action(action, path));
+                        };
                         let arg = syn::Ident::new(
                             &format!("__compact_recorded_arg_{}", *next_temp),
                             Span::call_site(),
@@ -1503,7 +1666,7 @@ fn render_recorded_item(
                             let (frame, _) = #helper(frame, #(#args),*)?;
                         ));
                     }
-                    return Ok(true);
+                    return Ok(RecordingOutcome::Supported(()));
                 }
                 if !visiting.insert(name.clone()) {
                     return Err(RenderError::UnsupportedStatefulCall(name.clone()));
@@ -1534,7 +1697,7 @@ fn render_recorded_item(
                     };
                     let Some(value) = value else {
                         visiting.remove(name);
-                        return Ok(false);
+                        return Ok(unavailable_action(action, path));
                     };
                     let arg = syn::Ident::new(
                         &format!("__compact_recorded_arg_{}", *next_temp),
@@ -1544,10 +1707,11 @@ fn render_recorded_item(
                     steps.push(syn::parse_quote!(let #arg = #value;));
                     callee_locals.insert(parameter.name.clone(), syn::parse_quote!(#arg));
                 }
-                let mut complete = true;
-                for action in &callee.actions {
-                    if !append_steps(
+                let mut failure = None;
+                for (index, action) in callee.actions.iter().enumerate() {
+                    if let RecordingOutcome::Unsupported(gap) = append_steps(
                         action,
+                        &format!("callee[{name}].actions[{index}]"),
                         &callee_locals,
                         &HashMap::new(),
                         ledger_fields,
@@ -1558,12 +1722,15 @@ fn render_recorded_item(
                         next_temp,
                         visiting,
                     )? {
-                        complete = false;
+                        failure = Some(gap);
                         break;
                     }
                 }
                 visiting.remove(name);
-                Ok(complete)
+                Ok(failure.map_or(
+                    RecordingOutcome::Supported(()),
+                    RecordingOutcome::Unsupported,
+                ))
             }
             StateAction::CounterIncrement {
                 field,
@@ -1595,7 +1762,7 @@ fn render_recorded_item(
                             locals,
                             parameters,
                         ) else {
-                            return Ok(false);
+                            return Ok(unavailable_action(action, path));
                         };
                         value
                     }
@@ -1608,7 +1775,7 @@ fn render_recorded_item(
                 steps.push(syn::parse_quote!(
                     let frame = crate::ledger_slots::#slot.#method(frame, #amount)?;
                 ));
-                Ok(true)
+                Ok(RecordingOutcome::Supported(()))
             }
             StateAction::CounterReset { field, index } => {
                 let declaration = ledger_fields
@@ -1623,7 +1790,7 @@ fn render_recorded_item(
                 steps.push(syn::parse_quote!(
                     let frame = crate::ledger_slots::#slot.record_reset(frame)?;
                 ));
-                Ok(true)
+                Ok(RecordingOutcome::Supported(()))
             }
             StateAction::SetInsert {
                 field,
@@ -1639,10 +1806,10 @@ fn render_recorded_item(
                     .get(field.as_str())
                     .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
                 let LedgerFieldKind::Set { ty } = &declaration.declaration else {
-                    return Ok(false);
+                    return Ok(unavailable_action(action, path));
                 };
                 if declaration.index != *index {
-                    return Ok(false);
+                    return Ok(unavailable_action(action, path));
                 }
                 if !matches!(
                     ty,
@@ -1652,7 +1819,7 @@ fn render_recorded_item(
                         | Type::Struct { .. }
                         | Type::Vector { .. }
                 ) {
-                    return Ok(false);
+                    return Ok(unavailable_action(action, path));
                 }
                 let value = scalar_expression(
                     value,
@@ -1666,7 +1833,9 @@ fn render_recorded_item(
                     next_temp,
                     visiting,
                 )?;
-                let Some(value) = value else { return Ok(false) };
+                let Some(value) = value else {
+                    return Ok(unavailable_action(action, path));
+                };
                 let slot = ident(field)?;
                 let method = if matches!(action, StateAction::SetInsert { .. }) {
                     syn::Ident::new("record_insert", Span::call_site())
@@ -1676,7 +1845,7 @@ fn render_recorded_item(
                 steps.push(syn::parse_quote!(
                     let frame = crate::ledger_slots::#slot.#method(frame, #value)?;
                 ));
-                Ok(true)
+                Ok(RecordingOutcome::Supported(()))
             }
             StateAction::SetReset { field, index } => {
                 let declaration = ledger_fields
@@ -1686,13 +1855,13 @@ fn render_recorded_item(
                     || declaration.index != *index
                     || declaration.physical_path().len() != 1
                 {
-                    return Ok(false);
+                    return Ok(unavailable_action(action, path));
                 }
                 let slot = ident(field)?;
                 steps.push(syn::parse_quote!(
                     let frame = crate::ledger_slots::#slot.record_reset(frame)?;
                 ));
-                Ok(true)
+                Ok(RecordingOutcome::Supported(()))
             }
             StateAction::ListPushFront {
                 field,
@@ -1703,10 +1872,10 @@ fn render_recorded_item(
                     .get(field.as_str())
                     .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
                 let LedgerFieldKind::List { ty } = &declaration.declaration else {
-                    return Ok(false);
+                    return Ok(unavailable_action(action, path));
                 };
                 if declaration.index != *index {
-                    return Ok(false);
+                    return Ok(unavailable_action(action, path));
                 }
                 let value = scalar_expression(
                     value,
@@ -1720,12 +1889,14 @@ fn render_recorded_item(
                     next_temp,
                     visiting,
                 )?;
-                let Some(value) = value else { return Ok(false) };
+                let Some(value) = value else {
+                    return Ok(unavailable_action(action, path));
+                };
                 let slot = ident(field)?;
                 steps.push(syn::parse_quote!(
                     let frame = crate::ledger_slots::#slot.record_push_front(frame, #value)?;
                 ));
-                Ok(true)
+                Ok(RecordingOutcome::Supported(()))
             }
             StateAction::ListPopFront { field, index }
             | StateAction::ListReset { field, index } => {
@@ -1735,7 +1906,7 @@ fn render_recorded_item(
                 if !matches!(declaration.declaration, LedgerFieldKind::List { .. })
                     || declaration.index != *index
                 {
-                    return Ok(false);
+                    return Ok(unavailable_action(action, path));
                 }
                 let slot = ident(field)?;
                 let method = if matches!(action, StateAction::ListPopFront { .. }) {
@@ -1746,7 +1917,7 @@ fn render_recorded_item(
                 steps.push(syn::parse_quote!(
                     let frame = crate::ledger_slots::#slot.#method(frame)?;
                 ));
-                Ok(true)
+                Ok(RecordingOutcome::Supported(()))
             }
             StateAction::MapInsert {
                 field,
@@ -1762,10 +1933,10 @@ fn render_recorded_item(
                     value: value_ty,
                 } = &declaration.declaration
                 else {
-                    return Ok(false);
+                    return Ok(unavailable_action(action, path));
                 };
                 if declaration.index != *index {
-                    return Ok(false);
+                    return Ok(unavailable_action(action, path));
                 }
                 let key = scalar_expression(
                     key,
@@ -1779,7 +1950,9 @@ fn render_recorded_item(
                     next_temp,
                     visiting,
                 )?;
-                let Some(key) = key else { return Ok(false) };
+                let Some(key) = key else {
+                    return Ok(unavailable_action(action, path));
+                };
                 let key_name = syn::Ident::new(
                     &format!("__compact_recorded_key_{}", *next_temp),
                     Span::call_site(),
@@ -1798,12 +1971,14 @@ fn render_recorded_item(
                     next_temp,
                     visiting,
                 )?;
-                let Some(value) = value else { return Ok(false) };
+                let Some(value) = value else {
+                    return Ok(unavailable_action(action, path));
+                };
                 let slot = ident(field)?;
                 steps.push(syn::parse_quote!(
                     let frame = crate::ledger_slots::#slot.record_insert(frame, #key_name, #value)?;
                 ));
-                Ok(true)
+                Ok(RecordingOutcome::Supported(()))
             }
             StateAction::MapInsertDefault { field, index, key }
             | StateAction::MapRemove { field, index, key } => {
@@ -1815,13 +1990,13 @@ fn render_recorded_item(
                     value: value_ty,
                 } = &declaration.declaration
                 else {
-                    return Ok(false);
+                    return Ok(unavailable_action(action, path));
                 };
                 if declaration.index != *index
                     || (matches!(action, StateAction::MapInsertDefault { .. })
                         && !matches!(value_ty, Type::Field | Type::Boolean))
                 {
-                    return Ok(false);
+                    return Ok(unavailable_action(action, path));
                 }
                 let key = scalar_expression(
                     key,
@@ -1835,7 +2010,9 @@ fn render_recorded_item(
                     next_temp,
                     visiting,
                 )?;
-                let Some(key) = key else { return Ok(false) };
+                let Some(key) = key else {
+                    return Ok(unavailable_action(action, path));
+                };
                 let slot = ident(field)?;
                 let method = if matches!(action, StateAction::MapInsertDefault { .. }) {
                     syn::Ident::new("record_insert_default", Span::call_site())
@@ -1845,7 +2022,7 @@ fn render_recorded_item(
                 steps.push(syn::parse_quote!(
                     let frame = crate::ledger_slots::#slot.#method(frame, #key)?;
                 ));
-                Ok(true)
+                Ok(RecordingOutcome::Supported(()))
             }
             StateAction::MapReset { field, index } => {
                 let declaration = ledger_fields
@@ -1854,13 +2031,13 @@ fn render_recorded_item(
                 if !matches!(declaration.declaration, LedgerFieldKind::Map { .. })
                     || declaration.index != *index
                 {
-                    return Ok(false);
+                    return Ok(unavailable_action(action, path));
                 }
                 let slot = ident(field)?;
                 steps.push(syn::parse_quote!(
                     let frame = crate::ledger_slots::#slot.record_reset(frame)?;
                 ));
-                Ok(true)
+                Ok(RecordingOutcome::Supported(()))
             }
             StateAction::MerkleInsert {
                 field,
@@ -1878,22 +2055,24 @@ fn render_recorded_item(
                 let (ty, historic) = match &declaration.declaration {
                     LedgerFieldKind::MerkleTree { ty, .. } => (ty, false),
                     LedgerFieldKind::HistoricMerkleTree { ty, .. } => (ty, true),
-                    _ => return Ok(false),
+                    _ => {
+                        return Ok(unavailable_action(action, path));
+                    }
                 };
                 if declaration.index != *index
                     || declaration.physical_path().len() != 1
                     || historic != matches!(action, StateAction::HistoricMerkleInsert { .. })
                 {
-                    return Ok(false);
+                    return Ok(unavailable_action(action, path));
                 }
                 let Some(value) = cell_source(value, ty, locals, parameters) else {
-                    return Ok(false);
+                    return Ok(unavailable_action(action, path));
                 };
                 let slot = ident(field)?;
                 steps.push(syn::parse_quote!(
                     let frame = crate::ledger_slots::#slot.record_insert(frame, #value)?;
                 ));
-                Ok(true)
+                Ok(RecordingOutcome::Supported(()))
             }
             StateAction::CellWrite {
                 field,
@@ -1904,7 +2083,7 @@ fn render_recorded_item(
                     .get(field.as_str())
                     .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
                 let LedgerFieldKind::Cell { ty } = &declaration.declaration else {
-                    return Ok(false);
+                    return Ok(unavailable_action(action, path));
                 };
                 if !matches!(
                     ty,
@@ -1914,11 +2093,14 @@ fn render_recorded_item(
                         | Type::Unsigned { .. }
                         | Type::Enum { .. }
                 ) {
-                    return Ok(false);
+                    return Ok(RecordingOutcome::Unsupported(
+                        RecordingGap::unsupported_type(action, ty, format!("{path}.value")),
+                    ));
                 }
                 if declaration.index != *index {
-                    return Ok(false);
+                    return Ok(unavailable_action(action, path));
                 }
+                let expression = value;
                 let value = if *ty == Type::Field {
                     field_expression(
                         value,
@@ -1948,24 +2130,28 @@ fn render_recorded_item(
                     cell_source(value, ty, locals, parameters)
                 };
                 let Some(value) = value else {
-                    return Ok(false);
+                    return Ok(RecordingOutcome::Unsupported(RecordingGap::expression(
+                        expression,
+                        format!("{path}.value"),
+                    )));
                 };
                 let slot = ident(field)?;
                 steps.push(syn::parse_quote!(
                     let frame = crate::ledger_slots::#slot.record_write(frame, #value)?;
                 ));
-                Ok(true)
+                Ok(RecordingOutcome::Supported(()))
             }
-            _ => Ok(false),
+            _ => Ok(unavailable_action(action, path)),
         }
     }
 
     let mut steps = Vec::<syn::Stmt>::new();
     let mut next_temp = 0;
     let mut visiting = HashSet::from([circuit.name.clone()]);
-    for action in &circuit.actions {
-        if !append_steps(
+    for (index, action) in circuit.actions.iter().enumerate() {
+        if let RecordingOutcome::Unsupported(gap) = append_steps(
             action,
+            &format!("actions[{index}]"),
             &HashMap::new(),
             &parameters,
             ledger_fields,
@@ -1976,14 +2162,14 @@ fn render_recorded_item(
             &mut next_temp,
             &mut visiting,
         )? {
-            return Ok(None);
+            return Ok(RecordingOutcome::Unsupported(gap));
         }
     }
     let result_ty = rust_type(&circuit.result)?;
     let (return_steps, result): (Vec<syn::Stmt>, syn::Expr) = match &circuit.return_value {
         StateReturn::Unit if circuit.result == Type::Unit => {
             if steps.is_empty() {
-                return Ok(None);
+                return Ok(RecordingOutcome::Unsupported(RecordingGap::no_effect()));
             }
             (Vec::new(), syn::parse_quote!(()))
         }
@@ -2030,7 +2216,9 @@ fn render_recorded_item(
                 })
                 || declaration.index != *index
             {
-                return Ok(None);
+                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
+                    &circuit.return_value,
+                )));
             }
             let slot = ident(field)?;
             (
@@ -2060,7 +2248,10 @@ fn render_recorded_item(
                 &mut visiting,
             )?
             else {
-                return Ok(None);
+                return Ok(RecordingOutcome::Unsupported(RecordingGap::expression(
+                    value,
+                    "return_value.value".to_owned(),
+                )));
             };
             (return_steps, result)
         }
@@ -2083,7 +2274,10 @@ fn render_recorded_item(
                 &mut visiting,
             )?
             else {
-                return Ok(None);
+                return Ok(RecordingOutcome::Unsupported(RecordingGap::expression(
+                    value,
+                    "return_value.value".to_owned(),
+                )));
             };
             (return_steps, result)
         }
@@ -2167,7 +2361,9 @@ fn render_recorded_item(
                 &mut visiting,
             )?
             else {
-                return Ok(None);
+                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
+                    &circuit.return_value,
+                )));
             };
             let Some((then_steps, then_result)) = pure_branch(
                 then,
@@ -2181,7 +2377,9 @@ fn render_recorded_item(
                 &mut visiting,
             )?
             else {
-                return Ok(None);
+                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
+                    &circuit.return_value,
+                )));
             };
             let Some((otherwise_steps, otherwise_result)) = pure_branch(
                 otherwise,
@@ -2195,7 +2393,9 @@ fn render_recorded_item(
                 &mut visiting,
             )?
             else {
-                return Ok(None);
+                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
+                    &circuit.return_value,
+                )));
             };
             return_steps.push(syn::parse_quote! {
                 let (frame, observed): (_, #result_ty) = if #condition {
@@ -2231,7 +2431,9 @@ fn render_recorded_item(
                 &mut visiting,
             )?
             else {
-                return Ok(None);
+                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
+                    &circuit.return_value,
+                )));
             };
             (return_steps, result)
         }
@@ -2247,7 +2449,9 @@ fn render_recorded_item(
             if !matches!(declaration.declaration, LedgerFieldKind::Set { .. })
                 || declaration.index != *index
             {
-                return Ok(None);
+                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
+                    &circuit.return_value,
+                )));
             }
             let slot = ident(field)?;
             (
@@ -2268,7 +2472,9 @@ fn render_recorded_item(
             if !matches!(declaration.declaration, LedgerFieldKind::Set { .. })
                 || declaration.index != *index
             {
-                return Ok(None);
+                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
+                    &circuit.return_value,
+                )));
             }
             let slot = ident(field)?;
             (
@@ -2291,7 +2497,9 @@ fn render_recorded_item(
             if !matches!(declaration.declaration, LedgerFieldKind::List { .. })
                 || declaration.index != *index
             {
-                return Ok(None);
+                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
+                    &circuit.return_value,
+                )));
             }
             let slot = ident(field)?;
             (
@@ -2312,7 +2520,9 @@ fn render_recorded_item(
             if !matches!(declaration.declaration, LedgerFieldKind::List { .. })
                 || declaration.index != *index
             {
-                return Ok(None);
+                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
+                    &circuit.return_value,
+                )));
             }
             let slot = ident(field)?;
             (
@@ -2328,11 +2538,15 @@ fn render_recorded_item(
                 .get(field.as_str())
                 .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
             let LedgerFieldKind::List { ty } = &declaration.declaration else {
-                return Ok(None);
+                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
+                    &circuit.return_value,
+                )));
             };
             let expected = list_head_result_type(ty, &circuit.result);
             if declaration.index != *index || circuit.result != expected {
-                return Ok(None);
+                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
+                    &circuit.return_value,
+                )));
             }
             let slot = ident(field)?;
             (
@@ -2353,7 +2567,9 @@ fn render_recorded_item(
                 value: value_ty,
             } = &declaration.declaration
             else {
-                return Ok(None);
+                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
+                    &circuit.return_value,
+                )));
             };
             let member = matches!(&circuit.return_value, StateReturn::MapMember { .. });
             let expected = if member {
@@ -2365,7 +2581,9 @@ fn render_recorded_item(
                 || circuit.result != expected
                 || !matches!(expected, Type::Boolean | Type::Field)
             {
-                return Ok(None);
+                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
+                    &circuit.return_value,
+                )));
             }
             let mut return_steps = Vec::new();
             let key = scalar_expression(
@@ -2380,7 +2598,11 @@ fn render_recorded_item(
                 &mut next_temp,
                 &mut visiting,
             )?;
-            let Some(key) = key else { return Ok(None) };
+            let Some(key) = key else {
+                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
+                    &circuit.return_value,
+                )));
+            };
             let slot = ident(field)?;
             let method = if member {
                 "record_member"
@@ -2406,7 +2628,9 @@ fn render_recorded_item(
             if !matches!(declaration.declaration, LedgerFieldKind::Map { .. })
                 || declaration.index != *index
             {
-                return Ok(None);
+                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
+                    &circuit.return_value,
+                )));
             }
             let slot = ident(field)?;
             (
@@ -2427,7 +2651,9 @@ fn render_recorded_item(
             if !matches!(declaration.declaration, LedgerFieldKind::Map { .. })
                 || declaration.index != *index
             {
-                return Ok(None);
+                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
+                    &circuit.return_value,
+                )));
             }
             let slot = ident(field)?;
             (
@@ -2466,10 +2692,14 @@ fn render_recorded_item(
                 syn::parse_quote!(observed),
             )
         }
-        _ => return Ok(None),
+        _ => {
+            return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
+                &circuit.return_value,
+            )));
+        }
     };
     if steps.is_empty() && return_steps.is_empty() {
-        return Ok(None);
+        return Ok(RecordingOutcome::Unsupported(RecordingGap::no_effect()));
     }
 
     let uses_witness = circuit_uses_witness(circuit, circuits, &mut HashSet::new())?;
@@ -2560,7 +2790,7 @@ fn render_recorded_item(
         }
         }
     };
-    Ok(Some(item))
+    Ok(RecordingOutcome::Supported(item))
 }
 
 /// A recording handle that borrows the user-supplied witness implementation.

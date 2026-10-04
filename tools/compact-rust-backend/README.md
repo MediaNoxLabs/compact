@@ -46,7 +46,12 @@ compactc --target rust --rust-require-recording \
 ```
 
 The strict option reports an unsupported circuit at its Compact source
-position and publishes no partial output. The capability report describes
+position, with a reason code and structural IR path, and publishes no partial
+output. Capability report schema 2 retains the `recorded` and `observed_call`
+booleans and adds `recording_unavailable` or `observed_call_unavailable` when
+an API is missing. Each reason includes a stable code, IR node name, path, and
+detail. These paths identify the nearest definite failure; some nested
+expressions still report the enclosing action or return. The report describes
 generated API availability; proof, transcript parity, and wallet admission
 still require the corresponding acceptance tests. Internal circuits are
 omitted, and the report schema is separate from the private IR schema and
@@ -166,7 +171,7 @@ Compact spelling without warning in consumer builds.
 |---|---|---|
 | Compact compiler | Toolchain 0.31.133, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
 | Rust IR | Schema 8, private to this backend | The renderer rejects any other schema before writing `lib.rs`. Ledger, circuit, witness, constructor, and exported alias declarations carry optional Compact source locations for diagnostics. |
-| Generated code and Rust runtime | ABI 34 | Generated modules assert the ABI at Rust compile time. ABI 34 adds recorded direct plain/historic Merkle fullness reads through typed slots; ABI 33 adds typed local plain/historic Merkle views with checked depth; ABI 32 adds List views; ABI 31 adds cell-valued Map views; ABI 30 adds Set views; ABI 29 adds Cell/Counter views; ABI 25–28 add physical List paths, chunked Map and Cell calls, and Cell-read scalar returns; ABI 21–24 add typed multi-argument observed calls and composite/chunked Set calls. The [runtime guide](../../runtime-rs/README.md) records earlier ABI changes. |
+| Generated code and Rust runtime | ABI 35 | Generated modules assert the ABI at Rust compile time. ABI 35 adds recorded Counter reset through typed slots; ABI 34 adds recorded direct plain/historic Merkle fullness reads; ABI 33 adds typed local plain/historic Merkle views with checked depth; ABI 32 adds List views; ABI 31 adds cell-valued Map views; ABI 30 adds Set views; ABI 29 adds Cell/Counter views; ABI 25–28 add physical List paths, chunked Map and Cell calls, and Cell-read scalar returns; ABI 21–24 add typed multi-argument observed calls and composite/chunked Set calls. The [runtime guide](../../runtime-rs/README.md) records earlier ABI changes. |
 | Rust runtime source | Bundled runtime crates or an explicit shared source root | Cargo resolves the matching runtime and its pinned Midnight crates. |
 
 `--runtime-version` reports the TypeScript runtime version; the Rust runtime

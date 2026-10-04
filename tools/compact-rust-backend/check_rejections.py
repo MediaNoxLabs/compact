@@ -243,19 +243,26 @@ def check_proof_capabilities(compactc: str, directory: Path) -> list[str]:
         report_bytes = report_path.read_bytes()
         report = json.loads(report_bytes)
         manifest = json.loads(manifest_path.read_bytes())
-        assert report["schema_version"] == 1
-        assert report["circuits"] == [{
+        assert report["schema_version"] == 2
+        assert len(report["circuits"]) == 1
+        capability = report["circuits"][0]
+        assert {key: capability[key] for key in ("name", "source", "recorded", "observed_call")} == {
             "name": "write",
             "source": {"file": "pure-call.compact", "line": 4, "column": 1},
             "recorded": False,
             "observed_call": False,
-        }]
+        }
+        assert capability["recording_unavailable"]["code"] == "unsupported_expression"
+        assert capability["recording_unavailable"]["path"] == "actions[0].bindings[0].value"
+        assert capability["observed_call_unavailable"]["code"] == "recording_unavailable"
         assert manifest["contract"]["rust-capabilities.json"]["hash"] == hashlib.sha256(report_bytes).hexdigest()
     except (AssertionError, FileNotFoundError, KeyError, ValueError) as error:
         failures.append(f"native-only pure-call report or manifest is wrong: {error}")
     before = snapshot(output)
     rejected = compile_source(source, output, True)
-    if rejected.returncode == 0 or "pure-call.compact line 4 char 1" not in rejected.stderr:
+    if (rejected.returncode == 0
+            or "pure-call.compact line 4 char 1" not in rejected.stderr
+            or "unsupported_expression at actions[0].bindings[0].value" not in rejected.stderr):
         failures.append(f"strict rebuild did not reject at source:\n{rejected.stderr}")
     if snapshot(output) != before:
         failures.append("strict rebuild changed the prior native-only output")
@@ -293,9 +300,13 @@ def check_proof_capabilities(compactc: str, directory: Path) -> list[str]:
         actual = [(item["name"], item["recorded"], item["observed_call"]) for item in report["circuits"]]
         if actual != [("bump", True, False), ("bump_call", True, True)]:
             failures.append(f"call-name collision capability report is wrong: {actual}")
+        if report["circuits"][0]["observed_call_unavailable"]["code"] != "name_collision":
+            failures.append("call-name collision has no typed reason")
         before = snapshot(collision_output)
         rejected = compile_source(collision_source, collision_output, True)
-        if rejected.returncode == 0 or "call-collision.compact line 3 char 1" not in rejected.stderr:
+        if (rejected.returncode == 0
+                or "call-collision.compact line 3 char 1" not in rejected.stderr
+                or "name_collision at name" not in rejected.stderr):
             failures.append(f"strict call-name collision did not reject at source:\n{rejected.stderr}")
         if snapshot(collision_output) != before:
             failures.append("strict call-name collision changed the prior output")

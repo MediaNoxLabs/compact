@@ -1054,7 +1054,7 @@ def main() -> None:
         assert (rust / "contract/Cargo.toml").is_file()
         assert not (rust / "contract/index.js").exists()
         capabilities = json.loads((rust / "contract/rust-capabilities.json").read_text())
-        assert capabilities["schema_version"] == 1
+        assert capabilities["schema_version"] == 2
         assert [(c["name"], c["recorded"], c["observed_call"]) for c in capabilities["circuits"]] == [
             ("increment", True, True), ("read_round", True, True)
         ]

@@ -676,14 +676,18 @@ fn run() -> Result<i32, Box<dyn Error>> {
                         )
                     },
                 );
+                let (api, gap) = if !circuit.recorded {
+                    ("recorded", circuit.recording_unavailable.as_ref())
+                } else {
+                    ("observed-call", circuit.observed_call_unavailable.as_ref())
+                };
+                let gap = gap.expect("false capability has a reason");
                 format!(
-                    "{position}: exported circuit {:?} has no complete {} API",
+                    "{position}: exported circuit {:?} has no complete {api} API: {} at {} ({})",
                     circuit.name,
-                    if !circuit.recorded {
-                        "recorded"
-                    } else {
-                        "observed-call"
-                    }
+                    gap.code.as_str(),
+                    gap.path,
+                    gap.detail,
                 )
             })
             .collect::<Vec<_>>();

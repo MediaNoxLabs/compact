@@ -3,11 +3,12 @@
 pub mod ir;
 mod native_frame;
 mod recorded;
+pub use recorded::{RecordingGap, RecordingGapCode};
 mod stateful;
 mod witness;
 
 const RUNTIME_ABI_VERSION: u32 = 35;
-pub const RUST_CAPABILITY_SCHEMA_VERSION: u32 = 1;
+pub const RUST_CAPABILITY_SCHEMA_VERSION: u32 = 2;
 
 const GENERATED_HEADER: &str = r#"// This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
@@ -52,6 +53,10 @@ pub struct RustCircuitCapability {
     pub source: Option<ir::SourceLocation>,
     pub recorded: bool,
     pub observed_call: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub recording_unavailable: Option<RecordingGap>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub observed_call_unavailable: Option<RecordingGap>,
 }
 
 pub struct RenderedContract {
@@ -3039,7 +3044,8 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
                 &shared_recorded_callees,
             )?;
             let call_name = format!("{}_call", circuit.name);
-            let observed_call = recorded.is_some()
+            let recording_unavailable = recorded.gap().cloned();
+            let observed_call = recorded.is_supported()
                 && !contract
                     .stateful_circuits
                     .iter()
@@ -3048,11 +3054,19 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
                 proof_capabilities.push(RustCircuitCapability {
                     name: circuit.name.clone(),
                     source: circuit.source.clone(),
-                    recorded: recorded.is_some(),
+                    recorded: recorded.is_supported(),
                     observed_call,
+                    recording_unavailable: recording_unavailable.clone(),
+                    observed_call_unavailable: if observed_call {
+                        None
+                    } else if let Some(gap) = recording_unavailable {
+                        Some(recorded::RecordingGap::recording_dependency(gap))
+                    } else {
+                        Some(recorded::RecordingGap::name_collision(&call_name))
+                    },
                 });
             }
-            if let Some(item) = recorded {
+            if let recorded::RecordingOutcome::Supported(item) = recorded {
                 recorded_items.push(item);
                 let uses_witness = stateful::circuit_uses_witness(
                     circuit,

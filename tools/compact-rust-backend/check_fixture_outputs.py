@@ -22,6 +22,7 @@ stale generated fixture libraries after reviewing the backend changes.
 """
 
 import argparse
+import json
 import os
 from pathlib import Path
 import subprocess
@@ -77,6 +78,18 @@ def main() -> int:
             if compile_result.returncode:
                 failures.append(f"{source.name}: {compile_result.stderr.strip()}")
                 continue
+            report = json.loads((Path(output) / "contract/rust-capabilities.json").read_text())
+            if report["schema_version"] != 2:
+                failures.append(f"{source.name}: wrong capability report schema")
+                continue
+            for capability in report["circuits"]:
+                for available, unavailable in (("recorded", "recording_unavailable"),
+                                               ("observed_call", "observed_call_unavailable")):
+                    gap = capability.get(unavailable)
+                    if capability[available] == (gap is not None):
+                        failures.append(f"{source.name}.{capability['name']}: {available} reason invariant failed")
+                    elif gap is not None and not all(gap.get(key) for key in ("code", "ir_node", "path", "detail")):
+                        failures.append(f"{source.name}.{capability['name']}: incomplete {unavailable}")
             generated = Path(output) / "contract" / "lib.rs"
             format_result = run(["rustfmt", "--edition", "2024", str(generated)])
             if format_result.returncode:

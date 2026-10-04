@@ -2915,12 +2915,24 @@ fn unsupported_pure_call_and_supported_field_arithmetic_have_exact_capabilities(
     assert!(!rendered.source.contains("pub mod recorded"));
     assert!(!rendered.source.contains("pub fn write_call"));
     let report = serde_json::to_value(&rendered.capabilities).unwrap();
-    assert_eq!(report["schema_version"], 1);
+    assert_eq!(report["schema_version"], 2);
     assert_eq!(report["circuits"][0]["name"], "write");
     assert_eq!(report["circuits"][0]["source"]["file"], "pure-call.compact");
     assert_eq!(report["circuits"][0]["source"]["line"], 4);
     assert_eq!(report["circuits"][0]["recorded"], false);
     assert_eq!(report["circuits"][0]["observed_call"], false);
+    assert_eq!(
+        report["circuits"][0]["recording_unavailable"]["code"],
+        "unsupported_expression"
+    );
+    assert_eq!(
+        report["circuits"][0]["recording_unavailable"]["path"],
+        "actions[0].value"
+    );
+    assert_eq!(
+        report["circuits"][0]["observed_call_unavailable"]["code"],
+        "recording_unavailable"
+    );
 
     let StateAction::CellWrite { value, .. } = &mut contract.stateful_circuits[0].actions[0] else {
         unreachable!()
@@ -2948,6 +2960,144 @@ fn unsupported_pure_call_and_supported_field_arithmetic_have_exact_capabilities(
     assert!(rendered.source.contains("__compact_recorded_product_0"));
     assert!(rendered.capabilities.circuits[0].recorded);
     assert!(rendered.capabilities.circuits[0].observed_call);
+}
+
+#[test]
+fn recording_gaps_follow_the_first_definite_ir_failure() {
+    let mut contract = Contract {
+        schema_version: 8,
+        type_aliases: vec![],
+        constructor: None,
+        witnesses: vec![],
+        ledger_fields: vec![LedgerField {
+            source: None,
+            id: "round".into(),
+            index: 0,
+            path: vec![],
+            declaration: LedgerFieldKind::Counter,
+        }],
+        circuits: vec![],
+        stateful_circuits: vec![StatefulCircuit {
+            source: None,
+            internal: false,
+            name: "run".into(),
+            parameters: vec![],
+            result: Type::Unit,
+            return_value: StateReturn::Unit,
+            actions: vec![StateAction::Sequence {
+                actions: vec![
+                    StateAction::CounterReset {
+                        field: "round".into(),
+                        index: 0,
+                    },
+                    StateAction::Expression {
+                        value: Expr::Boolean { value: true },
+                    },
+                    StateAction::Expression {
+                        value: Expr::Boolean { value: false },
+                    },
+                ],
+            }],
+        }],
+    };
+    let report = render_with_capabilities(&contract).unwrap().capabilities;
+    let gap = report.circuits[0].recording_unavailable.as_ref().unwrap();
+    assert_eq!(gap.code.as_str(), "unsupported_action");
+    assert_eq!(gap.ir_node, "StateAction::Expression");
+    assert_eq!(gap.path, "actions[0].actions[1]");
+
+    contract.stateful_circuits[0].actions.clear();
+    let report = render_with_capabilities(&contract).unwrap().capabilities;
+    assert_eq!(
+        report.circuits[0]
+            .recording_unavailable
+            .as_ref()
+            .unwrap()
+            .code
+            .as_str(),
+        "no_recorded_effect"
+    );
+
+    contract.stateful_circuits[0].result = Type::Boolean;
+    contract.stateful_circuits[0].return_value = StateReturn::Expression {
+        value: Expr::Boolean { value: true },
+    };
+    let report = render_with_capabilities(&contract).unwrap().capabilities;
+    let gap = report.circuits[0].recording_unavailable.as_ref().unwrap();
+    assert_eq!(gap.code.as_str(), "unsupported_return");
+    assert_eq!(gap.ir_node, "StateReturn::Expression");
+    assert_eq!(gap.path, "return_value");
+}
+
+#[test]
+fn recording_gaps_include_unsupported_type_and_called_callee_path() {
+    let unsupported_cell_type = Type::Vector {
+        element: Box::new(Type::Boolean),
+        length: 2,
+    };
+    let mut contract = Contract {
+        schema_version: 8,
+        type_aliases: vec![],
+        constructor: None,
+        witnesses: vec![],
+        ledger_fields: vec![LedgerField {
+            source: None,
+            id: "small".into(),
+            index: 0,
+            path: vec![],
+            declaration: LedgerFieldKind::Cell {
+                ty: unsupported_cell_type.clone(),
+            },
+        }],
+        circuits: vec![],
+        stateful_circuits: vec![StatefulCircuit {
+            source: None,
+            internal: false,
+            name: "set".into(),
+            parameters: vec![],
+            result: Type::Unit,
+            return_value: StateReturn::Unit,
+            actions: vec![StateAction::CellWrite {
+                field: "small".into(),
+                index: 0,
+                value: Expr::Default {
+                    ty: unsupported_cell_type,
+                },
+            }],
+        }],
+    };
+    let report = render_with_capabilities(&contract).unwrap().capabilities;
+    let gap = report.circuits[0].recording_unavailable.as_ref().unwrap();
+    assert_eq!(gap.code.as_str(), "unsupported_type");
+    assert_eq!(gap.ir_node, "StateAction::CellWrite");
+    assert_eq!(gap.path, "actions[0].value");
+
+    contract.ledger_fields[0].declaration = LedgerFieldKind::Counter;
+    contract.stateful_circuits[0].name = "inner".into();
+    contract.stateful_circuits[0].internal = true;
+    contract.stateful_circuits[0].actions = vec![StateAction::Expression {
+        value: Expr::Boolean { value: true },
+    }];
+    let mut outer = contract.stateful_circuits[0].clone();
+    outer.name = "outer".into();
+    outer.internal = false;
+    outer.actions = vec![StateAction::CircuitCall {
+        name: "inner".into(),
+        arguments: vec![],
+    }];
+    contract.stateful_circuits.push(outer);
+    let report = render_with_capabilities(&contract).unwrap().capabilities;
+    let gap = report.circuits[0].recording_unavailable.as_ref().unwrap();
+    assert_eq!(gap.code.as_str(), "unsupported_action");
+    assert_eq!(gap.path, "callee[inner].actions[0]");
+    assert_eq!(gap.ir_node, "StateAction::Expression");
+    for circuit in report.circuits {
+        assert_eq!(circuit.recorded, circuit.recording_unavailable.is_none());
+        assert_eq!(
+            circuit.observed_call,
+            circuit.observed_call_unavailable.is_none()
+        );
+    }
 }
 
 #[test]
@@ -3146,6 +3296,12 @@ fn counter_parameter_requires_uint16_and_a_known_name() {
             ("increment_by_call", true, true)
         ]
     );
+    let gap = rendered.capabilities.circuits[0]
+        .observed_call_unavailable
+        .as_ref()
+        .unwrap();
+    assert_eq!(gap.code.as_str(), "name_collision");
+    assert_eq!(gap.path, "name");
 
     contract.stateful_circuits[0].parameters[0].ty = Type::Unsigned { max: "255".into() };
     assert_eq!(

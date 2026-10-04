@@ -295,10 +295,19 @@ def main() -> int:
                 "compiler-rejections", directory, receipt, env=environment)
             run([sys.executable, str(ROOT / "tools/compact-rust-backend/check_oracle_acceptance.py")],
                 "oracle-acceptance", directory, receipt, env=environment)
-            run(["cargo", "+1.99.0", "test", "--workspace", "--all-targets", "--all-features",
-                 "--locked"], "workspace-tests", directory, receipt, env=environment)
-            run(["cargo", "+1.99.0", "clippy", "--workspace", "--all-targets", "--all-features",
-                 "--locked", "--", "-D", "warnings"], "workspace-clippy", directory, receipt,
+            # The compactup integration tests require the machine's installed
+            # compiler and the mutable GitHub release list. They are outside
+            # this compiler/backend parity gate and cannot give a repeatable
+            # local receipt.
+            run(["cargo", "+1.99.0", "test", "--workspace", "--exclude", "compact",
+                 "--all-targets", "--all-features", "--locked"],
+                "backend-workspace-tests", directory, receipt, env=environment)
+            run(["cargo", "+1.99.0", "test", "-p", "compact", "--lib", "--bins",
+                 "--all-features", "--locked"],
+                "compact-cli-unit-tests", directory, receipt, env=environment)
+            run(["cargo", "+1.99.0", "clippy", "--workspace", "--exclude", "compact",
+                 "--all-targets", "--all-features", "--locked", "--", "-D", "warnings"],
+                "backend-workspace-clippy", directory, receipt,
                 env=environment)
             run([sys.executable, str(ROOT / "tools/compact-rust-backend/check_compactc_target.py"),
                  "--consumer", "--proof"], "consumer-proof-ledger", directory, receipt,

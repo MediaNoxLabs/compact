@@ -564,11 +564,7 @@ pub mod ledger_contract {
             crate::ledger_slots::committed.member(context, __compact_action_local_1)?;
         context = __compact_query_8.context;
         total_cost += __compact_query_8.gas_cost;
-        if !(if __compact_query_8.result {
-            false
-        } else {
-            true
-        }) {
+        if __compact_query_8.result {
             return Err(runtime::CompactError::AssertionFailed(
                 "Unexpected attempt to double use of nullifier".to_owned(),
             ));
@@ -699,11 +695,7 @@ pub mod ledger_contract {
             crate::ledger_slots::revealed.member(context, __compact_action_local_1)?;
         context = __compact_query_6.context;
         total_cost += __compact_query_6.gas_cost;
-        if !(if __compact_query_6.result {
-            false
-        } else {
-            true
-        }) {
+        if __compact_query_6.result {
             return Err(runtime::CompactError::AssertionFailed(
                 "Attempted to double vote".to_owned(),
             ));
@@ -950,11 +942,7 @@ pub mod ledger_contract {
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
             (__compact_witness_1).clone(),
         ));
-        if !(if (__compact_witness_1).is_some {
-            false
-        } else {
-            true
-        }) {
+        if (__compact_witness_1).is_some {
             return Err(runtime::CompactError::AssertionFailed(
                 "Attempted to add a voter twice".to_owned(),
             ));

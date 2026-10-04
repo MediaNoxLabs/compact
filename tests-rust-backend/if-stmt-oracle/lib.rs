@@ -22,7 +22,7 @@ pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
     const _: () = assert!(runtime::RUST_RUNTIME_ABI == 34);
     pub fn classify(b: bool) -> Result<bool, runtime::CompactError> {
-        Ok(if b { false } else { true })
+        Ok(!(b))
     }
 }
 /// Typed descriptors for Compact ledger declarations.

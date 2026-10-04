@@ -144,6 +144,78 @@ fn pure_fallible_tail_returns_its_result_without_an_extra_try() {
 }
 
 #[test]
+fn opposite_boolean_literal_branches_share_one_ast_normalization() {
+    let mut contract = identity(
+        Type::Boolean,
+        Expr::If {
+            condition: Box::new(Expr::Parameter {
+                name: "value".into(),
+            }),
+            then: Box::new(Expr::Boolean { value: true }),
+            otherwise: Box::new(Expr::Boolean { value: false }),
+        },
+    );
+    contract.circuits[0].parameters[0].ty = Type::Boolean;
+    let positive = render(&contract).unwrap();
+    assert!(positive.contains("Ok(value)"));
+    assert!(!positive.contains("if value { true } else { false }"));
+
+    contract.circuits[0].body = Expr::If {
+        condition: Box::new(Expr::Parameter {
+            name: "value".into(),
+        }),
+        then: Box::new(Expr::Boolean { value: false }),
+        otherwise: Box::new(Expr::Boolean { value: true }),
+    };
+    let negative = render(&contract).unwrap();
+    assert!(negative.contains("Ok(!(value))"));
+
+    contract.circuits[0].body = Expr::If {
+        condition: Box::new(Expr::Parameter {
+            name: "value".into(),
+        }),
+        then: Box::new(Expr::Parameter {
+            name: "value".into(),
+        }),
+        otherwise: Box::new(Expr::Boolean { value: false }),
+    };
+    let nonliteral = render(&contract).unwrap();
+    assert!(nonliteral.contains("if value { value } else { false }"));
+
+    contract.circuits[0].body = Expr::If {
+        condition: Box::new(Expr::Parameter {
+            name: "value".into(),
+        }),
+        then: Box::new(Expr::Sequence {
+            steps: vec![Expr::Assert {
+                condition: Box::new(Expr::Boolean { value: true }),
+                message: "keep assertion".into(),
+            }],
+            value: Box::new(Expr::Boolean { value: true }),
+        }),
+        otherwise: Box::new(Expr::Boolean { value: false }),
+    };
+    let effectful = render(&contract).unwrap();
+    assert!(effectful.contains("keep assertion"));
+    assert!(effectful.contains("if value"));
+
+    contract.circuits[0].result = Type::Unit;
+    contract.circuits[0].body = Expr::Assert {
+        condition: Box::new(Expr::If {
+            condition: Box::new(Expr::Parameter {
+                name: "value".into(),
+            }),
+            then: Box::new(Expr::Boolean { value: false }),
+            otherwise: Box::new(Expr::Boolean { value: true }),
+        }),
+        message: "one read".into(),
+    };
+    let assertion = render(&contract).unwrap();
+    assert!(assertion.contains("if value {"));
+    assert!(!assertion.contains("!(!"));
+}
+
+#[test]
 fn public_state_getters_follow_declared_types_and_escaped_names() {
     let mut contract = identity(Type::Unit, Expr::Unit);
     contract.ledger_fields = vec![

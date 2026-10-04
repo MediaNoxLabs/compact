@@ -774,11 +774,7 @@ pub mod ledger_contract {
         let __compact_query_1 = crate::ledger_slots::frozen.read(context)?;
         context = __compact_query_1.context;
         total_cost += __compact_query_1.gas_cost;
-        if !(if __compact_query_1.result {
-            false
-        } else {
-            true
-        }) {
+        if __compact_query_1.result {
             return Err(runtime::CompactError::AssertionFailed(
                 "registry is frozen".to_owned(),
             ));
@@ -903,7 +899,7 @@ pub mod ledger_contract {
                 let __compact_call_6 = recordExists(context, __compact_call_argument_5)?;
                 context = __compact_call_6.context;
                 total_cost += __compact_call_6.gas_cost;
-                if !(if __compact_call_6.result { false } else { true }) {
+                if __compact_call_6.result {
                     return Err(runtime::CompactError::AssertionFailed(
                         "record already exists".to_owned(),
                     ));
@@ -968,11 +964,7 @@ pub mod ledger_contract {
             .member(context, (__compact_action_local_0.clone()).clone())?;
         context = __compact_query_1.context;
         total_cost += __compact_query_1.gas_cost;
-        if !(if __compact_query_1.result {
-            false
-        } else {
-            true
-        }) {
+        if __compact_query_1.result {
             return Err(runtime::CompactError::AssertionFailed(
                 "record is still watched".to_owned(),
             ));
@@ -1056,7 +1048,7 @@ pub mod ledger_contract {
                 let __compact_call_6 = recordExists(context, __compact_call_argument_5)?;
                 context = __compact_call_6.context;
                 total_cost += __compact_call_6.gas_cost;
-                if !(if __compact_call_6.result { false } else { true }) {
+                if __compact_call_6.result {
                     return Err(runtime::CompactError::AssertionFailed(
                         "grant already exists".to_owned(),
                     ));
@@ -1132,11 +1124,7 @@ pub mod ledger_contract {
                 .member(context, (__compact_action_local_0.clone()).clone())?;
             context = __compact_query_5.context;
             total_cost += __compact_query_5.gas_cost;
-            if !(if __compact_query_5.result {
-                false
-            } else {
-                true
-            }) {
+            if __compact_query_5.result {
                 return Err(runtime::CompactError::AssertionFailed(
                     "record is already watched".to_owned(),
                 ));

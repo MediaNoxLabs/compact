@@ -22,7 +22,7 @@ pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
     const _: () = assert!(runtime::RUST_RUNTIME_ABI == 34);
     pub fn invert(value: bool) -> Result<bool, runtime::CompactError> {
-        Ok(if value { false } else { true })
+        Ok(!(value))
     }
     pub fn both(left: bool, right: bool) -> Result<bool, runtime::CompactError> {
         Ok(if left { right } else { false })
@@ -170,7 +170,7 @@ pub mod ledger_contract {
         total_cost += __compact_witness_meter_1.gas_cost();
         context.private_state = __compact_next_private_1;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_1));
-        let result = if __compact_witness_1 { false } else { true };
+        let result = !(__compact_witness_1);
         Ok(runtime::context::CircuitResult {
             context,
             result,

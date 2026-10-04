@@ -1702,11 +1702,7 @@ pub mod pure_circuits {
     ) -> Result<(), runtime::CompactError> {
         crate::pure_circuits::assertValidProtocolMessageEnvelope(requestEnvelope.clone())?;
         crate::pure_circuits::assertValidProtocolMessageEnvelope(responseEnvelope.clone())?;
-        if !(if (responseEnvelope.clone()).initialMessage {
-            false
-        } else {
-            true
-        }) {
+        if (responseEnvelope.clone()).initialMessage {
             return Err(runtime::CompactError::AssertionFailed(
                 "Protocol response must not be initial".to_owned(),
             ));
@@ -1755,11 +1751,7 @@ pub mod pure_circuits {
         crate::pure_circuits::assertValidProtocolMessageEnvelope(
             ((request.clone()).envelope).clone(),
         )?;
-        if !(if (((request.clone()).envelope).clone()).initialMessage {
-            false
-        } else {
-            true
-        }) {
+        if (((request.clone()).envelope).clone()).initialMessage {
             return Err(runtime::CompactError::AssertionFailed(
                 "Issuance request must be a response message".to_owned(),
             ));
@@ -1809,11 +1801,7 @@ pub mod pure_circuits {
         crate::pure_circuits::assertValidProtocolMessageEnvelope(
             ((result.clone()).envelope).clone(),
         )?;
-        if !(if (((result.clone()).envelope).clone()).initialMessage {
-            false
-        } else {
-            true
-        }) {
+        if (((result.clone()).envelope).clone()).initialMessage {
             return Err(runtime::CompactError::AssertionFailed(
                 "Issuance result must be a response message".to_owned(),
             ));
@@ -1879,11 +1867,7 @@ pub mod pure_circuits {
         crate::pure_circuits::assertValidProtocolMessageEnvelope(
             ((submission.clone()).envelope).clone(),
         )?;
-        if !(if (((submission.clone()).envelope).clone()).initialMessage {
-            false
-        } else {
-            true
-        }) {
+        if (((submission.clone()).envelope).clone()).initialMessage {
             return Err(runtime::CompactError::AssertionFailed(
                 "Presentation submission must be a response message".to_owned(),
             ));
@@ -1941,11 +1925,7 @@ pub mod pure_circuits {
         crate::pure_circuits::assertValidProtocolMessageEnvelope(
             ((result.clone()).envelope).clone(),
         )?;
-        if !(if (((result.clone()).envelope).clone()).initialMessage {
-            false
-        } else {
-            true
-        }) {
+        if (((result.clone()).envelope).clone()).initialMessage {
             return Err(runtime::CompactError::AssertionFailed(
                 "Presentation result must be a response message".to_owned(),
             ));
@@ -2369,11 +2349,7 @@ pub mod pure_circuits {
         }
         if ((((credential.clone()).claimCommitments).clone()).documentNumberCommitment
             == crate::pure_circuits::documentNumberNullCommitment()?)
-            && (!(if (((presentation.clone()).disclosed).clone()).revealDocumentNumber {
-                false
-            } else {
-                true
-            }))
+            && ((((presentation.clone()).disclosed).clone()).revealDocumentNumber)
         {
             return Err(
                 runtime::CompactError::AssertionFailed(

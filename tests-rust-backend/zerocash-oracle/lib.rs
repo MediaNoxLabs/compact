@@ -458,11 +458,7 @@ pub mod ledger_contract {
             .member(context, (__compact_action_local_1.clone()).clone())?;
         context = __compact_query_3.context;
         total_cost += __compact_query_3.gas_cost;
-        if !(if __compact_query_3.result {
-            false
-        } else {
-            true
-        }) {
+        if __compact_query_3.result {
             return Err(runtime::CompactError::AssertionFailed(
                 "spend: Coin already spent".to_owned(),
             ));

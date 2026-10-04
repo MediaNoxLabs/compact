@@ -1593,6 +1593,24 @@ pub mod ledger_contract {
                 crate::ledger_slots::fieldCell.record_write(frame, runtime::Field::from(1u128))?;
             Ok(frame.finish(()))
         }
+        pub fn streamAssertEq<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_recorded_bool_0): (_, bool) =
+                crate::ledger_slots::flag.record_read(frame)?;
+            let _ = __compact_recorded_bool_0;
+            let __compact_recorded_conditional_bool_1: bool = true;
+            if !(__compact_recorded_conditional_bool_1) {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "stream ternary assert".to_owned(),
+                ));
+            }
+            let frame =
+                crate::ledger_slots::fieldCell.record_write(frame, runtime::Field::from(1u128))?;
+            Ok(frame.finish(()))
+        }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
         impl Contract {
@@ -1810,6 +1828,31 @@ pub mod ledger_contract {
                     observed,
                     recorded,
                     "streamConstAnnotated",
+                    input,
+                ))
+            }
+            pub fn streamAssertEq<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::streamAssertEq(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn streamAssertEq_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.streamAssertEq(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "streamAssertEq",
                     input,
                 ))
             }

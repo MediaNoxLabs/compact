@@ -816,6 +816,64 @@ fn check_conditional_field_proof(root: &Path) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+fn check_conditional_assert_eq_proof(root: &Path) -> Result<(), Box<dyn Error>> {
+    let circuit = "streamAssertEq";
+    let mut rng = StdRng::seed_from_u64(0x0099_4153_5345_5254);
+    for flag in [false, true] {
+        let initial = conditional_counter_contract::initial_state(
+            ConstructorContext::new(()),
+            true,
+            true,
+            Field::from(111_u64),
+        )?;
+        let seed = initial.into_circuit_context(Default::default());
+        let seed = if flag {
+            seed.write_cell(0_u8, true)?.context
+        } else {
+            seed
+        };
+        let deploy = make_deploy(root, circuit, seed.query.state.get_ref().clone(), &mut rng)?;
+        let observed = ObservedContractState::new(
+            deploy.address(),
+            deploy.initial_state.clone(),
+            Observation {
+                transaction_hash: [0; 32],
+                block_hash: [0; 32],
+                block_height: 0,
+            },
+        );
+        let recorded =
+            conditional_counter_contract::recorded::streamAssertEq(observed.circuit_context(()))?;
+        let expected_state = recorded.execution.context.query.state.get_ref().clone();
+        let manual = check_generated_trace(root, circuit, recorded, ())?;
+        let verifier: VerifierKey = tagged_deserialize(&mut BufReader::new(File::open(
+            root.join("keys/streamAssertEq.verifier"),
+        )?))?;
+        let call = conditional_counter_contract::Contract::default()
+            .recording
+            .streamAssertEq_call(&observed, ())?
+            .prepare(verifier, Fr::from(0_u64))?;
+        if format!("{manual:?}") != format!("{call:?}") {
+            return Err("streamAssertEq typed observed call differs from manual prototype".into());
+        }
+        check_transaction(root, circuit, deploy, call, &mut rng, |state| {
+            let data = state.data.get_ref();
+            if data != &expected_state {
+                return Err("streamAssertEq proof changed unexpected ledger state".into());
+            }
+            if read_cell_at_path::<bool, _>(data, &[0])? != flag {
+                return Err("streamAssertEq proof changed the flag".into());
+            }
+            if read_cell_at_path::<Field, _>(data, &[1])? != Field::from(1_u64) {
+                return Err("streamAssertEq proof stored the wrong Field".into());
+            }
+            Ok(())
+        })?;
+    }
+    println!("streamAssertEq both branches proved and applied through ledger-8");
+    Ok(())
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     let mut arguments = env::args_os().skip(1);
     let first = arguments.next();
@@ -955,6 +1013,17 @@ fn main() -> Result<(), Box<dyn Error>> {
             );
         }
         return check_conditional_field_proof(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--conditional-assert-eq")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --conditional-assert-eq <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err(
+                "usage: compact-rust-proof-smoke --conditional-assert-eq <proof-output>".into(),
+            );
+        }
+        return check_conditional_assert_eq_proof(Path::new(&root));
     }
     if first.as_deref() == Some(OsStr::new("--merkle-verify")) {
         let root = arguments

@@ -14,9 +14,10 @@
 // limitations under the License.
 
 use compact_rust_ternary_cond_oracle_fixture::ledger_contract::{
-    LedgerView, Witnesses, initial_state, recorded, streamCallPure, streamCallWitness,
-    streamCompareEq, streamIncrement, streamWrite, walkerCallPure, walkerCompareEq,
-    walkerConstAnnotated, walkerInlineWrite, walkerStructMember, walkerWrite, witnessArg,
+    LedgerView, Witnesses, initial_state, recorded, streamAssertEq, streamCallPure,
+    streamCallWitness, streamCompareEq, streamIncrement, streamWrite, walkerCallPure,
+    walkerCompareEq, walkerConstAnnotated, walkerInlineWrite, walkerStructMember, walkerWrite,
+    witnessArg,
 };
 #[path = "../../boolean_observation_assertions.rs"]
 mod boolean_observation_assertions;
@@ -236,6 +237,8 @@ fn conditional_scalar_recordings_match_both_typescript_branches_and_replay() {
         ("streamConstAnnotatedTrue", true, true),
         ("streamIncrementFalse", false, false),
         ("streamIncrementTrue", true, true),
+        ("streamAssertEqFalse", false, false),
+        ("streamAssertEqTrue", true, true),
     ] {
         let native = initial(true, true, 111).into_circuit_context(ContractAddress::default());
         let recording = initial(true, true, 111).into_circuit_context(ContractAddress::default());
@@ -272,6 +275,10 @@ fn conditional_scalar_recordings_match_both_typescript_branches_and_replay() {
             "streamIncrementFalse" | "streamIncrementTrue" => (
                 streamIncrement(native).unwrap(),
                 recorded::streamIncrement(recording).unwrap(),
+            ),
+            "streamAssertEqFalse" | "streamAssertEqTrue" => (
+                streamAssertEq(native).unwrap(),
+                recorded::streamAssertEq(recording).unwrap(),
             ),
             _ => unreachable!(),
         };

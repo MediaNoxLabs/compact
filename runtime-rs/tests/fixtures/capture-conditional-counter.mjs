@@ -93,7 +93,7 @@ function capture(name, args, flag, privateState = null) {
     stateHex: Buffer.from(initial.currentContractState.serialize()).toString('hex'),
     publicTranscriptShape: output.proofData.publicTranscript.map(shape),
     privateTranscriptCount: output.proofData.privateTranscriptOutputs.length,
-    privateStateNull: output.context.currentPrivateState === null,
+    ...(privateState === null ? { privateStateNull: output.context.currentPrivateState === null } : {}),
     queries: queries.slice(start),
     reportedGas: Object.fromEntries(
       Object.entries(output.gasCost).map(([key, value]) => [key, value.toString()]),
@@ -130,4 +130,6 @@ process.stdout.write(JSON.stringify({
   witnessArgTrue: capture('witnessArg', [true], false, 7),
   streamCallWitnessFalse: capture('streamCallWitness', [], false, 7),
   streamCallWitnessTrue: capture('streamCallWitness', [], true, 7),
+  streamAssertEqFalse: capture('streamAssertEq', [], false),
+  streamAssertEqTrue: capture('streamAssertEq', [], true),
 }, null, 2) + '\n');

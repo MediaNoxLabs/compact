@@ -848,6 +848,37 @@ fn render_recorded_item(
         Ok(Some(scoped))
     }
 
+    /// A Boolean If arm can fold a closed, same-type unsigned equality.
+    /// This never records an effect from the unselected branch.
+    fn closed_boolean_assertion_arm(
+        value: &Expr,
+        locals: &HashMap<String, syn::Expr>,
+        parameters: &HashMap<&str, (&Type, syn::Ident)>,
+    ) -> Option<syn::Expr> {
+        if let Expr::Equal { left, right } = value
+            && let (
+                Expr::UnsignedLiteral {
+                    value: left_value,
+                    max: left_max,
+                },
+                Expr::UnsignedLiteral {
+                    value: right_value,
+                    max: right_max,
+                },
+            ) = (left.as_ref(), right.as_ref())
+            && left_max == right_max
+        {
+            let maximum = left_max.parse::<u128>().ok()?;
+            let left = left_value.parse::<u128>().ok()?;
+            let right = right_value.parse::<u128>().ok()?;
+            if left <= maximum && right <= maximum {
+                let folded = syn::LitBool::new(left == right, Span::call_site());
+                return Some(syn::parse_quote!(#folded));
+            }
+        }
+        cell_source(value, &Type::Boolean, locals, parameters)
+    }
+
     /// Lower a Field expression together with its ordered recording effects.
     /// The returned syntax refers only to values already evaluated in `steps`.
     #[expect(
@@ -1353,10 +1384,10 @@ fn render_recorded_item(
                 else {
                     return Ok(None);
                 };
-                let Some(then) = cell_source(then, &Type::Boolean, locals, parameters) else {
+                let Some(then) = closed_boolean_assertion_arm(then, locals, parameters) else {
                     return Ok(None);
                 };
-                let Some(otherwise) = cell_source(otherwise, &Type::Boolean, locals, parameters)
+                let Some(otherwise) = closed_boolean_assertion_arm(otherwise, locals, parameters)
                 else {
                     return Ok(None);
                 };
@@ -1365,9 +1396,26 @@ fn render_recorded_item(
                     Span::call_site(),
                 );
                 *next_temp += 1;
-                steps.push(syn::parse_quote! {
-                    let #selected: bool = if #condition { #then } else { #otherwise };
-                });
+                let literal = |value: &syn::Expr| match value {
+                    syn::Expr::Lit(syn::ExprLit {
+                        lit: syn::Lit::Bool(value),
+                        ..
+                    }) => Some(value.value),
+                    _ => None,
+                };
+                if let (Some(then_value), Some(otherwise_value)) =
+                    (literal(&then), literal(&otherwise))
+                    && then_value == otherwise_value
+                {
+                    // The condition may have already recorded its effects.
+                    // Evaluate its remaining scalar expression exactly once.
+                    steps.push(syn::parse_quote!(let _ = #condition;));
+                    steps.push(syn::parse_quote!(let #selected: bool = #then_value;));
+                } else {
+                    steps.push(syn::parse_quote! {
+                        let #selected: bool = if #condition { #then } else { #otherwise };
+                    });
+                }
                 Ok(Some(syn::parse_quote!(#selected)))
             }
             Expr::WitnessCall { name, arguments } => {

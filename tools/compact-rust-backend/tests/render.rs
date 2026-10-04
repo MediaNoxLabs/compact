@@ -4664,3 +4664,83 @@ fn pure_call_action_checks_arguments_and_discards_result() {
         })
     );
 }
+
+#[test]
+fn conditional_assertion_folds_only_closed_same_type_unsigned_equality() {
+    let mut contract = identity(Type::Unit, Expr::Unit);
+    contract.circuits.clear();
+    contract.ledger_fields = vec![LedgerField {
+        source: None,
+        id: "fieldCell".into(),
+        index: 0,
+        path: vec![],
+        declaration: LedgerFieldKind::Cell { ty: Type::Field },
+    }];
+    contract.stateful_circuits = vec![StatefulCircuit {
+        source: None,
+        internal: false,
+        name: "checked_write".into(),
+        parameters: vec![Parameter {
+            name: "choose".into(),
+            ty: Type::Boolean,
+        }],
+        actions: vec![
+            StateAction::Assert {
+                condition: Expr::If {
+                    condition: Box::new(Expr::Parameter {
+                        name: "choose".into(),
+                    }),
+                    then: Box::new(Expr::Equal {
+                        left: Box::new(Expr::UnsignedLiteral {
+                            value: "1".into(),
+                            max: "2".into(),
+                        }),
+                        right: Box::new(Expr::UnsignedLiteral {
+                            value: "2".into(),
+                            max: "2".into(),
+                        }),
+                    }),
+                    otherwise: Box::new(Expr::Boolean { value: true }),
+                },
+                message: "closed equality denied".into(),
+            },
+            StateAction::CellWrite {
+                field: "fieldCell".into(),
+                index: 0,
+                value: Expr::FieldLiteral { value: "1".into() },
+            },
+        ],
+        result: Type::Unit,
+        return_value: StateReturn::Unit,
+    }];
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(
+        rendered
+            .source
+            .contains("__compact_recorded_conditional_bool_0: bool = !(__compact_param_0)")
+    );
+    assert!(rendered.source.contains("closed equality denied"));
+    assert!(rendered.source.contains("record_write(frame"));
+
+    // An observation inside an arm cannot be evaluated ahead of the If.
+    let StateAction::Assert { condition, .. } = &mut contract.stateful_circuits[0].actions[0]
+    else {
+        unreachable!()
+    };
+    let Expr::If { then, .. } = condition else {
+        unreachable!()
+    };
+    **then = Expr::Equal {
+        left: Box::new(Expr::CellRead {
+            field: "fieldCell".into(),
+            index: 0,
+        }),
+        right: Box::new(Expr::FieldLiteral { value: "1".into() }),
+    };
+    let report = render_with_capabilities(&contract).unwrap().capabilities;
+    assert!(!report.circuits[0].recorded);
+    let gap = report.circuits[0].recording_unavailable.as_ref().unwrap();
+    assert_eq!(gap.ir_node, "StateAction::Assert");
+    assert_eq!(gap.path, "actions[0]");
+}

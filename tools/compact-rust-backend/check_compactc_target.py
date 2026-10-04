@@ -1413,12 +1413,12 @@ def main() -> None:
                 (ternary_cond_proof / "contract/rust-capabilities.json").read_text()
             )
             for name in ("walkerWrite", "walkerCallPure", "streamCallPure",
-                         "witnessArg", "streamCallWitness"):
+                         "witnessArg", "streamCallWitness", "streamAssertEq"):
                 circuit = next(circuit for circuit in capabilities["circuits"]
                                if circuit["name"] == name)
                 assert circuit["proof_required"] and circuit["recorded"] \
                     and circuit["observed_call"]
-            for name in ("walkerWrite", "streamCallPure", "streamCallWitness"):
+            for name in ("walkerWrite", "streamCallPure", "streamCallWitness", "streamAssertEq"):
                 for extension in ("prover", "verifier"):
                     assert (ternary_cond_proof / "keys" / f"{name}.{extension}").is_file()
                 for extension in ("zkir", "bzkir"):
@@ -1587,6 +1587,10 @@ def main() -> None:
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 "--pure-field-arguments", str(internal_pure_call_proof), str(ternary_cond_proof),
+            )
+            run(
+                "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--conditional-assert-eq", str(ternary_cond_proof),
             )
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",

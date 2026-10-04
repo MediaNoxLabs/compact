@@ -26,6 +26,7 @@ use std::process::{self, Command};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use compact_rust_backend::{ir::Contract, render_with_capabilities};
+use fs2::FileExt;
 use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
 use toml_edit::{Array, DocumentMut, InlineTable, Item, Table, Value as TomlValue, value};
@@ -390,6 +391,83 @@ fn refresh_manifest(output: &Path) -> Result<(), Box<dyn Error>> {
 struct StagedOutput {
     path: PathBuf,
     published: bool,
+    _lock: fs::File,
+}
+
+fn interrupted_backup(name: &str, candidate: &OsStr) -> bool {
+    let prefix = format!(".{name}.compactc-stage-");
+    let Some(parts) = candidate
+        .to_str()
+        .and_then(|candidate| candidate.strip_prefix(&prefix))
+        .and_then(|candidate| candidate.strip_suffix("-previous"))
+    else {
+        return false;
+    };
+    let numbers = parts.split('-').collect::<Vec<_>>();
+    numbers.len() == 3
+        && numbers
+            .iter()
+            .all(|part| !part.is_empty() && part.bytes().all(|byte| byte.is_ascii_digit()))
+}
+
+fn recover_interrupted_output(
+    output: &Path,
+    parent: &Path,
+    name: &str,
+) -> Result<(), Box<dyn Error>> {
+    let mut backups = Vec::new();
+    for entry in fs::read_dir(parent)? {
+        let entry = entry?;
+        if !interrupted_backup(name, &entry.file_name()) {
+            continue;
+        }
+        let path = entry.path();
+        let metadata = fs::symlink_metadata(&path)?;
+        if !metadata.is_dir() || metadata.file_type().is_symlink() {
+            return Err(format!(
+                "interrupted Rust output backup is not a directory: {}",
+                path.display()
+            )
+            .into());
+        }
+        backups.push(path);
+    }
+    if backups.len() > 1 {
+        return Err(format!(
+            "multiple interrupted Rust output backups for {}: {}",
+            output.display(),
+            backups
+                .iter()
+                .map(|path| path.display().to_string())
+                .collect::<Vec<_>>()
+                .join(", ")
+        )
+        .into());
+    }
+    match fs::symlink_metadata(output) {
+        Ok(metadata) if !metadata.is_dir() || metadata.file_type().is_symlink() => {
+            return Err(format!(
+                "Rust output must be a directory, not a file or symlink: {}",
+                output.display()
+            )
+            .into());
+        }
+        Ok(_) => {
+            if let Some(backup) = backups.first() {
+                eprintln!(
+                    "compactc: warning: previous Rust output remains at {} after an interrupted publication",
+                    backup.display()
+                );
+            }
+        }
+        Err(error) if error.kind() == io::ErrorKind::NotFound => {
+            if let Some(backup) = backups.first() {
+                fs::rename(backup, output)?;
+            }
+        }
+        Err(error) => return Err(error.into()),
+    }
+    Ok(())
 }
 
 impl StagedOutput {
@@ -404,22 +482,32 @@ impl StagedOutput {
             .filter(|parent| !parent.as_os_str().is_empty())
             .unwrap_or_else(|| Path::new("."));
         fs::create_dir_all(parent)?;
-        match fs::symlink_metadata(output) {
-            Ok(metadata) if !metadata.is_dir() || metadata.file_type().is_symlink() => {
+        let name = name.to_string_lossy();
+        let lock_path = parent.join(format!(".{name}.compactc.lock"));
+        match fs::symlink_metadata(&lock_path) {
+            Ok(metadata) if !metadata.is_file() || metadata.file_type().is_symlink() => {
                 return Err(format!(
-                    "Rust output must be a directory, not a file or symlink: {}",
-                    output.display()
+                    "Rust output lock must be a regular file, not a directory or symlink: {}",
+                    lock_path.display()
                 )
                 .into());
             }
             Err(error) if error.kind() != io::ErrorKind::NotFound => return Err(error.into()),
             _ => {}
         }
+        let lock = fs::OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create(true)
+            .truncate(false)
+            .open(&lock_path)?;
+        FileExt::lock_exclusive(&lock)?;
+        recover_interrupted_output(output, parent, &name)?;
         let nonce = SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos();
         for attempt in 0..100 {
             let path = parent.join(format!(
                 ".{}.compactc-stage-{}-{nonce}-{attempt}",
-                name.to_string_lossy(),
+                name,
                 process::id()
             ));
             match fs::create_dir(&path) {
@@ -427,6 +515,7 @@ impl StagedOutput {
                     return Ok(Self {
                         path,
                         published: false,
+                        _lock: lock,
                     });
                 }
                 Err(error) if error.kind() == io::ErrorKind::AlreadyExists => continue,
@@ -641,10 +730,131 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::{
-        RuntimeDependency, crate_manifest, package_name, runtime_package_version, select_targets,
+        RuntimeDependency, StagedOutput, crate_manifest, package_name, runtime_package_version,
+        select_targets,
     };
+    use fs2::FileExt;
     use std::ffi::OsString;
+    use std::fs;
     use std::path::Path;
+    use std::path::PathBuf;
+    use std::sync::atomic::{AtomicU64, Ordering};
+
+    static NEXT_TEMP_ROOT: AtomicU64 = AtomicU64::new(0);
+
+    struct TempRoot(PathBuf);
+
+    impl TempRoot {
+        fn new() -> Self {
+            let path = std::env::temp_dir().join(format!(
+                "compactc-output-test-{}-{}",
+                std::process::id(),
+                NEXT_TEMP_ROOT.fetch_add(1, Ordering::Relaxed)
+            ));
+            fs::create_dir(&path).unwrap();
+            Self(path)
+        }
+    }
+
+    impl Drop for TempRoot {
+        fn drop(&mut self) {
+            fs::remove_dir_all(&self.0).unwrap();
+        }
+    }
+
+    #[test]
+    fn output_lock_serializes_one_name_without_blocking_another() {
+        let root = TempRoot::new();
+        let stage = StagedOutput::new(&root.0.join("contract")).unwrap();
+        let same = fs::File::open(root.0.join(".contract.compactc.lock")).unwrap();
+        assert!(FileExt::try_lock_exclusive(&same).is_err());
+
+        let other = StagedOutput::new(&root.0.join("other")).unwrap();
+        assert!(other.path().is_dir());
+        drop(other);
+        drop(stage);
+        FileExt::try_lock_exclusive(&same).unwrap();
+    }
+
+    #[test]
+    fn interrupted_replacement_restores_the_previous_directory() {
+        let root = TempRoot::new();
+        let output = root.0.join("contract");
+        let backup = root.0.join(".contract.compactc-stage-42-123-0-previous");
+        fs::create_dir(&backup).unwrap();
+        fs::write(backup.join("previous.txt"), "complete previous output").unwrap();
+
+        let stage = StagedOutput::new(&output).unwrap();
+        assert_eq!(
+            fs::read_to_string(output.join("previous.txt")).unwrap(),
+            "complete previous output"
+        );
+        assert!(!backup.exists());
+        assert!(stage.path().is_dir());
+        drop(stage);
+    }
+
+    #[test]
+    fn interrupted_replacement_refuses_ambiguous_or_unsafe_backups() {
+        let root = TempRoot::new();
+        let output = root.0.join("contract");
+        let first = root.0.join(".contract.compactc-stage-42-123-0-previous");
+        let second = root.0.join(".contract.compactc-stage-43-124-0-previous");
+        fs::create_dir(&first).unwrap();
+        fs::create_dir(&second).unwrap();
+        let error = match StagedOutput::new(&output) {
+            Ok(_) => panic!("ambiguous backups must be rejected"),
+            Err(error) => error,
+        };
+        assert!(error.to_string().contains("multiple interrupted"));
+        assert!(first.is_dir() && second.is_dir() && !output.exists());
+
+        fs::remove_dir(&second).unwrap();
+        fs::remove_dir(&first).unwrap();
+        fs::write(&first, "do not move").unwrap();
+        let error = match StagedOutput::new(&output) {
+            Ok(_) => panic!("a file backup must be rejected"),
+            Err(error) => error,
+        };
+        assert!(error.to_string().contains("not a directory"));
+        assert_eq!(fs::read_to_string(&first).unwrap(), "do not move");
+        assert!(!output.exists());
+
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::symlink;
+
+            fs::remove_file(&first).unwrap();
+            let outside = root.0.join("outside");
+            fs::create_dir(&outside).unwrap();
+            fs::write(outside.join("sentinel.txt"), "preserve").unwrap();
+            symlink(&outside, &first).unwrap();
+            let error = match StagedOutput::new(&output) {
+                Ok(_) => panic!("a symlink backup must be rejected"),
+                Err(error) => error,
+            };
+            assert!(error.to_string().contains("not a directory"));
+            assert_eq!(
+                fs::read_to_string(outside.join("sentinel.txt")).unwrap(),
+                "preserve"
+            );
+            assert!(!output.exists());
+        }
+    }
+
+    #[test]
+    fn completed_stage_replaces_existing_output_under_the_lock() {
+        let root = TempRoot::new();
+        let output = root.0.join("contract");
+        fs::create_dir(&output).unwrap();
+        fs::write(output.join("old.txt"), "old").unwrap();
+        let stage = StagedOutput::new(&output).unwrap();
+        fs::write(stage.path().join("new.txt"), "new").unwrap();
+        stage.publish(&output).unwrap();
+        assert_eq!(fs::read_to_string(output.join("new.txt")).unwrap(), "new");
+        assert!(!output.join("old.txt").exists());
+        assert_eq!(fs::read_dir(&root.0).unwrap().count(), 2); // output and lock sidecar
+    }
 
     #[test]
     fn target_selection_preserves_other_compiler_arguments() {

@@ -32,6 +32,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 
 
 CASES = {
@@ -113,6 +114,18 @@ def check_output_publication(compactc: str, directory: Path) -> list[str]:
         failures.append(f"successful rebuild did not replace output cleanly:\n{valid.stderr}")
 
     preserved = snapshot(output)
+    interrupted_backup = directory / f".{output.name}.compactc-stage-42-123-0-previous"
+    output.rename(interrupted_backup)
+    rejected = run_compiler(invalid_environment)
+    if (
+        rejected.returncode == 0
+        or not output.is_dir()
+        or snapshot(output) != preserved
+        or interrupted_backup.exists()
+        or leaked_stage()
+    ):
+        failures.append("interrupted replacement was not recovered before failed rebuild")
+
     file_output = directory / "output-file"
     file_output.write_text("keep this file")
     link_output = directory / "output-link"
@@ -128,6 +141,76 @@ def check_output_publication(compactc: str, directory: Path) -> list[str]:
         failures.append("unsafe output root check changed an existing file or symlink")
     if snapshot(output) != preserved:
         failures.append("unsafe output root check changed the valid generated directory")
+    return failures
+
+
+def check_output_serialization(compactc: str, directory: Path) -> list[str]:
+    failures = []
+    source = ROOT / "examples/rust_backend/counter.compact"
+    output = directory / "serialized-output"
+    trace = directory / "scheme-starts.txt"
+    release = directory / "release-first-scheme"
+    scheme = directory / "blocking-scheme.py"
+    scheme.write_text(
+        "#!/usr/bin/env python3\n"
+        "import os, sys, time\n"
+        "from pathlib import Path\n"
+        "trace = Path(os.environ['COMPACT_LOCK_TRACE'])\n"
+        "with trace.open('a') as output:\n"
+        "    output.write(str(os.getpid()) + '\\n')\n"
+        "if len(trace.read_text().splitlines()) == 1:\n"
+        "    release = Path(os.environ['COMPACT_LOCK_RELEASE'])\n"
+        "    while not release.exists():\n"
+        "        time.sleep(0.02)\n"
+        "sys.exit(7)\n"
+    )
+    scheme.chmod(0o755)
+    environment = os.environ.copy()
+    environment.update({
+        "COMPACTC_SCHEME": str(scheme),
+        "COMPACT_LOCK_TRACE": str(trace),
+        "COMPACT_LOCK_RELEASE": str(release),
+    })
+    command = [compactc, "--target", "rust", "--skip-zk", str(source), str(output)]
+    first = subprocess.Popen(command, env=environment, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    second = None
+    try:
+        deadline = time.monotonic() + 30
+        while time.monotonic() < deadline and not trace.exists():
+            if first.poll() is not None:
+                break
+            time.sleep(0.05)
+        if not trace.exists():
+            failures.append("first compiler did not enter the Scheme phase")
+            return failures
+        second = subprocess.Popen(command, env=environment, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        deadline = time.monotonic() + 5
+        while time.monotonic() < deadline and second.poll() is None:
+            if len(trace.read_text().splitlines()) > 1:
+                failures.append("second compiler entered Scheme before the first released its output lock")
+                break
+            time.sleep(0.05)
+        if second.poll() is not None:
+            failures.append("second compiler exited before the first released its output lock")
+        release.touch()
+        first.communicate(timeout=30)
+        if first.returncode != 7:
+            failures.append("first compiler did not report the injected Scheme failure")
+        second.communicate(timeout=30)
+        if second.returncode != 7:
+            failures.append("second compiler did not run after the first released its output lock")
+        if len(trace.read_text().splitlines()) != 2 or output.exists() or any(
+            directory.glob(f".{output.name}.compactc-stage-*")
+        ):
+            failures.append("serialized compiler runs left output/staging debris or skipped the second run")
+    except subprocess.TimeoutExpired:
+        failures.append("serialized compiler runs timed out")
+    finally:
+        release.touch()
+        for process in (first, second):
+            if process is not None and process.poll() is None:
+                process.kill()
+                process.communicate()
     return failures
 
 
@@ -280,6 +363,7 @@ def main() -> int:
             ):
                 failures.append("spread rejection changed a complete existing output")
         failures.extend(check_output_publication(compactc, directory))
+        failures.extend(check_output_serialization(compactc, directory))
         failures.extend(check_proof_capabilities(compactc, directory))
 
     for failure in failures:

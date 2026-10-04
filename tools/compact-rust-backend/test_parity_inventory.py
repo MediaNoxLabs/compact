@@ -412,15 +412,15 @@ metadata.mkdir()
             (root / "Cargo.lock").write_text('''[[package]]\nname = "midnight-ledger"\nversion = "8.0.3"\nchecksum = "abc"\n''')
             ir = root / "tools/compact-rust-backend/src/ir.rs"
             ir.parent.mkdir(parents=True)
-            ir.write_text("pub const SCHEMA_VERSION: u32 = 8;\n")
+            ir.write_text("pub const SCHEMA_VERSION: u32 = 9;\n")
             runtime = root / "runtime-rs/src/lib.rs"
             runtime.parent.mkdir(parents=True)
-            runtime.write_text("pub const RUST_RUNTIME_ABI: u32 = 36;\n")
+            runtime.write_text("pub const RUST_RUNTIME_ABI: u32 = 37;\n")
             result = inventory.make_inventory(root, [], None)
             self.assertNotIn("receipt_metadata", result)
             metadata = inventory.receipt_metadata(root, None, result["contracts"])
-            self.assertEqual(metadata["rust_ir_schema"], 8)
-            self.assertEqual(metadata["rust_runtime_abi"], 36)
+            self.assertEqual(metadata["rust_ir_schema"], 9)
+            self.assertEqual(metadata["rust_runtime_abi"], 37)
             self.assertEqual(metadata["upstream_packages"]["midnight-ledger"],
                              {"version": "8.0.3", "checksum": "abc"})
             self.assertEqual(metadata["source_manifest_sha256"],

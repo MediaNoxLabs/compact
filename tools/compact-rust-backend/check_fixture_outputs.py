@@ -37,6 +37,8 @@ BACKEND = ROOT / "target" / "debug" / "compact-rustc"
 EXTRA_SOURCES = {
     SOURCES / "digital-passport-credential" / "src" / "digital-passport-credential.compact":
         FIXTURES / "passport-dogfood" / "lib.rs",
+    ROOT / "examples" / "bugs" / "pm-19252" / "example_ten.compact":
+        FIXTURES / "pm-19252-own-public-key" / "lib.rs",
 }
 
 

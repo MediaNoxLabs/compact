@@ -43,6 +43,7 @@
 
       (define call-argument-types (make-eq-hashtable))
       (define function-rust-names (make-eq-hashtable))
+      (define native-witness-ids (make-eq-hashtable))
       (define current-variable-types (make-parameter #f))
       (define struct-shape-names '())
       (define used-struct-names '())
@@ -751,6 +752,16 @@
             pelt*)
           table))
 
+      (define (index-native-witnesses pelt*)
+        (for-each
+          (lambda (pelt)
+            (nanopass-case (Lnodisclose Program-Element) pelt
+              [(native ,src ,function-name ,native-entry (,arg* ...) ,type)
+               (when (eq? (native-entry-class native-entry) 'witness)
+                 (eq-hashtable-set! native-witness-ids function-name (id-sym function-name)))]
+              [else (void)]))
+          pelt*))
+
       (define (index-call-argument-types pelt)
         (nanopass-case (Lnodisclose Program-Element) pelt
           [(circuit ,src ,function-name (,arg* ...) ,type ,expr)
@@ -922,12 +933,19 @@
                                        '()
                                        (list (state-action-ir expr src environment witness-ids)))))))]
           [(call ,src ,function-name ,expr* ...)
-           (if (eq-hashtable-ref witness-ids function-name #f)
-               (object (cons "kind" "expression")
-                       (cons "value" (stateful-expression-ir expr src witness-ids)))
-               (object (cons "kind" (if (id-pure? function-name) "pure_call" "circuit_call"))
-                       (cons "name" (rust-function-name function-name))
-                       (cons "arguments" (stateful-call-arguments-ir function-name expr* src witness-ids))))]
+           (cond
+             [(eq-hashtable-ref witness-ids function-name #f)
+              (object (cons "kind" "expression")
+                      (cons "value" (stateful-expression-ir expr src witness-ids)))]
+             [(eq-hashtable-ref native-witness-ids function-name #f)
+              (unless (and (eq? (id-sym function-name) 'ownPublicKey) (null? expr*))
+                (source-errorf src "Rust backend does not yet support this native witness action"))
+              (object (cons "kind" "native_witness_call")
+                      (cons "builtin" "own_public_key"))]
+             [else
+              (object (cons "kind" (if (id-pure? function-name) "pure_call" "circuit_call"))
+                      (cons "name" (rust-function-name function-name))
+                      (cons "arguments" (stateful-call-arguments-ir function-name expr* src witness-ids)))])]
           [(assert ,src ,expr ,mesg)
            (object (cons "kind" "assert")
                    (cons "condition" (stateful-expression-ir expr src witness-ids))
@@ -1225,6 +1243,8 @@
                                                  (cons "value" (stateful-expression-ir arg src witness-ids))
                                                  (cons "ty" (type-ir formal-type src))))
                                        expr* formal-types)))))]
+               [(eq-hashtable-ref native-witness-ids function-name #f)
+                (source-errorf src "Rust backend does not yet support value-bearing native witness calls")]
                [(memq name '(transientHash persistentHash keccak256 degradeToTransient upgradeFromTransient
                               hashToCurve jubjubPointX jubjubPointY ecNeg jubjubScalarFromNative))
                 (unless (= (length expr*) 1)
@@ -1938,9 +1958,11 @@
       [(program ,src (,contract-name* ...) ((,export-name* ,name*) ...) ,pelt* ...)
        (hashtable-clear! call-argument-types)
        (hashtable-clear! function-rust-names)
+       (hashtable-clear! native-witness-ids)
        (set! struct-shape-names '())
        (set! used-struct-names '())
        (index-function-names pelt*)
+       (index-native-witnesses pelt*)
        (for-each index-call-argument-types pelt*)
        (let* ([witness-ids (witness-id-table pelt*)]
               [constructor* (filter (lambda (value) value)
@@ -1950,7 +1972,7 @@
            (source-errorf src "Rust backend found multiple constructors"))
          (print-json
            (get-target-port 'rust.ir.json)
-           (append (object (cons "schema_version" 8)
+           (append (object (cons "schema_version" 9)
                    (cons "type_aliases"
                          (list->vector (fold-right type-alias-ir '() pelt*)))
                    (cons "ledger_fields"

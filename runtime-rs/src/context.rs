@@ -21,6 +21,8 @@
 
 pub use midnight_base_crypto::cost_model::RunningCost;
 use midnight_base_crypto::fab::AlignedValue;
+use midnight_base_crypto::hash::HashOutput;
+pub use midnight_coin_structure::coin::PublicKey as CoinPublicKey;
 use midnight_onchain_vm::cost_model::{CostModel, INITIAL_COST_MODEL};
 use midnight_zswap::local::State as ZswapLocalState;
 use std::cell::RefCell;
@@ -65,6 +67,7 @@ impl<Private, D: DB> ConstructorResult<Private, D> {
             private_state: self.private_state,
             query: QueryContext::new(self.ledger_state, address),
             zswap_state: self.zswap_state,
+            coin_public_key: None,
             cost_model: INITIAL_COST_MODEL.clone(),
             gas_limit: None,
         }
@@ -75,6 +78,7 @@ pub struct CircuitContext<Private, D: DB = DefaultDB> {
     pub private_state: Private,
     pub query: QueryContext<D>,
     pub zswap_state: ZswapLocalState<D>,
+    coin_public_key: Option<CoinPublicKey>,
     pub cost_model: CostModel,
     /// Ledger-8 VM guard for each individual query, including witness reads.
     /// CircuitResult::gas_cost separately sums the accepted query costs.
@@ -373,6 +377,24 @@ impl<Private, D: DB> CircuitFrame<Private, D> {
 }
 
 impl<Private, D: DB> CircuitContext<Private, D> {
+    /// Associate the callers pinned ledger coin key with native witness calls.
+    pub fn with_coin_public_key(mut self, key: CoinPublicKey) -> Self {
+        self.coin_public_key = Some(key);
+        self
+    }
+
+    /// Use the 32-byte Compact representation of a ledger coin public key.
+    pub fn with_coin_public_key_bytes(self, bytes: [u8; 32]) -> Self {
+        self.with_coin_public_key(CoinPublicKey(HashOutput(bytes)))
+    }
+
+    /// Native `ownPublicKey()` reads the execution identity, not Zswap state.
+    pub fn own_coin_public_key(&self) -> Result<[u8; 32], CompactError> {
+        self.coin_public_key
+            .map(|key| key.0.0)
+            .ok_or(CompactError::MissingCoinPublicKey)
+    }
+
     /// Start a new circuit call from an upstream ledger contract snapshot.
     ///
     /// The caller must associate this state with `address` and establish its
@@ -387,6 +409,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
             private_state,
             query: QueryContext::new(contract.data.clone(), address),
             zswap_state: ZswapLocalState::default(),
+            coin_public_key: None,
             cost_model: INITIAL_COST_MODEL.clone(),
             gas_limit: None,
         }

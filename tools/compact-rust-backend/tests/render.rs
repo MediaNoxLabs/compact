@@ -18,8 +18,8 @@ use std::process::{Command, Stdio};
 
 use compact_rust_backend::ir::{
     Constructor, ConstructorStep, Contract, CounterAmount, Expr, LedgerField, LedgerFieldKind,
-    LocalBinding, Parameter, PureCircuit, SourceLocation, StateAction, StateReturn,
-    StatefulCircuit, StructField, Type, TypeAlias, WitnessDeclaration,
+    LocalBinding, NativeWitnessBuiltin, Parameter, PureCircuit, SourceLocation, StateAction,
+    StateReturn, StatefulCircuit, StructField, Type, TypeAlias, WitnessDeclaration,
 };
 use compact_rust_backend::{
     RenderError, render, render_with_capabilities, render_with_proof_capabilities,
@@ -27,7 +27,7 @@ use compact_rust_backend::{
 
 fn identity(result: Type, body: Expr) -> Contract {
     Contract {
-        schema_version: 8,
+        schema_version: 9,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -45,6 +45,76 @@ fn identity(result: Type, body: Expr) -> Contract {
         }],
         stateful_circuits: vec![],
     }
+}
+
+#[test]
+fn native_own_public_key_is_a_private_effect_without_a_user_witness() {
+    let contract = Contract {
+        schema_version: 9,
+        type_aliases: vec![],
+        constructor: None,
+        witnesses: vec![],
+        ledger_fields: vec![],
+        circuits: vec![],
+        stateful_circuits: vec![StatefulCircuit {
+            source: None,
+            internal: false,
+            name: "test1".into(),
+            parameters: vec![],
+            result: Type::Unit,
+            return_value: StateReturn::Unit,
+            actions: vec![StateAction::NativeWitnessCall {
+                builtin: NativeWitnessBuiltin::OwnPublicKey,
+            }],
+        }],
+    };
+    let source = render(&contract).unwrap();
+    assert!(source.contains("own_coin_public_key()?"));
+    assert!(source.contains("private_transcript_outputs"));
+    assert!(source.contains("runtime::fab::AlignedValue::from"));
+    assert!(source.contains("pub fn test1<Private>"));
+    assert!(!source.contains("Witnesses::ownPublicKey"));
+    assert!(!source.contains("pub fn test1<Private, W:"));
+}
+
+#[test]
+fn native_private_output_flows_through_a_stateful_caller() {
+    let helper = StatefulCircuit {
+        source: None,
+        internal: true,
+        name: "helper".into(),
+        parameters: vec![],
+        result: Type::Unit,
+        return_value: StateReturn::Unit,
+        actions: vec![StateAction::NativeWitnessCall {
+            builtin: NativeWitnessBuiltin::OwnPublicKey,
+        }],
+    };
+    let caller = StatefulCircuit {
+        source: None,
+        internal: false,
+        name: "caller".into(),
+        parameters: vec![],
+        result: Type::Unit,
+        return_value: StateReturn::Unit,
+        actions: vec![StateAction::CircuitCall {
+            name: "helper".into(),
+            arguments: vec![],
+        }],
+    };
+    let contract = Contract {
+        schema_version: 9,
+        type_aliases: vec![],
+        constructor: None,
+        witnesses: vec![],
+        ledger_fields: vec![],
+        circuits: vec![],
+        stateful_circuits: vec![helper, caller],
+    };
+    let source = render(&contract).unwrap();
+    assert!(source.contains("call_step.private_transcript_outputs"));
+    assert!(source.contains("pub fn caller<Private>"));
+    assert!(!source.contains("pub fn caller<Private, W:"));
 }
 
 #[test]
@@ -582,7 +652,7 @@ fn generated_unit_enum_uses_checked_derive_without_handwritten_codecs() {
     let source = render(&contract).unwrap();
     assert!(source.contains("CompactCellValue, CompactEnum"));
     assert!(source.contains("pub enum Choice"));
-    assert!(source.contains("RUST_RUNTIME_ABI == 36"));
+    assert!(source.contains("RUST_RUNTIME_ABI == 37"));
     assert!(!source.contains("impl FieldRepr for Choice"));
     assert!(!source.contains("impl BinaryHashRepr for Choice"));
     assert!(!source.contains("impl FromFieldRepr for Choice"));
@@ -1819,6 +1889,8 @@ fn rejects_bad_schema_and_unknown_references() {
     contract.schema_version = 7;
     assert_eq!(render(&contract), Err(RenderError::SchemaVersion(7)));
     contract.schema_version = 8;
+    assert_eq!(render(&contract), Err(RenderError::SchemaVersion(8)));
+    contract.schema_version = 9;
     contract.circuits[0].body = Expr::Parameter {
         name: "missing".into(),
     };
@@ -2162,7 +2234,7 @@ fn rejects_noncanonical_or_unsupported_unsigned_maxima() {
         "452312848583266388373324160190187140051835877600158453279131187530910662656",
     ] {
         let contract = Contract {
-            schema_version: 8,
+            schema_version: 9,
             type_aliases: vec![],
             constructor: None,
             witnesses: vec![],
@@ -2201,7 +2273,7 @@ fn unknown_json_fields_are_rejected() {
 #[test]
 fn witness_calls_require_a_declared_witness_and_matching_signature() {
     let mut contract = Contract {
-        schema_version: 8,
+        schema_version: 9,
         type_aliases: vec![],
         constructor: None,
         ledger_fields: vec![],
@@ -2269,7 +2341,7 @@ fn witness_calls_require_a_declared_witness_and_matching_signature() {
 #[test]
 fn witness_cell_and_counter_getters_use_declared_composite_slots() {
     let contract = Contract {
-        schema_version: 8,
+        schema_version: 9,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![WitnessDeclaration {
@@ -2672,7 +2744,7 @@ fn recorded_field_returning_helper_is_shared_across_callers() {
 #[test]
 fn state_action_must_reference_the_declared_ledger_field_and_index() {
     let mut contract = Contract {
-        schema_version: 8,
+        schema_version: 9,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -2792,7 +2864,7 @@ fn state_action_must_reference_the_declared_ledger_field_and_index() {
 #[test]
 fn nested_call_exposes_a_trace_only_when_every_step_is_supported() {
     let mut contract = Contract {
-        schema_version: 8,
+        schema_version: 9,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -2852,7 +2924,7 @@ fn nested_call_exposes_a_trace_only_when_every_step_is_supported() {
 #[test]
 fn unsupported_pure_call_and_supported_field_arithmetic_have_exact_capabilities() {
     let mut contract = Contract {
-        schema_version: 8,
+        schema_version: 9,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -2987,7 +3059,7 @@ fn unsupported_pure_call_and_supported_field_arithmetic_have_exact_capabilities(
 #[test]
 fn recording_gaps_follow_the_first_definite_ir_failure() {
     let mut contract = Contract {
-        schema_version: 8,
+        schema_version: 9,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -3055,7 +3127,7 @@ fn recording_gaps_follow_the_first_definite_ir_failure() {
 fn recording_gaps_include_unsupported_type_and_called_callee_path() {
     let unsupported_cell_type = Type::OpaqueString;
     let mut contract = Contract {
-        schema_version: 8,
+        schema_version: 9,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -3122,7 +3194,7 @@ fn recording_gaps_include_unsupported_type_and_called_callee_path() {
 #[test]
 fn stateful_parameters_are_checked_before_cell_writes() {
     let mut contract = Contract {
-        schema_version: 8,
+        schema_version: 9,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -3179,7 +3251,7 @@ fn stateful_parameters_are_checked_before_cell_writes() {
 #[test]
 fn counter_parameter_requires_uint16_and_a_known_name() {
     let mut contract = Contract {
-        schema_version: 8,
+        schema_version: 9,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -3352,7 +3424,7 @@ fn counter_parameter_requires_uint16_and_a_known_name() {
 #[test]
 fn ledger_read_return_must_match_the_declared_cell() {
     let mut contract = Contract {
-        schema_version: 8,
+        schema_version: 9,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -3403,7 +3475,7 @@ fn ledger_read_return_must_match_the_declared_cell() {
 #[test]
 fn counter_read_returns_uint64() {
     let mut contract = Contract {
-        schema_version: 8,
+        schema_version: 9,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -3452,7 +3524,7 @@ fn counter_read_returns_uint64() {
 #[test]
 fn set_actions_require_the_declared_element_type() {
     let mut contract = Contract {
-        schema_version: 8,
+        schema_version: 9,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -3555,7 +3627,7 @@ fn set_actions_require_the_declared_element_type() {
 #[test]
 fn map_insert_and_lookup_require_key_and_value_types() {
     let mut contract = Contract {
-        schema_version: 8,
+        schema_version: 9,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -3710,7 +3782,7 @@ fn map_insert_and_lookup_require_key_and_value_types() {
 #[test]
 fn list_push_front_and_length_validate_declared_types() {
     let mut contract = Contract {
-        schema_version: 8,
+        schema_version: 9,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -3883,7 +3955,7 @@ fn struct_definitions_are_shared_by_name_and_must_match() {
         }],
     };
     let mut contract = Contract {
-        schema_version: 8,
+        schema_version: 9,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -3922,7 +3994,7 @@ fn struct_definitions_are_shared_by_name_and_must_match() {
 #[test]
 fn stateful_call_checks_target_and_arguments() {
     let mut contract = Contract {
-        schema_version: 8,
+        schema_version: 9,
         type_aliases: vec![],
         constructor: None,
         ledger_fields: vec![],

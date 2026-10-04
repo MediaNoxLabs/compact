@@ -55,7 +55,7 @@ pub mod fab {
 }
 
 /// Increment when generated Rust and the runtime's public contract change.
-pub const RUST_RUNTIME_ABI: u32 = 36;
+pub const RUST_RUNTIME_ABI: u32 = 37;
 /// The ledger line selected by this Compact branch's `flake.nix`.
 pub const LEDGER_VERSION: &str = "ledger-8.0.3";
 
@@ -78,6 +78,7 @@ pub enum CompactError {
     InvalidUnsignedValue,
     InvalidJubjubScalar,
     InvalidJubjubPoint,
+    MissingCoinPublicKey,
     UnsignedOutOfRange { value: u128, max: u128 },
     UnsignedOverflow,
     UnsignedUnderflow,
@@ -92,6 +93,10 @@ impl std::fmt::Display for CompactError {
             Self::InvalidUnsignedValue => write!(f, "invalid Compact unsigned value"),
             Self::InvalidJubjubScalar => write!(f, "invalid Jubjub scalar"),
             Self::InvalidJubjubPoint => write!(f, "invalid Jubjub point"),
+            Self::MissingCoinPublicKey => write!(
+                f,
+                "native ownPublicKey requires a coin public key in the circuit context"
+            ),
             Self::UnsignedOutOfRange { value, max } => {
                 write!(f, "unsigned value {value} exceeds Compact maximum {max}")
             }

@@ -22,7 +22,7 @@
 
 use serde::{Deserialize, Serialize};
 
-pub const SCHEMA_VERSION: u32 = 8;
+pub const SCHEMA_VERSION: u32 = 9;
 
 /// A Compact source position, independent of the compiler checkout path.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
@@ -321,6 +321,9 @@ pub enum StateAction {
         name: String,
         arguments: Vec<Expr>,
     },
+    NativeWitnessCall {
+        builtin: NativeWitnessBuiltin,
+    },
     Assert {
         condition: Expr,
         message: String,
@@ -461,6 +464,12 @@ pub enum StateAction {
         field: String,
         index: u8,
     },
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum NativeWitnessBuiltin {
+    OwnPublicKey,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]

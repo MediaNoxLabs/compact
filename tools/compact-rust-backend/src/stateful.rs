@@ -19,8 +19,8 @@ use proc_macro2::Span;
 use std::collections::{HashMap, HashSet};
 
 use crate::ir::{
-    ComparisonOperator, CounterAmount, Expr, LedgerField, LedgerFieldKind, PureCircuit,
-    StateAction, StateReturn, StatefulCircuit, StructField, Type, WitnessDeclaration,
+    ComparisonOperator, CounterAmount, Expr, LedgerField, LedgerFieldKind, NativeWitnessBuiltin,
+    PureCircuit, StateAction, StateReturn, StatefulCircuit, StructField, Type, WitnessDeclaration,
 };
 use crate::{
     RenderError, UnsignedMaximum, coerce_expression, condition_needs_statement, discard_expression,
@@ -335,17 +335,22 @@ pub(crate) fn render_state_expression(
             Ok((syn::parse_quote!(#step.result), Type::Boolean, false))
         }
         Expr::Call { name, arguments } => {
-            let (formal_parameters, result, stateful, callee_uses_witness) = if let Some(callee) =
-                stateful_circuits.get(name.as_str())
-            {
-                let effect = circuit_uses_witness(callee, stateful_circuits, &mut HashSet::new())?;
-                (&callee.parameters, &callee.result, true, effect)
-            } else {
-                let callee = circuits
-                    .get(name.as_str())
-                    .ok_or_else(|| RenderError::UnknownCircuit(name.clone()))?;
-                (&callee.parameters, &callee.result, false, false)
-            };
+            let (formal_parameters, result, stateful, callee_uses_witness, callee_emits_native) =
+                if let Some(callee) = stateful_circuits.get(name.as_str()) {
+                    let effect =
+                        circuit_uses_witness(callee, stateful_circuits, &mut HashSet::new())?;
+                    let native = circuit_emits_native_private_output(
+                        callee,
+                        stateful_circuits,
+                        &mut HashSet::new(),
+                    )?;
+                    (&callee.parameters, &callee.result, true, effect, native)
+                } else {
+                    let callee = circuits
+                        .get(name.as_str())
+                        .ok_or_else(|| RenderError::UnknownCircuit(name.clone()))?;
+                    (&callee.parameters, &callee.result, false, false, false)
+                };
             if arguments.len() != formal_parameters.len() {
                 return Err(RenderError::ArgumentCount {
                     circuit: name.clone(),
@@ -391,12 +396,14 @@ pub(crate) fn render_state_expression(
                     statements.push(syn::parse_quote!(
                         let #step = #name(context, witnesses, #(#rendered_arguments),*)?;
                     ));
-                    statements.push(syn::parse_quote!(
-                        private_transcript_outputs.extend(#step.private_transcript_outputs);
-                    ));
                 } else {
                     statements.push(syn::parse_quote!(
                         let #step = #name(context, #(#rendered_arguments),*)?;
+                    ));
+                }
+                if callee_uses_witness || callee_emits_native {
+                    statements.push(syn::parse_quote!(
+                        private_transcript_outputs.extend(#step.private_transcript_outputs);
                     ));
                 }
                 statements.push(syn::parse_quote!(context = #step.context;));
@@ -1285,6 +1292,7 @@ fn action_calls_named(action: &StateAction, name: &str) -> bool {
             ..
         } => expression_calls_named(value, name) || expression_calls_named(position, name),
         StateAction::CounterIncrement { .. }
+        | StateAction::NativeWitnessCall { .. }
         | StateAction::CounterDecrement { .. }
         | StateAction::CounterReset { .. }
         | StateAction::SetReset { .. }
@@ -1334,6 +1342,47 @@ pub(crate) fn circuit_uses_witness(
             || return_calls_named(&circuit.return_value, name)
         {
             effect |= circuit_uses_witness(callee, circuits, visiting)?;
+        }
+    }
+    visiting.remove(&circuit.name);
+    Ok(effect)
+}
+
+fn action_emits_native_private_output(action: &StateAction) -> bool {
+    match action {
+        StateAction::NativeWitnessCall { .. } => true,
+        StateAction::Sequence { actions } => actions.iter().any(action_emits_native_private_output),
+        StateAction::If {
+            then, otherwise, ..
+        } => {
+            action_emits_native_private_output(then)
+                || action_emits_native_private_output(otherwise)
+        }
+        StateAction::Let { action, .. } => action_emits_native_private_output(action),
+        _ => false,
+    }
+}
+
+fn circuit_emits_native_private_output(
+    circuit: &StatefulCircuit,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+    visiting: &mut HashSet<String>,
+) -> Result<bool, RenderError> {
+    if !visiting.insert(circuit.name.clone()) {
+        return Err(RenderError::UnsupportedStatefulCall(circuit.name.clone()));
+    }
+    let mut effect = circuit
+        .actions
+        .iter()
+        .any(action_emits_native_private_output);
+    for (name, callee) in circuits {
+        if circuit
+            .actions
+            .iter()
+            .any(|action| action_calls_named(action, name))
+            || return_calls_named(&circuit.return_value, name)
+        {
+            effect |= circuit_emits_native_private_output(callee, circuits, visiting)?;
         }
     }
     visiting.remove(&circuit.name);
@@ -1571,6 +1620,7 @@ fn action_contains_witness(action: &StateAction) -> bool {
             ..
         } => expression_contains_witness(value) || expression_contains_witness(position),
         StateAction::CounterIncrement { .. }
+        | StateAction::NativeWitnessCall { .. }
         | StateAction::CounterDecrement { .. }
         | StateAction::CounterReset { .. }
         | StateAction::SetReset { .. }
@@ -1631,6 +1681,8 @@ pub(crate) fn render_stateful_circuit(
     }
     let mut statements = Vec::<syn::Stmt>::new();
     let mut uses_witness = circuit_uses_witness(circuit, stateful_circuits, &mut HashSet::new())?;
+    let has_native_private_output =
+        circuit_emits_native_private_output(circuit, stateful_circuits, &mut HashSet::new())?;
     let mut next_temp = 0;
     let mut next_local = 0;
     enum Pending<'a> {
@@ -1785,6 +1837,15 @@ pub(crate) fn render_stateful_circuit(
         }
         let parameters = local_parameters.clone();
         match action {
+            StateAction::NativeWitnessCall {
+                builtin: NativeWitnessBuiltin::OwnPublicKey,
+            } => {
+                statements.push(syn::parse_quote! {
+                    private_transcript_outputs.extend([runtime::fab::AlignedValue::from(
+                        context.own_coin_public_key()?
+                    )]);
+                });
+            }
             StateAction::Expression { value } => {
                 let mut effect_statements = Vec::new();
                 let mut query_effect = false;
@@ -1825,6 +1886,11 @@ pub(crate) fn render_stateful_circuit(
                     .ok_or_else(|| RenderError::UnknownCircuit(callee_name.clone()))?;
                 let callee_uses_witness =
                     circuit_uses_witness(callee, stateful_circuits, &mut HashSet::new())?;
+                let callee_emits_native = circuit_emits_native_private_output(
+                    callee,
+                    stateful_circuits,
+                    &mut HashSet::new(),
+                )?;
                 if arguments.len() != callee.parameters.len() {
                     return Err(RenderError::ArgumentCount {
                         circuit: callee_name.clone(),
@@ -1873,13 +1939,15 @@ pub(crate) fn render_stateful_circuit(
                     statements.push(syn::parse_quote! {
                         let call_step = #callee_name(context, witnesses, #(#args),*)?;
                     });
-                    statements.push(syn::parse_quote! {
-                        private_transcript_outputs.extend(call_step.private_transcript_outputs);
-                    });
                     uses_witness = true;
                 } else {
                     statements.push(syn::parse_quote! {
                         let call_step = #callee_name(context, #(#args),*)?;
+                    });
+                }
+                if callee_uses_witness || callee_emits_native {
+                    statements.push(syn::parse_quote! {
+                        private_transcript_outputs.extend(call_step.private_transcript_outputs);
                     });
                 }
                 statements.push(syn::parse_quote!(let context = call_step.context;));
@@ -2933,7 +3001,7 @@ pub(crate) fn render_stateful_circuit(
             syn::parse_quote!(read_step.result)
         }
     };
-    let transcript_init: syn::Stmt = if uses_witness {
+    let transcript_init: syn::Stmt = if uses_witness || has_native_private_output {
         syn::parse_quote!(let mut private_transcript_outputs = Vec::new();)
     } else {
         syn::parse_quote!(let private_transcript_outputs = Vec::new();)

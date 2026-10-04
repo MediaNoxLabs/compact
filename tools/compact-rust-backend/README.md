@@ -47,15 +47,21 @@ compactc --target rust --rust-require-recording \
 
 The strict option reports an unsupported circuit at its Compact source
 position, with a reason code and structural IR path, and publishes no partial
-output. Capability report schema 2 retains the `recorded` and `observed_call`
-booleans and adds `recording_unavailable` or `observed_call_unavailable` when
+output. Capability report schema 3 retains the `recorded` and `observed_call`
+booleans, adds compiler-derived `proof_required` and `recording_status`, and retains `recording_unavailable` or `observed_call_unavailable` when
 an API is missing. Each reason includes a stable code, IR node name, path, and
 detail. These paths identify the nearest definite failure; some nested
 expressions still report the enclosing action or return. The report describes
-generated API availability; proof, transcript parity, and wallet admission
+generated API availability and compiler proof applicability; proof execution, transcript parity, and wallet admission
 still require the corresponding acceptance tests. Internal circuits are
 omitted, and the report schema is separate from the private IR schema and
 runtime ABI.
+The library's `render_with_capabilities` returns an unclassified schema-2
+lowering draft for diagnostics. `render_with_proof_capabilities` requires the
+frontend `contract-info.json` value, validates one proof flag per exported
+circuit, permits extra nonexported helper entries, and produces the published
+schema-3 report. The CLI uses this validated path; unknown applicability never
+defaults to `false`.
 The generated `ledger_slots` module exposes named typed descriptors for Cell,
 Counter, Set, Map, List, and Merkle declarations. For example,
 `ledger_slots::tree.insert(context, value)` accepts the declared Merkle leaf

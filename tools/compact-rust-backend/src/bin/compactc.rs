@@ -25,13 +25,13 @@ use std::path::{Component, Path, PathBuf};
 use std::process::{self, Command};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use compact_rust_backend::{ir::Contract, render_with_capabilities};
+use compact_rust_backend::{ir::Contract, render_with_proof_capabilities};
 use fs2::FileExt;
 use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
 use toml_edit::{Array, DocumentMut, InlineTable, Item, Table, Value as TomlValue, value};
 
-const TARGET_HELP: &str = "\n  --target <ts|rust> selects contract code. Repeat to emit both.\n    With no --target, TypeScript remains the default. Rust emits a standalone\n    contract/Cargo.toml, source, capability report, and matching runtime crates.\n    ZKIR and keys are independent.\n  --rust-require-recording rejects exported stateful circuits without both\n    replayable recording and typed observed-call APIs.\n  --rust-runtime-root <path> uses one shared runtime source root for generated\n    Rust crates. The root must contain runtime-rs/ and runtime-rs-macros/.\n  --rust-runtime-registry pins the compiler's matching runtime package version\n    without copying runtime sources. That version must be published to build.\n";
+const TARGET_HELP: &str = "\n  --target <ts|rust> selects contract code. Repeat to emit both.\n    With no --target, TypeScript remains the default. Rust emits a standalone\n    contract/Cargo.toml, source, capability report, and matching runtime crates.\n    ZKIR and keys are independent.\n  --rust-require-recording rejects proof-required exported circuits without both\n    replayable recording and typed observed-call APIs.\n  --rust-runtime-root <path> uses one shared runtime source root for generated\n    Rust crates. The root must contain runtime-rs/ and runtime-rs-macros/.\n  --rust-runtime-registry pins the compiler's matching runtime package version\n    without copying runtime sources. That version must be published to build.\n";
 
 #[derive(Default)]
 struct Targets {
@@ -659,13 +659,19 @@ fn run() -> Result<i32, Box<dyn Error>> {
     let contract_dir = staging.path().join("contract");
     let ir: Contract =
         serde_json::from_slice(&fs::read(contract_dir.join("compact-rust-ir.json"))?)?;
-    let rendered = render_with_capabilities(&ir)?;
+    let contract_info: Value = serde_json::from_slice(&fs::read(
+        staging.path().join("compiler/contract-info.json"),
+    )?)?;
+    let rendered = render_with_proof_capabilities(&ir, &contract_info)?;
     if targets.require_recording {
         let unavailable = rendered
             .capabilities
             .circuits
             .iter()
-            .filter(|circuit| !circuit.recorded || !circuit.observed_call)
+            .filter(|circuit| {
+                circuit.proof_required == Some(true)
+                    && (!circuit.recorded || !circuit.observed_call)
+            })
             .map(|circuit| {
                 let position = circuit.source.as_ref().map_or_else(
                     || "unknown source".to_owned(),

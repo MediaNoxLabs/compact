@@ -243,7 +243,7 @@ def check_proof_capabilities(compactc: str, directory: Path) -> list[str]:
         report_bytes = report_path.read_bytes()
         report = json.loads(report_bytes)
         manifest = json.loads(manifest_path.read_bytes())
-        assert report["schema_version"] == 2
+        assert report["schema_version"] == 3
         assert len(report["circuits"]) == 1
         capability = report["circuits"][0]
         assert {key: capability[key] for key in ("name", "source", "recorded", "observed_call")} == {
@@ -310,6 +310,36 @@ def check_proof_capabilities(compactc: str, directory: Path) -> list[str]:
             failures.append(f"strict call-name collision did not reject at source:\n{rejected.stderr}")
         if snapshot(collision_output) != before:
             failures.append("strict call-name collision changed the prior output")
+    for name in ("boolean_logic", "witness_ledger_cell"):
+        source = ROOT / "examples/rust_backend" / f"{name}.compact"
+        accepted = compile_source(source, directory / f"{name}-proof-aware", True)
+        if accepted.returncode:
+            failures.append(f"proof-false {name} failed strict recording:\n{accepted.stderr}")
+    checked_value_only = directory / "checked-value-only.compact"
+    checked_value_only.write_text(
+        "import CompactStandardLibrary;\n"
+        "witness echo(flag: Boolean): Boolean;\n"
+        "export circuit checked_value(first: Boolean, second: Boolean, value: Field): Field {\n"
+        '  assert(disclose(echo(first)), "first witness failed");\n'
+        '  assert(disclose(echo(second)), "second witness failed");\n'
+        "  return value;\n}"
+    )
+    accepted = compile_source(checked_value_only, directory / "checked-value-proof-aware", True)
+    if accepted.returncode:
+        failures.append(f"proof-false checked_value failed strict recording:\n{accepted.stderr}")
+    else:
+        report = json.loads((directory / "checked-value-proof-aware/contract/rust-capabilities.json").read_text())
+        if [(item["name"], item["proof_required"], item["recording_status"])
+                for item in report["circuits"]] != [("checked_value", False, "not_applicable")]:
+            failures.append("proof-false checked_value has wrong schema-3 applicability")
+    merkle = ROOT / "examples/rust_backend/merkle_path_verify.compact"
+    rejected = compile_source(merkle, directory / "merkle-proof-aware", True)
+    if rejected.returncode == 0 or 'exported circuit "verify"' not in rejected.stderr:
+        failures.append(f"proof-required Merkle verify did not fail strict recording:\n{rejected.stderr}")
+    witness_assert = ROOT / "examples/rust_backend/assert_witness.compact"
+    rejected = compile_source(witness_assert, directory / "assert-proof-aware", True)
+    if rejected.returncode == 0 or 'exported circuit "checked_value"' in rejected.stderr:
+        failures.append(f"proof-false Assert was treated as a strict gap:\n{rejected.stderr}")
     return failures
 
 

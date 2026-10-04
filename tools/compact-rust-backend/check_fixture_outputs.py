@@ -79,10 +79,16 @@ def main() -> int:
                 failures.append(f"{source.name}: {compile_result.stderr.strip()}")
                 continue
             report = json.loads((Path(output) / "contract/rust-capabilities.json").read_text())
-            if report["schema_version"] != 2:
+            if report["schema_version"] != 3:
                 failures.append(f"{source.name}: wrong capability report schema")
                 continue
             for capability in report["circuits"]:
+                proof = capability.get("proof_required")
+                expected_status = ("not_applicable" if proof is False else
+                                   "available" if capability["recorded"] and capability["observed_call"] else
+                                   "unavailable")
+                if not isinstance(proof, bool) or capability.get("recording_status") != expected_status:
+                    failures.append(f"{source.name}.{capability['name']}: proof applicability invariant failed")
                 for available, unavailable in (("recorded", "recording_unavailable"),
                                                ("observed_call", "observed_call_unavailable")):
                     gap = capability.get(unavailable)

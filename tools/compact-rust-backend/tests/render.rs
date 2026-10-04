@@ -21,7 +21,9 @@ use compact_rust_backend::ir::{
     LocalBinding, Parameter, PureCircuit, SourceLocation, StateAction, StateReturn,
     StatefulCircuit, StructField, Type, TypeAlias, WitnessDeclaration,
 };
-use compact_rust_backend::{RenderError, render, render_with_capabilities};
+use compact_rust_backend::{
+    RenderError, render, render_with_capabilities, render_with_proof_capabilities,
+};
 
 fn identity(result: Type, body: Expr) -> Contract {
     Contract {
@@ -2933,6 +2935,26 @@ fn unsupported_pure_call_and_supported_field_arithmetic_have_exact_capabilities(
         report["circuits"][0]["observed_call_unavailable"]["code"],
         "recording_unavailable"
     );
+    let published = render_with_proof_capabilities(
+        &contract,
+        &serde_json::json!({"circuits": [
+            {"name": "square", "proof": false},
+            {"name": "write", "proof": true}
+        ]}),
+    )
+    .unwrap();
+    assert_eq!(published.source, rendered.source);
+    let published_report = serde_json::to_value(&published.capabilities).unwrap();
+    assert_eq!(published_report["schema_version"], 3);
+    assert_eq!(published_report["circuits"][0]["proof_required"], true);
+    assert_eq!(
+        published_report["circuits"][0]["recording_status"],
+        "unavailable"
+    );
+    assert!(matches!(
+        render_with_proof_capabilities(&contract, &serde_json::json!({"circuits": []})),
+        Err(RenderError::ProofApplicability(_))
+    ));
 
     let StateAction::CellWrite { value, .. } = &mut contract.stateful_circuits[0].actions[0] else {
         unreachable!()

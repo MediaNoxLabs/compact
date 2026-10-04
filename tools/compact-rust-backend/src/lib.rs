@@ -8,7 +8,7 @@ mod stateful;
 mod witness;
 
 const RUNTIME_ABI_VERSION: u32 = 35;
-pub const RUST_CAPABILITY_SCHEMA_VERSION: u32 = 2;
+pub const RUST_CAPABILITY_SCHEMA_VERSION: u32 = 3;
 
 const GENERATED_HEADER: &str = r#"// This file is part of Compact.
 // Copyright (C) 2026 Midnight Foundation
@@ -38,6 +38,7 @@ use ir::{
 use proc_macro2::Span;
 use quote::quote;
 use serde::Serialize;
+use serde_json::Value;
 use syn::visit_mut::{self, VisitMut};
 
 /// Compiler metadata for the developer-facing Rust proving surface.
@@ -54,9 +55,76 @@ pub struct RustCircuitCapability {
     pub recorded: bool,
     pub observed_call: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub proof_required: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub recording_status: Option<RecordingStatus>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub recording_unavailable: Option<RecordingGap>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub observed_call_unavailable: Option<RecordingGap>,
+}
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum RecordingStatus {
+    Available,
+    Unavailable,
+    NotApplicable,
+}
+
+impl RustCapabilityReport {
+    /// Finish the report with the frontend's authoritative proof applicability.
+    /// Contract-info may also contain nonexported helpers, which are ignored.
+    pub fn apply_contract_info(&mut self, contract_info: &Value) -> Result<(), String> {
+        if self.schema_version != 2 {
+            return Err(format!(
+                "capability report must be an unclassified schema-2 draft, got schema {}",
+                self.schema_version
+            ));
+        }
+        let circuits = contract_info
+            .get("circuits")
+            .and_then(Value::as_array)
+            .ok_or("contract-info.json has no circuits array")?;
+        let mut proof_flags = Vec::with_capacity(self.circuits.len());
+        for capability in &self.circuits {
+            let matches = circuits
+                .iter()
+                .filter(|entry| {
+                    entry.get("name").and_then(Value::as_str) == Some(capability.name.as_str())
+                })
+                .collect::<Vec<_>>();
+            if matches.len() != 1 {
+                return Err(format!(
+                    "contract-info.json must contain exactly one entry for exported circuit {:?}; found {}",
+                    capability.name,
+                    matches.len()
+                ));
+            }
+            let proof_required = matches[0]
+                .get("proof")
+                .and_then(Value::as_bool)
+                .ok_or_else(|| {
+                    format!(
+                        "contract-info.json circuit {:?} has no Boolean proof flag",
+                        capability.name
+                    )
+                })?;
+            proof_flags.push(proof_required);
+        }
+        for (capability, proof_required) in self.circuits.iter_mut().zip(proof_flags) {
+            capability.proof_required = Some(proof_required);
+            capability.recording_status = Some(if !proof_required {
+                RecordingStatus::NotApplicable
+            } else if capability.recorded && capability.observed_call {
+                RecordingStatus::Available
+            } else {
+                RecordingStatus::Unavailable
+            });
+        }
+        self.schema_version = RUST_CAPABILITY_SCHEMA_VERSION;
+        Ok(())
+    }
 }
 
 pub struct RenderedContract {
@@ -85,6 +153,7 @@ pub enum RenderError {
         error: Box<RenderError>,
     },
     SchemaVersion(u32),
+    ProofApplicability(String),
     InvalidIdentifier(String),
     InvalidUnsignedMaximum(String),
     InvalidFieldLiteral(String),
@@ -141,6 +210,9 @@ impl fmt::Display for RenderError {
             ),
             Self::SchemaVersion(version) => {
                 write!(f, "unsupported Rust backend IR schema {version}")
+            }
+            Self::ProofApplicability(message) => {
+                write!(f, "invalid proof applicability: {message}")
             }
             Self::InvalidIdentifier(name) => write!(f, "invalid Rust identifier {name:?}"),
             Self::InvalidUnsignedMaximum(max) => {
@@ -2774,6 +2846,21 @@ pub fn render(contract: &Contract) -> Result<String, RenderError> {
     Ok(render_with_capabilities(contract)?.source)
 }
 
+/// Render the publishable schema-3 capability report using compiler proof metadata.
+/// `render_with_capabilities` exposes the schema-2 lowering draft for callers
+/// that need to inspect reasons before a compiler contract-info file exists.
+pub fn render_with_proof_capabilities(
+    contract: &Contract,
+    contract_info: &Value,
+) -> Result<RenderedContract, RenderError> {
+    let mut rendered = render_with_capabilities(contract)?;
+    rendered
+        .capabilities
+        .apply_contract_info(contract_info)
+        .map_err(RenderError::ProofApplicability)?;
+    Ok(rendered)
+}
+
 pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract, RenderError> {
     if contract.schema_version != SCHEMA_VERSION {
         return Err(RenderError::SchemaVersion(contract.schema_version));
@@ -3056,6 +3143,8 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
                     source: circuit.source.clone(),
                     recorded: recorded.is_supported(),
                     observed_call,
+                    proof_required: None,
+                    recording_status: None,
                     recording_unavailable: recording_unavailable.clone(),
                     observed_call_unavailable: if observed_call {
                         None
@@ -3671,8 +3760,75 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
             prettyplease::unparse(&file)
         ),
         capabilities: RustCapabilityReport {
-            schema_version: RUST_CAPABILITY_SCHEMA_VERSION,
+            // The compiler finalizes the report from contract-info.json before publication.
+            schema_version: 2,
             circuits: proof_capabilities,
         },
     })
+}
+
+#[cfg(test)]
+mod proof_applicability_tests {
+    use super::*;
+    use serde_json::json;
+
+    fn report() -> RustCapabilityReport {
+        RustCapabilityReport {
+            schema_version: 2,
+            circuits: vec![RustCircuitCapability {
+                name: "exported".into(),
+                source: None,
+                recorded: false,
+                observed_call: false,
+                proof_required: None,
+                recording_status: None,
+                recording_unavailable: None,
+                observed_call_unavailable: None,
+            }],
+        }
+    }
+
+    #[test]
+    fn proof_join_allows_extra_nonexported_helpers() {
+        let mut report = report();
+        report
+            .apply_contract_info(&json!({"circuits": [
+                {"name": "helper", "proof": false},
+                {"name": "exported", "proof": true}
+            ]}))
+            .unwrap();
+        assert_eq!(report.schema_version, 3);
+        assert_eq!(report.circuits[0].proof_required, Some(true));
+        assert_eq!(
+            report.circuits[0].recording_status,
+            Some(RecordingStatus::Unavailable)
+        );
+        let serialized = serde_json::to_value(&report).unwrap();
+        assert_eq!(serialized["circuits"][0]["recording_status"], "unavailable");
+    }
+
+    #[test]
+    fn nonproof_row_is_not_applicable_even_when_api_missing() {
+        let mut report = report();
+        report
+            .apply_contract_info(&json!({"circuits": [{"name": "exported", "proof": false}]}))
+            .unwrap();
+        assert_eq!(
+            report.circuits[0].recording_status,
+            Some(RecordingStatus::NotApplicable)
+        );
+    }
+
+    #[test]
+    fn proof_join_rejects_missing_duplicate_and_non_boolean_flags() {
+        for metadata in [
+            json!({"circuits": [{"name": "helper", "proof": false}]}),
+            json!({"circuits": [{"name": "exported", "proof": true}, {"name": "exported", "proof": false}]}),
+            json!({"circuits": [{"name": "exported", "proof": "true"}]}),
+        ] {
+            let mut report = report();
+            assert!(report.apply_contract_info(&metadata).is_err());
+            assert_eq!(report.schema_version, 2);
+        }
+    }
 }

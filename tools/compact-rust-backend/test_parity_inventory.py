@@ -103,9 +103,11 @@ export circuit live(value: Field): Field { return value; }
 import json, pathlib, sys
 contract = pathlib.Path(sys.argv[-1]) / "contract"
 contract.mkdir(parents=True)
-report = {"schema_version": 1, "circuits": [
-  {"name": "available", "recorded": True, "observed_call": True},
-  {"name": "missing", "recorded": False, "observed_call": False}]}
+report = {"schema_version": 3, "circuits": [
+  {"name": "available", "recorded": True, "observed_call": True,
+   "proof_required": True, "recording_status": "available"},
+  {"name": "missing", "recorded": False, "observed_call": False,
+   "proof_required": True, "recording_status": "unavailable"}]}
 (contract / "rust-capabilities.json").write_text(json.dumps(report))
 """)
             compiler.chmod(0o755)
@@ -117,8 +119,37 @@ report = {"schema_version": 1, "circuits": [
             summary = json.loads(output.read_text())["summary"]
             self.assertEqual(summary["recorded_available"], 1)
             self.assertEqual(summary["recorded_missing"], 1)
+            self.assertEqual(summary["proof_required"], 2)
+            self.assertEqual(summary["proof_missing"], 1)
             self.assertEqual(summary["ranked_missing_sources"],
                              [{"source": "examples/rust_backend/sample.compact", "count": 1}])
+
+    def test_nonproof_missing_api_does_not_fail_full_gate(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "examples/rust_backend/sample.compact"
+            source.parent.mkdir(parents=True)
+            source.write_text("export circuit private_only(): Boolean;\n")
+            compiler = root / "compiler.py"
+            compiler.write_text("""#!/usr/bin/env python3
+import json, pathlib, sys
+contract = pathlib.Path(sys.argv[-1]) / "contract"
+contract.mkdir(parents=True)
+report = {"schema_version": 3, "circuits": [
+  {"name": "private_only", "recorded": False, "observed_call": False,
+   "proof_required": False, "recording_status": "not_applicable"}]}
+(contract / "rust-capabilities.json").write_text(json.dumps(report))
+""")
+            compiler.chmod(0o755)
+            output = root / "receipt.json"
+            result = subprocess.run([sys.executable, str(SCRIPT), "--root", str(root),
+                                     "--compiler", str(compiler), "--require-full", "--output", str(output)],
+                                    capture_output=True, text=True, check=False)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            summary = json.loads(output.read_text())["summary"]
+            self.assertEqual(summary["recorded_missing"], 1)
+            self.assertEqual(summary["nonproof"], 1)
+            self.assertEqual(summary["proof_missing"], 0)
 
     def test_receipt_metadata_is_exact_and_optional(self):
         with tempfile.TemporaryDirectory() as directory:

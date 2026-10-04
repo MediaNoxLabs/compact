@@ -1054,10 +1054,12 @@ def main() -> None:
         assert (rust / "contract/Cargo.toml").is_file()
         assert not (rust / "contract/index.js").exists()
         capabilities = json.loads((rust / "contract/rust-capabilities.json").read_text())
-        assert capabilities["schema_version"] == 2
+        assert capabilities["schema_version"] == 3
         assert [(c["name"], c["recorded"], c["observed_call"]) for c in capabilities["circuits"]] == [
             ("increment", True, True), ("read_round", True, True)
         ]
+        assert all(c["proof_required"] is True and c["recording_status"] == "available"
+                   for c in capabilities["circuits"])
         rust_ir = json.loads((rust / "contract/compact-rust-ir.json").read_text())
         assert rust_ir["schema_version"] == 8
         round_field = next(field for field in rust_ir["ledger_fields"] if field["id"] == "round")

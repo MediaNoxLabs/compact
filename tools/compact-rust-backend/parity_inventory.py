@@ -19,7 +19,8 @@
 
 This is a source inventory, not a Compact parser or an assertion of semantic
 TypeScript/Rust parity. A baseline checks declaration membership and signatures;
-the compiler capability report checks only recorded/observed API availability.
+the compiler capability report checks recorded/observed API availability and
+compiler proof applicability, not proof execution or behavioral parity.
 """
 
 import argparse
@@ -267,7 +268,8 @@ def make_inventory(root: Path, extra_dirs: list[Path], compiler: Path | None,
         paths = [path for path in paths if relative_source(path, root) in only]
     contracts = [parse_source(path, root) for path in paths]
     rows = [{"source": contract["source"], **item,
-             "ts_source_declaration": True, "rust_recorded": None, "rust_observed_call": None}
+             "ts_source_declaration": True, "rust_recorded": None, "rust_observed_call": None,
+             "proof_required": None, "rust_recording_status": None}
             for contract in contracts for item in contract["declarations"]]
     by_source = {contract["source"]: contract for contract in contracts}
     unmatched = []
@@ -278,6 +280,8 @@ def make_inventory(root: Path, extra_dirs: list[Path], compiler: Path | None,
         for path in roots:
             source = relative_source(path, root)
             report = compile_capabilities(compiler, path, root)
+            if report.get("schema_version") != 3:
+                raise ValueError(f"{source}: expected Rust capability schema 3")
             compiled.append(source)
             by_source[source]["rust_capability_schema"] = report.get("schema_version")
             for capability in report["circuits"]:
@@ -285,13 +289,23 @@ def make_inventory(root: Path, extra_dirs: list[Path], compiler: Path | None,
                            and row["kind"] == "circuit" and row["name"] == capability["name"]
                            and row["visibility"] == "export"]
                 if len(matches) == 1:
+                    if not isinstance(capability.get("proof_required"), bool):
+                        raise ValueError(f"{source}: missing Boolean proof applicability for {capability['name']}")
+                    expected_status = ("not_applicable" if not capability["proof_required"] else
+                                       "available" if capability["recorded"] and capability["observed_call"] else
+                                       "unavailable")
+                    if capability.get("recording_status") != expected_status:
+                        raise ValueError(f"{source}: invalid recording status for {capability['name']}")
                     matches[0]["rust_recorded"] = capability["recorded"]
                     matches[0]["rust_observed_call"] = capability["observed_call"]
+                    matches[0]["proof_required"] = capability["proof_required"]
+                    matches[0]["rust_recording_status"] = expected_status
                 else:
                     unmatched.append({"source": source, "name": capability["name"]})
     rows.sort(key=lambda row: (row["source"], row["line"], row["kind"], row["name"]))
     missing = Counter(row["source"] for row in rows if row["kind"] == "circuit"
-                      and row["visibility"] == "export" and row["rust_recorded"] is False)
+                      and row["visibility"] == "export" and row["proof_required"] is True
+                      and row["rust_recording_status"] == "unavailable")
     return {
         "format_version": 1,
         "scope": "repository source declarations; TS behavior parity requires executing tests",
@@ -304,6 +318,12 @@ def make_inventory(root: Path, extra_dirs: list[Path], compiler: Path | None,
             "compiled_rust_sources": len(compiled),
             "recorded_available": sum(row["rust_recorded"] is True for row in rows),
             "recorded_missing": sum(row["rust_recorded"] is False for row in rows),
+            "proof_required": sum(row["proof_required"] is True for row in rows),
+            "proof_available": sum(row["rust_recording_status"] == "available" for row in rows),
+            "proof_missing": sum(row["rust_recording_status"] == "unavailable" for row in rows),
+            "nonproof": sum(row["proof_required"] is False for row in rows),
+            "unassessed_exported_circuits": sum(row["kind"] == "circuit" and row["visibility"] == "export"
+                                                and row["proof_required"] is None for row in rows),
             "ranked_missing_sources": [{"source": source, "count": count}
                                        for source, count in sorted(missing.items(), key=lambda pair: (-pair[1], pair[0]))],
             "unmatched_compiler_circuits": unmatched,
@@ -325,7 +345,7 @@ def main() -> int:
     parser.add_argument("--receipt-metadata", action="store_true",
                         help="attach exact local compiler/source/ABI/upstream package identifiers")
     parser.add_argument("--require-full", action="store_true",
-                        help="fail if any exported compiled circuit lacks recorded/observed API")
+                        help="fail if a proof-required exported circuit lacks recording or any exported circuit is unassessed")
     args = parser.parse_args()
     try:
         root = args.root.resolve()
@@ -355,12 +375,15 @@ def main() -> int:
             }
             failure = bool(inventory["baseline_diff"]["added"] or inventory["baseline_diff"]["removed"])
         if args.require_full:
-            failure |= bool(inventory["summary"]["recorded_missing"]
+            failure |= bool(inventory["summary"]["proof_missing"]
+                            or inventory["summary"]["unassessed_exported_circuits"]
                             or inventory["summary"]["unmatched_compiler_circuits"])
             if not compiler:
                 raise ValueError("--require-full requires --compiler")
             failure |= any(row["kind"] == "circuit" and row["visibility"] == "export"
-                           and (row["rust_recorded"] is not True or row["rust_observed_call"] is not True)
+                           and (row["proof_required"] is None
+                                or row["proof_required"] is True
+                                and (row["rust_recorded"] is not True or row["rust_observed_call"] is not True))
                            for row in inventory["rows"])
         receipt = json.dumps(inventory, indent=2, sort_keys=True) + "\n"
         if args.output:

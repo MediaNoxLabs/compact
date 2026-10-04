@@ -6,7 +6,7 @@ mod recorded;
 mod stateful;
 mod witness;
 
-const RUNTIME_ABI_VERSION: u32 = 28;
+const RUNTIME_ABI_VERSION: u32 = 29;
 pub const RUST_CAPABILITY_SCHEMA_VERSION: u32 = 1;
 
 const GENERATED_HEADER: &str = r#"// This file is part of Compact.
@@ -2946,21 +2946,38 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
         None
     };
     let mut slot_items = Vec::<syn::Item>::new();
+    let mut public_state_getters = Vec::<syn::ImplItemFn>::new();
     for field in &contract.ledger_fields {
         let name = ident(&field.id)?;
         let path = field.physical_path();
         match &field.declaration {
             LedgerFieldKind::Cell { ty } => {
                 let ty = rust_type(ty)?;
+                public_state_getters.push(syn::parse_quote! {
+                    /// Decode this declared Cell from the borrowed public state.
+                    pub fn #name(&self) -> Result<#ty, runtime::CompactError> {
+                        crate::ledger_slots::#name.inspect(self.state)
+                    }
+                });
                 slot_items.push(syn::parse_quote! {
                     pub const #name: runtime::slots::CellSlot<#ty> =
                         runtime::slots::CellSlot::new(&[#(#path),*]);
                 });
             }
-            LedgerFieldKind::Counter => slot_items.push(syn::parse_quote! {
-                pub const #name: runtime::slots::CounterSlot =
-                    runtime::slots::CounterSlot::new(&[#(#path),*]);
-            }),
+            LedgerFieldKind::Counter => {
+                public_state_getters.push(syn::parse_quote! {
+                    /// Decode this declared Counter as Compact Uint<64>.
+                    pub fn #name(&self) -> Result<runtime::BoundedUint<{u64::MAX as u128}>, runtime::CompactError> {
+                        let value = crate::ledger_slots::#name.inspect(self.state)?;
+                        Ok(runtime::BoundedUint::<{u64::MAX as u128}>::new(value as u128)
+                            .expect("ledger Counter fits Uint<64>"))
+                    }
+                });
+                slot_items.push(syn::parse_quote! {
+                    pub const #name: runtime::slots::CounterSlot =
+                        runtime::slots::CounterSlot::new(&[#(#path),*]);
+                });
+            }
             LedgerFieldKind::Set { ty } => {
                 let ty = rust_type(ty)?;
                 slot_items.push(syn::parse_quote! {
@@ -3009,6 +3026,23 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
             }
         }
     });
+    let public_state_view = (!public_state_getters.is_empty()).then(|| {
+        quote! {
+            /// Read-only projection of an existing ledger-8 public state.
+            pub struct PublicStateView<'a, D: runtime::ledger::DB = runtime::ledger::DefaultDB> {
+                state: &'a runtime::ledger::StateValue<D>,
+            }
+            impl<'a, D: runtime::ledger::DB> PublicStateView<'a, D> {
+                #(#public_state_getters)*
+            }
+            impl<'a, S: runtime::public_state::PublicStateSource>
+                From<&'a S> for PublicStateView<'a, S::Database> {
+                fn from(source: &'a S) -> Self {
+                    Self { state: source.public_state() }
+                }
+            }
+        }
+    });
     let ledger_module: Option<syn::Item> = if contract.ledger_fields.is_empty()
         && contract.constructor.is_none()
         && contract.stateful_circuits.is_empty()
@@ -3030,6 +3064,7 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
                     impl<'a> LedgerView<'a> {
                         #(#ledger_view_methods)*
                     }
+                    #public_state_view
                     /// Implement for infallible callbacks; use TryWitnesses for fallible ledger reads.
                     #[runtime::compact_witness_bridge]
                     pub trait Witnesses<Private> {

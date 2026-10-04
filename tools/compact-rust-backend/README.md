@@ -166,13 +166,34 @@ Compact spelling without warning in consumer builds.
 |---|---|---|
 | Compact compiler | Toolchain 0.31.133, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
 | Rust IR | Schema 8, private to this backend | The renderer rejects any other schema before writing `lib.rs`. Ledger, circuit, witness, constructor, and exported alias declarations carry optional Compact source locations for diagnostics. |
-| Generated code and Rust runtime | ABI 28 | Generated modules assert the ABI at Rust compile time. ABI 25–28 add physical List paths, chunked Map and Cell calls, and Cell-read scalar returns; ABI 21–24 add typed multi-argument observed calls and composite/chunked Set calls. The [runtime guide](../../runtime-rs/README.md) records earlier ABI changes. |
+| Generated code and Rust runtime | ABI 29 | Generated modules assert the ABI at Rust compile time. ABI 29 adds read-only typed public Cell/Counter views; ABI 25–28 add physical List paths, chunked Map and Cell calls, and Cell-read scalar returns; ABI 21–24 add typed multi-argument observed calls and composite/chunked Set calls. The [runtime guide](../../runtime-rs/README.md) records earlier ABI changes. |
 | Rust runtime source | Bundled runtime crates or an explicit shared source root | Cargo resolves the matching runtime and its pinned Midnight crates. |
 
 `--runtime-version` reports the TypeScript runtime version; the Rust runtime
 compatibility contract is the ABI assertion and matching source packages. The
 generated `Cargo.toml` has `publish = false` because it is a contract-specific
 artifact. Change the runtime source only alongside an ABI and consumer test review.
+
+### Inspecting public state
+
+For a contract with declared Cell or Counter fields, `ledger_contract::PublicStateView`
+borrows existing ledger state and exposes fallible getters with the declaration's
+Rust type. Counter getters return Compact `BoundedUint<2^64-1>`; Cell getters
+return the declared type. For example, a generated Counter named `round` can
+be read after a call without copying its physical ledger index:
+
+```rust
+let view = ledger_contract::PublicStateView::from(&result);
+let round = view.round()?.value();
+```
+
+The view also accepts borrowed constructor results, query contexts,
+`ContractState`, recorded results, and, with `ledger-transaction`,
+`ObservedContractState`. It only decodes local state;
+the caller remains responsible for the origin and freshness of an observation.
+If a Compact field is named `from`, use `let view: PublicStateView<'_> = state.into();`
+so its generated getter does not shadow trait method syntax. Set, Map, List and
+Merkle inspection are still available through the lower-level ledger APIs.
 
 ### Fallible witnesses
 

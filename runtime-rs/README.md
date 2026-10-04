@@ -6,6 +6,11 @@ midnight-zk primitives for fields, encoding, cryptography, state, and VM
 queries. Generated code checks `RUST_RUNTIME_ABI` at compile time. A generated
 crate bundles matching runtime sources by default or points to one shared
 source root when compiled with `--rust-runtime-root`.
+ABI 29 adds generated read-only `PublicStateView` getters for declared Cell and
+Counter fields. Runtime slot inspection uses the existing ledger-8 path and
+alignment decoder without a VM query or gas charge. A shared
+`PublicStateSource` trait lets the generated view borrow a state value, contract
+state, observed contract or recorded result with one emitted conversion.
 ABI 28 emits recorded and observed calls for supported action-free Boolean
 and Field return expressions with an explicit Cell read. The generated methods reuse the typed scalar
 expression lowerers and existing ledger VM programs.

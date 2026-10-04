@@ -128,6 +128,28 @@ fn check<Output: std::fmt::Debug + PartialEq>(
         native.context.query.state.get_ref(),
         "{name}: replay"
     );
+    for state in [
+        native.context.query.state.get_ref(),
+        replay.context.state.get_ref(),
+    ] {
+        let view = ledger_contract::PublicStateView::from(state);
+        assert_eq!(
+            view.active().unwrap(),
+            read_cell_at_path::<bool, _>(state, active.path()).unwrap()
+        );
+        assert_eq!(
+            view.amount().unwrap(),
+            read_cell_at_path::<Field, _>(state, amount.path()).unwrap()
+        );
+    }
+    assert_eq!(
+        ledger_contract::PublicStateView::from(&recorded)
+            .active()
+            .unwrap(),
+        ledger_contract::PublicStateView::from(native.context.query.state.get_ref())
+            .active()
+            .unwrap(),
+    );
     assert_eq!(
         shape(&recorded),
         reference["publicTranscriptShape"],

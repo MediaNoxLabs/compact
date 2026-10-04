@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 28);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 29);
     pub fn constant() -> Result<runtime::Field, runtime::CompactError> {
         Ok(runtime::Field::from_le_bytes(&[
             151u8, 229u8, 222u8, 218u8, 203u8, 225u8, 18u8, 90u8, 16u8, 2u8, 153u8, 121u8, 18u8,
@@ -40,7 +40,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 28);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 29);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -48,6 +48,25 @@ pub mod ledger_contract {
         meter: &'a runtime::context::WitnessReadMeter<'a>,
     }
     impl<'a> LedgerView<'a> {}
+    /// Read-only projection of an existing ledger-8 public state.
+    pub struct PublicStateView<'a, D: runtime::ledger::DB = runtime::ledger::DefaultDB> {
+        state: &'a runtime::ledger::StateValue<D>,
+    }
+    impl<'a, D: runtime::ledger::DB> PublicStateView<'a, D> {
+        /// Decode this declared Cell from the borrowed public state.
+        pub fn large(&self) -> Result<runtime::Field, runtime::CompactError> {
+            crate::ledger_slots::large.inspect(self.state)
+        }
+    }
+    impl<'a, S: runtime::public_state::PublicStateSource> From<&'a S>
+        for PublicStateView<'a, S::Database>
+    {
+        fn from(source: &'a S) -> Self {
+            Self {
+                state: source.public_state(),
+            }
+        }
+    }
     /// Implement for infallible callbacks; use TryWitnesses for fallible ledger reads.
     #[runtime::compact_witness_bridge]
     pub trait Witnesses<Private> {}

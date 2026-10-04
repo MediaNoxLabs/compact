@@ -13,7 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use compact_rust_constructor_cell_literal_fixture::ledger_contract::{initial_state, read_value};
+use compact_rust_constructor_cell_literal_fixture::ledger_contract::{
+    PublicStateView, initial_state, read_value,
+};
 use midnight_compact_runtime::Field;
 use midnight_compact_runtime::context::ConstructorContext;
 use midnight_compact_runtime::ledger::{ContractAddress, DefaultDB, StateValue};
@@ -42,6 +44,8 @@ fn literal_constructor_matches_typescript_state_and_read() {
     ))
     .unwrap();
     let constructor = initial_state(ConstructorContext::new(())).unwrap();
+    let public = PublicStateView::from(constructor.ledger_state.get_ref());
+    assert_eq!(public.value().unwrap(), Field::from(7_u64));
     assert_eq!(
         state_hex(constructor.ledger_state.get_ref().clone()),
         oracle["initialHex"]
@@ -50,5 +54,36 @@ fn literal_constructor_matches_typescript_state_and_read() {
     assert_eq!(
         result.result,
         Field::from(oracle["read"].as_str().unwrap().parse::<u64>().unwrap())
+    );
+}
+
+#[cfg(feature = "ledger-transaction")]
+#[test]
+fn observed_contract_exposes_typed_public_value() {
+    use midnight_compact_runtime::transaction::{Observation, ObservedContractState};
+
+    let constructor = initial_state(ConstructorContext::new(())).unwrap();
+    let operations: HashMap<EntryPointBuf, ContractOperation, DefaultDB> = HashMap::new();
+    let contract = ContractState::new(
+        constructor.ledger_state.get_ref().clone(),
+        operations,
+        ContractMaintenanceAuthority::default(),
+    );
+    let observed = ObservedContractState::new(
+        ContractAddress::default(),
+        contract,
+        Observation {
+            transaction_hash: [0; 32],
+            block_hash: [0; 32],
+            block_height: 0,
+        },
+    );
+    assert_eq!(
+        PublicStateView::from(&observed).value().unwrap(),
+        Field::from(7_u64)
+    );
+    assert_eq!(
+        PublicStateView::from(observed.contract()).value().unwrap(),
+        Field::from(7_u64)
     );
 }

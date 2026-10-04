@@ -13,7 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use compact_rust_cell_read_fixture::ledger_contract::{Contract, initial_state, read_flag};
+use compact_rust_cell_read_fixture::ledger_contract::{
+    Contract, PublicStateView, initial_state, read_flag,
+};
 use midnight_compact_runtime::context::ConstructorContext;
 use midnight_compact_runtime::ledger::ContractAddress;
 
@@ -23,10 +25,12 @@ fn generated_cell_read_uses_ledger_gather_event() {
     let context = constructor.into_circuit_context(ContractAddress::default());
     let read = read_flag(context).unwrap();
     assert!(!read.result);
+    assert!(!PublicStateView::from(&read).flag().unwrap());
 
     let written = read.context.write_cell(0, true).unwrap();
     let read = read_flag(written.context).unwrap();
     assert!(read.result);
+    assert!(PublicStateView::from(&read).flag().unwrap());
 }
 
 #[test]
@@ -39,6 +43,7 @@ fn generated_cell_read_records_the_observed_value() {
         .read_flag(written.context)
         .unwrap();
     assert!(recorded.execution.result);
+    assert!(PublicStateView::from(&recorded).flag().unwrap());
     let replay = recorded
         .public
         .initial()

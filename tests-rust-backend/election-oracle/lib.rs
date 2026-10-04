@@ -139,7 +139,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 28);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 29);
     pub(crate) fn merkleTreePathRoot(
         path: crate::types::MerkleTreePath,
     ) -> Result<crate::types::MerkleTreeDigest, runtime::CompactError> {
@@ -280,7 +280,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 28);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 29);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -356,6 +356,53 @@ pub mod ledger_contract {
             runtime::CompactError,
         > {
             crate::ledger_slots::revealed.witness_view(self.meter)
+        }
+    }
+    /// Read-only projection of an existing ledger-8 public state.
+    pub struct PublicStateView<'a, D: runtime::ledger::DB = runtime::ledger::DefaultDB> {
+        state: &'a runtime::ledger::StateValue<D>,
+    }
+    impl<'a, D: runtime::ledger::DB> PublicStateView<'a, D> {
+        /// Decode this declared Cell from the borrowed public state.
+        pub fn authority(&self) -> Result<runtime::FixedBytes<32>, runtime::CompactError> {
+            crate::ledger_slots::authority.inspect(self.state)
+        }
+        /// Decode this declared Cell from the borrowed public state.
+        pub fn state(&self) -> Result<crate::types::PublicState, runtime::CompactError> {
+            crate::ledger_slots::state.inspect(self.state)
+        }
+        /// Decode this declared Cell from the borrowed public state.
+        pub fn topic(&self) -> Result<crate::types::Maybe, runtime::CompactError> {
+            crate::ledger_slots::topic.inspect(self.state)
+        }
+        /// Decode this declared Counter as Compact Uint<64>.
+        pub fn tally_yes(
+            &self,
+        ) -> Result<runtime::BoundedUint<{ u64::MAX as u128 }>, runtime::CompactError> {
+            let value = crate::ledger_slots::tally_yes.inspect(self.state)?;
+            Ok(
+                runtime::BoundedUint::<{ u64::MAX as u128 }>::new(value as u128)
+                    .expect("ledger Counter fits Uint<64>"),
+            )
+        }
+        /// Decode this declared Counter as Compact Uint<64>.
+        pub fn tally_no(
+            &self,
+        ) -> Result<runtime::BoundedUint<{ u64::MAX as u128 }>, runtime::CompactError> {
+            let value = crate::ledger_slots::tally_no.inspect(self.state)?;
+            Ok(
+                runtime::BoundedUint::<{ u64::MAX as u128 }>::new(value as u128)
+                    .expect("ledger Counter fits Uint<64>"),
+            )
+        }
+    }
+    impl<'a, S: runtime::public_state::PublicStateSource> From<&'a S>
+        for PublicStateView<'a, S::Database>
+    {
+        fn from(source: &'a S) -> Self {
+            Self {
+                state: source.public_state(),
+            }
         }
     }
     /// Implement for infallible callbacks; use TryWitnesses for fallible ledger reads.

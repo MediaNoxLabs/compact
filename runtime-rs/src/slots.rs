@@ -16,9 +16,9 @@
 //! Typed names for compiler-declared ledger fields.
 //!
 //! Generated contracts expose one constant per supported ledger declaration. The runtime
-//! still owns VM execution; these descriptors only tie a value type to its
-//! physical ledger path. Their constructors are public to support generated
-//! crates and are not an access-control boundary.
+//! owns VM execution and read-only state decoding; these descriptors tie a
+//! value type to its physical ledger path. Their constructors are public to
+//! support generated crates and are not an access-control boundary.
 
 use std::marker::PhantomData;
 
@@ -26,7 +26,7 @@ use crate::CompactError;
 use crate::context::{CircuitContext, CircuitResult, WitnessReadMeter};
 use crate::ledger::{
     CellValue, DB, MeteredHistoricMerkleTreeView, MeteredListView, MeteredMapView,
-    MeteredMerkleTreeView, MeteredSetView, metered_historic_merkle_tree_view_at_path,
+    MeteredMerkleTreeView, MeteredSetView, StateValue, metered_historic_merkle_tree_view_at_path,
     metered_list_view_at_path, metered_map_view_at_path, metered_merkle_tree_view_at_path,
     metered_set_view_at_path,
 };
@@ -215,6 +215,11 @@ impl<T: CellValue> CellSlot<T> {
         self.path
     }
 
+    /// Inspect an already held public state without a VM query or gas charge.
+    pub fn inspect<D: DB>(self, state: &StateValue<D>) -> Result<T, CompactError> {
+        crate::ledger::read_cell_at_path(state, self.path)
+    }
+
     /// Read this declared Cell through the witness read meter.
     pub fn witness_read<D: DB>(self, meter: &WitnessReadMeter<'_, D>) -> Result<T, CompactError> {
         meter.read_cell::<T>(self.path)
@@ -263,6 +268,11 @@ impl CounterSlot {
 
     pub const fn path(self) -> &'static [u8] {
         self.path
+    }
+
+    /// Inspect an already held public Counter without a VM query or gas charge.
+    pub fn inspect<D: DB>(self, state: &StateValue<D>) -> Result<u64, CompactError> {
+        crate::ledger::read_cell_at_path(state, self.path)
     }
 
     /// Read the raw ledger Counter through the witness read meter.

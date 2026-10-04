@@ -14,7 +14,7 @@
 // limitations under the License.
 
 use compact_rust_counter_fixture::ledger_contract::{
-    Contract, increment, initial_state, read_round, recorded,
+    Contract, PublicStateView, increment, initial_state, read_round, recorded,
 };
 use midnight_compact_runtime::context::ConstructorContext;
 use midnight_compact_runtime::ledger::{ContractAddress, StateValue, read_counter};
@@ -22,6 +22,10 @@ use midnight_compact_runtime::ledger::{ContractAddress, StateValue, read_counter
 #[test]
 fn generated_counter_contract_runs_through_ledger_vm() {
     let constructor = initial_state(ConstructorContext::new(())).unwrap();
+    assert_eq!(
+        PublicStateView::from(&constructor).round().unwrap().value(),
+        0
+    );
     let context = constructor.into_circuit_context(ContractAddress::default());
     let read = read_round(context).unwrap();
     assert_eq!(read.result.value(), 0);
@@ -30,6 +34,7 @@ fn generated_counter_contract_runs_through_ledger_vm() {
         panic!("expected ledger field array")
     };
     assert_eq!(read_counter(&fields.get(0).unwrap()).unwrap(), 1);
+    assert_eq!(PublicStateView::from(&result).round().unwrap().value(), 1);
     let read = read_round(result.context).unwrap();
     assert_eq!(read.result.value(), 1);
 }
@@ -62,8 +67,31 @@ fn generated_counter_state_can_enter_a_replayable_ledger_trace() {
             panic!("expected ledger field array")
         };
         assert_eq!(read_counter(&fields.get(0).unwrap()).unwrap(), 1);
+        assert_eq!(PublicStateView::from(state).round().unwrap().value(), 1);
     }
+    assert_eq!(PublicStateView::from(&recorded).round().unwrap().value(), 1);
     assert_eq!(recorded.public.verify_ops().len(), 3);
+}
+
+#[test]
+fn public_counter_view_rejects_wrong_shape_and_alignment() {
+    use midnight_compact_runtime::ledger::{constructor_cell, contract_state, read_cell_at_path};
+
+    let empty = contract_state::<midnight_compact_runtime::ledger::DefaultDB>(vec![]);
+    assert_eq!(
+        PublicStateView::from(empty.get_ref()).round().unwrap_err(),
+        read_cell_at_path::<u64, _>(empty.get_ref(), &[0]).unwrap_err(),
+    );
+    let wrong_type =
+        contract_state::<midnight_compact_runtime::ledger::DefaultDB>(vec![constructor_cell(
+            false,
+        )]);
+    assert_eq!(
+        PublicStateView::from(wrong_type.get_ref())
+            .round()
+            .unwrap_err(),
+        read_cell_at_path::<u64, _>(wrong_type.get_ref(), &[0]).unwrap_err(),
+    );
 }
 
 #[test]

@@ -46,6 +46,43 @@ fn identity(result: Type, body: Expr) -> Contract {
 }
 
 #[test]
+fn public_state_getters_follow_declared_types_and_escaped_names() {
+    let mut contract = identity(Type::Unit, Expr::Unit);
+    contract.ledger_fields = vec![
+        LedgerField {
+            source: None,
+            id: "type".into(),
+            index: 0,
+            path: vec![],
+            declaration: LedgerFieldKind::Counter,
+        },
+        LedgerField {
+            source: None,
+            id: "flag".into(),
+            index: 1,
+            path: vec![],
+            declaration: LedgerFieldKind::Cell { ty: Type::Boolean },
+        },
+        LedgerField {
+            source: None,
+            id: "from".into(),
+            index: 2,
+            path: vec![],
+            declaration: LedgerFieldKind::Cell { ty: Type::Boolean },
+        },
+    ];
+    let source = render(&contract).unwrap();
+    assert!(source.contains("pub struct PublicStateView<'a, D:"));
+    assert!(source.contains("pub fn r#type("));
+    assert!(source.contains("pub fn flag(&self)"));
+    assert!(source.contains("crate::ledger_slots::r#type.inspect(self.state)"));
+    assert!(source.contains("crate::ledger_slots::flag.inspect(self.state)"));
+    assert!(source.contains("pub fn from(&self)"));
+    assert!(source.contains("runtime::public_state::PublicStateSource"));
+    assert!(source.contains("source.public_state()"));
+}
+
+#[test]
 fn ledger_validation_retains_compact_source_location() {
     let mut contract = identity(Type::Unit, Expr::Unit);
     let location = SourceLocation {
@@ -210,7 +247,7 @@ fn generated_unit_enum_uses_checked_derive_without_handwritten_codecs() {
     let source = render(&contract).unwrap();
     assert!(source.contains("CompactCellValue, CompactEnum"));
     assert!(source.contains("pub enum Choice"));
-    assert!(source.contains("RUST_RUNTIME_ABI == 28"));
+    assert!(source.contains("RUST_RUNTIME_ABI == 29"));
     assert!(!source.contains("impl FieldRepr for Choice"));
     assert!(!source.contains("impl BinaryHashRepr for Choice"));
     assert!(!source.contains("impl FromFieldRepr for Choice"));

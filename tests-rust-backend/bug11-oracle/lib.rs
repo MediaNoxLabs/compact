@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 28);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 29);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -36,7 +36,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 28);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 29);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -44,6 +44,33 @@ pub mod ledger_contract {
         meter: &'a runtime::context::WitnessReadMeter<'a>,
     }
     impl<'a> LedgerView<'a> {}
+    /// Read-only projection of an existing ledger-8 public state.
+    pub struct PublicStateView<'a, D: runtime::ledger::DB = runtime::ledger::DefaultDB> {
+        state: &'a runtime::ledger::StateValue<D>,
+    }
+    impl<'a, D: runtime::ledger::DB> PublicStateView<'a, D> {
+        /// Decode this declared Cell from the borrowed public state.
+        pub fn tiny(&self) -> Result<runtime::BoundedUint<99>, runtime::CompactError> {
+            crate::ledger_slots::tiny.inspect(self.state)
+        }
+        /// Decode this declared Cell from the borrowed public state.
+        pub fn medium(&self) -> Result<runtime::BoundedUint<69999>, runtime::CompactError> {
+            crate::ledger_slots::medium.inspect(self.state)
+        }
+        /// Decode this declared Cell from the borrowed public state.
+        pub fn wide(&self) -> Result<runtime::BoundedUint<4999999999>, runtime::CompactError> {
+            crate::ledger_slots::wide.inspect(self.state)
+        }
+    }
+    impl<'a, S: runtime::public_state::PublicStateSource> From<&'a S>
+        for PublicStateView<'a, S::Database>
+    {
+        fn from(source: &'a S) -> Self {
+            Self {
+                state: source.public_state(),
+            }
+        }
+    }
     /// Implement for infallible callbacks; use TryWitnesses for fallible ledger reads.
     #[runtime::compact_witness_bridge]
     pub trait Witnesses<Private> {}

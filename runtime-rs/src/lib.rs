@@ -26,6 +26,7 @@ pub mod ledger;
 mod natives;
 mod opaque;
 mod primitives;
+pub mod public_state;
 pub mod recording;
 pub mod slots;
 #[cfg(feature = "ledger-transaction")]
@@ -54,7 +55,7 @@ pub mod fab {
 }
 
 /// Increment when generated Rust and the runtime's public contract change.
-pub const RUST_RUNTIME_ABI: u32 = 28;
+pub const RUST_RUNTIME_ABI: u32 = 29;
 /// The ledger line selected by this Compact branch's `flake.nix`.
 pub const LEDGER_VERSION: &str = "ledger-8.0.3";
 

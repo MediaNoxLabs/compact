@@ -77,85 +77,68 @@ pub mod pure_circuits {
         attestation: crate::types::Attestation,
         currentTime: runtime::BoundedUint<18446744073709551615>,
     ) -> Result<(), runtime::CompactError> {
-        Ok({
-            {
-                if !(currentTime.value()
-                    >= (((attestation.clone()).proof).clone()).createdAt.value())
-                {
-                    return Err(runtime::CompactError::AssertionFailed(
-                        "attestation creation time cannot be in the future".to_owned(),
-                    ));
-                }
-            };
-            if (policy.clone()).enforceMaxAge {
-                {
-                    if !({
-                        let __compact_local_t_19: runtime::BoundedUint<18446744073709551615> = {
-                            let __compact_local_t_20: runtime::BoundedUint<18446744073709551615> =
-                                (((attestation.clone()).proof).clone()).createdAt;
-                            runtime::subtract_unsigned::<
-                                18446744073709551615,
-                                18446744073709551615,
-                                18446744073709551615,
-                            >(currentTime, __compact_local_t_20)?
-                        };
-                        __compact_local_t_19.value() <= (policy.clone()).maxAge.value()
-                    }) {
-                        return Err(runtime::CompactError::AssertionFailed(
-                            "attestation exceeds the max-age policy".to_owned(),
-                        ));
-                    }
-                }
-            } else {
-                ()
-            };
-            ()
-        })
+        if !(currentTime.value() >= (((attestation.clone()).proof).clone()).createdAt.value()) {
+            return Err(runtime::CompactError::AssertionFailed(
+                "attestation creation time cannot be in the future".to_owned(),
+            ));
+        }
+        if ((policy.clone()).enforceMaxAge)
+            && (!({
+                let __compact_local_t_19: runtime::BoundedUint<18446744073709551615> = {
+                    let __compact_local_t_20: runtime::BoundedUint<18446744073709551615> =
+                        (((attestation.clone()).proof).clone()).createdAt;
+                    runtime::subtract_unsigned::<
+                        18446744073709551615,
+                        18446744073709551615,
+                        18446744073709551615,
+                    >(currentTime, __compact_local_t_20)?
+                };
+                __compact_local_t_19.value() <= (policy.clone()).maxAge.value()
+            }))
+        {
+            return Err(runtime::CompactError::AssertionFailed(
+                "attestation exceeds the max-age policy".to_owned(),
+            ));
+        }
+        Ok(())
     }
     pub fn assertAgeWithin(
         attestation: crate::types::Attestation,
         currentTime: runtime::BoundedUint<18446744073709551615>,
         limit: runtime::BoundedUint<18446744073709551615>,
     ) -> Result<(), runtime::CompactError> {
-        Ok({
-            {
-                if !({
-                    let __compact_local_t_17: runtime::BoundedUint<18446744073709551615> = {
-                        let __compact_local_t_18: runtime::BoundedUint<18446744073709551615> =
-                            (((attestation.clone()).proof).clone()).createdAt;
-                        runtime::subtract_unsigned::<
-                            18446744073709551615,
-                            18446744073709551615,
-                            18446744073709551615,
-                        >(currentTime, __compact_local_t_18)?
-                    };
-                    __compact_local_t_17.value() <= limit.value()
-                }) {
-                    return Err(runtime::CompactError::AssertionFailed(
-                        "attestation age exceeds the limit".to_owned(),
-                    ));
-                }
+        if !({
+            let __compact_local_t_17: runtime::BoundedUint<18446744073709551615> = {
+                let __compact_local_t_18: runtime::BoundedUint<18446744073709551615> =
+                    (((attestation.clone()).proof).clone()).createdAt;
+                runtime::subtract_unsigned::<
+                    18446744073709551615,
+                    18446744073709551615,
+                    18446744073709551615,
+                >(currentTime, __compact_local_t_18)?
             };
-            ()
-        })
+            __compact_local_t_17.value() <= limit.value()
+        }) {
+            return Err(runtime::CompactError::AssertionFailed(
+                "attestation age exceeds the limit".to_owned(),
+            ));
+        }
+        Ok(())
     }
     pub fn ageGap(
         newer: crate::types::Attestation,
         older: crate::types::Attestation,
     ) -> Result<runtime::BoundedUint<18446744073709551615>, runtime::CompactError> {
         Ok({
-            {
-                if !({
-                    let __compact_local_t_14: runtime::BoundedUint<18446744073709551615> =
-                        (((newer.clone()).proof).clone()).createdAt;
-                    __compact_local_t_14.value()
-                        >= (((older.clone()).proof).clone()).createdAt.value()
-                }) {
-                    return Err(runtime::CompactError::AssertionFailed(
-                        "newer attestation must not predate the older one".to_owned(),
-                    ));
-                }
-            };
+            if !({
+                let __compact_local_t_14: runtime::BoundedUint<18446744073709551615> =
+                    (((newer.clone()).proof).clone()).createdAt;
+                __compact_local_t_14.value() >= (((older.clone()).proof).clone()).createdAt.value()
+            }) {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "newer attestation must not predate the older one".to_owned(),
+                ));
+            }
             {
                 let __compact_local_t_15: runtime::BoundedUint<18446744073709551615> =
                     (((newer.clone()).proof).clone()).createdAt;

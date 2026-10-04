@@ -27,20 +27,16 @@ pub mod pure_circuits {
         value: runtime::Field,
     ) -> Result<runtime::Field, runtime::CompactError> {
         Ok({
-            {
-                if !(first) {
-                    return Err(runtime::CompactError::AssertionFailed(
-                        "first condition failed".to_owned(),
-                    ));
-                }
-            };
-            {
-                if !(second) {
-                    return Err(runtime::CompactError::AssertionFailed(
-                        "second condition failed".to_owned(),
-                    ));
-                }
-            };
+            if !(first) {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "first condition failed".to_owned(),
+                ));
+            }
+            if !(second) {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "second condition failed".to_owned(),
+                ));
+            }
             value
         })
     }

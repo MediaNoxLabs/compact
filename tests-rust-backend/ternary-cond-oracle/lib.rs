@@ -139,26 +139,22 @@ pub mod pure_circuits {
         })?)
     }
     pub fn assertArg(c: bool, x: runtime::BoundedUint<255>) -> Result<(), runtime::CompactError> {
-        Ok({
-            {
-                if !(if c {
-                    x.value()
-                        > runtime::BoundedUint::<255>::new(1u128)
-                            .expect("Compact Uint literal fits its maximum")
-                            .value()
-                } else {
-                    x.value()
-                        > runtime::BoundedUint::<255>::new(2u128)
-                            .expect("Compact Uint literal fits its maximum")
-                            .value()
-                }) {
-                    return Err(runtime::CompactError::AssertionFailed(
-                        "ternary assert".to_owned(),
-                    ));
-                }
-            };
-            ()
-        })
+        if !(if c {
+            x.value()
+                > runtime::BoundedUint::<255>::new(1u128)
+                    .expect("Compact Uint literal fits its maximum")
+                    .value()
+        } else {
+            x.value()
+                > runtime::BoundedUint::<255>::new(2u128)
+                    .expect("Compact Uint literal fits its maximum")
+                    .value()
+        }) {
+            return Err(runtime::CompactError::AssertionFailed(
+                "ternary assert".to_owned(),
+            ));
+        }
+        Ok(())
     }
     pub fn arithOperand(
         c: bool,

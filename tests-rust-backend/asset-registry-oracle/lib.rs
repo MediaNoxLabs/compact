@@ -132,58 +132,46 @@ pub mod pure_circuits {
         record: crate::types::AssetRecord,
         currentTime: runtime::BoundedUint<18446744073709551615>,
     ) -> Result<(), runtime::CompactError> {
-        Ok({
-            {
-                if !(currentTime.value()
-                    >= (((record.clone()).provenance).clone()).registeredAt.value())
-                {
-                    return Err(runtime::CompactError::AssertionFailed(
-                        "registration time cannot be in the future".to_owned(),
-                    ));
-                }
-            };
-            if (policy.clone()).enforceMaxAge {
-                {
-                    if !({
-                        let __compact_local_t_114: runtime::BoundedUint<18446744073709551615> = {
-                            let __compact_local_t_115: runtime::BoundedUint<18446744073709551615> =
-                                (((record.clone()).provenance).clone()).registeredAt;
-                            runtime::subtract_unsigned::<
-                                18446744073709551615,
-                                18446744073709551615,
-                                18446744073709551615,
-                            >(currentTime, __compact_local_t_115)?
-                        };
-                        __compact_local_t_114.value() <= (policy.clone()).maxAge.value()
-                    }) {
-                        return Err(runtime::CompactError::AssertionFailed(
-                            "record exceeds the max-age policy".to_owned(),
-                        ));
-                    }
-                }
-            } else {
-                ()
-            };
-            ()
-        })
+        if !(currentTime.value() >= (((record.clone()).provenance).clone()).registeredAt.value()) {
+            return Err(runtime::CompactError::AssertionFailed(
+                "registration time cannot be in the future".to_owned(),
+            ));
+        }
+        if ((policy.clone()).enforceMaxAge)
+            && (!({
+                let __compact_local_t_114: runtime::BoundedUint<18446744073709551615> = {
+                    let __compact_local_t_115: runtime::BoundedUint<18446744073709551615> =
+                        (((record.clone()).provenance).clone()).registeredAt;
+                    runtime::subtract_unsigned::<
+                        18446744073709551615,
+                        18446744073709551615,
+                        18446744073709551615,
+                    >(currentTime, __compact_local_t_115)?
+                };
+                __compact_local_t_114.value() <= (policy.clone()).maxAge.value()
+            }))
+        {
+            return Err(runtime::CompactError::AssertionFailed(
+                "record exceeds the max-age policy".to_owned(),
+            ));
+        }
+        Ok(())
     }
     pub fn registrationGap(
         newer: crate::types::AssetRecord,
         older: crate::types::AssetRecord,
     ) -> Result<runtime::BoundedUint<18446744073709551615>, runtime::CompactError> {
         Ok({
-            {
-                if !({
-                    let __compact_local_t_111: runtime::BoundedUint<18446744073709551615> =
-                        (((newer.clone()).provenance).clone()).registeredAt;
-                    __compact_local_t_111.value()
-                        >= (((older.clone()).provenance).clone()).registeredAt.value()
-                }) {
-                    return Err(runtime::CompactError::AssertionFailed(
-                        "newer record must not predate the older one".to_owned(),
-                    ));
-                }
-            };
+            if !({
+                let __compact_local_t_111: runtime::BoundedUint<18446744073709551615> =
+                    (((newer.clone()).provenance).clone()).registeredAt;
+                __compact_local_t_111.value()
+                    >= (((older.clone()).provenance).clone()).registeredAt.value()
+            }) {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "newer record must not predate the older one".to_owned(),
+                ));
+            }
             {
                 let __compact_local_t_112: runtime::BoundedUint<18446744073709551615> =
                     (((newer.clone()).provenance).clone()).registeredAt;
@@ -202,35 +190,27 @@ pub mod pure_circuits {
     pub fn assertRecordClassKnown(
         record: crate::types::AssetRecord,
     ) -> Result<(), runtime::CompactError> {
-        Ok({
-            {
-                if !((record.clone()).kind != crate::types::AssetClass::Unspecified) {
-                    return Err(runtime::CompactError::AssertionFailed(
-                        "asset class must be specified".to_owned(),
-                    ));
-                }
-            };
-            ()
-        })
+        if !((record.clone()).kind != crate::types::AssetClass::Unspecified) {
+            return Err(runtime::CompactError::AssertionFailed(
+                "asset class must be specified".to_owned(),
+            ));
+        }
+        Ok(())
     }
     pub fn assertGrantNotFuture(
         grant: crate::types::CustodyGrant,
         asOf: runtime::BoundedUint<18446744073709551615>,
     ) -> Result<(), runtime::CompactError> {
-        Ok({
-            {
-                if !({
-                    let __compact_local_t_110: runtime::BoundedUint<18446744073709551615> =
-                        (grant.clone()).grantedAt;
-                    __compact_local_t_110.value() <= asOf.value()
-                }) {
-                    return Err(runtime::CompactError::AssertionFailed(
-                        "grant is not yet effective".to_owned(),
-                    ));
-                }
-            };
-            ()
-        })
+        if !({
+            let __compact_local_t_110: runtime::BoundedUint<18446744073709551615> =
+                (grant.clone()).grantedAt;
+            __compact_local_t_110.value() <= asOf.value()
+        }) {
+            return Err(runtime::CompactError::AssertionFailed(
+                "grant is not yet effective".to_owned(),
+            ));
+        }
+        Ok(())
     }
 }
 /// Typed descriptors for Compact ledger declarations.

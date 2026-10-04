@@ -25,137 +25,113 @@ pub mod pure_circuits {
         q: runtime::BoundedUint<4294967295>,
         y: runtime::BoundedUint<4294967295>,
     ) -> Result<(), runtime::CompactError> {
-        Ok({
-            {
-                if !({
-                    let __compact_local_t_13: runtime::BoundedUint<17179869180> =
-                        runtime::multiply_unsigned::<17179869180, 17179869180, 17179869180>(
-                            runtime::cast_unsigned::<4294967295, 17179869180>(q)?,
-                            runtime::BoundedUint::<17179869180>::new(4u128)
-                                .expect("Compact Uint literal fits its maximum"),
-                        )?;
-                    __compact_local_t_13.value()
-                        <= runtime::cast_unsigned::<4294967295, 17179869180>(y)?.value()
-                }) {
-                    return Err(runtime::CompactError::AssertionFailed(
-                        "product must not exceed the bound".to_owned(),
-                    ));
-                }
-            };
-            ()
-        })
+        if !({
+            let __compact_local_t_13: runtime::BoundedUint<17179869180> =
+                runtime::multiply_unsigned::<17179869180, 17179869180, 17179869180>(
+                    runtime::cast_unsigned::<4294967295, 17179869180>(q)?,
+                    runtime::BoundedUint::<17179869180>::new(4u128)
+                        .expect("Compact Uint literal fits its maximum"),
+                )?;
+            __compact_local_t_13.value()
+                <= runtime::cast_unsigned::<4294967295, 17179869180>(y)?.value()
+        }) {
+            return Err(runtime::CompactError::AssertionFailed(
+                "product must not exceed the bound".to_owned(),
+            ));
+        }
+        Ok(())
     }
     pub fn assertProductLT(
         q: runtime::BoundedUint<4294967295>,
         y: runtime::BoundedUint<4294967295>,
     ) -> Result<(), runtime::CompactError> {
-        Ok({
-            {
-                if !({
-                    let __compact_local_t_12: runtime::BoundedUint<17179869180> =
-                        runtime::multiply_unsigned::<17179869180, 17179869180, 17179869180>(
-                            runtime::cast_unsigned::<4294967295, 17179869180>(q)?,
-                            runtime::BoundedUint::<17179869180>::new(4u128)
-                                .expect("Compact Uint literal fits its maximum"),
-                        )?;
-                    __compact_local_t_12.value()
-                        < runtime::cast_unsigned::<4294967295, 17179869180>(y)?.value()
-                }) {
-                    return Err(runtime::CompactError::AssertionFailed(
-                        "product must stay below the bound".to_owned(),
-                    ));
-                }
-            };
-            ()
-        })
+        if !({
+            let __compact_local_t_12: runtime::BoundedUint<17179869180> =
+                runtime::multiply_unsigned::<17179869180, 17179869180, 17179869180>(
+                    runtime::cast_unsigned::<4294967295, 17179869180>(q)?,
+                    runtime::BoundedUint::<17179869180>::new(4u128)
+                        .expect("Compact Uint literal fits its maximum"),
+                )?;
+            __compact_local_t_12.value()
+                < runtime::cast_unsigned::<4294967295, 17179869180>(y)?.value()
+        }) {
+            return Err(runtime::CompactError::AssertionFailed(
+                "product must stay below the bound".to_owned(),
+            ));
+        }
+        Ok(())
     }
     pub fn assertProductGT(
         q: runtime::BoundedUint<4294967295>,
         y: runtime::BoundedUint<4294967295>,
     ) -> Result<(), runtime::CompactError> {
-        Ok({
-            {
-                if !({
-                    let __compact_local_t_11: runtime::BoundedUint<17179869180> =
-                        runtime::multiply_unsigned::<17179869180, 17179869180, 17179869180>(
-                            runtime::cast_unsigned::<4294967295, 17179869180>(q)?,
-                            runtime::BoundedUint::<17179869180>::new(4u128)
-                                .expect("Compact Uint literal fits its maximum"),
-                        )?;
-                    __compact_local_t_11.value()
-                        > runtime::cast_unsigned::<4294967295, 17179869180>(y)?.value()
-                }) {
-                    return Err(runtime::CompactError::AssertionFailed(
-                        "product must exceed the bound".to_owned(),
-                    ));
-                }
-            };
-            ()
-        })
+        if !({
+            let __compact_local_t_11: runtime::BoundedUint<17179869180> =
+                runtime::multiply_unsigned::<17179869180, 17179869180, 17179869180>(
+                    runtime::cast_unsigned::<4294967295, 17179869180>(q)?,
+                    runtime::BoundedUint::<17179869180>::new(4u128)
+                        .expect("Compact Uint literal fits its maximum"),
+                )?;
+            __compact_local_t_11.value()
+                > runtime::cast_unsigned::<4294967295, 17179869180>(y)?.value()
+        }) {
+            return Err(runtime::CompactError::AssertionFailed(
+                "product must exceed the bound".to_owned(),
+            ));
+        }
+        Ok(())
     }
     pub fn assertProductGE(
         q: runtime::BoundedUint<4294967295>,
         y: runtime::BoundedUint<4294967295>,
     ) -> Result<(), runtime::CompactError> {
-        Ok({
-            {
-                if !({
-                    let __compact_local_t_10: runtime::BoundedUint<17179869180> =
-                        runtime::multiply_unsigned::<17179869180, 17179869180, 17179869180>(
-                            runtime::cast_unsigned::<4294967295, 17179869180>(q)?,
-                            runtime::BoundedUint::<17179869180>::new(4u128)
-                                .expect("Compact Uint literal fits its maximum"),
-                        )?;
-                    __compact_local_t_10.value()
-                        >= runtime::cast_unsigned::<4294967295, 17179869180>(y)?.value()
-                }) {
-                    return Err(runtime::CompactError::AssertionFailed(
-                        "product must reach the bound".to_owned(),
-                    ));
-                }
-            };
-            ()
-        })
+        if !({
+            let __compact_local_t_10: runtime::BoundedUint<17179869180> =
+                runtime::multiply_unsigned::<17179869180, 17179869180, 17179869180>(
+                    runtime::cast_unsigned::<4294967295, 17179869180>(q)?,
+                    runtime::BoundedUint::<17179869180>::new(4u128)
+                        .expect("Compact Uint literal fits its maximum"),
+                )?;
+            __compact_local_t_10.value()
+                >= runtime::cast_unsigned::<4294967295, 17179869180>(y)?.value()
+        }) {
+            return Err(runtime::CompactError::AssertionFailed(
+                "product must reach the bound".to_owned(),
+            ));
+        }
+        Ok(())
     }
     pub fn assertProductEQ(
         q: runtime::BoundedUint<4294967295>,
         y: runtime::BoundedUint<4294967295>,
     ) -> Result<(), runtime::CompactError> {
-        Ok({
-            {
-                if !(runtime::multiply_unsigned::<17179869180, 17179869180, 17179869180>(
-                    runtime::cast_unsigned::<4294967295, 17179869180>(q)?,
-                    runtime::BoundedUint::<17179869180>::new(4u128)
-                        .expect("Compact Uint literal fits its maximum"),
-                )? == runtime::cast_unsigned::<4294967295, 17179869180>(y)?)
-                {
-                    return Err(runtime::CompactError::AssertionFailed(
-                        "product must equal the bound".to_owned(),
-                    ));
-                }
-            };
-            ()
-        })
+        if !(runtime::multiply_unsigned::<17179869180, 17179869180, 17179869180>(
+            runtime::cast_unsigned::<4294967295, 17179869180>(q)?,
+            runtime::BoundedUint::<17179869180>::new(4u128)
+                .expect("Compact Uint literal fits its maximum"),
+        )? == runtime::cast_unsigned::<4294967295, 17179869180>(y)?)
+        {
+            return Err(runtime::CompactError::AssertionFailed(
+                "product must equal the bound".to_owned(),
+            ));
+        }
+        Ok(())
     }
     pub fn assertProductNE(
         q: runtime::BoundedUint<4294967295>,
         y: runtime::BoundedUint<4294967295>,
     ) -> Result<(), runtime::CompactError> {
-        Ok({
-            {
-                if !(runtime::multiply_unsigned::<17179869180, 17179869180, 17179869180>(
-                    runtime::cast_unsigned::<4294967295, 17179869180>(q)?,
-                    runtime::BoundedUint::<17179869180>::new(4u128)
-                        .expect("Compact Uint literal fits its maximum"),
-                )? != runtime::cast_unsigned::<4294967295, 17179869180>(y)?)
-                {
-                    return Err(runtime::CompactError::AssertionFailed(
-                        "product must differ from the bound".to_owned(),
-                    ));
-                }
-            };
-            ()
-        })
+        if !(runtime::multiply_unsigned::<17179869180, 17179869180, 17179869180>(
+            runtime::cast_unsigned::<4294967295, 17179869180>(q)?,
+            runtime::BoundedUint::<17179869180>::new(4u128)
+                .expect("Compact Uint literal fits its maximum"),
+        )? != runtime::cast_unsigned::<4294967295, 17179869180>(y)?)
+        {
+            return Err(runtime::CompactError::AssertionFailed(
+                "product must differ from the bound".to_owned(),
+            ));
+        }
+        Ok(())
     }
     pub fn sumMixed(
         q: runtime::BoundedUint<4294967295>,
@@ -193,15 +169,13 @@ pub mod pure_circuits {
                         .expect("Compact Uint literal fits its maximum"),
                 )?;
             {
+                if !(runtime::cast_unsigned::<4294967295, 17179869180>(y)?.value()
+                    >= __compact_local_t_9.value())
                 {
-                    if !(runtime::cast_unsigned::<4294967295, 17179869180>(y)?.value()
-                        >= __compact_local_t_9.value())
-                    {
-                        return Err(runtime::CompactError::AssertionFailed(
-                            "result of subtraction would be negative".to_owned(),
-                        ));
-                    }
-                };
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "result of subtraction would be negative".to_owned(),
+                    ));
+                }
                 runtime::subtract_unsigned::<4294967295, 4294967295, 4294967295>(
                     y,
                     runtime::cast_unsigned::<17179869180, 4294967295>(__compact_local_t_9)?,

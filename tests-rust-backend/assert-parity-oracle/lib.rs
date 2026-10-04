@@ -23,13 +23,11 @@ pub mod pure_circuits {
     const _: () = assert!(runtime::RUST_RUNTIME_ABI == 34);
     pub fn require_true(b: bool) -> Result<bool, runtime::CompactError> {
         Ok({
-            {
-                if !(b) {
-                    return Err(runtime::CompactError::AssertionFailed(
-                        "must be true".to_owned(),
-                    ));
-                }
-            };
+            if !(b) {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "must be true".to_owned(),
+                ));
+            }
             b
         })
     }

@@ -46,6 +46,64 @@ fn identity(result: Type, body: Expr) -> Contract {
 }
 
 #[test]
+fn pure_unit_circuits_keep_effects_in_statement_order() {
+    let mut contract = identity(Type::Unit, Expr::Unit);
+    let literal = render(&contract).unwrap();
+    assert!(literal.contains("pub fn identity(value: runtime::Field) -> Result<(), runtime::CompactError> {\n        Ok(())"));
+
+    contract.circuits[0].body = Expr::Sequence {
+        steps: vec![Expr::Assert {
+            condition: Box::new(Expr::Boolean { value: true }),
+            message: "first".into(),
+        }],
+        value: Box::new(Expr::Unit),
+    };
+    let assertions = render(&contract).unwrap();
+    assert!(assertions.contains("if !(true)"));
+    assert!(assertions.contains("AssertionFailed(\"first\".to_owned())"));
+    assert!(!assertions.contains("Ok({"));
+
+    contract.circuits.push(PureCircuit {
+        source: None,
+        internal: false,
+        name: "target".into(),
+        parameters: vec![Parameter {
+            name: "value".into(),
+            ty: Type::Field,
+        }],
+        result: Type::Unit,
+        body: Expr::Unit,
+    });
+    contract.circuits[0].body = Expr::If {
+        condition: Box::new(Expr::Boolean { value: true }),
+        then: Box::new(Expr::Call {
+            name: "target".into(),
+            arguments: vec![Expr::Parameter {
+                name: "value".into(),
+            }],
+        }),
+        otherwise: Box::new(Expr::Unit),
+    };
+    let conditional_call = render(&contract).unwrap();
+    assert!(conditional_call.contains("if true"));
+    assert!(conditional_call.contains("crate::pure_circuits::target(value)?;"));
+    assert!(conditional_call.contains("Ok(())"));
+    assert!(!conditional_call.contains("else {\n            ()"));
+
+    contract.circuits[0].body = Expr::If {
+        condition: Box::new(Expr::Boolean { value: true }),
+        then: Box::new(Expr::Assert {
+            condition: Box::new(Expr::Boolean { value: false }),
+            message: "guarded".into(),
+        }),
+        otherwise: Box::new(Expr::Unit),
+    };
+    let guarded_assertion = render(&contract).unwrap();
+    assert!(guarded_assertion.contains("if (true) && (!(false))"));
+    assert!(!guarded_assertion.contains("if true {\n            if"));
+}
+
+#[test]
 fn public_state_getters_follow_declared_types_and_escaped_names() {
     let mut contract = identity(Type::Unit, Expr::Unit);
     contract.ledger_fields = vec![

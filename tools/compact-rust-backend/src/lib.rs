@@ -1014,6 +1014,113 @@ impl VisitMut for CompactSignatureLint {
     }
 }
 
+fn unit_statements(
+    expr: &Expr,
+    parameters: &HashMap<&str, (&Type, syn::Ident)>,
+    circuits: &HashMap<&str, &PureCircuit>,
+) -> Result<Vec<syn::Stmt>, RenderError> {
+    match expr {
+        Expr::Unit | Expr::Default { ty: Type::Unit } => Ok(Vec::new()),
+        Expr::Sequence { steps, value } => {
+            let mut statements = Vec::new();
+            for step in steps {
+                statements.extend(unit_statements(step, parameters, circuits)?);
+            }
+            statements.extend(unit_statements(value, parameters, circuits)?);
+            Ok(statements)
+        }
+        Expr::Assert { condition, message } => {
+            let (condition, actual) = expression_with_calls(condition, parameters, circuits)?;
+            if actual != Type::Boolean {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Boolean,
+                    actual,
+                });
+            }
+            Ok(vec![syn::parse_quote!(if !(#condition) {
+                return Err(runtime::CompactError::AssertionFailed(#message.to_owned()));
+            })])
+        }
+        Expr::If {
+            condition,
+            then,
+            otherwise,
+        } => {
+            let (condition, actual) = expression_with_calls(condition, parameters, circuits)?;
+            if actual != Type::Boolean {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Boolean,
+                    actual,
+                });
+            }
+            let then = unit_statements(then, parameters, circuits)?;
+            let otherwise = unit_statements(otherwise, parameters, circuits)?;
+            if otherwise.is_empty() {
+                if let [syn::Stmt::Expr(syn::Expr::If(inner), _)] = then.as_slice() {
+                    if inner.else_branch.is_none() {
+                        let inner_condition = &inner.cond;
+                        let inner_body = &inner.then_branch;
+                        return Ok(vec![
+                            syn::parse_quote!(if (#condition) && (#inner_condition) #inner_body),
+                        ]);
+                    }
+                }
+            }
+            if otherwise.is_empty() && then.is_empty() {
+                Ok(vec![syn::parse_quote!(let _ = #condition;)])
+            } else if otherwise.is_empty() {
+                Ok(vec![syn::parse_quote!(if #condition { #(#then)* })])
+            } else if then.is_empty() {
+                Ok(vec![syn::parse_quote!(if !(#condition) { #(#otherwise)* })])
+            } else {
+                Ok(vec![syn::parse_quote!(if #condition {
+                    #(#then)*
+                } else {
+                    #(#otherwise)*
+                })])
+            }
+        }
+        Expr::Let { bindings, body } => {
+            let mut locals = parameters.clone();
+            let mut statements = Vec::<syn::Stmt>::new();
+            for binding in bindings {
+                ident(&binding.name)?;
+                let (value, actual) = expression_with_calls(&binding.value, &locals, circuits)?;
+                if actual != binding.ty {
+                    return Err(RenderError::TypeMismatch {
+                        expected: binding.ty.clone(),
+                        actual,
+                    });
+                }
+                let local_ty = rust_type(&binding.ty)?;
+                let local_name = syn::Ident::new(
+                    &format!("__compact_local_{}", binding.name),
+                    Span::call_site(),
+                );
+                statements.push(syn::parse_quote!(let #local_name: #local_ty = #value;));
+                locals.insert(binding.name.as_str(), (&binding.ty, local_name));
+            }
+            let body = unit_statements(body, &locals, circuits)?;
+            if statements.is_empty() {
+                Ok(body)
+            } else {
+                statements.extend(body);
+                Ok(vec![syn::parse_quote!({ #(#statements)* })])
+            }
+        }
+        _ => {
+            let (rendered, actual) = expression_with_calls(expr, parameters, circuits)?;
+            if actual != Type::Unit {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Unit,
+                    actual,
+                });
+            }
+            Ok(vec![syn::parse_quote!(#rendered;)])
+        }
+    }
+}
+
 fn expression_with_calls(
     expr: &Expr,
     parameters: &HashMap<&str, (&Type, syn::Ident)>,
@@ -1205,14 +1312,14 @@ fn expression_with_calls(
         Expr::Sequence { steps, value } => {
             let mut statements = Vec::<syn::Stmt>::new();
             for step in steps {
-                let (rendered, actual) = expression_with_calls(step, parameters, circuits)?;
+                let (_, actual) = expression_with_calls(step, parameters, circuits)?;
                 if actual != Type::Unit {
                     return Err(RenderError::TypeMismatch {
                         expected: Type::Unit,
                         actual,
                     });
                 }
-                statements.push(syn::parse_quote!(#rendered;));
+                statements.extend(unit_statements(step, parameters, circuits)?);
             }
             let (value, ty) = expression_with_calls(value, parameters, circuits)?;
             Ok((syn::parse_quote!({ #(#statements)* #value }), ty))
@@ -2626,7 +2733,26 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
                 });
             }
             let result = rust_type(&circuit.result)?;
-            let item: syn::Item = if circuit.internal {
+            let unit_body = if actual == Type::Unit {
+                unit_statements(&circuit.body, &parameters, &callable_circuits)?
+            } else {
+                Vec::new()
+            };
+            let item: syn::Item = if circuit.internal && actual == Type::Unit {
+                syn::parse_quote! {
+                    pub(crate) fn #name(#(#args),*) -> Result<#result, runtime::CompactError> {
+                        #(#unit_body)*
+                        Ok(())
+                    }
+                }
+            } else if actual == Type::Unit {
+                syn::parse_quote! {
+                    pub fn #name(#(#args),*) -> Result<#result, runtime::CompactError> {
+                        #(#unit_body)*
+                        Ok(())
+                    }
+                }
+            } else if circuit.internal {
                 syn::parse_quote! {
                     pub(crate) fn #name(#(#args),*) -> Result<#result, runtime::CompactError> {
                         Ok(#body)

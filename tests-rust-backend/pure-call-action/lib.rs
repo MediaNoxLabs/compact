@@ -22,16 +22,12 @@ pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
     const _: () = assert!(runtime::RUST_RUNTIME_ABI == 34);
     pub fn require_positive(value: runtime::Field) -> Result<(), runtime::CompactError> {
-        Ok({
-            {
-                if !(value != runtime::Field::from(0u128)) {
-                    return Err(runtime::CompactError::AssertionFailed(
-                        "value must be positive".to_owned(),
-                    ));
-                }
-            };
-            ()
-        })
+        if !(value != runtime::Field::from(0u128)) {
+            return Err(runtime::CompactError::AssertionFailed(
+                "value must be positive".to_owned(),
+            ));
+        }
+        Ok(())
     }
 }
 /// Typed descriptors for Compact ledger declarations.

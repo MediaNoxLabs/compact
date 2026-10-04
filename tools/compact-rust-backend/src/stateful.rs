@@ -24,8 +24,8 @@ use crate::ir::{
 };
 use crate::{
     RenderError, UnsignedMaximum, coerce_expression, expression_with_calls, ident,
-    ledger_path_expr, list_head_result_type, map_slot_types, rust_type, unsigned_cast_syntax,
-    unsigned_maximum,
+    ledger_path_expr, list_head_result_type, map_slot_types, public_parameter_idents, rust_type,
+    unsigned_cast_syntax, unsigned_maximum,
 };
 
 pub(crate) fn render_state_expression(
@@ -1330,8 +1330,11 @@ pub(crate) fn render_contract_method(
     let uses_witness = circuit_uses_witness(circuit, circuits, &mut HashSet::new())?;
     let mut args = Vec::<syn::FnArg>::new();
     let mut call_args = Vec::<syn::Ident>::new();
-    for (index, parameter) in circuit.parameters.iter().enumerate() {
-        let arg = syn::Ident::new(&format!("__compact_param_{index}"), Span::call_site());
+    for (parameter, arg) in circuit
+        .parameters
+        .iter()
+        .zip(public_parameter_idents(&circuit.parameters))
+    {
         let ty = rust_type(&parameter.ty)?;
         args.push(syn::parse_quote!(#arg: #ty));
         call_args.push(arg);

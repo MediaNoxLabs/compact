@@ -1406,47 +1406,41 @@ pub mod ledger_contract {
         pub fn setCustodian<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: crate::types::ContractAddress,
+            holder: crate::types::ContractAddress,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError>
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::setCustodian(context, &self.witnesses, __compact_param_0)
+            crate::ledger_contract::setCustodian(context, &self.witnesses, holder)
         }
         pub fn setRecord<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::OpaqueString,
-            __compact_param_1: crate::types::AssetRecord,
-            __compact_param_2: crate::types::RecordMutation,
+            recordId: runtime::OpaqueString,
+            record: crate::types::AssetRecord,
+            mutation: crate::types::RecordMutation,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError>
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::setRecord(
-                context,
-                &self.witnesses,
-                __compact_param_0,
-                __compact_param_1,
-                __compact_param_2,
-            )
+            crate::ledger_contract::setRecord(context, &self.witnesses, recordId, record, mutation)
         }
         pub fn removeRecord<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::OpaqueString,
+            recordId: runtime::OpaqueString,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError>
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::removeRecord(context, &self.witnesses, __compact_param_0)
+            crate::ledger_contract::removeRecord(context, &self.witnesses, recordId)
         }
         pub fn setCustodyGrant<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::OpaqueString,
-            __compact_param_1: crate::types::CustodyGrant,
-            __compact_param_2: crate::types::RecordMutation,
+            grantId: runtime::OpaqueString,
+            grant: crate::types::CustodyGrant,
+            mutation: crate::types::RecordMutation,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError>
         where
             W: TryWitnesses<Private>,
@@ -1454,69 +1448,55 @@ pub mod ledger_contract {
             crate::ledger_contract::setCustodyGrant(
                 context,
                 &self.witnesses,
-                __compact_param_0,
-                __compact_param_1,
-                __compact_param_2,
+                grantId,
+                grant,
+                mutation,
             )
         }
         pub fn setWatch<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::OpaqueString,
-            __compact_param_1: crate::types::ListMutation,
+            recordId: runtime::OpaqueString,
+            mutation: crate::types::ListMutation,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError>
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::setWatch(
-                context,
-                &self.witnesses,
-                __compact_param_0,
-                __compact_param_1,
-            )
+            crate::ledger_contract::setWatch(context, &self.witnesses, recordId, mutation)
         }
         pub fn tag<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
+            value: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError>
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::tag(context, &self.witnesses, __compact_param_0)
+            crate::ledger_contract::tag(context, &self.witnesses, value)
         }
         pub fn assertStoredRecordFresh<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::OpaqueString,
-            __compact_param_1: crate::types::FreshnessPolicy,
-            __compact_param_2: runtime::BoundedUint<18446744073709551615>,
+            recordId: runtime::OpaqueString,
+            policy: crate::types::FreshnessPolicy,
+            currentTime: runtime::BoundedUint<18446744073709551615>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::assertStoredRecordFresh(
-                context,
-                __compact_param_0,
-                __compact_param_1,
-                __compact_param_2,
-            )
+            crate::ledger_contract::assertStoredRecordFresh(context, recordId, policy, currentTime)
         }
         pub fn assertGrantEffective<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::OpaqueString,
-            __compact_param_1: runtime::BoundedUint<18446744073709551615>,
+            grantId: runtime::OpaqueString,
+            asOf: runtime::BoundedUint<18446744073709551615>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::assertGrantEffective(
-                context,
-                __compact_param_0,
-                __compact_param_1,
-            )
+            crate::ledger_contract::assertGrantEffective(context, grantId, asOf)
         }
         pub fn acceptIfFresh<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: crate::types::FreshnessPolicy,
-            __compact_param_1: crate::types::AssetRecord,
-            __compact_param_2: runtime::BoundedUint<18446744073709551615>,
+            policy: crate::types::FreshnessPolicy,
+            record: crate::types::AssetRecord,
+            currentTime: runtime::BoundedUint<18446744073709551615>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError>
         where
             W: TryWitnesses<Private>,
@@ -1524,9 +1504,9 @@ pub mod ledger_contract {
             crate::ledger_contract::acceptIfFresh(
                 context,
                 &self.witnesses,
-                __compact_param_0,
-                __compact_param_1,
-                __compact_param_2,
+                policy,
+                record,
+                currentTime,
             )
         }
         pub fn close<Private>(

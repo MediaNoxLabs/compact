@@ -174,24 +174,23 @@ pub mod ledger_contract {
             pub fn choose<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: crate::types::Choice,
+                next: crate::types::Choice,
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             {
-                crate::ledger_contract::recorded::choose(context, __compact_param_0)
+                crate::ledger_contract::recorded::choose(context, next)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn choose_call<'observed, Private>(
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
-                __compact_param_0: crate::types::Choice,
+                next: crate::types::Choice,
             ) -> Result<
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
-                let recorded =
-                    self.choose(observed.circuit_context(private_state), __compact_param_0)?;
+                let input = runtime::fab::AlignedValue::from(next.clone());
+                let recorded = self.choose(observed.circuit_context(private_state), next)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed, recorded, "choose", input,
                 ))
@@ -270,9 +269,9 @@ pub mod ledger_contract {
         pub fn choose<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: crate::types::Choice,
+            next: crate::types::Choice,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::choose(context, __compact_param_0)
+            crate::ledger_contract::choose(context, next)
         }
         pub fn selectNo<Private>(
             &self,

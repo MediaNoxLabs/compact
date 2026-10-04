@@ -382,18 +382,18 @@ pub mod ledger_contract {
         pub fn recordPinned<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::BoundedUint<4294967295>,
-            __compact_param_1: runtime::BoundedUint<4294967295>,
+            q: runtime::BoundedUint<4294967295>,
+            y: runtime::BoundedUint<4294967295>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::recordPinned(context, __compact_param_0, __compact_param_1)
+            crate::ledger_contract::recordPinned(context, q, y)
         }
         pub fn recordMatching<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::BoundedUint<255>,
-            __compact_param_1: runtime::BoundedUint<4294967295>,
+            small: runtime::BoundedUint<255>,
+            big: runtime::BoundedUint<4294967295>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::recordMatching(context, __compact_param_0, __compact_param_1)
+            crate::ledger_contract::recordMatching(context, small, big)
         }
     }
 }

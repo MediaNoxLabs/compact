@@ -101,12 +101,12 @@ pub mod ledger_contract {
         pub fn apply_offset<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
+            value: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, runtime::Field>, runtime::CompactError>
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::apply_offset(context, &self.witnesses, __compact_param_0)
+            crate::ledger_contract::apply_offset(context, &self.witnesses, value)
         }
     }
 }

@@ -160,9 +160,9 @@ pub mod ledger_contract {
         pub fn run<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: bool,
+            c: bool,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::run(context, __compact_param_0)
+            crate::ledger_contract::run(context, c)
         }
     }
 }

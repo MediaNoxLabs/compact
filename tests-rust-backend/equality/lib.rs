@@ -140,18 +140,13 @@ pub mod ledger_contract {
         pub fn equal_echo<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
-            __compact_param_1: runtime::Field,
+            left: runtime::Field,
+            right: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, bool>, runtime::CompactError>
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::equal_echo(
-                context,
-                &self.witnesses,
-                __compact_param_0,
-                __compact_param_1,
-            )
+            crate::ledger_contract::equal_echo(context, &self.witnesses, left, right)
         }
     }
 }

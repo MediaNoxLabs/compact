@@ -309,24 +309,23 @@ pub mod ledger_contract {
             pub fn seed<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: runtime::Field,
+                value: runtime::Field,
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             {
-                crate::ledger_contract::recorded::seed(context, __compact_param_0)
+                crate::ledger_contract::recorded::seed(context, value)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn seed_call<'observed, Private>(
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
-                __compact_param_0: runtime::Field,
+                value: runtime::Field,
             ) -> Result<
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
-                let recorded =
-                    self.seed(observed.circuit_context(private_state), __compact_param_0)?;
+                let input = runtime::fab::AlignedValue::from(value.clone());
+                let recorded = self.seed(observed.circuit_context(private_state), value)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed, recorded, "seed", input,
                 ))
@@ -334,24 +333,23 @@ pub mod ledger_contract {
             pub fn check_member<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: runtime::Field,
+                value: runtime::Field,
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             {
-                crate::ledger_contract::recorded::check_member(context, __compact_param_0)
+                crate::ledger_contract::recorded::check_member(context, value)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn check_member_call<'observed, Private>(
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
-                __compact_param_0: runtime::Field,
+                value: runtime::Field,
             ) -> Result<
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
-                let recorded =
-                    self.check_member(observed.circuit_context(private_state), __compact_param_0)?;
+                let input = runtime::fab::AlignedValue::from(value.clone());
+                let recorded = self.check_member(observed.circuit_context(private_state), value)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
                     recorded,
@@ -468,16 +466,16 @@ pub mod ledger_contract {
         pub fn seed<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
+            value: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::seed(context, __compact_param_0)
+            crate::ledger_contract::seed(context, value)
         }
         pub fn check_member<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
+            value: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::check_member(context, __compact_param_0)
+            crate::ledger_contract::check_member(context, value)
         }
         pub fn check_set_empty<Private>(
             &self,

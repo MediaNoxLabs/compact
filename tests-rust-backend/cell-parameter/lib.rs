@@ -108,24 +108,23 @@ pub mod ledger_contract {
             pub fn set_flag<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: bool,
+                value: bool,
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             {
-                crate::ledger_contract::recorded::set_flag(context, __compact_param_0)
+                crate::ledger_contract::recorded::set_flag(context, value)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn set_flag_call<'observed, Private>(
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
-                __compact_param_0: bool,
+                value: bool,
             ) -> Result<
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
-                let recorded =
-                    self.set_flag(observed.circuit_context(private_state), __compact_param_0)?;
+                let input = runtime::fab::AlignedValue::from(value.clone());
+                let recorded = self.set_flag(observed.circuit_context(private_state), value)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed, recorded, "set_flag", input,
                 ))
@@ -158,9 +157,9 @@ pub mod ledger_contract {
         pub fn set_flag<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: bool,
+            value: bool,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::set_flag(context, __compact_param_0)
+            crate::ledger_contract::set_flag(context, value)
         }
         /// Access replayable circuit calls for this contract.
         pub fn recording(&self) -> &recorded::Contract {

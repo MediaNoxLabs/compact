@@ -280,24 +280,23 @@ pub mod ledger_contract {
             pub fn setHash<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: runtime::FixedBytes<32>,
+                h: runtime::FixedBytes<32>,
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             {
-                crate::ledger_contract::recorded::setHash(context, __compact_param_0)
+                crate::ledger_contract::recorded::setHash(context, h)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn setHash_call<'observed, Private>(
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
-                __compact_param_0: runtime::FixedBytes<32>,
+                h: runtime::FixedBytes<32>,
             ) -> Result<
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
-                let recorded =
-                    self.setHash(observed.circuit_context(private_state), __compact_param_0)?;
+                let input = runtime::fab::AlignedValue::from(h.clone());
+                let recorded = self.setHash(observed.circuit_context(private_state), h)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed, recorded, "setHash", input,
                 ))
@@ -330,32 +329,32 @@ pub mod ledger_contract {
         pub fn setHash<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::FixedBytes<32>,
+            h: runtime::FixedBytes<32>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::setHash(context, __compact_param_0)
+            crate::ledger_contract::setHash(context, h)
         }
         pub fn checkScalarScope<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::FixedVector<runtime::Field, 2>,
-            __compact_param_1: runtime::Field,
+            v: runtime::FixedVector<runtime::Field, 2>,
+            x: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::checkScalarScope(context, __compact_param_0, __compact_param_1)
+            crate::ledger_contract::checkScalarScope(context, v, x)
         }
         pub fn checkAggScope<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::FixedVector<runtime::Field, 2>,
-            __compact_param_1: runtime::FixedVector<runtime::Field, 4>,
+            w: runtime::FixedVector<runtime::Field, 2>,
+            z: runtime::FixedVector<runtime::Field, 4>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::checkAggScope(context, __compact_param_0, __compact_param_1)
+            crate::ledger_contract::checkAggScope(context, w, z)
         }
         pub fn checkNoCollisionScope<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::FixedVector<runtime::Field, 2>,
+            v: runtime::FixedVector<runtime::Field, 2>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::checkNoCollisionScope(context, __compact_param_0)
+            crate::ledger_contract::checkNoCollisionScope(context, v)
         }
         /// Access replayable circuit calls for this contract.
         pub fn recording(&self) -> &recorded::Contract {

@@ -157,24 +157,24 @@ pub mod ledger_contract {
             pub fn increment_by<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: runtime::BoundedUint<65535>,
+                amount: runtime::BoundedUint<65535>,
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             {
-                crate::ledger_contract::recorded::increment_by(context, __compact_param_0)
+                crate::ledger_contract::recorded::increment_by(context, amount)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn increment_by_call<'observed, Private>(
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
-                __compact_param_0: runtime::BoundedUint<65535>,
+                amount: runtime::BoundedUint<65535>,
             ) -> Result<
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
+                let input = runtime::fab::AlignedValue::from(amount.clone());
                 let recorded =
-                    self.increment_by(observed.circuit_context(private_state), __compact_param_0)?;
+                    self.increment_by(observed.circuit_context(private_state), amount)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
                     recorded,
@@ -185,24 +185,24 @@ pub mod ledger_contract {
             pub fn decrement_by<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: runtime::BoundedUint<65535>,
+                amount: runtime::BoundedUint<65535>,
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             {
-                crate::ledger_contract::recorded::decrement_by(context, __compact_param_0)
+                crate::ledger_contract::recorded::decrement_by(context, amount)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn decrement_by_call<'observed, Private>(
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
-                __compact_param_0: runtime::BoundedUint<65535>,
+                amount: runtime::BoundedUint<65535>,
             ) -> Result<
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
+                let input = runtime::fab::AlignedValue::from(amount.clone());
                 let recorded =
-                    self.decrement_by(observed.circuit_context(private_state), __compact_param_0)?;
+                    self.decrement_by(observed.circuit_context(private_state), amount)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
                     recorded,
@@ -238,16 +238,16 @@ pub mod ledger_contract {
         pub fn increment_by<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::BoundedUint<65535>,
+            amount: runtime::BoundedUint<65535>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::increment_by(context, __compact_param_0)
+            crate::ledger_contract::increment_by(context, amount)
         }
         pub fn decrement_by<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::BoundedUint<65535>,
+            amount: runtime::BoundedUint<65535>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::decrement_by(context, __compact_param_0)
+            crate::ledger_contract::decrement_by(context, amount)
         }
         pub fn reset_round<Private>(
             &self,

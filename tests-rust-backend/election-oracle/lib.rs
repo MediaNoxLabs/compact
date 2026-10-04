@@ -1051,12 +1051,12 @@ pub mod ledger_contract {
         pub fn vote_commit<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: crate::types::PermissibleVotes,
+            ballot: crate::types::PermissibleVotes,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError>
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::vote_commit(context, &self.witnesses, __compact_param_0)
+            crate::ledger_contract::vote_commit(context, &self.witnesses, ballot)
         }
         pub fn vote_reveal<Private>(
             &self,
@@ -1079,22 +1079,22 @@ pub mod ledger_contract {
         pub fn set_topic<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::OpaqueString,
+            t: runtime::OpaqueString,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError>
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::set_topic(context, &self.witnesses, __compact_param_0)
+            crate::ledger_contract::set_topic(context, &self.witnesses, t)
         }
         pub fn add_voter<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::FixedBytes<32>,
+            pk: runtime::FixedBytes<32>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError>
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::add_voter(context, &self.witnesses, __compact_param_0)
+            crate::ledger_contract::add_voter(context, &self.witnesses, pk)
         }
     }
 }

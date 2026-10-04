@@ -165,10 +165,10 @@ pub mod ledger_contract {
         pub fn recordArea<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::BoundedUint<65535>,
-            __compact_param_1: runtime::BoundedUint<65535>,
+            w: runtime::BoundedUint<65535>,
+            h: runtime::BoundedUint<65535>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::recordArea(context, __compact_param_0, __compact_param_1)
+            crate::ledger_contract::recordArea(context, w, h)
         }
     }
 }

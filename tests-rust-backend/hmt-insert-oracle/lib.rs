@@ -255,24 +255,23 @@ pub mod ledger_contract {
             pub fn append<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: runtime::BoundedUint<255>,
+                value: runtime::BoundedUint<255>,
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             {
-                crate::ledger_contract::recorded::append(context, __compact_param_0)
+                crate::ledger_contract::recorded::append(context, value)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn append_call<'observed, Private>(
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
-                __compact_param_0: runtime::BoundedUint<255>,
+                value: runtime::BoundedUint<255>,
             ) -> Result<
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
-                let recorded =
-                    self.append(observed.circuit_context(private_state), __compact_param_0)?;
+                let input = runtime::fab::AlignedValue::from(value.clone());
+                let recorded = self.append(observed.circuit_context(private_state), value)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed, recorded, "append", input,
                 ))
@@ -305,32 +304,32 @@ pub mod ledger_contract {
         pub fn append<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::BoundedUint<255>,
+            value: runtime::BoundedUint<255>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::append(context, __compact_param_0)
+            crate::ledger_contract::append(context, value)
         }
         pub fn place<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::BoundedUint<255>,
-            __compact_param_1: runtime::BoundedUint<18446744073709551615>,
+            value: runtime::BoundedUint<255>,
+            index: runtime::BoundedUint<18446744073709551615>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::place(context, __compact_param_0, __compact_param_1)
+            crate::ledger_contract::place(context, value, index)
         }
         pub fn append_hash<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::FixedBytes<32>,
+            hash: runtime::FixedBytes<32>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::append_hash(context, __compact_param_0)
+            crate::ledger_contract::append_hash(context, hash)
         }
         pub fn place_hash<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::FixedBytes<32>,
-            __compact_param_1: runtime::BoundedUint<18446744073709551615>,
+            hash: runtime::FixedBytes<32>,
+            index: runtime::BoundedUint<18446744073709551615>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::place_hash(context, __compact_param_0, __compact_param_1)
+            crate::ledger_contract::place_hash(context, hash, index)
         }
         pub fn forget_history<Private>(
             &self,
@@ -353,9 +352,9 @@ pub mod ledger_contract {
         pub fn known<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: crate::types::MerkleTreeDigest,
+            root: crate::types::MerkleTreeDigest,
         ) -> Result<runtime::context::CircuitResult<Private, bool>, runtime::CompactError> {
-            crate::ledger_contract::known(context, __compact_param_0)
+            crate::ledger_contract::known(context, root)
         }
         /// Access replayable circuit calls for this contract.
         pub fn recording(&self) -> &recorded::Contract {

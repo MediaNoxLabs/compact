@@ -141,9 +141,9 @@ pub mod ledger_contract {
         pub fn set_small<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::BoundedUint<99>,
+            v: runtime::BoundedUint<99>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::set_small(context, __compact_param_0)
+            crate::ledger_contract::set_small(context, v)
         }
     }
 }

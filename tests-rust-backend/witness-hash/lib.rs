@@ -298,27 +298,27 @@ pub mod ledger_contract {
         pub fn hash_echo<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
+            value: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, runtime::Field>, runtime::CompactError>
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::hash_echo(context, &self.witnesses, __compact_param_0)
+            crate::ledger_contract::hash_echo(context, &self.witnesses, value)
         }
         pub fn commit_echo<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
+            value: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, runtime::Field>, runtime::CompactError>
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::commit_echo(context, &self.witnesses, __compact_param_0)
+            crate::ledger_contract::commit_echo(context, &self.witnesses, value)
         }
         pub fn persistent_hash_echo<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
+            value: runtime::Field,
         ) -> Result<
             runtime::context::CircuitResult<Private, runtime::FixedBytes<32>>,
             runtime::CompactError,
@@ -326,26 +326,22 @@ pub mod ledger_contract {
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::persistent_hash_echo(
-                context,
-                &self.witnesses,
-                __compact_param_0,
-            )
+            crate::ledger_contract::persistent_hash_echo(context, &self.witnesses, value)
         }
         pub fn degrade_hash_echo<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
+            value: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, runtime::Field>, runtime::CompactError>
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::degrade_hash_echo(context, &self.witnesses, __compact_param_0)
+            crate::ledger_contract::degrade_hash_echo(context, &self.witnesses, value)
         }
         pub fn upgrade_echo<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
+            value: runtime::Field,
         ) -> Result<
             runtime::context::CircuitResult<Private, runtime::FixedBytes<32>>,
             runtime::CompactError,
@@ -353,13 +349,13 @@ pub mod ledger_contract {
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::upgrade_echo(context, &self.witnesses, __compact_param_0)
+            crate::ledger_contract::upgrade_echo(context, &self.witnesses, value)
         }
         pub fn persistent_commit_echo<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
-            __compact_param_1: runtime::FixedBytes<32>,
+            value: runtime::Field,
+            opening: runtime::FixedBytes<32>,
         ) -> Result<
             runtime::context::CircuitResult<Private, runtime::FixedBytes<32>>,
             runtime::CompactError,
@@ -367,12 +363,7 @@ pub mod ledger_contract {
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::persistent_commit_echo(
-                context,
-                &self.witnesses,
-                __compact_param_0,
-                __compact_param_1,
-            )
+            crate::ledger_contract::persistent_commit_echo(context, &self.witnesses, value, opening)
         }
     }
 }

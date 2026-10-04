@@ -24,7 +24,10 @@ use crate::ir::{
     StateReturn, StatefulCircuit, Type, WitnessDeclaration,
 };
 use crate::stateful::circuit_uses_witness;
-use crate::{RenderError, expression_with_calls, ident, list_head_result_type, rust_type};
+use crate::{
+    RenderError, expression_with_calls, ident, list_head_result_type, public_parameter_idents,
+    rust_type,
+};
 
 /// Keep exported scalar-expression recording tied to a ledger read. Other
 /// action-free expressions may still be lowered as private shared helpers.
@@ -2491,8 +2494,11 @@ pub(crate) fn render_borrowed_recorded_contract_method(
     let name = ident(&circuit.name)?;
     let mut args = Vec::<syn::FnArg>::new();
     let mut call_args = Vec::<syn::Ident>::new();
-    for (index, parameter) in circuit.parameters.iter().enumerate() {
-        let arg = syn::Ident::new(&format!("__compact_param_{index}"), Span::call_site());
+    for (parameter, arg) in circuit
+        .parameters
+        .iter()
+        .zip(public_parameter_idents(&circuit.parameters))
+    {
         let ty = rust_type(&parameter.ty)?;
         args.push(syn::parse_quote!(#arg: #ty));
         call_args.push(arg);
@@ -2531,8 +2537,11 @@ pub(crate) fn render_recorded_contract_method(
     let name = ident(&circuit.name)?;
     let mut args = Vec::<syn::FnArg>::new();
     let mut call_args = Vec::<syn::Ident>::new();
-    for (index, parameter) in circuit.parameters.iter().enumerate() {
-        let arg = syn::Ident::new(&format!("__compact_param_{index}"), Span::call_site());
+    for (parameter, arg) in circuit
+        .parameters
+        .iter()
+        .zip(public_parameter_idents(&circuit.parameters))
+    {
         let ty = rust_type(&parameter.ty)?;
         args.push(syn::parse_quote!(#arg: #ty));
         call_args.push(arg);
@@ -2561,8 +2570,11 @@ pub(crate) fn render_observed_call_method(
     let mut args = Vec::<syn::FnArg>::new();
     let mut call_args = Vec::<syn::Ident>::new();
     let mut input_args = Vec::<syn::Expr>::new();
-    for (index, parameter) in circuit.parameters.iter().enumerate() {
-        let arg = syn::Ident::new(&format!("__compact_param_{index}"), Span::call_site());
+    for (parameter, arg) in circuit
+        .parameters
+        .iter()
+        .zip(public_parameter_idents(&circuit.parameters))
+    {
         let ty = rust_type(&parameter.ty)?;
         args.push(syn::parse_quote!(#arg: #ty));
         input_args.push(syn::parse_quote!(#arg.clone()));

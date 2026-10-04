@@ -178,9 +178,9 @@ pub mod ledger_contract {
         pub fn set_values<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::FixedVector<runtime::Field, 3>,
+            value: runtime::FixedVector<runtime::Field, 3>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::set_values(context, __compact_param_0)
+            crate::ledger_contract::set_values(context, value)
         }
         pub fn read_values<Private>(
             &self,
@@ -194,9 +194,9 @@ pub mod ledger_contract {
         pub fn set_pair<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: (runtime::Field, bool),
+            value: (runtime::Field, bool),
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::set_pair(context, __compact_param_0)
+            crate::ledger_contract::set_pair(context, value)
         }
         pub fn read_pair<Private>(
             &self,

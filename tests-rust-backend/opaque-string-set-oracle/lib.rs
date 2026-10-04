@@ -127,16 +127,16 @@ pub mod ledger_contract {
         pub fn addName<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::OpaqueString,
+            name: runtime::OpaqueString,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::addName(context, __compact_param_0)
+            crate::ledger_contract::addName(context, name)
         }
         pub fn hasName<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::OpaqueString,
+            name: runtime::OpaqueString,
         ) -> Result<runtime::context::CircuitResult<Private, bool>, runtime::CompactError> {
-            crate::ledger_contract::hasName(context, __compact_param_0)
+            crate::ledger_contract::hasName(context, name)
         }
     }
 }

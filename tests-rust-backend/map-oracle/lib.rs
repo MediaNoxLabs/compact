@@ -118,32 +118,25 @@ pub mod ledger_contract {
             pub fn put<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: runtime::Field,
-                __compact_param_1: runtime::Field,
+                k: runtime::Field,
+                v: runtime::Field,
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             {
-                crate::ledger_contract::recorded::put(context, __compact_param_0, __compact_param_1)
+                crate::ledger_contract::recorded::put(context, k, v)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn put_call<'observed, Private>(
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
-                __compact_param_0: runtime::Field,
-                __compact_param_1: runtime::Field,
+                k: runtime::Field,
+                v: runtime::Field,
             ) -> Result<
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from((
-                    __compact_param_0.clone(),
-                    __compact_param_1.clone(),
-                ));
-                let recorded = self.put(
-                    observed.circuit_context(private_state),
-                    __compact_param_0,
-                    __compact_param_1,
-                )?;
+                let input = runtime::fab::AlignedValue::from((k.clone(), v.clone()));
+                let recorded = self.put(observed.circuit_context(private_state), k, v)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed, recorded, "put", input,
                 ))
@@ -176,10 +169,10 @@ pub mod ledger_contract {
         pub fn put<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
-            __compact_param_1: runtime::Field,
+            k: runtime::Field,
+            v: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::put(context, __compact_param_0, __compact_param_1)
+            crate::ledger_contract::put(context, k, v)
         }
         /// Access replayable circuit calls for this contract.
         pub fn recording(&self) -> &recorded::Contract {

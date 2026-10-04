@@ -574,24 +574,23 @@ pub mod ledger_contract {
             pub fn push_flag<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: bool,
+                value: bool,
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             {
-                crate::ledger_contract::recorded::push_flag(context, __compact_param_0)
+                crate::ledger_contract::recorded::push_flag(context, value)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn push_flag_call<'observed, Private>(
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
-                __compact_param_0: bool,
+                value: bool,
             ) -> Result<
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
-                let recorded =
-                    self.push_flag(observed.circuit_context(private_state), __compact_param_0)?;
+                let input = runtime::fab::AlignedValue::from(value.clone());
+                let recorded = self.push_flag(observed.circuit_context(private_state), value)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
                     recorded,
@@ -602,24 +601,23 @@ pub mod ledger_contract {
             pub fn push_count<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: runtime::BoundedUint<65535>,
+                value: runtime::BoundedUint<65535>,
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             {
-                crate::ledger_contract::recorded::push_count(context, __compact_param_0)
+                crate::ledger_contract::recorded::push_count(context, value)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn push_count_call<'observed, Private>(
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
-                __compact_param_0: runtime::BoundedUint<65535>,
+                value: runtime::BoundedUint<65535>,
             ) -> Result<
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
-                let recorded =
-                    self.push_count(observed.circuit_context(private_state), __compact_param_0)?;
+                let input = runtime::fab::AlignedValue::from(value.clone());
+                let recorded = self.push_count(observed.circuit_context(private_state), value)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
                     recorded,
@@ -630,24 +628,23 @@ pub mod ledger_contract {
             pub fn push_tag<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: runtime::FixedBytes<3>,
+                value: runtime::FixedBytes<3>,
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             {
-                crate::ledger_contract::recorded::push_tag(context, __compact_param_0)
+                crate::ledger_contract::recorded::push_tag(context, value)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn push_tag_call<'observed, Private>(
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
-                __compact_param_0: runtime::FixedBytes<3>,
+                value: runtime::FixedBytes<3>,
             ) -> Result<
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
-                let recorded =
-                    self.push_tag(observed.circuit_context(private_state), __compact_param_0)?;
+                let input = runtime::fab::AlignedValue::from(value.clone());
+                let recorded = self.push_tag(observed.circuit_context(private_state), value)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed, recorded, "push_tag", input,
                 ))
@@ -655,24 +652,23 @@ pub mod ledger_contract {
             pub fn push_choice<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: crate::types::Choice,
+                value: crate::types::Choice,
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             {
-                crate::ledger_contract::recorded::push_choice(context, __compact_param_0)
+                crate::ledger_contract::recorded::push_choice(context, value)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn push_choice_call<'observed, Private>(
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
-                __compact_param_0: crate::types::Choice,
+                value: crate::types::Choice,
             ) -> Result<
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
-                let recorded =
-                    self.push_choice(observed.circuit_context(private_state), __compact_param_0)?;
+                let input = runtime::fab::AlignedValue::from(value.clone());
+                let recorded = self.push_choice(observed.circuit_context(private_state), value)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
                     recorded,
@@ -683,24 +679,23 @@ pub mod ledger_contract {
             pub fn push_packet<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: crate::types::Packet,
+                value: crate::types::Packet,
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             {
-                crate::ledger_contract::recorded::push_packet(context, __compact_param_0)
+                crate::ledger_contract::recorded::push_packet(context, value)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn push_packet_call<'observed, Private>(
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
-                __compact_param_0: crate::types::Packet,
+                value: crate::types::Packet,
             ) -> Result<
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
-                let recorded =
-                    self.push_packet(observed.circuit_context(private_state), __compact_param_0)?;
+                let input = runtime::fab::AlignedValue::from(value.clone());
+                let recorded = self.push_packet(observed.circuit_context(private_state), value)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
                     recorded,
@@ -790,37 +785,37 @@ pub mod ledger_contract {
         pub fn push_flag<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: bool,
+            value: bool,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::push_flag(context, __compact_param_0)
+            crate::ledger_contract::push_flag(context, value)
         }
         pub fn push_count<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::BoundedUint<65535>,
+            value: runtime::BoundedUint<65535>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::push_count(context, __compact_param_0)
+            crate::ledger_contract::push_count(context, value)
         }
         pub fn push_tag<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::FixedBytes<3>,
+            value: runtime::FixedBytes<3>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::push_tag(context, __compact_param_0)
+            crate::ledger_contract::push_tag(context, value)
         }
         pub fn push_choice<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: crate::types::Choice,
+            value: crate::types::Choice,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::push_choice(context, __compact_param_0)
+            crate::ledger_contract::push_choice(context, value)
         }
         pub fn push_packet<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: crate::types::Packet,
+            value: crate::types::Packet,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::push_packet(context, __compact_param_0)
+            crate::ledger_contract::push_packet(context, value)
         }
         pub fn first_packet<Private>(
             &self,

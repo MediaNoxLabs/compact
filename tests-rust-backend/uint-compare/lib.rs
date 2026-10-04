@@ -147,18 +147,13 @@ pub mod ledger_contract {
         pub fn witnessed_less<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::BoundedUint<65535>,
-            __compact_param_1: runtime::BoundedUint<65535>,
+            left: runtime::BoundedUint<65535>,
+            right: runtime::BoundedUint<65535>,
         ) -> Result<runtime::context::CircuitResult<Private, bool>, runtime::CompactError>
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::witnessed_less(
-                context,
-                &self.witnesses,
-                __compact_param_0,
-                __compact_param_1,
-            )
+            crate::ledger_contract::witnessed_less(context, &self.witnesses, left, right)
         }
     }
 }

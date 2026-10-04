@@ -118,7 +118,7 @@ pub mod ledger_contract {
         pub fn hash_echo<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
+            value: runtime::Field,
         ) -> Result<
             runtime::context::CircuitResult<Private, runtime::FixedBytes<32>>,
             runtime::CompactError,
@@ -126,7 +126,7 @@ pub mod ledger_contract {
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::hash_echo(context, &self.witnesses, __compact_param_0)
+            crate::ledger_contract::hash_echo(context, &self.witnesses, value)
         }
     }
 }

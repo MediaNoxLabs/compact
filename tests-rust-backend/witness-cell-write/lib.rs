@@ -367,19 +367,19 @@ pub mod ledger_contract {
             pub fn write_secret<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: runtime::Field,
+                seed: runtime::Field,
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             where
                 W: super::TryWitnesses<Private>,
             {
-                write_secret(context, self.witnesses, __compact_param_0)
+                write_secret(context, self.witnesses, seed)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn write_secret_call<'observed, Private>(
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
-                __compact_param_0: runtime::Field,
+                seed: runtime::Field,
             ) -> Result<
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
@@ -387,9 +387,8 @@ pub mod ledger_contract {
             where
                 W: super::TryWitnesses<Private>,
             {
-                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
-                let recorded =
-                    self.write_secret(observed.circuit_context(private_state), __compact_param_0)?;
+                let input = runtime::fab::AlignedValue::from(seed.clone());
+                let recorded = self.write_secret(observed.circuit_context(private_state), seed)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
                     recorded,
@@ -400,19 +399,19 @@ pub mod ledger_contract {
             pub fn write_twice<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: runtime::Field,
+                seed: runtime::Field,
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             where
                 W: super::TryWitnesses<Private>,
             {
-                write_twice(context, self.witnesses, __compact_param_0)
+                write_twice(context, self.witnesses, seed)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn write_twice_call<'observed, Private>(
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
-                __compact_param_0: runtime::Field,
+                seed: runtime::Field,
             ) -> Result<
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
@@ -420,9 +419,8 @@ pub mod ledger_contract {
             where
                 W: super::TryWitnesses<Private>,
             {
-                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
-                let recorded =
-                    self.write_twice(observed.circuit_context(private_state), __compact_param_0)?;
+                let input = runtime::fab::AlignedValue::from(seed.clone());
+                let recorded = self.write_twice(observed.circuit_context(private_state), seed)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
                     recorded,
@@ -433,26 +431,21 @@ pub mod ledger_contract {
             pub fn write_offset<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: runtime::Field,
-                __compact_param_1: runtime::Field,
+                seed: runtime::Field,
+                offset: runtime::Field,
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             where
                 W: super::TryWitnesses<Private>,
             {
-                write_offset(
-                    context,
-                    self.witnesses,
-                    __compact_param_0,
-                    __compact_param_1,
-                )
+                write_offset(context, self.witnesses, seed, offset)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn write_offset_call<'observed, Private>(
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
-                __compact_param_0: runtime::Field,
-                __compact_param_1: runtime::Field,
+                seed: runtime::Field,
+                offset: runtime::Field,
             ) -> Result<
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
@@ -460,15 +453,9 @@ pub mod ledger_contract {
             where
                 W: super::TryWitnesses<Private>,
             {
-                let input = runtime::fab::AlignedValue::from((
-                    __compact_param_0.clone(),
-                    __compact_param_1.clone(),
-                ));
-                let recorded = self.write_offset(
-                    observed.circuit_context(private_state),
-                    __compact_param_0,
-                    __compact_param_1,
-                )?;
+                let input = runtime::fab::AlignedValue::from((seed.clone(), offset.clone()));
+                let recorded =
+                    self.write_offset(observed.circuit_context(private_state), seed, offset)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
                     recorded,
@@ -479,19 +466,19 @@ pub mod ledger_contract {
             pub fn write_nested_twice<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: runtime::Field,
+                seed: runtime::Field,
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             where
                 W: super::TryWitnesses<Private>,
             {
-                write_nested_twice(context, self.witnesses, __compact_param_0)
+                write_nested_twice(context, self.witnesses, seed)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn write_nested_twice_call<'observed, Private>(
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
-                __compact_param_0: runtime::Field,
+                seed: runtime::Field,
             ) -> Result<
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
@@ -499,11 +486,9 @@ pub mod ledger_contract {
             where
                 W: super::TryWitnesses<Private>,
             {
-                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
-                let recorded = self.write_nested_twice(
-                    observed.circuit_context(private_state),
-                    __compact_param_0,
-                )?;
+                let input = runtime::fab::AlignedValue::from(seed.clone());
+                let recorded =
+                    self.write_nested_twice(observed.circuit_context(private_state), seed)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
                     recorded,
@@ -566,48 +551,43 @@ pub mod ledger_contract {
         pub fn write_secret<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
+            seed: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError>
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::write_secret(context, &self.witnesses, __compact_param_0)
+            crate::ledger_contract::write_secret(context, &self.witnesses, seed)
         }
         pub fn write_twice<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
+            seed: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError>
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::write_twice(context, &self.witnesses, __compact_param_0)
+            crate::ledger_contract::write_twice(context, &self.witnesses, seed)
         }
         pub fn write_offset<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
-            __compact_param_1: runtime::Field,
+            seed: runtime::Field,
+            offset: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError>
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::write_offset(
-                context,
-                &self.witnesses,
-                __compact_param_0,
-                __compact_param_1,
-            )
+            crate::ledger_contract::write_offset(context, &self.witnesses, seed, offset)
         }
         pub fn write_nested_twice<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
+            seed: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError>
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::write_nested_twice(context, &self.witnesses, __compact_param_0)
+            crate::ledger_contract::write_nested_twice(context, &self.witnesses, seed)
         }
         pub fn read_cell<Private>(
             &self,

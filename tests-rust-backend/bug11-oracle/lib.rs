@@ -165,23 +165,23 @@ pub mod ledger_contract {
         pub fn set_tiny<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::BoundedUint<99>,
+            v: runtime::BoundedUint<99>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::set_tiny(context, __compact_param_0)
+            crate::ledger_contract::set_tiny(context, v)
         }
         pub fn set_medium<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::BoundedUint<69999>,
+            v: runtime::BoundedUint<69999>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::set_medium(context, __compact_param_0)
+            crate::ledger_contract::set_medium(context, v)
         }
         pub fn set_wide<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::BoundedUint<4999999999>,
+            v: runtime::BoundedUint<4999999999>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::set_wide(context, __compact_param_0)
+            crate::ledger_contract::set_wide(context, v)
         }
     }
 }

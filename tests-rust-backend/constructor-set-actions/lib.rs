@@ -160,26 +160,26 @@ pub mod ledger_contract {
             pub fn contains_seen<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: bool,
+                value: bool,
             ) -> Result<
                 runtime::recording::RecordedCircuitResult<Private, bool>,
                 runtime::CompactError,
             > {
-                crate::ledger_contract::recorded::contains_seen(context, __compact_param_0)
+                crate::ledger_contract::recorded::contains_seen(context, value)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn contains_seen_call<'observed, Private>(
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
-                __compact_param_0: bool,
+                value: bool,
             ) -> Result<
                 runtime::transaction::RecordedCall<'observed, Private, bool>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
+                let input = runtime::fab::AlignedValue::from(value.clone());
                 let recorded =
-                    self.contains_seen(observed.circuit_context(private_state), __compact_param_0)?;
+                    self.contains_seen(observed.circuit_context(private_state), value)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
                     recorded,
@@ -190,26 +190,26 @@ pub mod ledger_contract {
             pub fn contains_history<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: bool,
+                value: bool,
             ) -> Result<
                 runtime::recording::RecordedCircuitResult<Private, bool>,
                 runtime::CompactError,
             > {
-                crate::ledger_contract::recorded::contains_history(context, __compact_param_0)
+                crate::ledger_contract::recorded::contains_history(context, value)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn contains_history_call<'observed, Private>(
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
-                __compact_param_0: bool,
+                value: bool,
             ) -> Result<
                 runtime::transaction::RecordedCall<'observed, Private, bool>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
-                let recorded = self
-                    .contains_history(observed.circuit_context(private_state), __compact_param_0)?;
+                let input = runtime::fab::AlignedValue::from(value.clone());
+                let recorded =
+                    self.contains_history(observed.circuit_context(private_state), value)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
                     recorded,
@@ -245,16 +245,16 @@ pub mod ledger_contract {
         pub fn contains_seen<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: bool,
+            value: bool,
         ) -> Result<runtime::context::CircuitResult<Private, bool>, runtime::CompactError> {
-            crate::ledger_contract::contains_seen(context, __compact_param_0)
+            crate::ledger_contract::contains_seen(context, value)
         }
         pub fn contains_history<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: bool,
+            value: bool,
         ) -> Result<runtime::context::CircuitResult<Private, bool>, runtime::CompactError> {
-            crate::ledger_contract::contains_history(context, __compact_param_0)
+            crate::ledger_contract::contains_history(context, value)
         }
         /// Access replayable circuit calls for this contract.
         pub fn recording(&self) -> &recorded::Contract {

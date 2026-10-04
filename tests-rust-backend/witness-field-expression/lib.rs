@@ -150,22 +150,22 @@ pub mod ledger_contract {
         pub fn add_secret<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
+            seed: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, runtime::Field>, runtime::CompactError>
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::add_secret(context, &self.witnesses, __compact_param_0)
+            crate::ledger_contract::add_secret(context, &self.witnesses, seed)
         }
         pub fn sum_secrets<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
+            seed: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, runtime::Field>, runtime::CompactError>
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::sum_secrets(context, &self.witnesses, __compact_param_0)
+            crate::ledger_contract::sum_secrets(context, &self.witnesses, seed)
         }
     }
 }

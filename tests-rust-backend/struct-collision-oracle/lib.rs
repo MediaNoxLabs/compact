@@ -277,16 +277,16 @@ pub mod ledger_contract {
         pub fn runAlpha<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
+            x: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::runAlpha(context, __compact_param_0)
+            crate::ledger_contract::runAlpha(context, x)
         }
         pub fn runBeta<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
+            y: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::runBeta(context, __compact_param_0)
+            crate::ledger_contract::runBeta(context, y)
         }
     }
 }

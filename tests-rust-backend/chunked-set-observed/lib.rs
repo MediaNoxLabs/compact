@@ -391,24 +391,23 @@ pub mod ledger_contract {
             pub fn insert_key<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: (runtime::Field, bool),
+                key: (runtime::Field, bool),
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             {
-                crate::ledger_contract::recorded::insert_key(context, __compact_param_0)
+                crate::ledger_contract::recorded::insert_key(context, key)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn insert_key_call<'observed, Private>(
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
-                __compact_param_0: (runtime::Field, bool),
+                key: (runtime::Field, bool),
             ) -> Result<
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
-                let recorded =
-                    self.insert_key(observed.circuit_context(private_state), __compact_param_0)?;
+                let input = runtime::fab::AlignedValue::from(key.clone());
+                let recorded = self.insert_key(observed.circuit_context(private_state), key)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
                     recorded,
@@ -419,26 +418,25 @@ pub mod ledger_contract {
             pub fn roundtrip_key<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: (runtime::Field, bool),
+                key: (runtime::Field, bool),
             ) -> Result<
                 runtime::recording::RecordedCircuitResult<Private, bool>,
                 runtime::CompactError,
             > {
-                crate::ledger_contract::recorded::roundtrip_key(context, __compact_param_0)
+                crate::ledger_contract::recorded::roundtrip_key(context, key)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn roundtrip_key_call<'observed, Private>(
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
-                __compact_param_0: (runtime::Field, bool),
+                key: (runtime::Field, bool),
             ) -> Result<
                 runtime::transaction::RecordedCall<'observed, Private, bool>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
-                let recorded =
-                    self.roundtrip_key(observed.circuit_context(private_state), __compact_param_0)?;
+                let input = runtime::fab::AlignedValue::from(key.clone());
+                let recorded = self.roundtrip_key(observed.circuit_context(private_state), key)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
                     recorded,
@@ -532,16 +530,16 @@ pub mod ledger_contract {
         pub fn insert_key<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: (runtime::Field, bool),
+            key: (runtime::Field, bool),
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::insert_key(context, __compact_param_0)
+            crate::ledger_contract::insert_key(context, key)
         }
         pub fn roundtrip_key<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: (runtime::Field, bool),
+            key: (runtime::Field, bool),
         ) -> Result<runtime::context::CircuitResult<Private, bool>, runtime::CompactError> {
-            crate::ledger_contract::roundtrip_key(context, __compact_param_0)
+            crate::ledger_contract::roundtrip_key(context, key)
         }
         pub fn key_count<Private>(
             &self,

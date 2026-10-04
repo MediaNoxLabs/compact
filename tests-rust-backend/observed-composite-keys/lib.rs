@@ -389,24 +389,23 @@ pub mod ledger_contract {
             pub fn insert_vector<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: runtime::FixedVector<runtime::Field, 2>,
+                key: runtime::FixedVector<runtime::Field, 2>,
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             {
-                crate::ledger_contract::recorded::insert_vector(context, __compact_param_0)
+                crate::ledger_contract::recorded::insert_vector(context, key)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn insert_vector_call<'observed, Private>(
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
-                __compact_param_0: runtime::FixedVector<runtime::Field, 2>,
+                key: runtime::FixedVector<runtime::Field, 2>,
             ) -> Result<
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
-                let recorded =
-                    self.insert_vector(observed.circuit_context(private_state), __compact_param_0)?;
+                let input = runtime::fab::AlignedValue::from(key.clone());
+                let recorded = self.insert_vector(observed.circuit_context(private_state), key)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
                     recorded,
@@ -417,24 +416,23 @@ pub mod ledger_contract {
             pub fn insert_tuple<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: (runtime::Field, bool),
+                key: (runtime::Field, bool),
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             {
-                crate::ledger_contract::recorded::insert_tuple(context, __compact_param_0)
+                crate::ledger_contract::recorded::insert_tuple(context, key)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn insert_tuple_call<'observed, Private>(
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
-                __compact_param_0: (runtime::Field, bool),
+                key: (runtime::Field, bool),
             ) -> Result<
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
-                let recorded =
-                    self.insert_tuple(observed.circuit_context(private_state), __compact_param_0)?;
+                let input = runtime::fab::AlignedValue::from(key.clone());
+                let recorded = self.insert_tuple(observed.circuit_context(private_state), key)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
                     recorded,
@@ -445,24 +443,23 @@ pub mod ledger_contract {
             pub fn insert_struct<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: crate::types::CompositeKey,
+                key: crate::types::CompositeKey,
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             {
-                crate::ledger_contract::recorded::insert_struct(context, __compact_param_0)
+                crate::ledger_contract::recorded::insert_struct(context, key)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn insert_struct_call<'observed, Private>(
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
-                __compact_param_0: crate::types::CompositeKey,
+                key: crate::types::CompositeKey,
             ) -> Result<
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
-                let recorded =
-                    self.insert_struct(observed.circuit_context(private_state), __compact_param_0)?;
+                let input = runtime::fab::AlignedValue::from(key.clone());
+                let recorded = self.insert_struct(observed.circuit_context(private_state), key)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
                     recorded,
@@ -473,26 +470,26 @@ pub mod ledger_contract {
             pub fn roundtrip_tuple<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: (runtime::Field, bool),
+                key: (runtime::Field, bool),
             ) -> Result<
                 runtime::recording::RecordedCircuitResult<Private, bool>,
                 runtime::CompactError,
             > {
-                crate::ledger_contract::recorded::roundtrip_tuple(context, __compact_param_0)
+                crate::ledger_contract::recorded::roundtrip_tuple(context, key)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn roundtrip_tuple_call<'observed, Private>(
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
-                __compact_param_0: (runtime::Field, bool),
+                key: (runtime::Field, bool),
             ) -> Result<
                 runtime::transaction::RecordedCall<'observed, Private, bool>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
-                let recorded = self
-                    .roundtrip_tuple(observed.circuit_context(private_state), __compact_param_0)?;
+                let input = runtime::fab::AlignedValue::from(key.clone());
+                let recorded =
+                    self.roundtrip_tuple(observed.circuit_context(private_state), key)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
                     recorded,
@@ -503,26 +500,26 @@ pub mod ledger_contract {
             pub fn roundtrip_struct<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: crate::types::CompositeKey,
+                key: crate::types::CompositeKey,
             ) -> Result<
                 runtime::recording::RecordedCircuitResult<Private, bool>,
                 runtime::CompactError,
             > {
-                crate::ledger_contract::recorded::roundtrip_struct(context, __compact_param_0)
+                crate::ledger_contract::recorded::roundtrip_struct(context, key)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn roundtrip_struct_call<'observed, Private>(
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
-                __compact_param_0: crate::types::CompositeKey,
+                key: crate::types::CompositeKey,
             ) -> Result<
                 runtime::transaction::RecordedCall<'observed, Private, bool>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
-                let recorded = self
-                    .roundtrip_struct(observed.circuit_context(private_state), __compact_param_0)?;
+                let input = runtime::fab::AlignedValue::from(key.clone());
+                let recorded =
+                    self.roundtrip_struct(observed.circuit_context(private_state), key)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
                     recorded,
@@ -533,34 +530,22 @@ pub mod ledger_contract {
             pub fn record_twelve<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: runtime::Field,
-                __compact_param_1: runtime::Field,
-                __compact_param_2: runtime::Field,
-                __compact_param_3: runtime::Field,
-                __compact_param_4: runtime::Field,
-                __compact_param_5: runtime::Field,
-                __compact_param_6: runtime::Field,
-                __compact_param_7: runtime::Field,
-                __compact_param_8: runtime::Field,
-                __compact_param_9: runtime::Field,
-                __compact_param_10: runtime::Field,
-                __compact_param_11: runtime::Field,
+                a: runtime::Field,
+                b: runtime::Field,
+                c: runtime::Field,
+                d: runtime::Field,
+                e: runtime::Field,
+                f: runtime::Field,
+                g: runtime::Field,
+                h: runtime::Field,
+                i: runtime::Field,
+                j: runtime::Field,
+                k: runtime::Field,
+                l: runtime::Field,
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             {
                 crate::ledger_contract::recorded::record_twelve(
-                    context,
-                    __compact_param_0,
-                    __compact_param_1,
-                    __compact_param_2,
-                    __compact_param_3,
-                    __compact_param_4,
-                    __compact_param_5,
-                    __compact_param_6,
-                    __compact_param_7,
-                    __compact_param_8,
-                    __compact_param_9,
-                    __compact_param_10,
-                    __compact_param_11,
+                    context, a, b, c, d, e, f, g, h, i, j, k, l,
                 )
             }
             #[cfg(feature = "ledger-transaction")]
@@ -568,50 +553,50 @@ pub mod ledger_contract {
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
-                __compact_param_0: runtime::Field,
-                __compact_param_1: runtime::Field,
-                __compact_param_2: runtime::Field,
-                __compact_param_3: runtime::Field,
-                __compact_param_4: runtime::Field,
-                __compact_param_5: runtime::Field,
-                __compact_param_6: runtime::Field,
-                __compact_param_7: runtime::Field,
-                __compact_param_8: runtime::Field,
-                __compact_param_9: runtime::Field,
-                __compact_param_10: runtime::Field,
-                __compact_param_11: runtime::Field,
+                a: runtime::Field,
+                b: runtime::Field,
+                c: runtime::Field,
+                d: runtime::Field,
+                e: runtime::Field,
+                f: runtime::Field,
+                g: runtime::Field,
+                h: runtime::Field,
+                i: runtime::Field,
+                j: runtime::Field,
+                k: runtime::Field,
+                l: runtime::Field,
             ) -> Result<
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
                 let input = runtime::fab::AlignedValue::concat(&[
-                    runtime::fab::AlignedValue::from(__compact_param_0.clone()),
-                    runtime::fab::AlignedValue::from(__compact_param_1.clone()),
-                    runtime::fab::AlignedValue::from(__compact_param_2.clone()),
-                    runtime::fab::AlignedValue::from(__compact_param_3.clone()),
-                    runtime::fab::AlignedValue::from(__compact_param_4.clone()),
-                    runtime::fab::AlignedValue::from(__compact_param_5.clone()),
-                    runtime::fab::AlignedValue::from(__compact_param_6.clone()),
-                    runtime::fab::AlignedValue::from(__compact_param_7.clone()),
-                    runtime::fab::AlignedValue::from(__compact_param_8.clone()),
-                    runtime::fab::AlignedValue::from(__compact_param_9.clone()),
-                    runtime::fab::AlignedValue::from(__compact_param_10.clone()),
-                    runtime::fab::AlignedValue::from(__compact_param_11.clone()),
+                    runtime::fab::AlignedValue::from(a.clone()),
+                    runtime::fab::AlignedValue::from(b.clone()),
+                    runtime::fab::AlignedValue::from(c.clone()),
+                    runtime::fab::AlignedValue::from(d.clone()),
+                    runtime::fab::AlignedValue::from(e.clone()),
+                    runtime::fab::AlignedValue::from(f.clone()),
+                    runtime::fab::AlignedValue::from(g.clone()),
+                    runtime::fab::AlignedValue::from(h.clone()),
+                    runtime::fab::AlignedValue::from(i.clone()),
+                    runtime::fab::AlignedValue::from(j.clone()),
+                    runtime::fab::AlignedValue::from(k.clone()),
+                    runtime::fab::AlignedValue::from(l.clone()),
                 ]);
                 let recorded = self.record_twelve(
                     observed.circuit_context(private_state),
-                    __compact_param_0,
-                    __compact_param_1,
-                    __compact_param_2,
-                    __compact_param_3,
-                    __compact_param_4,
-                    __compact_param_5,
-                    __compact_param_6,
-                    __compact_param_7,
-                    __compact_param_8,
-                    __compact_param_9,
-                    __compact_param_10,
-                    __compact_param_11,
+                    a,
+                    b,
+                    c,
+                    d,
+                    e,
+                    f,
+                    g,
+                    h,
+                    i,
+                    j,
+                    k,
+                    l,
                 )?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
@@ -648,69 +633,55 @@ pub mod ledger_contract {
         pub fn insert_vector<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::FixedVector<runtime::Field, 2>,
+            key: runtime::FixedVector<runtime::Field, 2>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::insert_vector(context, __compact_param_0)
+            crate::ledger_contract::insert_vector(context, key)
         }
         pub fn insert_tuple<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: (runtime::Field, bool),
+            key: (runtime::Field, bool),
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::insert_tuple(context, __compact_param_0)
+            crate::ledger_contract::insert_tuple(context, key)
         }
         pub fn insert_struct<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: crate::types::CompositeKey,
+            key: crate::types::CompositeKey,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::insert_struct(context, __compact_param_0)
+            crate::ledger_contract::insert_struct(context, key)
         }
         pub fn roundtrip_tuple<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: (runtime::Field, bool),
+            key: (runtime::Field, bool),
         ) -> Result<runtime::context::CircuitResult<Private, bool>, runtime::CompactError> {
-            crate::ledger_contract::roundtrip_tuple(context, __compact_param_0)
+            crate::ledger_contract::roundtrip_tuple(context, key)
         }
         pub fn roundtrip_struct<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: crate::types::CompositeKey,
+            key: crate::types::CompositeKey,
         ) -> Result<runtime::context::CircuitResult<Private, bool>, runtime::CompactError> {
-            crate::ledger_contract::roundtrip_struct(context, __compact_param_0)
+            crate::ledger_contract::roundtrip_struct(context, key)
         }
         pub fn record_twelve<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
-            __compact_param_1: runtime::Field,
-            __compact_param_2: runtime::Field,
-            __compact_param_3: runtime::Field,
-            __compact_param_4: runtime::Field,
-            __compact_param_5: runtime::Field,
-            __compact_param_6: runtime::Field,
-            __compact_param_7: runtime::Field,
-            __compact_param_8: runtime::Field,
-            __compact_param_9: runtime::Field,
-            __compact_param_10: runtime::Field,
-            __compact_param_11: runtime::Field,
+            a: runtime::Field,
+            b: runtime::Field,
+            c: runtime::Field,
+            d: runtime::Field,
+            e: runtime::Field,
+            f: runtime::Field,
+            g: runtime::Field,
+            h: runtime::Field,
+            i: runtime::Field,
+            j: runtime::Field,
+            k: runtime::Field,
+            l: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::record_twelve(
-                context,
-                __compact_param_0,
-                __compact_param_1,
-                __compact_param_2,
-                __compact_param_3,
-                __compact_param_4,
-                __compact_param_5,
-                __compact_param_6,
-                __compact_param_7,
-                __compact_param_8,
-                __compact_param_9,
-                __compact_param_10,
-                __compact_param_11,
-            )
+            crate::ledger_contract::record_twelve(context, a, b, c, d, e, f, g, h, i, j, k, l)
         }
         /// Access replayable circuit calls for this contract.
         pub fn recording(&self) -> &recorded::Contract {

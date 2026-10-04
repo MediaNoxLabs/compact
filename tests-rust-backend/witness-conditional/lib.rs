@@ -249,25 +249,19 @@ pub mod ledger_contract {
         pub fn choose_secret<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: bool,
-            __compact_param_1: runtime::Field,
-            __compact_param_2: runtime::Field,
+            flag: bool,
+            left: runtime::Field,
+            right: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, runtime::Field>, runtime::CompactError>
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::choose_secret(
-                context,
-                &self.witnesses,
-                __compact_param_0,
-                __compact_param_1,
-                __compact_param_2,
-            )
+            crate::ledger_contract::choose_secret(context, &self.witnesses, flag, left, right)
         }
         pub fn pair_secret<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
+            seed: runtime::Field,
         ) -> Result<
             runtime::context::CircuitResult<Private, (runtime::Field, runtime::Field)>,
             runtime::CompactError,
@@ -275,27 +269,27 @@ pub mod ledger_contract {
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::pair_secret(context, &self.witnesses, __compact_param_0)
+            crate::ledger_contract::pair_secret(context, &self.witnesses, seed)
         }
         pub fn nested_secret<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
+            seed: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, runtime::Field>, runtime::CompactError>
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::nested_secret(context, &self.witnesses, __compact_param_0)
+            crate::ledger_contract::nested_secret(context, &self.witnesses, seed)
         }
         pub fn local_secret<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
+            seed: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, runtime::Field>, runtime::CompactError>
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::local_secret(context, &self.witnesses, __compact_param_0)
+            crate::ledger_contract::local_secret(context, &self.witnesses, seed)
         }
     }
 }

@@ -671,18 +671,13 @@ pub mod ledger_contract {
         pub fn spend<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: crate::types::public_key,
-            __compact_param_1: crate::types::coin_info,
+            dest_public_key: crate::types::public_key,
+            input_coin: crate::types::coin_info,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError>
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::spend(
-                context,
-                &self.witnesses,
-                __compact_param_0,
-                __compact_param_1,
-            )
+            crate::ledger_contract::spend(context, &self.witnesses, dest_public_key, input_coin)
         }
         pub fn zerocash_mint<Private>(
             &self,

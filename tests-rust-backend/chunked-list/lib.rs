@@ -542,24 +542,23 @@ pub mod ledger_contract {
             pub fn prepend<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: runtime::Field,
+                value: runtime::Field,
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             {
-                crate::ledger_contract::recorded::prepend(context, __compact_param_0)
+                crate::ledger_contract::recorded::prepend(context, value)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn prepend_call<'observed, Private>(
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
-                __compact_param_0: runtime::Field,
+                value: runtime::Field,
             ) -> Result<
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
-                let recorded =
-                    self.prepend(observed.circuit_context(private_state), __compact_param_0)?;
+                let input = runtime::fab::AlignedValue::from(value.clone());
+                let recorded = self.prepend(observed.circuit_context(private_state), value)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed, recorded, "prepend", input,
                 ))
@@ -666,9 +665,9 @@ pub mod ledger_contract {
         pub fn prepend<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
+            value: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::prepend(context, __compact_param_0)
+            crate::ledger_contract::prepend(context, value)
         }
         pub fn drop_first<Private>(
             &self,

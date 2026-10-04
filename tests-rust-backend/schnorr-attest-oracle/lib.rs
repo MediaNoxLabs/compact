@@ -510,34 +510,24 @@ pub mod ledger_contract {
         pub fn verifyAttestation<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::FixedVector<runtime::Field, 4>,
-            __compact_param_1: crate::types::SchnorrSignature,
+            digest: runtime::FixedVector<runtime::Field, 4>,
+            signature: crate::types::SchnorrSignature,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError>
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::verifyAttestation(
-                context,
-                &self.witnesses,
-                __compact_param_0,
-                __compact_param_1,
-            )
+            crate::ledger_contract::verifyAttestation(context, &self.witnesses, digest, signature)
         }
         pub fn acceptAttestation<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::FixedVector<runtime::Field, 4>,
-            __compact_param_1: crate::types::SchnorrSignature,
+            digest: runtime::FixedVector<runtime::Field, 4>,
+            signature: crate::types::SchnorrSignature,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError>
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::acceptAttestation(
-                context,
-                &self.witnesses,
-                __compact_param_0,
-                __compact_param_1,
-            )
+            crate::ledger_contract::acceptAttestation(context, &self.witnesses, digest, signature)
         }
     }
 }

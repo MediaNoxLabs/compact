@@ -270,36 +270,25 @@ pub mod ledger_contract {
         pub fn checked_value<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: bool,
-            __compact_param_1: bool,
-            __compact_param_2: runtime::Field,
+            first: bool,
+            second: bool,
+            value: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, runtime::Field>, runtime::CompactError>
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::checked_value(
-                context,
-                &self.witnesses,
-                __compact_param_0,
-                __compact_param_1,
-                __compact_param_2,
-            )
+            crate::ledger_contract::checked_value(context, &self.witnesses, first, second, value)
         }
         pub fn checked_write<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: bool,
-            __compact_param_1: runtime::Field,
+            flag: bool,
+            value: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError>
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::checked_write(
-                context,
-                &self.witnesses,
-                __compact_param_0,
-                __compact_param_1,
-            )
+            crate::ledger_contract::checked_write(context, &self.witnesses, flag, value)
         }
         pub fn read_cell<Private>(
             &self,

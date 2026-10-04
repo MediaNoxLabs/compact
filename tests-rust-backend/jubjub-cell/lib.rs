@@ -193,9 +193,9 @@ pub mod ledger_contract {
         pub fn set_point<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::JubjubPoint,
+            value: runtime::JubjubPoint,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::set_point(context, __compact_param_0)
+            crate::ledger_contract::set_point(context, value)
         }
         pub fn read_point<Private>(
             &self,
@@ -209,9 +209,9 @@ pub mod ledger_contract {
         pub fn set_box<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: crate::types::PointBox,
+            value: crate::types::PointBox,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::set_box(context, __compact_param_0)
+            crate::ledger_contract::set_box(context, value)
         }
         pub fn read_box<Private>(
             &self,

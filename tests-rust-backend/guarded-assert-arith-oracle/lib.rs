@@ -276,16 +276,11 @@ pub mod ledger_contract {
         pub fn recordFreshEnough<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: crate::types::VerifierPolicy,
-            __compact_param_1: crate::types::Attestation,
-            __compact_param_2: runtime::BoundedUint<18446744073709551615>,
+            policy: crate::types::VerifierPolicy,
+            attestation: crate::types::Attestation,
+            currentTime: runtime::BoundedUint<18446744073709551615>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::recordFreshEnough(
-                context,
-                __compact_param_0,
-                __compact_param_1,
-                __compact_param_2,
-            )
+            crate::ledger_contract::recordFreshEnough(context, policy, attestation, currentTime)
         }
     }
 }

@@ -152,9 +152,9 @@ pub mod ledger_contract {
         pub fn record_update<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::BoundedUint<18446744073709551615>,
+            value: runtime::BoundedUint<18446744073709551615>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::record_update(context, __compact_param_0)
+            crate::ledger_contract::record_update(context, value)
         }
     }
 }

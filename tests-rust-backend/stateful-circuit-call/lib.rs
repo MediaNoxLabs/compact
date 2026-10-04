@@ -265,24 +265,23 @@ pub mod ledger_contract {
             pub fn add<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: runtime::BoundedUint<65535>,
+                amount: runtime::BoundedUint<65535>,
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             {
-                crate::ledger_contract::recorded::add(context, __compact_param_0)
+                crate::ledger_contract::recorded::add(context, amount)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn add_call<'observed, Private>(
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
-                __compact_param_0: runtime::BoundedUint<65535>,
+                amount: runtime::BoundedUint<65535>,
             ) -> Result<
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
-                let recorded =
-                    self.add(observed.circuit_context(private_state), __compact_param_0)?;
+                let input = runtime::fab::AlignedValue::from(amount.clone());
+                let recorded = self.add(observed.circuit_context(private_state), amount)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed, recorded, "add", input,
                 ))
@@ -290,24 +289,23 @@ pub mod ledger_contract {
             pub fn add_twice<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: runtime::BoundedUint<65535>,
+                amount: runtime::BoundedUint<65535>,
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             {
-                crate::ledger_contract::recorded::add_twice(context, __compact_param_0)
+                crate::ledger_contract::recorded::add_twice(context, amount)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn add_twice_call<'observed, Private>(
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
-                __compact_param_0: runtime::BoundedUint<65535>,
+                amount: runtime::BoundedUint<65535>,
             ) -> Result<
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
-                let recorded =
-                    self.add_twice(observed.circuit_context(private_state), __compact_param_0)?;
+                let input = runtime::fab::AlignedValue::from(amount.clone());
+                let recorded = self.add_twice(observed.circuit_context(private_state), amount)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
                     recorded,
@@ -355,16 +353,16 @@ pub mod ledger_contract {
         pub fn add<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::BoundedUint<65535>,
+            amount: runtime::BoundedUint<65535>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::add(context, __compact_param_0)
+            crate::ledger_contract::add(context, amount)
         }
         pub fn add_twice<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::BoundedUint<65535>,
+            amount: runtime::BoundedUint<65535>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::add_twice(context, __compact_param_0)
+            crate::ledger_contract::add_twice(context, amount)
         }
         /// Access replayable circuit calls for this contract.
         pub fn recording(&self) -> &recorded::Contract {

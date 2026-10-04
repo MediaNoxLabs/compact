@@ -481,19 +481,19 @@ pub mod ledger_contract {
             pub fn set<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: runtime::Field,
+                v: runtime::Field,
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             where
                 W: super::TryWitnesses<Private>,
             {
-                set(context, self.witnesses, __compact_param_0)
+                set(context, self.witnesses, v)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn set_call<'observed, Private>(
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
-                __compact_param_0: runtime::Field,
+                v: runtime::Field,
             ) -> Result<
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
@@ -501,9 +501,8 @@ pub mod ledger_contract {
             where
                 W: super::TryWitnesses<Private>,
             {
-                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
-                let recorded =
-                    self.set(observed.circuit_context(private_state), __compact_param_0)?;
+                let input = runtime::fab::AlignedValue::from(v.clone());
+                let recorded = self.set(observed.circuit_context(private_state), v)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed, recorded, "set", input,
                 ))
@@ -587,12 +586,12 @@ pub mod ledger_contract {
         pub fn set<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
+            v: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError>
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::set(context, &self.witnesses, __compact_param_0)
+            crate::ledger_contract::set(context, &self.witnesses, v)
         }
         pub fn get<Private>(
             &self,

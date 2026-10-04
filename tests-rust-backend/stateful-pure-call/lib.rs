@@ -188,10 +188,10 @@ pub mod ledger_contract {
         pub fn save<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
+            value: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, runtime::Field>, runtime::CompactError>
         {
-            crate::ledger_contract::save(context, __compact_param_0)
+            crate::ledger_contract::save(context, value)
         }
         pub fn read_stored<Private>(
             &self,

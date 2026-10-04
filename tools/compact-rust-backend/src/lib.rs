@@ -260,6 +260,96 @@ fn ident(name: &str) -> Result<syn::Ident, RenderError> {
         .map_err(|_| RenderError::InvalidIdentifier(name.to_owned()))
 }
 
+/// Name public wrapper arguments after their Compact parameters. Wrapper
+/// locals and names that normalize to the same Rust identifier need stable
+/// positional fallbacks; the underlying circuit still receives arguments in
+/// declaration order.
+pub(crate) fn public_parameter_idents(parameters: &[ir::Parameter]) -> Vec<syn::Ident> {
+    let mut used = HashSet::<String>::new();
+    let reserved = [
+        "self",
+        "Self",
+        "super",
+        "crate",
+        "context",
+        "witnesses",
+        "observed",
+        "private_state",
+        "input",
+        "recorded",
+    ];
+    used.extend(reserved.into_iter().map(str::to_owned));
+    parameters
+        .iter()
+        .enumerate()
+        .map(|(index, parameter)| {
+            let candidate = ident(&parameter.name).ok().filter(|name| {
+                let spelling = name.to_string();
+                spelling != "_"
+                    && !used.contains(&spelling)
+                    && !used.contains(spelling.strip_prefix("r#").unwrap_or(&spelling))
+            });
+            let name = candidate.unwrap_or_else(|| {
+                let base = format!("__compact_param_{index}");
+                let mut fallback = base.clone();
+                let mut suffix = 1;
+                while used.contains(&fallback) {
+                    fallback = format!("{base}_{suffix}");
+                    suffix += 1;
+                }
+                syn::Ident::new(&fallback, Span::call_site())
+            });
+            used.insert(name.to_string());
+            name
+        })
+        .collect()
+}
+
+#[cfg(test)]
+mod public_parameter_name_tests {
+    use super::{ir, public_parameter_idents};
+
+    #[test]
+    fn preserves_source_names_and_allocates_unique_wrapper_fallbacks() {
+        let names = [
+            "amount",
+            "type",
+            "a$b",
+            "a_b",
+            "context",
+            "input",
+            "__compact_param_6",
+            "self",
+            "unused_8",
+        ];
+        let parameters = names
+            .into_iter()
+            .map(|name| ir::Parameter {
+                name: name.into(),
+                ty: ir::Type::Field,
+            })
+            .collect::<Vec<_>>();
+        let actual = public_parameter_idents(&parameters)
+            .into_iter()
+            .map(|name| name.to_string())
+            .collect::<Vec<_>>();
+        assert_eq!(
+            actual,
+            [
+                "amount",
+                "r#type",
+                "a_b",
+                "__compact_param_3",
+                "__compact_param_4",
+                "__compact_param_5",
+                "__compact_param_6",
+                "__compact_param_7",
+                "unused_8",
+            ]
+        );
+    }
+}
+
 fn field_literal_bytes(value: &str) -> Result<[u8; 32], RenderError> {
     let invalid = || RenderError::InvalidFieldLiteral(value.to_owned());
     if value.is_empty()

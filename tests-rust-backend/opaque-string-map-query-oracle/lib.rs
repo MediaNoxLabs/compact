@@ -148,18 +148,18 @@ pub mod ledger_contract {
         pub fn put<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::OpaqueString,
-            __compact_param_1: runtime::Field,
+            key: runtime::OpaqueString,
+            value: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::put(context, __compact_param_0, __compact_param_1)
+            crate::ledger_contract::put(context, key, value)
         }
         pub fn ensure<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::OpaqueString,
+            key: runtime::OpaqueString,
         ) -> Result<runtime::context::CircuitResult<Private, runtime::Field>, runtime::CompactError>
         {
-            crate::ledger_contract::ensure(context, __compact_param_0)
+            crate::ledger_contract::ensure(context, key)
         }
     }
 }

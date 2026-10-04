@@ -131,8 +131,8 @@ pub mod ledger_contract {
         pub fn construct_echo<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
-            __compact_param_1: runtime::Field,
+            x: runtime::Field,
+            y: runtime::Field,
         ) -> Result<
             runtime::context::CircuitResult<Private, runtime::JubjubPoint>,
             runtime::CompactError,
@@ -140,12 +140,7 @@ pub mod ledger_contract {
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::construct_echo(
-                context,
-                &self.witnesses,
-                __compact_param_0,
-                __compact_param_1,
-            )
+            crate::ledger_contract::construct_echo(context, &self.witnesses, x, y)
         }
     }
 }

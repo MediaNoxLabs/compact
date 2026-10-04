@@ -1431,49 +1431,49 @@ pub mod ledger_contract {
         pub fn walkerConstAnnotated<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: bool,
+            c: bool,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::walkerConstAnnotated(context, __compact_param_0)
+            crate::ledger_contract::walkerConstAnnotated(context, c)
         }
         pub fn walkerCompareEq<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: bool,
-            __compact_param_1: runtime::BoundedUint<255>,
+            c: bool,
+            x: runtime::BoundedUint<255>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::walkerCompareEq(context, __compact_param_0, __compact_param_1)
+            crate::ledger_contract::walkerCompareEq(context, c, x)
         }
         pub fn walkerCallPure<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: bool,
+            c: bool,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::walkerCallPure(context, __compact_param_0)
+            crate::ledger_contract::walkerCallPure(context, c)
         }
         pub fn walkerStructMember<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: bool,
+            c: bool,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::walkerStructMember(context, __compact_param_0)
+            crate::ledger_contract::walkerStructMember(context, c)
         }
         pub fn walkerWrite<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: bool,
-            __compact_param_1: runtime::Field,
+            c: bool,
+            x: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::walkerWrite(context, __compact_param_0, __compact_param_1)
+            crate::ledger_contract::walkerWrite(context, c, x)
         }
         pub fn witnessArg<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: bool,
+            c: bool,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError>
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::witnessArg(context, &self.witnesses, __compact_param_0)
+            crate::ledger_contract::witnessArg(context, &self.witnesses, c)
         }
         pub fn streamIncrement<Private>(
             &self,
@@ -1490,39 +1490,39 @@ pub mod ledger_contract {
         pub fn streamWrite<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: bool,
-            __compact_param_1: runtime::Field,
+            c: bool,
+            x: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::streamWrite(context, __compact_param_0, __compact_param_1)
+            crate::ledger_contract::streamWrite(context, c, x)
         }
         pub fn walkerVectorElement<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: bool,
+            c: bool,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::walkerVectorElement(context, __compact_param_0)
+            crate::ledger_contract::walkerVectorElement(context, c)
         }
         pub fn walkerNativeArg<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: bool,
+            c: bool,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::walkerNativeArg(context, __compact_param_0)
+            crate::ledger_contract::walkerNativeArg(context, c)
         }
         pub fn walkerNestedIf<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: bool,
-            __compact_param_1: bool,
+            c: bool,
+            d: bool,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::walkerNestedIf(context, __compact_param_0, __compact_param_1)
+            crate::ledger_contract::walkerNestedIf(context, c, d)
         }
         pub fn walkerInlineWrite<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: bool,
+            c: bool,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::walkerInlineWrite(context, __compact_param_0)
+            crate::ledger_contract::walkerInlineWrite(context, c)
         }
         pub fn streamCallPure<Private>(
             &self,

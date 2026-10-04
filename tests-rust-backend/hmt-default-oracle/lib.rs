@@ -114,9 +114,9 @@ pub mod ledger_contract {
         pub fn add_default<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::BoundedUint<18446744073709551615>,
+            idx: runtime::BoundedUint<18446744073709551615>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::add_default(context, __compact_param_0)
+            crate::ledger_contract::add_default(context, idx)
         }
     }
 }

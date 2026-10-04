@@ -616,24 +616,23 @@ pub mod ledger_contract {
             pub fn set_active<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: bool,
+                next: bool,
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             {
-                crate::ledger_contract::recorded::set_active(context, __compact_param_0)
+                crate::ledger_contract::recorded::set_active(context, next)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn set_active_call<'observed, Private>(
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
-                __compact_param_0: bool,
+                next: bool,
             ) -> Result<
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
-                let recorded =
-                    self.set_active(observed.circuit_context(private_state), __compact_param_0)?;
+                let input = runtime::fab::AlignedValue::from(next.clone());
+                let recorded = self.set_active(observed.circuit_context(private_state), next)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
                     recorded,
@@ -671,24 +670,24 @@ pub mod ledger_contract {
             pub fn assert_active<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: bool,
+                expected: bool,
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             {
-                crate::ledger_contract::recorded::assert_active(context, __compact_param_0)
+                crate::ledger_contract::recorded::assert_active(context, expected)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn assert_active_call<'observed, Private>(
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
-                __compact_param_0: bool,
+                expected: bool,
             ) -> Result<
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
+                let input = runtime::fab::AlignedValue::from(expected.clone());
                 let recorded =
-                    self.assert_active(observed.circuit_context(private_state), __compact_param_0)?;
+                    self.assert_active(observed.circuit_context(private_state), expected)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
                     recorded,
@@ -699,24 +698,23 @@ pub mod ledger_contract {
             pub fn set_amount<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: runtime::Field,
+                next: runtime::Field,
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             {
-                crate::ledger_contract::recorded::set_amount(context, __compact_param_0)
+                crate::ledger_contract::recorded::set_amount(context, next)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn set_amount_call<'observed, Private>(
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
-                __compact_param_0: runtime::Field,
+                next: runtime::Field,
             ) -> Result<
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
-                let recorded =
-                    self.set_amount(observed.circuit_context(private_state), __compact_param_0)?;
+                let input = runtime::fab::AlignedValue::from(next.clone());
+                let recorded = self.set_amount(observed.circuit_context(private_state), next)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
                     recorded,
@@ -754,24 +752,23 @@ pub mod ledger_contract {
             pub fn add_amount<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: runtime::Field,
+                delta: runtime::Field,
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             {
-                crate::ledger_contract::recorded::add_amount(context, __compact_param_0)
+                crate::ledger_contract::recorded::add_amount(context, delta)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn add_amount_call<'observed, Private>(
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
-                __compact_param_0: runtime::Field,
+                delta: runtime::Field,
             ) -> Result<
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
-                let recorded =
-                    self.add_amount(observed.circuit_context(private_state), __compact_param_0)?;
+                let input = runtime::fab::AlignedValue::from(delta.clone());
+                let recorded = self.add_amount(observed.circuit_context(private_state), delta)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
                     recorded,
@@ -782,26 +779,26 @@ pub mod ledger_contract {
             pub fn active_equals<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: bool,
+                expected: bool,
             ) -> Result<
                 runtime::recording::RecordedCircuitResult<Private, bool>,
                 runtime::CompactError,
             > {
-                crate::ledger_contract::recorded::active_equals(context, __compact_param_0)
+                crate::ledger_contract::recorded::active_equals(context, expected)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn active_equals_call<'observed, Private>(
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
-                __compact_param_0: bool,
+                expected: bool,
             ) -> Result<
                 runtime::transaction::RecordedCall<'observed, Private, bool>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
+                let input = runtime::fab::AlignedValue::from(expected.clone());
                 let recorded =
-                    self.active_equals(observed.circuit_context(private_state), __compact_param_0)?;
+                    self.active_equals(observed.circuit_context(private_state), expected)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
                     recorded,
@@ -812,26 +809,25 @@ pub mod ledger_contract {
             pub fn plus_amount<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: runtime::Field,
+                delta: runtime::Field,
             ) -> Result<
                 runtime::recording::RecordedCircuitResult<Private, runtime::Field>,
                 runtime::CompactError,
             > {
-                crate::ledger_contract::recorded::plus_amount(context, __compact_param_0)
+                crate::ledger_contract::recorded::plus_amount(context, delta)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn plus_amount_call<'observed, Private>(
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
-                __compact_param_0: runtime::Field,
+                delta: runtime::Field,
             ) -> Result<
                 runtime::transaction::RecordedCall<'observed, Private, runtime::Field>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
-                let recorded =
-                    self.plus_amount(observed.circuit_context(private_state), __compact_param_0)?;
+                let input = runtime::fab::AlignedValue::from(delta.clone());
+                let recorded = self.plus_amount(observed.circuit_context(private_state), delta)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
                     recorded,
@@ -842,24 +838,24 @@ pub mod ledger_contract {
             pub fn subtract_amount<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: runtime::Field,
+                delta: runtime::Field,
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             {
-                crate::ledger_contract::recorded::subtract_amount(context, __compact_param_0)
+                crate::ledger_contract::recorded::subtract_amount(context, delta)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn subtract_amount_call<'observed, Private>(
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
-                __compact_param_0: runtime::Field,
+                delta: runtime::Field,
             ) -> Result<
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
-                let recorded = self
-                    .subtract_amount(observed.circuit_context(private_state), __compact_param_0)?;
+                let input = runtime::fab::AlignedValue::from(delta.clone());
+                let recorded =
+                    self.subtract_amount(observed.circuit_context(private_state), delta)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
                     recorded,
@@ -870,24 +866,24 @@ pub mod ledger_contract {
             pub fn multiply_amount<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
-                __compact_param_0: runtime::Field,
+                factor: runtime::Field,
             ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
             {
-                crate::ledger_contract::recorded::multiply_amount(context, __compact_param_0)
+                crate::ledger_contract::recorded::multiply_amount(context, factor)
             }
             #[cfg(feature = "ledger-transaction")]
             pub fn multiply_amount_call<'observed, Private>(
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
-                __compact_param_0: runtime::Field,
+                factor: runtime::Field,
             ) -> Result<
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());
-                let recorded = self
-                    .multiply_amount(observed.circuit_context(private_state), __compact_param_0)?;
+                let input = runtime::fab::AlignedValue::from(factor.clone());
+                let recorded =
+                    self.multiply_amount(observed.circuit_context(private_state), factor)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
                     recorded,
@@ -923,9 +919,9 @@ pub mod ledger_contract {
         pub fn set_active<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: bool,
+            next: bool,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::set_active(context, __compact_param_0)
+            crate::ledger_contract::set_active(context, next)
         }
         pub fn get_active<Private>(
             &self,
@@ -936,16 +932,16 @@ pub mod ledger_contract {
         pub fn assert_active<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: bool,
+            expected: bool,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::assert_active(context, __compact_param_0)
+            crate::ledger_contract::assert_active(context, expected)
         }
         pub fn set_amount<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
+            next: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::set_amount(context, __compact_param_0)
+            crate::ledger_contract::set_amount(context, next)
         }
         pub fn get_amount<Private>(
             &self,
@@ -957,38 +953,38 @@ pub mod ledger_contract {
         pub fn add_amount<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
+            delta: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::add_amount(context, __compact_param_0)
+            crate::ledger_contract::add_amount(context, delta)
         }
         pub fn active_equals<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: bool,
+            expected: bool,
         ) -> Result<runtime::context::CircuitResult<Private, bool>, runtime::CompactError> {
-            crate::ledger_contract::active_equals(context, __compact_param_0)
+            crate::ledger_contract::active_equals(context, expected)
         }
         pub fn plus_amount<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
+            delta: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, runtime::Field>, runtime::CompactError>
         {
-            crate::ledger_contract::plus_amount(context, __compact_param_0)
+            crate::ledger_contract::plus_amount(context, delta)
         }
         pub fn subtract_amount<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
+            delta: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::subtract_amount(context, __compact_param_0)
+            crate::ledger_contract::subtract_amount(context, delta)
         }
         pub fn multiply_amount<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
+            factor: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::multiply_amount(context, __compact_param_0)
+            crate::ledger_contract::multiply_amount(context, factor)
         }
         /// Access replayable circuit calls for this contract.
         pub fn recording(&self) -> &recorded::Contract {

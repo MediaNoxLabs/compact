@@ -354,7 +354,7 @@ pub mod ledger_contract {
         pub fn combine<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
+            seed: runtime::Field,
         ) -> Result<
             runtime::context::CircuitResult<Private, runtime::JubjubPoint>,
             runtime::CompactError,
@@ -362,12 +362,12 @@ pub mod ledger_contract {
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::combine(context, &self.witnesses, __compact_param_0)
+            crate::ledger_contract::combine(context, &self.witnesses, seed)
         }
         pub fn scale<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
+            seed: runtime::Field,
         ) -> Result<
             runtime::context::CircuitResult<Private, runtime::JubjubPoint>,
             runtime::CompactError,
@@ -375,32 +375,32 @@ pub mod ledger_contract {
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::scale(context, &self.witnesses, __compact_param_0)
+            crate::ledger_contract::scale(context, &self.witnesses, seed)
         }
         pub fn point_x<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
+            seed: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, runtime::Field>, runtime::CompactError>
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::point_x(context, &self.witnesses, __compact_param_0)
+            crate::ledger_contract::point_x(context, &self.witnesses, seed)
         }
         pub fn point_y<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
+            seed: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, runtime::Field>, runtime::CompactError>
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::point_y(context, &self.witnesses, __compact_param_0)
+            crate::ledger_contract::point_y(context, &self.witnesses, seed)
         }
         pub fn negate<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
+            seed: runtime::Field,
         ) -> Result<
             runtime::context::CircuitResult<Private, runtime::JubjubPoint>,
             runtime::CompactError,
@@ -408,12 +408,12 @@ pub mod ledger_contract {
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::negate(context, &self.witnesses, __compact_param_0)
+            crate::ledger_contract::negate(context, &self.witnesses, seed)
         }
         pub fn reveal<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
+            seed: runtime::Field,
         ) -> Result<
             runtime::context::CircuitResult<Private, runtime::JubjubPoint>,
             runtime::CompactError,
@@ -421,12 +421,12 @@ pub mod ledger_contract {
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::reveal(context, &self.witnesses, __compact_param_0)
+            crate::ledger_contract::reveal(context, &self.witnesses, seed)
         }
         pub fn hash_scalar<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
+            seed: runtime::Field,
         ) -> Result<
             runtime::context::CircuitResult<Private, runtime::JubjubPoint>,
             runtime::CompactError,
@@ -434,12 +434,12 @@ pub mod ledger_contract {
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::hash_scalar(context, &self.witnesses, __compact_param_0)
+            crate::ledger_contract::hash_scalar(context, &self.witnesses, seed)
         }
         pub fn generator<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::Field,
+            seed: runtime::Field,
         ) -> Result<
             runtime::context::CircuitResult<Private, runtime::JubjubPoint>,
             runtime::CompactError,
@@ -447,7 +447,7 @@ pub mod ledger_contract {
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::generator(context, &self.witnesses, __compact_param_0)
+            crate::ledger_contract::generator(context, &self.witnesses, seed)
         }
     }
 }

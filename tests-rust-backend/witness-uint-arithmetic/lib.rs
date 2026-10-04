@@ -195,7 +195,7 @@ pub mod ledger_contract {
         pub fn add_echo<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::BoundedUint<65535>,
+            value: runtime::BoundedUint<65535>,
         ) -> Result<
             runtime::context::CircuitResult<Private, runtime::BoundedUint<65535>>,
             runtime::CompactError,
@@ -203,12 +203,12 @@ pub mod ledger_contract {
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::add_echo(context, &self.witnesses, __compact_param_0)
+            crate::ledger_contract::add_echo(context, &self.witnesses, value)
         }
         pub fn subtract_echo<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::BoundedUint<65535>,
+            value: runtime::BoundedUint<65535>,
         ) -> Result<
             runtime::context::CircuitResult<Private, runtime::BoundedUint<65535>>,
             runtime::CompactError,
@@ -216,12 +216,12 @@ pub mod ledger_contract {
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::subtract_echo(context, &self.witnesses, __compact_param_0)
+            crate::ledger_contract::subtract_echo(context, &self.witnesses, value)
         }
         pub fn multiply_echo<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::BoundedUint<65535>,
+            value: runtime::BoundedUint<65535>,
         ) -> Result<
             runtime::context::CircuitResult<Private, runtime::BoundedUint<65535>>,
             runtime::CompactError,
@@ -229,7 +229,7 @@ pub mod ledger_contract {
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::multiply_echo(context, &self.witnesses, __compact_param_0)
+            crate::ledger_contract::multiply_echo(context, &self.witnesses, value)
         }
     }
 }

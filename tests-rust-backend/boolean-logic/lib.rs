@@ -207,44 +207,34 @@ pub mod ledger_contract {
         pub fn witnessed_both<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: bool,
-            __compact_param_1: bool,
+            left: bool,
+            right: bool,
         ) -> Result<runtime::context::CircuitResult<Private, bool>, runtime::CompactError>
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::witnessed_both(
-                context,
-                &self.witnesses,
-                __compact_param_0,
-                __compact_param_1,
-            )
+            crate::ledger_contract::witnessed_both(context, &self.witnesses, left, right)
         }
         pub fn witnessed_either<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: bool,
-            __compact_param_1: bool,
+            left: bool,
+            right: bool,
         ) -> Result<runtime::context::CircuitResult<Private, bool>, runtime::CompactError>
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::witnessed_either(
-                context,
-                &self.witnesses,
-                __compact_param_0,
-                __compact_param_1,
-            )
+            crate::ledger_contract::witnessed_either(context, &self.witnesses, left, right)
         }
         pub fn witnessed_not<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: bool,
+            value: bool,
         ) -> Result<runtime::context::CircuitResult<Private, bool>, runtime::CompactError>
         where
             W: TryWitnesses<Private>,
         {
-            crate::ledger_contract::witnessed_not(context, &self.witnesses, __compact_param_0)
+            crate::ledger_contract::witnessed_not(context, &self.witnesses, value)
         }
     }
 }

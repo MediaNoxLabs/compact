@@ -147,9 +147,9 @@ pub mod ledger_contract {
         pub fn set_record<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: crate::types::Pair,
+            value: crate::types::Pair,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
-            crate::ledger_contract::set_record(context, __compact_param_0)
+            crate::ledger_contract::set_record(context, value)
         }
         pub fn read_record<Private>(
             &self,

@@ -2501,9 +2501,8 @@ fn counter_parameter_requires_uint16_and_a_known_name() {
     let source = render(&contract).unwrap();
     assert!(source.contains("__compact_param_0.value() as u16"));
     assert!(source.contains("pub fn increment_by_call<'observed, Private>("));
-    assert!(
-        source.contains("let input = runtime::fab::AlignedValue::from(__compact_param_0.clone());")
-    );
+    assert!(source.contains("let input = runtime::fab::AlignedValue::from(amount.clone());"));
+    assert_eq!(source.matches("amount:").count(), 3);
 
     let mut two_parameters = contract.clone();
     two_parameters.stateful_circuits[0]
@@ -2516,8 +2515,8 @@ fn counter_parameter_requires_uint16_and_a_known_name() {
     assert!(two_parameter_source.contains("pub mod recorded"));
     assert!(two_parameter_source.contains("pub fn increment_by_call<'observed"));
     assert!(two_parameter_source.contains("let input = runtime::fab::AlignedValue::from(("));
-    assert!(two_parameter_source.contains("__compact_param_0.clone(),"));
-    assert!(two_parameter_source.contains("__compact_param_1.clone(),"));
+    assert!(two_parameter_source.contains("amount.clone(),"));
+    assert!(two_parameter_source.contains("unused.clone(),"));
 
     let mut three_parameters = two_parameters.clone();
     three_parameters.stateful_circuits[0]
@@ -2529,7 +2528,7 @@ fn counter_parameter_requires_uint16_and_a_known_name() {
     let three_parameter_source = render(&three_parameters).unwrap();
     assert!(three_parameter_source.contains("pub fn increment_by_call<'observed"));
     assert!(three_parameter_source.contains("runtime::fab::AlignedValue::concat"));
-    assert!(three_parameter_source.contains("AlignedValue::from(__compact_param_2.clone())"));
+    assert!(three_parameter_source.contains("AlignedValue::from(another_unused.clone())"));
 
     let mut twelve_parameters = three_parameters.clone();
     for index in 3..12 {
@@ -2543,7 +2542,7 @@ fn counter_parameter_requires_uint16_and_a_known_name() {
     let twelve_parameter_source = render(&twelve_parameters).unwrap();
     syn::parse_file(&twelve_parameter_source).unwrap();
     assert!(twelve_parameter_source.contains("pub fn increment_by_call<'observed"));
-    assert!(twelve_parameter_source.contains("AlignedValue::from(__compact_param_11.clone())"));
+    assert!(twelve_parameter_source.contains("AlignedValue::from(unused_11.clone())"));
 
     let mut collision = two_parameters.clone();
     let mut exported = collision.stateful_circuits[0].clone();

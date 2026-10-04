@@ -121,10 +121,10 @@ pub mod ledger_contract {
         pub fn save<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,
-            __compact_param_0: runtime::BoundedUint<340282366920938463463374607431768211455>,
+            value: runtime::BoundedUint<340282366920938463463374607431768211455>,
         ) -> Result<runtime::context::CircuitResult<Private, runtime::Field>, runtime::CompactError>
         {
-            crate::ledger_contract::save(context, __compact_param_0)
+            crate::ledger_contract::save(context, value)
         }
     }
 }

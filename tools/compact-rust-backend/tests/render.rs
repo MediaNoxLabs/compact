@@ -247,7 +247,7 @@ fn generated_unit_enum_uses_checked_derive_without_handwritten_codecs() {
     let source = render(&contract).unwrap();
     assert!(source.contains("CompactCellValue, CompactEnum"));
     assert!(source.contains("pub enum Choice"));
-    assert!(source.contains("RUST_RUNTIME_ABI == 29"));
+    assert!(source.contains("RUST_RUNTIME_ABI == 30"));
     assert!(!source.contains("impl FieldRepr for Choice"));
     assert!(!source.contains("impl BinaryHashRepr for Choice"));
     assert!(!source.contains("impl FromFieldRepr for Choice"));
@@ -2734,6 +2734,10 @@ fn set_actions_require_the_declared_element_type() {
     };
     let source = render(&contract).unwrap();
     assert!(source.contains("pub const seen: runtime::slots::SetSlot<bool>"));
+    assert!(source.contains("pub struct PublicStateView<'a, D:"));
+    assert!(source.contains("pub fn seen("));
+    assert!(source.contains("runtime::ledger::SetView<'a, bool, D>"));
+    assert!(source.contains("crate::ledger_slots::seen.inspect(self.state)"));
     assert!(source.contains("crate::ledger_slots::seen.insert(context, __compact_param_0)?"));
     assert!(
         source.contains(".record_insert(frame, __compact_param_0)?"),

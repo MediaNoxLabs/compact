@@ -203,6 +203,11 @@ fn chunked_set_calls_match_typescript_and_replay() {
         &reference["empty"],
     );
     let inserted = ledger_contract::insert_key(context(), key).unwrap();
+    let typed = ledger_contract::PublicStateView::from(&inserted)
+        .keySet()
+        .unwrap();
+    assert!(typed.member(key));
+    assert_eq!(typed.size().unwrap().value(), 1);
     assert!(
         set_view_at_path::<(Field, bool), _>(inserted.context.query.state.get_ref(), &[1, 14])
             .unwrap()

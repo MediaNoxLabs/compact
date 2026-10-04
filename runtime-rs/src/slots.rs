@@ -26,9 +26,9 @@ use crate::CompactError;
 use crate::context::{CircuitContext, CircuitResult, WitnessReadMeter};
 use crate::ledger::{
     CellValue, DB, MeteredHistoricMerkleTreeView, MeteredListView, MeteredMapView,
-    MeteredMerkleTreeView, MeteredSetView, StateValue, metered_historic_merkle_tree_view_at_path,
-    metered_list_view_at_path, metered_map_view_at_path, metered_merkle_tree_view_at_path,
-    metered_set_view_at_path,
+    MeteredMerkleTreeView, MeteredSetView, SetView, StateValue,
+    metered_historic_merkle_tree_view_at_path, metered_list_view_at_path, metered_map_view_at_path,
+    metered_merkle_tree_view_at_path, metered_set_view_at_path, set_view_at_path,
 };
 use crate::recording::RecordingFrame;
 
@@ -351,6 +351,14 @@ impl<T: CellValue> SetSlot<T> {
 
     pub const fn path(self) -> &'static [u8] {
         self.path
+    }
+
+    /// Inspect an already held public Set without a VM query or gas charge.
+    pub fn inspect<'a, D: DB>(
+        self,
+        state: &'a StateValue<D>,
+    ) -> Result<SetView<'a, T, D>, CompactError> {
+        set_view_at_path(state, self.path)
     }
 
     /// Project this Set through the existing metered witness view.

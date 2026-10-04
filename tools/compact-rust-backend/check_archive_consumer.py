@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Build two generated contracts together using only the runtime archives."""
+"""Build three generated contracts together using only the runtime archives."""
 
 import argparse
 import hashlib
@@ -32,6 +32,7 @@ ROOT = Path(__file__).resolve().parents[2]
 CONTRACTS = (
     ("counter", ROOT / "examples/rust_backend/counter.compact"),
     ("cell-boolean", ROOT / "examples/rust_backend/cell_boolean.compact"),
+    ("set-boolean", ROOT / "examples/rust_backend/set_boolean.compact"),
 )
 PACKAGE_NAMES = ("midnight-compact-runtime-macros", "midnight-compact-runtime")
 
@@ -196,6 +197,7 @@ def main() -> None:
         (consumer / "tests/counter.rs").write_text(
             'use compact_contract_counter as counter;\n'
             'use compact_contract_cell_boolean as cell;\n'
+            'use compact_contract_set_boolean as set;\n'
             'use compact_contract_counter::runtime::context::ConstructorContext;\n'
             'use compact_contract_counter::runtime::ledger::{ContractAddress, StateValue, read_cell};\n'
             '#[test]\nfn archived_runtime_executes_generated_counter() {\n'
@@ -217,16 +219,41 @@ def main() -> None:
             '        panic!("expected generated Cell field array");\n'
             '    };\n'
             '    assert!(read_cell::<bool, _>(&fields.get(0).unwrap()).unwrap());\n}\n'
+            '#[test]\nfn archived_runtime_executes_generated_set() {\n'
+            '    let state = set::ledger_contract::initial_state(ConstructorContext::new(())).unwrap();\n'
+            '    let initial = set::ledger_contract::PublicStateView::from(&state);\n'
+            '    assert!(initial.seen().unwrap().is_empty());\n'
+            '    let context = state.into_circuit_context(ContractAddress::default());\n'
+            '    let call = set::ledger_contract::Contract::default().add(context, true).unwrap();\n'
+            '    let view = set::ledger_contract::PublicStateView::from(&call);\n'
+            '    assert!(view.seen().unwrap().member(true));\n'
+            '    assert_eq!(view.seen().unwrap().size().unwrap().value(), 1);\n}\n'
         )
         environment = os.environ.copy()
         environment.setdefault("CARGO_TARGET_DIR", str(ROOT / "target/compactc-consumer"))
         environment.setdefault("CARGO_INCREMENTAL", "0")
         environment.setdefault("CARGO_BUILD_JOBS", "2")
         run(["cargo", "test", "--offline", "--quiet"], cwd=consumer, env=environment)
+        wrong_key = consumer / "tests/wrong_set_key.rs"
+        wrong_key.write_text(
+            'use compact_contract_set_boolean as set;\n'
+            '#[test]\nfn wrong_set_key_is_rejected() {\n'
+            '    let state = set::ledger_contract::initial_state('
+            'set::runtime::context::ConstructorContext::new(())).unwrap();\n'
+            '    let view = set::ledger_contract::PublicStateView::from(&state);\n'
+            '    view.seen().unwrap().member(set::runtime::Field::from(42_u64));\n}\n'
+        )
+        rejection = subprocess.run(
+            ["cargo", "check", "--offline", "--tests", "--quiet"],
+            cwd=consumer, env=environment, capture_output=True, text=True,
+        )
+        wrong_key.unlink()
+        if rejection.returncode == 0 or "mismatched types" not in rejection.stderr:
+            raise RuntimeError("wrong Set key type was not rejected by the archive-only consumer")
         metadata = json.loads(run(["cargo", "metadata", "--offline", "--format-version", "1"],
                                   cwd=consumer, env=environment))
         check_graph(metadata, consumer, vendor, entries)
-    print("archive-only Counter + Cell consumer passed with one shared runtime; public registry publication remains unverified")
+    print("archive-only Counter + Cell + Set consumer passed with one shared runtime; public registry publication remains unverified")
 
 
 if __name__ == "__main__":

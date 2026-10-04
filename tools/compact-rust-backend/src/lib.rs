@@ -6,7 +6,7 @@ mod recorded;
 mod stateful;
 mod witness;
 
-const RUNTIME_ABI_VERSION: u32 = 29;
+const RUNTIME_ABI_VERSION: u32 = 30;
 pub const RUST_CAPABILITY_SCHEMA_VERSION: u32 = 1;
 
 const GENERATED_HEADER: &str = r#"// This file is part of Compact.
@@ -2980,6 +2980,12 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
             }
             LedgerFieldKind::Set { ty } => {
                 let ty = rust_type(ty)?;
+                public_state_getters.push(syn::parse_quote! {
+                    /// Inspect this declared Set in the borrowed public state.
+                    pub fn #name(&self) -> Result<runtime::ledger::SetView<'a, #ty, D>, runtime::CompactError> {
+                        crate::ledger_slots::#name.inspect(self.state)
+                    }
+                });
                 slot_items.push(syn::parse_quote! {
                     pub const #name: runtime::slots::SetSlot<#ty> =
                         runtime::slots::SetSlot::new(&[#(#path),*]);

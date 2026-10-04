@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use compact_rust_set_boolean_fixture::ledger_contract::Contract;
+use compact_rust_set_boolean_fixture::ledger_contract::{Contract, PublicStateView};
 use compact_rust_set_boolean_fixture::ledger_contract::{
     add, add_field, choose, contains, contains_field, initial_state, remove, reset_fields,
     seen_is_empty, seen_size,
@@ -53,8 +53,35 @@ fn state_hex(state: StateValue<DefaultDB>) -> String {
 }
 
 #[test]
+fn public_set_view_rejects_missing_and_wrong_shaped_paths() {
+    use midnight_compact_runtime::ledger::{constructor_cell, contract_state, set_view_at_path};
+
+    let empty = contract_state::<DefaultDB>(vec![]);
+    assert_eq!(
+        PublicStateView::from(empty.get_ref()).seen().err().unwrap(),
+        set_view_at_path::<bool, _>(empty.get_ref(), &[0])
+            .err()
+            .unwrap(),
+    );
+    let wrong_shape = contract_state::<DefaultDB>(vec![constructor_cell(false)]);
+    assert_eq!(
+        PublicStateView::from(wrong_shape.get_ref())
+            .seen()
+            .err()
+            .unwrap(),
+        set_view_at_path::<bool, _>(wrong_shape.get_ref(), &[0])
+            .err()
+            .unwrap(),
+    );
+}
+
+#[test]
 fn generated_set_contract_inserts_and_checks_membership() {
     let constructor = initial_state(ConstructorContext::new(())).unwrap();
+    let initial = PublicStateView::from(&constructor);
+    assert!(initial.seen().unwrap().is_empty());
+    assert_eq!(initial.seen().unwrap().size().unwrap().value(), 0);
+    assert!(initial.fields().unwrap().is_empty());
     let StateValue::Array(fields) = constructor.ledger_state.get_ref() else {
         panic!("expected ledger field array")
     };
@@ -91,6 +118,31 @@ fn generated_set_contract_inserts_and_checks_membership() {
     assert!(result.result);
     let result = contains_field(result.context, Field::from(43_u64)).unwrap();
     assert!(!result.result);
+    let view = PublicStateView::from(&result);
+    assert!(view.seen().unwrap().member(true));
+    assert!(!view.seen().unwrap().member(false));
+    assert_eq!(view.seen().unwrap().size().unwrap().value(), 1);
+    assert!(view.fields().unwrap().member(Field::from(42_u64)));
+    assert!(!view.fields().unwrap().member(Field::from(43_u64)));
+    let raw_seen = midnight_compact_runtime::ledger::set_view_at_path::<bool, _>(
+        result.context.query.state.get_ref(),
+        &[0],
+    )
+    .unwrap();
+    assert_eq!(view.seen().unwrap().member(true), raw_seen.member(true));
+    assert_eq!(
+        view.seen().unwrap().size().unwrap(),
+        raw_seen.size().unwrap()
+    );
+    let raw_fields = midnight_compact_runtime::ledger::set_view_at_path::<Field, _>(
+        result.context.query.state.get_ref(),
+        &[1],
+    )
+    .unwrap();
+    assert_eq!(
+        view.fields().unwrap().member(Field::from(42_u64)),
+        raw_fields.member(Field::from(42_u64)),
+    );
     let StateValue::Array(fields) = result.context.query.state.get_ref() else {
         panic!("expected ledger field array")
     };
@@ -108,6 +160,7 @@ fn generated_set_contract_inserts_and_checks_membership() {
     assert!(result.result);
     let result = seen_size(result.context).unwrap();
     assert_eq!(result.result.value(), 0);
+    assert!(PublicStateView::from(&result).seen().unwrap().is_empty());
     let StateValue::Array(fields) = result.context.query.state.get_ref() else {
         panic!("expected ledger field array")
     };
@@ -117,6 +170,7 @@ fn generated_set_contract_inserts_and_checks_membership() {
     assert_eq!(set.size(), 1);
 
     let result = reset_fields(result.context).unwrap();
+    assert!(PublicStateView::from(&result).fields().unwrap().is_empty());
     let StateValue::Array(fields) = result.context.query.state.get_ref() else {
         panic!("expected ledger field array")
     };
@@ -181,6 +235,8 @@ fn recorded_set_mutation_and_queries_match_native_state_and_replay() {
         replay.context.state.get_ref(),
         added.execution.context.query.state.get_ref()
     );
+    assert!(PublicStateView::from(&added).seen().unwrap().member(true));
+    assert!(PublicStateView::from(&replay).seen().unwrap().member(true));
 
     let contains = contract
         .recording

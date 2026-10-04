@@ -89,7 +89,7 @@ pub mod ledger_contract {
                     "constructor rejected".to_owned(),
                 ));
             }
-            let step = context.write_cell(0, (__compact_constructor_local_0).clone())?;
+            let step = context.write_cell(0, __compact_constructor_local_0)?;
             context = step.context;
             let _ = total_cost;
             Ok(context.into_constructor_result())

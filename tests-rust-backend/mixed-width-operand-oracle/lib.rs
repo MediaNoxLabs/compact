@@ -306,7 +306,7 @@ pub mod ledger_contract {
                     __compact_value_3,
                     __compact_value_4,
                 )?;
-            let step = context.write_cell(0, (__compact_constructor_local_5).clone())?;
+            let step = context.write_cell(0, __compact_constructor_local_5)?;
             context = step.context;
             let _ = total_cost;
             Ok(context.into_constructor_result())

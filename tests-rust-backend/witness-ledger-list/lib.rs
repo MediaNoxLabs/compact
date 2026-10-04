@@ -136,9 +136,7 @@ pub mod ledger_contract {
             }))?;
         total_cost += __compact_witness_meter_0.gas_cost();
         context.private_state = __compact_next_private_0;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_0.clone(),
-        ));
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_0));
         let result = __compact_witness_0;
         Ok(runtime::context::CircuitResult {
             context,
@@ -188,7 +186,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(value.clone());
+                let input = runtime::fab::AlignedValue::from(value);
                 let recorded = self.prepend(observed.circuit_context(private_state), value)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed, recorded, "prepend", input,

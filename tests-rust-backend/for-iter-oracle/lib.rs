@@ -76,21 +76,16 @@ pub mod ledger_contract {
                 .into_circuit_context(runtime::ledger::ContractAddress::default());
             let mut total_cost = runtime::context::RunningCost::default();
             let __compact_constructor_values_0: [runtime::BoundedUint<18446744073709551615>; 5] = [
-                (runtime::BoundedUint::<18446744073709551615>::new(1u128)
-                    .expect("Compact Uint literal fits its maximum"))
-                .clone(),
-                (runtime::BoundedUint::<18446744073709551615>::new(2u128)
-                    .expect("Compact Uint literal fits its maximum"))
-                .clone(),
-                (runtime::BoundedUint::<18446744073709551615>::new(3u128)
-                    .expect("Compact Uint literal fits its maximum"))
-                .clone(),
-                (runtime::BoundedUint::<18446744073709551615>::new(4u128)
-                    .expect("Compact Uint literal fits its maximum"))
-                .clone(),
-                (runtime::BoundedUint::<18446744073709551615>::new(5u128)
-                    .expect("Compact Uint literal fits its maximum"))
-                .clone(),
+                runtime::BoundedUint::<18446744073709551615>::new(1u128)
+                    .expect("Compact Uint literal fits its maximum"),
+                runtime::BoundedUint::<18446744073709551615>::new(2u128)
+                    .expect("Compact Uint literal fits its maximum"),
+                runtime::BoundedUint::<18446744073709551615>::new(3u128)
+                    .expect("Compact Uint literal fits its maximum"),
+                runtime::BoundedUint::<18446744073709551615>::new(4u128)
+                    .expect("Compact Uint literal fits its maximum"),
+                runtime::BoundedUint::<18446744073709551615>::new(5u128)
+                    .expect("Compact Uint literal fits its maximum"),
             ];
             for __compact_constructor_item_0 in __compact_constructor_values_0 {
                 let __compact_constructor_local_0: runtime::BoundedUint<65535> =

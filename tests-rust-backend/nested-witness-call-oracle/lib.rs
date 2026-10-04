@@ -154,9 +154,7 @@ pub mod ledger_contract {
             }))?;
         total_cost += __compact_witness_meter_0.gas_cost();
         context.private_state = __compact_next_private_0;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_0.clone(),
-        ));
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_0));
         let result = __compact_witness_0;
         Ok(runtime::context::CircuitResult {
             context,
@@ -206,9 +204,7 @@ pub mod ledger_contract {
             }))?;
         total_cost += __compact_witness_meter_0.gas_cost();
         context.private_state = __compact_next_private_0;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_0.clone(),
-        ));
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_0));
         let __compact_value_1 = __compact_witness_0;
         let __compact_value_2 = __compact_param_0;
         let __compact_value_3 = __compact_value_1 + __compact_value_2;
@@ -236,9 +232,7 @@ pub mod ledger_contract {
             }))?;
         total_cost += __compact_witness_meter_0.gas_cost();
         context.private_state = __compact_next_private_0;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_0.clone(),
-        ));
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_0));
         let __compact_call_argument_1 = __compact_witness_0;
         let __compact_witness_meter_2 = runtime::context::WitnessReadMeter::new(&context);
         let (__compact_next_private_2, __compact_witness_2) =
@@ -248,9 +242,7 @@ pub mod ledger_contract {
             }))?;
         total_cost += __compact_witness_meter_2.gas_cost();
         context.private_state = __compact_next_private_2;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_2.clone(),
-        ));
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_2));
         let __compact_call_argument_3 = __compact_witness_2;
         let __compact_call_4 = innerValue2(
             context,
@@ -293,9 +285,7 @@ pub mod ledger_contract {
             }))?;
         total_cost += __compact_witness_meter_2.gas_cost();
         context.private_state = __compact_next_private_2;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_2.clone(),
-        ));
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_2));
         let __compact_value_3 = __compact_witness_2;
         let __compact_action_local_0: runtime::Field = __compact_value_1 + __compact_value_3;
         let step = crate::ledger_slots::value.write(context, __compact_action_local_0)?;

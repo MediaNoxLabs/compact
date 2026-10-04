@@ -88,13 +88,13 @@ pub mod ledger_contract {
                 .into_circuit_context(runtime::ledger::ContractAddress::default());
             let mut total_cost = runtime::context::RunningCost::default();
             let __compact_constructor_local_0: runtime::Field = runtime::Field::from(1u128);
-            let step = context.write_cell(0, (__compact_constructor_local_0).clone())?;
+            let step = context.write_cell(0, __compact_constructor_local_0)?;
             context = step.context;
             let step =
                 context.increment_counter(1, __compact_constructor_param_0.value() as u16)?;
             context = step.context;
             let __compact_constructor_local_1: runtime::Field = runtime::Field::from(2u128);
-            let step = context.write_cell(0, (__compact_constructor_local_1).clone())?;
+            let step = context.write_cell(0, __compact_constructor_local_1)?;
             context = step.context;
             let __compact_constructor_local_2: runtime::BoundedUint<65535> =
                 runtime::BoundedUint::<65535>::new(2u128)

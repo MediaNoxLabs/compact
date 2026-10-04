@@ -380,9 +380,7 @@ pub mod ledger_contract {
             }))?;
         total_cost += __compact_witness_meter_0.gas_cost();
         context.private_state = __compact_next_private_0;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_0.clone(),
-        ));
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_0));
         let result = __compact_witness_0;
         Ok(runtime::context::CircuitResult {
             context,
@@ -406,9 +404,7 @@ pub mod ledger_contract {
             }))?;
         total_cost += __compact_witness_meter_0.gas_cost();
         context.private_state = __compact_next_private_0;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_0.clone(),
-        ));
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_0));
         let result = __compact_witness_0;
         Ok(runtime::context::CircuitResult {
             context,
@@ -432,9 +428,7 @@ pub mod ledger_contract {
             }))?;
         total_cost += __compact_witness_meter_0.gas_cost();
         context.private_state = __compact_next_private_0;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_0.clone(),
-        ));
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_0));
         let result = __compact_witness_0;
         Ok(runtime::context::CircuitResult {
             context,
@@ -458,9 +452,7 @@ pub mod ledger_contract {
             }))?;
         total_cost += __compact_witness_meter_0.gas_cost();
         context.private_state = __compact_next_private_0;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_0.clone(),
-        ));
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_0));
         let result = __compact_witness_0;
         Ok(runtime::context::CircuitResult {
             context,
@@ -484,9 +476,7 @@ pub mod ledger_contract {
             }))?;
         total_cost += __compact_witness_meter_0.gas_cost();
         context.private_state = __compact_next_private_0;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_0.clone(),
-        ));
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_0));
         let result = __compact_witness_0;
         Ok(runtime::context::CircuitResult {
             context,
@@ -522,8 +512,7 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let frame =
-                crate::ledger_slots::tags.record_push_front(frame, (__compact_param_0).clone())?;
+            let frame = crate::ledger_slots::tags.record_push_front(frame, __compact_param_0)?;
             Ok(frame.finish(()))
         }
         pub fn push_choice<Private>(
@@ -532,8 +521,7 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let frame = crate::ledger_slots::choices
-                .record_push_front(frame, (__compact_param_0).clone())?;
+            let frame = crate::ledger_slots::choices.record_push_front(frame, __compact_param_0)?;
             Ok(frame.finish(()))
         }
         pub fn push_packet<Private>(
@@ -589,7 +577,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(value.clone());
+                let input = runtime::fab::AlignedValue::from(value);
                 let recorded = self.push_flag(observed.circuit_context(private_state), value)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
@@ -616,7 +604,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(value.clone());
+                let input = runtime::fab::AlignedValue::from(value);
                 let recorded = self.push_count(observed.circuit_context(private_state), value)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
@@ -643,7 +631,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(value.clone());
+                let input = runtime::fab::AlignedValue::from(value);
                 let recorded = self.push_tag(observed.circuit_context(private_state), value)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed, recorded, "push_tag", input,
@@ -667,7 +655,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(value.clone());
+                let input = runtime::fab::AlignedValue::from(value);
                 let recorded = self.push_choice(observed.circuit_context(private_state), value)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
@@ -694,7 +682,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(value.clone());
+                let input = runtime::fab::AlignedValue::from((value).clone());
                 let recorded = self.push_packet(observed.circuit_context(private_state), value)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,

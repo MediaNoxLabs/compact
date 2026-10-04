@@ -98,7 +98,7 @@ pub mod ledger_contract {
                     runtime::Field::from(0u128),
                     runtime::Field::from(0u128),
                 ]));
-            let step = context.write_cell(1, (__compact_constructor_local_1).clone())?;
+            let step = context.write_cell(1, __compact_constructor_local_1)?;
             context = step.context;
             let _ = total_cost;
             Ok(context.into_constructor_result())
@@ -270,8 +270,7 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let frame =
-                crate::ledger_slots::hashCell.record_write(frame, (__compact_param_0).clone())?;
+            let frame = crate::ledger_slots::hashCell.record_write(frame, __compact_param_0)?;
             Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
@@ -295,7 +294,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(h.clone());
+                let input = runtime::fab::AlignedValue::from(h);
                 let recorded = self.setHash(observed.circuit_context(private_state), h)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed, recorded, "setHash", input,

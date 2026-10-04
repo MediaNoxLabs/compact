@@ -53,7 +53,7 @@ pub mod pure_circuits {
     ) -> Result<crate::types::Maybe, runtime::CompactError> {
         Ok(crate::types::Maybe {
             is_some: true,
-            value: value,
+            value,
         })
     }
     pub(crate) fn none() -> Result<crate::types::Maybe, runtime::CompactError> {
@@ -171,18 +171,16 @@ pub mod ledger_contract {
                 }))?;
             total_cost += __compact_witness_meter_0.gas_cost();
             context.private_state = __compact_next_private_0;
-            private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-                __compact_witness_0.clone(),
-            ));
+            private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_0));
             let __compact_constructor_local_1: runtime::FixedBytes<32> = __compact_witness_0;
             let __compact_call_argument_2 = __compact_constructor_local_1;
             let __compact_constructor_local_3: runtime::FixedBytes<32> =
                 crate::pure_circuits::public_key(__compact_call_argument_2)?;
-            let step = context.write_cell(0, (__compact_constructor_local_3).clone())?;
+            let step = context.write_cell(0, __compact_constructor_local_3)?;
             context = step.context;
-            let step = context.write_cell(1, (__compact_constructor_param_0).clone())?;
+            let step = context.write_cell(1, __compact_constructor_param_0)?;
             context = step.context;
-            let step = context.write_cell(2, (crate::types::STATE::set).clone())?;
+            let step = context.write_cell(2, crate::types::STATE::set)?;
             context = step.context;
             let _ = total_cost;
             let _ = private_transcript_outputs;
@@ -234,9 +232,7 @@ pub mod ledger_contract {
             }))?;
         total_cost += __compact_witness_meter_2.gas_cost();
         context.private_state = __compact_next_private_2;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_2.clone(),
-        ));
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_2));
         let __compact_action_local_0: runtime::FixedBytes<32> = __compact_witness_2;
         let __compact_call_argument_3 = __compact_action_local_0;
         let __compact_action_local_1: runtime::FixedBytes<32> =
@@ -310,9 +306,7 @@ pub mod ledger_contract {
             }))?;
         total_cost += __compact_witness_meter_2.gas_cost();
         context.private_state = __compact_next_private_2;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_2.clone(),
-        ));
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_2));
         let __compact_action_local_0: runtime::FixedBytes<32> = __compact_witness_2;
         let __compact_call_argument_3 = __compact_action_local_0;
         let __compact_action_local_1: runtime::FixedBytes<32> =
@@ -360,7 +354,7 @@ pub mod ledger_contract {
             let (frame, __compact_recorded_value_1): (_, crate::types::STATE) =
                 crate::ledger_slots::state.record_read(frame)?;
             let __compact_recorded_compare_2 =
-                __compact_recorded_value_1 == (__compact_recorded_arg_0).clone();
+                __compact_recorded_value_1 == __compact_recorded_arg_0;
             if !(__compact_recorded_compare_2) {
                 return Err(runtime::CompactError::AssertionFailed(
                     "set: attempted to overwrite recorded value".to_owned(),
@@ -373,9 +367,9 @@ pub mod ledger_contract {
                 }))
             })?;
             let __compact_recorded_pure_4: runtime::FixedBytes<32> =
-                crate::pure_circuits::public_key((__compact_witness_3).clone())?;
-            let frame = crate::ledger_slots::authority
-                .record_write(frame, (__compact_recorded_pure_4).clone())?;
+                crate::pure_circuits::public_key(__compact_witness_3)?;
+            let frame =
+                crate::ledger_slots::authority.record_write(frame, __compact_recorded_pure_4)?;
             let frame = crate::ledger_slots::value.record_write(frame, __compact_param_0)?;
             let frame = crate::ledger_slots::state.record_write(frame, crate::types::STATE::set)?;
             Ok(frame.finish(()))
@@ -391,7 +385,7 @@ pub mod ledger_contract {
             let (frame, __compact_recorded_value_1): (_, crate::types::STATE) =
                 crate::ledger_slots::state.record_read(frame)?;
             let __compact_recorded_compare_2 =
-                __compact_recorded_value_1 == (__compact_recorded_arg_0).clone();
+                __compact_recorded_value_1 == __compact_recorded_arg_0;
             let (frame, observed): (_, crate::types::Maybe) = if __compact_recorded_compare_2 {
                 let (frame, __compact_recorded_value_3): (_, runtime::Field) =
                     crate::ledger_slots::value.record_read(frame)?;
@@ -412,7 +406,7 @@ pub mod ledger_contract {
             let (frame, __compact_recorded_value_1): (_, crate::types::STATE) =
                 crate::ledger_slots::state.record_read(frame)?;
             let __compact_recorded_compare_2 =
-                __compact_recorded_value_1 == (__compact_recorded_arg_0).clone();
+                __compact_recorded_value_1 == __compact_recorded_arg_0;
             if !(__compact_recorded_compare_2) {
                 return Err(runtime::CompactError::AssertionFailed(
                     "clear: no value is currently recorded".to_owned(),
@@ -425,20 +419,18 @@ pub mod ledger_contract {
                 }))
             })?;
             let __compact_recorded_pure_4: runtime::FixedBytes<32> =
-                crate::pure_circuits::public_key((__compact_witness_3).clone())?;
+                crate::pure_circuits::public_key(__compact_witness_3)?;
             let (frame, __compact_recorded_value_5): (_, runtime::FixedBytes<32>) =
                 crate::ledger_slots::authority.record_read(frame)?;
             let __compact_recorded_compare_6 =
-                (__compact_recorded_pure_4).clone() == __compact_recorded_value_5;
+                __compact_recorded_pure_4 == __compact_recorded_value_5;
             if !(__compact_recorded_compare_6) {
                 return Err(runtime::CompactError::AssertionFailed(
                     "clear: attempted clear without proper authorization".to_owned(),
                 ));
             }
-            let frame = crate::ledger_slots::authority.record_write(
-                frame,
-                (<runtime::FixedBytes<32> as Default>::default()).clone(),
-            )?;
+            let frame = crate::ledger_slots::authority
+                .record_write(frame, <runtime::FixedBytes<32> as Default>::default())?;
             let frame =
                 crate::ledger_slots::value.record_write(frame, runtime::Field::from(0u128))?;
             let frame =
@@ -501,7 +493,7 @@ pub mod ledger_contract {
             where
                 W: super::TryWitnesses<Private>,
             {
-                let input = runtime::fab::AlignedValue::from(v.clone());
+                let input = runtime::fab::AlignedValue::from(v);
                 let recorded = self.set(observed.circuit_context(private_state), v)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed, recorded, "set", input,

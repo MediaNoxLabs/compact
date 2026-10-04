@@ -84,7 +84,7 @@ pub mod ledger_contract {
                 .into_circuit_context(runtime::ledger::ContractAddress::default());
             let mut total_cost = runtime::context::RunningCost::default();
             let __compact_constructor_local_0: runtime::Field = runtime::Field::from(7u128);
-            let step = context.write_cell(0, (__compact_constructor_local_0).clone())?;
+            let step = context.write_cell(0, __compact_constructor_local_0)?;
             context = step.context;
             let __compact_query_1 = crate::ledger_slots::first.read(context)?;
             context = __compact_query_1.context;
@@ -95,7 +95,7 @@ pub mod ledger_contract {
             total_cost += __compact_call_3.gas_cost;
             let _ = __compact_call_3.result;
             let __compact_constructor_local_4: runtime::Field = runtime::Field::from(9u128);
-            let step = context.write_cell(1, (__compact_constructor_local_4).clone())?;
+            let step = context.write_cell(1, __compact_constructor_local_4)?;
             context = step.context;
             let _ = total_cost;
             Ok(context.into_constructor_result())

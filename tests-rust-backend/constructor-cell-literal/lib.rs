@@ -74,7 +74,7 @@ pub mod ledger_contract {
                 .into_circuit_context(runtime::ledger::ContractAddress::default());
             let mut total_cost = runtime::context::RunningCost::default();
             let __compact_constructor_local_0: runtime::Field = runtime::Field::from(7u128);
-            let step = context.write_cell(0, (__compact_constructor_local_0).clone())?;
+            let step = context.write_cell(0, __compact_constructor_local_0)?;
             context = step.context;
             let _ = total_cost;
             Ok(context.into_constructor_result())

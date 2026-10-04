@@ -283,16 +283,14 @@ pub mod ledger_contract {
             let __compact_constructor_local_0: runtime::BoundedUint<18446744073709551615> =
                 runtime::BoundedUint::<18446744073709551615>::new(7u128)
                     .expect("Compact Uint literal fits its maximum");
-            let step =
-                context.write_cell_at_path(&[0, 0], (__compact_constructor_local_0).clone())?;
+            let step = context.write_cell_at_path(&[0, 0], __compact_constructor_local_0)?;
             context = step.context;
             let __compact_constructor_local_1: runtime::BoundedUint<18446744073709551615> =
                 runtime::BoundedUint::<18446744073709551615>::new(42u128)
                     .expect("Compact Uint literal fits its maximum");
-            let step =
-                context.write_cell_at_path(&[1, 13], (__compact_constructor_local_1).clone())?;
+            let step = context.write_cell_at_path(&[1, 13], __compact_constructor_local_1)?;
             context = step.context;
-            let step = context.write_cell_at_path(&[1, 14], (true).clone())?;
+            let step = context.write_cell_at_path(&[1, 14], true)?;
             context = step.context;
             let _ = total_cost;
             Ok(context.into_constructor_result())

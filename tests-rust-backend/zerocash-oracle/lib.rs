@@ -207,13 +207,13 @@ pub mod pure_circuits {
     ) -> Result<crate::types::MerkleTreeDigest, runtime::CompactError> {
         Ok(crate::types::MerkleTreeDigest {
             field: {
-                let __compact_fold_source = (path.clone()).path.clone();
+                let __compact_fold_source = ((path.clone()).path).clone();
                 let mut __compact_fold_accumulator = runtime::degrade_to_transient(
                     runtime::persistent_hash(crate::types::LeafPreimage {
                         domain_sep: runtime::FixedBytes::new([
                             109u8, 100u8, 110u8, 58u8, 108u8, 104u8,
                         ]),
-                        data: (path.clone()).leaf.clone(),
+                        data: ((path.clone()).leaf).clone(),
                     }),
                 );
                 for __compact_fold_item in __compact_fold_source.into_array() {
@@ -231,14 +231,14 @@ pub mod pure_circuits {
         entry: crate::types::MerkleTreePathEntry,
     ) -> Result<runtime::Field, runtime::CompactError> {
         Ok({
-            let __compact_local_left: runtime::Field = if (entry.clone()).goes_left.clone() {
+            let __compact_local_left: runtime::Field = if (entry.clone()).goes_left {
                 recursiveDigest
             } else {
-                ((entry.clone()).sibling.clone()).field.clone()
+                (((entry.clone()).sibling).clone()).field
             };
             {
-                let __compact_local_right: runtime::Field = if (entry.clone()).goes_left.clone() {
-                    ((entry.clone()).sibling.clone()).field.clone()
+                let __compact_local_right: runtime::Field = if (entry.clone()).goes_left {
+                    (((entry.clone()).sibling).clone()).field
                 } else {
                     recursiveDigest
                 };
@@ -257,9 +257,9 @@ pub mod pure_circuits {
                     115u8, 104u8, 58u8, 99u8, 111u8, 109u8, 109u8, 105u8, 116u8, 0u8, 0u8, 0u8,
                     0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
                 ]),
-                ((coin.clone()).nonce.clone()).bytes.clone(),
-                ((coin.clone()).opening.clone()).bytes.clone(),
-                (sk.clone()).bytes.clone(),
+                (((coin.clone()).nonce).clone()).bytes,
+                (((coin.clone()).opening).clone()).bytes,
+                (sk.clone()).bytes,
             )),
         })
     }
@@ -267,7 +267,7 @@ pub mod pure_circuits {
         sk: crate::types::zk_secret_key,
     ) -> Result<crate::types::zk_public_key, runtime::CompactError> {
         Ok(crate::types::zk_public_key {
-            bytes: runtime::persistent_hash((sk.clone()).bytes.clone()),
+            bytes: runtime::persistent_hash((sk.clone()).bytes),
         })
     }
     pub(crate) fn commitment_from_coin_info(
@@ -281,9 +281,9 @@ pub mod pure_circuits {
                     115u8, 104u8, 58u8, 99u8, 111u8, 109u8, 109u8, 105u8, 116u8, 0u8, 0u8, 0u8,
                     0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
                 ]),
-                ((coin.clone()).nonce.clone()).bytes.clone(),
-                ((coin.clone()).opening.clone()).bytes.clone(),
-                (pk.clone()).bytes.clone(),
+                (((coin.clone()).nonce).clone()).bytes,
+                (((coin.clone()).opening).clone()).bytes,
+                (pk.clone()).bytes,
             )),
         })
     }
@@ -443,7 +443,7 @@ pub mod ledger_contract {
         total_cost += __compact_witness_meter_0.gas_cost();
         context.private_state = __compact_next_private_0;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_0.clone(),
+            (__compact_witness_0).clone(),
         ));
         let __compact_action_local_0: crate::types::zk_secret_key = __compact_witness_0;
         let __compact_call_argument_1 = __compact_param_1.clone();
@@ -494,7 +494,7 @@ pub mod ledger_contract {
         total_cost += __compact_witness_meter_8.gas_cost();
         context.private_state = __compact_next_private_8;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_8.clone(),
+            (__compact_witness_8).clone(),
         ));
         let __compact_action_local_4: crate::types::MerkleTreePath = __compact_witness_8;
         let mut context = context;
@@ -507,7 +507,7 @@ pub mod ledger_contract {
         total_cost += __compact_query_11.gas_cost;
         if !(if __compact_query_11.result {
             let __compact_value_12 = __compact_action_local_3.clone();
-            __compact_value_12 == (__compact_action_local_4.clone()).leaf.clone()
+            __compact_value_12 == ((__compact_action_local_4.clone()).leaf).clone()
         } else {
             false
         }) {
@@ -525,11 +525,11 @@ pub mod ledger_contract {
         total_cost += __compact_witness_meter_13.gas_cost();
         context.private_state = __compact_next_private_13;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_13.clone(),
+            (__compact_witness_13).clone(),
         ));
         let __compact_action_local_5: crate::types::coin_info = __compact_witness_13;
         let __compact_call_argument_14 = __compact_action_local_5.clone();
-        let __compact_call_argument_15 = (__compact_param_0.clone()).zk.clone();
+        let __compact_call_argument_15 = ((__compact_param_0.clone()).zk).clone();
         let __compact_action_local_6: crate::types::commitment =
             crate::pure_circuits::commitment_from_coin_info(
                 __compact_call_argument_14,
@@ -540,7 +540,7 @@ pub mod ledger_contract {
         let context = step.context;
         total_cost += step.gas_cost;
         let mut context = context;
-        let __compact_argument_16 = (__compact_param_0.clone()).encryption.clone();
+        let __compact_argument_16 = ((__compact_param_0.clone()).encryption).clone();
         let __compact_argument_17 = __compact_action_local_5.clone();
         let __compact_witness_meter_18 = runtime::context::WitnessReadMeter::new(&context);
         let (__compact_next_private_18, __compact_witness_18) = witnesses.context_encrypt(
@@ -554,7 +554,7 @@ pub mod ledger_contract {
         total_cost += __compact_witness_meter_18.gas_cost();
         context.private_state = __compact_next_private_18;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_18.clone(),
+            (__compact_witness_18).clone(),
         ));
         let __compact_action_local_7: runtime::OpaqueBytes = __compact_witness_18;
         let step =
@@ -573,9 +573,7 @@ pub mod ledger_contract {
         )?;
         total_cost += __compact_witness_meter_20.gas_cost();
         context.private_state = __compact_next_private_20;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_20.clone(),
-        ));
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_20));
         let _ = __compact_witness_20;
         let result = ();
         Ok(runtime::context::CircuitResult {
@@ -601,7 +599,7 @@ pub mod ledger_contract {
         total_cost += __compact_witness_meter_0.gas_cost();
         context.private_state = __compact_next_private_0;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_0.clone(),
+            (__compact_witness_0).clone(),
         ));
         let __compact_action_local_0: crate::types::coin_info = __compact_witness_0;
         let mut context = context;
@@ -614,7 +612,7 @@ pub mod ledger_contract {
         total_cost += __compact_witness_meter_1.gas_cost();
         context.private_state = __compact_next_private_1;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_1.clone(),
+            (__compact_witness_1).clone(),
         ));
         let __compact_action_local_1: crate::types::zk_public_key = __compact_witness_1;
         let mut context = context;
@@ -629,9 +627,7 @@ pub mod ledger_contract {
         )?;
         total_cost += __compact_witness_meter_3.gas_cost();
         context.private_state = __compact_next_private_3;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_3.clone(),
-        ));
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_3));
         let _ = __compact_witness_3;
         let __compact_call_argument_4 = __compact_action_local_0.clone();
         let __compact_call_argument_5 = __compact_action_local_1.clone();

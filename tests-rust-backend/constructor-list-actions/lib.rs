@@ -106,20 +106,20 @@ pub mod ledger_contract {
                 .into_circuit_context(runtime::ledger::ContractAddress::default());
             let mut total_cost = runtime::context::RunningCost::default();
             let __compact_constructor_local_0: runtime::Field = runtime::Field::from(1u128);
-            let step = context.push_front_list(0, (__compact_constructor_local_0).clone())?;
+            let step = context.push_front_list(0, __compact_constructor_local_0)?;
             context = step.context;
             let __compact_constructor_local_1: runtime::Field = runtime::Field::from(2u128);
-            let step = context.push_front_list(0, (__compact_constructor_local_1).clone())?;
+            let step = context.push_front_list(0, __compact_constructor_local_1)?;
             context = step.context;
             let step = context.pop_front_list(0)?;
             context = step.context;
             let __compact_constructor_local_2: runtime::Field = runtime::Field::from(3u128);
-            let step = context.push_front_list(1, (__compact_constructor_local_2).clone())?;
+            let step = context.push_front_list(1, __compact_constructor_local_2)?;
             context = step.context;
             let step = context.reset_list(1)?;
             context = step.context;
             let __compact_constructor_local_3: runtime::Field = runtime::Field::from(4u128);
-            let step = context.push_front_list(1, (__compact_constructor_local_3).clone())?;
+            let step = context.push_front_list(1, __compact_constructor_local_3)?;
             context = step.context;
             let _ = total_cost;
             Ok(context.into_constructor_result())

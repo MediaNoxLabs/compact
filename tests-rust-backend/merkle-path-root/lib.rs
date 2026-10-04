@@ -93,13 +93,13 @@ pub mod pure_circuits {
     ) -> Result<crate::types::MerkleTreeDigest, runtime::CompactError> {
         Ok(crate::types::MerkleTreeDigest {
             field: {
-                let __compact_fold_source = (path.clone()).path.clone();
+                let __compact_fold_source = ((path.clone()).path).clone();
                 let mut __compact_fold_accumulator = runtime::degrade_to_transient(
                     runtime::persistent_hash(crate::types::LeafPreimage {
                         domain_sep: runtime::FixedBytes::new([
                             109u8, 100u8, 110u8, 58u8, 108u8, 104u8,
                         ]),
-                        data: (path.clone()).leaf.clone(),
+                        data: (path.clone()).leaf,
                     }),
                 );
                 for __compact_fold_item in __compact_fold_source.into_array() {
@@ -117,14 +117,14 @@ pub mod pure_circuits {
         entry: crate::types::MerkleTreePathEntry,
     ) -> Result<runtime::Field, runtime::CompactError> {
         Ok({
-            let __compact_local_left: runtime::Field = if (entry.clone()).goes_left.clone() {
+            let __compact_local_left: runtime::Field = if (entry.clone()).goes_left {
                 recursiveDigest
             } else {
-                ((entry.clone()).sibling.clone()).field.clone()
+                (((entry.clone()).sibling).clone()).field
             };
             {
-                let __compact_local_right: runtime::Field = if (entry.clone()).goes_left.clone() {
-                    ((entry.clone()).sibling.clone()).field.clone()
+                let __compact_local_right: runtime::Field = if (entry.clone()).goes_left {
+                    (((entry.clone()).sibling).clone()).field
                 } else {
                     recursiveDigest
                 };

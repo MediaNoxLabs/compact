@@ -106,9 +106,7 @@ pub mod ledger_contract {
         )?;
         total_cost += __compact_witness_meter_1.gas_cost();
         context.private_state = __compact_next_private_1;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_1.clone(),
-        ));
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_1));
         if !(__compact_witness_1) {
             return Err(runtime::CompactError::AssertionFailed(
                 "first witness failed".to_owned(),
@@ -126,9 +124,7 @@ pub mod ledger_contract {
         )?;
         total_cost += __compact_witness_meter_3.gas_cost();
         context.private_state = __compact_next_private_3;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_3.clone(),
-        ));
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_3));
         if !(__compact_witness_3) {
             return Err(runtime::CompactError::AssertionFailed(
                 "second witness failed".to_owned(),
@@ -162,9 +158,7 @@ pub mod ledger_contract {
         )?;
         total_cost += __compact_witness_meter_1.gas_cost();
         context.private_state = __compact_next_private_1;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_1.clone(),
-        ));
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_1));
         if !(__compact_witness_1) {
             return Err(runtime::CompactError::AssertionFailed(
                 "write denied".to_owned(),

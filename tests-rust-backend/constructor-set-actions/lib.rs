@@ -79,17 +79,17 @@ pub mod ledger_contract {
             let mut context = runtime::context::ConstructorResult::new(__compact_context, state)
                 .into_circuit_context(runtime::ledger::ContractAddress::default());
             let mut total_cost = runtime::context::RunningCost::default();
-            let step = context.insert_set(0, (true).clone())?;
+            let step = context.insert_set(0, true)?;
             context = step.context;
-            let step = context.insert_set(0, (false).clone())?;
+            let step = context.insert_set(0, false)?;
             context = step.context;
-            let step = context.remove_set(0, (false).clone())?;
+            let step = context.remove_set(0, false)?;
             context = step.context;
-            let step = context.insert_set(1, (true).clone())?;
+            let step = context.insert_set(1, true)?;
             context = step.context;
             let step = context.reset_set(1)?;
             context = step.context;
-            let step = context.insert_set(1, (false).clone())?;
+            let step = context.insert_set(1, false)?;
             context = step.context;
             let _ = total_cost;
             Ok(context.into_constructor_result())
@@ -177,7 +177,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, bool>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(value.clone());
+                let input = runtime::fab::AlignedValue::from(value);
                 let recorded =
                     self.contains_seen(observed.circuit_context(private_state), value)?;
                 Ok(runtime::transaction::RecordedCall::new(
@@ -207,7 +207,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, bool>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(value.clone());
+                let input = runtime::fab::AlignedValue::from(value);
                 let recorded =
                     self.contains_history(observed.circuit_context(private_state), value)?;
                 Ok(runtime::transaction::RecordedCall::new(

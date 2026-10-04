@@ -37,6 +37,7 @@ use ir::{
 use proc_macro2::Span;
 use quote::quote;
 use serde::Serialize;
+use syn::visit_mut::{self, VisitMut};
 
 /// Compiler metadata for the developer-facing Rust proving surface.
 #[derive(Debug, Clone, Serialize)]
@@ -952,7 +953,7 @@ pub(crate) fn coerce_expression(
     }
 }
 
-fn copy_type(ty: &Type) -> bool {
+pub(crate) fn copy_type(ty: &Type) -> bool {
     match ty {
         Type::Struct { .. }
         | Type::Vector { .. }
@@ -967,6 +968,49 @@ fn copy_type(ty: &Type) -> bool {
         | Type::Bytes { .. }
         | Type::Enum { .. }
         | Type::Unsigned { .. } => true,
+    }
+}
+
+/// Keep an owned value available at an emission boundary without cloning Copy types.
+pub(crate) fn retained_value(value: syn::Expr, ty: &Type) -> syn::Expr {
+    if copy_type(ty) {
+        value
+    } else {
+        syn::parse_quote!((#value).clone())
+    }
+}
+
+/// A Compact circuit's positional signature is part of the generated Rust API.
+/// Scope the Clippy exception to functions that cross its seven-input limit.
+struct CompactSignatureLint;
+
+impl CompactSignatureLint {
+    fn mark(attrs: &mut Vec<syn::Attribute>, signature: &syn::Signature) {
+        if signature.inputs.len() > 7 {
+            attrs.push(syn::parse_quote!(
+                #[allow(
+                    clippy::too_many_arguments,
+                    reason = "preserves the declared Compact circuit signature"
+                )]
+            ));
+        }
+    }
+}
+
+impl VisitMut for CompactSignatureLint {
+    fn visit_item_fn_mut(&mut self, item: &mut syn::ItemFn) {
+        Self::mark(&mut item.attrs, &item.sig);
+        visit_mut::visit_item_fn_mut(self, item);
+    }
+
+    fn visit_impl_item_fn_mut(&mut self, item: &mut syn::ImplItemFn) {
+        Self::mark(&mut item.attrs, &item.sig);
+        visit_mut::visit_impl_item_fn_mut(self, item);
+    }
+
+    fn visit_trait_item_fn_mut(&mut self, item: &mut syn::TraitItemFn) {
+        Self::mark(&mut item.attrs, &item.sig);
+        visit_mut::visit_trait_item_fn_mut(self, item);
     }
 }
 
@@ -1084,10 +1128,8 @@ fn expression_with_calls(
                 .filter(|declaration| declaration.name == *field)
                 .ok_or_else(|| RenderError::InvalidStructField(field.clone()))?;
             let name = ident(field)?;
-            Ok((
-                syn::parse_quote!((#value).#name.clone()),
-                declaration.ty.clone(),
-            ))
+            let field_value = retained_value(syn::parse_quote!((#value).#name), &declaration.ty);
+            Ok((field_value, declaration.ty.clone()))
         }
         Expr::TupleIndex { value, index } => {
             let (value, ty) = expression_with_calls(value, parameters, circuits)?;
@@ -1112,8 +1154,7 @@ fn expression_with_calls(
             if fields.len() != declarations.len() {
                 return Err(RenderError::InvalidStructField(name.clone()));
             }
-            let mut field_names = Vec::with_capacity(fields.len());
-            let mut field_values = Vec::with_capacity(fields.len());
+            let mut field_values = Vec::<syn::FieldValue>::with_capacity(fields.len());
             for (value, declaration) in fields.iter().zip(declarations) {
                 let (rendered, actual) = expression_with_calls(value, parameters, circuits)?;
                 if actual != declaration.ty {
@@ -1122,12 +1163,25 @@ fn expression_with_calls(
                         actual,
                     });
                 }
-                field_names.push(ident(&declaration.name)?);
-                field_values.push(rendered);
+                let field_name = ident(&declaration.name)?;
+                let shorthand = matches!(
+                    &rendered,
+                    syn::Expr::Path(path)
+                        if path.qself.is_none()
+                            && path.path.leading_colon.is_none()
+                            && path.path.segments.len() == 1
+                            && path.path.segments[0].ident == field_name
+                            && matches!(path.path.segments[0].arguments, syn::PathArguments::None)
+                );
+                field_values.push(if shorthand {
+                    syn::parse_quote!(#field_name)
+                } else {
+                    syn::parse_quote!(#field_name: #rendered)
+                });
             }
             let name = ident(name)?;
             Ok((
-                syn::parse_quote!(crate::types::#name { #(#field_names: #field_values),* }),
+                syn::parse_quote!(crate::types::#name { #(#field_values),* }),
                 ty.clone(),
             ))
         }
@@ -2000,17 +2054,18 @@ fn render_constructor_vm_steps<'a>(
                         actual,
                     });
                 }
+                let value = retained_value(value, ty);
                 let index = syn::LitInt::new(&index.to_string(), Span::call_site());
                 actions.extend(expression_steps);
                 let path = declaration.physical_path();
                 let write: syn::Stmt = if path.len() == 1 {
-                    syn::parse_quote!(let step = context.write_cell(#index, (#value).clone())?;)
+                    syn::parse_quote!(let step = context.write_cell(#index, #value)?;)
                 } else {
                     let path = path
                         .iter()
                         .map(|part| syn::LitInt::new(&part.to_string(), Span::call_site()))
                         .collect::<Vec<_>>();
-                    syn::parse_quote!(let step = context.write_cell_at_path(&[#(#path),*], (#value).clone())?;)
+                    syn::parse_quote!(let step = context.write_cell_at_path(&[#(#path),*], #value)?;)
                 };
                 actions.push(write);
                 actions.push(syn::parse_quote!(context = step.context;));
@@ -2105,15 +2160,14 @@ fn render_constructor_vm_steps<'a>(
                         actual,
                     });
                 }
+                let value = retained_value(value, ty);
                 let method = if matches!(step, ConstructorStep::SetInsert { .. }) {
                     syn::Ident::new("insert_set", Span::call_site())
                 } else {
                     syn::Ident::new("remove_set", Span::call_site())
                 };
                 let index = ledger_path_expr(declaration);
-                actions.push(
-                    syn::parse_quote!(let step = context.#method(#index, (#value).clone())?;),
-                );
+                actions.push(syn::parse_quote!(let step = context.#method(#index, #value)?;));
                 actions.push(syn::parse_quote!(context = step.context;));
             }
             ConstructorStep::SetReset { field, index } => {
@@ -2153,8 +2207,10 @@ fn render_constructor_vm_steps<'a>(
                         actual,
                     });
                 }
+                let value = retained_value(value, ty);
                 let index = ledger_path_expr(declaration);
-                actions.push(syn::parse_quote!(let step = context.push_front_list(#index, (#value).clone())?;));
+                actions
+                    .push(syn::parse_quote!(let step = context.push_front_list(#index, #value)?;));
                 actions.push(syn::parse_quote!(context = step.context;));
             }
             ConstructorStep::ListPopFront { field, index }
@@ -2213,8 +2269,11 @@ fn render_constructor_vm_steps<'a>(
                         actual: actual_value,
                     });
                 }
+                let key = retained_value(key, key_ty);
+                let value = retained_value(value, value_ty);
                 let index = ledger_path_expr(declaration);
-                actions.push(syn::parse_quote!(let step = context.insert_map(#index, (#key).clone(), (#value).clone())?;));
+                actions
+                    .push(syn::parse_quote!(let step = context.insert_map(#index, #key, #value)?;));
                 actions.push(syn::parse_quote!(context = step.context;));
             }
             ConstructorStep::MapInsertDefault { field, index, key }
@@ -2242,14 +2301,13 @@ fn render_constructor_vm_steps<'a>(
                         actual: actual_key,
                     });
                 }
+                let key = retained_value(key, key_ty);
                 let index = ledger_path_expr(declaration);
                 if matches!(step, ConstructorStep::MapInsertDefault { .. }) {
                     let value_ty = rust_type(value_ty)?;
-                    actions.push(syn::parse_quote!(let step = context.insert_map(#index, (#key).clone(), <#value_ty as Default>::default())?;));
+                    actions.push(syn::parse_quote!(let step = context.insert_map(#index, #key, <#value_ty as Default>::default())?;));
                 } else {
-                    actions.push(
-                        syn::parse_quote!(let step = context.remove_map(#index, (#key).clone())?;),
-                    );
+                    actions.push(syn::parse_quote!(let step = context.remove_map(#index, #key)?;));
                 }
                 actions.push(syn::parse_quote!(context = step.context;));
             }
@@ -2312,7 +2370,11 @@ fn render_constructor_vm_steps<'a>(
                 )?;
                 let ty = rust_type(&binding.ty)?;
                 let len = syn::LitInt::new(&values.len().to_string(), Span::call_site());
-                actions.push(syn::parse_quote!(let #iterable: [#ty; #len] = [#((#rendered_values).clone()),*];));
+                let values = rendered_values
+                    .into_iter()
+                    .map(|value| retained_value(value, &binding.ty))
+                    .collect::<Vec<_>>();
+                actions.push(syn::parse_quote!(let #iterable: [#ty; #len] = [#(#values),*];));
                 actions.push(syn::parse_quote!(for #item in #iterable { #(#body)* }));
             }
         }
@@ -2804,10 +2866,11 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
             if !matches!(ty, Type::Boolean | Type::Field | Type::JubjubPoint | Type::OpaqueString | Type::OpaqueBytes | Type::Unsigned { .. } | Type::Bytes { .. } | Type::Struct { .. } | Type::Enum { .. } | Type::Vector { .. } | Type::Tuple { .. } | Type::Unit) {
                 return Err(RenderError::UnsupportedLedgerCellType(ty.clone()));
             }
-            let ty = rust_type(ty)?;
-            let value: syn::Expr = constructor_values.get(field.id.as_str())
-                .map(|value| syn::parse_quote!(#value.clone()))
+            let value = constructor_values
+                .get(field.id.as_str())
+                .map(|value| retained_value(value.clone(), ty))
                 .unwrap_or_else(|| syn::parse_quote!(Default::default()));
+            let ty = rust_type(ty)?;
             Ok(syn::parse_quote!(runtime::ledger::constructor_cell::<#ty, runtime::ledger::DefaultDB>(#value)))
         }
     }).collect::<Result<Vec<syn::Expr>, RenderError>>()?;
@@ -3225,7 +3288,7 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
             }
         })
     };
-    let file: syn::File = syn::parse2(quote! {
+    let mut file: syn::File = syn::parse2(quote! {
         /// The matching Midnight Compact Rust runtime used by this generated crate.
         pub use midnight_compact_runtime as runtime;
         #types_module
@@ -3240,6 +3303,7 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
         #ledger_module
     })
     .expect("typed renderer constructed invalid Rust syntax");
+    CompactSignatureLint.visit_file_mut(&mut file);
     Ok(RenderedContract {
         source: format!(
             "{GENERATED_HEADER}// Generated by compactc. Do not edit.\n\n{}",

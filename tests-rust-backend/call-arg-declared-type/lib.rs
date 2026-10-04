@@ -230,15 +230,14 @@ pub mod ledger_contract {
             let mut total_cost = runtime::context::RunningCost::default();
             let step = context.write_cell(
                 0,
-                (runtime::FixedBytes::new([
+                runtime::FixedBytes::new([
                     99u8, 97u8, 108u8, 108u8, 45u8, 97u8, 114u8, 103u8, 45u8, 100u8, 101u8, 99u8,
                     108u8, 97u8, 114u8, 101u8, 100u8, 45u8, 116u8, 121u8, 112u8, 101u8, 0u8, 0u8,
                     0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
-                ]))
-                .clone(),
+                ]),
             )?;
             context = step.context;
-            let step = context.write_cell(6, (true).clone())?;
+            let step = context.write_cell(6, true)?;
             context = step.context;
             let __compact_call_argument_0 = runtime::FixedVector::new([
                 runtime::Field::from(0u128),
@@ -257,7 +256,7 @@ pub mod ledger_contract {
                 })
                 .value(),
             );
-            let step = context.write_cell(5, (__compact_constructor_local_2).clone())?;
+            let step = context.write_cell(5, __compact_constructor_local_2)?;
             context = step.context;
             let _ = total_cost;
             Ok(context.into_constructor_result())
@@ -491,9 +490,7 @@ pub mod ledger_contract {
         )?;
         total_cost += __compact_witness_meter_3.gas_cost();
         context.private_state = __compact_next_private_3;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_3.clone(),
-        ));
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_3));
         let __compact_action_local_0: runtime::Field = __compact_witness_3;
         let step = crate::ledger_slots::fieldCell.write(context, __compact_action_local_0)?;
         let context = step.context;
@@ -530,9 +527,7 @@ pub mod ledger_contract {
         )?;
         total_cost += __compact_witness_meter_3.gas_cost();
         context.private_state = __compact_next_private_3;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_3.clone(),
-        ));
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_3));
         let _ = __compact_witness_3;
         let __compact_action_local_0: runtime::Field = runtime::Field::from(7u128);
         let step = crate::ledger_slots::fieldCell.write(context, __compact_action_local_0)?;

@@ -144,8 +144,7 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let frame =
-                crate::ledger_slots::choice.record_write(frame, (__compact_param_0).clone())?;
+            let frame = crate::ledger_slots::choice.record_write(frame, __compact_param_0)?;
             Ok(frame.finish(()))
         }
         pub fn selectNo<Private>(
@@ -189,7 +188,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(next.clone());
+                let input = runtime::fab::AlignedValue::from(next);
                 let recorded = self.choose(observed.circuit_context(private_state), next)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed, recorded, "choose", input,

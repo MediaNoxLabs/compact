@@ -135,29 +135,26 @@ pub mod pure_circuits {
         Ok({
             {
                 if !(currentTime.value()
-                    >= ((record.clone()).provenance.clone())
-                        .registeredAt
-                        .clone()
-                        .value())
+                    >= (((record.clone()).provenance).clone()).registeredAt.value())
                 {
                     return Err(runtime::CompactError::AssertionFailed(
                         "registration time cannot be in the future".to_owned(),
                     ));
                 }
             };
-            if (policy.clone()).enforceMaxAge.clone() {
+            if (policy.clone()).enforceMaxAge {
                 {
                     if !({
                         let __compact_local_t_114: runtime::BoundedUint<18446744073709551615> = {
                             let __compact_local_t_115: runtime::BoundedUint<18446744073709551615> =
-                                ((record.clone()).provenance.clone()).registeredAt.clone();
+                                (((record.clone()).provenance).clone()).registeredAt;
                             runtime::subtract_unsigned::<
                                 18446744073709551615,
                                 18446744073709551615,
                                 18446744073709551615,
                             >(currentTime, __compact_local_t_115)?
                         };
-                        __compact_local_t_114.value() <= (policy.clone()).maxAge.clone().value()
+                        __compact_local_t_114.value() <= (policy.clone()).maxAge.value()
                     }) {
                         return Err(runtime::CompactError::AssertionFailed(
                             "record exceeds the max-age policy".to_owned(),
@@ -178,12 +175,9 @@ pub mod pure_circuits {
             {
                 if !({
                     let __compact_local_t_111: runtime::BoundedUint<18446744073709551615> =
-                        ((newer.clone()).provenance.clone()).registeredAt.clone();
+                        (((newer.clone()).provenance).clone()).registeredAt;
                     __compact_local_t_111.value()
-                        >= ((older.clone()).provenance.clone())
-                            .registeredAt
-                            .clone()
-                            .value()
+                        >= (((older.clone()).provenance).clone()).registeredAt.value()
                 }) {
                     return Err(runtime::CompactError::AssertionFailed(
                         "newer record must not predate the older one".to_owned(),
@@ -192,10 +186,10 @@ pub mod pure_circuits {
             };
             {
                 let __compact_local_t_112: runtime::BoundedUint<18446744073709551615> =
-                    ((newer.clone()).provenance.clone()).registeredAt.clone();
+                    (((newer.clone()).provenance).clone()).registeredAt;
                 {
                     let __compact_local_t_113: runtime::BoundedUint<18446744073709551615> =
-                        ((older.clone()).provenance.clone()).registeredAt.clone();
+                        (((older.clone()).provenance).clone()).registeredAt;
                     runtime::subtract_unsigned::<
                         18446744073709551615,
                         18446744073709551615,
@@ -210,7 +204,7 @@ pub mod pure_circuits {
     ) -> Result<(), runtime::CompactError> {
         Ok({
             {
-                if !((record.clone()).kind.clone() != crate::types::AssetClass::Unspecified) {
+                if !((record.clone()).kind != crate::types::AssetClass::Unspecified) {
                     return Err(runtime::CompactError::AssertionFailed(
                         "asset class must be specified".to_owned(),
                     ));
@@ -227,7 +221,7 @@ pub mod pure_circuits {
             {
                 if !({
                     let __compact_local_t_110: runtime::BoundedUint<18446744073709551615> =
-                        (grant.clone()).grantedAt.clone();
+                        (grant.clone()).grantedAt;
                     __compact_local_t_110.value() <= asOf.value()
                 }) {
                     return Err(runtime::CompactError::AssertionFailed(
@@ -627,8 +621,7 @@ pub mod ledger_contract {
             let __compact_constructor_local_0: runtime::BoundedUint<4294967295> =
                 runtime::BoundedUint::<4294967295>::new(3u128)
                     .expect("Compact Uint literal fits its maximum");
-            let step =
-                context.write_cell_at_path(&[0, 0], (__compact_constructor_local_0).clone())?;
+            let step = context.write_cell_at_path(&[0, 0], __compact_constructor_local_0)?;
             context = step.context;
             let __compact_constructor_local_1: crate::types::ContractAddress =
                 crate::types::ContractAddress {
@@ -639,23 +632,21 @@ pub mod ledger_contract {
             context = step.context;
             let step = context.write_cell_at_path(
                 &[1, 1],
-                (runtime::FixedBytes::new([
+                runtime::FixedBytes::new([
                     97u8, 115u8, 115u8, 101u8, 116u8, 45u8, 114u8, 101u8, 103u8, 105u8, 115u8,
                     116u8, 114u8, 121u8, 58u8, 118u8, 51u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
                     0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
-                ]))
-                .clone(),
+                ]),
             )?;
             context = step.context;
             let __compact_constructor_local_2: runtime::BoundedUint<18446744073709551615> =
                 runtime::BoundedUint::<18446744073709551615>::new(86400u128)
                     .expect("Compact Uint literal fits its maximum");
-            let step =
-                context.write_cell_at_path(&[1, 4], (__compact_constructor_local_2).clone())?;
+            let step = context.write_cell_at_path(&[1, 4], __compact_constructor_local_2)?;
             context = step.context;
-            let step = context.write_cell_at_path(&[1, 6], (true).clone())?;
+            let step = context.write_cell_at_path(&[1, 6], true)?;
             context = step.context;
-            let step = context.write_cell_at_path(&[1, 7], (false).clone())?;
+            let step = context.write_cell_at_path(&[1, 7], false)?;
             context = step.context;
             let __compact_witness_meter_3 = runtime::context::WitnessReadMeter::new(&context);
             let (__compact_next_private_3, __compact_witness_3) =
@@ -665,12 +656,9 @@ pub mod ledger_contract {
                 }))?;
             total_cost += __compact_witness_meter_3.gas_cost();
             context.private_state = __compact_next_private_3;
-            private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-                __compact_witness_3.clone(),
-            ));
+            private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_3));
             let __compact_constructor_local_4: runtime::JubjubPoint = __compact_witness_3;
-            let step =
-                context.write_cell_at_path(&[0, 3], (__compact_constructor_local_4).clone())?;
+            let step = context.write_cell_at_path(&[0, 3], __compact_constructor_local_4)?;
             context = step.context;
             let __compact_witness_meter_5 = runtime::context::WitnessReadMeter::new(&context);
             let (__compact_next_private_5, __compact_witness_5) =
@@ -680,12 +668,9 @@ pub mod ledger_contract {
                 }))?;
             total_cost += __compact_witness_meter_5.gas_cost();
             context.private_state = __compact_next_private_5;
-            private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-                __compact_witness_5.clone(),
-            ));
+            private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_5));
             let __compact_constructor_local_6: runtime::JubjubPoint = __compact_witness_5;
-            let step =
-                context.write_cell_at_path(&[0, 4], (__compact_constructor_local_6).clone())?;
+            let step = context.write_cell_at_path(&[0, 4], __compact_constructor_local_6)?;
             context = step.context;
             let __compact_query_7 = crate::ledger_slots::operatorKey.read(context)?;
             context = __compact_query_7.context;
@@ -704,16 +689,12 @@ pub mod ledger_contract {
                 }))?;
             total_cost += __compact_witness_meter_10.gas_cost();
             context.private_state = __compact_next_private_10;
-            private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-                __compact_witness_10.clone(),
-            ));
+            private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_10));
             let __compact_constructor_local_11: runtime::BoundedUint<18446744073709551615> =
                 __compact_witness_10;
-            let step =
-                context.write_cell_at_path(&[1, 2], (__compact_constructor_local_11).clone())?;
+            let step = context.write_cell_at_path(&[1, 2], __compact_constructor_local_11)?;
             context = step.context;
-            let step =
-                context.write_cell_at_path(&[1, 3], (__compact_constructor_local_11).clone())?;
+            let step = context.write_cell_at_path(&[1, 3], __compact_constructor_local_11)?;
             context = step.context;
             let _ = total_cost;
             let _ = private_transcript_outputs;
@@ -781,9 +762,7 @@ pub mod ledger_contract {
             }))?;
         total_cost += __compact_witness_meter_0.gas_cost();
         context.private_state = __compact_next_private_0;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_0.clone(),
-        ));
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_0));
         let __compact_action_local_2: runtime::BoundedUint<18446744073709551615> =
             __compact_witness_0;
         let step = crate::ledger_slots::updatedAt.write(context, __compact_action_local_2)?;

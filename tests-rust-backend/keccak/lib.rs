@@ -88,9 +88,7 @@ pub mod ledger_contract {
         )?;
         total_cost += __compact_witness_meter_1.gas_cost();
         context.private_state = __compact_next_private_1;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_1.clone(),
-        ));
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_1));
         let result = runtime::keccak256(__compact_witness_1);
         Ok(runtime::context::CircuitResult {
             context,

@@ -133,13 +133,13 @@ pub mod pure_circuits {
     pub fn runWrapAlpha(x: runtime::Field) -> Result<runtime::Field, runtime::CompactError> {
         Ok({
             let __compact_local_w: crate::types::WrapCompact1 = crate::pure_circuits::wrapAlpha(x)?;
-            ((__compact_local_w.clone()).inner.clone()).a.clone()
+            (((__compact_local_w.clone()).inner).clone()).a
         })
     }
     pub fn runWrapBeta(y: bool) -> Result<bool, runtime::CompactError> {
         Ok({
             let __compact_local_w: crate::types::Wrap = crate::pure_circuits::wrapBeta(y)?;
-            ((__compact_local_w.clone()).inner.clone()).b.clone()
+            (((__compact_local_w.clone()).inner).clone()).b
         })
     }
 }
@@ -205,10 +205,10 @@ pub mod ledger_contract {
                 .into_circuit_context(runtime::ledger::ContractAddress::default());
             let mut total_cost = runtime::context::RunningCost::default();
             let __compact_constructor_local_0: runtime::Field = runtime::Field::from(0u128);
-            let step = context.write_cell(0, (__compact_constructor_local_0).clone())?;
+            let step = context.write_cell(0, __compact_constructor_local_0)?;
             context = step.context;
             let __compact_constructor_local_1: runtime::Field = runtime::Field::from(0u128);
-            let step = context.write_cell(1, (__compact_constructor_local_1).clone())?;
+            let step = context.write_cell(1, __compact_constructor_local_1)?;
             context = step.context;
             let _ = total_cost;
             Ok(context.into_constructor_result())
@@ -223,8 +223,7 @@ pub mod ledger_contract {
         let __compact_call_argument_0 = __compact_param_0;
         let __compact_action_local_0: crate::types::RecCompact1 =
             crate::pure_circuits::makeAlpha(__compact_call_argument_0)?;
-        let __compact_action_local_1: runtime::Field =
-            (__compact_action_local_0.clone()).alpha.clone();
+        let __compact_action_local_1: runtime::Field = (__compact_action_local_0.clone()).alpha;
         let step = crate::ledger_slots::lastAlpha.write(context, __compact_action_local_1)?;
         let context = step.context;
         total_cost += step.gas_cost;
@@ -245,8 +244,7 @@ pub mod ledger_contract {
         let __compact_call_argument_0 = __compact_param_0;
         let __compact_action_local_0: crate::types::Rec =
             crate::pure_circuits::makeBeta(__compact_call_argument_0)?;
-        let __compact_action_local_1: runtime::Field =
-            (__compact_action_local_0.clone()).beta.clone();
+        let __compact_action_local_1: runtime::Field = (__compact_action_local_0.clone()).beta;
         let step = crate::ledger_slots::lastBeta.write(context, __compact_action_local_1)?;
         let context = step.context;
         total_cost += step.gas_cost;

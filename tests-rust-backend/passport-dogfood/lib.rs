@@ -754,7 +754,7 @@ pub mod pure_circuits {
     ) -> Result<(), runtime::CompactError> {
         Ok({
             {
-                if !((schema.clone()).packageId.clone()
+                if !((schema.clone()).packageId
                     != runtime::FixedBytes::new([
                         0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
                         0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
@@ -767,7 +767,7 @@ pub mod pure_circuits {
                 }
             };
             {
-                if !((schema.clone()).schemaId.clone()
+                if !((schema.clone()).schemaId
                     != runtime::FixedBytes::new([
                         0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
                         0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
@@ -782,7 +782,7 @@ pub mod pure_circuits {
             {
                 if !({
                     let __compact_local_t_41: runtime::BoundedUint<65535> =
-                        (schema.clone()).majorVersion.clone();
+                        (schema.clone()).majorVersion;
                     __compact_local_t_41.value()
                         > runtime::BoundedUint::<65535>::new(0u128)
                             .expect("Compact Uint literal fits its maximum")
@@ -808,17 +808,17 @@ pub mod pure_circuits {
             {
                 let __compact_local_noHint: runtime::FixedBytes<32> =
                     crate::pure_circuits::noSchemaFamilyResolverHint()?;
-                if (hint.clone()).hasResolverHint.clone() {
+                if (hint.clone()).hasResolverHint {
                     {
                         {
-                            if !((hint.clone()).resolverHint.clone() != __compact_local_noHint) {
+                            if !((hint.clone()).resolverHint != __compact_local_noHint) {
                                 return Err(runtime::CompactError::AssertionFailed(
                                     "Schema resolver hint must be set".to_owned(),
                                 ));
                             }
                         };
                         {
-                            if !((hint.clone()).resolverHint.clone()
+                            if !((hint.clone()).resolverHint
                                 != runtime::FixedBytes::new([
                                     0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
                                     0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
@@ -833,7 +833,7 @@ pub mod pure_circuits {
                     }
                 } else {
                     {
-                        if !((hint.clone()).resolverHint.clone() == __compact_local_noHint) {
+                        if !((hint.clone()).resolverHint == __compact_local_noHint) {
                             return Err(runtime::CompactError::AssertionFailed(
                                 "Absent schema resolver hint must use the no-hint sentinel"
                                     .to_owned(),
@@ -849,12 +849,12 @@ pub mod pure_circuits {
         descriptor: crate::types::SchemaDescriptor,
     ) -> Result<(), runtime::CompactError> {
         Ok({
-            crate::pure_circuits::assertValidSchemaRef((descriptor.clone()).schema.clone())?;
+            crate::pure_circuits::assertValidSchemaRef(((descriptor.clone()).schema).clone())?;
             crate::pure_circuits::assertValidSchemaCapabilities(
-                (descriptor.clone()).capabilities.clone(),
+                ((descriptor.clone()).capabilities).clone(),
             )?;
             crate::pure_circuits::assertValidSchemaFamilyResolutionHint(
-                (descriptor.clone()).familyResolutionHint.clone(),
+                ((descriptor.clone()).familyResolutionHint).clone(),
             )?;
             ()
         })
@@ -865,21 +865,21 @@ pub mod pure_circuits {
     ) -> Result<(), runtime::CompactError> {
         Ok({
             {
-                if !(if if if (expected.clone()).supportsSelectiveDisclosure.clone()
-                    == (actual.clone()).supportsSelectiveDisclosure.clone()
+                if !(if if if (expected.clone()).supportsSelectiveDisclosure
+                    == (actual.clone()).supportsSelectiveDisclosure
                 {
-                    (expected.clone()).supportsPredicateProofs.clone()
-                        == (actual.clone()).supportsPredicateProofs.clone()
+                    (expected.clone()).supportsPredicateProofs
+                        == (actual.clone()).supportsPredicateProofs
                 } else {
                     false
                 } {
-                    (expected.clone()).supportsVerifierScopedPseudonym.clone()
-                        == (actual.clone()).supportsVerifierScopedPseudonym.clone()
+                    (expected.clone()).supportsVerifierScopedPseudonym
+                        == (actual.clone()).supportsVerifierScopedPseudonym
                 } else {
                     false
                 } {
-                    (expected.clone()).supportsSameHolderProof.clone()
-                        == (actual.clone()).supportsSameHolderProof.clone()
+                    (expected.clone()).supportsSameHolderProof
+                        == (actual.clone()).supportsSameHolderProof
                 } else {
                     false
                 }) {
@@ -898,12 +898,12 @@ pub mod pure_circuits {
     ) -> Result<bool, runtime::CompactError> {
         Ok({
             let __compact_local_leftSide: runtime::JubjubPoint =
-                runtime::ec_mul_generator((signature.clone()).s.clone())?;
+                runtime::ec_mul_generator((signature.clone()).s)?;
             {
                 let __compact_local_cPk: runtime::JubjubPoint = runtime::ec_mul(pk, challenge)?;
                 {
                     let __compact_local_rightSide: runtime::JubjubPoint =
-                        runtime::ec_add((signature.clone()).r.clone(), __compact_local_cPk);
+                        runtime::ec_add((signature.clone()).r, __compact_local_cPk);
                     {
                         let __compact_local_xMatches: bool =
                             runtime::jubjub_point_x(__compact_local_leftSide)
@@ -958,11 +958,9 @@ pub mod pure_circuits {
         Ok(runtime::persistent_hash((
             bodyRoot,
             contextTag,
-            runtime::persistent_hash((proof.clone()).signerVerificationMethodRef.clone()),
-            runtime::upgrade_from_transient(runtime::transient_hash(
-                (proof.clone()).createdAt.clone(),
-            )),
-            (proof.clone()).challengeHash.clone(),
+            runtime::persistent_hash(((proof.clone()).signerVerificationMethodRef).clone()),
+            runtime::upgrade_from_transient(runtime::transient_hash((proof.clone()).createdAt)),
+            (proof.clone()).challengeHash,
         )))
     }
     pub(crate) fn proofChallengeForContext(
@@ -972,11 +970,9 @@ pub mod pure_circuits {
     ) -> Result<runtime::Field, runtime::CompactError> {
         Ok(runtime::degrade_to_transient(runtime::persistent_hash((
             crate::pure_circuits::proofPayloadRootForContext(bodyRoot, contextTag, proof.clone())?,
+            runtime::upgrade_from_transient(runtime::transient_hash((proof.clone()).publicKey)),
             runtime::upgrade_from_transient(runtime::transient_hash(
-                (proof.clone()).publicKey.clone(),
-            )),
-            runtime::upgrade_from_transient(runtime::transient_hash(
-                ((proof.clone()).signature.clone()).r.clone(),
+                (((proof.clone()).signature).clone()).r,
             )),
         ))))
     }
@@ -988,8 +984,8 @@ pub mod pure_circuits {
         Ok({
             {
                 if !(crate::pure_circuits::verifySignature(
-                    (proof.clone()).publicKey.clone(),
-                    (proof.clone()).signature.clone(),
+                    (proof.clone()).publicKey,
+                    ((proof.clone()).signature).clone(),
                     crate::pure_circuits::proofChallengeForContext(
                         bodyRoot,
                         contextTag,
@@ -1081,7 +1077,7 @@ pub mod pure_circuits {
     ) -> Result<(), runtime::CompactError> {
         Ok({
             {
-                if !((credential.clone()).version.clone()
+                if !((credential.clone()).version
                     == runtime::BoundedUint::<65535>::new(1u128)
                         .expect("Compact Uint literal fits its maximum"))
                 {
@@ -1091,19 +1087,18 @@ pub mod pure_circuits {
                 }
             };
             {
-                if !((credential.clone()).claimRoot.clone() == expectedClaimRoot) {
+                if !((credential.clone()).claimRoot == expectedClaimRoot) {
                     return Err(runtime::CompactError::AssertionFailed(
                         "Credential claim root mismatch".to_owned(),
                     ));
                 }
             };
-            if (credential.clone()).hasExpiration.clone() {
+            if (credential.clone()).hasExpiration {
                 {
                     if !({
                         let __compact_local_t_40: runtime::BoundedUint<18446744073709551615> =
-                            (credential.clone()).expiresAt.clone();
-                        __compact_local_t_40.value()
-                            >= (credential.clone()).issuedAt.clone().value()
+                            (credential.clone()).expiresAt;
+                        __compact_local_t_40.value() >= (credential.clone()).issuedAt.value()
                     }) {
                         return Err(runtime::CompactError::AssertionFailed(
                             "Expiration must not precede issuance".to_owned(),
@@ -1140,11 +1135,10 @@ pub mod pure_circuits {
     ) -> Result<(), runtime::CompactError> {
         Ok({
             {
-                if !(((credential.clone()).issuerVerificationMethodRef.clone())
-                    .didContractAddress
+                if !(((((credential.clone()).issuerVerificationMethodRef).clone())
+                    .didContractAddress)
                     .clone()
-                    == ((proof.clone()).signerVerificationMethodRef.clone())
-                        .didContractAddress
+                    == ((((proof.clone()).signerVerificationMethodRef).clone()).didContractAddress)
                         .clone())
                 {
                     return Err(runtime::CompactError::AssertionFailed(
@@ -1154,12 +1148,8 @@ pub mod pure_circuits {
                 }
             };
             {
-                if !(((credential.clone()).issuerVerificationMethodRef.clone())
-                    .methodId
-                    .clone()
-                    == ((proof.clone()).signerVerificationMethodRef.clone())
-                        .methodId
-                        .clone())
+                if !((((credential.clone()).issuerVerificationMethodRef).clone()).methodId
+                    == (((proof.clone()).signerVerificationMethodRef).clone()).methodId)
                 {
                     return Err(runtime::CompactError::AssertionFailed(
                         "Issuer proof method reference does not match issuer verification method"
@@ -1181,7 +1171,7 @@ pub mod pure_circuits {
     ) -> Result<(), runtime::CompactError> {
         Ok({
             {
-                if !((presentation.clone()).version.clone()
+                if !((presentation.clone()).version
                     == runtime::BoundedUint::<65535>::new(1u128)
                         .expect("Compact Uint literal fits its maximum"))
                 {
@@ -1199,20 +1189,18 @@ pub mod pure_circuits {
     ) -> Result<(), runtime::CompactError> {
         Ok({
             {
-                if !((presentation.clone()).credentialClaimRoot.clone()
-                    == (credential.clone()).claimRoot.clone())
-                {
+                if !((presentation.clone()).credentialClaimRoot == (credential.clone()).claimRoot) {
                     return Err(runtime::CompactError::AssertionFailed(
                         "Presentation must reference the credential claim root".to_owned(),
                     ));
                 }
             };
             {
-                if !(((presentation.clone()).issuerVerificationMethodRef.clone())
-                    .didContractAddress
+                if !(((((presentation.clone()).issuerVerificationMethodRef).clone())
+                    .didContractAddress)
                     .clone()
-                    == ((credential.clone()).issuerVerificationMethodRef.clone())
-                        .didContractAddress
+                    == ((((credential.clone()).issuerVerificationMethodRef).clone())
+                        .didContractAddress)
                         .clone())
                 {
                     return Err(runtime::CompactError::AssertionFailed(
@@ -1221,12 +1209,8 @@ pub mod pure_circuits {
                 }
             };
             {
-                if !(((presentation.clone()).issuerVerificationMethodRef.clone())
-                    .methodId
-                    .clone()
-                    == ((credential.clone()).issuerVerificationMethodRef.clone())
-                        .methodId
-                        .clone())
+                if !((((presentation.clone()).issuerVerificationMethodRef).clone()).methodId
+                    == (((credential.clone()).issuerVerificationMethodRef).clone()).methodId)
                 {
                     return Err(runtime::CompactError::AssertionFailed(
                         "Presentation issuer method reference does not match credential issuer"
@@ -1242,11 +1226,10 @@ pub mod pure_circuits {
     ) -> Result<(), runtime::CompactError> {
         Ok({
             {
-                if !((((binding.clone()).holderVerificationMethodRef.clone())
-                    .didContractAddress
+                if !((((((binding.clone()).holderVerificationMethodRef).clone())
+                    .didContractAddress)
                     .clone())
                 .bytes
-                .clone()
                     != runtime::FixedBytes::new([
                         0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
                         0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
@@ -1259,9 +1242,7 @@ pub mod pure_circuits {
                 }
             };
             {
-                if !(((binding.clone()).holderVerificationMethodRef.clone())
-                    .methodId
-                    .clone()
+                if !((((binding.clone()).holderVerificationMethodRef).clone()).methodId
                     != runtime::FixedBytes::new([
                         0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
                         0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
@@ -1282,16 +1263,12 @@ pub mod pure_circuits {
     ) -> Result<(), runtime::CompactError> {
         Ok({
             {
-                if !(((presentationBinding.clone())
-                    .holderVerificationMethodRef
-                    .clone())
-                .didContractAddress
-                .clone()
-                    == ((credentialBinding.clone())
-                        .holderVerificationMethodRef
+                if !(((((presentationBinding.clone()).holderVerificationMethodRef).clone())
+                    .didContractAddress)
+                    .clone()
+                    == ((((credentialBinding.clone()).holderVerificationMethodRef).clone())
+                        .didContractAddress)
                         .clone())
-                    .didContractAddress
-                    .clone())
                 {
                     return Err(runtime::CompactError::AssertionFailed(
                         "Presentation holder contract does not match credential holder binding"
@@ -1300,16 +1277,8 @@ pub mod pure_circuits {
                 }
             };
             {
-                if !(((presentationBinding.clone())
-                    .holderVerificationMethodRef
-                    .clone())
-                .methodId
-                .clone()
-                    == ((credentialBinding.clone())
-                        .holderVerificationMethodRef
-                        .clone())
-                    .methodId
-                    .clone())
+                if !((((presentationBinding.clone()).holderVerificationMethodRef).clone()).methodId
+                    == (((credentialBinding.clone()).holderVerificationMethodRef).clone()).methodId)
                 {
                     return Err(
                         runtime::CompactError::AssertionFailed(
@@ -1328,14 +1297,11 @@ pub mod pure_circuits {
     ) -> Result<(), runtime::CompactError> {
         Ok({
             {
-                if !(((binding.clone()).holderVerificationMethodRef.clone())
-                    .didContractAddress
+                if !(((((binding.clone()).holderVerificationMethodRef).clone()).didContractAddress)
                     .clone()
-                    == ((presentationProof.clone())
-                        .signerVerificationMethodRef
+                    == ((((presentationProof.clone()).signerVerificationMethodRef).clone())
+                        .didContractAddress)
                         .clone())
-                    .didContractAddress
-                    .clone())
                 {
                     return Err(runtime::CompactError::AssertionFailed(
                         "Presentation proof signer must match holder binding".to_owned(),
@@ -1343,14 +1309,8 @@ pub mod pure_circuits {
                 }
             };
             {
-                if !(((binding.clone()).holderVerificationMethodRef.clone())
-                    .methodId
-                    .clone()
-                    == ((presentationProof.clone())
-                        .signerVerificationMethodRef
-                        .clone())
-                    .methodId
-                    .clone())
+                if !((((binding.clone()).holderVerificationMethodRef).clone()).methodId
+                    == (((presentationProof.clone()).signerVerificationMethodRef).clone()).methodId)
                 {
                     return Err(runtime::CompactError::AssertionFailed(
                         "Presentation proof signer method reference must match holder binding"
@@ -1366,12 +1326,12 @@ pub mod pure_circuits {
     ) -> Result<(), runtime::CompactError> {
         Ok({
             {
-                if !(if runtime::jubjub_point_x((binding.clone()).holderPublicKey.clone())
+                if !(if runtime::jubjub_point_x((binding.clone()).holderPublicKey)
                     != runtime::Field::from(0u128)
                 {
                     true
                 } else {
-                    runtime::jubjub_point_y((binding.clone()).holderPublicKey.clone())
+                    runtime::jubjub_point_y((binding.clone()).holderPublicKey)
                         != runtime::Field::from(0u128)
                 }) {
                     return Err(runtime::CompactError::AssertionFailed(
@@ -1388,15 +1348,11 @@ pub mod pure_circuits {
     ) -> Result<(), runtime::CompactError> {
         Ok({
             {
-                if !(if runtime::jubjub_point_x(
-                    (presentationBinding.clone()).holderPublicKey.clone(),
-                ) == runtime::jubjub_point_x(
-                    (credentialBinding.clone()).holderPublicKey.clone(),
-                ) {
-                    runtime::jubjub_point_y((presentationBinding.clone()).holderPublicKey.clone())
-                        == runtime::jubjub_point_y(
-                            (credentialBinding.clone()).holderPublicKey.clone(),
-                        )
+                if !(if runtime::jubjub_point_x((presentationBinding.clone()).holderPublicKey)
+                    == runtime::jubjub_point_x((credentialBinding.clone()).holderPublicKey)
+                {
+                    runtime::jubjub_point_y((presentationBinding.clone()).holderPublicKey)
+                        == runtime::jubjub_point_y((credentialBinding.clone()).holderPublicKey)
                 } else {
                     false
                 }) {
@@ -1417,11 +1373,11 @@ pub mod pure_circuits {
     ) -> Result<(), runtime::CompactError> {
         Ok({
             {
-                if !(if runtime::jubjub_point_x((binding.clone()).holderPublicKey.clone())
-                    == runtime::jubjub_point_x((presentationProof.clone()).publicKey.clone())
+                if !(if runtime::jubjub_point_x((binding.clone()).holderPublicKey)
+                    == runtime::jubjub_point_x((presentationProof.clone()).publicKey)
                 {
-                    runtime::jubjub_point_y((binding.clone()).holderPublicKey.clone())
-                        == runtime::jubjub_point_y((presentationProof.clone()).publicKey.clone())
+                    runtime::jubjub_point_y((binding.clone()).holderPublicKey)
+                        == runtime::jubjub_point_y((presentationProof.clone()).publicKey)
                 } else {
                     false
                 }) {
@@ -1440,7 +1396,7 @@ pub mod pure_circuits {
         Ok({
             {
                 {
-                    if !((binding.clone()).holderDidStateHash.clone()
+                    if !((binding.clone()).holderDidStateHash
                         != runtime::FixedBytes::new([
                             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
                             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
@@ -1453,7 +1409,7 @@ pub mod pure_circuits {
                     }
                 };
                 {
-                    if !((binding.clone()).holderMethodId.clone()
+                    if !((binding.clone()).holderMethodId
                         != runtime::FixedBytes::new([
                             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
                             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
@@ -1468,7 +1424,7 @@ pub mod pure_circuits {
                 {
                     let __compact_local_jubjubBinding: crate::types::JubjubHolderBinding =
                         crate::types::JubjubHolderBinding {
-                            holderPublicKey: (binding.clone()).holderPublicKey.clone(),
+                            holderPublicKey: (binding.clone()).holderPublicKey,
                         };
                     crate::pure_circuits::assertValidJubjubHolderBinding(
                         __compact_local_jubjubBinding.clone(),
@@ -1485,8 +1441,8 @@ pub mod pure_circuits {
         Ok({
             {
                 {
-                    if !((presentationBinding.clone()).holderDidStateHash.clone()
-                        == (credentialBinding.clone()).holderDidStateHash.clone())
+                    if !((presentationBinding.clone()).holderDidStateHash
+                        == (credentialBinding.clone()).holderDidStateHash)
                     {
                         return Err(
                             runtime::CompactError::AssertionFailed(
@@ -1497,8 +1453,8 @@ pub mod pure_circuits {
                     }
                 };
                 {
-                    if !((presentationBinding.clone()).holderMethodId.clone()
-                        == (credentialBinding.clone()).holderMethodId.clone())
+                    if !((presentationBinding.clone()).holderMethodId
+                        == (credentialBinding.clone()).holderMethodId)
                     {
                         return Err(
                             runtime::CompactError::AssertionFailed(
@@ -1511,13 +1467,12 @@ pub mod pure_circuits {
                 {
                     let __compact_local_credentialJubjubBinding: crate::types::JubjubHolderBinding =
                         crate::types::JubjubHolderBinding {
-                            holderPublicKey: (credentialBinding.clone()).holderPublicKey.clone(),
+                            holderPublicKey: (credentialBinding.clone()).holderPublicKey,
                         };
                     {
                         let __compact_local_presentationJubjubBinding: crate::types::JubjubHolderBinding = crate::types::JubjubHolderBinding {
                             holderPublicKey: (presentationBinding.clone())
-                                .holderPublicKey
-                                .clone(),
+                                .holderPublicKey,
                         };
                         crate::pure_circuits::assertMatchingJubjubHolderBindings(
                             __compact_local_credentialJubjubBinding.clone(),
@@ -1537,7 +1492,7 @@ pub mod pure_circuits {
             {
                 let __compact_local_jubjubBinding: crate::types::JubjubHolderBinding =
                     crate::types::JubjubHolderBinding {
-                        holderPublicKey: (binding.clone()).holderPublicKey.clone(),
+                        holderPublicKey: (binding.clone()).holderPublicKey,
                     };
                 crate::pure_circuits::assertProofMatchesJubjubHolderBinding(
                     __compact_local_jubjubBinding.clone(),
@@ -1634,7 +1589,7 @@ pub mod pure_circuits {
     ) -> Result<(), runtime::CompactError> {
         Ok({
             {
-                if !((binding.clone()).requestChallengeResponse.clone()
+                if !((binding.clone()).requestChallengeResponse
                     == crate::pure_circuits::noSecretHolderChallengeResponse()?)
                 {
                     return Err(
@@ -1653,7 +1608,7 @@ pub mod pure_circuits {
     ) -> Result<(), runtime::CompactError> {
         Ok({
             {
-                if !((binding.clone()).requestChallengeResponse.clone()
+                if !((binding.clone()).requestChallengeResponse
                     != crate::pure_circuits::noSecretHolderChallengeResponse()?)
                 {
                     return Err(
@@ -1673,8 +1628,8 @@ pub mod pure_circuits {
     ) -> Result<(), runtime::CompactError> {
         Ok({
             {
-                if !((credentialBinding.clone()).holderSecretCommitment.clone()
-                    == (presentationBinding.clone()).holderSecretCommitment.clone())
+                if !((credentialBinding.clone()).holderSecretCommitment
+                    == (presentationBinding.clone()).holderSecretCommitment)
                 {
                     return Err(
                         runtime::CompactError::AssertionFailed(
@@ -1692,7 +1647,7 @@ pub mod pure_circuits {
     ) -> Result<(), runtime::CompactError> {
         Ok({
             {
-                if !((binding.clone()).requestChallengeResponse.clone()
+                if !((binding.clone()).requestChallengeResponse
                     == crate::pure_circuits::noSecretHolderChallengeResponse()?)
                 {
                     return Err(
@@ -1711,7 +1666,7 @@ pub mod pure_circuits {
     ) -> Result<(), runtime::CompactError> {
         Ok({
             {
-                if !((binding.clone()).requestChallengeResponse.clone()
+                if !((binding.clone()).requestChallengeResponse
                     != crate::pure_circuits::noSecretHolderChallengeResponse()?)
                 {
                     return Err(
@@ -1731,12 +1686,8 @@ pub mod pure_circuits {
     ) -> Result<(), runtime::CompactError> {
         Ok({
             {
-                if !((credentialBinding.clone())
-                    .blindedHolderSecretCommitment
-                    .clone()
-                    == (presentationBinding.clone())
-                        .blindedHolderSecretCommitment
-                        .clone())
+                if !((credentialBinding.clone()).blindedHolderSecretCommitment
+                    == (presentationBinding.clone()).blindedHolderSecretCommitment)
                 {
                     return Err(
                         runtime::CompactError::AssertionFailed(
@@ -1747,8 +1698,8 @@ pub mod pure_circuits {
                 }
             };
             {
-                if !((credentialBinding.clone()).issuerNonce.clone()
-                    == (presentationBinding.clone()).issuerNonce.clone())
+                if !((credentialBinding.clone()).issuerNonce
+                    == (presentationBinding.clone()).issuerNonce)
                 {
                     return Err(runtime::CompactError::AssertionFailed(
                         "Presentation issuer nonce does not match the credential holder binding"
@@ -1768,7 +1719,7 @@ pub mod pure_circuits {
         Ok({
             {
                 if !(crate::pure_circuits::secretHolderBindingCommitment(holderSecret, opening)?
-                    == (binding.clone()).holderSecretCommitment.clone())
+                    == (binding.clone()).holderSecretCommitment)
                 {
                     return Err(runtime::CompactError::AssertionFailed(
                         "Holder secret witness does not match the holder-binding commitment"
@@ -1780,7 +1731,7 @@ pub mod pure_circuits {
                 if !(crate::pure_circuits::secretHolderBindingChallengeResponse(
                     holderSecret,
                     verifierChallengeHash,
-                )? == (binding.clone()).requestChallengeResponse.clone())
+                )? == (binding.clone()).requestChallengeResponse)
                 {
                     return Err(runtime::CompactError::AssertionFailed(
                         "Holder secret challenge response does not match the verifier challenge"
@@ -1806,9 +1757,9 @@ pub mod pure_circuits {
                     {
                         if !(crate::pure_circuits::blindedSecretHolderCommitment(
                             __compact_local_holderCommitment,
-                            (binding.clone()).issuerNonce.clone(),
+                            (binding.clone()).issuerNonce,
                             blindingFactor,
-                        )? == (binding.clone()).blindedHolderSecretCommitment.clone())
+                        )? == (binding.clone()).blindedHolderSecretCommitment)
                         {
                             return Err(
                                 runtime::CompactError::AssertionFailed(
@@ -1822,7 +1773,7 @@ pub mod pure_circuits {
                         if !(crate::pure_circuits::secretHolderBindingChallengeResponse(
                             holderSecret,
                             verifierChallengeHash,
-                        )? == (binding.clone()).requestChallengeResponse.clone())
+                        )? == (binding.clone()).requestChallengeResponse)
                         {
                             return Err(
                                 runtime::CompactError::AssertionFailed(
@@ -1841,12 +1792,10 @@ pub mod pure_circuits {
         features: crate::types::CredentialProtocolFeatures,
     ) -> Result<crate::types::SchemaCapabilities, runtime::CompactError> {
         Ok(crate::types::SchemaCapabilities {
-            supportsSelectiveDisclosure: (features.clone()).supportsSelectiveDisclosure.clone(),
-            supportsPredicateProofs: (features.clone()).supportsPredicateProofs.clone(),
-            supportsVerifierScopedPseudonym: (features.clone())
-                .supportsVerifierScopedPseudonym
-                .clone(),
-            supportsSameHolderProof: (features.clone()).supportsSameHolderProof.clone(),
+            supportsSelectiveDisclosure: (features.clone()).supportsSelectiveDisclosure,
+            supportsPredicateProofs: (features.clone()).supportsPredicateProofs,
+            supportsVerifierScopedPseudonym: (features.clone()).supportsVerifierScopedPseudonym,
+            supportsSameHolderProof: (features.clone()).supportsSameHolderProof,
         })
     }
     pub fn assertProtocolFeaturesMatchSchemaCapabilities(
@@ -1873,7 +1822,7 @@ pub mod pure_circuits {
     ) -> Result<(), runtime::CompactError> {
         Ok({
             {
-                if !((verificationMethodRef.clone()).methodId.clone()
+                if !((verificationMethodRef.clone()).methodId
                     != runtime::FixedBytes::new([
                         0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
                         0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
@@ -1896,18 +1845,16 @@ pub mod pure_circuits {
             crate::pure_circuits::assertValidSchemaRef(expected.clone())?;
             crate::pure_circuits::assertValidSchemaRef(actual.clone())?;
             {
-                if !(if if if (expected.clone()).packageId.clone()
-                    == (actual.clone()).packageId.clone()
-                {
-                    (expected.clone()).schemaId.clone() == (actual.clone()).schemaId.clone()
+                if !(if if if (expected.clone()).packageId == (actual.clone()).packageId {
+                    (expected.clone()).schemaId == (actual.clone()).schemaId
                 } else {
                     false
                 } {
-                    (expected.clone()).majorVersion.clone() == (actual.clone()).majorVersion.clone()
+                    (expected.clone()).majorVersion == (actual.clone()).majorVersion
                 } else {
                     false
                 } {
-                    (expected.clone()).minorVersion.clone() == (actual.clone()).minorVersion.clone()
+                    (expected.clone()).minorVersion == (actual.clone()).minorVersion
                 } else {
                     false
                 }) {
@@ -1928,7 +1875,7 @@ pub mod pure_circuits {
                     crate::pure_circuits::noProtocolResponseReference()?;
                 {
                     {
-                        if !((envelope.clone()).version.clone()
+                        if !((envelope.clone()).version
                             == runtime::BoundedUint::<65535>::new(1u128)
                                 .expect("Compact Uint literal fits its maximum"))
                         {
@@ -1938,22 +1885,22 @@ pub mod pure_circuits {
                         }
                     };
                     {
-                        if !((envelope.clone()).messageId.clone() != __compact_local_noResponse) {
+                        if !((envelope.clone()).messageId != __compact_local_noResponse) {
                             return Err(runtime::CompactError::AssertionFailed(
                                 "Protocol message id must be set".to_owned(),
                             ));
                         }
                     };
                     {
-                        if !((envelope.clone()).threadId.clone() != __compact_local_noResponse) {
+                        if !((envelope.clone()).threadId != __compact_local_noResponse) {
                             return Err(runtime::CompactError::AssertionFailed(
                                 "Protocol thread id must be set".to_owned(),
                             ));
                         }
                     };
-                    if (envelope.clone()).initialMessage.clone() {
+                    if (envelope.clone()).initialMessage {
                         {
-                            if !((envelope.clone()).respondsToMessageId.clone()
+                            if !((envelope.clone()).respondsToMessageId
                                 == __compact_local_noResponse)
                             {
                                 return Err(
@@ -1966,7 +1913,7 @@ pub mod pure_circuits {
                         }
                     } else {
                         {
-                            if !((envelope.clone()).respondsToMessageId.clone()
+                            if !((envelope.clone()).respondsToMessageId
                                 != __compact_local_noResponse)
                             {
                                 return Err(runtime::CompactError::AssertionFailed(
@@ -1976,14 +1923,13 @@ pub mod pure_circuits {
                             }
                         }
                     };
-                    if (envelope.clone()).hasExpiresAt.clone() {
+                    if (envelope.clone()).hasExpiresAt {
                         {
                             if !({
                                 let __compact_local_t_39: runtime::BoundedUint<
                                     18446744073709551615,
-                                > = (envelope.clone()).expiresAt.clone();
-                                __compact_local_t_39.value()
-                                    >= (envelope.clone()).createdAt.clone().value()
+                                > = (envelope.clone()).expiresAt;
+                                __compact_local_t_39.value() >= (envelope.clone()).createdAt.value()
                             }) {
                                 return Err(runtime::CompactError::AssertionFailed(
                                     "Protocol message expiration must not precede creation"
@@ -2007,7 +1953,7 @@ pub mod pure_circuits {
             crate::pure_circuits::assertValidProtocolMessageEnvelope(requestEnvelope.clone())?;
             crate::pure_circuits::assertValidProtocolMessageEnvelope(responseEnvelope.clone())?;
             {
-                if !(if (responseEnvelope.clone()).initialMessage.clone() {
+                if !(if (responseEnvelope.clone()).initialMessage {
                     false
                 } else {
                     true
@@ -2018,9 +1964,7 @@ pub mod pure_circuits {
                 }
             };
             {
-                if !((responseEnvelope.clone()).threadId.clone()
-                    == (requestEnvelope.clone()).threadId.clone())
-                {
+                if !((responseEnvelope.clone()).threadId == (requestEnvelope.clone()).threadId) {
                     return Err(runtime::CompactError::AssertionFailed(
                         "Protocol response thread id does not match the request thread id"
                             .to_owned(),
@@ -2028,8 +1972,8 @@ pub mod pure_circuits {
                 }
             };
             {
-                if !((responseEnvelope.clone()).respondsToMessageId.clone()
-                    == (requestEnvelope.clone()).messageId.clone())
+                if !((responseEnvelope.clone()).respondsToMessageId
+                    == (requestEnvelope.clone()).messageId)
                 {
                     return Err(runtime::CompactError::AssertionFailed(
                         "Protocol response does not reference the request message id".to_owned(),
@@ -2039,9 +1983,8 @@ pub mod pure_circuits {
             {
                 if !({
                     let __compact_local_t_38: runtime::BoundedUint<18446744073709551615> =
-                        (responseEnvelope.clone()).createdAt.clone();
-                    __compact_local_t_38.value()
-                        >= (requestEnvelope.clone()).createdAt.clone().value()
+                        (responseEnvelope.clone()).createdAt;
+                    __compact_local_t_38.value() >= (requestEnvelope.clone()).createdAt.value()
                 }) {
                     return Err(runtime::CompactError::AssertionFailed(
                         "Protocol response creation time must not precede the request".to_owned(),
@@ -2056,17 +1999,17 @@ pub mod pure_circuits {
     ) -> Result<(), runtime::CompactError> {
         Ok({
             crate::pure_circuits::assertValidProtocolMessageEnvelope(
-                (offer.clone()).envelope.clone(),
+                ((offer.clone()).envelope).clone(),
             )?;
             {
-                if !(((offer.clone()).envelope.clone()).initialMessage.clone()) {
+                if !((((offer.clone()).envelope).clone()).initialMessage) {
                     return Err(runtime::CompactError::AssertionFailed(
                         "Issuance offer must be the initial message".to_owned(),
                     ));
                 }
             };
             crate::pure_circuits::assertValidVerificationMethodRef(
-                (offer.clone()).issuerVerificationMethodRef.clone(),
+                ((offer.clone()).issuerVerificationMethodRef).clone(),
             )?;
             ()
         })
@@ -2076,10 +2019,10 @@ pub mod pure_circuits {
     ) -> Result<(), runtime::CompactError> {
         Ok({
             crate::pure_circuits::assertValidProtocolMessageEnvelope(
-                (request.clone()).envelope.clone(),
+                ((request.clone()).envelope).clone(),
             )?;
             {
-                if !(if ((request.clone()).envelope.clone()).initialMessage.clone() {
+                if !(if (((request.clone()).envelope).clone()).initialMessage {
                     false
                 } else {
                     true
@@ -2090,7 +2033,7 @@ pub mod pure_circuits {
                 }
             };
             crate::pure_circuits::assertValidVerificationMethodRef(
-                (request.clone()).issuerVerificationMethodRef.clone(),
+                ((request.clone()).issuerVerificationMethodRef).clone(),
             )?;
             ()
         })
@@ -2103,27 +2046,22 @@ pub mod pure_circuits {
             crate::pure_circuits::assertValidOfferMessage(offer.clone())?;
             crate::pure_circuits::__compact_function_assertValidRequestMessage_0(request.clone())?;
             crate::pure_circuits::assertProtocolResponseEnvelope(
-                (offer.clone()).envelope.clone(),
-                (request.clone()).envelope.clone(),
+                ((offer.clone()).envelope).clone(),
+                ((request.clone()).envelope).clone(),
             )?;
             crate::pure_circuits::assertMatchingSchemaRefs(
-                (offer.clone()).schema.clone(),
-                (request.clone()).schema.clone(),
+                ((offer.clone()).schema).clone(),
+                ((request.clone()).schema).clone(),
             )?;
             {
-                if !(if ((offer.clone()).issuerVerificationMethodRef.clone())
-                    .didContractAddress
+                if !(if ((((offer.clone()).issuerVerificationMethodRef).clone()).didContractAddress)
                     .clone()
-                    == ((request.clone()).issuerVerificationMethodRef.clone())
-                        .didContractAddress
+                    == ((((request.clone()).issuerVerificationMethodRef).clone())
+                        .didContractAddress)
                         .clone()
                 {
-                    ((offer.clone()).issuerVerificationMethodRef.clone())
-                        .methodId
-                        .clone()
-                        == ((request.clone()).issuerVerificationMethodRef.clone())
-                            .methodId
-                            .clone()
+                    (((offer.clone()).issuerVerificationMethodRef).clone()).methodId
+                        == (((request.clone()).issuerVerificationMethodRef).clone()).methodId
                 } else {
                     false
                 }) {
@@ -2134,8 +2072,7 @@ pub mod pure_circuits {
                 }
             };
             {
-                if !((offer.clone()).holderBindingProfile.clone()
-                    == (request.clone()).holderBindingProfile.clone())
+                if !((offer.clone()).holderBindingProfile == (request.clone()).holderBindingProfile)
                 {
                     return Err(runtime::CompactError::AssertionFailed(
                         "Issuance request holder binding profile does not match the offer"
@@ -2151,10 +2088,10 @@ pub mod pure_circuits {
     ) -> Result<(), runtime::CompactError> {
         Ok({
             crate::pure_circuits::assertValidProtocolMessageEnvelope(
-                (result.clone()).envelope.clone(),
+                ((result.clone()).envelope).clone(),
             )?;
             {
-                if !(if ((result.clone()).envelope.clone()).initialMessage.clone() {
+                if !(if (((result.clone()).envelope).clone()).initialMessage {
                     false
                 } else {
                     true
@@ -2165,7 +2102,7 @@ pub mod pure_circuits {
                 }
             };
             crate::pure_circuits::assertValidVerificationMethodRef(
-                (result.clone()).issuerVerificationMethodRef.clone(),
+                ((result.clone()).issuerVerificationMethodRef).clone(),
             )?;
             ()
         })
@@ -2178,27 +2115,22 @@ pub mod pure_circuits {
             crate::pure_circuits::__compact_function_assertValidRequestMessage_0(request.clone())?;
             crate::pure_circuits::__compact_function_assertValidResultMessage_1(result.clone())?;
             crate::pure_circuits::assertProtocolResponseEnvelope(
-                (request.clone()).envelope.clone(),
-                (result.clone()).envelope.clone(),
+                ((request.clone()).envelope).clone(),
+                ((result.clone()).envelope).clone(),
             )?;
             crate::pure_circuits::assertMatchingSchemaRefs(
-                (request.clone()).schema.clone(),
-                (result.clone()).schema.clone(),
+                ((request.clone()).schema).clone(),
+                ((result.clone()).schema).clone(),
             )?;
             {
-                if !(if ((request.clone()).issuerVerificationMethodRef.clone())
-                    .didContractAddress
+                if !(if ((((request.clone()).issuerVerificationMethodRef).clone())
+                    .didContractAddress)
                     .clone()
-                    == ((result.clone()).issuerVerificationMethodRef.clone())
-                        .didContractAddress
+                    == ((((result.clone()).issuerVerificationMethodRef).clone()).didContractAddress)
                         .clone()
                 {
-                    ((request.clone()).issuerVerificationMethodRef.clone())
-                        .methodId
-                        .clone()
-                        == ((result.clone()).issuerVerificationMethodRef.clone())
-                            .methodId
-                            .clone()
+                    (((request.clone()).issuerVerificationMethodRef).clone()).methodId
+                        == (((result.clone()).issuerVerificationMethodRef).clone()).methodId
                 } else {
                     false
                 }) {
@@ -2209,8 +2141,8 @@ pub mod pure_circuits {
                 }
             };
             {
-                if !((request.clone()).holderBindingProfile.clone()
-                    == (result.clone()).holderBindingProfile.clone())
+                if !((request.clone()).holderBindingProfile
+                    == (result.clone()).holderBindingProfile)
                 {
                     return Err(runtime::CompactError::AssertionFailed(
                         "Issuance result holder binding profile does not match the request"
@@ -2226,17 +2158,17 @@ pub mod pure_circuits {
     ) -> Result<(), runtime::CompactError> {
         Ok({
             crate::pure_circuits::assertValidProtocolMessageEnvelope(
-                (request.clone()).envelope.clone(),
+                ((request.clone()).envelope).clone(),
             )?;
             {
-                if !(((request.clone()).envelope.clone()).initialMessage.clone()) {
+                if !((((request.clone()).envelope).clone()).initialMessage) {
                     return Err(runtime::CompactError::AssertionFailed(
                         "Presentation request must be the initial message".to_owned(),
                     ));
                 }
             };
             crate::pure_circuits::assertValidVerificationMethodRef(
-                (request.clone()).issuerVerificationMethodRef.clone(),
+                ((request.clone()).issuerVerificationMethodRef).clone(),
             )?;
             ()
         })
@@ -2246,13 +2178,10 @@ pub mod pure_circuits {
     ) -> Result<(), runtime::CompactError> {
         Ok({
             crate::pure_circuits::assertValidProtocolMessageEnvelope(
-                (submission.clone()).envelope.clone(),
+                ((submission.clone()).envelope).clone(),
             )?;
             {
-                if !(if ((submission.clone()).envelope.clone())
-                    .initialMessage
-                    .clone()
-                {
+                if !(if (((submission.clone()).envelope).clone()).initialMessage {
                     false
                 } else {
                     true
@@ -2263,7 +2192,7 @@ pub mod pure_circuits {
                 }
             };
             crate::pure_circuits::assertValidVerificationMethodRef(
-                (submission.clone()).issuerVerificationMethodRef.clone(),
+                ((submission.clone()).issuerVerificationMethodRef).clone(),
             )?;
             ()
         })
@@ -2276,27 +2205,23 @@ pub mod pure_circuits {
             crate::pure_circuits::__compact_function_assertValidRequestMessage_2(request.clone())?;
             crate::pure_circuits::assertValidSubmissionMessage(submission.clone())?;
             crate::pure_circuits::assertProtocolResponseEnvelope(
-                (request.clone()).envelope.clone(),
-                (submission.clone()).envelope.clone(),
+                ((request.clone()).envelope).clone(),
+                ((submission.clone()).envelope).clone(),
             )?;
             crate::pure_circuits::assertMatchingSchemaRefs(
-                (request.clone()).schema.clone(),
-                (submission.clone()).schema.clone(),
+                ((request.clone()).schema).clone(),
+                ((submission.clone()).schema).clone(),
             )?;
             {
-                if !(if ((request.clone()).issuerVerificationMethodRef.clone())
-                    .didContractAddress
+                if !(if ((((request.clone()).issuerVerificationMethodRef).clone())
+                    .didContractAddress)
                     .clone()
-                    == ((submission.clone()).issuerVerificationMethodRef.clone())
-                        .didContractAddress
+                    == ((((submission.clone()).issuerVerificationMethodRef).clone())
+                        .didContractAddress)
                         .clone()
                 {
-                    ((request.clone()).issuerVerificationMethodRef.clone())
-                        .methodId
-                        .clone()
-                        == ((submission.clone()).issuerVerificationMethodRef.clone())
-                            .methodId
-                            .clone()
+                    (((request.clone()).issuerVerificationMethodRef).clone()).methodId
+                        == (((submission.clone()).issuerVerificationMethodRef).clone()).methodId
                 } else {
                     false
                 }) {
@@ -2309,8 +2234,8 @@ pub mod pure_circuits {
                 }
             };
             {
-                if !((request.clone()).holderBindingProfile.clone()
-                    == (submission.clone()).holderBindingProfile.clone())
+                if !((request.clone()).holderBindingProfile
+                    == (submission.clone()).holderBindingProfile)
                 {
                     return Err(runtime::CompactError::AssertionFailed(
                         "Presentation submission holder binding profile does not match the request"
@@ -2319,8 +2244,7 @@ pub mod pure_circuits {
                 }
             };
             {
-                if !((request.clone()).verifierChallengeHash.clone()
-                    == (submission.clone()).challengeHash.clone())
+                if !((request.clone()).verifierChallengeHash == (submission.clone()).challengeHash)
                 {
                     return Err(runtime::CompactError::AssertionFailed(
                         "Presentation submission challenge does not match the request challenge"
@@ -2336,10 +2260,10 @@ pub mod pure_circuits {
     ) -> Result<(), runtime::CompactError> {
         Ok({
             crate::pure_circuits::assertValidProtocolMessageEnvelope(
-                (result.clone()).envelope.clone(),
+                ((result.clone()).envelope).clone(),
             )?;
             {
-                if !(if ((result.clone()).envelope.clone()).initialMessage.clone() {
+                if !(if (((result.clone()).envelope).clone()).initialMessage {
                     false
                 } else {
                     true
@@ -2360,8 +2284,8 @@ pub mod pure_circuits {
             crate::pure_circuits::assertValidSubmissionMessage(submission.clone())?;
             crate::pure_circuits::__compact_function_assertValidResultMessage_3(result.clone())?;
             crate::pure_circuits::assertProtocolResponseEnvelope(
-                (submission.clone()).envelope.clone(),
-                (result.clone()).envelope.clone(),
+                ((submission.clone()).envelope).clone(),
+                ((result.clone()).envelope).clone(),
             )?;
             ()
         })
@@ -2371,7 +2295,7 @@ pub mod pure_circuits {
     ) -> Result<(), runtime::CompactError> {
         Ok({
             {
-                if !((registryRef.clone()).registryId.clone()
+                if !((registryRef.clone()).registryId
                     != runtime::FixedBytes::new([
                         0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
                         0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
@@ -2384,7 +2308,7 @@ pub mod pure_circuits {
                 }
             };
             crate::pure_circuits::assertValidVerificationMethodRef(
-                (registryRef.clone()).authorityVerificationMethodRef.clone(),
+                ((registryRef.clone()).authorityVerificationMethodRef).clone(),
             )?;
             ()
         })
@@ -2399,19 +2323,17 @@ pub mod pure_circuits {
     ) -> Result<(), runtime::CompactError> {
         Ok({
             {
-                if !((binding.clone()).statusType.clone()
-                    == crate::types::StatusType::revocationRegistry)
-                {
+                if !((binding.clone()).statusType == crate::types::StatusType::revocationRegistry) {
                     return Err(runtime::CompactError::AssertionFailed(
                         "Registry-bound status type must be revocationRegistry".to_owned(),
                     ));
                 }
             };
             crate::pure_circuits::assertValidStatusRegistryRef(
-                (binding.clone()).registryRef.clone(),
+                ((binding.clone()).registryRef).clone(),
             )?;
             {
-                if !((binding.clone()).statusHandleCommitment.clone()
+                if !((binding.clone()).statusHandleCommitment
                     != runtime::FixedBytes::new([
                         0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
                         0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
@@ -2443,11 +2365,11 @@ pub mod pure_circuits {
                 100u8, 105u8, 103u8, 105u8, 116u8, 97u8, 108u8, 45u8, 112u8, 97u8, 115u8, 115u8,
                 112u8, 111u8, 114u8, 116u8, 58u8, 118u8, 49u8, 0u8,
             ]),
-            (commitments.clone()).firstNameCommitment.clone(),
-            (commitments.clone()).lastNameCommitment.clone(),
-            (commitments.clone()).dateOfBirthCommitment.clone(),
-            (commitments.clone()).documentNumberCommitment.clone(),
-            (commitments.clone()).issuingStateCommitment.clone(),
+            (commitments.clone()).firstNameCommitment,
+            (commitments.clone()).lastNameCommitment,
+            (commitments.clone()).dateOfBirthCommitment,
+            (commitments.clone()).documentNumberCommitment,
+            (commitments.clone()).issuingStateCommitment,
         )))
     }
     pub fn firstNameCommitment(
@@ -2503,13 +2425,9 @@ pub mod pure_circuits {
         Ok({
             {
                 if !(crate::pure_circuits::firstNameCommitment(
-                    ((privateParts.clone()).claimValues.clone())
-                        .firstNameValuePadded
-                        .clone(),
-                    ((privateParts.clone()).openings.clone())
-                        .firstNameOpening
-                        .clone(),
-                )? == (claimCommitments.clone()).firstNameCommitment.clone())
+                    (((privateParts.clone()).claimValues).clone()).firstNameValuePadded,
+                    (((privateParts.clone()).openings).clone()).firstNameOpening,
+                )? == (claimCommitments.clone()).firstNameCommitment)
                 {
                     return Err(runtime::CompactError::AssertionFailed(
                         "Private-parts first-name value does not match credential commitment"
@@ -2519,13 +2437,9 @@ pub mod pure_circuits {
             };
             {
                 if !(crate::pure_circuits::lastNameCommitment(
-                    ((privateParts.clone()).claimValues.clone())
-                        .lastNameValuePadded
-                        .clone(),
-                    ((privateParts.clone()).openings.clone())
-                        .lastNameOpening
-                        .clone(),
-                )? == (claimCommitments.clone()).lastNameCommitment.clone())
+                    (((privateParts.clone()).claimValues).clone()).lastNameValuePadded,
+                    (((privateParts.clone()).openings).clone()).lastNameOpening,
+                )? == (claimCommitments.clone()).lastNameCommitment)
                 {
                     return Err(runtime::CompactError::AssertionFailed(
                         "Private-parts last-name value does not match credential commitment"
@@ -2535,13 +2449,9 @@ pub mod pure_circuits {
             };
             {
                 if !(crate::pure_circuits::dateOfBirthCommitment(
-                    ((privateParts.clone()).claimValues.clone())
-                        .dateOfBirthDays
-                        .clone(),
-                    ((privateParts.clone()).openings.clone())
-                        .dateOfBirthOpening
-                        .clone(),
-                )? == (claimCommitments.clone()).dateOfBirthCommitment.clone())
+                    (((privateParts.clone()).claimValues).clone()).dateOfBirthDays,
+                    (((privateParts.clone()).openings).clone()).dateOfBirthOpening,
+                )? == (claimCommitments.clone()).dateOfBirthCommitment)
                 {
                     return Err(runtime::CompactError::AssertionFailed(
                         "Private-parts date-of-birth value does not match credential commitment"
@@ -2549,14 +2459,12 @@ pub mod pure_circuits {
                     ));
                 }
             };
-            if (claimCommitments.clone()).documentNumberCommitment.clone()
+            if (claimCommitments.clone()).documentNumberCommitment
                 == crate::pure_circuits::documentNumberNullCommitment()?
             {
                 {
                     {
-                        if !(((privateParts.clone()).claimValues.clone())
-                            .documentNumberValue
-                            .clone()
+                        if !((((privateParts.clone()).claimValues).clone()).documentNumberValue
                             == runtime::FixedBytes::new([
                                 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
                                 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
@@ -2572,9 +2480,7 @@ pub mod pure_circuits {
                         }
                     };
                     {
-                        if !(((privateParts.clone()).openings.clone())
-                            .documentNumberOpening
-                            .clone()
+                        if !((((privateParts.clone()).openings).clone()).documentNumberOpening
                             == runtime::FixedBytes::new([
                                 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
                                 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
@@ -2593,13 +2499,9 @@ pub mod pure_circuits {
             } else {
                 {
                     if !(crate::pure_circuits::documentNumberCommitment(
-                        ((privateParts.clone()).claimValues.clone())
-                            .documentNumberValue
-                            .clone(),
-                        ((privateParts.clone()).openings.clone())
-                            .documentNumberOpening
-                            .clone(),
-                    )? == (claimCommitments.clone()).documentNumberCommitment.clone())
+                        (((privateParts.clone()).claimValues).clone()).documentNumberValue,
+                        (((privateParts.clone()).openings).clone()).documentNumberOpening,
+                    )? == (claimCommitments.clone()).documentNumberCommitment)
                     {
                         return Err(
                             runtime::CompactError::AssertionFailed(
@@ -2612,13 +2514,9 @@ pub mod pure_circuits {
             };
             {
                 if !(crate::pure_circuits::issuingStateCommitment(
-                    ((privateParts.clone()).claimValues.clone())
-                        .issuingStateValue
-                        .clone(),
-                    ((privateParts.clone()).openings.clone())
-                        .issuingStateOpening
-                        .clone(),
-                )? == (claimCommitments.clone()).issuingStateCommitment.clone())
+                    (((privateParts.clone()).claimValues).clone()).issuingStateValue,
+                    (((privateParts.clone()).openings).clone()).issuingStateOpening,
+                )? == (claimCommitments.clone()).issuingStateCommitment)
                 {
                     return Err(runtime::CompactError::AssertionFailed(
                         "Private-parts issuing-state value does not match credential commitment"
@@ -2662,7 +2560,7 @@ pub mod pure_circuits {
     ) -> Result<(), runtime::CompactError> {
         Ok({
             {
-                if !((schema.clone()).packageId.clone()
+                if !((schema.clone()).packageId
                     == runtime::FixedBytes::new([
                         109u8, 105u8, 100u8, 110u8, 105u8, 103u8, 104u8, 116u8, 58u8, 118u8, 99u8,
                         58u8, 100u8, 105u8, 103u8, 105u8, 116u8, 97u8, 108u8, 45u8, 112u8, 97u8,
@@ -2675,7 +2573,7 @@ pub mod pure_circuits {
                 }
             };
             {
-                if !((schema.clone()).schemaId.clone()
+                if !((schema.clone()).schemaId
                     == runtime::FixedBytes::new([
                         100u8, 105u8, 103u8, 105u8, 116u8, 97u8, 108u8, 45u8, 112u8, 97u8, 115u8,
                         115u8, 112u8, 111u8, 114u8, 116u8, 58u8, 118u8, 49u8, 0u8, 0u8, 0u8, 0u8,
@@ -2688,7 +2586,7 @@ pub mod pure_circuits {
                 }
             };
             {
-                if !((schema.clone()).majorVersion.clone()
+                if !((schema.clone()).majorVersion
                     == runtime::BoundedUint::<65535>::new(1u128)
                         .expect("Compact Uint literal fits its maximum"))
                 {
@@ -2698,7 +2596,7 @@ pub mod pure_circuits {
                 }
             };
             {
-                if !((schema.clone()).minorVersion.clone()
+                if !((schema.clone()).minorVersion
                     == runtime::BoundedUint::<65535>::new(0u128)
                         .expect("Compact Uint literal fits its maximum"))
                 {
@@ -2715,7 +2613,7 @@ pub mod pure_circuits {
     ) -> Result<(), runtime::CompactError> {
         Ok({
             {
-                if !((request.clone()).version.clone()
+                if !((request.clone()).version
                     == runtime::BoundedUint::<65535>::new(1u128)
                         .expect("Compact Uint literal fits its maximum"))
                 {
@@ -2725,16 +2623,16 @@ pub mod pure_circuits {
                 }
             };
             crate::pure_circuits::assertValidDigitalPassportSchemaRef(
-                (request.clone()).schema.clone(),
+                ((request.clone()).schema).clone(),
             )?;
             crate::pure_circuits::assertValidVerificationMethodRef(
-                (request.clone()).issuerVerificationMethodRef.clone(),
+                ((request.clone()).issuerVerificationMethodRef).clone(),
             )?;
-            if (request.clone()).requireAgeOverThreshold.clone() {
+            if (request.clone()).requireAgeOverThreshold {
                 {
                     if !({
                         let __compact_local_t_37: runtime::BoundedUint<255> =
-                            (request.clone()).requestedAgeThresholdYears.clone();
+                            (request.clone()).requestedAgeThresholdYears;
                         __compact_local_t_37.value()
                             > runtime::BoundedUint::<255>::new(0u128)
                                 .expect("Compact Uint literal fits its maximum")
@@ -2747,7 +2645,7 @@ pub mod pure_circuits {
                 }
             } else {
                 {
-                    if !((request.clone()).requestedAgeThresholdYears.clone()
+                    if !((request.clone()).requestedAgeThresholdYears
                         == runtime::BoundedUint::<255>::new(0u128)
                             .expect("Compact Uint literal fits its maximum"))
                     {
@@ -2758,7 +2656,7 @@ pub mod pure_circuits {
                 }
             };
             {
-                if !((request.clone()).verifierChallengeHash.clone()
+                if !((request.clone()).verifierChallengeHash
                     != runtime::FixedBytes::new([
                         0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
                         0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
@@ -2779,27 +2677,19 @@ pub mod pure_circuits {
         Ok(crate::types::DigitalPassportPresentationRequest {
             version: runtime::BoundedUint::<65535>::new(1u128)
                 .expect("Compact Uint literal fits its maximum"),
-            schema: (request.clone()).schema.clone(),
-            issuerVerificationMethodRef: (request.clone()).issuerVerificationMethodRef.clone(),
-            requireFirstNameDisclosure: ((request.clone()).body.clone())
-                .requireFirstNameDisclosure
-                .clone(),
-            requireLastNameDisclosure: ((request.clone()).body.clone())
-                .requireLastNameDisclosure
-                .clone(),
-            requireAgeOverThreshold: ((request.clone()).body.clone())
-                .requireAgeOverThreshold
-                .clone(),
-            requestedAgeThresholdYears: ((request.clone()).body.clone())
-                .requestedAgeThresholdYears
-                .clone(),
-            requireDocumentNumberDisclosure: ((request.clone()).body.clone())
-                .requireDocumentNumberDisclosure
-                .clone(),
-            requireIssuingStateDisclosure: ((request.clone()).body.clone())
-                .requireIssuingStateDisclosure
-                .clone(),
-            verifierChallengeHash: (request.clone()).verifierChallengeHash.clone(),
+            schema: ((request.clone()).schema).clone(),
+            issuerVerificationMethodRef: ((request.clone()).issuerVerificationMethodRef).clone(),
+            requireFirstNameDisclosure: (((request.clone()).body).clone())
+                .requireFirstNameDisclosure,
+            requireLastNameDisclosure: (((request.clone()).body).clone()).requireLastNameDisclosure,
+            requireAgeOverThreshold: (((request.clone()).body).clone()).requireAgeOverThreshold,
+            requestedAgeThresholdYears: (((request.clone()).body).clone())
+                .requestedAgeThresholdYears,
+            requireDocumentNumberDisclosure: (((request.clone()).body).clone())
+                .requireDocumentNumberDisclosure,
+            requireIssuingStateDisclosure: (((request.clone()).body).clone())
+                .requireIssuingStateDisclosure,
+            verifierChallengeHash: (request.clone()).verifierChallengeHash,
         })
     }
     pub fn assertValidDigitalPassportCredential(
@@ -2808,19 +2698,19 @@ pub mod pure_circuits {
     ) -> Result<(), runtime::CompactError> {
         Ok({
             crate::pure_circuits::assertValidDigitalPassportSchemaRef(
-                (credential.clone()).schema.clone(),
+                ((credential.clone()).schema).clone(),
             )?;
             crate::pure_circuits::assertValidCredentialEnvelope(
                 credential.clone(),
                 crate::pure_circuits::digitalPassportClaimRoot(
-                    (credential.clone()).claimCommitments.clone(),
+                    ((credential.clone()).claimCommitments).clone(),
                 )?,
             )?;
             crate::pure_circuits::assertValidNoStatusBinding(
-                (credential.clone()).statusBinding.clone(),
+                ((credential.clone()).statusBinding).clone(),
             )?;
             crate::pure_circuits::assertValidExplicitHolderBinding(
-                (credential.clone()).holderBinding.clone(),
+                ((credential.clone()).holderBinding).clone(),
             )?;
             crate::pure_circuits::assertValidCredentialProof(credential.clone(), proof.clone())?;
             ()
@@ -2838,7 +2728,7 @@ pub mod pure_circuits {
                 credentialProof.clone(),
             )?;
             crate::pure_circuits::assertValidDigitalPassportSchemaRef(
-                (presentation.clone()).schema.clone(),
+                ((presentation.clone()).schema).clone(),
             )?;
             crate::pure_circuits::assertValidPresentationEnvelope(presentation.clone())?;
             crate::pure_circuits::assertMatchingCredentialPresentation(
@@ -2846,27 +2736,19 @@ pub mod pure_circuits {
                 presentation.clone(),
             )?;
             crate::pure_circuits::assertValidExplicitHolderBinding(
-                (presentation.clone()).holderBinding.clone(),
+                ((presentation.clone()).holderBinding).clone(),
             )?;
             crate::pure_circuits::assertMatchingExplicitHolderBindings(
-                (credential.clone()).holderBinding.clone(),
-                (presentation.clone()).holderBinding.clone(),
+                ((credential.clone()).holderBinding).clone(),
+                ((presentation.clone()).holderBinding).clone(),
             )?;
-            if ((presentation.clone()).disclosed.clone())
-                .revealFirstName
-                .clone()
-            {
+            if (((presentation.clone()).disclosed).clone()).revealFirstName {
                 {
                     if !(crate::pure_circuits::firstNameCommitment(
-                        ((presentation.clone()).disclosed.clone())
-                            .firstNameValuePadded
-                            .clone(),
-                        ((presentation.clone()).disclosed.clone())
-                            .firstNameOpening
-                            .clone(),
-                    )? == ((credential.clone()).claimCommitments.clone())
-                        .firstNameCommitment
-                        .clone())
+                        (((presentation.clone()).disclosed).clone()).firstNameValuePadded,
+                        (((presentation.clone()).disclosed).clone()).firstNameOpening,
+                    )? == (((credential.clone()).claimCommitments).clone())
+                        .firstNameCommitment)
                     {
                         return Err(runtime::CompactError::AssertionFailed(
                             "Presentation first-name disclosure does not match the credential"
@@ -2877,21 +2759,12 @@ pub mod pure_circuits {
             } else {
                 ()
             };
-            if ((presentation.clone()).disclosed.clone())
-                .revealLastName
-                .clone()
-            {
+            if (((presentation.clone()).disclosed).clone()).revealLastName {
                 {
                     if !(crate::pure_circuits::lastNameCommitment(
-                        ((presentation.clone()).disclosed.clone())
-                            .lastNameValuePadded
-                            .clone(),
-                        ((presentation.clone()).disclosed.clone())
-                            .lastNameOpening
-                            .clone(),
-                    )? == ((credential.clone()).claimCommitments.clone())
-                        .lastNameCommitment
-                        .clone())
+                        (((presentation.clone()).disclosed).clone()).lastNameValuePadded,
+                        (((presentation.clone()).disclosed).clone()).lastNameOpening,
+                    )? == (((credential.clone()).claimCommitments).clone()).lastNameCommitment)
                     {
                         return Err(runtime::CompactError::AssertionFailed(
                             "Presentation last-name disclosure does not match the credential"
@@ -2902,16 +2775,11 @@ pub mod pure_circuits {
             } else {
                 ()
             };
-            if ((credential.clone()).claimCommitments.clone())
-                .documentNumberCommitment
-                .clone()
+            if (((credential.clone()).claimCommitments).clone()).documentNumberCommitment
                 == crate::pure_circuits::documentNumberNullCommitment()?
             {
                 {
-                    if !(if ((presentation.clone()).disclosed.clone())
-                        .revealDocumentNumber
-                        .clone()
-                    {
+                    if !(if (((presentation.clone()).disclosed).clone()).revealDocumentNumber {
                         false
                     } else {
                         true
@@ -2927,21 +2795,13 @@ pub mod pure_circuits {
             } else {
                 ()
             };
-            if ((presentation.clone()).disclosed.clone())
-                .revealDocumentNumber
-                .clone()
-            {
+            if (((presentation.clone()).disclosed).clone()).revealDocumentNumber {
                 {
                     if !(crate::pure_circuits::documentNumberCommitment(
-                        ((presentation.clone()).disclosed.clone())
-                            .documentNumberValue
-                            .clone(),
-                        ((presentation.clone()).disclosed.clone())
-                            .documentNumberOpening
-                            .clone(),
-                    )? == ((credential.clone()).claimCommitments.clone())
-                        .documentNumberCommitment
-                        .clone())
+                        (((presentation.clone()).disclosed).clone()).documentNumberValue,
+                        (((presentation.clone()).disclosed).clone()).documentNumberOpening,
+                    )? == (((credential.clone()).claimCommitments).clone())
+                        .documentNumberCommitment)
                     {
                         return Err(runtime::CompactError::AssertionFailed(
                             "Presentation document-number disclosure does not match the credential"
@@ -2952,21 +2812,13 @@ pub mod pure_circuits {
             } else {
                 ()
             };
-            if ((presentation.clone()).disclosed.clone())
-                .revealIssuingState
-                .clone()
-            {
+            if (((presentation.clone()).disclosed).clone()).revealIssuingState {
                 {
                     if !(crate::pure_circuits::issuingStateCommitment(
-                        ((presentation.clone()).disclosed.clone())
-                            .issuingStateValue
-                            .clone(),
-                        ((presentation.clone()).disclosed.clone())
-                            .issuingStateOpening
-                            .clone(),
-                    )? == ((credential.clone()).claimCommitments.clone())
-                        .issuingStateCommitment
-                        .clone())
+                        (((presentation.clone()).disclosed).clone()).issuingStateValue,
+                        (((presentation.clone()).disclosed).clone()).issuingStateOpening,
+                    )? == (((credential.clone()).claimCommitments).clone())
+                        .issuingStateCommitment)
                     {
                         return Err(runtime::CompactError::AssertionFailed(
                             "Presentation issuing-state disclosure does not match the credential"
@@ -2977,16 +2829,11 @@ pub mod pure_circuits {
             } else {
                 ()
             };
-            if ((presentation.clone()).disclosed.clone())
-                .proveAgeOverThreshold
-                .clone()
-            {
+            if (((presentation.clone()).disclosed).clone()).proveAgeOverThreshold {
                 {
                     if !({
                         let __compact_local_t_36: runtime::BoundedUint<255> =
-                            ((presentation.clone()).disclosed.clone())
-                                .ageThresholdYears
-                                .clone();
+                            (((presentation.clone()).disclosed).clone()).ageThresholdYears;
                         __compact_local_t_36.value()
                             > runtime::BoundedUint::<255>::new(0u128)
                                 .expect("Compact Uint literal fits its maximum")
@@ -3001,7 +2848,7 @@ pub mod pure_circuits {
                 ()
             };
             crate::pure_circuits::assertProofMatchesExplicitHolderBinding(
-                (presentation.clone()).holderBinding.clone(),
+                ((presentation.clone()).holderBinding).clone(),
                 presentationProof.clone(),
             )?;
             crate::pure_circuits::assertValidPresentationContextProof(
@@ -3020,22 +2867,21 @@ pub mod pure_circuits {
         Ok({
             crate::pure_circuits::assertValidDigitalPassportPresentationRequest(request.clone())?;
             crate::pure_circuits::assertValidDigitalPassportSchemaRef(
-                (presentation.clone()).schema.clone(),
+                ((presentation.clone()).schema).clone(),
             )?;
             crate::pure_circuits::assertMatchingSchemaRefs(
-                (request.clone()).schema.clone(),
-                (credential.clone()).schema.clone(),
+                ((request.clone()).schema).clone(),
+                ((credential.clone()).schema).clone(),
             )?;
             crate::pure_circuits::assertMatchingSchemaRefs(
-                (request.clone()).schema.clone(),
-                (presentation.clone()).schema.clone(),
+                ((request.clone()).schema).clone(),
+                ((presentation.clone()).schema).clone(),
             )?;
             {
-                if !(((request.clone()).issuerVerificationMethodRef.clone())
-                    .didContractAddress
+                if !(((((request.clone()).issuerVerificationMethodRef).clone()).didContractAddress)
                     .clone()
-                    == ((credential.clone()).issuerVerificationMethodRef.clone())
-                        .didContractAddress
+                    == ((((credential.clone()).issuerVerificationMethodRef).clone())
+                        .didContractAddress)
                         .clone())
                 {
                     return Err(runtime::CompactError::AssertionFailed(
@@ -3045,12 +2891,8 @@ pub mod pure_circuits {
                 }
             };
             {
-                if !(((request.clone()).issuerVerificationMethodRef.clone())
-                    .methodId
-                    .clone()
-                    == ((credential.clone()).issuerVerificationMethodRef.clone())
-                        .methodId
-                        .clone())
+                if !((((request.clone()).issuerVerificationMethodRef).clone()).methodId
+                    == (((credential.clone()).issuerVerificationMethodRef).clone()).methodId)
                 {
                     return Err(
                         runtime::CompactError::AssertionFailed(
@@ -3061,8 +2903,8 @@ pub mod pure_circuits {
                 }
             };
             {
-                if !((presentationProof.clone()).challengeHash.clone()
-                    == (request.clone()).verifierChallengeHash.clone())
+                if !((presentationProof.clone()).challengeHash
+                    == (request.clone()).verifierChallengeHash)
                 {
                     return Err(runtime::CompactError::AssertionFailed(
                         "Presentation proof challenge does not match the request challenge"
@@ -3070,12 +2912,9 @@ pub mod pure_circuits {
                     ));
                 }
             };
-            if (request.clone()).requireFirstNameDisclosure.clone() {
+            if (request.clone()).requireFirstNameDisclosure {
                 {
-                    if !(((presentation.clone()).disclosed.clone())
-                        .revealFirstName
-                        .clone())
-                    {
+                    if !((((presentation.clone()).disclosed).clone()).revealFirstName) {
                         return Err(runtime::CompactError::AssertionFailed(
                             "Presentation request requires the first-name disclosure".to_owned(),
                         ));
@@ -3084,12 +2923,9 @@ pub mod pure_circuits {
             } else {
                 ()
             };
-            if (request.clone()).requireLastNameDisclosure.clone() {
+            if (request.clone()).requireLastNameDisclosure {
                 {
-                    if !(((presentation.clone()).disclosed.clone())
-                        .revealLastName
-                        .clone())
-                    {
+                    if !((((presentation.clone()).disclosed).clone()).revealLastName) {
                         return Err(runtime::CompactError::AssertionFailed(
                             "Presentation request requires the last-name disclosure".to_owned(),
                         ));
@@ -3098,13 +2934,10 @@ pub mod pure_circuits {
             } else {
                 ()
             };
-            if (request.clone()).requireAgeOverThreshold.clone() {
+            if (request.clone()).requireAgeOverThreshold {
                 {
                     {
-                        if !(((presentation.clone()).disclosed.clone())
-                            .proveAgeOverThreshold
-                            .clone())
-                        {
+                        if !((((presentation.clone()).disclosed).clone()).proveAgeOverThreshold) {
                             return Err(runtime::CompactError::AssertionFailed(
                                 "Presentation request requires the age-over-threshold predicate"
                                     .to_owned(),
@@ -3112,10 +2945,8 @@ pub mod pure_circuits {
                         }
                     };
                     {
-                        if !(((presentation.clone()).disclosed.clone())
-                            .ageThresholdYears
-                            .clone()
-                            == (request.clone()).requestedAgeThresholdYears.clone())
+                        if !((((presentation.clone()).disclosed).clone()).ageThresholdYears
+                            == (request.clone()).requestedAgeThresholdYears)
                         {
                             return Err(runtime::CompactError::AssertionFailed(
                                 "Presentation age threshold does not match the request".to_owned(),
@@ -3126,12 +2957,9 @@ pub mod pure_circuits {
             } else {
                 ()
             };
-            if (request.clone()).requireDocumentNumberDisclosure.clone() {
+            if (request.clone()).requireDocumentNumberDisclosure {
                 {
-                    if !(((presentation.clone()).disclosed.clone())
-                        .revealDocumentNumber
-                        .clone())
-                    {
+                    if !((((presentation.clone()).disclosed).clone()).revealDocumentNumber) {
                         return Err(runtime::CompactError::AssertionFailed(
                             "Presentation request requires the document-number disclosure"
                                 .to_owned(),
@@ -3141,12 +2969,9 @@ pub mod pure_circuits {
             } else {
                 ()
             };
-            if (request.clone()).requireIssuingStateDisclosure.clone() {
+            if (request.clone()).requireIssuingStateDisclosure {
                 {
-                    if !(((presentation.clone()).disclosed.clone())
-                        .revealIssuingState
-                        .clone())
-                    {
+                    if !((((presentation.clone()).disclosed).clone()).revealIssuingState) {
                         return Err(runtime::CompactError::AssertionFailed(
                             "Presentation request requires the issuing-state disclosure".to_owned(),
                         ));
@@ -3167,7 +2992,7 @@ pub mod pure_circuits {
                 {
                     if !({
                         let __compact_local_t_14: runtime::BoundedUint<4294967295> =
-                            (date.clone()).year.clone();
+                            (date.clone()).year;
                         __compact_local_t_14.value()
                             >= runtime::BoundedUint::<4294967295>::new(1970u128)
                                 .expect("Compact Uint literal fits its maximum")
@@ -3181,7 +3006,7 @@ pub mod pure_circuits {
                 {
                     if !({
                         let __compact_local_t_15: runtime::BoundedUint<4294967295> =
-                            (date.clone()).month.clone();
+                            (date.clone()).month;
                         __compact_local_t_15.value()
                             >= runtime::BoundedUint::<4294967295>::new(1u128)
                                 .expect("Compact Uint literal fits its maximum")
@@ -3195,7 +3020,7 @@ pub mod pure_circuits {
                 {
                     if !({
                         let __compact_local_t_12: runtime::BoundedUint<4294967295> =
-                            (date.clone()).month.clone();
+                            (date.clone()).month;
                         __compact_local_t_12.value()
                             <= runtime::BoundedUint::<4294967295>::new(12u128)
                                 .expect("Compact Uint literal fits its maximum")
@@ -3209,7 +3034,7 @@ pub mod pure_circuits {
                 {
                     if !({
                         let __compact_local_t_13: runtime::BoundedUint<4294967295> =
-                            (date.clone()).day.clone();
+                            (date.clone()).day;
                         __compact_local_t_13.value()
                             >= runtime::BoundedUint::<4294967295>::new(1u128)
                                 .expect("Compact Uint literal fits its maximum")
@@ -3223,7 +3048,7 @@ pub mod pure_circuits {
                 {
                     let __compact_local_yearAdjusted: runtime::BoundedUint<4294967295> = if {
                         let __compact_local_t_16: runtime::BoundedUint<4294967295> =
-                            (date.clone()).month.clone();
+                            (date.clone()).month;
                         __compact_local_t_16.value()
                             <= runtime::BoundedUint::<4294967295>::new(2u128)
                                 .expect("Compact Uint literal fits its maximum")
@@ -3231,7 +3056,7 @@ pub mod pure_circuits {
                     } {
                         {
                             let __compact_local_t_17: runtime::BoundedUint<4294967295> =
-                                (date.clone()).year.clone();
+                                (date.clone()).year;
                             runtime::subtract_unsigned::<4294967295, 4294967295, 4294967295>(
                                 __compact_local_t_17,
                                 runtime::BoundedUint::<4294967295>::new(1u128)
@@ -3239,7 +3064,7 @@ pub mod pure_circuits {
                             )?
                         }
                     } else {
-                        (date.clone()).year.clone()
+                        (date.clone()).year
                     };
                     {
                         {
@@ -3251,7 +3076,7 @@ pub mod pure_circuits {
                                         17179869180,
                                     >(
                                         runtime::cast_unsigned::<4294967295, 17179869180>(
-                                            (date.clone()).yearAdjustedQuotient4.clone(),
+                                            (date.clone()).yearAdjustedQuotient4,
                                         )?,
                                         runtime::BoundedUint::<17179869180>::new(4u128)
                                             .expect("Compact Uint literal fits its maximum"),
@@ -3284,7 +3109,7 @@ pub mod pure_circuits {
                                                     runtime::cast_unsigned::<
                                                         4294967295,
                                                         17179869180,
-                                                    >((date.clone()).yearAdjustedQuotient4.clone())?,
+                                                    >((date.clone()).yearAdjustedQuotient4)?,
                                                     runtime::BoundedUint::<17179869180>::new(4u128)
                                                         .expect("Compact Uint literal fits its maximum"),
                                                 )?,
@@ -3310,7 +3135,7 @@ pub mod pure_circuits {
                                         429496729500,
                                     >(
                                         runtime::cast_unsigned::<4294967295, 429496729500>(
-                                            (date.clone()).yearAdjustedQuotient100.clone(),
+                                            (date.clone()).yearAdjustedQuotient100,
                                         )?,
                                         runtime::BoundedUint::<429496729500>::new(100u128)
                                             .expect("Compact Uint literal fits its maximum"),
@@ -3337,7 +3162,7 @@ pub mod pure_circuits {
                                                 429496729500,
                                             >(
                                                 runtime::cast_unsigned::<4294967295, 429496729500>(
-                                                    (date.clone()).yearAdjustedQuotient100.clone(),
+                                                    (date.clone()).yearAdjustedQuotient100,
                                                 )?,
                                                 runtime::BoundedUint::<429496729500>::new(100u128)
                                                     .expect(
@@ -3366,7 +3191,7 @@ pub mod pure_circuits {
                                         1717986918000,
                                     >(
                                         runtime::cast_unsigned::<4294967295, 1717986918000>(
-                                            (date.clone()).yearAdjustedQuotient400.clone(),
+                                            (date.clone()).yearAdjustedQuotient400,
                                         )?,
                                         runtime::BoundedUint::<1717986918000>::new(400u128)
                                             .expect("Compact Uint literal fits its maximum"),
@@ -3393,7 +3218,7 @@ pub mod pure_circuits {
                                                 1717986918000,
                                             >(
                                                 runtime::cast_unsigned::<4294967295, 1717986918000>(
-                                                    (date.clone()).yearAdjustedQuotient400.clone(),
+                                                    (date.clone()).yearAdjustedQuotient400,
                                                 )?,
                                                 runtime::BoundedUint::<1717986918000>::new(400u128)
                                                     .expect(
@@ -3422,7 +3247,7 @@ pub mod pure_circuits {
                                         17179869180,
                                     >(
                                         runtime::cast_unsigned::<4294967295, 17179869180>(
-                                            (date.clone()).yearAdjustedQuotient4.clone(),
+                                            (date.clone()).yearAdjustedQuotient4,
                                         )?,
                                         runtime::BoundedUint::<17179869180>::new(4u128)
                                             .expect("Compact Uint literal fits its maximum"),
@@ -3458,7 +3283,7 @@ pub mod pure_circuits {
                                             429496729500,
                                         >(
                                             runtime::cast_unsigned::<4294967295, 429496729500>(
-                                                (date.clone()).yearAdjustedQuotient100.clone(),
+                                                (date.clone()).yearAdjustedQuotient100,
                                             )?,
                                             runtime::BoundedUint::<429496729500>::new(100u128)
                                                 .expect("Compact Uint literal fits its maximum"),
@@ -3503,7 +3328,7 @@ pub mod pure_circuits {
                                             1717986918000,
                                         >(
                                             runtime::cast_unsigned::<4294967295, 1717986918000>(
-                                                (date.clone()).yearAdjustedQuotient400.clone(),
+                                                (date.clone()).yearAdjustedQuotient400,
                                             )?,
                                             runtime::BoundedUint::<1717986918000>::new(400u128)
                                                 .expect("Compact Uint literal fits its maximum"),
@@ -3542,7 +3367,7 @@ pub mod pure_circuits {
                                         let __compact_local_isLeap: bool = if {
                                             let __compact_local_t_24: runtime::BoundedUint<
                                                 4294967295,
-                                            > = (date.clone()).month.clone();
+                                            > = (date.clone()).month;
                                             __compact_local_t_24.value()
                                                 >= runtime::BoundedUint::<4294967295>::new(3u128)
                                                     .expect("Compact Uint literal fits its maximum")
@@ -3596,7 +3421,7 @@ pub mod pure_circuits {
                                             > = if {
                                                 let __compact_local_t_25: runtime::BoundedUint<
                                                     4294967295,
-                                                > = (date.clone()).month.clone();
+                                                > = (date.clone()).month;
                                                 __compact_local_t_25.value()
                                                     >= runtime::BoundedUint::<4294967295>::new(
                                                         3u128,
@@ -3607,7 +3432,7 @@ pub mod pure_circuits {
                                                 runtime::cast_unsigned::<4294967295, 4294967304>({
                                                     let __compact_local_t_26: runtime::BoundedUint<
                                                         4294967295,
-                                                    > = (date.clone()).month.clone();
+                                                    > = (date.clone()).month;
                                                     runtime::subtract_unsigned::<
                                                         4294967295,
                                                         4294967295,
@@ -3629,7 +3454,7 @@ pub mod pure_circuits {
                                                     4294967304,
                                                 >(
                                                     runtime::cast_unsigned::<4294967295, 4294967304>(
-                                                        (date.clone()).month.clone(),
+                                                        (date.clone()).month,
                                                     )?,
                                                     runtime::BoundedUint::<4294967304>::new(9u128)
                                                         .expect(
@@ -3678,7 +3503,7 @@ pub mod pure_circuits {
                                                                 runtime::cast_unsigned::<
                                                                     4294967295,
                                                                     21474836475,
-                                                                >((date.clone()).marchBasedMonthDayOffset.clone())?,
+                                                                >((date.clone()).marchBasedMonthDayOffset)?,
                                                                 runtime::BoundedUint::<21474836475>::new(5u128)
                                                                     .expect("Compact Uint literal fits its maximum"),
                                                             )?;
@@ -3714,7 +3539,7 @@ pub mod pure_circuits {
                                                                                     runtime::cast_unsigned::<
                                                                                         4294967295,
                                                                                         21474836475,
-                                                                                    >((date.clone()).marchBasedMonthDayOffset.clone())?,
+                                                                                    >((date.clone()).marchBasedMonthDayOffset)?,
                                                                                     runtime::BoundedUint::<21474836475>::new(5u128)
                                                                                         .expect("Compact Uint literal fits its maximum"),
                                                                                 )?,
@@ -3734,9 +3559,7 @@ pub mod pure_circuits {
                                                             );
                                                         }
                                                     };
-                                                    if if if if if if if (date.clone())
-                                                        .month
-                                                        .clone()
+                                                    if if if if if if if (date.clone()).month
                                                         == runtime::BoundedUint::<4294967295>::new(
                                                             1u128,
                                                         )
@@ -3745,37 +3568,37 @@ pub mod pure_circuits {
                                                         ) {
                                                         true
                                                     } else {
-                                                        (date.clone()).month.clone()
+                                                        (date.clone()).month
                                                             == runtime::BoundedUint::<4294967295>::new(3u128)
                                                                 .expect("Compact Uint literal fits its maximum")
                                                     } {
                                                         true
                                                     } else {
-                                                        (date.clone()).month.clone()
+                                                        (date.clone()).month
                                                             == runtime::BoundedUint::<4294967295>::new(5u128)
                                                                 .expect("Compact Uint literal fits its maximum")
                                                     } {
                                                         true
                                                     } else {
-                                                        (date.clone()).month.clone()
+                                                        (date.clone()).month
                                                             == runtime::BoundedUint::<4294967295>::new(7u128)
                                                                 .expect("Compact Uint literal fits its maximum")
                                                     } {
                                                         true
                                                     } else {
-                                                        (date.clone()).month.clone()
+                                                        (date.clone()).month
                                                             == runtime::BoundedUint::<4294967295>::new(8u128)
                                                                 .expect("Compact Uint literal fits its maximum")
                                                     } {
                                                         true
                                                     } else {
-                                                        (date.clone()).month.clone()
+                                                        (date.clone()).month
                                                             == runtime::BoundedUint::<4294967295>::new(10u128)
                                                                 .expect("Compact Uint literal fits its maximum")
                                                     } {
                                                         true
                                                     } else {
-                                                        (date.clone()).month.clone()
+                                                        (date.clone()).month
                                                             == runtime::BoundedUint::<4294967295>::new(12u128)
                                                                 .expect("Compact Uint literal fits its maximum")
                                                     } {
@@ -3783,7 +3606,7 @@ pub mod pure_circuits {
                                                             if !({
                                                                 let __compact_local_t_28: runtime::BoundedUint<
                                                                     4294967295,
-                                                                > = (date.clone()).day.clone();
+                                                                > = (date.clone()).day;
                                                                 __compact_local_t_28.value()
                                                                     <= runtime::BoundedUint::<4294967295>::new(31u128)
                                                                         .expect("Compact Uint literal fits its maximum")
@@ -3797,7 +3620,7 @@ pub mod pure_circuits {
                                                             }
                                                         }
                                                     } else {
-                                                        if (date.clone()).month.clone()
+                                                        if (date.clone()).month
                                                             == runtime::BoundedUint::<4294967295>::new(2u128)
                                                                 .expect("Compact Uint literal fits its maximum")
                                                         {
@@ -3806,7 +3629,7 @@ pub mod pure_circuits {
                                                                     {
                                                                         let __compact_local_t_29: runtime::BoundedUint<
                                                                             4294967295,
-                                                                        > = (date.clone()).day.clone();
+                                                                        > = (date.clone()).day;
                                                                         __compact_local_t_29.value()
                                                                             <= runtime::BoundedUint::<4294967295>::new(29u128)
                                                                                 .expect("Compact Uint literal fits its maximum")
@@ -3816,7 +3639,7 @@ pub mod pure_circuits {
                                                                     {
                                                                         let __compact_local_t_30: runtime::BoundedUint<
                                                                             4294967295,
-                                                                        > = (date.clone()).day.clone();
+                                                                        > = (date.clone()).day;
                                                                         __compact_local_t_30.value()
                                                                             <= runtime::BoundedUint::<4294967295>::new(28u128)
                                                                                 .expect("Compact Uint literal fits its maximum")
@@ -3836,7 +3659,7 @@ pub mod pure_circuits {
                                                                 if !({
                                                                     let __compact_local_t_31: runtime::BoundedUint<
                                                                         4294967295,
-                                                                    > = (date.clone()).day.clone();
+                                                                    > = (date.clone()).day;
                                                                     __compact_local_t_31.value()
                                                                         <= runtime::BoundedUint::<4294967295>::new(30u128)
                                                                             .expect("Compact Uint literal fits its maximum")
@@ -3917,12 +3740,12 @@ pub mod pure_circuits {
                                                                                                 runtime::cast_unsigned::<
                                                                                                     4294967295,
                                                                                                     1571958029970,
-                                                                                                >((date.clone()).yearAdjustedQuotient4.clone())?,
+                                                                                                >((date.clone()).yearAdjustedQuotient4)?,
                                                                                             )?;
                                                                                             {
                                                                                                 let __compact_local_t_35: runtime::BoundedUint<
                                                                                                     4294967295,
-                                                                                                > = (date.clone()).yearAdjustedQuotient100.clone();
+                                                                                                > = (date.clone()).yearAdjustedQuotient100;
                                                                                                 runtime::subtract_unsigned::<
                                                                                                     1571958029970,
                                                                                                     1571958029970,
@@ -3939,19 +3762,19 @@ pub mod pure_circuits {
                                                                                         runtime::cast_unsigned::<
                                                                                             4294967295,
                                                                                             1576252997265,
-                                                                                        >((date.clone()).yearAdjustedQuotient400.clone())?,
+                                                                                        >((date.clone()).yearAdjustedQuotient400)?,
                                                                                     )?,
                                                                                 )?,
                                                                                 runtime::cast_unsigned::<
                                                                                     4294967295,
                                                                                     1580547964560,
-                                                                                >((date.clone()).marchBasedMonthDayOffset.clone())?,
+                                                                                >((date.clone()).marchBasedMonthDayOffset)?,
                                                                             )?,
                                                                         )?,
                                                                         runtime::cast_unsigned::<
                                                                             4294967295,
                                                                             1584842931855,
-                                                                        >((date.clone()).day.clone())?,
+                                                                        >((date.clone()).day)?,
                                                                     )?;
                                                                     runtime::subtract_unsigned::<
                                                                         1584842931855,
@@ -4005,10 +3828,7 @@ pub mod pure_circuits {
         Ok({
             {
                 {
-                    if !(((presentation.clone()).disclosed.clone())
-                        .proveAgeOverThreshold
-                        .clone())
-                    {
+                    if !((((presentation.clone()).disclosed).clone()).proveAgeOverThreshold) {
                         return Err(runtime::CompactError::AssertionFailed(
                             "Presentation must request the age-over-threshold predicate".to_owned(),
                         ));
@@ -4018,9 +3838,8 @@ pub mod pure_circuits {
                     if !(crate::pure_circuits::dateOfBirthCommitment(
                         dateOfBirthDays,
                         dateOfBirthOpening,
-                    )? == ((credential.clone()).claimCommitments.clone())
-                        .dateOfBirthCommitment
-                        .clone())
+                    )? == (((credential.clone()).claimCommitments).clone())
+                        .dateOfBirthCommitment)
                     {
                         return Err(runtime::CompactError::AssertionFailed(
                             "Date-of-birth witness does not match credential commitment".to_owned(),
@@ -4045,20 +3864,16 @@ pub mod pure_circuits {
                 {
                     let __compact_local_beforeBirthdayThisYear: bool = if {
                         let __compact_local_t_6: runtime::BoundedUint<4294967295> =
-                            (currentDate.clone()).month.clone();
-                        __compact_local_t_6.value()
-                            < (dateOfBirthDate.clone()).month.clone().value()
+                            (currentDate.clone()).month;
+                        __compact_local_t_6.value() < (dateOfBirthDate.clone()).month.value()
                     } {
                         true
                     } else {
-                        if (currentDate.clone()).month.clone()
-                            == (dateOfBirthDate.clone()).month.clone()
-                        {
+                        if (currentDate.clone()).month == (dateOfBirthDate.clone()).month {
                             {
                                 let __compact_local_t_7: runtime::BoundedUint<4294967295> =
-                                    (currentDate.clone()).day.clone();
-                                __compact_local_t_7.value()
-                                    < (dateOfBirthDate.clone()).day.clone().value()
+                                    (currentDate.clone()).day;
+                                __compact_local_t_7.value() < (dateOfBirthDate.clone()).day.value()
                             }
                         } else {
                             false
@@ -4068,10 +3883,10 @@ pub mod pure_circuits {
                         let __compact_local_ageInYears: runtime::BoundedUint<4294967295> = {
                             let __compact_local_t_8: runtime::BoundedUint<4294967295> = {
                                 let __compact_local_t_9: runtime::BoundedUint<4294967295> =
-                                    (currentDate.clone()).year.clone();
+                                    (currentDate.clone()).year;
                                 {
                                     let __compact_local_t_10: runtime::BoundedUint<4294967295> =
-                                        (dateOfBirthDate.clone()).year.clone();
+                                        (dateOfBirthDate.clone()).year;
                                     runtime::subtract_unsigned::<4294967295, 4294967295, 4294967295>(
                                         __compact_local_t_9,
                                         __compact_local_t_10,
@@ -4096,9 +3911,7 @@ pub mod pure_circuits {
                         {
                             if !(__compact_local_ageInYears.value()
                                 >= runtime::cast_unsigned::<255, 4294967295>(
-                                    ((presentation.clone()).disclosed.clone())
-                                        .ageThresholdYears
-                                        .clone(),
+                                    (((presentation.clone()).disclosed).clone()).ageThresholdYears,
                                 )?
                                 .value())
                             {
@@ -4120,10 +3933,10 @@ pub mod pure_circuits {
         Ok({
             crate::pure_circuits::assertValidOfferMessage(offer.clone())?;
             crate::pure_circuits::assertValidDigitalPassportSchemaRef(
-                (offer.clone()).schema.clone(),
+                ((offer.clone()).schema).clone(),
             )?;
             {
-                if !((offer.clone()).holderBindingProfile.clone()
+                if !((offer.clone()).holderBindingProfile
                     == crate::types::HolderBindingProfile::explicitDid)
                 {
                     return Err(runtime::CompactError::AssertionFailed(
@@ -4132,11 +3945,11 @@ pub mod pure_circuits {
                     ));
                 }
             };
-            if ((offer.clone()).body.clone()).supportsExpiration.clone() {
+            if (((offer.clone()).body).clone()).supportsExpiration {
                 {
                     if !({
                         let __compact_local_t_5: runtime::BoundedUint<65535> =
-                            ((offer.clone()).body.clone()).defaultExpirationDays.clone();
+                            (((offer.clone()).body).clone()).defaultExpirationDays;
                         __compact_local_t_5.value()
                             > runtime::BoundedUint::<65535>::new(0u128)
                                 .expect("Compact Uint literal fits its maximum")
@@ -4152,7 +3965,7 @@ pub mod pure_circuits {
                 }
             } else {
                 {
-                    if !(((offer.clone()).body.clone()).defaultExpirationDays.clone()
+                    if !((((offer.clone()).body).clone()).defaultExpirationDays
                         == runtime::BoundedUint::<65535>::new(0u128)
                             .expect("Compact Uint literal fits its maximum"))
                     {
@@ -4174,10 +3987,10 @@ pub mod pure_circuits {
         Ok({
             crate::pure_circuits::__compact_function_assertValidRequestMessage_0(request.clone())?;
             crate::pure_circuits::assertValidDigitalPassportSchemaRef(
-                (request.clone()).schema.clone(),
+                ((request.clone()).schema).clone(),
             )?;
             {
-                if !((request.clone()).holderBindingProfile.clone()
+                if !((request.clone()).holderBindingProfile
                     == crate::types::HolderBindingProfile::explicitDid)
                 {
                     return Err(runtime::CompactError::AssertionFailed(
@@ -4187,10 +4000,10 @@ pub mod pure_circuits {
                 }
             };
             crate::pure_circuits::assertValidExplicitHolderBinding(
-                ((request.clone()).body.clone()).holderBinding.clone(),
+                ((((request.clone()).body).clone()).holderBinding).clone(),
             )?;
             {
-                if !(((request.clone()).body.clone()).holderChallengeHash.clone()
+                if !((((request.clone()).body).clone()).holderChallengeHash
                     != crate::pure_circuits::noProtocolResponseReference()?)
                 {
                     return Err(runtime::CompactError::AssertionFailed(
@@ -4198,13 +4011,11 @@ pub mod pure_circuits {
                     ));
                 }
             };
-            if ((request.clone()).body.clone()).requestExpiration.clone() {
+            if (((request.clone()).body).clone()).requestExpiration {
                 {
                     if !({
                         let __compact_local_t_4: runtime::BoundedUint<65535> =
-                            ((request.clone()).body.clone())
-                                .requestedExpirationDays
-                                .clone();
+                            (((request.clone()).body).clone()).requestedExpirationDays;
                         __compact_local_t_4.value()
                             > runtime::BoundedUint::<65535>::new(0u128)
                                 .expect("Compact Uint literal fits its maximum")
@@ -4220,9 +4031,7 @@ pub mod pure_circuits {
                 }
             } else {
                 {
-                    if !(((request.clone()).body.clone())
-                        .requestedExpirationDays
-                        .clone()
+                    if !((((request.clone()).body).clone()).requestedExpirationDays
                         == runtime::BoundedUint::<65535>::new(0u128)
                             .expect("Compact Uint literal fits its maximum"))
                     {
@@ -4246,9 +4055,9 @@ pub mod pure_circuits {
             crate::pure_circuits::assertValidDigitalPassportIssuanceOffer(offer.clone())?;
             crate::pure_circuits::assertValidDigitalPassportIssuanceRequest(request.clone())?;
             crate::pure_circuits::assertOfferRequestAlignment(offer.clone(), request.clone())?;
-            if ((request.clone()).body.clone()).requestExpiration.clone() {
+            if (((request.clone()).body).clone()).requestExpiration {
                 {
-                    if !(((offer.clone()).body.clone()).supportsExpiration.clone()) {
+                    if !((((offer.clone()).body).clone()).supportsExpiration) {
                         return Err(
                             runtime::CompactError::AssertionFailed(
                                 "Digital-passport issuance request cannot require expiration when the offer disables it"
@@ -4269,10 +4078,10 @@ pub mod pure_circuits {
         Ok({
             crate::pure_circuits::__compact_function_assertValidResultMessage_1(result.clone())?;
             crate::pure_circuits::assertValidDigitalPassportSchemaRef(
-                (result.clone()).schema.clone(),
+                ((result.clone()).schema).clone(),
             )?;
             {
-                if !((result.clone()).holderBindingProfile.clone()
+                if !((result.clone()).holderBindingProfile
                     == crate::types::HolderBindingProfile::explicitDid)
                 {
                     return Err(runtime::CompactError::AssertionFailed(
@@ -4282,16 +4091,12 @@ pub mod pure_circuits {
                 }
             };
             crate::pure_circuits::assertValidDigitalPassportCredential(
-                ((result.clone()).body.clone()).credential.clone(),
-                ((result.clone()).body.clone()).credentialProof.clone(),
+                ((((result.clone()).body).clone()).credential).clone(),
+                ((((result.clone()).body).clone()).credentialProof).clone(),
             )?;
             {
-                if !((((result.clone()).body.clone()).credentialProof.clone())
-                    .challengeHash
-                    .clone()
-                    == ((result.clone()).body.clone())
-                        .issuanceChallengeHash
-                        .clone())
+                if !((((((result.clone()).body).clone()).credentialProof).clone()).challengeHash
+                    == (((result.clone()).body).clone()).issuanceChallengeHash)
                 {
                     return Err(
                         runtime::CompactError::AssertionFailed(
@@ -4302,13 +4107,9 @@ pub mod pure_circuits {
                 }
             };
             crate::pure_circuits::assertValidDigitalPassportCredentialPrivateParts(
-                (((result.clone()).body.clone()).credential.clone())
-                    .claimCommitments
-                    .clone(),
-                (((result.clone()).body.clone()).credential.clone())
-                    .claimRoot
-                    .clone(),
-                ((result.clone()).body.clone()).privateParts.clone(),
+                ((((((result.clone()).body).clone()).credential).clone()).claimCommitments).clone(),
+                (((((result.clone()).body).clone()).credential).clone()).claimRoot,
+                ((((result.clone()).body).clone()).privateParts).clone(),
             )?;
             ()
         })
@@ -4322,10 +4123,8 @@ pub mod pure_circuits {
             crate::pure_circuits::assertValidDigitalPassportIssuanceResult(result.clone())?;
             crate::pure_circuits::assertRequestResultAlignment(request.clone(), result.clone())?;
             {
-                if !(((request.clone()).body.clone()).holderChallengeHash.clone()
-                    == ((result.clone()).body.clone())
-                        .issuanceChallengeHash
-                        .clone())
+                if !((((request.clone()).body).clone()).holderChallengeHash
+                    == (((result.clone()).body).clone()).issuanceChallengeHash)
                 {
                     return Err(
                         runtime::CompactError::AssertionFailed(
@@ -4336,22 +4135,17 @@ pub mod pure_circuits {
                 }
             };
             crate::pure_circuits::assertMatchingExplicitHolderBindings(
-                ((request.clone()).body.clone()).holderBinding.clone(),
-                (((result.clone()).body.clone()).credential.clone())
-                    .holderBinding
-                    .clone(),
+                ((((request.clone()).body).clone()).holderBinding).clone(),
+                ((((((result.clone()).body).clone()).credential).clone()).holderBinding).clone(),
             )?;
             {
-                if !(if runtime::jubjub_point_x(
-                    ((request.clone()).body.clone()).holderPublicKey.clone(),
-                ) == runtime::jubjub_point_x(
-                    ((result.clone()).body.clone()).holderPublicKey.clone(),
-                ) {
-                    runtime::jubjub_point_y(
-                        ((request.clone()).body.clone()).holderPublicKey.clone(),
-                    ) == runtime::jubjub_point_y(
-                        ((result.clone()).body.clone()).holderPublicKey.clone(),
-                    )
+                if !(if runtime::jubjub_point_x((((request.clone()).body).clone()).holderPublicKey)
+                    == runtime::jubjub_point_x((((result.clone()).body).clone()).holderPublicKey)
+                {
+                    runtime::jubjub_point_y((((request.clone()).body).clone()).holderPublicKey)
+                        == runtime::jubjub_point_y(
+                            (((result.clone()).body).clone()).holderPublicKey,
+                        )
                 } else {
                     false
                 }) {
@@ -4372,10 +4166,10 @@ pub mod pure_circuits {
         Ok({
             crate::pure_circuits::__compact_function_assertValidRequestMessage_2(request.clone())?;
             crate::pure_circuits::assertValidDigitalPassportSchemaRef(
-                (request.clone()).schema.clone(),
+                ((request.clone()).schema).clone(),
             )?;
             {
-                if !((request.clone()).holderBindingProfile.clone()
+                if !((request.clone()).holderBindingProfile
                     == crate::types::HolderBindingProfile::explicitDid)
                 {
                     return Err(
@@ -4400,10 +4194,10 @@ pub mod pure_circuits {
         Ok({
             crate::pure_circuits::assertValidSubmissionMessage(submission.clone())?;
             crate::pure_circuits::assertValidDigitalPassportSchemaRef(
-                (submission.clone()).schema.clone(),
+                ((submission.clone()).schema).clone(),
             )?;
             {
-                if !((submission.clone()).holderBindingProfile.clone()
+                if !((submission.clone()).holderBindingProfile
                     == crate::types::HolderBindingProfile::explicitDid)
                 {
                     return Err(
@@ -4415,20 +4209,15 @@ pub mod pure_circuits {
                 }
             };
             crate::pure_circuits::assertValidDigitalPassportPresentation(
-                ((submission.clone()).body.clone()).credential.clone(),
-                ((submission.clone()).body.clone()).credentialProof.clone(),
-                ((submission.clone()).body.clone()).presentation.clone(),
-                ((submission.clone()).body.clone())
-                    .presentationProof
-                    .clone(),
+                ((((submission.clone()).body).clone()).credential).clone(),
+                ((((submission.clone()).body).clone()).credentialProof).clone(),
+                ((((submission.clone()).body).clone()).presentation).clone(),
+                ((((submission.clone()).body).clone()).presentationProof).clone(),
             )?;
             {
-                if !((((submission.clone()).body.clone())
-                    .presentationProof
-                    .clone())
-                .challengeHash
-                .clone()
-                    == (submission.clone()).challengeHash.clone())
+                if !((((((submission.clone()).body).clone()).presentationProof).clone())
+                    .challengeHash
+                    == (submission.clone()).challengeHash)
                 {
                     return Err(
                         runtime::CompactError::AssertionFailed(
@@ -4457,14 +4246,12 @@ pub mod pure_circuits {
                 submission.clone(),
             )?;
             crate::pure_circuits::assertDigitalPassportPresentationSatisfiesRequest(
-                ((submission.clone()).body.clone()).credential.clone(),
+                ((((submission.clone()).body).clone()).credential).clone(),
                 crate::pure_circuits::digitalPassportPresentationRequestFromProtocol(
                     request.clone(),
                 )?,
-                ((submission.clone()).body.clone()).presentation.clone(),
-                ((submission.clone()).body.clone())
-                    .presentationProof
-                    .clone(),
+                ((((submission.clone()).body).clone()).presentation).clone(),
+                ((((submission.clone()).body).clone()).presentationProof).clone(),
             )?;
             ()
         })
@@ -4474,9 +4261,9 @@ pub mod pure_circuits {
     ) -> Result<(), runtime::CompactError> {
         Ok({
             crate::pure_circuits::__compact_function_assertValidResultMessage_3(result.clone())?;
-            if (result.clone()).approved.clone() {
+            if (result.clone()).approved {
                 {
-                    if !(((result.clone()).body.clone()).credentialRoot.clone()
+                    if !((((result.clone()).body).clone()).credentialRoot
                         != crate::pure_circuits::noProtocolResponseReference()?)
                     {
                         return Err(
@@ -4508,11 +4295,11 @@ pub mod pure_circuits {
                 submission.clone(),
                 result.clone(),
             )?;
-            if (result.clone()).approved.clone() {
+            if (result.clone()).approved {
                 {
-                    if !(((result.clone()).body.clone()).credentialRoot.clone()
+                    if !((((result.clone()).body).clone()).credentialRoot
                         == crate::pure_circuits::digitalPassportCredentialBodyRoot(
-                            ((submission.clone()).body.clone()).credential.clone(),
+                            ((((submission.clone()).body).clone()).credential).clone(),
                         )?)
                     {
                         return Err(

@@ -101,9 +101,7 @@ pub mod ledger_contract {
         )?;
         total_cost += __compact_witness_meter_1.gas_cost();
         context.private_state = __compact_next_private_1;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_1.clone(),
-        ));
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_1));
         let __compact_expression_local_2: runtime::BoundedUint<65535> = __compact_witness_1;
         let __compact_value_3 = __compact_expression_local_2;
         let __compact_argument_4 = __compact_param_1;
@@ -117,9 +115,7 @@ pub mod ledger_contract {
         )?;
         total_cost += __compact_witness_meter_5.gas_cost();
         context.private_state = __compact_next_private_5;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_5.clone(),
-        ));
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_5));
         let result = __compact_value_3.value() < __compact_witness_5.value();
         Ok(runtime::context::CircuitResult {
             context,

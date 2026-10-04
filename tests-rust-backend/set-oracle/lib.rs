@@ -90,8 +90,7 @@ pub mod ledger_contract {
         let mut total_cost = runtime::context::RunningCost::default();
         let private_transcript_outputs = Vec::new();
         let mut context = context;
-        let __compact_query_0 =
-            crate::ledger_slots::s.member(context, (__compact_param_0).clone())?;
+        let __compact_query_0 = crate::ledger_slots::s.member(context, __compact_param_0)?;
         context = __compact_query_0.context;
         total_cost += __compact_query_0.gas_cost;
         let __compact_action_local_0: bool = __compact_query_0.result;
@@ -143,7 +142,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(x.clone());
+                let input = runtime::fab::AlignedValue::from(x);
                 let recorded = self.check(observed.circuit_context(private_state), x)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed, recorded, "check", input,

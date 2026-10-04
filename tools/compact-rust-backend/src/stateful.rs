@@ -24,8 +24,8 @@ use crate::ir::{
 };
 use crate::{
     RenderError, UnsignedMaximum, coerce_expression, expression_with_calls, ident,
-    ledger_path_expr, list_head_result_type, map_slot_types, public_parameter_idents, rust_type,
-    unsigned_cast_syntax, unsigned_maximum,
+    ledger_path_expr, list_head_result_type, map_slot_types, public_parameter_idents,
+    retained_value, rust_type, unsigned_cast_syntax, unsigned_maximum,
 };
 
 #[expect(
@@ -116,11 +116,8 @@ pub(crate) fn render_state_expression(
                 .filter(|declaration| declaration.name == *field)
                 .ok_or_else(|| RenderError::InvalidStructField(field.clone()))?;
             let name = ident(field)?;
-            Ok((
-                syn::parse_quote!((#value).#name.clone()),
-                declaration.ty.clone(),
-                witness_effect,
-            ))
+            let field_value = retained_value(syn::parse_quote!((#value).#name), &declaration.ty);
+            Ok((field_value, declaration.ty.clone(), witness_effect))
         }
         Expr::TupleIndex { value, index } => {
             let (value, ty, witness_effect) = render_state_expression(
@@ -181,8 +178,9 @@ pub(crate) fn render_state_expression(
             );
             *next_temp += 1;
             let slot = ident(&declaration.id)?;
+            let item = retained_value(item, ty);
             statements.push(syn::parse_quote!(
-                let #step = crate::ledger_slots::#slot.member(context, (#item).clone())?;
+                let #step = crate::ledger_slots::#slot.member(context, #item)?;
             ));
             statements.push(syn::parse_quote!(context = #step.context;));
             statements.push(syn::parse_quote!(total_cost += #step.gas_cost;));
@@ -230,14 +228,15 @@ pub(crate) fn render_state_expression(
             );
             *next_temp += 1;
             let slot = ident(&declaration.id)?;
+            let key = retained_value(key, key_ty);
             let result_ty = if matches!(value, Expr::MapMember { .. }) {
                 statements.push(syn::parse_quote!(
-                    let #step = crate::ledger_slots::#slot.member(context, (#key).clone())?;
+                    let #step = crate::ledger_slots::#slot.member(context, #key)?;
                 ));
                 Type::Boolean
             } else {
                 statements.push(syn::parse_quote!(
-                    let #step = crate::ledger_slots::#slot.lookup(context, (#key).clone())?;
+                    let #step = crate::ledger_slots::#slot.lookup(context, #key)?;
                 ));
                 value_ty.clone()
             };
@@ -481,8 +480,10 @@ pub(crate) fn render_state_expression(
             });
             statements.push(syn::parse_quote!(total_cost += #meter_name.gas_cost();));
             statements.push(syn::parse_quote!(context.private_state = #private_name;));
+            let transcript_value =
+                retained_value(syn::parse_quote!(#value_name), &declaration.result);
             statements.push(syn::parse_quote! {
-                private_transcript_outputs.push(runtime::fab::AlignedValue::from(#value_name.clone()));
+                private_transcript_outputs.push(runtime::fab::AlignedValue::from(#transcript_value));
             });
             Ok((
                 syn::parse_quote!(#value_name),

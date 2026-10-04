@@ -341,8 +341,7 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let frame =
-                crate::ledger_slots::keySet.record_insert(frame, (__compact_param_0).clone())?;
+            let frame = crate::ledger_slots::keySet.record_insert(frame, __compact_param_0)?;
             Ok(frame.finish(()))
         }
         pub fn roundtrip_key<Private>(
@@ -351,11 +350,9 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let frame =
-                crate::ledger_slots::keySet.record_insert(frame, (__compact_param_0).clone())?;
-            let frame =
-                crate::ledger_slots::keySet.record_remove(frame, (__compact_param_0).clone())?;
-            let __compact_recorded_key_0 = (__compact_param_0).clone();
+            let frame = crate::ledger_slots::keySet.record_insert(frame, __compact_param_0)?;
+            let frame = crate::ledger_slots::keySet.record_remove(frame, __compact_param_0)?;
+            let __compact_recorded_key_0 = __compact_param_0;
             let (frame, __compact_recorded_member_1): (_, bool) =
                 crate::ledger_slots::keySet.record_member(frame, __compact_recorded_key_0)?;
             Ok(frame.finish(__compact_recorded_member_1))
@@ -406,7 +403,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(key.clone());
+                let input = runtime::fab::AlignedValue::from(key);
                 let recorded = self.insert_key(observed.circuit_context(private_state), key)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
@@ -435,7 +432,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, bool>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(key.clone());
+                let input = runtime::fab::AlignedValue::from(key);
                 let recorded = self.roundtrip_key(observed.circuit_context(private_state), key)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,

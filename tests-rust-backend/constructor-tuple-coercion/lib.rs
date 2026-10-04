@@ -84,7 +84,7 @@ pub mod ledger_contract {
             let __compact_element_1 = runtime::Field::from(4u128);
             let __compact_constructor_local_2: (runtime::Field, runtime::Field) =
                 (__compact_element_0, __compact_element_1);
-            let step = context.write_cell(0, (__compact_constructor_local_2).clone())?;
+            let step = context.write_cell(0, __compact_constructor_local_2)?;
             context = step.context;
             let _ = total_cost;
             Ok(context.into_constructor_result())

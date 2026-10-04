@@ -26,7 +26,7 @@ use crate::ir::{
 use crate::stateful::circuit_uses_witness;
 use crate::{
     RenderError, expression_with_calls, ident, list_head_result_type, public_parameter_idents,
-    rust_type,
+    retained_value, rust_type,
 };
 
 /// Keep exported scalar-expression recording tied to a ledger read. Other
@@ -395,20 +395,7 @@ fn render_recorded_item(
                     let (actual, rust_name) = parameters.get(name.as_str())?;
                     (actual == &ty).then(|| syn::parse_quote!(#rust_name))
                 })
-                .map(|source| {
-                    if matches!(
-                        ty,
-                        Type::Bytes { .. }
-                            | Type::Enum { .. }
-                            | Type::Struct { .. }
-                            | Type::Tuple { .. }
-                            | Type::Vector { .. }
-                    ) {
-                        syn::parse_quote!((#source).clone())
-                    } else {
-                        source
-                    }
-                }),
+                .map(|source| retained_value(source, ty)),
             Expr::EnumVariant {
                 ty: variant_ty,
                 variant,
@@ -2633,7 +2620,7 @@ pub(crate) fn render_observed_call_method(
     {
         let ty = rust_type(&parameter.ty)?;
         args.push(syn::parse_quote!(#arg: #ty));
-        input_args.push(syn::parse_quote!(#arg.clone()));
+        input_args.push(retained_value(syn::parse_quote!(#arg), &parameter.ty));
         call_args.push(arg);
     }
     let input: syn::Expr = match input_args.as_slice() {

@@ -76,36 +76,26 @@ pub mod ledger_contract {
                 .into_circuit_context(runtime::ledger::ContractAddress::default());
             let mut total_cost = runtime::context::RunningCost::default();
             let __compact_constructor_values_0: [runtime::BoundedUint<9>; 10] = [
-                (runtime::BoundedUint::<9>::new(0u128)
-                    .expect("Compact Uint literal fits its maximum"))
-                .clone(),
-                (runtime::BoundedUint::<9>::new(1u128)
-                    .expect("Compact Uint literal fits its maximum"))
-                .clone(),
-                (runtime::BoundedUint::<9>::new(2u128)
-                    .expect("Compact Uint literal fits its maximum"))
-                .clone(),
-                (runtime::BoundedUint::<9>::new(3u128)
-                    .expect("Compact Uint literal fits its maximum"))
-                .clone(),
-                (runtime::BoundedUint::<9>::new(4u128)
-                    .expect("Compact Uint literal fits its maximum"))
-                .clone(),
-                (runtime::BoundedUint::<9>::new(5u128)
-                    .expect("Compact Uint literal fits its maximum"))
-                .clone(),
-                (runtime::BoundedUint::<9>::new(6u128)
-                    .expect("Compact Uint literal fits its maximum"))
-                .clone(),
-                (runtime::BoundedUint::<9>::new(7u128)
-                    .expect("Compact Uint literal fits its maximum"))
-                .clone(),
-                (runtime::BoundedUint::<9>::new(8u128)
-                    .expect("Compact Uint literal fits its maximum"))
-                .clone(),
-                (runtime::BoundedUint::<9>::new(9u128)
-                    .expect("Compact Uint literal fits its maximum"))
-                .clone(),
+                runtime::BoundedUint::<9>::new(0u128)
+                    .expect("Compact Uint literal fits its maximum"),
+                runtime::BoundedUint::<9>::new(1u128)
+                    .expect("Compact Uint literal fits its maximum"),
+                runtime::BoundedUint::<9>::new(2u128)
+                    .expect("Compact Uint literal fits its maximum"),
+                runtime::BoundedUint::<9>::new(3u128)
+                    .expect("Compact Uint literal fits its maximum"),
+                runtime::BoundedUint::<9>::new(4u128)
+                    .expect("Compact Uint literal fits its maximum"),
+                runtime::BoundedUint::<9>::new(5u128)
+                    .expect("Compact Uint literal fits its maximum"),
+                runtime::BoundedUint::<9>::new(6u128)
+                    .expect("Compact Uint literal fits its maximum"),
+                runtime::BoundedUint::<9>::new(7u128)
+                    .expect("Compact Uint literal fits its maximum"),
+                runtime::BoundedUint::<9>::new(8u128)
+                    .expect("Compact Uint literal fits its maximum"),
+                runtime::BoundedUint::<9>::new(9u128)
+                    .expect("Compact Uint literal fits its maximum"),
             ];
             for __compact_constructor_item_0 in __compact_constructor_values_0 {
                 let __compact_constructor_local_0: runtime::BoundedUint<65535> =
@@ -115,15 +105,12 @@ pub mod ledger_contract {
                 context = step.context;
             }
             let __compact_constructor_values_1: [runtime::BoundedUint<65535>; 3] = [
-                (runtime::BoundedUint::<65535>::new(1u128)
-                    .expect("Compact Uint literal fits its maximum"))
-                .clone(),
-                (runtime::BoundedUint::<65535>::new(2u128)
-                    .expect("Compact Uint literal fits its maximum"))
-                .clone(),
-                (runtime::BoundedUint::<65535>::new(3u128)
-                    .expect("Compact Uint literal fits its maximum"))
-                .clone(),
+                runtime::BoundedUint::<65535>::new(1u128)
+                    .expect("Compact Uint literal fits its maximum"),
+                runtime::BoundedUint::<65535>::new(2u128)
+                    .expect("Compact Uint literal fits its maximum"),
+                runtime::BoundedUint::<65535>::new(3u128)
+                    .expect("Compact Uint literal fits its maximum"),
             ];
             for __compact_constructor_item_1 in __compact_constructor_values_1 {
                 let step =

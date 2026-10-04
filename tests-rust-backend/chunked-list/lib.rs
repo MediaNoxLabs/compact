@@ -276,8 +276,7 @@ pub mod ledger_contract {
                 .into_circuit_context(runtime::ledger::ContractAddress::default());
             let mut total_cost = runtime::context::RunningCost::default();
             let __compact_constructor_local_0: runtime::Field = runtime::Field::from(1u128);
-            let step =
-                context.push_front_list(&[1, 14], (__compact_constructor_local_0).clone())?;
+            let step = context.push_front_list(&[1, 14], __compact_constructor_local_0)?;
             context = step.context;
             let _ = total_cost;
             Ok(context.into_constructor_result())
@@ -557,7 +556,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(value.clone());
+                let input = runtime::fab::AlignedValue::from(value);
                 let recorded = self.prepend(observed.circuit_context(private_state), value)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed, recorded, "prepend", input,

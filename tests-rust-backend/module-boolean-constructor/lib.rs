@@ -79,7 +79,7 @@ pub mod ledger_contract {
         let state = runtime::ledger::contract_state(vec![
             runtime::ledger::constructor_counter(),
             runtime::ledger::constructor_cell::<bool, runtime::ledger::DefaultDB>(
-                __compact_constructor_value_0.clone(),
+                __compact_constructor_value_0,
             ),
         ]);
         Ok(runtime::context::ConstructorResult::new(

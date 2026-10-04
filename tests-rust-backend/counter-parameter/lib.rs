@@ -172,7 +172,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(amount.clone());
+                let input = runtime::fab::AlignedValue::from(amount);
                 let recorded =
                     self.increment_by(observed.circuit_context(private_state), amount)?;
                 Ok(runtime::transaction::RecordedCall::new(
@@ -200,7 +200,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(amount.clone());
+                let input = runtime::fab::AlignedValue::from(amount);
                 let recorded =
                     self.decrement_by(observed.circuit_context(private_state), amount)?;
                 Ok(runtime::transaction::RecordedCall::new(

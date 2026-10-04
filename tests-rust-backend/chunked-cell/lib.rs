@@ -275,10 +275,9 @@ pub mod ledger_contract {
                 .into_circuit_context(runtime::ledger::ContractAddress::default());
             let mut total_cost = runtime::context::RunningCost::default();
             let __compact_constructor_local_0: runtime::Field = runtime::Field::from(3u128);
-            let step =
-                context.write_cell_at_path(&[1, 13], (__compact_constructor_local_0).clone())?;
+            let step = context.write_cell_at_path(&[1, 13], __compact_constructor_local_0)?;
             context = step.context;
-            let step = context.write_cell_at_path(&[1, 14], (true).clone())?;
+            let step = context.write_cell_at_path(&[1, 14], true)?;
             context = step.context;
             let _ = total_cost;
             Ok(context.into_constructor_result())
@@ -631,7 +630,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(next.clone());
+                let input = runtime::fab::AlignedValue::from(next);
                 let recorded = self.set_active(observed.circuit_context(private_state), next)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
@@ -685,7 +684,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(expected.clone());
+                let input = runtime::fab::AlignedValue::from(expected);
                 let recorded =
                     self.assert_active(observed.circuit_context(private_state), expected)?;
                 Ok(runtime::transaction::RecordedCall::new(
@@ -713,7 +712,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(next.clone());
+                let input = runtime::fab::AlignedValue::from(next);
                 let recorded = self.set_amount(observed.circuit_context(private_state), next)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
@@ -767,7 +766,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(delta.clone());
+                let input = runtime::fab::AlignedValue::from(delta);
                 let recorded = self.add_amount(observed.circuit_context(private_state), delta)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
@@ -796,7 +795,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, bool>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(expected.clone());
+                let input = runtime::fab::AlignedValue::from(expected);
                 let recorded =
                     self.active_equals(observed.circuit_context(private_state), expected)?;
                 Ok(runtime::transaction::RecordedCall::new(
@@ -826,7 +825,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, runtime::Field>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(delta.clone());
+                let input = runtime::fab::AlignedValue::from(delta);
                 let recorded = self.plus_amount(observed.circuit_context(private_state), delta)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
@@ -853,7 +852,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(delta.clone());
+                let input = runtime::fab::AlignedValue::from(delta);
                 let recorded =
                     self.subtract_amount(observed.circuit_context(private_state), delta)?;
                 Ok(runtime::transaction::RecordedCall::new(
@@ -881,7 +880,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(factor.clone());
+                let input = runtime::fab::AlignedValue::from(factor);
                 let recorded =
                     self.multiply_amount(observed.circuit_context(private_state), factor)?;
                 Ok(runtime::transaction::RecordedCall::new(

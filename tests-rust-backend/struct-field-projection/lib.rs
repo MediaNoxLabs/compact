@@ -51,11 +51,11 @@ pub mod pure_circuits {
     pub fn project(
         item: crate::types::VecBox,
     ) -> Result<runtime::FixedVector<runtime::Field, 2>, runtime::CompactError> {
-        Ok((item.clone()).values.clone())
+        Ok(((item.clone()).values).clone())
     }
     pub fn hash_projected(
         item: crate::types::VecBox,
     ) -> Result<runtime::FixedBytes<32>, runtime::CompactError> {
-        Ok(runtime::persistent_hash((item.clone()).values.clone()))
+        Ok(runtime::persistent_hash(((item.clone()).values).clone()))
     }
 }

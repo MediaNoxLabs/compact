@@ -73,9 +73,7 @@ pub mod ledger_contract {
         )?;
         total_cost += __compact_witness_meter_1.gas_cost();
         context.private_state = __compact_next_private_1;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_1.clone(),
-        ));
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_1));
         let __compact_value_2 = runtime::cast_unsigned::<65535, 65536>(__compact_witness_1)?;
         let __compact_value_3 = runtime::BoundedUint::<65536>::new(1u128)
             .expect("Compact Uint literal fits its maximum");
@@ -115,9 +113,7 @@ pub mod ledger_contract {
         )?;
         total_cost += __compact_witness_meter_1.gas_cost();
         context.private_state = __compact_next_private_1;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_1.clone(),
-        ));
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_1));
         let __compact_expression_local_2: runtime::BoundedUint<65535> = __compact_witness_1;
         let __compact_value_3 = __compact_expression_local_2;
         let __compact_value_4 = runtime::BoundedUint::<65535>::new(1u128)
@@ -155,9 +151,7 @@ pub mod ledger_contract {
         )?;
         total_cost += __compact_witness_meter_1.gas_cost();
         context.private_state = __compact_next_private_1;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_1.clone(),
-        ));
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_1));
         let __compact_value_2 = runtime::cast_unsigned::<65535, 131070>(__compact_witness_1)?;
         let __compact_value_3 = runtime::BoundedUint::<131070>::new(2u128)
             .expect("Compact Uint literal fits its maximum");

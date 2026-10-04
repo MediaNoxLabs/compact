@@ -74,7 +74,7 @@ pub mod pure_circuits {
     ) -> Result<crate::types::Maybe, runtime::CompactError> {
         Ok(crate::types::Maybe {
             is_some: true,
-            value: value,
+            value,
         })
     }
     pub fn idf(x: runtime::Field) -> Result<runtime::Field, runtime::CompactError> {
@@ -293,7 +293,7 @@ pub mod pure_circuits {
     pub fn hashStructFieldVectorArg(
         b: crate::types::VecBox,
     ) -> Result<runtime::FixedBytes<32>, runtime::CompactError> {
-        Ok(runtime::persistent_hash((b.clone()).v.clone()))
+        Ok(runtime::persistent_hash(((b.clone()).v).clone()))
     }
     pub fn hashDefaultVectorArg() -> Result<runtime::FixedBytes<32>, runtime::CompactError> {
         Ok(runtime::persistent_hash(<runtime::FixedVector<
@@ -478,12 +478,12 @@ pub mod ledger_contract {
                 .into_circuit_context(runtime::ledger::ContractAddress::default());
             let mut total_cost = runtime::context::RunningCost::default();
             let __compact_constructor_local_0: runtime::Field = runtime::Field::from(0u128);
-            let step = context.write_cell(0, (__compact_constructor_local_0).clone())?;
+            let step = context.write_cell(0, __compact_constructor_local_0)?;
             context = step.context;
             let __compact_constructor_local_1: runtime::BoundedUint<18446744073709551615> =
                 runtime::BoundedUint::<18446744073709551615>::new(0u128)
                     .expect("Compact Uint literal fits its maximum");
-            let step = context.write_cell(1, (__compact_constructor_local_1).clone())?;
+            let step = context.write_cell(1, __compact_constructor_local_1)?;
             context = step.context;
             let __compact_constructor_local_2: runtime::FixedVector<runtime::Field, 2> =
                 runtime::FixedVector::new([
@@ -497,11 +497,11 @@ pub mod ledger_contract {
                     runtime::Field::from(0u128),
                     runtime::Field::from(0u128),
                 ]));
-            let step = context.write_cell(3, (__compact_constructor_local_3).clone())?;
+            let step = context.write_cell(3, __compact_constructor_local_3)?;
             context = step.context;
             let __compact_constructor_local_4: runtime::JubjubPoint =
                 runtime::hash_to_curve(runtime::Field::from(0u128));
-            let step = context.write_cell(4, (__compact_constructor_local_4).clone())?;
+            let step = context.write_cell(4, __compact_constructor_local_4)?;
             context = step.context;
             let _ = total_cost;
             Ok(context.into_constructor_result())

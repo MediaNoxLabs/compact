@@ -118,13 +118,8 @@ pub mod pure_circuits {
                     0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
                 ]),
             }),
-            runtime::transient_hash(crate::types::AttestationSubject {
-                subject: subject,
-                epoch: epoch,
-            }),
-            runtime::transient_hash(crate::types::AttestationPayload {
-                payloadHash: payloadHash,
-            }),
+            runtime::transient_hash(crate::types::AttestationSubject { subject, epoch }),
+            runtime::transient_hash(crate::types::AttestationPayload { payloadHash }),
             payloadHash,
         ]))
     }
@@ -235,7 +230,7 @@ pub mod ledger_contract {
                 .into_circuit_context(runtime::ledger::ContractAddress::default());
             let mut total_cost = runtime::context::RunningCost::default();
             let mut private_transcript_outputs = Vec::new();
-            let step = context.write_cell(2, (true).clone())?;
+            let step = context.write_cell(2, true)?;
             context = step.context;
             let __compact_witness_meter_0 = runtime::context::WitnessReadMeter::new(&context);
             let (__compact_next_private_0, __compact_witness_0) =
@@ -245,11 +240,9 @@ pub mod ledger_contract {
                 }))?;
             total_cost += __compact_witness_meter_0.gas_cost();
             context.private_state = __compact_next_private_0;
-            private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-                __compact_witness_0.clone(),
-            ));
+            private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_0));
             let __compact_constructor_local_1: runtime::JubjubPoint = __compact_witness_0;
-            let step = context.write_cell(0, (__compact_constructor_local_1).clone())?;
+            let step = context.write_cell(0, __compact_constructor_local_1)?;
             context = step.context;
             let _ = total_cost;
             let _ = private_transcript_outputs;
@@ -267,9 +260,8 @@ pub mod ledger_contract {
         let mut private_transcript_outputs = Vec::new();
         let __compact_action_local_0: crate::types::SchnorrSignature = __compact_param_1.clone();
         let __compact_action_local_1: runtime::JubjubPoint =
-            (__compact_action_local_0.clone()).announcement.clone();
-        let __compact_action_local_2: runtime::Field =
-            (__compact_action_local_0.clone()).response.clone();
+            (__compact_action_local_0.clone()).announcement;
+        let __compact_action_local_2: runtime::Field = (__compact_action_local_0.clone()).response;
         let __compact_action_local_3: runtime::Field =
             runtime::transient_hash(crate::types::SchnorrHashInput {
                 ann_x: runtime::jubjub_point_x(__compact_action_local_1),
@@ -295,9 +287,7 @@ pub mod ledger_contract {
         )?;
         total_cost += __compact_witness_meter_1.gas_cost();
         context.private_state = __compact_next_private_1;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_1.clone(),
-        ));
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_1));
         let __compact_action_local_5: (
             runtime::BoundedUint<127>,
             runtime::WideUint<

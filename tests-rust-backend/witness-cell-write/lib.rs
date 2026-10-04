@@ -387,7 +387,7 @@ pub mod ledger_contract {
             where
                 W: super::TryWitnesses<Private>,
             {
-                let input = runtime::fab::AlignedValue::from(seed.clone());
+                let input = runtime::fab::AlignedValue::from(seed);
                 let recorded = self.write_secret(observed.circuit_context(private_state), seed)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
@@ -419,7 +419,7 @@ pub mod ledger_contract {
             where
                 W: super::TryWitnesses<Private>,
             {
-                let input = runtime::fab::AlignedValue::from(seed.clone());
+                let input = runtime::fab::AlignedValue::from(seed);
                 let recorded = self.write_twice(observed.circuit_context(private_state), seed)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
@@ -453,7 +453,7 @@ pub mod ledger_contract {
             where
                 W: super::TryWitnesses<Private>,
             {
-                let input = runtime::fab::AlignedValue::from((seed.clone(), offset.clone()));
+                let input = runtime::fab::AlignedValue::from((seed, offset));
                 let recorded =
                     self.write_offset(observed.circuit_context(private_state), seed, offset)?;
                 Ok(runtime::transaction::RecordedCall::new(
@@ -486,7 +486,7 @@ pub mod ledger_contract {
             where
                 W: super::TryWitnesses<Private>,
             {
-                let input = runtime::fab::AlignedValue::from(seed.clone());
+                let input = runtime::fab::AlignedValue::from(seed);
                 let recorded =
                     self.write_nested_twice(observed.circuit_context(private_state), seed)?;
                 Ok(runtime::transaction::RecordedCall::new(

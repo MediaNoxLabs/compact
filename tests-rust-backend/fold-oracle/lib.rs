@@ -76,15 +76,12 @@ pub mod ledger_contract {
                 .into_circuit_context(runtime::ledger::ContractAddress::default());
             let mut total_cost = runtime::context::RunningCost::default();
             let __compact_constructor_values_0: [runtime::BoundedUint<65535>; 3] = [
-                (runtime::BoundedUint::<65535>::new(1u128)
-                    .expect("Compact Uint literal fits its maximum"))
-                .clone(),
-                (runtime::BoundedUint::<65535>::new(2u128)
-                    .expect("Compact Uint literal fits its maximum"))
-                .clone(),
-                (runtime::BoundedUint::<65535>::new(3u128)
-                    .expect("Compact Uint literal fits its maximum"))
-                .clone(),
+                runtime::BoundedUint::<65535>::new(1u128)
+                    .expect("Compact Uint literal fits its maximum"),
+                runtime::BoundedUint::<65535>::new(2u128)
+                    .expect("Compact Uint literal fits its maximum"),
+                runtime::BoundedUint::<65535>::new(3u128)
+                    .expect("Compact Uint literal fits its maximum"),
             ];
             for __compact_constructor_item_0 in __compact_constructor_values_0 {
                 let step =

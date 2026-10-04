@@ -104,22 +104,21 @@ pub mod ledger_contract {
                 .into_circuit_context(runtime::ledger::ContractAddress::default());
             let mut total_cost = runtime::context::RunningCost::default();
             let __compact_constructor_local_0: runtime::Field = runtime::Field::from(42u128);
-            let step = context.write_cell(0, (__compact_constructor_local_0).clone())?;
+            let step = context.write_cell(0, __compact_constructor_local_0)?;
             context = step.context;
             let step = context.write_cell(
                 1,
-                (runtime::FixedBytes::new([
+                runtime::FixedBytes::new([
                     108u8, 97u8, 114u8, 101u8, 115u8, 58u8, 115u8, 101u8, 97u8, 108u8, 101u8,
                     100u8, 58u8, 100u8, 101u8, 109u8, 111u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
                     0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
-                ]))
-                .clone(),
+                ]),
             )?;
             context = step.context;
             let __compact_constructor_local_1: runtime::BoundedUint<18446744073709551615> =
                 runtime::BoundedUint::<18446744073709551615>::new(12345u128)
                     .expect("Compact Uint literal fits its maximum");
-            let step = context.write_cell(2, (__compact_constructor_local_1).clone())?;
+            let step = context.write_cell(2, __compact_constructor_local_1)?;
             context = step.context;
             let _ = total_cost;
             Ok(context.into_constructor_result())

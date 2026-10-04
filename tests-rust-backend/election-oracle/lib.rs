@@ -145,13 +145,13 @@ pub mod pure_circuits {
     ) -> Result<crate::types::MerkleTreeDigest, runtime::CompactError> {
         Ok(crate::types::MerkleTreeDigest {
             field: {
-                let __compact_fold_source = (path.clone()).path.clone();
+                let __compact_fold_source = ((path.clone()).path).clone();
                 let mut __compact_fold_accumulator = runtime::degrade_to_transient(
                     runtime::persistent_hash(crate::types::LeafPreimage {
                         domain_sep: runtime::FixedBytes::new([
                             109u8, 100u8, 110u8, 58u8, 108u8, 104u8,
                         ]),
-                        data: (path.clone()).leaf.clone(),
+                        data: (path.clone()).leaf,
                     }),
                 );
                 for __compact_fold_item in __compact_fold_source.into_array() {
@@ -169,14 +169,14 @@ pub mod pure_circuits {
         entry: crate::types::MerkleTreePathEntry,
     ) -> Result<runtime::Field, runtime::CompactError> {
         Ok({
-            let __compact_local_left: runtime::Field = if (entry.clone()).goes_left.clone() {
+            let __compact_local_left: runtime::Field = if (entry.clone()).goes_left {
                 recursiveDigest
             } else {
-                ((entry.clone()).sibling.clone()).field.clone()
+                (((entry.clone()).sibling).clone()).field
             };
             {
-                let __compact_local_right: runtime::Field = if (entry.clone()).goes_left.clone() {
-                    ((entry.clone()).sibling.clone()).field.clone()
+                let __compact_local_right: runtime::Field = if (entry.clone()).goes_left {
+                    (((entry.clone()).sibling).clone()).field
                 } else {
                     recursiveDigest
                 };
@@ -479,7 +479,7 @@ pub mod ledger_contract {
         let __compact_constructor_value_0 = __compact_constructor_param_0;
         let state = runtime::ledger::contract_state(vec![
             runtime::ledger::constructor_cell::<runtime::FixedBytes<32>, runtime::ledger::DefaultDB>(
-                __compact_constructor_value_0.clone(),
+                __compact_constructor_value_0,
             ),
             runtime::ledger::constructor_cell::<
                 crate::types::PublicState,
@@ -521,9 +521,7 @@ pub mod ledger_contract {
                 }))?;
             total_cost += __compact_witness_meter_2.gas_cost();
             context.private_state = __compact_next_private_2;
-            private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-                __compact_witness_2.clone(),
-            ));
+            private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_2));
             let __compact_value_3 = __compact_witness_2;
             __compact_value_3 == crate::types::PrivateState::initial
         } else {
@@ -545,9 +543,7 @@ pub mod ledger_contract {
         )?;
         total_cost += __compact_witness_meter_5.gas_cost();
         context.private_state = __compact_next_private_5;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_5.clone(),
-        ));
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_5));
         let _ = __compact_witness_5;
         let mut context = context;
         let __compact_witness_meter_6 = runtime::context::WitnessReadMeter::new(&context);
@@ -558,16 +554,14 @@ pub mod ledger_contract {
             }))?;
         total_cost += __compact_witness_meter_6.gas_cost();
         context.private_state = __compact_next_private_6;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_6.clone(),
-        ));
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_6));
         let __compact_action_local_0: runtime::FixedBytes<32> = __compact_witness_6;
         let __compact_call_argument_7 = __compact_action_local_0;
         let __compact_action_local_1: runtime::FixedBytes<32> =
             crate::pure_circuits::commitment_nullifier(__compact_call_argument_7)?;
         let mut context = context;
         let __compact_query_8 =
-            crate::ledger_slots::committed.member(context, (__compact_action_local_1).clone())?;
+            crate::ledger_slots::committed.member(context, __compact_action_local_1)?;
         context = __compact_query_8.context;
         total_cost += __compact_query_8.gas_cost;
         if !(if __compact_query_8.result {
@@ -596,12 +590,12 @@ pub mod ledger_contract {
         total_cost += __compact_witness_meter_11.gas_cost();
         context.private_state = __compact_next_private_11;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_11.clone(),
+            (__compact_witness_11).clone(),
         ));
         let __compact_action_local_3: crate::types::MaybeCompact1 = __compact_witness_11;
         let mut context = context;
-        if !(if if (__compact_action_local_3.clone()).is_some.clone() {
-            let __compact_call_argument_12 = (__compact_action_local_3.clone()).value.clone();
+        if !(if if (__compact_action_local_3.clone()).is_some {
+            let __compact_call_argument_12 = ((__compact_action_local_3.clone()).value).clone();
             let __compact_expression_local_13: crate::types::MerkleTreeDigest =
                 crate::pure_circuits::merkleTreePathRoot(__compact_call_argument_12)?;
             let __compact_query_14 = crate::ledger_slots::eligible_voters
@@ -613,10 +607,7 @@ pub mod ledger_contract {
             false
         } {
             let __compact_value_15 = __compact_action_local_2;
-            __compact_value_15
-                == ((__compact_action_local_3.clone()).value.clone())
-                    .leaf
-                    .clone()
+            __compact_value_15 == (((__compact_action_local_3.clone()).value).clone()).leaf
         } else {
             false
         }) {
@@ -649,9 +640,7 @@ pub mod ledger_contract {
             }))?;
         total_cost += __compact_witness_meter_19.gas_cost();
         context.private_state = __compact_next_private_19;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_19.clone(),
-        ));
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_19));
         let _ = __compact_witness_19;
         let result = ();
         Ok(runtime::context::CircuitResult {
@@ -681,9 +670,7 @@ pub mod ledger_contract {
                 }))?;
             total_cost += __compact_witness_meter_2.gas_cost();
             context.private_state = __compact_next_private_2;
-            private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-                __compact_witness_2.clone(),
-            ));
+            private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_2));
             let __compact_value_3 = __compact_witness_2;
             __compact_value_3 == crate::types::PrivateState::committed
         } else {
@@ -702,16 +689,14 @@ pub mod ledger_contract {
             }))?;
         total_cost += __compact_witness_meter_4.gas_cost();
         context.private_state = __compact_next_private_4;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_4.clone(),
-        ));
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_4));
         let __compact_action_local_0: runtime::FixedBytes<32> = __compact_witness_4;
         let __compact_call_argument_5 = __compact_action_local_0;
         let __compact_action_local_1: runtime::FixedBytes<32> =
             crate::pure_circuits::reveal_nullifier(__compact_call_argument_5)?;
         let mut context = context;
         let __compact_query_6 =
-            crate::ledger_slots::revealed.member(context, (__compact_action_local_1).clone())?;
+            crate::ledger_slots::revealed.member(context, __compact_action_local_1)?;
         context = __compact_query_6.context;
         total_cost += __compact_query_6.gas_cost;
         if !(if __compact_query_6.result {
@@ -732,9 +717,7 @@ pub mod ledger_contract {
             }))?;
         total_cost += __compact_witness_meter_7.gas_cost();
         context.private_state = __compact_next_private_7;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_7.clone(),
-        ));
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_7));
         let __compact_action_local_2: crate::types::PermissibleVotes = __compact_witness_7;
         let __compact_call_argument_8 = __compact_action_local_2;
         let __compact_call_argument_9 =
@@ -759,12 +742,12 @@ pub mod ledger_contract {
         total_cost += __compact_witness_meter_12.gas_cost();
         context.private_state = __compact_next_private_12;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_12.clone(),
+            (__compact_witness_12).clone(),
         ));
         let __compact_action_local_4: crate::types::MaybeCompact1 = __compact_witness_12;
         let mut context = context;
-        if !(if if (__compact_action_local_4.clone()).is_some.clone() {
-            let __compact_call_argument_13 = (__compact_action_local_4.clone()).value.clone();
+        if !(if if (__compact_action_local_4.clone()).is_some {
+            let __compact_call_argument_13 = ((__compact_action_local_4.clone()).value).clone();
             let __compact_expression_local_14: crate::types::MerkleTreeDigest =
                 crate::pure_circuits::merkleTreePathRoot(__compact_call_argument_13)?;
             let __compact_query_15 = crate::ledger_slots::committed_votes
@@ -776,10 +759,7 @@ pub mod ledger_contract {
             false
         } {
             let __compact_value_16 = __compact_action_local_3;
-            __compact_value_16
-                == ((__compact_action_local_4.clone()).value.clone())
-                    .leaf
-                    .clone()
+            __compact_value_16 == (((__compact_action_local_4.clone()).value).clone()).leaf
         } else {
             false
         }) {
@@ -824,9 +804,7 @@ pub mod ledger_contract {
             }))?;
         total_cost += __compact_witness_meter_18.gas_cost();
         context.private_state = __compact_next_private_18;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_18.clone(),
-        ));
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_18));
         let _ = __compact_witness_18;
         let result = ();
         Ok(runtime::context::CircuitResult {
@@ -851,9 +829,7 @@ pub mod ledger_contract {
             }))?;
         total_cost += __compact_witness_meter_0.gas_cost();
         context.private_state = __compact_next_private_0;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_0.clone(),
-        ));
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_0));
         let __compact_action_local_0: runtime::FixedBytes<32> = __compact_witness_0;
         let __compact_call_argument_1 = __compact_action_local_0;
         let __compact_action_local_1: runtime::FixedBytes<32> =
@@ -872,7 +848,7 @@ pub mod ledger_contract {
         let __compact_query_4 = crate::ledger_slots::topic.read(context)?;
         context = __compact_query_4.context;
         total_cost += __compact_query_4.gas_cost;
-        if !((__compact_query_4.result).is_some.clone()) {
+        if !((__compact_query_4.result).is_some) {
             return Err(runtime::CompactError::AssertionFailed(
                 "Attempted to start election without a topic".to_owned(),
             ));
@@ -911,9 +887,7 @@ pub mod ledger_contract {
             }))?;
         total_cost += __compact_witness_meter_0.gas_cost();
         context.private_state = __compact_next_private_0;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_0.clone(),
-        ));
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_0));
         let __compact_action_local_0: runtime::FixedBytes<32> = __compact_witness_0;
         let __compact_call_argument_1 = __compact_action_local_0;
         let __compact_action_local_1: runtime::FixedBytes<32> =
@@ -974,9 +948,9 @@ pub mod ledger_contract {
         total_cost += __compact_witness_meter_1.gas_cost();
         context.private_state = __compact_next_private_1;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_1.clone(),
+            (__compact_witness_1).clone(),
         ));
-        if !(if (__compact_witness_1).is_some.clone() {
+        if !(if (__compact_witness_1).is_some {
             false
         } else {
             true
@@ -994,9 +968,7 @@ pub mod ledger_contract {
             }))?;
         total_cost += __compact_witness_meter_2.gas_cost();
         context.private_state = __compact_next_private_2;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_2.clone(),
-        ));
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_2));
         let __compact_action_local_0: runtime::FixedBytes<32> = __compact_witness_2;
         let __compact_call_argument_3 = __compact_action_local_0;
         let __compact_action_local_1: runtime::FixedBytes<32> =

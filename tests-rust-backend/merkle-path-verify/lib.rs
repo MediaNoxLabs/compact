@@ -93,13 +93,13 @@ pub mod pure_circuits {
     ) -> Result<crate::types::MerkleTreeDigest, runtime::CompactError> {
         Ok(crate::types::MerkleTreeDigest {
             field: {
-                let __compact_fold_source = (path.clone()).path.clone();
+                let __compact_fold_source = ((path.clone()).path).clone();
                 let mut __compact_fold_accumulator = runtime::degrade_to_transient(
                     runtime::persistent_hash(crate::types::LeafPreimage {
                         domain_sep: runtime::FixedBytes::new([
                             109u8, 100u8, 110u8, 58u8, 108u8, 104u8,
                         ]),
-                        data: (path.clone()).leaf.clone(),
+                        data: (path.clone()).leaf,
                     }),
                 );
                 for __compact_fold_item in __compact_fold_source.into_array() {
@@ -117,14 +117,14 @@ pub mod pure_circuits {
         entry: crate::types::MerkleTreePathEntry,
     ) -> Result<runtime::Field, runtime::CompactError> {
         Ok({
-            let __compact_local_left: runtime::Field = if (entry.clone()).goes_left.clone() {
+            let __compact_local_left: runtime::Field = if (entry.clone()).goes_left {
                 recursiveDigest
             } else {
-                ((entry.clone()).sibling.clone()).field.clone()
+                (((entry.clone()).sibling).clone()).field
             };
             {
-                let __compact_local_right: runtime::Field = if (entry.clone()).goes_left.clone() {
-                    ((entry.clone()).sibling.clone()).field.clone()
+                let __compact_local_right: runtime::Field = if (entry.clone()).goes_left {
+                    (((entry.clone()).sibling).clone()).field
                 } else {
                     recursiveDigest
                 };
@@ -263,7 +263,7 @@ pub mod ledger_contract {
         total_cost += __compact_witness_meter_0.gas_cost();
         context.private_state = __compact_next_private_0;
         private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_0.clone(),
+            (__compact_witness_0).clone(),
         ));
         let __compact_call_argument_1 = __compact_witness_0;
         let __compact_expression_local_2: crate::types::MerkleTreeDigest =
@@ -313,7 +313,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(value.clone());
+                let input = runtime::fab::AlignedValue::from(value);
                 let recorded = self.append(observed.circuit_context(private_state), value)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed, recorded, "append", input,

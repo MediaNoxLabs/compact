@@ -227,6 +227,10 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
+    #[allow(
+        clippy::too_many_arguments,
+        reason = "preserves the declared Compact circuit signature"
+    )]
     pub fn record_twelve<Private>(
         context: runtime::context::CircuitContext<Private>,
         __compact_param_0: runtime::Field,
@@ -297,8 +301,7 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let frame =
-                crate::ledger_slots::tupleKeys.record_insert(frame, (__compact_param_0).clone())?;
+            let frame = crate::ledger_slots::tupleKeys.record_insert(frame, __compact_param_0)?;
             Ok(frame.finish(()))
         }
         pub fn insert_struct<Private>(
@@ -317,11 +320,9 @@ pub mod ledger_contract {
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
         {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let frame =
-                crate::ledger_slots::tupleKeys.record_insert(frame, (__compact_param_0).clone())?;
-            let frame =
-                crate::ledger_slots::tupleKeys.record_remove(frame, (__compact_param_0).clone())?;
-            let __compact_recorded_key_0 = (__compact_param_0).clone();
+            let frame = crate::ledger_slots::tupleKeys.record_insert(frame, __compact_param_0)?;
+            let frame = crate::ledger_slots::tupleKeys.record_remove(frame, __compact_param_0)?;
+            let __compact_recorded_key_0 = __compact_param_0;
             let (frame, __compact_recorded_member_1): (_, bool) =
                 crate::ledger_slots::tupleKeys.record_member(frame, __compact_recorded_key_0)?;
             Ok(frame.finish(__compact_recorded_member_1))
@@ -341,6 +342,10 @@ pub mod ledger_contract {
                 crate::ledger_slots::structKeys.record_member(frame, __compact_recorded_key_0)?;
             Ok(frame.finish(__compact_recorded_member_1))
         }
+        #[allow(
+            clippy::too_many_arguments,
+            reason = "preserves the declared Compact circuit signature"
+        )]
         pub fn record_twelve<Private>(
             context: runtime::context::CircuitContext<Private>,
             __compact_param_0: runtime::Field,
@@ -404,7 +409,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(key.clone());
+                let input = runtime::fab::AlignedValue::from((key).clone());
                 let recorded = self.insert_vector(observed.circuit_context(private_state), key)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
@@ -431,7 +436,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(key.clone());
+                let input = runtime::fab::AlignedValue::from(key);
                 let recorded = self.insert_tuple(observed.circuit_context(private_state), key)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
@@ -458,7 +463,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, ()>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(key.clone());
+                let input = runtime::fab::AlignedValue::from((key).clone());
                 let recorded = self.insert_struct(observed.circuit_context(private_state), key)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed,
@@ -487,7 +492,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, bool>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(key.clone());
+                let input = runtime::fab::AlignedValue::from(key);
                 let recorded =
                     self.roundtrip_tuple(observed.circuit_context(private_state), key)?;
                 Ok(runtime::transaction::RecordedCall::new(
@@ -517,7 +522,7 @@ pub mod ledger_contract {
                 runtime::transaction::RecordedCall<'observed, Private, bool>,
                 runtime::CompactError,
             > {
-                let input = runtime::fab::AlignedValue::from(key.clone());
+                let input = runtime::fab::AlignedValue::from((key).clone());
                 let recorded =
                     self.roundtrip_struct(observed.circuit_context(private_state), key)?;
                 Ok(runtime::transaction::RecordedCall::new(
@@ -527,6 +532,10 @@ pub mod ledger_contract {
                     input,
                 ))
             }
+            #[allow(
+                clippy::too_many_arguments,
+                reason = "preserves the declared Compact circuit signature"
+            )]
             pub fn record_twelve<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
@@ -549,6 +558,10 @@ pub mod ledger_contract {
                 )
             }
             #[cfg(feature = "ledger-transaction")]
+            #[allow(
+                clippy::too_many_arguments,
+                reason = "preserves the declared Compact circuit signature"
+            )]
             pub fn record_twelve_call<'observed, Private>(
                 &self,
                 observed: &'observed runtime::transaction::ObservedContractState,
@@ -570,18 +583,18 @@ pub mod ledger_contract {
                 runtime::CompactError,
             > {
                 let input = runtime::fab::AlignedValue::concat(&[
-                    runtime::fab::AlignedValue::from(a.clone()),
-                    runtime::fab::AlignedValue::from(b.clone()),
-                    runtime::fab::AlignedValue::from(c.clone()),
-                    runtime::fab::AlignedValue::from(d.clone()),
-                    runtime::fab::AlignedValue::from(e.clone()),
-                    runtime::fab::AlignedValue::from(f.clone()),
-                    runtime::fab::AlignedValue::from(g.clone()),
-                    runtime::fab::AlignedValue::from(h.clone()),
-                    runtime::fab::AlignedValue::from(i.clone()),
-                    runtime::fab::AlignedValue::from(j.clone()),
-                    runtime::fab::AlignedValue::from(k.clone()),
-                    runtime::fab::AlignedValue::from(l.clone()),
+                    runtime::fab::AlignedValue::from(a),
+                    runtime::fab::AlignedValue::from(b),
+                    runtime::fab::AlignedValue::from(c),
+                    runtime::fab::AlignedValue::from(d),
+                    runtime::fab::AlignedValue::from(e),
+                    runtime::fab::AlignedValue::from(f),
+                    runtime::fab::AlignedValue::from(g),
+                    runtime::fab::AlignedValue::from(h),
+                    runtime::fab::AlignedValue::from(i),
+                    runtime::fab::AlignedValue::from(j),
+                    runtime::fab::AlignedValue::from(k),
+                    runtime::fab::AlignedValue::from(l),
                 ]);
                 let recorded = self.record_twelve(
                     observed.circuit_context(private_state),
@@ -665,6 +678,10 @@ pub mod ledger_contract {
         ) -> Result<runtime::context::CircuitResult<Private, bool>, runtime::CompactError> {
             crate::ledger_contract::roundtrip_struct(context, key)
         }
+        #[allow(
+            clippy::too_many_arguments,
+            reason = "preserves the declared Compact circuit signature"
+        )]
         pub fn record_twelve<Private>(
             &self,
             context: runtime::context::CircuitContext<Private>,

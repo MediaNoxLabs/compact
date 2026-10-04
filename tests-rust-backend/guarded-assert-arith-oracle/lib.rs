@@ -80,29 +80,26 @@ pub mod pure_circuits {
         Ok({
             {
                 if !(currentTime.value()
-                    >= ((attestation.clone()).proof.clone())
-                        .createdAt
-                        .clone()
-                        .value())
+                    >= (((attestation.clone()).proof).clone()).createdAt.value())
                 {
                     return Err(runtime::CompactError::AssertionFailed(
                         "attestation creation time cannot be in the future".to_owned(),
                     ));
                 }
             };
-            if (policy.clone()).enforceMaxAge.clone() {
+            if (policy.clone()).enforceMaxAge {
                 {
                     if !({
                         let __compact_local_t_19: runtime::BoundedUint<18446744073709551615> = {
                             let __compact_local_t_20: runtime::BoundedUint<18446744073709551615> =
-                                ((attestation.clone()).proof.clone()).createdAt.clone();
+                                (((attestation.clone()).proof).clone()).createdAt;
                             runtime::subtract_unsigned::<
                                 18446744073709551615,
                                 18446744073709551615,
                                 18446744073709551615,
                             >(currentTime, __compact_local_t_20)?
                         };
-                        __compact_local_t_19.value() <= (policy.clone()).maxAge.clone().value()
+                        __compact_local_t_19.value() <= (policy.clone()).maxAge.value()
                     }) {
                         return Err(runtime::CompactError::AssertionFailed(
                             "attestation exceeds the max-age policy".to_owned(),
@@ -125,7 +122,7 @@ pub mod pure_circuits {
                 if !({
                     let __compact_local_t_17: runtime::BoundedUint<18446744073709551615> = {
                         let __compact_local_t_18: runtime::BoundedUint<18446744073709551615> =
-                            ((attestation.clone()).proof.clone()).createdAt.clone();
+                            (((attestation.clone()).proof).clone()).createdAt;
                         runtime::subtract_unsigned::<
                             18446744073709551615,
                             18446744073709551615,
@@ -150,9 +147,9 @@ pub mod pure_circuits {
             {
                 if !({
                     let __compact_local_t_14: runtime::BoundedUint<18446744073709551615> =
-                        ((newer.clone()).proof.clone()).createdAt.clone();
+                        (((newer.clone()).proof).clone()).createdAt;
                     __compact_local_t_14.value()
-                        >= ((older.clone()).proof.clone()).createdAt.clone().value()
+                        >= (((older.clone()).proof).clone()).createdAt.value()
                 }) {
                     return Err(runtime::CompactError::AssertionFailed(
                         "newer attestation must not predate the older one".to_owned(),
@@ -161,10 +158,10 @@ pub mod pure_circuits {
             };
             {
                 let __compact_local_t_15: runtime::BoundedUint<18446744073709551615> =
-                    ((newer.clone()).proof.clone()).createdAt.clone();
+                    (((newer.clone()).proof).clone()).createdAt;
                 {
                     let __compact_local_t_16: runtime::BoundedUint<18446744073709551615> =
-                        ((older.clone()).proof.clone()).createdAt.clone();
+                        (((older.clone()).proof).clone()).createdAt;
                     runtime::subtract_unsigned::<
                         18446744073709551615,
                         18446744073709551615,

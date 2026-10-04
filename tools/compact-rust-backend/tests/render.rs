@@ -539,7 +539,20 @@ fn struct_field_projection_checks_declared_name_and_position() {
             ty: Type::Field,
         }],
     };
-    assert!(render(&contract).unwrap().contains("amount.clone()"));
+    assert!(!render(&contract).unwrap().contains(".amount.clone()"));
+    let vector = Type::Vector {
+        element: Box::new(Type::Field),
+        length: 2,
+    };
+    contract.circuits[0].result = vector.clone();
+    contract.circuits[0].parameters[0].ty = Type::Struct {
+        name: "Record".into(),
+        fields: vec![StructField {
+            name: "amount".into(),
+            ty: vector,
+        }],
+    };
+    assert!(render(&contract).unwrap().contains(".amount).clone()"));
     let Expr::StructField { index, .. } = &mut contract.circuits[0].body else {
         unreachable!()
     };
@@ -548,6 +561,54 @@ fn struct_field_projection_checks_declared_name_and_position() {
         render(&contract),
         Err(RenderError::InvalidStructField("amount".into()))
     );
+}
+
+#[test]
+fn struct_literal_uses_shorthand_only_for_an_uncloned_field_name() {
+    let field = Type::Struct {
+        name: "Record".into(),
+        fields: vec![StructField {
+            name: "value".into(),
+            ty: Type::Field,
+        }],
+    };
+    let mut contract = identity(
+        field.clone(),
+        Expr::StructLiteral {
+            ty: field,
+            fields: vec![Expr::Parameter {
+                name: "value".into(),
+            }],
+        },
+    );
+    let source = render(&contract).unwrap();
+    assert!(
+        source.contains("crate::types::Record { value }"),
+        "{source}"
+    );
+    assert!(!source.contains("value: value"));
+
+    let vector = Type::Vector {
+        element: Box::new(Type::Field),
+        length: 2,
+    };
+    let record = Type::Struct {
+        name: "Record".into(),
+        fields: vec![StructField {
+            name: "value".into(),
+            ty: vector.clone(),
+        }],
+    };
+    contract.circuits[0].parameters[0].ty = vector;
+    contract.circuits[0].result = record.clone();
+    contract.circuits[0].body = Expr::StructLiteral {
+        ty: record,
+        fields: vec![Expr::Parameter {
+            name: "value".into(),
+        }],
+    };
+    let source = render(&contract).unwrap();
+    assert!(source.contains("value: value.clone()"), "{source}");
 }
 
 #[test]
@@ -604,6 +665,51 @@ fn repeated_vector_parameters_keep_value_semantics() {
     contract.circuits[0].parameters[0].ty = vector;
     let source = render(&contract).unwrap();
     assert_eq!(source.matches("value.clone()").count(), 2);
+}
+
+#[test]
+fn observed_call_input_clones_non_copy_values_but_not_copy_values() {
+    let mut contract = identity(Type::Unit, Expr::Unit);
+    let vector = Type::Vector {
+        element: Box::new(Type::Field),
+        length: 2,
+    };
+    contract.ledger_fields = vec![LedgerField {
+        source: None,
+        id: "stored".into(),
+        index: 0,
+        path: vec![],
+        declaration: LedgerFieldKind::List { ty: vector.clone() },
+    }];
+    contract.stateful_circuits = vec![StatefulCircuit {
+        source: None,
+        internal: false,
+        name: "write".into(),
+        parameters: vec![Parameter {
+            name: "value".into(),
+            ty: vector,
+        }],
+        result: Type::Unit,
+        return_value: StateReturn::Unit,
+        actions: vec![StateAction::ListPushFront {
+            field: "stored".into(),
+            index: 0,
+            value: Expr::Parameter {
+                name: "value".into(),
+            },
+        }],
+    }];
+    let source = render(&contract).unwrap();
+    assert!(
+        source.contains("AlignedValue::from((value).clone())"),
+        "{source}"
+    );
+
+    contract.ledger_fields[0].declaration = LedgerFieldKind::List { ty: Type::Field };
+    contract.stateful_circuits[0].parameters[0].ty = Type::Field;
+    let source = render(&contract).unwrap();
+    assert!(source.contains("AlignedValue::from(value)"), "{source}");
+    assert!(!source.contains("AlignedValue::from((value).clone())"));
 }
 
 #[test]
@@ -723,7 +829,7 @@ fn constructor_cell_parameters_are_typed_and_validated() {
     let source = render(&contract).unwrap();
     assert!(source.contains("__compact_constructor_param_0: runtime::Field"));
     assert!(source.contains("let __compact_constructor_value_0 = __compact_constructor_param_0;"));
-    assert!(source.contains("__compact_constructor_value_0.clone()"));
+    assert!(!source.contains("__compact_constructor_value_0.clone()"));
     assert!(
         source.contains(
             "Result<runtime::context::ConstructorResult<Private>, runtime::CompactError>"
@@ -931,8 +1037,8 @@ fn constructor_set_steps_validate_values_and_use_vm_methods() {
         ],
     });
     let source = render(&contract).unwrap();
-    assert!(source.contains("context.insert_set(0, (true).clone())?"));
-    assert!(source.contains("context.remove_set(0, (false).clone())?"));
+    assert!(source.contains("context.insert_set(0, true)?"));
+    assert!(source.contains("context.remove_set(0, false)?"));
     assert!(source.contains("context.reset_set(0)?"));
     let ConstructorStep::SetInsert { value, .. } =
         &mut contract.constructor.as_mut().unwrap().steps[0]
@@ -2583,7 +2689,7 @@ fn counter_parameter_requires_uint16_and_a_known_name() {
     let source = render(&contract).unwrap();
     assert!(source.contains("__compact_param_0.value() as u16"));
     assert!(source.contains("pub fn increment_by_call<'observed, Private>("));
-    assert!(source.contains("let input = runtime::fab::AlignedValue::from(amount.clone());"));
+    assert!(source.contains("let input = runtime::fab::AlignedValue::from(amount);"));
     assert_eq!(source.matches("amount:").count(), 3);
 
     let mut two_parameters = contract.clone();
@@ -2597,8 +2703,7 @@ fn counter_parameter_requires_uint16_and_a_known_name() {
     assert!(two_parameter_source.contains("pub mod recorded"));
     assert!(two_parameter_source.contains("pub fn increment_by_call<'observed"));
     assert!(two_parameter_source.contains("let input = runtime::fab::AlignedValue::from(("));
-    assert!(two_parameter_source.contains("amount.clone(),"));
-    assert!(two_parameter_source.contains("unused.clone(),"));
+    assert!(two_parameter_source.contains("amount, unused"));
 
     let mut three_parameters = two_parameters.clone();
     three_parameters.stateful_circuits[0]
@@ -2610,10 +2715,30 @@ fn counter_parameter_requires_uint16_and_a_known_name() {
     let three_parameter_source = render(&three_parameters).unwrap();
     assert!(three_parameter_source.contains("pub fn increment_by_call<'observed"));
     assert!(three_parameter_source.contains("runtime::fab::AlignedValue::concat"));
-    assert!(three_parameter_source.contains("AlignedValue::from(another_unused.clone())"));
+    assert!(three_parameter_source.contains("AlignedValue::from(another_unused)"));
 
-    let mut twelve_parameters = three_parameters.clone();
-    for index in 3..12 {
+    let mut four_parameters = three_parameters.clone();
+    four_parameters.stateful_circuits[0]
+        .parameters
+        .push(Parameter {
+            name: "unused_3".into(),
+            ty: Type::Field,
+        });
+    let four_parameter_source = render(&four_parameters).unwrap();
+    assert!(!four_parameter_source.contains("clippy::too_many_arguments"));
+
+    let mut five_parameters = four_parameters.clone();
+    five_parameters.stateful_circuits[0]
+        .parameters
+        .push(Parameter {
+            name: "unused_4".into(),
+            ty: Type::Field,
+        });
+    let five_parameter_source = render(&five_parameters).unwrap();
+    assert!(five_parameter_source.contains("clippy::too_many_arguments"));
+
+    let mut twelve_parameters = five_parameters.clone();
+    for index in 5..12 {
         twelve_parameters.stateful_circuits[0]
             .parameters
             .push(Parameter {
@@ -2624,7 +2749,13 @@ fn counter_parameter_requires_uint16_and_a_known_name() {
     let twelve_parameter_source = render(&twelve_parameters).unwrap();
     syn::parse_file(&twelve_parameter_source).unwrap();
     assert!(twelve_parameter_source.contains("pub fn increment_by_call<'observed"));
-    assert!(twelve_parameter_source.contains("AlignedValue::from(unused_11.clone())"));
+    assert!(twelve_parameter_source.contains("AlignedValue::from(unused_11)"));
+    assert!(
+        twelve_parameter_source
+            .matches("clippy::too_many_arguments")
+            .count()
+            >= 4
+    );
 
     let mut collision = two_parameters.clone();
     let mut exported = collision.stateful_circuits[0].clone();

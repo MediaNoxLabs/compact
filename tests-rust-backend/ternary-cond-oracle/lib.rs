@@ -68,7 +68,7 @@ pub mod pure_circuits {
     ) -> Result<crate::types::Maybe, runtime::CompactError> {
         Ok(crate::types::Maybe {
             is_some: true,
-            value: value,
+            value,
         })
     }
     pub fn idf(x: runtime::Field) -> Result<runtime::Field, runtime::CompactError> {
@@ -617,7 +617,7 @@ pub mod ledger_contract {
                 ));
             }
             let __compact_value_11 = __compact_constructor_local_1;
-            let __compact_value_12 = (__compact_constructor_local_2.clone()).f.clone();
+            let __compact_value_12 = (__compact_constructor_local_2.clone()).f;
             let __compact_value_13 = __compact_value_11 + __compact_value_12;
             let __compact_value_14 = runtime::Field::from((__compact_constructor_local_3).value());
             let __compact_value_15 = __compact_value_13 + __compact_value_14;
@@ -639,7 +639,7 @@ pub mod ledger_contract {
             );
             let __compact_constructor_local_23: runtime::Field =
                 __compact_value_21 + __compact_value_22;
-            let step = context.write_cell(1, (__compact_constructor_local_23).clone())?;
+            let step = context.write_cell(1, __compact_constructor_local_23)?;
             context = step.context;
             let __compact_constructor_local_24: runtime::BoundedUint<18446744073709551615> =
                 runtime::cast_unsigned::<20, 18446744073709551615>(
@@ -651,7 +651,7 @@ pub mod ledger_contract {
                             .expect("Compact Uint literal fits its maximum")
                     },
                 )?;
-            let step = context.write_cell(2, (__compact_constructor_local_24).clone())?;
+            let step = context.write_cell(2, __compact_constructor_local_24)?;
             context = step.context;
             let __compact_constructor_local_25: runtime::FixedVector<runtime::Field, 2> =
                 runtime::FixedVector::new([
@@ -786,7 +786,7 @@ pub mod ledger_contract {
                 .value(),
             ),
         };
-        let __compact_action_local_1: runtime::Field = (__compact_action_local_0.clone()).f.clone();
+        let __compact_action_local_1: runtime::Field = (__compact_action_local_0.clone()).f;
         let step = crate::ledger_slots::fieldCell.write(context, __compact_action_local_1)?;
         let context = step.context;
         total_cost += step.gas_cost;
@@ -849,9 +849,7 @@ pub mod ledger_contract {
         )?;
         total_cost += __compact_witness_meter_1.gas_cost();
         context.private_state = __compact_next_private_1;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_1.clone(),
-        ));
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_1));
         let __compact_action_local_0: runtime::Field = __compact_witness_1;
         let step = crate::ledger_slots::fieldCell.write(context, __compact_action_local_0)?;
         let context = step.context;
@@ -1233,7 +1231,7 @@ pub mod ledger_contract {
                 .value(),
             ),
         };
-        let __compact_action_local_2: runtime::Field = (__compact_action_local_1.clone()).f.clone();
+        let __compact_action_local_2: runtime::Field = (__compact_action_local_1.clone()).f;
         let step = crate::ledger_slots::fieldCell.write(context, __compact_action_local_2)?;
         let context = step.context;
         total_cost += step.gas_cost;
@@ -1277,9 +1275,7 @@ pub mod ledger_contract {
         )?;
         total_cost += __compact_witness_meter_2.gas_cost();
         context.private_state = __compact_next_private_2;
-        private_transcript_outputs.push(runtime::fab::AlignedValue::from(
-            __compact_witness_2.clone(),
-        ));
+        private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_2));
         let __compact_action_local_1: runtime::Field = __compact_witness_2;
         let step = crate::ledger_slots::fieldCell.write(context, __compact_action_local_1)?;
         let context = step.context;

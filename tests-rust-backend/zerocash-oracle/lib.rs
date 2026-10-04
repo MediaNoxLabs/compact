@@ -201,7 +201,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 32);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 33);
     pub(crate) fn merkleTreePathRoot(
         path: crate::types::MerkleTreePath,
     ) -> Result<crate::types::MerkleTreeDigest, runtime::CompactError> {
@@ -302,7 +302,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 32);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 33);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -349,6 +349,15 @@ pub mod ledger_contract {
         ) -> Result<runtime::ledger::SetView<'a, crate::types::nullifier, D>, runtime::CompactError>
         {
             crate::ledger_slots::nullifiers.inspect(self.state)
+        }
+        /// Inspect this declared historic Merkle tree in the borrowed public state.
+        pub fn commitments(
+            &self,
+        ) -> Result<
+            runtime::slots::HistoricMerkleStateView<'a, crate::types::commitment, 32u8, D>,
+            runtime::CompactError,
+        > {
+            crate::ledger_slots::commitments.inspect(self.state)
         }
         /// Decode this declared Cell from the borrowed public state.
         pub fn ciphertexts(&self) -> Result<runtime::OpaqueBytes, runtime::CompactError> {

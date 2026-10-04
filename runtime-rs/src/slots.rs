@@ -22,16 +22,98 @@
 
 use std::marker::PhantomData;
 
+use midnight_base_crypto::repr::BinaryHashRepr;
+
 use crate::CompactError;
 use crate::context::{CircuitContext, CircuitResult, WitnessReadMeter};
 use crate::ledger::{
-    CellValue, DB, ListView, MapView, MeteredHistoricMerkleTreeView, MeteredListView,
-    MeteredMapView, MeteredMerkleTreeView, MeteredSetView, SetView, StateValue, list_view_at_path,
-    map_view_at_path, metered_historic_merkle_tree_view_at_path, metered_list_view_at_path,
-    metered_map_view_at_path, metered_merkle_tree_view_at_path, metered_set_view_at_path,
-    set_view_at_path,
+    CellValue, DB, HistoricMerkleTreeView, ListView, MapView, MerklePath, MerkleTreeDigest,
+    MerkleTreeView, MeteredHistoricMerkleTreeView, MeteredListView, MeteredMapView,
+    MeteredMerkleTreeView, MeteredSetView, SetView, StateValue, historic_merkle_tree_view_at_path,
+    list_view_at_path, map_view_at_path, merkle_tree_view_at_path,
+    metered_historic_merkle_tree_view_at_path, metered_list_view_at_path, metered_map_view_at_path,
+    metered_merkle_tree_view_at_path, metered_set_view_at_path, set_view_at_path,
 };
 use crate::recording::RecordingFrame;
+
+/// Local, read-only projection of a declared plain Merkle tree.
+///
+/// This view checks the declared height but does not execute ledger VM reads.
+pub struct PlainMerkleStateView<'a, Leaf, const DEPTH: u8, D: DB> {
+    view: MerkleTreeView<'a, D>,
+    leaf: PhantomData<fn() -> Leaf>,
+}
+
+impl<Leaf, const DEPTH: u8, D: DB> PlainMerkleStateView<'_, Leaf, DEPTH, D> {
+    pub const DECLARED_DEPTH: u8 = DEPTH;
+
+    pub fn root(&self) -> Option<MerkleTreeDigest> {
+        self.view.root()
+    }
+
+    pub fn first_free(&self) -> Result<crate::BoundedUint<{ u64::MAX as u128 }>, CompactError> {
+        self.view.first_free()
+    }
+
+    /// Build a path with a declared leaf; the supplied leaf is not checked against the tree.
+    pub fn path_for_leaf(&self, index: u64, leaf: Leaf) -> Result<MerklePath<Leaf>, CompactError>
+    where
+        Leaf: BinaryHashRepr,
+    {
+        self.view.path_for_leaf(index, leaf)
+    }
+
+    pub fn find_path_for_leaf(&self, leaf: Leaf) -> Option<MerklePath<Leaf>>
+    where
+        Leaf: BinaryHashRepr,
+    {
+        self.view.find_path_for_leaf(leaf)
+    }
+}
+
+/// Local, read-only projection of a declared historic Merkle tree.
+///
+/// History inspection reads the held state; VM-metered root checks remain on witness views.
+pub struct HistoricMerkleStateView<'a, Leaf, const DEPTH: u8, D: DB> {
+    view: HistoricMerkleTreeView<'a, D>,
+    leaf: PhantomData<fn() -> Leaf>,
+}
+
+impl<Leaf, const DEPTH: u8, D: DB> HistoricMerkleStateView<'_, Leaf, DEPTH, D> {
+    pub const DECLARED_DEPTH: u8 = DEPTH;
+
+    pub fn root(&self) -> Option<MerkleTreeDigest> {
+        self.view.root()
+    }
+
+    pub fn first_free(&self) -> Result<crate::BoundedUint<{ u64::MAX as u128 }>, CompactError> {
+        self.view.first_free()
+    }
+
+    /// Build a path with a declared leaf; the supplied leaf is not checked against the tree.
+    pub fn path_for_leaf(&self, index: u64, leaf: Leaf) -> Result<MerklePath<Leaf>, CompactError>
+    where
+        Leaf: BinaryHashRepr,
+    {
+        self.view.path_for_leaf(index, leaf)
+    }
+
+    pub fn find_path_for_leaf(&self, leaf: Leaf) -> Option<MerklePath<Leaf>>
+    where
+        Leaf: BinaryHashRepr,
+    {
+        self.view.find_path_for_leaf(leaf)
+    }
+
+    pub fn history(&self) -> Result<Vec<MerkleTreeDigest>, CompactError> {
+        self.view.history()
+    }
+
+    /// Check the held history map locally, without the ledger VM's root-check program.
+    pub fn contains_root(&self, root: MerkleTreeDigest) -> bool {
+        self.view.contains_root(root)
+    }
+}
 
 /// A compiler-declared Merkle tree. The leaf type, depth, and historic kind
 /// are fixed at the generated declaration rather than repeated at call sites.
@@ -154,6 +236,24 @@ impl<T: CellValue, const DEPTH: u8, const HISTORIC: bool> MerkleSlot<T, DEPTH, H
 }
 
 impl<T: CellValue, const DEPTH: u8> MerkleSlot<T, DEPTH, false> {
+    /// Inspect an already held plain tree, rejecting a mismatched ledger height.
+    pub fn inspect<'a, D: DB>(
+        self,
+        state: &'a StateValue<D>,
+    ) -> Result<PlainMerkleStateView<'a, T, DEPTH, D>, CompactError> {
+        let view = merkle_tree_view_at_path(state, self.path)?;
+        if view.height() != DEPTH {
+            return Err(CompactError::InvalidLedgerCell(format!(
+                "expected MerkleTree height {DEPTH}, got {}",
+                view.height()
+            )));
+        }
+        Ok(PlainMerkleStateView {
+            view,
+            leaf: PhantomData,
+        })
+    }
+
     /// Project the declared plain tree through the existing metered witness view.
     pub fn witness_view<'a, Root: CellValue, D: DB>(
         self,
@@ -173,6 +273,24 @@ impl<T: CellValue, const DEPTH: u8> MerkleSlot<T, DEPTH, false> {
 }
 
 impl<T: CellValue, const DEPTH: u8> MerkleSlot<T, DEPTH, true> {
+    /// Inspect an already held historic tree, rejecting a mismatched ledger height.
+    pub fn inspect<'a, D: DB>(
+        self,
+        state: &'a StateValue<D>,
+    ) -> Result<HistoricMerkleStateView<'a, T, DEPTH, D>, CompactError> {
+        let view = historic_merkle_tree_view_at_path(state, self.path)?;
+        if view.height() != DEPTH {
+            return Err(CompactError::InvalidLedgerCell(format!(
+                "expected HistoricMerkleTree height {DEPTH}, got {}",
+                view.height()
+            )));
+        }
+        Ok(HistoricMerkleStateView {
+            view,
+            leaf: PhantomData,
+        })
+    }
+
     /// Project the declared historic tree through the existing metered witness view.
     pub fn witness_view<'a, Root: CellValue, D: DB>(
         self,

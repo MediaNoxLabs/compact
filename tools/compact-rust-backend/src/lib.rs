@@ -6,7 +6,7 @@ mod recorded;
 mod stateful;
 mod witness;
 
-const RUNTIME_ABI_VERSION: u32 = 32;
+const RUNTIME_ABI_VERSION: u32 = 33;
 pub const RUST_CAPABILITY_SCHEMA_VERSION: u32 = 1;
 
 const GENERATED_HEADER: &str = r#"// This file is part of Compact.
@@ -3030,6 +3030,21 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
                     &field.declaration,
                     LedgerFieldKind::HistoricMerkleTree { .. }
                 );
+                if historic {
+                    public_state_getters.push(syn::parse_quote! {
+                        /// Inspect this declared historic Merkle tree in the borrowed public state.
+                        pub fn #name(&self) -> Result<runtime::slots::HistoricMerkleStateView<'a, #leaf, #depth, D>, runtime::CompactError> {
+                            crate::ledger_slots::#name.inspect(self.state)
+                        }
+                    });
+                } else {
+                    public_state_getters.push(syn::parse_quote! {
+                        /// Inspect this declared plain Merkle tree in the borrowed public state.
+                        pub fn #name(&self) -> Result<runtime::slots::PlainMerkleStateView<'a, #leaf, #depth, D>, runtime::CompactError> {
+                            crate::ledger_slots::#name.inspect(self.state)
+                        }
+                    });
+                }
                 slot_items.push(syn::parse_quote! {
                     pub const #name: runtime::slots::MerkleSlot<#leaf, #depth, #historic> =
                         runtime::slots::MerkleSlot::new(&[#(#path),*]);

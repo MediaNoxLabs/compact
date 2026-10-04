@@ -2096,6 +2096,14 @@ fn main() -> Result<(), Box<dyn Error>> {
         let call = check_generated_trace(merkle_root, circuit, recorded, value)?;
         check_transaction(merkle_root, circuit, deploy, call, &mut rng, |contract| {
             let tree = merkle_tree_view_at_path(contract.data.get_ref(), &[0])?;
+            let generated = merkle_contract::PublicStateView::from(contract).t()?;
+            if generated.root() != tree.root()
+                || generated.first_free()? != tree.first_free()?
+                || generated.find_path_for_leaf(value).is_some()
+                    != tree.find_path_for_leaf(value).is_some()
+            {
+                return Err("generated proven Merkle view differs from raw view".into());
+            }
             if tree.first_free()?.value() != 1 {
                 return Err("proven Merkle append did not advance the leaf index".into());
             }
@@ -2122,6 +2130,15 @@ fn main() -> Result<(), Box<dyn Error>> {
         let call = check_generated_trace(historic_root, circuit, recorded, value)?;
         check_transaction(historic_root, circuit, deploy, call, &mut rng, |contract| {
             let tree = historic_merkle_tree_view_at_path(contract.data.get_ref(), &[0])?;
+            let generated = historic_merkle_contract::PublicStateView::from(contract).t()?;
+            if generated.root() != tree.root()
+                || generated.first_free()? != tree.first_free()?
+                || generated.find_path_for_leaf(value).is_some()
+                    != tree.find_path_for_leaf(value).is_some()
+                || generated.history()? != tree.history()?
+            {
+                return Err("generated proven historic Merkle view differs from raw view".into());
+            }
             if tree.first_free()?.value() != 1 {
                 return Err("proven historic append did not advance the leaf index".into());
             }

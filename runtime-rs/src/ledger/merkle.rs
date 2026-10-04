@@ -109,6 +109,11 @@ pub fn merkle_tree_view_at_path<'a, D: DB>(
 }
 
 impl<D: DB> MerkleTreeView<'_, D> {
+    /// Height stored by the ledger tree, independent of any declaration.
+    pub fn height(&self) -> u8 {
+        bounded_tree(self.fields).height()
+    }
+
     pub fn first_free(&self) -> Result<BoundedUint<{ u64::MAX as u128 }>, CompactError> {
         let value = read_cell::<u64, _>(&self.fields.get(1).expect("tree shape checked"))?;
         BoundedUint::new(value as u128)
@@ -247,6 +252,11 @@ pub fn historic_merkle_tree_view_at_path<'a, D: DB>(
 }
 
 impl<D: DB> HistoricMerkleTreeView<'_, D> {
+    /// Height stored by the ledger tree, independent of any declaration.
+    pub fn height(&self) -> u8 {
+        bounded_tree(self.fields).height()
+    }
+
     pub fn first_free(&self) -> Result<BoundedUint<{ u64::MAX as u128 }>, CompactError> {
         let value = read_cell::<u64, _>(&self.fields.get(1).expect("tree shape checked"))?;
         BoundedUint::new(value as u128)

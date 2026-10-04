@@ -247,7 +247,7 @@ fn generated_unit_enum_uses_checked_derive_without_handwritten_codecs() {
     let source = render(&contract).unwrap();
     assert!(source.contains("CompactCellValue, CompactEnum"));
     assert!(source.contains("pub enum Choice"));
-    assert!(source.contains("RUST_RUNTIME_ABI == 32"));
+    assert!(source.contains("RUST_RUNTIME_ABI == 33"));
     assert!(!source.contains("impl FieldRepr for Choice"));
     assert!(!source.contains("impl BinaryHashRepr for Choice"));
     assert!(!source.contains("impl FromFieldRepr for Choice"));
@@ -385,6 +385,13 @@ fn native_merkle_calls_use_declared_typed_slots() {
     ));
     assert!(source.contains("pub const historic: runtime::slots::MerkleSlot<"));
     assert!(source.contains("4u8,\n        true,"));
+    assert!(source.contains("pub struct PublicStateView<'a, D:"));
+    assert!(source.contains("pub fn plain("));
+    assert!(source.contains("pub fn historic("));
+    assert!(source.contains("runtime::slots::PlainMerkleStateView<"));
+    assert!(source.contains("runtime::slots::HistoricMerkleStateView<"));
+    assert!(source.contains("crate::ledger_slots::plain.inspect(self.state)"));
+    assert!(source.contains("crate::ledger_slots::historic.inspect(self.state)"));
     assert!(source.contains("crate::ledger_slots::plain.insert(context, __compact_param_0)?"));
     assert!(source.contains("crate::ledger_slots::plain.is_full(context)?"));
     assert!(source.contains("crate::ledger_slots::historic.reset_history(context)?"));

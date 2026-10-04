@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Build five generated contracts together using only the runtime archives."""
+"""Build six generated contracts together using only the runtime archives."""
 
 import argparse
 import hashlib
@@ -35,6 +35,7 @@ CONTRACTS = (
     ("set-boolean", ROOT / "examples/rust_backend/set_boolean.compact"),
     ("map-boolean-field", ROOT / "examples/rust_backend/map_boolean_field.compact"),
     ("list-field", ROOT / "examples/rust_backend/list_field.compact"),
+    ("merkle-path-witness", ROOT / "examples/rust_backend/merkle_path_witness.compact"),
 )
 PACKAGE_NAMES = ("midnight-compact-runtime-macros", "midnight-compact-runtime")
 
@@ -202,6 +203,7 @@ def main() -> None:
             'use compact_contract_set_boolean as set;\n'
             'use compact_contract_map_boolean_field as map;\n'
             'use compact_contract_list_field as list;\n'
+            'use compact_contract_merkle_path_witness as merkle;\n'
             'use compact_contract_counter::runtime::context::ConstructorContext;\n'
             'use compact_contract_counter::runtime::ledger::{ContractAddress, StateValue, read_cell};\n'
             '#[test]\nfn archived_runtime_executes_generated_counter() {\n'
@@ -252,6 +254,21 @@ def main() -> None:
             '    let view = list::ledger_contract::PublicStateView::from(&call);\n'
             '    assert_eq!(view.items().unwrap().head().unwrap(), Some(list::runtime::Field::from(7_u64)));\n'
             '    assert_eq!(view.items().unwrap().length().unwrap().value(), 1);\n}\n'
+            '#[test]\nfn archived_runtime_executes_generated_merkle_views() {\n'
+            '    let state = merkle::ledger_contract::initial_state(ConstructorContext::new(())).unwrap();\n'
+            '    let initial = merkle::ledger_contract::PublicStateView::from(&state);\n'
+            '    assert_eq!(initial.t().unwrap().first_free().unwrap().value(), 0);\n'
+            '    assert_eq!(initial.h().unwrap().first_free().unwrap().value(), 0);\n'
+            '    let context = state.into_circuit_context(ContractAddress::default());\n'
+            '    let call = merkle::ledger_contract::append('
+            'context, merkle::runtime::BoundedUint::<255>::new(7).unwrap()).unwrap();\n'
+            '    let view = merkle::ledger_contract::PublicStateView::from(&call);\n'
+            '    assert_eq!(view.t().unwrap().first_free().unwrap().value(), 1);\n'
+            '    let next = merkle::ledger_contract::append_h('
+            'call.context, merkle::runtime::BoundedUint::<255>::new(7).unwrap()).unwrap();\n'
+            '    let historic = merkle::ledger_contract::PublicStateView::from(&next);\n'
+            '    assert_eq!(historic.h().unwrap().first_free().unwrap().value(), 1);\n'
+            '    assert_eq!(historic.h().unwrap().history().unwrap().len(), 2);\n}\n'
         )
         environment = os.environ.copy()
         environment.setdefault("CARGO_TARGET_DIR", str(ROOT / "target/compactc-consumer"))
@@ -283,6 +300,14 @@ def main() -> None:
                 '    let view = list::ledger_contract::PublicStateView::from(&state);\n'
                 '    let _: Option<bool> = view.items().unwrap().head().unwrap();\n}\n'
             ),
+            "wrong_merkle_leaf": (
+                'use compact_contract_merkle_path_witness as merkle;\n'
+                'fn main() {\n'
+                '    let state = merkle::ledger_contract::initial_state('
+                'merkle::runtime::context::ConstructorContext::new(())).unwrap();\n'
+                '    let view = merkle::ledger_contract::PublicStateView::from(&state);\n'
+                '    let _ = view.t().unwrap().path_for_leaf(0, true);\n}\n'
+            ),
         }
         for name, source in compile_rejections.items():
             negative = consumer / f"tests/{name}.rs"
@@ -294,10 +319,32 @@ def main() -> None:
             negative.unlink()
             if rejection.returncode == 0 or "mismatched types" not in rejection.stderr:
                 raise RuntimeError(f"{name} was not rejected by the archive-only consumer: {rejection.stderr[-1200:]}")
+        unavailable_methods = {
+            "plain_merkle_history": "view.t().unwrap().history()",
+            "local_merkle_check_root": "view.t().unwrap().check_root(merkle::runtime::Field::from(0_u64))",
+            "local_historic_merkle_is_full": "view.h().unwrap().is_full()",
+        }
+        for name, expression in unavailable_methods.items():
+            negative = consumer / f"tests/{name}.rs"
+            negative.write_text(
+                'use compact_contract_merkle_path_witness as merkle;\n'
+                'fn main() {\n'
+                '    let state = merkle::ledger_contract::initial_state('
+                'merkle::runtime::context::ConstructorContext::new(())).unwrap();\n'
+                '    let view = merkle::ledger_contract::PublicStateView::from(&state);\n'
+                f'    let _ = {expression};\n}}\n'
+            )
+            rejection = subprocess.run(
+                ["cargo", "check", "--offline", "--test", name, "--quiet"],
+                cwd=consumer, env=environment, capture_output=True, text=True,
+            )
+            negative.unlink()
+            if rejection.returncode == 0 or "no method named" not in rejection.stderr:
+                raise RuntimeError(f"{name} was not rejected by the archive-only consumer: {rejection.stderr[-1200:]}")
         metadata = json.loads(run(["cargo", "metadata", "--offline", "--format-version", "1"],
                                   cwd=consumer, env=environment))
         check_graph(metadata, consumer, vendor, entries)
-    print("archive-only Counter + Cell + Set + Map + List consumer passed with one shared runtime; public registry publication remains unverified")
+    print("archive-only Counter + Cell + Set + Map + List + Merkle consumer passed with one shared runtime; public registry publication remains unverified")
 
 
 if __name__ == "__main__":

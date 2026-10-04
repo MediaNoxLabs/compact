@@ -6,6 +6,12 @@ midnight-zk primitives for fields, encoding, cryptography, state, and VM
 queries. Generated code checks `RUST_RUNTIME_ABI` at compile time. A generated
 crate bundles matching runtime sources by default or points to one shared
 source root when compiled with `--rust-runtime-root`.
+ABI 33 adds declaration-named local views for plain and historic Merkle trees.
+Their slot-backed wrappers preserve the declared leaf type and depth, validate
+the actual tree height, and expose structural root, first-free and typed path
+inspection; historic views also expose history. VM-charged `check_root` and
+`is_full` remain on metered witness views. Local paths do not prove that a
+supplied leaf matches the stored hash or authenticate the state.
 ABI 32 adds generated read-only `PublicStateView` getters for declared Lists.
 `ListSlot<T>::inspect` delegates to the existing structural List decoder and
 returns a local `ListView` with `Option<T>` head, bounded length and empty flag.

@@ -15,7 +15,8 @@
 
 use compact_rust_hmt_insert_oracle_fixture::ledger_contract::recorded;
 use compact_rust_hmt_insert_oracle_fixture::ledger_contract::{
-    append, append_hash, forget_history, full, initial_state, known, place, place_hash, reset_tree,
+    PublicStateView, append, append_hash, forget_history, full, initial_state, known, place,
+    place_hash, reset_tree,
 };
 use compact_rust_hmt_insert_oracle_fixture::types::MerkleTreeDigest;
 use midnight_compact_runtime as runtime;
@@ -105,10 +106,24 @@ fn assert_state(
     let tree = runtime::ledger::historic_merkle_tree_view_at_path(state, &[0]).unwrap();
     assert_eq!(tree.first_free().unwrap().value(), first_free);
     assert!(tree.root().is_some());
+    let generated = PublicStateView::from(state);
+    let typed = generated.t().unwrap();
+    assert_eq!(typed.root(), tree.root(), "generated root at {step}");
+    assert_eq!(
+        typed.first_free().unwrap(),
+        tree.first_free().unwrap(),
+        "generated first_free at {step}"
+    );
 }
 
 fn assert_history(state: &StateValue<DefaultDB>, oracle: &serde_json::Value, key: &str) {
     let tree = runtime::ledger::historic_merkle_tree_view_at_path(state, &[0]).unwrap();
+    let generated = PublicStateView::from(state);
+    let typed = generated.t().unwrap();
+    assert_eq!(typed.history().unwrap(), tree.history().unwrap());
+    for root in tree.history().unwrap() {
+        assert_eq!(typed.contains_root(root), tree.contains_root(root));
+    }
     let mut actual = tree
         .history()
         .unwrap()

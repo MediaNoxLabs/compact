@@ -15,7 +15,8 @@
 
 use compact_rust_merkle_tree_oracle_fixture::ledger_contract::recorded;
 use compact_rust_merkle_tree_oracle_fixture::ledger_contract::{
-    append, append_hash, full, initial_state, known, place, place_default, place_hash, reset_tree,
+    PublicStateView, append, append_hash, full, initial_state, known, place, place_default,
+    place_hash, reset_tree,
 };
 use compact_rust_merkle_tree_oracle_fixture::types::MerkleTreeDigest;
 use midnight_compact_runtime as runtime;
@@ -105,6 +106,14 @@ fn assert_state(
     let tree = runtime::ledger::merkle_tree_view_at_path(state, &[0]).unwrap();
     assert_eq!(tree.first_free().unwrap().value(), first_free);
     assert!(tree.root().is_some());
+    let generated = PublicStateView::from(state);
+    let typed = generated.t().unwrap();
+    assert_eq!(typed.root(), tree.root(), "generated root at {step}");
+    assert_eq!(
+        typed.first_free().unwrap(),
+        tree.first_free().unwrap(),
+        "generated first_free at {step}"
+    );
 }
 
 #[test]
@@ -177,6 +186,11 @@ fn merkle_tree_operations_match_typescript_state_bytes() {
     )
     .unwrap();
     let path = tree.path_for_leaf(0, bounded::<255>(7)).unwrap();
+    let typed = PublicStateView::from(&after_append7).t().unwrap();
+    assert_eq!(
+        typed.path_for_leaf(0, bounded::<255>(7)).unwrap().root(),
+        path.root()
+    );
     assert_eq!(Some(path.root()), tree.root());
     let path_oracle = &oracle["pathFor7At0"];
     assert_eq!(path.leaf.value().to_string(), path_oracle["leaf"]);
@@ -230,6 +244,11 @@ fn merkle_tree_operations_match_typescript_state_bytes() {
         runtime::ledger::merkle_tree_view_at_path(after_place9.context.query.state.get_ref(), &[0])
             .unwrap();
     let path = tree.path_for_leaf(3, bounded::<255>(9)).unwrap();
+    let typed = PublicStateView::from(&after_place9).t().unwrap();
+    assert_eq!(
+        typed.path_for_leaf(3, bounded::<255>(9)).unwrap().root(),
+        path.root()
+    );
     assert_eq!(Some(path.root()), tree.root());
     let expected = &oracle["pathFor9At3"];
     assert_eq!(path.leaf.value().to_string(), expected["leaf"]);

@@ -14,9 +14,10 @@
 // limitations under the License.
 
 use compact_rust_merkle_path_witness_fixture::ledger_contract::{
-    LedgerView, TryWitnesses, append, append_h, check_witness_history, check_witness_merkle,
-    get_historic_path, get_path, initial_state,
+    LedgerView, PublicStateView, TryWitnesses, append, append_h, check_witness_history,
+    check_witness_merkle, get_historic_path, get_path, initial_state,
 };
+use compact_rust_merkle_path_witness_fixture::ledger_slots::{h, t};
 use compact_rust_merkle_path_witness_fixture::types::{MerkleTreeDigest, MerkleTreePath};
 use midnight_compact_runtime as runtime;
 use midnight_onchain_state::state::{
@@ -27,6 +28,7 @@ use midnight_storage::storage::HashMap;
 use runtime::CompactError;
 use runtime::context::{ConstructorContext, RunningCost, WitnessContext};
 use runtime::ledger::{ContractAddress, DefaultDB, StateValue};
+use runtime::slots::MerkleSlot;
 
 struct PathWitness;
 
@@ -137,6 +139,115 @@ impl TryWitnesses<()> for PathWitness {
         let known_prior = tree.check_root(MerkleTreeDigest { field: prior.0 })?;
         Ok(((), !full && known && known_prior))
     }
+}
+
+#[test]
+fn generated_local_merkle_views_preserve_kind_leaf_and_depth() {
+    type Leaf = runtime::BoundedUint<255>;
+    let leaf = Leaf::new(7).unwrap();
+    let initial = initial_state(ConstructorContext::new(())).unwrap();
+    let initial_view = PublicStateView::from(&initial);
+    assert_eq!(initial_view.t().unwrap().first_free().unwrap().value(), 0);
+    assert_eq!(initial_view.h().unwrap().first_free().unwrap().value(), 0);
+    assert_eq!(
+        runtime::slots::PlainMerkleStateView::<Leaf, 3, DefaultDB>::DECLARED_DEPTH,
+        3
+    );
+    assert!(matches!(
+        MerkleSlot::<Leaf, 4, false>::new(&[0]).inspect(initial.ledger_state.get_ref()),
+        Err(CompactError::InvalidLedgerCell(_))
+    ));
+    assert!(matches!(
+        MerkleSlot::<Leaf, 4, true>::new(&[1]).inspect(initial.ledger_state.get_ref()),
+        Err(CompactError::InvalidLedgerCell(_))
+    ));
+
+    let plain = append(
+        initial.into_circuit_context(ContractAddress::default()),
+        leaf,
+    )
+    .unwrap();
+    {
+        let view = PublicStateView::from(&plain);
+        let generated = view.t().unwrap();
+        let raw =
+            runtime::ledger::merkle_tree_view_at_path(plain.context.query.state.get_ref(), &[0])
+                .unwrap();
+        assert_eq!(generated.root(), raw.root());
+        assert_eq!(generated.first_free().unwrap(), raw.first_free().unwrap());
+        assert_eq!(
+            generated.path_for_leaf(0, leaf).unwrap().root(),
+            raw.path_for_leaf(0, leaf).unwrap().root()
+        );
+        assert!(generated.path_for_leaf(8, leaf).is_err());
+        assert_ne!(
+            generated
+                .path_for_leaf(0, Leaf::new(8).unwrap())
+                .unwrap()
+                .root(),
+            generated.root().unwrap()
+        );
+    }
+
+    let historic = append_h(plain.context, leaf).unwrap();
+    let view = PublicStateView::from(&historic);
+    let generated = view.h().unwrap();
+    let raw = runtime::ledger::historic_merkle_tree_view_at_path(
+        historic.context.query.state.get_ref(),
+        &[1],
+    )
+    .unwrap();
+    assert_eq!(generated.root(), raw.root());
+    assert_eq!(generated.first_free().unwrap(), raw.first_free().unwrap());
+    assert_eq!(generated.history().unwrap(), raw.history().unwrap());
+    assert!(generated.contains_root(generated.root().unwrap()));
+    assert_eq!(
+        generated.path_for_leaf(0, leaf).unwrap().root(),
+        raw.path_for_leaf(0, leaf).unwrap().root()
+    );
+
+    let broken_plain = StateValue::Array(
+        vec![
+            StateValue::Null,
+            runtime::ledger::constructor_historic_merkle_tree::<DefaultDB>(3),
+        ]
+        .into(),
+    );
+    assert!(t.inspect(&broken_plain).is_err());
+    let historic = runtime::ledger::constructor_historic_merkle_tree::<DefaultDB>(3);
+    let StateValue::Array(fields) = &historic else {
+        unreachable!()
+    };
+    let bad_history = StateValue::Array(
+        vec![
+            fields.get(0).unwrap().clone(),
+            fields.get(1).unwrap().clone(),
+            StateValue::Null,
+        ]
+        .into(),
+    );
+    let broken_history = StateValue::Array(
+        vec![
+            runtime::ledger::constructor_merkle_tree::<DefaultDB>(3),
+            bad_history,
+        ]
+        .into(),
+    );
+    assert!(h.inspect(&broken_history).is_err());
+    let plain = runtime::ledger::constructor_merkle_tree::<DefaultDB>(3);
+    let StateValue::Array(fields) = &plain else {
+        unreachable!()
+    };
+    let bad_first_free =
+        StateValue::Array(vec![fields.get(0).unwrap().clone(), StateValue::Null].into());
+    let broken_first_free = StateValue::Array(
+        vec![
+            bad_first_free,
+            runtime::ledger::constructor_historic_merkle_tree::<DefaultDB>(3),
+        ]
+        .into(),
+    );
+    assert!(t.inspect(&broken_first_free).unwrap().first_free().is_err());
 }
 
 #[test]

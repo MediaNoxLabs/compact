@@ -14,14 +14,33 @@
 // limitations under the License.
 
 use compact_rust_jubjub_cell_fixture::ledger_contract::{
-    initial_state, read_box, read_point, set_box, set_point,
+    initial_state, read_box, read_point, recorded, set_box, set_point,
 };
 use compact_rust_jubjub_cell_fixture::types::PointBox;
 use midnight_compact_runtime::context::ConstructorContext;
 use midnight_compact_runtime::ledger::{ContractAddress, StateValue, read_cell};
+use midnight_compact_runtime::recording::RecordedCircuitResult;
 use midnight_compact_runtime::{
     BinaryHashRepr, Field, FieldRepr, FromFieldRepr, JubjubPoint, hash_to_curve,
 };
+
+fn assert_replay<Output>(call: &RecordedCircuitResult<(), Output>) {
+    let replay = call
+        .public
+        .initial()
+        .query(
+            call.public.verify_ops(),
+            None,
+            &call.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(
+        replay.context.state.get_ref(),
+        call.execution.context.query.state.get_ref()
+    );
+    assert_eq!(replay.context.effects, call.execution.context.query.effects);
+    assert_eq!(replay.gas_cost, call.execution.gas_cost);
+}
 
 fn assert_coords(point: JubjubPoint, oracle: &serde_json::Value) {
     assert_eq!(
@@ -88,4 +107,56 @@ fn point_and_struct_cells_round_trip_with_compact_default_encoding() {
     let expected_count: u64 = oracle["boxed"]["count"].as_str().unwrap().parse().unwrap();
     assert_eq!(read.result.count, Field::from(expected_count));
     assert_eq!(PointBox::from_field_repr(&boxed.field_vec()), Some(boxed));
+}
+
+#[test]
+fn recorded_point_and_box_match_native_typescript_and_replay() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/jubjub-cell.json"
+    ))
+    .unwrap();
+    let native = initial_state(ConstructorContext::new(())).unwrap();
+    let recording = initial_state(ConstructorContext::new(())).unwrap();
+    let native = native.into_circuit_context(ContractAddress::default());
+    let recording = recording.into_circuit_context(ContractAddress::default());
+
+    let native_read = read_point(native).unwrap();
+    let recorded_read = recorded::read_point(recording).unwrap();
+    assert_replay(&recorded_read);
+    assert_eq!(recorded_read.execution.result, native_read.result);
+    assert_coords(recorded_read.execution.result, &oracle["before"]);
+    assert_eq!(recorded_read.execution.gas_cost, native_read.gas_cost);
+
+    let point = hash_to_curve(Field::from(42_u64));
+    let native_write = set_point(native_read.context, point).unwrap();
+    let recorded_write = recorded::set_point(recorded_read.execution.context, point).unwrap();
+    assert_replay(&recorded_write);
+    assert_eq!(recorded_write.execution.gas_cost, native_write.gas_cost);
+
+    let native_read = read_point(native_write.context).unwrap();
+    let recorded_read = recorded::read_point(recorded_write.execution.context).unwrap();
+    assert_replay(&recorded_read);
+    assert_eq!(recorded_read.execution.result, native_read.result);
+    assert_coords(recorded_read.execution.result, &oracle["after"]);
+    assert_eq!(recorded_read.execution.gas_cost, native_read.gas_cost);
+
+    let boxed = PointBox {
+        point,
+        count: Field::from(7_u64),
+    };
+    let native_write = set_box(native_read.context, boxed.clone()).unwrap();
+    let recorded_write = recorded::set_box(recorded_read.execution.context, boxed.clone()).unwrap();
+    assert_replay(&recorded_write);
+    assert_eq!(recorded_write.execution.gas_cost, native_write.gas_cost);
+
+    let native_read = read_box(native_write.context).unwrap();
+    let recorded_read = recorded::read_box(recorded_write.execution.context).unwrap();
+    assert_replay(&recorded_read);
+    assert_eq!(recorded_read.execution.result, native_read.result);
+    assert_coords(
+        recorded_read.execution.result.point,
+        &oracle["boxed"]["point"],
+    );
+    assert_eq!(recorded_read.execution.result.count, boxed.count);
+    assert_eq!(recorded_read.execution.gas_cost, native_read.gas_cost);
 }

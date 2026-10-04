@@ -1669,6 +1669,7 @@ version = "0.1.0"
 dependencies = [
  "compact-rust-cell-boolean-fixture",
  "compact-rust-cell-read-fixture",
+ "compact-rust-cell-struct-fixture",
  "compact-rust-chunked-cell-fixture",
  "compact-rust-chunked-list-fixture",
  "compact-rust-chunked-map-fixture",

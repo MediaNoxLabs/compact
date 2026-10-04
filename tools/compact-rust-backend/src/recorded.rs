@@ -206,6 +206,25 @@ fn contains_cell_read(value: &Expr) -> bool {
     }
 }
 
+/// These generated Rust types implement the runtime's existing `CellValue`
+/// contract, including aligned FAB encoding and checked readback.
+fn recordable_cell_type(ty: &Type) -> bool {
+    match ty {
+        Type::Boolean
+        | Type::Field
+        | Type::JubjubPoint
+        | Type::Bytes { .. }
+        | Type::Unsigned { .. }
+        | Type::Enum { .. } => true,
+        Type::Struct { fields, .. } => fields.iter().all(|field| recordable_cell_type(&field.ty)),
+        Type::Tuple { elements } => {
+            !elements.is_empty() && elements.len() <= 8 && elements.iter().all(recordable_cell_type)
+        }
+        Type::Vector { element, .. } => recordable_cell_type(element),
+        Type::Unit | Type::OpaqueString | Type::OpaqueBytes | Type::LedgerMap { .. } => false,
+    }
+}
+
 /// Emit a replayable public VM trace for supported root Cell, Counter, Set, Map, List,
 /// and plain/historic Merkle append
 /// operations, including witnessed Cell values. Unsupported circuits have no
@@ -518,6 +537,7 @@ fn render_recorded_item(
             ty,
             Type::Boolean
                 | Type::Field
+                | Type::JubjubPoint
                 | Type::Bytes { .. }
                 | Type::Unsigned { .. }
                 | Type::Enum { .. }
@@ -2085,14 +2105,7 @@ fn render_recorded_item(
                 let LedgerFieldKind::Cell { ty } = &declaration.declaration else {
                     return Ok(unavailable_action(action, path));
                 };
-                if !matches!(
-                    ty,
-                    Type::Boolean
-                        | Type::Field
-                        | Type::Bytes { .. }
-                        | Type::Unsigned { .. }
-                        | Type::Enum { .. }
-                ) {
+                if !recordable_cell_type(ty) {
                     return Ok(RecordingOutcome::Unsupported(
                         RecordingGap::unsupported_type(action, ty, format!("{path}.value")),
                     ));
@@ -2197,16 +2210,7 @@ fn render_recorded_item(
                 ),
             )
         }
-        StateReturn::CellRead { field, index }
-            if matches!(
-                circuit.result,
-                Type::Boolean
-                    | Type::Field
-                    | Type::Bytes { .. }
-                    | Type::Unsigned { .. }
-                    | Type::Enum { .. }
-            ) =>
-        {
+        StateReturn::CellRead { field, index } if recordable_cell_type(&circuit.result) => {
             let declaration = ledger_fields
                 .get(field.as_str())
                 .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;

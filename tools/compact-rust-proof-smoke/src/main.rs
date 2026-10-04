@@ -22,6 +22,7 @@
 
 use std::env;
 use std::error::Error;
+use std::ffi::OsStr;
 use std::fs::{self, File};
 use std::io::{self, BufReader};
 use std::path::{Path, PathBuf};
@@ -29,6 +30,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use compact_rust_cell_boolean_fixture::ledger_contract as cell_contract;
 use compact_rust_cell_read_fixture::ledger_contract as cell_read_contract;
+use compact_rust_cell_struct_fixture::ledger_contract as composite_cell_contract;
+use compact_rust_cell_struct_fixture::types::Pair;
 use compact_rust_chunked_cell_fixture::ledger_contract as chunked_cell_contract;
 use compact_rust_chunked_list_fixture::ledger_contract as chunked_list_contract;
 use compact_rust_chunked_map_fixture::ledger_contract as chunked_map_contract;
@@ -599,9 +602,70 @@ impl expression_contract::Witnesses<u64> for NestedSecret {
     }
 }
 
+fn check_composite_cell_proof(root: &Path) -> Result<(), Box<dyn Error>> {
+    let mut rng = StdRng::seed_from_u64(0x434f_4d50_4345_4c4c);
+    let value = Pair {
+        amount: Field::from(42_u64),
+        active: true,
+    };
+    let initial = composite_cell_contract::initial_state(ConstructorContext::new(()))?;
+    let deploy = make_deploy(
+        root,
+        "set_record",
+        initial.ledger_state.get_ref().clone(),
+        &mut rng,
+    )?;
+    let context = initial.into_circuit_context(deploy.address());
+    let recorded = composite_cell_contract::recorded::set_record(context, value.clone())?;
+    let call = check_generated_trace(root, "set_record", recorded, value.clone())?;
+    check_transaction(root, "set_record", deploy, call, &mut rng, |state| {
+        let StateValue::Array(fields) = state.data.get_ref() else {
+            return Err("composite Cell state is not an array".into());
+        };
+        if read_cell::<Pair, _>(fields.get(0).ok_or("composite Cell missing")?)? != value {
+            return Err("proven composite Cell write differs from expected value".into());
+        }
+        Ok(())
+    })?;
+
+    let initial = composite_cell_contract::initial_state(ConstructorContext::new(()))?;
+    let deploy = make_deploy(
+        root,
+        "read_record",
+        initial.ledger_state.get_ref().clone(),
+        &mut rng,
+    )?;
+    let context = initial.into_circuit_context(deploy.address());
+    let recorded = composite_cell_contract::recorded::read_record(context)?;
+    if recorded.execution.result != Pair::default() {
+        return Err("fresh composite Cell read differs from default".into());
+    }
+    let call = check_generated_trace(root, "read_record", recorded, ())?;
+    check_transaction(root, "read_record", deploy, call, &mut rng, |state| {
+        let StateValue::Array(fields) = state.data.get_ref() else {
+            return Err("composite Cell read state is not an array".into());
+        };
+        if read_cell::<Pair, _>(fields.get(0).ok_or("composite Cell missing")?)? != Pair::default()
+        {
+            return Err("proven composite Cell read changed the state".into());
+        }
+        Ok(())
+    })
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     let mut arguments = env::args_os().skip(1);
-    let counter_root = arguments.next().ok_or(
+    let first = arguments.next();
+    if first.as_deref() == Some(OsStr::new("--composite-cell")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --composite-cell <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err("usage: compact-rust-proof-smoke --composite-cell <proof-output>".into());
+        }
+        return check_composite_cell_proof(Path::new(&root));
+    }
+    let counter_root = first.ok_or(
         "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output>",
     )?;
     let cell_root = arguments.next().ok_or(

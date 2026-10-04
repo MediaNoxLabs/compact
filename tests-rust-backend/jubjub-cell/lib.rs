@@ -174,19 +174,177 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
+    /// Circuits with a replayable ordered ledger program.
+    pub mod recorded {
+        use midnight_compact_runtime as runtime;
+        pub fn set_point<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::JubjubPoint,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let frame = crate::ledger_slots::point.record_write(frame, __compact_param_0)?;
+            Ok(frame.finish(()))
+        }
+        pub fn read_point<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<
+            runtime::recording::RecordedCircuitResult<Private, runtime::JubjubPoint>,
+            runtime::CompactError,
+        > {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, observed): (_, runtime::JubjubPoint) =
+                crate::ledger_slots::point.record_read(frame)?;
+            Ok(frame.finish(observed))
+        }
+        pub fn set_box<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: crate::types::PointBox,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let frame =
+                crate::ledger_slots::boxed.record_write(frame, (__compact_param_0).clone())?;
+            Ok(frame.finish(()))
+        }
+        pub fn read_box<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<
+            runtime::recording::RecordedCircuitResult<Private, crate::types::PointBox>,
+            runtime::CompactError,
+        > {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, observed): (_, crate::types::PointBox) =
+                crate::ledger_slots::boxed.record_read(frame)?;
+            Ok(frame.finish(observed))
+        }
+        /// Typed handle for circuits with a complete recorded trace.
+        pub struct Contract;
+        impl Contract {
+            pub fn set_point<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                value: runtime::JubjubPoint,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::set_point(context, value)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn set_point_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                value: runtime::JubjubPoint,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(value);
+                let recorded = self.set_point(observed.circuit_context(private_state), value)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "set_point",
+                    input,
+                ))
+            }
+            pub fn read_point<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, runtime::JubjubPoint>,
+                runtime::CompactError,
+            > {
+                crate::ledger_contract::recorded::read_point(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn read_point_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, runtime::JubjubPoint>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.read_point(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "read_point",
+                    input,
+                ))
+            }
+            pub fn set_box<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                value: crate::types::PointBox,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::set_box(context, value)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn set_box_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                value: crate::types::PointBox,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from((value).clone());
+                let recorded = self.set_box(observed.circuit_context(private_state), value)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "set_box", input,
+                ))
+            }
+            pub fn read_box<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, crate::types::PointBox>,
+                runtime::CompactError,
+            > {
+                crate::ledger_contract::recorded::read_box(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn read_box_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, crate::types::PointBox>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.read_box(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "read_box", input,
+                ))
+            }
+        }
+    }
     /// Groups the contract's exported circuits for Rust consumers.
     pub struct Contract<W> {
         #[allow(dead_code)]
         witnesses: W,
+        pub recording: recorded::Contract,
     }
     impl<W> From<W> for Contract<W> {
         fn from(witnesses: W) -> Self {
-            Self { witnesses }
+            Self {
+                witnesses,
+                recording: recorded::Contract,
+            }
         }
     }
     impl Default for Contract<()> {
         fn default() -> Self {
-            Self { witnesses: () }
+            Self {
+                witnesses: (),
+                recording: recorded::Contract,
+            }
         }
     }
     impl<W> Contract<W> {
@@ -221,6 +379,10 @@ pub mod ledger_contract {
             runtime::CompactError,
         > {
             crate::ledger_contract::read_box(context)
+        }
+        /// Access replayable circuit calls for this contract.
+        pub fn recording(&self) -> &recorded::Contract {
+            &self.recording
         }
     }
 }

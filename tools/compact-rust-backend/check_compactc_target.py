@@ -38,6 +38,7 @@ BUG11_SOURCE = ROOT / "examples/rust_backend/bug11_oracle.compact"
 MULTI_PL_CALL_SOURCE = ROOT / "examples/rust_backend/multi_pl_call_oracle.compact"
 PURE_SOURCE = ROOT / "examples/rust_backend/field_add.compact"
 CELL_SOURCE = ROOT / "examples/rust_backend/cell_boolean.compact"
+CELL_STRUCT_SOURCE = ROOT / "examples/rust_backend/cell_struct.compact"
 SET_SOURCE = ROOT / "examples/rust_backend/set_oracle.compact"
 SET_BOOLEAN_SOURCE = ROOT / "examples/rust_backend/set_boolean.compact"
 MAP_BOOLEAN_SOURCE = ROOT / "examples/rust_backend/map_boolean_field.compact"
@@ -1198,6 +1199,14 @@ def main() -> None:
                 assert (cell_read_proof / "keys" / f"read_flag.{extension}").is_file()
             for extension in ("zkir", "bzkir"):
                 assert (cell_read_proof / "zkir" / f"read_flag.{extension}").is_file()
+            composite_cell_proof = base / "composite-cell-proof"
+            run(compiler, "--target", "rust", "--rust-require-recording", str(CELL_STRUCT_SOURCE), str(composite_cell_proof))
+            check_manifest(composite_cell_proof)
+            for circuit in ("set_record", "read_record"):
+                for extension in ("prover", "verifier"):
+                    assert (composite_cell_proof / "keys" / f"{circuit}.{extension}").is_file()
+                for extension in ("zkir", "bzkir"):
+                    assert (composite_cell_proof / "zkir" / f"{circuit}.{extension}").is_file()
             witness_proof = base / "witness-proof"
             run(compiler, "--target", "rust", str(WITNESS_CELL_SOURCE), str(witness_proof))
             check_manifest(witness_proof)
@@ -1409,6 +1418,10 @@ def main() -> None:
                 str(chunked_cell_proof),
                 str(unsigned_proofs["uints"]),
                 str(unsigned_proofs["wide-uint"]),
+            )
+            run(
+                "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--composite-cell", str(composite_cell_proof),
             )
     print("compactc target boundary and manifest: passed")
 

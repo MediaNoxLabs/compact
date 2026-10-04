@@ -13,7 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use compact_rust_cell_struct_fixture::ledger_contract::{initial_state, read_record, set_record};
+use compact_rust_cell_struct_fixture::ledger_contract::{
+    initial_state, read_record, recorded, set_record,
+};
 use compact_rust_cell_struct_fixture::types::Pair;
 use midnight_compact_runtime::Field;
 use midnight_compact_runtime::context::ConstructorContext;
@@ -58,4 +60,62 @@ fn generated_struct_cell_has_ledger_alignment_and_round_trips() {
     assert_eq!(read_cell::<Pair, _>(fields.get(0).unwrap()).unwrap(), value);
     let read = read_record(result.context).unwrap();
     assert_eq!(read.result, value);
+}
+
+#[test]
+fn recorded_struct_write_and_read_match_native_and_replay() {
+    let value = Pair {
+        amount: Field::from(42_u64),
+        active: true,
+    };
+    let native = initial_state(ConstructorContext::new(())).unwrap();
+    let recorded_state = initial_state(ConstructorContext::new(())).unwrap();
+    let native = set_record(
+        native.into_circuit_context(ContractAddress::default()),
+        value.clone(),
+    )
+    .unwrap();
+    let write = recorded::set_record(
+        recorded_state.into_circuit_context(ContractAddress::default()),
+        value.clone(),
+    )
+    .unwrap();
+    let replay = write
+        .public
+        .initial()
+        .query(
+            write.public.verify_ops(),
+            None,
+            &write.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(write.public.verify_ops().len(), 3);
+    assert_eq!(
+        write.execution.context.query.state.get_ref(),
+        native.context.query.state.get_ref()
+    );
+    assert_eq!(
+        replay.context.state.get_ref(),
+        native.context.query.state.get_ref()
+    );
+    assert_eq!(write.execution.gas_cost, native.gas_cost);
+    assert_eq!(replay.gas_cost, native.gas_cost);
+
+    let native = read_record(native.context).unwrap();
+    let read = recorded::read_record(write.execution.context).unwrap();
+    let replay = read
+        .public
+        .initial()
+        .query(
+            read.public.verify_ops(),
+            None,
+            &read.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(read.public.verify_ops().len(), 3);
+    assert_eq!(native.result, value);
+    assert_eq!(read.execution.result, native.result);
+    assert_eq!(read.execution.context.query.effects, replay.context.effects);
+    assert_eq!(read.execution.gas_cost, native.gas_cost);
+    assert_eq!(replay.gas_cost, native.gas_cost);
 }

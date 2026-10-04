@@ -3053,10 +3053,7 @@ fn recording_gaps_follow_the_first_definite_ir_failure() {
 
 #[test]
 fn recording_gaps_include_unsupported_type_and_called_callee_path() {
-    let unsupported_cell_type = Type::Vector {
-        element: Box::new(Type::Boolean),
-        length: 2,
-    };
+    let unsupported_cell_type = Type::OpaqueString;
     let mut contract = Contract {
         schema_version: 8,
         type_aliases: vec![],

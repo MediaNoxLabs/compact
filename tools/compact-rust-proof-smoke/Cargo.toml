@@ -28,6 +28,7 @@ compact-rust-counter-parameter-fixture = { path = "../../tests-rust-backend/coun
 compact-rust-uints-oracle-fixture = { path = "../../tests-rust-backend/uints-oracle", features = ["ledger-transaction"] }
 compact-rust-wide-uint-oracle-fixture = { path = "../../tests-rust-backend/wide-uint-oracle", features = ["ledger-transaction"] }
 compact-rust-cell-boolean-fixture = { path = "../../tests-rust-backend/cell-boolean" }
+compact-rust-cell-struct-fixture = { path = "../../tests-rust-backend/cell-struct", features = ["ledger-transaction"] }
 compact-rust-cell-read-fixture = { path = "../../tests-rust-backend/cell-read" }
 compact-rust-set-boolean-fixture = { path = "../../tests-rust-backend/set-boolean" }
 compact-rust-set-oracle-fixture = { path = "../../tests-rust-backend/set-oracle" }

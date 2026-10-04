@@ -43,10 +43,41 @@ function snapshot() {
   state.balance = initial.currentContractState.balance;
   return Buffer.from(state.serialize()).toString('hex');
 }
+function gas(result) {
+  return Object.fromEntries(
+    Object.entries(result.gasCost).map(([name, value]) => [name, value.toString()]),
+  );
+}
+function operation(operation) {
+  if (typeof operation === 'string') return { kind: operation };
+  if (operation.push) return { kind: 'push', storage: operation.push.storage };
+  if (operation.ins) return { kind: 'ins', cached: operation.ins.cached, n: operation.ins.n };
+  if (operation.idx) {
+    const { cached, pushPath, path } = operation.idx;
+    return { kind: 'idx', cached, pushPath, pathLength: path.length };
+  }
+  if (operation.popeq) {
+    return {
+      kind: 'popeq', cached: operation.popeq.cached,
+      resultAtoms: operation.popeq.result.value.map((atom) => Array.from(atom)),
+    };
+  }
+  throw new Error(`unexpected operation: ${Object.keys(operation)}`);
+}
 const afterInit = Buffer.from(initial.currentContractState.serialize()).toString('hex');
-context = contract.circuits.set_small(context, 99n).context;
+const set99 = contract.circuits.set_small(context, 99n);
+context = set99.context;
 const afterSet99 = snapshot();
 const smallAfterSet99 = ledger(context.currentQueryContext.state).small.toString();
-context = contract.circuits.set_small(context, 0n).context;
+const set0 = contract.circuits.set_small(context, 0n);
+context = set0.context;
 const afterSet0 = snapshot();
-process.stdout.write(JSON.stringify({ afterInit, afterSet99, smallAfterSet99, afterSet0 }, null, 2) + '\n');
+process.stdout.write(JSON.stringify({
+  afterInit, afterSet99, smallAfterSet99, afterSet0,
+  set99Gas: gas(set99),
+  set99Transcript: set99.proofData.publicTranscript.map(operation),
+  set99PrivateTranscriptCount: set99.proofData.privateTranscriptOutputs.length,
+  set0Gas: gas(set0),
+  set0Transcript: set0.proofData.publicTranscript.map(operation),
+  set0PrivateTranscriptCount: set0.proofData.privateTranscriptOutputs.length,
+}, null, 2) + '\n');

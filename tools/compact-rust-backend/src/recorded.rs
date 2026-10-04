@@ -408,6 +408,11 @@ fn render_recorded_item(
                 let rust_ty = rust_type(ty).ok()?;
                 Some(syn::parse_quote!(<#rust_ty as Default>::default()))
             }
+            Expr::UnsignedLiteral { .. } if matches!(ty, Type::Unsigned { .. }) => {
+                let (rendered, actual) =
+                    expression_with_calls(value, parameters, &HashMap::new()).ok()?;
+                (actual == *ty).then_some(rendered)
+            }
             Expr::Vector { .. } if matches!(ty, Type::Vector { .. }) => {
                 let (rendered, actual) =
                     expression_with_calls(value, parameters, &HashMap::new()).ok()?;
@@ -1312,7 +1317,13 @@ fn render_recorded_item(
                         };
                         scoped.insert(binding.name.clone(), value);
                     } else if let Expr::WitnessCall { name, arguments } = &binding.value {
-                        if !matches!(binding.ty, Type::Boolean | Type::Field | Type::Bytes { .. }) {
+                        if !matches!(
+                            binding.ty,
+                            Type::Boolean
+                                | Type::Field
+                                | Type::Bytes { .. }
+                                | Type::Unsigned { .. }
+                        ) {
                             return Ok(false);
                         }
                         let declaration = witnesses
@@ -1897,7 +1908,11 @@ fn render_recorded_item(
                 };
                 if !matches!(
                     ty,
-                    Type::Boolean | Type::Field | Type::Bytes { .. } | Type::Enum { .. }
+                    Type::Boolean
+                        | Type::Field
+                        | Type::Bytes { .. }
+                        | Type::Unsigned { .. }
+                        | Type::Enum { .. }
                 ) {
                     return Ok(false);
                 }
@@ -1999,7 +2014,11 @@ fn render_recorded_item(
         StateReturn::CellRead { field, index }
             if matches!(
                 circuit.result,
-                Type::Boolean | Type::Field | Type::Bytes { .. } | Type::Enum { .. }
+                Type::Boolean
+                    | Type::Field
+                    | Type::Bytes { .. }
+                    | Type::Unsigned { .. }
+                    | Type::Enum { .. }
             ) =>
         {
             let declaration = ledger_fields

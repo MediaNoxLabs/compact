@@ -3,5 +3,242 @@
   "initialValue": "0",
   "afterSet7": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a4c0008070804000401040408010404080403040c0004100801040414580304244801040304010801040401040104010807080000383472657365745f616e645f736574000400081c2000042408010404288c03043e7c21c8b7ce80eea63c5ba7ede8af939ede88f166019583eab0d1d4a639e9b513001814726573657408302000043408010404388c03043e7c34a5cb1597d7f709c1a9c4aee9b62b5477747f1d9289131892832ba7cb79c140202020202020202c20202020203c202008020804401403080104601408201844201003000400",
   "afterSet13": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a4c00080d0804000401040408010404080403040c000410080104041458030424480104030401080104040104010401080d080000383472657365745f616e645f736574000400081c2000042408010404288c03043e7c21c8b7ce80eea63c5ba7ede8af939ede88f166019583eab0d1d4a639e9b513001814726573657408302000043408010404388c03043e7c34a5cb1597d7f709c1a9c4aee9b62b5477747f1d9289131892832ba7cb79c140202020202020202c20202020203c202008020804401403080104601408201844201003000400",
-  "afterReset": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a4c0008400804000401040408010404080403040c0004100801040414580304244801040304010801040401040104010840080000383472657365745f616e645f736574000400081c2000042408010404288c03043e7c21c8b7ce80eea63c5ba7ede8af939ede88f166019583eab0d1d4a639e9b513001814726573657408302000043408010404388c03043e7c34a5cb1597d7f709c1a9c4aee9b62b5477747f1d9289131892832ba7cb79c140202020202020202c20202020203c202008020804401403080104601408201844201003000400"
+  "afterReset": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a4c0008400804000401040408010404080403040c0004100801040414580304244801040304010801040401040104010840080000383472657365745f616e645f736574000400081c2000042408010404288c03043e7c21c8b7ce80eea63c5ba7ede8af939ede88f166019583eab0d1d4a639e9b513001814726573657408302000043408010404388c03043e7c34a5cb1597d7f709c1a9c4aee9b62b5477747f1d9289131892832ba7cb79c140202020202020202c20202020203c202008020804401403080104601408201844201003000400",
+  "set7": {
+    "reportedGas": {
+      "readTime": "85000000",
+      "computeTime": "1233942932",
+      "bytesWritten": "36",
+      "bytesDeleted": "36"
+    },
+    "totalGas": {
+      "readTime": "170000000",
+      "computeTime": "2402191231",
+      "bytesWritten": "36",
+      "bytesDeleted": "36"
+    },
+    "queries": [
+      {
+        "gas": {
+          "readTime": "85000000",
+          "computeTime": "1168248299",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        },
+        "transcript": [
+          {
+            "kind": "push",
+            "storage": false
+          },
+          {
+            "kind": "push",
+            "storage": true
+          },
+          {
+            "kind": "ins",
+            "cached": false,
+            "n": 1
+          }
+        ]
+      },
+      {
+        "gas": {
+          "readTime": "85000000",
+          "computeTime": "1233942932",
+          "bytesWritten": "36",
+          "bytesDeleted": "36"
+        },
+        "transcript": [
+          {
+            "kind": "push",
+            "storage": false
+          },
+          {
+            "kind": "push",
+            "storage": true
+          },
+          {
+            "kind": "ins",
+            "cached": false,
+            "n": 1
+          }
+        ]
+      }
+    ],
+    "transcript": [
+      {
+        "kind": "push",
+        "storage": false
+      },
+      {
+        "kind": "push",
+        "storage": true
+      },
+      {
+        "kind": "ins",
+        "cached": false,
+        "n": 1
+      },
+      {
+        "kind": "push",
+        "storage": false
+      },
+      {
+        "kind": "push",
+        "storage": true
+      },
+      {
+        "kind": "ins",
+        "cached": false,
+        "n": 1
+      }
+    ],
+    "privateTranscriptCount": 0
+  },
+  "set13": {
+    "reportedGas": {
+      "readTime": "85000000",
+      "computeTime": "1233942932",
+      "bytesWritten": "36",
+      "bytesDeleted": "36"
+    },
+    "totalGas": {
+      "readTime": "170000000",
+      "computeTime": "2467885864",
+      "bytesWritten": "72",
+      "bytesDeleted": "72"
+    },
+    "queries": [
+      {
+        "gas": {
+          "readTime": "85000000",
+          "computeTime": "1233942932",
+          "bytesWritten": "36",
+          "bytesDeleted": "36"
+        },
+        "transcript": [
+          {
+            "kind": "push",
+            "storage": false
+          },
+          {
+            "kind": "push",
+            "storage": true
+          },
+          {
+            "kind": "ins",
+            "cached": false,
+            "n": 1
+          }
+        ]
+      },
+      {
+        "gas": {
+          "readTime": "85000000",
+          "computeTime": "1233942932",
+          "bytesWritten": "36",
+          "bytesDeleted": "36"
+        },
+        "transcript": [
+          {
+            "kind": "push",
+            "storage": false
+          },
+          {
+            "kind": "push",
+            "storage": true
+          },
+          {
+            "kind": "ins",
+            "cached": false,
+            "n": 1
+          }
+        ]
+      }
+    ],
+    "transcript": [
+      {
+        "kind": "push",
+        "storage": false
+      },
+      {
+        "kind": "push",
+        "storage": true
+      },
+      {
+        "kind": "ins",
+        "cached": false,
+        "n": 1
+      },
+      {
+        "kind": "push",
+        "storage": false
+      },
+      {
+        "kind": "push",
+        "storage": true
+      },
+      {
+        "kind": "ins",
+        "cached": false,
+        "n": 1
+      }
+    ],
+    "privateTranscriptCount": 0
+  },
+  "reset": {
+    "reportedGas": {
+      "readTime": "85000000",
+      "computeTime": "1233942932",
+      "bytesWritten": "36",
+      "bytesDeleted": "36"
+    },
+    "totalGas": {
+      "readTime": "85000000",
+      "computeTime": "1233942932",
+      "bytesWritten": "36",
+      "bytesDeleted": "36"
+    },
+    "queries": [
+      {
+        "gas": {
+          "readTime": "85000000",
+          "computeTime": "1233942932",
+          "bytesWritten": "36",
+          "bytesDeleted": "36"
+        },
+        "transcript": [
+          {
+            "kind": "push",
+            "storage": false
+          },
+          {
+            "kind": "push",
+            "storage": true
+          },
+          {
+            "kind": "ins",
+            "cached": false,
+            "n": 1
+          }
+        ]
+      }
+    ],
+    "transcript": [
+      {
+        "kind": "push",
+        "storage": false
+      },
+      {
+        "kind": "push",
+        "storage": true
+      },
+      {
+        "kind": "ins",
+        "cached": false,
+        "n": 1
+      }
+    ],
+    "privateTranscriptCount": 0
+  }
 }

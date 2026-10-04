@@ -51,7 +51,9 @@ use compact_rust_set_boolean_fixture::ledger_contract as set_contract;
 use compact_rust_set_oracle_fixture::ledger_contract as set_oracle_contract;
 use compact_rust_stateful_circuit_call_fixture::ledger_contract as nested_contract;
 use compact_rust_tiny_oracle_fixture::ledger_contract as tiny_contract;
+use compact_rust_uints_oracle_fixture::ledger_contract as uints_contract;
 use compact_rust_vector_key_adt_fixture::ledger_contract as vector_key_contract;
+use compact_rust_wide_uint_oracle_fixture::ledger_contract as wide_contract;
 use compact_rust_witness_cell_write_fixture::ledger_contract as witness_contract;
 use compact_rust_witness_list_shapes_fixture::ledger_contract as list_shapes_contract;
 use compact_rust_witness_list_shapes_fixture::types::{Choice as ListChoice, Packet};
@@ -70,7 +72,7 @@ use midnight_compact_runtime::transaction::{
     CallSpec, Observation, ObservedCallError, ObservedContractState, RecordedCall,
     decode_verifier_key, prepare_call,
 };
-use midnight_compact_runtime::{BoundedUint, FixedBytes, FixedVector};
+use midnight_compact_runtime::{BoundedUint, FixedBytes, FixedVector, WideUint};
 use midnight_ledger::construct::{ContractCallExt, ContractCallPrototype};
 use midnight_ledger::semantics::{TransactionContext, TransactionResult};
 use midnight_ledger::structure::{
@@ -553,6 +555,22 @@ impl witness_contract::Witnesses<u64> for Secret {
 
 struct NestedSecret;
 
+type Uint248 = WideUint<{ (1_u128 << 120) - 1 }, { u128::MAX }>;
+
+struct WideSecret;
+
+impl wide_contract::Witnesses<u64> for WideSecret {
+    fn nextWide(
+        &self,
+        context: WitnessContext<'_, u64, wide_contract::LedgerView<'_>>,
+    ) -> (u64, Uint248) {
+        (
+            *context.private_state + 1,
+            Uint248::from_le_bytes(&[0xff; 31]).expect("Uint<248> maximum is valid"),
+        )
+    }
+}
+
 struct TinySecret;
 
 impl tiny_contract::Witnesses<()> for TinySecret {
@@ -614,9 +632,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     let chunked_list_root = arguments.next();
     let chunked_map_root = arguments.next();
     let chunked_cell_root = arguments.next();
+    let uints_root = arguments.next();
+    let wide_root = arguments.next();
     if arguments.next().is_some() {
         return Err(
-            "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output> [witness-output] [nested-output] [nested-witness-output] [set-output] [set-oracle-output] [map-output] [constructor-map-output] [list-output] [constructor-list-output] [enum-cell-output] [tiny-output] [nested-map-shape-output] [list-shapes-output] [merkle-output] [historic-merkle-output] [vector-key-output] [counter-parameter-output] [composite-key-output] [chunked-set-output] [chunked-list-output] [chunked-map-output] [chunked-cell-output]"
+            "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output> [witness-output] [nested-output] [nested-witness-output] [set-output] [set-oracle-output] [map-output] [constructor-map-output] [list-output] [constructor-list-output] [enum-cell-output] [tiny-output] [nested-map-shape-output] [list-shapes-output] [merkle-output] [historic-merkle-output] [vector-key-output] [counter-parameter-output] [composite-key-output] [chunked-set-output] [chunked-list-output] [chunked-map-output] [chunked-cell-output] [uints-output] [wide-uint-output]"
                 .into(),
         );
     }
@@ -3030,6 +3050,125 @@ fn main() -> Result<(), Box<dyn Error>> {
                 Ok(())
             })?;
         }
+    }
+    if let Some(root) = uints_root.as_ref().map(Path::new) {
+        let initial = uints_contract::initial_state(ConstructorContext::new(()))?;
+        let deploy = make_deploy(
+            root,
+            "set_byte",
+            initial.ledger_state.get_ref().clone(),
+            &mut rng,
+        )?;
+        let amount = BoundedUint::<255>::new(255)?;
+        let contract = uints_contract::Contract::default();
+        let recorded = contract
+            .recording
+            .set_byte(initial.into_circuit_context(deploy.address()), amount)?;
+        let manual = check_generated_trace(root, "set_byte", recorded, amount)?;
+        let observed = ObservedContractState::new(
+            deploy.address(),
+            deploy.initial_state.clone(),
+            Observation {
+                transaction_hash: [0; 32],
+                block_hash: [0; 32],
+                block_height: 0,
+            },
+        );
+        let verifier = decode_verifier_key(&fs::read(root.join("keys/set_byte.verifier"))?)?;
+        let typed = contract
+            .recording
+            .set_byte_call(&observed, (), amount)?
+            .prepare(verifier, Fr::from(0_u64))?;
+        check_observed_call_parity(root, "set_byte", &deploy, &manual, &typed)?;
+        check_transaction(root, "set_byte", deploy, typed, &mut rng, |state| {
+            let byte = read_cell_at_path::<BoundedUint<255>, _>(state.data.get_ref(), &[0])?;
+            if byte.value() != 255 {
+                return Err("proven Uint<8> Cell write did not persist 255".into());
+            }
+            Ok(())
+        })?;
+    }
+    if let Some(root) = wide_root.as_ref().map(Path::new) {
+        let contract = wide_contract::Contract::from(WideSecret);
+        let maximum = Uint248::from_le_bytes(&[0xff; 31])?;
+        let initial = wide_contract::initial_state(ConstructorContext::new(7_u64))?;
+        let deploy = make_deploy(
+            root,
+            "writeWide",
+            initial.ledger_state.get_ref().clone(),
+            &mut rng,
+        )?;
+        let recorded = contract
+            .recording()
+            .writeWide(initial.into_circuit_context(deploy.address()))?;
+        if recorded.execution.context.private_state != 8_u64 {
+            return Err("recorded Uint<248> witness did not advance private state".into());
+        }
+        let manual = check_generated_trace(root, "writeWide", recorded, ())?;
+        let observed = ObservedContractState::new(
+            deploy.address(),
+            deploy.initial_state.clone(),
+            Observation {
+                transaction_hash: [0; 32],
+                block_hash: [0; 32],
+                block_height: 0,
+            },
+        );
+        let verifier = decode_verifier_key(&fs::read(root.join("keys/writeWide.verifier"))?)?;
+        let typed = contract
+            .recording()
+            .writeWide_call(&observed, 7_u64)?
+            .prepare(verifier, Fr::from(0_u64))?;
+        check_observed_call_parity(root, "writeWide", &deploy, &manual, &typed)?;
+        check_transaction(root, "writeWide", deploy, typed, &mut rng, |state| {
+            let wide = read_cell_at_path::<Uint248, _>(state.data.get_ref(), &[0])?;
+            if wide != maximum {
+                return Err("proven Uint<248> witness write did not persist maximum".into());
+            }
+            Ok(())
+        })?;
+
+        // Prove a read against a seeded deployment whose Cell contains the
+        // same witness value. The write and read use separate deployments;
+        // this check does not imply a chained ledger transaction history.
+        let initial = wide_contract::initial_state(ConstructorContext::new(7_u64))?;
+        let seeded = wide_contract::writeWide(
+            initial.into_circuit_context(Default::default()),
+            &WideSecret,
+        )?;
+        let seed_state = seeded.context.query.state.get_ref().clone();
+        let deploy = make_deploy(root, "readWide", seed_state.clone(), &mut rng)?;
+        let context = midnight_compact_runtime::context::CircuitContext::from_contract_state(
+            7_u64,
+            deploy.address(),
+            &deploy.initial_state,
+        );
+        let recorded = contract.recording().readWide(context)?;
+        if recorded.execution.result != maximum {
+            return Err("recorded Uint<248> Cell read differed from seeded value".into());
+        }
+        let manual = check_generated_trace(root, "readWide", recorded, ())?;
+        let observed = ObservedContractState::new(
+            deploy.address(),
+            deploy.initial_state.clone(),
+            Observation {
+                transaction_hash: [0; 32],
+                block_hash: [0; 32],
+                block_height: 0,
+            },
+        );
+        let verifier = decode_verifier_key(&fs::read(root.join("keys/readWide.verifier"))?)?;
+        let typed = contract
+            .recording()
+            .readWide_call(&observed, 7_u64)?
+            .prepare(verifier, Fr::from(0_u64))?;
+        check_observed_call_parity(root, "readWide", &deploy, &manual, &typed)?;
+        check_transaction(root, "readWide", deploy, typed, &mut rng, |state| {
+            if state.data.get_ref() != &seed_state {
+                return Err("proven Uint<248> Cell read changed ledger state".into());
+            }
+            Ok(())
+        })?;
     }
     Ok(())
 }

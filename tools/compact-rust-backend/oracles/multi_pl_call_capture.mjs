@@ -23,6 +23,37 @@ const contractIndex = resolve(process.argv[2], 'index.js');
 const requireFromContract = createRequire(contractIndex);
 const runtime = await import(pathToFileURL(requireFromContract.resolve('@midnight-ntwrk/compact-runtime')));
 const { Contract, ledger } = await import(pathToFileURL(contractIndex));
+const queryCosts = [];
+const originalQuery = runtime.QueryContext.prototype.query;
+runtime.QueryContext.prototype.query = function (...args) {
+  const result = originalQuery.call(this, ...args);
+  queryCosts.push({
+    gasCost: result.gasCost,
+    opTags: args[0].map((op) => typeof op === 'string' ? op : Object.keys(op)[0]),
+  });
+  return result;
+};
+function normalize(value) {
+  if (typeof value === 'bigint') return value.toString();
+  if (value instanceof Uint8Array) return { bytesHex: Buffer.from(value).toString('hex') };
+  if (Array.isArray(value)) return value.map(normalize);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([key, inner]) => [key, normalize(inner)]));
+  }
+  return value;
+}
+const calls = {};
+function capture(name, invoke) {
+  const start = queryCosts.length;
+  const output = invoke();
+  calls[name] = {
+    reportedGas: normalize(output.gasCost),
+    queries: normalize(queryCosts.slice(start)),
+    publicTranscript: normalize(output.proofData.publicTranscript),
+    privateOutputCount: output.proofData.privateTranscriptOutputs.length,
+  };
+  return output;
+}
 const contract = new Contract({});
 const coinPublicKey = { bytes: new Uint8Array(32) };
 const initial = contract.initialState({
@@ -48,10 +79,10 @@ function fields() {
   return { ops: view.ops.toString(), ver: view.ver.toString(), updated: view.updated.toString() };
 }
 const afterInit = Buffer.from(initial.currentContractState.serialize()).toString('hex');
-context = contract.circuits.record_update(context, 7n).context;
+context = capture('update7', () => contract.circuits.record_update(context, 7n)).context;
 const afterUpdate7 = snapshot();
 const fieldsAfterUpdate7 = fields();
-context = contract.circuits.record_update(context, 13n).context;
+context = capture('update13', () => contract.circuits.record_update(context, 13n)).context;
 const afterUpdate13 = snapshot();
 const fieldsAfterUpdate13 = fields();
-process.stdout.write(JSON.stringify({ afterInit, afterUpdate7, fieldsAfterUpdate7, afterUpdate13, fieldsAfterUpdate13 }, null, 2) + '\n');
+process.stdout.write(JSON.stringify({ afterInit, afterUpdate7, fieldsAfterUpdate7, afterUpdate13, fieldsAfterUpdate13, calls }, null, 2) + '\n');

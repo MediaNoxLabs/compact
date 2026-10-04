@@ -146,19 +146,136 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
+    /// Circuits with a replayable ordered ledger program.
+    pub mod recorded {
+        use midnight_compact_runtime as runtime;
+        pub fn set_tiny<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::BoundedUint<99>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let frame = crate::ledger_slots::tiny.record_write(frame, __compact_param_0)?;
+            Ok(frame.finish(()))
+        }
+        pub fn set_medium<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::BoundedUint<69999>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let frame = crate::ledger_slots::medium.record_write(frame, __compact_param_0)?;
+            Ok(frame.finish(()))
+        }
+        pub fn set_wide<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::BoundedUint<4999999999>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let frame = crate::ledger_slots::wide.record_write(frame, __compact_param_0)?;
+            Ok(frame.finish(()))
+        }
+        /// Typed handle for circuits with a complete recorded trace.
+        pub struct Contract;
+        impl Contract {
+            pub fn set_tiny<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                v: runtime::BoundedUint<99>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::set_tiny(context, v)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn set_tiny_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                v: runtime::BoundedUint<99>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(v);
+                let recorded = self.set_tiny(observed.circuit_context(private_state), v)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "set_tiny", input,
+                ))
+            }
+            pub fn set_medium<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                v: runtime::BoundedUint<69999>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::set_medium(context, v)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn set_medium_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                v: runtime::BoundedUint<69999>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(v);
+                let recorded = self.set_medium(observed.circuit_context(private_state), v)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "set_medium",
+                    input,
+                ))
+            }
+            pub fn set_wide<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                v: runtime::BoundedUint<4999999999>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::set_wide(context, v)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn set_wide_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                v: runtime::BoundedUint<4999999999>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(v);
+                let recorded = self.set_wide(observed.circuit_context(private_state), v)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "set_wide", input,
+                ))
+            }
+        }
+    }
     /// Groups the contract's exported circuits for Rust consumers.
     pub struct Contract<W> {
         #[allow(dead_code)]
         witnesses: W,
+        pub recording: recorded::Contract,
     }
     impl<W> From<W> for Contract<W> {
         fn from(witnesses: W) -> Self {
-            Self { witnesses }
+            Self {
+                witnesses,
+                recording: recorded::Contract,
+            }
         }
     }
     impl Default for Contract<()> {
         fn default() -> Self {
-            Self { witnesses: () }
+            Self {
+                witnesses: (),
+                recording: recorded::Contract,
+            }
         }
     }
     impl<W> Contract<W> {
@@ -182,6 +299,10 @@ pub mod ledger_contract {
             v: runtime::BoundedUint<4999999999>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
             crate::ledger_contract::set_wide(context, v)
+        }
+        /// Access replayable circuit calls for this contract.
+        pub fn recording(&self) -> &recorded::Contract {
+            &self.recording
         }
     }
 }

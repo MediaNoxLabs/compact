@@ -18,6 +18,49 @@
 import { pathToFileURL } from 'node:url';
 import * as runtime from '../../../runtime/dist/index.js';
 
+const queryCosts = [];
+const originalQuery = runtime.QueryContext.prototype.query;
+runtime.QueryContext.prototype.query = function (...args) {
+  const result = originalQuery.call(this, ...args);
+  queryCosts.push({
+    gasCost: result.gasCost,
+    opTags: args[0].map((op) => typeof op === 'string' ? op : Object.keys(op)[0]),
+  });
+  return result;
+};
+
+function normalize(value) {
+  if (typeof value === 'bigint') return value.toString();
+  if (value instanceof Uint8Array) return { bytesHex: Buffer.from(value).toString('hex') };
+  if (Array.isArray(value)) return value.map(normalize);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([key, inner]) => [key, normalize(inner)]));
+  }
+  return value;
+}
+
+function privateOutputs(output) {
+  return output.proofData.privateTranscriptOutputs.map(({ value, alignment }) => ({
+    valueAtoms: value.map((atom) => Array.from(atom)),
+    alignment,
+  }));
+}
+
+function capture(invoke) {
+  const start = queryCosts.length;
+  const output = invoke();
+  return {
+    output,
+    observations: {
+      reportedGas: normalize(output.gasCost),
+      queries: normalize(queryCosts.slice(start)),
+      publicTranscript: normalize(output.proofData.publicTranscript),
+      privateOutputCount: output.proofData.privateTranscriptOutputs.length,
+      privateTranscriptOutputs: privateOutputs(output),
+    },
+  };
+}
+
 const [contractPath] = process.argv.slice(2);
 if (!contractPath) throw new Error('expected contract/index.js');
 const { Contract, pureCircuits } = await import(pathToFileURL(contractPath).href);
@@ -35,22 +78,23 @@ const context = runtime.createCircuitContext(
   runtime.dummyContractAddress(), coinPublicKey,
   initial.currentContractState.data, initial.currentPrivateState,
 );
-const write = contract.circuits.writeWide(context);
+const { output: write, observations: writeWide } = capture(
+  () => contract.circuits.writeWide(context),
+);
 initial.currentContractState.data = new runtime.ChargedState(
   write.context.currentQueryContext.state.state,
 );
 const afterWriteHex = Buffer.from(initial.currentContractState.serialize()).toString('hex');
-const read = contract.circuits.readWide(write.context);
+const { output: read, observations: readWide } = capture(
+  () => contract.circuits.readWide(write.context),
+);
 process.stdout.write(JSON.stringify({
   initialHex,
   afterWriteHex,
   privateState: write.context.currentPrivateState,
   read: String(read.result),
   maxWide: String(pureCircuits.maxWide()),
-  privateTranscriptOutputs: write.proofData.privateTranscriptOutputs.map(
-    ({ value, alignment }) => ({
-      valueAtoms: value.map((atom) => Array.from(atom)),
-      alignment,
-    }),
-  ),
+  privateTranscriptOutputs: privateOutputs(write),
+  writeWide,
+  readWide,
 }, null, 2) + '\n');

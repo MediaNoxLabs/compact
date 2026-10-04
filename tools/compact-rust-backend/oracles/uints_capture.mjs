@@ -43,10 +43,41 @@ function snapshot() {
   state.balance = initial.currentContractState.balance;
   return Buffer.from(state.serialize()).toString('hex');
 }
+function gas(result) {
+  return Object.fromEntries(
+    Object.entries(result.gasCost).map(([name, value]) => [name, value.toString()]),
+  );
+}
+function operation(operation) {
+  if (typeof operation === 'string') return { kind: operation };
+  if (operation.push) return { kind: 'push', storage: operation.push.storage };
+  if (operation.ins) return { kind: 'ins', cached: operation.ins.cached, n: operation.ins.n };
+  if (operation.idx) {
+    const { cached, pushPath, path } = operation.idx;
+    return { kind: 'idx', cached, pushPath, pathLength: path.length };
+  }
+  if (operation.popeq) {
+    return {
+      kind: 'popeq', cached: operation.popeq.cached,
+      resultAtoms: operation.popeq.result.value.map((atom) => Array.from(atom)),
+    };
+  }
+  throw new Error(`unexpected operation: ${Object.keys(operation)}`);
+}
 const afterInit = Buffer.from(initial.currentContractState.serialize()).toString('hex');
-context = contract.circuits.set_byte(context, 255n).context;
+const set255 = contract.circuits.set_byte(context, 255n);
+context = set255.context;
 const afterSet255 = snapshot();
 const byteAfterSet255 = ledger(context.currentQueryContext.state).byte_field.toString();
-context = contract.circuits.set_byte(context, 0n).context;
+const set0 = contract.circuits.set_byte(context, 0n);
+context = set0.context;
 const afterSet0 = snapshot();
-process.stdout.write(JSON.stringify({ afterInit, afterSet255, byteAfterSet255, afterSet0 }, null, 2) + '\n');
+process.stdout.write(JSON.stringify({
+  afterInit, afterSet255, byteAfterSet255, afterSet0,
+  set255Gas: gas(set255),
+  set255Transcript: set255.proofData.publicTranscript.map(operation),
+  set255PrivateTranscriptCount: set255.proofData.privateTranscriptOutputs.length,
+  set0Gas: gas(set0),
+  set0Transcript: set0.proofData.publicTranscript.map(operation),
+  set0PrivateTranscriptCount: set0.proofData.privateTranscriptOutputs.length,
+}, null, 2) + '\n');

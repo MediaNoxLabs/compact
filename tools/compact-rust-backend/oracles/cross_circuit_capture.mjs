@@ -23,6 +23,27 @@ const contractIndex = resolve(process.argv[2], 'index.js');
 const requireFromContract = createRequire(contractIndex);
 const runtime = await import(pathToFileURL(requireFromContract.resolve('@midnight-ntwrk/compact-runtime')));
 const { Contract, ledger } = await import(pathToFileURL(contractIndex));
+function gas(cost) {
+  return Object.fromEntries(
+    Object.entries(cost).map(([name, value]) => [name, value.toString()]),
+  );
+}
+function operation(operation) {
+  if (typeof operation === 'string') return { kind: operation };
+  if (operation.push) return { kind: 'push', storage: operation.push.storage };
+  if (operation.ins) return { kind: 'ins', cached: operation.ins.cached, n: operation.ins.n };
+  if (operation.idx) {
+    const { cached, pushPath, path } = operation.idx;
+    return { kind: 'idx', cached, pushPath, pathLength: path.length };
+  }
+  if (operation.popeq) {
+    return {
+      kind: 'popeq', cached: operation.popeq.cached,
+      resultAtoms: operation.popeq.result.value.map((atom) => Array.from(atom)),
+    };
+  }
+  throw new Error(`unexpected operation: ${Object.keys(operation)}`);
+}
 const contract = new Contract({});
 const coinPublicKey = { bytes: new Uint8Array(32) };
 const initial = contract.initialState({
@@ -43,12 +64,43 @@ function snapshot() {
   state.balance = initial.currentContractState.balance;
   return Buffer.from(state.serialize()).toString('hex');
 }
+function sumGas(queries) {
+  return Object.fromEntries(
+    ['readTime', 'computeTime', 'bytesWritten', 'bytesDeleted'].map((name) => [
+      name,
+      queries.reduce((total, query) => total + BigInt(query.gas[name]), 0n).toString(),
+    ]),
+  );
+}
+function invoke(call) {
+  const firstQuery = queryCosts.length;
+  const result = call();
+  context = result.context;
+  const queries = queryCosts.slice(firstQuery);
+  return {
+    reportedGas: gas(result.gasCost),
+    totalGas: sumGas(queries),
+    queries,
+    transcript: result.proofData.publicTranscript.map(operation),
+    privateTranscriptCount: result.proofData.privateTranscriptOutputs.length,
+  };
+}
 const afterInit = Buffer.from(initial.currentContractState.serialize()).toString('hex');
 const initialValue = ledger(initial.currentContractState.data).n.toString();
-context = contract.circuits.reset_and_set(context, 7n).context;
+const queryCosts = [];
+const originalQuery = runtime.QueryContext.prototype.query;
+runtime.QueryContext.prototype.query = function (...args) {
+  const result = originalQuery.call(this, ...args);
+  queryCosts.push({ gas: gas(result.gasCost), transcript: args[0].map(operation) });
+  return result;
+};
+const set7 = invoke(() => contract.circuits.reset_and_set(context, 7n));
 const afterSet7 = snapshot();
-context = contract.circuits.reset_and_set(context, 13n).context;
+const set13 = invoke(() => contract.circuits.reset_and_set(context, 13n));
 const afterSet13 = snapshot();
-context = contract.circuits.reset(context).context;
+const reset = invoke(() => contract.circuits.reset(context));
 const afterReset = snapshot();
-process.stdout.write(JSON.stringify({ afterInit, initialValue, afterSet7, afterSet13, afterReset }, null, 2) + '\n');
+process.stdout.write(JSON.stringify({
+  afterInit, initialValue, afterSet7, afterSet13, afterReset,
+  set7, set13, reset,
+}, null, 2) + '\n');

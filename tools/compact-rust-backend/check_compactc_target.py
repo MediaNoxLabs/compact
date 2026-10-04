@@ -30,6 +30,12 @@ import tomllib
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "examples/rust_backend/counter.compact"
 COUNTER_PARAMETER_SOURCE = ROOT / "examples/rust_backend/counter_parameter.compact"
+BOUNDED_UINT_SOURCE = ROOT / "examples/rust_backend/bounded_uint_oracle.compact"
+UINTS_SOURCE = ROOT / "examples/rust_backend/uints_oracle.compact"
+CROSS_CIRCUIT_SOURCE = ROOT / "examples/rust_backend/cross_circuit_oracle.compact"
+WIDE_UINT_SOURCE = ROOT / "examples/rust_backend/wide_uint_oracle.compact"
+BUG11_SOURCE = ROOT / "examples/rust_backend/bug11_oracle.compact"
+MULTI_PL_CALL_SOURCE = ROOT / "examples/rust_backend/multi_pl_call_oracle.compact"
 PURE_SOURCE = ROOT / "examples/rust_backend/field_add.compact"
 CELL_SOURCE = ROOT / "examples/rust_backend/cell_boolean.compact"
 SET_SOURCE = ROOT / "examples/rust_backend/set_oracle.compact"
@@ -1155,6 +1161,27 @@ def main() -> None:
                     assert (counter_parameter_proof / "keys" / f"{circuit}.{extension}").is_file()
                 for extension in ("zkir", "bzkir"):
                     assert (counter_parameter_proof / "zkir" / f"{circuit}.{extension}").is_file()
+            unsigned_proofs = {}
+            for label, source, circuits in (
+                ("bounded-uint", BOUNDED_UINT_SOURCE, ("set_small",)),
+                ("uints", UINTS_SOURCE, ("set_byte",)),
+                ("cross-circuit", CROSS_CIRCUIT_SOURCE, ("reset", "reset_and_set")),
+                ("wide-uint", WIDE_UINT_SOURCE, ("writeWide", "readWide")),
+                ("bug11", BUG11_SOURCE, ("set_tiny", "set_medium", "set_wide")),
+                ("multi-pl-call", MULTI_PL_CALL_SOURCE, ("record_update",)),
+            ):
+                unsigned_proof = base / f"{label}-proof"
+                unsigned_proofs[label] = unsigned_proof
+                run(compiler, "--target", "rust", "--rust-require-recording", str(source), str(unsigned_proof))
+                check_manifest(unsigned_proof)
+                capabilities = json.loads((unsigned_proof / "contract/rust-capabilities.json").read_text())
+                assert {row["name"] for row in capabilities["circuits"]} == set(circuits)
+                assert all(row["recorded"] and row["observed_call"] for row in capabilities["circuits"])
+                for circuit in circuits:
+                    for extension in ("prover", "verifier"):
+                        assert (unsigned_proof / "keys" / f"{circuit}.{extension}").is_file()
+                    for extension in ("zkir", "bzkir"):
+                        assert (unsigned_proof / "zkir" / f"{circuit}.{extension}").is_file()
             cell_proof = base / "cell-proof"
             run(compiler, "--target", "rust", str(CELL_SOURCE), str(cell_proof))
             check_manifest(cell_proof)
@@ -1378,6 +1405,8 @@ def main() -> None:
                 str(chunked_list_proof),
                 str(chunked_map_proof),
                 str(chunked_cell_proof),
+                str(unsigned_proofs["uints"]),
+                str(unsigned_proofs["wide-uint"]),
             )
     print("compactc target boundary and manifest: passed")
 

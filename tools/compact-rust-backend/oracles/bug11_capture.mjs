@@ -23,6 +23,37 @@ const contractIndex = resolve(process.argv[2], 'index.js');
 const requireFromContract = createRequire(contractIndex);
 const runtime = await import(pathToFileURL(requireFromContract.resolve('@midnight-ntwrk/compact-runtime')));
 const { Contract, ledger } = await import(pathToFileURL(contractIndex));
+const queryCosts = [];
+const originalQuery = runtime.QueryContext.prototype.query;
+runtime.QueryContext.prototype.query = function (...args) {
+  const result = originalQuery.call(this, ...args);
+  queryCosts.push({
+    gasCost: result.gasCost,
+    opTags: args[0].map((op) => typeof op === 'string' ? op : Object.keys(op)[0]),
+  });
+  return result;
+};
+function normalize(value) {
+  if (typeof value === 'bigint') return value.toString();
+  if (value instanceof Uint8Array) return { bytesHex: Buffer.from(value).toString('hex') };
+  if (Array.isArray(value)) return value.map(normalize);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([key, inner]) => [key, normalize(inner)]));
+  }
+  return value;
+}
+const calls = {};
+function capture(name, invoke) {
+  const start = queryCosts.length;
+  const output = invoke();
+  calls[name] = {
+    reportedGas: normalize(output.gasCost),
+    queries: normalize(queryCosts.slice(start)),
+    publicTranscript: normalize(output.proofData.publicTranscript),
+    privateOutputCount: output.proofData.privateTranscriptOutputs.length,
+  };
+  return output;
+}
 const contract = new Contract({});
 const coinPublicKey = { bytes: new Uint8Array(32) };
 const initial = contract.initialState({
@@ -44,14 +75,15 @@ function snapshot() {
   return Buffer.from(state.serialize()).toString('hex');
 }
 const afterInit = Buffer.from(initial.currentContractState.serialize()).toString('hex');
-context = contract.circuits.set_tiny(context, 99n).context;
+context = capture('set_tiny', () => contract.circuits.set_tiny(context, 99n)).context;
 const afterTiny99 = snapshot();
-context = contract.circuits.set_medium(context, 69999n).context;
+context = capture('set_medium', () => contract.circuits.set_medium(context, 69999n)).context;
 const afterMedium69999 = snapshot();
-context = contract.circuits.set_wide(context, 4999999999n).context;
+context = capture('set_wide', () => contract.circuits.set_wide(context, 4999999999n)).context;
 const afterWide4999999999 = snapshot();
 const view = ledger(context.currentQueryContext.state);
 process.stdout.write(JSON.stringify({
   afterInit, afterTiny99, afterMedium69999, afterWide4999999999,
   values: { tiny: view.tiny.toString(), medium: view.medium.toString(), wide: view.wide.toString() },
+  calls,
 }, null, 2) + '\n');

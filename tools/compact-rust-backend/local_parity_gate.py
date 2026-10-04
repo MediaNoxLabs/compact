@@ -137,9 +137,17 @@ def run(command: list[str], label: str, directory: Path, receipt: dict,
 
 
 def validate_report(report: dict, source: Path) -> None:
-    if report.get("schema_version") != 2:
-        raise GateError(f"{source.name}: expected capability schema 2")
+    if report.get("schema_version") != 3:
+        raise GateError(f"{source.name}: expected capability schema 3")
     for circuit in report["circuits"]:
+        proof_required = circuit.get("proof_required")
+        if type(proof_required) is not bool:
+            raise GateError(f"{source.name}.{circuit['name']}: missing proof applicability")
+        expected_status = ("not_applicable" if not proof_required else
+                           "available" if circuit["recorded"] and circuit["observed_call"] else
+                           "unavailable")
+        if circuit.get("recording_status") != expected_status:
+            raise GateError(f"{source.name}.{circuit['name']}: recording status invariant")
         for available, unavailable in (("recorded", "recording_unavailable"),
                                        ("observed_call", "observed_call_unavailable")):
             gap = circuit.get(unavailable)
@@ -167,6 +175,8 @@ def proof_cross_tab(report: dict, contract_info: dict, source: Path) -> list[dic
     rows = []
     for circuit in capabilities:
         proof = proof_by_name[circuit["name"]]
+        if circuit["proof_required"] is not proof:
+            raise GateError(f"{source.name}.{circuit['name']}: proof applicability disagrees with contract-info")
         if circuit["recorded"] and not proof:
             raise GateError(f"{source.name}.{circuit['name']}: recorded nonproof circuit")
         rows.append({"name": circuit["name"], "proof": proof,

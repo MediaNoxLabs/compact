@@ -452,6 +452,11 @@ nonproof native circuits. The receipt is kept in the printed run
 directory. It records what ran; a dirty worktree remains visible in the
 receipt.
 
+The focused gate requires the published schema-3 capability report. It checks
+`proof_required` and `recording_status` against the compiler's own
+`contract-info.json` for every exported circuit; extra nonexported helper
+circuits in that metadata are allowed.
+
 ```sh
 python3 tools/compact-rust-backend/local_parity_gate.py \
   --source bounded_uint_oracle --source wide_uint_oracle \

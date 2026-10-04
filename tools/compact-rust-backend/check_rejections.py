@@ -348,9 +348,16 @@ def check_proof_capabilities(compactc: str, directory: Path) -> list[str]:
         if statuses.get("verify") != (True, "available") or statuses.get("replace") != (True, "unavailable"):
             failures.append(f"Merkle proof capability statuses are wrong: {statuses}")
     witness_assert = ROOT / "examples/rust_backend/assert_witness.compact"
-    rejected = compile_source(witness_assert, directory / "assert-proof-aware", True)
-    if rejected.returncode == 0 or 'exported circuit "checked_value"' in rejected.stderr:
-        failures.append(f"proof-false Assert was treated as a strict gap:\n{rejected.stderr}")
+    accepted = compile_source(witness_assert, directory / "assert-proof-aware", True)
+    if accepted.returncode:
+        failures.append(f"recorded Boolean witness Assert failed strict recording:\n{accepted.stderr}")
+    else:
+        report = json.loads((directory / "assert-proof-aware/contract/rust-capabilities.json").read_text())
+        statuses = {item["name"]: (item["proof_required"], item["recording_status"])
+                    for item in report["circuits"]}
+        if statuses.get("checked_value") != (False, "not_applicable") \
+                or statuses.get("checked_write") != (True, "available"):
+            failures.append(f"witness Assert proof applicability changed unexpectedly: {statuses}")
     return failures
 
 

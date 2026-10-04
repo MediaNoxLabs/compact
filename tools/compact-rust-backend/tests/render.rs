@@ -1974,6 +1974,116 @@ fn enum_set_locals_record_typed_keys_in_source_order() {
 }
 
 #[test]
+fn closed_literal_vector_call_records_set_key_but_other_pure_calls_remain_unavailable() {
+    let mut contract = identity(Type::Unit, Expr::Unit);
+    let vector = Type::Vector {
+        element: Box::new(Type::Field),
+        length: 2,
+    };
+    contract.circuits = vec![PureCircuit {
+        source: None,
+        internal: true,
+        name: "getVector".into(),
+        parameters: vec![],
+        result: vector.clone(),
+        body: Expr::Vector {
+            element: Type::Field,
+            elements: vec![
+                Expr::FieldLiteral { value: "2".into() },
+                Expr::FieldLiteral { value: "12".into() },
+            ],
+        },
+    }];
+    contract.ledger_fields = vec![LedgerField {
+        source: None,
+        id: "c".into(),
+        index: 0,
+        path: vec![],
+        declaration: LedgerFieldKind::Set { ty: vector.clone() },
+    }];
+    contract.stateful_circuits = vec![StatefulCircuit {
+        source: None,
+        internal: false,
+        name: "test".into(),
+        parameters: vec![],
+        actions: vec![StateAction::Let {
+            bindings: vec![LocalBinding {
+                name: "one".into(),
+                ty: vector.clone(),
+                value: Expr::Call {
+                    name: "getVector".into(),
+                    arguments: vec![],
+                },
+            }],
+            action: Box::new(StateAction::Sequence {
+                actions: vec![
+                    StateAction::SetInsert {
+                        field: "c".into(),
+                        index: 0,
+                        value: Expr::Parameter { name: "one".into() },
+                    },
+                    StateAction::Assert {
+                        condition: Expr::Equal {
+                            left: Box::new(Expr::SetMember {
+                                field: "c".into(),
+                                index: 0,
+                                value: Box::new(Expr::Parameter { name: "one".into() }),
+                            }),
+                            right: Box::new(Expr::Boolean { value: true }),
+                        },
+                        message: "member".into(),
+                    },
+                ],
+            }),
+        }],
+        result: Type::Unit,
+        return_value: StateReturn::Unit,
+    }];
+
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.capabilities.circuits[0].observed_call);
+    let body = rendered.source.split("pub mod recorded").nth(1).unwrap();
+    let pure = body.find("crate::pure_circuits::getVector()?").unwrap();
+    let inserted = body.find("record_insert(frame,").unwrap();
+    let observed = body.find("record_member(frame,").unwrap();
+    assert!(pure < inserted && inserted < observed);
+
+    contract.circuits[0].body = Expr::Default { ty: vector.clone() };
+    let defaulted = render_with_capabilities(&contract).unwrap();
+    assert!(!defaulted.capabilities.circuits[0].recorded);
+    assert_eq!(
+        defaulted.capabilities.circuits[0]
+            .recording_unavailable
+            .as_ref()
+            .unwrap()
+            .ir_node,
+        "StateAction::Let"
+    );
+
+    contract.circuits[0].body = Expr::Vector {
+        element: Type::Field,
+        elements: vec![
+            Expr::FieldLiteral { value: "2".into() },
+            Expr::FieldLiteral { value: "12".into() },
+        ],
+    };
+    contract.circuits[0].parameters = vec![Parameter {
+        name: "unused".into(),
+        ty: Type::Field,
+    }];
+    let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[0] else {
+        unreachable!();
+    };
+    bindings[0].value = Expr::Call {
+        name: "getVector".into(),
+        arguments: vec![Expr::FieldLiteral { value: "7".into() }],
+    };
+    let argument_bearing = render_with_capabilities(&contract).unwrap();
+    assert!(!argument_bearing.capabilities.circuits[0].recorded);
+}
+
+#[test]
 fn direct_boolean_witness_assertion_records_before_cell_write() {
     let mut contract = identity(Type::Unit, Expr::Unit);
     contract.circuits.clear();

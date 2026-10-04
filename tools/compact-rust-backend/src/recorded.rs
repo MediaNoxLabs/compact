@@ -324,6 +324,39 @@ fn closed_pure_field_call(
     allowed
 }
 
+/// A closed literal Vector helper has no ledger, witness, or VM effects. Keep
+/// this narrower than general pure calls until their recording parity is known.
+fn closed_literal_field_vector_call(
+    name: &str,
+    ty: &Type,
+    pure_circuits: &HashMap<&str, &PureCircuit>,
+) -> bool {
+    let Type::Vector { element, length } = ty else {
+        return false;
+    };
+    if **element != Type::Field {
+        return false;
+    }
+    let Some(callee) = pure_circuits.get(name) else {
+        return false;
+    };
+    if !callee.parameters.is_empty() || callee.result != *ty {
+        return false;
+    }
+    let Expr::Vector {
+        element: body_element,
+        elements,
+    } = &callee.body
+    else {
+        return false;
+    };
+    *body_element == Type::Field
+        && elements.len() == *length
+        && elements
+            .iter()
+            .all(|element| matches!(element, Expr::FieldLiteral { .. }))
+}
+
 /// Emit a replayable public VM trace for supported root Cell, Counter, Set, Map, List,
 /// and plain/historic Merkle append
 /// operations, including witnessed Cell values. Unsupported circuits have no
@@ -2221,10 +2254,10 @@ fn render_recorded_item(
                                 runtime::persistent_commit(#field_value, #opening_value);
                         });
                         scoped.insert(binding.name.clone(), syn::parse_quote!(#committed));
-                    } else if let Expr::Call { name, arguments } = &binding.value {
-                        if !matches!(binding.ty, Type::Bytes { .. })
-                            || circuits.contains_key(name.as_str())
-                        {
+                    } else if matches!(binding.ty, Type::Bytes { .. })
+                        && let Expr::Call { name, arguments } = &binding.value
+                    {
+                        if circuits.contains_key(name.as_str()) {
                             return Ok(unavailable_action(whole, path));
                         }
                         let mut args = Vec::new();
@@ -2256,6 +2289,23 @@ fn render_recorded_item(
                         };
                         scoped.insert(binding.name.clone(), value);
                     } else if matches!(binding.ty, Type::Vector { .. }) {
+                        if let Expr::Call { name, arguments } = &binding.value
+                            && arguments.is_empty()
+                            && closed_literal_field_vector_call(name, &binding.ty, pure_circuits)
+                        {
+                            let method = ident(name)?;
+                            let value_ty = rust_type(&binding.ty)?;
+                            let local = syn::Ident::new(
+                                &format!("__compact_recorded_pure_vector_{}", *next_temp),
+                                Span::call_site(),
+                            );
+                            *next_temp += 1;
+                            steps.push(syn::parse_quote! {
+                                let #local: #value_ty = crate::pure_circuits::#method()?;
+                            });
+                            scoped.insert(binding.name.clone(), syn::parse_quote!(#local));
+                            continue;
+                        }
                         let Some(next) = static_bindings(
                             std::slice::from_ref(binding),
                             &scoped,

@@ -83,12 +83,12 @@ tools/compact-rust-backend/parity_positive_adt_set_sources.json --compiler
 compiler receipt. The manifest locks glob membership and authoritative proof
 flags. Four of the five sources compile for Rust; `set_qualified_coin_info`
 still rejects at a separate nested ledger operation, and `set_struct` has no
-contract circuit. The proof-required `set_field.test` and `set_enum.test` have
-recorded and observed-call APIs. `set_enum` has TypeScript/native/recorded
-state, gas, VM, and proof application coverage through its generated fixture.
-`set_vector` compiles but its pure `getVector()` local binding still prevents
-recording. The cohort is tracked in #188, #190, and #196; source acceptance
-alone does not establish executing parity for the other circuits.
+contract circuit. The proof-required `set_field.test`, `set_enum.test`, and
+`set_vector.test` have recorded and observed-call APIs. `set_enum` and
+`set_vector` have TypeScript/native/recorded state, gas, VM, and proof
+application coverage through generated fixtures. The cohort is tracked in
+#188, #190, #196, and #201; source acceptance alone does not establish
+executing parity for the remaining circuits.
 The lexical scanner includes `pure circuit` and `export pure circuit`
 declarations, with compiler `contract-info.json` supplying proof applicability
 even when the Rust capability report has no recorded method for a pure circuit.

@@ -41,6 +41,8 @@ EXTRA_SOURCES = {
         FIXTURES / "pm-19252-own-public-key" / "lib.rs",
     ROOT / "examples" / "adt" / "tests" / "set_enum.compact":
         FIXTURES / "adt-set-enum" / "lib.rs",
+    ROOT / "examples" / "adt" / "tests" / "set_vector.compact":
+        FIXTURES / "adt-set-vector" / "lib.rs",
 }
 
 

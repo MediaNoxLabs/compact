@@ -1026,6 +1026,8 @@ def main() -> None:
     parser.add_argument("--consumer", action="store_true", help="build and run a separate consumer")
     parser.add_argument("--proof", action="store_true", help="generate ZKIR and proving keys")
     args = parser.parse_args()
+    # Captured Rust errors are asserted below; runner color settings must not split their text.
+    os.environ["CARGO_TERM_COLOR"] = "never"
     compiler = os.environ.get("COMPACTC", "compactc")
     with tempfile.TemporaryDirectory(prefix="compactc-target-") as temporary:
         base = Path(temporary)

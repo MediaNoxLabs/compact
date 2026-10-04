@@ -17,8 +17,9 @@
 
 use crate::context::{CircuitContext, CircuitResult, ConstructorResult};
 use crate::ledger::QueryContext;
-use crate::ledger::{ContractState, DB, StateValue};
+use crate::ledger::{ContractState, DB, QueryResults, StateValue};
 use crate::recording::RecordedCircuitResult;
+use midnight_onchain_vm::result_mode::ResultMode;
 
 /// A local holder of public state; this does not authenticate or query it.
 pub trait PublicStateSource {
@@ -56,6 +57,14 @@ impl<D: DB> PublicStateSource for QueryContext<D> {
 
     fn public_state(&self) -> &StateValue<D> {
         self.state.get_ref()
+    }
+}
+
+impl<M: ResultMode<D>, D: DB> PublicStateSource for QueryResults<M, D> {
+    type Database = D;
+
+    fn public_state(&self) -> &StateValue<D> {
+        self.context.state.get_ref()
     }
 }
 

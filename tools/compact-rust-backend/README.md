@@ -189,7 +189,8 @@ let view = ledger_contract::PublicStateView::from(&result);
 let round = view.round()?.value();
 ```
 
-The view also accepts borrowed constructor results, query contexts,
+The view also accepts borrowed constructor results, query contexts and replay
+query results,
 `ContractState`, recorded results, and, with `ledger-transaction`,
 `ObservedContractState`. It only decodes local state;
 the caller remains responsible for the origin and freshness of an observation.

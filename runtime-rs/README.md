@@ -10,6 +10,8 @@ ABI 30 adds generated read-only `PublicStateView` getters for declared Set
 fields, including Set-only contracts. `SetSlot<T>::inspect` returns the
 existing borrowed structural `SetView` at the compiler-owned physical path;
 local inspection does not make a VM query or charge gas.
+The shared public-state source adapter also accepts upstream `QueryResults`,
+so a generated view can inspect a replay result directly.
 ABI 29 adds generated read-only `PublicStateView` getters for declared Cell and
 Counter fields. Runtime slot inspection uses the existing ledger-8 path and
 alignment decoder without a VM query or gas charge. A shared

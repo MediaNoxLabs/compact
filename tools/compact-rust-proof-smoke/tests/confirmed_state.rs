@@ -26,7 +26,7 @@ fn round(state: &StateValue<DefaultDB>) -> u64 {
     let StateValue::Array(fields) = state else {
         panic!("counter state is not an array")
     };
-    read_counter(&fields.get(0).expect("Counter field")).expect("valid Counter")
+    read_counter(fields.get(0).expect("Counter field")).expect("valid Counter")
 }
 
 #[test]

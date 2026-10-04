@@ -51,6 +51,6 @@ fn module_constructor_and_counter_match_typescript_state() {
     let StateValue::Array(fields) = state else {
         panic!("expected ledger field array")
     };
-    assert_eq!(read_counter(&fields.get(0).unwrap()).unwrap(), 1);
+    assert_eq!(read_counter(fields.get(0).unwrap()).unwrap(), 1);
     assert_eq!(state_hex(state.clone()), oracle["afterHex"]);
 }

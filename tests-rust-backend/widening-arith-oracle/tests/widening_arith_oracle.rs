@@ -42,7 +42,7 @@ fn count(state: &StateValue<DefaultDB>) -> String {
     let StateValue::Array(fields) = state else {
         panic!("expected ledger field array")
     };
-    runtime::ledger::read_counter(&fields.get(0).unwrap())
+    runtime::ledger::read_counter(fields.get(0).unwrap())
         .unwrap()
         .to_string()
 }

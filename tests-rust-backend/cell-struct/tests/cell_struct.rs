@@ -39,7 +39,7 @@ fn generated_struct_cell_has_ledger_alignment_and_round_trips() {
         panic!("expected ledger field array")
     };
     assert_eq!(
-        read_cell::<Pair, _>(&fields.get(0).unwrap()).unwrap(),
+        read_cell::<Pair, _>(fields.get(0).unwrap()).unwrap(),
         Pair::default()
     );
 
@@ -55,10 +55,7 @@ fn generated_struct_cell_has_ledger_alignment_and_round_trips() {
     let StateValue::Array(fields) = result.context.query.state.get_ref() else {
         panic!("expected ledger field array")
     };
-    assert_eq!(
-        read_cell::<Pair, _>(&fields.get(0).unwrap()).unwrap(),
-        value
-    );
+    assert_eq!(read_cell::<Pair, _>(fields.get(0).unwrap()).unwrap(), value);
     let read = read_record(result.context).unwrap();
     assert_eq!(read.result, value);
 }

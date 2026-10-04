@@ -33,7 +33,7 @@ fn generated_counter_contract_runs_through_ledger_vm() {
     let StateValue::Array(fields) = result.context.query.state.get_ref() else {
         panic!("expected ledger field array")
     };
-    assert_eq!(read_counter(&fields.get(0).unwrap()).unwrap(), 1);
+    assert_eq!(read_counter(fields.get(0).unwrap()).unwrap(), 1);
     assert_eq!(PublicStateView::from(&result).round().unwrap().value(), 1);
     let read = read_round(result.context).unwrap();
     assert_eq!(read.result.value(), 1);
@@ -66,7 +66,7 @@ fn generated_counter_state_can_enter_a_replayable_ledger_trace() {
         let StateValue::Array(fields) = state else {
             panic!("expected ledger field array")
         };
-        assert_eq!(read_counter(&fields.get(0).unwrap()).unwrap(), 1);
+        assert_eq!(read_counter(fields.get(0).unwrap()).unwrap(), 1);
         assert_eq!(PublicStateView::from(state).round().unwrap().value(), 1);
     }
     assert_eq!(PublicStateView::from(&recorded).round().unwrap().value(), 1);

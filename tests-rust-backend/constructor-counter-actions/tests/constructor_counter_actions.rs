@@ -55,7 +55,7 @@ fn constructor_counter_steps_match_typescript_state() {
     let StateValue::Array(fields) = state else {
         panic!("expected ledger field array")
     };
-    assert_eq!(read_counter(&fields.get(1).unwrap()).unwrap(), 4);
+    assert_eq!(read_counter(fields.get(1).unwrap()).unwrap(), 4);
     assert_eq!(state_hex(state.clone()), oracle["initialHex"]);
     let read = read_count(constructor.into_circuit_context(ContractAddress::default())).unwrap();
     assert_eq!(read.result.value().to_string(), oracle["count"]);

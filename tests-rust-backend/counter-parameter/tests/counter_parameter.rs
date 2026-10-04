@@ -29,24 +29,24 @@ fn generated_counter_uses_bounded_parameter() {
     let StateValue::Array(fields) = result.context.query.state.get_ref() else {
         panic!("expected ledger field array")
     };
-    assert_eq!(read_counter(&fields.get(0).unwrap()).unwrap(), 7);
+    assert_eq!(read_counter(fields.get(0).unwrap()).unwrap(), 7);
 
     let result = increment_by(result.context, BoundedUint::<65535>::new(2).unwrap()).unwrap();
     let StateValue::Array(fields) = result.context.query.state.get_ref() else {
         panic!("expected ledger field array")
     };
-    assert_eq!(read_counter(&fields.get(0).unwrap()).unwrap(), 9);
+    assert_eq!(read_counter(fields.get(0).unwrap()).unwrap(), 9);
 
     let result = decrement_by(result.context, BoundedUint::<65535>::new(5).unwrap()).unwrap();
     let StateValue::Array(fields) = result.context.query.state.get_ref() else {
         panic!("expected ledger field array")
     };
-    assert_eq!(read_counter(&fields.get(0).unwrap()).unwrap(), 4);
+    assert_eq!(read_counter(fields.get(0).unwrap()).unwrap(), 4);
     let result = reset_round(result.context).unwrap();
     let StateValue::Array(fields) = result.context.query.state.get_ref() else {
         panic!("expected ledger field array")
     };
-    assert_eq!(read_counter(&fields.get(0).unwrap()).unwrap(), 0);
+    assert_eq!(read_counter(fields.get(0).unwrap()).unwrap(), 0);
     assert!(decrement_by(result.context, BoundedUint::<65535>::new(1).unwrap()).is_err());
 }
 
@@ -72,6 +72,6 @@ fn recorded_counter_parameter_replays_the_generated_amount() {
         let StateValue::Array(fields) = state else {
             panic!("expected ledger field array")
         };
-        assert_eq!(read_counter(&fields.get(0).unwrap()).unwrap(), 7);
+        assert_eq!(read_counter(fields.get(0).unwrap()).unwrap(), 7);
     }
 }

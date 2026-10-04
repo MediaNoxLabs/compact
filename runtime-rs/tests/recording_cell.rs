@@ -50,8 +50,8 @@ fn boolean_cell_write_then_read_replays_as_one_verifying_program() {
     let StateValue::Array(replayed_fields) = replay.context.state.get_ref() else {
         panic!("replayed state must be an array");
     };
-    assert!(read_cell::<bool, _>(&executed_fields.get(0).unwrap()).unwrap());
-    assert!(read_cell::<bool, _>(&replayed_fields.get(0).unwrap()).unwrap());
+    assert!(read_cell::<bool, _>(executed_fields.get(0).unwrap()).unwrap());
+    assert!(read_cell::<bool, _>(replayed_fields.get(0).unwrap()).unwrap());
 
     let mut executed_bytes = Vec::new();
     tagged_serialize(

@@ -134,16 +134,16 @@ fn normalized_verify_ops<Output>(
     fn normalize(value: &mut serde_json::Value) {
         match value {
             serde_json::Value::Object(object) => {
-                if object.contains_key("alignment") {
-                    if let Some(serde_json::Value::Array(chunks)) = object.get_mut("value") {
-                        for chunk in chunks {
-                            if let serde_json::Value::Array(bytes) = chunk {
-                                let bytes = bytes
-                                    .iter()
-                                    .map(|byte| byte.as_u64().unwrap() as u8)
-                                    .collect::<Vec<_>>();
-                                *chunk = serde_json::json!({ "bytesHex": hex::encode(bytes) });
-                            }
+                if object.contains_key("alignment")
+                    && let Some(serde_json::Value::Array(chunks)) = object.get_mut("value")
+                {
+                    for chunk in chunks {
+                        if let serde_json::Value::Array(bytes) = chunk {
+                            let bytes = bytes
+                                .iter()
+                                .map(|byte| byte.as_u64().unwrap() as u8)
+                                .collect::<Vec<_>>();
+                            *chunk = serde_json::json!({ "bytesHex": hex::encode(bytes) });
                         }
                     }
                 }

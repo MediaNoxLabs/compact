@@ -55,7 +55,7 @@ fn counter_state_bytes_match_the_typescript_oracle() {
         panic!("expected field array")
     };
     assert_eq!(
-        read_counter(&fields.get(0).unwrap()).unwrap().to_string(),
+        read_counter(fields.get(0).unwrap()).unwrap().to_string(),
         reference["counterValue"].as_str().unwrap()
     );
 }

@@ -56,16 +56,16 @@ fn normalized_verify_ops(recorded: &RecordedCircuitResult<u64, ()>) -> serde_jso
     fn normalize(value: &mut serde_json::Value) {
         match value {
             serde_json::Value::Object(object) => {
-                if object.contains_key("alignment") {
-                    if let Some(serde_json::Value::Array(chunks)) = object.get_mut("value") {
-                        for chunk in chunks {
-                            if let serde_json::Value::Array(bytes) = chunk {
-                                let bytes = bytes
-                                    .iter()
-                                    .map(|byte| byte.as_u64().unwrap() as u8)
-                                    .collect::<Vec<_>>();
-                                *chunk = serde_json::json!({ "bytesHex": hex::encode(bytes) });
-                            }
+                if object.contains_key("alignment")
+                    && let Some(serde_json::Value::Array(chunks)) = object.get_mut("value")
+                {
+                    for chunk in chunks {
+                        if let serde_json::Value::Array(bytes) = chunk {
+                            let bytes = bytes
+                                .iter()
+                                .map(|byte| byte.as_u64().unwrap() as u8)
+                                .collect::<Vec<_>>();
+                            *chunk = serde_json::json!({ "bytesHex": hex::encode(bytes) });
                         }
                     }
                 }
@@ -330,7 +330,7 @@ fn nested_witnessed_writes_record_the_same_private_and_public_effects() {
         seed,
     )
     .unwrap();
-    let native_gas = native.gas_cost.clone();
+    let native_gas = native.gas_cost;
     assert_oracle_output(native, &oracle["nested"]);
 
     let context = initial_state(ConstructorContext::new(7_u64))
@@ -481,7 +481,7 @@ fn witness_read_meter_charges_each_successful_read() {
     let (query, value) = query_cell_at_path::<Field, _>(
         &context.query,
         &[0],
-        context.gas_limit.clone(),
+        context.gas_limit,
         &context.cost_model,
     )
     .unwrap();
@@ -492,10 +492,7 @@ fn witness_read_meter_charges_each_successful_read() {
         assert_eq!(meter.read_cell::<Field>(&[0]).unwrap(), Field::from(0_u64));
         (context.private_state, ())
     });
-    assert_eq!(
-        frame.finish(()).gas_cost,
-        expected_cost.clone() + expected_cost
-    );
+    assert_eq!(frame.finish(()).gas_cost, expected_cost + expected_cost);
 
     let context = initial_state(ConstructorContext::new(7_u64))
         .unwrap()

@@ -145,14 +145,14 @@ where
         let mut proof = Proof {
             signerVerificationMethodRef: signer.clone(),
             createdAt: uint(created_at as u128),
-            challengeHash: challenge_hash.clone(),
+            challengeHash: challenge_hash,
             publicKey: issuer_pk(),
             signature: Signature {
                 r: nonce_point(),
                 s: Field::from(0u64),
             },
         };
-        let challenge = challenge_fn(root.clone(), proof.clone()).unwrap();
+        let challenge = challenge_fn(root, proof.clone()).unwrap();
         let reduced = fr_to_embedded(challenge);
         if embedded_to_fr(reduced) == challenge {
             proof.signature.s = embedded_to_fr(nonce + reduced * secret);
@@ -181,19 +181,17 @@ fn build_round_trip() -> RoundTrip {
     let issuing_state = bytes32(0x05);
     let issuing_state_opening = bytes32(0x0b);
     let commitments = DigitalPassportClaimCommitments {
-        firstNameCommitment: pure_circuits::firstNameCommitment(first_name.clone(), bytes32(0x03))
-            .unwrap(),
-        lastNameCommitment: pure_circuits::lastNameCommitment(last_name.clone(), bytes32(0x04))
-            .unwrap(),
+        firstNameCommitment: pure_circuits::firstNameCommitment(first_name, bytes32(0x03)).unwrap(),
+        lastNameCommitment: pure_circuits::lastNameCommitment(last_name, bytes32(0x04)).unwrap(),
         dateOfBirthCommitment: pure_circuits::dateOfBirthCommitment(
             uint(7400),
-            date_of_birth_opening.clone(),
+            date_of_birth_opening,
         )
         .unwrap(),
         documentNumberCommitment: pure_circuits::documentNumberNullCommitment().unwrap(),
         issuingStateCommitment: pure_circuits::issuingStateCommitment(
-            issuing_state.clone(),
-            issuing_state_opening.clone(),
+            issuing_state,
+            issuing_state_opening,
         )
         .unwrap(),
     };
@@ -209,16 +207,16 @@ fn build_round_trip() -> RoundTrip {
         expiresAt: uint(0),
         claims: NoPublicClaims {},
         claimCommitments: commitments,
-        claimRoot: claim_root.clone(),
+        claimRoot: claim_root,
     };
     let issuance_challenge = bytes32(0x77);
     let credential_root =
         pure_circuits::digitalPassportCredentialBodyRoot(credential.clone()).unwrap();
     let credential_proof = sign_proof(
-        credential_root.clone(),
+        credential_root,
         pure_circuits::issuanceProofChallenge,
         issuer_method(),
-        issuance_challenge.clone(),
+        issuance_challenge,
     );
     let presentation = Presentation {
         version: uint(1),
@@ -228,10 +226,10 @@ fn build_round_trip() -> RoundTrip {
         holderBinding: holder_binding(),
         disclosed: DigitalPassportDisclosures {
             revealFirstName: false,
-            firstNameValuePadded: first_name.clone(),
+            firstNameValuePadded: first_name,
             firstNameOpening: bytes32(0x03),
             revealLastName: false,
-            lastNameValuePadded: last_name.clone(),
+            lastNameValuePadded: last_name,
             lastNameOpening: bytes32(0x04),
             proveAgeOverThreshold: false,
             ageThresholdYears: uint(0),
@@ -239,8 +237,8 @@ fn build_round_trip() -> RoundTrip {
             documentNumberValue: bytes32(0),
             documentNumberOpening: bytes32(0),
             revealIssuingState: false,
-            issuingStateValue: issuing_state.clone(),
-            issuingStateOpening: issuing_state_opening.clone(),
+            issuingStateValue: issuing_state,
+            issuingStateOpening: issuing_state_opening,
         },
     };
     let presentation_challenge = bytes32(0x88);
@@ -250,7 +248,7 @@ fn build_round_trip() -> RoundTrip {
         presentation_root,
         pure_circuits::presentationProofChallenge,
         holder_method(),
-        presentation_challenge.clone(),
+        presentation_challenge,
     );
     let thread = bytes32(0x20);
     let offer_id = bytes32(0x10);
@@ -260,7 +258,7 @@ fn build_round_trip() -> RoundTrip {
     let submission_id = bytes32(0x31);
     let verification_result_id = bytes32(0x32);
     let issuance_offer = OfferMessage {
-        envelope: envelope(offer_id.clone(), thread.clone(), true, no_response(), 1),
+        envelope: envelope(offer_id, thread, true, no_response(), 1),
         schema: schema(),
         issuerVerificationMethodRef: issuer_method(),
         holderBindingProfile: HolderBindingProfile::explicitDid,
@@ -272,32 +270,20 @@ fn build_round_trip() -> RoundTrip {
         },
     };
     let issuance_request = RequestMessageCompact1 {
-        envelope: envelope(
-            issuance_request_id.clone(),
-            thread.clone(),
-            false,
-            offer_id,
-            2,
-        ),
+        envelope: envelope(issuance_request_id, thread, false, offer_id, 2),
         schema: schema(),
         issuerVerificationMethodRef: issuer_method(),
         holderBindingProfile: HolderBindingProfile::explicitDid,
         body: DigitalPassportIssuanceRequestBody {
             holderBinding: holder_binding(),
             holderPublicKey: issuer_pk(),
-            holderChallengeHash: issuance_challenge.clone(),
+            holderChallengeHash: issuance_challenge,
             requestExpiration: false,
             requestedExpirationDays: uint(0),
         },
     };
     let issuance_result = ResultMessageCompact1 {
-        envelope: envelope(
-            issuance_result_id,
-            thread.clone(),
-            false,
-            issuance_request_id,
-            3,
-        ),
+        envelope: envelope(issuance_result_id, thread, false, issuance_request_id, 3),
         schema: schema(),
         issuerVerificationMethodRef: issuer_method(),
         holderBindingProfile: HolderBindingProfile::explicitDid,
@@ -325,18 +311,12 @@ fn build_round_trip() -> RoundTrip {
         },
     };
     let verification_request = RequestMessage {
-        envelope: envelope(
-            verification_request_id.clone(),
-            thread.clone(),
-            true,
-            no_response(),
-            4,
-        ),
+        envelope: envelope(verification_request_id, thread, true, no_response(), 4),
         schema: schema(),
         issuerVerificationMethodRef: issuer_method(),
         holderBindingProfile: HolderBindingProfile::explicitDid,
         features: features(),
-        verifierChallengeHash: presentation_challenge.clone(),
+        verifierChallengeHash: presentation_challenge,
         body: DigitalPassportVerificationRequestBody {
             requireFirstNameDisclosure: false,
             requireLastNameDisclosure: false,
@@ -347,13 +327,7 @@ fn build_round_trip() -> RoundTrip {
         },
     };
     let verification_submission = SubmissionMessage {
-        envelope: envelope(
-            submission_id.clone(),
-            thread.clone(),
-            false,
-            verification_request_id,
-            5,
-        ),
+        envelope: envelope(submission_id, thread, false, verification_request_id, 5),
         schema: schema(),
         issuerVerificationMethodRef: issuer_method(),
         holderBindingProfile: HolderBindingProfile::explicitDid,
@@ -504,11 +478,8 @@ fn proof_signatures_are_separated_by_issuance_and_presentation_context() {
     let presentation_proof = values.verification_submission.body.presentationProof;
 
     assert!(
-        pure_circuits::assertValidIssuanceContextProof(
-            credential_root.clone(),
-            issuance_proof.clone(),
-        )
-        .is_ok()
+        pure_circuits::assertValidIssuanceContextProof(credential_root, issuance_proof.clone(),)
+            .is_ok()
     );
     assert!(matches!(
         pure_circuits::assertValidPresentationContextProof(credential_root, issuance_proof),
@@ -516,7 +487,7 @@ fn proof_signatures_are_separated_by_issuance_and_presentation_context() {
     ));
     assert!(
         pure_circuits::assertValidPresentationContextProof(
-            presentation_root.clone(),
+            presentation_root,
             presentation_proof.clone(),
         )
         .is_ok()

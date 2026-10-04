@@ -54,14 +54,14 @@ fn stateful_calls_execute_twice_and_match_typescript_state() {
     let StateValue::Array(fields) = state else {
         panic!("expected ledger field array")
     };
-    assert_eq!(read_counter(&fields.get(0).unwrap()).unwrap(), 2);
+    assert_eq!(read_counter(fields.get(0).unwrap()).unwrap(), 2);
     assert_eq!(state_hex(state.clone()), oracle["afterBumpHex"]);
     let added = add_twice(called.context, BoundedUint::<65535>::new(3).unwrap()).unwrap();
     let state = added.context.query.state.get_ref();
     let StateValue::Array(fields) = state else {
         panic!("expected ledger field array")
     };
-    assert_eq!(read_counter(&fields.get(0).unwrap()).unwrap(), 8);
+    assert_eq!(read_counter(fields.get(0).unwrap()).unwrap(), 8);
     assert_eq!(state_hex(state.clone()), oracle["afterHex"]);
 }
 

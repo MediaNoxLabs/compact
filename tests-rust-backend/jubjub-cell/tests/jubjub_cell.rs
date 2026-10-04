@@ -54,7 +54,7 @@ fn point_and_struct_cells_round_trip_with_compact_default_encoding() {
     let StateValue::Array(fields) = constructor.ledger_state.get_ref() else {
         panic!("expected ledger root array");
     };
-    let default_point = read_cell::<JubjubPoint, _>(&fields.get(0).unwrap()).unwrap();
+    let default_point = read_cell::<JubjubPoint, _>(fields.get(0).unwrap()).unwrap();
     assert_coords(default_point, &oracle["before"]);
     assert_eq!(
         default_point.field_vec(),

@@ -125,7 +125,7 @@ fn exact_guarded_nested_arithmetic_matches_typescript() {
     let StateValue::Array(fields) = accepted.context.query.state.get_ref() else {
         panic!("expected ledger field array")
     };
-    let count = runtime::ledger::read_counter(&fields.get(0).unwrap()).unwrap();
+    let count = runtime::ledger::read_counter(fields.get(0).unwrap()).unwrap();
     assert_eq!(count.to_string(), oracle["countAfterRecordFresh"]);
     assertion_error(
         recordFreshEnough(accepted.context, policy(true), att, uint(130)),

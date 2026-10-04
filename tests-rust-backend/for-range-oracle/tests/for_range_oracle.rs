@@ -47,7 +47,7 @@ fn exact_oracle_constructor_for_range_matches_typescript() {
     let StateValue::Array(fields) = state else {
         panic!("expected ledger field array")
     };
-    let count = read_counter(&fields.get(0).unwrap()).unwrap();
+    let count = read_counter(fields.get(0).unwrap()).unwrap();
     assert_eq!(count.to_string(), oracle["counterAfterInit"]);
     assert_eq!(count, 10);
     let after_ping = ping(constructor.into_circuit_context(ContractAddress::default())).unwrap();

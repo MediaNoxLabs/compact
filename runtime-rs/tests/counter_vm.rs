@@ -23,7 +23,7 @@ fn counter_field(context: &QueryContext<DefaultDB>) -> u64 {
     let StateValue::Array(fields) = context.state.get_ref() else {
         panic!("expected contract field array")
     };
-    read_counter(&fields.get(0).unwrap()).unwrap()
+    read_counter(fields.get(0).unwrap()).unwrap()
 }
 
 #[test]
@@ -53,8 +53,7 @@ fn ledger_vm_replaces_a_compact_cell() {
     let StateValue::Array(fields) = result.context.state.get_ref() else {
         panic!("expected field array")
     };
-    assert_eq!(
-        midnight_compact_runtime::ledger::read_cell::<bool, _>(&fields.get(0).unwrap()).unwrap(),
-        true
+    assert!(
+        midnight_compact_runtime::ledger::read_cell::<bool, _>(fields.get(0).unwrap()).unwrap()
     );
 }

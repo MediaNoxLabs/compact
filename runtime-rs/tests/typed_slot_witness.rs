@@ -44,8 +44,8 @@ fn typed_witness_slots_preserve_cell_cost_and_reject_wrong_shapes() {
     let meter = WitnessReadMeter::new(&circuit);
     let direct_meter = WitnessReadMeter::new(&circuit);
     let slot = CellSlot::<bool>::new(&[0]);
-    assert_eq!(slot.witness_read(&meter).unwrap(), true);
-    assert_eq!(direct_meter.read_cell::<bool>(&[0]).unwrap(), true);
+    assert!(slot.witness_read(&meter).unwrap());
+    assert!(direct_meter.read_cell::<bool>(&[0]).unwrap());
     assert_eq!(meter.gas_cost(), direct_meter.gas_cost());
     assert_eq!(CounterSlot::new(&[1]).witness_read(&meter).unwrap(), 0);
     assert_eq!(direct_meter.read_cell::<u64>(&[1]).unwrap(), 0);

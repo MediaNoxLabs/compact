@@ -32,7 +32,7 @@ fn generated_enum_cell_has_ledger_alignment_and_round_trips() {
         panic!("expected ledger field array")
     };
     assert_eq!(
-        read_cell::<Choice, _>(&fields.get(0).unwrap()).unwrap(),
+        read_cell::<Choice, _>(fields.get(0).unwrap()).unwrap(),
         Choice::yes
     );
 
@@ -45,7 +45,7 @@ fn generated_enum_cell_has_ledger_alignment_and_round_trips() {
         panic!("expected ledger field array")
     };
     assert_eq!(
-        read_cell::<Choice, _>(&fields.get(0).unwrap()).unwrap(),
+        read_cell::<Choice, _>(fields.get(0).unwrap()).unwrap(),
         Choice::no
     );
 }

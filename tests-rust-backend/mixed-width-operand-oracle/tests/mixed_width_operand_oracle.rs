@@ -33,6 +33,8 @@ fn uint32(value: u128) -> BoundedUint<4294967295> {
     BoundedUint::new(value).unwrap()
 }
 
+type Comparison = fn(BoundedUint<4294967295>, BoundedUint<4294967295>) -> Result<(), CompactError>;
+
 fn state_hex(state: StateValue<DefaultDB>) -> String {
     let mut operations: HashMap<EntryPointBuf, ContractOperation, DefaultDB> = HashMap::new();
     for name in ["recordPinned", "recordMatching"] {
@@ -72,7 +74,7 @@ fn mixed_width_oracle_matches_typescript_at_boundaries() {
         oracle["constructorUnderflow"]
     );
 
-    let comparisons: [(&str, fn(_, _) -> Result<(), CompactError>); 6] = [
+    let comparisons: [(&str, Comparison); 6] = [
         ("LE", assertProductLE),
         ("LT", assertProductLT),
         ("GT", assertProductGT),
@@ -130,7 +132,7 @@ fn mixed_width_oracle_matches_typescript_at_boundaries() {
     let StateValue::Array(fields) = &state else {
         panic!("expected ledger field array")
     };
-    assert_eq!(read_counter(&fields.get(1).unwrap()).unwrap(), 2);
+    assert_eq!(read_counter(fields.get(1).unwrap()).unwrap(), 2);
     assert_eq!(state_hex(state), oracle["stateAfterActionsHex"]);
     assert_eq!(
         outcome(

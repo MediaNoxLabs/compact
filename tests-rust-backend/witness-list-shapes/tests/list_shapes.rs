@@ -125,16 +125,16 @@ fn state_hex(state: StateValue<DefaultDB>) -> String {
 fn normalized_vm_ops(ops: &mut serde_json::Value) {
     match ops {
         serde_json::Value::Object(object) => {
-            if object.contains_key("alignment") {
-                if let Some(serde_json::Value::Array(chunks)) = object.get_mut("value") {
-                    for chunk in chunks {
-                        if let serde_json::Value::Array(bytes) = chunk {
-                            let bytes = bytes
-                                .iter()
-                                .map(|byte| byte.as_u64().unwrap() as u8)
-                                .collect::<Vec<_>>();
-                            *chunk = serde_json::json!({"bytesHex": hex::encode(bytes)});
-                        }
+            if object.contains_key("alignment")
+                && let Some(serde_json::Value::Array(chunks)) = object.get_mut("value")
+            {
+                for chunk in chunks {
+                    if let serde_json::Value::Array(bytes) = chunk {
+                        let bytes = bytes
+                            .iter()
+                            .map(|byte| byte.as_u64().unwrap() as u8)
+                            .collect::<Vec<_>>();
+                        *chunk = serde_json::json!({"bytesHex": hex::encode(bytes)});
                     }
                 }
             }
@@ -419,7 +419,7 @@ fn assert_result(actual: &CircuitResult<u64, bool>, oracle: &serde_json::Value, 
         serde_json::to_value(&output.alignment).unwrap(),
         oracle["privateTranscriptOutputs"][0]["alignment"]
     );
-    let actual_gas = serde_json::to_value(&actual.gas_cost).unwrap();
+    let actual_gas = serde_json::to_value(actual.gas_cost).unwrap();
     let queries = oracle["queries"].as_array().unwrap();
     assert_eq!(queries.len(), 3);
     for key in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {

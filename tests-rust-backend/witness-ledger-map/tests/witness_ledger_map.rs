@@ -31,12 +31,10 @@ use midnight_storage::storage::HashMap;
 
 fn state_hex(state: StateValue<DefaultDB>) -> String {
     let mut operations: HashMap<EntryPointBuf, ContractOperation, DefaultDB> = HashMap::new();
-    for name in ["put_true"] {
-        operations = operations.insert(
-            EntryPointBuf(name.as_bytes().to_vec()),
-            ContractOperation::new(None),
-        );
-    }
+    operations = operations.insert(
+        EntryPointBuf(b"put_true".to_vec()),
+        ContractOperation::new(None),
+    );
     let state = ContractState::new(state, operations, ContractMaintenanceAuthority::default());
     let mut bytes = Vec::new();
     tagged_serialize(&state, &mut bytes).unwrap();
@@ -81,7 +79,7 @@ fn assert_oracle_output(result: &CircuitResult<u64, bool>, oracle: &serde_json::
         serde_json::to_value(&output.alignment).unwrap(),
         oracle["privateTranscriptOutputs"][0]["alignment"]
     );
-    let actual_gas = serde_json::to_value(&result.gas_cost).unwrap();
+    let actual_gas = serde_json::to_value(result.gas_cost).unwrap();
     let queries = oracle["queryCosts"].as_array().unwrap();
     assert!(queries.len() == 3 || queries.len() == 4);
     for key in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
@@ -200,7 +198,7 @@ fn repeated_map_member_reads_charge_each_vm_query() {
         &context.query,
         &[0],
         true,
-        context.gas_limit.clone(),
+        context.gas_limit,
         &context.cost_model,
     )
     .unwrap();
@@ -210,7 +208,7 @@ fn repeated_map_member_reads_charge_each_vm_query() {
     let view = metered_map_view_at_path::<bool, Field, _>(&meter, &[0]).unwrap();
     assert!(!view.member(true).unwrap());
     assert!(!view.member(true).unwrap());
-    assert_eq!(meter.gas_cost(), expected_cost.clone() + expected_cost);
+    assert_eq!(meter.gas_cost(), expected_cost + expected_cost);
 }
 
 #[test]
@@ -222,7 +220,7 @@ fn nested_map_projection_queries_its_full_physical_path() {
     let (query, empty) = is_empty_map(
         &context.query,
         &[0, 0],
-        context.gas_limit.clone(),
+        context.gas_limit,
         &context.cost_model,
     )
     .unwrap();

@@ -270,7 +270,7 @@ fn check_observed_call_parity(
         return Err(format!("{circuit} observed call differs from manual adapter").into());
     }
     let prove_and_apply = |call: ContractCallPrototype<DefaultDB>| -> Result<(Vec<u8>, ContractState<DefaultDB>), Box<dyn Error>> {
-        let mut intent_rng = StdRng::seed_from_u64(0x4144_5234_33);
+        let mut intent_rng = StdRng::seed_from_u64(0x0041_4452_3433);
         let intent: Intent<Signature, ProofPreimageMarker, PedersenRandomness, DefaultDB> =
             Intent::empty(&mut intent_rng, Timestamp::from_secs(0)).add_call::<ProofPreimage>(call);
         let transaction =
@@ -283,7 +283,7 @@ fn check_observed_call_parity(
         };
         let params = MidnightDataProvider::new(FetchMode::OnDemand, OutputMode::Log, vec![])?;
         let provider = LocalProvingProvider {
-            rng: StdRng::seed_from_u64(0x5052_4f56_45),
+            rng: StdRng::seed_from_u64(0x0050_524f_5645),
             resolver: &resolver,
             params: &params,
         };
@@ -376,6 +376,10 @@ fn write_sealed_handoff(
     Ok(())
 }
 
+#[expect(
+    clippy::too_many_arguments,
+    reason = "proof handoff requires independent transaction and state inputs"
+)]
 fn check_transaction_with_handoff<F>(
     root: &Path,
     circuit: &'static str,
@@ -503,7 +507,7 @@ where
         .contract
         .get(&address)
         .ok_or("deployed contract disappeared")?;
-    check_state(&contract)?;
+    check_state(contract)?;
     println!("{circuit} deployment and proven call validated and applied at address {address:?}");
     Ok(())
 }
@@ -1861,7 +1865,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                     }
                     let head = items.get(0).ok_or("List head missing")?;
                     let correct = match circuit {
-                        "push_flag" => read_cell::<bool, _>(head)? == true,
+                        "push_flag" => read_cell::<bool, _>(head)?,
                         "push_count" => {
                             read_cell::<BoundedUint<65535>, _>(head)?
                                 == BoundedUint::<65535>::new(42)?
@@ -2789,10 +2793,10 @@ fn main() -> Result<(), Box<dyn Error>> {
                 if view.member(true) != expected_true.is_some() {
                     return Err("proven chunked Map membership differs".into());
                 }
-                if let Some(value) = expected_true {
-                    if view.lookup(true)? != value {
-                        return Err("proven chunked Map value differs".into());
-                    }
+                if let Some(value) = expected_true
+                    && view.lookup(true)? != value
+                {
+                    return Err("proven chunked Map value differs".into());
                 }
                 Ok(())
             })?;

@@ -31,9 +31,7 @@ fn nested_provenance_subtraction_keeps_distinct_compiler_temporaries() {
     .unwrap();
     let gap = registrationGap(record(120), record(100)).unwrap();
     assert_eq!(gap.value().to_string(), oracle["gap"]);
-    let error = registrationGap(record(100), record(120))
-        .err()
-        .expect("reversed order should fail");
+    let error = registrationGap(record(100), record(120)).expect_err("reversed order should fail");
     assert!(matches!(error, runtime::CompactError::AssertionFailed(_)));
     assert_eq!(error.to_string(), oracle["reverseError"]);
 }

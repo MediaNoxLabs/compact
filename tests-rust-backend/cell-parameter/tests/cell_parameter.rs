@@ -25,13 +25,13 @@ fn generated_parameterized_cell_write_uses_supplied_value() {
     let StateValue::Array(fields) = result.context.query.state.get_ref() else {
         panic!("expected ledger field array")
     };
-    assert!(read_cell::<bool, _>(&fields.get(0).unwrap()).unwrap());
+    assert!(read_cell::<bool, _>(fields.get(0).unwrap()).unwrap());
 
     let result = set_flag(result.context, false).unwrap();
     let StateValue::Array(fields) = result.context.query.state.get_ref() else {
         panic!("expected ledger field array")
     };
-    assert!(!read_cell::<bool, _>(&fields.get(0).unwrap()).unwrap());
+    assert!(!read_cell::<bool, _>(fields.get(0).unwrap()).unwrap());
 }
 
 #[test]

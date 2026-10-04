@@ -82,7 +82,7 @@ fn assert_oracle_output(result: &CircuitResult<u64, bool>, oracle: &serde_json::
         serde_json::to_value(&output.alignment).unwrap(),
         oracle["privateTranscriptOutputs"][0]["alignment"]
     );
-    let actual_gas = serde_json::to_value(&result.gas_cost).unwrap();
+    let actual_gas = serde_json::to_value(result.gas_cost).unwrap();
     let queries = oracle["queryCosts"].as_array().unwrap();
     assert_eq!(queries.len(), 3, "head, isEmpty, and length queries");
     for key in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
@@ -179,7 +179,7 @@ fn repeated_list_head_reads_charge_each_vm_query() {
     let (query, head): (_, (bool, Field)) = head_list::<Field, (bool, Field), _>(
         &context.query,
         0,
-        context.gas_limit.clone(),
+        context.gas_limit,
         &context.cost_model,
     )
     .unwrap();
@@ -189,7 +189,7 @@ fn repeated_list_head_reads_charge_each_vm_query() {
     let list = metered_list_view::<Field, _>(&meter, 0).unwrap();
     assert_eq!(list.head().unwrap(), None);
     assert_eq!(list.head().unwrap(), None);
-    assert_eq!(meter.gas_cost(), cost.clone() + cost);
+    assert_eq!(meter.gas_cost(), cost + cost);
 }
 
 #[test]

@@ -39,8 +39,8 @@ fn values(state: &StateValue<DefaultDB>) -> (String, String, String) {
     let StateValue::Array(fields) = state else {
         panic!("expected ledger field array")
     };
-    let ops = runtime::ledger::read_counter(&fields.get(0).unwrap()).unwrap();
-    let ver = runtime::ledger::read_counter(&fields.get(1).unwrap()).unwrap();
+    let ops = runtime::ledger::read_counter(fields.get(0).unwrap()).unwrap();
+    let ver = runtime::ledger::read_counter(fields.get(1).unwrap()).unwrap();
     let updated =
         runtime::ledger::read_root_cell::<runtime::BoundedUint<{ u64::MAX as u128 }>, _>(state, 2)
             .unwrap();

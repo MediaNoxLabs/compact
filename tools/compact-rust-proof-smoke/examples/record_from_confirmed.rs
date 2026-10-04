@@ -142,7 +142,7 @@ fn prove_and_export(
     };
     let params = MidnightDataProvider::new(FetchMode::OnDemand, OutputMode::Log, vec![])?;
     let provider = LocalProvingProvider {
-        rng: StdRng::seed_from_u64(0x5052_4f56_45),
+        rng: StdRng::seed_from_u64(0x0050_524f_5645),
         resolver: &resolver,
         params: &params,
     };

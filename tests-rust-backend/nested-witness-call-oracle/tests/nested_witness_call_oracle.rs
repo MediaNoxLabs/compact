@@ -305,7 +305,7 @@ fn parameterized_value_helper_preserves_argument_order_and_verify_program() {
         1,
         "only the final Cell write queries the ledger"
     );
-    let actual_gas = serde_json::to_value(&recorded.execution.gas_cost).unwrap();
+    let actual_gas = serde_json::to_value(recorded.execution.gas_cost).unwrap();
     for key in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
         let expected = queries[0]["gasCost"][key]
             .as_str()
@@ -400,7 +400,7 @@ fn expression_nested_value_helper_matches_typescript_and_replays() {
     );
     let queries = reference["outerValueExprQueries"].as_array().unwrap();
     assert_eq!(queries.len(), 1, "only the Cell write queries the ledger");
-    let actual_gas = serde_json::to_value(&recorded.execution.gas_cost).unwrap();
+    let actual_gas = serde_json::to_value(recorded.execution.gas_cost).unwrap();
     for key in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
         let expected = queries[0]["gasCost"][key]
             .as_str()
@@ -467,16 +467,16 @@ fn normalized_verify_ops(
     fn normalize(value: &mut serde_json::Value) {
         match value {
             serde_json::Value::Object(object) => {
-                if object.contains_key("alignment") {
-                    if let Some(serde_json::Value::Array(chunks)) = object.get_mut("value") {
-                        for chunk in chunks {
-                            if let serde_json::Value::Array(bytes) = chunk {
-                                let bytes = bytes
-                                    .iter()
-                                    .map(|byte| byte.as_u64().unwrap() as u8)
-                                    .collect::<Vec<_>>();
-                                *chunk = serde_json::json!({ "bytesHex": hex::encode(bytes) });
-                            }
+                if object.contains_key("alignment")
+                    && let Some(serde_json::Value::Array(chunks)) = object.get_mut("value")
+                {
+                    for chunk in chunks {
+                        if let serde_json::Value::Array(bytes) = chunk {
+                            let bytes = bytes
+                                .iter()
+                                .map(|byte| byte.as_u64().unwrap() as u8)
+                                .collect::<Vec<_>>();
+                            *chunk = serde_json::json!({ "bytesHex": hex::encode(bytes) });
                         }
                     }
                 }

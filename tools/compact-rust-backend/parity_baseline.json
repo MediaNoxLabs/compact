@@ -1,0 +1,5202 @@
+[
+  {
+    "source": "examples/rust_backend/struct_collision_oracle.compact",
+    "module_path": [
+      "Alpha"
+    ],
+    "kind": "circuit",
+    "name": "makeAlpha",
+    "signature": "export circuit makeAlpha(x: Field): Rec",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/struct_collision_oracle.compact",
+    "module_path": [
+      "Alpha"
+    ],
+    "kind": "circuit",
+    "name": "wrapAlpha",
+    "signature": "export circuit wrapAlpha(x: Field): Wrap",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/struct_collision_oracle.compact",
+    "module_path": [
+      "Beta"
+    ],
+    "kind": "circuit",
+    "name": "makeBeta",
+    "signature": "export circuit makeBeta(y: Field): Rec",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/struct_collision_oracle.compact",
+    "module_path": [
+      "Beta"
+    ],
+    "kind": "circuit",
+    "name": "wrapBeta",
+    "signature": "export circuit wrapBeta(y: Boolean): Wrap",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/module_boolean_constructor.compact",
+    "module_path": [
+      "M"
+    ],
+    "kind": "circuit",
+    "name": "bump_inner",
+    "signature": "export circuit bump_inner(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/schnorr_attest_oracle.compact",
+    "module_path": [
+      "Schnorr"
+    ],
+    "kind": "circuit",
+    "name": "schnorrVerify",
+    "signature": "export circuit schnorrVerify<#n>( msg: Vector<n, Field>, signature: SchnorrSignature, pk: JubjubPoint ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/schnorr_attest_oracle.compact",
+    "module_path": [
+      "Schnorr"
+    ],
+    "kind": "circuit",
+    "name": "schnorrVerifyDigest",
+    "signature": "export circuit schnorrVerifyDigest( digest: Vector<4, Field>, signature: SchnorrSignature, pk: JubjubPoint ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/schnorr_attest_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "acceptAttestation",
+    "signature": "export circuit acceptAttestation( digest: Vector<4, Field>, signature: Schnorr_SchnorrSignature ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/asset_registry_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "acceptIfFresh",
+    "signature": "export circuit acceptIfFresh( policy: FreshnessPolicy, record: AssetRecord, currentTime: Uint<64> ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/chunked_cell.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "active_equals",
+    "signature": "export circuit active_equals(expected: Boolean): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/stateful_circuit_call.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "add",
+    "signature": "export circuit add(amount: Uint<16>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/set_boolean.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "add",
+    "signature": "export circuit add(value: Boolean): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/opaque_string_set_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "addName",
+    "signature": "export circuit addName(name: Opaque<\"string\">): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/chunked_cell.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "add_amount",
+    "signature": "export circuit add_amount(delta: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/hmt_default_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "add_default",
+    "signature": "export circuit add_default(idx: Uint<64>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_uint_arithmetic.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "add_echo",
+    "signature": "export circuit add_echo(value: Uint<16>): Uint<16>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/set_boolean.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "add_field",
+    "signature": "export circuit add_field(value: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "test-center/test-contracts/welcome.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "add_organizer",
+    "signature": "export circuit add_organizer(organizer_pk: Bytes<32>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "test-center/test-contracts/welcome.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "add_participant",
+    "signature": "export circuit add_participant(participant: Opaque<\"string\">): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/jubjub_arithmetic.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "add_points",
+    "signature": "export circuit add_points(left: Field, right: Field): JubjubPoint",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_field_expression.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "add_secret",
+    "signature": "export circuit add_secret(seed: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_ledger_set.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "add_true",
+    "signature": "export circuit add_true(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/stateful_circuit_call.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "add_twice",
+    "signature": "export circuit add_twice(amount: Uint<16>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/uint_identity.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "add_uint",
+    "signature": "export circuit add_uint(left: Uint<8>, right: Uint<8>): Uint<9>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/election.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "add_voter",
+    "signature": "circuit add_voter(pk: Bytes<32>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/election_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "add_voter",
+    "signature": "circuit add_voter(pk: Bytes<32>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/election.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "advance",
+    "signature": "circuit advance(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/election_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "advance",
+    "signature": "circuit advance(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "test-center/test-contracts/micro-dao.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "advance",
+    "signature": "circuit advance(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/inline_type_scope_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "aggHelper",
+    "signature": "circuit aggHelper(w: Vector<4, Field>): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/choose_field.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "answer",
+    "signature": "export circuit answer(): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/hmt_insert_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "append",
+    "signature": "export circuit append(value: Uint<8>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/merkle_path_verify.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "append",
+    "signature": "export circuit append(value: Uint<8>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/merkle_path_witness.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "append",
+    "signature": "export circuit append(value: Uint<8>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/merkle_tree_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "append",
+    "signature": "export circuit append(value: Uint<8>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/merkle_path_witness.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "append_h",
+    "signature": "export circuit append_h(value: Uint<8>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/hmt_insert_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "append_hash",
+    "signature": "export circuit append_hash(hash: Bytes<32>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/merkle_tree_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "append_hash",
+    "signature": "export circuit append_hash(hash: Bytes<32>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_argument.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "apply_offset",
+    "signature": "export circuit apply_offset(value: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/asset_registry_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertGrantEffective",
+    "signature": "export circuit assertGrantEffective( grantId: Opaque<\"string\">, asOf: Uint<64> ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/asset_registry_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertOperatorDistinctFromAuditor",
+    "signature": "circuit assertOperatorDistinctFromAuditor(candidate: JubjubPoint): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/asset_registry_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertStoredRecordFresh",
+    "signature": "export circuit assertStoredRecordFresh( recordId: Opaque<\"string\">, policy: FreshnessPolicy, currentTime: Uint<64> ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/asset_registry_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assertWritable",
+    "signature": "circuit assertWritable(): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/chunked_cell.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "assert_active",
+    "signature": "export circuit assert_active(expected: Boolean): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/election.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "ballot_repr",
+    "signature": "circuit ballot_repr(ballot: PermissibleVotes): Bytes<32>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/election_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "ballot_repr",
+    "signature": "circuit ballot_repr(ballot: PermissibleVotes): Bytes<32>",
+    "visibility": "internal"
+  },
+  {
+    "source": "test-center/test-contracts/coracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "blue_concede",
+    "signature": "circuit blue_concede(): ShieldedCoinInfo",
+    "visibility": "internal"
+  },
+  {
+    "source": "test-center/test-contracts/coracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "blue_guess",
+    "signature": "circuit blue_guess(my_guess: Field): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "test-center/test-contracts/coracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "blue_pk",
+    "signature": "export circuit blue_pk(sk: Bytes<32>): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "test-center/test-contracts/coracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "blue_withdraw",
+    "signature": "circuit blue_withdraw(): WithdrawnCoins",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/boolean_logic.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "both",
+    "signature": "export circuit both(left: Boolean, right: Boolean): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/call_arg_declared_type.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "bridgeTupleIntoVec",
+    "signature": "export circuit bridgeTupleIntoVec(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/call_arg_declared_type.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "bridgeVecIntoTuple",
+    "signature": "export circuit bridgeVecIntoTuple(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/stateful_circuit_call.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "bump",
+    "signature": "export circuit bump(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/stateful_circuit_call.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "bump_twice",
+    "signature": "export circuit bump_twice(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "test-center/test-contracts/micro-dao.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "buy_in",
+    "signature": "circuit buy_in(coin: ShieldedCoinInfo, amount: Uint<64>): ShieldedCoinInfo",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/bytes_identity.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "bytes_identity",
+    "signature": "export circuit bytes_identity(value: Bytes<4>): Bytes<4>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/choose_field.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "call_sum",
+    "signature": "export circuit call_sum(left: Field, right: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "test-center/test-contracts/micro-dao.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "cash_out",
+    "signature": "circuit cash_out(): ShieldedCoinInfo",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/set_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "check",
+    "signature": "export circuit check(x: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/inline_type_scope_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "checkAggScope",
+    "signature": "export circuit checkAggScope(w: Vector<2, Field>, z: Vector<4, Field>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/inline_type_scope_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "checkNoCollisionScope",
+    "signature": "export circuit checkNoCollisionScope(v: Vector<2, Field>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/inline_type_scope_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "checkScalarScope",
+    "signature": "export circuit checkScalarScope(v: Vector<2, Field>, x: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "test-center/test-contracts/welcome.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "check_in",
+    "signature": "export circuit check_in(participant: Opaque<\"string\">): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/nested_collection_query_write.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "check_map_empty",
+    "signature": "export circuit check_map_empty(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/set_size_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "check_map_empty",
+    "signature": "export circuit check_map_empty(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/nested_collection_query_write.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "check_member",
+    "signature": "export circuit check_member(value: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/nested_map_shape.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "check_nested_empty",
+    "signature": "export circuit check_nested_empty(): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/nested_collection_query_write.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "check_set_empty",
+    "signature": "export circuit check_set_empty(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/set_size_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "check_set_empty",
+    "signature": "export circuit check_set_empty(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/merkle_path_witness.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "check_witness_history",
+    "signature": "export circuit check_witness_history(): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/merkle_path_witness.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "check_witness_merkle",
+    "signature": "export circuit check_witness_merkle(): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/assert_pure.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "checked_value",
+    "signature": "export circuit checked_value(first: Boolean, second: Boolean, value: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/assert_witness.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "checked_value",
+    "signature": "export circuit checked_value(first: Boolean, second: Boolean, value: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/assert_witness.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "checked_write",
+    "signature": "export circuit checked_write(flag: Boolean, value: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/enum_identity.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "choice_identity",
+    "signature": "export circuit choice_identity(value: Choice): Choice",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/choose_field.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "choose",
+    "signature": "export circuit choose(flag: Boolean, left: Field, right: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/recorded_enum_cell.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "choose",
+    "signature": "export circuit choose(next: Choice): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/set_boolean.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "choose",
+    "signature": "export circuit choose(value: Boolean, insert: Boolean): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_conditional.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "choose_secret",
+    "signature": "export circuit choose_secret(flag: Boolean, left: Field, right: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/tiny_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "clear",
+    "signature": "circuit clear(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/tiny.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "clear",
+    "signature": "circuit clear(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/chunked_list.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "clear_items",
+    "signature": "export circuit clear_items(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/constructor_list_actions.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "clear_items",
+    "signature": "export circuit clear_items(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/list_field.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "clear_items",
+    "signature": "export circuit clear_items(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/asset_registry_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "close",
+    "signature": "export circuit close(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_jubjub.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "combine",
+    "signature": "export circuit combine(seed: Field): JubjubPoint",
+    "visibility": "export"
+  },
+  {
+    "source": "test-center/test-contracts/coracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "commit",
+    "signature": "circuit commit<A>(c: Committable<A>): Commitment<A>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/call_arg_declared_type.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "commitFieldOnly",
+    "signature": "export circuit commitFieldOnly(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/call_arg_declared_type.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "commitSmall",
+    "signature": "export circuit commitSmall(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/call_arg_declared_type.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "commitU128",
+    "signature": "export circuit commitU128(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_hash.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "commit_echo",
+    "signature": "export circuit commit_echo(value: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/persistent_hash.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "commit_field",
+    "signature": "export circuit commit_field(value: Field, opening: Bytes<32>): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/transient_hash.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "commit_field",
+    "signature": "export circuit commit_field(value: Field, opening: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/transient_hash.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "commit_pair",
+    "signature": "export circuit commit_pair(value: Vector<2, Field>, opening: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/election.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "commit_with_sk",
+    "signature": "circuit commit_with_sk(ballot: Bytes<32>, sk: Bytes<32>): Bytes<32>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/election_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "commit_with_sk",
+    "signature": "circuit commit_with_sk(ballot: Bytes<32>, sk: Bytes<32>): Bytes<32>",
+    "visibility": "internal"
+  },
+  {
+    "source": "test-center/test-contracts/micro-dao.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "commit_with_sk",
+    "signature": "circuit commit_with_sk(ballot: Bytes<32>, sk: Bytes<32>): Bytes<32>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/zerocash_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "commitment_from_coin_info",
+    "signature": "circuit commitment_from_coin_info(coin: coin_info, pk: zk_public_key): commitment",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/zerocash.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "commitment_from_coin_info",
+    "signature": "circuit commitment_from_coin_info(coin: coin_info, pk: zk_public_key): commitment",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/election.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "commitment_nullifier",
+    "signature": "circuit commitment_nullifier(sk: Bytes<32>): Bytes<32>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/election_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "commitment_nullifier",
+    "signature": "circuit commitment_nullifier(sk: Bytes<32>): Bytes<32>",
+    "visibility": "internal"
+  },
+  {
+    "source": "test-center/test-contracts/micro-dao.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "commitment_nullifier",
+    "signature": "circuit commitment_nullifier(sk: Bytes<32>): Bytes<32>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/composite_struct.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "composite_identity",
+    "signature": "export circuit composite_identity(value: Composite): Composite",
+    "visibility": "export"
+  },
+  {
+    "source": "test-center/test-contracts/coracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "concede",
+    "signature": "export circuit concede(): ShieldedCoinInfo",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/jubjub_construct.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "construct_echo",
+    "signature": "export circuit construct_echo(x: Field, y: Field): JubjubPoint",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/jubjub_construct.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "construct_point",
+    "signature": "export circuit construct_point(x: Field, y: Field): JubjubPoint",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/jubjub_construct.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "construct_y",
+    "signature": "export circuit construct_y(x: Field, y: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/set_boolean.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "contains",
+    "signature": "export circuit contains(value: Boolean): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/set_boolean.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "contains_field",
+    "signature": "export circuit contains_field(value: Field): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/constructor_set_actions.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "contains_history",
+    "signature": "export circuit contains_history(value: Boolean): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/constructor_set_actions.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "contains_seen",
+    "signature": "export circuit contains_seen(value: Boolean): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/recorded_enum_cell.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "current",
+    "signature": "export circuit current(): Choice",
+    "visibility": "export"
+  },
+  {
+    "source": "test-center/test-contracts/micro-dao.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "dao_token_domain_separator",
+    "signature": "export circuit dao_token_domain_separator(): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "test-center/test-contracts/micro-dao.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "dao_voting_token",
+    "signature": "export circuit dao_voting_token(): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/counter_parameter.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "decrement_by",
+    "signature": "export circuit decrement_by(amount: Uint<16>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/persistent_hash.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "degrade_digest",
+    "signature": "export circuit degrade_digest(value: Bytes<32>): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/persistent_hash.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "degrade_hash",
+    "signature": "export circuit degrade_hash(value: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_hash.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "degrade_hash_echo",
+    "signature": "export circuit degrade_hash_echo(value: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/zerocash_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "derive_nullifier",
+    "signature": "circuit derive_nullifier(coin: coin_info, sk: zk_secret_key): nullifier",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/zerocash.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "derive_nullifier",
+    "signature": "circuit derive_nullifier(coin: coin_info, sk: zk_secret_key): nullifier",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/zerocash_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "derive_zk_public_key",
+    "signature": "circuit derive_zk_public_key(sk: zk_secret_key): zk_public_key",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/zerocash.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "derive_zk_public_key",
+    "signature": "circuit derive_zk_public_key(sk: zk_secret_key): zk_public_key",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/witness_vector_action.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "discardResult",
+    "signature": "export circuit discardResult(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/chunked_list.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "drop_first",
+    "signature": "export circuit drop_first(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/constructor_list_actions.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "drop_first",
+    "signature": "export circuit drop_first(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/list_field.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "drop_first",
+    "signature": "export circuit drop_first(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_ledger_list.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "drop_first",
+    "signature": "export circuit drop_first(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/boolean_logic.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "either",
+    "signature": "export circuit either(left: Boolean, right: Boolean): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/chunked_set_observed.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "empty",
+    "signature": "export circuit empty(): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/opaque_string_map_query_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "ensure",
+    "signature": "export circuit ensure(key: Opaque<\"string\">): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/constructor_stateful_call_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "ensureFirst",
+    "signature": "circuit ensureFirst(value: Field): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "test-center/test-contracts/coracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "eq_commitment",
+    "signature": "circuit eq_commitment<A>(left: Commitment<A>, right: Commitment<A>): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/equality.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "equal_bytes",
+    "signature": "export circuit equal_bytes(left: Bytes<4>, right: Bytes<4>): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/equality.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "equal_echo",
+    "signature": "export circuit equal_echo(left: Field, right: Field): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/equality.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "equal_field",
+    "signature": "export circuit equal_field(left: Field, right: Field): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/equality.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "equal_pair",
+    "signature": "export circuit equal_pair(left: Vector<2, Field>, right: Vector<2, Field>): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/field_add.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "field_add",
+    "signature": "export circuit field_add(left: Field, right: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_list_shapes.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "first_choice",
+    "signature": "export circuit first_choice(): Maybe<Choice>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/chunked_list.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "first_item",
+    "signature": "export circuit first_item(): Maybe<Field>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/constructor_list_actions.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "first_item",
+    "signature": "export circuit first_item(): Maybe<Field>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/list_field.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "first_item",
+    "signature": "export circuit first_item(): Maybe<Field>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_list_shapes.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "first_packet",
+    "signature": "export circuit first_packet(): Maybe<Packet>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/proposal.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "foo",
+    "signature": "circuit foo()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/hmt_insert_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "forget_history",
+    "signature": "export circuit forget_history(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/hmt_insert_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "full",
+    "signature": "export circuit full(): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/merkle_tree_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "full",
+    "signature": "export circuit full(): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_jubjub.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "generator",
+    "signature": "export circuit generator(seed: Field): JubjubPoint",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/jubjub_arithmetic.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "generator_point",
+    "signature": "export circuit generator_point(scalar: Field): JubjubPoint",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/jubjub_arithmetic.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "generator_reduced",
+    "signature": "export circuit generator_reduced(value: Field): JubjubPoint",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/tiny_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "get",
+    "signature": "circuit get(): Maybe<Field>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/tiny.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "get",
+    "signature": "circuit get(): Maybe<Field>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/chunked_map.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "get",
+    "signature": "export circuit get(key: Boolean): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/map_boolean_field.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "get",
+    "signature": "export circuit get(key: Boolean): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/chunked_cell.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "get_active",
+    "signature": "export circuit get_active(): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/chunked_cell.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "get_amount",
+    "signature": "export circuit get_amount(): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/constructor_map_actions.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "get_false_history",
+    "signature": "export circuit get_false_history(): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/merkle_path_witness.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "get_historic_path",
+    "signature": "export circuit get_historic_path(): MerkleTreePath<3, Uint<8>>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/merkle_path_witness.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "get_path",
+    "signature": "export circuit get_path(): MerkleTreePath<3, Uint<8>>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/constructor_map_actions.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "get_true",
+    "signature": "export circuit get_true(): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/uint_compare.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "greater",
+    "signature": "export circuit greater(left: Uint<16>, right: Uint<16>): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/uint_compare.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "greater_equal",
+    "signature": "export circuit greater_equal(left: Uint<16>, right: Uint<16>): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "test-center/test-contracts/coracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "guess",
+    "signature": "export circuit guess(position: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/chunked_map.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "has",
+    "signature": "export circuit has(key: Boolean): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/map_boolean_field.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "has",
+    "signature": "export circuit has(key: Boolean): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/opaque_string_set_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "hasName",
+    "signature": "export circuit hasName(name: Opaque<\"string\">): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/call_arg_declared_type.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "hashPersistentVec",
+    "signature": "export circuit hashPersistentVec(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/call_arg_declared_type.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "hashTransientVec",
+    "signature": "export circuit hashTransientVec(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/keccak.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "hash_bytes",
+    "signature": "export circuit hash_bytes(value: Bytes<4>): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/transient_hash.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "hash_bytes",
+    "signature": "export circuit hash_bytes(value: Bytes<4>): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/keccak.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "hash_echo",
+    "signature": "export circuit hash_echo(value: Field): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_hash.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "hash_echo",
+    "signature": "export circuit hash_echo(value: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/keccak.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "hash_field",
+    "signature": "export circuit hash_field(value: Field): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/persistent_hash.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "hash_field",
+    "signature": "export circuit hash_field(value: Field): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/transient_hash.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "hash_field",
+    "signature": "export circuit hash_field(value: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/keccak.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "hash_pair",
+    "signature": "export circuit hash_pair(value: Vector<2, Field>): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/persistent_hash.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "hash_pair",
+    "signature": "export circuit hash_pair(value: Vector<2, Field>): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/transient_hash.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "hash_pair",
+    "signature": "export circuit hash_pair(value: Vector<2, Field>): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_jubjub.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "hash_scalar",
+    "signature": "export circuit hash_scalar(seed: Field): JubjubPoint",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/constructor_list_actions.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "history_count",
+    "signature": "export circuit history_count(): Uint<64>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/constructor_map_actions.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "history_size",
+    "signature": "export circuit history_size(): Uint<64>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/identity.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "identity",
+    "signature": "export circuit identity(value: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/call_arg_declared_type.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "impureBare",
+    "signature": "export circuit impureBare(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/call_arg_declared_type.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "impureConst",
+    "signature": "export circuit impureConst(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/call_arg_declared_type.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "impureInIfArm",
+    "signature": "export circuit impureInIfArm(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/tiny_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "in_state",
+    "signature": "circuit in_state(s: STATE): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/tiny.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "in_state",
+    "signature": "circuit in_state(s: STATE): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/counter.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "increment",
+    "signature": "export circuit increment(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/counter.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "increment",
+    "signature": "export circuit increment(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "test-center/test-contracts/counter.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "increment",
+    "signature": "export circuit increment(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/counter_parameter.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "increment_by",
+    "signature": "export circuit increment_by(amount: Uint<16>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_ledger_counter.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "increment_round",
+    "signature": "export circuit increment_round(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/proposal.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "initialize",
+    "signature": "circuit initialize()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/call_arg_declared_type.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "inlinedAssert",
+    "signature": "export circuit inlinedAssert(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/nested_witness_call_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "inner",
+    "signature": "circuit inner(next: Field): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/nested_witness_call_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "innerValue",
+    "signature": "circuit innerValue(): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/nested_witness_call_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "innerValue2",
+    "signature": "circuit innerValue2(first: Field, second: Field): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/chunked_set_observed.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "insert_key",
+    "signature": "export circuit insert_key(key: [Field, Boolean]): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/observed_composite_keys.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "insert_struct",
+    "signature": "export circuit insert_struct(key: CompositeKey): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/observed_composite_keys.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "insert_tuple",
+    "signature": "export circuit insert_tuple(key: [Field, Boolean]): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/observed_composite_keys.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "insert_vector",
+    "signature": "export circuit insert_vector(key: Vector<2, Field>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/boolean_logic.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "invert",
+    "signature": "export circuit invert(value: Boolean): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "test-center/test-contracts/coracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "is_blue",
+    "signature": "export circuit is_blue(sk: Bytes<32>, pk: Bytes<32>): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "test-center/test-contracts/coracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "is_blue_turn",
+    "signature": "circuit is_blue_turn(state: State): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "test-center/test-contracts/coracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "is_match",
+    "signature": "circuit is_match<A>(c: Committable<A>, b: Commitment<A>): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "test-center/test-contracts/coracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "is_player_alive",
+    "signature": "export circuit is_player_alive(local_board: Committable<Board>, guess: Field): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "test-center/test-contracts/coracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "is_player_honest",
+    "signature": "circuit is_player_honest(local_board: Committable<Board>, remote_board: Commitment<Board>): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "test-center/test-contracts/coracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "is_red",
+    "signature": "export circuit is_red(sk: Bytes<32>, pk: Bytes<32>): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "test-center/test-contracts/coracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "is_red_turn",
+    "signature": "circuit is_red_turn(state: State): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "test-center/test-contracts/coracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "is_valid_board",
+    "signature": "circuit is_valid_board(board: Board): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "test-center/test-contracts/coracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "is_valid_pos",
+    "signature": "circuit is_valid_pos(pos: Field): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/chunked_list.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "item_count",
+    "signature": "export circuit item_count(): Uint<64>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/constructor_list_actions.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "item_count",
+    "signature": "export circuit item_count(): Uint<64>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/list_field.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "item_count",
+    "signature": "export circuit item_count(): Uint<64>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/chunked_list.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "items_empty",
+    "signature": "export circuit items_empty(): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/list_field.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "items_empty",
+    "signature": "export circuit items_empty(): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_vector_action.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "keepResult",
+    "signature": "export circuit keepResult(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/chunked_set_observed.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "key_count",
+    "signature": "export circuit key_count(): Uint<64>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/hmt_insert_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "known",
+    "signature": "export circuit known(root: MerkleTreeDigest): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/merkle_tree_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "known",
+    "signature": "export circuit known(root: MerkleTreeDigest): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/uint_compare.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "less",
+    "signature": "export circuit less(left: Uint<16>, right: Uint<16>): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/uint_compare.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "less_equal",
+    "signature": "export circuit less_equal(left: Uint<16>, right: Uint<16>): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_conditional.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "local_secret",
+    "signature": "export circuit local_secret(seed: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "test-center/test-contracts/welcome.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "local_sk_or_error",
+    "signature": "circuit local_sk_or_error(): Bytes<32>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/map_literal.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "lookup_true",
+    "signature": "export circuit lookup_true(): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/vector_key_adt.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "mapInsert",
+    "signature": "export circuit mapInsert(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/vector_key_adt.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "mapInsertDefault",
+    "signature": "export circuit mapInsertDefault(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/vector_key_adt.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "mapLookup",
+    "signature": "export circuit mapLookup(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/vector_key_adt.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "mapMember",
+    "signature": "export circuit mapMember(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/vector_key_adt.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "mapRemove",
+    "signature": "export circuit mapRemove(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/nested_collection_query_write.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "map_empty_flag",
+    "signature": "export circuit map_empty_flag(): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/uint_identity.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "max_uint",
+    "signature": "export circuit max_uint(): Uint<8>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/nested_collection_query_write.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "member_flag",
+    "signature": "export circuit member_flag(): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/nested_witness_call_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "middle",
+    "signature": "circuit middle(next: Field): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/uint_compare.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "mixed_width",
+    "signature": "export circuit mixed_width(left: Uint<8>, right: Uint<16>): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/field_arithmetic.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "multiply",
+    "signature": "export circuit multiply(left: Field, right: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/chunked_cell.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "multiply_amount",
+    "signature": "export circuit multiply_amount(factor: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_uint_arithmetic.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "multiply_echo",
+    "signature": "export circuit multiply_echo(value: Uint<16>): Uint<16>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/jubjub_arithmetic.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "multiply_point",
+    "signature": "export circuit multiply_point(value: Field, scalar: Field): JubjubPoint",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/uint_arithmetic.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "multiply_uint",
+    "signature": "export circuit multiply_uint(left: Uint<8>, right: Uint<8>): Uint<16>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_jubjub.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "negate",
+    "signature": "export circuit negate(seed: Field): JubjubPoint",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/jubjub_arithmetic.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "negate_point",
+    "signature": "export circuit negate_point(value: Field): JubjubPoint",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/nested_struct.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "nested_identity",
+    "signature": "export circuit nested_identity(value: Outer): Outer",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_conditional.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "nested_secret",
+    "signature": "export circuit nested_secret(seed: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/inline_type_scope_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "noCollisionHelper",
+    "signature": "circuit noCollisionHelper(w: Vector<2, Field>): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/equality.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "not_equal_field",
+    "signature": "export circuit not_equal_field(left: Field, right: Field): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/one_tuple.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "one_tuple",
+    "signature": "export circuit one_tuple(value: Field): [Field]",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/nested_witness_call_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "outer",
+    "signature": "export circuit outer(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/nested_witness_call_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "outerValue",
+    "signature": "export circuit outerValue(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/nested_witness_call_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "outerValue2",
+    "signature": "export circuit outerValue2(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/nested_witness_call_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "outerValueExpr",
+    "signature": "export circuit outerValueExpr(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/struct_identity.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "pair_identity",
+    "signature": "export circuit pair_identity(value: Pair): Pair",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/jubjub_hash.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "pair_point",
+    "signature": "export circuit pair_point(value: Vector<2, Field>): JubjubPoint",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_conditional.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "pair_secret",
+    "signature": "export circuit pair_secret(seed: Field): [Field, Field]",
+    "visibility": "export"
+  },
+  {
+    "source": "test-center/test-contracts/micro-dao.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "path_root",
+    "signature": "export circuit path_root(path: MerkleTreePath<10, Bytes<32>>): MerkleTreeDigest",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_hash.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "persistent_commit_echo",
+    "signature": "export circuit persistent_commit_echo(value: Field, opening: Bytes<32>): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_hash.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "persistent_hash_echo",
+    "signature": "export circuit persistent_hash_echo(value: Field): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/assert_parity_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "ping",
+    "signature": "export circuit ping(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/fold_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "ping",
+    "signature": "export circuit ping(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/for_iter_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "ping",
+    "signature": "export circuit ping(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/for_range_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "ping",
+    "signature": "export circuit ping(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/hash_to_curve_vector_constructor.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "ping",
+    "signature": "export circuit ping(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/list_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "ping",
+    "signature": "export circuit ping(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/map_fn_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "ping",
+    "signature": "export circuit ping(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/map_lambda_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "ping",
+    "signature": "export circuit ping(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/nested_map_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "ping",
+    "signature": "export circuit ping(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/pure_circuit_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "ping",
+    "signature": "export circuit ping(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/sealed_ledger_constructor.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "ping",
+    "signature": "export circuit ping(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/tuple_destructure.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "ping",
+    "signature": "export circuit ping(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/tuple_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "ping",
+    "signature": "export circuit ping(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/hmt_insert_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "place",
+    "signature": "export circuit place(value: Uint<8>, index: Uint<64>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/merkle_tree_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "place",
+    "signature": "export circuit place(value: Uint<8>, index: Uint<64>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/merkle_tree_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "place_default",
+    "signature": "export circuit place_default(index: Uint<64>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/hmt_insert_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "place_hash",
+    "signature": "export circuit place_hash(hash: Bytes<32>, index: Uint<64>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/merkle_tree_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "place_hash",
+    "signature": "export circuit place_hash(hash: Bytes<32>, index: Uint<64>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/chunked_cell.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "plus_amount",
+    "signature": "export circuit plus_amount(delta: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/jubjub_hash.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "point",
+    "signature": "export circuit point(value: Field): JubjubPoint",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_jubjub.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "point_x",
+    "signature": "export circuit point_x(seed: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/jubjub_hash.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "point_x",
+    "signature": "export circuit point_x(value: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_jubjub.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "point_y",
+    "signature": "export circuit point_y(seed: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/jubjub_hash.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "point_y",
+    "signature": "export circuit point_y(value: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "test-center/test-contracts/bboard.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "post",
+    "signature": "export circuit post(new_message: Opaque<\"string\">): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/chunked_list.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "prepend",
+    "signature": "export circuit prepend(value: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/list_field.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "prepend",
+    "signature": "export circuit prepend(value: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_ledger_list.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "prepend",
+    "signature": "export circuit prepend(value: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_ledger_cell.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "private_check",
+    "signature": "export circuit private_check(): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_ledger_set.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "private_contains",
+    "signature": "export circuit private_contains(): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_ledger_list.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "private_first_is_42",
+    "signature": "export circuit private_first_is_42(): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_ledger_map.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "private_has",
+    "signature": "export circuit private_has(): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_ledger_counter.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "private_round",
+    "signature": "export circuit private_round(): Uint<64>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/election.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "public_key",
+    "signature": "circuit public_key(sk: Bytes<32>): Bytes<32>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/election_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "public_key",
+    "signature": "circuit public_key(sk: Bytes<32>): Bytes<32>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/tiny_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "public_key",
+    "signature": "circuit public_key(sk: Bytes<32>): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/tiny.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "public_key",
+    "signature": "circuit public_key(sk: Bytes<32>): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "test-center/test-contracts/micro-dao.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "public_key",
+    "signature": "export circuit public_key(sk: Bytes<32>): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "test-center/test-contracts/welcome.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "public_key",
+    "signature": "export circuit public_key(sk: Bytes<32>): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "test-center/test-contracts/bboard.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "public_key",
+    "signature": "export circuit public_key(sk: Bytes<32>, instance: Bytes<32>): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witnesses_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "pull",
+    "signature": "export circuit pull(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/call_arg_declared_type.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "pureBodyFieldOnly",
+    "signature": "export circuit pureBodyFieldOnly(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/call_arg_declared_type.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "pureBodyVec",
+    "signature": "export circuit pureBodyVec(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/call_arg_declared_type.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "pureFromImpure",
+    "signature": "export circuit pureFromImpure(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_list_shapes.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "push_choice",
+    "signature": "export circuit push_choice(value: Choice): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_list_shapes.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "push_count",
+    "signature": "export circuit push_count(value: Uint<16>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_list_shapes.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "push_flag",
+    "signature": "export circuit push_flag(value: Boolean): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_list_shapes.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "push_packet",
+    "signature": "export circuit push_packet(value: Packet): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_list_shapes.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "push_tag",
+    "signature": "export circuit push_tag(value: Bytes<3>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/map_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "put",
+    "signature": "export circuit put(k: Field, v: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/chunked_map.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "put",
+    "signature": "export circuit put(key: Boolean, value: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/map_boolean_field.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "put",
+    "signature": "export circuit put(key: Boolean, value: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/opaque_string_map_query_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "put",
+    "signature": "export circuit put(key: Opaque<\"string\">, value: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/chunked_map.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "put_default",
+    "signature": "export circuit put_default(key: Boolean): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/map_boolean_field.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "put_default",
+    "signature": "export circuit put_default(key: Boolean): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/map_literal.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "put_literal",
+    "signature": "export circuit put_literal(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/chunked_map.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "put_pair",
+    "signature": "export circuit put_pair(left: Boolean, right: Boolean, value: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/map_boolean_field.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "put_pair",
+    "signature": "export circuit put_pair(left: Boolean, right: Boolean, value: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_ledger_map.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "put_true",
+    "signature": "export circuit put_true(value: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/constructor_assert_sequence.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "read",
+    "signature": "export circuit read(): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/kernel_self_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "readAddress",
+    "signature": "export circuit readAddress(): ContractAddress",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/constructor_stateful_call_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "readSecond",
+    "signature": "export circuit readSecond(): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/wide_uint_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "readWide",
+    "signature": "export circuit readWide(): Uint<248>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/jubjub_cell.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "read_box",
+    "signature": "export circuit read_box(): PointBox",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/assert_witness.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "read_cell",
+    "signature": "export circuit read_cell(): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_cell_write.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "read_cell",
+    "signature": "export circuit read_cell(): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_list_shapes.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "read_choices",
+    "signature": "export circuit read_choices(): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/constructor_counter_actions.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "read_count",
+    "signature": "export circuit read_count(): Uint<64>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/constructor_for_each.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "read_count",
+    "signature": "export circuit read_count(): Uint<64>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_list_shapes.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "read_counts",
+    "signature": "export circuit read_counts(): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/constructor_persistent_hash.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "read_digest",
+    "signature": "export circuit read_digest(): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/cell_read.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "read_flag",
+    "signature": "export circuit read_flag(): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_list_shapes.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "read_flags",
+    "signature": "export circuit read_flags(): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/wide_field_literal.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "read_large",
+    "signature": "export circuit read_large(): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_list_shapes.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "read_packets",
+    "signature": "export circuit read_packets(): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/vector_tuple_cell.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "read_pair",
+    "signature": "export circuit read_pair(): [Field, Boolean]",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/constructor_tuple_coercion.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "read_pair",
+    "signature": "export circuit read_pair(): [Field, Field]",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/jubjub_cell.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "read_point",
+    "signature": "export circuit read_point(): JubjubPoint",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_minimal.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "read_private",
+    "signature": "export circuit read_private(): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/cell_struct.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "read_record",
+    "signature": "export circuit read_record(): Pair",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/counter.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "read_round",
+    "signature": "export circuit read_round(): Uint<64>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/counter.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "read_round",
+    "signature": "export circuit read_round(): Uint<64>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/internal_pure_call.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "read_stored",
+    "signature": "export circuit read_stored(): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/stateful_pure_call.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "read_stored",
+    "signature": "export circuit read_stored(): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_list_shapes.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "read_tags",
+    "signature": "export circuit read_tags(): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/constructor_cell_literal.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "read_value",
+    "signature": "export circuit read_value(): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/constructor_cell_parameter.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "read_value",
+    "signature": "export circuit read_value(): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/constructor_counter_actions.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "read_value",
+    "signature": "export circuit read_value(): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/constructor_vector_coercion.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "read_values",
+    "signature": "export circuit read_values(): Vector<2, Field>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/default_vector.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "read_values",
+    "signature": "export circuit read_values(): Vector<2, Field>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/vector_tuple_cell.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "read_values",
+    "signature": "export circuit read_values(): Vector<3, Field>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/widening_arith_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "recordArea",
+    "signature": "export circuit recordArea(w: Uint<16>, h: Uint<16>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/asset_registry_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "recordExists",
+    "signature": "circuit recordExists(id: Opaque<\"string\">): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/guarded_assert_arith_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "recordFreshEnough",
+    "signature": "export circuit recordFreshEnough( policy: VerifierPolicy, attestation: Attestation, currentTime: Uint<64> ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/mixed_width_operand_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "recordMatching",
+    "signature": "export circuit recordMatching(small: Uint<8>, big: Uint<32>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/mixed_width_operand_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "recordPinned",
+    "signature": "export circuit recordPinned(q: Uint<32>, y: Uint<32>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/asset_registry_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "recordWrite",
+    "signature": "circuit recordWrite(): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/observed_composite_keys.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "record_twelve",
+    "signature": "export circuit record_twelve(a: Field, b: Field, c: Field, d: Field, e: Field, f: Field, g: Field, h: Field, i: Field, j: Field, k: Field, l: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/multi_pl_call_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "record_update",
+    "signature": "export circuit record_update(value: Uint<64>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "test-center/test-contracts/coracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "red_concede",
+    "signature": "circuit red_concede(): ShieldedCoinInfo",
+    "visibility": "internal"
+  },
+  {
+    "source": "test-center/test-contracts/coracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "red_guess",
+    "signature": "circuit red_guess(my_guess: Field): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "test-center/test-contracts/coracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "red_pk",
+    "signature": "export circuit red_pk(sk: Bytes<32>): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "test-center/test-contracts/coracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "red_withdraw",
+    "signature": "circuit red_withdraw(): WithdrawnCoins",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/jubjub_arithmetic.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "reduce_scalar",
+    "signature": "export circuit reduce_scalar(value: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/set_boolean.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "remove",
+    "signature": "export circuit remove(value: Boolean): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/asset_registry_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "removeRecord",
+    "signature": "export circuit removeRecord(recordId: Opaque<\"string\">): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/chunked_map.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "remove_key",
+    "signature": "export circuit remove_key(key: Boolean): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/map_boolean_field.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "remove_key",
+    "signature": "export circuit remove_key(key: Boolean): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/merkle_path_verify.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "replace",
+    "signature": "export circuit replace(value: Uint<8>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/cross_circuit_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "reset",
+    "signature": "export circuit reset(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/cross_circuit_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "reset_and_set",
+    "signature": "export circuit reset_and_set(v: Uint<64>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/set_boolean.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "reset_fields",
+    "signature": "export circuit reset_fields(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/counter_parameter.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "reset_round",
+    "signature": "export circuit reset_round(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "test-center/test-contracts/micro-dao.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "reset_state",
+    "signature": "circuit reset_state(reset_pot: Boolean): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/chunked_map.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "reset_table",
+    "signature": "export circuit reset_table(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/map_boolean_field.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "reset_table",
+    "signature": "export circuit reset_table(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/hmt_insert_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "reset_tree",
+    "signature": "export circuit reset_tree(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/merkle_tree_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "reset_tree",
+    "signature": "export circuit reset_tree(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_vector_action.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "reuseResult",
+    "signature": "export circuit reuseResult(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_jubjub.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "reveal",
+    "signature": "export circuit reveal(seed: Field): JubjubPoint",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/election.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "reveal_nullifier",
+    "signature": "circuit reveal_nullifier(sk: Bytes<32>): Bytes<32>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/election_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "reveal_nullifier",
+    "signature": "circuit reveal_nullifier(sk: Bytes<32>): Bytes<32>",
+    "visibility": "internal"
+  },
+  {
+    "source": "test-center/test-contracts/micro-dao.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "reveal_nullifier",
+    "signature": "circuit reveal_nullifier(sk: Bytes<32>): Bytes<32>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/chunked_set_observed.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "roundtrip_key",
+    "signature": "export circuit roundtrip_key(key: [Field, Boolean]): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/observed_composite_keys.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "roundtrip_struct",
+    "signature": "export circuit roundtrip_struct(key: CompositeKey): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/observed_composite_keys.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "roundtrip_tuple",
+    "signature": "export circuit roundtrip_tuple(key: [Field, Boolean]): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/nested_stateful_ternary.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "run",
+    "signature": "export circuit run(c: Boolean): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/struct_collision_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "runAlpha",
+    "signature": "export circuit runAlpha(x: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/struct_collision_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "runBeta",
+    "signature": "export circuit runBeta(y: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/struct_collision_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "runWrapAlpha",
+    "signature": "export circuit runWrapAlpha(x: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/struct_collision_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "runWrapBeta",
+    "signature": "export circuit runWrapBeta(y: Boolean): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/stateful_pure_call.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "save",
+    "signature": "export circuit save(value: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/internal_pure_call.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "save",
+    "signature": "export circuit save(value: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/pure_call_action.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "save",
+    "signature": "export circuit save(value: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/field_cast_uint128.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "save",
+    "signature": "export circuit save(value: Uint<128>): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/inline_type_scope_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "scalarHelper",
+    "signature": "circuit scalarHelper(v: Field): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/witness_jubjub.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "scale",
+    "signature": "export circuit scale(seed: Field): JubjubPoint",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/nested_collection_query_write.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "seed",
+    "signature": "export circuit seed(value: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/set_boolean.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "seen_is_empty",
+    "signature": "export circuit seen_is_empty(): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/set_boolean.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "seen_size",
+    "signature": "export circuit seen_size(): Uint<64>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/recorded_enum_cell.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "selectNo",
+    "signature": "export circuit selectNo(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/tiny_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "set",
+    "signature": "circuit set(v: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/tiny.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "set",
+    "signature": "circuit set(v: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/asset_registry_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "setCustodian",
+    "signature": "export circuit setCustodian(holder: ContractAddress): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/asset_registry_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "setCustodyGrant",
+    "signature": "export circuit setCustodyGrant( grantId: Opaque<\"string\">, grant: CustodyGrant, mutation: RecordMutation ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/inline_type_scope_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "setHash",
+    "signature": "export circuit setHash(h: Bytes<32>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/vector_key_adt.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "setInsert",
+    "signature": "export circuit setInsert(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/vector_key_adt.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "setMember",
+    "signature": "export circuit setMember(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/asset_registry_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "setRecord",
+    "signature": "export circuit setRecord( recordId: Opaque<\"string\">, record: AssetRecord, mutation: RecordMutation ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/vector_key_adt.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "setRemove",
+    "signature": "export circuit setRemove(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/asset_registry_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "setWatch",
+    "signature": "export circuit setWatch(recordId: Opaque<\"string\">, mutation: ListMutation): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/chunked_cell.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "set_active",
+    "signature": "export circuit set_active(next: Boolean): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/chunked_cell.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "set_amount",
+    "signature": "export circuit set_amount(next: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/jubjub_cell.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "set_box",
+    "signature": "export circuit set_box(value: PointBox): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/uints_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "set_byte",
+    "signature": "export circuit set_byte(v: Uint<8>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/nested_collection_query_write.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "set_empty_flag",
+    "signature": "export circuit set_empty_flag(): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/cell_boolean.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "set_flag",
+    "signature": "export circuit set_flag(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_ledger_cell.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "set_flag",
+    "signature": "export circuit set_flag(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/cell_parameter.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "set_flag",
+    "signature": "export circuit set_flag(value: Boolean): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/bug11_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "set_medium",
+    "signature": "export circuit set_medium(v: Uint<0..70000>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/vector_tuple_cell.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "set_pair",
+    "signature": "export circuit set_pair(value: [Field, Boolean]): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/jubjub_cell.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "set_point",
+    "signature": "export circuit set_point(value: JubjubPoint): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/cell_struct.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "set_record",
+    "signature": "export circuit set_record(value: Pair): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/bounded_uint_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "set_small",
+    "signature": "export circuit set_small(v: Uint<0..100>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/bug11_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "set_tiny",
+    "signature": "export circuit set_tiny(v: Uint<0..100>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/election.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "set_topic",
+    "signature": "circuit set_topic(t: Opaque<\"string\">): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/election_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "set_topic",
+    "signature": "circuit set_topic(t: Opaque<\"string\">): []",
+    "visibility": "export"
+  },
+  {
+    "source": "test-center/test-contracts/micro-dao.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "set_topic",
+    "signature": "circuit set_topic(topic_param: Opaque<\"string\">, beneficiary_param: ZswapCoinPublicKey, seedCoin: ShieldedCoinInfo): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/vector_tuple_cell.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "set_values",
+    "signature": "export circuit set_values(value: Vector<3, Field>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/bug11_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "set_wide",
+    "signature": "export circuit set_wide(v: Uint<0..5000000000>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/uint_identity.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "seven",
+    "signature": "export circuit seven(): Uint<8>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/zerocash_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "spend",
+    "signature": "circuit spend(dest_public_key: public_key, input_coin: coin_info): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/zerocash.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "spend",
+    "signature": "circuit spend(dest_public_key: public_key, input_coin: coin_info): []",
+    "visibility": "export"
+  },
+  {
+    "source": "test-center/test-contracts/coracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "start",
+    "signature": "export circuit start(pos: Field, wager: ShieldedCoinInfo, deposit: ShieldedCoinInfo): Player",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/call_arg_declared_type.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "storeVec",
+    "signature": "circuit storeVec(v: Vector<2, Field>): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "streamAssertEq",
+    "signature": "export circuit streamAssertEq(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "streamCallPure",
+    "signature": "export circuit streamCallPure(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "streamCallWitness",
+    "signature": "export circuit streamCallWitness(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "streamCompareEq",
+    "signature": "export circuit streamCompareEq(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "streamConstAnnotated",
+    "signature": "export circuit streamConstAnnotated(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "streamIncrement",
+    "signature": "export circuit streamIncrement(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "streamNativeArg",
+    "signature": "export circuit streamNativeArg(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "streamNestedIf",
+    "signature": "export circuit streamNestedIf(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "streamStructMember",
+    "signature": "export circuit streamStructMember(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "streamVectorElement",
+    "signature": "export circuit streamVectorElement(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "streamWrite",
+    "signature": "export circuit streamWrite(c: Boolean, x: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/field_arithmetic.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "subtract",
+    "signature": "export circuit subtract(left: Field, right: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/chunked_cell.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "subtract_amount",
+    "signature": "export circuit subtract_amount(delta: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_uint_arithmetic.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "subtract_echo",
+    "signature": "export circuit subtract_echo(value: Uint<16>): Uint<16>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/uint_arithmetic.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "subtract_uint",
+    "signature": "export circuit subtract_uint(left: Uint<8>, right: Uint<8>): Uint<8>",
+    "visibility": "export"
+  },
+  {
+    "source": "test-center/test-contracts/micro-dao.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "successor",
+    "signature": "circuit successor(state: LedgerState): LedgerState",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/election.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "successor",
+    "signature": "circuit successor(state: PublicState): PublicState",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/election_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "successor",
+    "signature": "circuit successor(state: PublicState): PublicState",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/call_arg_declared_type.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "sumVecPlusCell",
+    "signature": "circuit sumVecPlusCell(v: Vector<2, Field>): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/witness_field_expression.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "sum_secrets",
+    "signature": "export circuit sum_secrets(seed: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/choose_field.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "sum_with_local",
+    "signature": "export circuit sum_with_local(left: Field, right: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/chunked_map.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "table_is_empty",
+    "signature": "export circuit table_is_empty(): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/map_boolean_field.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "table_is_empty",
+    "signature": "export circuit table_is_empty(): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/chunked_map.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "table_size",
+    "signature": "export circuit table_size(): Uint<64>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/constructor_map_actions.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "table_size",
+    "signature": "export circuit table_size(): Uint<64>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/map_boolean_field.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "table_size",
+    "signature": "export circuit table_size(): Uint<64>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/asset_registry_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "tag",
+    "signature": "export circuit tag(value: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "test-center/test-contracts/bboard.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "take_down",
+    "signature": "export circuit take_down(): Opaque<\"string\">",
+    "visibility": "export"
+  },
+  {
+    "source": "test-center/test-contracts/micro-dao.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "tdust",
+    "signature": "export circuit tdust(): Uint<64>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/assert_parity_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "trigger_fail",
+    "signature": "export circuit trigger_fail(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/assert_parity_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "trigger_ok",
+    "signature": "export circuit trigger_ok(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/truth.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "truth",
+    "signature": "export circuit truth(): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/uint_identity.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "uint_identity",
+    "signature": "export circuit uint_identity(value: Uint<8>): Uint<8>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_hash.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "upgrade_echo",
+    "signature": "export circuit upgrade_echo(value: Field): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/persistent_hash.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "upgrade_field",
+    "signature": "export circuit upgrade_field(value: Field): Bytes<32>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/call_arg_declared_type.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "vecDiffers",
+    "signature": "circuit vecDiffers(v: Vector<2, Field>): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/merkle_path_verify.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "verify",
+    "signature": "export circuit verify(): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/schnorr_attest_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "verifyAttestation",
+    "signature": "export circuit verifyAttestation( digest: Vector<4, Field>, signature: Schnorr_SchnorrSignature ): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/election.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "vote$commit",
+    "signature": "circuit vote$commit(ballot: PermissibleVotes): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/election_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "vote$commit",
+    "signature": "circuit vote$commit(ballot: PermissibleVotes): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/election.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "vote$reveal",
+    "signature": "circuit vote$reveal(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/election_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "vote$reveal",
+    "signature": "circuit vote$reveal(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "test-center/test-contracts/micro-dao.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "vote_commit",
+    "signature": "circuit vote_commit(ballot: Boolean, votingCoin: ShieldedCoinInfo): []",
+    "visibility": "export"
+  },
+  {
+    "source": "test-center/test-contracts/micro-dao.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "vote_reveal",
+    "signature": "circuit vote_reveal(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "walkerCallCtor",
+    "signature": "export circuit walkerCallCtor(c: Boolean): Maybe<Field>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "walkerCallPure",
+    "signature": "export circuit walkerCallPure(c: Boolean): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "walkerCompareEq",
+    "signature": "export circuit walkerCompareEq(c: Boolean, x: Uint<8>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "walkerConstAnnotated",
+    "signature": "export circuit walkerConstAnnotated(c: Boolean): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "walkerInlineWrite",
+    "signature": "export circuit walkerInlineWrite(c: Boolean): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "walkerNativeArg",
+    "signature": "export circuit walkerNativeArg(c: Boolean): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "walkerNestedIf",
+    "signature": "export circuit walkerNestedIf(c: Boolean, d: Boolean): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "walkerReturnTail",
+    "signature": "export circuit walkerReturnTail(c: Boolean): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "walkerStructMember",
+    "signature": "export circuit walkerStructMember(c: Boolean): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "walkerVectorElement",
+    "signature": "export circuit walkerVectorElement(c: Boolean): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "walkerWrite",
+    "signature": "export circuit walkerWrite(c: Boolean, x: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/choose_field.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "wide_constant",
+    "signature": "export circuit wide_constant(): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "test-center/test-contracts/coracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "withdraw",
+    "signature": "export circuit withdraw(): WithdrawnCoins",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "witnessArg",
+    "signature": "export circuit witnessArg(c: Boolean): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/call_arg_declared_type.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "witnessBare",
+    "signature": "export circuit witnessBare(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/call_arg_declared_type.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "witnessConst",
+    "signature": "export circuit witnessConst(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/boolean_logic.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "witnessed_both",
+    "signature": "export circuit witnessed_both(left: Boolean, right: Boolean): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/boolean_logic.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "witnessed_either",
+    "signature": "export circuit witnessed_either(left: Boolean, right: Boolean): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/uint_compare.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "witnessed_less",
+    "signature": "export circuit witnessed_less(left: Uint<16>, right: Uint<16>): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/boolean_logic.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "witnessed_not",
+    "signature": "export circuit witnessed_not(value: Boolean): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/wide_uint_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "writeWide",
+    "signature": "export circuit writeWide(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_cell_write.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "write_inner",
+    "signature": "circuit write_inner(seed: Field): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/witness_cell_write.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "write_nested_twice",
+    "signature": "export circuit write_nested_twice(seed: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_cell_write.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "write_offset",
+    "signature": "export circuit write_offset(seed: Field, offset: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_cell_write.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "write_secret",
+    "signature": "export circuit write_secret(seed: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/witness_cell_write.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "write_twice",
+    "signature": "export circuit write_twice(seed: Field): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/uint_identity.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "zero",
+    "signature": "export circuit zero(): Uint<8>",
+    "visibility": "export"
+  },
+  {
+    "source": "test-center/test-contracts/coracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "zero_commitment",
+    "signature": "circuit zero_commitment<A>(): Commitment<A>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/zerocash_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "zerocash_mint",
+    "signature": "circuit zerocash_mint(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/zerocash.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "zerocash_mint",
+    "signature": "circuit zerocash_mint(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "test-center/test-contracts/coracle.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor ()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/asset_registry_oracle.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/call_arg_declared_type.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/chunked_cell.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/chunked_ledger_oracle.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/chunked_list.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/chunked_map.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/constructor_cell_literal.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/constructor_for_each.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/constructor_list_actions.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/constructor_map_actions.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/constructor_persistent_hash.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/constructor_set_actions.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/constructor_stateful_call_oracle.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/constructor_tuple_coercion.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/constructor_vector_coercion.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/default_vector.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/fold_oracle.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/for_iter_oracle.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/for_range_oracle.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/hash_to_curve_vector_constructor.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/inline_type_scope_oracle.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/kernel_self_oracle.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/literal_coercion_oracle.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/map_fn_oracle.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/map_lambda_oracle.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/module_boolean_constructor.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/nested_stateful_ternary.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/schnorr_attest_oracle.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/sealed_ledger_constructor.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/struct_collision_oracle.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/wide_field_literal.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/witness_vector_action.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "test-center/test-contracts/bboard.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/election_oracle.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor(authority_init: Bytes<32>)",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/mixed_width_operand_oracle.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor(base: Uint<32>, q: Uint<32>)",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor(c: Boolean, d: Boolean, x: Field)",
+    "visibility": "internal"
+  },
+  {
+    "source": "test-center/test-contracts/welcome.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor(initial_eligible_participants: Vector<5000, Maybe<Opaque<\"string\">>>)",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/constructor_assert_sequence.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor(ok: Boolean)",
+    "visibility": "internal"
+  },
+  {
+    "source": "test-center/test-contracts/micro-dao.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor(organizer_secret_key: Bytes<32>, costs_param: Costs)",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/constructor_cell_parameter.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor(seed: Field)",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/constructor_counter_actions.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor(seed: Uint<16>)",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/tiny_oracle.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor(v: Field)",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/tiny.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor(v: Field)",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/struct_collision_oracle.compact",
+    "module_path": [],
+    "kind": "module",
+    "name": "Alpha",
+    "signature": "module Alpha",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/struct_collision_oracle.compact",
+    "module_path": [],
+    "kind": "module",
+    "name": "Beta",
+    "signature": "module Beta",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/relations.compact",
+    "module_path": [],
+    "kind": "module",
+    "name": "CredentialPresentationRelations",
+    "signature": "module CredentialPresentationRelations< TPublicClaims, TClaimCommitments, TDisclosures, THolderBinding, TStatusBinding >",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/issue.compact",
+    "module_path": [],
+    "kind": "module",
+    "name": "Issue",
+    "signature": "module Issue<TOfferBody, TRequestBody, TResultBody>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/module_boolean_constructor.compact",
+    "module_path": [],
+    "kind": "module",
+    "name": "M",
+    "signature": "module M",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/present.compact",
+    "module_path": [],
+    "kind": "module",
+    "name": "Present",
+    "signature": "module Present<TRequestBody, TSubmissionBody, TResultBody>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/schnorr_attest_oracle.compact",
+    "module_path": [],
+    "kind": "module",
+    "name": "Schnorr",
+    "signature": "module Schnorr",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/vc.compact",
+    "module_path": [],
+    "kind": "module",
+    "name": "VC",
+    "signature": "module VC<TPublicClaims, TClaimCommitments, THolderBinding, TStatusBinding>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/vp.compact",
+    "module_path": [],
+    "kind": "module",
+    "name": "VP",
+    "signature": "module VP<TDisclosures, THolderBinding>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/schnorr_attest_oracle.compact",
+    "module_path": [
+      "Schnorr"
+    ],
+    "kind": "witness",
+    "name": "getSchnorrReduction",
+    "signature": "witness getSchnorrReduction(challengeHash: Field): [Uint<7>, Uint<248>]",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/witness_ledger_set.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "contains_true",
+    "signature": "witness contains_true(): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/election.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "context$committed_votes$path_of",
+    "signature": "witness context$committed_votes$path_of(cm: Bytes<32>): Maybe<MerkleTreePath<10, Bytes<32>>>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/election_oracle.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "context$committed_votes$path_of",
+    "signature": "witness context$committed_votes$path_of(cm: Bytes<32>): Maybe<MerkleTreePath<10, Bytes<32>>>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/election.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "context$eligible_voters$path_of",
+    "signature": "witness context$eligible_voters$path_of(pk: Bytes<32>): Maybe<MerkleTreePath<10, Bytes<32>>>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/election_oracle.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "context$eligible_voters$path_of",
+    "signature": "witness context$eligible_voters$path_of(pk: Bytes<32>): Maybe<MerkleTreePath<10, Bytes<32>>>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/zerocash_oracle.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "context$encrypt",
+    "signature": "witness context$encrypt(pk: Opaque<\"Uint8Array\">, coin: coin_info): Opaque<\"Uint8Array\">",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/zerocash.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "context$encrypt",
+    "signature": "witness context$encrypt(pk: Opaque<\"Uint8Array\">, coin: coin_info): Opaque<\"Uint8Array\">",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/zerocash_oracle.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "context$new_coin_info",
+    "signature": "witness context$new_coin_info(): coin_info",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/zerocash.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "context$new_coin_info",
+    "signature": "witness context$new_coin_info(): coin_info",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/zerocash_oracle.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "context$path_of",
+    "signature": "witness context$path_of(cm: commitment): MerkleTreePath<32, commitment>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/zerocash.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "context$path_of",
+    "signature": "witness context$path_of(cm: commitment): MerkleTreePath<32, commitment>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/asset_registry_oracle.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "currentTimestamp",
+    "signature": "witness currentTimestamp(): Uint<64>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/assert_witness.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "echo",
+    "signature": "witness echo(flag: Boolean): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/boolean_logic.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "echo",
+    "signature": "witness echo(value: Boolean): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/equality.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "echo",
+    "signature": "witness echo(value: Field): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/jubjub_construct.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "echo",
+    "signature": "witness echo(value: Field): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/keccak.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "echo",
+    "signature": "witness echo(value: Field): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/witness_hash.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "echo",
+    "signature": "witness echo(value: Field): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/uint_compare.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "echo",
+    "signature": "witness echo(value: Uint<16>): Uint<16>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/witness_uint_arithmetic.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "echo",
+    "signature": "witness echo(value: Uint<16>): Uint<16>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/witnesses_oracle.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "echo",
+    "signature": "witness echo(x: Field): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/ternary_cond_oracle.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "echoField",
+    "signature": "witness echoField(x: Field): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/witness_hash.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "echo_bytes",
+    "signature": "witness echo_bytes(value: Bytes<32>): Bytes<32>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/witnesses_oracle.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "fetch_field",
+    "signature": "witness fetch_field(): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/witnesses_oracle.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "fetch_maybe",
+    "signature": "witness fetch_maybe(): Maybe<Field>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/witness_ledger_list.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "first_is_42",
+    "signature": "witness first_is_42(): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "test-center/test-contracts/coracle.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "fresh_nonce",
+    "signature": "witness fresh_nonce(): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/witness_ledger_map.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "has_true",
+    "signature": "witness has_true(): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/merkle_path_witness.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "historic_checks",
+    "signature": "witness historic_checks(): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/merkle_path_witness.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "historic_path",
+    "signature": "witness historic_path(): MerkleTreePath<3, Uint<8>>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/witness_list_shapes.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "inspect_choices",
+    "signature": "witness inspect_choices(): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/witness_list_shapes.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "inspect_counts",
+    "signature": "witness inspect_counts(): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/witness_list_shapes.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "inspect_flags",
+    "signature": "witness inspect_flags(): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/witness_list_shapes.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "inspect_packets",
+    "signature": "witness inspect_packets(): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/witness_list_shapes.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "inspect_tags",
+    "signature": "witness inspect_tags(): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/merkle_path_verify.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "leaf_path",
+    "signature": "witness leaf_path(): MerkleTreePath<3, Uint<8>>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/merkle_path_witness.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "leaf_path",
+    "signature": "witness leaf_path(): MerkleTreePath<3, Uint<8>>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/schnorr_attest_oracle.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "localAttestorKey",
+    "signature": "witness localAttestorKey(): JubjubPoint",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/asset_registry_oracle.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "localAuditorKey",
+    "signature": "witness localAuditorKey(): JubjubPoint",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/asset_registry_oracle.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "localOperatorKey",
+    "signature": "witness localOperatorKey(): JubjubPoint",
+    "visibility": "internal"
+  },
+  {
+    "source": "test-center/test-contracts/micro-dao.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "local_advance_state",
+    "signature": "witness local_advance_state(): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "test-center/test-contracts/coracle.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "local_board",
+    "signature": "witness local_board(): Committable<Board>",
+    "visibility": "internal"
+  },
+  {
+    "source": "test-center/test-contracts/micro-dao.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "local_path_of_cm",
+    "signature": "witness local_path_of_cm(cm: Bytes<32>): Maybe<MerkleTreePath<10, Bytes<32>>>",
+    "visibility": "internal"
+  },
+  {
+    "source": "test-center/test-contracts/micro-dao.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "local_record_vote",
+    "signature": "witness local_record_vote(vote: Boolean): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "test-center/test-contracts/bboard.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "local_secret_key",
+    "signature": "witness local_secret_key(): Bytes<32>",
+    "visibility": "internal"
+  },
+  {
+    "source": "test-center/test-contracts/coracle.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "local_secret_key",
+    "signature": "witness local_secret_key(): Bytes<32>",
+    "visibility": "internal"
+  },
+  {
+    "source": "test-center/test-contracts/micro-dao.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "local_secret_key",
+    "signature": "witness local_secret_key(): Bytes<32>",
+    "visibility": "internal"
+  },
+  {
+    "source": "test-center/test-contracts/coracle.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "local_set_board",
+    "signature": "witness local_set_board(board: Committable<Board>): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "test-center/test-contracts/welcome.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "local_sk",
+    "signature": "witness local_sk(): Maybe<Bytes<32>>",
+    "visibility": "internal"
+  },
+  {
+    "source": "test-center/test-contracts/micro-dao.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "local_state",
+    "signature": "witness local_state(): LocalState",
+    "visibility": "internal"
+  },
+  {
+    "source": "test-center/test-contracts/micro-dao.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "local_vote_cast",
+    "signature": "witness local_vote_cast(): Maybe<Boolean>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/merkle_path_witness.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "merkle_checks",
+    "signature": "witness merkle_checks(): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/wide_uint_oracle.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "nextWide",
+    "signature": "witness nextWide(): Uint<248>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/nested_witness_call_oracle.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "ordered",
+    "signature": "witness ordered(): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/zerocash_oracle.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "private$add_coin",
+    "signature": "witness private$add_coin(coin: coin_info): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/zerocash.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "private$add_coin",
+    "signature": "witness private$add_coin(coin: coin_info): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/zerocash_oracle.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "private$remove_coin",
+    "signature": "witness private$remove_coin(coin: coin_info): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/zerocash.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "private$remove_coin",
+    "signature": "witness private$remove_coin(coin: coin_info): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/election.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "private$secret_key",
+    "signature": "witness private$secret_key(): Bytes<32>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/election_oracle.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "private$secret_key",
+    "signature": "witness private$secret_key(): Bytes<32>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/tiny_oracle.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "private$secret_key",
+    "signature": "witness private$secret_key(): Bytes<32>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/tiny.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "private$secret_key",
+    "signature": "witness private$secret_key(): Bytes<32>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/election.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "private$state",
+    "signature": "witness private$state(): PrivateState",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/election_oracle.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "private$state",
+    "signature": "witness private$state(): PrivateState",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/election.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "private$state$advance",
+    "signature": "witness private$state$advance(): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/election_oracle.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "private$state$advance",
+    "signature": "witness private$state$advance(): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/election.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "private$vote",
+    "signature": "witness private$vote(): PermissibleVotes",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/election_oracle.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "private$vote",
+    "signature": "witness private$vote(): PermissibleVotes",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/election.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "private$vote$record",
+    "signature": "witness private$vote$record(ballot: PermissibleVotes): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/election_oracle.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "private$vote$record",
+    "signature": "witness private$vote$record(ballot: PermissibleVotes): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/zerocash_oracle.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "private$zk_public_key",
+    "signature": "witness private$zk_public_key(): zk_public_key",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/zerocash.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "private$zk_public_key",
+    "signature": "witness private$zk_public_key(): zk_public_key",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/zerocash_oracle.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "private$zk_secret_key",
+    "signature": "witness private$zk_secret_key(): zk_secret_key",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/zerocash.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "private$zk_secret_key",
+    "signature": "witness private$zk_secret_key(): zk_secret_key",
+    "visibility": "internal"
+  },
+  {
+    "source": "test-center/test-contracts/counter.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "private_increment",
+    "signature": "witness private_increment(): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/witness_argument.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "private_offset",
+    "signature": "witness private_offset(value: Field): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/witness_minimal.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "private_value",
+    "signature": "witness private_value(): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/witness_ledger_cell.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "read_flag",
+    "signature": "witness read_flag(): Boolean",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/witness_ledger_counter.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "read_round",
+    "signature": "witness read_round(): Uint<64>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/nested_witness_call_oracle.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "secret",
+    "signature": "witness secret(): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/witness_cell_write.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "secret",
+    "signature": "witness secret(seed: Field): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/witness_conditional.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "secret",
+    "signature": "witness secret(seed: Field): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/witness_field_expression.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "secret",
+    "signature": "witness secret(seed: Field): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/witness_jubjub.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "secret_point",
+    "signature": "witness secret_point(seed: Field): JubjubPoint",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/witness_jubjub.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "secret_scalar",
+    "signature": "witness secret_scalar(seed: Field): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "test-center/test-contracts/welcome.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "set_local_id",
+    "signature": "witness set_local_id(participant: Opaque<\"string\">): []",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/call_arg_declared_type.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "sumWitness",
+    "signature": "witness sumWitness(v: Vector<2, Field>): Field",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/witness_vector_action.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "sumWitness",
+    "signature": "witness sumWitness(values: Vector<2, Field>): Field",
+    "visibility": "internal"
+  }
+]

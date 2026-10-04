@@ -1,0 +1,377 @@
+#!/usr/bin/env python3
+
+# This file is part of Compact.
+# Copyright (C) 2026 Midnight Foundation
+# SPDX-License-Identifier: Apache-2.0
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Inventory Compact declarations and, optionally, compiler-reported Rust APIs.
+
+This is a source inventory, not a Compact parser or an assertion of semantic
+TypeScript/Rust parity. A baseline checks declaration membership and signatures;
+the compiler capability report checks only recorded/observed API availability.
+"""
+
+import argparse
+from collections import Counter
+import hashlib
+import json
+from pathlib import Path
+import re
+import subprocess
+import sys
+import tempfile
+import tomllib
+
+
+ROOT = Path(__file__).resolve().parents[2]
+ORACLE_MANIFEST = Path(__file__).with_name("oracle_acceptance.json")
+DEFAULT_BASELINE = Path(__file__).with_name("parity_baseline.json")
+DECLARATION = re.compile(r"(?m)^[ \t]*(export[ \t]+)?(circuit|witness|constructor|module)\b")
+IMPORT = re.compile(r"(?m)^[ \t]*(include|import)\s+(.+?);", re.DOTALL)
+EXPORT_LIST = re.compile(r"(?m)^[ \t]*export[ \t]*\{([^}]*)\}")
+NAME = re.compile(r"[A-Za-z_$][A-Za-z0-9_$]*")
+
+
+def without_comments(source: str) -> str:
+    """Hide comments, preserving offsets, newlines and string literals."""
+    out = list(source)
+    index = 0
+    quote = None
+    while index < len(source):
+        char = source[index]
+        next_char = source[index + 1] if index + 1 < len(source) else ""
+        if quote:
+            if char == "\\":
+                index += 2
+                continue
+            if char == quote:
+                quote = None
+        elif char in ('"', "'"):
+            quote = char
+        elif char == "/" and next_char in ("/", "*"):
+            line = next_char == "/"
+            end = source.find("\n" if line else "*/", index + 2)
+            end = len(source) if end < 0 else end + (0 if line else 2)
+            for offset in range(index, end):
+                if source[offset] != "\n":
+                    out[offset] = " "
+            index = end
+            continue
+        index += 1
+    return "".join(out)
+
+
+def declaration_end(source: str, start: int) -> tuple[int, str]:
+    """Find a declaration's body opener or semicolon outside type delimiters."""
+    depths = {"(": 0, "[": 0, "<": 0}
+    closes = {")": "(", "]": "[", ">": "<"}
+    quote = None
+    index = start
+    while index < len(source):
+        char = source[index]
+        if quote:
+            if char == "\\":
+                index += 2
+                continue
+            if char == quote:
+                quote = None
+        elif char in ('"', "'"):
+            quote = char
+        elif char in depths:
+            depths[char] += 1
+        elif char in closes:
+            opener = closes[char]
+            depths[opener] = max(0, depths[opener] - 1)
+        elif char in "{;" and not any(depths.values()):
+            return index, char
+        index += 1
+    raise ValueError("unterminated declaration")
+
+
+def closing_brace(source: str, opener: int) -> int:
+    depth = 0
+    quote = None
+    for index in range(opener, len(source)):
+        char = source[index]
+        if quote:
+            if char == quote and (index == 0 or source[index - 1] != "\\"):
+                quote = None
+        elif char in ('"', "'"):
+            quote = char
+        elif char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return index
+    raise ValueError("unclosed module body")
+
+
+def normalized(source: str) -> str:
+    return " ".join(source.split())
+
+
+def relative_source(path: Path, root: Path) -> str:
+    resolved = path.resolve()
+    if not resolved.is_relative_to(root.resolve()) or not resolved.is_file():
+        raise ValueError(f"invalid repository source: {path}")
+    return resolved.relative_to(root.resolve()).as_posix()
+
+
+def source_paths(root: Path, extra_dirs: list[Path] | None = None) -> list[Path]:
+    paths = set((root / "examples/rust_backend").glob("*.compact"))
+    paths.update((root / "examples/rust_backend/digital-passport-credential").rglob("*.compact"))
+    paths.update((root / "examples").glob("*.compact"))
+    paths.update((root / "test-center/test-contracts").glob("*.compact"))
+    if ORACLE_MANIFEST.is_file() and root.resolve() == ROOT.resolve():
+        manifest = json.loads(ORACLE_MANIFEST.read_text())
+        paths.update(root / item["source"] for item in manifest["fixtures"])
+    for directory in extra_dirs or []:
+        directory = directory if directory.is_absolute() else root / directory
+        if not directory.is_dir() or not directory.resolve().is_relative_to(root.resolve()):
+            raise ValueError(f"invalid source directory: {directory}")
+        paths.update(directory.rglob("*.compact"))
+    return [root / name for name in sorted(relative_source(path, root) for path in paths)]
+
+
+def parse_source(path: Path, root: Path) -> dict:
+    source = without_comments(path.read_text())
+    relative = relative_source(path, root)
+    named_exports = {name.strip() for match in EXPORT_LIST.finditer(source)
+                     for name in match.group(1).split(",")}
+    modules = []
+    declarations = []
+    for match in DECLARATION.finditer(source):
+        kind = match.group(2)
+        end, terminator = declaration_end(source, match.end())
+        tail = source[match.end():end].strip()
+        name_match = NAME.match(tail)
+        if kind != "constructor" and not name_match:
+            raise ValueError(f"{relative}:{source.count(chr(10), 0, match.start()) + 1}: missing name")
+        name = "constructor" if kind == "constructor" else name_match.group()
+        signature = normalized(source[match.start():end])
+        declarations.append({
+            "kind": kind,
+            "name": name,
+            "signature": signature,
+            "visibility": "export" if match.group(1) or name in named_exports else "internal",
+            "line": source.count("\n", 0, match.start()) + 1,
+            "offset": match.start(),
+        })
+        if kind == "module" and terminator == "{":
+            modules.append((match.start(), closing_brace(source, end), name))
+    modules.sort()
+    for item in declarations:
+        enclosing = [module for module in modules if module[0] < item["offset"] < module[1]]
+        item["module_path"] = [module[2] for module in enclosing]
+        del item["offset"]
+    imports = [{"kind": match.group(1), "expression": normalized(match.group(2))}
+               for match in IMPORT.finditer(source)]
+    return {
+        "source": relative,
+        "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        "named_exports": sorted(named_exports),
+        "imports": imports,
+        "declarations": declarations,
+    }
+
+
+def row_identity(row: dict) -> dict:
+    return {key: row[key] for key in ("source", "module_path", "kind", "name", "signature", "visibility")}
+
+
+def identity_key(row: dict) -> str:
+    return json.dumps(row_identity(row), sort_keys=True, separators=(",", ":"))
+
+
+def baseline_rows(rows: list[dict]) -> list[dict]:
+    return [row_identity(row) for row in sorted(rows, key=identity_key)]
+
+
+def sha256_file(path: Path) -> str | None:
+    return hashlib.sha256(path.read_bytes()).hexdigest() if path.is_file() else None
+
+
+def constant_from_source(path: Path, name: str) -> int | None:
+    if not path.is_file():
+        return None
+    match = re.search(rf"\b{name}\s*:\s*u32\s*=\s*(\d+)", path.read_text())
+    return int(match.group(1)) if match else None
+
+
+def git_head(root: Path) -> str | None:
+    result = subprocess.run(["git", "-C", str(root), "rev-parse", "HEAD"],
+                            capture_output=True, text=True, check=False)
+    return result.stdout.strip() if result.returncode == 0 else None
+
+
+def upstream_packages(lock_path: Path) -> dict:
+    if not lock_path.is_file():
+        return {}
+    selected = {"midnight-ledger", "midnight-zk-stdlib", "midnight-zkir"}
+    lock = tomllib.loads(lock_path.read_text())
+    return {package["name"]: {key: package[key] for key in ("version", "source", "checksum")
+                              if key in package}
+            for package in lock.get("package", []) if package.get("name") in selected}
+
+
+def receipt_metadata(root: Path, compiler: Path | None, contracts: list[dict]) -> dict:
+    ir_file = root / "tools/compact-rust-backend/src/ir.rs"
+    runtime_file = root / "runtime-rs/src/lib.rs"
+    lock_file = root / "Cargo.lock"
+    source_hashes = [{"source": contract["source"], "sha256": contract["sha256"]}
+                     for contract in contracts]
+    return {
+        "git_head": git_head(root),
+        "compiler": {"path": str(compiler), "sha256": sha256_file(compiler)} if compiler else None,
+        "rust_ir_schema": constant_from_source(ir_file, "SCHEMA_VERSION"),
+        "rust_runtime_abi": constant_from_source(runtime_file, "RUST_RUNTIME_ABI"),
+        "ir_file_sha256": sha256_file(ir_file),
+        "runtime_file_sha256": sha256_file(runtime_file),
+        "cargo_lock_sha256": sha256_file(lock_file),
+        "source_manifest_sha256": hashlib.sha256(
+            json.dumps(source_hashes, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest(),
+        "upstream_packages": upstream_packages(lock_file),
+    }
+
+
+def compile_capabilities(compiler: Path, source: Path, root: Path) -> dict:
+    with tempfile.TemporaryDirectory(prefix="compact-parity-inventory-") as output:
+        command = [str(compiler), "--target", "rust", "--skip-zk", "--rust-runtime-root",
+                   str(root), str(source), output]
+        result = subprocess.run(command, cwd=root, capture_output=True, text=True, check=False)
+        if result.returncode:
+            raise RuntimeError(f"{source.relative_to(root)}: compiler failed: {result.stderr.strip()}")
+        report = Path(output) / "contract/rust-capabilities.json"
+        if not report.is_file():
+            raise RuntimeError(f"{source.relative_to(root)}: missing Rust capability report")
+        return json.loads(report.read_text())
+
+
+def make_inventory(root: Path, extra_dirs: list[Path], compiler: Path | None,
+                   only: set[str] | None = None) -> dict:
+    paths = source_paths(root, extra_dirs)
+    if only is not None:
+        paths = [path for path in paths if relative_source(path, root) in only]
+    contracts = [parse_source(path, root) for path in paths]
+    rows = [{"source": contract["source"], **item,
+             "ts_source_declaration": True, "rust_recorded": None, "rust_observed_call": None}
+            for contract in contracts for item in contract["declarations"]]
+    by_source = {contract["source"]: contract for contract in contracts}
+    unmatched = []
+    compiled = []
+    if compiler:
+        roots = [path for path in paths if path.parent == root / "examples/rust_backend"
+                 or path == root / "examples/rust_backend/digital-passport-credential/src/digital-passport-credential.compact"]
+        for path in roots:
+            source = relative_source(path, root)
+            report = compile_capabilities(compiler, path, root)
+            compiled.append(source)
+            by_source[source]["rust_capability_schema"] = report.get("schema_version")
+            for capability in report["circuits"]:
+                matches = [row for row in rows if row["source"] == source
+                           and row["kind"] == "circuit" and row["name"] == capability["name"]
+                           and row["visibility"] == "export"]
+                if len(matches) == 1:
+                    matches[0]["rust_recorded"] = capability["recorded"]
+                    matches[0]["rust_observed_call"] = capability["observed_call"]
+                else:
+                    unmatched.append({"source": source, "name": capability["name"]})
+    rows.sort(key=lambda row: (row["source"], row["line"], row["kind"], row["name"]))
+    missing = Counter(row["source"] for row in rows if row["kind"] == "circuit"
+                      and row["visibility"] == "export" and row["rust_recorded"] is False)
+    return {
+        "format_version": 1,
+        "scope": "repository source declarations; TS behavior parity requires executing tests",
+        "contracts": contracts,
+        "rows": rows,
+        "summary": {
+            "sources": len(contracts),
+            "declarations": len(rows),
+            "exported_circuits": sum(row["kind"] == "circuit" and row["visibility"] == "export" for row in rows),
+            "compiled_rust_sources": len(compiled),
+            "recorded_available": sum(row["rust_recorded"] is True for row in rows),
+            "recorded_missing": sum(row["rust_recorded"] is False for row in rows),
+            "ranked_missing_sources": [{"source": source, "count": count}
+                                       for source, count in sorted(missing.items(), key=lambda pair: (-pair[1], pair[0]))],
+            "unmatched_compiler_circuits": unmatched,
+        },
+    }
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--root", type=Path, default=ROOT)
+    parser.add_argument("--source-dir", type=Path, action="append", default=[],
+                        help="additional repository source tree (repeatable)")
+    parser.add_argument("--compiler", type=Path, help="compactc binary for Rust capability reports")
+    parser.add_argument("--only", action="append", help="repository-relative source filter (repeatable)")
+    parser.add_argument("--baseline", type=Path, help="compare identities to a baseline (defaults to checked-in baseline for full repository inventory)")
+    parser.add_argument("--no-baseline", action="store_true", help="skip the default checked-in baseline")
+    parser.add_argument("--write-baseline", type=Path, help="write identity rows for review/check-in")
+    parser.add_argument("--output", type=Path, help="write JSON receipt instead of stdout")
+    parser.add_argument("--receipt-metadata", action="store_true",
+                        help="attach exact local compiler/source/ABI/upstream package identifiers")
+    parser.add_argument("--require-full", action="store_true",
+                        help="fail if any exported compiled circuit lacks recorded/observed API")
+    args = parser.parse_args()
+    try:
+        root = args.root.resolve()
+        compiler = args.compiler.resolve() if args.compiler else None
+        if compiler and not compiler.is_file():
+            raise ValueError(f"compiler does not exist: {compiler}")
+        inventory = make_inventory(root, args.source_dir, compiler, set(args.only) if args.only else None)
+        identities = baseline_rows(inventory["rows"])
+        if args.receipt_metadata:
+            inventory["receipt_metadata"] = receipt_metadata(root, compiler, inventory["contracts"])
+        if args.write_baseline:
+            args.write_baseline.write_text(json.dumps(identities, indent=2) + "\n")
+        failure = False
+        baseline = args.baseline
+        if baseline is None and not args.no_baseline and not args.write_baseline \
+                and root == ROOT and not args.source_dir and not args.only and DEFAULT_BASELINE.is_file():
+            baseline = DEFAULT_BASELINE
+        if baseline:
+            previous = json.loads(baseline.read_text())
+            if len(previous) != len({identity_key(row) for row in previous}):
+                raise ValueError(f"duplicate identities in baseline: {baseline}")
+            before = {identity_key(row): row for row in previous}
+            after = {identity_key(row): row for row in identities}
+            inventory["baseline_diff"] = {
+                "added": [after[key] for key in sorted(after.keys() - before.keys())],
+                "removed": [before[key] for key in sorted(before.keys() - after.keys())],
+            }
+            failure = bool(inventory["baseline_diff"]["added"] or inventory["baseline_diff"]["removed"])
+        if args.require_full:
+            failure |= bool(inventory["summary"]["recorded_missing"]
+                            or inventory["summary"]["unmatched_compiler_circuits"])
+            if not compiler:
+                raise ValueError("--require-full requires --compiler")
+            failure |= any(row["kind"] == "circuit" and row["visibility"] == "export"
+                           and (row["rust_recorded"] is not True or row["rust_observed_call"] is not True)
+                           for row in inventory["rows"])
+        receipt = json.dumps(inventory, indent=2, sort_keys=True) + "\n"
+        if args.output:
+            args.output.write_text(receipt)
+        else:
+            sys.stdout.write(receipt)
+        return 1 if failure else 0
+    except (ValueError, RuntimeError, OSError, KeyError, json.JSONDecodeError) as error:
+        print(f"parity inventory: {error}", file=sys.stderr)
+        return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

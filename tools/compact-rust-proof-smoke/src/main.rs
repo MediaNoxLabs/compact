@@ -20,6 +20,8 @@
 //! commitment uses the value-field encoding from ledger-8's Intent::add_call.
 //! Deployment combines the generated constructor state with the emitted key.
 
+mod merkle_verify;
+
 use std::env;
 use std::error::Error;
 use std::ffi::OsStr;
@@ -664,6 +666,17 @@ fn main() -> Result<(), Box<dyn Error>> {
             return Err("usage: compact-rust-proof-smoke --composite-cell <proof-output>".into());
         }
         return check_composite_cell_proof(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--merkle-verify")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --merkle-verify <compiled-contract-output>")?;
+        if arguments.next().is_some() {
+            return Err(
+                "usage: compact-rust-proof-smoke --merkle-verify <compiled-contract-output>".into(),
+            );
+        }
+        return merkle_verify::run(Path::new(&root));
     }
     let counter_root = first.ok_or(
         "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output>",

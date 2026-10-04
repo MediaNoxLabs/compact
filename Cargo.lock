@@ -1470,7 +1470,11 @@ dependencies = [
 name = "compact-rust-merkle-path-verify-fixture"
 version = "0.1.0"
 dependencies = [
+ "hex",
  "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
  "num-bigint",
  "serde_json",
 ]
@@ -1681,6 +1685,7 @@ dependencies = [
  "compact-rust-hmt-insert-oracle-fixture",
  "compact-rust-list-field-fixture",
  "compact-rust-map-boolean-field-fixture",
+ "compact-rust-merkle-path-verify-fixture",
  "compact-rust-merkle-tree-oracle-fixture",
  "compact-rust-nested-map-shape-fixture",
  "compact-rust-nested-witness-call-oracle-fixture",

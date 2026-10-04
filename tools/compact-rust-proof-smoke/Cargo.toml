@@ -40,6 +40,7 @@ compact-rust-witness-list-shapes-fixture = { path = "../../tests-rust-backend/wi
 compact-rust-constructor-list-actions-fixture = { path = "../../tests-rust-backend/constructor-list-actions" }
 compact-rust-tiny-oracle-fixture = { path = "../../tests-rust-backend/tiny-oracle" }
 compact-rust-merkle-tree-oracle-fixture = { path = "../../tests-rust-backend/merkle-tree-oracle" }
+compact-rust-merkle-path-verify-fixture = { path = "../../tests-rust-backend/merkle-path-verify", features = ["ledger-transaction"] }
 compact-rust-hmt-insert-oracle-fixture = { path = "../../tests-rust-backend/hmt-insert-oracle" }
 compact-rust-vector-key-adt-fixture = { path = "../../tests-rust-backend/vector-key-adt" }
 compact-rust-observed-composite-keys-fixture = { path = "../../tests-rust-backend/observed-composite-keys", features = ["ledger-transaction"] }

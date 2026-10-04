@@ -163,12 +163,12 @@ report = {"schema_version": 3, "circuits": [
             ir.write_text("pub const SCHEMA_VERSION: u32 = 8;\n")
             runtime = root / "runtime-rs/src/lib.rs"
             runtime.parent.mkdir(parents=True)
-            runtime.write_text("pub const RUST_RUNTIME_ABI: u32 = 35;\n")
+            runtime.write_text("pub const RUST_RUNTIME_ABI: u32 = 36;\n")
             result = inventory.make_inventory(root, [], None)
             self.assertNotIn("receipt_metadata", result)
             metadata = inventory.receipt_metadata(root, None, result["contracts"])
             self.assertEqual(metadata["rust_ir_schema"], 8)
-            self.assertEqual(metadata["rust_runtime_abi"], 35)
+            self.assertEqual(metadata["rust_runtime_abi"], 36)
             self.assertEqual(metadata["upstream_packages"]["midnight-ledger"],
                              {"version": "8.0.3", "checksum": "abc"})
             self.assertEqual(metadata["source_manifest_sha256"],

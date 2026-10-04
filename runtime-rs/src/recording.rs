@@ -261,6 +261,33 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         Ok((self, full))
     }
 
+    /// Compare a typed digest with the current Merkle root and retain its
+    /// observed Boolean in the ledger verification program.
+    pub fn merkle_check_root<T: CellValue + Clone>(
+        mut self,
+        path: impl Into<LedgerPath>,
+        root: T,
+    ) -> Result<(Self, bool), CompactError> {
+        let path = path.into();
+        let (result, known) = ledger::merkle_check_root(
+            &self.context.query,
+            path.as_slice(),
+            root.clone(),
+            self.context.gas_limit,
+            &self.context.cost_model,
+        )?;
+        let Some(GatherEvent::Read(observed)) = result.events.last() else {
+            return Err(CompactError::InvalidLedgerCell(
+                "missing Merkle root comparison event".into(),
+            ));
+        };
+        let program = ledger::merkle_check_root_verify_program(path, root, observed.clone());
+        self.context.query = result.context;
+        self.observed_gas += result.gas_cost;
+        self.verify_ops.extend(program);
+        Ok((self, known))
+    }
+
     pub fn remove_set<T: CellValue>(
         self,
         path: impl Into<LedgerPath>,

@@ -6,6 +6,9 @@ midnight-zk primitives for fields, encoding, cryptography, state, and VM
 queries. Generated code checks `RUST_RUNTIME_ABI` at compile time. A generated
 crate bundles matching runtime sources by default or points to one shared
 source root when compiled with `--rust-runtime-root`.
+ABI 36 records plain Merkle root comparisons through typed slots. Its
+recording frame reuses the ledger-8 query and retains the observed Boolean in
+the verification program for a source-typed recorded call.
 ABI 34 records direct plain/historic Merkle `isFull()` reads through typed
 `MerkleSlot::record_is_full`. The recording frame uses the native ledger-8
 query, preserves its observed read in a verifying VM program, and exposes a

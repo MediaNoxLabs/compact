@@ -2696,6 +2696,103 @@ fn render_recorded_item(
                 syn::parse_quote!(observed),
             )
         }
+        StateReturn::Expression {
+            value: Expr::Let { bindings, body },
+        } if circuit.result == Type::Boolean
+            && circuit.actions.is_empty()
+            && bindings.len() == 1
+            && matches!(body.as_ref(), Expr::MerkleCheckRoot { .. }) =>
+        {
+            let binding = &bindings[0];
+            let Expr::MerkleCheckRoot { field, index, root } = body.as_ref() else {
+                unreachable!("guarded by MerkleCheckRoot expression")
+            };
+            let declaration = ledger_fields
+                .get(field.as_str())
+                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+            if !matches!(declaration.declaration, LedgerFieldKind::MerkleTree { .. })
+                || declaration.index != *index
+                || !matches!(root.as_ref(), Expr::Parameter { name } if *name == binding.name)
+            {
+                return Ok(RecordingOutcome::Unsupported(RecordingGap::expression(
+                    body,
+                    "return_value.value".to_owned(),
+                )));
+            }
+            let Expr::Call { name, arguments } = &binding.value else {
+                return Ok(RecordingOutcome::Unsupported(RecordingGap::expression(
+                    &binding.value,
+                    "return_value.value.bindings[0].value".to_owned(),
+                )));
+            };
+            let pure = pure_circuits
+                .get(name.as_str())
+                .ok_or_else(|| RenderError::UnknownCircuit(name.clone()))?;
+            if name != "merkleTreePathRoot"
+                || pure.result != binding.ty
+                || !matches!(&binding.ty, Type::Struct { name, .. } if name == "MerkleTreeDigest")
+                || pure.parameters.len() != 1
+                || arguments.len() != 1
+            {
+                return Ok(RecordingOutcome::Unsupported(RecordingGap::expression(
+                    &binding.value,
+                    "return_value.value.bindings[0].value".to_owned(),
+                )));
+            }
+            let path_ty = &pure.parameters[0].ty;
+            let path = match &arguments[0] {
+                Expr::Coerce { value, ty } if ty == path_ty => value.as_ref(),
+                other => other,
+            };
+            let Expr::WitnessCall {
+                name: witness_name,
+                arguments: witness_args,
+            } = path
+            else {
+                return Ok(RecordingOutcome::Unsupported(RecordingGap::expression(
+                    path,
+                    "return_value.value.bindings[0].value.arguments[0]".to_owned(),
+                )));
+            };
+            let witness = witnesses
+                .get(witness_name.as_str())
+                .ok_or_else(|| RenderError::UnknownWitness(witness_name.clone()))?;
+            if witness.result != *path_ty
+                || !witness.parameters.is_empty()
+                || !witness_args.is_empty()
+            {
+                return Ok(RecordingOutcome::Unsupported(RecordingGap::expression(
+                    path,
+                    "return_value.value.bindings[0].value.arguments[0]".to_owned(),
+                )));
+            }
+            let slot = ident(field)?;
+            let witness_method = ident(witness_name)?;
+            let pure_method = ident(name)?;
+            let root_ty = rust_type(&binding.ty)?;
+            (
+                vec![
+                    syn::parse_quote! {
+                        let (frame, path) = frame.try_witness_metered(|context, meter| {
+                            witnesses.#witness_method(
+                                context.witness_context_with(super::LedgerView {
+                                    state: context.query.state.get_ref(),
+                                    meter,
+                                }),
+                            )
+                        })?;
+                    },
+                    syn::parse_quote! {
+                        let root: #root_ty = crate::pure_circuits::#pure_method(path)?;
+                    },
+                    syn::parse_quote! {
+                        let (frame, observed): (_, bool) =
+                            crate::ledger_slots::#slot.record_check_root(frame, root)?;
+                    },
+                ],
+                syn::parse_quote!(observed),
+            )
+        }
         _ => {
             return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
                 &circuit.return_value,

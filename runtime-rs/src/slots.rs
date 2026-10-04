@@ -248,6 +248,14 @@ impl<T: CellValue, const DEPTH: u8, const HISTORIC: bool> MerkleSlot<T, DEPTH, H
 }
 
 impl<T: CellValue, const DEPTH: u8> MerkleSlot<T, DEPTH, false> {
+    pub fn record_check_root<Private, D: DB, R: CellValue + Clone>(
+        self,
+        frame: RecordingFrame<Private, D>,
+        root: R,
+    ) -> Result<(RecordingFrame<Private, D>, bool), CompactError> {
+        frame.merkle_check_root(self.path, root)
+    }
+
     /// Inspect an already held plain tree, rejecting a mismatched ledger height.
     pub fn inspect<'a, D: DB>(
         self,

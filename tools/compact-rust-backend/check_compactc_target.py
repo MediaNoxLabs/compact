@@ -47,6 +47,7 @@ NESTED_MAP_SHAPE_SOURCE = ROOT / "examples/rust_backend/nested_map_shape.compact
 CONSTRUCTOR_MAP_SOURCE = ROOT / "examples/rust_backend/constructor_map_actions.compact"
 LIST_SOURCE = ROOT / "examples/rust_backend/list_field.compact"
 MERKLE_SOURCE = ROOT / "examples/rust_backend/merkle_tree_oracle.compact"
+MERKLE_VERIFY_SOURCE = ROOT / "examples/rust_backend/merkle_path_verify.compact"
 HISTORIC_MERKLE_SOURCE = ROOT / "examples/rust_backend/hmt_insert_oracle.compact"
 VECTOR_KEY_SOURCE = ROOT / "examples/rust_backend/vector_key_adt.compact"
 COMPOSITE_KEY_SOURCE = ROOT / "examples/rust_backend/observed_composite_keys.compact"
@@ -1294,6 +1295,16 @@ def main() -> None:
                     assert (merkle_proof / "keys" / f"{circuit}.{extension}").is_file()
                 for extension in ("zkir", "bzkir"):
                     assert (merkle_proof / "zkir" / f"{circuit}.{extension}").is_file()
+            merkle_verify_proof = base / "merkle-verify-proof"
+            run(compiler, "--target", "rust", str(MERKLE_VERIFY_SOURCE), str(merkle_verify_proof))
+            check_manifest(merkle_verify_proof)
+            capabilities = json.loads((merkle_verify_proof / "contract/rust-capabilities.json").read_text())
+            verify_capability = next(circuit for circuit in capabilities["circuits"] if circuit["name"] == "verify")
+            assert verify_capability["recorded"] and verify_capability["observed_call"]
+            for extension in ("prover", "verifier"):
+                assert (merkle_verify_proof / "keys" / f"verify.{extension}").is_file()
+            for extension in ("zkir", "bzkir"):
+                assert (merkle_verify_proof / "zkir" / f"verify.{extension}").is_file()
             historic_merkle_proof = base / "historic-merkle-proof"
             run(compiler, "--target", "rust", str(HISTORIC_MERKLE_SOURCE), str(historic_merkle_proof))
             check_manifest(historic_merkle_proof)
@@ -1422,6 +1433,10 @@ def main() -> None:
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 "--composite-cell", str(composite_cell_proof),
+            )
+            run(
+                "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--merkle-verify", str(merkle_verify_proof),
             )
     print("compactc target boundary and manifest: passed")
 

@@ -928,7 +928,12 @@ pub fn merkle_check_root<T: CellValue, D: DB>(
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<(QueryResults<ResultModeGather, D>, bool), CompactError> {
-    let program = check_root_program::<T, D>(path.into(), root, MerkleHistory::CurrentOnly);
+    let program = check_root_program::<T, ResultModeGather, D>(
+        path.into(),
+        root,
+        MerkleHistory::CurrentOnly,
+        (),
+    );
     let result = context
         .query(&program, gas_limit, cost_model)
         .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
@@ -936,11 +941,12 @@ pub fn merkle_check_root<T: CellValue, D: DB>(
     Ok((result, decoded))
 }
 
-fn check_root_program<T: CellValue, D: DB>(
+fn check_root_program<T: CellValue, M: ResultMode<D>, D: DB>(
     path: LedgerPath,
     root: T,
     history: MerkleHistory,
-) -> Vec<Op<ResultModeGather, D>> {
+    read_result: M::ReadResult,
+) -> Vec<Op<M, D>> {
     let historic = matches!(history, MerkleHistory::Historic);
     let index = if historic { 2_u8 } else { 0_u8 };
     let index_key = vec![Key::Value(AlignedValue::from(index))].into();
@@ -977,9 +983,17 @@ fn check_root_program<T: CellValue, D: DB>(
     }
     program.push(Op::Popeq {
         cached: true,
-        result: (),
+        result: read_result,
     });
     program
+}
+
+pub(crate) fn merkle_check_root_verify_program<T: CellValue, D: DB>(
+    path: LedgerPath,
+    root: T,
+    observed: AlignedValue,
+) -> Vec<Op<ResultModeVerify, D>> {
+    check_root_program(path, root, MerkleHistory::CurrentOnly, observed)
 }
 
 /// Query membership in a HistoricMerkleTree's root history.
@@ -990,7 +1004,12 @@ pub fn historic_check_root<T: CellValue, D: DB>(
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<(QueryResults<ResultModeGather, D>, bool), CompactError> {
-    let program = check_root_program::<T, D>(path.into(), root, MerkleHistory::Historic);
+    let program = check_root_program::<T, ResultModeGather, D>(
+        path.into(),
+        root,
+        MerkleHistory::Historic,
+        (),
+    );
     let result = context
         .query(&program, gas_limit, cost_model)
         .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
@@ -1084,12 +1103,22 @@ mod query_program_tests {
         assert_program(&full, &plain, "fullAtInit");
         assert_program(&full, &historic, "fullAtInit");
         assert_program(
-            &check_root_program::<_, DefaultDB>(path(), plain_root.0, MerkleHistory::CurrentOnly),
+            &check_root_program::<_, ResultModeGather, DefaultDB>(
+                path(),
+                plain_root.0,
+                MerkleHistory::CurrentOnly,
+                (),
+            ),
             &plain,
             "knownAtInit",
         );
         assert_program(
-            &check_root_program::<_, DefaultDB>(path(), historic_root.0, MerkleHistory::Historic),
+            &check_root_program::<_, ResultModeGather, DefaultDB>(
+                path(),
+                historic_root.0,
+                MerkleHistory::Historic,
+                (),
+            ),
             &historic,
             "knownAtInit",
         );

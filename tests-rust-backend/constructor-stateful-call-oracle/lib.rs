@@ -93,7 +93,6 @@ pub mod ledger_contract {
             let __compact_call_3 = ensureFirst(context, __compact_call_argument_2)?;
             context = __compact_call_3.context;
             total_cost += __compact_call_3.gas_cost;
-            let _ = __compact_call_3.result;
             let __compact_constructor_local_4: runtime::Field = runtime::Field::from(9u128);
             let step = context.write_cell(1, __compact_constructor_local_4)?;
             context = step.context;

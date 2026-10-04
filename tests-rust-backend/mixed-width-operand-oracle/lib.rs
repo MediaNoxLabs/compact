@@ -262,18 +262,14 @@ pub mod ledger_contract {
                     __compact_value_0,
                     __compact_value_1,
                 )?;
-            let _ = {
-                if !(runtime::cast_unsigned::<4294967295, 17179869180>(
-                    __compact_constructor_param_0,
-                )?
+            if !(runtime::cast_unsigned::<4294967295, 17179869180>(__compact_constructor_param_0)?
                 .value()
-                    >= __compact_expression_local_2.value())
-                {
-                    return Err(runtime::CompactError::AssertionFailed(
-                        "result of subtraction would be negative".to_owned(),
-                    ));
-                }
-            };
+                >= __compact_expression_local_2.value())
+            {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "result of subtraction would be negative".to_owned(),
+                ));
+            }
             let __compact_value_3 = __compact_constructor_param_0;
             let __compact_value_4 =
                 runtime::cast_unsigned::<17179869180, 4294967295>(__compact_expression_local_2)?;

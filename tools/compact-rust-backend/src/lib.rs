@@ -1082,6 +1082,74 @@ impl VisitMut for CompactBooleanLiterals {
     }
 }
 
+/// A stateful expression's effects are emitted before its returned value.
+/// Drop only a materialized Unit value; keep effect-bearing expressions in order.
+pub(crate) fn discard_expression(value: syn::Expr, ty: &Type) -> Vec<syn::Stmt> {
+    if *ty != Type::Unit {
+        return vec![syn::parse_quote!(let _ = #value;)];
+    }
+    match value {
+        syn::Expr::Tuple(tuple) if tuple.elems.is_empty() => Vec::new(),
+        syn::Expr::Path(path)
+            if path.qself.is_none()
+                && path.path.leading_colon.is_none()
+                && path.path.segments.len() == 1 =>
+        {
+            Vec::new()
+        }
+        syn::Expr::Field(field)
+            if matches!(&*field.base, syn::Expr::Path(path)
+                if path.qself.is_none()
+                    && path.path.leading_colon.is_none()
+                    && path.path.segments.len() == 1) =>
+        {
+            Vec::new()
+        }
+        syn::Expr::Block(block)
+            if block.attrs.is_empty()
+                && matches!(
+                    block.block.stmts.as_slice(),
+                    [syn::Stmt::Expr(syn::Expr::If(_), _)]
+                ) =>
+        {
+            let statement = block.block.stmts.into_iter().next().expect("one statement");
+            vec![statement]
+        }
+        other => vec![syn::parse_quote!(#other;)],
+    }
+}
+
+#[cfg(test)]
+mod discarded_expression_tests {
+    use super::{Type, discard_expression};
+    use quote::quote;
+
+    #[test]
+    fn drops_materialized_unit_but_executes_unit_effects() {
+        let unit = Type::Unit;
+        assert!(discard_expression(syn::parse_quote!(()), &unit).is_empty());
+        assert!(discard_expression(syn::parse_quote!(__compact_witness_20), &unit).is_empty());
+        assert!(discard_expression(syn::parse_quote!(__compact_call_3.result), &unit).is_empty());
+
+        let call = discard_expression(syn::parse_quote!(pure_check()?), &unit);
+        assert_eq!(quote!(#(#call)*).to_string(), "pure_check () ? ;");
+
+        let assertion = discard_expression(
+            syn::parse_quote!({
+                if !condition {
+                    return Err(error);
+                }
+            }),
+            &unit,
+        );
+        assert_eq!(assertion.len(), 1);
+        assert!(matches!(assertion[0], syn::Stmt::Expr(syn::Expr::If(_), _)));
+
+        let value = discard_expression(syn::parse_quote!(result), &Type::Field);
+        assert_eq!(quote!(#(#value)*).to_string(), "let _ = result ;");
+    }
+}
+
 fn unit_statements(
     expr: &Expr,
     parameters: &HashMap<&str, (&Type, syn::Ident)>,
@@ -2098,7 +2166,7 @@ fn render_constructor_vm_steps<'a>(
             ConstructorStep::Expression { value } => {
                 let mut expression_steps = Vec::new();
                 let mut query_effect = false;
-                let (value, _, _) = stateful::render_state_expression(
+                let (value, ty, _) = stateful::render_state_expression(
                     value,
                     parameters,
                     witnesses,
@@ -2110,7 +2178,7 @@ fn render_constructor_vm_steps<'a>(
                     &mut query_effect,
                 )?;
                 actions.extend(expression_steps);
-                actions.push(syn::parse_quote!(let _ = #value;));
+                actions.extend(discard_expression(value, &ty));
             }
             ConstructorStep::Let { bindings, step } => {
                 let mut locals = parameters.clone();

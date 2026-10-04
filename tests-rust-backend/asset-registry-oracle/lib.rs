@@ -660,7 +660,6 @@ pub mod ledger_contract {
                 assertOperatorDistinctFromAuditor(context, __compact_call_argument_8)?;
             context = __compact_call_9.context;
             total_cost += __compact_call_9.gas_cost;
-            let _ = __compact_call_9.result;
             let __compact_witness_meter_10 = runtime::context::WitnessReadMeter::new(&context);
             let (__compact_next_private_10, __compact_witness_10) =
                 witnesses.currentTimestamp(context.witness_context_with(LedgerView {

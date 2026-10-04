@@ -23,8 +23,8 @@ use crate::ir::{
     StateAction, StateReturn, StatefulCircuit, StructField, Type, WitnessDeclaration,
 };
 use crate::{
-    RenderError, UnsignedMaximum, coerce_expression, expression_with_calls, ident,
-    ledger_path_expr, list_head_result_type, map_slot_types, public_parameter_idents,
+    RenderError, UnsignedMaximum, coerce_expression, discard_expression, expression_with_calls,
+    ident, ledger_path_expr, list_head_result_type, map_slot_types, public_parameter_idents,
     retained_value, rust_type, unsigned_cast_syntax, unsigned_maximum,
 };
 
@@ -768,7 +768,7 @@ pub(crate) fn render_state_expression(
         Expr::Sequence { steps, value } => {
             let mut witness_effect = false;
             for step in steps {
-                let (rendered, _, effect) = render_state_expression(
+                let (rendered, ty, effect) = render_state_expression(
                     step,
                     parameters,
                     witnesses,
@@ -779,7 +779,7 @@ pub(crate) fn render_state_expression(
                     ledger_fields,
                     query_effect,
                 )?;
-                statements.push(syn::parse_quote!(let _ = #rendered;));
+                statements.extend(discard_expression(rendered, &ty));
                 witness_effect |= effect;
             }
             let (rendered, ty, effect) = render_state_expression(
@@ -1770,7 +1770,7 @@ pub(crate) fn render_stateful_circuit(
             StateAction::Expression { value } => {
                 let mut effect_statements = Vec::new();
                 let mut query_effect = false;
-                let (rendered, _, effect) = render_state_expression(
+                let (rendered, ty, effect) = render_state_expression(
                     value,
                     &parameters,
                     witnesses,
@@ -1788,7 +1788,7 @@ pub(crate) fn render_stateful_circuit(
                     statements.push(syn::parse_quote!(let mut context = context;));
                 }
                 statements.extend(effect_statements);
-                statements.push(syn::parse_quote!(let _ = #rendered;));
+                statements.extend(discard_expression(rendered, &ty));
             }
             StateAction::PureCall { name, arguments } => {
                 let call = Expr::Call {

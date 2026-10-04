@@ -431,6 +431,48 @@ and compares it with the checked-in generated Rust. Use `--update` after an
 intentional renderer change, then inspect the diff. The fixture crates also
 compare native results and serialized state with captures from the ledger-8
 TypeScript runtime. Capture programs are in [`oracles`](oracles).
+
+### Local parity delivery gate
+
+Run [`local_parity_gate.py`](local_parity_gate.py) from the repository root for
+the smallest affected Rust fixture slice. It copies `compactc` and its Scheme
+frontend into a unique run directory before compiling, so a concurrent Cargo
+build cannot replace the compiler in use. Each run writes `receipt.json` with
+the exact Git HEAD, dirty paths, SHA-256 of both compiler binaries, Rust
+ABI/IR and upstream lock metadata, source and fixture hashes, capability
+reports, a name-checked join of exported APIs against the compiler's `proof`
+flags, commands, and log paths. Its summary separates proof-eligible recording gaps from
+nonproof native circuits. The receipt is kept in the printed run
+directory. It records what ran; a dirty worktree remains visible in the
+receipt.
+
+```sh
+python3 tools/compact-rust-backend/local_parity_gate.py \
+  --source bounded_uint_oracle --source wide_uint_oracle \
+  --compiler target/debug/compactc \
+  --scheme /path/to/compactc-scheme \
+  --expect-head "$(git rev-parse HEAD)"
+```
+
+Focused mode compiles and compares only the selected generated fixtures,
+validates their capability reports and pinned declaration identities, and
+runs only their Cargo fixture packages. Omit `--source` for the small
+`counter_parameter` smoke. `--skip-cargo` is available for a compile and
+fixture check while another Cargo gate owns the shared target directory.
+Use `--run-dir /path/to/new-directory` to choose where the receipt and logs
+are stored. If Scheme is beside `compactc`, `--scheme` can be omitted; the
+`COMPACTC_SCHEME` environment variable is also accepted. Cargo uses the
+reusable, shared `target/compact-rust-parity-gate` directory to keep it separate
+from `target/debug/compactc`. Concurrent agents or worktrees should pass
+distinct `--cargo-target-dir` paths.
+
+`--full` is an explicit broader local gate: all checked Rust fixtures and
+curated declaration identities, Rust formatting, compiler rejection checks,
+the pinned TypeScript oracle source inventory, workspace tests and Clippy,
+then the consumer and proof checks. It can take substantially longer. Neither mode
+pushes commits, starts remote CI, or interprets fixture coverage as full
+TypeScript parity across the repository's Compact corpus.
+
 The [oracle acceptance inventory](oracle_acceptance.json) pins the 37
 `codegen-rust` fixture sources at the recorded commit. Its checker verifies
 local source bytes, executable lines after excluding full-line comments, and

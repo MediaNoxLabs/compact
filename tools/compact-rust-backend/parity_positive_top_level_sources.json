@@ -1,0 +1,38 @@
+{
+  "format_version": 1,
+  "suite": "compiler/test.ss",
+  "purpose": "Original top-level Counter and Tiny source acceptance and proof applicability; source identity and compiler API availability only",
+  "positive_sources": [
+    {
+      "source": "examples/counter.compact",
+      "typescript_reference": "tests-e2e/src/tests/runtime.compatibility.e2e.test.ts",
+      "rust_fixture": "tests-rust-backend/counter/lib.rs",
+      "rust_fixture_source": "examples/rust_backend/counter.compact",
+      "expected_ts": "success",
+      "expected_rust": "success",
+      "proof_circuits": [
+        {"name": "increment", "pure": false, "proof": true},
+        {"name": "read_round", "pure": false, "proof": true}
+      ],
+      "pure_declarations": 0,
+      "exported_pure_declarations": 0
+    },
+    {
+      "source": "examples/tiny.compact",
+      "typescript_reference": "compiler/test.ss",
+      "rust_fixture": "tests-rust-backend/tiny-oracle/lib.rs",
+      "rust_fixture_source": "examples/rust_backend/tiny_oracle.compact",
+      "expected_ts": "success",
+      "expected_rust": "success",
+      "proof_circuits": [
+        {"name": "set", "pure": false, "proof": true},
+        {"name": "get", "pure": false, "proof": true},
+        {"name": "clear", "pure": false, "proof": true},
+        {"name": "public_key", "pure": true, "proof": false}
+      ],
+      "pure_declarations": 0,
+      "exported_pure_declarations": 0
+    }
+  ],
+  "expected_rejections": []
+}

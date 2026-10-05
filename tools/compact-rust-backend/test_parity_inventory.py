@@ -170,6 +170,37 @@ metadata.mkdir()
         self.assertIn("source cohort membership changed",
                       source_scope.cohort_membership_failures(bad_manifest)[0])
 
+    def test_top_level_cohort_names_original_sources_and_ts_references(self):
+        manifest = json.loads(inventory.TOP_LEVEL_SOURCE_MANIFEST.read_text())
+        entries = manifest["positive_sources"]
+        self.assertEqual([entry["source"] for entry in entries],
+                         ["examples/counter.compact", "examples/tiny.compact"])
+        self.assertEqual(manifest["expected_rejections"], [])
+        scope = inventory.positive_scope(inventory.ROOT)
+        self.assertEqual({entry["source"] for entry in scope["positive_sources"]
+                          if entry["source"] in {item["source"] for item in entries}},
+                         {item["source"] for item in entries})
+        for entry in entries:
+            self.assertEqual((entry["expected_ts"], entry["expected_rust"]),
+                             ("success", "success"))
+            source = inventory.ROOT / entry["source"]
+            reference = inventory.ROOT / entry["typescript_reference"]
+            fixture_source = inventory.ROOT / entry["rust_fixture_source"]
+            fixture = inventory.ROOT / entry["rust_fixture"]
+            self.assertTrue(reference.is_file())
+            self.assertIn(entry["source"], reference.read_text())
+            self.assertTrue(fixture.is_file())
+            self.assertEqual(inventory.without_comments(source.read_text()).strip(),
+                             inventory.without_comments(fixture_source.read_text()).strip())
+            declarations = inventory.parse_source(source, inventory.ROOT)["declarations"]
+            exported = {item["name"] for item in declarations
+                        if item["kind"] == "circuit" and item["visibility"] == "export"}
+            self.assertEqual({item["name"] for item in entry["proof_circuits"]}, exported)
+        self.assertEqual(sum(circuit["proof"] for entry in entries
+                             for circuit in entry["proof_circuits"]), 5)
+        self.assertEqual(sum(not circuit["proof"] for entry in entries
+                             for circuit in entry["proof_circuits"]), 1)
+
     def test_pm19252_positive_scope_is_complete_and_excludes_rejection(self):
         scope = json.loads(inventory.POSITIVE_SOURCE_MANIFEST.read_text())
         positive = scope["positive_sources"]

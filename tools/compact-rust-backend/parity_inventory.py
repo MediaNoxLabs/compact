@@ -40,8 +40,10 @@ ORACLE_MANIFEST = Path(__file__).with_name("oracle_acceptance.json")
 POSITIVE_SOURCE_MANIFEST = Path(__file__).with_name("parity_positive_sources.json")
 ADT_SET_SOURCE_MANIFEST = Path(__file__).with_name("parity_positive_adt_set_sources.json")
 ADT_LIST_SOURCE_MANIFEST = Path(__file__).with_name("parity_positive_adt_list_sources.json")
+TOP_LEVEL_SOURCE_MANIFEST = Path(__file__).with_name("parity_positive_top_level_sources.json")
 POSITIVE_SOURCE_MANIFESTS = (
-    POSITIVE_SOURCE_MANIFEST, ADT_SET_SOURCE_MANIFEST, ADT_LIST_SOURCE_MANIFEST)
+    POSITIVE_SOURCE_MANIFEST, ADT_SET_SOURCE_MANIFEST,
+    ADT_LIST_SOURCE_MANIFEST, TOP_LEVEL_SOURCE_MANIFEST)
 DEFAULT_BASELINE = Path(__file__).with_name("parity_baseline.json")
 COMPILED_PACKAGE_ROOTS = {
     "examples/rust_backend/digital-passport-credential/src/digital-passport-credential.compact",

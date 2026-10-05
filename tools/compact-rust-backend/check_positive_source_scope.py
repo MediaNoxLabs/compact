@@ -18,7 +18,8 @@
 """Compile the checked TS-positive source cohort and record exact proof metadata.
 
 This gate establishes compiler acceptance and capability metadata only. It does
-not execute TypeScript, Rust, proofs, or ledger transactions.
+not execute TypeScript, Rust, proofs, or ledger transactions. When a cohort
+names a Rust fixture, compare the formatted generated crate source exactly.
 """
 
 import argparse
@@ -134,6 +135,22 @@ def check(compiler: Path, manifest_path: Path = MANIFEST) -> tuple[dict, list[st
                         proof = proof_map(circuits).get(capability["name"])
                         if proof is None or capability.get("proof_required") is not proof[1]:
                             failures.append(f"{source.name}.{capability['name']}: Rust proof flag disagrees")
+                if "rust_fixture" in expected:
+                    generated = output / "rust/contract/lib.rs"
+                    fixture = ROOT / expected["rust_fixture"]
+                    if not generated.is_file() or not fixture.is_file():
+                        failures.append(f"{source.name}: missing generated Rust or checked fixture")
+                    else:
+                        formatted = subprocess.run(["rustfmt", "--edition", "2024", str(generated)],
+                                                   cwd=ROOT, capture_output=True, text=True, check=False)
+                        if formatted.returncode:
+                            failures.append(f"{source.name}: generated Rust formatting failed: {formatted.stderr.strip()}")
+                        else:
+                            row["rust_fixture"] = expected["rust_fixture"]
+                            row["rust_fixture_sha256"] = sha256(fixture)
+                            row["rust_fixture_match"] = generated.read_bytes() == fixture.read_bytes()
+                            if not row["rust_fixture_match"]:
+                                failures.append(f"{source.name}: original-source Rust differs from checked fixture")
             receipt["sources"].append(row)
     receipt["summary"] = {
         "positive_sources": len(manifest["positive_sources"]),

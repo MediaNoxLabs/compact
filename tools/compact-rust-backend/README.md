@@ -95,6 +95,18 @@ lowering in ADR-0101/#204. Its generated fixture checks the TypeScript,
 native, and recorded state, four gas dimensions, ordered VM trace, and replay;
 the proof smoke verifies and applies the observed call through ledger-8.
 The other eleven `list_*.compact` sources are not claimed by this receipt.
+The top-level source cohort in `parity_positive_top_level_sources.json` checks
+the original `examples/counter.compact` and `examples/tiny.compact` paths with
+the same TypeScript/Rust compiler and compares their formatted generated Rust
+against the existing Counter and Tiny fixtures. The corresponding Compact
+sources have identical bodies after comments are removed and the fixtures
+carry separate local runtime tests;
+the check preserves original source identity instead of attributing a fixture
+path to an example. Counter contributes two known proof-required recorded APIs.
+Tiny contributes three proof-required recorded APIs and one compiler-pure,
+proof-false helper. The full local parity gate runs this cohort check. Original
+`election.compact` and `zerocash.compact` compile but report five and two
+unavailable proof calls respectively, so they remain a separate gap.
 The lexical scanner includes `pure circuit` and `export pure circuit`
 declarations, with compiler `contract-info.json` supplying proof applicability
 even when the Rust capability report has no recorded method for a pure circuit.

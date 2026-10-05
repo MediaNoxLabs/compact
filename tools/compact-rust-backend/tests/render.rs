@@ -9703,3 +9703,73 @@ fn typed_reveal_plan_rejects_unproven_counter_mutations_and_wrong_slots() {
         .index = 4;
     assert!(render_with_capabilities(&wrong_slot).is_err());
 }
+
+#[test]
+fn typed_cell_lifecycle_retains_only_final_root_scope_and_audits_helpers() {
+    let source = include_str!("bboard-schema13-ir.json");
+    let load = |source: &str| {
+        let mut contract: Contract = serde_json::from_str(source).unwrap();
+        contract.schema_version = SCHEMA_VERSION;
+        contract
+    };
+    let available = |contract: &Contract| {
+        render_with_capabilities(contract)
+            .unwrap()
+            .capabilities
+            .circuits
+            .iter()
+            .map(|c| c.recorded)
+            .collect::<Vec<_>>()
+    };
+    let contract = load(source);
+    assert_eq!(available(&contract), [true, true]);
+    let renamed = load(
+        &source
+            .replace("post", "publish")
+            .replace("take_down", "remove_message")
+            .replace("former_msg", "saved_content")
+            .replace("public_key", "derive_owner")
+            .replace("instance", "generation"),
+    );
+    assert_eq!(available(&renamed), [true, true]);
+    let mut effectful = contract.clone();
+    let helper = effectful
+        .circuits
+        .iter_mut()
+        .find(|c| c.name == "public_key")
+        .unwrap();
+    helper.body = Expr::Sequence {
+        steps: vec![Expr::Assert {
+            condition: Box::new(Expr::Boolean { value: true }),
+            message: "extra effect".into(),
+        }],
+        value: Box::new(helper.body.clone()),
+    };
+    assert_eq!(available(&effectful), [false, false]);
+    let mut nested = contract.clone();
+    let action = nested.stateful_circuits[1].actions.pop().unwrap();
+    nested.stateful_circuits[1]
+        .actions
+        .push(StateAction::Sequence {
+            actions: vec![action],
+        });
+    let error = render(&nested).unwrap_err();
+    assert!(format!("{error:?}").contains("former_msg"), "{error:?}");
+    let mut earlier = contract.clone();
+    earlier.stateful_circuits[1]
+        .actions
+        .push(StateAction::Assert {
+            condition: Expr::Boolean { value: true },
+            message: "after scoped binding".into(),
+        });
+    let error = render(&earlier).unwrap_err();
+    assert!(format!("{error:?}").contains("former_msg"), "{error:?}");
+    let mut wrong_slot = contract;
+    wrong_slot
+        .ledger_fields
+        .iter_mut()
+        .find(|f| f.id == "instance")
+        .unwrap()
+        .index = 3;
+    assert!(render(&wrong_slot).is_err());
+}

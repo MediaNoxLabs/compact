@@ -137,9 +137,8 @@ fn original_bboard_retains_unicode_message_before_ordered_clear() {
         [vec!["dup", "idx", "popeq"]]
     );
 
-    // The TS oracle fixes operation order. These native calls do not have a
-    // public recorded trace yet; pre-clear return, final fields, serialized
-    // state and summed query gas below check the Rust execution.
+    // The original native oracle fixes operation order and pre-clear return.
+    // recording.rs separately compares full recorded programs and replay.
     assert_eq!(
         query_tags(&expected["post"]),
         [

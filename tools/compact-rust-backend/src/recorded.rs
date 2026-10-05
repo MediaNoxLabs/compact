@@ -16,7 +16,7 @@
 //! Emit complete replayable traces from supported typed stateful IR.
 //! Unsupported effect shapes have no generated recorded entry point.
 
-mod typed_merkle_plan;
+mod typed_plan;
 
 use proc_macro2::Span;
 use serde::Serialize;
@@ -7921,7 +7921,7 @@ fn render_recorded_item(
         }
     }
 
-    let organizer_steps =
+    let mut organizer_steps =
         closed_organizer_gate_steps(circuit, ledger_fields, witnesses, pure_circuits, circuits)?
             .or(closed_authorized_optional_write_steps(
                 circuit,
@@ -7940,8 +7940,14 @@ fn render_recorded_item(
                 ledger_fields,
                 witnesses,
                 pure_circuits,
-            )?)
-            .or_else(|| typed_merkle_plan::steps(circuit, ledger_fields, witnesses, pure_circuits));
+            )?);
+    let mut typed_result = None;
+    if organizer_steps.is_none()
+        && let Some(plan) = typed_plan::lower(circuit, ledger_fields, witnesses, pure_circuits)
+    {
+        organizer_steps = Some(plan.steps);
+        typed_result = Some(plan.result);
+    }
     let organizer_gate = organizer_steps.is_some();
     let opaque_map_operation = closed_opaque_map_operation(circuit, ledger_fields);
     let opaque_asset_removal = closed_opaque_asset_removal(circuit, ledger_fields);
@@ -8079,6 +8085,10 @@ fn render_recorded_item(
     }
     let result_ty = rust_type(&circuit.result)?;
     let (return_steps, result): (Vec<syn::Stmt>, syn::Expr) = match &circuit.return_value {
+        _ if typed_result.is_some() => (
+            Vec::new(),
+            typed_result.expect("typed plan result was checked"),
+        ),
         StateReturn::Expression {
             value: Expr::Let { bindings, body },
         } if circuit.result == Type::Unit

@@ -1090,7 +1090,7 @@ def main() -> None:
     parser.add_argument("--field-to-bytes32", action="store_true",
                         help="run the focused explicit Field-to-Bytes<32> source gate")
     parser.add_argument("--test-center-bboard", action="store_true",
-                        help="compile the complete bboard source and check its native-only capability boundary")
+                        help="compile the complete bboard source and check recorded/observed parity")
     args = parser.parse_args()
     # Captured Rust errors are asserted below; runner color settings must not split their text.
     os.environ["CARGO_TERM_COLOR"] = "never"
@@ -1102,8 +1102,10 @@ def main() -> None:
         base = Path(temporary)
         if args.test_center_bboard:
             output = base / "test-center-bboard"
-            run(compiler, "--target", "rust", "--skip-zk",
-                str(TEST_CENTER_BBOARD_SOURCE), str(output))
+            command = [compiler, "--target", "rust", "--rust-require-recording"]
+            if not args.proof:
+                command.append("--skip-zk")
+            run(*command, str(TEST_CENTER_BBOARD_SOURCE), str(output))
             ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
             assert ir["schema_version"] == 13
             assert [row["name"] for row in ir["circuits"]] == ["some", "none", "public_key"]
@@ -1124,16 +1126,12 @@ def main() -> None:
             capabilities = json.loads((output / "contract/rust-capabilities.json").read_text())
             assert [(row["name"], row["proof_required"], row["recorded"], row["observed_call"])
                     for row in capabilities["circuits"]] == [
-                ("post", True, False, False), ("take_down", True, False, False)]
-            assert all(row["recording_unavailable"] for row in capabilities["circuits"])
-            rejected = subprocess.run(
-                [compiler, "--target", "rust", "--rust-require-recording", "--skip-zk",
-                 str(TEST_CENTER_BBOARD_SOURCE), str(base / "bboard-requires-recording")],
-                cwd=ROOT, capture_output=True, text=True,
-            )
-            assert rejected.returncode != 0
-            assert "post" in rejected.stderr and "take_down" in rejected.stderr
-            print("complete test-center bboard source accepted with native-only proof boundary")
+                ("post", True, True, True), ("take_down", True, True, True)]
+            assert all("recording_unavailable" not in row for row in capabilities["circuits"])
+            if args.proof:
+                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                    "--bboard", str(output))
+            print("complete test-center bboard recorded/observed calls accepted")
             return
         if args.field_to_bytes32:
             output = base / "field-to-bytes32"
@@ -1491,6 +1489,10 @@ def main() -> None:
                 assert (zerocash_mint_proof / "keys" / f"zerocash_mint.{extension}").is_file()
             for extension in ("zkir", "bzkir"):
                 assert (zerocash_mint_proof / "zkir" / f"zerocash_mint.{extension}").is_file()
+            bboard_proof = base / "bboard-proof"
+            run(compiler, "--target", "rust", "--rust-require-recording",
+                str(TEST_CENTER_BBOARD_SOURCE), str(bboard_proof))
+            check_manifest(bboard_proof)
             election_topic_proof = base / "election-topic-proof"
             run(compiler, "--target", "rust", str(ELECTION_SOURCE), str(election_topic_proof))
             check_manifest(election_topic_proof)
@@ -1934,6 +1936,10 @@ def main() -> None:
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 "--election-reveal", str(election_topic_proof),
+            )
+            run(
+                "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--bboard", str(bboard_proof),
             )
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",

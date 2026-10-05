@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! A bounded typed recording plan for membership-guarded Merkle writes.
+//! Typed recording plans with bounded membership and optional-Cell admission.
 //! Actual value types and branch-local frames preserve scope and effect order.
 
 use super::*;
@@ -36,6 +36,9 @@ struct Plan<'a> {
     tree_writes: usize,
     set_writes: usize,
     counter_writes: usize,
+    counter_reads: usize,
+    cell_writes: usize,
+    optional_cells: usize,
 }
 
 impl Plan<'_> {
@@ -74,6 +77,9 @@ impl Plan<'_> {
 
     fn pure_value(&self, value: &Expr, visiting: &mut HashSet<String>) -> bool {
         match value {
+            Expr::Default {
+                ty: Type::OpaqueString,
+            } => true,
             Expr::Parameter { .. }
             | Expr::BytesLiteral { .. }
             | Expr::FieldLiteral { .. }
@@ -261,15 +267,55 @@ impl Plan<'_> {
                     steps,
                 )
             }
+            Expr::CounterRead { field, index } => {
+                if self.field(field, *index)?.declaration != LedgerFieldKind::Counter {
+                    return None;
+                }
+                let slot = ident(field).ok()?;
+                let observed = self.fresh();
+                steps.push(syn::parse_quote!(let (frame, #observed) = crate::ledger_slots::#slot.record_read(frame)?;));
+                self.counter_reads += 1;
+                self.bind(syn::parse_quote!(runtime::BoundedUint::<18446744073709551615>::new(#observed as u128)?), Type::Unsigned { max: "18446744073709551615".into() }, steps)
+            }
+            Expr::FieldCast { value } => {
+                let value = self.expression(value, scope, steps)?;
+                if value.ty
+                    != (Type::Unsigned {
+                        max: "18446744073709551615".into(),
+                    })
+                {
+                    return None;
+                }
+                let value = value.value;
+                self.bind(
+                    syn::parse_quote!(runtime::Field::from((#value).value())),
+                    Type::Field,
+                    steps,
+                )
+            }
+            Expr::FieldToBytes32 { value } => {
+                let value = self.expression(value, scope, steps)?;
+                if value.ty != Type::Field {
+                    return None;
+                }
+                self.bind(
+                    crate::field_to_bytes_32_syntax(value.value),
+                    Type::Bytes { length: 32 },
+                    steps,
+                )
+            }
             Expr::CellRead { field, index } => {
                 let declaration = self.field(field, *index)?;
                 let LedgerFieldKind::Cell { ty } = &declaration.declaration else {
                     return None;
                 };
-                if !matches!(ty, Type::Enum { .. } | Type::Bytes { length: 32 }) {
+                if !cell_type(ty) {
                     return None;
                 }
                 let ty = ty.clone();
+                if optional_string(&ty) {
+                    self.optional_cells += 1;
+                }
                 self.observe(field, "record_read", vec![], ty, steps)
             }
             Expr::SetMember {
@@ -426,6 +472,30 @@ impl Plan<'_> {
                     };
                 });
             }
+            StateAction::CellWrite {
+                field,
+                index,
+                value,
+            } => {
+                let LedgerFieldKind::Cell { ty } = &self.field(field, *index)?.declaration else {
+                    return None;
+                };
+                if !cell_type(ty) {
+                    return None;
+                }
+                let ty = ty.clone();
+                let value = self.expression(value, scope, steps)?;
+                if value.ty != ty {
+                    return None;
+                }
+                let value = value.value;
+                let slot = ident(field).ok()?;
+                steps.push(syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_write(frame, #value)?;));
+                self.cell_writes += 1;
+                if optional_string(&ty) {
+                    self.optional_cells += 1;
+                }
+            }
             StateAction::CounterIncrement {
                 field,
                 index,
@@ -515,16 +585,30 @@ impl Plan<'_> {
     }
 }
 
-pub(super) fn steps<'a>(
+fn optional_string(ty: &Type) -> bool {
+    matches!(ty, Type::Struct { fields, .. } if matches!(fields.as_slice(), [present, value] if present.ty == Type::Boolean && value.ty == Type::OpaqueString))
+}
+
+fn cell_type(ty: &Type) -> bool {
+    matches!(ty, Type::Enum { .. } | Type::Bytes { length: 32 }) || optional_string(ty)
+}
+
+pub(super) struct TypedPlan {
+    pub steps: Vec<syn::Stmt>,
+    pub result: syn::Expr,
+}
+
+pub(super) fn lower<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
     witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,
     pure: &'a HashMap<&'a str, &'a PureCircuit>,
-) -> Option<Vec<syn::Stmt>> {
-    if circuit.result != Type::Unit
-        || circuit.return_value != StateReturn::Unit
-        || !(circuit.parameters.is_empty()
-            || matches!(circuit.parameters.as_slice(), [parameter] if matches!(parameter.ty, Type::Enum { .. })))
+) -> Option<TypedPlan> {
+    let enum_entry = matches!(circuit.parameters.as_slice(), [parameter] if matches!(parameter.ty, Type::Enum { .. }));
+    let opaque_entry =
+        matches!(circuit.parameters.as_slice(), [parameter] if parameter.ty == Type::OpaqueString);
+    if !(circuit.parameters.is_empty() || enum_entry || opaque_entry)
+        || !matches!(circuit.result, Type::Unit | Type::OpaqueString)
     {
         return None;
     }
@@ -537,8 +621,11 @@ pub(super) fn steps<'a>(
         tree_writes: 0,
         set_writes: 0,
         counter_writes: 0,
+        counter_reads: 0,
+        cell_writes: 0,
+        optional_cells: 0,
     };
-    let scope = circuit
+    let scope: Scope = circuit
         .parameters
         .iter()
         .enumerate()
@@ -553,16 +640,53 @@ pub(super) fn steps<'a>(
             )
         })
         .collect();
+    let mut return_scope = scope.clone();
     let mut steps = Vec::new();
-    for action in &circuit.actions {
-        plan.action(action, &scope, &mut steps)?;
+    for (index, action) in circuit.actions.iter().enumerate() {
+        // Only bindings belonging to the final top-level Let enclose the return.
+        // Nested or earlier sibling Lets cannot escape their action scope.
+        if index + 1 == circuit.actions.len()
+            && let StateAction::Let { bindings, action } = action
+        {
+            return_scope = plan.bindings(bindings, &scope, &mut steps)?;
+            plan.action(action, &return_scope, &mut steps)?;
+        } else {
+            plan.action(action, &scope, &mut steps)?;
+        }
     }
-    let write_domain = if circuit.parameters.is_empty() {
-        plan.counter_writes > 0 && plan.tree_writes == 0
-    } else {
-        plan.tree_writes > 0 && plan.counter_writes == 0
+    let result = match &circuit.return_value {
+        StateReturn::Unit if circuit.result == Type::Unit => syn::parse_quote!(()),
+        StateReturn::Expression { value } => {
+            let result = plan.expression(value, &return_scope, &mut steps)?;
+            if result.ty != circuit.result {
+                return None;
+            }
+            result.value
+        }
+        _ => return None,
     };
-    (plan.root_observations > 0 && write_domain && plan.set_writes > 0).then_some(steps)
+    let membership = circuit.result == Type::Unit
+        && plan.root_observations > 0
+        && plan.set_writes > 0
+        && plan.cell_writes == 0
+        && plan.optional_cells == 0
+        && plan.counter_reads == 0
+        && if enum_entry {
+            plan.tree_writes > 0 && plan.counter_writes == 0
+        } else {
+            circuit.parameters.is_empty() && plan.counter_writes > 0 && plan.tree_writes == 0
+        };
+    let cell_lifecycle = plan.root_observations == 0
+        && plan.set_writes == 0
+        && plan.tree_writes == 0
+        && plan.cell_writes > 0
+        && plan.optional_cells > 0
+        && plan.counter_reads > 0
+        && ((opaque_entry && circuit.result == Type::Unit && plan.counter_writes == 0)
+            || (circuit.parameters.is_empty()
+                && circuit.result == Type::OpaqueString
+                && plan.counter_writes > 0));
+    (membership || cell_lifecycle).then_some(TypedPlan { steps, result })
 }
 
 #[cfg(test)]
@@ -583,6 +707,9 @@ mod tests {
             tree_writes: 0,
             set_writes: 0,
             counter_writes: 0,
+            counter_reads: 0,
+            cell_writes: 0,
+            optional_cells: 0,
         };
         let actual = Type::Unsigned { max: "255".into() };
         let target = Type::Unsigned {
@@ -645,6 +772,9 @@ mod tests {
             tree_writes: 0,
             set_writes: 0,
             counter_writes: 0,
+            counter_reads: 0,
+            cell_writes: 0,
+            optional_cells: 0,
         };
         let action = StateAction::CounterIncrement {
             field: "tally_yes".into(),

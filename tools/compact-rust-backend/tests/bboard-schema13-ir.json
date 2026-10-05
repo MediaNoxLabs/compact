@@ -1,0 +1,800 @@
+{
+  "schema_version": 13,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "state",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "enum",
+          "name": "STATE",
+          "variants": [
+            "vacant",
+            "occupied"
+          ]
+        }
+      },
+      "source": {
+        "file": "bboard.compact",
+        "line": 22,
+        "column": 1
+      }
+    },
+    {
+      "id": "message",
+      "index": 1,
+      "path": [
+        1
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "struct",
+          "name": "Maybe",
+          "fields": [
+            {
+              "name": "is_some",
+              "ty": {
+                "kind": "boolean"
+              }
+            },
+            {
+              "name": "value",
+              "ty": {
+                "kind": "opaque_string"
+              }
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "bboard.compact",
+        "line": 23,
+        "column": 1
+      }
+    },
+    {
+      "id": "instance",
+      "index": 2,
+      "path": [
+        2
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "bboard.compact",
+        "line": 24,
+        "column": 1
+      }
+    },
+    {
+      "id": "poster",
+      "index": 3,
+      "path": [
+        3
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "bytes",
+          "length": 32
+        }
+      },
+      "source": {
+        "file": "bboard.compact",
+        "line": 25,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "local_secret_key",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "bytes",
+        "length": 32
+      },
+      "source": {
+        "file": "bboard.compact",
+        "line": 33,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+    {
+      "name": "some",
+      "internal": true,
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "opaque_string"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Maybe",
+        "fields": [
+          {
+            "name": "is_some",
+            "ty": {
+              "kind": "boolean"
+            }
+          },
+          {
+            "name": "value",
+            "ty": {
+              "kind": "opaque_string"
+            }
+          }
+        ]
+      },
+      "body": {
+        "kind": "struct_literal",
+        "ty": {
+          "kind": "struct",
+          "name": "Maybe",
+          "fields": [
+            {
+              "name": "is_some",
+              "ty": {
+                "kind": "boolean"
+              }
+            },
+            {
+              "name": "value",
+              "ty": {
+                "kind": "opaque_string"
+              }
+            }
+          ]
+        },
+        "fields": [
+          {
+            "kind": "boolean",
+            "value": true
+          },
+          {
+            "kind": "parameter",
+            "name": "value"
+          }
+        ]
+      },
+      "source": {
+        "file": "standard-library.compact",
+        "line": 24,
+        "column": 1
+      }
+    },
+    {
+      "name": "none",
+      "internal": true,
+      "parameters": [
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Maybe",
+        "fields": [
+          {
+            "name": "is_some",
+            "ty": {
+              "kind": "boolean"
+            }
+          },
+          {
+            "name": "value",
+            "ty": {
+              "kind": "opaque_string"
+            }
+          }
+        ]
+      },
+      "body": {
+        "kind": "struct_literal",
+        "ty": {
+          "kind": "struct",
+          "name": "Maybe",
+          "fields": [
+            {
+              "name": "is_some",
+              "ty": {
+                "kind": "boolean"
+              }
+            },
+            {
+              "name": "value",
+              "ty": {
+                "kind": "opaque_string"
+              }
+            }
+          ]
+        },
+        "fields": [
+          {
+            "kind": "boolean",
+            "value": false
+          },
+          {
+            "kind": "default",
+            "ty": {
+              "kind": "opaque_string"
+            }
+          }
+        ]
+      },
+      "source": {
+        "file": "standard-library.compact",
+        "line": 28,
+        "column": 1
+      }
+    },
+    {
+      "name": "public_key",
+      "parameters": [
+        {
+          "name": "sk",
+          "ty": {
+            "kind": "bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "instance",
+          "ty": {
+            "kind": "bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result": {
+        "kind": "bytes",
+        "length": 32
+      },
+      "body": {
+        "kind": "persistent_hash",
+        "value": {
+          "kind": "tuple",
+          "elements": [
+            {
+              "kind": "bytes_literal",
+              "bytes": [
+                98,
+                98,
+                111,
+                97,
+                114,
+                100,
+                58,
+                112,
+                107,
+                58,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "kind": "parameter",
+              "name": "instance"
+            },
+            {
+              "kind": "parameter",
+              "name": "sk"
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "bboard.compact",
+        "line": 53,
+        "column": 1
+      }
+    }
+  ],
+  "stateful_circuits": [
+    {
+      "name": "post",
+      "parameters": [
+        {
+          "name": "new_message",
+          "ty": {
+            "kind": "opaque_string"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "equal",
+            "left": {
+              "kind": "cell_read",
+              "field": "state",
+              "index": 0
+            },
+            "right": {
+              "kind": "enum_variant",
+              "ty": {
+                "kind": "enum",
+                "name": "STATE",
+                "variants": [
+                  "vacant",
+                  "occupied"
+                ]
+              },
+              "variant": "vacant"
+            }
+          },
+          "message": "Attempted to post to an occupied board"
+        },
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_18",
+              "ty": {
+                "kind": "bytes",
+                "length": 32
+              },
+              "value": {
+                "kind": "call",
+                "name": "public_key",
+                "arguments": [
+                  {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "witness_call",
+                      "name": "local_secret_key",
+                      "arguments": [
+                      ]
+                    },
+                    "ty": {
+                      "kind": "bytes",
+                      "length": 32
+                    }
+                  },
+                  {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "field_to_bytes32",
+                      "value": {
+                        "kind": "field_cast",
+                        "value": {
+                          "kind": "counter_read",
+                          "field": "instance",
+                          "index": 2
+                        }
+                      }
+                    },
+                    "ty": {
+                      "kind": "bytes",
+                      "length": 32
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "action": {
+            "kind": "cell_write",
+            "field": "poster",
+            "index": 3,
+            "value": {
+              "kind": "parameter",
+              "name": "tmp_18"
+            }
+          }
+        },
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_17",
+              "ty": {
+                "kind": "struct",
+                "name": "Maybe",
+                "fields": [
+                  {
+                    "name": "is_some",
+                    "ty": {
+                      "kind": "boolean"
+                    }
+                  },
+                  {
+                    "name": "value",
+                    "ty": {
+                      "kind": "opaque_string"
+                    }
+                  }
+                ]
+              },
+              "value": {
+                "kind": "call",
+                "name": "some",
+                "arguments": [
+                  {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "new_message"
+                    },
+                    "ty": {
+                      "kind": "opaque_string"
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "action": {
+            "kind": "cell_write",
+            "field": "message",
+            "index": 1,
+            "value": {
+              "kind": "parameter",
+              "name": "tmp_17"
+            }
+          }
+        },
+        {
+          "kind": "cell_write",
+          "field": "state",
+          "index": 0,
+          "value": {
+            "kind": "enum_variant",
+            "ty": {
+              "kind": "enum",
+              "name": "STATE",
+              "variants": [
+                "vacant",
+                "occupied"
+              ]
+            },
+            "variant": "occupied"
+          }
+        }
+      ],
+      "source": {
+        "file": "bboard.compact",
+        "line": 35,
+        "column": 1
+      }
+    },
+    {
+      "name": "take_down",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "opaque_string"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "parameter",
+          "name": "former_msg"
+        }
+      },
+      "actions": [
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "equal",
+            "left": {
+              "kind": "cell_read",
+              "field": "state",
+              "index": 0
+            },
+            "right": {
+              "kind": "enum_variant",
+              "ty": {
+                "kind": "enum",
+                "name": "STATE",
+                "variants": [
+                  "vacant",
+                  "occupied"
+                ]
+              },
+              "variant": "occupied"
+            }
+          },
+          "message": "Attempted to take down post from an empty board"
+        },
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "equal",
+            "left": {
+              "kind": "cell_read",
+              "field": "poster",
+              "index": 3
+            },
+            "right": {
+              "kind": "call",
+              "name": "public_key",
+              "arguments": [
+                {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "witness_call",
+                    "name": "local_secret_key",
+                    "arguments": [
+                    ]
+                  },
+                  "ty": {
+                    "kind": "bytes",
+                    "length": 32
+                  }
+                },
+                {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "field_to_bytes32",
+                    "value": {
+                      "kind": "field_cast",
+                      "value": {
+                        "kind": "counter_read",
+                        "field": "instance",
+                        "index": 2
+                      }
+                    }
+                  },
+                  "ty": {
+                    "kind": "bytes",
+                    "length": 32
+                  }
+                }
+              ]
+            }
+          },
+          "message": "Attempted to take down post, but not the current poster"
+        },
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "former_msg",
+              "ty": {
+                "kind": "opaque_string"
+              },
+              "value": {
+                "kind": "struct_field",
+                "value": {
+                  "kind": "cell_read",
+                  "field": "message",
+                  "index": 1
+                },
+                "field": "value",
+                "index": 1
+              }
+            }
+          ],
+          "action": {
+            "kind": "sequence",
+            "actions": [
+              {
+                "kind": "cell_write",
+                "field": "state",
+                "index": 0,
+                "value": {
+                  "kind": "enum_variant",
+                  "ty": {
+                    "kind": "enum",
+                    "name": "STATE",
+                    "variants": [
+                      "vacant",
+                      "occupied"
+                    ]
+                  },
+                  "variant": "vacant"
+                }
+              },
+              {
+                "kind": "let",
+                "bindings": [
+                  {
+                    "name": "tmp_16",
+                    "ty": {
+                      "kind": "unsigned",
+                      "max": "65535"
+                    },
+                    "value": {
+                      "kind": "unsigned_literal",
+                      "value": "1",
+                      "max": "65535"
+                    }
+                  }
+                ],
+                "action": {
+                  "kind": "counter_increment",
+                  "field": "instance",
+                  "index": 2,
+                  "amount": {
+                    "kind": "parameter",
+                    "name": "tmp_16"
+                  }
+                }
+              },
+              {
+                "kind": "let",
+                "bindings": [
+                  {
+                    "name": "tmp_15",
+                    "ty": {
+                      "kind": "struct",
+                      "name": "Maybe",
+                      "fields": [
+                        {
+                          "name": "is_some",
+                          "ty": {
+                            "kind": "boolean"
+                          }
+                        },
+                        {
+                          "name": "value",
+                          "ty": {
+                            "kind": "opaque_string"
+                          }
+                        }
+                      ]
+                    },
+                    "value": {
+                      "kind": "call",
+                      "name": "none",
+                      "arguments": [
+                      ]
+                    }
+                  }
+                ],
+                "action": {
+                  "kind": "cell_write",
+                  "field": "message",
+                  "index": 1,
+                  "value": {
+                    "kind": "parameter",
+                    "name": "tmp_15"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "source": {
+        "file": "bboard.compact",
+        "line": 42,
+        "column": 1
+      }
+    }
+  ],
+  "constructor": {
+    "parameters": [
+    ],
+    "steps": [
+      {
+        "kind": "cell_write",
+        "field": "state",
+        "index": 0,
+        "value": {
+          "kind": "enum_variant",
+          "ty": {
+            "kind": "enum",
+            "name": "STATE",
+            "variants": [
+              "vacant",
+              "occupied"
+            ]
+          },
+          "variant": "vacant"
+        }
+      },
+      {
+        "kind": "let",
+        "bindings": [
+          {
+            "name": "tmp_14",
+            "ty": {
+              "kind": "struct",
+              "name": "Maybe",
+              "fields": [
+                {
+                  "name": "is_some",
+                  "ty": {
+                    "kind": "boolean"
+                  }
+                },
+                {
+                  "name": "value",
+                  "ty": {
+                    "kind": "opaque_string"
+                  }
+                }
+              ]
+            },
+            "value": {
+              "kind": "call",
+              "name": "none",
+              "arguments": [
+              ]
+            }
+          }
+        ],
+        "step": {
+          "kind": "cell_write",
+          "field": "message",
+          "index": 1,
+          "value": {
+            "kind": "parameter",
+            "name": "tmp_14"
+          }
+        }
+      },
+      {
+        "kind": "let",
+        "bindings": [
+          {
+            "name": "tmp_13",
+            "ty": {
+              "kind": "unsigned",
+              "max": "65535"
+            },
+            "value": {
+              "kind": "unsigned_literal",
+              "value": "1",
+              "max": "65535"
+            }
+          }
+        ],
+        "step": {
+          "kind": "counter_increment",
+          "field": "instance",
+          "index": 2,
+          "amount": {
+            "kind": "literal",
+            "value": 1
+          }
+        }
+      }
+    ],
+    "source": {
+      "file": "bboard.compact",
+      "line": 27,
+      "column": 1
+    }
+  }
+}

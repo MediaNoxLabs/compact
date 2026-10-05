@@ -36,6 +36,7 @@ mod asset_watch_write;
 mod asset_writable;
 mod boolean_pair_assert;
 mod closed_pure_field;
+mod election_commit;
 mod election_topic;
 mod field_pair_hash;
 mod field_to_bytes32;
@@ -2259,6 +2260,15 @@ fn run() -> Result<(), Box<dyn Error>> {
             return Err("usage: compact-rust-proof-smoke --merkle-root <proof-output>".into());
         }
         return merkle_root::run(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--election-commit")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: --election-commit <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err("usage: --election-commit <proof-output>".into());
+        }
+        return election_commit::run(Path::new(&root));
     }
     if first.as_deref() == Some(OsStr::new("--election-add-voter")) {
         let root = arguments

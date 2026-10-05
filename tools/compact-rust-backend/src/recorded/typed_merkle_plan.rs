@@ -1,0 +1,559 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//  	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+//! A bounded typed recording plan for membership-guarded Merkle writes.
+//! Actual value types and branch-local frames preserve scope and effect order.
+
+use super::*;
+use crate::coerce_expression;
+
+#[derive(Clone)]
+struct TypedValue {
+    ty: Type,
+    value: syn::Expr,
+}
+
+type Scope = HashMap<String, TypedValue>;
+
+struct Plan<'a> {
+    ledger: &'a HashMap<&'a str, &'a LedgerField>,
+    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,
+    pure: &'a HashMap<&'a str, &'a PureCircuit>,
+    next: usize,
+    root_observations: usize,
+    tree_writes: usize,
+    set_writes: usize,
+}
+
+impl Plan<'_> {
+    fn fresh(&mut self) -> syn::Ident {
+        let id = syn::Ident::new(&format!("__compact_plan_{}", self.next), Span::call_site());
+        self.next += 1;
+        id
+    }
+
+    fn bind(
+        &mut self,
+        value: syn::Expr,
+        ty: Type,
+        steps: &mut Vec<syn::Stmt>,
+    ) -> Option<TypedValue> {
+        let rust_ty = rust_type(&ty).ok()?;
+        let name = self.fresh();
+        steps.push(syn::parse_quote!(let #name: #rust_ty = #value;));
+        Some(TypedValue {
+            ty,
+            value: syn::parse_quote!(#name),
+        })
+    }
+
+    fn pure_call(&self, name: &str, visiting: &mut HashSet<String>) -> bool {
+        let Some(callee) = self.pure.get(name) else {
+            return false;
+        };
+        if !visiting.insert(name.to_owned()) {
+            return false;
+        }
+        let supported = self.pure_value(&callee.body, visiting);
+        visiting.remove(name);
+        supported
+    }
+
+    fn pure_value(&self, value: &Expr, visiting: &mut HashSet<String>) -> bool {
+        match value {
+            Expr::Parameter { .. }
+            | Expr::BytesLiteral { .. }
+            | Expr::FieldLiteral { .. }
+            | Expr::Boolean { .. }
+            | Expr::EnumVariant { .. } => true,
+            Expr::StructField { value, .. }
+            | Expr::Coerce { value, .. }
+            | Expr::PersistentHash { value }
+            | Expr::TransientHash { value }
+            | Expr::DegradeToTransient { value } => self.pure_value(value, visiting),
+            Expr::Tuple { elements }
+            | Expr::StructLiteral {
+                fields: elements, ..
+            } => elements
+                .iter()
+                .all(|value| self.pure_value(value, visiting)),
+            Expr::Equal { left, right } => {
+                self.pure_value(left, visiting) && self.pure_value(right, visiting)
+            }
+            Expr::If {
+                condition,
+                then,
+                otherwise,
+            } => {
+                self.pure_value(condition, visiting)
+                    && self.pure_value(then, visiting)
+                    && self.pure_value(otherwise, visiting)
+            }
+            Expr::Let { bindings, body } => {
+                bindings
+                    .iter()
+                    .all(|binding| self.pure_value(&binding.value, visiting))
+                    && self.pure_value(body, visiting)
+            }
+            Expr::Call { name, arguments } => {
+                arguments
+                    .iter()
+                    .all(|value| self.pure_value(value, visiting))
+                    && self.pure_call(name, visiting)
+            }
+            Expr::VectorFoldCall {
+                name,
+                initial,
+                source,
+                ..
+            } => {
+                self.pure_value(initial, visiting)
+                    && self.pure_value(source, visiting)
+                    && self.pure_call(name, visiting)
+            }
+            _ => false,
+        }
+    }
+
+    fn field(&self, field: &str, index: u8) -> Option<&LedgerField> {
+        let declaration = *self.ledger.get(field)?;
+        (declaration.index == index && declaration.physical_path().len() == 1)
+            .then_some(declaration)
+    }
+
+    fn expression(
+        &mut self,
+        expression: &Expr,
+        scope: &Scope,
+        steps: &mut Vec<syn::Stmt>,
+    ) -> Option<TypedValue> {
+        match expression {
+            Expr::Parameter { name } => {
+                let value = scope.get(name)?;
+                Some(TypedValue {
+                    ty: value.ty.clone(),
+                    value: retained_value(value.value.clone(), &value.ty),
+                })
+            }
+            Expr::Boolean { .. } | Expr::BytesLiteral { .. } | Expr::EnumVariant { .. } => {
+                let (value, ty) =
+                    expression_with_calls(expression, &HashMap::new(), &HashMap::new()).ok()?;
+                self.bind(value, ty, steps)
+            }
+            Expr::Coerce { value, ty } => {
+                let value = self.expression(value, scope, steps)?;
+                let converted = coerce_expression(value.value, &value.ty, ty, 0).ok()?;
+                self.bind(converted, ty.clone(), steps)
+            }
+            Expr::StructField {
+                value,
+                field,
+                index,
+            } => {
+                let value = self.expression(value, scope, steps)?;
+                let Type::Struct { fields, .. } = value.ty else {
+                    return None;
+                };
+                let member = fields.get(*index)?;
+                if member.name != *field {
+                    return None;
+                }
+                let name = ident(field).ok()?;
+                let source = value.value;
+                let projected = retained_value(syn::parse_quote!((#source).#name), &member.ty);
+                self.bind(projected, member.ty.clone(), steps)
+            }
+            Expr::Let { bindings, body } => {
+                let scoped = self.bindings(bindings, scope, steps)?;
+                self.expression(body, &scoped, steps)
+            }
+            Expr::Equal { left, right } => {
+                let left = self.expression(left, scope, steps)?;
+                let right = self.expression(right, scope, steps)?;
+                if left.ty != right.ty {
+                    return None;
+                }
+                let (left, right) = (left.value, right.value);
+                self.bind(syn::parse_quote!(#left == #right), Type::Boolean, steps)
+            }
+            Expr::If {
+                condition,
+                then,
+                otherwise,
+            } => {
+                let condition = self.expression(condition, scope, steps)?;
+                if condition.ty != Type::Boolean {
+                    return None;
+                }
+                let mut then_steps = Vec::new();
+                let then = self.expression(then, scope, &mut then_steps)?;
+                let mut else_steps = Vec::new();
+                let otherwise = self.expression(otherwise, scope, &mut else_steps)?;
+                if then.ty != Type::Boolean || otherwise.ty != Type::Boolean {
+                    return None;
+                }
+                let name = self.fresh();
+                let (condition, then, otherwise) = (condition.value, then.value, otherwise.value);
+                steps.push(syn::parse_quote! {
+                    let (frame, #name): (_, bool) = if #condition {
+                        #(#then_steps)*
+                        (frame, #then)
+                    } else {
+                        #(#else_steps)*
+                        (frame, #otherwise)
+                    };
+                });
+                Some(TypedValue {
+                    ty: Type::Boolean,
+                    value: syn::parse_quote!(#name),
+                })
+            }
+            Expr::WitnessCall { name, arguments } => {
+                let declaration = *self.witnesses.get(name.as_str())?;
+                if arguments.len() != declaration.parameters.len()
+                    || !(declaration.result == Type::Unit
+                        || recordable_cell_type(&declaration.result))
+                {
+                    return None;
+                }
+                let args = self.arguments(arguments, &declaration.parameters, scope, steps)?;
+                let method = ident(name).ok()?;
+                let observed = self.fresh();
+                let ty = rust_type(&declaration.result).ok()?;
+                steps.push(syn::parse_quote! {
+                    let (frame, #observed): (_, #ty) = frame.try_witness_metered(|context, meter| {
+                        witnesses.#method(context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(), meter,
+                        }), #(#args),*)
+                    })?;
+                });
+                Some(TypedValue {
+                    ty: declaration.result.clone(),
+                    value: syn::parse_quote!(#observed),
+                })
+            }
+            Expr::Call { name, arguments } => {
+                let callee = *self.pure.get(name.as_str())?;
+                if !self.pure_call(name, &mut HashSet::new()) {
+                    return None;
+                }
+                let args = self.arguments(arguments, &callee.parameters, scope, steps)?;
+                let method = ident(name).ok()?;
+                self.bind(
+                    syn::parse_quote!(crate::pure_circuits::#method(#(#args),*)?),
+                    callee.result.clone(),
+                    steps,
+                )
+            }
+            Expr::CellRead { field, index } => {
+                let declaration = self.field(field, *index)?;
+                let LedgerFieldKind::Cell { ty } = &declaration.declaration else {
+                    return None;
+                };
+                if !matches!(ty, Type::Enum { .. } | Type::Bytes { length: 32 }) {
+                    return None;
+                }
+                let ty = ty.clone();
+                self.observe(field, "record_read", vec![], ty, steps)
+            }
+            Expr::SetMember {
+                field,
+                index,
+                value,
+            } => {
+                if self.field(field, *index)?.declaration
+                    != (LedgerFieldKind::Set {
+                        ty: Type::Bytes { length: 32 },
+                    })
+                {
+                    return None;
+                }
+                let value = self.expression(value, scope, steps)?;
+                if value.ty != (Type::Bytes { length: 32 }) {
+                    return None;
+                }
+                self.observe(
+                    field,
+                    "record_member",
+                    vec![value.value],
+                    Type::Boolean,
+                    steps,
+                )
+            }
+            Expr::MerkleCheckRoot { field, index, root } => {
+                if !matches!(
+                    self.field(field, *index)?.declaration,
+                    LedgerFieldKind::MerkleTree {
+                        ty: Type::Bytes { length: 32 },
+                        ..
+                    }
+                ) {
+                    return None;
+                }
+                let root = self.expression(root, scope, steps)?;
+                if !matches!(&root.ty, Type::Struct { fields, .. } if matches!(fields.as_slice(), [member] if member.ty == Type::Field))
+                {
+                    return None;
+                }
+                self.root_observations += 1;
+                self.observe(
+                    field,
+                    "record_check_root",
+                    vec![root.value],
+                    Type::Boolean,
+                    steps,
+                )
+            }
+            _ => None,
+        }
+    }
+
+    fn arguments(
+        &mut self,
+        arguments: &[Expr],
+        formals: &[crate::ir::Parameter],
+        scope: &Scope,
+        steps: &mut Vec<syn::Stmt>,
+    ) -> Option<Vec<syn::Expr>> {
+        if arguments.len() != formals.len() {
+            return None;
+        }
+        let mut args = Vec::new();
+        for (argument, formal) in arguments.iter().zip(formals) {
+            let value = self.expression(argument, scope, steps)?;
+            if value.ty != formal.ty {
+                return None;
+            }
+            args.push(value.value);
+        }
+        Some(args)
+    }
+
+    fn observe(
+        &mut self,
+        field: &str,
+        operation: &str,
+        args: Vec<syn::Expr>,
+        ty: Type,
+        steps: &mut Vec<syn::Stmt>,
+    ) -> Option<TypedValue> {
+        let slot = ident(field).ok()?;
+        let method = ident(operation).ok()?;
+        let observed = self.fresh();
+        let rust_ty = rust_type(&ty).ok()?;
+        steps.push(syn::parse_quote! {
+            let (frame, #observed): (_, #rust_ty) = crate::ledger_slots::#slot.#method(frame, #(#args),*)?;
+        });
+        Some(TypedValue {
+            ty,
+            value: syn::parse_quote!(#observed),
+        })
+    }
+
+    fn bindings(
+        &mut self,
+        bindings: &[LocalBinding],
+        scope: &Scope,
+        steps: &mut Vec<syn::Stmt>,
+    ) -> Option<Scope> {
+        let mut scoped = scope.clone();
+        for binding in bindings {
+            let value = self.expression(&binding.value, &scoped, steps)?;
+            if value.ty != binding.ty {
+                return None;
+            }
+            // Evaluate once at the lexical declaration, including pure aliases.
+            let value = self.bind(value.value, value.ty, steps)?;
+            scoped.insert(binding.name.clone(), value);
+        }
+        Some(scoped)
+    }
+
+    fn action(
+        &mut self,
+        action: &StateAction,
+        scope: &Scope,
+        steps: &mut Vec<syn::Stmt>,
+    ) -> Option<()> {
+        match action {
+            StateAction::Sequence { actions } => {
+                for action in actions {
+                    self.action(action, scope, steps)?;
+                }
+            }
+            StateAction::Let { bindings, action } => {
+                let scoped = self.bindings(bindings, scope, steps)?;
+                self.action(action, &scoped, steps)?;
+            }
+            StateAction::Assert { condition, message } => {
+                let condition = self.expression(condition, scope, steps)?;
+                if condition.ty != Type::Boolean {
+                    return None;
+                }
+                let condition = condition.value;
+                steps.push(syn::parse_quote! {
+                    if !#condition { return Err(runtime::CompactError::AssertionFailed(#message.to_owned())); }
+                });
+            }
+            StateAction::Expression {
+                value: value @ Expr::WitnessCall { .. },
+            } => {
+                if self.expression(value, scope, steps)?.ty != Type::Unit {
+                    return None;
+                }
+            }
+            StateAction::MerkleInsert {
+                field,
+                index,
+                value,
+            }
+            | StateAction::SetInsert {
+                field,
+                index,
+                value,
+            } => {
+                let declaration = self.field(field, *index)?;
+                match (action, &declaration.declaration) {
+                    (
+                        StateAction::MerkleInsert { .. },
+                        LedgerFieldKind::MerkleTree {
+                            ty: Type::Bytes { length: 32 },
+                            ..
+                        },
+                    ) => self.tree_writes += 1,
+                    (
+                        StateAction::SetInsert { .. },
+                        LedgerFieldKind::Set {
+                            ty: Type::Bytes { length: 32 },
+                        },
+                    ) => self.set_writes += 1,
+                    _ => return None,
+                }
+                let value = self.expression(value, scope, steps)?;
+                if value.ty != (Type::Bytes { length: 32 }) {
+                    return None;
+                }
+                let slot = ident(field).ok()?;
+                let value = value.value;
+                steps.push(syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_insert(frame, #value)?;));
+            }
+            _ => return None,
+        }
+        Some(())
+    }
+}
+
+pub(super) fn steps<'a>(
+    circuit: &StatefulCircuit,
+    ledger: &'a HashMap<&'a str, &'a LedgerField>,
+    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,
+    pure: &'a HashMap<&'a str, &'a PureCircuit>,
+) -> Option<Vec<syn::Stmt>> {
+    if circuit.result != Type::Unit
+        || circuit.return_value != StateReturn::Unit
+        || !matches!(circuit.parameters.as_slice(), [parameter] if matches!(parameter.ty, Type::Enum { .. }))
+    {
+        return None;
+    }
+    let mut plan = Plan {
+        ledger,
+        witnesses,
+        pure,
+        next: 0,
+        root_observations: 0,
+        tree_writes: 0,
+        set_writes: 0,
+    };
+    let scope = circuit
+        .parameters
+        .iter()
+        .enumerate()
+        .map(|(index, parameter)| {
+            let name = syn::Ident::new(&format!("__compact_param_{index}"), Span::call_site());
+            (
+                parameter.name.clone(),
+                TypedValue {
+                    ty: parameter.ty.clone(),
+                    value: syn::parse_quote!(#name),
+                },
+            )
+        })
+        .collect();
+    let mut steps = Vec::new();
+    for action in &circuit.actions {
+        plan.action(action, &scope, &mut steps)?;
+    }
+    (plan.root_observations > 0 && plan.tree_writes > 0 && plan.set_writes > 0).then_some(steps)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn local_coercion_uses_its_actual_type_before_a_helper_boundary() {
+        let ledger = HashMap::new();
+        let witnesses = HashMap::new();
+        let pure = HashMap::new();
+        let mut plan = Plan {
+            ledger: &ledger,
+            witnesses: &witnesses,
+            pure: &pure,
+            next: 0,
+            root_observations: 0,
+            tree_writes: 0,
+            set_writes: 0,
+        };
+        let actual = Type::Unsigned { max: "255".into() };
+        let target = Type::Unsigned {
+            max: "65535".into(),
+        };
+        let scope = HashMap::from([(
+            "n".into(),
+            TypedValue {
+                ty: actual,
+                value: syn::parse_quote!(small),
+            },
+        )]);
+        let expression = Expr::Coerce {
+            value: Box::new(Expr::Parameter { name: "n".into() }),
+            ty: target.clone(),
+        };
+        let mut steps = Vec::new();
+        let value = plan.expression(&expression, &scope, &mut steps).unwrap();
+        assert_eq!(value.ty, target);
+        let item: syn::Item = syn::parse_quote!(fn probe(small:runtime::BoundedUint<255>)->Result<(),runtime::CompactError>{#(#steps)* Ok(())});
+        let file = syn::File {
+            shebang: None,
+            attrs: vec![],
+            items: vec![item],
+        };
+        let text = prettyplease::unparse(&file);
+        assert!(
+            text.split_whitespace()
+                .collect::<String>()
+                .contains("cast_unsigned::<255,65535,>(small)?"),
+            "{text}"
+        );
+        let narrowing = Expr::Coerce {
+            value: Box::new(Expr::Parameter { name: "n".into() }),
+            ty: Type::Unsigned { max: "15".into() },
+        };
+        assert!(
+            plan.expression(&narrowing, &scope, &mut Vec::new())
+                .is_none()
+        );
+    }
+}

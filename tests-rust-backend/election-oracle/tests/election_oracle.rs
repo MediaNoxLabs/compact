@@ -755,3 +755,201 @@ fn recorded_add_voter_uses_live_tree_witness_and_preserves_two_private_outputs()
         oracle["wrongPhase"]["witnessCalls"]
     );
 }
+
+#[path = "../support/commit.rs"]
+mod commit_support;
+
+#[test]
+fn recorded_commit_preserves_ballots_membership_and_short_circuit_witnesses() {
+    use commit_support::{Mode, Private, Witness, seeded};
+    use compact_rust_election_oracle_fixture::ledger_contract::{recorded, vote_commit};
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/election-commit-oracle.json"
+    ))
+    .unwrap();
+    for scenario in oracle["scenarios"].as_array().unwrap() {
+        let ballot = if scenario["ballot"] == 0 {
+            PermissibleVotes::yes
+        } else {
+            PermissibleVotes::no
+        };
+        let native_witness = Witness::default();
+        let witness = Witness::default();
+        let native = vote_commit(
+            seeded(false, false, false).unwrap(),
+            &native_witness,
+            ballot,
+        )
+        .unwrap();
+        let recorded =
+            recorded::vote_commit(seeded(false, false, false).unwrap(), &witness, ballot).unwrap();
+        assert_eq!(*native_witness.calls.borrow(), *witness.calls.borrow());
+        assert_eq!(
+            serde_json::to_value(&*witness.calls.borrow()).unwrap(),
+            scenario["witnessCalls"]
+        );
+        assert_eq!(native.gas_cost, recorded.execution.gas_cost);
+        assert_eq!(
+            native.private_transcript_outputs,
+            recorded.execution.private_transcript_outputs
+        );
+        assert_eq!(
+            native.context.private_state,
+            recorded.execution.context.private_state
+        );
+        let private = &recorded.execution.context.private_state;
+        assert_eq!(
+            serde_json::json!({"phase":private.phase,"ballot":private.ballot,"calls":private.calls}),
+            scenario["privateState"]
+        );
+        assert_eq!(
+            native.context.query.effects,
+            recorded.execution.context.query.effects
+        );
+        assert_eq!(
+            native.context.query.state.get_ref(),
+            recorded.execution.context.query.state.get_ref()
+        );
+        assert_eq!(
+            state_hex(recorded.execution.context.query.state.get_ref().clone()),
+            scenario["stateHex"]
+        );
+        assert_eq!(recorded.execution.private_transcript_outputs.len(), 5);
+        for (output, expected) in recorded
+            .execution
+            .private_transcript_outputs
+            .iter()
+            .zip(scenario["privateTranscriptOutputs"].as_array().unwrap())
+        {
+            let atoms: Vec<_> = output.value.0.iter().map(|atom| &atom.0).collect();
+            assert_eq!(serde_json::to_value(atoms).unwrap(), expected["value"]);
+            assert_eq!(
+                serde_json::to_value(&output.alignment).unwrap(),
+                expected["alignment"]
+            );
+        }
+        let queries = scenario["queries"].as_array().unwrap();
+        assert_eq!(queries.len(), 5);
+        let gas = serde_json::to_value(recorded.execution.gas_cost).unwrap();
+        for key in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+            let sum: u64 = queries
+                .iter()
+                .map(|query| {
+                    query["gasCost"][key]
+                        .as_str()
+                        .unwrap()
+                        .parse::<u64>()
+                        .unwrap()
+                })
+                .sum();
+            assert_eq!(gas[key], sum);
+        }
+        let mut program = serde_json::to_value(recorded.public.verify_ops()).unwrap();
+        for op in program.as_array_mut().unwrap() {
+            if let Some(pop) = op.get_mut("popeq") {
+                pop["result"] = serde_json::Value::Null;
+            }
+        }
+        let expected: Vec<_> = queries
+            .iter()
+            .flat_map(|query| query["program"].as_array().unwrap().iter().cloned())
+            .collect();
+        assert_eq!(program, serde_json::json!(expected));
+        let replay = recorded
+            .public
+            .initial()
+            .query(
+                recorded.public.verify_ops(),
+                None,
+                &recorded.execution.context.cost_model,
+            )
+            .unwrap();
+        let replay_gas = serde_json::to_value(replay.gas_cost).unwrap();
+        for key in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+            assert_eq!(
+                replay_gas[key],
+                scenario["replayGas"][key]
+                    .as_str()
+                    .unwrap()
+                    .parse::<u64>()
+                    .unwrap()
+            );
+        }
+        assert_eq!(
+            replay.context.effects,
+            recorded.execution.context.query.effects
+        );
+        assert_eq!(
+            state_hex(replay.context.state.get_ref().clone()),
+            scenario["stateHex"]
+        );
+    }
+    for name in [
+        "wrongPhase",
+        "wrongPrivate",
+        "duplicate",
+        "missingPath",
+        "wrongRoot",
+        "wrongLeaf",
+        "malformed",
+    ] {
+        let make = || {
+            let mut context = seeded(
+                name == "missingPath",
+                name == "wrongLeaf",
+                name == "wrongPhase",
+            )
+            .unwrap();
+            if name == "wrongPrivate" {
+                context.private_state.phase = 1;
+            }
+            if name == "duplicate" {
+                context = vote_commit(context, &Witness::default(), PermissibleVotes::yes)
+                    .unwrap()
+                    .context;
+                context.private_state = Private::default();
+            }
+            context
+        };
+        let mode = match name {
+            "wrongRoot" => Mode::WrongRoot,
+            "wrongLeaf" => Mode::WrongLeaf,
+            "malformed" => Mode::Malformed,
+            _ => Mode::Normal,
+        };
+        let native_witness = Witness {
+            mode,
+            ..Default::default()
+        };
+        let witness = Witness {
+            mode,
+            ..Default::default()
+        };
+        let native = vote_commit(make(), &native_witness, PermissibleVotes::yes)
+            .err()
+            .unwrap()
+            .to_string();
+        let recorded = recorded::vote_commit(make(), &witness, PermissibleVotes::yes)
+            .err()
+            .unwrap()
+            .to_string();
+        assert_eq!(native, recorded, "{name}");
+        if name == "malformed" {
+            assert!(recorded.contains("Merkle path depth"));
+            assert!(
+                oracle[name]["error"]
+                    .as_str()
+                    .unwrap()
+                    .starts_with("type error:")
+            );
+        } else {
+            assert_eq!(recorded, oracle[name]["error"], "{name}");
+        }
+        assert_eq!(*native_witness.calls.borrow(), *witness.calls.borrow());
+        assert_eq!(
+            serde_json::to_value(&*witness.calls.borrow()).unwrap(),
+            oracle[name]["witnessCalls"],
+            "{name}"
+        );
+    }
+}

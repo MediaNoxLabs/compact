@@ -9568,3 +9568,73 @@ fn guarded_opaque_set_mutation_requires_two_maps_and_opposite_typed_branches() {
     helper["return_value"]["value"]["otherwise"]["field"] = serde_json::json!("records");
     assert!(!recorded(&duplicate_map).0);
 }
+
+#[test]
+fn typed_membership_plan_checks_helper_closure_and_requires_its_domain() {
+    let source = include_str!("election-schema13-ir.json");
+    let mut contract: Contract = serde_json::from_str(source).unwrap();
+    contract.schema_version = SCHEMA_VERSION;
+    let available = |contract: &Contract, name: &str| {
+        render_with_capabilities(contract)
+            .unwrap()
+            .capabilities
+            .circuits
+            .iter()
+            .find(|circuit| circuit.name == name)
+            .unwrap()
+            .recorded
+    };
+    assert!(available(&contract, "vote$commit"));
+    assert!(!available(&contract, "vote$reveal"));
+    let renamed = source
+        .replace("vote$commit", "submit_ballot")
+        .replace("private$vote$record", "store_ballot")
+        .replace("commitment_nullifier", "unique_vote")
+        .replace("public_key", "voter_key")
+        .replace("ballot_repr", "encode_vote")
+        .replace("commit_with_sk", "seal_vote")
+        .replace("eligible_voters", "membership")
+        .replace("committed_votes", "ballots");
+    let mut renamed: Contract = serde_json::from_str(&renamed).unwrap();
+    renamed.schema_version = SCHEMA_VERSION;
+    assert!(available(&renamed, "submit_ballot"));
+    let mut effectful = contract.clone();
+    let helper = effectful
+        .circuits
+        .iter_mut()
+        .find(|circuit| circuit.name == "ballot_repr")
+        .unwrap();
+    helper.body = Expr::Sequence {
+        steps: vec![Expr::Assert {
+            condition: Box::new(Expr::Boolean { value: true }),
+            message: "extra guard".into(),
+        }],
+        value: Box::new(helper.body.clone()),
+    };
+    assert!(!available(&effectful, "vote$commit"));
+    let mut recursive = contract.clone();
+    let helper = recursive
+        .circuits
+        .iter_mut()
+        .find(|circuit| circuit.name == "merkleTreePathEntryRoot")
+        .unwrap();
+    helper.body = Expr::Call {
+        name: helper.name.clone(),
+        arguments: helper
+            .parameters
+            .iter()
+            .map(|parameter| Expr::Parameter {
+                name: parameter.name.clone(),
+            })
+            .collect(),
+    };
+    assert!(!available(&recursive, "vote$commit"));
+    let mut wrong_slot = contract;
+    wrong_slot
+        .ledger_fields
+        .iter_mut()
+        .find(|field| field.id == "eligible_voters")
+        .unwrap()
+        .index = 8;
+    assert!(render_with_capabilities(&wrong_slot).is_err());
+}

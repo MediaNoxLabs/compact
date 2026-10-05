@@ -16,6 +16,8 @@
 //! Emit complete replayable traces from supported typed stateful IR.
 //! Unsupported effect shapes have no generated recorded entry point.
 
+mod typed_merkle_plan;
+
 use proc_macro2::Span;
 use serde::Serialize;
 use std::collections::{HashMap, HashSet};
@@ -7938,7 +7940,8 @@ fn render_recorded_item(
                 ledger_fields,
                 witnesses,
                 pure_circuits,
-            )?);
+            )?)
+            .or_else(|| typed_merkle_plan::steps(circuit, ledger_fields, witnesses, pure_circuits));
     let organizer_gate = organizer_steps.is_some();
     let opaque_map_operation = closed_opaque_map_operation(circuit, ledger_fields);
     let opaque_asset_removal = closed_opaque_asset_removal(circuit, ledger_fields);

@@ -498,7 +498,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
     ) -> Result<(), CompactError> {
         use crate::zswap::Allocation;
         let commitment = coin.commitment(&recipient);
-        match &self.circuit_zswap.allocation {
+        let index = match &self.circuit_zswap.allocation {
             #[cfg(feature = "ledger-transaction")]
             Allocation::Locked => return Err(CompactError::ZswapAllocationLocked),
             #[cfg(feature = "ledger-transaction")]
@@ -515,9 +515,34 @@ impl<Private, D: DB> CircuitContext<Private, D> {
                 {
                     return Err(CompactError::ZswapOfferOutputMismatch);
                 }
+                self.circuit_zswap.next_index
             }
-            Allocation::Provisional => (),
-        }
+            #[cfg(feature = "ledger-transaction")]
+            Allocation::CanonicalOfferBound { outputs, .. } => {
+                let row = outputs
+                    .iter()
+                    .find(|row| row.commitment == commitment)
+                    .ok_or(CompactError::ZswapOfferOutputMismatch)?;
+                if !row.matches_recipient(&recipient)
+                    || self
+                        .circuit_zswap
+                        .outputs
+                        .iter()
+                        .any(|intent| intent.coin.commitment(&intent.recipient) == commitment)
+                    || self
+                        .query
+                        .call_context
+                        .com_indices
+                        .get(&commitment)
+                        .copied()
+                        != Some(row.index)
+                {
+                    return Err(CompactError::ZswapOfferOutputMismatch);
+                }
+                row.index
+            }
+            Allocation::Provisional => self.circuit_zswap.next_index,
+        };
         let next = self
             .circuit_zswap
             .next_index
@@ -532,7 +557,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         }
         self.circuit_zswap.next_index = next;
         self.circuit_zswap.outputs.push(crate::CircuitZswapOutput {
-            provisional_index: next - 1,
+            provisional_index: index,
             coin,
             recipient,
         });

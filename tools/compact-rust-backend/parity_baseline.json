@@ -2122,6 +2122,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/canonical_output_order_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "distribute",
+    "signature": "export circuit distribute(input: QualifiedShieldedCoinInfo, sent: ShieldedCoinInfo, change: ShieldedCoinInfo, recipient: Either<ZswapCoinPublicKey, ContractAddress>, selfRecipient: Either<ZswapCoinPublicKey, ContractAddress>, nullifier: Bytes<32>, sentCommitment: Bytes<32>, changeCommitment: Bytes<32>): []",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/digital-passport-credential/src/digital-passport-credential/claims.compact",
     "module_path": [],
     "kind": "circuit",
@@ -4455,6 +4463,14 @@
     "kind": "circuit",
     "name": "read_choices",
     "signature": "export circuit read_choices(): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/canonical_output_order_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "read_coin",
+    "signature": "export circuit read_coin(): QualifiedShieldedCoinInfo",
     "visibility": "export"
   },
   {

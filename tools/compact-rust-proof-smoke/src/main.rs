@@ -37,6 +37,7 @@ mod asset_watch_write;
 mod asset_writable;
 mod bboard;
 mod boolean_pair_assert;
+mod canonical_output_order;
 mod closed_pure_field;
 mod composite_zswap;
 mod coracle_guess;
@@ -2024,6 +2025,27 @@ fn run() -> Result<(), Box<dyn Error>> {
             Ok(Ok(())) => Ok(()),
             Ok(Err(error)) => Err(error.into()),
             Err(_) => Err("microDAO reveal proof thread panicked".into()),
+        };
+    }
+    if first.as_deref() == Some(OsStr::new("--canonical-output-order")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --canonical-output-order <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err(
+                "usage: compact-rust-proof-smoke --canonical-output-order <proof-output>".into(),
+            );
+        }
+        let proof = std::thread::Builder::new()
+            .name("canonical-output-order-proof".into())
+            .stack_size(64 * 1024 * 1024)
+            .spawn(move || {
+                canonical_output_order::run(Path::new(&root)).map_err(|e| e.to_string())
+            })?;
+        return match proof.join() {
+            Ok(Ok(())) => Ok(()),
+            Ok(Err(error)) => Err(error.into()),
+            Err(_) => Err("terminal lexical return proof thread panicked".into()),
         };
     }
     if first.as_deref() == Some(OsStr::new("--terminal-lexical-return")) {

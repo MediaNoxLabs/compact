@@ -1,0 +1,1975 @@
+{
+  "provenance": {
+    "source": "examples/rust_backend/canonical_output_order_oracle.compact",
+    "generatedRuntimeVersion": "0.16.101",
+    "runtimePackageVersion": "0.16.101",
+    "runtimeTypesSha256": "5cdccdb9fde9fdb297459588f33ce093ad557584b35b480819e0d930ce1bd73b",
+    "allocation": "provisional source order; canonical offer execution tested separately"
+  },
+  "rows": [
+    {
+      "name": "distribute",
+      "left": true,
+      "selected": true,
+      "start": "7",
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a4800308440404040c420012001100804000401040408010404080403040c000410080104041480030438700104030401080104040104010401308440404040c420012001100800002824726561645f636f696e000400081c2000042408010404289003043f8028e213c93880ad6b4af751bd97a336c9f917181f99a1f039c17c2ee4e1a28fd0002c286469737472696275746508302000043408010404389003043f808cd6581b0fa38fa428f54c9237a35f73e04c1d5846bdb532fc9692e1fb7688304020202c20202020202020203c202020200802081408201840201003000400",
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a4800308404021908c420012001100804000401040408010404080403040c000410080104041480030438700104030401080104040104010401308404021908c420012001100800002824726561645f636f696e000400081c2000042408010404289003043f8028e213c93880ad6b4af751bd97a336c9f917181f99a1f039c17c2ee4e1a28fd0002c286469737472696275746508302000043408010404389003043f808cd6581b0fa38fa428f54c9237a35f73e04c1d5846bdb532fc9692e1fb7688304020202c20202020202020203c202020200802081408201840201003000400",
+      "plan": {
+        "coinPublicKey": {
+          "bytes": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "currentIndex": "9",
+        "inputs": [
+          {
+            "nonce": [
+              1,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "color": [
+              2,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "value": "42",
+            "mt_index": "3"
+          }
+        ],
+        "outputs": [
+          {
+            "coinInfo": {
+              "nonce": [
+                3,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "color": [
+                2,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "value": "17"
+            },
+            "recipient": {
+              "is_left": true,
+              "left": {
+                "bytes": [
+                  7,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "right": {
+                "bytes": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              }
+            }
+          },
+          {
+            "coinInfo": {
+              "nonce": [
+                4,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "color": [
+                2,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "value": "25"
+            },
+            "recipient": {
+              "is_left": false,
+              "left": {
+                "bytes": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "right": {
+                "bytes": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "privateState": [],
+      "privateOutputs": [
+        {
+          "value": [],
+          "alignment": []
+        },
+        {
+          "value": [],
+          "alignment": []
+        },
+        {
+          "value": [],
+          "alignment": []
+        }
+      ],
+      "queries": [
+        {
+          "ops": [
+            {
+              "swap": {
+                "n": 0
+              }
+            },
+            {
+              "idx": {
+                "cached": true,
+                "pushPath": true,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        []
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        5
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 32
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "null"
+                }
+              }
+            },
+            {
+              "ins": {
+                "cached": true,
+                "n": 2
+              }
+            },
+            {
+              "swap": {
+                "n": 0
+              }
+            }
+          ],
+          "gas": {
+            "readTime": "0",
+            "computeTime": "1102190592",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "ops": [
+            {
+              "swap": {
+                "n": 0
+              }
+            },
+            {
+              "idx": {
+                "cached": true,
+                "pushPath": true,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        [
+                          2
+                        ]
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        6
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 32
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "null"
+                }
+              }
+            },
+            {
+              "ins": {
+                "cached": true,
+                "n": 2
+              }
+            },
+            {
+              "swap": {
+                "n": 0
+              }
+            }
+          ],
+          "gas": {
+            "readTime": "0",
+            "computeTime": "1102190592",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "ops": [
+            {
+              "swap": {
+                "n": 0
+              }
+            },
+            {
+              "idx": {
+                "cached": true,
+                "pushPath": true,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        [
+                          2
+                        ]
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        8
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 32
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "null"
+                }
+              }
+            },
+            {
+              "ins": {
+                "cached": true,
+                "n": 2
+              }
+            },
+            {
+              "swap": {
+                "n": 0
+              }
+            }
+          ],
+          "gas": {
+            "readTime": "0",
+            "computeTime": "1102190592",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "ops": [
+            {
+              "swap": {
+                "n": 0
+              }
+            },
+            {
+              "idx": {
+                "cached": true,
+                "pushPath": true,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        [
+                          1
+                        ]
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        8
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 32
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "null"
+                }
+              }
+            },
+            {
+              "ins": {
+                "cached": true,
+                "n": 2
+              }
+            },
+            {
+              "swap": {
+                "n": 0
+              }
+            }
+          ],
+          "gas": {
+            "readTime": "0",
+            "computeTime": "1102190592",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "ops": [
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "dup": {
+                "n": 3
+              }
+            },
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        177,
+                        37,
+                        84,
+                        132,
+                        232,
+                        165,
+                        94,
+                        206,
+                        13,
+                        250,
+                        164,
+                        216,
+                        147,
+                        126,
+                        217,
+                        74,
+                        16,
+                        96,
+                        214,
+                        178,
+                        147,
+                        188,
+                        90,
+                        143,
+                        159,
+                        74,
+                        195,
+                        87,
+                        231,
+                        146,
+                        28,
+                        97
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 32
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "idx": {
+                "cached": true,
+                "pushPath": false,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        [
+                          1
+                        ]
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "tag": "stack"
+                  }
+                ]
+              }
+            },
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        4
+                      ],
+                      [
+                        2
+                      ],
+                      [
+                        25
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 32
+                        }
+                      },
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 32
+                        }
+                      },
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 16
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "swap": {
+                "n": 0
+              }
+            },
+            {
+              "concat": {
+                "cached": true,
+                "n": 91
+              }
+            },
+            {
+              "ins": {
+                "cached": false,
+                "n": 1
+              }
+            }
+          ],
+          "gas": {
+            "readTime": "85000000",
+            "computeTime": "1246762906",
+            "bytesWritten": "56",
+            "bytesDeleted": "56"
+          }
+        }
+      ],
+      "effects": {
+        "claimedNullifiers": [
+          "0500000000000000000000000000000000000000000000000000000000000000"
+        ],
+        "claimedShieldedReceives": [
+          "0800000000000000000000000000000000000000000000000000000000000000"
+        ],
+        "claimedShieldedSpends": [
+          "0800000000000000000000000000000000000000000000000000000000000000",
+          "0600000000000000000000000000000000000000000000000000000000000000"
+        ],
+        "claimedContractCalls": [],
+        "shieldedMints": {},
+        "unshieldedMints": {},
+        "unshieldedInputs": {},
+        "unshieldedOutputs": {},
+        "claimedUnshieldedSpends": {}
+      },
+      "gas": {
+        "readTime": "85000000",
+        "computeTime": "1246762906",
+        "bytesWritten": "56",
+        "bytesDeleted": "56"
+      },
+      "qualifiedIndex": "8"
+    },
+    {
+      "name": "distribute",
+      "left": false,
+      "selected": true,
+      "start": "7",
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a4800308440404040c420012001100804000401040408010404080403040c000410080104041480030438700104030401080104040104010401308440404040c420012001100800002824726561645f636f696e000400081c2000042408010404289003043f8028e213c93880ad6b4af751bd97a336c9f917181f99a1f039c17c2ee4e1a28fd0002c286469737472696275746508302000043408010404389003043f808cd6581b0fa38fa428f54c9237a35f73e04c1d5846bdb532fc9692e1fb7688304020202c20202020202020203c202020200802081408201840201003000400",
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a4800308404021908c420012001100804000401040408010404080403040c000410080104041480030438700104030401080104040104010401308404021908c420012001100800002824726561645f636f696e000400081c2000042408010404289003043f8028e213c93880ad6b4af751bd97a336c9f917181f99a1f039c17c2ee4e1a28fd0002c286469737472696275746508302000043408010404389003043f808cd6581b0fa38fa428f54c9237a35f73e04c1d5846bdb532fc9692e1fb7688304020202c20202020202020203c202020200802081408201840201003000400",
+      "plan": {
+        "coinPublicKey": {
+          "bytes": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "currentIndex": "9",
+        "inputs": [
+          {
+            "nonce": [
+              1,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "color": [
+              2,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "value": "42",
+            "mt_index": "3"
+          }
+        ],
+        "outputs": [
+          {
+            "coinInfo": {
+              "nonce": [
+                3,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "color": [
+                2,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "value": "17"
+            },
+            "recipient": {
+              "is_left": false,
+              "left": {
+                "bytes": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "right": {
+                "bytes": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              }
+            }
+          },
+          {
+            "coinInfo": {
+              "nonce": [
+                4,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "color": [
+                2,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "value": "25"
+            },
+            "recipient": {
+              "is_left": false,
+              "left": {
+                "bytes": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "right": {
+                "bytes": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "privateState": [],
+      "privateOutputs": [
+        {
+          "value": [],
+          "alignment": []
+        },
+        {
+          "value": [],
+          "alignment": []
+        },
+        {
+          "value": [],
+          "alignment": []
+        }
+      ],
+      "queries": [
+        {
+          "ops": [
+            {
+              "swap": {
+                "n": 0
+              }
+            },
+            {
+              "idx": {
+                "cached": true,
+                "pushPath": true,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        []
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        5
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 32
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "null"
+                }
+              }
+            },
+            {
+              "ins": {
+                "cached": true,
+                "n": 2
+              }
+            },
+            {
+              "swap": {
+                "n": 0
+              }
+            }
+          ],
+          "gas": {
+            "readTime": "0",
+            "computeTime": "1102190592",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "ops": [
+            {
+              "swap": {
+                "n": 0
+              }
+            },
+            {
+              "idx": {
+                "cached": true,
+                "pushPath": true,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        [
+                          2
+                        ]
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        6
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 32
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "null"
+                }
+              }
+            },
+            {
+              "ins": {
+                "cached": true,
+                "n": 2
+              }
+            },
+            {
+              "swap": {
+                "n": 0
+              }
+            }
+          ],
+          "gas": {
+            "readTime": "0",
+            "computeTime": "1102190592",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "ops": [
+            {
+              "swap": {
+                "n": 0
+              }
+            },
+            {
+              "idx": {
+                "cached": true,
+                "pushPath": true,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        [
+                          2
+                        ]
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        8
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 32
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "null"
+                }
+              }
+            },
+            {
+              "ins": {
+                "cached": true,
+                "n": 2
+              }
+            },
+            {
+              "swap": {
+                "n": 0
+              }
+            }
+          ],
+          "gas": {
+            "readTime": "0",
+            "computeTime": "1102190592",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "ops": [
+            {
+              "swap": {
+                "n": 0
+              }
+            },
+            {
+              "idx": {
+                "cached": true,
+                "pushPath": true,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        [
+                          1
+                        ]
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        8
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 32
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "null"
+                }
+              }
+            },
+            {
+              "ins": {
+                "cached": true,
+                "n": 2
+              }
+            },
+            {
+              "swap": {
+                "n": 0
+              }
+            }
+          ],
+          "gas": {
+            "readTime": "0",
+            "computeTime": "1102190592",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "ops": [
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "dup": {
+                "n": 3
+              }
+            },
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        177,
+                        37,
+                        84,
+                        132,
+                        232,
+                        165,
+                        94,
+                        206,
+                        13,
+                        250,
+                        164,
+                        216,
+                        147,
+                        126,
+                        217,
+                        74,
+                        16,
+                        96,
+                        214,
+                        178,
+                        147,
+                        188,
+                        90,
+                        143,
+                        159,
+                        74,
+                        195,
+                        87,
+                        231,
+                        146,
+                        28,
+                        97
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 32
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "idx": {
+                "cached": true,
+                "pushPath": false,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        [
+                          1
+                        ]
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "tag": "stack"
+                  }
+                ]
+              }
+            },
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        4
+                      ],
+                      [
+                        2
+                      ],
+                      [
+                        25
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 32
+                        }
+                      },
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 32
+                        }
+                      },
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 16
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "swap": {
+                "n": 0
+              }
+            },
+            {
+              "concat": {
+                "cached": true,
+                "n": 91
+              }
+            },
+            {
+              "ins": {
+                "cached": false,
+                "n": 1
+              }
+            }
+          ],
+          "gas": {
+            "readTime": "85000000",
+            "computeTime": "1246762906",
+            "bytesWritten": "56",
+            "bytesDeleted": "56"
+          }
+        }
+      ],
+      "effects": {
+        "claimedNullifiers": [
+          "0500000000000000000000000000000000000000000000000000000000000000"
+        ],
+        "claimedShieldedReceives": [
+          "0800000000000000000000000000000000000000000000000000000000000000"
+        ],
+        "claimedShieldedSpends": [
+          "0600000000000000000000000000000000000000000000000000000000000000",
+          "0800000000000000000000000000000000000000000000000000000000000000"
+        ],
+        "claimedContractCalls": [],
+        "shieldedMints": {},
+        "unshieldedMints": {},
+        "unshieldedInputs": {},
+        "unshieldedOutputs": {},
+        "claimedUnshieldedSpends": {}
+      },
+      "gas": {
+        "readTime": "85000000",
+        "computeTime": "1246762906",
+        "bytesWritten": "56",
+        "bytesDeleted": "56"
+      },
+      "qualifiedIndex": "8"
+    }
+  ]
+}

@@ -17,6 +17,24 @@
 
 use crate::ledger::{CoinInfo, CoinRecipient, QualifiedCoinInfo};
 
+/// One persistent output allocated by the retained complete upstream offer.
+#[cfg(feature = "ledger-transaction")]
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct BoundOutput {
+    pub commitment: crate::ledger::CoinCommitment,
+    pub index: u64,
+    pub owner: Option<crate::ledger::ContractAddress>,
+}
+#[cfg(feature = "ledger-transaction")]
+impl BoundOutput {
+    pub fn matches_recipient(&self, recipient: &CoinRecipient) -> bool {
+        match recipient {
+            CoinRecipient::User(_) => self.owner.is_none(),
+            CoinRecipient::Contract(address) => self.owner == Some(*address),
+        }
+    }
+}
+
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub(crate) enum Allocation {
     #[default]
@@ -27,6 +45,11 @@ pub(crate) enum Allocation {
     OfferBound {
         start: u64,
         outputs: Vec<(crate::ledger::CoinCommitment, u64)>,
+    },
+    #[cfg(feature = "ledger-transaction")]
+    CanonicalOfferBound {
+        start: u64,
+        outputs: Vec<BoundOutput>,
     },
 }
 
@@ -53,6 +76,8 @@ impl CircuitZswapPlan {
         self.inputs.is_empty() && self.outputs.is_empty()
     }
 
+    /// Logical progress: start plus the number of source-ordered output intents.
+    /// In canonical mode this is not the next intent's physical Merkle index.
     pub fn next_index(&self) -> u64 {
         self.next_index
     }

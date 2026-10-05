@@ -23,6 +23,7 @@ description = "Ledger-8 proof compatibility gate for Rust Compact output"
 
 [dependencies]
 compact-rust-zswap-transfer-oracle-fixture = { path = "../../tests-rust-backend/zswap-transfer-oracle", features = ["ledger-transaction"] }
+compact-rust-canonical-output-order-oracle-fixture = { path = "../../tests-rust-backend/canonical-output-order-oracle", features = ["ledger-transaction"] }
 compact-rust-native-zswap-intents-oracle-fixture = { path = "../../tests-rust-backend/native-zswap-intents-oracle", features = ["ledger-transaction"] }
 compact-rust-kernel-shielded-effects-oracle-fixture = { path = "../../tests-rust-backend/kernel-shielded-effects-oracle", features = ["ledger-transaction"] }
 compact-rust-pm-19252-unused-read-seven-fixture = { path = "../../tests-rust-backend/pm-19252-unused-read-seven", features = ["ledger-transaction"] }

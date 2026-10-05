@@ -1354,3 +1354,60 @@ contract-info cross-tab and generated Cargo check; add `--proof` for four strict
 proof cases. Reuse keys with `compact-rust-proof-smoke --terminal-lexical-return
 <proof-output>` and set `MIDNIGHT_LEDGER_TEST_STATIC_DIR` to the upstream static
 fixtures for Dust funding.
+
+### Opt-in canonical persistent output allocation (ADR205)
+
+Upstream `Offer::new` sorts outputs. A circuit can emit sent/change in the opposite
+order, so the default exact-order policy still rejects that execution. Applications
+can explicitly select canonical indices before recording:
+
+```rust
+use midnight_compact_runtime::transaction::{
+    OfferBackedObservedState, OfferBindingOptions, PersistentOutputAllocation,
+};
+let options = OfferBindingOptions::default()
+    .with_output_allocation(PersistentOutputAllocation::CanonicalOfferIndices);
+let bound = OfferBackedObservedState::with_options(observed, &ledger, offer, options)?;
+let call = contract.recording.distribute_call(bound.observed(), private_state, /* inputs */)?;
+let prepared = bound.prepare(call, verifier, randomness)?;
+```
+
+`with_wallet_funding` on the options composes the existing explicit upstream wallet
+input selection; `new` and `OfferBackedObservedState::with_wallet_funding` retain
+exact-order behavior. Output ownership is not inferred from the funding selection.
+The canonical policy accepts normalized complete offers with persistent outputs
+only. It never normalizes after execution, deduplicates outputs, admits wallet
+change, or accepts transient coins.
+
+The immutable upstream commitment map is installed before execution. Each source
+intent looks up its actual allocated index and checks typed recipient/owner
+metadata. Source intent, private Unit output, witness and query order remain
+unchanged. Final reconciliation requires an exact output bijection plus retained
+input/owner/nullifier checks, unchanged allocation/context maps and sealed intent
+snapshots. Additional owner checks reject malformed metadata early; upstream
+proof and default-strict ledger validation remain authoritative.
+
+`CircuitZswapOutput.provisional_index` holds the actual index in bound mode.
+`next_index()` is logical progress, start plus the emitted count: source indices
+can be `[8, 7]` while progress advances `7 → 8 → 9`. Qualified Cell/Set queries use
+the actual upstream map; no result, state or transcript is patched afterward.
+Raw TypeScript/provisional execution still allocates source-order indices, so its
+qualified indices can differ from canonical execution for the same coin sequence.
+The independent capture checks that provisional behavior; canonical replay and
+strict ledger application check the different bound context.
+
+Canonical empty plans always return `CanonicalEmptyPlan`, including empty offers
+and no-query calls. Default no-query preparation retains `EmptyTranscript`; the
+existing funded policy retains `WalletFundingEmptyPlan`. Legacy default empty-plan
+offer calls remain supported. The policy is additive and opt-in: ABI48/schema20
+and generated method signatures remain unchanged.
+
+The two-output fixture spends an explicitly seeded contract coin42 into user17
+and contract change25, then stores the qualified change. Two original-key proof
+cases exercise both normalized sort orders, verify independently, reject changed
+bindings, pay separate Night-backed Dust, pass unchanged default strictness and
+ledger application, check both leaf owners/indices and the stored qualified index,
+and reject spent-nullifier replay. The seed is an offline genesis prerequisite,
+not proof of an earlier transaction or network finality. Run
+`check_compactc_target.py --canonical-output-order` (optionally `--proof`), or reuse
+keys with `compact-rust-proof-smoke --canonical-output-order <proof-output>`.

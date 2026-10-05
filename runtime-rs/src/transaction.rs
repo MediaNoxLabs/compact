@@ -98,7 +98,9 @@ impl<D: DB> ObservedContractState<D> {
             CircuitContext::from_contract_state(private_state, self.address, &self.contract);
         context.query.call_context.com_indices = self.com_indices.clone();
         context.circuit_zswap.allocation = self.allocation.clone();
-        if let crate::zswap::Allocation::OfferBound { start, .. } = &self.allocation {
+        if let crate::zswap::Allocation::OfferBound { start, .. }
+        | crate::zswap::Allocation::CanonicalOfferBound { start, .. } = &self.allocation
+        {
             context.circuit_zswap.next_index = *start;
         }
         context
@@ -112,6 +114,40 @@ pub struct OfferBackedObservedState<D: DB = DefaultDB> {
     offer: Offer<ProofPreimage, D>,
     zswap: midnight_zswap::ledger::State<D>,
     wallet_funding: Option<WalletFundingInputs<D>>,
+}
+
+/// How persistent output intents bind to the retained upstream offer.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum PersistentOutputAllocation {
+    /// Source intent order must equal normalized offer order (legacy behavior).
+    #[default]
+    ExactIntentOrder,
+    /// Preserve source order while selecting each actual index by commitment.
+    CanonicalOfferIndices,
+}
+
+/// Explicit, composable offer policy. No funding or change is inferred.
+pub struct OfferBindingOptions<D: DB = DefaultDB> {
+    output_allocation: PersistentOutputAllocation,
+    wallet_funding: Option<WalletFundingInputs<D>>,
+}
+impl<D: DB> Default for OfferBindingOptions<D> {
+    fn default() -> Self {
+        Self {
+            output_allocation: PersistentOutputAllocation::ExactIntentOrder,
+            wallet_funding: None,
+        }
+    }
+}
+impl<D: DB> OfferBindingOptions<D> {
+    pub fn with_output_allocation(mut self, policy: PersistentOutputAllocation) -> Self {
+        self.output_allocation = policy;
+        self
+    }
+    pub fn with_wallet_funding(mut self, funding: WalletFundingInputs<D>) -> Self {
+        self.wallet_funding = Some(funding);
+        self
+    }
 }
 
 /// Caller-selected upstream wallet inputs to admit alongside recorded
@@ -162,7 +198,7 @@ impl<D: DB> OfferBackedObservedState<D> {
         ledger: &LedgerState<D>,
         offer: Offer<ProofPreimage, D>,
     ) -> Result<Self, crate::CompactError> {
-        Self::new_inner(observed, ledger, offer, None)
+        Self::with_options(observed, ledger, offer, OfferBindingOptions::default())
     }
 
     /// Bind a complete offer and an explicit selection of wallet-owned inputs.
@@ -173,18 +209,44 @@ impl<D: DB> OfferBackedObservedState<D> {
         offer: Offer<ProofPreimage, D>,
         funding: WalletFundingInputs<D>,
     ) -> Result<Self, crate::CompactError> {
-        funding.validate_offer(&offer).map_err(|error| {
-            crate::CompactError::InvalidLedgerCell(format!("wallet funding rejected: {error:?}"))
-        })?;
-        Self::new_inner(observed, ledger, offer, Some(funding))
+        Self::with_options(
+            observed,
+            ledger,
+            offer,
+            OfferBindingOptions::default().with_wallet_funding(funding),
+        )
     }
 
-    fn new_inner(
+    /// Bind an unchanged complete offer under an explicit allocation/funding policy.
+    /// Canonical allocation is persistent-only and requires normalized input.
+    pub fn with_options(
         mut observed: ObservedContractState<D>,
         ledger: &LedgerState<D>,
         offer: Offer<ProofPreimage, D>,
-        wallet_funding: Option<WalletFundingInputs<D>>,
+        options: OfferBindingOptions<D>,
     ) -> Result<Self, crate::CompactError> {
+        let wallet_funding = options.wallet_funding;
+        if let Some(funding) = &wallet_funding {
+            funding.validate_offer(&offer).map_err(|error| {
+                crate::CompactError::InvalidLedgerCell(format!(
+                    "wallet funding rejected: {error:?}"
+                ))
+            })?;
+        }
+        if options.output_allocation == PersistentOutputAllocation::CanonicalOfferIndices {
+            if !offer.transient.is_empty() {
+                return Err(crate::CompactError::InvalidLedgerCell(
+                    "canonical persistent allocation rejects transients".into(),
+                ));
+            }
+            let mut normalized = offer.clone();
+            normalized.normalize();
+            if normalized != offer {
+                return Err(crate::CompactError::InvalidLedgerCell(
+                    "canonical persistent allocation requires a normalized offer".into(),
+                ));
+            }
+        }
         let Some(ledger_contract) = ledger.contract.get(&observed.address) else {
             return Err(crate::CompactError::InvalidLedgerCell(
                 "offer observation contract missing from ledger".into(),
@@ -198,18 +260,34 @@ impl<D: DB> OfferBackedObservedState<D> {
         let (_, indices) = ledger.zswap.try_apply(&offer, None).map_err(|error| {
             crate::CompactError::InvalidLedgerCell(format!("offer rejected: {error:?}"))
         })?;
-        observed.allocation = crate::zswap::Allocation::OfferBound {
-            start: ledger.zswap.first_free,
-            outputs: offer
-                .outputs
-                .iter_deref()
-                .map(|out| {
-                    (
-                        out.coin_com,
-                        *indices.get(&out.coin_com).expect("applied output index"),
-                    )
-                })
-                .collect(),
+        observed.allocation = match options.output_allocation {
+            PersistentOutputAllocation::ExactIntentOrder => crate::zswap::Allocation::OfferBound {
+                start: ledger.zswap.first_free,
+                outputs: offer
+                    .outputs
+                    .iter_deref()
+                    .map(|out| {
+                        (
+                            out.coin_com,
+                            *indices.get(&out.coin_com).expect("applied output index"),
+                        )
+                    })
+                    .collect(),
+            },
+            PersistentOutputAllocation::CanonicalOfferIndices => {
+                crate::zswap::Allocation::CanonicalOfferBound {
+                    start: ledger.zswap.first_free,
+                    outputs: offer
+                        .outputs
+                        .iter_deref()
+                        .map(|out| crate::zswap::BoundOutput {
+                            commitment: out.coin_com,
+                            index: *indices.get(&out.coin_com).expect("applied output index"),
+                            owner: out.contract_address.as_ref().map(|owner| **owner),
+                        })
+                        .collect(),
+                }
+            }
         };
         observed.com_indices = indices;
         Ok(Self {
@@ -238,7 +316,13 @@ impl<D: DB> OfferBackedObservedState<D> {
         }
         // Empty plans preserve pre-existing offer-only calls only in the
         // default exact policy. Funded mode must bind actual circuit intents.
-        if self.wallet_funding.is_none() && call.recorded.public.verify_ops().is_empty() {
+        if self.wallet_funding.is_none()
+            && matches!(
+                self.observed.allocation,
+                crate::zswap::Allocation::OfferBound { .. }
+            )
+            && call.recorded.public.verify_ops().is_empty()
+        {
             return call
                 .prepare_inner(verifier, communication_commitment_rand, true)
                 .map(|call| OfferBoundPreparedCall {
@@ -270,8 +354,14 @@ impl<D: DB> OfferBackedObservedState<D> {
         {
             return Err(ZswapIntentError::AllocationMismatch);
         }
+        let canonical = matches!(
+            self.observed.allocation,
+            crate::zswap::Allocation::CanonicalOfferBound { .. }
+        );
         if plan.is_empty() {
-            return if self.wallet_funding.is_some() {
+            return if canonical {
+                Err(ZswapIntentError::CanonicalEmptyPlan)
+            } else if self.wallet_funding.is_some() {
                 Err(ZswapIntentError::WalletFundingEmptyPlan)
             } else {
                 Ok(())
@@ -291,13 +381,39 @@ impl<D: DB> OfferBackedObservedState<D> {
         if plan.next_index() != expected_end {
             return Err(ZswapIntentError::AllocationMismatch);
         }
-        for (intent, output) in plan.outputs().iter().zip(self.offer.outputs.iter_deref()) {
+        let mut output_commitments = std::collections::HashSet::new();
+        for (position, intent) in plan.outputs().iter().enumerate() {
             let commitment = intent.coin.commitment(&intent.recipient);
+            let output = if canonical {
+                if !output_commitments.insert(commitment) {
+                    return Err(ZswapIntentError::OutputMismatch);
+                }
+                self.offer
+                    .outputs
+                    .iter_deref()
+                    .find(|out| out.coin_com == commitment)
+            } else {
+                self.offer.outputs.get(position)
+            }
+            .ok_or(ZswapIntentError::OutputMismatch)?;
             if commitment != output.coin_com
                 || self.observed.com_indices.get(&commitment).copied()
                     != Some(intent.provisional_index)
             {
                 return Err(ZswapIntentError::OutputMismatch);
+            }
+            if let crate::zswap::Allocation::CanonicalOfferBound { outputs, .. } = &plan.allocation
+            {
+                let row = outputs
+                    .iter()
+                    .find(|row| row.commitment == commitment)
+                    .ok_or(ZswapIntentError::AllocationMismatch)?;
+                if row.index != intent.provisional_index
+                    || !row.matches_recipient(&intent.recipient)
+                    || row.owner != output.contract_address.as_ref().map(|owner| **owner)
+                {
+                    return Err(ZswapIntentError::OutputMismatch);
+                }
             }
         }
         let wallet_funding = self
@@ -363,6 +479,7 @@ impl<D: DB> OfferBackedObservedState<D> {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ZswapIntentError {
     AllocationMismatch,
+    CanonicalEmptyPlan,
     OutputMismatch,
     InputMismatch,
     InputIndexMismatch,

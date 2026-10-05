@@ -915,6 +915,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-canonical-output-order-oracle-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-base-crypto",
+ "midnight-coin-structure",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-cell-boolean-fixture"
 version = "0.1.0"
 dependencies = [
@@ -1968,6 +1983,7 @@ dependencies = [
  "compact-rust-assert-witness-fixture",
  "compact-rust-asset-registry-oracle-fixture",
  "compact-rust-call-arg-declared-type-fixture",
+ "compact-rust-canonical-output-order-oracle-fixture",
  "compact-rust-cell-boolean-fixture",
  "compact-rust-cell-read-fixture",
  "compact-rust-cell-struct-fixture",

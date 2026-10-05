@@ -383,6 +383,80 @@ fn recorded_plain_indexed_hash_placement_matches_typescript_and_replays() {
     );
 }
 
+#[test]
+fn recorded_plain_reset_matches_typescript_and_replays_empty_and_populated_trees() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/merkle-tree-oracle.json"
+    ))
+    .unwrap();
+    let populated = || {
+        let context = initial_state(ConstructorContext::new(()))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default());
+        let context = append(context, bounded::<255>(7)).unwrap().context;
+        let context = place(
+            context,
+            bounded::<255>(9),
+            bounded::<{ u64::MAX as u128 }>(3),
+        )
+        .unwrap()
+        .context;
+        let context = append(context, bounded::<255>(11)).unwrap().context;
+        let context = place(
+            context,
+            bounded::<255>(13),
+            bounded::<{ u64::MAX as u128 }>(1),
+        )
+        .unwrap()
+        .context;
+        let context = place_default(context, bounded::<{ u64::MAX as u128 }>(6))
+            .unwrap()
+            .context;
+        let context = full(context).unwrap().context;
+        let context = append_hash(context, runtime::FixedBytes::new([1; 32]))
+            .unwrap()
+            .context;
+        let context = full(context).unwrap().context;
+        place_hash(
+            context,
+            runtime::FixedBytes::new([2; 32]),
+            bounded::<{ u64::MAX as u128 }>(1),
+        )
+        .unwrap()
+        .context
+    };
+    for (is_populated, query, state) in [
+        (false, "resetEmpty", "afterInit"),
+        (true, "resetTree", "afterResetTree"),
+    ] {
+        let context = || {
+            if is_populated {
+                populated()
+            } else {
+                initial_state(ConstructorContext::new(()))
+                    .unwrap()
+                    .into_circuit_context(ContractAddress::default())
+            }
+        };
+        let native = reset_tree(context()).unwrap();
+        let recorded = recorded::reset_tree(context()).unwrap();
+        assert_eq!(recorded.public.verify_ops().len(), 3);
+        assert_eq!(
+            current_root(recorded.execution.context.query.state.get_ref()),
+            current_root(
+                initial_state(ConstructorContext::new(()))
+                    .unwrap()
+                    .ledger_state
+                    .get_ref()
+            )
+        );
+        assert_indexed_recording(query, state, 0, native, recorded, &oracle);
+    }
+    let mut context = populated();
+    context.gas_limit = Some(runtime::context::RunningCost::ZERO);
+    assert!(recorded::reset_tree(context).is_err());
+}
+
 fn assert_indexed_recording(
     query: &str,
     state: &str,

@@ -8520,3 +8520,59 @@ fn conditional_assertion_folds_only_closed_same_type_unsigned_equality() {
     assert_eq!(gap.ir_node, "StateAction::Assert");
     assert_eq!(gap.path, "actions[0]");
 }
+
+#[test]
+fn plain_merkle_reset_recording_requires_exact_plain_slot() {
+    let mut contract = identity(Type::Unit, Expr::Unit);
+    contract.ledger_fields = vec![LedgerField {
+        source: None,
+        id: "tree".into(),
+        index: 0,
+        path: vec![],
+        declaration: LedgerFieldKind::MerkleTree {
+            ty: Type::Unsigned { max: "255".into() },
+            depth: 3,
+        },
+    }];
+    contract.stateful_circuits = vec![StatefulCircuit {
+        source: None,
+        internal: false,
+        name: "reset".into(),
+        parameters: vec![],
+        actions: vec![StateAction::MerkleResetToDefault {
+            field: "tree".into(),
+            index: 0,
+        }],
+        result: Type::Unit,
+        return_value: StateReturn::Unit,
+    }];
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.capabilities.circuits[0].observed_call);
+    assert!(rendered.source.contains(".record_reset_to_default(frame)"));
+    contract.stateful_circuits[0].actions[0] = StateAction::MerkleResetToDefault {
+        field: "tree".into(),
+        index: 1,
+    };
+    assert!(render_with_capabilities(&contract).is_err());
+    contract.stateful_circuits[0].actions[0] = StateAction::MerkleResetToDefault {
+        field: "tree".into(),
+        index: 0,
+    };
+    contract.ledger_fields[0].declaration = LedgerFieldKind::HistoricMerkleTree {
+        ty: Type::Unsigned { max: "255".into() },
+        depth: 3,
+    };
+    assert!(render_with_capabilities(&contract).is_err());
+    contract.stateful_circuits[0].actions[0] = StateAction::HistoricMerkleResetToDefault {
+        field: "tree".into(),
+        index: 0,
+    };
+    assert!(
+        !render_with_capabilities(&contract)
+            .unwrap()
+            .capabilities
+            .circuits[0]
+            .recorded
+    );
+}

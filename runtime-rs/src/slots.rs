@@ -312,6 +312,14 @@ impl<T: CellValue, const DEPTH: u8> MerkleSlot<T, DEPTH, false> {
         metered_merkle_tree_view_at_path(meter, self.path, DEPTH)
     }
 
+    /// Record a plain-tree reset at its declared path and depth.
+    pub fn record_reset_to_default<Private, D: DB>(
+        self,
+        frame: RecordingFrame<Private, D>,
+    ) -> Result<RecordingFrame<Private, D>, CompactError> {
+        frame.reset_merkle_to_default(self.path, DEPTH)
+    }
+
     /// Record a complete plain-tree append trace for replay and proof.
     pub fn record_insert<Private, D: DB>(
         self,

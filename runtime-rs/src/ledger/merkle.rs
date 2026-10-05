@@ -942,6 +942,14 @@ pub fn merkle_reset_to_default<D: DB>(
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    context.query(&merkle_reset_program(path, depth), gas_limit, cost_model)
+}
+
+/// Canonical plain-tree reset program shared by native and recorded execution.
+pub(crate) fn merkle_reset_program<D: DB>(
+    path: impl Into<LedgerPath>,
+    depth: u8,
+) -> Vec<Op<ResultModeVerify, D>> {
     let path = path.into();
     let (&field_index, parent) = path
         .as_slice()
@@ -975,7 +983,7 @@ pub fn merkle_reset_to_default<D: DB>(
             n: parent.len() as u8,
         });
     }
-    context.query(&program, gas_limit, cost_model)
+    program
 }
 
 /// Ask the ledger VM whether the next free index has reached tree capacity.

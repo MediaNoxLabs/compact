@@ -324,6 +324,95 @@
         }
       ]
     },
+    "resetEmpty": {
+      "result": [],
+      "privateOutputs": 0,
+      "reportedGas": {
+        "readTime": "85000000",
+        "computeTime": "1168755395",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1168755395",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          },
+          "opTags": [
+            "push",
+            "push",
+            "ins"
+          ],
+          "program": [
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "push": {
+                "storage": true,
+                "value": {
+                  "tag": "array",
+                  "content": [
+                    {
+                      "tag": "boundedMerkleTree",
+                      "content": [
+                        3,
+                        {}
+                      ]
+                    },
+                    {
+                      "tag": "cell",
+                      "content": {
+                        "value": [
+                          []
+                        ],
+                        "alignment": [
+                          {
+                            "tag": "atom",
+                            "value": {
+                              "tag": "bytes",
+                              "length": 8
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "ins": {
+                "cached": false,
+                "n": 1
+              }
+            }
+          ]
+        }
+      ]
+    },
     "append7": {
       "result": [],
       "privateOutputs": 0,
@@ -2114,6 +2203,95 @@
             {
               "ins": {
                 "cached": true,
+                "n": 1
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "resetTree": {
+      "result": [],
+      "privateOutputs": 0,
+      "reportedGas": {
+        "readTime": "85000000",
+        "computeTime": "1234450028",
+        "bytesWritten": "92",
+        "bytesDeleted": "1122"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1234450028",
+            "bytesWritten": "92",
+            "bytesDeleted": "1122"
+          },
+          "opTags": [
+            "push",
+            "push",
+            "ins"
+          ],
+          "program": [
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "push": {
+                "storage": true,
+                "value": {
+                  "tag": "array",
+                  "content": [
+                    {
+                      "tag": "boundedMerkleTree",
+                      "content": [
+                        3,
+                        {}
+                      ]
+                    },
+                    {
+                      "tag": "cell",
+                      "content": {
+                        "value": [
+                          []
+                        ],
+                        "alignment": [
+                          {
+                            "tag": "atom",
+                            "value": {
+                              "tag": "bytes",
+                              "length": 8
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "ins": {
+                "cached": false,
                 "n": 1
               }
             }

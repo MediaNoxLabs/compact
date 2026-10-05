@@ -1391,21 +1391,16 @@ def main() -> None:
                 for extension in ("zkir", "bzkir"):
                     assert (list_shapes_proof / "zkir" / f"{circuit}.{extension}").is_file()
             merkle_proof = base / "merkle-proof"
-            run(compiler, "--target", "rust", str(MERKLE_SOURCE), str(merkle_proof))
+            run(compiler, "--target", "rust", "--rust-require-recording", str(MERKLE_SOURCE), str(merkle_proof))
             check_manifest(merkle_proof)
             capabilities = json.loads((merkle_proof / "contract/rust-capabilities.json").read_text())
             by_name = {circuit["name"]: circuit for circuit in capabilities["circuits"]}
-            for circuit in ("append", "place", "place_default", "full", "append_hash", "place_hash", "known"):
+            for circuit in ("append", "place", "place_default", "full", "append_hash", "place_hash", "known", "reset_tree"):
                 assert by_name[circuit]["recorded"] and by_name[circuit]["observed_call"]
                 for extension in ("prover", "verifier"):
                     assert (merkle_proof / "keys" / f"{circuit}.{extension}").is_file()
                 for extension in ("zkir", "bzkir"):
                     assert (merkle_proof / "zkir" / f"{circuit}.{extension}").is_file()
-            for circuit, node in (
-                ("reset_tree", "StateAction::MerkleResetToDefault"),
-            ):
-                assert not by_name[circuit]["recorded"]
-                assert by_name[circuit]["recording_unavailable"]["ir_node"] == node
             merkle_verify_proof = base / "merkle-verify-proof"
             run(compiler, "--target", "rust", str(MERKLE_VERIFY_SOURCE), str(merkle_verify_proof))
             check_manifest(merkle_verify_proof)
@@ -1761,6 +1756,10 @@ def main() -> None:
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 "--merkle-root", str(merkle_proof),
+            )
+            run(
+                "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--merkle-reset", str(merkle_proof),
             )
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",

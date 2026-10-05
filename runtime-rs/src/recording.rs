@@ -206,6 +206,15 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         self.apply_verify_program(ledger::merkle_insert_hash_program(path, hash))
     }
 
+    /// Reset a plain tree with the canonical metered ledger program.
+    pub fn reset_merkle_to_default(
+        self,
+        path: impl Into<LedgerPath>,
+        depth: u8,
+    ) -> Result<Self, CompactError> {
+        self.apply_verify_program(ledger::merkle_reset_program(path, depth))
+    }
+
     /// Append to a historic Merkle tree and retain its root-history VM update.
     pub fn insert_historic_merkle<T: CellValue>(
         self,

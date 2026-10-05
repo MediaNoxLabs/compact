@@ -296,6 +296,14 @@ pub mod ledger_contract {
                 crate::ledger_slots::t.record_insert_index_default(frame, __compact_param_0)?;
             Ok(frame.finish(()))
         }
+        pub fn reset_tree<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let frame = crate::ledger_slots::t.record_reset_to_default(frame)?;
+            Ok(frame.finish(()))
+        }
         pub fn full<Private>(
             context: runtime::context::CircuitContext<Private>,
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
@@ -449,6 +457,31 @@ pub mod ledger_contract {
                     observed,
                     recorded,
                     "place_default",
+                    input,
+                ))
+            }
+            pub fn reset_tree<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::reset_tree(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn reset_tree_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.reset_tree(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "reset_tree",
                     input,
                 ))
             }

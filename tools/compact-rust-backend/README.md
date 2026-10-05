@@ -158,7 +158,13 @@ The generated `ledger_slots` module exposes named typed descriptors for Cell,
 Counter, Set, Map, List, and Merkle declarations. For example,
 `ledger_slots::tree.insert(context, value)` accepts the declared Merkle leaf
 type and uses its declared path and depth. Plain and historic Merkle slots
-share the native API; only historic slots expose `reset_history`. These slot
+share the native API; only historic slots expose `reset_history`. Plain slots
+expose `record_reset_to_default`, sharing the native ledger VM reset program.
+The original `merkle_tree_oracle.compact` now has recorded and observed-call
+APIs for all eight proof-required exports and passes strict recording mode.
+Its reset coverage checks empty and populated trees against TypeScript state,
+gas and ordered VM execution, then proves and applies a populated-tree reset.
+These slot
 constructors are public typed conveniences, not access-control boundaries.
 
 For applications that use several generated contracts, pass the same

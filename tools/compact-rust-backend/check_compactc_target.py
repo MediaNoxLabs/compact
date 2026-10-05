@@ -83,8 +83,8 @@ NESTED_WITNESS_SOURCE = ROOT / "examples/rust_backend/nested_witness_call_oracle
 ALIAS_SOURCE = ROOT / "examples/rust_backend/aliases_oracle.compact"
 
 
-def run(*arguments: str, cwd: Path = ROOT) -> None:
-    subprocess.run(arguments, cwd=cwd, check=True)
+def run(*arguments: str, cwd: Path = ROOT, env: dict[str, str] | None = None) -> None:
+    subprocess.run(arguments, cwd=cwd, env=env, check=True)
 
 
 def check_manifest(output: Path, *, require_zkir: bool = True) -> None:

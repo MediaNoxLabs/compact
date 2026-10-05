@@ -28,7 +28,7 @@
     {
       "oracle_source": "examples/asset_registry_fixture.compact",
       "source": "examples/rust_backend/asset_registry_oracle.compact",
-      "source_sha256": "d4491f60b069780350cd219f7c02292702a5714626eed38124b218e12abde30c",
+      "source_sha256": "2027ebbced964b5ae2271b11018734ef317776d93c23721ec622f30d79cbd1c2",
       "non_comment_sha256": "185b93c0ba3a0c879ca11638e7a501fe12e5fb5764e9701895fa251f0cbbe7e3",
       "rust_tests": [
         "tests-rust-backend/asset-registry-oracle/tests/asset_registry_oracle.rs",

@@ -442,13 +442,15 @@ pub mod ledger_contract {
             }
             let frame = crate::ledger_slots::checked_in_participants
                 .record_insert(frame, (__compact_param_0).clone())?;
+            let __compact_recorded_witness_arg_2: runtime::OpaqueString =
+                (__compact_param_0).clone();
             let (frame, _) = frame.try_witness_metered(|context, meter| {
                 witnesses.set_local_id(
                     context.witness_context_with(super::LedgerView {
                         state: context.query.state.get_ref(),
                         meter,
                     }),
-                    (__compact_param_0).clone(),
+                    __compact_recorded_witness_arg_2,
                 )
             })?;
             Ok(frame.finish(()))

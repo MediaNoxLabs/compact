@@ -36,6 +36,22 @@ import {
 const FORMAT = "compact-shielded-live/v1";
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const jsonBytes = (value) => Buffer.from(`${JSON.stringify(value, null, 2)}\n`);
+// Retain actionable transport/checkpoint causes only in the private receipt.
+export function boundedErrorChain(error) {
+  const chain = [];
+  const seen = new Set();
+  let current = error;
+  while (current != null && chain.length < 8 && !seen.has(current)) {
+    seen.add(current);
+    chain.push({
+      name: String(current.name ?? typeof current).slice(0, 128),
+      message: String(current.message ?? current).slice(0, 2048),
+    });
+    current = current.cause;
+  }
+  return { chain, truncated: current != null };
+}
+
 export function requireIsolatedEndpoints(node, indexer, proofServer) {
   for (const [value, port] of [
     [node, "49944"],
@@ -314,11 +330,11 @@ async function main() {
       ),
   });
   const keys = { shieldedSecretKeys, dustSecretKey };
-  const waitState = (predicate) =>
+  const waitState = (predicate, maxWaitMs = 300_000) =>
     firstValueFrom(
       wallet.state().pipe(
         filter((state) => state.isSynced && predicate(state)),
-        timeout({ first: 300_000 }),
+        timeout({ first: maxWaitMs }),
       ),
     );
   const rpc = async (method, params) => {
@@ -459,10 +475,13 @@ async function main() {
     const deadline = Date.now() + 180_000;
     let lastError;
     do {
-      const state = await waitState((state) => Boolean(state.shielded));
-      const snapshot = Buffer.from(state.shielded.serialize());
-      const envelope = JSON.parse(snapshot.toString());
       try {
+        const state = await waitState(
+          (state) => Boolean(state.shielded),
+          Math.max(1, deadline - Date.now()),
+        );
+        const snapshot = Buffer.from(state.shielded.serialize());
+        const envelope = JSON.parse(snapshot.toString());
         const acquired = await acquireVerifiedCheckpoint({
           rpc,
           indexer: createIndexerClient(indexerUrl),
@@ -492,7 +511,7 @@ async function main() {
         return acquired.manifest;
       } catch (error) {
         lastError = error;
-        await sleep(2000);
+        await sleep(Math.max(0, Math.min(2000, deadline - Date.now())));
       }
     } while (Date.now() < deadline);
     throw new Error("wallet/node checkpoint agreement timed out", {
@@ -689,7 +708,7 @@ async function main() {
     if (reserved && !submitted)
       await wallet.shielded.revertTransaction(reserved);
     receipt.status = "failed";
-    receipt.failure = { name: error.name, message: error.message };
+    receipt.failure = boundedErrorChain(error);
     await privateReference(
       join(directory, "failure.json"),
       jsonBytes(receipt),

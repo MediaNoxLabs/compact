@@ -20,6 +20,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
   requireIsolatedEndpoints,
+  boundedErrorChain,
   privateReference,
   readReference,
   selectExactCoin,
@@ -240,4 +241,31 @@ test("runner cannot target protected oxid or remote service ports", () => {
     changed[index] = value;
     assert.throws(() => requireIsolatedEndpoints(...changed), /isolated/);
   }
+});
+
+test("private diagnostics retain bounded checkpoint causes without stack or bytes", () => {
+  const cause = new Error("wallet is behind final Zswap event");
+  cause.privateBytes = Buffer.from("never serialize this");
+  const outer = new Error("wallet/node checkpoint agreement timed out", {
+    cause,
+  });
+  assert.deepEqual(boundedErrorChain(outer), {
+    chain: [
+      { name: "Error", message: outer.message },
+      { name: "Error", message: cause.message },
+    ],
+    truncated: false,
+  });
+  cause.cause = outer;
+  assert.equal(boundedErrorChain(outer).truncated, true);
+  const long = new Error("x".repeat(3000));
+  let last = long;
+  for (let i = 0; i < 12; i++) {
+    last.cause = new Error(`cause ${i}`);
+    last = last.cause;
+  }
+  const bounded = boundedErrorChain(long);
+  assert.equal(bounded.chain.length, 8);
+  assert.equal(bounded.chain[0].message.length, 2048);
+  assert.equal(bounded.truncated, true);
 });

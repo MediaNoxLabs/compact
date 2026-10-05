@@ -135,6 +135,19 @@ def check(compiler: Path, manifest_path: Path = MANIFEST) -> tuple[dict, list[st
                         proof = proof_map(circuits).get(capability["name"])
                         if proof is None or capability.get("proof_required") is not proof[1]:
                             failures.append(f"{source.name}.{capability['name']}: Rust proof flag disagrees")
+                    by_name = {item["name"]: item for item in report["circuits"]}
+                    for name, expected_gap in expected.get("expected_recording_gaps", {}).items():
+                        capability = by_name.get(name)
+                        if capability is None:
+                            failures.append(f"{source.name}.{name}: missing expected Rust capability")
+                            continue
+                        actual_gap = capability.get("recording_unavailable") or {}
+                        if (capability.get("recording_status") != "unavailable"
+                                or capability.get("recorded") is not False
+                                or capability.get("observed_call") is not False
+                                or any(actual_gap.get(key) != value
+                                       for key, value in expected_gap.items())):
+                            failures.append(f"{source.name}.{name}: recording gap changed")
                 if "rust_fixture" in expected:
                     generated = output / "rust/contract/lib.rs"
                     fixture = ROOT / expected["rust_fixture"]

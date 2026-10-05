@@ -1075,7 +1075,7 @@ def main() -> None:
         assert all(c["proof_required"] is True and c["recording_status"] == "available"
                    for c in capabilities["circuits"])
         rust_ir = json.loads((rust / "contract/compact-rust-ir.json").read_text())
-        assert rust_ir["schema_version"] == 11
+        assert rust_ir["schema_version"] == 12
         native_output = base / "native-own-public-key"
         run(compiler, "--target", "rust", "--skip-zk", str(PM_19252_SOURCE), str(native_output))
         native_contract = native_output / "contract"
@@ -1103,7 +1103,7 @@ def main() -> None:
             str(native_value_output))
         native_value_contract = native_value_output / "contract"
         native_value_ir = json.loads((native_value_contract / "compact-rust-ir.json").read_text())
-        assert native_value_ir["schema_version"] == 11
+        assert native_value_ir["schema_version"] == 12
         assert native_value_ir["witnesses"] == []
         assert [(c["name"], c["return_value"]["value"]["kind"])
                 for c in native_value_ir["stateful_circuits"]] == [
@@ -1138,7 +1138,7 @@ def main() -> None:
             output = base / f"source-{name}"
             run(compiler, "--target", "rust", "--skip-zk", str(source), str(output))
             emitted = json.loads((output / "contract/compact-rust-ir.json").read_text())
-            assert emitted["schema_version"] == 11
+            assert emitted["schema_version"] == 12
             owners = emitted[key]
             if isinstance(owners, dict):
                 owners = [owners]

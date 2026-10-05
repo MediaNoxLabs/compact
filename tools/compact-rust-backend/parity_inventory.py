@@ -47,11 +47,14 @@ ADT_LIST_BYTES_SOURCE_MANIFEST = Path(__file__).with_name(
 TOP_LEVEL_SOURCE_MANIFEST = Path(__file__).with_name("parity_positive_top_level_sources.json")
 TEST_CENTER_COUNTER_SOURCE_MANIFEST = Path(__file__).with_name(
     "parity_positive_test_center_counter_sources.json")
+TEST_CENTER_WELCOME_SOURCE_MANIFEST = Path(__file__).with_name(
+    "parity_positive_test_center_welcome_sources.json")
 POSITIVE_SOURCE_MANIFESTS = (
     POSITIVE_SOURCE_MANIFEST, ADT_SET_SOURCE_MANIFEST,
     ADT_LIST_SOURCE_MANIFEST, ADT_LIST_VECTOR_FIELD_4_SOURCE_MANIFEST,
     ADT_LIST_BYTES_SOURCE_MANIFEST,
-    TOP_LEVEL_SOURCE_MANIFEST, TEST_CENTER_COUNTER_SOURCE_MANIFEST)
+    TOP_LEVEL_SOURCE_MANIFEST, TEST_CENTER_COUNTER_SOURCE_MANIFEST,
+    TEST_CENTER_WELCOME_SOURCE_MANIFEST)
 DEFAULT_BASELINE = Path(__file__).with_name("parity_baseline.json")
 COMPILED_PACKAGE_ROOTS = {
     "examples/rust_backend/digital-passport-credential/src/digital-passport-credential.compact",

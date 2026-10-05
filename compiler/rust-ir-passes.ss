@@ -1728,6 +1728,13 @@
            (if (eq? (id-sym var-name) accumulator)
                '()
                (source-errorf src "Rust constructor fold must return its accumulator"))]
+          [(if ,src ,expr0 ,expr1 ,expr2)
+           (list (object (cons "kind" "if")
+                         (cons "condition" (expression-ir expr0 src))
+                         (cons "then_steps"
+                               (list->vector (constructor-fold-body-ir expr1 accumulator parameters src witness-ids)))
+                         (cons "otherwise_steps"
+                               (list->vector (constructor-fold-body-ir expr2 accumulator parameters src witness-ids)))))]
           [else (list (constructor-step-ir expr parameters '() owner-src witness-ids))]))
 
       ;; Both literal ranges and array iteration arrive here as a unit-accumulator fold.
@@ -1793,7 +1800,21 @@
                                           (constructor-fold-body-ir expr1 (id-sym acc-name)
                                                                     (cons (id-sym item-name) parameters)
                                                                     src1 witness-ids))))]
-                         [else (source-errorf src "Rust constructor fold needs a literal iterable")])]))]))])]
+                         [(var-ref ,src2 ,var-name)
+                          (unless (memq (id-sym var-name) parameters)
+                            (source-errorf src2 "Rust constructor Vector iterable must be a constructor parameter"))
+                          (object (cons "kind" "for_each_vector")
+                                  (cons "binding"
+                                        (object (cons "name" (symbol->string (id-sym item-name)))
+                                                (cons "ty" (type-ir item-type src))))
+                                  (cons "source" (typed-expression-ir expr2 type src2))
+                                  (cons "length" len)
+                                  (cons "steps"
+                                        (list->vector
+                                          (constructor-fold-body-ir expr1 (id-sym acc-name)
+                                                                    (cons (id-sym item-name) parameters)
+                                                                    src1 witness-ids))))]
+                         [else (source-errorf src "Rust constructor fold needs a literal or parameter Vector iterable")])]))]))])]
              [else (source-errorf src "Rust constructor fold needs an inline circuit body")])]
           [(let* ,src ([,local* ,expr*] ...) ,expr)
            (let ([bindings^
@@ -1995,7 +2016,7 @@
            (source-errorf src "Rust backend found multiple constructors"))
          (print-json
            (get-target-port 'rust.ir.json)
-           (append (object (cons "schema_version" 11)
+           (append (object (cons "schema_version" 12)
                    (cons "type_aliases"
                          (list->vector (fold-right type-alias-ir '() pelt*)))
                    (cons "ledger_fields"

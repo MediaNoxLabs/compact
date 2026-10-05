@@ -256,6 +256,30 @@ metadata.mkdir()
                           if item["kind"] == "circuit" and item["visibility"] == "export"},
                          {"increment"})
 
+    def test_test_center_welcome_cohort_keeps_proof_gaps_explicit(self):
+        manifest = json.loads(inventory.TEST_CENTER_WELCOME_SOURCE_MANIFEST.read_text())
+        self.assertEqual(source_scope.cohort_membership_failures(manifest), [])
+        self.assertEqual(len(manifest["positive_sources"]), 1)
+        entry = manifest["positive_sources"][0]
+        self.assertEqual(entry["source"], "test-center/test-contracts/welcome.compact")
+        self.assertIn(entry["source"],
+                      (inventory.ROOT / manifest["suite"]).read_text())
+        self.assertIn(entry["source"],
+                      (inventory.ROOT / entry["typescript_capture"]).read_text())
+        fixture = json.loads((inventory.ROOT / entry["typescript_fixture"]).read_text())
+        self.assertEqual(fixture["source"], entry["source"])
+        self.assertEqual([case["present"] for case in fixture["cases"]], [False, True])
+        self.assertIn(Path(entry["typescript_fixture"]).name,
+                      (inventory.ROOT / entry["rust_test"]).read_text())
+        self.assertEqual([(item["name"], item["proof"]) for item in entry["proof_circuits"]],
+                         [("add_participant", True), ("add_organizer", True),
+                          ("check_in", True), ("public_key", False)])
+        self.assertEqual({item["name"] for item in
+                          inventory.parse_source(inventory.ROOT / entry["source"],
+                                                 inventory.ROOT)["declarations"]
+                          if item["kind"] == "circuit" and item["visibility"] == "export"},
+                         {item["name"] for item in entry["proof_circuits"]})
+
     def test_pm19252_positive_scope_is_complete_and_excludes_rejection(self):
         scope = json.loads(inventory.POSITIVE_SOURCE_MANIFEST.read_text())
         positive = scope["positive_sources"]
@@ -616,14 +640,14 @@ metadata.mkdir()
             (root / "Cargo.lock").write_text('''[[package]]\nname = "midnight-ledger"\nversion = "8.0.3"\nchecksum = "abc"\n''')
             ir = root / "tools/compact-rust-backend/src/ir.rs"
             ir.parent.mkdir(parents=True)
-            ir.write_text("pub const SCHEMA_VERSION: u32 = 11;\n")
+            ir.write_text("pub const SCHEMA_VERSION: u32 = 12;\n")
             runtime = root / "runtime-rs/src/lib.rs"
             runtime.parent.mkdir(parents=True)
             runtime.write_text("pub const RUST_RUNTIME_ABI: u32 = 37;\n")
             result = inventory.make_inventory(root, [], None)
             self.assertNotIn("receipt_metadata", result)
             metadata = inventory.receipt_metadata(root, None, result["contracts"])
-            self.assertEqual(metadata["rust_ir_schema"], 11)
+            self.assertEqual(metadata["rust_ir_schema"], 12)
             self.assertEqual(metadata["rust_runtime_abi"], 37)
             self.assertEqual(metadata["upstream_packages"]["midnight-ledger"],
                              {"version": "8.0.3", "checksum": "abc"})

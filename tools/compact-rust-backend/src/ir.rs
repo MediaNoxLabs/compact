@@ -22,7 +22,7 @@
 
 use serde::{Deserialize, Serialize};
 
-pub const SCHEMA_VERSION: u32 = 11;
+pub const SCHEMA_VERSION: u32 = 12;
 
 /// A Compact source position, independent of the compiler checkout path.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
@@ -153,6 +153,17 @@ pub enum ConstructorStep {
         binding: Parameter,
         values: Vec<Expr>,
         steps: Vec<ConstructorStep>,
+    },
+    ForEachVector {
+        binding: Parameter,
+        source: Expr,
+        length: usize,
+        steps: Vec<ConstructorStep>,
+    },
+    If {
+        condition: Expr,
+        then_steps: Vec<ConstructorStep>,
+        otherwise_steps: Vec<ConstructorStep>,
     },
 }
 

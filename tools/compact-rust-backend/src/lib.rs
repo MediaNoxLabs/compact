@@ -2198,6 +2198,7 @@ fn infallible_constructor_expr(value: &Expr) -> bool {
         | Expr::HashToCurve { value }
         | Expr::JubjubPointX { value }
         | Expr::JubjubPointY { value }
+        | Expr::StructField { value, .. }
         | Expr::Coerce { value, .. }
         | Expr::FieldCast { value } => infallible_constructor_expr(value),
         _ => false,
@@ -2261,6 +2262,28 @@ fn collect_constructor_step_types(
                 collect_constructor_step_types(step, structs, enums)?;
             }
         }
+        ConstructorStep::ForEachVector {
+            binding,
+            source,
+            steps,
+            ..
+        } => {
+            collect_named_types(&binding.ty, structs, enums)?;
+            collect_expression_types(source, structs, enums)?;
+            for step in steps {
+                collect_constructor_step_types(step, structs, enums)?;
+            }
+        }
+        ConstructorStep::If {
+            condition,
+            then_steps,
+            otherwise_steps,
+        } => {
+            collect_expression_types(condition, structs, enums)?;
+            for step in then_steps.iter().chain(otherwise_steps) {
+                collect_constructor_step_types(step, structs, enums)?;
+            }
+        }
     }
     Ok(())
 }
@@ -2303,6 +2326,32 @@ fn constructor_step_uses_witness(
                 }
             }
             for step in steps {
+                if constructor_step_uses_witness(step, stateful_circuits)? {
+                    return Ok(true);
+                }
+            }
+            Ok(false)
+        }
+        ConstructorStep::ForEachVector { source, steps, .. } => {
+            if requires(source)? {
+                return Ok(true);
+            }
+            for step in steps {
+                if constructor_step_uses_witness(step, stateful_circuits)? {
+                    return Ok(true);
+                }
+            }
+            Ok(false)
+        }
+        ConstructorStep::If {
+            condition,
+            then_steps,
+            otherwise_steps,
+        } => {
+            if requires(condition)? {
+                return Ok(true);
+            }
+            for step in then_steps.iter().chain(otherwise_steps) {
                 if constructor_step_uses_witness(step, stateful_circuits)? {
                     return Ok(true);
                 }
@@ -2792,6 +2841,92 @@ fn render_constructor_vm_steps<'a>(
                 actions.push(syn::parse_quote!(let #iterable: [#ty; #len] = [#(#values),*];));
                 actions.push(syn::parse_quote!(for #item in #iterable { #(#body)* }));
             }
+            ConstructorStep::ForEachVector {
+                binding,
+                source,
+                length,
+                steps,
+            } => {
+                let loop_index = *next_loop;
+                *next_loop += 1;
+                let item = syn::Ident::new(
+                    &format!("__compact_constructor_item_{loop_index}"),
+                    Span::call_site(),
+                );
+                let Expr::Parameter { name } = source else {
+                    return Err(RenderError::InvalidConstructorInitializer(
+                        binding.name.clone(),
+                    ));
+                };
+                let (actual, iterable) = parameters
+                    .get(name.as_str())
+                    .ok_or_else(|| RenderError::UnknownParameter(name.clone()))?;
+                let expected = Type::Vector {
+                    element: Box::new(binding.ty.clone()),
+                    length: *length,
+                };
+                if **actual != expected {
+                    return Err(RenderError::TypeMismatch {
+                        expected,
+                        actual: (*actual).clone(),
+                    });
+                }
+                let mut body_parameters = parameters.clone();
+                body_parameters.insert(binding.name.as_str(), (&binding.ty, item.clone()));
+                let body = render_constructor_vm_steps(
+                    steps,
+                    ledger_fields,
+                    &body_parameters,
+                    witnesses,
+                    circuits,
+                    stateful_circuits,
+                    next_loop,
+                    next_temp,
+                )?;
+                actions.push(syn::parse_quote!(for #item in #iterable.0.iter() { #(#body)* }));
+            }
+            ConstructorStep::If {
+                condition,
+                then_steps,
+                otherwise_steps,
+            } => {
+                if !infallible_constructor_expr(condition) {
+                    return Err(RenderError::InvalidConstructorInitializer("if".into()));
+                }
+                let (condition, actual) =
+                    expression_with_calls(condition, parameters, &HashMap::new())?;
+                if actual != Type::Boolean {
+                    return Err(RenderError::TypeMismatch {
+                        expected: Type::Boolean,
+                        actual,
+                    });
+                }
+                let then_body = render_constructor_vm_steps(
+                    then_steps,
+                    ledger_fields,
+                    parameters,
+                    witnesses,
+                    circuits,
+                    stateful_circuits,
+                    next_loop,
+                    next_temp,
+                )?;
+                let otherwise_body = render_constructor_vm_steps(
+                    otherwise_steps,
+                    ledger_fields,
+                    parameters,
+                    witnesses,
+                    circuits,
+                    stateful_circuits,
+                    next_loop,
+                    next_temp,
+                )?;
+                if otherwise_body.is_empty() {
+                    actions.push(syn::parse_quote!(if #condition { #(#then_body)* }));
+                } else {
+                    actions.push(syn::parse_quote!(if #condition { #(#then_body)* } else { #(#otherwise_body)* }));
+                }
+            }
         }
     }
     Ok(actions)
@@ -3240,7 +3375,9 @@ pub fn render_with_capabilities(contract: &Contract) -> Result<RenderedContract,
                 | ConstructorStep::MapInsertDefault { .. }
                 | ConstructorStep::MapRemove { .. }
                 | ConstructorStep::MapReset { .. }
-                | ConstructorStep::ForEach { .. } => true,
+                | ConstructorStep::ForEach { .. }
+                | ConstructorStep::ForEachVector { .. }
+                | ConstructorStep::If { .. } => true,
             })
         });
     let mut constructor_actions = Vec::<syn::Stmt>::new();

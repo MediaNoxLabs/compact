@@ -113,10 +113,13 @@ The original test-center Counter in
 witness now records through the existing metered witness frame. The checked
 TypeScript capture, native and recorded Rust fixture, ordered public VM trace,
 private output, and replay agree; a pinned emitted ZKIR proof verifies and
-applies through ledger-8. The other four `test-center/test-contracts` sources
-remain unassessed by the Rust compiler-backed inventory: `welcome` rejects a
-constructor fold, `bboard` and `coracle` reject nested ledger queries, and
-`micro-dao` rejects a standard-library expression.
+applies through ledger-8. The exact original `welcome.compact` source now
+compiles with a typed constructor Vector parameter loop and conditional Maybe
+insertion. Its generated crate and empty/one-participant constructor state
+match the checked TypeScript capture on a default Rust test thread. Its three
+proof-required exports remain recording-unavailable at their first assertions;
+constructor acceptance adds no proven call. `bboard` and `coracle` still reject
+nested ledger queries, and `micro-dao` rejects a standard-library expression.
 The lexical scanner includes `pure circuit` and `export pure circuit`
 declarations, with compiler `contract-info.json` supplying proof applicability
 even when the Rust capability report has no recorded method for a pure circuit.

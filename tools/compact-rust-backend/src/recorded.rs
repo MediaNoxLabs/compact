@@ -32,6 +32,8 @@ use crate::{
     retained_value, rust_type,
 };
 
+mod audited_local;
+
 /// The first definite reason an exported circuit has no recorded Rust API.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct RecordingGap {
@@ -2229,6 +2231,11 @@ fn render_recorded_item(
 ) -> Result<RecordingOutcome<syn::Item>, RenderError> {
     if circuit.internal && !helper {
         return Ok(RecordingOutcome::Unsupported(RecordingGap::no_effect()));
+    }
+    if !helper
+        && let Some(item) = audited_local::render(circuit, ledger_fields, witnesses, circuits)?
+    {
+        return Ok(item);
     }
 
     let name = ident(&circuit.name)?;

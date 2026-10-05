@@ -31,3 +31,6 @@ serde_json = "1"
 midnight-onchain-state = "=3.0.0"
 midnight-serialize = "=1.0.0"
 midnight-storage = "=2.0.1"
+
+[features]
+ledger-transaction = ["midnight-compact-runtime/ledger-transaction"]

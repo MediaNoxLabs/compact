@@ -103,7 +103,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 37);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 38);
     pub(crate) fn merkleTreePathRoot(
         path: crate::types::MerkleTreePathCompact1,
     ) -> Result<crate::types::MerkleTreeDigest, runtime::CompactError> {

@@ -2570,7 +2570,7 @@ fn generated_unit_enum_uses_checked_derive_without_handwritten_codecs() {
     let source = render(&contract).unwrap();
     assert!(source.contains("CompactCellValue, CompactEnum"));
     assert!(source.contains("pub enum Choice"));
-    assert!(source.contains("RUST_RUNTIME_ABI == 37"));
+    assert!(source.contains("RUST_RUNTIME_ABI == 38"));
     assert!(!source.contains("impl FieldRepr for Choice"));
     assert!(!source.contains("impl BinaryHashRepr for Choice"));
     assert!(!source.contains("impl FromFieldRepr for Choice"));
@@ -9848,4 +9848,138 @@ fn typed_historic_spend_audits_path_helpers_and_slot_provenance() {
     replace(&mut json);
     let unsupported: Contract = serde_json::from_value(json).unwrap();
     assert!(!available(&unsupported, "spend"));
+}
+
+#[test]
+fn audited_schnorr_local_helper_requires_transitive_public_purity_and_typed_sources() {
+    let mut contract: Contract =
+        serde_json::from_str(include_str!("schnorr-attestation-schema13-ir.json")).unwrap();
+    contract.schema_version = SCHEMA_VERSION;
+    let reported = render_with_capabilities(&contract).unwrap();
+    for name in ["verifyAttestation", "acceptAttestation"] {
+        assert!(
+            reported
+                .capabilities
+                .circuits
+                .iter()
+                .find(|c| c.name == name)
+                .unwrap()
+                .recorded
+        );
+    }
+    assert!(reported.source.contains(".call_local(|context|"));
+
+    let mut effectful = contract.clone();
+    let helper = effectful
+        .stateful_circuits
+        .iter_mut()
+        .find(|c| c.name == "schnorrVerify")
+        .unwrap();
+    helper.actions.push(StateAction::CounterIncrement {
+        field: "acceptedCount".into(),
+        index: 1,
+        amount: CounterAmount::Literal { value: 1 },
+    });
+    assert!(
+        !render_with_capabilities(&effectful)
+            .unwrap()
+            .capabilities
+            .circuits
+            .iter()
+            .find(|c| c.name == "verifyAttestation")
+            .unwrap()
+            .recorded
+    );
+
+    let mut read_opening = contract.clone();
+    read_opening.ledger_fields.push(LedgerField {
+        source: None,
+        id: "hidden".into(),
+        index: 3,
+        path: vec![],
+        declaration: LedgerFieldKind::Cell { ty: Type::Field },
+    });
+    let helper = read_opening
+        .stateful_circuits
+        .iter_mut()
+        .find(|c| c.name == "schnorrVerify")
+        .unwrap();
+    helper.actions.push(StateAction::Expression {
+        value: Expr::TransientCommit {
+            value: Box::new(Expr::FieldLiteral { value: "1".into() }),
+            opening: Box::new(Expr::CellRead {
+                field: "hidden".into(),
+                index: 3,
+            }),
+        },
+    });
+    assert!(
+        !render_with_capabilities(&read_opening)
+            .unwrap()
+            .capabilities
+            .circuits
+            .iter()
+            .find(|c| c.name == "verifyAttestation")
+            .unwrap()
+            .recorded
+    );
+
+    let mut wrong_key = contract.clone();
+    let key = wrong_key
+        .ledger_fields
+        .iter_mut()
+        .find(|f| f.id == "attestorKey")
+        .unwrap();
+    key.declaration = LedgerFieldKind::Cell { ty: Type::Field };
+    assert!(render_with_capabilities(&wrong_key).is_err());
+
+    let mut missing_guard = contract.clone();
+    missing_guard
+        .stateful_circuits
+        .iter_mut()
+        .find(|c| c.name == "verifyAttestation")
+        .unwrap()
+        .actions
+        .remove(0);
+    assert!(
+        !render_with_capabilities(&missing_guard)
+            .unwrap()
+            .capabilities
+            .circuits
+            .iter()
+            .find(|c| c.name == "verifyAttestation")
+            .unwrap()
+            .recorded
+    );
+
+    let mut unknown = contract.clone();
+    let helper = unknown
+        .stateful_circuits
+        .iter_mut()
+        .find(|c| c.name == "schnorrVerifyDigest")
+        .unwrap();
+    let StateAction::CircuitCall { name, .. } = &mut helper.actions[0] else {
+        unreachable!()
+    };
+    *name = "unknownHelper".into();
+    assert!(render_with_capabilities(&unknown).is_err());
+
+    let mut recursive = contract.clone();
+    recursive
+        .stateful_circuits
+        .iter_mut()
+        .find(|c| c.name == "schnorrVerify")
+        .unwrap()
+        .actions
+        .push(StateAction::CircuitCall {
+            name: "schnorrVerifyDigest".into(),
+            arguments: vec![
+                Expr::Parameter { name: "msg".into() },
+                Expr::Parameter {
+                    name: "signature".into(),
+                },
+                Expr::Parameter { name: "pk".into() },
+            ],
+        });
+    assert!(render_with_capabilities(&recursive).is_err());
 }

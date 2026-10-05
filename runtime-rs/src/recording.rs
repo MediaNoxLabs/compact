@@ -127,6 +127,58 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         Ok((self, value))
     }
 
+    /// Adopt a generated helper that has been statically audited as local.
+    ///
+    /// The helper may change private state, emit private witness values, and
+    /// incur metered witness-read gas. It cannot add a public VM operation or
+    /// modify the ledger, Zswap, call context, or execution policy. A runtime
+    /// check enforces that boundary before its effects enter the recording.
+    pub fn call_local<Output, F>(mut self, call: F) -> Result<(Self, Output), CompactError>
+    where
+        F: FnOnce(
+            CircuitContext<Private, D>,
+        ) -> Result<CircuitResult<Private, Output, D>, CompactError>,
+    {
+        let prior_query = self.context.query.clone();
+        let prior_zswap = self.context.zswap_state.clone();
+        let prior_coin_key = self.context.own_coin_public_key().ok();
+        let prior_cost_model = self.context.cost_model.clone();
+        let prior_gas_limit = self.context.gas_limit;
+        let result = call(self.context)?;
+        let next = &result.context;
+        let before_call = &prior_query.call_context;
+        let after_call = &next.query.call_context;
+        if prior_query.state != next.query.state
+            || prior_query.effects != next.query.effects
+            || prior_query.address != next.query.address
+            || before_call.own_address != after_call.own_address
+            || before_call.tblock != after_call.tblock
+            || before_call.tblock_err != after_call.tblock_err
+            || before_call.parent_block_hash != after_call.parent_block_hash
+            || before_call.caller != after_call.caller
+            || before_call.balance != after_call.balance
+            || before_call.com_indices != after_call.com_indices
+            || before_call.last_block_time != after_call.last_block_time
+            || prior_zswap.coins != next.zswap_state.coins
+            || prior_zswap.pending_spends != next.zswap_state.pending_spends
+            || prior_zswap.pending_outputs != next.zswap_state.pending_outputs
+            || prior_zswap.merkle_tree != next.zswap_state.merkle_tree
+            || prior_zswap.first_free != next.zswap_state.first_free
+            || prior_coin_key != next.own_coin_public_key().ok()
+            || prior_cost_model != next.cost_model
+            || prior_gas_limit != next.gas_limit
+        {
+            return Err(CompactError::InvalidLedgerCell(
+                "local helper changed public or Zswap execution context".into(),
+            ));
+        }
+        self.context = result.context;
+        self.observed_gas += result.gas_cost;
+        self.private_outputs
+            .extend(result.private_transcript_outputs);
+        Ok((self, result.result))
+    }
+
     pub fn write_cell<T: CellValue>(
         self,
         path: impl Into<LedgerPath>,

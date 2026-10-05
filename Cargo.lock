@@ -1893,6 +1893,7 @@ dependencies = [
  "compact-rust-pm-19252-unused-read-seven-fixture",
  "compact-rust-pure-call-action-fixture",
  "compact-rust-recorded-enum-cell-fixture",
+ "compact-rust-schnorr-attest-oracle-fixture",
  "compact-rust-set-boolean-fixture",
  "compact-rust-set-oracle-fixture",
  "compact-rust-set-size-oracle-fixture",
@@ -1913,6 +1914,7 @@ dependencies = [
  "compact-rust-witness-vector-action-fixture",
  "compact-rust-zerocash-oracle-fixture",
  "futures-executor",
+ "hex",
  "midnight-base-crypto",
  "midnight-circuits",
  "midnight-compact-runtime",
@@ -1930,6 +1932,7 @@ dependencies = [
  "midnight-zkir",
  "rand 0.8.5",
  "rand_chacha 0.3.1",
+ "serde_json",
 ]
 
 [[package]]

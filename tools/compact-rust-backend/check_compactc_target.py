@@ -62,6 +62,7 @@ MIXED_WIDTH_OPERAND_SOURCE = ROOT / "examples/rust_backend/mixed_width_operand_o
 TERNARY_COND_SOURCE = ROOT / "examples/rust_backend/ternary_cond_oracle.compact"
 NESTED_STATEFUL_TERNARY_SOURCE = ROOT / "examples/rust_backend/nested_stateful_ternary.compact"
 ASSET_REGISTRY_SOURCE = ROOT / "examples/rust_backend/asset_registry_oracle.compact"
+SCHNORR_ATTEST_SOURCE = ROOT / "examples/rust_backend/schnorr_attest_oracle.compact"
 HISTORIC_MERKLE_SOURCE = ROOT / "examples/rust_backend/hmt_insert_oracle.compact"
 HISTORIC_MERKLE_DEFAULT_SOURCE = ROOT / "examples/rust_backend/hmt_default_oracle.compact"
 ELECTION_SOURCE = ROOT / "examples/rust_backend/election_oracle.compact"
@@ -1748,6 +1749,19 @@ def main() -> None:
                     assert (asset_writable_proof / "keys" / f"{circuit}.{extension}").is_file()
                 for extension in ("zkir", "bzkir"):
                     assert (asset_writable_proof / "zkir" / f"{circuit}.{extension}").is_file()
+            schnorr_proof = base / "schnorr-attestation-proof"
+            run(compiler, "--target", "rust", "--rust-require-recording",
+                str(SCHNORR_ATTEST_SOURCE), str(schnorr_proof))
+            check_manifest(schnorr_proof)
+            capabilities = json.loads((schnorr_proof / "contract/rust-capabilities.json").read_text())
+            for circuit in ("verifyAttestation", "acceptAttestation"):
+                capability = next(row for row in capabilities["circuits"] if row["name"] == circuit)
+                assert capability["proof_required"] and capability["recorded"] \
+                    and capability["observed_call"]
+                for extension in ("prover", "verifier"):
+                    assert (schnorr_proof / "keys" / f"{circuit}.{extension}").is_file()
+                for extension in ("zkir", "bzkir"):
+                    assert (schnorr_proof / "zkir" / f"{circuit}.{extension}").is_file()
             historic_merkle_proof = base / "historic-merkle-proof"
             run(compiler, "--target", "rust", str(HISTORIC_MERKLE_SOURCE), str(historic_merkle_proof))
             check_manifest(historic_merkle_proof)
@@ -2061,6 +2075,10 @@ def main() -> None:
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 "--asset-watch-write", str(asset_writable_proof),
+            )
+            run(
+                "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--schnorr-attestation", str(schnorr_proof),
             )
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",

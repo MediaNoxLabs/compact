@@ -42,6 +42,7 @@ compact-rust-stateful-pure-call-fixture = { path = "../../tests-rust-backend/sta
 compact-rust-field-cast-uint128-fixture = { path = "../../tests-rust-backend/field-cast-uint128", features = ["ledger-transaction"] }
 compact-rust-widening-arith-oracle-fixture = { path = "../../tests-rust-backend/widening-arith-oracle", features = ["ledger-transaction"] }
 compact-rust-mixed-width-operand-oracle-fixture = { path = "../../tests-rust-backend/mixed-width-operand-oracle", features = ["ledger-transaction"] }
+compact-rust-schnorr-attest-oracle-fixture = { path = "../../tests-rust-backend/schnorr-attest-oracle", features = ["ledger-transaction"] }
 compact-rust-assert-witness-fixture = { path = "../../tests-rust-backend/assert-witness", features = ["ledger-transaction"] }
 compact-rust-asset-registry-oracle-fixture = { path = "../../tests-rust-backend/asset-registry-oracle", features = ["ledger-transaction"] }
 compact-rust-guarded-assert-arith-oracle-fixture = { path = "../../tests-rust-backend/guarded-assert-arith-oracle", features = ["ledger-transaction"] }
@@ -103,6 +104,8 @@ midnight-storage-core = "=1.1.0"
 rand = "=0.8.5"
 rand_chacha = "=0.3.1"
 futures-executor = "=0.3.32"
+hex = "0.4"
+serde_json = "1"
 
 compact-rust-map-fn-oracle-fixture = { path = "../../tests-rust-backend/map-fn-oracle", features = ["ledger-transaction"] }
 compact-rust-map-lambda-oracle-fixture = { path = "../../tests-rust-backend/map-lambda-oracle", features = ["ledger-transaction"] }

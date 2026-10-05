@@ -60,6 +60,7 @@ mod pair_hash_cell;
 mod persistent_commit;
 mod pure_assert_call;
 mod pure_field_arguments;
+mod schnorr_attestation;
 mod stateful_pair_hash;
 mod stateful_pure_return;
 mod struct_constructor_cell;
@@ -1669,6 +1670,17 @@ fn run() -> Result<(), Box<dyn Error>> {
             );
         }
         return asset_record_write::run(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--schnorr-attestation")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --schnorr-attestation <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err(
+                "usage: compact-rust-proof-smoke --schnorr-attestation <proof-output>".into(),
+            );
+        }
+        return schnorr_attestation::run(Path::new(&root));
     }
     if first.as_deref() == Some(OsStr::new("--asset-watch-write")) {
         let root = arguments

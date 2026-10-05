@@ -21,6 +21,24 @@ import * as runtime from '../../../runtime/dist/index.js';
 const [contractPath] = process.argv.slice(2);
 if (!contractPath) throw new Error('expected contract/index.js');
 const { Contract, pureCircuits } = await import(pathToFileURL(contractPath).href);
+const normalize = (value) => {
+  if (typeof value === 'bigint') return value.toString();
+  if (value instanceof Uint8Array) return Array.from(value);
+  if (Array.isArray(value)) return value.map(normalize);
+  if (value && typeof value === 'object') return Object.fromEntries(
+    Object.entries(value).map(([key, inner]) => [key, normalize(inner)]),
+  );
+  return value;
+};
+const queries = [];
+const originalQuery = runtime.QueryContext.prototype.query;
+runtime.QueryContext.prototype.query = function (...args) {
+  const result = originalQuery.call(this, ...args);
+  queries.push({ gasCost: normalize(result.gasCost),
+    opTags: args[0].map((op) => typeof op === 'string' ? op : Object.keys(op)[0]),
+    raw: args[0] });
+  return result;
+};
 const generator = runtime.ecMulGenerator(1n);
 const contract = new Contract({
   getSchnorrReduction: ({ privateState }, challengeHash) => [
@@ -51,8 +69,65 @@ const context = runtime.createCircuitContext(
   runtime.dummyContractAddress(), coinPublicKey,
   initial.currentContractState.data, initial.currentPrivateState,
 );
+const trace = (output, start, prior) => {
+  const own = queries.slice(start);
+  const replay = prior.currentQueryContext.query(own.flatMap(({ raw }) => raw), prior.costModel);
+  return { resultGas: normalize(output.gasCost), vmProgram: normalize(output.proofData.publicTranscript),
+    queries: own.map(({ gasCost, opTags }) => ({ gasCost, opTags })),
+    replayGas: normalize(replay.gasCost) };
+};
+const verifyStart = queries.length;
 const verified = contract.circuits.verifyAttestation(context, digest, signature);
+const verifyTrace = trace(verified, verifyStart, context);
+const acceptStart = queries.length;
 const accepted = contract.circuits.acceptAttestation(verified.context, digest, signature);
+const acceptTrace = trace(accepted, acceptStart, verified.context);
+const rejected = (label, witnesses, sig) => {
+  const local = new Contract(witnesses);
+  const start = queries.length;
+  try {
+    local.circuits.verifyAttestation(context, digest, sig);
+    throw new Error(`${label} unexpectedly accepted`);
+  } catch (error) {
+    if (String(error.message).includes('unexpectedly accepted')) throw error;
+    return { error: String(error.message), queries: queries.slice(start)
+      .map(({ gasCost, opTags }) => ({ gasCost, opTags })) };
+  }
+};
+const badReduction = rejected('bad reduction', {
+  getSchnorrReduction: ({ privateState }) => [privateState + 1, [0n, 0n]],
+  localAttestorKey: ({ privateState }) => [privateState + 1, generator],
+}, signature);
+const identityAnnouncement = rejected('identity announcement', {
+  getSchnorrReduction: ({ privateState }, challenge) =>
+    [privateState + 1, [challenge >> 248n, challenge & ((1n << 248n) - 1n)]],
+  localAttestorKey: ({ privateState }) => [privateState + 1, generator],
+}, { announcement: runtime.ecMulGenerator(0n), response: signature.response });
+const closedContext = runtime.createCircuitContext(
+  runtime.dummyContractAddress(), coinPublicKey,
+  initial.currentContractState.data, initial.currentPrivateState,
+);
+const byteIndex = new runtime.CompactTypeUnsignedInteger(255n, 1);
+closedContext.currentQueryContext = closedContext.currentQueryContext.query([
+  { push: { storage: false, value: runtime.StateValue.newCell({
+    value: byteIndex.toValue(2n), alignment: byteIndex.alignment(),
+  }).encode() } },
+  { push: { storage: true, value: runtime.StateValue.newCell({
+    value: runtime.CompactTypeBoolean.toValue(false),
+    alignment: runtime.CompactTypeBoolean.alignment(),
+  }).encode() } },
+  { ins: { cached: false, n: 1 } },
+], closedContext.costModel).context;
+const closedStart = queries.length;
+let closed;
+try {
+  contract.circuits.verifyAttestation(closedContext, digest, signature);
+  throw new Error('closed attestor unexpectedly accepted');
+} catch (error) {
+  if (String(error.message).includes('unexpectedly accepted')) throw error;
+  closed = { error: String(error.message), queries: queries.slice(closedStart)
+    .map(({ gasCost, opTags }) => ({ gasCost, opTags })) };
+}
 initial.currentContractState.data = new runtime.ChargedState(
   accepted.context.currentQueryContext.state.state,
 );
@@ -73,6 +148,7 @@ process.stdout.write(JSON.stringify({
   afterAcceptHex: Buffer.from(initial.currentContractState.serialize()).toString('hex'),
   afterVerifyPrivateState: verified.context.currentPrivateState,
   afterAcceptPrivateState: accepted.context.currentPrivateState,
+  verifyTrace, acceptTrace, badReduction, identityAnnouncement, closed,
   verifyTranscript: verified.proofData.privateTranscriptOutputs.map(
     ({ value, alignment }) => ({
       valueAtoms: value.map((atom) => Array.from(atom)),

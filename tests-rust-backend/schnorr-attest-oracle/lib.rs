@@ -104,7 +104,7 @@ pub use types::Schnorr_SchnorrSignature;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 37);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 38);
     pub fn attestationDigest(
         subject: runtime::FixedBytes<32>,
         epoch: runtime::BoundedUint<18446744073709551615>,
@@ -136,7 +136,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 37);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 38);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -481,19 +481,172 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
+    /// Circuits with a replayable ordered ledger program.
+    pub mod recorded {
+        use midnight_compact_runtime as runtime;
+        pub fn verifyAttestation<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: runtime::FixedVector<runtime::Field, 4>,
+            __compact_param_1: crate::types::SchnorrSignature,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, open): (_, bool) = crate::ledger_slots::open.record_read(frame)?;
+            if !open {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "attestor is closed".to_owned(),
+                ));
+            }
+            let (frame, public_key): (_, runtime::JubjubPoint) =
+                crate::ledger_slots::attestorKey.record_read(frame)?;
+            let (frame, ()) = frame.call_local(|context| {
+                super::schnorrVerifyDigest(
+                    context,
+                    witnesses,
+                    __compact_param_0,
+                    __compact_param_1,
+                    public_key,
+                )
+            })?;
+            Ok(frame.finish(()))
+        }
+        pub fn acceptAttestation<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: runtime::FixedVector<runtime::Field, 4>,
+            __compact_param_1: crate::types::SchnorrSignature,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, open): (_, bool) = crate::ledger_slots::open.record_read(frame)?;
+            if !open {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "attestor is closed".to_owned(),
+                ));
+            }
+            let (frame, public_key): (_, runtime::JubjubPoint) =
+                crate::ledger_slots::attestorKey.record_read(frame)?;
+            let (frame, ()) = frame.call_local(|context| {
+                super::schnorrVerifyDigest(
+                    context,
+                    witnesses,
+                    __compact_param_0,
+                    __compact_param_1,
+                    public_key,
+                )
+            })?;
+            let frame = crate::ledger_slots::acceptedCount.record_increment(frame, 1_u16)?;
+            Ok(frame.finish(()))
+        }
+        /// Typed handle for circuits with a complete recorded trace.
+        pub struct Contract;
+        impl Contract {}
+        /// A recording handle with access to the contract's witnesses.
+        pub struct BorrowedContract<'a, W> {
+            pub(super) witnesses: &'a W,
+        }
+        impl<W> BorrowedContract<'_, W> {
+            pub fn verifyAttestation<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                digest: runtime::FixedVector<runtime::Field, 4>,
+                signature: crate::types::SchnorrSignature,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                verifyAttestation(context, self.witnesses, digest, signature)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn verifyAttestation_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                digest: runtime::FixedVector<runtime::Field, 4>,
+                signature: crate::types::SchnorrSignature,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input =
+                    runtime::fab::AlignedValue::from(((digest).clone(), (signature).clone()));
+                let recorded = self.verifyAttestation(
+                    observed.circuit_context(private_state),
+                    digest,
+                    signature,
+                )?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "verifyAttestation",
+                    input,
+                ))
+            }
+            pub fn acceptAttestation<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                digest: runtime::FixedVector<runtime::Field, 4>,
+                signature: crate::types::SchnorrSignature,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                acceptAttestation(context, self.witnesses, digest, signature)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn acceptAttestation_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                digest: runtime::FixedVector<runtime::Field, 4>,
+                signature: crate::types::SchnorrSignature,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input =
+                    runtime::fab::AlignedValue::from(((digest).clone(), (signature).clone()));
+                let recorded = self.acceptAttestation(
+                    observed.circuit_context(private_state),
+                    digest,
+                    signature,
+                )?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "acceptAttestation",
+                    input,
+                ))
+            }
+        }
+    }
     /// Groups the contract's exported circuits for Rust consumers.
     pub struct Contract<W> {
         #[allow(dead_code)]
         witnesses: W,
+        pub recording: recorded::Contract,
     }
     impl<W> From<W> for Contract<W> {
         fn from(witnesses: W) -> Self {
-            Self { witnesses }
+            Self {
+                witnesses,
+                recording: recorded::Contract,
+            }
         }
     }
     impl Default for Contract<()> {
         fn default() -> Self {
-            Self { witnesses: () }
+            Self {
+                witnesses: (),
+                recording: recorded::Contract,
+            }
         }
     }
     impl<W> Contract<W> {
@@ -518,6 +671,12 @@ pub mod ledger_contract {
             W: TryWitnesses<Private>,
         {
             crate::ledger_contract::acceptAttestation(context, &self.witnesses, digest, signature)
+        }
+        /// Borrow the contract's witnesses for a replayable circuit call.
+        pub fn recording(&self) -> recorded::BorrowedContract<'_, W> {
+            recorded::BorrowedContract {
+                witnesses: &self.witnesses,
+            }
         }
     }
 }

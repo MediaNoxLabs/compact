@@ -96,3 +96,49 @@ fn boolean_cell_write_then_read_replays_as_one_verifying_program() {
     assert_eq!(transcript.program.len(), 6);
     assert_eq!(transcript.effects, replay.context.effects);
 }
+
+#[test]
+fn audited_local_call_adopts_private_cost_but_rejects_unrecorded_public_effects() {
+    use midnight_compact_runtime::context::{CircuitResult, RunningCost};
+
+    let state = StateValue::Array(vec![constructor_cell::<_, DefaultDB>(false)].into());
+    let context = ConstructorResult::new(ConstructorContext::new(7_u64), ChargedState::new(state))
+        .into_circuit_context(ContractAddress::default());
+    let local_cost = midnight_compact_runtime::ledger::query_cell_at_path::<bool, _>(
+        &context.query,
+        &[0],
+        None,
+        &context.cost_model,
+    )
+    .unwrap()
+    .0
+    .gas_cost;
+    assert_ne!(local_cost, RunningCost::ZERO);
+    let (frame, output) = RecordingFrame::new(context)
+        .call_local(|mut context| {
+            context.private_state += 1;
+            Ok(CircuitResult {
+                context,
+                result: 17_u64,
+                gas_cost: local_cost,
+                private_transcript_outputs: vec![AlignedValue::from(true)],
+            })
+        })
+        .unwrap();
+    assert_eq!(output, 17);
+    let recorded = frame.finish(());
+    assert_eq!(recorded.execution.context.private_state, 8);
+    assert_eq!(recorded.execution.private_transcript_outputs.len(), 1);
+    assert_eq!(recorded.execution.gas_cost, local_cost);
+    assert!(recorded.public.verify_ops().is_empty());
+
+    let state = StateValue::Array(vec![constructor_cell::<_, DefaultDB>(false)].into());
+    let context = ConstructorResult::new(ConstructorContext::new(()), ChargedState::new(state))
+        .into_circuit_context(ContractAddress::default());
+    let rejected =
+        RecordingFrame::new(context).call_local(|context| context.write_cell(0_u8, true));
+    assert!(matches!(
+        rejected,
+        Err(midnight_compact_runtime::CompactError::InvalidLedgerCell(_))
+    ));
+}

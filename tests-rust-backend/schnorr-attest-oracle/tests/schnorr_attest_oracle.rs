@@ -161,3 +161,227 @@ fn assert_transcript(
         );
     }
 }
+
+#[test]
+fn recorded_schnorr_calls_match_original_queries_private_transcript_and_replay() {
+    use compact_rust_schnorr_attest_oracle_fixture::ledger_contract::recorded;
+
+    let reference: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/schnorr-attest-oracle.json"
+    ))
+    .unwrap();
+    let digest = attestationDigest(
+        FixedBytes::new([0_u8; 32]),
+        BoundedUint::<{ u64::MAX as u128 }>::new(1).unwrap(),
+        Field::from(2_u64),
+    )
+    .unwrap();
+    let generator = midnight_compact_runtime::ec_mul_generator(Field::from(1_u64)).unwrap();
+    let response = hex::decode(reference["signatureResponseHex"].as_str().unwrap()).unwrap();
+    let signature = SchnorrSignature {
+        announcement: generator,
+        response: Field::from_le_bytes(&response).unwrap(),
+    };
+    let initial = initial_state(ConstructorContext::new(7_u64), &OracleWitness).unwrap();
+    let context = initial.into_circuit_context(ContractAddress::default());
+    let verified =
+        recorded::verifyAttestation(context, &OracleWitness, digest.clone(), signature.clone())
+            .unwrap();
+    check_recorded(&verified, &reference["verifyTrace"]);
+    assert_eq!(
+        verified.execution.context.private_state,
+        reference["afterVerifyPrivateState"].as_u64().unwrap()
+    );
+    assert_transcript(
+        &verified.execution.private_transcript_outputs,
+        &reference["verifyTranscript"],
+    );
+    assert_eq!(
+        state_hex(verified.execution.context.query.state.get_ref().clone()),
+        reference["initialHex"]
+    );
+
+    let accepted = recorded::acceptAttestation(
+        verified.execution.context,
+        &OracleWitness,
+        digest.clone(),
+        signature.clone(),
+    )
+    .unwrap();
+    check_recorded(&accepted, &reference["acceptTrace"]);
+    assert_eq!(
+        accepted.execution.context.private_state,
+        reference["afterAcceptPrivateState"].as_u64().unwrap()
+    );
+    assert_transcript(
+        &accepted.execution.private_transcript_outputs,
+        &reference["acceptTranscript"],
+    );
+    assert_eq!(
+        state_hex(accepted.execution.context.query.state.get_ref().clone()),
+        reference["afterAcceptHex"]
+    );
+
+    let initial = initial_state(ConstructorContext::new(7_u64), &OracleWitness).unwrap();
+    let context = initial.into_circuit_context(ContractAddress::default());
+    let native =
+        verifyAttestation(context, &OracleWitness, digest.clone(), signature.clone()).unwrap();
+    let accepted_native =
+        acceptAttestation(native.context, &OracleWitness, digest, signature).unwrap();
+    assert_eq!(
+        accepted.execution.context.query.state.get_ref(),
+        accepted_native.context.query.state.get_ref()
+    );
+    assert_eq!(
+        accepted.execution.context.query.effects,
+        accepted_native.context.query.effects
+    );
+}
+
+fn check_recorded(
+    recorded: &midnight_compact_runtime::recording::RecordedCircuitResult<u64, ()>,
+    expected: &serde_json::Value,
+) {
+    let mut actual = serde_json::to_value(recorded.public.verify_ops()).unwrap();
+    let mut reference = expected["vmProgram"].clone();
+    for program in [&mut actual, &mut reference] {
+        for operation in program.as_array_mut().unwrap() {
+            if let Some(popeq) = operation.get_mut("popeq") {
+                popeq.as_object_mut().unwrap().remove("result");
+            }
+        }
+    }
+    assert_eq!(actual, reference, "ordered public VM");
+    let gas = serde_json::to_value(recorded.execution.gas_cost).unwrap();
+    for dimension in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+        let expected_sum: u64 = expected["queries"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|query| {
+                query["gasCost"][dimension]
+                    .as_str()
+                    .unwrap()
+                    .parse::<u64>()
+                    .unwrap()
+            })
+            .sum();
+        assert_eq!(
+            gas[dimension].as_u64().unwrap(),
+            expected_sum,
+            "recorded {dimension}"
+        );
+    }
+    let replay = recorded
+        .public
+        .initial()
+        .query(
+            recorded.public.verify_ops(),
+            None,
+            &recorded.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(
+        replay.context.state.get_ref(),
+        recorded.execution.context.query.state.get_ref()
+    );
+    assert_eq!(
+        replay.context.effects,
+        recorded.execution.context.query.effects
+    );
+    let replay_gas = serde_json::to_value(replay.gas_cost).unwrap();
+    for dimension in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+        let target: u64 = expected["replayGas"][dimension]
+            .as_str()
+            .unwrap()
+            .parse()
+            .unwrap();
+        assert_eq!(
+            replay_gas[dimension].as_u64().unwrap(),
+            target,
+            "replay {dimension}"
+        );
+    }
+}
+
+struct BadReduction;
+impl Witnesses<u64> for BadReduction {
+    fn getSchnorrReduction(
+        &self,
+        context: WitnessContext<'_, u64, LedgerView<'_>>,
+        _challenge_hash: Field,
+    ) -> (u64, (BoundedUint<127>, Uint248)) {
+        (
+            *context.private_state + 1,
+            (
+                BoundedUint::<127>::new(0).unwrap(),
+                Uint248::from_le_bytes(&[0_u8; 31]).unwrap(),
+            ),
+        )
+    }
+    fn localAttestorKey(
+        &self,
+        context: WitnessContext<'_, u64, LedgerView<'_>>,
+    ) -> (u64, JubjubPoint) {
+        OracleWitness.localAttestorKey(context)
+    }
+}
+
+#[test]
+fn malformed_schnorr_reduction_and_identity_announcement_fail_recording() {
+    use compact_rust_schnorr_attest_oracle_fixture::ledger_contract::recorded;
+    let reference: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/schnorr-attest-oracle.json"
+    ))
+    .unwrap();
+    let digest = attestationDigest(
+        FixedBytes::new([0_u8; 32]),
+        BoundedUint::<{ u64::MAX as u128 }>::new(1).unwrap(),
+        Field::from(2_u64),
+    )
+    .unwrap();
+    let generator = midnight_compact_runtime::ec_mul_generator(Field::from(1_u64)).unwrap();
+    let response = hex::decode(reference["signatureResponseHex"].as_str().unwrap()).unwrap();
+    let signature = SchnorrSignature {
+        announcement: generator,
+        response: Field::from_le_bytes(&response).unwrap(),
+    };
+    let initial = initial_state(ConstructorContext::new(7_u64), &OracleWitness).unwrap();
+    let context = initial.into_circuit_context(ContractAddress::default());
+    let error =
+        recorded::verifyAttestation(context, &BadReduction, digest.clone(), signature.clone())
+            .err()
+            .unwrap()
+            .to_string();
+    assert!(error.contains("Invalid challenge reduction"), "{error}");
+    let initial = initial_state(ConstructorContext::new(7_u64), &OracleWitness).unwrap();
+    let context = initial.into_circuit_context(ContractAddress::default());
+    let identity = midnight_compact_runtime::ec_mul_generator(Field::from(0_u64)).unwrap();
+    let error = recorded::verifyAttestation(
+        context,
+        &OracleWitness,
+        digest.clone(),
+        SchnorrSignature {
+            announcement: identity,
+            ..signature.clone()
+        },
+    )
+    .err()
+    .unwrap()
+    .to_string();
+    assert!(
+        error.contains("non-identity key and announcement"),
+        "{error}"
+    );
+    let initial = initial_state(ConstructorContext::new(7_u64), &OracleWitness).unwrap();
+    let context = initial
+        .into_circuit_context(ContractAddress::default())
+        .write_cell(2_u8, false)
+        .unwrap()
+        .context;
+    let error = recorded::verifyAttestation(context, &OracleWitness, digest, signature)
+        .err()
+        .unwrap()
+        .to_string();
+    assert_eq!(error, reference["closed"]["error"].as_str().unwrap());
+}

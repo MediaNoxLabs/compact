@@ -723,6 +723,12 @@ separate temporary harness before adding a `node_modules` link. The compiler
 cleans its output directories on each run, so links must stay outside them.
 The rejection checker verifies source-located failures for unsupported
 constructs and that no generated Rust library survives a rejected compile.
+ADR219 additionally pins exact defining-file locations for nested expressions,
+constructors, imported helpers, witness results, exported struct fields and
+ledger-map values. The cast cases compile with TypeScript; unknown opaque type
+cases are explicitly shared target refusals. Each context checks fresh output
+and byte-for-byte preservation of an existing complete Rust output, alongside
+the existing strict capability diagnostics and post-render publication checks.
 The `tiny` gas fixture is captured with
 [`tiny_gas_capture.mjs`](oracles/tiny_gas_capture.mjs) from a TypeScript
 compilation with the matching runtime package available to Node. It records

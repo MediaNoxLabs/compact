@@ -18,7 +18,7 @@
 """Ensure the public Rust compiler target rejects unsupported programs.
 
 The positive fixture checker cannot detect an unsupported construct that
-quietly emits a plausible Rust library. This gate pins two source-level
+quietly emits a plausible Rust library. This gate pins source-level
 refusals and verifies that no generated Cargo library survives. It also
 checks that a later packaging failure cannot publish partial Rust output
 or replace a previously complete directory.
@@ -66,6 +66,92 @@ CASES = {
 }
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+# Cast cases are valid TypeScript programs. Unknown opaque types deliberately
+# exercise a shared target refusal; they are not Rust-only language gaps.
+CONTEXT_CASES = {
+    "nested": (
+        'export pure circuit narrow(f: Field): Uint<64> {\n'
+        '  return (true ? f : 1) as Uint<64>;\n}\n',
+        "nested.compact", (2, 10), False,
+    ),
+    "constructor": (
+        'export ledger n: Uint<64>;\nconstructor(f: Field) {\n'
+        '  n = disclose(f as Uint<64>);\n}\n',
+        "constructor.compact", (3, 16), False,
+    ),
+    "imported": (
+        'import "broken";\n'
+        'export pure circuit value(f: Field): Uint<64> { return narrow(f); }\n',
+        "broken.compact", (3, 10), False,
+    ),
+    "witness": (
+        'witness wrong(): Opaque<"NotAThing">;\n'
+        'export circuit value(): Opaque<"NotAThing"> { return disclose(wrong()); }\n',
+        "witness.compact", (1, 18), True,
+    ),
+    "struct": (
+        'export struct Broken {\n  value: Opaque<"NotAThing">;\n}\n',
+        "struct.compact", (2, 10), True,
+    ),
+    "ledger": (
+        'import CompactStandardLibrary;\n'
+        'export ledger bad: Map<Field, Opaque<"NotAThing">>;\nconstructor() {}\n',
+        "ledger.compact", (2, 31), True,
+    ),
+}
+
+
+def check_context_locations(compactc: str, directory: Path) -> list[str]:
+    """Pin definition locations and atomic refusal across six source contexts."""
+    failures = []
+    directory = directory / "contexts"
+    directory.mkdir()
+    (directory / "broken.compact").write_text(
+        "module broken {\nexport pure circuit narrow(f: Field): Uint<64> {\n"
+        "  return f as Uint<64>;\n}\n}\n"
+    )
+
+    def compile_source(source: Path, output: Path, target: str):
+        return subprocess.run(
+            [compactc, "--target", target, "--skip-zk", str(source), str(output)],
+            capture_output=True, text=True, check=False,
+        )
+
+    preserved = directory / "preserved"
+    baseline = compile_source(ROOT / "examples/rust_backend/counter.compact", preserved, "rust")
+    if baseline.returncode or not (preserved / "contract/lib.rs").is_file():
+        return [f"context preservation baseline failed:\n{baseline.stderr}"]
+    before = snapshot(preserved)
+    for name, (source, defining_file, (line, column), opaque) in CONTEXT_CASES.items():
+        source_path = directory / f"{name}.compact"
+        source_path.write_text(source)
+        position = f"{defining_file} line {line} char {column}"
+        control = compile_source(source_path, directory / f"{name}-ts", "ts")
+        if opaque:
+            if (control.returncode == 0 or position not in control.stderr
+                    or "opaque type NotAThing is not supported" not in control.stderr):
+                failures.append(f"{name}: shared type refusal control changed:\n{control.stderr}")
+        elif control.returncode or not (directory / f"{name}-ts/contract/index.js").is_file():
+            failures.append(f"{name}: valid TypeScript control failed:\n{control.stderr}")
+        diagnostic = "Rust backend does not yet support " + (
+            "this opaque type" if opaque else "Field-to-Uint downcasts"
+        )
+        for output in (directory / name, preserved):
+            rejected = compile_source(source_path, output, "rust")
+            if (rejected.returncode == 0 or position not in rejected.stderr
+                    or diagnostic not in rejected.stderr):
+                failures.append(f"{name}: missing exact Rust source diagnostic:\n{rejected.stderr}")
+            if any(directory.glob(f".{output.name}.compactc-stage-*")):
+                failures.append(f"{name}: refusal left staging debris")
+            if output == preserved:
+                if snapshot(preserved) != before:
+                    failures.append(f"{name}: refusal changed previously complete output")
+            elif output.exists():
+                failures.append(f"{name}: fresh refusal published output")
+        print(f"Context {name}: {position}; TS {'shared refusal' if opaque else 'accepted'}")
+    return failures
 
 
 def snapshot(path: Path) -> dict[str, str]:
@@ -425,10 +511,12 @@ def main() -> int:
         failures.extend(check_output_publication(compactc, directory))
         failures.extend(check_output_serialization(compactc, directory))
         failures.extend(check_proof_capabilities(compactc, directory))
+        failures.extend(check_context_locations(compactc, directory))
 
     for failure in failures:
         print(f"FAIL {failure}", file=sys.stderr)
-    print(f"Checked {len(CASES)} source rejections, output publication and proof capabilities; {len(failures)} failed")
+    print(f"Checked {len(CASES)} source rejections, {len(CONTEXT_CASES)} source contexts, "
+          f"output publication and proof capabilities; {len(failures)} failed")
     return 1 if failures else 0
 
 

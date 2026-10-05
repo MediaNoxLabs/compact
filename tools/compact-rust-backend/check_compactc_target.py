@@ -1216,10 +1216,10 @@ def main() -> None:
                  str(CORACLE_SOURCE), str(base / "coracle")],
                 cwd=ROOT, capture_output=True, text=True)
             assert complete.returncode != 0
-            assert "<standard library>" in complete.stderr
-            assert "native witness expression" in complete.stderr
+            assert "standard-library.compact line 207" in complete.stderr
+            assert 'unsupported Compact Uint maximum "680564733841876926926749214863536422911"' in complete.stderr
             assert not (base / "coracle/contract/lib.rs").exists()
-            print("typed effectful returns admitted; complete Coracle remains unassessed at shielded witness")
+            print("typed effectful returns admitted; complete Coracle remains unassessed at the Uint129 intermediate")
             return
         if args.qualified_coin_cell:
             output = base / "qualified-coin-cell"
@@ -1332,9 +1332,9 @@ def main() -> None:
                  str(CORACLE_SOURCE), str(base / "coracle")],
                 cwd=ROOT, capture_output=True, text=True)
             assert complete.returncode != 0
-            assert "<standard library>" in complete.stderr
-            assert "native witness expression" in complete.stderr
-            print("root Let actions retained; complete Coracle remains unassessed at shielded witness")
+            assert "standard-library.compact line 207" in complete.stderr
+            assert 'unsupported Compact Uint maximum "680564733841876926926749214863536422911"' in complete.stderr
+            print("root Let actions retained; complete Coracle remains unassessed at the Uint129 intermediate")
             return
         if args.adt_set_qualified:
             output = base / "adt-set-qualified"

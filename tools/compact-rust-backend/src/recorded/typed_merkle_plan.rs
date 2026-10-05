@@ -35,6 +35,7 @@ struct Plan<'a> {
     root_observations: usize,
     tree_writes: usize,
     set_writes: usize,
+    counter_writes: usize,
 }
 
 impl Plan<'_> {
@@ -147,7 +148,10 @@ impl Plan<'_> {
                     value: retained_value(value.value.clone(), &value.ty),
                 })
             }
-            Expr::Boolean { .. } | Expr::BytesLiteral { .. } | Expr::EnumVariant { .. } => {
+            Expr::Boolean { .. }
+            | Expr::BytesLiteral { .. }
+            | Expr::EnumVariant { .. }
+            | Expr::UnsignedLiteral { .. } => {
                 let (value, ty) =
                     expression_with_calls(expression, &HashMap::new(), &HashMap::new()).ok()?;
                 self.bind(value, ty, steps)
@@ -397,6 +401,62 @@ impl Plan<'_> {
                 let scoped = self.bindings(bindings, scope, steps)?;
                 self.action(action, &scoped, steps)?;
             }
+            StateAction::If {
+                condition,
+                then,
+                otherwise,
+            } => {
+                let condition = self.expression(condition, scope, steps)?;
+                if condition.ty != Type::Boolean {
+                    return None;
+                }
+                let mut then_steps = Vec::new();
+                let mut else_steps = Vec::new();
+                self.action(then, scope, &mut then_steps)?;
+                self.action(otherwise, scope, &mut else_steps)?;
+                let condition = condition.value;
+                steps.push(syn::parse_quote! {
+                    #[allow(clippy::let_and_return, reason = "uniform branch frames preserve ordered recording steps")]
+                    let frame = if #condition {
+                        #(#then_steps)*
+                        frame
+                    } else {
+                        #(#else_steps)*
+                        frame
+                    };
+                });
+            }
+            StateAction::CounterIncrement {
+                field,
+                index,
+                amount,
+            } => {
+                if self.field(field, *index)?.declaration != LedgerFieldKind::Counter {
+                    return None;
+                }
+                let amount: syn::Expr = match amount {
+                    CounterAmount::Literal { value } => {
+                        let value = syn::LitInt::new(&format!("{value}u16"), Span::call_site());
+                        syn::parse_quote!(#value)
+                    }
+                    CounterAmount::Parameter { name } => {
+                        let value =
+                            self.expression(&Expr::Parameter { name: name.clone() }, scope, steps)?;
+                        if value.ty
+                            != (Type::Unsigned {
+                                max: "65535".into(),
+                            })
+                        {
+                            return None;
+                        }
+                        let value = value.value;
+                        syn::parse_quote!((#value).value() as u16)
+                    }
+                };
+                let slot = ident(field).ok()?;
+                steps.push(syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_increment(frame, #amount)?;));
+                self.counter_writes += 1;
+            }
             StateAction::Assert { condition, message } => {
                 let condition = self.expression(condition, scope, steps)?;
                 if condition.ty != Type::Boolean {
@@ -463,7 +523,8 @@ pub(super) fn steps<'a>(
 ) -> Option<Vec<syn::Stmt>> {
     if circuit.result != Type::Unit
         || circuit.return_value != StateReturn::Unit
-        || !matches!(circuit.parameters.as_slice(), [parameter] if matches!(parameter.ty, Type::Enum { .. }))
+        || !(circuit.parameters.is_empty()
+            || matches!(circuit.parameters.as_slice(), [parameter] if matches!(parameter.ty, Type::Enum { .. })))
     {
         return None;
     }
@@ -475,6 +536,7 @@ pub(super) fn steps<'a>(
         root_observations: 0,
         tree_writes: 0,
         set_writes: 0,
+        counter_writes: 0,
     };
     let scope = circuit
         .parameters
@@ -495,7 +557,12 @@ pub(super) fn steps<'a>(
     for action in &circuit.actions {
         plan.action(action, &scope, &mut steps)?;
     }
-    (plan.root_observations > 0 && plan.tree_writes > 0 && plan.set_writes > 0).then_some(steps)
+    let write_domain = if circuit.parameters.is_empty() {
+        plan.counter_writes > 0 && plan.tree_writes == 0
+    } else {
+        plan.tree_writes > 0 && plan.counter_writes == 0
+    };
+    (plan.root_observations > 0 && write_domain && plan.set_writes > 0).then_some(steps)
 }
 
 #[cfg(test)]
@@ -515,6 +582,7 @@ mod tests {
             root_observations: 0,
             tree_writes: 0,
             set_writes: 0,
+            counter_writes: 0,
         };
         let actual = Type::Unsigned { max: "255".into() };
         let target = Type::Unsigned {
@@ -555,5 +623,48 @@ mod tests {
             plan.expression(&narrowing, &scope, &mut Vec::new())
                 .is_none()
         );
+    }
+
+    #[test]
+    fn counter_parameters_require_the_actual_u16_bound() {
+        let source = include_str!("../../tests/election-schema13-ir.json");
+        let contract: crate::ir::Contract = serde_json::from_str(source).unwrap();
+        let ledger = contract
+            .ledger_fields
+            .iter()
+            .map(|field| (field.id.as_str(), field))
+            .collect();
+        let witnesses = HashMap::new();
+        let pure = HashMap::new();
+        let mut plan = Plan {
+            ledger: &ledger,
+            witnesses: &witnesses,
+            pure: &pure,
+            next: 0,
+            root_observations: 0,
+            tree_writes: 0,
+            set_writes: 0,
+            counter_writes: 0,
+        };
+        let action = StateAction::CounterIncrement {
+            field: "tally_yes".into(),
+            index: 3,
+            amount: CounterAmount::Parameter {
+                name: "amount".into(),
+            },
+        };
+        for (max, expected) in [("65535", true), ("255", false), ("65536", false)] {
+            let scope = HashMap::from([(
+                "amount".into(),
+                TypedValue {
+                    ty: Type::Unsigned { max: max.into() },
+                    value: syn::parse_quote!(amount),
+                },
+            )]);
+            assert_eq!(
+                plan.action(&action, &scope, &mut Vec::new()).is_some(),
+                expected
+            );
+        }
     }
 }

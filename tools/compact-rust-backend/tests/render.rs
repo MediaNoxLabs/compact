@@ -9585,9 +9585,12 @@ fn typed_membership_plan_checks_helper_closure_and_requires_its_domain() {
             .recorded
     };
     assert!(available(&contract, "vote$commit"));
-    assert!(!available(&contract, "vote$reveal"));
+    assert!(available(&contract, "vote$reveal"));
     let renamed = source
         .replace("vote$commit", "submit_ballot")
+        .replace("vote$reveal", "open_ballot")
+        .replace("tally_yes", "accepted")
+        .replace("tally_no", "rejected")
         .replace("private$vote$record", "store_ballot")
         .replace("commitment_nullifier", "unique_vote")
         .replace("public_key", "voter_key")
@@ -9598,6 +9601,7 @@ fn typed_membership_plan_checks_helper_closure_and_requires_its_domain() {
     let mut renamed: Contract = serde_json::from_str(&renamed).unwrap();
     renamed.schema_version = SCHEMA_VERSION;
     assert!(available(&renamed, "submit_ballot"));
+    assert!(available(&renamed, "open_ballot"));
     let mut effectful = contract.clone();
     let helper = effectful
         .circuits
@@ -9612,6 +9616,7 @@ fn typed_membership_plan_checks_helper_closure_and_requires_its_domain() {
         value: Box::new(helper.body.clone()),
     };
     assert!(!available(&effectful, "vote$commit"));
+    assert!(!available(&effectful, "vote$reveal"));
     let mut recursive = contract.clone();
     let helper = recursive
         .circuits
@@ -9629,6 +9634,7 @@ fn typed_membership_plan_checks_helper_closure_and_requires_its_domain() {
             .collect(),
     };
     assert!(!available(&recursive, "vote$commit"));
+    assert!(!available(&recursive, "vote$reveal"));
     let mut wrong_slot = contract;
     wrong_slot
         .ledger_fields
@@ -9636,5 +9642,64 @@ fn typed_membership_plan_checks_helper_closure_and_requires_its_domain() {
         .find(|field| field.id == "eligible_voters")
         .unwrap()
         .index = 8;
+    assert!(render_with_capabilities(&wrong_slot).is_err());
+}
+
+#[test]
+fn typed_reveal_plan_rejects_unproven_counter_mutations_and_wrong_slots() {
+    fn available(value: &serde_json::Value) -> bool {
+        let mut contract: Contract = serde_json::from_value(value.clone()).unwrap();
+        contract.schema_version = SCHEMA_VERSION;
+        render_with_capabilities(&contract)
+            .unwrap()
+            .capabilities
+            .circuits
+            .iter()
+            .find(|c| c.name == "vote$reveal")
+            .unwrap()
+            .recorded
+    }
+    fn replace_kind(value: &mut serde_json::Value, from: &str, to: &str) {
+        match value {
+            serde_json::Value::Object(map) => {
+                if map.get("kind").and_then(|v| v.as_str()) == Some(from) {
+                    map.insert("kind".into(), serde_json::Value::String(to.into()));
+                }
+                for value in map.values_mut() {
+                    replace_kind(value, from, to);
+                }
+            }
+            serde_json::Value::Array(values) => {
+                for value in values {
+                    replace_kind(value, from, to);
+                }
+            }
+            _ => {}
+        }
+    }
+    let source: serde_json::Value =
+        serde_json::from_str(include_str!("election-schema13-ir.json")).unwrap();
+    assert!(available(&source));
+    let mut decrement = source.clone();
+    let reveal = decrement["stateful_circuits"]
+        .as_array_mut()
+        .unwrap()
+        .iter_mut()
+        .find(|c| c["name"] == "vote$reveal")
+        .unwrap();
+    replace_kind(
+        &mut reveal["actions"],
+        "counter_increment",
+        "counter_decrement",
+    );
+    assert!(!available(&decrement));
+    let mut wrong_slot: Contract = serde_json::from_value(source).unwrap();
+    wrong_slot.schema_version = SCHEMA_VERSION;
+    wrong_slot
+        .ledger_fields
+        .iter_mut()
+        .find(|f| f.id == "tally_yes")
+        .unwrap()
+        .index = 4;
     assert!(render_with_capabilities(&wrong_slot).is_err());
 }

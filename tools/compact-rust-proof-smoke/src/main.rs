@@ -37,6 +37,9 @@ mod asset_writable;
 mod boolean_pair_assert;
 mod closed_pure_field;
 mod election_commit;
+#[path = "../../../tests-rust-backend/election-oracle/support/commit.rs"]
+mod election_membership_support;
+mod election_reveal;
 mod election_topic;
 mod field_pair_hash;
 mod field_to_bytes32;
@@ -2260,6 +2263,15 @@ fn run() -> Result<(), Box<dyn Error>> {
             return Err("usage: compact-rust-proof-smoke --merkle-root <proof-output>".into());
         }
         return merkle_root::run(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--election-reveal")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: --election-reveal <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err("usage: --election-reveal <proof-output>".into());
+        }
+        return election_reveal::run(Path::new(&root));
     }
     if first.as_deref() == Some(OsStr::new("--election-commit")) {
         let root = arguments

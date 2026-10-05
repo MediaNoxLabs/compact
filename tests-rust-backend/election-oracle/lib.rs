@@ -1129,6 +1129,157 @@ pub mod ledger_contract {
                 })?;
             Ok(frame.finish(()))
         }
+        pub fn vote_reveal<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_plan_0): (_, crate::types::PublicState) =
+                crate::ledger_slots::state.record_read(frame)?;
+            let __compact_plan_1: crate::types::PublicState = crate::types::PublicState::reveal;
+            let __compact_plan_2: bool = __compact_plan_0 == __compact_plan_1;
+            let (frame, __compact_plan_7): (_, bool) = if __compact_plan_2 {
+                let (frame, __compact_plan_3): (_, crate::types::PrivateState) = frame
+                    .try_witness_metered(|context, meter| {
+                        witnesses.private_state(context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }))
+                    })?;
+                let __compact_plan_4: crate::types::PrivateState =
+                    crate::types::PrivateState::committed;
+                let __compact_plan_5: bool = __compact_plan_3 == __compact_plan_4;
+                (frame, __compact_plan_5)
+            } else {
+                let __compact_plan_6: bool = false;
+                (frame, __compact_plan_6)
+            };
+            if !__compact_plan_7 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "In illegal state for revealing".to_owned(),
+                ));
+            }
+            let (frame, __compact_plan_8): (_, runtime::FixedBytes<32>) = frame
+                .try_witness_metered(|context, meter| {
+                    witnesses.private_secret_key(context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                        meter,
+                    }))
+                })?;
+            let __compact_plan_9: runtime::FixedBytes<32> = __compact_plan_8;
+            let __compact_plan_10: runtime::FixedBytes<32> = __compact_plan_9;
+            let __compact_plan_11: runtime::FixedBytes<32> =
+                crate::pure_circuits::reveal_nullifier(__compact_plan_10)?;
+            let __compact_plan_12: runtime::FixedBytes<32> = __compact_plan_11;
+            let (frame, __compact_plan_13): (_, bool) =
+                crate::ledger_slots::revealed.record_member(frame, __compact_plan_12)?;
+            let (frame, __compact_plan_16): (_, bool) = if __compact_plan_13 {
+                let __compact_plan_14: bool = false;
+                (frame, __compact_plan_14)
+            } else {
+                let __compact_plan_15: bool = true;
+                (frame, __compact_plan_15)
+            };
+            if !__compact_plan_16 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Attempted to double vote".to_owned(),
+                ));
+            }
+            let (frame, __compact_plan_17): (_, crate::types::PermissibleVotes) = frame
+                .try_witness_metered(|context, meter| {
+                    witnesses.private_vote(context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                        meter,
+                    }))
+                })?;
+            let __compact_plan_18: crate::types::PermissibleVotes = __compact_plan_17;
+            let __compact_plan_19: crate::types::PermissibleVotes = __compact_plan_18;
+            let __compact_plan_20: runtime::FixedBytes<32> =
+                crate::pure_circuits::ballot_repr(__compact_plan_19)?;
+            let __compact_plan_21: runtime::FixedBytes<32> = __compact_plan_20;
+            let __compact_plan_22: runtime::FixedBytes<32> = __compact_plan_9;
+            let __compact_plan_23: runtime::FixedBytes<32> =
+                crate::pure_circuits::commit_with_sk(__compact_plan_21, __compact_plan_22)?;
+            let __compact_plan_24: runtime::FixedBytes<32> = __compact_plan_23;
+            let __compact_plan_25: runtime::FixedBytes<32> = __compact_plan_24;
+            let (frame, __compact_plan_26): (_, crate::types::MaybeCompact1) = frame
+                .try_witness_metered(|context, meter| {
+                    witnesses.context_committed_votes_path_of(
+                        context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }),
+                        __compact_plan_25,
+                    )
+                })?;
+            let __compact_plan_27: crate::types::MaybeCompact1 = __compact_plan_26;
+            let __compact_plan_28: bool = ((__compact_plan_27).clone()).is_some;
+            let (frame, __compact_plan_35): (_, bool) = if __compact_plan_28 {
+                let __compact_plan_29: crate::types::MerkleTreePath =
+                    (((__compact_plan_27).clone()).value).clone();
+                let __compact_plan_30: crate::types::MerkleTreePath = __compact_plan_29;
+                let __compact_plan_31: crate::types::MerkleTreeDigest =
+                    crate::pure_circuits::merkleTreePathRoot(__compact_plan_30)?;
+                let __compact_plan_32: crate::types::MerkleTreeDigest = __compact_plan_31;
+                let (frame, __compact_plan_33): (_, bool) = crate::ledger_slots::committed_votes
+                    .record_check_root(frame, (__compact_plan_32).clone())?;
+                (frame, __compact_plan_33)
+            } else {
+                let __compact_plan_34: bool = false;
+                (frame, __compact_plan_34)
+            };
+            let (frame, __compact_plan_40): (_, bool) = if __compact_plan_35 {
+                let __compact_plan_36: crate::types::MerkleTreePath =
+                    (((__compact_plan_27).clone()).value).clone();
+                let __compact_plan_37: runtime::FixedBytes<32> = (__compact_plan_36).leaf;
+                let __compact_plan_38: bool = __compact_plan_24 == __compact_plan_37;
+                (frame, __compact_plan_38)
+            } else {
+                let __compact_plan_39: bool = false;
+                (frame, __compact_plan_39)
+            };
+            if !__compact_plan_40 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Attempted to reveal incorrectly".to_owned(),
+                ));
+            }
+            let __compact_plan_41: crate::types::PermissibleVotes =
+                crate::types::PermissibleVotes::yes;
+            let __compact_plan_42: bool = __compact_plan_18 == __compact_plan_41;
+            #[allow(
+                clippy::let_and_return,
+                reason = "uniform branch frames preserve ordered recording steps"
+            )]
+            let frame = if __compact_plan_42 {
+                let __compact_plan_43: runtime::BoundedUint<65535> =
+                    runtime::BoundedUint::<65535>::new(1u128)
+                        .expect("Compact Uint literal fits its maximum");
+                let __compact_plan_44: runtime::BoundedUint<65535> = __compact_plan_43;
+                let frame = crate::ledger_slots::tally_yes
+                    .record_increment(frame, (__compact_plan_44).value() as u16)?;
+                frame
+            } else {
+                let __compact_plan_45: runtime::BoundedUint<65535> =
+                    runtime::BoundedUint::<65535>::new(1u128)
+                        .expect("Compact Uint literal fits its maximum");
+                let __compact_plan_46: runtime::BoundedUint<65535> = __compact_plan_45;
+                let frame = crate::ledger_slots::tally_no
+                    .record_increment(frame, (__compact_plan_46).value() as u16)?;
+                frame
+            };
+            let frame = crate::ledger_slots::revealed.record_insert(frame, __compact_plan_12)?;
+            let (frame, __compact_plan_47): (_, ()) =
+                frame.try_witness_metered(|context, meter| {
+                    witnesses.private_state_advance(context.witness_context_with(
+                        super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        },
+                    ))
+                })?;
+            Ok(frame.finish(()))
+        }
         pub fn advance<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
             witnesses: &W,
@@ -1288,6 +1439,36 @@ pub mod ledger_contract {
                     observed,
                     recorded,
                     "vote$commit",
+                    input,
+                ))
+            }
+            pub fn vote_reveal<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                vote_reveal(context, self.witnesses)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn vote_reveal_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.vote_reveal(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "vote$reveal",
                     input,
                 ))
             }

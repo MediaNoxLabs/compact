@@ -1497,7 +1497,7 @@ def main() -> None:
             election_capabilities = json.loads(
                 (election_topic_proof / "contract/rust-capabilities.json").read_text()
             )
-            for circuit in ("set_topic", "advance", "add_voter", "vote$commit"):
+            for circuit in ("set_topic", "advance", "add_voter", "vote$commit", "vote$reveal"):
                 row = next(row for row in election_capabilities["circuits"] if row["name"] == circuit)
                 assert row["proof_required"] and row["recorded"] and row["observed_call"]
                 for extension in ("prover", "verifier"):
@@ -1930,6 +1930,10 @@ def main() -> None:
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 "--election-commit", str(election_topic_proof),
+            )
+            run(
+                "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--election-reveal", str(election_topic_proof),
             )
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",

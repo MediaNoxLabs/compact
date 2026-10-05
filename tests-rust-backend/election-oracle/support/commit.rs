@@ -99,9 +99,14 @@ impl contract::TryWitnesses<Private> for Witness {
     }
     fn private_vote(
         &self,
-        _context: WitnessContext<'_, Private, contract::LedgerView<'_>>,
+        context: WitnessContext<'_, Private, contract::LedgerView<'_>>,
     ) -> Result<(Private, PermissibleVotes), CompactError> {
-        panic!("unexpected vote read")
+        let vote = if context.private_state.ballot == 0 {
+            PermissibleVotes::yes
+        } else {
+            PermissibleVotes::no
+        };
+        Ok((self.step("vote", &context), vote))
     }
     fn context_eligible_voters_path_of(
         &self,
@@ -135,10 +140,35 @@ impl contract::TryWitnesses<Private> for Witness {
     }
     fn context_committed_votes_path_of(
         &self,
-        _context: WitnessContext<'_, Private, contract::LedgerView<'_>>,
-        _cm: FixedBytes<32>,
+        context: WitnessContext<'_, Private, contract::LedgerView<'_>>,
+        cm: FixedBytes<32>,
     ) -> Result<(Private, MaybeCompact1), CompactError> {
-        panic!("unexpected commitment path")
+        let state = self.step("path", &context);
+        let key = if matches!(self.mode, Mode::WrongLeaf) {
+            let mut no = [0; 32];
+            no[..2].copy_from_slice(b"no");
+            runtime::persistent_hash((FixedBytes::new(no), FixedBytes::new([7; 32])))
+        } else {
+            cm
+        };
+        let path = context.ledger.committed_votes()?.find_path_for_leaf(key);
+        let mut result = if let Some(mut path) = path {
+            if matches!(self.mode, Mode::Malformed) {
+                path.path.pop();
+            }
+            MaybeCompact1 {
+                is_some: true,
+                value: MerkleTreePath::from_ledger_path(path)?,
+            }
+        } else {
+            MaybeCompact1::default()
+        };
+        if matches!(self.mode, Mode::WrongRoot) {
+            let mut entries = result.value.path.into_array();
+            entries[0].sibling.field = entries[0].sibling.field + runtime::Field::from(1_u64);
+            result.value.path = runtime::FixedVector::new(entries);
+        }
+        Ok((state, result))
     }
 }
 
@@ -174,5 +204,40 @@ pub fn seeded(
         context = contract::advance(context, &witness)?.context;
     }
     context.private_state = Private::default();
+    Ok(context)
+}
+
+pub fn reveal_seeded(
+    ballot: PermissibleVotes,
+    no_commit: bool,
+    no_advance: bool,
+    opposite: bool,
+) -> Result<CircuitContext<Private>, CompactError> {
+    let witness = Witness::default();
+    let mut context = seeded(false, false, false)?;
+    if !no_commit {
+        context = contract::vote_commit(
+            context,
+            &witness,
+            if opposite {
+                PermissibleVotes::no
+            } else {
+                ballot
+            },
+        )?
+        .context;
+    }
+    if !no_advance {
+        context = contract::advance(context, &witness)?.context;
+    }
+    context.private_state = Private {
+        phase: 1,
+        ballot: if ballot == PermissibleVotes::yes {
+            0
+        } else {
+            1
+        },
+        calls: 0,
+    };
     Ok(context)
 }

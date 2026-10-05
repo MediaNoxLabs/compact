@@ -176,3 +176,8 @@ execution path and return `CircuitResult`.
 ABI41 adds native/recorded Counter less-than queries through typed CounterSlot
 methods. The shared program reproduces Compact ledger8 `dup/idx/push/lt/popeq`,
 including the cached Boolean observation and exact ledger gas.
+
+ABI42 adds native `CellSlot::write_coin` and `CircuitContext::write_qualified_coin_cell`.
+Qualified Cell writes and Set insertions share allocated commitment validation,
+then obtain the Merkle index through the canonical ledger VM. Recording Cell coin
+writes remains unsupported and is reported explicitly by the compiler.

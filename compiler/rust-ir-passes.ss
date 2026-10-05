@@ -1076,6 +1076,14 @@
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
                          (cons "value" (typed-expression-ir (car expr*) (car adt-arg*) src)))]
+                [(and (eq? adt-name '__compact_Cell)
+                      (eq? ledger-op 'writeCoin)
+                      (= (length expr*) 2))
+                 (object (cons "kind" "cell_write_coin")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*))
+                         (cons "coin" (stateful-typed-expression-ir (car expr*) (car type*) src witness-ids))
+                         (cons "recipient" (stateful-typed-expression-ir (cadr expr*) (cadr type*) src witness-ids)))]
                 [(and (eq? adt-name 'Set)
                       (eq? ledger-op 'insertCoin)
                       (= (length expr*) 2))
@@ -2207,7 +2215,7 @@
            (source-errorf src "Rust backend found multiple constructors"))
          (print-json
            (get-target-port 'rust.ir.json)
-           (append (object (cons "schema_version" 15)
+           (append (object (cons "schema_version" 16)
                    (cons "type_aliases"
                          (list->vector (fold-right type-alias-ir '() pelt*)))
                    (cons "ledger_fields"

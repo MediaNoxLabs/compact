@@ -1579,6 +1579,9 @@ fn action_calls_named(action: &StateAction, name: &str) -> bool {
         }
         StateAction::SetInsertCoin {
             coin, recipient, ..
+        }
+        | StateAction::CellWriteCoin {
+            coin, recipient, ..
         } => expression_calls_named(coin, name) || expression_calls_named(recipient, name),
         StateAction::MerkleInsertIndex {
             value, position, ..
@@ -1697,6 +1700,9 @@ fn action_emits_native_private_output(action: &StateAction) -> bool {
             expression_contains_native_witness(key) || expression_contains_native_witness(value)
         }
         StateAction::SetInsertCoin {
+            coin, recipient, ..
+        }
+        | StateAction::CellWriteCoin {
             coin, recipient, ..
         } => {
             expression_contains_native_witness(coin)
@@ -1996,6 +2002,9 @@ fn action_contains_witness(action: &StateAction) -> bool {
             expression_contains_witness(key) || expression_contains_witness(value)
         }
         StateAction::SetInsertCoin {
+            coin, recipient, ..
+        }
+        | StateAction::CellWriteCoin {
             coin, recipient, ..
         } => expression_contains_witness(coin) || expression_contains_witness(recipient),
         StateAction::MerkleInsertIndex {
@@ -2627,17 +2636,24 @@ pub(crate) fn render_stateful_circuit(
                 index,
                 coin,
                 recipient,
+            }
+            | StateAction::CellWriteCoin {
+                field,
+                index,
+                coin,
+                recipient,
             } => {
                 let declaration = ledger_fields
                     .get(field.as_str())
                     .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
                 let expected = qualified_coin_type();
-                if declaration.declaration
-                    != (LedgerFieldKind::Set {
-                        ty: expected.clone(),
-                    })
-                    || declaration.index != *index
-                {
+                let cell_write = matches!(action, StateAction::CellWriteCoin { .. });
+                let expected_kind = if cell_write {
+                    LedgerFieldKind::Cell { ty: expected }
+                } else {
+                    LedgerFieldKind::Set { ty: expected }
+                };
+                if declaration.declaration != expected_kind || declaration.index != *index {
                     return Err(RenderError::UnknownLedgerField(field.clone()));
                 }
                 let mut operands = Vec::new();
@@ -2696,8 +2712,13 @@ pub(crate) fn render_stateful_circuit(
                 }
                 statements.extend(operands);
                 let slot = ident(&declaration.id)?;
+                let method = ident(if cell_write {
+                    "write_coin"
+                } else {
+                    "insert_coin"
+                })?;
                 statements.push(syn::parse_quote! {
-                    let step = crate::ledger_slots::#slot.insert_coin(
+                    let step = crate::ledger_slots::#slot.#method(
                         context,
                         runtime::ledger::coin_info_from_compact(
                             #coin_name.nonce,

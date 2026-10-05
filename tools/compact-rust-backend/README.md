@@ -299,7 +299,7 @@ Compact spelling without warning in consumer builds.
 | Boundary | Current contract | Failure behavior |
 |---|---|---|
 | Compact compiler | Toolchain 0.31.133, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
-| Rust IR | Schema 15, private to this backend | The renderer rejects any other schema before writing `lib.rs`. Schema 15 adds typed Counter less-than queries. Schema 14 adds typed qualified-coin Set insertion. Schema 13 adds an explicit typed Field-to-Bytes32 expression and nested Counter read; the cast uses midnight-zk's canonical 32-byte little-endian Field representation. Ledger, circuit, witness, constructor, and exported alias declarations carry optional Compact source locations for diagnostics. |
+| Rust IR | Schema 16, private to this backend | The renderer rejects any other schema before writing `lib.rs`. Schema 16 adds native qualified-coin Cell writes. Schema 15 adds typed Counter less-than queries. Schema 14 adds typed qualified-coin Set insertion. Schema 13 adds an explicit typed Field-to-Bytes32 expression and nested Counter read; the cast uses midnight-zk's canonical 32-byte little-endian Field representation. Ledger, circuit, witness, constructor, and exported alias declarations carry optional Compact source locations for diagnostics. |
 | Generated code and Rust runtime | ABI 39 | Generated modules assert the ABI at Rust compile time. ABI 39 adds qualified-coin Set insertion using ledger coin and recipient types and the allocated commitment index. ABI 38 adds audited local-helper adoption for private witnesses, gas, and transcript while checking the public and Zswap context. ABI 37 adds a caller coin key for native `ownPublicKey()` and its private output; ABI 36 adds recorded plain Merkle root checks through typed slots; ABI 35 adds recorded Counter reset through typed slots; ABI 34 adds recorded direct plain/historic Merkle fullness reads; ABI 33 adds typed local plain/historic Merkle views with checked depth; ABI 32 adds List views; ABI 31 adds cell-valued Map views; ABI 30 adds Set views; ABI 29 adds Cell/Counter views; ABI 25–28 add physical List paths, chunked Map and Cell calls, and Cell-read scalar returns; ABI 21–24 add typed multi-argument observed calls and composite/chunked Set calls. The [runtime guide](../../runtime-rs/README.md) records earlier ABI changes. |
 | Rust runtime source | Bundled runtime crates or an explicit shared source root | Cargo resolves the matching runtime and its pinned Midnight crates. |
 
@@ -754,3 +754,29 @@ shape; native/recorded totals use the query-cost sum. Assertion rejection is
 checked separately because Rust error results do not expose partial query gas.
 Original micro-dao now reaches unsupported `pot.writeCoin` at line171; this is
 source progress, not complete native or recorded DAO admission.
+
+### Native qualified-coin Cell writes (ADR0173)
+
+Schema16 `CellWriteCoin` validates a Cell of the exact Compact qualified-coin
+shape and typed coin/recipient operands, sharing native operand lowering with
+qualified Set insertion. ABI42 adds `CellSlot::write_coin` and the context method.
+Both collection operations share the upstream coin commitment calculation and
+allocation-presence validation. The actual index lookup and qualification happen
+inside the ledger VM; the runtime never fabricates an index.
+
+The Cell program preserves Compact's root and parent-path stack offsets, concat91
+and insertion flags. Root and `[1,14]` parent paths have independent generated TS
+program/state/effect/gas evidence; empty paths and depths exceeding the VM's
+four-bit dup operand reject. Caller-supplied allocation tables in native fixtures
+are test context inputs; production allocation remains ledger-owned. Missing or
+wrong-recipient allocations reject before querying, matching TS preflight checks.
+
+`check_compactc_target.py --qualified-coin-cell` verifies native source admission,
+the chunked path probe, and required-recording refusal. The capability report
+explicitly identifies unsupported `StateAction::CellWriteCoin` recording. This
+slice has no recorded write or proof claim. Its recipient is a parameter, so it
+does not mask the separate Kernel.self query/gas fix from ADR0170.
+
+The unchanged original micro-dao advances past `pot.writeCoin` to an unsupported
+standard-library native-witness expression. Its createZswapOutput/createZswapInput
+family and further shielded operations remain separate source-admission work.

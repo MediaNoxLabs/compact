@@ -472,6 +472,16 @@ impl<T: CellValue> CellSlot<T> {
         context.read_cell_at_path(self.path)
     }
 
+    /// Qualify a coin using the transaction context and replace this Cell.
+    pub fn write_coin<Private, D: DB>(
+        self,
+        context: CircuitContext<Private, D>,
+        coin: crate::ledger::CoinInfo,
+        recipient: crate::ledger::CoinRecipient,
+    ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        context.write_qualified_coin_cell::<T>(self.path, coin, recipient)
+    }
+
     pub fn write<Private, D: DB>(
         self,
         context: CircuitContext<Private, D>,

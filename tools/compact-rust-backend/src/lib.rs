@@ -7,7 +7,7 @@ pub use recorded::{RecordingGap, RecordingGapCode};
 mod stateful;
 mod witness;
 
-const RUNTIME_ABI_VERSION: u32 = 41;
+const RUNTIME_ABI_VERSION: u32 = 42;
 pub const RUST_CAPABILITY_SCHEMA_VERSION: u32 = 3;
 
 const GENERATED_HEADER: &str = r#"// This file is part of Compact.
@@ -879,6 +879,9 @@ fn collect_action_types(
             collect_expression_types(value, structs, enums)?;
         }
         StateAction::SetInsertCoin {
+            coin, recipient, ..
+        }
+        | StateAction::CellWriteCoin {
             coin, recipient, ..
         } => {
             collect_expression_types(coin, structs, enums)?;

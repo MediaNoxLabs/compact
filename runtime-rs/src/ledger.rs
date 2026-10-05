@@ -110,6 +110,25 @@ pub fn coin_recipient_from_compact(
     }
 }
 
+/// Validate an already allocated qualified coin without inventing its index.
+/// Both Set insertion and Cell replacement leave index lookup to the ledger VM.
+pub(crate) fn qualified_coin_commitment<T: CellValue, D: DB>(
+    context: &QueryContext<D>,
+    coin: &CoinInfo,
+    recipient: &CoinRecipient,
+) -> Result<midnight_coin_structure::coin::Commitment, CompactError> {
+    if T::alignment() != QualifiedCoinInfo::alignment() {
+        return Err(CompactError::InvalidLedgerCell(
+            "value alignment is not QualifiedShieldedCoinInfo".into(),
+        ));
+    }
+    let commitment = coin.commitment(recipient);
+    if context.call_context.com_indices.get(&commitment).is_none() {
+        return Err(CompactError::InvalidLedgerCell("Coin commitment not found. Check the coin has been received (or call 'createZswapOutput')".into()));
+    }
+    Ok(commitment)
+}
+
 macro_rules! primitive_cell_value {
     ($($ty:ty),* $(,)?) => {$ (
         impl CellValue for $ty {
@@ -249,7 +268,7 @@ pub(crate) use cell::{
 };
 pub use cell::{
     constructor_cell, query_cell, query_cell_at_path, read_cell, read_cell_at_path, read_root_cell,
-    write_cell, write_cell_at_path,
+    write_cell, write_cell_at_path, write_qualified_coin_cell,
 };
 pub use collections::{
     ListView, MapView, MeteredListView, MeteredMapView, MeteredSetView, SetView, constructor_list,

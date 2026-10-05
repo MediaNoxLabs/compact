@@ -2577,7 +2577,7 @@ fn generated_unit_enum_uses_checked_derive_without_handwritten_codecs() {
     let source = render(&contract).unwrap();
     assert!(source.contains("CompactCellValue, CompactEnum"));
     assert!(source.contains("pub enum Choice"));
-    assert!(source.contains("RUST_RUNTIME_ABI == 41"));
+    assert!(source.contains("RUST_RUNTIME_ABI == 42"));
     assert!(!source.contains("impl FieldRepr for Choice"));
     assert!(!source.contains("impl BinaryHashRepr for Choice"));
     assert!(!source.contains("impl FromFieldRepr for Choice"));
@@ -10250,4 +10250,50 @@ fn counter_less_than_requires_typed_counter_slots_and_thresholds() {
         },
     });
     assert!(render_with_capabilities(&pure).is_err());
+}
+
+#[test]
+fn qualified_cell_coin_write_is_typed_native_and_reports_recording_gap() {
+    let mut contract: Contract =
+        serde_json::from_str(include_str!("qualified-coin-cell-schema16-ir.json")).unwrap();
+    contract.schema_version = SCHEMA_VERSION;
+    let rendered = render_with_capabilities(&contract).unwrap();
+    let write = rendered
+        .capabilities
+        .circuits
+        .iter()
+        .find(|c| c.name == "write_coin")
+        .unwrap();
+    assert!(!write.recorded && !write.observed_call);
+    let gap = write.recording_unavailable.as_ref().unwrap();
+    assert_eq!(gap.ir_node, "StateAction::CellWriteCoin");
+    assert_eq!(gap.path, "actions[0]");
+    assert!(rendered.source.contains(".write_coin("));
+    for mode in 0..4 {
+        let mut wrong = contract.clone();
+        let circuit = wrong
+            .stateful_circuits
+            .iter_mut()
+            .find(|c| c.name == "write_coin")
+            .unwrap();
+        let StateAction::CellWriteCoin {
+            index,
+            coin,
+            recipient,
+            ..
+        } = &mut circuit.actions[0]
+        else {
+            panic!("expected coin write")
+        };
+        match mode {
+            0 => *index = 1,
+            1 => *coin = Expr::Boolean { value: false },
+            2 => *recipient = Expr::Boolean { value: false },
+            _ => wrong.ledger_fields[0].declaration = LedgerFieldKind::Cell { ty: Type::Boolean },
+        }
+        assert!(
+            render_with_capabilities(&wrong).is_err(),
+            "invalid qualified Cell mode {mode}"
+        );
+    }
 }

@@ -23,8 +23,8 @@ use super::{
 use crate::BoundedUint;
 use crate::context::WitnessReadMeter;
 use midnight_base_crypto::cost_model::RunningCost;
-use midnight_base_crypto::fab::{Aligned, AlignedValue};
-use midnight_coin_structure::coin::{Info as CoinInfo, QualifiedInfo as QualifiedCoinInfo};
+use midnight_base_crypto::fab::AlignedValue;
+use midnight_coin_structure::coin::Info as CoinInfo;
 use midnight_coin_structure::transfer::Recipient;
 use midnight_onchain_vm::cost_model::CostModel;
 use midnight_onchain_vm::ops::{Key, Op};
@@ -774,17 +774,7 @@ pub fn insert_qualified_coin_set<T: CellValue, D: DB>(
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, CompactError> {
-    if T::alignment() != QualifiedCoinInfo::alignment() {
-        return Err(CompactError::InvalidLedgerCell(
-            "Set element alignment is not QualifiedShieldedCoinInfo".into(),
-        ));
-    }
-    let commitment = coin.commitment(&recipient);
-    if context.call_context.com_indices.get(&commitment).is_none() {
-        return Err(CompactError::InvalidLedgerCell(
-            "Coin commitment not found. Check the coin has been received (or call 'createZswapOutput')".into(),
-        ));
-    }
+    let commitment = super::qualified_coin_commitment::<T, D>(context, &coin, &recipient)?;
     let path = path.into();
     let program = vec![
         Op::Idx {

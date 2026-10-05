@@ -229,3 +229,154 @@ pub(crate) fn cell_write_program<T: CellValue, D: DB>(
         Op::Ins { cached: true, n: 1 },
     ]
 }
+
+/// Replace a qualified-coin Cell using its transaction-allocated commitment index.
+pub fn write_qualified_coin_cell<T: CellValue, D: DB>(
+    context: &QueryContext<D>,
+    path: impl Into<super::LedgerPath>,
+    coin: super::CoinInfo,
+    recipient: super::CoinRecipient,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<QueryResults<ResultModeVerify, D>, CompactError> {
+    let commitment = super::qualified_coin_commitment::<T, D>(context, &coin, &recipient)?;
+    let path = path.into();
+    let program = qualified_coin_cell_write_program(path.as_slice(), coin, commitment)?;
+    context
+        .query(&program, gas_limit, cost_model)
+        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))
+}
+
+fn qualified_coin_cell_write_program<D: DB>(
+    path: &[u8],
+    coin: super::CoinInfo,
+    commitment: midnight_coin_structure::coin::Commitment,
+) -> Result<Vec<Op<ResultModeVerify, D>>, CompactError> {
+    let Some((&last, parents)) = path.split_last() else {
+        return Err(CompactError::InvalidLedgerCell(
+            "empty qualified coin Cell path".into(),
+        ));
+    };
+    // The VM encodes dup depth in four bits. Each indexed parent adds two
+    // stack entries; suppressing a root idx matches the Compact ADT program.
+    let depth = 3 + 2 * parents.len();
+    if depth > 15 {
+        return Err(CompactError::InvalidLedgerCell(
+            "qualified coin Cell path exceeds VM dup depth".into(),
+        ));
+    }
+    let mut program = Vec::new();
+    if !parents.is_empty() {
+        program.push(Op::Idx {
+            cached: false,
+            push_path: true,
+            path: super::path_keys(parents).into(),
+        });
+    }
+    program.extend([
+        Op::Push {
+            storage: false,
+            value: constructor_cell(last),
+        },
+        Op::Dup { n: depth as u8 },
+        Op::Push {
+            storage: false,
+            value: StateValue::from(AlignedValue::from(commitment)),
+        },
+        Op::Idx {
+            cached: true,
+            push_path: false,
+            path: vec![Key::Value(AlignedValue::from(1u8)), Key::Stack].into(),
+        },
+        Op::Push {
+            storage: false,
+            value: StateValue::from(AlignedValue::from(coin)),
+        },
+        Op::Swap { n: 0 },
+        Op::Concat {
+            cached: true,
+            n: 91,
+        },
+        Op::Ins {
+            cached: false,
+            n: 1,
+        },
+    ]);
+    if !parents.is_empty() {
+        program.push(Op::Ins {
+            cached: true,
+            n: parents.len() as u8,
+        });
+    }
+    Ok(program)
+}
+
+#[cfg(test)]
+mod qualified_coin_tests {
+    use super::*;
+    use crate::{FixedBytes, ledger};
+
+    #[test]
+    fn native_qualified_cell_program_matches_independent_typescript() {
+        let oracle: serde_json::Value = serde_json::from_str(include_str!(
+            "../../tests/fixtures/qualified-coin-cell-oracle.json"
+        ))
+        .unwrap();
+        for (name, left, second) in [
+            ("right7", false, false),
+            ("left11", true, false),
+            ("zero", false, false),
+            ("replacement", true, true),
+        ] {
+            let mut nonce = [0; 32];
+            nonce[..5].copy_from_slice(b"nonce");
+            if second {
+                nonce[5] = b'2';
+            }
+            let mut color = [0; 32];
+            color[..5].copy_from_slice(b"color");
+            let coin = ledger::coin_info_from_compact(
+                FixedBytes::new(nonce),
+                FixedBytes::new(color),
+                if second { 43 } else { 42 },
+            );
+            let mut key = [0; 32];
+            if left {
+                key[0] = 7;
+            }
+            let recipient = ledger::coin_recipient_from_compact(
+                left,
+                FixedBytes::new(key),
+                FixedBytes::new([0; 32]),
+            );
+            let commitment = coin.commitment(&recipient);
+            let program =
+                qualified_coin_cell_write_program::<ledger::DefaultDB>(&[0], coin, commitment)
+                    .unwrap();
+            assert_eq!(
+                serde_json::to_value(program).unwrap(),
+                oracle[name]["publicTranscript"]
+            );
+            let chunked: serde_json::Value = serde_json::from_str(include_str!(
+                "../../tests/fixtures/qualified-coin-cell-chunked-oracle.json"
+            ))
+            .unwrap();
+            let nested =
+                qualified_coin_cell_write_program::<ledger::DefaultDB>(&[1, 14], coin, commitment)
+                    .unwrap();
+            assert_eq!(
+                serde_json::to_value(nested).unwrap(),
+                chunked[name]["publicTranscript"]
+            );
+
+            assert!(
+                qualified_coin_cell_write_program::<ledger::DefaultDB>(&[], coin, commitment)
+                    .is_err()
+            );
+            assert!(
+                qualified_coin_cell_write_program::<ledger::DefaultDB>(&[0; 8], coin, commitment)
+                    .is_err()
+            );
+        }
+    }
+}

@@ -73,6 +73,7 @@ use compact_rust_list_field_fixture::ledger_contract as list_contract;
 use compact_rust_map_boolean_field_fixture::ledger_contract as map_contract;
 use compact_rust_merkle_tree_oracle_fixture::ledger_contract as merkle_contract;
 use compact_rust_nested_map_shape_fixture::ledger_contract as nested_map_shape_contract;
+use compact_rust_nested_stateful_ternary_fixture::ledger_contract as nested_stateful_ternary_contract;
 use compact_rust_nested_witness_call_oracle_fixture::ledger_contract as expression_contract;
 use compact_rust_observed_composite_keys_fixture::ledger_contract as composite_key_contract;
 use compact_rust_observed_composite_keys_fixture::types::CompositeKey;
@@ -968,6 +969,58 @@ fn check_closed_unsigned_ternary_comparison_proof(root: &Path) -> Result<(), Box
     Ok(())
 }
 
+fn check_nested_uint64_cell_counter_proof(root: &Path) -> Result<(), Box<dyn Error>> {
+    let mut rng = StdRng::seed_from_u64(0x0132_4e45_5354_4544);
+    let circuit = "run";
+    for choice in [true, false] {
+        let initial = nested_stateful_ternary_contract::initial_state(ConstructorContext::new(()))?;
+        let seed = initial.into_circuit_context(Default::default());
+        let deploy = make_deploy(root, circuit, seed.query.state.get_ref().clone(), &mut rng)?;
+        let observed = ObservedContractState::new(
+            deploy.address(),
+            deploy.initial_state.clone(),
+            Observation {
+                transaction_hash: [0; 32],
+                block_hash: [0; 32],
+                block_height: 0,
+            },
+        );
+        let verifier: VerifierKey = tagged_deserialize(&mut BufReader::new(File::open(
+            root.join(format!("keys/{circuit}.verifier")),
+        )?))?;
+        let recorded =
+            nested_stateful_ternary_contract::recorded::run(observed.circuit_context(()), choice)?;
+        let expected_state = recorded.execution.context.query.state.get_ref().clone();
+        let manual = check_generated_trace(root, circuit, recorded, choice)?;
+        let typed = nested_stateful_ternary_contract::Contract::default()
+            .recording
+            .run_call(&observed, (), choice)?
+            .prepare(verifier, Fr::from(0_u64))?;
+        if format!("{manual:?}") != format!("{typed:?}") {
+            return Err(format!("{circuit} typed observed call differs from manual trace").into());
+        }
+        let expected = BoundedUint::<18446744073709551615>::new(if choice { 1 } else { 4 })?;
+        check_transaction(root, circuit, deploy, typed, &mut rng, |state| {
+            let data = state.data.get_ref();
+            if data != &expected_state {
+                return Err("nested Uint proof changed unexpected ledger state".into());
+            }
+            if read_cell_at_path::<BoundedUint<18446744073709551615>, _>(data, &[0])? != expected {
+                return Err("nested Uint proof stored the wrong branch".into());
+            }
+            let StateValue::Array(fields) = data else {
+                return Err("nested Uint state is not an array".into());
+            };
+            if read_counter(fields.get(1).ok_or("Counter missing")?)? != 1 {
+                return Err("nested Uint proof changed the Counter".into());
+            }
+            Ok(())
+        })?;
+    }
+    println!("nested Uint<4> to Uint<64> Cell and Counter proved and applied through ledger-8");
+    Ok(())
+}
+
 fn check_nested_uint4_proof(root: &Path) -> Result<(), Box<dyn Error>> {
     let mut rng = StdRng::seed_from_u64(0x0121_4e45_5354_4544);
     for (circuit, args, flag, expected_field) in [
@@ -1823,6 +1876,29 @@ fn main() -> Result<(), Box<dyn Error>> {
             );
         }
         return check_closed_unsigned_ternary_comparison_proof(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--nested-uint64-cell-counter")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --nested-uint64-cell-counter <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err(
+                "usage: compact-rust-proof-smoke --nested-uint64-cell-counter <proof-output>"
+                    .into(),
+            );
+        }
+        let root = PathBuf::from(root);
+        return match std::thread::Builder::new()
+            .stack_size(64 * 1024 * 1024)
+            .spawn(move || {
+                check_nested_uint64_cell_counter_proof(&root).map_err(|error| error.to_string())
+            })?
+            .join()
+        {
+            Ok(Ok(())) => Ok(()),
+            Ok(Err(error)) => Err(error.into()),
+            Err(_) => Err("nested Uint<64> Cell/Counter proof thread panicked".into()),
+        };
     }
     if first.as_deref() == Some(OsStr::new("--nested-uint4")) {
         let root = arguments

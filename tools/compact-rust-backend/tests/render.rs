@@ -239,6 +239,95 @@ fn identity(result: Type, body: Expr) -> Contract {
 }
 
 #[test]
+fn recorded_nested_uint64_projection_rejects_other_widths_and_effects() {
+    let mut contract: Contract = serde_json::from_str(include_str!(
+        "../fixtures/recorded-nested-uint64-cell-counter.json"
+    ))
+    .unwrap();
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(
+        rendered
+            .source
+            .contains("__compact_recorded_nested_uint64_")
+    );
+
+    let closed = contract.clone();
+    let StateAction::Let { action, .. } = &mut contract.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    let StateAction::Sequence { actions } = action.as_mut() else {
+        unreachable!()
+    };
+    let StateAction::Let { bindings, .. } = &mut actions[0] else {
+        unreachable!()
+    };
+    bindings[0].ty = Type::Unsigned { max: "255".into() };
+    let Expr::UnsignedCast { max, .. } = &mut bindings[0].value else {
+        unreachable!()
+    };
+    *max = "255".into();
+    let LedgerFieldKind::Cell { ty } = &mut contract.ledger_fields[0].declaration else {
+        unreachable!()
+    };
+    *ty = Type::Unsigned { max: "255".into() };
+    assert!(
+        !render_with_capabilities(&contract)
+            .unwrap()
+            .capabilities
+            .circuits[0]
+            .recorded
+    );
+
+    let mut contract = closed.clone();
+    let StateAction::Let { action, .. } = &mut contract.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    let StateAction::Sequence { actions } = action.as_mut() else {
+        unreachable!()
+    };
+    let StateAction::Let { bindings, .. } = &mut actions[1] else {
+        unreachable!()
+    };
+    bindings[0].value = Expr::UnsignedLiteral {
+        value: "2".into(),
+        max: "65535".into(),
+    };
+    assert!(
+        !render_with_capabilities(&contract)
+            .unwrap()
+            .capabilities
+            .circuits[0]
+            .recorded
+    );
+
+    let mut contract = closed;
+    contract.witnesses.push(WitnessDeclaration {
+        source: None,
+        name: "dynamicFlag".into(),
+        parameters: vec![],
+        result: Type::Boolean,
+    });
+    let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    let Expr::If { condition, .. } = &mut bindings[0].value else {
+        unreachable!()
+    };
+    **condition = Expr::WitnessCall {
+        name: "dynamicFlag".into(),
+        arguments: vec![],
+    };
+    assert!(
+        !render_with_capabilities(&contract)
+            .unwrap()
+            .capabilities
+            .circuits[0]
+            .recorded
+    );
+}
+
+#[test]
 fn recorded_conditional_field_pair_rejects_unrecorded_predicates_and_arms() {
     let mut contract: Contract = serde_json::from_str(include_str!(
         "../fixtures/recorded-closed-conditional-field-pair.json"

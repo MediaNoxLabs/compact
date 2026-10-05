@@ -58,6 +58,7 @@ STATEFUL_PURE_CALL_SOURCE = ROOT / "examples/rust_backend/stateful_pure_call.com
 FIELD_CAST_UINT128_SOURCE = ROOT / "examples/rust_backend/field_cast_uint128.compact"
 WIDENING_ARITH_SOURCE = ROOT / "examples/rust_backend/widening_arith_oracle.compact"
 TERNARY_COND_SOURCE = ROOT / "examples/rust_backend/ternary_cond_oracle.compact"
+NESTED_STATEFUL_TERNARY_SOURCE = ROOT / "examples/rust_backend/nested_stateful_ternary.compact"
 ASSET_REGISTRY_SOURCE = ROOT / "examples/rust_backend/asset_registry_oracle.compact"
 HISTORIC_MERKLE_SOURCE = ROOT / "examples/rust_backend/hmt_insert_oracle.compact"
 HISTORIC_MERKLE_DEFAULT_SOURCE = ROOT / "examples/rust_backend/hmt_default_oracle.compact"
@@ -1532,6 +1533,21 @@ def main() -> None:
                     assert (ternary_cond_proof / "keys" / f"{name}.{extension}").is_file()
                 for extension in ("zkir", "bzkir"):
                     assert (ternary_cond_proof / "zkir" / f"{name}.{extension}").is_file()
+            nested_stateful_ternary_proof = base / "nested-stateful-ternary-proof"
+            run(compiler, "--target", "rust", str(NESTED_STATEFUL_TERNARY_SOURCE),
+                str(nested_stateful_ternary_proof))
+            check_manifest(nested_stateful_ternary_proof)
+            capabilities = json.loads(
+                (nested_stateful_ternary_proof / "contract/rust-capabilities.json").read_text()
+            )
+            run_capability = next(row for row in capabilities["circuits"]
+                                  if row["name"] == "run")
+            assert run_capability["proof_required"] and run_capability["recorded"] \
+                and run_capability["observed_call"]
+            for extension in ("prover", "verifier"):
+                assert (nested_stateful_ternary_proof / "keys" / f"run.{extension}").is_file()
+            for extension in ("zkir", "bzkir"):
+                assert (nested_stateful_ternary_proof / "zkir" / f"run.{extension}").is_file()
             asset_writable_proof = base / "asset-writable-proof"
             run(compiler, "--target", "rust", str(ASSET_REGISTRY_SOURCE),
                 str(asset_writable_proof))
@@ -1762,6 +1778,10 @@ def main() -> None:
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 "--nested-uint4", str(ternary_cond_proof),
+            )
+            run(
+                "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--nested-uint64-cell-counter", str(nested_stateful_ternary_proof),
             )
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",

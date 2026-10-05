@@ -1,0 +1,228 @@
+{
+  "schema_version": 12,
+  "type_aliases": [],
+  "ledger_fields": [
+    {
+      "id": "stored",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "unsigned",
+          "max": "18446744073709551615"
+        }
+      },
+      "source": {
+        "file": "nested_stateful_ternary.compact",
+        "line": 17,
+        "column": 1
+      }
+    },
+    {
+      "id": "ops",
+      "index": 1,
+      "path": [
+        1
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "nested_stateful_ternary.compact",
+        "line": 18,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [],
+  "circuits": [],
+  "stateful_circuits": [
+    {
+      "name": "run",
+      "parameters": [
+        {
+          "name": "c",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "x",
+              "ty": {
+                "kind": "unsigned",
+                "max": "4"
+              },
+              "value": {
+                "kind": "if",
+                "condition": {
+                  "kind": "parameter",
+                  "name": "c"
+                },
+                "then": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "unsigned_cast",
+                    "max": "4",
+                    "value": {
+                      "kind": "if",
+                      "condition": {
+                        "kind": "parameter",
+                        "name": "c"
+                      },
+                      "then": {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "unsigned_literal",
+                          "value": "1",
+                          "max": "2"
+                        },
+                        "ty": {
+                          "kind": "unsigned",
+                          "max": "2"
+                        }
+                      },
+                      "otherwise": {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "unsigned_literal",
+                          "value": "2",
+                          "max": "2"
+                        },
+                        "ty": {
+                          "kind": "unsigned",
+                          "max": "2"
+                        }
+                      }
+                    }
+                  },
+                  "ty": {
+                    "kind": "unsigned",
+                    "max": "4"
+                  }
+                },
+                "otherwise": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "if",
+                    "condition": {
+                      "kind": "parameter",
+                      "name": "c"
+                    },
+                    "then": {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "unsigned_literal",
+                        "value": "3",
+                        "max": "4"
+                      },
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "4"
+                      }
+                    },
+                    "otherwise": {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "unsigned_literal",
+                        "value": "4",
+                        "max": "4"
+                      },
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "4"
+                      }
+                    }
+                  },
+                  "ty": {
+                    "kind": "unsigned",
+                    "max": "4"
+                  }
+                }
+              }
+            }
+          ],
+          "action": {
+            "kind": "sequence",
+            "actions": [
+              {
+                "kind": "let",
+                "bindings": [
+                  {
+                    "name": "tmp_3",
+                    "ty": {
+                      "kind": "unsigned",
+                      "max": "18446744073709551615"
+                    },
+                    "value": {
+                      "kind": "unsigned_cast",
+                      "max": "18446744073709551615",
+                      "value": {
+                        "kind": "parameter",
+                        "name": "x"
+                      }
+                    }
+                  }
+                ],
+                "action": {
+                  "kind": "cell_write",
+                  "field": "stored",
+                  "index": 0,
+                  "value": {
+                    "kind": "parameter",
+                    "name": "tmp_3"
+                  }
+                }
+              },
+              {
+                "kind": "let",
+                "bindings": [
+                  {
+                    "name": "tmp_2",
+                    "ty": {
+                      "kind": "unsigned",
+                      "max": "65535"
+                    },
+                    "value": {
+                      "kind": "unsigned_literal",
+                      "value": "1",
+                      "max": "65535"
+                    }
+                  }
+                ],
+                "action": {
+                  "kind": "counter_increment",
+                  "field": "ops",
+                  "index": 1,
+                  "amount": {
+                    "kind": "parameter",
+                    "name": "tmp_2"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "source": {
+        "file": "nested_stateful_ternary.compact",
+        "line": 20,
+        "column": 1
+      }
+    }
+  ],
+  "constructor": null
+}

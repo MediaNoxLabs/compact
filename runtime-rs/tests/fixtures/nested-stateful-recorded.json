@@ -1,0 +1,122 @@
+{
+  "true": {
+    "initialStateHex": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a3c00084008040004010404080104040814030401041008040c080408041004030414000418080104041cb0030450a00104030401080408080104010401084008000114030401041004010801040401040104010840080000100c72756e00040008242800042c080104043090030440806ae60e31fdb4b353d38709288ce63fe4d787e216a2944a836d6d2f44d1fa35d81410282034281003000400",
+    "afterStateHex": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a3c00080108040004010404080104040814030401041008040c080408041004030414000418080104041cb0030450a00104030401080408080104010401080108000114030401041004010801040401040104010801080000100c72756e00040008242800042c080104043090030440806ae60e31fdb4b353d38709288ce63fe4d787e216a2944a836d6d2f44d1fa35d81410282034281003000400",
+    "result": "",
+    "reportedGas": {
+      "readTime": "170000000",
+      "computeTime": "1323481916",
+      "bytesWritten": "80",
+      "bytesDeleted": "80"
+    },
+    "publicTranscriptShape": [
+      {
+        "kind": "push",
+        "storage": false
+      },
+      {
+        "kind": "push",
+        "storage": true
+      },
+      {
+        "kind": "ins",
+        "cached": false,
+        "n": 1
+      },
+      {
+        "kind": "idx",
+        "cached": false,
+        "pushPath": true,
+        "pathLength": 1
+      },
+      {
+        "kind": "addi",
+        "immediate": 1
+      },
+      {
+        "kind": "ins",
+        "cached": true,
+        "n": 1
+      }
+    ],
+    "privateTranscriptCount": 0,
+    "queries": [
+      {
+        "gasCost": {
+          "readTime": "85000000",
+          "computeTime": "1233942932",
+          "bytesWritten": "80",
+          "bytesDeleted": "80"
+        }
+      },
+      {
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1323481916",
+          "bytesWritten": "80",
+          "bytesDeleted": "80"
+        }
+      }
+    ]
+  },
+  "false": {
+    "initialStateHex": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a3c00084008040004010404080104040814030401041008040c080408041004030414000418080104041cb0030450a00104030401080408080104010401084008000114030401041004010801040401040104010840080000100c72756e00040008242800042c080104043090030440806ae60e31fdb4b353d38709288ce63fe4d787e216a2944a836d6d2f44d1fa35d81410282034281003000400",
+    "afterStateHex": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a4400080408040004010008010804080401040c080104041014030401041008041408040804180403041c0004200801040424b0030450a00104030401080408080104010401080408000114030401041004010801040401040104010801080000100c72756e000400082c30000434080104043890030440806ae60e31fdb4b353d38709288ce63fe4d787e216a2944a836d6d2f44d1fa35d8141830283c301003000400",
+    "result": "",
+    "reportedGas": {
+      "readTime": "170000000",
+      "computeTime": "1323481916",
+      "bytesWritten": "80",
+      "bytesDeleted": "80"
+    },
+    "publicTranscriptShape": [
+      {
+        "kind": "push",
+        "storage": false
+      },
+      {
+        "kind": "push",
+        "storage": true
+      },
+      {
+        "kind": "ins",
+        "cached": false,
+        "n": 1
+      },
+      {
+        "kind": "idx",
+        "cached": false,
+        "pushPath": true,
+        "pathLength": 1
+      },
+      {
+        "kind": "addi",
+        "immediate": 1
+      },
+      {
+        "kind": "ins",
+        "cached": true,
+        "n": 1
+      }
+    ],
+    "privateTranscriptCount": 0,
+    "queries": [
+      {
+        "gasCost": {
+          "readTime": "85000000",
+          "computeTime": "1233942932",
+          "bytesWritten": "80",
+          "bytesDeleted": "80"
+        }
+      },
+      {
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1323481916",
+          "bytesWritten": "80",
+          "bytesDeleted": "80"
+        }
+      }
+    ]
+  }
+}

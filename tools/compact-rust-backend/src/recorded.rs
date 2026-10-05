@@ -1526,6 +1526,29 @@ fn render_recorded_item(
         nested.then_some(selected)
     }
 
+    fn closed_counter_one_continuation(action: &StateAction) -> bool {
+        let StateAction::Let { bindings, action } = action else {
+            return false;
+        };
+        let [binding] = bindings.as_slice() else {
+            return false;
+        };
+        binding.ty
+            == (Type::Unsigned {
+                max: "65535".into(),
+            })
+            && matches!(
+                &binding.value,
+                Expr::UnsignedLiteral { value, max }
+                    if value == "1" && max == "65535"
+            )
+            && matches!(
+                action.as_ref(),
+                StateAction::CounterIncrement { amount: CounterAmount::Parameter { name }, .. }
+                    if name == &binding.name
+            )
+    }
+
     // The compiler emits each element of the closed two-Field vector as a
     // ternary over a Boolean already retained by recording. Both arms must
     // be small, checked literals; no element can perform a VM or witness
@@ -3458,6 +3481,98 @@ fn render_recorded_item(
                 bindings,
                 action: nested_action,
             } => {
+                // The nested Uint<4> source also occurs before an exact
+                // Uint<64> Cell projection and one Counter increment. Keep
+                // this sibling of the Field projection bounded and ordered.
+                if let [unsigned_binding] = bindings.as_slice()
+                    && unsigned_binding.ty == (Type::Unsigned { max: "4".into() })
+                    && let Some(selected) =
+                        closed_nested_uint4_source(&unsigned_binding.value, locals, parameters)
+                    && let StateAction::Sequence { actions } = nested_action.as_ref()
+                    && let [
+                        StateAction::Let {
+                            bindings: projected_bindings,
+                            action: projected_action,
+                        },
+                        continuation,
+                    ] = actions.as_slice()
+                    && let [projected_binding] = projected_bindings.as_slice()
+                    && projected_binding.ty
+                        == (Type::Unsigned {
+                            max: "18446744073709551615".into(),
+                        })
+                    && matches!(
+                        &projected_binding.value,
+                        Expr::UnsignedCast { max, value }
+                            if max == "18446744073709551615"
+                                && matches!(value.as_ref(), Expr::Parameter { name } if name == &unsigned_binding.name)
+                    )
+                    && matches!(
+                        projected_action.as_ref(),
+                        StateAction::CellWrite { value: Expr::Parameter { name }, .. }
+                            if name == &projected_binding.name
+                    )
+                    && closed_counter_one_continuation(continuation)
+                {
+                    let selected_name = syn::Ident::new(
+                        &format!("__compact_recorded_nested_uint4_{}", *next_temp),
+                        Span::call_site(),
+                    );
+                    *next_temp += 1;
+                    let widened_name = syn::Ident::new(
+                        &format!("__compact_recorded_nested_uint64_{}", *next_temp),
+                        Span::call_site(),
+                    );
+                    *next_temp += 1;
+                    steps.push(syn::parse_quote! {
+                        let #selected_name: runtime::BoundedUint<4> =
+                            runtime::BoundedUint::<4>::new((#selected) as u128)?;
+                    });
+                    steps.push(syn::parse_quote! {
+                        let #widened_name: runtime::BoundedUint<18446744073709551615> =
+                            runtime::cast_unsigned::<4, 18446744073709551615>(#selected_name)?;
+                    });
+                    let mut scoped = locals.clone();
+                    scoped.insert(
+                        unsigned_binding.name.clone(),
+                        syn::parse_quote!(#selected_name),
+                    );
+                    scoped.insert(
+                        projected_binding.name.clone(),
+                        syn::parse_quote!(#widened_name),
+                    );
+                    let first = append_steps(
+                        projected_action,
+                        &format!("{path}.action.actions[0].action"),
+                        &scoped,
+                        parameters,
+                        ledger_fields,
+                        witnesses,
+                        pure_circuits,
+                        circuits,
+                        shared_callees,
+                        steps,
+                        next_temp,
+                        visiting,
+                    )?;
+                    if let RecordingOutcome::Unsupported(_) = first {
+                        return Ok(first);
+                    }
+                    return append_steps(
+                        continuation,
+                        &format!("{path}.action.actions[1]"),
+                        &scoped,
+                        parameters,
+                        ledger_fields,
+                        witnesses,
+                        pure_circuits,
+                        circuits,
+                        shared_callees,
+                        steps,
+                        next_temp,
+                        visiting,
+                    );
+                }
                 if let [vector_binding] = bindings.as_slice()
                     && vector_binding.ty
                         == (Type::Vector {

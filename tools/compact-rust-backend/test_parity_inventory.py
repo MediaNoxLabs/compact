@@ -36,6 +36,106 @@ SCOPE_SPEC.loader.exec_module(source_scope)
 
 
 class ParityInventoryTests(unittest.TestCase):
+    def package_fixture(self, root: Path) -> tuple[Path, Path, Path, Path]:
+        package = root / next(iter(inventory.COMPILED_PACKAGE_ROOTS))
+        package.parent.mkdir(parents=True)
+        package.write_text('include "./parts/reachable";\n')
+        reachable = package.parent / "parts/reachable.compact"
+        reachable.parent.mkdir()
+        reachable.write_text("export pure circuit helper(): Boolean { return true; }\n")
+        unreachable = package.parent / "parts/unreachable.compact"
+        unreachable.write_text("export pure circuit helper(): Boolean { return false; }\n")
+        metadata = root / "compiler-info.json"
+        metadata.write_text(json.dumps([{"name": "helper", "pure": True, "proof": False}]))
+        compiler = root / "compiler.py"
+        compiler.write_text("""#!/usr/bin/env python3
+import json, pathlib, sys
+root = pathlib.Path(__file__).parent
+output = pathlib.Path(sys.argv[-1])
+contract = output / "contract"
+contract.mkdir(parents=True)
+(contract / "rust-capabilities.json").write_text(json.dumps({"schema_version": 3, "circuits": []}))
+metadata = output / "compiler"
+metadata.mkdir()
+(metadata / "contract-info.json").write_text(json.dumps({
+    "circuits": json.loads((root / "compiler-info.json").read_text())
+}))
+""")
+        compiler.chmod(0o755)
+        return package, reachable, metadata, compiler
+
+    def test_imported_pure_metadata_uses_reachable_source_without_identity_change(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            package, reachable, _, compiler = self.package_fixture(root)
+            before = inventory.make_inventory(root, [], None)
+            after = inventory.make_inventory(root, [], compiler)
+            self.assertEqual(inventory.baseline_rows(before["rows"]),
+                             inventory.baseline_rows(after["rows"]))
+            rows = {row["source"]: row for row in after["rows"] if row["name"] == "helper"}
+            reached = rows[inventory.relative_source(reachable, root)]
+            self.assertEqual((reached["proof_required"], reached["compiler_pure"],
+                              reached["rust_recording_status"], reached["rust_recorded"],
+                              reached["compiler_metadata_source"]),
+                             (False, True, "not_applicable", None,
+                              inventory.relative_source(package, root)))
+            self.assertIsNone(rows[inventory.relative_source(
+                package.parent / "parts/unreachable.compact", root)]["proof_required"])
+            self.assertIsNone(rows[inventory.relative_source(
+                package.parent / "parts/unreachable.compact", root)]["compiler_metadata_source"])
+            self.assertEqual(after["summary"]["compiled_rust_sources"], 1)
+            self.assertEqual(after["summary"]["nonproof"], 1)
+            self.assertEqual(after["summary"]["unassessed_exported_circuits"], 1)
+            focused = inventory.make_inventory(
+                root, [], compiler, {inventory.relative_source(package, root)})
+            self.assertEqual(focused["summary"]["sources"], 2)
+            self.assertEqual(focused["summary"]["nonproof"], 1)
+            self.assertEqual(focused["summary"]["unassessed_exported_circuits"], 0)
+
+    def test_imported_pure_metadata_rejects_ambiguous_or_mismatched_provenance(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            package, _, metadata, compiler = self.package_fixture(root)
+            for entries, error in (
+                ([{"name": "helper", "pure": False, "proof": False}],
+                 "included declaration disagrees"),
+                ([{"name": "helper", "pure": True, "proof": True}],
+                 "included declaration disagrees"),
+                ([{"name": "other", "pure": True, "proof": False}],
+                 "no included declaration"),
+                ([], "included declaration has no compiler proof row"),
+                ([{"name": "helper", "pure": True, "proof": False}] * 2,
+                 "ambiguous compiler proof rows"),
+            ):
+                with self.subTest(error=error, entries=entries):
+                    metadata.write_text(json.dumps(entries))
+                    with self.assertRaisesRegex(ValueError, error):
+                        inventory.make_inventory(root, [], compiler)
+            metadata.write_text(json.dumps([{"name": "helper", "pure": True, "proof": False}]))
+            duplicate = package.parent / "parts/duplicate.compact"
+            duplicate.write_text("export pure circuit helper(): Boolean { return true; }\n")
+            package.write_text('include "./parts/reachable";\ninclude "./parts/duplicate";\n')
+            with self.assertRaisesRegex(ValueError, "ambiguous included declaration"):
+                inventory.make_inventory(root, [], compiler)
+            package.write_text('include "./parts/missing";\n')
+            with self.assertRaisesRegex(ValueError, "invalid repository source"):
+                inventory.make_inventory(root, [], compiler)
+            package.write_text('include "../../../../outside";\n')
+            with self.assertRaisesRegex(ValueError, "invalid repository source"):
+                inventory.make_inventory(root, [], compiler)
+            with tempfile.TemporaryDirectory() as external:
+                outside = Path(external) / "outside.compact"
+                outside.write_text("export pure circuit helper(): Boolean { return true; }\n")
+                escape = package.parent / "parts/escape.compact"
+                escape.symlink_to(outside)
+                package.write_text('include "./parts/escape";\n')
+                with self.assertRaisesRegex(ValueError, "invalid repository source"):
+                    inventory.make_inventory(root, [], compiler)
+                escape.unlink()
+            package.write_text('include ./parts/reachable;\n')
+            with self.assertRaisesRegex(ValueError, "not a quoted local path"):
+                inventory.make_inventory(root, [], compiler)
+
     def test_adt_set_positive_cohort_is_checked_and_glob_locked(self):
         manifest = json.loads(inventory.ADT_SET_SOURCE_MANIFEST.read_text())
         entries = manifest["positive_sources"]

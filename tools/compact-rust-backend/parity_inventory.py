@@ -41,6 +41,9 @@ POSITIVE_SOURCE_MANIFEST = Path(__file__).with_name("parity_positive_sources.jso
 ADT_SET_SOURCE_MANIFEST = Path(__file__).with_name("parity_positive_adt_set_sources.json")
 POSITIVE_SOURCE_MANIFESTS = (POSITIVE_SOURCE_MANIFEST, ADT_SET_SOURCE_MANIFEST)
 DEFAULT_BASELINE = Path(__file__).with_name("parity_baseline.json")
+COMPILED_PACKAGE_ROOTS = {
+    "examples/rust_backend/digital-passport-credential/src/digital-passport-credential.compact",
+}
 DECLARATION = re.compile(
     r"(?m)^[ \t]*(?P<export>export[ \t]+)?(?P<pure>pure[ \t]+)?"
     r"(?P<kind>circuit|witness|constructor|module)\b"
@@ -301,11 +304,44 @@ def compile_capabilities(compiler: Path, source: Path, root: Path) -> tuple[dict
         return json.loads(report.read_text()), json.loads(contract_info.read_text())
 
 
+def included_sources(source: str, by_source: dict[str, dict], root: Path) -> set[str]:
+    """Resolve the scanned local include closure for a compiled package root."""
+    seen = set()
+    pending = [source]
+    while pending:
+        current = pending.pop()
+        if current in seen:
+            continue
+        seen.add(current)
+        for item in by_source[current]["imports"]:
+            if item["kind"] != "include":
+                continue
+            path = re.fullmatch(r'"([^"\n]+)"', item["expression"])
+            if path is None:
+                raise ValueError(f"{current}: include path is not a quoted local path")
+            included = Path(path.group(1))
+            if included.is_absolute() or included.suffix not in ("", ".compact"):
+                raise ValueError(f"{current}: invalid local include path: {included}")
+            if not included.suffix:
+                included = included.with_suffix(".compact")
+            target = relative_source(root / Path(current).parent / included, root)
+            if target not in by_source:
+                raise ValueError(f"{current}: included source is outside the inventory: {target}")
+            pending.append(target)
+    return seen
+
+
 def make_inventory(root: Path, extra_dirs: list[Path], compiler: Path | None,
                    only: set[str] | None = None) -> dict:
     paths = source_paths(root, extra_dirs)
     if only is not None:
-        paths = [path for path in paths if relative_source(path, root) in only]
+        selected = set(only)
+        package_roots = selected & COMPILED_PACKAGE_ROOTS
+        if package_roots:
+            all_sources = {relative_source(path, root): parse_source(path, root) for path in paths}
+            for package in package_roots:
+                selected.update(included_sources(package, all_sources, root))
+        paths = [path for path in paths if relative_source(path, root) in selected]
     contracts = [parse_source(path, root) for path in paths]
     scope = positive_scope(root)
     expected_proof = {(entry["source"], circuit["name"]): circuit["proof"]
@@ -313,6 +349,7 @@ def make_inventory(root: Path, extra_dirs: list[Path], compiler: Path | None,
     rows = [{"source": contract["source"], **item,
              "ts_source_declaration": True, "rust_recorded": None, "rust_observed_call": None,
              "proof_required": None, "compiler_pure": None, "rust_recording_status": None,
+             "compiler_metadata_source": None,
              "ts_expected_proof": expected_proof.get((contract["source"], item["name"]))}
             for contract in contracts for item in contract["declarations"]]
     by_source = {contract["source"]: contract for contract in contracts}
@@ -323,7 +360,7 @@ def make_inventory(root: Path, extra_dirs: list[Path], compiler: Path | None,
         acceptance_rust_success = {entry["source"] for entry in scope["positive_sources"]
                                    if entry["expected_rust"] == "success"} if scope else set()
         roots = [path for path in paths if path.parent == root / "examples/rust_backend"
-                 or path == root / "examples/rust_backend/digital-passport-credential/src/digital-passport-credential.compact"
+                 or relative_source(path, root) in COMPILED_PACKAGE_ROOTS
                  or relative_source(path, root) in acceptance_rust_success]
         for path in roots:
             source = relative_source(path, root)
@@ -335,23 +372,51 @@ def make_inventory(root: Path, extra_dirs: list[Path], compiler: Path | None,
             compiler_circuits = contract_info.get("circuits")
             if not isinstance(compiler_circuits, list):
                 raise ValueError(f"{source}: compiler contract-info has no circuits array")
-            for row in rows:
-                if row["source"] != source or row["kind"] != "circuit" or row["visibility"] != "export":
-                    continue
-                matches = [item for item in compiler_circuits if item.get("name") == row["name"]]
-                if not matches:
+            metadata_by_name = {}
+            for item in compiler_circuits:
+                name = item.get("name")
+                if not isinstance(name, str) or not name:
+                    raise ValueError(f"{source}: compiler proof row has no name")
+                if name in metadata_by_name:
+                    raise ValueError(f"{source}: ambiguous compiler proof rows for {name}")
+                metadata_by_name[name] = item
+            provenance = included_sources(source, by_source, root) \
+                if source in COMPILED_PACKAGE_ROOTS else {source}
+            candidates = [row for row in rows if row["kind"] == "circuit"
+                          and row["visibility"] == "export"
+                          and (row["source"] == source
+                               or (row["source"] in provenance and row["declared_pure"]))]
+            candidates_by_name = {}
+            for row in candidates:
+                if row["name"] in candidates_by_name:
+                    raise ValueError(f"{source}: ambiguous included declaration for {row['name']}")
+                candidates_by_name[row["name"]] = row
+            if source in COMPILED_PACKAGE_ROOTS:
+                for name in sorted(metadata_by_name.keys() - candidates_by_name.keys()):
+                    raise ValueError(f"{source}: compiler proof row has no included declaration: {name}")
+            for row in candidates:
+                metadata = metadata_by_name.get(row["name"])
+                if metadata is None:
+                    if source in COMPILED_PACKAGE_ROOTS:
+                        raise ValueError(f"{source}: included declaration has no compiler proof row: {row['name']}")
                     missing_compiler_proof_rows.append({
-                        "source": source, "name": row["name"], "module_path": row["module_path"],
+                        "source": row["source"], "name": row["name"],
+                        "module_path": row["module_path"],
                         "declared_pure": row["declared_pure"],
                     })
                     continue
-                if len(matches) != 1:
-                    raise ValueError(f"{source}: ambiguous compiler proof rows for {row['name']}")
-                metadata = matches[0]
                 if type(metadata.get("proof")) is not bool or type(metadata.get("pure")) is not bool:
                     raise ValueError(f"{source}: invalid compiler proof/pure metadata for {row['name']}")
+                if source in COMPILED_PACKAGE_ROOTS and (
+                    row["declared_pure"] is not metadata["pure"]
+                    or (row["source"] != source and metadata["proof"])
+                ):
+                    raise ValueError(f"{source}: included declaration disagrees with compiler metadata for {row['name']}")
+                if row["compiler_metadata_source"] is not None:
+                    raise ValueError(f"{source}: declaration already attributed by another compiler root: {row['name']}")
                 row["proof_required"] = metadata["proof"]
                 row["compiler_pure"] = metadata["pure"]
+                row["compiler_metadata_source"] = source
                 if not metadata["proof"]:
                     row["rust_recording_status"] = "not_applicable"
             for capability in report["circuits"]:
@@ -426,7 +491,7 @@ def main() -> int:
     parser.add_argument("--source-dir", type=Path, action="append", default=[],
                         help="additional repository source tree (repeatable)")
     parser.add_argument("--compiler", type=Path, help="compactc binary for Rust capability reports")
-    parser.add_argument("--only", action="append", help="repository-relative source filter (repeatable)")
+    parser.add_argument("--only", action="append", help="repository-relative source filter; compiled package roots include their local source closure (repeatable)")
     parser.add_argument("--baseline", type=Path, help="compare identities to a baseline (defaults to checked-in baseline for full repository inventory)")
     parser.add_argument("--no-baseline", action="store_true", help="skip the default checked-in baseline")
     parser.add_argument("--write-baseline", type=Path, help="write identity rows for review/check-in")

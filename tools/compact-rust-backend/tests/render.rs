@@ -5956,6 +5956,57 @@ fn pure_call_action_checks_arguments_and_discards_result() {
 }
 
 #[test]
+fn recorded_pure_assert_call_rejects_extra_pure_steps() {
+    let assertion = Expr::Assert {
+        condition: Box::new(Expr::NotEqual {
+            left: Box::new(Expr::Parameter {
+                name: "value".into(),
+            }),
+            right: Box::new(Expr::FieldLiteral { value: "0".into() }),
+        }),
+        message: "positive".into(),
+    };
+    let mut contract = identity(
+        Type::Unit,
+        Expr::Sequence {
+            steps: vec![assertion.clone()],
+            value: Box::new(Expr::Unit),
+        },
+    );
+    contract.circuits[0].name = "require_positive".into();
+    contract.stateful_circuits = vec![StatefulCircuit {
+        source: None,
+        internal: false,
+        name: "save".into(),
+        parameters: vec![Parameter {
+            name: "seed".into(),
+            ty: Type::Field,
+        }],
+        actions: vec![StateAction::PureCall {
+            name: "require_positive".into(),
+            arguments: vec![Expr::Coerce {
+                value: Box::new(Expr::Parameter {
+                    name: "seed".into(),
+                }),
+                ty: Type::Field,
+            }],
+        }],
+        result: Type::Unit,
+        return_value: StateReturn::Unit,
+    }];
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.source.contains("pure_circuits::require_positive"));
+
+    let Expr::Sequence { steps, .. } = &mut contract.circuits[0].body else {
+        unreachable!()
+    };
+    steps.push(assertion);
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(!rendered.capabilities.circuits[0].recorded);
+}
+
+#[test]
 fn conditional_assertion_folds_only_closed_same_type_unsigned_equality() {
     let mut contract = identity(Type::Unit, Expr::Unit);
     contract.circuits.clear();

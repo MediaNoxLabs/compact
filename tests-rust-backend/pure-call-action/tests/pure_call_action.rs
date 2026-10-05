@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use compact_rust_pure_call_action_fixture::ledger_contract::{initial_state, save};
+use compact_rust_pure_call_action_fixture::ledger_contract::{initial_state, recorded, save};
 use midnight_compact_runtime::Field;
 use midnight_compact_runtime::context::ConstructorContext;
 use midnight_compact_runtime::ledger::{ContractAddress, DefaultDB, StateValue};
@@ -56,4 +56,120 @@ fn pure_call_action_propagates_error_before_write_and_matches_success_state() {
         state_hex(saved.context.query.state.get_ref().clone()),
         oracle["afterHex"]
     );
+}
+
+#[test]
+fn recorded_pure_assert_call_matches_typescript_success_and_failure() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/recorded-pure-assert.json"
+    ))
+    .unwrap();
+    let success = &oracle["saveSuccess"];
+    let initial = initial_state(ConstructorContext::new(())).unwrap();
+    assert_eq!(
+        state_hex(initial.ledger_state.get_ref().clone()),
+        success["initialStateHex"],
+    );
+    let native = save(
+        initial.into_circuit_context(ContractAddress::default()),
+        Field::from(7_u64),
+    )
+    .unwrap();
+    let initial = initial_state(ConstructorContext::new(())).unwrap();
+    let recorded = recorded::save(
+        initial.into_circuit_context(ContractAddress::default()),
+        Field::from(7_u64),
+    )
+    .unwrap();
+    let _: () = native.result;
+    let _: () = recorded.execution.result;
+    assert_eq!(success["result"], "");
+    assert_eq!(native.gas_cost, recorded.execution.gas_cost);
+    assert_eq!(
+        native.context.query.effects,
+        recorded.execution.context.query.effects
+    );
+    assert_eq!(
+        native.context.query.state.get_ref(),
+        recorded.execution.context.query.state.get_ref(),
+    );
+    assert_eq!(
+        state_hex(recorded.execution.context.query.state.get_ref().clone()),
+        success["afterStateHex"],
+    );
+    assert!(native.private_transcript_outputs.is_empty());
+    assert!(recorded.execution.private_transcript_outputs.is_empty());
+    assert_eq!(success["privateTranscriptCount"], 0);
+    let vm: serde_json::Value = serde_json::to_value(recorded.public.verify_ops()).unwrap();
+    let shape = serde_json::Value::Array(
+        vm.as_array()
+            .unwrap()
+            .iter()
+            .map(|operation| {
+                if let Some(push) = operation.get("push") {
+                    serde_json::json!({"kind":"push", "storage":push["storage"]})
+                } else if let Some(ins) = operation.get("ins") {
+                    serde_json::json!({"kind":"ins", "cached":ins["cached"], "n":ins["n"]})
+                } else {
+                    panic!("unexpected VM operation: {operation}")
+                }
+            })
+            .collect(),
+    );
+    assert_eq!(shape, success["publicTranscriptShape"]);
+    let replay = recorded
+        .public
+        .initial()
+        .query(
+            recorded.public.verify_ops(),
+            None,
+            &recorded.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(
+        replay.context.state.get_ref(),
+        native.context.query.state.get_ref()
+    );
+    assert_eq!(replay.context.effects, native.context.query.effects);
+    let actual = serde_json::to_value(native.gas_cost).unwrap();
+    for dimension in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+        assert_eq!(
+            actual[dimension].as_u64().unwrap().to_string(),
+            success["queries"][0]["gasCost"][dimension],
+            "{dimension}",
+        );
+        assert_eq!(
+            success["queries"][0]["gasCost"][dimension],
+            success["reportedGas"][dimension],
+        );
+    }
+
+    let failure = &oracle["saveFailure"];
+    assert_eq!(failure["compactError"], true);
+    assert_eq!(failure["queryCount"], 0);
+    assert_eq!(failure["afterStateHex"], failure["initialStateHex"]);
+    let initial = initial_state(ConstructorContext::new(())).unwrap();
+    assert_eq!(
+        state_hex(initial.ledger_state.get_ref().clone()),
+        failure["initialStateHex"],
+    );
+    let native_error = save(
+        initial.into_circuit_context(ContractAddress::default()),
+        Field::from(0_u64),
+    )
+    .err()
+    .expect("zero input should fail");
+    let initial = initial_state(ConstructorContext::new(())).unwrap();
+    let recorded_error = recorded::save(
+        initial.into_circuit_context(ContractAddress::default()),
+        Field::from(0_u64),
+    )
+    .err()
+    .expect("recorded zero input should fail");
+    assert!(matches!(
+        recorded_error,
+        midnight_compact_runtime::CompactError::AssertionFailed(_)
+    ));
+    assert_eq!(native_error.to_string(), failure["error"]);
+    assert_eq!(recorded_error.to_string(), failure["error"]);
 }

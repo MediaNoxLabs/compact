@@ -140,6 +140,30 @@ pub mod ledger_contract {
     /// Circuits with a replayable ordered ledger program.
     pub mod recorded {
         use midnight_compact_runtime as runtime;
+        pub fn trigger_ok<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_pure_assert_arg_0: bool = true;
+            let __compact_recorded_pure_assert_1: bool =
+                crate::pure_circuits::require_true(__compact_recorded_pure_assert_arg_0)?;
+            let frame =
+                crate::ledger_slots::flag.record_write(frame, __compact_recorded_pure_assert_1)?;
+            Ok(frame.finish(()))
+        }
+        pub fn trigger_fail<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_pure_assert_arg_0: bool = false;
+            let __compact_recorded_pure_assert_1: bool =
+                crate::pure_circuits::require_true(__compact_recorded_pure_assert_arg_0)?;
+            let frame =
+                crate::ledger_slots::flag.record_write(frame, __compact_recorded_pure_assert_1)?;
+            Ok(frame.finish(()))
+        }
         pub fn ping<Private>(
             context: runtime::context::CircuitContext<Private>,
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
@@ -151,6 +175,56 @@ pub mod ledger_contract {
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
         impl Contract {
+            pub fn trigger_ok<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::trigger_ok(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn trigger_ok_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.trigger_ok(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "trigger_ok",
+                    input,
+                ))
+            }
+            pub fn trigger_fail<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::trigger_fail(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn trigger_fail_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.trigger_fail(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "trigger_fail",
+                    input,
+                ))
+            }
             pub fn ping<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,

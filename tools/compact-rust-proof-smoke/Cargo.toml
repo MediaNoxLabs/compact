@@ -66,6 +66,8 @@ compact-rust-recorded-enum-cell-fixture = { path = "../../tests-rust-backend/rec
 compact-rust-witness-cell-write-fixture = { path = "../../tests-rust-backend/witness-cell-write", features = ["ledger-transaction"] }
 compact-rust-stateful-circuit-call-fixture = { path = "../../tests-rust-backend/stateful-circuit-call", features = ["ledger-transaction"] }
 compact-rust-ternary-cond-oracle-fixture = { path = "../../tests-rust-backend/ternary-cond-oracle", features = ["ledger-transaction"] }
+compact-rust-pure-call-action-fixture = { path = "../../tests-rust-backend/pure-call-action", features = ["ledger-transaction"] }
+compact-rust-assert-parity-oracle-fixture = { path = "../../tests-rust-backend/assert-parity-oracle", features = ["ledger-transaction"] }
 compact-rust-nested-witness-call-oracle-fixture = { path = "../../tests-rust-backend/nested-witness-call-oracle" }
 midnight-compact-runtime = { path = "../../runtime-rs", features = ["ledger-transaction"] }
 midnight-ledger = "=8.0.3"

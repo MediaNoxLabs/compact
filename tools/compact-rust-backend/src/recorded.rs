@@ -361,6 +361,40 @@ fn closed_pure_field_call(
     allowed
 }
 
+// Calling the generated pure Rust function retains its exact assertion
+// message and propagates failure before any recorded ledger operation. Keep
+// this admission bounded to one typed argument, one assertion, and a direct
+// Unit or Boolean return; other pure bodies need their own effect audit.
+fn closed_pure_assert_call(callee: &PureCircuit) -> bool {
+    let [parameter] = callee.parameters.as_slice() else {
+        return false;
+    };
+    let Expr::Sequence { steps, value } = &callee.body else {
+        return false;
+    };
+    let [Expr::Assert { condition, .. }] = steps.as_slice() else {
+        return false;
+    };
+    match (
+        &parameter.ty,
+        &callee.result,
+        condition.as_ref(),
+        value.as_ref(),
+    ) {
+        (
+            Type::Boolean,
+            Type::Boolean,
+            Expr::Parameter { name: asserted },
+            Expr::Parameter { name: returned },
+        ) => asserted == &parameter.name && returned == &parameter.name,
+        (Type::Field, Type::Unit, Expr::NotEqual { left, right }, Expr::Unit) => {
+            matches!(left.as_ref(), Expr::Parameter { name } if name == &parameter.name)
+                && matches!(right.as_ref(), Expr::FieldLiteral { value } if value == "0")
+        }
+        _ => false,
+    }
+}
+
 fn field_pair_type(ty: &Type) -> bool {
     matches!(ty, Type::Vector { element, length } if **element == Type::Field && *length == 2)
         || matches!(ty, Type::Tuple { elements } if elements == &[Type::Field, Type::Field])
@@ -2568,6 +2602,34 @@ fn render_recorded_item(
                 ));
                 Ok(RecordingOutcome::Supported(()))
             }
+            StateAction::PureCall { name, arguments } => {
+                let Some(callee) = pure_circuits.get(name.as_str()) else {
+                    return Ok(unavailable_action(action, path));
+                };
+                if !closed_pure_assert_call(callee) || callee.result != Type::Unit {
+                    return Ok(unavailable_action(action, path));
+                }
+                let [parameter] = callee.parameters.as_slice() else {
+                    unreachable!("closed pure assertion has one parameter")
+                };
+                let [argument] = arguments.as_slice() else {
+                    return Ok(unavailable_action(action, path));
+                };
+                let Some(argument) = cell_source(argument, &parameter.ty, locals, parameters)
+                else {
+                    return Ok(unavailable_action(action, path));
+                };
+                let method = ident(name)?;
+                let typed_arg = syn::Ident::new(
+                    &format!("__compact_recorded_pure_assert_arg_{}", *next_temp),
+                    Span::call_site(),
+                );
+                *next_temp += 1;
+                let arg_ty = rust_type(&parameter.ty)?;
+                steps.push(syn::parse_quote!(let #typed_arg: #arg_ty = #argument;));
+                steps.push(syn::parse_quote!(crate::pure_circuits::#method(#typed_arg)?;));
+                Ok(RecordingOutcome::Supported(()))
+            }
             whole @ StateAction::Let {
                 bindings,
                 action: nested_action,
@@ -2859,6 +2921,39 @@ fn render_recorded_item(
                             )));
                         };
                         scoped.insert(binding.name.clone(), value);
+                    } else if binding.ty == Type::Boolean
+                        && let Expr::Call { name, arguments } = &binding.value
+                        && let Some(callee) = pure_circuits.get(name.as_str())
+                        && callee.result == Type::Boolean
+                        && closed_pure_assert_call(callee)
+                    {
+                        let [parameter] = callee.parameters.as_slice() else {
+                            unreachable!("closed pure assertion has one parameter")
+                        };
+                        let [argument] = arguments.as_slice() else {
+                            return Ok(unavailable_action(whole, path));
+                        };
+                        let Some(argument) =
+                            cell_source(argument, &parameter.ty, &scoped, parameters)
+                        else {
+                            return Ok(unavailable_action(whole, path));
+                        };
+                        let method = ident(name)?;
+                        let typed_arg = syn::Ident::new(
+                            &format!("__compact_recorded_pure_assert_arg_{}", *next_temp),
+                            Span::call_site(),
+                        );
+                        *next_temp += 1;
+                        let value = syn::Ident::new(
+                            &format!("__compact_recorded_pure_assert_{}", *next_temp),
+                            Span::call_site(),
+                        );
+                        *next_temp += 1;
+                        steps.push(syn::parse_quote!(let #typed_arg: bool = #argument;));
+                        steps.push(syn::parse_quote!(
+                            let #value: bool = crate::pure_circuits::#method(#typed_arg)?;
+                        ));
+                        scoped.insert(binding.name.clone(), syn::parse_quote!(#value));
                     } else if binding.ty == Type::Boolean
                         && !matches!(binding.value, Expr::WitnessCall { .. })
                     {

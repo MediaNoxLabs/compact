@@ -33,6 +33,7 @@ mod field_pair_hash;
 mod merkle_indexed;
 mod merkle_verify;
 mod persistent_commit;
+mod pure_assert_call;
 mod pure_field_arguments;
 mod stateful_pair_hash;
 mod stateful_pure_return;
@@ -1195,6 +1196,21 @@ fn main() -> Result<(), Box<dyn Error>> {
             );
         }
         return closed_pure_field::run(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--pure-assert-call")) {
+        let pure_root = arguments.next().ok_or(
+            "usage: compact-rust-proof-smoke --pure-assert-call <pure-call-proof> <assert-proof>",
+        )?;
+        let assert_root = arguments.next().ok_or(
+            "usage: compact-rust-proof-smoke --pure-assert-call <pure-call-proof> <assert-proof>",
+        )?;
+        if arguments.next().is_some() {
+            return Err(
+                "usage: compact-rust-proof-smoke --pure-assert-call <pure-call-proof> <assert-proof>"
+                    .into(),
+            );
+        }
+        return pure_assert_call::run(Path::new(&pure_root), Path::new(&assert_root));
     }
     if first.as_deref() == Some(OsStr::new("--field-pair-hash")) {
         let root = arguments

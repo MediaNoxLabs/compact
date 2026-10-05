@@ -60,6 +60,7 @@ compact-rust-set-size-oracle-fixture = { path = "../../tests-rust-backend/set-si
 compact-rust-adt-set-enum-fixture = { path = "../../tests-rust-backend/adt-set-enum", features = ["ledger-transaction"] }
 compact-rust-adt-set-qualified-coin-info-fixture = { path = "../../tests-rust-backend/adt-set-qualified-coin-info", features = ["ledger-transaction"] }
 compact-rust-qualified-coin-set-oracle-fixture = { path = "../../tests-rust-backend/qualified-coin-set-oracle", features = ["ledger-transaction"] }
+compact-rust-qualified-coin-cell-oracle-fixture = { path = "../../tests-rust-backend/qualified-coin-cell-oracle", features = ["ledger-transaction"] }
 compact-rust-adt-set-vector-fixture = { path = "../../tests-rust-backend/adt-set-vector", features = ["ledger-transaction"] }
 compact-rust-adt-list-vector-field-4-fixture = { path = "../../tests-rust-backend/adt-list-vector-field-4", features = ["ledger-transaction"] }
 compact-rust-adt-list-bytes-fixture = { path = "../../tests-rust-backend/adt-list-bytes", features = ["ledger-transaction"] }

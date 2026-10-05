@@ -63,6 +63,7 @@ mod pair_hash_cell;
 mod persistent_commit;
 mod pure_assert_call;
 mod pure_field_arguments;
+mod qualified_coin_cell;
 mod qualified_coin_set;
 mod schnorr_attestation;
 mod stateful_pair_hash;
@@ -1738,6 +1739,17 @@ fn run() -> Result<(), Box<dyn Error>> {
             );
         }
         return qualified_coin_set::run(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--qualified-coin-cell")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --qualified-coin-cell <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err(
+                "usage: compact-rust-proof-smoke --qualified-coin-cell <proof-output>".into(),
+            );
+        }
+        return qualified_coin_cell::run(Path::new(&root));
     }
     if first.as_deref() == Some(OsStr::new("--adt-set-qualified-coin-info")) {
         let root = arguments.next().ok_or(

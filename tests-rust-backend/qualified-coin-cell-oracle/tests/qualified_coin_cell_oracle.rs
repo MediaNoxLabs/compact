@@ -174,6 +174,15 @@ fn qualified_cell_write_matches_typescript_allocation_and_replacement() {
             value.value = runtime::BoundedUint::new(43).unwrap();
         }
         let target = recipient(left);
+        let mut recording_context = initial();
+        recording_context.query.state =
+            runtime::ledger::ChargedState::new(context.query.state.get_ref().clone());
+        let recorded = ledger_contract::recorded::write_coin(
+            allocated(recording_context, &value, &target, index),
+            value.clone(),
+            target.clone(),
+        )
+        .unwrap();
         let result = ledger_contract::write_coin(
             allocated(context, &value, &target, index),
             value.clone(),
@@ -189,6 +198,35 @@ fn qualified_cell_write_matches_typescript_allocation_and_replacement() {
             row["effects"]
         );
         assert!(result.private_transcript_outputs.is_empty());
+        assert!(recorded.execution.private_transcript_outputs.is_empty());
+        assert_eq!(recorded.execution.gas_cost, result.gas_cost);
+        assert_eq!(
+            recorded.execution.context.query.effects,
+            result.context.query.effects
+        );
+        assert_eq!(
+            recorded.execution.context.query.state.get_ref(),
+            result.context.query.state.get_ref()
+        );
+        assert_eq!(
+            serde_json::to_value(recorded.public.verify_ops()).unwrap(),
+            row["writeQueries"][0]["ops"]
+        );
+        let replay = recorded
+            .public
+            .initial()
+            .query(
+                recorded.public.verify_ops(),
+                None,
+                &recorded.execution.context.cost_model,
+            )
+            .unwrap();
+        assert_eq!(
+            replay.context.state.get_ref(),
+            result.context.query.state.get_ref()
+        );
+        assert_eq!(replay.context.effects, result.context.query.effects);
+        assert_eq!(replay.gas_cost, recorded.execution.gas_cost);
         assert_eq!(row["privateCount"], 0);
         gas_matches(result.gas_cost, &row["writeQueries"], &row["writeGas"]);
         let read = ledger_contract::read_coin(result.context).unwrap().result;
@@ -213,6 +251,20 @@ fn qualified_cell_write_matches_typescript_allocation_and_replacement() {
             .err()
             .unwrap();
         assert!(error.to_string().contains("Coin commitment not found"));
+        let recorded_context = if wrong {
+            allocated(initial(), &coin(), &right, 7)
+        } else {
+            initial()
+        };
+        let recorded_error =
+            ledger_contract::recorded::write_coin(recorded_context, coin(), recipient(wrong))
+                .err()
+                .unwrap();
+        assert!(
+            recorded_error
+                .to_string()
+                .contains("Coin commitment not found")
+        );
         assert!(
             expected[name]["error"]
                 .as_str()
@@ -230,6 +282,20 @@ fn qualified_cell_write_matches_typescript_allocation_and_replacement() {
         .unwrap();
     assert!(
         wrong
+            .to_string()
+            .contains("alignment is not QualifiedShieldedCoinInfo")
+    );
+    let (info, recipient) = ledger_carriers(&value, &target);
+    let wrong_recording = runtime::slots::CellSlot::<bool>::new(&[0])
+        .record_write_coin(
+            runtime::recording::RecordingFrame::new(allocated(initial(), &value, &target, 7)),
+            info,
+            recipient,
+        )
+        .err()
+        .unwrap();
+    assert!(
+        wrong_recording
             .to_string()
             .contains("alignment is not QualifiedShieldedCoinInfo")
     );
@@ -262,6 +328,22 @@ fn qualified_cell_parent_path_matches_independent_chunked_typescript() {
         }
         let target = recipient(left);
         let (info, recipient) = ledger_carriers(&value, &target);
+        let mut recording_context = initial();
+        recording_context.query.state =
+            runtime::ledger::ChargedState::new(context.query.state.get_ref().clone());
+        let recorded = runtime::slots::CellSlot::<types::QualifiedShieldedCoinInfo>::new(&[1, 14])
+            .record_write_coin(
+                runtime::recording::RecordingFrame::new(allocated(
+                    recording_context,
+                    &value,
+                    &target,
+                    index,
+                )),
+                info,
+                recipient.clone(),
+            )
+            .unwrap()
+            .finish(());
         let result = runtime::slots::CellSlot::<types::QualifiedShieldedCoinInfo>::new(&[1, 14])
             .write_coin(allocated(context, &value, &target, index), info, recipient)
             .unwrap();
@@ -273,6 +355,35 @@ fn qualified_cell_parent_path_matches_independent_chunked_typescript() {
             serde_json::to_value(&result.context.query.effects).unwrap(),
             row["effects"]
         );
+        assert_eq!(recorded.execution.gas_cost, result.gas_cost);
+        assert_eq!(
+            recorded.execution.context.query.effects,
+            result.context.query.effects
+        );
+        assert_eq!(
+            recorded.execution.context.query.state.get_ref(),
+            result.context.query.state.get_ref()
+        );
+        assert!(recorded.execution.private_transcript_outputs.is_empty());
+        assert_eq!(
+            serde_json::to_value(recorded.public.verify_ops()).unwrap(),
+            row["writeQueries"][0]["ops"]
+        );
+        let replay = recorded
+            .public
+            .initial()
+            .query(
+                recorded.public.verify_ops(),
+                None,
+                &recorded.execution.context.cost_model,
+            )
+            .unwrap();
+        assert_eq!(
+            replay.context.state.get_ref(),
+            result.context.query.state.get_ref()
+        );
+        assert_eq!(replay.context.effects, result.context.query.effects);
+        assert_eq!(replay.gas_cost, recorded.execution.gas_cost);
         gas_matches(result.gas_cost, &row["writeQueries"], &row["writeGas"]);
         let read = runtime::slots::CellSlot::<types::QualifiedShieldedCoinInfo>::new(&[1, 14])
             .inspect(result.context.query.state.get_ref())
@@ -307,6 +418,35 @@ fn missing_allocation_preflight_is_distinct_from_vm_rejection() {
         rejected,
         runtime::CompactError::LedgerQueryRejected(_)
     ));
+    let mut recorded_context = allocated(initial(), &coin(), &recipient(false), 7);
+    recorded_context.query.state = runtime::ledger::ChargedState::new(
+        runtime::ledger::constructor_cell::<bool, DefaultDB>(false),
+    );
+    let recorded_rejected =
+        ledger_contract::recorded::write_coin(recorded_context, coin(), recipient(false))
+            .err()
+            .unwrap();
+    assert!(matches!(
+        recorded_rejected,
+        runtime::CompactError::LedgerQueryRejected(_)
+    ));
+    let (info, target) = ledger_carriers(&coin(), &recipient(false));
+    let deep = runtime::slots::CellSlot::<types::QualifiedShieldedCoinInfo>::new(&[
+        1, 2, 3, 4, 5, 6, 7, 8,
+    ])
+    .record_write_coin(
+        runtime::recording::RecordingFrame::new(allocated(
+            initial(),
+            &coin(),
+            &recipient(false),
+            7,
+        )),
+        info,
+        target,
+    )
+    .err()
+    .unwrap();
+    assert!(deep.to_string().contains("exceeds VM dup depth"));
     assert!(expected["malformed"]["error"].is_string());
     assert_eq!(expected["malformed"]["queryAttempts"], 1);
 }

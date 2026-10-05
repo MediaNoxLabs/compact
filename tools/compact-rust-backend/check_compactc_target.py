@@ -1097,7 +1097,7 @@ def main() -> None:
     parser.add_argument("--proof", action="store_true", help="generate ZKIR and proving keys")
     parser.add_argument("--native-zswap-intents", action="store_true", help="check native Zswap intent admission and explicit recording refusal")
     parser.add_argument("--qualified-coin-cell", action="store_true",
-                        help="check native qualified-coin Cell write admission and honest recording gap")
+                        help="check recorded qualified-coin Cell write and offer-backed proof")
     parser.add_argument("--counter-less-than", action="store_true",
                         help="check typed Counter comparison and nested-read recording")
     parser.add_argument("--literal-bytes-field", action="store_true",
@@ -1206,16 +1206,25 @@ def main() -> None:
             assert action["kind"] == "cell_write_coin"
             report = json.loads((output / "contract/rust-capabilities.json").read_text())
             write = next(row for row in report["circuits"] if row["name"] == "write_coin")
-            assert not write["recorded"] and not write["observed_call"]
-            assert write["recording_unavailable"]
-            rejected = subprocess.run([compiler, "--target", "rust", "--skip-zk", "--rust-require-recording", str(source), str(base / "required")], cwd=ROOT, capture_output=True, text=True)
-            assert rejected.returncode != 0 and "write_coin" in rejected.stderr
-            assert not (base / "required/contract/lib.rs").exists()
+            assert write["recorded"] and write["observed_call"]
+            assert write.get("recording_unavailable") is None
+            run(compiler, "--target", "rust", "--skip-zk", "--rust-require-recording", str(source), str(base / "required"))
+            assert (base / "required/contract/lib.rs").exists()
             chunked = base / "qualified-coin-cell-chunked"
-            run(compiler, "--target", "rust", "--skip-zk", str(ROOT / "runtime-rs/tests/fixtures/qualified-coin-cell-chunked.compact"), str(chunked))
+            run(compiler, "--target", "rust", "--skip-zk", "--rust-require-recording",
+                str(ROOT / "runtime-rs/tests/fixtures/qualified-coin-cell-chunked.compact"), str(chunked))
             generated = (chunked / "contract/lib.rs").read_text()
             assert "&[1u8,14u8]" in "".join(generated.split())
-            print("qualified-coin Cell native admission and explicit recording refusal passed")
+            assert ".record_write_coin(" in generated
+            chunked_report = json.loads((chunked / "contract/rust-capabilities.json").read_text())
+            chunked_write = next(row for row in chunked_report["circuits"] if row["name"] == "write_coin")
+            assert chunked_write["recorded"] and chunked_write["observed_call"]
+            if args.proof:
+                proof = base / "qualified-coin-cell-proof"
+                run(compiler, "--target", "rust", "--rust-require-recording", str(source), str(proof))
+                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                    "--qualified-coin-cell", str(proof))
+            print("qualified-coin Cell recorded/observed admission passed")
             return
         if args.counter_less_than:
             output = base / "counter-less-than"
@@ -1421,7 +1430,8 @@ def main() -> None:
             assert "Field-to-Bytes<32> casts only" in rejected.stderr
             print("field-to-bytes32 target gate passed")
             return
-        run(sys.executable, str(Path(__file__).resolve()), "--qualified-coin-cell")
+        run(sys.executable, str(Path(__file__).resolve()), "--qualified-coin-cell",
+            *(["--proof"] if args.proof else []))
         run(sys.executable, str(Path(__file__).resolve()), "--native-zswap-intents")
         ts, rust, both, pure = (base / name for name in ("ts", "rust", "both", "pure"))
         run(compiler, "--skip-zk", str(SOURCE), str(ts))

@@ -239,12 +239,26 @@ pub fn write_qualified_coin_cell<T: CellValue, D: DB>(
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, CompactError> {
-    let commitment = super::qualified_coin_commitment::<T, D>(context, &coin, &recipient)?;
     let path = path.into();
-    let program = qualified_coin_cell_write_program(path.as_slice(), coin, commitment)?;
+    let program = qualified_coin_cell_write_program_for_context::<T, D>(
+        context,
+        path.as_slice(),
+        coin,
+        recipient,
+    )?;
     context
         .query(&program, gas_limit, cost_model)
         .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))
+}
+
+pub(crate) fn qualified_coin_cell_write_program_for_context<T: CellValue, D: DB>(
+    context: &QueryContext<D>,
+    path: &[u8],
+    coin: super::CoinInfo,
+    recipient: super::CoinRecipient,
+) -> Result<Vec<Op<ResultModeVerify, D>>, CompactError> {
+    let commitment = super::qualified_coin_commitment::<T, D>(context, &coin, &recipient)?;
+    qualified_coin_cell_write_program(path, coin, commitment)
 }
 
 fn qualified_coin_cell_write_program<D: DB>(

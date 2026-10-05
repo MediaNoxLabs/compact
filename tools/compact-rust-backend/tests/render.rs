@@ -2741,7 +2741,7 @@ fn generated_unit_enum_uses_checked_derive_without_handwritten_codecs() {
     let source = render(&contract).unwrap();
     assert!(source.contains("CompactCellValue, CompactEnum"));
     assert!(source.contains("pub enum Choice"));
-    assert!(source.contains("RUST_RUNTIME_ABI == 43"));
+    assert!(source.contains("RUST_RUNTIME_ABI == 44"));
     assert!(!source.contains("impl FieldRepr for Choice"));
     assert!(!source.contains("impl BinaryHashRepr for Choice"));
     assert!(!source.contains("impl FromFieldRepr for Choice"));
@@ -10418,7 +10418,7 @@ fn counter_less_than_requires_typed_counter_slots_and_thresholds() {
 }
 
 #[test]
-fn qualified_cell_coin_write_is_typed_native_and_reports_recording_gap() {
+fn qualified_cell_coin_write_is_typed_and_recordable() {
     let mut contract: Contract =
         serde_json::from_str(include_str!("qualified-coin-cell-schema16-ir.json")).unwrap();
     contract.schema_version = SCHEMA_VERSION;
@@ -10429,11 +10429,10 @@ fn qualified_cell_coin_write_is_typed_native_and_reports_recording_gap() {
         .iter()
         .find(|c| c.name == "write_coin")
         .unwrap();
-    assert!(!write.recorded && !write.observed_call);
-    let gap = write.recording_unavailable.as_ref().unwrap();
-    assert_eq!(gap.ir_node, "StateAction::CellWriteCoin");
-    assert_eq!(gap.path, "actions[0]");
+    assert!(write.recorded && write.observed_call);
+    assert!(write.recording_unavailable.is_none());
     assert!(rendered.source.contains(".write_coin("));
+    assert!(rendered.source.contains(".record_write_coin("));
     for mode in 0..4 {
         let mut wrong = contract.clone();
         let circuit = wrong
@@ -10461,6 +10460,35 @@ fn qualified_cell_coin_write_is_typed_native_and_reports_recording_gap() {
             "invalid qualified Cell mode {mode}"
         );
     }
+    let mut wrong_field = contract.clone();
+    let StateAction::CellWriteCoin { field, .. } = &mut wrong_field
+        .stateful_circuits
+        .iter_mut()
+        .find(|c| c.name == "write_coin")
+        .unwrap()
+        .actions[0]
+    else {
+        unreachable!()
+    };
+    *field = "missing".into();
+    assert!(render_with_capabilities(&wrong_field).is_err());
+    let mut escaped = contract.clone();
+    let StateAction::CellWriteCoin { coin, .. } = &mut escaped
+        .stateful_circuits
+        .iter_mut()
+        .find(|c| c.name == "write_coin")
+        .unwrap()
+        .actions[0]
+    else {
+        unreachable!()
+    };
+    *coin = Expr::Parameter {
+        name: "escaped".into(),
+    };
+    assert!(render_with_capabilities(&escaped).is_err());
+    let mut nested = contract;
+    nested.ledger_fields[0].path = vec![1];
+    assert!(render_with_capabilities(&nested).is_err());
 }
 
 #[test]

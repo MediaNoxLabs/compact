@@ -309,6 +309,7 @@ mod merkle;
 
 pub(crate) use cell::{
     aligned_cell_value, cell_read_program, cell_write_program, decode_last_read,
+    qualified_coin_cell_write_program_for_context,
 };
 pub use cell::{
     constructor_cell, query_cell, query_cell_at_path, read_cell, read_cell_at_path, read_root_cell,

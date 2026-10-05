@@ -45,6 +45,7 @@ struct Plan<'a> {
     historic_writes: usize,
     qualified_set_reads: usize,
     qualified_set_writes: usize,
+    qualified_cell_writes: usize,
 }
 
 impl Plan<'_> {
@@ -147,6 +148,15 @@ impl Plan<'_> {
         let declaration = *self.ledger.get(field)?;
         (declaration.index == index && declaration.physical_path().len() == 1)
             .then_some(declaration)
+    }
+
+    fn qualified_cell_field(&self, field: &str, index: u8) -> Option<&LedgerField> {
+        let declaration = *self.ledger.get(field)?;
+        let path = declaration.physical_path();
+        (declaration.index == index
+            && path.first() == Some(&index)
+            && (1..=2).contains(&path.len()))
+        .then_some(declaration)
     }
 
     fn expression(
@@ -610,6 +620,39 @@ impl Plan<'_> {
                     self.optional_cells += 1;
                 }
             }
+            StateAction::CellWriteCoin {
+                field,
+                index,
+                coin,
+                recipient,
+            } => {
+                let LedgerFieldKind::Cell { ty } =
+                    &self.qualified_cell_field(field, *index)?.declaration
+                else {
+                    return None;
+                };
+                if *ty != crate::stateful::qualified_coin_type() {
+                    return None;
+                }
+                let coin = self.expression(coin, scope, steps)?;
+                let recipient = self.expression(recipient, scope, steps)?;
+                if coin.ty != crate::stateful::shielded_coin_type()
+                    || recipient.ty != crate::stateful::shielded_recipient_type()
+                {
+                    return None;
+                }
+                let slot = ident(field).ok()?;
+                let coin = coin.value;
+                let recipient = recipient.value;
+                steps.push(syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_write_coin(
+                    frame,
+                    runtime::ledger::coin_info_from_compact(#coin.nonce, #coin.color, #coin.value.value()),
+                    runtime::ledger::coin_recipient_from_compact(
+                        #recipient.is_left, #recipient.left.bytes, #recipient.right.bytes,
+                    ),
+                )?;));
+                self.qualified_cell_writes += 1;
+            }
             StateAction::CounterIncrement {
                 field,
                 index,
@@ -863,6 +906,7 @@ pub(super) fn lower<'a>(
         historic_writes: 0,
         qualified_set_reads: 0,
         qualified_set_writes: 0,
+        qualified_cell_writes: 0,
     };
     let scope: Scope = circuit
         .parameters
@@ -904,7 +948,10 @@ pub(super) fn lower<'a>(
         }
         _ => return None,
     };
-    let ordinary = plan.opaque_cells == 0 && plan.historic_roots == 0 && plan.historic_writes == 0;
+    let ordinary = plan.opaque_cells == 0
+        && plan.historic_roots == 0
+        && plan.historic_writes == 0
+        && plan.qualified_cell_writes == 0;
     let membership = ordinary
         && circuit.result == Type::Unit
         && plan.root_observations > 0
@@ -930,6 +977,7 @@ pub(super) fn lower<'a>(
                 && plan.counter_writes > 0));
     let historic_spend = spend_entry
         && circuit.result == Type::Unit
+        && plan.qualified_cell_writes == 0
         && plan.root_observations == 0
         && plan.tree_writes == 0
         && plan.optional_cells == 0
@@ -952,6 +1000,7 @@ pub(super) fn lower<'a>(
         && plan.optional_cells == 0;
     let qualified_set_lifecycle = circuit.result == Type::Unit
         && plan.qualified_set_writes > 0
+        && plan.qualified_cell_writes == 0
         && plan.root_observations == 0
         && plan.tree_writes == 0
         && plan.set_writes == 0
@@ -964,11 +1013,27 @@ pub(super) fn lower<'a>(
             || matches!(circuit.parameters.as_slice(), [coin, recipient]
                 if coin.ty == crate::stateful::shielded_coin_type()
                     && recipient.ty == crate::stateful::shielded_recipient_type()));
+    let qualified_cell_replacement = circuit.result == Type::Unit
+        && matches!(circuit.parameters.as_slice(), [coin, recipient]
+            if coin.ty == crate::stateful::shielded_coin_type()
+                && recipient.ty == crate::stateful::shielded_recipient_type())
+        && plan.qualified_cell_writes == 1
+        && plan.qualified_set_reads == 0
+        && plan.qualified_set_writes == 0
+        && plan.root_observations == 0
+        && plan.tree_writes == 0
+        && plan.set_writes == 0
+        && plan.counter_writes == 0
+        && plan.counter_reads == 0
+        && plan.cell_writes == 0
+        && plan.historic_roots == 0
+        && plan.historic_writes == 0;
     (membership
         || cell_lifecycle
         || historic_spend
         || counter_comparison
-        || qualified_set_lifecycle)
+        || qualified_set_lifecycle
+        || qualified_cell_replacement)
         .then_some(TypedPlan { steps, result })
 }
 
@@ -999,6 +1064,7 @@ mod tests {
             historic_writes: 0,
             qualified_set_reads: 0,
             qualified_set_writes: 0,
+            qualified_cell_writes: 0,
         };
         let actual = Type::Unsigned { max: "255".into() };
         let target = Type::Unsigned {
@@ -1070,6 +1136,7 @@ mod tests {
             historic_writes: 0,
             qualified_set_reads: 0,
             qualified_set_writes: 0,
+            qualified_cell_writes: 0,
         };
         let action = StateAction::CounterIncrement {
             field: "tally_yes".into(),

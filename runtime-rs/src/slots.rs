@@ -482,6 +482,16 @@ impl<T: CellValue> CellSlot<T> {
         context.write_qualified_coin_cell::<T>(self.path, coin, recipient)
     }
 
+    /// Record a qualified coin replacement through the declared Cell slot.
+    pub fn record_write_coin<Private, D: DB>(
+        self,
+        frame: RecordingFrame<Private, D>,
+        coin: crate::ledger::CoinInfo,
+        recipient: crate::ledger::CoinRecipient,
+    ) -> Result<RecordingFrame<Private, D>, CompactError> {
+        frame.write_qualified_coin_cell::<T>(self.path, coin, recipient)
+    }
+
     pub fn write<Private, D: DB>(
         self,
         context: CircuitContext<Private, D>,

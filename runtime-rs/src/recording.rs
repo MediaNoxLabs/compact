@@ -211,6 +211,23 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         self.apply_verify_program(program)
     }
 
+    /// Replace a qualified coin Cell using the actual offer-allocated index.
+    pub fn write_qualified_coin_cell<T: CellValue>(
+        self,
+        path: impl Into<LedgerPath>,
+        coin: ledger::CoinInfo,
+        recipient: ledger::CoinRecipient,
+    ) -> Result<Self, CompactError> {
+        let path = path.into();
+        let program = ledger::qualified_coin_cell_write_program_for_context::<T, D>(
+            &self.context.query,
+            path.as_slice(),
+            coin,
+            recipient,
+        )?;
+        self.apply_verify_program(program)
+    }
+
     pub fn increment_counter(
         self,
         path: impl Into<LedgerPath>,

@@ -1297,11 +1297,14 @@ shared typed planner. Runtime ABI48 and IR schema20 are unchanged.
 shielded receive (intent capability without composite helper routing), and Field
 observations. Phase-reset admission remains independent. The seven-API fixture
 has 23 independent TypeScript/native/recorded/replay cases. Eight nonempty paths
-prove, verify and apply under the shared **unbalanced smoke policy**; these tests
-do not establish fee funding. `optional(false)` retains zero operations and exact
+prove, verify and apply under default ledger strictness with separate Night-backed
+Dust fee funding from the pinned upstream test fixture. Prior contract states are
+explicit fixtures; deployment lifecycle and wallet submission are separate gates. `optional(false)` retains zero operations and exact
 `EmptyTranscript` preparation refusal. Query sums, TypeScript wrapper last-query
 cost and whole-program replay gas remain distinct measurements.
 
 Run `check_compactc_target.py --field-observation` for strict source recording
 admission; add `--proof` for selective proof/application checks. Existing keys can
 be reused with `compact-rust-proof-smoke --field-observation <proof-output>`.
+Set `MIDNIGHT_LEDGER_TEST_STATIC_DIR` to the pinned upstream static fixtures for
+the Night-backed Dust funding helper.

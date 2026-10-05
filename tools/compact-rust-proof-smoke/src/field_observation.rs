@@ -74,14 +74,55 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
         if format!("{manual:?}") != format!("{prepared:?}") {
             return Err("manual/observed preparation differs".into());
         }
-        check_transaction(root, name, deploy, prepared, &mut rng, |state| {
-            if state.data.get_ref() != &expected_state {
-                return Err("read-only observation changed ledger state".into());
-            }
-            Ok(())
-        })?;
+        super::kernel_shielded_effects::prove_and_verify_call(root, name, &prepared, &verifier)?;
+        // Explicit prior contract state; fee funding is separate and does not
+        // fabricate a ledger query or an application-level shielded offer.
+        let address = deploy.address();
+        let mut funded = super::qualified_coin_funding::fee_funded_state(&mut rng)?;
+        funded.ledger.contract = funded.ledger.contract.insert(address, deploy.initial_state);
+        let intent: Intent<Signature, ProofPreimageMarker, PedersenRandomness, DefaultDB> =
+            Intent::empty(&mut rng, Timestamp::from_secs(funded.time.to_secs() + 3600))
+                .add_call::<ProofPreimage>(prepared);
+        let tx = Transaction::from_intents("local-test", HashMap::new().insert(1_u16, intent));
+        let resolver = super::qualified_coin_funding::fee_resolver(root, name)?;
+        let params = MidnightDataProvider::new(FetchMode::OnDemand, OutputMode::Log, vec![])?;
+        let provider = LocalProvingProvider {
+            rng: StdRng::seed_from_u64(0x0201_5052 + index as u64),
+            resolver: &resolver,
+            params: &params,
+        };
+        let proven = futures_executor::block_on(
+            tx.prove(provider, &INITIAL_PARAMETERS.cost_model.runtime_cost_model),
+        )?;
+        let sealed = proven.seal(StdRng::seed_from_u64(0x0201_5345 + index as u64));
+        let sealed = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()?
+            .block_on(funded.balance_tx(rng, sealed, &resolver))?;
+        let verified =
+            sealed.well_formed(&funded.ledger, WellFormedStrictness::default(), funded.time)?;
+        let context = TransactionContext {
+            ref_state: funded.ledger.clone(),
+            block_context: BlockContext {
+                tblock: funded.time,
+                last_block_time: funded.time,
+                ..BlockContext::default()
+            },
+            whitelist: None,
+        };
+        let (updated, result) = funded.ledger.apply(&verified, &context);
+        if !matches!(result, TransactionResult::Success(_)) {
+            return Err(format!("{name} application failed: {result:?}").into());
+        }
+        let actual = updated
+            .contract
+            .get(&address)
+            .ok_or("observation contract missing")?;
+        if actual.data.get_ref() != &expected_state {
+            return Err("read-only observation changed ledger state".into());
+        }
         println!(
-            "{name}({selected}): proved, verified, ledger-applied under shared unbalanced smoke policy"
+            "{name}({selected}): proof verified, changed binding rejected, separate Dust default-strict ledger apply passed"
         );
     }
     Ok(())

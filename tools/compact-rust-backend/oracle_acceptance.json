@@ -32,11 +32,13 @@
       "non_comment_sha256": "185b93c0ba3a0c879ca11638e7a501fe12e5fb5764e9701895fa251f0cbbe7e3",
       "rust_tests": [
         "tests-rust-backend/asset-registry-oracle/tests/asset_registry_oracle.rs",
-        "tests-rust-backend/asset-registry-oracle/tests/registration_gap.rs"
+        "tests-rust-backend/asset-registry-oracle/tests/registration_gap.rs",
+        "tests-rust-backend/asset-registry-oracle/tests/writable_recording.rs"
       ],
       "typescript_fixtures": [
         "runtime-rs/tests/fixtures/asset-registry-oracle.json",
-        "runtime-rs/tests/fixtures/asset-registry-pure.json"
+        "runtime-rs/tests/fixtures/asset-registry-pure.json",
+        "runtime-rs/tests/fixtures/asset-freshness-oracle.json"
       ]
     },
     {

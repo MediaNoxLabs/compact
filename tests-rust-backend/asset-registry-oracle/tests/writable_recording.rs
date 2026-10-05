@@ -16,10 +16,12 @@
 use std::cell::RefCell;
 
 use compact_rust_asset_registry_oracle_fixture::ledger_contract::{
-    LedgerView, Witnesses, initial_state, recorded, setCustodian, tag,
+    LedgerView, Witnesses, acceptIfFresh, initial_state, recorded, setCustodian, tag,
 };
 use compact_rust_asset_registry_oracle_fixture::ledger_slots;
-use compact_rust_asset_registry_oracle_fixture::types::ContractAddress as Holder;
+use compact_rust_asset_registry_oracle_fixture::types::{
+    AssetClass, AssetRecord, ContractAddress as Holder, FreshnessPolicy, Provenance,
+};
 use midnight_compact_runtime as runtime;
 use midnight_onchain_state::state::{
     ContractMaintenanceAuthority, ContractOperation, ContractState, EntryPointBuf,
@@ -418,6 +420,98 @@ fn asset_writable_guard_records_two_successes_and_rejects_closed_or_frozen() {
                     vec![json!(["dup", "idx", "popeq"]); if mode == "closed" { 1 } else { 2 }]
                 );
             }
+        }
+    }
+}
+
+fn freshness_oracle() -> Value {
+    serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/asset-freshness-oracle.json"
+    ))
+    .unwrap()
+}
+
+fn freshness_args(
+    case: &str,
+) -> (
+    FreshnessPolicy,
+    AssetRecord,
+    BoundedUint<{ u64::MAX as u128 }>,
+) {
+    let (enforce, max_age, registered, current) = match case {
+        "fresh" => (true, 50, 100, 120),
+        "unchecked_age" => (false, 0, 100, 500),
+        "future" => (true, 50, 130, 120),
+        "expired" => (true, 10, 100, 120),
+        _ => unreachable!(),
+    };
+    (
+        FreshnessPolicy {
+            enforceMaxAge: enforce,
+            maxAge: BoundedUint::new(max_age).unwrap(),
+        },
+        AssetRecord {
+            code: FixedBytes::new([3; 32]),
+            note: runtime::OpaqueString::from("valid note"),
+            provenance: Provenance {
+                facility: FixedBytes::new([4; 32]),
+                registeredAt: BoundedUint::new(registered).unwrap(),
+            },
+            kind: AssetClass::Instrument,
+            quantity: BoundedUint::new(5).unwrap(),
+        },
+        BoundedUint::new(current).unwrap(),
+    )
+}
+
+#[test]
+fn asset_freshness_pure_guard_records_only_successful_calls() {
+    let reference = freshness_oracle();
+    for case in ["fresh", "unchecked_age", "future", "expired"] {
+        let expected = &reference[case];
+        let native_witnesses = TrackingWitness::default();
+        let recorded_witnesses = TrackingWitness::default();
+        let native = initial("success", &native_witnesses);
+        let recording = initial("success", &recorded_witnesses);
+        assert_eq!(
+            state_hex(native.query.state.get_ref().clone()),
+            expected["initialStateHex"],
+            "{case}: constructor state",
+        );
+        let (policy, record, current) = freshness_args(case);
+        let native = acceptIfFresh(
+            native,
+            &native_witnesses,
+            policy.clone(),
+            record.clone(),
+            current,
+        );
+        let recorded =
+            recorded::acceptIfFresh(recording, &recorded_witnesses, policy, record, current);
+        if case == "fresh" || case == "unchecked_age" {
+            let native = native.unwrap();
+            let recorded = recorded.unwrap();
+            assert_eq!(expected["result"], json!([]));
+            assert_eq!(native.result, ());
+            assert_eq!(recorded.execution.result, ());
+            check_success(native, recorded, expected, case);
+            assert_eq!(native_witnesses.calls(), ["currentTimestamp"]);
+            assert_eq!(recorded_witnesses.calls(), ["currentTimestamp"]);
+            assert_eq!(expected["witnessCalls"], json!(["currentTimestamp"]));
+        } else {
+            let native_error = native.err().expect("guard must reject native call");
+            let recorded_error = recorded.err().expect("guard must reject recorded call");
+            assert_eq!(recorded_error, native_error, "{case}: error parity");
+            assert_eq!(
+                native_error.to_string(),
+                expected["error"].as_str().unwrap()
+            );
+            assert_eq!(expected["stateHex"], expected["initialStateHex"]);
+            assert_eq!(expected["privateState"], 10);
+            assert_eq!(expected["queries"], json!([]));
+            assert_eq!(expected["witnessCalls"], json!([]));
+            assert!(native_witnesses.calls().is_empty());
+            assert!(recorded_witnesses.calls().is_empty());
         }
     }
 }

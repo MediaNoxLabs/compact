@@ -1352,6 +1352,111 @@ fn render_recorded_item(
         args.push(syn::parse_quote!(#rust_name: #arg_ty));
     }
 
+    // The asset freshness call is a pure Unit guard before an already
+    // recordable zero-argument stateful helper. Keep the three typed source
+    // arguments and the pure assertion shape closed; the emitted pure Rust
+    // function owns its nested struct projection and bounded subtraction.
+    fn closed_guarded_struct_pure_steps(
+        circuit: &StatefulCircuit,
+        parameters: &HashMap<&str, (&Type, syn::Ident)>,
+        pure_circuits: &HashMap<&str, &PureCircuit>,
+        circuits: &HashMap<&str, &StatefulCircuit>,
+    ) -> Result<Option<Vec<syn::Stmt>>, RenderError> {
+        let [policy, record, current_time] = circuit.parameters.as_slice() else {
+            return Ok(None);
+        };
+        if !matches!(policy.ty, Type::Struct { .. })
+            || !matches!(record.ty, Type::Struct { .. })
+            || !matches!(&current_time.ty, Type::Unsigned { max } if max == "18446744073709551615")
+            || circuit.result != Type::Unit
+            || circuit.return_value != StateReturn::Unit
+        {
+            return Ok(None);
+        }
+        let [
+            StateAction::PureCall { name, arguments },
+            StateAction::CircuitCall {
+                name: helper_name,
+                arguments: helper_arguments,
+            },
+        ] = circuit.actions.as_slice()
+        else {
+            return Ok(None);
+        };
+        let Some(pure) = pure_circuits.get(name.as_str()) else {
+            return Ok(None);
+        };
+        let Some(helper) = circuits.get(helper_name.as_str()) else {
+            return Ok(None);
+        };
+        if pure.result != Type::Unit
+            || pure.parameters.len() != 3
+            || helper.result != Type::Unit
+            || helper.return_value != StateReturn::Unit
+            || !helper.parameters.is_empty()
+            || !helper_arguments.is_empty()
+            || arguments.len() != 3
+        {
+            return Ok(None);
+        }
+        let Expr::Sequence {
+            steps: pure_steps,
+            value,
+        } = &pure.body
+        else {
+            return Ok(None);
+        };
+        let [
+            Expr::Assert { .. },
+            Expr::If {
+                then, otherwise, ..
+            },
+        ] = pure_steps.as_slice()
+        else {
+            return Ok(None);
+        };
+        if !matches!(value.as_ref(), Expr::Unit)
+            || !matches!(then.as_ref(), Expr::Assert { .. })
+            || !matches!(otherwise.as_ref(), Expr::Unit)
+        {
+            return Ok(None);
+        }
+        let mut steps = Vec::new();
+        let mut typed_arguments = Vec::new();
+        for (index, ((argument, source), target)) in arguments
+            .iter()
+            .zip(&circuit.parameters)
+            .zip(&pure.parameters)
+            .enumerate()
+        {
+            if source.ty != target.ty
+                || !matches!(argument, Expr::Coerce { value, ty }
+                    if ty == &source.ty && matches!(value.as_ref(), Expr::Parameter { name } if name == &source.name))
+            {
+                return Ok(None);
+            }
+            let (_, rust_name) = parameters
+                .get(source.name.as_str())
+                .expect("closed guard argument is a declared parameter");
+            let arg_ty = rust_type(&source.ty)?;
+            let arg = syn::Ident::new(
+                &format!("__compact_recorded_guard_arg_{index}"),
+                Span::call_site(),
+            );
+            if index == 2 {
+                steps.push(syn::parse_quote!(let #arg: #arg_ty = #rust_name;));
+            } else {
+                steps.push(syn::parse_quote!(let #arg: #arg_ty = (#rust_name).clone();));
+            }
+            typed_arguments.push(arg);
+        }
+        let method = ident(name)?;
+        steps.push(syn::parse_quote!(
+            crate::pure_circuits::#method(#(#typed_arguments),*)?;
+        ));
+        Ok(Some(steps))
+    }
+
     fn amount_source(
         value: &Expr,
         locals: &HashMap<String, syn::Expr>,
@@ -5175,11 +5280,17 @@ fn render_recorded_item(
         closed_organizer_gate_steps(circuit, ledger_fields, witnesses, pure_circuits, circuits)?;
     let organizer_gate = organizer_steps.is_some();
     let opaque_map_operation = closed_opaque_map_operation(circuit, ledger_fields);
-    let mut steps = organizer_steps.unwrap_or_default();
+    let guarded_pure_steps =
+        closed_guarded_struct_pure_steps(circuit, &parameters, pure_circuits, circuits)?;
+    let guarded_pure_call = guarded_pure_steps.is_some();
+    let mut steps = organizer_steps.or(guarded_pure_steps).unwrap_or_default();
     let mut next_temp = 0;
     let mut visiting = HashSet::from([circuit.name.clone()]);
     if !organizer_gate {
         for (index, action) in circuit.actions.iter().enumerate() {
+            if guarded_pure_call && index == 0 {
+                continue;
+            }
             if let RecordingOutcome::Unsupported(gap) = append_steps(
                 action,
                 &format!("actions[{index}]"),

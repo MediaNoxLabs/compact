@@ -26,6 +26,7 @@ mod adt_list_field;
 mod adt_list_vector_field_4;
 mod adt_set_enum;
 mod adt_set_vector;
+mod asset_freshness;
 mod asset_writable;
 mod boolean_pair_assert;
 mod closed_pure_field;
@@ -1556,6 +1557,15 @@ fn main() -> Result<(), Box<dyn Error>> {
             return Err("usage: compact-rust-proof-smoke --adt-set-enum <proof-output>".into());
         }
         return adt_set_enum::run(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--asset-freshness")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --asset-freshness <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err("usage: compact-rust-proof-smoke --asset-freshness <proof-output>".into());
+        }
+        return asset_freshness::run(Path::new(&root));
     }
     if first.as_deref() == Some(OsStr::new("--asset-writable")) {
         let root = arguments

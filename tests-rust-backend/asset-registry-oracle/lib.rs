@@ -1401,6 +1401,29 @@ pub mod ledger_contract {
             let (frame, _) = __compact_recorded_body_recordWrite(frame, witnesses)?;
             Ok(frame.finish(()))
         }
+        pub fn acceptIfFresh<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: crate::types::FreshnessPolicy,
+            __compact_param_1: crate::types::AssetRecord,
+            __compact_param_2: runtime::BoundedUint<18446744073709551615>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_guard_arg_0: crate::types::FreshnessPolicy =
+                (__compact_param_0).clone();
+            let __compact_recorded_guard_arg_1: crate::types::AssetRecord =
+                (__compact_param_1).clone();
+            let __compact_recorded_guard_arg_2: runtime::BoundedUint<18446744073709551615> =
+                __compact_param_2;
+            crate::pure_circuits::assertRecordFreshEnough(
+                __compact_recorded_guard_arg_0,
+                __compact_recorded_guard_arg_1,
+                __compact_recorded_guard_arg_2,
+            )?;
+            let (frame, _) = __compact_recorded_body_recordWrite(frame, witnesses)?;
+            Ok(frame.finish(()))
+        }
         pub fn close<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
             witnesses: &W,
@@ -1487,6 +1510,51 @@ pub mod ledger_contract {
                 let recorded = self.tag(observed.circuit_context(private_state), value)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed, recorded, "tag", input,
+                ))
+            }
+            pub fn acceptIfFresh<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                policy: crate::types::FreshnessPolicy,
+                record: crate::types::AssetRecord,
+                currentTime: runtime::BoundedUint<18446744073709551615>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                acceptIfFresh(context, self.witnesses, policy, record, currentTime)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn acceptIfFresh_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                policy: crate::types::FreshnessPolicy,
+                record: crate::types::AssetRecord,
+                currentTime: runtime::BoundedUint<18446744073709551615>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::concat(&[
+                    runtime::fab::AlignedValue::from((policy).clone()),
+                    runtime::fab::AlignedValue::from((record).clone()),
+                    runtime::fab::AlignedValue::from(currentTime),
+                ]);
+                let recorded = self.acceptIfFresh(
+                    observed.circuit_context(private_state),
+                    policy,
+                    record,
+                    currentTime,
+                )?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "acceptIfFresh",
+                    input,
                 ))
             }
             pub fn close<Private>(

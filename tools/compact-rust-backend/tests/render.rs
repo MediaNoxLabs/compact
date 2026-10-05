@@ -6932,6 +6932,158 @@ fn recorded_pure_assert_call_rejects_extra_pure_steps() {
 }
 
 #[test]
+fn recorded_struct_pure_guard_requires_closed_typed_call_and_zero_arg_helper() {
+    let policy = Type::Struct {
+        name: "Policy".into(),
+        fields: vec![StructField {
+            name: "enabled".into(),
+            ty: Type::Boolean,
+        }],
+    };
+    let record = Type::Struct {
+        name: "Record".into(),
+        fields: vec![StructField {
+            name: "value".into(),
+            ty: Type::Field,
+        }],
+    };
+    let uint64 = Type::Unsigned {
+        max: "18446744073709551615".into(),
+    };
+    let parameters = vec![
+        Parameter {
+            name: "policy".into(),
+            ty: policy,
+        },
+        Parameter {
+            name: "record".into(),
+            ty: record,
+        },
+        Parameter {
+            name: "time".into(),
+            ty: uint64,
+        },
+    ];
+    let mut contract = identity(Type::Unit, Expr::Unit);
+    contract.ledger_fields.push(LedgerField {
+        source: None,
+        id: "written".into(),
+        index: 0,
+        path: vec![],
+        declaration: LedgerFieldKind::Cell { ty: Type::Field },
+    });
+    contract.circuits[0] = PureCircuit {
+        source: None,
+        internal: false,
+        name: "guard".into(),
+        parameters: parameters.clone(),
+        result: Type::Unit,
+        body: Expr::Sequence {
+            steps: vec![
+                Expr::Assert {
+                    condition: Box::new(Expr::Boolean { value: true }),
+                    message: "first".into(),
+                },
+                Expr::If {
+                    condition: Box::new(Expr::Boolean { value: true }),
+                    then: Box::new(Expr::Assert {
+                        condition: Box::new(Expr::Boolean { value: true }),
+                        message: "second".into(),
+                    }),
+                    otherwise: Box::new(Expr::Unit),
+                },
+            ],
+            value: Box::new(Expr::Unit),
+        },
+    };
+    contract.stateful_circuits = vec![
+        StatefulCircuit {
+            source: None,
+            internal: true,
+            name: "write".into(),
+            parameters: vec![],
+            actions: vec![StateAction::CellWrite {
+                field: "written".into(),
+                index: 0,
+                value: Expr::FieldLiteral { value: "1".into() },
+            }],
+            result: Type::Unit,
+            return_value: StateReturn::Unit,
+        },
+        StatefulCircuit {
+            source: None,
+            internal: false,
+            name: "caller".into(),
+            parameters: parameters.clone(),
+            actions: vec![
+                StateAction::PureCall {
+                    name: "guard".into(),
+                    arguments: parameters
+                        .iter()
+                        .map(|parameter| Expr::Coerce {
+                            value: Box::new(Expr::Parameter {
+                                name: parameter.name.clone(),
+                            }),
+                            ty: parameter.ty.clone(),
+                        })
+                        .collect(),
+                },
+                StateAction::CircuitCall {
+                    name: "write".into(),
+                    arguments: vec![],
+                },
+            ],
+            result: Type::Unit,
+            return_value: StateReturn::Unit,
+        },
+    ];
+    let recorded = |contract: &Contract| {
+        render_with_capabilities(contract)
+            .unwrap()
+            .capabilities
+            .circuits
+            .into_iter()
+            .find(|circuit| circuit.name == "caller")
+            .unwrap()
+            .recorded
+    };
+    assert!(recorded(&contract));
+
+    let closed = contract.clone();
+    contract.stateful_circuits[1]
+        .actions
+        .push(StateAction::CellWrite {
+            field: "written".into(),
+            index: 0,
+            value: Expr::FieldLiteral { value: "2".into() },
+        });
+    assert!(!recorded(&contract));
+    contract = closed.clone();
+    if let StateAction::PureCall { arguments, .. } = &mut contract.stateful_circuits[1].actions[0] {
+        arguments[0] = Expr::Default {
+            ty: parameters[0].ty.clone(),
+        };
+    }
+    assert!(!recorded(&contract));
+    contract = closed.clone();
+    if let Expr::Sequence { steps, .. } = &mut contract.circuits[0].body {
+        steps.push(Expr::Unit);
+    }
+    assert!(!recorded(&contract));
+    contract = closed;
+    contract.stateful_circuits[0].parameters.push(Parameter {
+        name: "extra".into(),
+        ty: Type::Field,
+    });
+    if let StateAction::CircuitCall { arguments, .. } =
+        &mut contract.stateful_circuits[1].actions[1]
+    {
+        arguments.push(Expr::FieldLiteral { value: "3".into() });
+    }
+    assert!(!recorded(&contract));
+}
+
+#[test]
 fn conditional_assertion_folds_only_closed_same_type_unsigned_equality() {
     let mut contract = identity(Type::Unit, Expr::Unit);
     contract.circuits.clear();

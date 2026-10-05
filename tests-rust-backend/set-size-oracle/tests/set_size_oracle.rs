@@ -209,6 +209,11 @@ fn nonempty_set_and_map_checks_write_false_with_exact_recorded_trace() {
         let _: () = recorded.execution.result;
         boolean_observation_assertions::assert_ts_trace(name, &native, &recorded, row);
         assert_eq!(
+            serde_json::to_value(recorded.public.verify_ops()).unwrap(),
+            row["publicTranscript"],
+            "{name}: complete ordered TypeScript public program"
+        );
+        assert_eq!(
             native.context.query.state,
             recorded.execution.context.query.state
         );

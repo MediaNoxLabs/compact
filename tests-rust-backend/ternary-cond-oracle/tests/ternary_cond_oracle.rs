@@ -765,6 +765,11 @@ fn recorded_streaming_comparison_and_struct_true_paths_match_typescript() {
             row["publicTranscriptShape"],
             "{name}: ordered TS VM"
         );
+        assert_eq!(
+            serde_json::to_value(recorded.public.verify_ops()).unwrap(),
+            row["publicTranscript"],
+            "{name}: complete ordered TypeScript public program"
+        );
         let replay = recorded
             .public
             .initial()

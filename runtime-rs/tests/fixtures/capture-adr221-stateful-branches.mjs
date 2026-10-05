@@ -69,6 +69,15 @@ function shape(op) {
   }
   throw new Error(`unknown public VM operation ${Object.keys(op)}`);
 }
+function jsonValue(value) {
+  if (typeof value === 'bigint') return value.toString();
+  if (value instanceof Uint8Array) return Array.from(value);
+  if (Array.isArray(value)) return value.map(jsonValue);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, jsonValue(item)]));
+  }
+  return value;
+}
 let queries = [];
 const originalQuery = runtime.QueryContext.prototype.query;
 runtime.QueryContext.prototype.query = function (...args) {
@@ -96,6 +105,7 @@ function run(name) {
     flags: mode === 'set-size' ? { set: view.flag_set, map: view.flag_map, setSize: String(view.s.size()), mapSize: String(view.m.size()) } :
       mode === 'call-arg' ? { flag: view.flag, fieldCell: String(view.fieldCell) } : undefined,
     publicTranscriptShape: output.proofData.publicTranscript.map(shape),
+    publicTranscript: jsonValue(output.proofData.publicTranscript),
     privateTranscriptCount: output.proofData.privateTranscriptOutputs.length,
     queryCount: ownQueries.length, queries: ownQueries,
     queryCostSum: sum, reportedGas: gas(output.gasCost),

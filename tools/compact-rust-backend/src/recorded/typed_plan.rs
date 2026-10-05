@@ -44,6 +44,7 @@ struct Plan<'a> {
     field_cell_writes: usize,
     field_cell_slot: Option<(String, u8)>,
     effectful_field_cells: bool,
+    read_only_assertions: bool,
     optional_cells: usize,
     opaque_cells: usize,
     historic_roots: usize,
@@ -171,6 +172,35 @@ impl Plan<'_> {
         steps: &mut Vec<syn::Stmt>,
     ) -> Option<TypedValue> {
         match expression {
+            Expr::Unit if self.read_only_assertions => Some(TypedValue {
+                ty: Type::Unit,
+                value: syn::parse_quote!(()),
+            }),
+            Expr::Sequence {
+                steps: expressions,
+                value,
+            } if self.read_only_assertions => {
+                for expression in expressions {
+                    if self.expression(expression, scope, steps)?.ty != Type::Unit {
+                        return None;
+                    }
+                }
+                self.expression(value, scope, steps)
+            }
+            Expr::Assert { condition, message } if self.read_only_assertions => {
+                let condition = self.expression(condition, scope, steps)?;
+                if condition.ty != Type::Boolean {
+                    return None;
+                }
+                let condition = condition.value;
+                steps.push(syn::parse_quote! {
+                    if !#condition { return Err(runtime::CompactError::AssertionFailed(#message.to_owned())); }
+                });
+                Some(TypedValue {
+                    ty: Type::Unit,
+                    value: syn::parse_quote!(()),
+                })
+            }
             Expr::Parameter { name } => {
                 let value = scope.get(name)?;
                 Some(TypedValue {
@@ -417,7 +447,11 @@ impl Plan<'_> {
                 if self.effectful_field_cells && *ty != Type::Field {
                     return None;
                 }
+                if self.read_only_assertions && *ty != Type::Boolean {
+                    return None;
+                }
                 if !cell_type(ty)
+                    && !(self.read_only_assertions && *ty == Type::Boolean)
                     && !(ty == &Type::Field
                         && (self.effectful_field_cells
                             || self.field_cell_slot.as_ref() == Some(&(field.clone(), *index))))
@@ -1074,6 +1108,7 @@ pub(super) fn lower_effectful<'a>(
         field_cell_writes: 0,
         field_cell_slot: None,
         effectful_field_cells: true,
+        read_only_assertions: false,
         optional_cells: 0,
         opaque_cells: 0,
         historic_roots: 0,
@@ -1114,12 +1149,87 @@ pub(super) fn lower_effectful<'a>(
     })
 }
 
+// Read-only assertion bodies have their own admission boundary. General calls,
+// writes, cryptographic effects and non-Boolean witness results remain outside it.
+fn assertion_value(
+    value: &Expr,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    assertions: &mut usize,
+) -> bool {
+    match value {
+        Expr::Unit
+        | Expr::Boolean { .. }
+        | Expr::Parameter { .. }
+        | Expr::UnsignedLiteral { .. }
+        | Expr::CellRead { .. }
+        | Expr::CounterRead { .. } => true,
+        Expr::CounterLessThan { threshold, .. } => {
+            assertion_value(threshold, witnesses, assertions)
+        }
+        Expr::Coerce { value, ty } if assertion_type(ty) => {
+            assertion_value(value, witnesses, assertions)
+        }
+        Expr::Assert { condition, .. } => {
+            *assertions += 1;
+            assertion_value(condition, witnesses, assertions)
+        }
+        Expr::Sequence { steps, value } => {
+            steps
+                .iter()
+                .all(|step| assertion_value(step, witnesses, assertions))
+                && assertion_value(value, witnesses, assertions)
+        }
+        Expr::If {
+            condition,
+            then,
+            otherwise,
+        } => {
+            assertion_value(condition, witnesses, assertions)
+                && assertion_value(then, witnesses, assertions)
+                && assertion_value(otherwise, witnesses, assertions)
+        }
+        Expr::Let { bindings, body } => {
+            bindings.iter().all(|binding| {
+                assertion_type(&binding.ty)
+                    && assertion_value(&binding.value, witnesses, assertions)
+            }) && assertion_value(body, witnesses, assertions)
+        }
+        Expr::WitnessCall { name, arguments } => witnesses.get(name.as_str()).is_some_and(|w| {
+            w.result == Type::Boolean
+                && w.parameters
+                    .iter()
+                    .all(|p| p.ty == (Type::Unsigned { max: "255".into() }))
+                && arguments
+                    .iter()
+                    .all(|arg| assertion_value(arg, witnesses, assertions))
+        }),
+        _ => false,
+    }
+}
+fn assertion_type(ty: &Type) -> bool {
+    matches!(ty, Type::Unit | Type::Boolean)
+        || matches!(ty, Type::Unsigned { max } if max == "255" || max == "18446744073709551615")
+}
+
 pub(super) fn lower<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
     witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,
     pure: &'a HashMap<&'a str, &'a PureCircuit>,
 ) -> Option<TypedPlan> {
+    let mut assertions = 0;
+    let assertion_entry = circuit.actions.is_empty()
+        && circuit
+            .parameters
+            .iter()
+            .all(|parameter| parameter.ty == Type::Boolean)
+        && (circuit.result == Type::Unit
+            || circuit.result
+                == (Type::Unsigned {
+                    max: u64::MAX.to_string(),
+                }))
+        && matches!(&circuit.return_value, StateReturn::Expression { value } if assertion_value(value, witnesses, &mut assertions))
+        && assertions > 0;
     let enum_entry = matches!(circuit.parameters.as_slice(), [parameter] if matches!(parameter.ty, Type::Enum { .. }));
     let opaque_entry =
         matches!(circuit.parameters.as_slice(), [parameter] if parameter.ty == Type::OpaqueString);
@@ -1167,11 +1277,13 @@ pub(super) fn lower<'a>(
         || opaque_entry
         || spend_entry
         || counter_entry
-        || field_cell_slot.is_some())
+        || field_cell_slot.is_some()
+        || assertion_entry)
         || (!matches!(
             circuit.result,
             Type::Unit | Type::OpaqueString | Type::Boolean
-        ) && field_cell_slot.is_none())
+        ) && field_cell_slot.is_none()
+            && !assertion_entry)
     {
         return None;
     }
@@ -1191,6 +1303,7 @@ pub(super) fn lower<'a>(
         field_cell_writes: 0,
         field_cell_slot: field_cell_slot.clone(),
         effectful_field_cells: false,
+        read_only_assertions: assertion_entry,
         optional_cells: 0,
         opaque_cells: 0,
         historic_roots: 0,
@@ -1340,7 +1453,8 @@ pub(super) fn lower<'a>(
         || counter_comparison
         || qualified_set_lifecycle
         || qualified_cell_replacement
-        || field_cell_root)
+        || field_cell_root
+        || assertion_entry)
         .then_some(TypedPlan { steps, result })
 }
 
@@ -1369,6 +1483,7 @@ mod tests {
             field_cell_writes: 0,
             field_cell_slot: None,
             effectful_field_cells: false,
+            read_only_assertions: false,
             optional_cells: 0,
             opaque_cells: 0,
             historic_roots: 0,
@@ -1445,6 +1560,7 @@ mod tests {
             field_cell_writes: 0,
             field_cell_slot: None,
             effectful_field_cells: false,
+            read_only_assertions: false,
             optional_cells: 0,
             opaque_cells: 0,
             historic_roots: 0,

@@ -28,6 +28,22 @@ policy. This does not establish funded transaction admission or recording parity
 for arbitrary effectful returns. The earlier single-slot root-Let profile keeps
 its separate admission rules. IR schema 20 and runtime ABI 46 are unchanged.
 
+## Stateful assertion recording
+
+A separate read-only profile records Boolean short-circuit assertions over
+Boolean Cells, Counter reads/comparisons, and typed Boolean witnesses. It keeps
+lexical bindings and returns Unit or Uint64. Every sequence step must be Unit;
+a failed assertion stops before later witnesses or result queries. Both branches
+are audited, and additional writes or unsupported calls remain recording gaps.
+
+The stateful assertion oracle preserves twelve original TypeScript cases and
+adds a per-query budget rejection after two successful reads. Native and recorded
+execution match success transcripts, outputs, state, query-summed gas and replay
+cost; failures match rejection class and observable witness prefixes. Failed
+Rust calls do not expose consumed context/gas, so no failed aggregate gas parity
+is claimed. Both APIs pass proof verification and ledger application under the
+shared unbalanced smoke policy. No runtime, IR schema or ABI change is required.
+
 ## Compile a contract
 
 The packaged `compactc` accepts a repeatable `--target` option. TypeScript is

@@ -1159,7 +1159,12 @@ def main() -> None:
             report = json.loads((output / "contract/rust-capabilities.json").read_text())
             assert {row["name"] for row in report["circuits"]} == {"checked", "unit_result"}
             for row in report["circuits"]:
-                assert row["proof_required"] and not row["recorded"] and not row["observed_call"]
+                assert row["proof_required"] and row["recorded"] and row["observed_call"]
+            run(compiler, "--target", "rust", "--rust-require-recording", "--skip-zk", str(source), str(base / "strict-assert"))
+            if args.proof:
+                proof = base / "stateful-assert-proof"
+                run(compiler, "--target", "rust", "--rust-require-recording", str(source), str(proof))
+                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--", "--stateful-assert", str(proof))
             original = base / "original-dao"
             run(compiler, "--target", "rust", "--skip-zk", str(ROOT / "test-center/test-contracts/micro-dao.compact"), str(original))
             info = json.loads((original / "compiler/contract-info.json").read_text())
@@ -1748,6 +1753,10 @@ def main() -> None:
                 str(ROOT_LET_ACTION_RETURN_SOURCE), str(root_let_proof))
             run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 "--root-let-action-return", str(root_let_proof))
+            assertion_proof = base / "stateful-assert-proof"
+            run(compiler, "--target", "rust", "--rust-require-recording",
+                str(ROOT / "examples/rust_backend/stateful_assert_oracle.compact"), str(assertion_proof))
+            run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--", "--stateful-assert", str(assertion_proof))
             effectful_proof = base / "effectful-return-proof"
             run(compiler, "--target", "rust", "--rust-require-recording",
                 str(EFFECTFUL_RETURN_SOURCE), str(effectful_proof))

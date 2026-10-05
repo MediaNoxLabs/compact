@@ -10888,7 +10888,7 @@ fn wide_addition_validates_every_bound_and_does_not_admit_other_wide_operators()
 }
 
 #[test]
-fn stateful_assertions_require_boolean_and_return_unit_without_broadening_recording() {
+fn stateful_assertions_require_boolean_and_record_typed_read_only_results() {
     let mut contract: Contract =
         serde_json::from_str(include_str!("stateful-assert-schema20-ir.json")).unwrap();
     contract.schema_version = SCHEMA_VERSION;
@@ -10899,7 +10899,7 @@ fn stateful_assertions_require_boolean_and_return_unit_without_broadening_record
             .capabilities
             .circuits
             .iter()
-            .all(|c| !c.recorded && !c.observed_call)
+            .all(|c| c.recorded && c.observed_call)
     );
     let mut value: serde_json::Value =
         serde_json::from_str(include_str!("stateful-assert-schema20-ir.json")).unwrap();
@@ -10952,4 +10952,51 @@ fn stateful_assertions_require_boolean_and_return_unit_without_broadening_record
         },
     });
     assert!(render_with_capabilities(&wrong).is_err());
+}
+
+#[test]
+fn assertion_recording_rejects_nonunit_steps_wrong_slots_and_extra_effects() {
+    let source: serde_json::Value =
+        serde_json::from_str(include_str!("stateful-assert-schema20-ir.json")).unwrap();
+    let parse = |value| serde_json::from_value::<Contract>(value).unwrap();
+    let mut nonunit = source.clone();
+    nonunit["stateful_circuits"][0]["return_value"]["value"]["body"]["steps"]
+        .as_array_mut()
+        .unwrap()
+        .push(serde_json::json!({"kind":"boolean", "value":true}));
+    let result = render_with_capabilities(&parse(nonunit)).unwrap();
+    assert!(!result.capabilities.circuits[0].recorded);
+    assert!(result.capabilities.circuits[1].recorded);
+    let mut extra = parse(source.clone());
+    extra.stateful_circuits[0]
+        .actions
+        .push(StateAction::CounterReset {
+            field: "low".into(),
+            index: 1,
+        });
+    assert!(
+        !render_with_capabilities(&extra)
+            .unwrap()
+            .capabilities
+            .circuits[0]
+            .recorded
+    );
+    let mut mismatch = source.clone();
+    mismatch["ledger_fields"][0]["declaration"]["ty"] = serde_json::json!({"kind":"field"});
+    assert!(render(&parse(mismatch)).is_err());
+    let mut counter_kind = source.clone();
+    counter_kind["ledger_fields"][2]["declaration"] =
+        serde_json::json!({"kind":"cell", "ty":{"kind":"boolean"}});
+    assert!(render(&parse(counter_kind)).is_err());
+    let mut wrong_arity = source.clone();
+    wrong_arity["witnesses"][0]["parameters"] = serde_json::json!([]);
+    assert!(render(&parse(wrong_arity)).is_err());
+    let mut escaped = source.clone();
+    escaped["stateful_circuits"][0]["return_value"]["value"]["body"]["value"] =
+        serde_json::json!({"kind":"parameter", "name":"tmp_16"});
+    assert!(render(&parse(escaped)).is_err());
+    // A Field-valued witness remains outside this Boolean assertion domain.
+    let mut witness_result = source;
+    witness_result["witnesses"][0]["result"] = serde_json::json!({"kind":"field"});
+    assert!(render(&parse(witness_result)).is_err());
 }

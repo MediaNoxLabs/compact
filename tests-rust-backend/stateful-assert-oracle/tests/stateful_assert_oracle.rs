@@ -86,6 +86,37 @@ fn check<T: Clone + Into<runtime::fab::AlignedValue>>(
         assert_eq!(row["gas"][dim], queries.last().unwrap()["gas"][dim]);
     }
 }
+fn check_recorded<T: Clone + Into<runtime::fab::AlignedValue>>(
+    out: Result<runtime::recording::RecordedCircuitResult<Vec<u8>, T>, runtime::CompactError>,
+    row: &Value,
+) {
+    let out = out.map(|recorded| {
+        assert_eq!(json!(recorded.public.verify_ops()), row["publicTranscript"]);
+        let replay = recorded
+            .public
+            .initial()
+            .query(
+                recorded.public.verify_ops(),
+                None,
+                &recorded.execution.context.cost_model,
+            )
+            .unwrap();
+        assert_eq!(replay.context.state, recorded.execution.context.query.state);
+        assert_eq!(
+            replay.context.effects,
+            recorded.execution.context.query.effects
+        );
+        for dim in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+            assert_eq!(
+                json!(replay.gas_cost)[dim].as_u64().unwrap().to_string(),
+                row["replayGas"][dim]
+            );
+        }
+        recorded.execution
+    });
+    check(out, row);
+}
+
 #[test]
 fn nested_assertions_match_typescript_short_circuit_witnesses_queries_and_rejections() {
     let rows: Value = serde_json::from_str(include_str!(
@@ -93,30 +124,58 @@ fn nested_assertions_match_typescript_short_circuit_witnesses_queries_and_reject
     ))
     .unwrap();
     for row in rows.as_array().unwrap() {
-        let w = Witnesses {
-            gates: serde_json::from_value(row["gates"].clone()).unwrap(),
-            trace: RefCell::new(vec![]),
-        };
-        let mut ctx = c::initial_state(
-            ConstructorContext::new(vec![]),
-            row["open"].as_bool().unwrap(),
-            runtime::BoundedUint::new(row["low"].as_u64().unwrap() as u128).unwrap(),
-            runtime::BoundedUint::new(row["high"].as_u64().unwrap() as u128).unwrap(),
-        )
-        .unwrap()
-        .into_circuit_context(runtime::ledger::ContractAddress::default());
-        assert_eq!(state_hex(ctx.query.state.get_ref().clone()), row["before"]);
-        if row["zeroGas"].as_bool().unwrap() {
-            ctx.gas_limit = Some(Default::default());
+        for recording in [false, true] {
+            let w = Witnesses {
+                gates: serde_json::from_value(row["gates"].clone()).unwrap(),
+                trace: RefCell::new(vec![]),
+            };
+            let mut ctx = c::initial_state(
+                ConstructorContext::new(vec![]),
+                row["open"].as_bool().unwrap(),
+                runtime::BoundedUint::new(row["low"].as_u64().unwrap() as u128).unwrap(),
+                runtime::BoundedUint::new(row["high"].as_u64().unwrap() as u128).unwrap(),
+            )
+            .unwrap()
+            .into_circuit_context(runtime::ledger::ContractAddress::default());
+            assert_eq!(state_hex(ctx.query.state.get_ref().clone()), row["before"]);
+            if row["zeroGas"].as_bool().unwrap() {
+                ctx.gas_limit = Some(Default::default());
+            }
+            if let Some(budget) = row["gasBudget"].as_object() {
+                let value: serde_json::Map<String, Value> = budget
+                    .iter()
+                    .map(|(key, value)| {
+                        (
+                            key.clone(),
+                            json!(value.as_str().unwrap().parse::<u64>().unwrap()),
+                        )
+                    })
+                    .collect();
+                ctx.gas_limit = Some(serde_json::from_value(Value::Object(value)).unwrap());
+            }
+            if row["name"] == "checked" {
+                if recording {
+                    check_recorded(
+                        c::recorded::checked(ctx, &w, row["selected"].as_bool().unwrap()),
+                        row,
+                    );
+                } else {
+                    check(c::checked(ctx, &w, row["selected"].as_bool().unwrap()), row);
+                }
+            } else {
+                if recording {
+                    check_recorded(
+                        c::recorded::unit_result(ctx, &w, row["selected"].as_bool().unwrap()),
+                        row,
+                    );
+                } else {
+                    check(
+                        c::unit_result(ctx, &w, row["selected"].as_bool().unwrap()),
+                        row,
+                    );
+                }
+            }
+            assert_eq!(json!(*w.trace.borrow()), row["trace"]);
         }
-        if row["name"] == "checked" {
-            check(c::checked(ctx, &w, row["selected"].as_bool().unwrap()), row);
-        } else {
-            check(
-                c::unit_result(ctx, &w, row["selected"].as_bool().unwrap()),
-                row,
-            );
-        }
-        assert_eq!(json!(*w.trace.borrow()), row["trace"]);
     }
 }

@@ -282,19 +282,259 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
+    /// Circuits with a replayable ordered ledger program.
+    pub mod recorded {
+        use midnight_compact_runtime as runtime;
+        pub fn checked<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: bool,
+        ) -> Result<
+            runtime::recording::RecordedCircuitResult<
+                Private,
+                runtime::BoundedUint<18446744073709551615>,
+            >,
+            runtime::CompactError,
+        > {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_plan_0: runtime::BoundedUint<255> =
+                runtime::BoundedUint::<255>::new(1u128)
+                    .expect("Compact Uint literal fits its maximum");
+            let __compact_plan_1: runtime::BoundedUint<255> = __compact_plan_0;
+            let (frame, __compact_plan_2): (_, bool) =
+                frame.try_witness_metered(|context, meter| {
+                    witnesses.next_gate(
+                        context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }),
+                        __compact_plan_1,
+                    )
+                })?;
+            let __compact_plan_3: bool = __compact_plan_2;
+            let (frame, __compact_plan_5): (_, bool) = if __compact_param_0 {
+                (frame, __compact_plan_3)
+            } else {
+                let __compact_plan_4: bool = false;
+                (frame, __compact_plan_4)
+            };
+            let (frame, __compact_plan_8): (_, bool) = if __compact_plan_5 {
+                let (frame, __compact_plan_6): (_, bool) =
+                    crate::ledger_slots::open.record_read(frame)?;
+                (frame, __compact_plan_6)
+            } else {
+                let __compact_plan_7: bool = false;
+                (frame, __compact_plan_7)
+            };
+            let (frame, __compact_plan_13): (_, bool) = if __compact_plan_8 {
+                let __compact_plan_9: runtime::BoundedUint<255> =
+                    runtime::BoundedUint::<255>::new(2u128)
+                        .expect("Compact Uint literal fits its maximum");
+                let __compact_plan_10: runtime::BoundedUint<255> = __compact_plan_9;
+                let (frame, __compact_plan_11): (_, bool) =
+                    frame.try_witness_metered(|context, meter| {
+                        witnesses.next_gate(
+                            context.witness_context_with(super::LedgerView {
+                                state: context.query.state.get_ref(),
+                                meter,
+                            }),
+                            __compact_plan_10,
+                        )
+                    })?;
+                (frame, __compact_plan_11)
+            } else {
+                let __compact_plan_12: bool = false;
+                (frame, __compact_plan_12)
+            };
+            let (frame, __compact_plan_20): (_, bool) = if __compact_plan_13 {
+                let (frame, __compact_plan_14) = crate::ledger_slots::high.record_read(frame)?;
+                let __compact_plan_15: runtime::BoundedUint<18446744073709551615> =
+                    runtime::BoundedUint::<18446744073709551615>::new(__compact_plan_14 as u128)?;
+                let __compact_plan_16: runtime::BoundedUint<18446744073709551615> =
+                    __compact_plan_15;
+                let (frame, __compact_plan_17) = crate::ledger_slots::low
+                    .record_less_than(frame, (__compact_plan_16).value() as u64)?;
+                let __compact_plan_18: bool = __compact_plan_17;
+                (frame, __compact_plan_18)
+            } else {
+                let __compact_plan_19: bool = false;
+                (frame, __compact_plan_19)
+            };
+            let (frame, __compact_plan_25): (_, bool) = if __compact_plan_20 {
+                let __compact_plan_21: runtime::BoundedUint<255> =
+                    runtime::BoundedUint::<255>::new(3u128)
+                        .expect("Compact Uint literal fits its maximum");
+                let __compact_plan_22: runtime::BoundedUint<255> = __compact_plan_21;
+                let (frame, __compact_plan_23): (_, bool) =
+                    frame.try_witness_metered(|context, meter| {
+                        witnesses.next_gate(
+                            context.witness_context_with(super::LedgerView {
+                                state: context.query.state.get_ref(),
+                                meter,
+                            }),
+                            __compact_plan_22,
+                        )
+                    })?;
+                (frame, __compact_plan_23)
+            } else {
+                let __compact_plan_24: bool = false;
+                (frame, __compact_plan_24)
+            };
+            if !__compact_plan_25 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "nested stateful guard".to_owned(),
+                ));
+            }
+            let (frame, __compact_plan_26) = crate::ledger_slots::high.record_read(frame)?;
+            let __compact_plan_27: runtime::BoundedUint<18446744073709551615> =
+                runtime::BoundedUint::<18446744073709551615>::new(__compact_plan_26 as u128)?;
+            Ok(frame.finish(__compact_plan_27))
+        }
+        pub fn unit_result<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: bool,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_plan_0: runtime::BoundedUint<255> =
+                runtime::BoundedUint::<255>::new(1u128)
+                    .expect("Compact Uint literal fits its maximum");
+            let __compact_plan_1: runtime::BoundedUint<255> = __compact_plan_0;
+            let (frame, __compact_plan_2): (_, bool) =
+                frame.try_witness_metered(|context, meter| {
+                    witnesses.next_gate(
+                        context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }),
+                        __compact_plan_1,
+                    )
+                })?;
+            let __compact_plan_3: bool = __compact_plan_2;
+            let (frame, __compact_plan_5): (_, bool) = if __compact_param_0 {
+                (frame, __compact_plan_3)
+            } else {
+                let __compact_plan_4: bool = false;
+                (frame, __compact_plan_4)
+            };
+            let (frame, __compact_plan_8): (_, bool) = if __compact_plan_5 {
+                let (frame, __compact_plan_6): (_, bool) =
+                    crate::ledger_slots::open.record_read(frame)?;
+                (frame, __compact_plan_6)
+            } else {
+                let __compact_plan_7: bool = false;
+                (frame, __compact_plan_7)
+            };
+            if !__compact_plan_8 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "nested unit guard".to_owned(),
+                ));
+            }
+            Ok(frame.finish(()))
+        }
+        /// Typed handle for circuits with a complete recorded trace.
+        pub struct Contract;
+        impl Contract {}
+        /// A recording handle with access to the contract's witnesses.
+        pub struct BorrowedContract<'a, W> {
+            pub(super) witnesses: &'a W,
+        }
+        impl<W> BorrowedContract<'_, W> {
+            pub fn checked<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                selected: bool,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<
+                    Private,
+                    runtime::BoundedUint<18446744073709551615>,
+                >,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                checked(context, self.witnesses, selected)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn checked_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                selected: bool,
+            ) -> Result<
+                runtime::transaction::RecordedCall<
+                    'observed,
+                    Private,
+                    runtime::BoundedUint<18446744073709551615>,
+                >,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(selected);
+                let recorded = self.checked(observed.circuit_context(private_state), selected)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "checked", input,
+                ))
+            }
+            pub fn unit_result<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                selected: bool,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                unit_result(context, self.witnesses, selected)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn unit_result_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                selected: bool,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(selected);
+                let recorded =
+                    self.unit_result(observed.circuit_context(private_state), selected)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "unit_result",
+                    input,
+                ))
+            }
+        }
+    }
     /// Groups the contract's exported circuits for Rust consumers.
     pub struct Contract<W> {
         #[allow(dead_code)]
         witnesses: W,
+        pub recording: recorded::Contract,
     }
     impl<W> From<W> for Contract<W> {
         fn from(witnesses: W) -> Self {
-            Self { witnesses }
+            Self {
+                witnesses,
+                recording: recorded::Contract,
+            }
         }
     }
     impl Default for Contract<()> {
         fn default() -> Self {
-            Self { witnesses: () }
+            Self {
+                witnesses: (),
+                recording: recorded::Contract,
+            }
         }
     }
     impl<W> Contract<W> {
@@ -320,6 +560,12 @@ pub mod ledger_contract {
             W: TryWitnesses<Private>,
         {
             crate::ledger_contract::unit_result(context, &self.witnesses, selected)
+        }
+        /// Borrow the contract's witnesses for a replayable circuit call.
+        pub fn recording(&self) -> recorded::BorrowedContract<'_, W> {
+            recorded::BorrowedContract {
+                witnesses: &self.witnesses,
+            }
         }
     }
 }

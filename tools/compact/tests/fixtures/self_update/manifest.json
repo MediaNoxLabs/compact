@@ -1,0 +1,54 @@
+{
+  "format": "compact-self-update-assets/v1",
+  "repository": "midnightntwrk/compact",
+  "releases": {
+    "0.5.0": {
+      "installer": {
+        "name": "compact-installer.sh",
+        "bytes": 50241,
+        "sha256": "89f60ec8c79a172fcca19e65e95b2b00910b031538c0010a308b74f1ebf22ad3"
+      },
+      "archives": {
+        "aarch64-apple-darwin": {
+          "name": "compact-aarch64-apple-darwin.tar.xz",
+          "bytes": 2683488,
+          "sha256": "96ed510e967a11957c5db7bee63f044e436a36dad8ba3f538d0266afcf3155de"
+        },
+        "x86_64-apple-darwin": {
+          "name": "compact-x86_64-apple-darwin.tar.xz",
+          "bytes": 2932508,
+          "sha256": "521970af42e953b03ba113e99549adb61d65aa45a5f0739e9eaf503658d38782"
+        },
+        "x86_64-unknown-linux-musl": {
+          "name": "compact-x86_64-unknown-linux-musl.tar.xz",
+          "bytes": 3206204,
+          "sha256": "3a4b91fa7e286d5c68bda513dca249534d738770ced0177bc8f7a855113b4fec"
+        }
+      }
+    },
+    "0.5.1": {
+      "installer": {
+        "name": "compact-installer.sh",
+        "bytes": 52072,
+        "sha256": "85e74a53ae4a67b31fa4d854f3b6ffb4c29f7c53e3372c5008b6a4729a8b4a73"
+      },
+      "archives": {
+        "aarch64-apple-darwin": {
+          "name": "compact-aarch64-apple-darwin.tar.xz",
+          "bytes": 2684440,
+          "sha256": "4d90647e4e8de0ec8d227eb6b01ab1c58223512e62bcf36b6a934ceef8179a08"
+        },
+        "x86_64-apple-darwin": {
+          "name": "compact-x86_64-apple-darwin.tar.xz",
+          "bytes": 2933872,
+          "sha256": "77b23c7bdf7c32f0cb2621bc03620e46c00842ef0010f2a9bbcaeca2a5d08a66"
+        },
+        "x86_64-unknown-linux-musl": {
+          "name": "compact-x86_64-unknown-linux-musl.tar.xz",
+          "bytes": 3222452,
+          "sha256": "684c6b3d2eef9484aabba7a0820c166ae5c169f3aecf28cbea2074840263ba66"
+        }
+      }
+    }
+  }
+}

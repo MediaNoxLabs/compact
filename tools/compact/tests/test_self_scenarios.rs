@@ -13,16 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::common::{
-    COMPACT_VERSION, PREVIOUS_COMPACT_VERSION, download_to_temp, run_downloaded_binary,
-};
-use std::collections::HashMap;
+use crate::common::{COMPACT_VERSION, load_and_replace};
+use self_update_fixture::SelfUpdateFixture;
+use std::process::Output;
 
 mod common;
+#[path = "common/self_update_fixture.rs"]
+mod self_update_fixture;
 
-// returns different values than compactc
-#[allow(dead_code)]
-pub fn get_compact_version() -> &'static str {
+// The archive target differs from the compactc archive target on macOS ARM.
+fn historical_archive_target() -> &'static str {
     match (std::env::consts::OS, std::env::consts::ARCH) {
         ("macos", "aarch64") => "aarch64-apple-darwin",
         ("macos", "x86_64") => "x86_64-apple-darwin",
@@ -31,148 +31,82 @@ pub fn get_compact_version() -> &'static str {
     }
 }
 
-// from 0.1.0, download same way user would do
+fn assert_historical_output(
+    output: &Output,
+    stdout_fixture: &str,
+    stderr_fixture: Option<&str>,
+    replacements: &[(&str, &str)],
+) {
+    let expected_stdout = load_and_replace(stdout_fixture, replacements);
+    let expected_stderr = stderr_fixture
+        .map(|path| load_and_replace(path, replacements))
+        .unwrap_or_default();
+    assert_eq!(
+        String::from_utf8_lossy(&output.stdout).trim(),
+        expected_stdout.trim()
+    );
+    assert_eq!(
+        String::from_utf8_lossy(&output.stderr).trim(),
+        expected_stderr.trim()
+    );
+    assert_eq!(output.status.code(), Some(0));
+}
+
 #[test]
 fn test_self_sc1_download_release_and_check() {
-    let temp_dir = tempfile::tempdir().unwrap();
-    let temp_path = temp_dir.path();
-
-    // set paths (home, compact binary, receipt home)
-    let home_dir = temp_path.to_str().unwrap();
-    let compact = temp_path.join(".local/bin/compact");
-    let receipt = temp_path.join(".config/compact");
-
-    download_to_temp(
-        PREVIOUS_COMPACT_VERSION,
-        home_dir,
-        receipt.to_str().unwrap(),
-    );
-
-    let mut env_hash_map = HashMap::new();
-    env_hash_map.insert("HOME".to_string(), home_dir.to_string());
-    env_hash_map.insert("XDG_CONFIG_HOME".to_string(), home_dir.to_string());
-    env_hash_map.insert(
-        "RECEIPT_HOME".to_string(),
-        receipt.to_str().unwrap().to_string(),
-    );
-
-    // Pass GITHUB_TOKEN if available to avoid rate limiting on CI
-    if let Ok(token) = std::env::var("GITHUB_TOKEN") {
-        env_hash_map.insert("GITHUB_TOKEN".to_string(), token);
-    }
-
-    run_downloaded_binary(
-        Some(compact.to_str().unwrap()),
-        &[
-            "--directory",
-            &format!("{}", temp_path.display()),
-            "self",
-            "check",
-        ],
-        Some(env_hash_map),
-        Some("./output/self_scenarios/std_update_available.txt"),
+    let fixture = SelfUpdateFixture::new();
+    let output = fixture.check();
+    assert_historical_output(
+        &output,
+        "./output/self_scenarios/std_update_available.txt",
         None,
         &[("[COMPACT_VERSION]", COMPACT_VERSION)],
-        Some(0),
-    )
+    );
 }
 
 #[test]
 #[cfg(not(all(target_os = "macos", target_arch = "x86_64")))]
 fn test_self_sc2_download_release_and_update() {
-    let temp_dir = tempfile::tempdir().unwrap();
-    let temp_path = temp_dir.path();
-
-    // set paths (home, compact binary, receipt home)
-    let home_dir = temp_path.to_str().unwrap();
-    let compact = temp_path.join(".local/bin/compact");
-    let receipt = temp_path.join(".config/compact");
-
-    download_to_temp(
-        PREVIOUS_COMPACT_VERSION,
-        home_dir,
-        receipt.to_str().unwrap(),
-    );
-
-    let mut env_hash_map = HashMap::new();
-    env_hash_map.insert("HOME".to_string(), home_dir.to_string());
-    env_hash_map.insert("XDG_CONFIG_HOME".to_string(), home_dir.to_string());
-    env_hash_map.insert(
-        "RECEIPT_HOME".to_string(),
-        receipt.to_str().unwrap().to_string(),
-    );
-
-    // Pass GITHUB_TOKEN if available to avoid rate limiting on CI
-    if let Ok(token) = std::env::var("GITHUB_TOKEN") {
-        env_hash_map.insert("GITHUB_TOKEN".to_string(), token);
-    }
-
-    run_downloaded_binary(
-        Some(compact.to_str().unwrap()),
-        &[
-            "--directory",
-            &format!("{}", temp_path.display()),
-            "self",
-            "update",
-        ],
-        Some(env_hash_map),
-        Some("./output/self_scenarios/std_update_downloaded.txt"),
+    let fixture = SelfUpdateFixture::new();
+    let output = fixture.update();
+    assert_historical_output(
+        &output,
+        "./output/self_scenarios/std_update_downloaded.txt",
         Some("./output/self_scenarios/err_update_downloading.txt"),
         &[
             ("[COMPACT_VERSION]", COMPACT_VERSION),
-            ("[USER_DIR]", temp_dir.path().to_str().unwrap()),
-            ("[SYSTEM_VERSION]", get_compact_version()),
+            (
+                "[USER_DIR]",
+                fixture.home().to_str().expect("UTF-8 private home"),
+            ),
+            ("[SYSTEM_VERSION]", historical_archive_target()),
         ],
-        Some(0),
-    )
+    );
+    fixture.assert_up_to_date();
 }
 
 #[test]
 #[cfg(all(target_os = "macos", target_arch = "x86_64"))]
 fn test_self_sc2a_download_release_and_update() {
-    let temp_dir = tempfile::tempdir().unwrap();
-    let temp_path = temp_dir.path();
-
-    // set paths (home, compact binary, receipt home)
-    let home_dir = temp_path.to_str().unwrap();
-    let compact = temp_path.join(".local/bin/compact");
-    let receipt = temp_path.join(".config/compact");
-
-    download_to_temp(
-        PREVIOUS_COMPACT_VERSION,
-        home_dir,
-        receipt.to_str().unwrap(),
-    );
-
-    let mut env_hash_map = HashMap::new();
-    env_hash_map.insert("HOME".to_string(), home_dir.to_string());
-    env_hash_map.insert("XDG_CONFIG_HOME".to_string(), home_dir.to_string());
-    env_hash_map.insert(
-        "RECEIPT_HOME".to_string(),
-        receipt.to_str().unwrap().to_string(),
-    );
-
-    // Pass GITHUB_TOKEN if available to avoid rate limiting on CI
-    if let Ok(token) = std::env::var("GITHUB_TOKEN") {
-        env_hash_map.insert("GITHUB_TOKEN".to_string(), token);
-    }
-
-    run_downloaded_binary(
-        Some(compact.to_str().unwrap()),
-        &[
-            "--directory",
-            &format!("{}", temp_path.display()),
-            "self",
-            "update",
-        ],
-        Some(env_hash_map),
-        Some("./output/self_scenarios/std_update_downloaded_macos_x86_64.txt"),
+    let fixture = SelfUpdateFixture::new();
+    let output = fixture.update();
+    assert_historical_output(
+        &output,
+        "./output/self_scenarios/std_update_downloaded_macos_x86_64.txt",
         Some("./output/self_scenarios/err_update_downloading.txt"),
         &[
             ("[COMPACT_VERSION]", COMPACT_VERSION),
-            ("[USER_DIR]", temp_dir.path().to_str().unwrap()),
-            ("[SYSTEM_VERSION]", get_compact_version()),
+            (
+                "[USER_DIR]",
+                fixture.home().to_str().expect("UTF-8 private home"),
+            ),
+            ("[SYSTEM_VERSION]", historical_archive_target()),
         ],
-        Some(0),
-    )
+    );
+    fixture.assert_up_to_date();
+}
+
+#[test]
+fn test_self_fixture_rejects_missing_and_changed_asset() {
+    self_update_fixture::assert_asset_validation_refusals();
 }

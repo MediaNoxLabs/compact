@@ -266,23 +266,22 @@ pub mod ledger_contract {
                     __compact_value_0,
                     __compact_value_1,
                 )?;
-            if !(runtime::cast_unsigned::<4294967295, 17179869180>(__compact_constructor_param_0)?
-                .value()
-                >= __compact_expression_local_2.value())
-            {
+            let __compact_value_3 =
+                runtime::cast_unsigned::<4294967295, 17179869180>(__compact_constructor_param_0)?;
+            if !(__compact_value_3.value() >= __compact_expression_local_2.value()) {
                 return Err(runtime::CompactError::AssertionFailed(
                     "result of subtraction would be negative".to_owned(),
                 ));
             }
-            let __compact_value_3 = __compact_constructor_param_0;
-            let __compact_value_4 =
+            let __compact_value_4 = __compact_constructor_param_0;
+            let __compact_value_5 =
                 runtime::cast_unsigned::<17179869180, 4294967295>(__compact_expression_local_2)?;
-            let __compact_constructor_local_5: runtime::BoundedUint<4294967295> =
+            let __compact_constructor_local_6: runtime::BoundedUint<4294967295> =
                 runtime::subtract_unsigned::<4294967295, 4294967295, 4294967295>(
-                    __compact_value_3,
                     __compact_value_4,
+                    __compact_value_5,
                 )?;
-            let step = context.write_cell(0, __compact_constructor_local_5)?;
+            let step = context.write_cell(0, __compact_constructor_local_6)?;
             context = step.context;
             let _ = total_cost;
             Ok(context.into_constructor_result())

@@ -261,6 +261,148 @@ fn recorded_closed_curve_argument_rejects_effectful_predicates_and_arms() {
 }
 
 #[test]
+fn typed_field_helper_hash_then_cell_read_preserves_order_and_rejects_effects() {
+    let pair = Type::Vector {
+        length: 2,
+        element: Box::new(Type::Field),
+    };
+    let mut contract = Contract {
+        schema_version: SCHEMA_VERSION,
+        type_aliases: vec![],
+        constructor: None,
+        witnesses: vec![],
+        ledger_fields: vec![
+            LedgerField {
+                source: None,
+                id: "source".into(),
+                index: 0,
+                path: vec![],
+                declaration: LedgerFieldKind::Cell { ty: Type::Field },
+            },
+            LedgerField {
+                source: None,
+                id: "target".into(),
+                index: 1,
+                path: vec![],
+                declaration: LedgerFieldKind::Cell { ty: Type::Field },
+            },
+        ],
+        circuits: vec![PureCircuit {
+            source: None,
+            internal: false,
+            name: "hashPair".into(),
+            parameters: vec![Parameter {
+                name: "pair".into(),
+                ty: pair.clone(),
+            }],
+            result: Type::Field,
+            body: Expr::TransientHash {
+                value: Box::new(Expr::Parameter {
+                    name: "pair".into(),
+                }),
+            },
+        }],
+        stateful_circuits: vec![
+            StatefulCircuit {
+                source: None,
+                internal: true,
+                name: "helper".into(),
+                parameters: vec![Parameter {
+                    name: "pair".into(),
+                    ty: pair.clone(),
+                }],
+                result: Type::Field,
+                return_value: StateReturn::Expression {
+                    value: Expr::Add {
+                        left: Box::new(Expr::Call {
+                            name: "hashPair".into(),
+                            arguments: vec![Expr::Coerce {
+                                value: Box::new(Expr::Parameter {
+                                    name: "pair".into(),
+                                }),
+                                ty: pair.clone(),
+                            }],
+                        }),
+                        right: Box::new(Expr::CellRead {
+                            field: "source".into(),
+                            index: 0,
+                        }),
+                    },
+                },
+                actions: vec![],
+            },
+            StatefulCircuit {
+                source: None,
+                internal: false,
+                name: "save".into(),
+                parameters: vec![],
+                result: Type::Unit,
+                return_value: StateReturn::Unit,
+                actions: vec![StateAction::Let {
+                    bindings: vec![LocalBinding {
+                        name: "value".into(),
+                        ty: Type::Field,
+                        value: Expr::Call {
+                            name: "helper".into(),
+                            arguments: vec![Expr::Coerce {
+                                value: Box::new(Expr::Tuple {
+                                    elements: vec![
+                                        Expr::FieldLiteral { value: "0".into() },
+                                        Expr::FieldLiteral { value: "1".into() },
+                                    ],
+                                }),
+                                ty: pair,
+                            }],
+                        },
+                    }],
+                    action: Box::new(StateAction::CellWrite {
+                        field: "target".into(),
+                        index: 1,
+                        value: Expr::Parameter {
+                            name: "value".into(),
+                        },
+                    }),
+                }],
+            },
+        ],
+    };
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.capabilities.circuits[0].observed_call);
+    let recording = rendered.source.split("pub mod recorded").nth(1).unwrap();
+    let pure = recording.find("crate::pure_circuits::hashPair(").unwrap();
+    let read = recording.find("record_read(frame)").unwrap();
+    let write = recording.find("record_write(frame").unwrap();
+    assert!(recording.contains("crate::ledger_slots::source"));
+    assert!(recording.contains("crate::ledger_slots::target"));
+    assert!(pure < read && read < write);
+
+    contract.stateful_circuits[0]
+        .actions
+        .push(StateAction::CellWrite {
+            field: "source".into(),
+            index: 0,
+            value: Expr::FieldLiteral { value: "2".into() },
+        });
+    assert!(
+        !render_with_capabilities(&contract)
+            .unwrap()
+            .capabilities
+            .circuits[0]
+            .recorded
+    );
+    contract.stateful_circuits[0].actions.clear();
+    contract.circuits[0].body = Expr::FieldLiteral { value: "9".into() };
+    assert!(
+        !render_with_capabilities(&contract)
+            .unwrap()
+            .capabilities
+            .circuits[0]
+            .recorded
+    );
+}
+
+#[test]
 fn opaque_set_check_in_records_only_typed_parameter_and_unit_witness() {
     let opaque = Type::OpaqueString;
     let parameter = Parameter {

@@ -908,6 +908,27 @@ pub mod ledger_contract {
                 .record_write(frame, __compact_recorded_pure_pair_hash_1)?;
             Ok(frame.finish(()))
         }
+        pub fn impureConst<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_helper_arg_0: runtime::FixedVector<runtime::Field, 2> = {
+                let __compact_cast_source_0 =
+                    (runtime::Field::from(0u128), runtime::Field::from(1u128));
+                let (__compact_cast_item_0_0, __compact_cast_item_0_1) = __compact_cast_source_0;
+                runtime::FixedVector::new([__compact_cast_item_0_0, __compact_cast_item_0_1])
+            };
+            let __compact_recorded_helper_pure_1: runtime::Field =
+                crate::pure_circuits::sumVec(__compact_recorded_helper_arg_0)?;
+            let (frame, __compact_recorded_helper_read_2): (_, runtime::Field) =
+                crate::ledger_slots::armCell.record_read(frame)?;
+            let __compact_recorded_helper_result_3: runtime::Field =
+                __compact_recorded_helper_pure_1 + __compact_recorded_helper_read_2;
+            let frame = crate::ledger_slots::fieldCell
+                .record_write(frame, __compact_recorded_helper_result_3)?;
+            Ok(frame.finish(()))
+        }
         pub fn impureBare<Private>(
             context: runtime::context::CircuitContext<Private>,
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
@@ -1169,6 +1190,31 @@ pub mod ledger_contract {
                     observed,
                     recorded,
                     "pureFromImpure",
+                    input,
+                ))
+            }
+            pub fn impureConst<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::impureConst(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn impureConst_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.impureConst(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "impureConst",
                     input,
                 ))
             }
@@ -1510,6 +1556,31 @@ pub mod ledger_contract {
                     observed,
                     recorded,
                     "pureFromImpure",
+                    input,
+                ))
+            }
+            pub fn impureConst<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                impureConst(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn impureConst_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.impureConst(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "impureConst",
                     input,
                 ))
             }

@@ -141,7 +141,7 @@ for (const name of CIRCUITS) {
     'commitSmall', 'commitU128', 'commitFieldOnly', 'pureBodyFieldOnly',
     'pureBodyVec', 'bridgeTupleIntoVec', 'bridgeVecIntoTuple',
     'pureFromImpure', 'impureBare', 'impureInIfArm', 'inlinedAssert',
-    'witnessBare',
+    'witnessBare', 'impureConst',
   ].includes(name)) {
     fixture.circuits[name].trace = {
       publicTranscriptShape: out.proofData.publicTranscript.map(operationShape),

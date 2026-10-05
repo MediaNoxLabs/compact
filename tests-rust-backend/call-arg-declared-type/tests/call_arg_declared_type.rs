@@ -19,10 +19,11 @@ use compact_rust_call_arg_declared_type_fixture::ledger_contract::{
     initial_state, inlinedAssert, pureBodyFieldOnly, pureBodyVec, pureFromImpure, witnessBare,
     witnessConst,
 };
+use compact_rust_call_arg_declared_type_fixture::{ledger_slots, pure_circuits};
 #[path = "../../boolean_observation_assertions.rs"]
 mod boolean_observation_assertions;
 use midnight_compact_runtime::context::{ConstructorContext, WitnessContext};
-use midnight_compact_runtime::ledger::{ContractAddress, DefaultDB, StateValue};
+use midnight_compact_runtime::ledger::{ContractAddress, DefaultDB, StateValue, read_cell};
 use midnight_compact_runtime::{Field, FixedVector};
 use midnight_onchain_state::state::{
     ContractMaintenanceAuthority, ContractOperation, ContractState, EntryPointBuf,
@@ -234,6 +235,7 @@ fn recorded_field_pair_hash_calls_match_typescript_trace_and_gas() {
         "bridgeTupleIntoVec",
         "bridgeVecIntoTuple",
         "pureFromImpure",
+        "impureConst",
         "impureBare",
         "impureInIfArm",
     ] {
@@ -248,6 +250,7 @@ fn recorded_field_pair_hash_calls_match_typescript_trace_and_gas() {
             "bridgeTupleIntoVec" => bridgeTupleIntoVec(native_context).unwrap(),
             "bridgeVecIntoTuple" => bridgeVecIntoTuple(native_context).unwrap(),
             "pureFromImpure" => pureFromImpure(native_context).unwrap(),
+            "impureConst" => impureConst(native_context).unwrap(),
             "impureBare" => impureBare(native_context).unwrap(),
             "impureInIfArm" => impureInIfArm(native_context).unwrap(),
             _ => unreachable!(),
@@ -257,6 +260,7 @@ fn recorded_field_pair_hash_calls_match_typescript_trace_and_gas() {
             "bridgeTupleIntoVec" => compact_rust_call_arg_declared_type_fixture::ledger_contract::recorded::bridgeTupleIntoVec(recording_context).unwrap(),
             "bridgeVecIntoTuple" => compact_rust_call_arg_declared_type_fixture::ledger_contract::recorded::bridgeVecIntoTuple(recording_context).unwrap(),
             "pureFromImpure" => compact_rust_call_arg_declared_type_fixture::ledger_contract::recorded::pureFromImpure(recording_context).unwrap(),
+            "impureConst" => compact_rust_call_arg_declared_type_fixture::ledger_contract::recorded::impureConst(recording_context).unwrap(),
             "impureBare" => compact_rust_call_arg_declared_type_fixture::ledger_contract::recorded::impureBare(recording_context).unwrap(),
             "impureInIfArm" => compact_rust_call_arg_declared_type_fixture::ledger_contract::recorded::impureInIfArm(recording_context).unwrap(),
             _ => unreachable!(),
@@ -278,6 +282,38 @@ fn recorded_field_pair_hash_calls_match_typescript_trace_and_gas() {
             "{name}: TypeScript state"
         );
     }
+}
+
+#[test]
+fn recorded_impure_field_helper_uses_the_observed_nonzero_cell_value() {
+    let seeded_context = || {
+        let context = initial_state(ConstructorContext::new(()))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default());
+        ledger_slots::armCell
+            .write(context, Field::from(5_u64))
+            .unwrap()
+            .context
+    };
+    let native = impureConst(seeded_context()).unwrap();
+    let recorded =
+        compact_rust_call_arg_declared_type_fixture::ledger_contract::recorded::impureConst(
+            seeded_context(),
+        )
+        .unwrap();
+    assert_eq!(native.gas_cost, recorded.execution.gas_cost);
+    assert_eq!(
+        native.context.query.state.get_ref(),
+        recorded.execution.context.query.state.get_ref()
+    );
+    let StateValue::Array(fields) = recorded.execution.context.query.state.get_ref() else {
+        panic!("expected ledger array");
+    };
+    let stored: Field = read_cell(fields.get(3).unwrap()).unwrap();
+    let expected =
+        pure_circuits::sumVec(FixedVector::new([Field::from(0_u64), Field::from(1_u64)])).unwrap()
+            + Field::from(5_u64);
+    assert_eq!(stored, expected);
 }
 
 #[test]

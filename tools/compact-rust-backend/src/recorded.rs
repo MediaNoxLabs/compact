@@ -3556,6 +3556,96 @@ fn render_recorded_item(
                         ));
                         scoped.insert(binding.name.clone(), syn::parse_quote!(#local));
                     } else if binding.ty == Type::Field {
+                        // Admit an internal Field helper only when its complete body is
+                        // a closed typed pair-hash call followed by one Field Cell read.
+                        // The pure result must be evaluated before the recorded read,
+                        // then the sum must be retained for the nested public action.
+                        if let Expr::Call { name, arguments } = &binding.value
+                            && let Some(callee) = circuits.get(name.as_str())
+                            && callee.internal
+                            && callee.actions.is_empty()
+                            && callee.result == Type::Field
+                            && let [callee_parameter] = callee.parameters.as_slice()
+                            && let [argument] = arguments.as_slice()
+                            && let StateReturn::Expression {
+                                value: Expr::Add { left, right },
+                            } = &callee.return_value
+                            && let Expr::Call {
+                                name: pure_name,
+                                arguments: pure_arguments,
+                            } = left.as_ref()
+                            && let [
+                                Expr::Coerce {
+                                    value: pure_argument,
+                                    ty: pure_argument_ty,
+                                },
+                            ] = pure_arguments.as_slice()
+                            && let Expr::Parameter {
+                                name: pure_parameter_name,
+                            } = pure_argument.as_ref()
+                            && pure_parameter_name == &callee_parameter.name
+                            && pure_argument_ty == &callee_parameter.ty
+                            && let Some(pure) = pure_circuits.get(pure_name.as_str())
+                            && pure.result == Type::Field
+                            && let [pure_parameter] = pure.parameters.as_slice()
+                            && pure_parameter.ty == callee_parameter.ty
+                            && closed_pure_field_pair_hash_call(pure_name, pure_circuits)
+                            && let Expr::CellRead { field, index } = right.as_ref()
+                            && let Some(declaration) = ledger_fields.get(field.as_str())
+                            && declaration.index == *index
+                            && declaration.declaration
+                                == (LedgerFieldKind::Cell { ty: Type::Field })
+                        {
+                            let Some(arg_value) =
+                                cell_source(argument, &callee_parameter.ty, &scoped, parameters)
+                            else {
+                                return Ok(RecordingOutcome::Unsupported(
+                                    RecordingGap::expression(
+                                        argument,
+                                        format!(
+                                            "{path}.bindings[{binding_index}].value.arguments[0]"
+                                        ),
+                                    ),
+                                ));
+                            };
+                            let arg = syn::Ident::new(
+                                &format!("__compact_recorded_helper_arg_{}", *next_temp),
+                                Span::call_site(),
+                            );
+                            *next_temp += 1;
+                            let arg_ty = rust_type(&callee_parameter.ty)?;
+                            steps.push(syn::parse_quote!(let #arg: #arg_ty = #arg_value;));
+                            let pure_result = syn::Ident::new(
+                                &format!("__compact_recorded_helper_pure_{}", *next_temp),
+                                Span::call_site(),
+                            );
+                            *next_temp += 1;
+                            let pure_method = ident(pure_name)?;
+                            steps.push(syn::parse_quote! {
+                                let #pure_result: runtime::Field =
+                                    crate::pure_circuits::#pure_method(#arg)?;
+                            });
+                            let observed = syn::Ident::new(
+                                &format!("__compact_recorded_helper_read_{}", *next_temp),
+                                Span::call_site(),
+                            );
+                            *next_temp += 1;
+                            let slot = ident(field)?;
+                            steps.push(syn::parse_quote! {
+                                let (frame, #observed): (_, runtime::Field) =
+                                    crate::ledger_slots::#slot.record_read(frame)?;
+                            });
+                            let result = syn::Ident::new(
+                                &format!("__compact_recorded_helper_result_{}", *next_temp),
+                                Span::call_site(),
+                            );
+                            *next_temp += 1;
+                            steps.push(syn::parse_quote! {
+                                let #result: runtime::Field = #pure_result + #observed;
+                            });
+                            scoped.insert(binding.name.clone(), syn::parse_quote!(#result));
+                            continue;
+                        }
                         if let Expr::Call { name, arguments } = &binding.value
                             && let Some(callee) = pure_circuits.get(name.as_str())
                             && callee.result == Type::Field

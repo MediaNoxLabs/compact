@@ -73,6 +73,31 @@ policy. `snapshot(false)` preserves zero operations and rejects preparation with
 output intent remains a separate recording gap. Runtime ABI47/schema20 stay
 unchanged by this slice.
 
+## Portable compiler archives
+
+`nix build .#compactc-binary` includes the matching runtime and derive sources
+under `share/compactc`. Package this output with:
+
+```sh
+python3 tools/compact-rust-backend/build_compiler_archive.py \
+  --package result --output compactc.zip
+```
+
+The archive retains the installer's existing top-level command names while
+preserving the full runtime directory tree, including crate licenses. Nix epoch
+timestamps are clamped to the ZIP format minimum. Optional `--release-notes FILE`
+adds notes without overwriting a compiler file. Extract the whole archive;
+copying only the executables is insufficient for Rust generation. The compiler
+finds runtime sources relative to its executable, and the launcher resolves
+installer symlinks and paths containing spaces before locating ZKIR helpers.
+Explicit `COMPACT_RUST_RUNTIME_DIR` overrides retain priority.
+
+Local release checks must exercise the **extracted portable archive** with
+runtime and Scheme overrides unset, from outside the repository, including
+default TypeScript generation, strict Rust generation and an offline generated
+Cargo consumer. A check of the normal Nix package alone does not cover this
+release path. Verify each supported platform separately.
+
 ## Compile a contract
 
 The packaged `compactc` accepts a repeatable `--target` option. TypeScript is

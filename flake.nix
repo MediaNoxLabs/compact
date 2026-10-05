@@ -219,7 +219,14 @@
           packages.compact-rust-cli = pkgs.rustPlatform.buildRustPackage {
             pname = "compact-rust-cli";
             version = "0.1.0";
-            src = ./tools/compact-rust-backend;
+            # The CLI build needs only its crate sources; local harness scripts
+            # and oracle captures must not force rebuilding the release binary.
+            src = inclusive.lib.inclusive ./tools/compact-rust-backend [
+              ./tools/compact-rust-backend/Cargo.toml
+              ./tools/compact-rust-backend/Cargo.lock
+              ./tools/compact-rust-backend/README.md
+              ./tools/compact-rust-backend/src
+            ];
             cargoLock.lockFile = ./tools/compact-rust-backend/Cargo.lock;
             cargoBuildFlags = [ "--bin" "compactc" ];
             # Compiler-backed gates run in build-compiler.yml against the full
@@ -349,6 +356,8 @@
 
               cp obj/compiler/compactc $out/bin/compactc-scheme
               cp ${packages.compact-rust-cli}/bin/compactc $out/bin/compactc
+              mkdir -p $out/share
+              cp -R ${packages.compact-rust-cli}/share/compactc $out/share/compactc
               chmod +x $out/bin/compactc $out/bin/compactc-scheme
 
               for exe in format-compact fixup-compact; do
@@ -382,6 +391,7 @@
 
             installPhase = ''
               mkdir -p $out/bin $out/lib
+              cp -R share $out/share
               cp bin/compactc $out/bin
               mv $out/bin/compactc $out/bin/compactc.bin
               cp bin/compactc-scheme $out/bin/compactc-scheme
@@ -391,15 +401,8 @@
               chmod +w $out/lib/zkir
               chmod +w $out/lib/zkir-v3
 
-              touch $out/bin/compactc
+              cp ${./tools/compact-rust-backend/compactc-launcher.sh} $out/bin/compactc
               chmod +x $out/bin/compactc
-
-              cat <<EOF > $out/bin/compactc
-              #!/usr/bin/env bash
-              thisdir="\$(cd \$(dirname \$0) ; pwd -P)"
-              PATH="\$thisdir/../lib:\$thisdir:\$PATH"
-              exec "\$thisdir/compactc.bin" "\$@"
-              EOF
 
               for exe in format-compact fixup-compact; do
                 cp "bin/$exe" $out/bin

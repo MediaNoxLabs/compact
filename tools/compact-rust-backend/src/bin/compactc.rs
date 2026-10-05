@@ -272,13 +272,17 @@ fn runtime_source_root() -> Result<PathBuf, Box<dyn Error>> {
         }
         return Err(format!("runtime source directory is invalid: {}", path.display()).into());
     }
-    let installed = env::current_exe()?
+    let executable = env::current_exe()?;
+    let directory = executable
         .parent()
-        .and_then(Path::parent)
-        .ok_or("cannot locate installed compactc runtime sources")?
-        .join("share/compactc");
-    if installed.join("runtime-rs/Cargo.toml").is_file() {
-        return Ok(installed);
+        .ok_or("cannot locate installed compactc runtime sources")?;
+    // Release archives keep executable names at their root for the compact
+    // installer; Nix packages keep binaries under bin/. Both preserve share/.
+    for prefix in [Some(directory), directory.parent()].into_iter().flatten() {
+        let installed = prefix.join("share/compactc");
+        if installed.join("runtime-rs/Cargo.toml").is_file() {
+            return Ok(installed);
+        }
     }
     let checkout = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
     if checkout.join("runtime-rs/Cargo.toml").is_file() {
@@ -305,6 +309,14 @@ fn runtime_package_version() -> Result<String, Box<dyn Error>> {
     Ok(version.to_owned())
 }
 
+fn write_source_file(source: &Path, destination: &Path) -> Result<(), Box<dyn Error>> {
+    // fs::copy preserves archive/Nix timestamps on macOS. Cargo can then reuse
+    // an older runtime in a shared target directory despite changed sources.
+    // These are generated source files, so write their bytes with fresh times.
+    fs::write(destination, fs::read(source)?)?;
+    Ok(())
+}
+
 fn copy_source_tree(source: &Path, destination: &Path) -> Result<(), Box<dyn Error>> {
     fs::create_dir_all(destination)?;
     for entry in fs::read_dir(source)? {
@@ -314,7 +326,7 @@ fn copy_source_tree(source: &Path, destination: &Path) -> Result<(), Box<dyn Err
         if kind.is_dir() {
             copy_source_tree(&entry.path(), &target)?;
         } else if kind.is_file() {
-            fs::copy(entry.path(), target)?;
+            write_source_file(&entry.path(), &target)?;
         } else {
             return Err(format!(
                 "unsupported runtime source entry: {}",
@@ -332,8 +344,8 @@ fn copy_runtime_sources(contract_dir: &Path) -> Result<(), Box<dyn Error>> {
         let source = root.join(package);
         let destination = contract_dir.join(package);
         fs::create_dir_all(&destination)?;
-        for file in ["Cargo.toml", "README.md"] {
-            fs::copy(source.join(file), destination.join(file))?;
+        for file in ["Cargo.toml", "README.md", "LICENSE"] {
+            write_source_file(&source.join(file), &destination.join(file))?;
         }
         copy_source_tree(&source.join("src"), &destination.join("src"))?;
     }
@@ -779,6 +791,29 @@ mod tests {
         fn drop(&mut self) {
             fs::remove_dir_all(&self.0).unwrap();
         }
+    }
+
+    #[test]
+    fn generated_runtime_sources_do_not_inherit_archive_timestamps() {
+        let root = TempRoot::new();
+        let source = root.0.join("archive");
+        fs::create_dir(&source).unwrap();
+        let file = source.join("lib.rs");
+        fs::write(&file, "pub const RUST_RUNTIME_ABI: u32 = 47;\n").unwrap();
+        fs::File::options()
+            .write(true)
+            .open(&file)
+            .unwrap()
+            .set_times(fs::FileTimes::new().set_modified(std::time::UNIX_EPOCH))
+            .unwrap();
+        let destination = root.0.join("generated");
+        super::copy_source_tree(&source, &destination).unwrap();
+        let generated = destination.join("lib.rs");
+        assert_eq!(fs::read(&file).unwrap(), fs::read(&generated).unwrap());
+        assert!(
+            fs::metadata(&generated).unwrap().modified().unwrap()
+                > fs::metadata(&file).unwrap().modified().unwrap()
+        );
     }
 
     #[test]

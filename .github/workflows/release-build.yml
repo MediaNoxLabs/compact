@@ -80,16 +80,11 @@ jobs:
       - name: Create binary for specific system
         run: |
           ${{ inputs.buildCommand }}
+          archive_args=(--package result --output "${{ env.ARTIFACT_NAME }}.zip")
           if [ "${{ inputs.include_release_notes }}" = "true" ] && [ -n "${{ inputs.release_notes_file }}" ]; then
-            if [ -f "${{ inputs.release_notes_file }}" ]; then
-              zip --junk-paths ${{ env.ARTIFACT_NAME }}.zip result/**/** "${{ inputs.release_notes_file }}"
-            else
-              echo "::error::Release notes file not found: ${{ inputs.release_notes_file }}"
-              exit 1
-            fi
-          else
-            zip --junk-paths ${{ env.ARTIFACT_NAME }}.zip result/**/**
+            archive_args+=(--release-notes "${{ inputs.release_notes_file }}")
           fi
+          python3 tools/compact-rust-backend/build_compiler_archive.py "${archive_args[@]}"
 
       - name: Upload release artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

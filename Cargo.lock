@@ -1866,6 +1866,7 @@ dependencies = [
  "compact-rust-constructor-map-actions-fixture",
  "compact-rust-counter-fixture",
  "compact-rust-counter-parameter-fixture",
+ "compact-rust-election-oracle-fixture",
  "compact-rust-field-cast-uint128-fixture",
  "compact-rust-field-to-bytes32-oracle-fixture",
  "compact-rust-guarded-assert-arith-oracle-fixture",

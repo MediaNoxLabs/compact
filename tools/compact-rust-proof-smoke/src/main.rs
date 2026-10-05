@@ -34,6 +34,7 @@ mod asset_stored_record_fresh;
 mod asset_writable;
 mod boolean_pair_assert;
 mod closed_pure_field;
+mod election_topic;
 mod field_pair_hash;
 mod field_to_bytes32;
 mod guarded_recording;
@@ -2233,6 +2234,15 @@ fn run() -> Result<(), Box<dyn Error>> {
             return Err("usage: compact-rust-proof-smoke --merkle-root <proof-output>".into());
         }
         return merkle_root::run(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--election-topic")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: --election-topic <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err("usage: --election-topic <proof-output>".into());
+        }
+        return election_topic::run(Path::new(&root));
     }
     if first.as_deref() == Some(OsStr::new("--inline-type-scope")) {
         let root = arguments

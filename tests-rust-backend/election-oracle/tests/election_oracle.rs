@@ -84,6 +84,60 @@ impl Witnesses<()> for FixedWitness {
     }
 }
 
+impl Witnesses<u64> for FixedWitness {
+    fn private_secret_key(
+        &self,
+        context: WitnessContext<'_, u64, LedgerView<'_>>,
+    ) -> (u64, runtime::FixedBytes<32>) {
+        (
+            *context.private_state + 1,
+            runtime::FixedBytes::new([7; 32]),
+        )
+    }
+
+    fn private_state(
+        &self,
+        context: WitnessContext<'_, u64, LedgerView<'_>>,
+    ) -> (u64, PrivateState) {
+        (*context.private_state, PrivateState::default())
+    }
+
+    fn private_state_advance(&self, context: WitnessContext<'_, u64, LedgerView<'_>>) -> (u64, ()) {
+        (*context.private_state, ())
+    }
+
+    fn private_vote_record(
+        &self,
+        context: WitnessContext<'_, u64, LedgerView<'_>>,
+        _vote: PermissibleVotes,
+    ) -> (u64, ()) {
+        (*context.private_state, ())
+    }
+
+    fn private_vote(
+        &self,
+        context: WitnessContext<'_, u64, LedgerView<'_>>,
+    ) -> (u64, PermissibleVotes) {
+        (*context.private_state, PermissibleVotes::default())
+    }
+
+    fn context_eligible_voters_path_of(
+        &self,
+        context: WitnessContext<'_, u64, LedgerView<'_>>,
+        _key: runtime::FixedBytes<32>,
+    ) -> (u64, MaybeCompact1) {
+        (*context.private_state, MaybeCompact1::default())
+    }
+
+    fn context_committed_votes_path_of(
+        &self,
+        context: WitnessContext<'_, u64, LedgerView<'_>>,
+        _key: runtime::FixedBytes<32>,
+    ) -> (u64, MaybeCompact1) {
+        (*context.private_state, MaybeCompact1::default())
+    }
+}
+
 fn state_hex(state: StateValue<DefaultDB>) -> String {
     let mut operations: HashMap<EntryPointBuf, ContractOperation, DefaultDB> = HashMap::new();
     for name in [
@@ -146,5 +200,142 @@ fn election_owner_operations_match_typescript_state() {
     assert_eq!(
         state_hex(voter.context.query.state.get_ref().clone()),
         oracle["afterAddVoter"]["stateHex"]
+    );
+}
+
+#[test]
+fn recorded_topic_preserves_authority_phase_opaque_state_and_private_effects() {
+    use compact_rust_election_oracle_fixture::ledger_contract::recorded;
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/election-topic-oracle.json"
+    ))
+    .unwrap();
+    let initial = |authority| {
+        initial_state(
+            ConstructorContext::new(10_u64),
+            runtime::FixedBytes::new(authority),
+        )
+        .unwrap()
+        .into_circuit_context(ContractAddress::default())
+    };
+    for scenario in oracle["scenarios"].as_array().unwrap() {
+        let topic = runtime::OpaqueString::from(scenario["topic"].as_str().unwrap());
+        let native = set_topic(initial(AUTHORITY), &FixedWitness, topic.clone()).unwrap();
+        let recorded = recorded::set_topic(initial(AUTHORITY), &FixedWitness, topic).unwrap();
+        assert_eq!(native.gas_cost, recorded.execution.gas_cost);
+        assert_eq!(
+            native.private_transcript_outputs,
+            recorded.execution.private_transcript_outputs
+        );
+        assert_eq!(
+            native.context.query.effects,
+            recorded.execution.context.query.effects
+        );
+        assert_eq!(
+            native.context.query.state.get_ref(),
+            recorded.execution.context.query.state.get_ref()
+        );
+        assert_eq!(
+            recorded.execution.context.private_state,
+            scenario["privateState"].as_u64().unwrap()
+        );
+        assert_eq!(
+            recorded.execution.private_transcript_outputs.len(),
+            scenario["privateOutputs"].as_u64().unwrap() as usize
+        );
+        assert_eq!(
+            recorded.execution.private_transcript_outputs,
+            vec![runtime::fab::AlignedValue::from(runtime::FixedBytes::new(
+                [7; 32]
+            ))]
+        );
+        assert_eq!(
+            state_hex(recorded.execution.context.query.state.get_ref().clone()),
+            scenario["stateHex"]
+        );
+        for (output, expected) in recorded
+            .execution
+            .private_transcript_outputs
+            .iter()
+            .zip(scenario["privateTranscriptOutputs"].as_array().unwrap())
+        {
+            let atoms: Vec<_> = output.value.0.iter().map(|atom| &atom.0).collect();
+            assert_eq!(serde_json::to_value(atoms).unwrap(), expected["value"]);
+            assert_eq!(
+                serde_json::to_value(&output.alignment).unwrap(),
+                expected["alignment"]
+            );
+        }
+        let gas = serde_json::to_value(recorded.execution.gas_cost).unwrap();
+        let queries = scenario["queries"].as_array().unwrap();
+        assert_eq!(queries.len(), 3);
+        for key in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+            let sum: u64 = queries
+                .iter()
+                .map(|query| {
+                    query["gasCost"][key]
+                        .as_str()
+                        .unwrap()
+                        .parse::<u64>()
+                        .unwrap()
+                })
+                .sum();
+            assert_eq!(gas[key], sum);
+        }
+        let mut program = serde_json::to_value(recorded.public.verify_ops()).unwrap();
+        for operation in program.as_array_mut().unwrap() {
+            if let Some(pop) = operation.get_mut("popeq") {
+                pop["result"] = serde_json::Value::Null;
+            }
+        }
+        let expected: Vec<_> = queries
+            .iter()
+            .flat_map(|query| query["program"].as_array().unwrap().iter().cloned())
+            .collect();
+        assert_eq!(program, serde_json::json!(expected));
+        let replay = recorded
+            .public
+            .initial()
+            .query(
+                recorded.public.verify_ops(),
+                None,
+                &recorded.execution.context.cost_model,
+            )
+            .unwrap();
+        let replay_gas = serde_json::to_value(replay.gas_cost).unwrap();
+        for key in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+            assert_eq!(
+                replay_gas[key],
+                scenario["replayGas"][key]
+                    .as_str()
+                    .unwrap()
+                    .parse::<u64>()
+                    .unwrap()
+            );
+        }
+        assert_eq!(
+            state_hex(replay.context.state.get_ref().clone()),
+            scenario["stateHex"]
+        );
+        assert_eq!(
+            replay.context.effects,
+            recorded.execution.context.query.effects
+        );
+    }
+    assert_eq!(
+        recorded::set_topic(initial([0; 32]), &FixedWitness, "denied".into())
+            .err()
+            .unwrap()
+            .to_string(),
+        oracle["wrongAuthority"]
+    );
+    let configured = set_topic(initial(AUTHORITY), &FixedWitness, "ready".into()).unwrap();
+    let advanced = advance(configured.context, &FixedWitness).unwrap();
+    assert_eq!(
+        recorded::set_topic(advanced.context, &FixedWitness, "denied".into())
+            .err()
+            .unwrap()
+            .to_string(),
+        oracle["wrongPhase"]
     );
 }

@@ -106,3 +106,5 @@ futures-executor = "=0.3.32"
 
 compact-rust-map-fn-oracle-fixture = { path = "../../tests-rust-backend/map-fn-oracle", features = ["ledger-transaction"] }
 compact-rust-map-lambda-oracle-fixture = { path = "../../tests-rust-backend/map-lambda-oracle", features = ["ledger-transaction"] }
+
+compact-rust-election-oracle-fixture = { path = "../../tests-rust-backend/election-oracle", features = ["ledger-transaction"] }

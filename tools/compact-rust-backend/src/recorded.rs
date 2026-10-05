@@ -861,6 +861,260 @@ fn closed_organizer_gate_steps(
     ]))
 }
 
+/// A typed authority witness/hash and enum phase guard before a single optional
+/// opaque Cell write. Every binding and ledger access is checked by provenance;
+/// names carry no semantic meaning in this closed proof-supported shape.
+fn closed_authorized_optional_write_steps(
+    circuit: &StatefulCircuit,
+    ledger_fields: &HashMap<&str, &LedgerField>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    pure_circuits: &HashMap<&str, &PureCircuit>,
+) -> Result<Option<Vec<syn::Stmt>>, RenderError> {
+    let bytes32 = Type::Bytes { length: 32 };
+    let [parameter] = circuit.parameters.as_slice() else {
+        return Ok(None);
+    };
+    if parameter.ty != Type::OpaqueString
+        || circuit.result != Type::Unit
+        || circuit.return_value != StateReturn::Unit
+    {
+        return Ok(None);
+    }
+    let [
+        StateAction::Let {
+            bindings: secret_bindings,
+            action,
+        },
+    ] = circuit.actions.as_slice()
+    else {
+        return Ok(None);
+    };
+    let [secret] = secret_bindings.as_slice() else {
+        return Ok(None);
+    };
+    let Expr::WitnessCall {
+        name: witness_name,
+        arguments,
+    } = &secret.value
+    else {
+        return Ok(None);
+    };
+    let Some(witness) = witnesses.get(witness_name.as_str()) else {
+        return Ok(None);
+    };
+    if secret.ty != bytes32
+        || witness.result != bytes32
+        || !arguments.is_empty()
+        || !witness.parameters.is_empty()
+    {
+        return Ok(None);
+    }
+    let StateAction::Let {
+        bindings: hash_bindings,
+        action,
+    } = action.as_ref()
+    else {
+        return Ok(None);
+    };
+    let [hash_binding] = hash_bindings.as_slice() else {
+        return Ok(None);
+    };
+    let Expr::Call {
+        name: hash_name,
+        arguments,
+    } = &hash_binding.value
+    else {
+        return Ok(None);
+    };
+    let [
+        Expr::Coerce {
+            value: hash_arg,
+            ty: arg_ty,
+        },
+    ] = arguments.as_slice()
+    else {
+        return Ok(None);
+    };
+    if hash_binding.ty != bytes32
+        || *arg_ty != bytes32
+        || !matches!(hash_arg.as_ref(), Expr::Parameter { name } if name == &secret.name)
+        || hash_binding.name == secret.name
+        || parameter.name == secret.name
+        || parameter.name == hash_binding.name
+    {
+        return Ok(None);
+    }
+    let Some(hash) = pure_circuits.get(hash_name.as_str()) else {
+        return Ok(None);
+    };
+    let [hash_formal] = hash.parameters.as_slice() else {
+        return Ok(None);
+    };
+    if hash_formal.ty != bytes32 || hash.result != bytes32 {
+        return Ok(None);
+    }
+    let Expr::PersistentHash { value } = &hash.body else {
+        return Ok(None);
+    };
+    let Expr::Tuple { elements } = value.as_ref() else {
+        return Ok(None);
+    };
+    if !matches!(elements.as_slice(), [Expr::BytesLiteral { bytes }, Expr::Parameter { name }]
+        if bytes.len() == 32 && name == &hash_formal.name)
+    {
+        return Ok(None);
+    }
+    let StateAction::Sequence { actions } = action.as_ref() else {
+        return Ok(None);
+    };
+    let [
+        StateAction::Assert {
+            condition:
+                Expr::Equal {
+                    left: authority_value,
+                    right: authority_read,
+                },
+            message: authority_message,
+        },
+        StateAction::Assert {
+            condition:
+                Expr::Equal {
+                    left: phase_read,
+                    right: phase_value,
+                },
+            message: phase_message,
+        },
+        StateAction::Let {
+            bindings: value_bindings,
+            action: write,
+        },
+    ] = actions.as_slice()
+    else {
+        return Ok(None);
+    };
+    if !matches!(authority_value.as_ref(), Expr::Parameter { name } if name == &hash_binding.name) {
+        return Ok(None);
+    }
+    let Expr::CellRead {
+        field: authority_field,
+        index: authority_index,
+    } = authority_read.as_ref()
+    else {
+        return Ok(None);
+    };
+    let Expr::CellRead {
+        field: phase_field,
+        index: phase_index,
+    } = phase_read.as_ref()
+    else {
+        return Ok(None);
+    };
+    let Expr::EnumVariant { ty: phase_ty, .. } = phase_value.as_ref() else {
+        return Ok(None);
+    };
+    if !matches!(phase_ty, Type::Enum { .. }) {
+        return Ok(None);
+    }
+    let [value_binding] = value_bindings.as_slice() else {
+        return Ok(None);
+    };
+    let Type::Struct {
+        fields: members, ..
+    } = &value_binding.ty
+    else {
+        return Ok(None);
+    };
+    let [present_member, value_member] = members.as_slice() else {
+        return Ok(None);
+    };
+    if present_member.ty != Type::Boolean || value_member.ty != Type::OpaqueString {
+        return Ok(None);
+    }
+    let Expr::StructLiteral {
+        ty: literal_ty,
+        fields: values,
+    } = &value_binding.value
+    else {
+        return Ok(None);
+    };
+    if literal_ty != &value_binding.ty
+        || !matches!(values.as_slice(), [Expr::Boolean { value: true }, Expr::Parameter { name }]
+            if name == &parameter.name)
+    {
+        return Ok(None);
+    }
+    let StateAction::CellWrite {
+        field: write_field,
+        index: write_index,
+        value: written,
+    } = write.as_ref()
+    else {
+        return Ok(None);
+    };
+    if !matches!(written, Expr::Parameter { name } if name == &value_binding.name) {
+        return Ok(None);
+    }
+    for (field, index, ty) in [
+        (authority_field, authority_index, &bytes32),
+        (phase_field, phase_index, phase_ty),
+        (write_field, write_index, &value_binding.ty),
+    ] {
+        if !matches!(ledger_fields.get(field.as_str()), Some(declaration)
+            if declaration.index == *index && declaration.declaration == (LedgerFieldKind::Cell { ty: ty.clone() }))
+        {
+            return Ok(None);
+        }
+    }
+    let witness_method = ident(witness_name)?;
+    let hash_method = ident(hash_name)?;
+    let authority_slot = ident(authority_field)?;
+    let phase_slot = ident(phase_field)?;
+    let write_slot = ident(write_field)?;
+    let phase_type = rust_type(phase_ty)?;
+    let (phase_value, _) = expression_with_calls(phase_value, &HashMap::new(), &HashMap::new())?;
+    let write_type = rust_type(&value_binding.ty)?;
+    let present_member = ident(&present_member.name)?;
+    let value_member = ident(&value_member.name)?;
+    Ok(Some(vec![
+        syn::parse_quote! {
+            let (frame, __compact_authority_secret): (_, runtime::FixedBytes<32>) =
+                frame.try_witness_metered(|context, meter| {
+                    witnesses.#witness_method(context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(), meter,
+                    }))
+                })?;
+        },
+        syn::parse_quote! {
+            let __compact_authority_hash = crate::pure_circuits::#hash_method(__compact_authority_secret)?;
+        },
+        syn::parse_quote! {
+            let (frame, __compact_authority): (_, runtime::FixedBytes<32>) =
+                crate::ledger_slots::#authority_slot.record_read(frame)?;
+        },
+        syn::parse_quote! {
+            if __compact_authority_hash != __compact_authority {
+                return Err(runtime::CompactError::AssertionFailed(#authority_message.to_owned()));
+            }
+        },
+        syn::parse_quote! {
+            let (frame, __compact_phase): (_, #phase_type) = crate::ledger_slots::#phase_slot.record_read(frame)?;
+        },
+        syn::parse_quote! {
+            if __compact_phase != #phase_value {
+                return Err(runtime::CompactError::AssertionFailed(#phase_message.to_owned()));
+            }
+        },
+        syn::parse_quote! {
+            let __compact_optional_value: #write_type = #write_type {
+                #present_member: true, #value_member: __compact_param_0.clone(),
+            };
+        },
+        syn::parse_quote! {
+            let frame = crate::ledger_slots::#write_slot.record_write(frame, __compact_optional_value)?;
+        },
+    ]))
+}
+
 /// A pure Field call may be evaluated while recording only when its whole
 /// transitive body is scalar arithmetic. Hashes and other primitives need
 /// their own VM/gas parity decision before they can join this path.
@@ -6633,7 +6887,13 @@ fn render_recorded_item(
     }
 
     let organizer_steps =
-        closed_organizer_gate_steps(circuit, ledger_fields, witnesses, pure_circuits, circuits)?;
+        closed_organizer_gate_steps(circuit, ledger_fields, witnesses, pure_circuits, circuits)?
+            .or(closed_authorized_optional_write_steps(
+                circuit,
+                ledger_fields,
+                witnesses,
+                pure_circuits,
+            )?);
     let organizer_gate = organizer_steps.is_some();
     let opaque_map_operation = closed_opaque_map_operation(circuit, ledger_fields);
     let opaque_asset_removal = closed_opaque_asset_removal(circuit, ledger_fields);

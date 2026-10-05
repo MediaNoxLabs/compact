@@ -989,19 +989,108 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
+    /// Circuits with a replayable ordered ledger program.
+    pub mod recorded {
+        use midnight_compact_runtime as runtime;
+        pub fn set_topic<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: runtime::OpaqueString,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_authority_secret): (_, runtime::FixedBytes<32>) = frame
+                .try_witness_metered(|context, meter| {
+                    witnesses.private_secret_key(context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                        meter,
+                    }))
+                })?;
+            let __compact_authority_hash =
+                crate::pure_circuits::public_key(__compact_authority_secret)?;
+            let (frame, __compact_authority): (_, runtime::FixedBytes<32>) =
+                crate::ledger_slots::authority.record_read(frame)?;
+            if __compact_authority_hash != __compact_authority {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Attempted to set topic without authorization".to_owned(),
+                ));
+            }
+            let (frame, __compact_phase): (_, crate::types::PublicState) =
+                crate::ledger_slots::state.record_read(frame)?;
+            if __compact_phase != crate::types::PublicState::setup {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "Attempted to set topic after setup phase".to_owned(),
+                ));
+            }
+            let __compact_optional_value: crate::types::Maybe = crate::types::Maybe {
+                is_some: true,
+                value: __compact_param_0.clone(),
+            };
+            let frame = crate::ledger_slots::topic.record_write(frame, __compact_optional_value)?;
+            Ok(frame.finish(()))
+        }
+        /// Typed handle for circuits with a complete recorded trace.
+        pub struct Contract;
+        impl Contract {}
+        /// A recording handle with access to the contract's witnesses.
+        pub struct BorrowedContract<'a, W> {
+            pub(super) witnesses: &'a W,
+        }
+        impl<W> BorrowedContract<'_, W> {
+            pub fn set_topic<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                t: runtime::OpaqueString,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                set_topic(context, self.witnesses, t)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn set_topic_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                t: runtime::OpaqueString,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from((t).clone());
+                let recorded = self.set_topic(observed.circuit_context(private_state), t)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "set_topic",
+                    input,
+                ))
+            }
+        }
+    }
     /// Groups the contract's exported circuits for Rust consumers.
     pub struct Contract<W> {
         #[allow(dead_code)]
         witnesses: W,
+        pub recording: recorded::Contract,
     }
     impl<W> From<W> for Contract<W> {
         fn from(witnesses: W) -> Self {
-            Self { witnesses }
+            Self {
+                witnesses,
+                recording: recorded::Contract,
+            }
         }
     }
     impl Default for Contract<()> {
         fn default() -> Self {
-            Self { witnesses: () }
+            Self {
+                witnesses: (),
+                recording: recorded::Contract,
+            }
         }
     }
     impl<W> Contract<W> {
@@ -1052,6 +1141,12 @@ pub mod ledger_contract {
             W: TryWitnesses<Private>,
         {
             crate::ledger_contract::add_voter(context, &self.witnesses, pk)
+        }
+        /// Borrow the contract's witnesses for a replayable circuit call.
+        pub fn recording(&self) -> recorded::BorrowedContract<'_, W> {
+            recorded::BorrowedContract {
+                witnesses: &self.witnesses,
+            }
         }
     }
 }

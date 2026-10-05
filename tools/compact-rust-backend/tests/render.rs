@@ -8982,3 +8982,87 @@ fn typed_opaque_struct_map_write_requires_scoped_value_and_ordered_mutation() {
         "Map insert must precede write continuation"
     );
 }
+
+#[test]
+fn authorized_optional_cell_write_is_structural_and_fails_closed() {
+    let source = include_str!("election-schema13-ir.json");
+    let mut contract: Contract = serde_json::from_str(source).unwrap();
+    contract.schema_version = SCHEMA_VERSION;
+    let available = |contract: &Contract| {
+        render_with_capabilities(contract)
+            .unwrap()
+            .capabilities
+            .circuits
+            .into_iter()
+            .find(|circuit| circuit.name == "set_topic")
+            .unwrap()
+            .recorded
+    };
+    assert!(available(&contract));
+    // No circuit, witness, formal, struct, field or enum spelling is an allowlist.
+    let renamed = source
+        .replace("set_topic", "configure")
+        .replace("private$secret_key", "load_credential")
+        .replace("public_key", "derive_key")
+        .replace("authority", "controller")
+        .replace("PublicState", "Phase")
+        .replace("setup", "draft")
+        .replace("Maybe", "OptionalText")
+        .replace("is_some", "present")
+        .replace("\"sk\"", "\"credential\"")
+        .replace("\"apk\"", "\"digest\"");
+    let mut renamed: Contract = serde_json::from_str(&renamed).unwrap();
+    renamed.schema_version = SCHEMA_VERSION;
+    assert!(
+        render_with_capabilities(&renamed)
+            .unwrap()
+            .capabilities
+            .circuits
+            .iter()
+            .find(|circuit| circuit.name == "configure")
+            .unwrap()
+            .recorded
+    );
+    let mut wrong_hash = contract.clone();
+    let hash = wrong_hash
+        .circuits
+        .iter_mut()
+        .find(|circuit| circuit.name == "public_key")
+        .unwrap();
+    let Expr::PersistentHash { value } = &mut hash.body else {
+        unreachable!()
+    };
+    let Expr::Tuple { elements } = value.as_mut() else {
+        unreachable!()
+    };
+    elements[1] = Expr::BytesLiteral { bytes: vec![0; 32] };
+    assert!(!available(&wrong_hash));
+    let actions = |contract: &mut Contract| {
+        let circuit = contract
+            .stateful_circuits
+            .iter_mut()
+            .find(|circuit| circuit.name == "set_topic")
+            .unwrap();
+        let StateAction::Let { action, .. } = &mut circuit.actions[0] else {
+            unreachable!()
+        };
+        let StateAction::Let { action, .. } = action.as_mut() else {
+            unreachable!()
+        };
+        let StateAction::Sequence { actions } = action.as_mut() else {
+            unreachable!()
+        };
+        actions.swap(0, 1);
+    };
+    let mut reordered = contract.clone();
+    actions(&mut reordered);
+    assert!(!available(&reordered));
+    let mut wrong_index = contract;
+    let field = wrong_index
+        .ledger_fields
+        .iter_mut()
+        .find(|field| field.id == "authority")
+        .unwrap();
+    field.index = 8;
+    assert!(render_with_capabilities(&wrong_index).is_err());
+}

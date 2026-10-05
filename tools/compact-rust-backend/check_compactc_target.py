@@ -63,6 +63,7 @@ NESTED_STATEFUL_TERNARY_SOURCE = ROOT / "examples/rust_backend/nested_stateful_t
 ASSET_REGISTRY_SOURCE = ROOT / "examples/rust_backend/asset_registry_oracle.compact"
 HISTORIC_MERKLE_SOURCE = ROOT / "examples/rust_backend/hmt_insert_oracle.compact"
 HISTORIC_MERKLE_DEFAULT_SOURCE = ROOT / "examples/rust_backend/hmt_default_oracle.compact"
+ELECTION_SOURCE = ROOT / "examples/rust_backend/election_oracle.compact"
 INLINE_TYPE_SCOPE_SOURCE = ROOT / "examples/rust_backend/inline_type_scope_oracle.compact"
 VECTOR_KEY_SOURCE = ROOT / "examples/rust_backend/vector_key_adt.compact"
 COMPOSITE_KEY_SOURCE = ROOT / "examples/rust_backend/observed_composite_keys.compact"
@@ -1441,6 +1442,18 @@ def main() -> None:
                     assert (list_shapes_proof / "keys" / f"{circuit}.{extension}").is_file()
                 for extension in ("zkir", "bzkir"):
                     assert (list_shapes_proof / "zkir" / f"{circuit}.{extension}").is_file()
+            election_topic_proof = base / "election-topic-proof"
+            run(compiler, "--target", "rust", str(ELECTION_SOURCE), str(election_topic_proof))
+            check_manifest(election_topic_proof)
+            election_capabilities = json.loads(
+                (election_topic_proof / "contract/rust-capabilities.json").read_text()
+            )
+            topic = next(row for row in election_capabilities["circuits"] if row["name"] == "set_topic")
+            assert topic["proof_required"] and topic["recorded"] and topic["observed_call"]
+            for extension in ("prover", "verifier"):
+                assert (election_topic_proof / "keys" / f"set_topic.{extension}").is_file()
+            for extension in ("zkir", "bzkir"):
+                assert (election_topic_proof / "zkir" / f"set_topic.{extension}").is_file()
             inline_type_scope_proof = base / "inline-type-scope-proof"
             run(compiler, "--target", "rust", "--rust-require-recording",
                 str(INLINE_TYPE_SCOPE_SOURCE), str(inline_type_scope_proof))
@@ -1847,6 +1860,10 @@ def main() -> None:
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 "--inline-type-scope", str(inline_type_scope_proof),
+            )
+            run(
+                "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--election-topic", str(election_topic_proof),
             )
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",

@@ -224,6 +224,14 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         self.apply_verify_program(ledger::historic_merkle_insert_hash_program(path, hash))
     }
 
+    /// Keep the current historic root and discard older root history.
+    pub fn reset_historic_merkle_history(
+        self,
+        path: impl Into<LedgerPath>,
+    ) -> Result<Self, CompactError> {
+        self.apply_verify_program(ledger::historic_reset_history_program(path.into()))
+    }
+
     /// Insert a typed leaf at a declared index, retaining the ledger-8 VM program.
     pub fn insert_merkle_index<T: CellValue>(
         self,

@@ -837,16 +837,17 @@ def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
     assert "error[E0308]: mismatched types" in rejected.stderr, rejected.stderr
     assert "expected `BoundedUint<255>`" in rejected.stderr, rejected.stderr
 
-    (consumer / "examples/unsupported_recorded_history_reset.rs").write_text(
-        "use compact_contract_hmt_insert_oracle::ledger_contract::recorded;\n"
-        "fn main() { let _ = recorded::forget_history::<()>; }\n"
+    (consumer / "examples/recorded_history_reset.rs").write_text(
+        "use compact_contract_hmt_insert_oracle::ledger_contract::{initial_state, recorded};\n"
+        "use compact_contract_hmt_insert_oracle::runtime::{context::ConstructorContext, ledger::ContractAddress};\n"
+        "fn main() {\n"
+        "    let state = initial_state(ConstructorContext::new(())).unwrap();\n"
+        "    let context = state.into_circuit_context(ContractAddress::default());\n"
+        "    let _ = recorded::forget_history(context).unwrap();\n"
+        "}\n"
     )
-    rejected = subprocess.run(
-        ["cargo", "check", "--quiet", "--example", "unsupported_recorded_history_reset"],
-        cwd=consumer, env=environment, capture_output=True, text=True,
-    )
-    assert rejected.returncode != 0, "unsupported history reset trace unexpectedly compiled"
-    assert "cannot find value `forget_history` in module `recorded`" in rejected.stderr, rejected.stderr
+    run("cargo", "check", "--quiet", "--example", "recorded_history_reset", cwd=consumer,
+        env=environment)
 
     (consumer / "examples/wrong_recorded_merkle_leaf.rs").write_text(
         "use compact_contract_merkle_tree_oracle::ledger_contract::{initial_state, recorded};\n"
@@ -1586,14 +1587,13 @@ def main() -> None:
             check_manifest(historic_merkle_proof)
             capabilities = json.loads((historic_merkle_proof / "contract/rust-capabilities.json").read_text())
             by_name = {circuit["name"]: circuit for circuit in capabilities["circuits"]}
-            for circuit in ("append", "place", "append_hash", "place_hash", "full"):
+            for circuit in ("append", "place", "append_hash", "place_hash", "forget_history", "full"):
                 assert by_name[circuit]["recorded"] and by_name[circuit]["observed_call"]
                 for extension in ("prover", "verifier"):
                     assert (historic_merkle_proof / "keys" / f"{circuit}.{extension}").is_file()
                 for extension in ("zkir", "bzkir"):
                     assert (historic_merkle_proof / "zkir" / f"{circuit}.{extension}").is_file()
             for circuit, node in (
-                ("forget_history", "StateAction::HistoricMerkleResetHistory"),
                 ("reset_tree", "StateAction::HistoricMerkleResetToDefault"),
                 ("known", "StateReturn::HistoricMerkleCheckRoot"),
             ):
@@ -1761,6 +1761,10 @@ def main() -> None:
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 "--historic-merkle-indexed-hash", str(historic_merkle_proof),
+            )
+            run(
+                "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--historic-merkle-reset-history", str(historic_merkle_proof),
             )
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",

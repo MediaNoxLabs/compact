@@ -255,3 +255,77 @@ pub(super) fn run_historic_indexed(root: &Path) -> Result<(), Box<dyn Error>> {
     println!("historic Merkle insertHashIndex proved and applied through ledger-8");
     Ok(())
 }
+
+pub(super) fn run_historic_reset_history(root: &Path) -> Result<(), Box<dyn Error>> {
+    let circuit = "forget_history";
+    let mut rng = StdRng::seed_from_u64(0x0148_4849_5354);
+    let initial = historic_merkle_contract::initial_state(ConstructorContext::new(()))?;
+    let initial_root = historic_merkle_tree_view_at_path(initial.ledger_state.get_ref(), &[0])?
+        .root()
+        .ok_or("missing initial historic Merkle root")?;
+    let context =
+        initial.into_circuit_context(midnight_compact_runtime::ledger::ContractAddress::default());
+    let context = historic_merkle_contract::append(context, BoundedUint::<255>::new(7)?)?.context;
+    let context = historic_merkle_contract::append(context, BoundedUint::<255>::new(8)?)?.context;
+    let pre_state = context.query.state.get_ref().clone();
+    let previous = historic_merkle_tree_view_at_path(&pre_state, &[0])?;
+    let current_root = previous
+        .root()
+        .ok_or("missing current historic Merkle root")?;
+    if previous.history()?.len() < 2 {
+        return Err("historic reset proof needs at least two roots".into());
+    }
+    let deploy = make_deploy(root, circuit, pre_state, &mut rng)?;
+    let observed = ObservedContractState::new(
+        deploy.address(),
+        deploy.initial_state.clone(),
+        Observation {
+            transaction_hash: [0; 32],
+            block_hash: [0; 32],
+            block_height: 0,
+        },
+    );
+    let expected = historic_merkle_contract::forget_history(observed.circuit_context(()))?;
+    let recorded =
+        historic_merkle_contract::recorded::forget_history(observed.circuit_context(()))?;
+    if !recorded.execution.private_transcript_outputs.is_empty()
+        || recorded.execution.context.query.state.get_ref()
+            != expected.context.query.state.get_ref()
+        || recorded.execution.gas_cost != expected.gas_cost
+        || recorded.execution.context.query.effects != expected.context.query.effects
+    {
+        return Err("recorded historic history reset differs from native execution".into());
+    }
+    let manual = check_generated_trace(root, circuit, recorded, ())?;
+    let verifier: VerifierKey = tagged_deserialize(&mut BufReader::new(File::open(
+        root.join("keys/forget_history.verifier"),
+    )?))?;
+    let typed = historic_merkle_contract::recorded::Contract
+        .forget_history_call(&observed, ())?
+        .prepare(verifier, Fr::from(0u64))?;
+    if format!("{manual:?}") != format!("{typed:?}") {
+        return Err("historic reset observed call differs from recording".into());
+    }
+    let expected_state = expected.context.query.state.get_ref().clone();
+    check_transaction(root, circuit, deploy, typed, &mut rng, |contract| {
+        let state = contract.data.get_ref();
+        if state != &expected_state {
+            return Err("proven historic history reset differs from native ledger state".into());
+        }
+        let tree = historic_merkle_tree_view_at_path(state, &[0])?;
+        let generated = historic_merkle_contract::PublicStateView::from(contract).t()?;
+        let expected_history = vec![current_root];
+        if tree.history()? != expected_history
+            || generated.history()? != expected_history
+            || tree.root() != Some(current_root)
+            || generated.root() != Some(current_root)
+            || tree.contains_root(initial_root)
+            || !tree.contains_root(current_root)
+        {
+            return Err("proven historic history reset did not retain only current root".into());
+        }
+        Ok(())
+    })?;
+    println!("historic Merkle resetHistory proved and applied through ledger-8");
+    Ok(())
+}

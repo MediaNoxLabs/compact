@@ -191,6 +191,60 @@ fn recorded_historic_append_preserves_root_history_and_replays() {
 }
 
 #[test]
+fn recorded_historic_reset_history_matches_typescript_and_replays() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/hmt-insert-oracle.json"
+    ))
+    .unwrap();
+    let before_reset = || {
+        let context = initial_state(ConstructorContext::new(()))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default());
+        let context = append(context, bounded::<255>(7)).unwrap().context;
+        let context = place(
+            context,
+            bounded::<255>(9),
+            bounded::<{ u64::MAX as u128 }>(3),
+        )
+        .unwrap()
+        .context;
+        let context = append(context, bounded::<255>(11)).unwrap().context;
+        place(
+            context,
+            bounded::<255>(13),
+            bounded::<{ u64::MAX as u128 }>(1),
+        )
+        .unwrap()
+        .context
+    };
+    let initial_root = current_root(
+        initial_state(ConstructorContext::new(()))
+            .unwrap()
+            .ledger_state
+            .get_ref(),
+    );
+    let current = current_root(before_reset().query.state.get_ref());
+    let native = forget_history(before_reset()).unwrap();
+    let recorded = recorded::forget_history(before_reset()).unwrap();
+    let tree = runtime::ledger::historic_merkle_tree_view_at_path(
+        recorded.execution.context.query.state.get_ref(),
+        &[0],
+    )
+    .unwrap();
+    assert!(!tree.contains_root(runtime::ledger::MerkleTreeDigest(initial_root.field)));
+    assert!(tree.contains_root(runtime::ledger::MerkleTreeDigest(current.field)));
+    assert_historic_hash_recording(
+        "forgetHistory",
+        "afterForgetHistory",
+        "historyAfterForget",
+        5,
+        native,
+        recorded,
+        &oracle,
+    );
+}
+
+#[test]
 fn recorded_historic_hash_append_preserves_typescript_history_and_replays() {
     let oracle: serde_json::Value = serde_json::from_str(include_str!(
         "../../../runtime-rs/tests/fixtures/hmt-insert-oracle.json"

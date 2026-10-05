@@ -2553,6 +2553,75 @@ fn native_merkle_calls_use_declared_typed_slots() {
 }
 
 #[test]
+fn historic_reset_history_records_only_exact_historic_slot() {
+    let mut contract = identity(Type::Unit, Expr::Unit);
+    contract.ledger_fields = vec![LedgerField {
+        source: None,
+        id: "tree".into(),
+        index: 0,
+        path: vec![],
+        declaration: LedgerFieldKind::HistoricMerkleTree {
+            ty: Type::Unsigned { max: "255".into() },
+            depth: 3,
+        },
+    }];
+    contract.stateful_circuits = vec![StatefulCircuit {
+        source: None,
+        internal: false,
+        name: "forget".into(),
+        parameters: vec![],
+        actions: vec![StateAction::HistoricMerkleResetHistory {
+            field: "tree".into(),
+            index: 0,
+        }],
+        result: Type::Unit,
+        return_value: StateReturn::Unit,
+    }];
+    let supported = render_with_capabilities(&contract).unwrap();
+    assert!(supported.capabilities.circuits[0].recorded);
+    assert!(
+        supported
+            .source
+            .contains("tree.record_reset_history(frame)")
+    );
+
+    contract.ledger_fields[0].declaration = LedgerFieldKind::MerkleTree {
+        ty: Type::Unsigned { max: "255".into() },
+        depth: 3,
+    };
+    assert!(
+        !render_with_capabilities(&contract)
+            .map(|rendered| rendered.capabilities.circuits[0].recorded)
+            .unwrap_or(false)
+    );
+    contract.ledger_fields[0].declaration = LedgerFieldKind::HistoricMerkleTree {
+        ty: Type::Unsigned { max: "255".into() },
+        depth: 3,
+    };
+    if let StateAction::HistoricMerkleResetHistory { index, .. } =
+        &mut contract.stateful_circuits[0].actions[0]
+    {
+        *index = 1;
+    }
+    assert!(
+        !render_with_capabilities(&contract)
+            .map(|rendered| rendered.capabilities.circuits[0].recorded)
+            .unwrap_or(false)
+    );
+    if let StateAction::HistoricMerkleResetHistory { index, .. } =
+        &mut contract.stateful_circuits[0].actions[0]
+    {
+        *index = 0;
+    }
+    contract.ledger_fields[0].path = vec![1];
+    assert!(
+        !render_with_capabilities(&contract)
+            .map(|rendered| rendered.capabilities.circuits[0].recorded)
+            .unwrap_or(false)
+    );
+}
+
+#[test]
 fn historic_merkle_indexed_hash_records_only_matching_bytes32_and_uint64_sources() {
     let mut contract = identity(Type::Unit, Expr::Unit);
     contract.ledger_fields = vec![LedgerField {

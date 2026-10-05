@@ -823,7 +823,9 @@ pub fn historic_reset_history<D: DB>(
     context.query(&program, gas_limit, cost_model)
 }
 
-fn historic_reset_history_program<D: DB>(path: LedgerPath) -> Vec<Op<ResultModeVerify, D>> {
+pub(crate) fn historic_reset_history_program<D: DB>(
+    path: LedgerPath,
+) -> Vec<Op<ResultModeVerify, D>> {
     let keys = path_keys(path.as_slice());
     let index_key = |index| vec![Key::Value(AlignedValue::from(index))].into();
     vec![

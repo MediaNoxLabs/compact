@@ -402,6 +402,14 @@ impl<T: CellValue, const DEPTH: u8> MerkleSlot<T, DEPTH, true> {
     ) -> Result<CircuitResult<Private, (), D>, CompactError> {
         context.historic_reset_history(self.path)
     }
+
+    /// Record the same ledger-8 reset-history VM program as the native call.
+    pub fn record_reset_history<Private, D: DB>(
+        self,
+        frame: RecordingFrame<Private, D>,
+    ) -> Result<RecordingFrame<Private, D>, CompactError> {
+        frame.reset_historic_merkle_history(self.path)
+    }
 }
 
 #[derive(Clone, Copy)]

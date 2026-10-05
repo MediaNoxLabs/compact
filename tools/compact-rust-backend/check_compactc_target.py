@@ -1483,12 +1483,13 @@ def main() -> None:
             run(compiler, "--target", "rust", str(ZEROCASH_SOURCE), str(zerocash_mint_proof))
             check_manifest(zerocash_mint_proof)
             capabilities = json.loads((zerocash_mint_proof / "contract/rust-capabilities.json").read_text())
-            mint = next(row for row in capabilities["circuits"] if row["name"] == "zerocash_mint")
-            assert mint["proof_required"] and mint["recorded"] and mint["observed_call"]
-            for extension in ("prover", "verifier"):
-                assert (zerocash_mint_proof / "keys" / f"zerocash_mint.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (zerocash_mint_proof / "zkir" / f"zerocash_mint.{extension}").is_file()
+            for name in ("zerocash_mint", "spend"):
+                circuit = next(row for row in capabilities["circuits"] if row["name"] == name)
+                assert circuit["proof_required"] and circuit["recorded"] and circuit["observed_call"]
+                for extension in ("prover", "verifier"):
+                    assert (zerocash_mint_proof / "keys" / f"{name}.{extension}").is_file()
+                for extension in ("zkir", "bzkir"):
+                    assert (zerocash_mint_proof / "zkir" / f"{name}.{extension}").is_file()
             bboard_proof = base / "bboard-proof"
             run(compiler, "--target", "rust", "--rust-require-recording",
                 str(TEST_CENTER_BBOARD_SOURCE), str(bboard_proof))
@@ -1928,6 +1929,10 @@ def main() -> None:
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 "--zerocash-mint", str(zerocash_mint_proof),
+            )
+            run(
+                "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--zerocash-spend", str(zerocash_mint_proof),
             )
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",

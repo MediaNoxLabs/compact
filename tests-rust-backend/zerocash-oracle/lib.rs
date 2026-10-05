@@ -645,6 +645,142 @@ pub mod ledger_contract {
     /// Circuits with a replayable ordered ledger program.
     pub mod recorded {
         use midnight_compact_runtime as runtime;
+        pub fn spend<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: crate::types::public_key,
+            __compact_param_1: crate::types::coin_info,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_plan_0): (_, crate::types::zk_secret_key) = frame
+                .try_witness_metered(|context, meter| {
+                    witnesses.private_zk_secret_key(context.witness_context_with(
+                        super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        },
+                    ))
+                })?;
+            let __compact_plan_1: crate::types::zk_secret_key = __compact_plan_0;
+            let __compact_plan_2: crate::types::coin_info = (__compact_param_1).clone();
+            let __compact_plan_3: crate::types::zk_secret_key = (__compact_plan_1).clone();
+            let __compact_plan_4: crate::types::nullifier =
+                crate::pure_circuits::derive_nullifier(__compact_plan_2, __compact_plan_3)?;
+            let __compact_plan_5: crate::types::nullifier = __compact_plan_4;
+            let (frame, __compact_plan_6): (_, bool) =
+                crate::ledger_slots::nullifiers.record_member(frame, (__compact_plan_5).clone())?;
+            let (frame, __compact_plan_9): (_, bool) = if __compact_plan_6 {
+                let __compact_plan_7: bool = false;
+                (frame, __compact_plan_7)
+            } else {
+                let __compact_plan_8: bool = true;
+                (frame, __compact_plan_8)
+            };
+            if !__compact_plan_9 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "spend: Coin already spent".to_owned(),
+                ));
+            }
+            let frame =
+                crate::ledger_slots::nullifiers.record_insert(frame, (__compact_plan_5).clone())?;
+            let __compact_plan_10: crate::types::zk_secret_key = (__compact_plan_1).clone();
+            let __compact_plan_11: crate::types::zk_public_key =
+                crate::pure_circuits::derive_zk_public_key(__compact_plan_10)?;
+            let __compact_plan_12: crate::types::zk_public_key = __compact_plan_11;
+            let __compact_plan_13: crate::types::coin_info = (__compact_param_1).clone();
+            let __compact_plan_14: crate::types::zk_public_key = (__compact_plan_12).clone();
+            let __compact_plan_15: crate::types::commitment =
+                crate::pure_circuits::commitment_from_coin_info(
+                    __compact_plan_13,
+                    __compact_plan_14,
+                )?;
+            let __compact_plan_16: crate::types::commitment = __compact_plan_15;
+            let __compact_plan_17: crate::types::commitment = (__compact_plan_16).clone();
+            let (frame, __compact_plan_18): (_, crate::types::MerkleTreePath) = frame
+                .try_witness_metered(|context, meter| {
+                    witnesses.context_path_of(
+                        context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }),
+                        __compact_plan_17,
+                    )
+                })?;
+            let __compact_plan_19: crate::types::MerkleTreePath = __compact_plan_18;
+            let __compact_plan_20: crate::types::MerkleTreePath = (__compact_plan_19).clone();
+            let __compact_plan_21: crate::types::MerkleTreeDigest =
+                crate::pure_circuits::merkleTreePathRoot(__compact_plan_20)?;
+            let __compact_plan_22: crate::types::MerkleTreeDigest = __compact_plan_21;
+            let (frame, __compact_plan_23): (_, bool) = crate::ledger_slots::commitments
+                .record_check_root(frame, (__compact_plan_22).clone())?;
+            let (frame, __compact_plan_27): (_, bool) = if __compact_plan_23 {
+                let __compact_plan_24: crate::types::commitment =
+                    (((__compact_plan_19).clone()).leaf).clone();
+                let __compact_plan_25: bool = (__compact_plan_16).clone() == __compact_plan_24;
+                (frame, __compact_plan_25)
+            } else {
+                let __compact_plan_26: bool = false;
+                (frame, __compact_plan_26)
+            };
+            if !__compact_plan_27 {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "spend: Illegal state: merkle path not recognized by public state".to_owned(),
+                ));
+            }
+            let (frame, __compact_plan_28): (_, crate::types::coin_info) = frame
+                .try_witness_metered(|context, meter| {
+                    witnesses.context_new_coin_info(context.witness_context_with(
+                        super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        },
+                    ))
+                })?;
+            let __compact_plan_29: crate::types::coin_info = __compact_plan_28;
+            let __compact_plan_30: crate::types::coin_info = (__compact_plan_29).clone();
+            let __compact_plan_31: crate::types::zk_public_key =
+                (((__compact_param_0).clone()).zk).clone();
+            let __compact_plan_32: crate::types::zk_public_key = __compact_plan_31;
+            let __compact_plan_33: crate::types::commitment =
+                crate::pure_circuits::commitment_from_coin_info(
+                    __compact_plan_30,
+                    __compact_plan_32,
+                )?;
+            let __compact_plan_34: crate::types::commitment = __compact_plan_33;
+            let frame = crate::ledger_slots::commitments
+                .record_insert(frame, (__compact_plan_34).clone())?;
+            let __compact_plan_35: runtime::OpaqueBytes =
+                (((__compact_param_0).clone()).encryption).clone();
+            let __compact_plan_36: runtime::OpaqueBytes = __compact_plan_35;
+            let __compact_plan_37: crate::types::coin_info = (__compact_plan_29).clone();
+            let (frame, __compact_plan_38): (_, runtime::OpaqueBytes) =
+                frame.try_witness_metered(|context, meter| {
+                    witnesses.context_encrypt(
+                        context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }),
+                        __compact_plan_36,
+                        __compact_plan_37,
+                    )
+                })?;
+            let __compact_plan_39: runtime::OpaqueBytes = __compact_plan_38;
+            let frame = crate::ledger_slots::ciphertexts
+                .record_write(frame, (__compact_plan_39).clone())?;
+            let __compact_plan_40: crate::types::coin_info = (__compact_param_1).clone();
+            let (frame, __compact_plan_41): (_, ()) =
+                frame.try_witness_metered(|context, meter| {
+                    witnesses.private_remove_coin(
+                        context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }),
+                        __compact_plan_40,
+                    )
+                })?;
+            Ok(frame.finish(()))
+        }
         pub fn zerocash_mint<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
             witnesses: &W,
@@ -691,6 +827,44 @@ pub mod ledger_contract {
             pub(super) witnesses: &'a W,
         }
         impl<W> BorrowedContract<'_, W> {
+            pub fn spend<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                dest_public_key: crate::types::public_key,
+                input_coin: crate::types::coin_info,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                spend(context, self.witnesses, dest_public_key, input_coin)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn spend_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                dest_public_key: crate::types::public_key,
+                input_coin: crate::types::coin_info,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from((
+                    (dest_public_key).clone(),
+                    (input_coin).clone(),
+                ));
+                let recorded = self.spend(
+                    observed.circuit_context(private_state),
+                    dest_public_key,
+                    input_coin,
+                )?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "spend", input,
+                ))
+            }
             pub fn zerocash_mint<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,

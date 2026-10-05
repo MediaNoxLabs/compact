@@ -29,10 +29,8 @@
         {"name": "spend", "pure": false, "proof": true},
         {"name": "zerocash_mint", "pure": false, "proof": true}
       ],
-      "expected_recorded_circuits": ["zerocash_mint"],
-      "expected_recording_gaps": {
-        "spend": {"code": "unsupported_action", "ir_node": "StateAction::Assert", "path": "actions[0].action.action.actions[2].action.action.action.actions[0]"}
-      },
+      "expected_recorded_circuits": ["zerocash_mint", "spend"],
+      "expected_recording_gaps": {},
       "pure_declarations": 0,
       "exported_pure_declarations": 0
     }

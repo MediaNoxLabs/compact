@@ -72,6 +72,7 @@ mod witness_assert;
 mod witness_vector_action;
 mod witness_vector_let;
 mod zerocash_mint;
+mod zerocash_spend;
 
 use std::env;
 use std::error::Error;
@@ -2264,6 +2265,15 @@ fn run() -> Result<(), Box<dyn Error>> {
             return Err("usage: compact-rust-proof-smoke --merkle-root <proof-output>".into());
         }
         return merkle_root::run(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--zerocash-spend")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: --zerocash-spend <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err("usage: --zerocash-spend <proof-output>".into());
+        }
+        return zerocash_spend::run(Path::new(&root));
     }
     if first.as_deref() == Some(OsStr::new("--bboard")) {
         let root = arguments

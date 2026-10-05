@@ -39,6 +39,9 @@ struct Plan<'a> {
     counter_reads: usize,
     cell_writes: usize,
     optional_cells: usize,
+    opaque_cells: usize,
+    historic_roots: usize,
+    historic_writes: usize,
 }
 
 impl Plan<'_> {
@@ -233,7 +236,7 @@ impl Plan<'_> {
             Expr::WitnessCall { name, arguments } => {
                 let declaration = *self.witnesses.get(name.as_str())?;
                 if arguments.len() != declaration.parameters.len()
-                    || !(declaration.result == Type::Unit
+                    || !(matches!(declaration.result, Type::Unit | Type::OpaqueBytes)
                         || recordable_cell_type(&declaration.result))
                 {
                     return None;
@@ -323,21 +326,40 @@ impl Plan<'_> {
                 index,
                 value,
             } => {
-                if self.field(field, *index)?.declaration
-                    != (LedgerFieldKind::Set {
-                        ty: Type::Bytes { length: 32 },
-                    })
-                {
+                let LedgerFieldKind::Set { ty } = &self.field(field, *index)?.declaration else {
+                    return None;
+                };
+                if !bytes32_key(ty) {
                     return None;
                 }
+                let ty = ty.clone();
                 let value = self.expression(value, scope, steps)?;
-                if value.ty != (Type::Bytes { length: 32 }) {
+                if value.ty != ty {
                     return None;
                 }
                 self.observe(
                     field,
                     "record_member",
                     vec![value.value],
+                    Type::Boolean,
+                    steps,
+                )
+            }
+            Expr::HistoricMerkleCheckRoot { field, index, root } => {
+                if !matches!(&self.field(field, *index)?.declaration, LedgerFieldKind::HistoricMerkleTree { ty, .. } if wrapped_bytes32(ty))
+                {
+                    return None;
+                }
+                let root = self.expression(root, scope, steps)?;
+                if !matches!(&root.ty, Type::Struct { fields, .. } if matches!(fields.as_slice(), [member] if member.ty == Type::Field))
+                {
+                    return None;
+                }
+                self.historic_roots += 1;
+                self.observe(
+                    field,
+                    "record_check_root",
+                    vec![root.value],
                     Type::Boolean,
                     steps,
                 )
@@ -492,6 +514,9 @@ impl Plan<'_> {
                 let slot = ident(field).ok()?;
                 steps.push(syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_write(frame, #value)?;));
                 self.cell_writes += 1;
+                if ty == Type::OpaqueBytes {
+                    self.opaque_cells += 1;
+                }
                 if optional_string(&ty) {
                     self.optional_cells += 1;
                 }
@@ -549,12 +574,17 @@ impl Plan<'_> {
                 index,
                 value,
             }
+            | StateAction::HistoricMerkleInsert {
+                field,
+                index,
+                value,
+            }
             | StateAction::SetInsert {
                 field,
                 index,
                 value,
             } => {
-                let declaration = self.field(field, *index)?;
+                let declaration = self.field(field, *index)?.clone();
                 match (action, &declaration.declaration) {
                     (
                         StateAction::MerkleInsert { .. },
@@ -563,16 +593,25 @@ impl Plan<'_> {
                             ..
                         },
                     ) => self.tree_writes += 1,
+                    (StateAction::SetInsert { .. }, LedgerFieldKind::Set { ty })
+                        if bytes32_key(ty) =>
+                    {
+                        self.set_writes += 1
+                    }
                     (
-                        StateAction::SetInsert { .. },
-                        LedgerFieldKind::Set {
-                            ty: Type::Bytes { length: 32 },
-                        },
-                    ) => self.set_writes += 1,
+                        StateAction::HistoricMerkleInsert { .. },
+                        LedgerFieldKind::HistoricMerkleTree { ty, .. },
+                    ) if wrapped_bytes32(ty) => self.historic_writes += 1,
                     _ => return None,
                 }
+                let ty = match &declaration.declaration {
+                    LedgerFieldKind::MerkleTree { ty, .. }
+                    | LedgerFieldKind::HistoricMerkleTree { ty, .. }
+                    | LedgerFieldKind::Set { ty } => ty.clone(),
+                    _ => return None,
+                };
                 let value = self.expression(value, scope, steps)?;
-                if value.ty != (Type::Bytes { length: 32 }) {
+                if value.ty != ty {
                     return None;
                 }
                 let slot = ident(field).ok()?;
@@ -589,8 +628,17 @@ fn optional_string(ty: &Type) -> bool {
     matches!(ty, Type::Struct { fields, .. } if matches!(fields.as_slice(), [present, value] if present.ty == Type::Boolean && value.ty == Type::OpaqueString))
 }
 
+fn wrapped_bytes32(ty: &Type) -> bool {
+    matches!(ty, Type::Struct { fields, .. } if matches!(fields.as_slice(), [member] if member.ty == (Type::Bytes { length: 32 })))
+}
+fn bytes32_key(ty: &Type) -> bool {
+    *ty == (Type::Bytes { length: 32 }) || wrapped_bytes32(ty)
+}
 fn cell_type(ty: &Type) -> bool {
-    matches!(ty, Type::Enum { .. } | Type::Bytes { length: 32 }) || optional_string(ty)
+    matches!(
+        ty,
+        Type::Enum { .. } | Type::Bytes { length: 32 } | Type::OpaqueBytes
+    ) || optional_string(ty)
 }
 
 pub(super) struct TypedPlan {
@@ -607,7 +655,8 @@ pub(super) fn lower<'a>(
     let enum_entry = matches!(circuit.parameters.as_slice(), [parameter] if matches!(parameter.ty, Type::Enum { .. }));
     let opaque_entry =
         matches!(circuit.parameters.as_slice(), [parameter] if parameter.ty == Type::OpaqueString);
-    if !(circuit.parameters.is_empty() || enum_entry || opaque_entry)
+    let spend_entry = matches!(circuit.parameters.as_slice(), [destination, coin] if matches!(destination.ty, Type::Struct { .. }) && matches!(coin.ty, Type::Struct { .. }));
+    if !(circuit.parameters.is_empty() || enum_entry || opaque_entry || spend_entry)
         || !matches!(circuit.result, Type::Unit | Type::OpaqueString)
     {
         return None;
@@ -624,6 +673,9 @@ pub(super) fn lower<'a>(
         counter_reads: 0,
         cell_writes: 0,
         optional_cells: 0,
+        opaque_cells: 0,
+        historic_roots: 0,
+        historic_writes: 0,
     };
     let scope: Scope = circuit
         .parameters
@@ -665,7 +717,9 @@ pub(super) fn lower<'a>(
         }
         _ => return None,
     };
-    let membership = circuit.result == Type::Unit
+    let ordinary = plan.opaque_cells == 0 && plan.historic_roots == 0 && plan.historic_writes == 0;
+    let membership = ordinary
+        && circuit.result == Type::Unit
         && plan.root_observations > 0
         && plan.set_writes > 0
         && plan.cell_writes == 0
@@ -676,7 +730,8 @@ pub(super) fn lower<'a>(
         } else {
             circuit.parameters.is_empty() && plan.counter_writes > 0 && plan.tree_writes == 0
         };
-    let cell_lifecycle = plan.root_observations == 0
+    let cell_lifecycle = ordinary
+        && plan.root_observations == 0
         && plan.set_writes == 0
         && plan.tree_writes == 0
         && plan.cell_writes > 0
@@ -686,7 +741,19 @@ pub(super) fn lower<'a>(
             || (circuit.parameters.is_empty()
                 && circuit.result == Type::OpaqueString
                 && plan.counter_writes > 0));
-    (membership || cell_lifecycle).then_some(TypedPlan { steps, result })
+    let historic_spend = spend_entry
+        && circuit.result == Type::Unit
+        && plan.root_observations == 0
+        && plan.tree_writes == 0
+        && plan.optional_cells == 0
+        && plan.counter_reads == 0
+        && plan.counter_writes == 0
+        && plan.historic_roots > 0
+        && plan.historic_writes > 0
+        && plan.set_writes > 0
+        && plan.opaque_cells > 0
+        && plan.cell_writes == plan.opaque_cells;
+    (membership || cell_lifecycle || historic_spend).then_some(TypedPlan { steps, result })
 }
 
 #[cfg(test)]
@@ -710,6 +777,9 @@ mod tests {
             counter_reads: 0,
             cell_writes: 0,
             optional_cells: 0,
+            opaque_cells: 0,
+            historic_roots: 0,
+            historic_writes: 0,
         };
         let actual = Type::Unsigned { max: "255".into() };
         let target = Type::Unsigned {
@@ -775,6 +845,9 @@ mod tests {
             counter_reads: 0,
             cell_writes: 0,
             optional_cells: 0,
+            opaque_cells: 0,
+            historic_roots: 0,
+            historic_writes: 0,
         };
         let action = StateAction::CounterIncrement {
             field: "tally_yes".into(),

@@ -9404,7 +9404,7 @@ fn composite_witness_and_pure_struct_hash_recording_remains_typed_and_closed() {
             .recorded
     };
     assert!(available(&contract, "zerocash_mint"));
-    assert!(!available(&contract, "spend"));
+    assert!(available(&contract, "spend"));
     let renamed = source
         .replace("zerocash_mint", "create_item")
         .replace("commitment_from_coin_info", "derive_item")
@@ -9772,4 +9772,80 @@ fn typed_cell_lifecycle_retains_only_final_root_scope_and_audits_helpers() {
         .unwrap()
         .index = 3;
     assert!(render(&wrong_slot).is_err());
+}
+
+#[test]
+fn typed_historic_spend_audits_path_helpers_and_slot_provenance() {
+    let source = include_str!("zerocash-schema13-ir.json");
+    let load = |source: &str| {
+        let mut c: Contract = serde_json::from_str(source).unwrap();
+        c.schema_version = SCHEMA_VERSION;
+        c
+    };
+    let available = |c: &Contract, name: &str| {
+        render_with_capabilities(c)
+            .unwrap()
+            .capabilities
+            .circuits
+            .iter()
+            .find(|c| c.name == name)
+            .unwrap()
+            .recorded
+    };
+    let contract = load(source);
+    assert!(available(&contract, "spend"));
+    let renamed = load(
+        &source
+            .replace("spend", "transfer")
+            .replace("ciphertexts", "envelopes")
+            .replace("commitments", "notes")
+            .replace("nullifiers", "used_notes")
+            .replace("context$encrypt", "seal"),
+    );
+    assert!(available(&renamed, "transfer"));
+    let mut effectful = contract.clone();
+    let helper = effectful
+        .circuits
+        .iter_mut()
+        .find(|c| c.name == "merkleTreePathEntryRoot")
+        .unwrap();
+    helper.body = Expr::Sequence {
+        steps: vec![Expr::Assert {
+            condition: Box::new(Expr::Boolean { value: true }),
+            message: "extra guard".into(),
+        }],
+        value: Box::new(helper.body.clone()),
+    };
+    assert!(!available(&effectful, "spend"));
+    let mut wrong_slot = contract;
+    wrong_slot
+        .ledger_fields
+        .iter_mut()
+        .find(|f| f.id == "commitments")
+        .unwrap()
+        .index = 2;
+    assert!(render(&wrong_slot).is_err());
+    let mut json: serde_json::Value = serde_json::from_str(source).unwrap();
+    json["schema_version"] = serde_json::json!(SCHEMA_VERSION);
+    fn replace(value: &mut serde_json::Value) {
+        match value {
+            serde_json::Value::Object(map) => {
+                if map.get("kind").and_then(|v| v.as_str()) == Some("set_insert") {
+                    map.insert("kind".into(), serde_json::json!("set_remove"));
+                }
+                for value in map.values_mut() {
+                    replace(value);
+                }
+            }
+            serde_json::Value::Array(values) => {
+                for value in values {
+                    replace(value);
+                }
+            }
+            _ => {}
+        }
+    }
+    replace(&mut json);
+    let unsupported: Contract = serde_json::from_value(json).unwrap();
+    assert!(!available(&unsupported, "spend"));
 }

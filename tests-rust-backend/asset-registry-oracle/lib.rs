@@ -1543,6 +1543,59 @@ pub mod ledger_contract {
             let (frame, _) = __compact_recorded_body_recordWrite(frame, witnesses)?;
             Ok(frame.finish(()))
         }
+        pub fn setWatch<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: runtime::OpaqueString,
+            __compact_param_1: crate::types::ListMutation,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_watch_key: runtime::OpaqueString = (__compact_param_0).clone();
+            let __compact_recorded_watch_mutation: crate::types::ListMutation = __compact_param_1;
+            let (frame, _) = __compact_recorded_body_assertWritable(frame)?;
+            if !(__compact_recorded_watch_mutation == crate::types::ListMutation::Add
+                || __compact_recorded_watch_mutation == crate::types::ListMutation::Drop)
+            {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "watch mutation must be Add or Drop".to_owned(),
+                ));
+            }
+            let (frame, __compact_recorded_first_exists): (_, bool) = crate::ledger_slots::records
+                .record_member(frame, __compact_recorded_watch_key.clone())?;
+            let (frame, __compact_recorded_exists): (_, bool) = if __compact_recorded_first_exists {
+                (frame, true)
+            } else {
+                crate::ledger_slots::custodyGrants
+                    .record_member(frame, __compact_recorded_watch_key.clone())?
+            };
+            if !__compact_recorded_exists {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "record does not exist".to_owned(),
+                ));
+            }
+            let frame = if __compact_recorded_watch_mutation == crate::types::ListMutation::Add {
+                let (frame, __compact_recorded_watched): (_, bool) = crate::ledger_slots::watchList
+                    .record_member(frame, __compact_recorded_watch_key.clone())?;
+                if __compact_recorded_watched {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "record is already watched".to_owned(),
+                    ));
+                }
+                crate::ledger_slots::watchList.record_insert(frame, __compact_recorded_watch_key)?
+            } else {
+                let (frame, __compact_recorded_watched): (_, bool) = crate::ledger_slots::watchList
+                    .record_member(frame, __compact_recorded_watch_key.clone())?;
+                if !__compact_recorded_watched {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "record is not watched".to_owned(),
+                    ));
+                }
+                crate::ledger_slots::watchList.record_remove(frame, __compact_recorded_watch_key)?
+            };
+            let (frame, _) = __compact_recorded_body_recordWrite(frame, witnesses)?;
+            Ok(frame.finish(()))
+        }
         pub fn tag<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
             witnesses: &W,
@@ -1897,6 +1950,38 @@ pub mod ledger_contract {
                     recorded,
                     "setCustodyGrant",
                     input,
+                ))
+            }
+            pub fn setWatch<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                recordId: runtime::OpaqueString,
+                mutation: crate::types::ListMutation,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                setWatch(context, self.witnesses, recordId, mutation)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn setWatch_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                recordId: runtime::OpaqueString,
+                mutation: crate::types::ListMutation,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(((recordId).clone(), mutation));
+                let recorded =
+                    self.setWatch(observed.circuit_context(private_state), recordId, mutation)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "setWatch", input,
                 ))
             }
             pub fn tag<Private>(

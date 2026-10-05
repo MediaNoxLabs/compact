@@ -9131,6 +9131,52 @@ fn typed_asset_map_write_requires_class_guard_and_insert_only_count() {
     assert!(source.contains("assertRecordClassKnown("));
     assert!(source.contains("__compact_recorded_write_value.clone()"));
 
+    // The checked guard follows the declared enum/member, not the oracle's
+    // spellings for either one. Mutation labels remain a bounded domain.
+    fn rename_class(value: &mut serde_json::Value) {
+        if let Some(object) = value.as_object_mut() {
+            let kind = object
+                .get("kind")
+                .and_then(serde_json::Value::as_str)
+                .map(str::to_owned);
+            let name = object
+                .get("name")
+                .and_then(serde_json::Value::as_str)
+                .map(str::to_owned);
+            if kind.as_deref() == Some("enum") && name.as_deref() == Some("AssetClass") {
+                object.get_mut("variants").unwrap()[0] = serde_json::json!("Pending");
+            }
+            if kind.as_deref() == Some("enum_variant")
+                && object.get("ty").and_then(|ty| ty.get("name"))
+                    == Some(&serde_json::json!("AssetClass"))
+            {
+                object.insert("variant".into(), serde_json::json!("Pending"));
+            }
+            if kind.as_deref() == Some("struct") && name.as_deref() == Some("AssetRecord") {
+                for field in object.get_mut("fields").unwrap().as_array_mut().unwrap() {
+                    if field["name"] == "kind" {
+                        field["name"] = serde_json::json!("category");
+                    }
+                }
+            }
+            if kind.as_deref() == Some("struct_field")
+                && object.get("field") == Some(&serde_json::json!("kind"))
+            {
+                object.insert("field".into(), serde_json::json!("category"));
+            }
+            for child in object.values_mut() {
+                rename_class(child);
+            }
+        } else if let Some(items) = value.as_array_mut() {
+            for child in items {
+                rename_class(child);
+            }
+        }
+    }
+    let mut renamed = original.clone();
+    rename_class(&mut renamed);
+    assert!(recorded(&renamed).0);
+
     fn actions(contract: &mut serde_json::Value) -> &mut Vec<serde_json::Value> {
         contract["stateful_circuits"]
             .as_array_mut()
@@ -9453,4 +9499,72 @@ fn composite_recording_does_not_erase_local_argument_widening() {
         replace(action);
     }
     assert!(!available(&contract));
+}
+
+#[test]
+fn guarded_opaque_set_mutation_requires_two_maps_and_opposite_typed_branches() {
+    let original: serde_json::Value =
+        serde_json::from_str(include_str!("asset-watch-write-schema13-ir.json")).unwrap();
+    let recorded = |value: &serde_json::Value| {
+        let contract: Contract = serde_json::from_value(value.clone()).unwrap();
+        let Ok(rendered) = render_with_capabilities(&contract) else {
+            return (false, String::new());
+        };
+        let capability = rendered
+            .capabilities
+            .circuits
+            .iter()
+            .find(|capability| capability.name == "setWatch")
+            .unwrap();
+        (capability.recorded, rendered.source)
+    };
+    let (available, source) = recorded(&original);
+    assert!(available);
+    assert!(source.contains("pub fn setWatch<Private"));
+    assert!(source.contains("watchList"));
+    assert!(source.contains("record_insert("));
+    assert!(source.contains("record_remove("));
+
+    fn actions(contract: &mut serde_json::Value) -> &mut Vec<serde_json::Value> {
+        contract["stateful_circuits"]
+            .as_array_mut()
+            .unwrap()
+            .iter_mut()
+            .find(|circuit| circuit["name"] == "setWatch")
+            .unwrap()["actions"][0]["action"]["action"]["actions"]
+            .as_array_mut()
+            .unwrap()
+    }
+    let mut wrong_key = original.clone();
+    actions(&mut wrong_key)[2]["condition"]["arguments"][0]["value"]["name"] =
+        serde_json::json!("recordId");
+    assert!(!recorded(&wrong_key).0);
+
+    let mut wrong_enum = original.clone();
+    actions(&mut wrong_enum)[1]["condition"]["otherwise"]["right"]["variant"] =
+        serde_json::json!("Add");
+    assert!(!recorded(&wrong_enum).0);
+
+    let mut reordered = original.clone();
+    actions(&mut reordered).swap(2, 3);
+    assert!(!recorded(&reordered).0);
+
+    let mut wrong_set = original.clone();
+    actions(&mut wrong_set)[3]["then"]["actions"][1]["field"] = serde_json::json!("retiredKeys");
+    assert!(!recorded(&wrong_set).0);
+
+    let mut wrong_drop = original.clone();
+    let absent_condition = actions(&mut wrong_drop)[3]["then"]["actions"][0]["condition"].clone();
+    actions(&mut wrong_drop)[3]["otherwise"]["then"]["actions"][0]["condition"] = absent_condition;
+    assert!(!recorded(&wrong_drop).0);
+
+    let mut duplicate_map = original.clone();
+    let helper = duplicate_map["stateful_circuits"]
+        .as_array_mut()
+        .unwrap()
+        .iter_mut()
+        .find(|circuit| circuit["name"] == "recordExists")
+        .unwrap();
+    helper["return_value"]["value"]["otherwise"]["field"] = serde_json::json!("records");
+    assert!(!recorded(&duplicate_map).0);
 }

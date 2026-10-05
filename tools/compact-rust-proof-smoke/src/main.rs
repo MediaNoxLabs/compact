@@ -32,6 +32,7 @@ mod asset_grant_effective;
 mod asset_record_write;
 mod asset_removal;
 mod asset_stored_record_fresh;
+mod asset_watch_write;
 mod asset_writable;
 mod boolean_pair_assert;
 mod closed_pure_field;
@@ -1662,6 +1663,17 @@ fn run() -> Result<(), Box<dyn Error>> {
             );
         }
         return asset_record_write::run(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--asset-watch-write")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --asset-watch-write <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err(
+                "usage: compact-rust-proof-smoke --asset-watch-write <proof-output>".into(),
+            );
+        }
+        return asset_watch_write::run(Path::new(&root));
     }
     if first.as_deref() == Some(OsStr::new("--asset-removal")) {
         let root = arguments

@@ -17,12 +17,12 @@ use std::cell::RefCell;
 
 use compact_rust_asset_registry_oracle_fixture::ledger_contract::{
     LedgerView, Witnesses, acceptIfFresh, initial_state, recorded, setCustodian, setCustodyGrant,
-    setRecord, tag,
+    setRecord, setWatch, tag,
 };
 use compact_rust_asset_registry_oracle_fixture::ledger_slots;
 use compact_rust_asset_registry_oracle_fixture::types::{
-    AssetClass, AssetRecord, ContractAddress as Holder, CustodyGrant, FreshnessPolicy, Provenance,
-    RecordMutation,
+    AssetClass, AssetRecord, ContractAddress as Holder, CustodyGrant, FreshnessPolicy,
+    ListMutation, Provenance, RecordMutation,
 };
 use midnight_compact_runtime as runtime;
 use midnight_onchain_state::state::{
@@ -599,6 +599,185 @@ fn asset_record(revised: bool, invalid_class: bool) -> AssetRecord {
         },
         quantity: BoundedUint::new(if revised { 9 } else { 5 }).unwrap(),
     }
+}
+
+fn watch_write_oracle() -> Value {
+    serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/asset-watch-write.json"
+    ))
+    .unwrap()
+}
+
+fn watch_context(mode: &str, seeded: bool, witnesses: &TrackingWitness) -> CircuitContext<u64> {
+    let context = initial("success", witnesses);
+    let context = if seeded {
+        setRecord(
+            context,
+            witnesses,
+            runtime::OpaqueString::from("record-α-1"),
+            asset_record(false, false),
+            RecordMutation::Insert,
+        )
+        .unwrap()
+        .context
+    } else {
+        context
+    };
+    witnesses.clear();
+    match mode {
+        "success" => context,
+        "closed" => context.write_cell_at_path(&[1, 6], false).unwrap().context,
+        "frozen" => context.write_cell_at_path(&[1, 7], true).unwrap().context,
+        _ => unreachable!(),
+    }
+}
+
+#[test]
+fn typed_watch_add_drop_match_typescript_native_recorded_and_replay() {
+    let reference = watch_write_oracle();
+    let native_witnesses = TrackingWitness::default();
+    let recorded_witnesses = TrackingWitness::default();
+    let native_context = watch_context("success", true, &native_witnesses);
+    let recorded_context = watch_context("success", true, &recorded_witnesses);
+    let key = runtime::OpaqueString::from("record-α-1");
+    assert_eq!(
+        state_hex(native_context.query.state.get_ref().clone()),
+        reference["add"]["initialStateHex"]
+    );
+    let native_add = setWatch(
+        native_context,
+        &native_witnesses,
+        key.clone(),
+        ListMutation::Add,
+    )
+    .unwrap();
+    let recorded_add = recorded::setWatch(
+        recorded_context,
+        &recorded_witnesses,
+        key.clone(),
+        ListMutation::Add,
+    )
+    .unwrap();
+    check_success(&native_add, &recorded_add, &reference["add"], "watch add");
+    assert_eq!(native_witnesses.calls(), ["currentTimestamp"]);
+    assert_eq!(recorded_witnesses.calls(), ["currentTimestamp"]);
+    native_witnesses.clear();
+    recorded_witnesses.clear();
+
+    assert_eq!(
+        state_hex(native_add.context.query.state.get_ref().clone()),
+        reference["drop"]["initialStateHex"]
+    );
+    let native_drop = setWatch(
+        native_add.context,
+        &native_witnesses,
+        key.clone(),
+        ListMutation::Drop,
+    )
+    .unwrap();
+    let recorded_drop = recorded::setWatch(
+        recorded_add.execution.context,
+        &recorded_witnesses,
+        key,
+        ListMutation::Drop,
+    )
+    .unwrap();
+    check_success(
+        &native_drop,
+        &recorded_drop,
+        &reference["drop"],
+        "watch drop",
+    );
+    assert_eq!(native_witnesses.calls(), ["currentTimestamp"]);
+    assert_eq!(recorded_witnesses.calls(), ["currentTimestamp"]);
+}
+
+#[test]
+fn typed_watch_rejects_unknown_duplicate_absent_invalid_closed_and_frozen() {
+    let reference = watch_write_oracle();
+    let key = runtime::OpaqueString::from("record-α-1");
+    for (case, mode, seeded, mutation) in [
+        ("unknownRecord", "success", false, ListMutation::Add),
+        ("absentDrop", "success", true, ListMutation::Drop),
+        (
+            "invalidMutation",
+            "success",
+            true,
+            ListMutation::Unspecified,
+        ),
+        ("closed", "closed", true, ListMutation::Add),
+        ("frozen", "frozen", true, ListMutation::Add),
+    ] {
+        let native_witnesses = TrackingWitness::default();
+        let recorded_witnesses = TrackingWitness::default();
+        let native_context = watch_context(mode, seeded, &native_witnesses);
+        let recorded_context = watch_context(mode, seeded, &recorded_witnesses);
+        assert_eq!(
+            state_hex(native_context.query.state.get_ref().clone()),
+            reference[case]["initialStateHex"]
+        );
+        let native_error = setWatch(native_context, &native_witnesses, key.clone(), mutation)
+            .err()
+            .unwrap();
+        let recorded_error =
+            recorded::setWatch(recorded_context, &recorded_witnesses, key.clone(), mutation)
+                .err()
+                .unwrap();
+        assert_eq!(native_error, recorded_error, "{case}: Rust guard");
+        assert_eq!(
+            native_error.to_string(),
+            reference[case]["error"],
+            "{case}: TypeScript guard"
+        );
+        assert!(native_witnesses.calls().is_empty());
+        assert!(recorded_witnesses.calls().is_empty());
+        assert_eq!(
+            reference[case]["stateHex"],
+            reference[case]["initialStateHex"]
+        );
+    }
+    let native_witnesses = TrackingWitness::default();
+    let recorded_witnesses = TrackingWitness::default();
+    let native_seed = setWatch(
+        watch_context("success", true, &native_witnesses),
+        &native_witnesses,
+        key.clone(),
+        ListMutation::Add,
+    )
+    .unwrap();
+    let recorded_seed = setWatch(
+        watch_context("success", true, &recorded_witnesses),
+        &recorded_witnesses,
+        key.clone(),
+        ListMutation::Add,
+    )
+    .unwrap();
+    assert_eq!(
+        state_hex(native_seed.context.query.state.get_ref().clone()),
+        reference["duplicateAdd"]["initialStateHex"]
+    );
+    native_witnesses.clear();
+    recorded_witnesses.clear();
+    let native_error = setWatch(
+        native_seed.context,
+        &native_witnesses,
+        key.clone(),
+        ListMutation::Add,
+    )
+    .err()
+    .unwrap();
+    let recorded_error = recorded::setWatch(
+        recorded_seed.context,
+        &recorded_witnesses,
+        key,
+        ListMutation::Add,
+    )
+    .err()
+    .unwrap();
+    assert_eq!(native_error, recorded_error);
+    assert_eq!(native_error.to_string(), reference["duplicateAdd"]["error"]);
+    assert!(native_witnesses.calls().is_empty());
+    assert!(recorded_witnesses.calls().is_empty());
 }
 
 #[test]

@@ -13,69 +13,45 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Prove typed asset-record Insert and Update with a Unicode opaque note.
+//! Prove typed asset watch Add and Drop with a Unicode opaque key.
 
 use super::*;
 use compact_rust_asset_registry_oracle_fixture::ledger_contract as asset;
-use compact_rust_asset_registry_oracle_fixture::types::{
-    AssetClass, AssetRecord, Provenance, RecordMutation,
-};
+use compact_rust_asset_registry_oracle_fixture::types::{ListMutation, RecordMutation};
 use midnight_compact_runtime as runtime;
 
-pub(super) fn record(revised: bool) -> Result<AssetRecord, Box<dyn Error>> {
-    Ok(AssetRecord {
-        code: FixedBytes::new([if revised { 3 } else { 0 }; 32]),
-        note: runtime::OpaqueString::from(if revised {
-            "更新済み café"
-        } else {
-            "検査資料 🔒"
-        }),
-        provenance: Provenance {
-            facility: FixedBytes::new([if revised { 6 } else { 4 }; 32]),
-            registeredAt: BoundedUint::new(if revised { 101 } else { 91 })?,
-        },
-        kind: if revised {
-            AssetClass::Container
-        } else {
-            AssetClass::Instrument
-        },
-        quantity: BoundedUint::new(if revised { 9 } else { 5 })?,
-    })
-}
-
 pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
-    const CIRCUIT: &str = "setRecord";
+    const CIRCUIT: &str = "setWatch";
     let key = runtime::OpaqueString::from("record-α-1");
-    for update in [false, true] {
+    for drop in [false, true] {
         let witnesses = super::asset_writable::AssetWitness;
         let initial = asset::initial_state(ConstructorContext::new(7_u64), &witnesses)?;
         if initial.private_state != 10 {
-            return Err("asset record constructor private state differs from TypeScript".into());
+            return Err("asset watch constructor private state differs from TypeScript".into());
         }
-        let context = initial.into_circuit_context(runtime::ledger::ContractAddress::default());
-        let context = if update {
-            asset::setRecord(
-                context,
-                &witnesses,
-                key.clone(),
-                record(false)?,
-                RecordMutation::Insert,
-            )?
-            .context
+        let context = asset::setRecord(
+            initial.into_circuit_context(runtime::ledger::ContractAddress::default()),
+            &witnesses,
+            key.clone(),
+            super::asset_record_write::record(false)?,
+            RecordMutation::Insert,
+        )?
+        .context;
+        let context = if drop {
+            asset::setWatch(context, &witnesses, key.clone(), ListMutation::Add)?.context
         } else {
             context
         };
         let private_state = context.private_state;
-        if private_state != if update { 11 } else { 10 } {
-            return Err("asset record prestate has wrong private witness count".into());
+        if private_state != if drop { 12 } else { 11 } {
+            return Err("asset watch prestate has wrong private witness count".into());
         }
-        let value = record(update)?;
-        let mutation = if update {
-            RecordMutation::Update
+        let mutation = if drop {
+            ListMutation::Drop
         } else {
-            RecordMutation::Insert
+            ListMutation::Add
         };
-        let mut rng = StdRng::seed_from_u64(if update { 0x0157_5002 } else { 0x0157_5001 });
+        let mut rng = StdRng::seed_from_u64(if drop { 0x0161_5002 } else { 0x0161_5001 });
         let deploy = make_deploy(
             root,
             CIRCUIT,
@@ -91,18 +67,16 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
                 block_height: 0,
             },
         );
-        let native = asset::setRecord(
+        let native = asset::setWatch(
             observed.circuit_context(private_state),
             &witnesses,
             key.clone(),
-            value.clone(),
             mutation,
         )?;
-        let recorded = asset::recorded::setRecord(
+        let recorded = asset::recorded::setWatch(
             observed.circuit_context(private_state),
             &witnesses,
             key.clone(),
-            value.clone(),
             mutation,
         )?;
         if native.context.query.state.get_ref() != recorded.execution.context.query.state.get_ref()
@@ -111,65 +85,56 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
             || native.context.private_state != recorded.execution.context.private_state
             || native.private_transcript_outputs != recorded.execution.private_transcript_outputs
         {
-            return Err(
-                format!("asset record update={update} recording differs from native").into(),
-            );
+            return Err(format!("asset watch drop={drop} recording differs from native").into());
         }
         let expected_state = native.context.query.state.get_ref().clone();
         let input = AlignedValue::concat(&[
             AlignedValue::from(key.clone()),
-            AlignedValue::from(value.clone()),
             AlignedValue::from(mutation),
         ]);
         let manual = check_generated_trace(root, CIRCUIT, recorded, input)?;
         let verifier: VerifierKey = tagged_deserialize(&mut BufReader::new(File::open(
-            root.join("keys/setRecord.verifier"),
+            root.join("keys/setWatch.verifier"),
         )?))?;
         let typed = asset::Contract::from(witnesses)
             .recording()
-            .setRecord_call(
-                &observed,
-                private_state,
-                key.clone(),
-                value.clone(),
-                mutation,
-            )?
+            .setWatch_call(&observed, private_state, key.clone(), mutation)?
             .prepare(verifier, Fr::from(0_u64))?;
         if format!("{manual:?}") != format!("{typed:?}") {
             return Err(
-                format!("asset record update={update} typed call differs from recording").into(),
+                format!("asset watch drop={drop} typed call differs from recording").into(),
             );
         }
         check_transaction(root, CIRCUIT, deploy, typed, &mut rng, |applied| {
             let data = applied.data.get_ref();
             if data != &expected_state {
-                return Err("proven asset record changed expected native state".into());
+                return Err("proven asset watch changed expected native state".into());
             }
-            let stored = map_view_at_path::<runtime::OpaqueString, AssetRecord, _>(data, &[1, 10])?
-                .lookup(key.clone())?;
-            if stored != value {
-                return Err("proven asset record stored wrong typed value".into());
+            if set_view_at_path::<runtime::OpaqueString, _>(data, &[1, 13])?.member(key.clone())
+                == drop
+            {
+                return Err("proven asset watch stored wrong membership".into());
             }
             let StateValue::Array(fields) = data else {
-                return Err("asset record root is not an array".into());
+                return Err("asset watch root is not an array".into());
             };
             let Some(StateValue::Array(metadata)) = fields.get(1) else {
-                return Err("asset record metadata is not an array".into());
+                return Err("asset watch metadata is not an array".into());
             };
-            let expected_count = if update { 2 } else { 1 };
             if read_counter(metadata.get(5).ok_or("missing recordCount")?)? != 1 {
-                return Err("proven asset record stored wrong record count".into());
+                return Err("proven asset watch changed record count".into());
             }
+            let expected_writes = if drop { 3 } else { 2 };
             for index in [8, 9] {
-                if read_counter(metadata.get(index).ok_or("missing record write counter")?)?
-                    != expected_count
+                if read_counter(metadata.get(index).ok_or("missing watch write counter")?)?
+                    != expected_writes
                 {
-                    return Err("proven asset record stored wrong write count".into());
+                    return Err("proven asset watch stored wrong write count".into());
                 }
             }
             Ok(())
         })?;
-        println!("typed asset record update={update} proved and applied through ledger-8");
+        println!("typed asset watch drop={drop} proved and applied through ledger-8");
     }
     Ok(())
 }

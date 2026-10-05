@@ -65,6 +65,7 @@ ASSET_REGISTRY_SOURCE = ROOT / "examples/rust_backend/asset_registry_oracle.comp
 HISTORIC_MERKLE_SOURCE = ROOT / "examples/rust_backend/hmt_insert_oracle.compact"
 HISTORIC_MERKLE_DEFAULT_SOURCE = ROOT / "examples/rust_backend/hmt_default_oracle.compact"
 ELECTION_SOURCE = ROOT / "examples/rust_backend/election_oracle.compact"
+ZEROCASH_SOURCE = ROOT / "examples/rust_backend/zerocash_oracle.compact"
 INLINE_TYPE_SCOPE_SOURCE = ROOT / "examples/rust_backend/inline_type_scope_oracle.compact"
 VECTOR_KEY_SOURCE = ROOT / "examples/rust_backend/vector_key_adt.compact"
 COMPOSITE_KEY_SOURCE = ROOT / "examples/rust_backend/observed_composite_keys.compact"
@@ -1480,6 +1481,16 @@ def main() -> None:
                     assert (list_shapes_proof / "keys" / f"{circuit}.{extension}").is_file()
                 for extension in ("zkir", "bzkir"):
                     assert (list_shapes_proof / "zkir" / f"{circuit}.{extension}").is_file()
+            zerocash_mint_proof = base / "zerocash-mint-proof"
+            run(compiler, "--target", "rust", str(ZEROCASH_SOURCE), str(zerocash_mint_proof))
+            check_manifest(zerocash_mint_proof)
+            capabilities = json.loads((zerocash_mint_proof / "contract/rust-capabilities.json").read_text())
+            mint = next(row for row in capabilities["circuits"] if row["name"] == "zerocash_mint")
+            assert mint["proof_required"] and mint["recorded"] and mint["observed_call"]
+            for extension in ("prover", "verifier"):
+                assert (zerocash_mint_proof / "keys" / f"zerocash_mint.{extension}").is_file()
+            for extension in ("zkir", "bzkir"):
+                assert (zerocash_mint_proof / "zkir" / f"zerocash_mint.{extension}").is_file()
             election_topic_proof = base / "election-topic-proof"
             run(compiler, "--target", "rust", str(ELECTION_SOURCE), str(election_topic_proof))
             check_manifest(election_topic_proof)
@@ -1911,6 +1922,10 @@ def main() -> None:
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 "--election-add-voter", str(election_topic_proof),
+            )
+            run(
+                "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--zerocash-mint", str(zerocash_mint_proof),
             )
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",

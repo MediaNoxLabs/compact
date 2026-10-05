@@ -1910,6 +1910,7 @@ dependencies = [
  "compact-rust-witness-cell-write-fixture",
  "compact-rust-witness-list-shapes-fixture",
  "compact-rust-witness-vector-action-fixture",
+ "compact-rust-zerocash-oracle-fixture",
  "futures-executor",
  "midnight-base-crypto",
  "midnight-circuits",

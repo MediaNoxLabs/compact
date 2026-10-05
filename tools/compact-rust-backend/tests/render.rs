@@ -9341,3 +9341,116 @@ fn witness_admitted_merkle_insert_requires_path_shape_argument_and_order() {
         );
     }
 }
+
+#[test]
+fn composite_witness_and_pure_struct_hash_recording_remains_typed_and_closed() {
+    let source = include_str!("zerocash-schema13-ir.json");
+    let mut contract: Contract = serde_json::from_str(source).unwrap();
+    contract.schema_version = SCHEMA_VERSION;
+    let available = |contract: &Contract, name: &str| {
+        render_with_capabilities(contract)
+            .unwrap()
+            .capabilities
+            .circuits
+            .iter()
+            .find(|circuit| circuit.name == name)
+            .unwrap()
+            .recorded
+    };
+    assert!(available(&contract, "zerocash_mint"));
+    assert!(!available(&contract, "spend"));
+    let renamed = source
+        .replace("zerocash_mint", "create_item")
+        .replace("commitment_from_coin_info", "derive_item")
+        .replace("context$new_coin_info", "load_item")
+        .replace("private$add_coin", "save_item")
+        .replace("coin_info", "ItemData");
+    let mut renamed: Contract = serde_json::from_str(&renamed).unwrap();
+    renamed.schema_version = SCHEMA_VERSION;
+    assert!(available(&renamed, "create_item"));
+    // A valid native branch is deliberately outside the closed hash expression subset.
+    let mut branch = contract.clone();
+    let helper = branch
+        .circuits
+        .iter_mut()
+        .find(|circuit| circuit.name == "commitment_from_coin_info")
+        .unwrap();
+    helper.body = Expr::If {
+        condition: Box::new(Expr::Boolean { value: true }),
+        then: Box::new(helper.body.clone()),
+        otherwise: Box::new(helper.body.clone()),
+    };
+    assert!(!available(&branch, "zerocash_mint"));
+    let mut wrong_witness = contract.clone();
+    wrong_witness
+        .witnesses
+        .iter_mut()
+        .find(|witness| witness.name == "context$new_coin_info")
+        .unwrap()
+        .result = Type::Field;
+    assert!(render_with_capabilities(&wrong_witness).is_err());
+    let mut wrong_slot = contract;
+    wrong_slot
+        .ledger_fields
+        .iter_mut()
+        .find(|field| field.id == "commitments")
+        .unwrap()
+        .index = 7;
+    assert!(render_with_capabilities(&wrong_slot).is_err());
+}
+
+#[test]
+fn composite_recording_does_not_erase_local_argument_widening() {
+    let mut contract: Contract =
+        serde_json::from_str(include_str!("struct-helper-widening-schema13-ir.json")).unwrap();
+    contract.schema_version = SCHEMA_VERSION;
+    let available = |contract: &Contract| {
+        render_with_capabilities(contract)
+            .unwrap()
+            .capabilities
+            .circuits[0]
+            .recorded
+    };
+    assert!(!available(&contract));
+    // Exercise the same conversion through a struct-returning witness.
+    let helper = contract
+        .circuits
+        .iter()
+        .find(|circuit| circuit.name == "wrap")
+        .unwrap()
+        .clone();
+    contract.witnesses.push(WitnessDeclaration {
+        name: helper.name.clone(),
+        parameters: helper.parameters.clone(),
+        result: helper.result.clone(),
+        source: helper.source.clone(),
+    });
+    fn replace(action: &mut StateAction) {
+        match action {
+            StateAction::Let { bindings, action } => {
+                for binding in bindings {
+                    if let Expr::Call { name, arguments } = &binding.value
+                        && name == "wrap"
+                    {
+                        binding.value = Expr::WitnessCall {
+                            name: name.clone(),
+                            arguments: arguments.clone(),
+                        };
+                    }
+                }
+                replace(action);
+            }
+            StateAction::Sequence { actions } => {
+                for action in actions {
+                    replace(action);
+                }
+            }
+            _ => {}
+        }
+    }
+    contract.circuits.retain(|circuit| circuit.name != "wrap");
+    for action in &mut contract.stateful_circuits[0].actions {
+        replace(action);
+    }
+    assert!(!available(&contract));
+}

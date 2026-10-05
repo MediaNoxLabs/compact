@@ -1556,6 +1556,38 @@ fn closed_witness_admitted_merkle_insert_steps(
     Ok(Some(steps))
 }
 
+// Native validation requires struct coercions to preserve the exact type. Other
+// coercions may need a conversion of an untyped recorded local; leave these
+// unavailable until recorded local bindings carry their source types.
+fn identity_struct_call_argument(value: &Expr) -> bool {
+    match value {
+        Expr::Coerce {
+            value,
+            ty: Type::Struct { .. },
+        } => identity_struct_call_argument(value),
+        Expr::Coerce { .. } => false,
+        _ => true,
+    }
+}
+
+// Pure struct values can reuse the native typed function once every node is
+// known to be effect-free. Ledger reads, witness calls and nested calls remain
+// outside this value family; recording owns their evaluation separately.
+fn closed_struct_hash_value(value: &Expr) -> bool {
+    match value {
+        Expr::Parameter { .. } | Expr::BytesLiteral { .. } => true,
+        Expr::StructField { value, .. } | Expr::PersistentHash { value } => {
+            closed_struct_hash_value(value)
+        }
+        Expr::Coerce { value, ty } => recordable_cell_type(ty) && closed_struct_hash_value(value),
+        Expr::Tuple { elements } => elements.iter().all(closed_struct_hash_value),
+        Expr::StructLiteral { ty, fields } => {
+            recordable_cell_type(ty) && fields.iter().all(closed_struct_hash_value)
+        }
+        _ => false,
+    }
+}
+
 /// A pure Field call may be evaluated while recording only when its whole
 /// transitive body is scalar arithmetic. Hashes and other primitives need
 /// their own VM/gas parity decision before they can join this path.
@@ -5264,7 +5296,10 @@ fn render_recorded_item(
                 }
                 if declaration.result == Type::Unit
                     && !(arguments.is_empty()
-                        || matches!(declaration.parameters.as_slice(), [parameter] if parameter.ty == Type::OpaqueString))
+                        || matches!(declaration.parameters.as_slice(), [parameter]
+                            if parameter.ty == Type::OpaqueString
+                                || (matches!(parameter.ty, Type::Struct { .. })
+                                    && recordable_cell_type(&parameter.ty))))
                 {
                     return Ok(unavailable_action(action, path));
                 }
@@ -6415,7 +6450,9 @@ fn render_recorded_item(
                                 | Type::Field
                                 | Type::Bytes { .. }
                                 | Type::Unsigned { .. }
-                        ) {
+                        ) && !(matches!(binding.ty, Type::Struct { .. })
+                            && recordable_cell_type(&binding.ty))
+                        {
                             return Ok(unavailable_action(whole, path));
                         }
                         let declaration = witnesses
@@ -6436,6 +6473,11 @@ fn render_recorded_item(
                         }
                         let mut args = Vec::new();
                         for (argument, parameter) in arguments.iter().zip(&declaration.parameters) {
+                            if matches!(binding.ty, Type::Struct { .. })
+                                && !identity_struct_call_argument(argument)
+                            {
+                                return Ok(unavailable_action(whole, path));
+                            }
                             let Some(arg) =
                                 cell_source(argument, &parameter.ty, &scoped, parameters)
                             else {
@@ -6580,6 +6622,46 @@ fn render_recorded_item(
                             return Ok(unavailable_action(whole, path));
                         };
                         scoped.insert(binding.name.clone(), value);
+                    } else if let (Type::Struct { .. }, Expr::Call { name, arguments }) =
+                        (&binding.ty, &binding.value)
+                    {
+                        let Some(callee) = pure_circuits.get(name.as_str()) else {
+                            return Ok(unavailable_action(whole, path));
+                        };
+                        if callee.result != binding.ty
+                            || !recordable_cell_type(&binding.ty)
+                            || !closed_struct_hash_value(&callee.body)
+                        {
+                            return Ok(unavailable_action(whole, path));
+                        }
+                        if arguments.len() != callee.parameters.len() {
+                            return Err(RenderError::ArgumentCount {
+                                circuit: name.clone(),
+                                expected: callee.parameters.len(),
+                                actual: arguments.len(),
+                            });
+                        }
+                        let mut args = Vec::new();
+                        for (argument, parameter) in arguments.iter().zip(&callee.parameters) {
+                            if !identity_struct_call_argument(argument) {
+                                return Ok(unavailable_action(whole, path));
+                            }
+                            let Some(value) =
+                                cell_source(argument, &parameter.ty, &scoped, parameters)
+                            else {
+                                return Ok(unavailable_action(whole, path));
+                            };
+                            args.push(value);
+                        }
+                        let method = ident(name)?;
+                        let value_ty = rust_type(&binding.ty)?;
+                        let local = syn::Ident::new(
+                            &format!("__compact_recorded_struct_value_{}", *next_temp),
+                            Span::call_site(),
+                        );
+                        *next_temp += 1;
+                        steps.push(syn::parse_quote! { let #local: #value_ty = crate::pure_circuits::#method(#(#args),*)?; });
+                        scoped.insert(binding.name.clone(), syn::parse_quote!(#local));
                     } else if matches!(binding.ty, Type::Vector { .. }) {
                         if let Expr::Call { name, arguments } = &binding.value
                             && arguments.is_empty()

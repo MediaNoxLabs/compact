@@ -642,19 +642,107 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
+    /// Circuits with a replayable ordered ledger program.
+    pub mod recorded {
+        use midnight_compact_runtime as runtime;
+        pub fn zerocash_mint<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_witness_0) = frame.try_witness_metered(|context, meter| {
+                witnesses.context_new_coin_info(context.witness_context_with(super::LedgerView {
+                    state: context.query.state.get_ref(),
+                    meter,
+                }))
+            })?;
+            let (frame, __compact_witness_1) = frame.try_witness_metered(|context, meter| {
+                witnesses.private_zk_public_key(context.witness_context_with(super::LedgerView {
+                    state: context.query.state.get_ref(),
+                    meter,
+                }))
+            })?;
+            let __compact_recorded_witness_arg_2: crate::types::coin_info =
+                (__compact_witness_0).clone();
+            let (frame, _) = frame.try_witness_metered(|context, meter| {
+                witnesses.private_add_coin(
+                    context.witness_context_with(super::LedgerView {
+                        state: context.query.state.get_ref(),
+                        meter,
+                    }),
+                    __compact_recorded_witness_arg_2,
+                )
+            })?;
+            let __compact_recorded_struct_value_3: crate::types::commitment =
+                crate::pure_circuits::commitment_from_coin_info(
+                    (__compact_witness_0).clone(),
+                    (__compact_witness_1).clone(),
+                )?;
+            let frame = crate::ledger_slots::commitments
+                .record_insert(frame, (__compact_recorded_struct_value_3).clone())?;
+            Ok(frame.finish(()))
+        }
+        /// Typed handle for circuits with a complete recorded trace.
+        pub struct Contract;
+        impl Contract {}
+        /// A recording handle with access to the contract's witnesses.
+        pub struct BorrowedContract<'a, W> {
+            pub(super) witnesses: &'a W,
+        }
+        impl<W> BorrowedContract<'_, W> {
+            pub fn zerocash_mint<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                zerocash_mint(context, self.witnesses)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn zerocash_mint_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.zerocash_mint(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "zerocash_mint",
+                    input,
+                ))
+            }
+        }
+    }
     /// Groups the contract's exported circuits for Rust consumers.
     pub struct Contract<W> {
         #[allow(dead_code)]
         witnesses: W,
+        pub recording: recorded::Contract,
     }
     impl<W> From<W> for Contract<W> {
         fn from(witnesses: W) -> Self {
-            Self { witnesses }
+            Self {
+                witnesses,
+                recording: recorded::Contract,
+            }
         }
     }
     impl Default for Contract<()> {
         fn default() -> Self {
-            Self { witnesses: () }
+            Self {
+                witnesses: (),
+                recording: recorded::Contract,
+            }
         }
     }
     impl<W> Contract<W> {
@@ -677,6 +765,12 @@ pub mod ledger_contract {
             W: TryWitnesses<Private>,
         {
             crate::ledger_contract::zerocash_mint(context, &self.witnesses)
+        }
+        /// Borrow the contract's witnesses for a replayable circuit call.
+        pub fn recording(&self) -> recorded::BorrowedContract<'_, W> {
+            recorded::BorrowedContract {
+                witnesses: &self.witnesses,
+            }
         }
     }
 }

@@ -1,0 +1,2410 @@
+{
+  "schema_version": 13,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "nullifiers",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "set",
+        "ty": {
+          "kind": "struct",
+          "name": "nullifier",
+          "fields": [
+            {
+              "name": "bytes",
+              "ty": {
+                "kind": "bytes",
+                "length": 32
+              }
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "zerocash_oracle.compact",
+        "line": 44,
+        "column": 1
+      }
+    },
+    {
+      "id": "commitments",
+      "index": 1,
+      "path": [
+        1
+      ],
+      "declaration": {
+        "kind": "historic_merkle_tree",
+        "depth": 32,
+        "ty": {
+          "kind": "struct",
+          "name": "commitment",
+          "fields": [
+            {
+              "name": "bytes",
+              "ty": {
+                "kind": "bytes",
+                "length": 32
+              }
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "zerocash_oracle.compact",
+        "line": 45,
+        "column": 1
+      }
+    },
+    {
+      "id": "ciphertexts",
+      "index": 2,
+      "path": [
+        2
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "opaque_bytes"
+        }
+      },
+      "source": {
+        "file": "zerocash_oracle.compact",
+        "line": 47,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "private$zk_secret_key",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "zk_secret_key",
+        "fields": [
+          {
+            "name": "bytes",
+            "ty": {
+              "kind": "bytes",
+              "length": 32
+            }
+          }
+        ]
+      },
+      "source": {
+        "file": "zerocash_oracle.compact",
+        "line": 36,
+        "column": 1
+      }
+    },
+    {
+      "name": "private$remove_coin",
+      "parameters": [
+        {
+          "name": "coin",
+          "ty": {
+            "kind": "struct",
+            "name": "coin_info",
+            "fields": [
+              {
+                "name": "nonce",
+                "ty": {
+                  "kind": "struct",
+                  "name": "Nonce",
+                  "fields": [
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "opening",
+                "ty": {
+                  "kind": "struct",
+                  "name": "opening",
+                  "fields": [
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "source": {
+        "file": "zerocash_oracle.compact",
+        "line": 37,
+        "column": 1
+      }
+    },
+    {
+      "name": "private$zk_public_key",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "zk_public_key",
+        "fields": [
+          {
+            "name": "bytes",
+            "ty": {
+              "kind": "bytes",
+              "length": 32
+            }
+          }
+        ]
+      },
+      "source": {
+        "file": "zerocash_oracle.compact",
+        "line": 38,
+        "column": 1
+      }
+    },
+    {
+      "name": "private$add_coin",
+      "parameters": [
+        {
+          "name": "coin",
+          "ty": {
+            "kind": "struct",
+            "name": "coin_info",
+            "fields": [
+              {
+                "name": "nonce",
+                "ty": {
+                  "kind": "struct",
+                  "name": "Nonce",
+                  "fields": [
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "opening",
+                "ty": {
+                  "kind": "struct",
+                  "name": "opening",
+                  "fields": [
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "source": {
+        "file": "zerocash_oracle.compact",
+        "line": 39,
+        "column": 1
+      }
+    },
+    {
+      "name": "context$path_of",
+      "parameters": [
+        {
+          "name": "cm",
+          "ty": {
+            "kind": "struct",
+            "name": "commitment",
+            "fields": [
+              {
+                "name": "bytes",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "MerkleTreePath",
+        "fields": [
+          {
+            "name": "leaf",
+            "ty": {
+              "kind": "struct",
+              "name": "commitment",
+              "fields": [
+                {
+                  "name": "bytes",
+                  "ty": {
+                    "kind": "bytes",
+                    "length": 32
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "path",
+            "ty": {
+              "kind": "vector",
+              "length": 32,
+              "element": {
+                "kind": "struct",
+                "name": "MerkleTreePathEntry",
+                "fields": [
+                  {
+                    "name": "sibling",
+                    "ty": {
+                      "kind": "struct",
+                      "name": "MerkleTreeDigest",
+                      "fields": [
+                        {
+                          "name": "field",
+                          "ty": {
+                            "kind": "field"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "goes_left",
+                    "ty": {
+                      "kind": "boolean"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "source": {
+        "file": "zerocash_oracle.compact",
+        "line": 40,
+        "column": 1
+      }
+    },
+    {
+      "name": "context$new_coin_info",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "coin_info",
+        "fields": [
+          {
+            "name": "nonce",
+            "ty": {
+              "kind": "struct",
+              "name": "Nonce",
+              "fields": [
+                {
+                  "name": "bytes",
+                  "ty": {
+                    "kind": "bytes",
+                    "length": 32
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "opening",
+            "ty": {
+              "kind": "struct",
+              "name": "opening",
+              "fields": [
+                {
+                  "name": "bytes",
+                  "ty": {
+                    "kind": "bytes",
+                    "length": 32
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "source": {
+        "file": "zerocash_oracle.compact",
+        "line": 41,
+        "column": 1
+      }
+    },
+    {
+      "name": "context$encrypt",
+      "parameters": [
+        {
+          "name": "pk",
+          "ty": {
+            "kind": "opaque_bytes"
+          }
+        },
+        {
+          "name": "coin",
+          "ty": {
+            "kind": "struct",
+            "name": "coin_info",
+            "fields": [
+              {
+                "name": "nonce",
+                "ty": {
+                  "kind": "struct",
+                  "name": "Nonce",
+                  "fields": [
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "opening",
+                "ty": {
+                  "kind": "struct",
+                  "name": "opening",
+                  "fields": [
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "opaque_bytes"
+      },
+      "source": {
+        "file": "zerocash_oracle.compact",
+        "line": 42,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+    {
+      "name": "merkleTreePathRoot",
+      "internal": true,
+      "parameters": [
+        {
+          "name": "path",
+          "ty": {
+            "kind": "struct",
+            "name": "MerkleTreePath",
+            "fields": [
+              {
+                "name": "leaf",
+                "ty": {
+                  "kind": "struct",
+                  "name": "commitment",
+                  "fields": [
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "path",
+                "ty": {
+                  "kind": "vector",
+                  "length": 32,
+                  "element": {
+                    "kind": "struct",
+                    "name": "MerkleTreePathEntry",
+                    "fields": [
+                      {
+                        "name": "sibling",
+                        "ty": {
+                          "kind": "struct",
+                          "name": "MerkleTreeDigest",
+                          "fields": [
+                            {
+                              "name": "field",
+                              "ty": {
+                                "kind": "field"
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "goes_left",
+                        "ty": {
+                          "kind": "boolean"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "MerkleTreeDigest",
+        "fields": [
+          {
+            "name": "field",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "body": {
+        "kind": "struct_literal",
+        "ty": {
+          "kind": "struct",
+          "name": "MerkleTreeDigest",
+          "fields": [
+            {
+              "name": "field",
+              "ty": {
+                "kind": "field"
+              }
+            }
+          ]
+        },
+        "fields": [
+          {
+            "kind": "vector_fold_call",
+            "name": "merkleTreePathEntryRoot",
+            "initial": {
+              "kind": "degrade_to_transient",
+              "value": {
+                "kind": "persistent_hash",
+                "value": {
+                  "kind": "struct_literal",
+                  "ty": {
+                    "kind": "struct",
+                    "name": "LeafPreimage",
+                    "fields": [
+                      {
+                        "name": "domain_sep",
+                        "ty": {
+                          "kind": "bytes",
+                          "length": 6
+                        }
+                      },
+                      {
+                        "name": "data",
+                        "ty": {
+                          "kind": "struct",
+                          "name": "commitment",
+                          "fields": [
+                            {
+                              "name": "bytes",
+                              "ty": {
+                                "kind": "bytes",
+                                "length": 32
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  "fields": [
+                    {
+                      "kind": "bytes_literal",
+                      "bytes": [
+                        109,
+                        100,
+                        110,
+                        58,
+                        108,
+                        104
+                      ]
+                    },
+                    {
+                      "kind": "struct_field",
+                      "value": {
+                        "kind": "parameter",
+                        "name": "path"
+                      },
+                      "field": "leaf",
+                      "index": 0
+                    }
+                  ]
+                }
+              }
+            },
+            "source": {
+              "kind": "struct_field",
+              "value": {
+                "kind": "parameter",
+                "name": "path"
+              },
+              "field": "path",
+              "index": 1
+            },
+            "accumulator": {
+              "kind": "field"
+            },
+            "element": {
+              "kind": "struct",
+              "name": "MerkleTreePathEntry",
+              "fields": [
+                {
+                  "name": "sibling",
+                  "ty": {
+                    "kind": "struct",
+                    "name": "MerkleTreeDigest",
+                    "fields": [
+                      {
+                        "name": "field",
+                        "ty": {
+                          "kind": "field"
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "goes_left",
+                  "ty": {
+                    "kind": "boolean"
+                  }
+                }
+              ]
+            },
+            "length": 32
+          }
+        ]
+      },
+      "source": {
+        "file": "standard-library.compact",
+        "line": 67,
+        "column": 1
+      }
+    },
+    {
+      "name": "merkleTreePathEntryRoot",
+      "internal": true,
+      "parameters": [
+        {
+          "name": "recursiveDigest",
+          "ty": {
+            "kind": "field"
+          }
+        },
+        {
+          "name": "entry",
+          "ty": {
+            "kind": "struct",
+            "name": "MerkleTreePathEntry",
+            "fields": [
+              {
+                "name": "sibling",
+                "ty": {
+                  "kind": "struct",
+                  "name": "MerkleTreeDigest",
+                  "fields": [
+                    {
+                      "name": "field",
+                      "ty": {
+                        "kind": "field"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "goes_left",
+                "ty": {
+                  "kind": "boolean"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "body": {
+        "kind": "let",
+        "bindings": [
+          {
+            "name": "left",
+            "ty": {
+              "kind": "field"
+            },
+            "value": {
+              "kind": "if",
+              "condition": {
+                "kind": "struct_field",
+                "value": {
+                  "kind": "parameter",
+                  "name": "entry"
+                },
+                "field": "goes_left",
+                "index": 1
+              },
+              "then": {
+                "kind": "coerce",
+                "value": {
+                  "kind": "parameter",
+                  "name": "recursiveDigest"
+                },
+                "ty": {
+                  "kind": "field"
+                }
+              },
+              "otherwise": {
+                "kind": "coerce",
+                "value": {
+                  "kind": "struct_field",
+                  "value": {
+                    "kind": "struct_field",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "entry"
+                    },
+                    "field": "sibling",
+                    "index": 0
+                  },
+                  "field": "field",
+                  "index": 0
+                },
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            }
+          }
+        ],
+        "body": {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "right",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "if",
+                "condition": {
+                  "kind": "struct_field",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "entry"
+                  },
+                  "field": "goes_left",
+                  "index": 1
+                },
+                "then": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "struct_field",
+                    "value": {
+                      "kind": "struct_field",
+                      "value": {
+                        "kind": "parameter",
+                        "name": "entry"
+                      },
+                      "field": "sibling",
+                      "index": 0
+                    },
+                    "field": "field",
+                    "index": 0
+                  },
+                  "ty": {
+                    "kind": "field"
+                  }
+                },
+                "otherwise": {
+                  "kind": "coerce",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "recursiveDigest"
+                  },
+                  "ty": {
+                    "kind": "field"
+                  }
+                }
+              }
+            }
+          ],
+          "body": {
+            "kind": "transient_hash",
+            "value": {
+              "kind": "tuple",
+              "elements": [
+                {
+                  "kind": "parameter",
+                  "name": "left"
+                },
+                {
+                  "kind": "parameter",
+                  "name": "right"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "source": {
+        "file": "standard-library.compact",
+        "line": 83,
+        "column": 1
+      }
+    },
+    {
+      "name": "derive_nullifier",
+      "internal": true,
+      "parameters": [
+        {
+          "name": "coin",
+          "ty": {
+            "kind": "struct",
+            "name": "coin_info",
+            "fields": [
+              {
+                "name": "nonce",
+                "ty": {
+                  "kind": "struct",
+                  "name": "Nonce",
+                  "fields": [
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "opening",
+                "ty": {
+                  "kind": "struct",
+                  "name": "opening",
+                  "fields": [
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "sk",
+          "ty": {
+            "kind": "struct",
+            "name": "zk_secret_key",
+            "fields": [
+              {
+                "name": "bytes",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "nullifier",
+        "fields": [
+          {
+            "name": "bytes",
+            "ty": {
+              "kind": "bytes",
+              "length": 32
+            }
+          }
+        ]
+      },
+      "body": {
+        "kind": "struct_literal",
+        "ty": {
+          "kind": "struct",
+          "name": "nullifier",
+          "fields": [
+            {
+              "name": "bytes",
+              "ty": {
+                "kind": "bytes",
+                "length": 32
+              }
+            }
+          ]
+        },
+        "fields": [
+          {
+            "kind": "persistent_hash",
+            "value": {
+              "kind": "tuple",
+              "elements": [
+                {
+                  "kind": "bytes_literal",
+                  "bytes": [
+                    108,
+                    97,
+                    114,
+                    101,
+                    115,
+                    58,
+                    122,
+                    101,
+                    114,
+                    111,
+                    99,
+                    97,
+                    115,
+                    104,
+                    58,
+                    99,
+                    111,
+                    109,
+                    109,
+                    105,
+                    116,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                  ]
+                },
+                {
+                  "kind": "struct_field",
+                  "value": {
+                    "kind": "struct_field",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "coin"
+                    },
+                    "field": "nonce",
+                    "index": 0
+                  },
+                  "field": "bytes",
+                  "index": 0
+                },
+                {
+                  "kind": "struct_field",
+                  "value": {
+                    "kind": "struct_field",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "coin"
+                    },
+                    "field": "opening",
+                    "index": 1
+                  },
+                  "field": "bytes",
+                  "index": 0
+                },
+                {
+                  "kind": "struct_field",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "sk"
+                  },
+                  "field": "bytes",
+                  "index": 0
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "source": {
+        "file": "zerocash_oracle.compact",
+        "line": 77,
+        "column": 1
+      }
+    },
+    {
+      "name": "derive_zk_public_key",
+      "internal": true,
+      "parameters": [
+        {
+          "name": "sk",
+          "ty": {
+            "kind": "struct",
+            "name": "zk_secret_key",
+            "fields": [
+              {
+                "name": "bytes",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "zk_public_key",
+        "fields": [
+          {
+            "name": "bytes",
+            "ty": {
+              "kind": "bytes",
+              "length": 32
+            }
+          }
+        ]
+      },
+      "body": {
+        "kind": "struct_literal",
+        "ty": {
+          "kind": "struct",
+          "name": "zk_public_key",
+          "fields": [
+            {
+              "name": "bytes",
+              "ty": {
+                "kind": "bytes",
+                "length": 32
+              }
+            }
+          ]
+        },
+        "fields": [
+          {
+            "kind": "persistent_hash",
+            "value": {
+              "kind": "struct_field",
+              "value": {
+                "kind": "parameter",
+                "name": "sk"
+              },
+              "field": "bytes",
+              "index": 0
+            }
+          }
+        ]
+      },
+      "source": {
+        "file": "zerocash_oracle.compact",
+        "line": 86,
+        "column": 1
+      }
+    },
+    {
+      "name": "commitment_from_coin_info",
+      "internal": true,
+      "parameters": [
+        {
+          "name": "coin",
+          "ty": {
+            "kind": "struct",
+            "name": "coin_info",
+            "fields": [
+              {
+                "name": "nonce",
+                "ty": {
+                  "kind": "struct",
+                  "name": "Nonce",
+                  "fields": [
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "opening",
+                "ty": {
+                  "kind": "struct",
+                  "name": "opening",
+                  "fields": [
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "pk",
+          "ty": {
+            "kind": "struct",
+            "name": "zk_public_key",
+            "fields": [
+              {
+                "name": "bytes",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "commitment",
+        "fields": [
+          {
+            "name": "bytes",
+            "ty": {
+              "kind": "bytes",
+              "length": 32
+            }
+          }
+        ]
+      },
+      "body": {
+        "kind": "struct_literal",
+        "ty": {
+          "kind": "struct",
+          "name": "commitment",
+          "fields": [
+            {
+              "name": "bytes",
+              "ty": {
+                "kind": "bytes",
+                "length": 32
+              }
+            }
+          ]
+        },
+        "fields": [
+          {
+            "kind": "persistent_hash",
+            "value": {
+              "kind": "tuple",
+              "elements": [
+                {
+                  "kind": "bytes_literal",
+                  "bytes": [
+                    108,
+                    97,
+                    114,
+                    101,
+                    115,
+                    58,
+                    122,
+                    101,
+                    114,
+                    111,
+                    99,
+                    97,
+                    115,
+                    104,
+                    58,
+                    99,
+                    111,
+                    109,
+                    109,
+                    105,
+                    116,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                  ]
+                },
+                {
+                  "kind": "struct_field",
+                  "value": {
+                    "kind": "struct_field",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "coin"
+                    },
+                    "field": "nonce",
+                    "index": 0
+                  },
+                  "field": "bytes",
+                  "index": 0
+                },
+                {
+                  "kind": "struct_field",
+                  "value": {
+                    "kind": "struct_field",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "coin"
+                    },
+                    "field": "opening",
+                    "index": 1
+                  },
+                  "field": "bytes",
+                  "index": 0
+                },
+                {
+                  "kind": "struct_field",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "pk"
+                  },
+                  "field": "bytes",
+                  "index": 0
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "source": {
+        "file": "zerocash_oracle.compact",
+        "line": 90,
+        "column": 1
+      }
+    }
+  ],
+  "stateful_circuits": [
+    {
+      "name": "spend",
+      "parameters": [
+        {
+          "name": "dest_public_key",
+          "ty": {
+            "kind": "struct",
+            "name": "public_key",
+            "fields": [
+              {
+                "name": "zk",
+                "ty": {
+                  "kind": "struct",
+                  "name": "zk_public_key",
+                  "fields": [
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "encryption",
+                "ty": {
+                  "kind": "opaque_bytes"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "input_coin",
+          "ty": {
+            "kind": "struct",
+            "name": "coin_info",
+            "fields": [
+              {
+                "name": "nonce",
+                "ty": {
+                  "kind": "struct",
+                  "name": "Nonce",
+                  "fields": [
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "opening",
+                "ty": {
+                  "kind": "struct",
+                  "name": "opening",
+                  "fields": [
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "source_secret_key",
+              "ty": {
+                "kind": "struct",
+                "name": "zk_secret_key",
+                "fields": [
+                  {
+                    "name": "bytes",
+                    "ty": {
+                      "kind": "bytes",
+                      "length": 32
+                    }
+                  }
+                ]
+              },
+              "value": {
+                "kind": "witness_call",
+                "name": "private$zk_secret_key",
+                "arguments": [
+                ]
+              }
+            }
+          ],
+          "action": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "old_nullifier",
+                "ty": {
+                  "kind": "struct",
+                  "name": "nullifier",
+                  "fields": [
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                },
+                "value": {
+                  "kind": "call",
+                  "name": "derive_nullifier",
+                  "arguments": [
+                    {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "parameter",
+                        "name": "input_coin"
+                      },
+                      "ty": {
+                        "kind": "struct",
+                        "name": "coin_info",
+                        "fields": [
+                          {
+                            "name": "nonce",
+                            "ty": {
+                              "kind": "struct",
+                              "name": "Nonce",
+                              "fields": [
+                                {
+                                  "name": "bytes",
+                                  "ty": {
+                                    "kind": "bytes",
+                                    "length": 32
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "name": "opening",
+                            "ty": {
+                              "kind": "struct",
+                              "name": "opening",
+                              "fields": [
+                                {
+                                  "name": "bytes",
+                                  "ty": {
+                                    "kind": "bytes",
+                                    "length": 32
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "parameter",
+                        "name": "source_secret_key"
+                      },
+                      "ty": {
+                        "kind": "struct",
+                        "name": "zk_secret_key",
+                        "fields": [
+                          {
+                            "name": "bytes",
+                            "ty": {
+                              "kind": "bytes",
+                              "length": 32
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            ],
+            "action": {
+              "kind": "sequence",
+              "actions": [
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "if",
+                    "condition": {
+                      "kind": "set_member",
+                      "field": "nullifiers",
+                      "index": 0,
+                      "value": {
+                        "kind": "parameter",
+                        "name": "old_nullifier"
+                      }
+                    },
+                    "then": {
+                      "kind": "boolean",
+                      "value": false
+                    },
+                    "otherwise": {
+                      "kind": "boolean",
+                      "value": true
+                    }
+                  },
+                  "message": "spend: Coin already spent"
+                },
+                {
+                  "kind": "set_insert",
+                  "field": "nullifiers",
+                  "index": 0,
+                  "value": {
+                    "kind": "parameter",
+                    "name": "old_nullifier"
+                  }
+                },
+                {
+                  "kind": "let",
+                  "bindings": [
+                    {
+                      "name": "source_public_key",
+                      "ty": {
+                        "kind": "struct",
+                        "name": "zk_public_key",
+                        "fields": [
+                          {
+                            "name": "bytes",
+                            "ty": {
+                              "kind": "bytes",
+                              "length": 32
+                            }
+                          }
+                        ]
+                      },
+                      "value": {
+                        "kind": "call",
+                        "name": "derive_zk_public_key",
+                        "arguments": [
+                          {
+                            "kind": "coerce",
+                            "value": {
+                              "kind": "parameter",
+                              "name": "source_secret_key"
+                            },
+                            "ty": {
+                              "kind": "struct",
+                              "name": "zk_secret_key",
+                              "fields": [
+                                {
+                                  "name": "bytes",
+                                  "ty": {
+                                    "kind": "bytes",
+                                    "length": 32
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ],
+                  "action": {
+                    "kind": "let",
+                    "bindings": [
+                      {
+                        "name": "old_commitment",
+                        "ty": {
+                          "kind": "struct",
+                          "name": "commitment",
+                          "fields": [
+                            {
+                              "name": "bytes",
+                              "ty": {
+                                "kind": "bytes",
+                                "length": 32
+                              }
+                            }
+                          ]
+                        },
+                        "value": {
+                          "kind": "call",
+                          "name": "commitment_from_coin_info",
+                          "arguments": [
+                            {
+                              "kind": "coerce",
+                              "value": {
+                                "kind": "parameter",
+                                "name": "input_coin"
+                              },
+                              "ty": {
+                                "kind": "struct",
+                                "name": "coin_info",
+                                "fields": [
+                                  {
+                                    "name": "nonce",
+                                    "ty": {
+                                      "kind": "struct",
+                                      "name": "Nonce",
+                                      "fields": [
+                                        {
+                                          "name": "bytes",
+                                          "ty": {
+                                            "kind": "bytes",
+                                            "length": 32
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "name": "opening",
+                                    "ty": {
+                                      "kind": "struct",
+                                      "name": "opening",
+                                      "fields": [
+                                        {
+                                          "name": "bytes",
+                                          "ty": {
+                                            "kind": "bytes",
+                                            "length": 32
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "kind": "coerce",
+                              "value": {
+                                "kind": "parameter",
+                                "name": "source_public_key"
+                              },
+                              "ty": {
+                                "kind": "struct",
+                                "name": "zk_public_key",
+                                "fields": [
+                                  {
+                                    "name": "bytes",
+                                    "ty": {
+                                      "kind": "bytes",
+                                      "length": 32
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ],
+                    "action": {
+                      "kind": "let",
+                      "bindings": [
+                        {
+                          "name": "commitment_path",
+                          "ty": {
+                            "kind": "struct",
+                            "name": "MerkleTreePath",
+                            "fields": [
+                              {
+                                "name": "leaf",
+                                "ty": {
+                                  "kind": "struct",
+                                  "name": "commitment",
+                                  "fields": [
+                                    {
+                                      "name": "bytes",
+                                      "ty": {
+                                        "kind": "bytes",
+                                        "length": 32
+                                      }
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "name": "path",
+                                "ty": {
+                                  "kind": "vector",
+                                  "length": 32,
+                                  "element": {
+                                    "kind": "struct",
+                                    "name": "MerkleTreePathEntry",
+                                    "fields": [
+                                      {
+                                        "name": "sibling",
+                                        "ty": {
+                                          "kind": "struct",
+                                          "name": "MerkleTreeDigest",
+                                          "fields": [
+                                            {
+                                              "name": "field",
+                                              "ty": {
+                                                "kind": "field"
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      {
+                                        "name": "goes_left",
+                                        "ty": {
+                                          "kind": "boolean"
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              }
+                            ]
+                          },
+                          "value": {
+                            "kind": "witness_call",
+                            "name": "context$path_of",
+                            "arguments": [
+                              {
+                                "kind": "coerce",
+                                "value": {
+                                  "kind": "parameter",
+                                  "name": "old_commitment"
+                                },
+                                "ty": {
+                                  "kind": "struct",
+                                  "name": "commitment",
+                                  "fields": [
+                                    {
+                                      "name": "bytes",
+                                      "ty": {
+                                        "kind": "bytes",
+                                        "length": 32
+                                      }
+                                    }
+                                  ]
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ],
+                      "action": {
+                        "kind": "sequence",
+                        "actions": [
+                          {
+                            "kind": "assert",
+                            "condition": {
+                              "kind": "if",
+                              "condition": {
+                                "kind": "let",
+                                "bindings": [
+                                  {
+                                    "name": "tmp_107",
+                                    "ty": {
+                                      "kind": "struct",
+                                      "name": "MerkleTreeDigest",
+                                      "fields": [
+                                        {
+                                          "name": "field",
+                                          "ty": {
+                                            "kind": "field"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    "value": {
+                                      "kind": "call",
+                                      "name": "merkleTreePathRoot",
+                                      "arguments": [
+                                        {
+                                          "kind": "coerce",
+                                          "value": {
+                                            "kind": "parameter",
+                                            "name": "commitment_path"
+                                          },
+                                          "ty": {
+                                            "kind": "struct",
+                                            "name": "MerkleTreePath",
+                                            "fields": [
+                                              {
+                                                "name": "leaf",
+                                                "ty": {
+                                                  "kind": "struct",
+                                                  "name": "commitment",
+                                                  "fields": [
+                                                    {
+                                                      "name": "bytes",
+                                                      "ty": {
+                                                        "kind": "bytes",
+                                                        "length": 32
+                                                      }
+                                                    }
+                                                  ]
+                                                }
+                                              },
+                                              {
+                                                "name": "path",
+                                                "ty": {
+                                                  "kind": "vector",
+                                                  "length": 32,
+                                                  "element": {
+                                                    "kind": "struct",
+                                                    "name": "MerkleTreePathEntry",
+                                                    "fields": [
+                                                      {
+                                                        "name": "sibling",
+                                                        "ty": {
+                                                          "kind": "struct",
+                                                          "name": "MerkleTreeDigest",
+                                                          "fields": [
+                                                            {
+                                                              "name": "field",
+                                                              "ty": {
+                                                                "kind": "field"
+                                                              }
+                                                            }
+                                                          ]
+                                                        }
+                                                      },
+                                                      {
+                                                        "name": "goes_left",
+                                                        "ty": {
+                                                          "kind": "boolean"
+                                                        }
+                                                      }
+                                                    ]
+                                                  }
+                                                }
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                ],
+                                "body": {
+                                  "kind": "historic_merkle_check_root",
+                                  "field": "commitments",
+                                  "index": 1,
+                                  "root": {
+                                    "kind": "parameter",
+                                    "name": "tmp_107"
+                                  }
+                                }
+                              },
+                              "then": {
+                                "kind": "equal",
+                                "left": {
+                                  "kind": "parameter",
+                                  "name": "old_commitment"
+                                },
+                                "right": {
+                                  "kind": "struct_field",
+                                  "value": {
+                                    "kind": "parameter",
+                                    "name": "commitment_path"
+                                  },
+                                  "field": "leaf",
+                                  "index": 0
+                                }
+                              },
+                              "otherwise": {
+                                "kind": "boolean",
+                                "value": false
+                              }
+                            },
+                            "message": "spend: Illegal state: merkle path not recognized by public state"
+                          },
+                          {
+                            "kind": "let",
+                            "bindings": [
+                              {
+                                "name": "fresh_coin_info",
+                                "ty": {
+                                  "kind": "struct",
+                                  "name": "coin_info",
+                                  "fields": [
+                                    {
+                                      "name": "nonce",
+                                      "ty": {
+                                        "kind": "struct",
+                                        "name": "Nonce",
+                                        "fields": [
+                                          {
+                                            "name": "bytes",
+                                            "ty": {
+                                              "kind": "bytes",
+                                              "length": 32
+                                            }
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "name": "opening",
+                                      "ty": {
+                                        "kind": "struct",
+                                        "name": "opening",
+                                        "fields": [
+                                          {
+                                            "name": "bytes",
+                                            "ty": {
+                                              "kind": "bytes",
+                                              "length": 32
+                                            }
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "value": {
+                                  "kind": "witness_call",
+                                  "name": "context$new_coin_info",
+                                  "arguments": [
+                                  ]
+                                }
+                              }
+                            ],
+                            "action": {
+                              "kind": "let",
+                              "bindings": [
+                                {
+                                  "name": "fresh_commitment",
+                                  "ty": {
+                                    "kind": "struct",
+                                    "name": "commitment",
+                                    "fields": [
+                                      {
+                                        "name": "bytes",
+                                        "ty": {
+                                          "kind": "bytes",
+                                          "length": 32
+                                        }
+                                      }
+                                    ]
+                                  },
+                                  "value": {
+                                    "kind": "call",
+                                    "name": "commitment_from_coin_info",
+                                    "arguments": [
+                                      {
+                                        "kind": "coerce",
+                                        "value": {
+                                          "kind": "parameter",
+                                          "name": "fresh_coin_info"
+                                        },
+                                        "ty": {
+                                          "kind": "struct",
+                                          "name": "coin_info",
+                                          "fields": [
+                                            {
+                                              "name": "nonce",
+                                              "ty": {
+                                                "kind": "struct",
+                                                "name": "Nonce",
+                                                "fields": [
+                                                  {
+                                                    "name": "bytes",
+                                                    "ty": {
+                                                      "kind": "bytes",
+                                                      "length": 32
+                                                    }
+                                                  }
+                                                ]
+                                              }
+                                            },
+                                            {
+                                              "name": "opening",
+                                              "ty": {
+                                                "kind": "struct",
+                                                "name": "opening",
+                                                "fields": [
+                                                  {
+                                                    "name": "bytes",
+                                                    "ty": {
+                                                      "kind": "bytes",
+                                                      "length": 32
+                                                    }
+                                                  }
+                                                ]
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      {
+                                        "kind": "coerce",
+                                        "value": {
+                                          "kind": "struct_field",
+                                          "value": {
+                                            "kind": "parameter",
+                                            "name": "dest_public_key"
+                                          },
+                                          "field": "zk",
+                                          "index": 0
+                                        },
+                                        "ty": {
+                                          "kind": "struct",
+                                          "name": "zk_public_key",
+                                          "fields": [
+                                            {
+                                              "name": "bytes",
+                                              "ty": {
+                                                "kind": "bytes",
+                                                "length": 32
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ],
+                              "action": {
+                                "kind": "sequence",
+                                "actions": [
+                                  {
+                                    "kind": "historic_merkle_insert",
+                                    "field": "commitments",
+                                    "index": 1,
+                                    "value": {
+                                      "kind": "parameter",
+                                      "name": "fresh_commitment"
+                                    }
+                                  },
+                                  {
+                                    "kind": "let",
+                                    "bindings": [
+                                      {
+                                        "name": "ciphertext",
+                                        "ty": {
+                                          "kind": "opaque_bytes"
+                                        },
+                                        "value": {
+                                          "kind": "witness_call",
+                                          "name": "context$encrypt",
+                                          "arguments": [
+                                            {
+                                              "kind": "coerce",
+                                              "value": {
+                                                "kind": "struct_field",
+                                                "value": {
+                                                  "kind": "parameter",
+                                                  "name": "dest_public_key"
+                                                },
+                                                "field": "encryption",
+                                                "index": 1
+                                              },
+                                              "ty": {
+                                                "kind": "opaque_bytes"
+                                              }
+                                            },
+                                            {
+                                              "kind": "coerce",
+                                              "value": {
+                                                "kind": "parameter",
+                                                "name": "fresh_coin_info"
+                                              },
+                                              "ty": {
+                                                "kind": "struct",
+                                                "name": "coin_info",
+                                                "fields": [
+                                                  {
+                                                    "name": "nonce",
+                                                    "ty": {
+                                                      "kind": "struct",
+                                                      "name": "Nonce",
+                                                      "fields": [
+                                                        {
+                                                          "name": "bytes",
+                                                          "ty": {
+                                                            "kind": "bytes",
+                                                            "length": 32
+                                                          }
+                                                        }
+                                                      ]
+                                                    }
+                                                  },
+                                                  {
+                                                    "name": "opening",
+                                                    "ty": {
+                                                      "kind": "struct",
+                                                      "name": "opening",
+                                                      "fields": [
+                                                        {
+                                                          "name": "bytes",
+                                                          "ty": {
+                                                            "kind": "bytes",
+                                                            "length": 32
+                                                          }
+                                                        }
+                                                      ]
+                                                    }
+                                                  }
+                                                ]
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      }
+                                    ],
+                                    "action": {
+                                      "kind": "sequence",
+                                      "actions": [
+                                        {
+                                          "kind": "cell_write",
+                                          "field": "ciphertexts",
+                                          "index": 2,
+                                          "value": {
+                                            "kind": "parameter",
+                                            "name": "ciphertext"
+                                          }
+                                        },
+                                        {
+                                          "kind": "expression",
+                                          "value": {
+                                            "kind": "witness_call",
+                                            "name": "private$remove_coin",
+                                            "arguments": [
+                                              {
+                                                "kind": "coerce",
+                                                "value": {
+                                                  "kind": "parameter",
+                                                  "name": "input_coin"
+                                                },
+                                                "ty": {
+                                                  "kind": "struct",
+                                                  "name": "coin_info",
+                                                  "fields": [
+                                                    {
+                                                      "name": "nonce",
+                                                      "ty": {
+                                                        "kind": "struct",
+                                                        "name": "Nonce",
+                                                        "fields": [
+                                                          {
+                                                            "name": "bytes",
+                                                            "ty": {
+                                                              "kind": "bytes",
+                                                              "length": 32
+                                                            }
+                                                          }
+                                                        ]
+                                                      }
+                                                    },
+                                                    {
+                                                      "name": "opening",
+                                                      "ty": {
+                                                        "kind": "struct",
+                                                        "name": "opening",
+                                                        "fields": [
+                                                          {
+                                                            "name": "bytes",
+                                                            "ty": {
+                                                              "kind": "bytes",
+                                                              "length": 32
+                                                            }
+                                                          }
+                                                        ]
+                                                      }
+                                                    }
+                                                  ]
+                                                }
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "zerocash_oracle.compact",
+        "line": 49,
+        "column": 1
+      }
+    },
+    {
+      "name": "zerocash_mint",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "coin",
+              "ty": {
+                "kind": "struct",
+                "name": "coin_info",
+                "fields": [
+                  {
+                    "name": "nonce",
+                    "ty": {
+                      "kind": "struct",
+                      "name": "Nonce",
+                      "fields": [
+                        {
+                          "name": "bytes",
+                          "ty": {
+                            "kind": "bytes",
+                            "length": 32
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "opening",
+                    "ty": {
+                      "kind": "struct",
+                      "name": "opening",
+                      "fields": [
+                        {
+                          "name": "bytes",
+                          "ty": {
+                            "kind": "bytes",
+                            "length": 32
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              "value": {
+                "kind": "witness_call",
+                "name": "context$new_coin_info",
+                "arguments": [
+                ]
+              }
+            }
+          ],
+          "action": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "pk",
+                "ty": {
+                  "kind": "struct",
+                  "name": "zk_public_key",
+                  "fields": [
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                },
+                "value": {
+                  "kind": "witness_call",
+                  "name": "private$zk_public_key",
+                  "arguments": [
+                  ]
+                }
+              }
+            ],
+            "action": {
+              "kind": "sequence",
+              "actions": [
+                {
+                  "kind": "expression",
+                  "value": {
+                    "kind": "witness_call",
+                    "name": "private$add_coin",
+                    "arguments": [
+                      {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "parameter",
+                          "name": "coin"
+                        },
+                        "ty": {
+                          "kind": "struct",
+                          "name": "coin_info",
+                          "fields": [
+                            {
+                              "name": "nonce",
+                              "ty": {
+                                "kind": "struct",
+                                "name": "Nonce",
+                                "fields": [
+                                  {
+                                    "name": "bytes",
+                                    "ty": {
+                                      "kind": "bytes",
+                                      "length": 32
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "name": "opening",
+                              "ty": {
+                                "kind": "struct",
+                                "name": "opening",
+                                "fields": [
+                                  {
+                                    "name": "bytes",
+                                    "ty": {
+                                      "kind": "bytes",
+                                      "length": 32
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "kind": "let",
+                  "bindings": [
+                    {
+                      "name": "cm",
+                      "ty": {
+                        "kind": "struct",
+                        "name": "commitment",
+                        "fields": [
+                          {
+                            "name": "bytes",
+                            "ty": {
+                              "kind": "bytes",
+                              "length": 32
+                            }
+                          }
+                        ]
+                      },
+                      "value": {
+                        "kind": "call",
+                        "name": "commitment_from_coin_info",
+                        "arguments": [
+                          {
+                            "kind": "coerce",
+                            "value": {
+                              "kind": "parameter",
+                              "name": "coin"
+                            },
+                            "ty": {
+                              "kind": "struct",
+                              "name": "coin_info",
+                              "fields": [
+                                {
+                                  "name": "nonce",
+                                  "ty": {
+                                    "kind": "struct",
+                                    "name": "Nonce",
+                                    "fields": [
+                                      {
+                                        "name": "bytes",
+                                        "ty": {
+                                          "kind": "bytes",
+                                          "length": 32
+                                        }
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "name": "opening",
+                                  "ty": {
+                                    "kind": "struct",
+                                    "name": "opening",
+                                    "fields": [
+                                      {
+                                        "name": "bytes",
+                                        "ty": {
+                                          "kind": "bytes",
+                                          "length": 32
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "kind": "coerce",
+                            "value": {
+                              "kind": "parameter",
+                              "name": "pk"
+                            },
+                            "ty": {
+                              "kind": "struct",
+                              "name": "zk_public_key",
+                              "fields": [
+                                {
+                                  "name": "bytes",
+                                  "ty": {
+                                    "kind": "bytes",
+                                    "length": 32
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ],
+                  "action": {
+                    "kind": "historic_merkle_insert",
+                    "field": "commitments",
+                    "index": 1,
+                    "value": {
+                      "kind": "parameter",
+                      "name": "cm"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "zerocash_oracle.compact",
+        "line": 68,
+        "column": 1
+      }
+    }
+  ]
+}

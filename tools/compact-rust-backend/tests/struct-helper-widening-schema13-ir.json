@@ -1,0 +1,195 @@
+{
+  "schema_version": 13,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "cell",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "struct",
+          "name": "Packet",
+          "fields": [
+            {
+              "name": "value",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              }
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "widening.compact",
+        "line": 5,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "small",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unsigned",
+        "max": "255"
+      },
+      "source": {
+        "file": "widening.compact",
+        "line": 4,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+    {
+      "name": "wrap",
+      "internal": true,
+      "parameters": [
+        {
+          "name": "x",
+          "ty": {
+            "kind": "unsigned",
+            "max": "65535"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Packet",
+        "fields": [
+          {
+            "name": "value",
+            "ty": {
+              "kind": "unsigned",
+              "max": "65535"
+            }
+          }
+        ]
+      },
+      "body": {
+        "kind": "struct_literal",
+        "ty": {
+          "kind": "struct",
+          "name": "Packet",
+          "fields": [
+            {
+              "name": "value",
+              "ty": {
+                "kind": "unsigned",
+                "max": "65535"
+              }
+            }
+          ]
+        },
+        "fields": [
+          {
+            "kind": "parameter",
+            "name": "x"
+          }
+        ]
+      },
+      "source": {
+        "file": "widening.compact",
+        "line": 6,
+        "column": 1
+      }
+    }
+  ],
+  "stateful_circuits": [
+    {
+      "name": "go",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "n",
+              "ty": {
+                "kind": "unsigned",
+                "max": "255"
+              },
+              "value": {
+                "kind": "witness_call",
+                "name": "small",
+                "arguments": [
+                ]
+              }
+            }
+          ],
+          "action": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "out",
+                "ty": {
+                  "kind": "struct",
+                  "name": "Packet",
+                  "fields": [
+                    {
+                      "name": "value",
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "65535"
+                      }
+                    }
+                  ]
+                },
+                "value": {
+                  "kind": "call",
+                  "name": "wrap",
+                  "arguments": [
+                    {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "unsigned_cast",
+                        "max": "65535",
+                        "value": {
+                          "kind": "parameter",
+                          "name": "n"
+                        }
+                      },
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "65535"
+                      }
+                    }
+                  ]
+                }
+              }
+            ],
+            "action": {
+              "kind": "cell_write",
+              "field": "cell",
+              "index": 0,
+              "value": {
+                "kind": "parameter",
+                "name": "out"
+              }
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "widening.compact",
+        "line": 7,
+        "column": 1
+      }
+    }
+  ]
+}

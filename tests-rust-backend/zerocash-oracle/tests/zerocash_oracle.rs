@@ -45,7 +45,9 @@ fn fixed_coin() -> coin_info {
     }
 }
 
+#[derive(Default)]
 struct FixedWitness {
+    calls: std::cell::RefCell<Vec<&'static str>>,
     spend_path: Option<MerkleTreePath>,
 }
 
@@ -74,6 +76,7 @@ impl Witnesses<()> for FixedWitness {
         &self,
         _context: WitnessContext<'_, (), LedgerView<'_>>,
     ) -> ((), zk_public_key) {
+        self.calls.borrow_mut().push("public_key");
         (
             (),
             zk_public_key {
@@ -85,8 +88,10 @@ impl Witnesses<()> for FixedWitness {
     fn private_add_coin(
         &self,
         _context: WitnessContext<'_, (), LedgerView<'_>>,
-        _coin: coin_info,
+        coin: coin_info,
     ) -> ((), ()) {
+        assert_eq!(coin, fixed_coin());
+        self.calls.borrow_mut().push("add_coin");
         ((), ())
     }
 
@@ -102,6 +107,7 @@ impl Witnesses<()> for FixedWitness {
         &self,
         _context: WitnessContext<'_, (), LedgerView<'_>>,
     ) -> ((), coin_info) {
+        self.calls.borrow_mut().push("new_coin");
         ((), fixed_coin())
     }
 
@@ -169,7 +175,7 @@ fn zerocash_constructor_and_mint_match_typescript_state() {
         state_hex(initial.ledger_state.get_ref().clone()),
         oracle["afterInit"]["stateHex"]
     );
-    let witness = FixedWitness { spend_path: None };
+    let witness = FixedWitness::default();
     let mint = zerocash_mint(
         initial.into_circuit_context(ContractAddress::default()),
         &witness,
@@ -189,6 +195,7 @@ fn zerocash_spend_matches_typescript_state_with_captured_merkle_path() {
     .unwrap();
     let witness = FixedWitness {
         spend_path: Some(captured_path(&oracle["spendPath"])),
+        ..Default::default()
     };
     let initial = initial_state(ConstructorContext::new(())).unwrap();
     let mint = zerocash_mint(
@@ -206,5 +213,91 @@ fn zerocash_spend_matches_typescript_state_with_captured_merkle_path() {
     assert_eq!(
         state_hex(spent.context.query.state.get_ref().clone()),
         oracle["afterSpend"]["stateHex"]
+    );
+}
+
+#[test]
+fn recorded_mint_preserves_composite_witnesses_program_gas_and_historic_state() {
+    use compact_rust_zerocash_oracle_fixture::ledger_contract::recorded;
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/zerocash-mint.json"
+    ))
+    .unwrap();
+    let initial = || {
+        initial_state(ConstructorContext::new(()))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default())
+    };
+    assert_eq!(
+        state_hex(initial().query.state.get_ref().clone()),
+        oracle["beforeStateHex"]
+    );
+    let native_witness = FixedWitness::default();
+    let recorded_witness = FixedWitness::default();
+    let native = zerocash_mint(initial(), &native_witness).unwrap();
+    let recorded = recorded::zerocash_mint(initial(), &recorded_witness).unwrap();
+    assert_eq!(
+        *native_witness.calls.borrow(),
+        *recorded_witness.calls.borrow()
+    );
+    assert_eq!(
+        serde_json::to_value(&*recorded_witness.calls.borrow()).unwrap(),
+        oracle["calls"]
+    );
+    assert_eq!(native.gas_cost, recorded.execution.gas_cost);
+    assert_eq!(
+        native.private_transcript_outputs,
+        recorded.execution.private_transcript_outputs
+    );
+    assert_eq!(
+        native.context.query.effects,
+        recorded.execution.context.query.effects
+    );
+    assert_eq!(
+        state_hex(native.context.query.state.get_ref().clone()),
+        oracle["afterStateHex"]
+    );
+    assert_eq!(
+        state_hex(recorded.execution.context.query.state.get_ref().clone()),
+        oracle["afterStateHex"]
+    );
+    assert_eq!(
+        serde_json::to_value(&recorded.execution.private_transcript_outputs).unwrap(),
+        oracle["privateOutputs"]
+    );
+    assert_eq!(
+        serde_json::to_value(recorded.public.verify_ops()).unwrap(),
+        oracle["publicProgram"]
+    );
+    let gas = serde_json::to_value(recorded.execution.gas_cost).unwrap();
+    assert_eq!(oracle["queries"].as_array().unwrap().len(), 1);
+    for key in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+        assert_eq!(
+            gas[key],
+            oracle["gasCost"][key]
+                .as_str()
+                .unwrap()
+                .parse::<u64>()
+                .unwrap()
+        );
+        assert_eq!(oracle["gasCost"][key], oracle["queries"][0]["gasCost"][key]);
+    }
+    let replay = recorded
+        .public
+        .initial()
+        .query(
+            recorded.public.verify_ops(),
+            None,
+            &recorded.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(replay.gas_cost, recorded.execution.gas_cost);
+    assert_eq!(
+        replay.context.effects,
+        recorded.execution.context.query.effects
+    );
+    assert_eq!(
+        state_hex(replay.context.state.get_ref().clone()),
+        oracle["afterStateHex"]
     );
 }

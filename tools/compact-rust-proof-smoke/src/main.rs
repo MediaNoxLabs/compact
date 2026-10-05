@@ -65,6 +65,7 @@ mod vector_map;
 mod witness_assert;
 mod witness_vector_action;
 mod witness_vector_let;
+mod zerocash_mint;
 
 use std::env;
 use std::error::Error;
@@ -2264,6 +2265,15 @@ fn run() -> Result<(), Box<dyn Error>> {
             return Err("usage: --election-advance <proof-output>".into());
         }
         return election_topic::advance(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--zerocash-mint")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: --zerocash-mint <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err("usage: --zerocash-mint <proof-output>".into());
+        }
+        return zerocash_mint::run(Path::new(&root));
     }
     if first.as_deref() == Some(OsStr::new("--election-topic")) {
         let root = arguments

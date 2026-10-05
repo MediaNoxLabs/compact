@@ -108,3 +108,5 @@ compact-rust-map-fn-oracle-fixture = { path = "../../tests-rust-backend/map-fn-o
 compact-rust-map-lambda-oracle-fixture = { path = "../../tests-rust-backend/map-lambda-oracle", features = ["ledger-transaction"] }
 
 compact-rust-election-oracle-fixture = { path = "../../tests-rust-backend/election-oracle", features = ["ledger-transaction"] }
+
+compact-rust-zerocash-oracle-fixture = { path = "../../tests-rust-backend/zerocash-oracle", features = ["ledger-transaction"] }

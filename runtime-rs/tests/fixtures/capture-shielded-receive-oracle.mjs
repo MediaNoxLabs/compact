@@ -27,12 +27,19 @@ const require = createRequire(contractPath);
 const generatedSource = readFileSync(contractPath, 'utf8');
 const generatedRuntimeVersion = generatedSource.match(/checkRuntimeVersion\('([^']+)'\)/)?.[1];
 const runtimePackageVersion = JSON.parse(readFileSync(
-  new URL('../../../runtime/package.json', import.meta.url), 'utf8',
+  require.resolve('@midnight-ntwrk/compact-runtime/package.json'), 'utf8',
 )).version;
 if (!generatedRuntimeVersion || generatedRuntimeVersion !== runtimePackageVersion) {
   throw new Error('generated contract/runtime version mismatch in oracle capture');
 }
 const runtime = await import(pathToFileURL(require.resolve('@midnight-ntwrk/compact-runtime')));
+const coinValueAlignment = runtime.ShieldedCoinInfoDescriptor.alignment().at(-1);
+if (coinValueAlignment?.tag !== 'atom'
+    || coinValueAlignment.value.tag !== 'bytes'
+    || coinValueAlignment.value.length !== 8) {
+  throw new Error('Historical ADR195 capture requires the original b8 coin descriptor; '
+    + 'use runtime/test/check-shielded-receive-u128.mjs for the corrected u128 runtime');
+}
 const { Contract } = await import(pathToFileURL(contractPath).href);
 const { Contract: CoracleContract } = await import(pathToFileURL(coraclePath).href);
 const bytes = (first) => Uint8Array.from([first, ...Array(31).fill(0)]);

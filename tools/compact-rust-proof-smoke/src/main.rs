@@ -49,6 +49,7 @@ mod election_commit;
 mod election_membership_support;
 mod election_reveal;
 mod election_topic;
+mod field_observation;
 mod field_pair_hash;
 mod field_to_bytes32;
 mod guarded_recording;
@@ -2094,6 +2095,25 @@ fn run() -> Result<(), Box<dyn Error>> {
             Ok(Ok(())) => Ok(()),
             Ok(Err(error)) => Err(error.into()),
             Err(_) => Err("composite Zswap proof thread panicked".into()),
+        };
+    }
+    if first.as_deref() == Some(OsStr::new("--field-observation")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --field-observation <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err(
+                "usage: compact-rust-proof-smoke --field-observation <proof-output>".into(),
+            );
+        }
+        let proof = std::thread::Builder::new()
+            .name("field-observation-proof".into())
+            .stack_size(64 * 1024 * 1024)
+            .spawn(move || field_observation::run(Path::new(&root)).map_err(|e| e.to_string()))?;
+        return match proof.join() {
+            Ok(Ok(())) => Ok(()),
+            Ok(Err(error)) => Err(error.into()),
+            Err(_) => Err("stateful struct proof thread panicked".into()),
         };
     }
     if first.as_deref() == Some(OsStr::new("--stateful-struct")) {

@@ -1,0 +1,37 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//  http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import CompactStandardLibrary;
+export ledger first_cell: Field;
+export ledger second_cell: Field;
+constructor(first: Field, second: Field) {
+ first_cell = disclose(first);
+ second_cell = disclose(second);
+}
+struct Snapshot { value: Field; }
+struct Pair { first: Field; second: Field; }
+export circuit direct(): Field { return first_cell.read(); }
+export circuit snapshot(): Snapshot { return Snapshot { first_cell.read() }; }
+circuit field_helper(): Field { return first_cell.read(); }
+circuit snapshot_helper(): Snapshot { return Snapshot { first_cell.read() }; }
+export circuit via_field_helper(): Snapshot { return Snapshot { field_helper() }; }
+export circuit via_snapshot_helper(): Snapshot { return snapshot_helper(); }
+export circuit pair(): Pair { return Pair { first_cell.read(), second_cell.read() }; }
+export circuit selected(select_left: Boolean): Snapshot {
+ return disclose(select_left) ? snapshot_helper() : Snapshot { second_cell.read() };
+}
+export circuit optional(select_left: Boolean): Snapshot {
+ return disclose(select_left) ? Snapshot { first_cell.read() } : Snapshot { 0 };
+}

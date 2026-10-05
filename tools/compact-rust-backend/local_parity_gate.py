@@ -445,6 +445,10 @@ def main() -> int:
                  "--manifest", str(ROOT / "tools/compact-rust-backend/parity_positive_shielded_receive_sources.json"),
                  "--compiler", str(snapshot), "--output", str(directory / "shielded-receive-source-scope.json")],
                 "shielded-receive-source-scope", directory, receipt, env=environment)
+            run([sys.executable, str(ROOT / "tools/compact-rust-backend/check_positive_source_scope.py"),
+                 "--manifest", str(ROOT / "tools/compact-rust-backend/parity_positive_field_observation_sources.json"),
+                 "--compiler", str(snapshot), "--output", str(directory / "field-observation-source-scope.json")],
+                "field-observation-source-scope", directory, receipt, env=environment)
             # The compactup integration tests require the machine's installed
             # compiler and the mutable GitHub release list. They are outside
             # this compiler/backend parity gate and cannot give a repeatable

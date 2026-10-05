@@ -1313,6 +1313,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-field-observation-oracle-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-base-crypto",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-field-to-bytes32-oracle-fixture"
 version = "0.1.0"
 dependencies = [
@@ -1971,6 +1984,7 @@ dependencies = [
  "compact-rust-effectful-return-oracle-fixture",
  "compact-rust-election-oracle-fixture",
  "compact-rust-field-cast-uint128-fixture",
+ "compact-rust-field-observation-oracle-fixture",
  "compact-rust-field-to-bytes32-oracle-fixture",
  "compact-rust-guarded-assert-arith-oracle-fixture",
  "compact-rust-hmt-default-oracle-fixture",

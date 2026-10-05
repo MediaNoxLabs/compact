@@ -1274,3 +1274,34 @@ smoke also accepts `--micro-dao-advance <proof-output>` to reuse pinned keys.
 `MIDNIGHT_LEDGER_TEST_STATIC_DIR` must point to the upstream static fixtures for
 Dust fee funding. The source cross-tab retains four original proof gaps:
 `vote_commit`, `set_topic`, `buy_in`, and `cash_out`.
+
+### Read-only Field snapshots (ADR0201)
+
+A Field observation can be returned inside a typed struct, including selected
+branches and scalar or composite helpers, using the same recording frame:
+
+```rust
+let call = contract.recording.snapshot_call(&observed, private_state)?;
+let snapshot: &types::Snapshot = &call.recorded().execution.result;
+```
+
+Use the generated call's result accessors for application integration; preparation
+uses the normal typed observed-call API. The bounded read-only observation policy
+requires a struct result, no actions, declared root `Cell<Field>` reads and an
+acyclic helper graph. Every binding, argument, branch and helper is audited;
+witnesses, writes, Kernel queries, Zswap intents and other collection operations
+remain outside this policy. Argument evaluation and lexical scopes stay in the
+shared typed planner. Runtime ABI48 and IR schema20 are unchanged.
+
+`CompositeDomain` explicitly distinguishes value composites, intent composites,
+shielded receive (intent capability without composite helper routing), and Field
+observations. Phase-reset admission remains independent. The seven-API fixture
+has 23 independent TypeScript/native/recorded/replay cases. Eight nonempty paths
+prove, verify and apply under the shared **unbalanced smoke policy**; these tests
+do not establish fee funding. `optional(false)` retains zero operations and exact
+`EmptyTranscript` preparation refusal. Query sums, TypeScript wrapper last-query
+cost and whole-program replay gas remain distinct measurements.
+
+Run `check_compactc_target.py --field-observation` for strict source recording
+admission; add `--proof` for selective proof/application checks. Existing keys can
+be reused with `compact-rust-proof-smoke --field-observation <proof-output>`.

@@ -2106,6 +2106,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/field_observation_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "direct",
+    "signature": "export circuit direct(): Field",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/witness_vector_action.compact",
     "module_path": [],
     "kind": "circuit",
@@ -2336,6 +2344,14 @@
     "name": "field_add",
     "signature": "export circuit field_add(left: Field, right: Field): Field",
     "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/field_observation_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "field_helper",
+    "signature": "circuit field_helper(): Field",
+    "visibility": "internal"
   },
   {
     "source": "examples/rust_backend/digital-passport-credential/src/digital-passport-credential/claims.compact",
@@ -3690,6 +3706,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/field_observation_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "optional",
+    "signature": "export circuit optional(select_left: Boolean): Snapshot",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/nested_witness_call_oracle.compact",
     "module_path": [],
     "kind": "circuit",
@@ -3728,6 +3752,14 @@
     "name": "pair",
     "signature": "circuit pair(coin: ShieldedCoinInfo, recipient: Either<ZswapCoinPublicKey, ContractAddress>): []",
     "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/field_observation_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "pair",
+    "signature": "export circuit pair(): Pair",
+    "visibility": "export"
   },
   {
     "source": "examples/rust_backend/struct_identity.compact",
@@ -5210,6 +5242,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/field_observation_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "selected",
+    "signature": "export circuit selected(select_left: Boolean): Snapshot",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/tiny_oracle.compact",
     "module_path": [],
     "kind": "circuit",
@@ -5474,12 +5514,28 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/field_observation_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "snapshot",
+    "signature": "export circuit snapshot(): Snapshot",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/stateful_struct_oracle.compact",
     "module_path": [],
     "kind": "circuit",
     "name": "snapshot",
     "signature": "export circuit snapshot(selected: Boolean): Snapshot",
     "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/field_observation_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "snapshot_helper",
+    "signature": "circuit snapshot_helper(): Snapshot",
+    "visibility": "internal"
   },
   {
     "source": "examples/rust_backend/literal_coercion_oracle.compact",
@@ -6458,6 +6514,22 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/field_observation_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "via_field_helper",
+    "signature": "export circuit via_field_helper(): Snapshot",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/field_observation_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "via_snapshot_helper",
+    "signature": "export circuit via_snapshot_helper(): Snapshot",
+    "visibility": "export"
+  },
+  {
     "source": "examples/election.compact",
     "module_path": [],
     "kind": "circuit",
@@ -7135,6 +7207,14 @@
     "kind": "constructor",
     "name": "constructor",
     "signature": "constructor(enabled: Boolean, lo: Uint<16>, hi: Uint<16>)",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/field_observation_oracle.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor(first: Field, second: Field)",
     "visibility": "internal"
   },
   {

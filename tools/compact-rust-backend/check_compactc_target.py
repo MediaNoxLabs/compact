@@ -1214,6 +1214,7 @@ def main() -> None:
     parser.add_argument("--micro-dao-reveal", action="store_true", help="check original microDAO reveal recording; optional selective proof")
     parser.add_argument("--micro-dao-token", action="store_true", help="check original microDAO token recording; optional selective proof")
     parser.add_argument("--composite-zswap", action="store_true", help="check composite intent recording and optional original-zero/funded-transfer proofs")
+    parser.add_argument("--field-observation", action="store_true", help="check read-only Field composite recording and empty-call boundary")
     parser.add_argument("--stateful-struct", action="store_true", help="check ordered composite recording and original micro-dao native admission")
     parser.add_argument("--kernel-shielded-effects", action="store_true", help="check typed Kernel recording and optional call/funded-mint proofs")
     parser.add_argument("--shielded-receive", action="store_true", help="check standard-library receiveShielded recording and optional exact-offer proof")
@@ -1322,6 +1323,22 @@ def main() -> None:
             if args.proof:
                 run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--", "--composite-zswap", *(str(output) for output in outputs))
             print("composite Unit intents and same-frame Kernel queries admitted; exact offer policy retained")
+            return
+        if args.field_observation:
+            source = ROOT / "examples/rust_backend/field_observation_oracle.compact"
+            output = base / "field-observation"
+            run(compiler, "--target", "rust", "--rust-require-recording",
+                *([] if args.proof else ["--skip-zk"]), str(source), str(output))
+            report = json.loads((output / "contract/rust-capabilities.json").read_text())
+            assert {row["name"] for row in report["circuits"]} == {
+                "direct", "snapshot", "via_field_helper", "via_snapshot_helper",
+                "pair", "selected", "optional"}
+            assert all(row["recorded"] and row["observed_call"] and row["proof_required"]
+                       for row in report["circuits"])
+            if args.proof:
+                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                    "--field-observation", str(output))
+            print("Field observations compose into typed structs and scoped helpers; empty selected path refuses preparation")
             return
         if args.stateful_struct:
             source = ROOT / "examples/rust_backend/stateful_struct_oracle.compact"
@@ -1724,6 +1741,8 @@ def main() -> None:
         run(sys.executable, str(Path(__file__).resolve()), "--shielded-receive",
             *(["--proof"] if args.proof else []))
         run(sys.executable, str(Path(__file__).resolve()), "--stateful-struct")
+        run(sys.executable, str(Path(__file__).resolve()), "--field-observation",
+            *(["--proof"] if args.proof else []))
         run(sys.executable, str(Path(__file__).resolve()), "--composite-zswap",
             *(["--proof"] if args.proof else []))
         run(sys.executable, str(Path(__file__).resolve()), "--micro-dao-token",

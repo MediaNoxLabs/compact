@@ -19,6 +19,7 @@
 use super::*;
 use crate::coerce_expression;
 use crate::ir::{KernelClaimKind, ReturnPlan};
+mod field_observations;
 mod phase_reset;
 mod unit_actions;
 
@@ -29,6 +30,25 @@ struct TypedValue {
 }
 
 type Scope = HashMap<String, TypedValue>;
+
+// Admission owns the value/effect domain. ShieldedReceive intentionally has
+// intents without composite-value helper routing; phase_reset is independent.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum CompositeDomain {
+    None,
+    Values,
+    Intents,
+    ShieldedReceive,
+    FieldObservations,
+}
+impl CompositeDomain {
+    fn values(self) -> bool {
+        matches!(self, Self::Values | Self::Intents | Self::FieldObservations)
+    }
+    fn intents(self) -> bool {
+        matches!(self, Self::Intents | Self::ShieldedReceive)
+    }
+}
 
 struct Plan<'a> {
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
@@ -52,8 +72,7 @@ struct Plan<'a> {
     read_only_assertions: bool,
     unit_actions: bool,
     phase_reset: bool,
-    composite_values: bool,
-    composite_intents: bool,
+    composite_domain: CompositeDomain,
     intent_effects: usize,
     intent_queries: usize,
     counter_hash_helpers: bool,
@@ -292,7 +311,7 @@ impl Plan<'_> {
             Expr::CreateZswapInput { .. }
             | Expr::CreateZswapOutput { .. }
             | Expr::KernelClaim { .. }
-                if self.composite_intents =>
+                if self.composite_domain.intents() =>
             {
                 let operands: Vec<&Expr> = match expression {
                     Expr::CreateZswapInput { coin } => vec![coin],
@@ -326,7 +345,9 @@ impl Plan<'_> {
                     steps,
                 )
             }
-            Expr::UnsignedCast { value, max } if self.composite_values || self.phase_reset => {
+            Expr::UnsignedCast { value, max }
+                if self.composite_domain.values() || self.phase_reset =>
+            {
                 let value = self.expression(value, scope, steps)?;
                 let Type::Unsigned { max: source_max } = value.ty else {
                     return None;
@@ -430,7 +451,7 @@ impl Plan<'_> {
                 let mut else_steps = Vec::new();
                 let otherwise = self.expression(otherwise, scope, &mut else_steps)?;
                 if then.ty != otherwise.ty
-                    || (!self.composite_values
+                    || (!self.composite_domain.values()
                         && !(self.unit_actions && then.ty == Type::Unit)
                         && then.ty != Type::Boolean
                         && !(self.scalar_arguments && then.ty == (Type::Bytes { length: 32 })))
@@ -632,6 +653,7 @@ impl Plan<'_> {
                     && !(self.read_only_assertions && *ty == Type::Boolean)
                     && !(ty == &Type::Field
                         && (self.effectful_field_cells
+                            || self.composite_domain == CompositeDomain::FieldObservations
                             || self.field_cell_slot.as_ref() == Some(&(field.clone(), *index))))
                 {
                     return None;
@@ -750,10 +772,10 @@ impl Plan<'_> {
             .copied();
         match (pure, stateful) {
             (Some(callee), None) => {
-                if self.composite_values {
+                if self.composite_domain.values() {
                     return None;
                 } // preserve ADR0187 admission
-                if self.context_query || (self.unit_actions && !self.composite_intents) {
+                if self.context_query || (self.unit_actions && !self.composite_domain.intents()) {
                     self.inline_call(
                         name,
                         &callee.parameters,
@@ -798,7 +820,7 @@ impl Plan<'_> {
                     );
                 }
                 if self.unit_actions {
-                    if !(self.composite_intents && shielded_unit_signature(callee))
+                    if !(self.composite_domain.intents() && shielded_unit_signature(callee))
                         && !unit_actions::helper_signature(callee)
                     {
                         return None;
@@ -815,21 +837,30 @@ impl Plan<'_> {
                         false,
                     );
                 }
-                let StateReturn::Expression { value } = &callee.return_value else {
-                    return None;
+                let value = match &callee.return_value {
+                    StateReturn::Expression { value } => value.clone(),
+                    StateReturn::CellRead { field, index }
+                        if self.composite_domain == CompositeDomain::FieldObservations =>
+                    {
+                        Expr::CellRead {
+                            field: field.clone(),
+                            index: *index,
+                        }
+                    }
+                    _ => return None,
                 };
                 if !callee.actions.is_empty() {
                     return None;
                 }
                 let scalar = self.counter_hash_helpers && scalar_counter_hash(callee, self.ledger);
-                if !self.composite_values && !scalar {
+                if !self.composite_domain.values() && !scalar {
                     return None;
                 }
                 self.inline_call(
                     name,
                     &callee.parameters,
                     &callee.result,
-                    value,
+                    &value,
                     &[],
                     arguments,
                     scope,
@@ -1205,13 +1236,15 @@ impl Plan<'_> {
                     return None;
                 }
             }
-            StateAction::Expression { value } if self.unit_actions && self.composite_intents => {
+            StateAction::Expression { value }
+                if self.unit_actions && self.composite_domain.intents() =>
+            {
                 if self.expression(value, scope, steps)?.ty != Type::Unit {
                     return None;
                 }
             }
             StateAction::CircuitCall { name, arguments }
-                if (self.unit_actions && self.composite_intents) || self.phase_reset =>
+                if (self.unit_actions && self.composite_domain.intents()) || self.phase_reset =>
             {
                 if self.call(name, arguments, scope, steps)?.ty != Type::Unit {
                     return None;
@@ -1558,8 +1591,7 @@ pub(super) fn lower_effectful<'a>(
         read_only_assertions: false,
         unit_actions: false,
         phase_reset: false,
-        composite_values: false,
-        composite_intents: false,
+        composite_domain: CompositeDomain::None,
         intent_effects: 0,
         intent_queries: 0,
         counter_hash_helpers: false,
@@ -1771,8 +1803,7 @@ pub(super) fn lower_context_query<'a>(
         read_only_assertions: false,
         unit_actions: false,
         phase_reset: false,
-        composite_values: false,
-        composite_intents: false,
+        composite_domain: CompositeDomain::None,
         intent_effects: 0,
         intent_queries: 0,
         counter_hash_helpers: false,
@@ -2069,8 +2100,7 @@ pub(super) fn lower_shielded_receive<'a>(
         read_only_assertions: false,
         unit_actions: true,
         phase_reset: false,
-        composite_values: false,
-        composite_intents: true,
+        composite_domain: CompositeDomain::ShieldedReceive,
         intent_effects: 0,
         intent_queries: 0,
         counter_hash_helpers: false,
@@ -2152,10 +2182,15 @@ pub(super) fn lower_composite<'a>(
             intents,
         )
     };
-    let intents = !audit(false);
-    if intents && !audit(true) {
+    let domain = if audit(false) {
+        CompositeDomain::Values
+    } else if audit(true) {
+        CompositeDomain::Intents
+    } else if field_observations::audit(circuit, ledger, pure, circuits) {
+        CompositeDomain::FieldObservations
+    } else {
         return None;
-    }
+    };
     let mut plan = Plan {
         ledger,
         witnesses,
@@ -2178,8 +2213,7 @@ pub(super) fn lower_composite<'a>(
         read_only_assertions: false,
         unit_actions: false,
         phase_reset: false,
-        composite_values: true,
-        composite_intents: intents,
+        composite_domain: domain,
         intent_effects: 0,
         intent_queries: 0,
         counter_hash_helpers: false,
@@ -2218,8 +2252,9 @@ pub(super) fn lower_composite<'a>(
     let mut steps = Vec::new();
     let result = plan.expression(value, &scope, &mut steps)?;
     (result.ty == circuit.result
-        && (!intents
-            || (plan.intent_effects > 0 && plan.kernel_self_reads + plan.intent_queries > 0)))
+        && (domain != CompositeDomain::Intents
+            || (plan.intent_effects > 0 && plan.kernel_self_reads + plan.intent_queries > 0))
+        && (domain != CompositeDomain::FieldObservations || plan.cell_reads > 0))
         .then_some(TypedPlan {
             steps,
             result: result.value,
@@ -2322,8 +2357,7 @@ pub(super) fn lower<'a>(
         read_only_assertions: assertion_entry,
         unit_actions: false,
         phase_reset: false,
-        composite_values: false,
-        composite_intents: false,
+        composite_domain: CompositeDomain::None,
         intent_effects: 0,
         intent_queries: 0,
         counter_hash_helpers: circuit.parameters.is_empty() && circuit.result == Type::Unit,
@@ -2873,8 +2907,7 @@ mod tests {
             read_only_assertions: false,
             unit_actions: false,
             phase_reset: false,
-            composite_values: false,
-            composite_intents: false,
+            composite_domain: CompositeDomain::None,
             intent_effects: 0,
             intent_queries: 0,
             counter_hash_helpers: false,
@@ -2966,8 +2999,7 @@ mod tests {
             read_only_assertions: false,
             unit_actions: false,
             phase_reset: false,
-            composite_values: false,
-            composite_intents: false,
+            composite_domain: CompositeDomain::None,
             intent_effects: 0,
             intent_queries: 0,
             counter_hash_helpers: false,

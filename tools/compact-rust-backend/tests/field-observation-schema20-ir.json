@@ -1,0 +1,530 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "first_cell",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "field"
+        }
+      },
+      "source": {
+        "file": "field_observation_oracle.compact",
+        "line": 17,
+        "column": 1
+      }
+    },
+    {
+      "id": "second_cell",
+      "index": 1,
+      "path": [
+        1
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "field"
+        }
+      },
+      "source": {
+        "file": "field_observation_oracle.compact",
+        "line": 18,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "direct",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "return_value": {
+        "kind": "cell_read",
+        "field": "first_cell",
+        "index": 0
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "field_observation_oracle.compact",
+        "line": 25,
+        "column": 1
+      }
+    },
+    {
+      "name": "snapshot",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Snapshot",
+        "fields": [
+          {
+            "name": "value",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "struct_literal",
+          "ty": {
+            "kind": "struct",
+            "name": "Snapshot",
+            "fields": [
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          },
+          "fields": [
+            {
+              "kind": "cell_read",
+              "field": "first_cell",
+              "index": 0
+            }
+          ]
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "field_observation_oracle.compact",
+        "line": 26,
+        "column": 1
+      }
+    },
+    {
+      "name": "field_helper",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "return_value": {
+        "kind": "cell_read",
+        "field": "first_cell",
+        "index": 0
+      },
+      "actions": [
+      ],
+      "internal": true,
+      "source": {
+        "file": "field_observation_oracle.compact",
+        "line": 27,
+        "column": 1
+      }
+    },
+    {
+      "name": "snapshot_helper",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Snapshot",
+        "fields": [
+          {
+            "name": "value",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "struct_literal",
+          "ty": {
+            "kind": "struct",
+            "name": "Snapshot",
+            "fields": [
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          },
+          "fields": [
+            {
+              "kind": "cell_read",
+              "field": "first_cell",
+              "index": 0
+            }
+          ]
+        }
+      },
+      "actions": [
+      ],
+      "internal": true,
+      "source": {
+        "file": "field_observation_oracle.compact",
+        "line": 28,
+        "column": 1
+      }
+    },
+    {
+      "name": "via_field_helper",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Snapshot",
+        "fields": [
+          {
+            "name": "value",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "struct_literal",
+          "ty": {
+            "kind": "struct",
+            "name": "Snapshot",
+            "fields": [
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          },
+          "fields": [
+            {
+              "kind": "call",
+              "name": "field_helper",
+              "arguments": [
+              ]
+            }
+          ]
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "field_observation_oracle.compact",
+        "line": 29,
+        "column": 1
+      }
+    },
+    {
+      "name": "via_snapshot_helper",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Snapshot",
+        "fields": [
+          {
+            "name": "value",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "call",
+          "name": "snapshot_helper",
+          "arguments": [
+          ]
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "field_observation_oracle.compact",
+        "line": 30,
+        "column": 1
+      }
+    },
+    {
+      "name": "pair",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Pair",
+        "fields": [
+          {
+            "name": "first",
+            "ty": {
+              "kind": "field"
+            }
+          },
+          {
+            "name": "second",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "struct_literal",
+          "ty": {
+            "kind": "struct",
+            "name": "Pair",
+            "fields": [
+              {
+                "name": "first",
+                "ty": {
+                  "kind": "field"
+                }
+              },
+              {
+                "name": "second",
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          },
+          "fields": [
+            {
+              "kind": "cell_read",
+              "field": "first_cell",
+              "index": 0
+            },
+            {
+              "kind": "cell_read",
+              "field": "second_cell",
+              "index": 1
+            }
+          ]
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "field_observation_oracle.compact",
+        "line": 31,
+        "column": 1
+      }
+    },
+    {
+      "name": "selected",
+      "parameters": [
+        {
+          "name": "select_left",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Snapshot",
+        "fields": [
+          {
+            "name": "value",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "if",
+          "condition": {
+            "kind": "parameter",
+            "name": "select_left"
+          },
+          "then": {
+            "kind": "call",
+            "name": "snapshot_helper",
+            "arguments": [
+            ]
+          },
+          "otherwise": {
+            "kind": "struct_literal",
+            "ty": {
+              "kind": "struct",
+              "name": "Snapshot",
+              "fields": [
+                {
+                  "name": "value",
+                  "ty": {
+                    "kind": "field"
+                  }
+                }
+              ]
+            },
+            "fields": [
+              {
+                "kind": "cell_read",
+                "field": "second_cell",
+                "index": 1
+              }
+            ]
+          }
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "field_observation_oracle.compact",
+        "line": 32,
+        "column": 1
+      }
+    },
+    {
+      "name": "optional",
+      "parameters": [
+        {
+          "name": "select_left",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Snapshot",
+        "fields": [
+          {
+            "name": "value",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "if",
+          "condition": {
+            "kind": "parameter",
+            "name": "select_left"
+          },
+          "then": {
+            "kind": "struct_literal",
+            "ty": {
+              "kind": "struct",
+              "name": "Snapshot",
+              "fields": [
+                {
+                  "name": "value",
+                  "ty": {
+                    "kind": "field"
+                  }
+                }
+              ]
+            },
+            "fields": [
+              {
+                "kind": "cell_read",
+                "field": "first_cell",
+                "index": 0
+              }
+            ]
+          },
+          "otherwise": {
+            "kind": "struct_literal",
+            "ty": {
+              "kind": "struct",
+              "name": "Snapshot",
+              "fields": [
+                {
+                  "name": "value",
+                  "ty": {
+                    "kind": "field"
+                  }
+                }
+              ]
+            },
+            "fields": [
+              {
+                "kind": "field_literal",
+                "value": "0"
+              }
+            ]
+          }
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "field_observation_oracle.compact",
+        "line": 35,
+        "column": 1
+      }
+    }
+  ],
+  "constructor": {
+    "parameters": [
+      {
+        "name": "first",
+        "ty": {
+          "kind": "field"
+        }
+      },
+      {
+        "name": "second",
+        "ty": {
+          "kind": "field"
+        }
+      }
+    ],
+    "steps": [
+      {
+        "kind": "cell_write",
+        "field": "first_cell",
+        "index": 0,
+        "value": {
+          "kind": "parameter",
+          "name": "first"
+        }
+      },
+      {
+        "kind": "cell_write",
+        "field": "second_cell",
+        "index": 1,
+        "value": {
+          "kind": "parameter",
+          "name": "second"
+        }
+      }
+    ],
+    "source": {
+      "file": "field_observation_oracle.compact",
+      "line": 19,
+      "column": 1
+    }
+  }
+}

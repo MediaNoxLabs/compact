@@ -1,0 +1,67 @@
+{
+  "format_version": 1,
+  "suite": "tools/compact-rust-backend/check_compactc_target.py --field-observation",
+  "purpose": "Read-only Field composite observations with exact TS/native/recorded/replay parity, nonempty proofs and empty-call refusal",
+  "source_glob": "examples/rust_backend/field_observation_oracle.compact",
+  "positive_sources": [
+    {
+      "source": "examples/rust_backend/field_observation_oracle.compact",
+      "typescript_capture": "runtime-rs/tests/fixtures/capture-field-observation-oracle.mjs",
+      "typescript_fixture": "runtime-rs/tests/fixtures/field-observation-oracle.json",
+      "rust_fixture": "tests-rust-backend/field-observation-oracle/lib.rs",
+      "rust_test": "tests-rust-backend/field-observation-oracle/tests/field_observation.rs",
+      "expected_ts": "success",
+      "expected_rust": "success",
+      "proof_circuits": [
+        {
+          "name": "direct",
+          "pure": false,
+          "proof": true
+        },
+        {
+          "name": "snapshot",
+          "pure": false,
+          "proof": true
+        },
+        {
+          "name": "via_field_helper",
+          "pure": false,
+          "proof": true
+        },
+        {
+          "name": "via_snapshot_helper",
+          "pure": false,
+          "proof": true
+        },
+        {
+          "name": "pair",
+          "pure": false,
+          "proof": true
+        },
+        {
+          "name": "selected",
+          "pure": false,
+          "proof": true
+        },
+        {
+          "name": "optional",
+          "pure": false,
+          "proof": true
+        }
+      ],
+      "expected_recording_gaps": {},
+      "pure_declarations": 0,
+      "exported_pure_declarations": 0,
+      "expected_recorded_circuits": [
+        "direct",
+        "snapshot",
+        "via_field_helper",
+        "via_snapshot_helper",
+        "pair",
+        "selected",
+        "optional"
+      ]
+    }
+  ],
+  "expected_rejections": []
+}

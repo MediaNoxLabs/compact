@@ -15,9 +15,8 @@
 
 use compact_rust_literal_coercion_oracle_fixture::ledger_contract::initial_state;
 use compact_rust_literal_coercion_oracle_fixture::pure_circuits::{
-    callArgFieldOnlyLiteral, callArgMaxUnsignedPlusOne, hashDefaultVectorArg,
-    hashNestedUintVarRefElem, hashSameTypeNestedArg, hashUintVarRefElem, retFieldOnlyLiteral,
-    subgroupCheck, vectorEltWise,
+    callArgMaxUnsignedPlusOne, hashDefaultVectorArg, hashNestedUintVarRefElem,
+    hashSameTypeNestedArg, hashUintVarRefElem, subgroupCheck, vectorEltWise,
 };
 use midnight_compact_runtime::context::ConstructorContext;
 use midnight_compact_runtime::ledger::{DefaultDB, StateValue};
@@ -64,14 +63,7 @@ fn oracle_constructor_and_selected_pure_circuits_match_typescript() {
         FixedVector::new([Field::from(7_u64); 2])
     );
     assert_eq!(oracle["vectorEltWise"], serde_json::json!(["7", "7"]));
-    assert_eq!(
-        callArgFieldOnlyLiteral().unwrap(),
-        retFieldOnlyLiteral().unwrap()
-    );
-    assert_eq!(
-        oracle["fieldOnly"],
-        "819310549611346726241370945440405716213240158234039660170669895299022906775"
-    );
+    // Each Field-only exported result is independently checked in direct_behavior.rs.
 }
 
 fn point_json(point: JubjubPoint) -> serde_json::Value {

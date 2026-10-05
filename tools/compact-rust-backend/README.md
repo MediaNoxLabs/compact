@@ -1691,3 +1691,24 @@ apply, exact fallible ReadMismatch rollback, wrong-placement InvalidProof and
 spent-nullifier replay refusal. Voting coins and DAO state are explicitly seeded;
 the zero-key output follows source behavior without a separate unspendability
 claim. Schema20/ABI49 and runtime are unchanged.
+
+### Direct pinned-oracle behavior (ADR216)
+
+`oracle_direct_behavior_review.json` records a reviewed subset of the 37-source
+oracle cohort: 43 literal-coercion pure exports with 91 independently captured
+TypeScript cases, plus `assert_parity.ping` and both Boolean branches of
+`ternary_cond.walkerVectorElement`. The literal test directly invokes every
+export, checks the exact export/case sets, and compares each typed result to
+the captured value. It includes widened Uint inputs, modular Field arithmetic,
+huge/Field-only equality branches, ordered aggregate hash inputs and curve values.
+
+The two stateful APIs check native/recorded result and state, the complete ordered
+public VM program, summed query gas, empty private outputs and upstream replay.
+They previously appeared only in serialized operations metadata. The constructor
+is not treated as execution of arbitrary pure exports. Cryptographic proofs and
+ledger application are explicitly outside this test-only delivery; no generated
+code, ABI49, schema20, runtime or Compact source changed.
+
+The larger behavior audit remains separate and incomplete. Function-pointer
+dispatch (for example the six mixed-width comparisons) counts when actual
+assertions consume its output; invocation regexes alone do not establish coverage.

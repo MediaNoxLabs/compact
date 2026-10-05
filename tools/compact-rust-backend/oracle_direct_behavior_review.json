@@ -1,0 +1,1220 @@
+{
+  "format": "reviewed-oracle-behavior-v1",
+  "scope": "ADR216 only; not a complete 37-source audit",
+  "abi": 49,
+  "schema": 20,
+  "source_hashes": {
+    "examples/rust_backend/literal_coercion_oracle.compact": "36f96813375018305b362745442cc3acbcebeb152fd7f44f5c79a4551c58d6a5",
+    "examples/rust_backend/assert_parity_oracle.compact": "0a9bbadf7e52ef1e7a8149d093531f6ad5b295778510807bf7b4740425b00c60",
+    "examples/rust_backend/ternary_cond_oracle.compact": "e95aef740573d9e5ba8980a74c0eabdf1c5fad4948750aeaa2a80502c3025b73"
+  },
+  "capture_provenance": {
+    "runtimeVersion": "0.16.101",
+    "sources": {
+      "literal_coercion_oracle": {
+        "sourceSha256": "36f96813375018305b362745442cc3acbcebeb152fd7f44f5c79a4551c58d6a5",
+        "generatedIndexSha256": "9c2ec6b6aec1e9c7c789115fa0e824cdff61e48a564c5058faa0cf7e8103c55d"
+      },
+      "assert_parity_oracle": {
+        "sourceSha256": "0a9bbadf7e52ef1e7a8149d093531f6ad5b295778510807bf7b4740425b00c60",
+        "generatedIndexSha256": "bbd01cf5fefcf4585c93674afa3fb8456d03289d6eff7382a631f5a7bac00164"
+      },
+      "ternary_cond_oracle": {
+        "sourceSha256": "e95aef740573d9e5ba8980a74c0eabdf1c5fad4948750aeaa2a80502c3025b73",
+        "generatedIndexSha256": "cd9e3e2800463af56a1b374a2fba95fb82c606dfc0e4f08914f697564a7d124a"
+      }
+    },
+    "runtime": {
+      "index.js": "c55a8ab3e7533b3fa6e27b66ab742c783d912d5a00d6ecc23d9f6142ddb0ecde",
+      "built-ins.js": "534001298a202e3b099355e0f9b3cf14a4b259358370ca88366231094989b481",
+      "compact-types.js": "5cdccdb9fde9fdb297459588f33ce093ad557584b35b480819e0d930ce1bd73b"
+    }
+  },
+  "reviewed_export_count": 45,
+  "literal_case_count": 91,
+  "stateful_case_count": 3,
+  "rows": [
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "addFieldLiteral",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "addFieldLiteral/0",
+        "addFieldLiteral/1",
+        "addFieldLiteral/340282366920938463463374607431768211455",
+        "addFieldLiteral/1606938044258990275541962092341162602522202993782792835301376"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=addFieldLiteral]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "addFieldOnlyLiteral",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "addFieldOnlyLiteral/0",
+        "addFieldOnlyLiteral/1",
+        "addFieldOnlyLiteral/340282366920938463463374607431768211455",
+        "addFieldOnlyLiteral/1606938044258990275541962092341162602522202993782792835301376"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=addFieldOnlyLiteral]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "addHugeFieldLiteral",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "addHugeFieldLiteral/0",
+        "addHugeFieldLiteral/1",
+        "addHugeFieldLiteral/340282366920938463463374607431768211455",
+        "addHugeFieldLiteral/1606938044258990275541962092341162602522202993782792835301376"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=addHugeFieldLiteral]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "addUintFieldOperand",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "addUintFieldOperand/0-0",
+        "addUintFieldOperand/1-255",
+        "addUintFieldOperand/1606938044258990275541962092341162602522202993782792835301376-255"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=addUintFieldOperand]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "callArgFieldOnlyLiteral",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "callArgFieldOnlyLiteral/constant"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=callArgFieldOnlyLiteral]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "callArgHugeFieldLiteral",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "callArgHugeFieldLiteral/constant"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=callArgHugeFieldLiteral]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "callArgMaxUnsignedPlusOne",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "callArgMaxUnsignedPlusOne/constant"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=callArgMaxUnsignedPlusOne]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "cmpFieldOnlyLiteral",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "cmpFieldOnlyLiteral/0",
+        "cmpFieldOnlyLiteral/819310549611346726241370945440405716213240158234039660170669895299022906775",
+        "cmpFieldOnlyLiteral/819310549611346726241370945440405716213240158234039660170669895299022906776"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=cmpFieldOnlyLiteral]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "cmpHugeFieldLiteral",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "cmpHugeFieldLiteral/0",
+        "cmpHugeFieldLiteral/1606938044258990275541962092341162602522202993782792835301376",
+        "cmpHugeFieldLiteral/1606938044258990275541962092341162602522202993782792835301377"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=cmpHugeFieldLiteral]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "constFieldOnlyLiteral",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "constFieldOnlyLiteral/constant"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=constFieldOnlyLiteral]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "constHugeFieldLiteral",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "constHugeFieldLiteral/constant"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=constHugeFieldLiteral]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "constThenCall",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "constThenCall/constant"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=constThenCall]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "hashCallVectorArg",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "hashCallVectorArg/constant"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=hashCallVectorArg]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "hashConstVectorArg",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "hashConstVectorArg/constant"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=hashConstVectorArg]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "hashDefaultVectorArg",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "hashDefaultVectorArg/constant"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=hashDefaultVectorArg]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "hashNestedUintVarRefElem",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "hashNestedUintVarRefElem/0",
+        "hashNestedUintVarRefElem/255"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=hashNestedUintVarRefElem]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "hashNestedVarRefVectorArg",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "hashNestedVarRefVectorArg/0-0",
+        "hashNestedVarRefVectorArg/255-1",
+        "hashNestedVarRefVectorArg/1-255"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=hashNestedVarRefVectorArg]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "hashSameTypeNestedArg",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "hashSameTypeNestedArg/0-0",
+        "hashSameTypeNestedArg/255-1",
+        "hashSameTypeNestedArg/1-255"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=hashSameTypeNestedArg]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "hashSameTypeVectorArg",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "hashSameTypeVectorArg/0-0",
+        "hashSameTypeVectorArg/255-1",
+        "hashSameTypeVectorArg/1-255"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=hashSameTypeVectorArg]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "hashStructFieldVectorArg",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "hashStructFieldVectorArg/0-0",
+        "hashStructFieldVectorArg/255-1",
+        "hashStructFieldVectorArg/1-255"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=hashStructFieldVectorArg]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "hashUintVarRefElem",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "hashUintVarRefElem/0",
+        "hashUintVarRefElem/255"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=hashUintVarRefElem]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "hashVarRefVectorArg",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "hashVarRefVectorArg/0-0",
+        "hashVarRefVectorArg/255-1",
+        "hashVarRefVectorArg/1-255"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=hashVarRefVectorArg]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "hashZeroLiteral",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "hashZeroLiteral/constant"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=hashZeroLiteral]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "idf",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "idf/0",
+        "idf/1",
+        "idf/340282366920938463463374607431768211455",
+        "idf/1606938044258990275541962092341162602522202993782792835301376"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=idf]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "litLhsFieldLiteral",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "litLhsFieldLiteral/0",
+        "litLhsFieldLiteral/1",
+        "litLhsFieldLiteral/340282366920938463463374607431768211455",
+        "litLhsFieldLiteral/1606938044258990275541962092341162602522202993782792835301376"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=litLhsFieldLiteral]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "mulHugeFieldLiteral",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "mulHugeFieldLiteral/0",
+        "mulHugeFieldLiteral/1",
+        "mulHugeFieldLiteral/340282366920938463463374607431768211455",
+        "mulHugeFieldLiteral/1606938044258990275541962092341162602522202993782792835301376"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=mulHugeFieldLiteral]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "nativeArgFieldOnlyLiteral",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "nativeArgFieldOnlyLiteral/generator-1",
+        "nativeArgFieldOnlyLiteral/generator-2"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=nativeArgFieldOnlyLiteral]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "nativeArgLiteral",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "nativeArgLiteral/constant"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=nativeArgLiteral]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "nestedFieldArith",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "nestedFieldArith/0",
+        "nestedFieldArith/1",
+        "nestedFieldArith/340282366920938463463374607431768211455",
+        "nestedFieldArith/1606938044258990275541962092341162602522202993782792835301376"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=nestedFieldArith]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "retFieldLiteral",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "retFieldLiteral/constant"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=retFieldLiteral]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "retFieldOnlyLiteral",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "retFieldOnlyLiteral/constant"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=retFieldOnlyLiteral]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "retHugeFieldLiteral",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "retHugeFieldLiteral/constant"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=retHugeFieldLiteral]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "retU128FieldLiteral",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "retU128FieldLiteral/constant"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=retU128FieldLiteral]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "sameTypeVec",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "sameTypeVec/constant"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=sameTypeVec]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "someFieldLiteral",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "someFieldLiteral/constant"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=someFieldLiteral]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "structLiteral",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "structLiteral/constant"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=structLiteral]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "structMemberHugeFieldLiteral",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "structMemberHugeFieldLiteral/constant"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=structMemberHugeFieldLiteral]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "subFieldLiteral",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "subFieldLiteral/0",
+        "subFieldLiteral/1",
+        "subFieldLiteral/340282366920938463463374607431768211455",
+        "subFieldLiteral/1606938044258990275541962092341162602522202993782792835301376"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=subFieldLiteral]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "subgroupCheck",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "subgroupCheck/constant"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=subgroupCheck]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "u128Rung",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "u128Rung/0",
+        "u128Rung/18446744073709551615",
+        "u128Rung/18446744073709551616",
+        "u128Rung/340282366920938463463374607431768211455"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=u128Rung]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "uintToField",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "uintToField/0",
+        "uintToField/255"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=uintToField]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "vectorEltHugeFieldLiteral",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "vectorEltHugeFieldLiteral/constant"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=vectorEltHugeFieldLiteral]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/literal_coercion_oracle.compact",
+      "export": "vectorEltWise",
+      "kind": "pure",
+      "review_status": "direct-result-assertions-reviewed",
+      "case_ids": [
+        "vectorEltWise/0",
+        "vectorEltWise/4294967295"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "literal.cases[export=vectorEltWise]"
+      },
+      "rust_test": "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs",
+      "assertion_test": "every_literal_export_has_an_independent_direct_typescript_result",
+      "dimensions": {
+        "result": "exact normalized value against generated TS",
+        "state": "not applicable",
+        "public_program": "not applicable",
+        "query_gas": "not applicable",
+        "private_witness": "not applicable",
+        "recorded_replay": "not applicable",
+        "cryptographic_proof": "not applicable",
+        "ledger_apply": "not applicable"
+      }
+    },
+    {
+      "source": "examples/rust_backend/assert_parity_oracle.compact",
+      "export": "ping",
+      "kind": "stateful",
+      "review_status": "direct-native-recorded-replay-assertions-reviewed",
+      "case_ids": [
+        "ping/default"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "stateful[export=ping]"
+      },
+      "rust_test": "tests-rust-backend/assert-parity-oracle/tests/assert_parity_oracle.rs",
+      "assertion_test": "ping_is_executed_and_matches_independent_typescript_recording",
+      "dimensions": {
+        "result": "exact Unit",
+        "state": "exact serialized TS state plus typed flag/vector",
+        "public_program": "complete ordered VM equality",
+        "query_gas": "sum of captured queries; reported TS last-query gas separately checked",
+        "private_witness": "native and recorded empty outputs, captured empty outputs",
+        "recorded_replay": "upstream query replay state and effects",
+        "cryptographic_proof": "not run in ADR216",
+        "ledger_apply": "not run in ADR216"
+      }
+    },
+    {
+      "source": "examples/rust_backend/ternary_cond_oracle.compact",
+      "export": "walkerVectorElement",
+      "kind": "stateful",
+      "review_status": "direct-native-recorded-replay-assertions-reviewed",
+      "case_ids": [
+        "walkerVectorElement/false",
+        "walkerVectorElement/true"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "json_path": "stateful[export=walkerVectorElement]"
+      },
+      "rust_test": "tests-rust-backend/ternary-cond-oracle/tests/ternary_cond_oracle.rs",
+      "assertion_test": "walker_vector_element_executes_both_branches_against_typescript",
+      "dimensions": {
+        "result": "exact Unit",
+        "state": "exact serialized TS state plus typed flag/vector",
+        "public_program": "complete ordered VM equality",
+        "query_gas": "sum of captured queries; reported TS last-query gas separately checked",
+        "private_witness": "native and recorded empty outputs, captured empty outputs",
+        "recorded_replay": "upstream query replay state and effects",
+        "cryptographic_proof": "not run in ADR216",
+        "ledger_apply": "not run in ADR216"
+      }
+    }
+  ],
+  "reviewed_rust_test_sha256": {
+    "tests-rust-backend/assert-parity-oracle/tests/assert_parity_oracle.rs": "26845d607fcf156a2d8ddbe2aa8180f3e29d19b1ef414048ff9dc4b818420f22",
+    "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs": "f4e8977efa115d8779e979187c85d7aee5a5b89fa653b23fc982117a3135608c",
+    "tests-rust-backend/ternary-cond-oracle/tests/ternary_cond_oracle.rs": "b426b3f45b3d18c0c0ef858d398adb1ea753f30443c4e9d13c15bb33775d5254"
+  },
+  "capture_sha256": "3d55db7a0c7e57a2be50b6c60ff1017ae86f00be9887c404d06460ea81db062d",
+  "capture_script": "runtime-rs/tests/fixtures/capture-oracle-direct-behavior.mjs",
+  "capture_script_sha256": "5b75704cd67d5a94a0cccae73c31cc04d5c1549773a158df4b0c2d59a04a611a"
+}

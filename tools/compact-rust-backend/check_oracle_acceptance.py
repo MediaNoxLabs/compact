@@ -46,6 +46,39 @@ def relative_file(name: str) -> Path:
     raise ValueError(f"missing or invalid repository file: {name}")
 
 
+
+def reviewed_behavior_failures() -> list[str]:
+    """Check reviewed artifact identity/links, never infer semantic coverage from text."""
+    review = json.loads(Path(__file__).with_name("oracle_direct_behavior_review.json").read_text())
+    failures = []
+    for path, digest in (review["source_hashes"] | review["reviewed_rust_test_sha256"]).items():
+        if hashlib.sha256(relative_file(path).read_bytes()).hexdigest() != digest:
+            failures.append(f"reviewed behavior artifact changed; re-review required: {path}")
+    capture_path = "runtime-rs/tests/fixtures/oracle-direct-behavior.json"
+    for path, digest in [(capture_path, review["capture_sha256"]),
+                         (review["capture_script"], review["capture_script_sha256"])]:
+        if hashlib.sha256(relative_file(path).read_bytes()).hexdigest() != digest:
+            failures.append(f"reviewed behavior capture changed; re-review required: {path}")
+    capture = json.loads(relative_file(capture_path).read_text())
+    rows = review["rows"]
+    identities = {(row["source"], row["export"]) for row in rows}
+    if len(identities) != len(rows) or len(rows) != review["reviewed_export_count"]:
+        failures.append("duplicate or incomplete reviewed export identities")
+    pure_names = set(capture["literal"]["exports"])
+    if {row["export"] for row in rows if row["kind"] == "pure"} != pure_names:
+        failures.append("literal reviewed export set differs from independent capture")
+    for row in rows:
+        relative_file(row["rust_test"])
+        if row["kind"] == "pure":
+            ids = [case["id"] for case in capture["literal"]["cases"] if case["export"] == row["export"]]
+        else:
+            ids = [case["export"] + "/" + ("default" if not case["args"] else str(case["args"][0]).lower())
+                   for case in capture["stateful"] if case["export"] == row["export"]]
+        if not ids or ids != row["case_ids"] or len(set(ids)) != len(ids):
+            failures.append(f"reviewed case identity mismatch: {row['export']}")
+    return failures
+
+
 def main() -> int:
     manifest = json.loads(MANIFEST.read_text())
     fixtures = manifest["fixtures"]
@@ -77,6 +110,11 @@ def main() -> int:
                     failures.append(f"{name}: test does not reference {path}")
         except (KeyError, ValueError, UnicodeDecodeError) as exc:
             failures.append(f"{name}: {exc}")
+
+    try:
+        failures.extend(reviewed_behavior_failures())
+    except (KeyError, ValueError, OSError) as exc:
+        failures.append(f"reviewed behavior matrix: {exc}")
 
     for failure in failures:
         print(f"FAIL {failure}", file=sys.stderr)

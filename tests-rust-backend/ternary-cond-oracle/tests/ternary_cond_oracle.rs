@@ -1073,3 +1073,122 @@ fn pure_ternary_arms_and_subtraction_guard_execute() {
     assert_eq!(constUnannotatedSeqLifted(true, five).unwrap().value(), 4);
     assert!(constUnannotatedSeqLifted(true, zero).is_err());
 }
+
+fn assert_direct_trace(
+    native: &midnight_compact_runtime::context::CircuitResult<(), ()>,
+    recorded: &midnight_compact_runtime::recording::RecordedCircuitResult<(), ()>,
+    row: &serde_json::Value,
+) {
+    assert_eq!(native.result, ());
+    assert_eq!(recorded.execution.result, ());
+    assert_eq!(row["result"], serde_json::json!([]));
+    assert_eq!(
+        state_hex(native.context.query.state.get_ref().clone()),
+        row["after"]
+    );
+    assert_eq!(
+        native.context.query.state,
+        recorded.execution.context.query.state
+    );
+    assert_eq!(
+        native.context.query.effects,
+        recorded.execution.context.query.effects
+    );
+    assert_eq!(
+        serde_json::json!(recorded.public.verify_ops()),
+        row["publicTranscript"]
+    );
+    assert!(native.private_transcript_outputs.is_empty());
+    assert!(recorded.execution.private_transcript_outputs.is_empty());
+    assert_eq!(row["privateTranscript"], serde_json::json!([]));
+    assert_eq!(native.gas_cost, recorded.execution.gas_cost);
+    let gas = serde_json::json!(native.gas_cost);
+    for dimension in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+        let queries = row["queries"].as_array().unwrap();
+        let sum: u64 = queries
+            .iter()
+            .map(|q| {
+                q["gasCost"][dimension]
+                    .as_str()
+                    .unwrap()
+                    .parse::<u64>()
+                    .unwrap()
+            })
+            .sum();
+        assert_eq!(gas[dimension], sum);
+        assert_eq!(
+            row["reportedGas"][dimension],
+            queries.last().unwrap()["gasCost"][dimension]
+        );
+    }
+    let replay = recorded
+        .public
+        .initial()
+        .query(
+            recorded.public.verify_ops(),
+            None,
+            &recorded.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(replay.context.state, native.context.query.state);
+    assert_eq!(replay.context.effects, native.context.query.effects);
+}
+
+#[test]
+fn walker_vector_element_executes_both_branches_against_typescript() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/oracle-direct-behavior.json"
+    ))
+    .unwrap();
+    let rows = oracle["stateful"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|row| row["export"] == "walkerVectorElement")
+        .collect::<Vec<_>>();
+    assert_eq!(rows.len(), 2);
+    let mut conditions = std::collections::BTreeSet::new();
+    for row in rows {
+        let condition = row["args"][0].as_bool().unwrap();
+        assert!(conditions.insert(condition));
+        let fresh = || {
+            initial_state(ConstructorContext::new(()), true, true, Field::from(111u64))
+                .unwrap()
+                .into_circuit_context(ContractAddress::default())
+        };
+        assert_eq!(
+            state_hex(fresh().query.state.get_ref().clone()),
+            row["before"]
+        );
+        let native =
+            compact_rust_ternary_cond_oracle_fixture::ledger_contract::walkerVectorElement(
+                fresh(),
+                condition,
+            )
+            .unwrap();
+        let recorded = recorded::walkerVectorElement(fresh(), condition).unwrap();
+        assert_direct_trace(&native, &recorded, row);
+        let vector = ledger_slots::vecCell
+            .inspect(native.context.query.state.get_ref())
+            .unwrap();
+        assert_eq!(
+            serde_json::json!(
+                vector
+                    .0
+                    .into_iter()
+                    .map(|v| hex::encode(v.as_le_bytes()))
+                    .collect::<Vec<_>>()
+            ),
+            row["ledgerVector"]
+        );
+        assert_eq!(
+            vector.0,
+            if condition {
+                [Field::from(1u64), Field::from(3u64)]
+            } else {
+                [Field::from(2u64), Field::from(4u64)]
+            }
+        );
+    }
+    assert_eq!(conditions, std::collections::BTreeSet::from([false, true]));
+}

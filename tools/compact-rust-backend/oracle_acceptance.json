@@ -22,7 +22,8 @@
         "tests-rust-backend/assert-parity-oracle/tests/assert_parity_oracle.rs"
       ],
       "typescript_fixtures": [
-        "runtime-rs/tests/fixtures/assert-parity-oracle.json"
+        "runtime-rs/tests/fixtures/assert-parity-oracle.json",
+        "runtime-rs/tests/fixtures/oracle-direct-behavior.json"
       ]
     },
     {
@@ -216,10 +217,12 @@
       "source_sha256": "36f96813375018305b362745442cc3acbcebeb152fd7f44f5c79a4551c58d6a5",
       "non_comment_sha256": "caa3e8500bf190e2337df8c8fda8f0395090e5f72841eeec340f79c85bd16da9",
       "rust_tests": [
-        "tests-rust-backend/literal-coercion-oracle/tests/literal_coercion_oracle.rs"
+        "tests-rust-backend/literal-coercion-oracle/tests/literal_coercion_oracle.rs",
+        "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs"
       ],
       "typescript_fixtures": [
-        "runtime-rs/tests/fixtures/literal-coercion-oracle.json"
+        "runtime-rs/tests/fixtures/literal-coercion-oracle.json",
+        "runtime-rs/tests/fixtures/oracle-direct-behavior.json"
       ]
     },
     {
@@ -391,7 +394,8 @@
         "runtime-rs/tests/fixtures/ternary-recorded-nested-if.json",
         "runtime-rs/tests/fixtures/ternary-recorded-native-arg.json",
         "runtime-rs/tests/fixtures/ternary-recorded-annotated-uint8.json",
-        "runtime-rs/tests/fixtures/ternary-recorded-vector-element.json"
+        "runtime-rs/tests/fixtures/ternary-recorded-vector-element.json",
+        "runtime-rs/tests/fixtures/oracle-direct-behavior.json"
       ]
     },
     {

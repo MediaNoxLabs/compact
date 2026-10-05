@@ -41,7 +41,11 @@ use midnight_transient_crypto::curve::Fr;
 pub use midnight_transient_crypto::proofs::VerifierKey;
 use midnight_transient_crypto::proofs::{KeyLocation, ProofPreimage};
 use midnight_zswap::{Input, Offer};
+
+#[path = "transaction/transients.rs"]
+mod transients;
 use rand::{CryptoRng, Rng};
+pub use transients::ContractTransientCoins;
 
 use crate::context::CircuitContext;
 use crate::ledger::{ContractAddress, ContractState, DB, DefaultDB};
@@ -114,6 +118,7 @@ pub struct OfferBackedObservedState<D: DB = DefaultDB> {
     offer: Offer<ProofPreimage, D>,
     zswap: midnight_zswap::ledger::State<D>,
     wallet_funding: Option<WalletFundingInputs<D>>,
+    transients: Option<ContractTransientCoins<D>>,
 }
 
 /// How persistent output intents bind to the retained upstream offer.
@@ -130,12 +135,14 @@ pub enum PersistentOutputAllocation {
 pub struct OfferBindingOptions<D: DB = DefaultDB> {
     output_allocation: PersistentOutputAllocation,
     wallet_funding: Option<WalletFundingInputs<D>>,
+    transients: Option<ContractTransientCoins<D>>,
 }
 impl<D: DB> Default for OfferBindingOptions<D> {
     fn default() -> Self {
         Self {
             output_allocation: PersistentOutputAllocation::ExactIntentOrder,
             wallet_funding: None,
+            transients: None,
         }
     }
 }
@@ -146,6 +153,12 @@ impl<D: DB> OfferBindingOptions<D> {
     }
     pub fn with_wallet_funding(mut self, funding: WalletFundingInputs<D>) -> Self {
         self.wallet_funding = Some(funding);
+        self
+    }
+    /// Select complete upstream same-contract transients explicitly. Requires
+    /// CanonicalOfferIndices; no index-zero inference or offer normalization.
+    pub fn with_transient_coins(mut self, transients: ContractTransientCoins<D>) -> Self {
+        self.transients = Some(transients);
         self
     }
 }
@@ -218,7 +231,8 @@ impl<D: DB> OfferBackedObservedState<D> {
     }
 
     /// Bind an unchanged complete offer under an explicit allocation/funding policy.
-    /// Canonical allocation is persistent-only and requires normalized input.
+    /// Canonical allocation requires normalized input; transients require an explicit
+    /// complete selection in addition to canonical allocation.
     pub fn with_options(
         mut observed: ObservedContractState<D>,
         ledger: &LedgerState<D>,
@@ -226,6 +240,21 @@ impl<D: DB> OfferBackedObservedState<D> {
         options: OfferBindingOptions<D>,
     ) -> Result<Self, crate::CompactError> {
         let wallet_funding = options.wallet_funding;
+        let transients = options.transients;
+        if let Some(selected) = &transients {
+            if options.output_allocation != PersistentOutputAllocation::CanonicalOfferIndices {
+                return Err(crate::CompactError::InvalidLedgerCell(
+                    "transient binding requires canonical offer allocation".into(),
+                ));
+            }
+            selected
+                .validate_offer(&offer, observed.address)
+                .map_err(|error| {
+                    crate::CompactError::InvalidLedgerCell(format!(
+                        "transient selection rejected: {error:?}"
+                    ))
+                })?;
+        }
         if let Some(funding) = &wallet_funding {
             funding.validate_offer(&offer).map_err(|error| {
                 crate::CompactError::InvalidLedgerCell(format!(
@@ -234,7 +263,7 @@ impl<D: DB> OfferBackedObservedState<D> {
             })?;
         }
         if options.output_allocation == PersistentOutputAllocation::CanonicalOfferIndices {
-            if !offer.transient.is_empty() {
+            if !offer.transient.is_empty() && transients.is_none() {
                 return Err(crate::CompactError::InvalidLedgerCell(
                     "canonical persistent allocation rejects transients".into(),
                 ));
@@ -285,6 +314,15 @@ impl<D: DB> OfferBackedObservedState<D> {
                             index: *indices.get(&out.coin_com).expect("applied output index"),
                             owner: out.contract_address.as_ref().map(|owner| **owner),
                         })
+                        .chain(offer.transient.iter_deref().map(|transient| {
+                            crate::zswap::BoundOutput {
+                                commitment: transient.coin_com,
+                                index: *indices
+                                    .get(&transient.coin_com)
+                                    .expect("applied transient index"),
+                                owner: transient.contract_address.as_ref().map(|owner| **owner),
+                            }
+                        }))
                         .collect(),
                 }
             }
@@ -295,6 +333,7 @@ impl<D: DB> OfferBackedObservedState<D> {
             offer,
             zswap: (*ledger.zswap).clone(),
             wallet_funding,
+            transients,
         })
     }
 
@@ -317,6 +356,7 @@ impl<D: DB> OfferBackedObservedState<D> {
         // Empty plans preserve pre-existing offer-only calls only in the
         // default exact policy. Funded mode must bind actual circuit intents.
         if self.wallet_funding.is_none()
+            && self.transients.is_none()
             && matches!(
                 self.observed.allocation,
                 crate::zswap::Allocation::OfferBound { .. }
@@ -367,10 +407,16 @@ impl<D: DB> OfferBackedObservedState<D> {
                 Ok(())
             };
         }
-        if !self.offer.transient.is_empty() {
-            return Err(ZswapIntentError::TransientsUnsupported);
-        }
-        if plan.outputs().len() != self.offer.outputs.len() {
+        let transient_inputs = if let Some(selected) = &self.transients {
+            selected.validate_offer(&self.offer, self.observed.address)?;
+            selected.reconcile_events(plan, self.observed.address)?
+        } else {
+            if !self.offer.transient.is_empty() {
+                return Err(ZswapIntentError::TransientsUnsupported);
+            }
+            std::collections::HashSet::new()
+        };
+        if plan.outputs().len() != self.offer.outputs.len() + self.offer.transient.len() {
             return Err(ZswapIntentError::OutputMismatch);
         }
         let expected_end = self
@@ -392,8 +438,16 @@ impl<D: DB> OfferBackedObservedState<D> {
                     .outputs
                     .iter_deref()
                     .find(|out| out.coin_com == commitment)
+                    .cloned()
+                    .or_else(|| {
+                        self.offer
+                            .transient
+                            .iter_deref()
+                            .find(|transient| transient.coin_com == commitment)
+                            .map(|transient| transient.as_output())
+                    })
             } else {
-                self.offer.outputs.get(position)
+                self.offer.outputs.get(position).cloned()
             }
             .ok_or(ZswapIntentError::OutputMismatch)?;
             if commitment != output.coin_com
@@ -420,11 +474,16 @@ impl<D: DB> OfferBackedObservedState<D> {
             .wallet_funding
             .as_ref()
             .map_or(&[][..], |funding| &funding.inputs);
-        if plan.inputs().len() + wallet_funding.len() != self.offer.inputs.len() {
+        if plan.inputs().len() - transient_inputs.len() + wallet_funding.len()
+            != self.offer.inputs.len()
+        {
             return Err(ZswapIntentError::InputMismatch);
         }
         let mut matched = std::collections::HashSet::new();
-        for coin in plan.inputs() {
+        for (position, coin) in plan.inputs().iter().enumerate() {
+            if transient_inputs.contains(&position) {
+                continue;
+            }
             let info = CoinInfo::from(coin);
             let commitment = info.commitment(&CoinRecipient::Contract(self.observed.address));
             if coin.mt_index >= self.zswap.first_free
@@ -484,6 +543,12 @@ pub enum ZswapIntentError {
     InputMismatch,
     InputIndexMismatch,
     TransientsUnsupported,
+    TransientSelectionMismatch,
+    TransientOwnerMismatch,
+    TransientSegmentMismatch,
+    TransientDuplicate,
+    TransientEventMismatch,
+    TransientInputMismatch,
     WalletFundingOwner,
     WalletFundingDuplicate,
     WalletFundingMismatch,
@@ -825,3 +890,7 @@ fn prepare_call_inner<Private, Output: Into<AlignedValue>, D: DB>(
 #[cfg(test)]
 #[path = "transaction/zswap_tests.rs"]
 mod zswap_tests;
+
+#[cfg(test)]
+#[path = "transaction/transient_tests.rs"]
+mod transient_tests;

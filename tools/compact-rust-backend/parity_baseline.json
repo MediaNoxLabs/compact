@@ -4698,6 +4698,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/transient_receive_send_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "receive_then_send",
+    "signature": "export circuit receive_then_send( coin: ShieldedCoinInfo, recipient: Either<ZswapCoinPublicKey, ContractAddress> ): ShieldedSendResult",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/widening_arith_oracle.compact",
     "module_path": [],
     "kind": "circuit",

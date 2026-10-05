@@ -1211,6 +1211,7 @@ def main() -> None:
     parser.add_argument("--witness-composition", action="store_true", help="check unrelated witness composition preserves recording")
     parser.add_argument("--stateful-assert", action="store_true", help="check native stateful assertions and complete original micro-dao Cargo admission")
     parser.add_argument("--wide-add", action="store_true", help="check bounded native wide addition and original-source progress")
+    parser.add_argument("--transient-receive-send", action="store_true", help="check full immediate-send recording; optional strict transient proof")
     parser.add_argument("--canonical-output-order", action="store_true", help="check two-output recording; optional strict canonical-allocation proofs")
     parser.add_argument("--terminal-lexical-return", action="store_true", help="check terminal lexical recorded returns and optional four strict Dust proofs")
     parser.add_argument("--micro-dao-advance", action="store_true", help="check original microDAO advance recording; optional strict Dust proof")
@@ -1294,6 +1295,23 @@ def main() -> None:
             assert original.returncode == 0, original.stderr
             assert (base / "original-dao/contract/lib.rs").is_file()
             print("wide addition admitted; original micro-dao emits native Rust")
+            return
+        if args.transient_receive_send:
+            source = ROOT / "examples/rust_backend/transient_receive_send_oracle.compact"
+            output = base / "transient-receive-send"
+            run(compiler, "--target", "rust", "--rust-require-recording", "--skip-zk", str(source), str(output))
+            info = json.loads((output / "compiler/contract-info.json").read_text())
+            report = json.loads((output / "contract/rust-capabilities.json").read_text())
+            assert {c["name"] for c in info["circuits"] if c["proof"]} == {"receive_then_send"}
+            assert len(report["circuits"]) == 1
+            row = report["circuits"][0]
+            assert row["name"] == "receive_then_send" and row["proof_required"] and row["recorded"] and row["observed_call"]
+            run("cargo", "+1.99.0", "check", "--offline", "--manifest-path", str(output / "contract/Cargo.toml"))
+            if args.proof:
+                (output / "keys").mkdir(exist_ok=True)
+                run("zkir", "compile", str(output / "zkir/receive_then_send.zkir"), str(output / "keys/receive_then_send.prover"), str(output / "keys/receive_then_send.verifier"))
+                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--", "--transient-receive-send", str(output))
+            print("unchanged receive/full immediate-send: one proof-required recorded API; optional strict wallet/transient proof")
             return
         if args.canonical_output_order:
             source = ROOT / "examples/rust_backend/canonical_output_order_oracle.compact"
@@ -1810,6 +1828,8 @@ def main() -> None:
         run(sys.executable, str(Path(__file__).resolve()), "--micro-dao-token",
             *(["--proof"] if args.proof else []))
         run(sys.executable, str(Path(__file__).resolve()), "--micro-dao-reveal",
+            *(["--proof"] if args.proof else []))
+        run(sys.executable, str(Path(__file__).resolve()), "--transient-receive-send",
             *(["--proof"] if args.proof else []))
         run(sys.executable, str(Path(__file__).resolve()), "--canonical-output-order",
             *(["--proof"] if args.proof else []))

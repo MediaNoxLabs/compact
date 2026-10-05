@@ -1398,9 +1398,10 @@ let prepared = bound.prepare(call, verifier, randomness)?;
 `with_wallet_funding` on the options composes the existing explicit upstream wallet
 input selection; `new` and `OfferBackedObservedState::with_wallet_funding` retain
 exact-order behavior. Output ownership is not inferred from the funding selection.
-The canonical policy accepts normalized complete offers with persistent outputs
-only. It never normalizes after execution, deduplicates outputs, admits wallet
-change, or accepts transient coins.
+Without an explicit transient selection, the canonical policy accepts normalized
+complete offers with persistent outputs only. It never normalizes after execution,
+deduplicates outputs, or admits wallet change. ADR204 adds a separate typed
+transient selection below.
 
 The immutable upstream commitment map is installed before execution. Each source
 intent looks up its actual allocated index and checks typed recipient/owner
@@ -1434,3 +1435,63 @@ and reject spent-nullifier replay. The seed is an offline genesis prerequisite,
 not proof of an earlier transaction or network finality. Run
 `check_compactc_target.py --canonical-output-order` (optionally `--proof`), or reuse
 keys with `compact-rust-proof-smoke --canonical-output-order <proof-output>`.
+
+
+### Receive then full immediate shielded send (ADR204)
+
+The original `receiveShielded(coin)` followed by
+`sendImmediateShielded(coin, recipient, coin.value)` now has a recorded API through
+the shared typed planner. Its structural policy requires the same coin, forwarded
+recipient, full value, and the standard singleton-index-zero bridge. Every helper,
+unused binding and branch is audited. Partial immediate sends, merges, extra
+prefix effects, alternative coin/value projections and helper cycles remain
+outside this policy. Existing qualified historical sends retain their own policy.
+
+Before this change the generated crate exposed native execution for this wrapper;
+now it also exposes `ledger_contract::recorded::receive_then_send` and the typed
+`contract.recording.receive_then_send_call` facade.
+The runtime operations emitted by the planner are unchanged. Applications opt into
+transient reconciliation with actual upstream proof-bearing values:
+
+```rust
+let options = OfferBindingOptions::default()
+    .with_output_allocation(PersistentOutputAllocation::CanonicalOfferIndices)
+    .with_wallet_funding(wallet_inputs)
+    .with_transient_coins(ContractTransientCoins::from_transients(vec![transient])?);
+let bound = OfferBackedObservedState::with_options(observed, &ledger, offer, options)?;
+```
+
+The private plan retains the complete ordered input/output event projection.
+A selected transient must be output to the executing contract before it is spent,
+match the exact coin and nullifier, and use the singleton witness index zero.
+It is distinct from an already-qualified historical input even if that input's
+real ledger index is zero. Full upstream input/output proofs and metadata must
+match the selected offer carrier. Guaranteed segments, exact disjoint ordinary,
+wallet and transient input coverage, output ownership and the sealed allocation
+map are checked. The upstream prover and ledger remain responsible for proof
+validity. Default and wallet-only policies still reject transients.
+
+Seven independently captured TypeScript cases compare native and recorded values,
+all public operations, private outputs, effects, gas and replay. Gas evidence keeps
+the summed query cost, TypeScript wrapper's last-query cost and whole-program
+replay cost separate. Provisional source execution assigns received/final indices
+`[2, 3]`; the normalized offer assigns `[3, 2]`. Bound execution installs that
+immutable map before evaluation; independent replay uses that map too. No
+transcript or state is patched after execution.
+
+The original-source strict proof case starts above ledger frontier one, spends a
+real wallet input, carries a real contract transient and creates an ordinary user
+output. Its 4,480-byte contract proof verifies; all Zswap proofs, separate
+Night-backed Dust, default-strict validation and ledger application pass. Both
+nullifiers reject replay. A malformed singleton-index-one transient fails proving
+with a public-transcript input mismatch, under the same keys and funding setup.
+The seed is an explicit offline prerequisite, not a proved prior deposit history.
+
+Run `check_compactc_target.py --transient-receive-send` for the source/report/Cargo
+guard; add `--proof` for key generation and strict execution. Retained keys can be
+used by `compact-rust-proof-smoke --transient-receive-send <proof-output>` with
+`MIDNIGHT_LEDGER_TEST_STATIC_DIR` set to the upstream static fixture directory.
+ABI48/schema20 remain unchanged: policy options are additive, ordered events are
+private, and generated methods use existing runtime entry points. This closes
+this full immediate-send wrapper, not merge support or all original application
+recording gaps.

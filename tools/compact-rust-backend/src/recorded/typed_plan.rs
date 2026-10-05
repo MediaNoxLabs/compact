@@ -20,6 +20,7 @@ use super::*;
 use crate::coerce_expression;
 use crate::ir::{KernelClaimKind, ReturnPlan};
 mod field_observations;
+mod immediate_send;
 mod phase_reset;
 mod terminal_returns;
 mod unit_actions;
@@ -41,20 +42,32 @@ enum CompositeDomain {
     Intents,
     ShieldedReceive,
     ShieldedSend,
+    ImmediateShieldedSend,
     FieldObservations,
     TerminalReturns,
 }
 impl CompositeDomain {
+    fn shielded_send(self) -> bool {
+        matches!(self, Self::ShieldedSend | Self::ImmediateShieldedSend)
+    }
+
     fn values(self) -> bool {
         matches!(
             self,
-            Self::Values | Self::Intents | Self::FieldObservations | Self::ShieldedSend
+            Self::Values
+                | Self::Intents
+                | Self::FieldObservations
+                | Self::ShieldedSend
+                | Self::ImmediateShieldedSend
         )
     }
     fn intents(self) -> bool {
         matches!(
             self,
-            Self::Intents | Self::ShieldedReceive | Self::ShieldedSend
+            Self::Intents
+                | Self::ShieldedReceive
+                | Self::ShieldedSend
+                | Self::ImmediateShieldedSend
         )
     }
 }
@@ -160,6 +173,13 @@ impl Plan<'_> {
 
     fn pure_value(&self, value: &Expr, visiting: &mut HashSet<String>) -> bool {
         match value {
+            Expr::UnsignedLiteral { value, max }
+                if self.composite_domain == CompositeDomain::ImmediateShieldedSend
+                    && value == "0"
+                    && max == &u64::MAX.to_string() =>
+            {
+                true
+            }
             Expr::Default {
                 ty: Type::OpaqueString,
             } => true,
@@ -246,7 +266,7 @@ impl Plan<'_> {
                 if self.read_only_assertions
                     || self.unit_actions
                     || self.phase_reset
-                    || self.composite_domain == CompositeDomain::ShieldedSend =>
+                    || self.composite_domain.shielded_send() =>
             {
                 Some(TypedValue {
                     ty: Type::Unit,
@@ -258,7 +278,7 @@ impl Plan<'_> {
                 value,
             } if self.read_only_assertions
                 || self.unit_actions
-                || self.composite_domain == CompositeDomain::ShieldedSend =>
+                || self.composite_domain.shielded_send() =>
             {
                 for expression in expressions {
                     if self.expression(expression, scope, steps)?.ty != Type::Unit {
@@ -414,7 +434,7 @@ impl Plan<'_> {
                 self.bind(value, Type::Unsigned { max: max.clone() }, steps)
             }
             Expr::UnsignedSubtract { max, left, right }
-                if self.composite_domain == CompositeDomain::ShieldedSend =>
+                if self.composite_domain.shielded_send() =>
             {
                 let left = self.expression(left, scope, steps)?;
                 let right = self.expression(right, scope, steps)?;
@@ -552,7 +572,7 @@ impl Plan<'_> {
                 if self.context_query
                     || self.scalar_body_depth > 0
                     || self.unit_actions
-                    || self.composite_domain == CompositeDomain::ShieldedSend =>
+                    || self.composite_domain.shielded_send() =>
             {
                 let values = elements
                     .iter()
@@ -616,9 +636,7 @@ impl Plan<'_> {
                     steps,
                 )
             }
-            Expr::DegradeToTransient { value }
-                if self.composite_domain == CompositeDomain::ShieldedSend =>
-            {
+            Expr::DegradeToTransient { value } if self.composite_domain.shielded_send() => {
                 let value = self.expression(value, scope, steps)?;
                 if value.ty != (Type::Bytes { length: 32 }) {
                     return None;
@@ -630,9 +648,7 @@ impl Plan<'_> {
                     steps,
                 )
             }
-            Expr::TransientHash { value }
-                if self.composite_domain == CompositeDomain::ShieldedSend =>
-            {
+            Expr::TransientHash { value } if self.composite_domain.shielded_send() => {
                 let value = self.expression(value, scope, steps)?;
                 if value.ty
                     != (Type::Tuple {
@@ -648,9 +664,7 @@ impl Plan<'_> {
                     steps,
                 )
             }
-            Expr::UpgradeFromTransient { value }
-                if self.composite_domain == CompositeDomain::ShieldedSend =>
-            {
+            Expr::UpgradeFromTransient { value } if self.composite_domain.shielded_send() => {
                 let value = self.expression(value, scope, steps)?;
                 if value.ty != Type::Field {
                     return None;
@@ -868,9 +882,7 @@ impl Plan<'_> {
             .copied();
         match (pure, stateful) {
             (Some(callee), None) => {
-                if self.composite_domain.values()
-                    && self.composite_domain != CompositeDomain::ShieldedSend
-                {
+                if self.composite_domain.values() && !self.composite_domain.shielded_send() {
                     return None;
                 } // preserve ADR0187 admission
                 if self.context_query || (self.unit_actions && !self.composite_domain.intents()) {
@@ -899,7 +911,22 @@ impl Plan<'_> {
                 }
             }
             (None, Some(callee)) => {
-                if self.composite_domain == CompositeDomain::ShieldedSend {
+                if self.composite_domain.shielded_send() {
+                    if self.composite_domain == CompositeDomain::ImmediateShieldedSend
+                        && shielded_unit_signature(callee)
+                    {
+                        return self.inline_call(
+                            name,
+                            &callee.parameters,
+                            &callee.result,
+                            &Expr::Unit,
+                            &callee.actions,
+                            arguments,
+                            scope,
+                            steps,
+                            false,
+                        );
+                    }
                     let StateReturn::Expression { value } = &callee.return_value else {
                         return None;
                     };
@@ -2406,6 +2433,57 @@ fn shielded_send_value(
     }
 }
 
+fn shielded_plan<'a>(
+    ledger: &'a HashMap<&'a str, &'a LedgerField>,
+    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,
+    pure: &'a HashMap<&'a str, &'a PureCircuit>,
+    circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
+    domain: CompositeDomain,
+) -> Plan<'a> {
+    Plan {
+        ledger,
+        witnesses,
+        pure,
+        next: 0,
+        witness_calls: 0,
+        kernel_self_reads: 0,
+        context_query: false,
+        root_observations: 0,
+        tree_writes: 0,
+        set_writes: 0,
+        counter_writes: 0,
+        counter_reads: 0,
+        counter_comparisons: 0,
+        cell_reads: 0,
+        cell_writes: 0,
+        field_cell_writes: 0,
+        field_cell_slot: None,
+        effectful_field_cells: false,
+        read_only_assertions: false,
+        unit_actions: domain == CompositeDomain::ImmediateShieldedSend,
+        phase_reset: false,
+        composite_domain: domain,
+        intent_effects: 0,
+        intent_queries: 0,
+        zswap_inputs: 0,
+        zswap_outputs: 0,
+        counter_hash_helpers: false,
+        scalar_arguments: false,
+        scalar_body_depth: 0,
+        scalar_helper_calls: 0,
+        scalar_counter_reads: 0,
+        active_calls: HashSet::new(),
+        stateful_circuits: Some(circuits),
+        optional_cells: 0,
+        opaque_cells: 0,
+        historic_roots: 0,
+        historic_writes: 0,
+        qualified_set_reads: 0,
+        qualified_set_writes: 0,
+        qualified_cell_writes: 0,
+    }
+}
+
 pub(super) fn lower_shielded_send<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
@@ -2434,48 +2512,13 @@ pub(super) fn lower_shielded_send<'a>(
     {
         return None;
     }
-    let mut plan = Plan {
+    let mut plan = shielded_plan(
         ledger,
         witnesses,
         pure,
-        next: 0,
-        witness_calls: 0,
-        kernel_self_reads: 0,
-        context_query: false,
-        root_observations: 0,
-        tree_writes: 0,
-        set_writes: 0,
-        counter_writes: 0,
-        counter_reads: 0,
-        counter_comparisons: 0,
-        cell_reads: 0,
-        cell_writes: 0,
-        field_cell_writes: 0,
-        field_cell_slot: None,
-        effectful_field_cells: false,
-        read_only_assertions: false,
-        unit_actions: false,
-        phase_reset: false,
-        composite_domain: CompositeDomain::ShieldedSend,
-        intent_effects: 0,
-        intent_queries: 0,
-        zswap_inputs: 0,
-        zswap_outputs: 0,
-        counter_hash_helpers: false,
-        scalar_arguments: false,
-        scalar_body_depth: 0,
-        scalar_helper_calls: 0,
-        scalar_counter_reads: 0,
-        active_calls: HashSet::new(),
-        stateful_circuits: Some(circuits),
-        optional_cells: 0,
-        opaque_cells: 0,
-        historic_roots: 0,
-        historic_writes: 0,
-        qualified_set_reads: 0,
-        qualified_set_writes: 0,
-        qualified_cell_writes: 0,
-    };
+        circuits,
+        CompositeDomain::ShieldedSend,
+    );
     let scope = circuit
         .parameters
         .iter()
@@ -3897,4 +3940,14 @@ mod shielded_send_tests {
         malformed["stateful_circuits"][0]["result"] = json!({"kind":"boolean"});
         assert!(!admitted(&malformed)[1]);
     }
+}
+
+pub(super) fn lower_immediate_shielded_send<'a>(
+    circuit: &StatefulCircuit,
+    ledger: &'a HashMap<&'a str, &'a LedgerField>,
+    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,
+    pure: &'a HashMap<&'a str, &'a PureCircuit>,
+    circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
+) -> Option<TypedPlan> {
+    immediate_send::lower(circuit, ledger, witnesses, pure, circuits)
 }

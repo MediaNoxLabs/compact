@@ -486,6 +486,11 @@ impl<Private, D: DB> CircuitContext<Private, D> {
 
     /// Append an input intent; this does not spend a wallet coin or validate an offer.
     pub fn create_zswap_input(&mut self, coin: ledger::QualifiedCoinInfo) {
+        self.circuit_zswap
+            .events
+            .push(crate::zswap::IntentEvent::Input(
+                self.circuit_zswap.inputs.len(),
+            ));
         self.circuit_zswap.inputs.push(coin);
     }
 
@@ -556,6 +561,11 @@ impl<Private, D: DB> CircuitContext<Private, D> {
                 .insert(commitment, self.circuit_zswap.next_index);
         }
         self.circuit_zswap.next_index = next;
+        self.circuit_zswap
+            .events
+            .push(crate::zswap::IntentEvent::Output(
+                self.circuit_zswap.outputs.len(),
+            ));
         self.circuit_zswap.outputs.push(crate::CircuitZswapOutput {
             provisional_index: index,
             coin,

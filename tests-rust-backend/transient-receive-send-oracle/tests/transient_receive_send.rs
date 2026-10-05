@@ -91,6 +91,48 @@ fn unchanged_receive_then_full_immediate_send_matches_raw_typescript() {
     for row in fixture()["rows"].as_array().unwrap() {
         let native =
             ledger_contract::receive_then_send(initial(row), coin(row), recipient(row)).unwrap();
+        let recorded =
+            ledger_contract::recorded::receive_then_send(initial(row), coin(row), recipient(row))
+                .unwrap();
+        assert_eq!(recorded.execution.result, native.result);
+        assert_eq!(
+            recorded.execution.context.query.state,
+            native.context.query.state
+        );
+        assert_eq!(
+            recorded.execution.context.query.effects,
+            native.context.query.effects
+        );
+        assert_eq!(
+            recorded.execution.context.circuit_zswap(),
+            native.context.circuit_zswap()
+        );
+        assert_eq!(
+            recorded.execution.private_transcript_outputs,
+            native.private_transcript_outputs
+        );
+        assert_eq!(recorded.execution.gas_cost, native.gas_cost);
+        assert_eq!(json!(recorded.public.verify_ops()), row["publicTranscript"]);
+        let replay = recorded
+            .public
+            .initial()
+            .query(
+                recorded.public.verify_ops(),
+                None,
+                &recorded.execution.context.cost_model,
+            )
+            .unwrap();
+        assert_eq!(replay.context.state, native.context.query.state);
+        assert_eq!(replay.context.effects, native.context.query.effects);
+        for dimension in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+            assert_eq!(
+                json!(replay.gas_cost)[dimension]
+                    .as_u64()
+                    .unwrap()
+                    .to_string(),
+                row["wholeProgramReplayGas"][dimension]
+            );
+        }
         assert!(!native.result.change.is_some);
         assert_eq!(coin_json(&native.result.sent), row["result"]["sent"]);
         assert_eq!(

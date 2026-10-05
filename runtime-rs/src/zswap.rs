@@ -17,7 +17,8 @@
 
 use crate::ledger::{CoinInfo, CoinRecipient, QualifiedCoinInfo};
 
-/// One persistent output allocated by the retained complete upstream offer.
+/// One policy-approved output allocated by the retained complete upstream offer.
+/// Includes explicitly selected transients when that policy is enabled.
 #[cfg(feature = "ledger-transaction")]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct BoundOutput {
@@ -61,19 +62,28 @@ pub struct CircuitZswapOutput {
     pub recipient: CoinRecipient,
 }
 
+/// Successful cross-kind intent order. Indices refer to the existing typed
+/// vectors; this is provenance, not another execution representation.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum IntentEvent {
+    Input(usize),
+    Output(usize),
+}
+
 /// Native execution's provisional output cursor and ordered circuit intents.
 /// Ledger validation and offer reconciliation remain separate operations.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct CircuitZswapPlan {
     pub(crate) next_index: u64,
     pub(crate) inputs: Vec<QualifiedCoinInfo>,
+    pub(crate) events: Vec<IntentEvent>,
     pub(crate) outputs: Vec<CircuitZswapOutput>,
     pub(crate) allocation: Allocation,
 }
 
 impl CircuitZswapPlan {
     pub fn is_empty(&self) -> bool {
-        self.inputs.is_empty() && self.outputs.is_empty()
+        self.inputs.is_empty() && self.outputs.is_empty() && self.events.is_empty()
     }
 
     /// Logical progress: start plus the number of source-ordered output intents.
@@ -217,13 +227,14 @@ mod tests {
 
     #[test]
     fn local_helper_audit_rejects_input_cursor_and_output_effects() {
-        for mode in 0..3 {
+        for mode in 0..4 {
             let rejected = RecordingFrame::new(context()).call_local(|mut ctx| {
                 let (coin, recipient) = output();
                 match mode {
                     0 => ctx.create_zswap_input(coin.qualify(4)),
                     1 => ctx.set_zswap_output_start(7)?,
-                    _ => ctx.create_zswap_output(coin, recipient.clone())?,
+                    2 => ctx.create_zswap_output(coin, recipient.clone())?,
+                    _ => ctx.circuit_zswap.events.push(IntentEvent::Input(0)),
                 }
                 Ok(CircuitResult {
                     context: ctx,

@@ -9,9 +9,10 @@ source root when compiled with `--rust-runtime-root`.
 
 The current runtime ABI is 48. It adds recorded native Zswap intent methods,
 sealed intent traces and exact authoritative offer reconciliation. Ordinary
-observations stay allocation-locked; extra wallet inputs/change and transients
-remain outside the bounded intent scope. Empty intent plans retain legacy
-offer-backed preparation.
+observations stay allocation-locked. Explicit offer options can select exact
+wallet funding inputs, canonical output indices, and same-contract guaranteed
+transient coins; wallet change remains unsupported. Default policies retain their
+previous restrictions. Empty intent plans retain legacy offer-backed preparation.
 ABI 47 adds bounded recorded Kernel claim/mint
 methods that reuse the native canonical programs and common recording executor.
 ABI 46 adds checked native wide unsigned addition; ABI 45 adds native Kernel

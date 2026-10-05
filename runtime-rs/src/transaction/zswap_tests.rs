@@ -23,14 +23,14 @@ use midnight_storage::arena::Sp;
 use midnight_zswap::{Input, Output};
 use rand::{SeedableRng, rngs::StdRng};
 
-fn coin(nonce: u8) -> CoinInfo {
+pub(super) fn coin(nonce: u8) -> CoinInfo {
     CoinInfo {
         nonce: CoinNonce(HashOutput([nonce; 32])),
         type_: ShieldedTokenType(HashOutput([2; 32])),
         value: 42,
     }
 }
-fn setup() -> (
+pub(super) fn setup() -> (
     OfferBackedObservedState,
     crate::ledger::QualifiedCoinInfo,
     CoinInfo,

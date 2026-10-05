@@ -2051,6 +2051,7 @@ dependencies = [
  "compact-rust-test-center-micro-dao-fixture",
  "compact-rust-test-center-welcome-fixture",
  "compact-rust-tiny-oracle-fixture",
+ "compact-rust-transient-receive-send-oracle-fixture",
  "compact-rust-uints-oracle-fixture",
  "compact-rust-vector-key-adt-fixture",
  "compact-rust-wide-uint-oracle-fixture",

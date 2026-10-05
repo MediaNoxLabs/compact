@@ -95,6 +95,7 @@ mod terminal_lexical_return;
 mod terminal_lexical_return_support;
 mod test_center_counter;
 mod test_center_welcome;
+mod transient_receive_send;
 mod unsigned_recording;
 mod unused_field_reads;
 mod vector_map;
@@ -2035,6 +2036,27 @@ fn run() -> Result<(), Box<dyn Error>> {
             Ok(Ok(())) => Ok(()),
             Ok(Err(error)) => Err(error.into()),
             Err(_) => Err("microDAO reveal proof thread panicked".into()),
+        };
+    }
+    if first.as_deref() == Some(OsStr::new("--transient-receive-send")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --transient-receive-send <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err(
+                "usage: compact-rust-proof-smoke --transient-receive-send <proof-output>".into(),
+            );
+        }
+        let proof = std::thread::Builder::new()
+            .name("transient-receive-send-proof".into())
+            .stack_size(64 * 1024 * 1024)
+            .spawn(move || {
+                transient_receive_send::run(Path::new(&root)).map_err(|e| e.to_string())
+            })?;
+        return match proof.join() {
+            Ok(Ok(())) => Ok(()),
+            Ok(Err(error)) => Err(error.into()),
+            Err(_) => Err("transient receive/send proof thread panicked".into()),
         };
     }
     if first.as_deref() == Some(OsStr::new("--canonical-output-order")) {

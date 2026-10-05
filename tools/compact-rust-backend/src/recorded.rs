@@ -21,8 +21,8 @@ use serde::Serialize;
 use std::collections::{HashMap, HashSet};
 
 use crate::ir::{
-    CounterAmount, Expr, LedgerField, LedgerFieldKind, LocalBinding, PureCircuit, StateAction,
-    StateReturn, StatefulCircuit, Type, WitnessDeclaration,
+    ComparisonOperator, CounterAmount, Expr, LedgerField, LedgerFieldKind, LocalBinding,
+    PureCircuit, StateAction, StateReturn, StatefulCircuit, Type, WitnessDeclaration,
 };
 use crate::stateful::circuit_uses_witness;
 use crate::{
@@ -1568,6 +1568,224 @@ fn render_recorded_item(
         steps.push(syn::parse_quote!(
             crate::pure_circuits::#method(#(#typed_arguments),*)?;
         ));
+        Ok(Some(steps))
+    }
+
+    // A custody grant read has a disclosed opaque key, one Map membership
+    // guard, one typed composite lookup, and a closed pure time assertion.
+    // Keep this exact asset shape separate from general OpaqueString Lets and
+    // general struct Map lookups until their own proof parity is established.
+    fn closed_custody_grant_steps(
+        circuit: &StatefulCircuit,
+        parameters: &HashMap<&str, (&Type, syn::Ident)>,
+        ledger_fields: &HashMap<&str, &LedgerField>,
+        pure_circuits: &HashMap<&str, &PureCircuit>,
+    ) -> Result<Option<Vec<syn::Stmt>>, RenderError> {
+        let [key_parameter, time_parameter] = circuit.parameters.as_slice() else {
+            return Ok(None);
+        };
+        let uint64 = Type::Unsigned {
+            max: u64::MAX.to_string(),
+        };
+        if circuit.name != "assertGrantEffective"
+            || key_parameter.ty != Type::OpaqueString
+            || time_parameter.ty != uint64
+            || circuit.result != Type::Unit
+            || circuit.return_value != StateReturn::Unit
+        {
+            return Ok(None);
+        }
+        let [
+            StateAction::Let {
+                bindings: key_bindings,
+                action,
+            },
+        ] = circuit.actions.as_slice()
+        else {
+            return Ok(None);
+        };
+        let [key_binding] = key_bindings.as_slice() else {
+            return Ok(None);
+        };
+        if key_binding.ty != Type::OpaqueString
+            || !matches!(&key_binding.value, Expr::Parameter { name } if name == &key_parameter.name)
+        {
+            return Ok(None);
+        }
+        let StateAction::Sequence { actions } = action.as_ref() else {
+            return Ok(None);
+        };
+        let [
+            StateAction::Assert {
+                condition:
+                    Expr::MapMember {
+                        field: member_field,
+                        index: member_index,
+                        key: member_key,
+                    },
+                message,
+            },
+            StateAction::Let {
+                bindings: grant_bindings,
+                action: grant_action,
+            },
+        ] = actions.as_slice()
+        else {
+            return Ok(None);
+        };
+        let [grant_binding] = grant_bindings.as_slice() else {
+            return Ok(None);
+        };
+        let Expr::MapLookup {
+            field: lookup_field,
+            index: lookup_index,
+            key: lookup_key,
+        } = &grant_binding.value
+        else {
+            return Ok(None);
+        };
+        let StateAction::PureCall {
+            name: pure_name,
+            arguments,
+        } = grant_action.as_ref()
+        else {
+            return Ok(None);
+        };
+        let [grant_argument, time_argument] = arguments.as_slice() else {
+            return Ok(None);
+        };
+        if member_field != "custodyGrants"
+            || lookup_field != member_field
+            || member_index != lookup_index
+            || !matches!(member_key.as_ref(), Expr::Parameter { name } if name == &key_binding.name)
+            || !matches!(lookup_key.as_ref(), Expr::Parameter { name } if name == &key_binding.name)
+            || pure_name != "assertGrantNotFuture"
+            || !matches!(grant_argument, Expr::Coerce { value, ty }
+                if ty == &grant_binding.ty && matches!(value.as_ref(), Expr::Parameter { name } if name == &grant_binding.name))
+            || !matches!(time_argument, Expr::Coerce { value, ty }
+                if ty == &uint64 && matches!(value.as_ref(), Expr::Parameter { name } if name == &time_parameter.name))
+        {
+            return Ok(None);
+        }
+        let Type::Struct {
+            name: grant_name,
+            fields: grant_fields,
+        } = &grant_binding.ty
+        else {
+            return Ok(None);
+        };
+        let [code, holder, granted_at] = grant_fields.as_slice() else {
+            return Ok(None);
+        };
+        let Type::Struct {
+            name: holder_name,
+            fields: holder_fields,
+        } = &holder.ty
+        else {
+            return Ok(None);
+        };
+        if grant_name != "CustodyGrant"
+            || code.name != "code"
+            || code.ty != (Type::Bytes { length: 32 })
+            || holder.name != "holder"
+            || holder_name != "ContractAddress"
+            || !matches!(holder_fields.as_slice(), [field]
+                if field.name == "bytes" && field.ty == (Type::Bytes { length: 32 }))
+            || granted_at.name != "grantedAt"
+            || granted_at.ty != uint64
+        {
+            return Ok(None);
+        }
+        let Some(slot) = ledger_fields.get(member_field.as_str()) else {
+            return Ok(None);
+        };
+        if slot.index != *member_index
+            || slot.physical_path() != [1, 11]
+            || slot.declaration
+                != (LedgerFieldKind::Map {
+                    key: Type::OpaqueString,
+                    value: grant_binding.ty.clone(),
+                })
+        {
+            return Ok(None);
+        }
+        let Some(pure) = pure_circuits.get(pure_name.as_str()) else {
+            return Ok(None);
+        };
+        let [pure_grant, pure_time] = pure.parameters.as_slice() else {
+            return Ok(None);
+        };
+        let Expr::Sequence {
+            steps: pure_steps,
+            value: pure_value,
+        } = &pure.body
+        else {
+            return Ok(None);
+        };
+        let [
+            Expr::Assert {
+                condition: pure_condition,
+                ..
+            },
+        ] = pure_steps.as_slice()
+        else {
+            return Ok(None);
+        };
+        let Expr::Let {
+            bindings: pure_bindings,
+            body,
+        } = pure_condition.as_ref()
+        else {
+            return Ok(None);
+        };
+        let [projected] = pure_bindings.as_slice() else {
+            return Ok(None);
+        };
+        if pure.result != Type::Unit
+            || pure_grant.ty != grant_binding.ty
+            || pure_time.ty != uint64
+            || !matches!(pure_value.as_ref(), Expr::Unit)
+            || projected.ty != uint64
+            || !matches!(&projected.value, Expr::StructField { value, field, index: 2 }
+                if field == "grantedAt" && matches!(value.as_ref(), Expr::Parameter { name } if name == &pure_grant.name))
+            || !matches!(body.as_ref(), Expr::Compare { operator: ComparisonOperator::LessEqual, left, right }
+                if matches!(left.as_ref(), Expr::Parameter { name } if name == &projected.name)
+                    && matches!(right.as_ref(), Expr::Parameter { name } if name == &pure_time.name))
+        {
+            return Ok(None);
+        }
+        let (_, key_source) = parameters
+            .get(key_parameter.name.as_str())
+            .expect("closed grant key is declared");
+        let (_, time_source) = parameters
+            .get(time_parameter.name.as_str())
+            .expect("closed grant time is declared");
+        let slot = ident(member_field)?;
+        let method = ident(pure_name)?;
+        let grant_ty = rust_type(&grant_binding.ty)?;
+        let steps = vec![
+            syn::parse_quote!(let __compact_recorded_grant_key: runtime::OpaqueString = (#key_source).clone();),
+            syn::parse_quote!(
+                let (frame, __compact_recorded_grant_member): (_, bool) =
+                    crate::ledger_slots::#slot.record_member(frame, __compact_recorded_grant_key.clone())?;
+            ),
+            syn::parse_quote!(
+                if !__compact_recorded_grant_member {
+                    return Err(runtime::CompactError::AssertionFailed(#message.to_owned()));
+                }
+            ),
+            syn::parse_quote!(
+                let (frame, __compact_recorded_grant): (_, #grant_ty) =
+                    crate::ledger_slots::#slot.record_lookup(frame, __compact_recorded_grant_key)?;
+            ),
+            syn::parse_quote!(
+                let __compact_recorded_as_of: runtime::BoundedUint<18446744073709551615> =
+                    #time_source;
+            ),
+            syn::parse_quote!(
+                crate::pure_circuits::#method(__compact_recorded_grant, __compact_recorded_as_of)?;
+            ),
+        ];
         Ok(Some(steps))
     }
 
@@ -5821,18 +6039,24 @@ fn render_recorded_item(
     let organizer_gate = organizer_steps.is_some();
     let opaque_map_operation = closed_opaque_map_operation(circuit, ledger_fields);
     let opaque_asset_removal = closed_opaque_asset_removal(circuit, ledger_fields);
+    let custody_steps =
+        closed_custody_grant_steps(circuit, &parameters, ledger_fields, pure_circuits)?;
+    let custody_gate = custody_steps.is_some();
     let guarded_pure_steps =
         closed_guarded_struct_pure_steps(circuit, &parameters, pure_circuits, circuits)?.or(
             closed_guarded_unsigned_product_steps(circuit, &parameters, pure_circuits)?,
         );
     let guarded_pure_call = guarded_pure_steps.is_some();
-    let mut steps = organizer_steps.or(guarded_pure_steps).unwrap_or_default();
+    let mut steps = organizer_steps
+        .or(custody_steps)
+        .or(guarded_pure_steps)
+        .unwrap_or_default();
     let mut next_temp = 0;
     let mut visiting = HashSet::from([circuit.name.clone()]);
     // A root Let encloses both its ordered actions and its final return.
     // Capture this exact Field Cell read once, before the nested actions,
     // so the returned value cannot accidentally observe the post-write state.
-    let root_field_return = if !organizer_gate && !guarded_pure_call {
+    let root_field_return = if !organizer_gate && !custody_gate && !guarded_pure_call {
         match (circuit.actions.as_slice(), &circuit.return_value) {
             (
                 [StateAction::Let { bindings, action }],
@@ -5869,7 +6093,7 @@ fn render_recorded_item(
         None
     };
     let mut recorded_root_return: Option<(&str, syn::Expr)> = None;
-    if !organizer_gate {
+    if !organizer_gate && !custody_gate {
         if let Some((name, field, action)) = root_field_return {
             let slot = ident(field)?;
             let saved = syn::Ident::new("__compact_recorded_root_return", Span::call_site());
@@ -6694,6 +6918,7 @@ fn render_recorded_item(
         && !closed_opaque_set_operation(circuit, ledger_fields)
         && opaque_map_operation.is_none()
         && !opaque_asset_removal
+        && !custody_gate
         && !organizer_gate
     {
         return Ok(RecordingOutcome::Unsupported(

@@ -1557,7 +1557,7 @@ def main() -> None:
             capabilities = json.loads(
                 (asset_writable_proof / "contract/rust-capabilities.json").read_text()
             )
-            for circuit in ("setCustodian", "tag", "removeRecord"):
+            for circuit in ("setCustodian", "tag", "removeRecord", "assertGrantEffective"):
                 capability = next(item for item in capabilities["circuits"]
                                   if item["name"] == circuit)
                 assert capability["proof_required"] and capability["recorded"] \
@@ -1823,6 +1823,10 @@ def main() -> None:
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 "--asset-removal", str(asset_writable_proof),
+            )
+            run(
+                "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--asset-grant-effective", str(asset_writable_proof),
             )
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",

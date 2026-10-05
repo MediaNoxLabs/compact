@@ -1434,6 +1434,33 @@ pub mod ledger_contract {
             let (frame, _) = __compact_recorded_body_recordWrite(frame, witnesses)?;
             Ok(frame.finish(()))
         }
+        pub fn assertGrantEffective<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::OpaqueString,
+            __compact_param_1: runtime::BoundedUint<18446744073709551615>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_grant_key: runtime::OpaqueString = (__compact_param_0).clone();
+            let (frame, __compact_recorded_grant_member): (_, bool) =
+                crate::ledger_slots::custodyGrants
+                    .record_member(frame, __compact_recorded_grant_key.clone())?;
+            if !__compact_recorded_grant_member {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "grant does not exist".to_owned(),
+                ));
+            }
+            let (frame, __compact_recorded_grant): (_, crate::types::CustodyGrant) =
+                crate::ledger_slots::custodyGrants
+                    .record_lookup(frame, __compact_recorded_grant_key)?;
+            let __compact_recorded_as_of: runtime::BoundedUint<18446744073709551615> =
+                __compact_param_1;
+            crate::pure_circuits::assertGrantNotFuture(
+                __compact_recorded_grant,
+                __compact_recorded_as_of,
+            )?;
+            Ok(frame.finish(()))
+        }
         pub fn acceptIfFresh<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
             witnesses: &W,
@@ -1477,7 +1504,41 @@ pub mod ledger_contract {
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
-        impl Contract {}
+        impl Contract {
+            pub fn assertGrantEffective<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                grantId: runtime::OpaqueString,
+                asOf: runtime::BoundedUint<18446744073709551615>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::assertGrantEffective(context, grantId, asOf)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn assertGrantEffective_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                grantId: runtime::OpaqueString,
+                asOf: runtime::BoundedUint<18446744073709551615>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(((grantId).clone(), asOf));
+                let recorded = self.assertGrantEffective(
+                    observed.circuit_context(private_state),
+                    grantId,
+                    asOf,
+                )?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "assertGrantEffective",
+                    input,
+                ))
+            }
+        }
         /// A recording handle with access to the contract's witnesses.
         pub struct BorrowedContract<'a, W> {
             pub(super) witnesses: &'a W,
@@ -1576,6 +1637,39 @@ pub mod ledger_contract {
                 let recorded = self.tag(observed.circuit_context(private_state), value)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed, recorded, "tag", input,
+                ))
+            }
+            pub fn assertGrantEffective<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                grantId: runtime::OpaqueString,
+                asOf: runtime::BoundedUint<18446744073709551615>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                assertGrantEffective(context, grantId, asOf)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn assertGrantEffective_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                grantId: runtime::OpaqueString,
+                asOf: runtime::BoundedUint<18446744073709551615>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(((grantId).clone(), asOf));
+                let recorded = self.assertGrantEffective(
+                    observed.circuit_context(private_state),
+                    grantId,
+                    asOf,
+                )?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "assertGrantEffective",
+                    input,
                 ))
             }
             pub fn acceptIfFresh<Private>(

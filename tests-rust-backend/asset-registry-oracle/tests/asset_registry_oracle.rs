@@ -16,10 +16,11 @@
 // limitations under the License.
 
 use compact_rust_asset_registry_oracle_fixture::ledger_contract::{
-    LedgerView, Witnesses, close, initial_state, recorded, removeRecord, setRecord, setWatch, tag,
+    LedgerView, Witnesses, assertGrantEffective, close, initial_state, recorded, removeRecord,
+    setCustodyGrant, setRecord, setWatch, tag,
 };
 use compact_rust_asset_registry_oracle_fixture::types::{
-    AssetClass, AssetRecord, ListMutation, RecordMutation,
+    AssetClass, AssetRecord, ContractAddress as Holder, CustodyGrant, ListMutation, RecordMutation,
 };
 use midnight_compact_runtime as runtime;
 use midnight_onchain_state::state::{
@@ -410,4 +411,138 @@ fn recorded_asset_removal_rejects_missing_and_watched_records() {
     .err()
     .unwrap();
     assert_eq!(watched.to_string(), oracle["watchedError"]);
+}
+
+fn context_with_grant() -> runtime::context::CircuitContext<()> {
+    let initial = initial_state(ConstructorContext::new(()), &ParityStub).unwrap();
+    let grant = CustodyGrant {
+        code: runtime::FixedBytes::new([0; 32]),
+        holder: Holder {
+            bytes: runtime::FixedBytes::new([7; 32]),
+        },
+        grantedAt: runtime::BoundedUint::new(100).unwrap(),
+    };
+    setCustodyGrant(
+        initial.into_circuit_context(ContractAddress::default()),
+        &ParityStub,
+        runtime::OpaqueString::from("grant-1"),
+        grant,
+        RecordMutation::Insert,
+    )
+    .unwrap()
+    .context
+}
+
+#[test]
+fn recorded_grant_effectiveness_matches_typescript_native_and_replay() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/asset-grant-effective.json"
+    ))
+    .unwrap();
+    let expected = &oracle["effective"];
+    let key = runtime::OpaqueString::from("grant-1");
+    let time = runtime::BoundedUint::new(120).unwrap();
+    let native_context = context_with_grant();
+    let recorded_context = context_with_grant();
+    assert_eq!(
+        state_hex(native_context.query.state.get_ref().clone()),
+        oracle["preReadHex"]
+    );
+    let native = assertGrantEffective(native_context, key.clone(), time).unwrap();
+    let recorded = recorded::assertGrantEffective(recorded_context, key, time).unwrap();
+    let _: () = native.result;
+    let _: () = recorded.execution.result;
+    assert_eq!(expected["result"], serde_json::json!([]));
+    assert_eq!(native.gas_cost, recorded.execution.gas_cost);
+    for output in [&native, &recorded.execution] {
+        assert_eq!(
+            state_hex(output.context.query.state.get_ref().clone()),
+            expected["stateHex"]
+        );
+        assert_eq!(expected["stateHex"], oracle["preReadHex"]);
+        assert!(output.private_transcript_outputs.is_empty());
+        let gas = serde_json::to_value(output.gas_cost).unwrap();
+        for key in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+            let amount: u64 = expected["queries"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|query| {
+                    query["gasCost"][key]
+                        .as_str()
+                        .unwrap()
+                        .parse::<u64>()
+                        .unwrap()
+                })
+                .sum();
+            assert_eq!(gas[key], amount, "{key}");
+        }
+    }
+    assert_eq!(
+        native.context.query.effects,
+        recorded.execution.context.query.effects
+    );
+    assert_eq!(expected["privateTranscriptOutputs"], serde_json::json!([]));
+    let _: () = recorded.execution.context.private_state;
+    assert!(expected["privateState"].is_null());
+
+    let mut program = serde_json::to_value(recorded.public.verify_ops()).unwrap();
+    let expected_program = expected["queries"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .flat_map(|query| query["program"].as_array().unwrap().iter().cloned())
+        .collect::<Vec<_>>();
+    assert_eq!(program.as_array().unwrap().len(), expected_program.len());
+    for operation in program.as_array_mut().unwrap() {
+        if let Some(popeq) = operation.get_mut("popeq") {
+            popeq.as_object_mut().unwrap().remove("result");
+        }
+    }
+    assert_eq!(program, serde_json::Value::Array(expected_program));
+
+    let replay = recorded
+        .public
+        .initial()
+        .query(
+            recorded.public.verify_ops(),
+            None,
+            &recorded.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(replay.context.effects, native.context.query.effects);
+    assert_eq!(
+        state_hex(replay.context.state.get_ref().clone()),
+        expected["stateHex"]
+    );
+    let replay_gas = serde_json::to_value(replay.gas_cost).unwrap();
+    for key in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+        let expected_gas: u64 = oracle["replayGas"][key].as_str().unwrap().parse().unwrap();
+        assert_eq!(replay_gas[key], expected_gas, "replay {key}");
+    }
+}
+
+#[test]
+fn recorded_grant_effectiveness_rejects_missing_and_future_grants() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/asset-grant-effective.json"
+    ))
+    .unwrap();
+    let initial = initial_state(ConstructorContext::new(()), &ParityStub).unwrap();
+    let missing = recorded::assertGrantEffective(
+        initial.into_circuit_context(ContractAddress::default()),
+        runtime::OpaqueString::from("missing"),
+        runtime::BoundedUint::new(120).unwrap(),
+    )
+    .err()
+    .unwrap();
+    assert_eq!(missing.to_string(), oracle["missingError"]);
+    let future = recorded::assertGrantEffective(
+        context_with_grant(),
+        runtime::OpaqueString::from("grant-1"),
+        runtime::BoundedUint::new(99).unwrap(),
+    )
+    .err()
+    .unwrap();
+    assert_eq!(future.to_string(), oracle["futureError"]);
 }

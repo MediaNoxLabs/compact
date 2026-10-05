@@ -17,9 +17,10 @@ use std::io::Write;
 use std::process::{Command, Stdio};
 
 use compact_rust_backend::ir::{
-    Constructor, ConstructorStep, Contract, CounterAmount, Expr, LedgerField, LedgerFieldKind,
-    LocalBinding, NativeWitnessBuiltin, Parameter, PureCircuit, SCHEMA_VERSION, SourceLocation,
-    StateAction, StateReturn, StatefulCircuit, StructField, Type, TypeAlias, WitnessDeclaration,
+    ComparisonOperator, Constructor, ConstructorStep, Contract, CounterAmount, Expr, LedgerField,
+    LedgerFieldKind, LocalBinding, NativeWitnessBuiltin, Parameter, PureCircuit, SCHEMA_VERSION,
+    SourceLocation, StateAction, StateReturn, StatefulCircuit, StructField, Type, TypeAlias,
+    WitnessDeclaration,
 };
 use compact_rust_backend::{
     RenderError, render, render_with_capabilities, render_with_proof_capabilities,
@@ -617,6 +618,60 @@ fn asset_removal_recording_requires_scoped_opaque_key_and_exact_order() {
         name: "recordId".into(),
     };
     assert!(!recorded(&contract).0, "Map removal must use the bound key");
+}
+
+#[test]
+fn custody_grant_recording_requires_typed_lookup_and_closed_pure_assertion() {
+    let contract: Contract =
+        serde_json::from_str(include_str!("asset-grant-effective-schema12-ir.json")).unwrap();
+    let recorded = |contract: &Contract| {
+        let rendered = render_with_capabilities(contract).unwrap();
+        let capability = rendered
+            .capabilities
+            .circuits
+            .iter()
+            .find(|capability| capability.name == "assertGrantEffective")
+            .unwrap();
+        (capability.recorded, rendered.source)
+    };
+    let (available, source) = recorded(&contract);
+    assert!(available);
+    assert!(source.contains("pub fn assertGrantEffective<Private"));
+    assert!(source.contains("record_lookup(frame"));
+
+    let mut wrong_key = contract.clone();
+    let StateAction::Let { action, .. } = &mut wrong_key.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    let StateAction::Sequence { actions } = action.as_mut() else {
+        unreachable!()
+    };
+    let StateAction::Let { bindings, .. } = &mut actions[1] else {
+        unreachable!()
+    };
+    let Expr::MapLookup { key, .. } = &mut bindings[0].value else {
+        unreachable!()
+    };
+    **key = Expr::Parameter {
+        name: "grantId".into(),
+    };
+    assert!(!recorded(&wrong_key).0, "lookup must use the scoped key");
+
+    let mut changed_guard = contract;
+    let Expr::Sequence { steps, .. } = &mut changed_guard.circuits[0].body else {
+        unreachable!()
+    };
+    let Expr::Assert { condition, .. } = &mut steps[0] else {
+        unreachable!()
+    };
+    let Expr::Let { body, .. } = condition.as_mut() else {
+        unreachable!()
+    };
+    let Expr::Compare { operator, .. } = body.as_mut() else {
+        unreachable!()
+    };
+    *operator = ComparisonOperator::GreaterEqual;
+    assert!(!recorded(&changed_guard).0, "pure guard must be less-equal");
 }
 
 #[test]

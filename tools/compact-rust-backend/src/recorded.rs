@@ -2235,7 +2235,17 @@ fn render_recorded_item(
     // Audit the complete ordered plan before any ordinary specialized gate.
     let effectful_plan = if matches!(circuit.return_value, StateReturn::Effectful { .. }) {
         let Some(plan) =
-            typed_plan::lower_effectful(circuit, ledger_fields, witnesses, pure_circuits)
+            typed_plan::lower_effectful(circuit, ledger_fields, witnesses, pure_circuits).or_else(
+                || {
+                    typed_plan::lower_start_funding(
+                        circuit,
+                        ledger_fields,
+                        witnesses,
+                        pure_circuits,
+                        circuits,
+                    )
+                },
+            )
         else {
             return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
                 &circuit.return_value,

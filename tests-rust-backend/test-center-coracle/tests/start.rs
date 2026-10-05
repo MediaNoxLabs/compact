@@ -228,8 +228,23 @@ fn original_start_native_matches_corrected_ts_from_seeded_prestates() {
             coin(row, "wager", 3, 5, 17),
             coin(row, "deposit", 2, 0, 100000),
         );
+        let recorded_witness = Witness::new(row);
+        let recorded = c::recorded::start(
+            context(row),
+            &recorded_witness,
+            Field::from(pos),
+            coin(row, "wager", 3, 5, 17),
+            coin(row, "deposit", 2, 0, 100000),
+        );
         if let Some(expected) = row["error"].as_str() {
             let actual = result.err().unwrap().to_string();
+            assert_eq!(
+                recorded.err().unwrap().to_string(),
+                actual,
+                "{}",
+                row["name"]
+            );
+            assert_eq!(recorded_witness.calls(), witness.calls(), "{}", row["name"]);
             if row["name"] == "nonceMalformed" {
                 // TS accepts -1n from a dynamically typed witness and rejects
                 // at the later Field descriptor. Rust rejects at the typed
@@ -258,6 +273,78 @@ fn original_start_native_matches_corrected_ts_from_seeded_prestates() {
             continue;
         }
         let out = result.unwrap();
+        let recorded = recorded.unwrap();
+        assert_eq!(
+            recorded_witness.calls(),
+            row["witnessCalls"],
+            "{}",
+            row["name"]
+        );
+        assert_eq!(recorded.execution.result, out.result, "{}", row["name"]);
+        assert_eq!(
+            recorded.execution.context.query.state, out.context.query.state,
+            "{}",
+            row["name"]
+        );
+        assert_eq!(
+            normalized_effects(json!(recorded.execution.context.query.effects)),
+            normalized_effects(json!(out.context.query.effects)),
+            "{}",
+            row["name"]
+        );
+        assert_eq!(
+            recorded.execution.context.circuit_zswap(),
+            out.context.circuit_zswap(),
+            "{}",
+            row["name"]
+        );
+        assert_eq!(
+            recorded.execution.context.query.call_context.com_indices,
+            out.context.query.call_context.com_indices,
+            "{}",
+            row["name"]
+        );
+        assert_eq!(
+            recorded.execution.private_transcript_outputs, out.private_transcript_outputs,
+            "{}",
+            row["name"]
+        );
+        assert_eq!(recorded.execution.gas_cost, out.gas_cost, "{}", row["name"]);
+        assert_eq!(
+            json!(recorded.public.verify_ops()),
+            row["publicTranscript"],
+            "{}",
+            row["name"]
+        );
+        let mut replay_initial = recorded.public.initial().clone();
+        replay_initial.call_context.com_indices =
+            out.context.query.call_context.com_indices.clone();
+        let replay = replay_initial
+            .query(
+                recorded.public.verify_ops(),
+                None,
+                &recorded.execution.context.cost_model,
+            )
+            .unwrap_or_else(|error| panic!("{} replay: {error:?}", row["name"]));
+        assert_eq!(
+            replay.context.state, out.context.query.state,
+            "{}",
+            row["name"]
+        );
+        assert_eq!(
+            normalized_effects(json!(replay.context.effects)),
+            normalized_effects(json!(out.context.query.effects)),
+            "{}",
+            row["name"]
+        );
+        for dim in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+            assert_eq!(
+                json!(replay.gas_cost)[dim].as_u64().unwrap().to_string(),
+                row["replayProbe"]["gas"][dim],
+                "{} {dim}",
+                row["name"]
+            );
+        }
         assert_eq!(witness.calls(), row["witnessCalls"], "{}", row["name"]);
         assert_eq!(
             state_hex(out.context.query.state.get_ref().clone()),

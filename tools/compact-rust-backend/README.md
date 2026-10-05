@@ -251,8 +251,9 @@ query gas. Its export now supports recorded/observed calls. Combined root-Let,
 effectful-return and stateful-assertion lowering admits complete original Coracle.
 `parity_positive_test_center_coracle_sources.json` checks all nine exports:
 five pure and four proof-required (`start`, `guess`, `concede`, `withdraw`).
-The four recording gaps remain exact: `StateReturn::Effectful` for `start`,
-`StateReturn::Expression` for the others, all at `return_value`. Both
+At this source-admission checkpoint the four recording gaps were exact:
+`StateReturn::Effectful` for `start`, `StateReturn::Expression` for the others,
+all at `return_value`. Later original-source slices close these gaps. Both
 `--effectful-return` and `--coracle-root-let` check native acceptance and strict
 recording refusal. The full local gate runs the Coracle source manifest,
 including one offline Rust 1.99 native Cargo check of the emitted crate.
@@ -1540,7 +1541,8 @@ with `NullifiersNEClaimedNullifiers`, even when the call proof verifies. The
 explicit whole-fallible policy retains source placement and upstream proof tags
 instead of moving claims or changing VM operations. Dust fee funding is separate.
 Proof fixtures seed prior game/coin state offline; they do not prove a complete
-funded game lifecycle. `start` and `concede` retain their explicit recording gaps.
+funded game lifecycle. At the ADR206 checkpoint, `start` and `concede` were
+still explicit recording gaps; their later delivery is described below.
 
 The independently constructed segment-0 offer fails effect matching; moving an
 already-proven segment-1 offer into the guaranteed slot instead fails earlier
@@ -1588,7 +1590,28 @@ offer intents. Both original red and blue calls independently prove and apply
 with a single contract-owned input and user output in the guaranteed segment,
 default strict offer binding and separate NIGHT-backed Dust. Binding mutation
 and spent-nullifier replay reject. Fixtures start from an explicitly seeded
-prior game; `start` remains the original Coracle recording gap.
+prior game; the separate `start` funding profile is described below.
+
+### Original Coracle start (ADR213)
+
+The unchanged `start(pos, wager, deposit)` export now has a recorded Rust API.
+Its separate `StartFunding` profile requires the two distinct direct wallet coin
+receives before branch-local stores. The red path stores the received wager;
+the blue path merges only the previously received wager with the historical
+pot before storing it. Both paths store the received deposit and preserve the
+key, board, phase and witness order. Root funding names cannot be shadowed,
+and a merge or store moved before receipt fails admission even when the static
+operation totals stay the same. The shared typed Plan owns evaluation, scope,
+gas and VM order; no IR schema or runtime API change is required.
+
+Twenty-seven corrected-TypeScript/native cases compare successful and failing
+returns, state, effects, private output, query gas, exact recorded programs and
+replay. Both original red and blue paths independently verify their circuit
+proofs and apply default-strict, wallet-funded offers with canonical indices.
+The blue case starts from an explicitly seeded prior game; these tests do not
+claim a red-to-blue ledger lifecycle. Changing the observed contract state
+rejects the blue selected segment and rolls back its shielded effects, while
+spent-nullifier replay also rejects.
 
 ### Original microDAO set_topic and explicit fallible funding (ADR211)
 

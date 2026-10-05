@@ -27,6 +27,7 @@ mod phase_reset;
 mod reset_payout;
 mod shielded_merge;
 mod shielded_payout;
+mod start_funding;
 mod terminal_returns;
 mod unit_actions;
 mod voting_commit;
@@ -56,6 +57,7 @@ enum CompositeDomain {
     GuardedShieldedDeposit,
     FundedShieldedMint,
     VotingCommit,
+    StartFunding,
     FieldObservations,
     TerminalReturns,
 }
@@ -78,7 +80,10 @@ impl CompositeDomain {
     fn shielded_merge(self) -> bool {
         matches!(
             self,
-            Self::ShieldedMerge(_) | Self::GuardedShieldedDeposit | Self::FundedShieldedMint
+            Self::ShieldedMerge(_)
+                | Self::GuardedShieldedDeposit
+                | Self::FundedShieldedMint
+                | Self::StartFunding
         )
     }
 
@@ -89,6 +94,7 @@ impl CompositeDomain {
                 | Self::VotingCommit
                 | Self::GuardedShieldedDeposit
                 | Self::FundedShieldedMint
+                | Self::StartFunding
                 | Self::ShieldedMerge(shielded_merge::Inputs::ReceivedRight)
         )
     }
@@ -108,6 +114,7 @@ impl CompositeDomain {
                 | Self::ShieldedMerge(_)
                 | Self::GuardedShieldedDeposit
                 | Self::FundedShieldedMint
+                | Self::StartFunding
         )
     }
     fn intents(self) -> bool {
@@ -124,6 +131,7 @@ impl CompositeDomain {
                 | Self::ShieldedMerge(_)
                 | Self::GuardedShieldedDeposit
                 | Self::FundedShieldedMint
+                | Self::StartFunding
         )
     }
 }
@@ -679,6 +687,11 @@ impl Plan<'_> {
                 {
                     return None;
                 }
+                if self.composite_domain == CompositeDomain::StartFunding
+                    && !start_funding::witness_type(&declaration.result)
+                {
+                    return None;
+                }
                 if arguments.len() != declaration.parameters.len()
                     || !(matches!(declaration.result, Type::Unit | Type::OpaqueBytes)
                         || recordable_cell_type(&declaration.result))
@@ -935,6 +948,11 @@ impl Plan<'_> {
                 {
                     return None;
                 }
+                if self.composite_domain == CompositeDomain::StartFunding
+                    && !start_funding::cell_type(ty)
+                {
+                    return None;
+                }
                 if !cell_type(ty)
                     && !(matches!(
                         self.composite_domain,
@@ -943,6 +961,8 @@ impl Plan<'_> {
                     ) && guarded_deposit::read_type(ty))
                     && !(self.composite_domain == CompositeDomain::ResetShieldedPayout
                         && reset_payout::read_type(ty))
+                    && !(self.composite_domain == CompositeDomain::StartFunding
+                        && start_funding::cell_type(ty))
                     && !(self.composite_domain == CompositeDomain::ShieldedPayout
                         && shielded_payout::cell_type(ty))
                     && !(self.composite_domain == CompositeDomain::ActionfulShieldedPayout
@@ -1524,11 +1544,18 @@ impl Plan<'_> {
                 {
                     return None;
                 }
+                if self.composite_domain == CompositeDomain::StartFunding
+                    && !start_funding::cell_type(ty)
+                {
+                    return None;
+                }
                 if !cell_type(ty)
                     && !(self.composite_domain == CompositeDomain::ResetShieldedPayout
                         && reset_payout::write_type(ty))
                     && !(self.composite_domain == CompositeDomain::GuardedShieldedDeposit
                         && guarded_deposit::write_type(ty))
+                    && !(self.composite_domain == CompositeDomain::StartFunding
+                        && start_funding::cell_type(ty))
                     && !(self.unit_actions && unit_actions::value_type(ty))
                     && !(self.phase_reset && phase_reset::cell_type(ty))
                     && !(ty == &Type::Field
@@ -2913,6 +2940,16 @@ pub(super) fn lower_shielded_merge<'a>(
     circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
 ) -> Option<TypedPlan> {
     shielded_merge::lower(circuit, ledger, witnesses, pure, circuits)
+}
+
+pub(super) fn lower_start_funding<'a>(
+    circuit: &StatefulCircuit,
+    ledger: &'a HashMap<&'a str, &'a LedgerField>,
+    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,
+    pure: &'a HashMap<&'a str, &'a PureCircuit>,
+    circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
+) -> Option<TypedPlan> {
+    start_funding::lower(circuit, ledger, witnesses, pure, circuits)
 }
 
 pub(super) fn lower_shielded_payout<'a>(

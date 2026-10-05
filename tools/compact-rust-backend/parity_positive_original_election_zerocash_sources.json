@@ -1,0 +1,46 @@
+{
+  "format_version": 1,
+  "suite": "compiler/test.ss",
+  "purpose": "Original election and zerocash source acceptance, compiler proof applicability, and explicit unavailable recording; no proof or behavior claim",
+  "positive_sources": [
+    {
+      "source": "examples/election.compact",
+      "expected_ts": "success",
+      "expected_rust": "success",
+      "proof_circuits": [
+        {"name": "vote$commit", "pure": false, "proof": true},
+        {"name": "vote$reveal", "pure": false, "proof": true},
+        {"name": "advance", "pure": false, "proof": true},
+        {"name": "set_topic", "pure": false, "proof": true},
+        {"name": "add_voter", "pure": false, "proof": true}
+      ],
+      "expected_recording_gaps": {
+        "vote$commit": {"code": "unsupported_action", "ir_node": "StateAction::Assert", "path": "actions[0].actions[0]"},
+        "vote$reveal": {"code": "unsupported_action", "ir_node": "StateAction::Assert", "path": "actions[0].actions[0]"},
+        "advance": {"code": "unsupported_action", "ir_node": "StateAction::Assert", "path": "actions[0].action.action.actions[1]"},
+        "set_topic": {"code": "unsupported_action", "ir_node": "StateAction::Let", "path": "actions[0].action.action.actions[2]"},
+        "add_voter": {"code": "unsupported_action", "ir_node": "StateAction::Assert", "path": "actions[0].actions[0]"}
+      },
+      "pure_declarations": 0,
+      "exported_pure_declarations": 0
+    },
+    {
+      "source": "examples/zerocash.compact",
+      "rust_fixture": "tests-rust-backend/zerocash-oracle/lib.rs",
+      "rust_fixture_source": "examples/rust_backend/zerocash_oracle.compact",
+      "expected_ts": "success",
+      "expected_rust": "success",
+      "proof_circuits": [
+        {"name": "spend", "pure": false, "proof": true},
+        {"name": "zerocash_mint", "pure": false, "proof": true}
+      ],
+      "expected_recording_gaps": {
+        "spend": {"code": "unsupported_action", "ir_node": "StateAction::Let", "path": "actions[0]"},
+        "zerocash_mint": {"code": "unsupported_action", "ir_node": "StateAction::Let", "path": "actions[0]"}
+      },
+      "pure_declarations": 0,
+      "exported_pure_declarations": 0
+    }
+  ],
+  "expected_rejections": []
+}

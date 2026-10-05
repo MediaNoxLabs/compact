@@ -318,6 +318,10 @@ def main() -> int:
                  "--compiler", str(snapshot), "--output", str(directory / "top-level-source-scope.json")],
                 "top-level-source-scope", directory, receipt, env=environment)
             run([sys.executable, str(ROOT / "tools/compact-rust-backend/check_positive_source_scope.py"),
+                 "--manifest", str(ROOT / "tools/compact-rust-backend/parity_positive_original_election_zerocash_sources.json"),
+                 "--compiler", str(snapshot), "--output", str(directory / "original-election-zerocash-source-scope.json")],
+                "original-election-zerocash-source-scope", directory, receipt, env=environment)
+            run([sys.executable, str(ROOT / "tools/compact-rust-backend/check_positive_source_scope.py"),
                  "--manifest", str(ROOT / "tools/compact-rust-backend/parity_positive_test_center_counter_sources.json"),
                  "--compiler", str(snapshot), "--output", str(directory / "test-center-counter-source-scope.json")],
                 "test-center-counter-source-scope", directory, receipt, env=environment)

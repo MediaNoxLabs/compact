@@ -105,8 +105,18 @@ the check preserves original source identity instead of attributing a fixture
 path to an example. Counter contributes two known proof-required recorded APIs.
 Tiny contributes three proof-required recorded APIs and one compiler-pure,
 proof-false helper. The full local parity gate runs this cohort check. Original
-`election.compact` and `zerocash.compact` compile but report five and two
-unavailable proof calls respectively, so they remain a separate gap.
+`parity_positive_original_election_zerocash_sources.json` now checks the exact
+original `examples/election.compact` and `examples/zerocash.compact` paths.
+Both compile for TypeScript and Rust; the seven exported circuits are
+compiler-proof-required but explicitly recording-unavailable at their first
+typed Assert or Let action. The generated original Zerocash library is
+byte-identical after formatting to the existing checked oracle fixture. The
+Election oracle fixture has a different constructor because it adds an
+authority parameter; its native TypeScript state test is analogous evidence,
+not a test of the original constructor. The separate original generated crates
+have passed `cargo check`, but source acceptance and crate construction do not
+claim recorded calls or executable parity for the original sources. The full
+local parity gate runs this cohort check.
 The original test-center Counter in
 `parity_positive_test_center_counter_sources.json` has one proof-required
 `increment` call. Its public Counter increment followed by a standalone Unit

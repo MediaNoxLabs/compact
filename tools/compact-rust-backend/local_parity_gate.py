@@ -54,6 +54,8 @@ EXTRA = {
         FIXTURES / "adt-list-field/lib.rs",
     ROOT / "examples/adt/tests/list_enum.compact":
         FIXTURES / "adt-list-enum/lib.rs",
+    ROOT / "test-center/test-contracts/counter.compact":
+        FIXTURES / "test-center-counter/lib.rs",
 }
 
 
@@ -309,6 +311,10 @@ def main() -> int:
                  "--manifest", str(ROOT / "tools/compact-rust-backend/parity_positive_top_level_sources.json"),
                  "--compiler", str(snapshot), "--output", str(directory / "top-level-source-scope.json")],
                 "top-level-source-scope", directory, receipt, env=environment)
+            run([sys.executable, str(ROOT / "tools/compact-rust-backend/check_positive_source_scope.py"),
+                 "--manifest", str(ROOT / "tools/compact-rust-backend/parity_positive_test_center_counter_sources.json"),
+                 "--compiler", str(snapshot), "--output", str(directory / "test-center-counter-source-scope.json")],
+                "test-center-counter-source-scope", directory, receipt, env=environment)
             # The compactup integration tests require the machine's installed
             # compiler and the mutable GitHub release list. They are outside
             # this compiler/backend parity gate and cannot give a repeatable

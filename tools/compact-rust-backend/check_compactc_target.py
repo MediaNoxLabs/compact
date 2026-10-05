@@ -29,6 +29,7 @@ import tomllib
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "examples/rust_backend/counter.compact"
+TEST_CENTER_COUNTER_SOURCE = ROOT / "test-center/test-contracts/counter.compact"
 PM_19252_SOURCE = ROOT / "examples/bugs/pm-19252/example_ten.compact"
 NATIVE_KEY_VALUE_SOURCE = ROOT / "examples/rust_backend/native_own_public_key_value.compact"
 COUNTER_PARAMETER_SOURCE = ROOT / "examples/rust_backend/counter_parameter.compact"
@@ -1213,6 +1214,19 @@ def main() -> None:
                 for extension in ("zkir", "bzkir"):
                     assert (proof / "zkir" / f"{circuit}.{extension}").is_file()
             check_observed_call_consumer(proof, base)
+            test_center_counter_proof = base / "test-center-counter-proof"
+            run(compiler, "--target", "rust", "--rust-require-recording",
+                str(TEST_CENTER_COUNTER_SOURCE), str(test_center_counter_proof))
+            check_manifest(test_center_counter_proof)
+            test_center_capabilities = json.loads(
+                (test_center_counter_proof / "contract/rust-capabilities.json").read_text())
+            assert [(row["name"], row["proof_required"], row["recording_status"])
+                    for row in test_center_capabilities["circuits"]] == [
+                ("increment", True, "available")]
+            for extension in ("prover", "verifier"):
+                assert (test_center_counter_proof / "keys" / f"increment.{extension}").is_file()
+            for extension in ("zkir", "bzkir"):
+                assert (test_center_counter_proof / "zkir" / f"increment.{extension}").is_file()
             counter_parameter_proof = base / "counter-parameter-proof"
             run(compiler, "--target", "rust", "--rust-require-recording", str(COUNTER_PARAMETER_SOURCE), str(counter_parameter_proof))
             check_manifest(counter_parameter_proof)
@@ -1585,6 +1599,10 @@ def main() -> None:
                 str(chunked_cell_proof),
                 str(unsigned_proofs["uints"]),
                 str(unsigned_proofs["wide-uint"]),
+            )
+            run(
+                "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--test-center-counter", str(test_center_counter_proof),
             )
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",

@@ -3727,6 +3727,83 @@ fn unsupported_pure_call_and_supported_field_arithmetic_have_exact_capabilities(
 }
 
 #[test]
+fn standalone_unit_witness_is_recorded_only_with_its_exact_signature() {
+    let mut contract = Contract {
+        schema_version: 11,
+        type_aliases: vec![],
+        constructor: None,
+        witnesses: vec![WitnessDeclaration {
+            source: None,
+            name: "private_increment".into(),
+            parameters: vec![],
+            result: Type::Unit,
+        }],
+        ledger_fields: vec![LedgerField {
+            source: None,
+            id: "round".into(),
+            index: 0,
+            path: vec![],
+            declaration: LedgerFieldKind::Counter,
+        }],
+        circuits: vec![],
+        stateful_circuits: vec![StatefulCircuit {
+            source: None,
+            internal: false,
+            name: "increment".into(),
+            parameters: vec![],
+            result: Type::Unit,
+            return_value: StateReturn::Unit,
+            actions: vec![
+                StateAction::CounterIncrement {
+                    field: "round".into(),
+                    index: 0,
+                    amount: CounterAmount::Literal { value: 1 },
+                },
+                StateAction::Expression {
+                    value: Expr::WitnessCall {
+                        name: "private_increment".into(),
+                        arguments: vec![],
+                    },
+                },
+            ],
+        }],
+    };
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.capabilities.circuits[0].observed_call);
+    let counter = rendered
+        .source
+        .find("record_increment(frame, 1u16)")
+        .unwrap();
+    let witness = rendered.source.find(".try_witness_metered").unwrap();
+    assert!(counter < witness);
+    assert!(rendered.source.contains(".private_increment("));
+
+    contract.witnesses[0].result = Type::Boolean;
+    let rejected = render_with_capabilities(&contract).unwrap();
+    assert!(!rejected.capabilities.circuits[0].recorded);
+    assert_eq!(
+        rejected.capabilities.circuits[0]
+            .recording_unavailable
+            .as_ref()
+            .unwrap()
+            .path,
+        "actions[1]"
+    );
+    contract.witnesses[0].result = Type::Unit;
+    contract.stateful_circuits[0].actions[1] = StateAction::Expression {
+        value: Expr::Boolean { value: true },
+    };
+    assert!(
+        !render_with_capabilities(&contract)
+            .unwrap()
+            .capabilities
+            .circuits[0]
+            .recorded
+    );
+}
+
+#[test]
 fn recording_gaps_follow_the_first_definite_ir_failure() {
     let mut contract = Contract {
         schema_version: 11,

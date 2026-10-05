@@ -2261,6 +2261,29 @@ fn render_recorded_item(
                 }
                 Ok(RecordingOutcome::Supported(()))
             }
+            StateAction::Expression {
+                value: Expr::WitnessCall { name, arguments },
+            } => {
+                let declaration = witnesses
+                    .get(name.as_str())
+                    .ok_or_else(|| RenderError::UnknownWitness(name.clone()))?;
+                if !arguments.is_empty()
+                    || !declaration.parameters.is_empty()
+                    || declaration.result != Type::Unit
+                {
+                    return Ok(unavailable_action(action, path));
+                }
+                let method = ident(name)?;
+                steps.push(syn::parse_quote! {
+                    let (frame, _) = frame.try_witness_metered(|context, meter| {
+                        witnesses.#method(context.witness_context_with(super::LedgerView {
+                            state: context.query.state.get_ref(),
+                            meter,
+                        }))
+                    })?;
+                });
+                Ok(RecordingOutcome::Supported(()))
+            }
             StateAction::If {
                 condition,
                 then,

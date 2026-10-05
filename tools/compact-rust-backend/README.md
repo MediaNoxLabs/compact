@@ -107,6 +107,16 @@ Tiny contributes three proof-required recorded APIs and one compiler-pure,
 proof-false helper. The full local parity gate runs this cohort check. Original
 `election.compact` and `zerocash.compact` compile but report five and two
 unavailable proof calls respectively, so they remain a separate gap.
+The original test-center Counter in
+`parity_positive_test_center_counter_sources.json` has one proof-required
+`increment` call. Its public Counter increment followed by a standalone Unit
+witness now records through the existing metered witness frame. The checked
+TypeScript capture, native and recorded Rust fixture, ordered public VM trace,
+private output, and replay agree; a pinned emitted ZKIR proof verifies and
+applies through ledger-8. The other four `test-center/test-contracts` sources
+remain unassessed by the Rust compiler-backed inventory: `welcome` rejects a
+constructor fold, `bboard` and `coracle` reject nested ledger queries, and
+`micro-dao` rejects a standard-library expression.
 The lexical scanner includes `pure circuit` and `export pure circuit`
 declarations, with compiler `contract-info.json` supplying proof applicability
 even when the Rust capability report has no recorded method for a pure circuit.

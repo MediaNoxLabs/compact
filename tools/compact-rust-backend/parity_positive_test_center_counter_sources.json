@@ -1,0 +1,24 @@
+{
+  "format_version": 1,
+  "suite": "compiler/test.ss",
+  "purpose": "Original test-center Counter compiler acceptance and proof metadata, with a separate generated runtime fixture",
+  "source_glob": "test-center/test-contracts/counter.compact",
+  "positive_sources": [
+    {
+      "source": "test-center/test-contracts/counter.compact",
+      "typescript_reference": "tests-e2e/src/tests/compiler/compiler.runtime.e2e.test.ts",
+      "typescript_capture": "runtime-rs/tests/fixtures/capture-test-center-counter.mjs",
+      "typescript_fixture": "runtime-rs/tests/fixtures/test-center-counter.json",
+      "rust_fixture": "tests-rust-backend/test-center-counter/lib.rs",
+      "rust_test": "tests-rust-backend/test-center-counter/tests/test_center_counter.rs",
+      "expected_ts": "success",
+      "expected_rust": "success",
+      "proof_circuits": [
+        {"name": "increment", "pure": false, "proof": true}
+      ],
+      "pure_declarations": 0,
+      "exported_pure_declarations": 0
+    }
+  ],
+  "expected_rejections": []
+}

@@ -204,6 +204,30 @@ metadata.mkdir()
         self.assertEqual(sum(not circuit["proof"] for entry in entries
                              for circuit in entry["proof_circuits"]), 1)
 
+    def test_test_center_counter_cohort_preserves_original_source_identity(self):
+        manifest = json.loads(inventory.TEST_CENTER_COUNTER_SOURCE_MANIFEST.read_text())
+        self.assertEqual(source_scope.cohort_membership_failures(manifest), [])
+        self.assertEqual(len(manifest["positive_sources"]), 1)
+        entry = manifest["positive_sources"][0]
+        self.assertEqual(entry["source"], "test-center/test-contracts/counter.compact")
+        self.assertEqual(entry["proof_circuits"],
+                         [{"name": "increment", "pure": False, "proof": True}])
+        self.assertIn(entry["source"],
+                      (inventory.ROOT / manifest["suite"]).read_text())
+        self.assertIn("CONTRACTS_ROOT + 'counter.compact'",
+                      (inventory.ROOT / entry["typescript_reference"]).read_text())
+        self.assertIn(entry["source"],
+                      (inventory.ROOT / entry["typescript_capture"]).read_text())
+        self.assertEqual(json.loads((inventory.ROOT / entry["typescript_fixture"]).read_text())
+                         ["source"], entry["source"])
+        self.assertIn(Path(entry["typescript_fixture"]).name,
+                      (inventory.ROOT / entry["rust_test"]).read_text())
+        self.assertEqual({item["name"] for item in
+                          inventory.parse_source(inventory.ROOT / entry["source"],
+                                                 inventory.ROOT)["declarations"]
+                          if item["kind"] == "circuit" and item["visibility"] == "export"},
+                         {"increment"})
+
     def test_pm19252_positive_scope_is_complete_and_excludes_rejection(self):
         scope = json.loads(inventory.POSITIVE_SOURCE_MANIFEST.read_text())
         positive = scope["positive_sources"]

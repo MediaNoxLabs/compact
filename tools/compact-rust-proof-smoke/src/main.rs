@@ -82,6 +82,7 @@ mod micro_dao_set_topic;
 mod micro_dao_token;
 mod micro_dao_vote_commit;
 mod mixed_width_recording;
+mod observational_binding;
 mod opaque_string_map;
 mod opaque_string_set;
 mod pair_hash_cell;
@@ -1802,6 +1803,29 @@ fn run() -> Result<(), Box<dyn Error>> {
             return Err("unexpected shielded send proof argument".into());
         }
         return shielded_send::run(Path::new(&root));
+    }
+    if matches!(first.as_deref(), Some(value) if value==OsStr::new("--observational-receive") || value==OsStr::new("--observational-send"))
+    {
+        let root = arguments
+            .next()
+            .ok_or("expected observational proof root")?;
+        if arguments.next().is_some() {
+            return Err("unexpected observational proof argument".into());
+        }
+        return if first.as_deref() == Some(OsStr::new("--observational-receive")) {
+            wallet_funded_receive::run_observational(Path::new(&root))
+        } else {
+            shielded_send::run_observational(Path::new(&root))
+        };
+    }
+    if first.as_deref() == Some(OsStr::new("--observational-shielded")) {
+        let receive = arguments.next().ok_or("expected receive proof root")?;
+        let send = arguments.next().ok_or("expected send proof root")?;
+        if arguments.next().is_some() {
+            return Err("unexpected observation proof argument".into());
+        }
+        wallet_funded_receive::run_observational(Path::new(&receive))?;
+        return shielded_send::run_observational(Path::new(&send));
     }
     if first.as_deref() == Some(OsStr::new("--wallet-funded-receive")) {
         let root = arguments

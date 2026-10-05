@@ -44,12 +44,15 @@ A contract-filtered Zswap tree can provide a real membership witness but omits
 global frontier/history/nullifier information. It cannot be passed off as a full
 ledger state. `requireOfferReconciliation` preserves this failure instead of
 filling missing state. The original full-ledger runtime binder remains unchanged.
-An explicit observation-based binder and exact wallet/block checkpoint adapter
-are under ADR217 design review; they are not implemented by these helpers.
+The runtime now provides an explicit observation-based binder (see runtime-rs/README.md).
+The exact live wallet/block checkpoint adapter and orchestration remain pending;
+these helpers alone do not establish an acquired checkpoint.
 
 Private pre-proof handoffs can contain wallet secret material. Use a private
 working directory and exclusive 0600 files; receipts contain only lengths and
-hashes. After Rust proving, wallet Dust balancing must preserve serialized
+hashes. `decodeWalletSnapshot` verifies the acquired SHA256 before decoding;
+that exact acquisition digest is retained in runtime checkpoint evidence.
+After Rust proving, wallet Dust balancing must preserve serialized
 shielded offers and placement exactly. The helper detects substituted proofs,
 extra inputs/change, and segment moves.
 
@@ -57,3 +60,41 @@ Live orchestration, same-block wallet root/frontier/event validation, actual
 bootstrap/receive/release proofs, confirmed ownership and node replay refusal
 remain required before this lane can claim live acceptance. Services start only
 after the final source checkpoint is frozen.
+
+## Bootstrap strict proof consumer
+
+Bootstrap now explicitly records mint, output creation and its spend claim. The
+acceptance builder derives token color from the domain and deployed address,
+coin value from the amount, and commitment from the coin and actual wallet key.
+The proof consumer checks changed amount/color/commitment refusals, proves the
+unedited generated source, applies at default strictness and recovers the
+accepted encrypted output in the wallet. It seeds no shielded input; the normal
+upstream NIGHT/Dust fixture funds fees. This remains an offline acceptance test.
+
+Compile with `--rust-runtime-root` pointing at this checkout so the generated
+consumer uses the additive observation API. Generate the single bootstrap key
+with the pinned ZKIR, then run (paths below are placeholders):
+
+```sh
+zkir compile /tmp/shielded-acceptance/zkir/bootstrap.zkir \
+  /tmp/shielded-acceptance/keys/bootstrap.prover \
+  /tmp/shielded-acceptance/keys/bootstrap.verifier
+
+MIDNIGHT_LEDGER_TEST_STATIC_DIR=/path/to/midnight-ledger/ledger/static \
+python3 proof-bootstrap.py \
+  --generated-contract /tmp/shielded-acceptance/contract \
+  --proof-root /tmp/shielded-acceptance \
+  --scratch /tmp/new-isolated-bootstrap-consumer \
+  --cargo-target-dir /path/to/existing/warm/target
+```
+
+Create the `keys` directory first. The scratch directory must be new. The
+adapter copies the existing proof utilities with the repository lockfile,
+relocates only their support-file references, and adds the generated crate as a
+normal dependency. It never edits the generated contract or starts services.
+Generated input hashes are saved with the consumer.
+
+The normal full proof gate additionally runs `--observational-receive` and
+`--observational-send` using its already-generated receive/send keys, after the
+existing complete-ledger runs. The latter proves a full send-to-self; live
+release-to-wallet still belongs to the subsequent devnet flow.

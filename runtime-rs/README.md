@@ -273,3 +273,43 @@ is outside counting, so report before/after deltas rather than interpreting
 absolute freed bytes as a leak or net-allocation measure. Normal tests spawn
 isolated default and explicit 2 MiB child workers so a future stack overflow is
 reported as a failing child process.
+
+### Explicit trusted observations (ADR217, additive at ABI49)
+
+`transaction::ObservationalOfferBackedState` is a separate route when a client
+has a confirmed contract tree and synchronized wallet checkpoint, but no full
+`LedgerState`. `TrustedObservationCheckpoint::from_trusted_sources` consumes
+`TrustedObservationParts`: node contract bytes decoded to upstream state,
+contract-filtered tree, decoded wallet state, block/network/event metadata and
+an adapter-acquired wallet-file SHA256. It checks internal agreement of roots,
+frontier, tree height, metadata and pinned ledger version. Evidence is immutable
+and contains no wallet state or secret keys.
+
+The adapter must check canonical finality and endpoint/network identity, tie
+frontier and final Zswap event to that exact block, and verify the acquisition
+SHA256 against the raw wallet bytes **before decoding**. The Rust constructor
+cannot authenticate arbitrary block hashes or recover the original encoding's
+hash from decoded state. Metadata and its hash remain explicit trusted claims.
+
+`ObservationalOfferBackedState::bind(observed, checkpoint, offer, funding)`
+requires upstream-normalized, guaranteed persistent offers with at least one
+output. It supports explicit wallet-input selection and contract-owned inputs;
+transients, fallible placement and input-only burns are refused. Output indices
+follow upstream normalized iteration from the checked frontier. No artificial
+ledger, history map or alternative sorting algorithm is constructed. Intent,
+owner, input-index and complete funding reconciliation are shared with the full
+ledger route.
+
+`prepare` returns `ObservationBoundPreparedCall`, retaining
+`OfferAdmission::TrustedObservation` and its checkpoint receipt. Its
+`into_transaction(rng, ttl)` uses the sealed network identity; the caller cannot
+supply a replacement network. The full-ledger route and its transaction API
+remain unchanged and report `OfferAdmission::CompleteLedger`.
+
+This observation policy cannot check global consumed nullifiers, recognized
+past-root history, previously used commitments or concurrent freshness. Actual
+node admission remains responsible for those checks. The existing
+`OfferBackedObservedState` still applies the retained offer to complete ledger
+state locally. Offline differential tests compare both policies' allocations,
+recorded effects/gas and serialized prepared transactions; generated receive and
+qualified-send strict proofs are separate from any live acceptance claim.

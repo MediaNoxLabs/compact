@@ -42,6 +42,12 @@ pub use midnight_transient_crypto::proofs::VerifierKey;
 use midnight_transient_crypto::proofs::{KeyLocation, ProofPreimage};
 use midnight_zswap::{Input, Offer};
 
+mod observation;
+pub use observation::{
+    CheckpointMetadata, ObservationBindingError, ObservationBoundPreparedCall,
+    ObservationalOfferBackedState, OfferAdmission, TrustedCheckpointEvidence,
+    TrustedObservationCheckpoint, TrustedObservationParts, WalletCheckpointMetadata,
+};
 mod placement;
 #[path = "transaction/transients.rs"]
 mod transients;
@@ -402,6 +408,7 @@ impl<D: DB> OfferBackedObservedState<D> {
                     call,
                     offer: self.offer.clone(),
                     placement: self.placement,
+                    admission: OfferAdmission::CompleteLedger,
                 });
         }
         self.reconcile(&call.recorded)
@@ -414,8 +421,44 @@ impl<D: DB> OfferBackedObservedState<D> {
             call: prepared,
             offer: self.offer.clone(),
             placement: self.placement,
+            admission: OfferAdmission::CompleteLedger,
         })
     }
+    fn reconciliation(&self) -> OfferReconciliation<'_, D> {
+        OfferReconciliation {
+            observed: &self.observed,
+            offer: &self.offer,
+            tree: &self.zswap.coin_coms,
+            frontier: self.zswap.first_free,
+            wallet_funding: self.wallet_funding.as_ref(),
+            transients: self.transients.as_ref(),
+            placement: self.placement,
+        }
+    }
+    fn reconcile<Private, Output>(
+        &self,
+        recorded: &RecordedCircuitResult<Private, Output, D>,
+    ) -> Result<(), ZswapIntentError> {
+        self.reconciliation().reconcile(recorded)
+    }
+}
+
+// Both admission policies retain the same intent/offer evaluator. This view has
+// only the tree/frontier needed for membership/allocation; it cannot invent or
+// accidentally claim chain-history/nullifier validation.
+struct OfferReconciliation<'a, D: DB> {
+    observed: &'a ObservedContractState<D>,
+    offer: &'a Offer<ProofPreimage, D>,
+    tree: &'a midnight_transient_crypto::merkle_tree::MerkleTree<
+        Option<midnight_storage::arena::Sp<ContractAddress, D>>,
+        D,
+    >,
+    frontier: u64,
+    wallet_funding: Option<&'a WalletFundingInputs<D>>,
+    transients: Option<&'a ContractTransientCoins<D>>,
+    placement: OfferPlacement,
+}
+impl<D: DB> OfferReconciliation<'_, D> {
     fn reconcile<Private, Output>(
         &self,
         recorded: &RecordedCircuitResult<Private, Output, D>,
@@ -447,7 +490,7 @@ impl<D: DB> OfferBackedObservedState<D> {
         }
         let transient_inputs = if let Some(selected) = &self.transients {
             selected.validate_placement(self.placement)?;
-            selected.validate_offer(&self.offer, self.observed.address)?;
+            selected.validate_offer(self.offer, self.observed.address)?;
             selected.reconcile_events(plan, self.observed.address)?
         } else {
             if !self.offer.transient.is_empty() {
@@ -459,8 +502,7 @@ impl<D: DB> OfferBackedObservedState<D> {
             return Err(ZswapIntentError::OutputMismatch);
         }
         let expected_end = self
-            .zswap
-            .first_free
+            .frontier
             .checked_add(plan.outputs().len() as u64)
             .ok_or(ZswapIntentError::AllocationMismatch)?;
         if plan.next_index() != expected_end {
@@ -525,17 +567,13 @@ impl<D: DB> OfferBackedObservedState<D> {
             }
             let info = CoinInfo::from(coin);
             let commitment = info.commitment(&CoinRecipient::Contract(self.observed.address));
-            if coin.mt_index >= self.zswap.first_free
-                || self
-                    .zswap
-                    .coin_coms
-                    .index(coin.mt_index)
-                    .is_none_or(|(hash, owner)| {
-                        hash != commitment.0
-                            || owner
-                                .as_ref()
-                                .is_none_or(|owner| **owner != self.observed.address)
-                    })
+            if coin.mt_index >= self.frontier
+                || self.tree.index(coin.mt_index).is_none_or(|(hash, owner)| {
+                    hash != commitment.0
+                        || owner
+                            .as_ref()
+                            .is_none_or(|owner| **owner != self.observed.address)
+                })
             {
                 return Err(ZswapIntentError::InputIndexMismatch);
             }
@@ -599,12 +637,19 @@ pub enum ZswapIntentError {
 
 /// A prepared call and the same validated offer from its observed context.
 pub struct OfferBoundPreparedCall<D: DB = DefaultDB> {
+    admission: OfferAdmission,
     call: ContractCallPrototype<D>,
     offer: Offer<ProofPreimage, D>,
     placement: OfferPlacement,
 }
 
 impl<D: DB> OfferBoundPreparedCall<D> {
+    /// Admission evidence retained through preparation. Observations do not
+    /// authenticate consensus or locally validate global nullifier history.
+    pub fn admission(&self) -> &OfferAdmission {
+        &self.admission
+    }
+
     /// Inspect the prepared prototype without detaching it from its retained offer.
     pub fn prototype(&self) -> &ContractCallPrototype<D> {
         &self.call

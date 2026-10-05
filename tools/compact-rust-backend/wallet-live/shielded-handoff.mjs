@@ -84,3 +84,14 @@ export async function writePrivateHandoff(path, bytes) {
   await writeFile(path, bytes, { flag: 'wx', mode: 0o600 });
   return { bytes: bytes.length, sha256: sha256(bytes) };
 }
+
+// Verify the exact acquired private snapshot before decoding it. A matching
+// digest identifies bytes; the adapter still owns endpoint/block/event trust.
+export function decodeWalletSnapshot(bytes, expectedSha256, ledger) {
+  const walletStateSha256 = sha256(bytes);
+  if (typeof expectedSha256 !== 'string' || !/^[a-f0-9]{64}$/i.test(expectedSha256) ||
+      walletStateSha256 !== expectedSha256.toLowerCase()) {
+    throw new Error('wallet snapshot acquisition SHA256 mismatch');
+  }
+  return { wallet: ledger.ZswapLocalState.deserialize(bytes), walletStateSha256 };
+}

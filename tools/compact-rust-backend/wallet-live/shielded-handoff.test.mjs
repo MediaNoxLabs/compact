@@ -46,3 +46,14 @@ test('private handoff files are exclusive and do not expose bytes in receipt', a
     await assert.rejects(writePrivateHandoff(file,Buffer.from('replacement')),/EEXIST/);
   } finally { await rm(directory,{recursive:true,force:true}); }
 });
+
+test('wallet snapshot acquisition hash is checked before private-state decoding', async () => {
+  const { decodeWalletSnapshot, sha256 } = await import('./shielded-handoff.mjs');
+  const raw=Buffer.from('exact acquired snapshot');let decoded=0;
+  const ledger={ZswapLocalState:{deserialize:bytes=>{decoded++;assert.deepEqual(bytes,raw);return {firstFree:3n};}}};
+  const result=decodeWalletSnapshot(raw,sha256(raw),ledger);
+  assert.equal(result.wallet.firstFree,3n);assert.equal(decoded,1);
+  assert.throws(()=>decodeWalletSnapshot(Buffer.from('substituted snapshot'),sha256(raw),ledger),/acquisition SHA256 mismatch/);
+  assert.throws(()=>decodeWalletSnapshot(raw,'bad hash',ledger),/acquisition SHA256 mismatch/);
+  assert.equal(decoded,1);
+});

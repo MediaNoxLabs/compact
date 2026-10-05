@@ -31,3 +31,13 @@ test('a real filtered coin witness does not supply full-ledger allocation/histor
     return true;
   });
 });
+
+test('exact pinned wallet snapshot is verified before decoding', async () => {
+  const { decodeWalletSnapshot, sha256 } = await import('./shielded-handoff.mjs');
+  const raw=new ledger.ZswapLocalState().serialize();
+  const acquired=decodeWalletSnapshot(raw,sha256(raw),ledger);
+  assert.equal(acquired.wallet.firstFree,0n);
+  assert.deepEqual(acquired.wallet.serialize(),raw);
+  const changed=Uint8Array.from(raw);changed[changed.length-1]^=1;
+  assert.throws(()=>decodeWalletSnapshot(changed,sha256(raw),ledger),/acquisition SHA256 mismatch/);
+});

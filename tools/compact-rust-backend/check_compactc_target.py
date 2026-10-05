@@ -1480,6 +1480,9 @@ def main() -> None:
                 # keep this default-strict acceptance in the full proof gate.
                 run("cargo", "+1.99.0", "run", "--offline", "--quiet", "-p",
                     "compact-rust-proof-smoke", "--", "--wallet-funded-receive", str(output))
+                # Same keys, additional explicit observation-policy strict proof.
+                run("cargo", "+1.99.0", "run", "--offline", "--quiet", "-p",
+                    "compact-rust-proof-smoke", "--", "--observational-receive", str(output))
             print("unchanged receiveShielded wrappers admitted with ordered output and audited claim")
             return
         if args.shielded_merge:
@@ -1514,6 +1517,9 @@ def main() -> None:
             if args.proof:
                 run("cargo", "+1.99.0", "run", "--offline", "--quiet", "-p",
                     "compact-rust-proof-smoke", "--", "--shielded-send", str(output))
+                # Same keys, additional explicit observation-policy strict proof.
+                run("cargo", "+1.99.0", "run", "--offline", "--quiet", "-p",
+                    "compact-rust-proof-smoke", "--", "--observational-send", str(output))
             print("unchanged qualified sendShielded wrappers admitted with ordered intents and typed result")
             return
         if args.native_zswap_intents:

@@ -259,6 +259,7 @@ mod tests {
             Err(ZswapIntentError::OfferTranscriptPlacementMismatch)
         );
         let prepared = OfferBoundPreparedCall {
+            admission: OfferAdmission::CompleteLedger,
             call: prototype,
             offer: bound.offer.clone(),
             placement: bound.placement,

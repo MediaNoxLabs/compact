@@ -10,6 +10,12 @@ use midnight_zswap::{Input, Offer, Output};
 use runtime::transaction::{ObservedCallError, OfferBackedObservedState, ZswapIntentError};
 
 pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
+    run_case(root, false)
+}
+pub(super) fn run_observational(root: &Path) -> Result<(), Box<dyn Error>> {
+    run_case(root, true)
+}
+fn run_case(root: &Path, observation_policy: bool) -> Result<(), Box<dyn Error>> {
     const NAME: &str = "send_to_self";
     let mut rng = StdRng::seed_from_u64(0x0203_0001);
     let initial = contract::initial_state(ConstructorContext::new(()))?;
@@ -125,18 +131,39 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
     let partial = contract::Contract::default().recording().send_to_self_call(
         bound.observed(),
         (),
-        compact_input,
+        compact_input.clone(),
         BoundedUint::new(17)?,
     );
     assert!(matches!(
         partial,
         Err(runtime::CompactError::ZswapOfferOutputMismatch)
     ));
-    let tx = prepared.into_transaction(
-        &mut rng,
-        "local-test",
-        Timestamp::from_secs(time.to_secs() + 3600),
-    );
+    let tx = if observation_policy {
+        use runtime::transaction::{ObservationalOfferBackedState, OfferAdmission};
+        let observed = super::shielded_receive::observed(address, deploy.initial_state.clone());
+        let checkpoint = super::observational_binding::checkpoint(&ledger, &observed)?;
+        let binding =
+            ObservationalOfferBackedState::bind(observed, checkpoint, offer.clone(), None)?;
+        let call = contract::Contract::default()
+            .recording()
+            .send_to_self_call(binding.observed(), (), compact_input, BoundedUint::new(42)?)?;
+        let observed_prepared = binding.prepare(call, verifier.clone(), Fr::from(0))?;
+        assert!(matches!(
+            observed_prepared.admission(),
+            OfferAdmission::TrustedObservation(_)
+        ));
+        super::observational_binding::same_preimage(
+            prepared.prototype(),
+            observed_prepared.prototype(),
+        )?;
+        observed_prepared.into_transaction(&mut rng, Timestamp::from_secs(time.to_secs() + 3600))
+    } else {
+        prepared.into_transaction(
+            &mut rng,
+            "local-test",
+            Timestamp::from_secs(time.to_secs() + 3600),
+        )
+    };
     let resolver = super::qualified_coin_funding::fee_resolver(root, NAME)?;
     let params = MidnightDataProvider::new(FetchMode::OnDemand, OutputMode::Log, vec![])?;
     let provider = LocalProvingProvider {
@@ -173,14 +200,16 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
     assert_eq!(updated.zswap.first_free, index + 1);
     assert!(matches!(updated.zswap.try_apply(&offer, None),
         Err(midnight_zswap::error::TransactionInvalid::NullifierAlreadyPresent(found)) if found==nullifier));
-    partial_order_cases(
-        root,
-        &mut fee_state,
-        address,
-        deploy.initial_state.clone(),
-        &verifier,
-        &mut rng,
-    )?;
+    if !observation_policy {
+        partial_order_cases(
+            root,
+            &mut fee_state,
+            address,
+            deploy.initial_state.clone(),
+            &verifier,
+            &mut rng,
+        )?;
+    }
     println!(
         "qualified full self send: exact offer, call proof, default strict Dust-funded ledger apply and nullifier replay rejection passed"
     );

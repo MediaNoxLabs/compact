@@ -5,8 +5,15 @@
 // substitute for confirmed wallet ownership or a production mint policy.
 import CompactStandardLibrary;
 
-export circuit bootstrap(domain: Bytes<32>, amount: Uint<64>): [] {
-  return kernel.mintShielded(disclose(domain), disclose(amount));
+// The acceptance builder derives coin color/value and commitment from this
+// domain, deployed address and actual wallet key; strict ledger checks remain.
+export circuit bootstrap(
+  domain: Bytes<32>, amount: Uint<64>, coin: ShieldedCoinInfo,
+  recipient: Either<ZswapCoinPublicKey, ContractAddress>, commitment: Bytes<32>
+): [] {
+  kernel.mintShielded(disclose(domain), disclose(amount));
+  createZswapOutput(disclose(coin), disclose(recipient));
+  kernel.claimZswapCoinSpend(disclose(commitment));
 }
 
 export circuit accept(coin: ShieldedCoinInfo): [] {

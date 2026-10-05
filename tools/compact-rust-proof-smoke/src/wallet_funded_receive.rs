@@ -22,6 +22,12 @@ use midnight_zswap::{Offer, Output};
 use runtime::transaction::{OfferBackedObservedState, WalletFundingInputs, ZswapIntentError};
 
 pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
+    run_case(root, false)
+}
+pub(super) fn run_observational(root: &Path) -> Result<(), Box<dyn Error>> {
+    run_case(root, true)
+}
+fn run_case(root: &Path, observation_policy: bool) -> Result<(), Box<dyn Error>> {
     let mut rng = StdRng::seed_from_u64(0x0199_0000);
     let initial = contract::initial_state(ConstructorContext::new(()))?;
     let deploy = make_deploy(
@@ -122,7 +128,7 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
     let native = contract::accept(bound.observed().circuit_context(()), coin.clone())?;
     let call = generated
         .recording()
-        .accept_call(bound.observed(), (), coin)?;
+        .accept_call(bound.observed(), (), coin.clone())?;
     assert_eq!(call.recorded().execution.result, ());
     assert_eq!(native.result, ());
     assert_eq!(
@@ -186,17 +192,58 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
     );
     let prepared = bound.prepare(call, verifier.clone(), Fr::from(0))?;
     let output_index = state.ledger.zswap.first_free;
-    let updated = super::composite_zswap::apply_bound(
-        root,
-        "accept",
-        prepared,
-        state,
-        rng,
-        &verifier,
-        commitment,
-        output_index,
-        address,
-    )?;
+    let updated = if observation_policy {
+        use runtime::transaction::{ObservationalOfferBackedState, OfferAdmission};
+        let observed = super::shielded_receive::observed(
+            address,
+            state.ledger.contract.get(&address).unwrap().clone(),
+        );
+        let checkpoint = super::observational_binding::checkpoint(&state.ledger, &observed)?;
+        let binding = ObservationalOfferBackedState::bind(
+            observed,
+            checkpoint,
+            offer.clone(),
+            Some(
+                WalletFundingInputs::from_inputs(vec![input])
+                    .map_err(|e| format!("funding: {e:?}"))?,
+            ),
+        )?;
+        let call = generated
+            .recording()
+            .accept_call(binding.observed(), (), coin)?;
+        let observed_prepared = binding.prepare(call, verifier.clone(), Fr::from(0))?;
+        assert!(matches!(
+            observed_prepared.admission(),
+            OfferAdmission::TrustedObservation(_)
+        ));
+        super::observational_binding::same_preimage(
+            prepared.prototype(),
+            observed_prepared.prototype(),
+        )?;
+        super::composite_zswap::apply_bound(
+            root,
+            "accept",
+            observed_prepared,
+            state,
+            rng,
+            &verifier,
+            commitment,
+            output_index,
+            address,
+        )?
+    } else {
+        super::composite_zswap::apply_bound(
+            root,
+            "accept",
+            prepared,
+            state,
+            rng,
+            &verifier,
+            commitment,
+            output_index,
+            address,
+        )?
+    };
     assert!(
         updated
             .zswap

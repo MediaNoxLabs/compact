@@ -24,9 +24,7 @@ use compact_rust_stateful_struct_oracle_fixture::{
 use midnight_compact_runtime as runtime;
 use midnight_ledger::test_utilities::TestState;
 use midnight_zswap::{Input, Offer, Output};
-use runtime::transaction::{
-    OfferBackedObservedState, OfferBoundPreparedCall, PrepareCallError, ZswapIntentError,
-};
+use runtime::transaction::{OfferBackedObservedState, PrepareCallError, ZswapIntentError};
 struct Witnesses;
 macro_rules! witness_impl {
     ($contract:ident) => {
@@ -69,7 +67,7 @@ pub(super) fn run(original: &Path, transfer_root: &Path) -> Result<(), Box<dyn E
 pub(super) fn apply_bound(
     root: &Path,
     name: &'static str,
-    prepared: OfferBoundPreparedCall,
+    prepared: impl super::observational_binding::ProofBoundCall,
     mut state: TestState<DefaultDB>,
     rng: StdRng,
     verifier: &VerifierKey,
@@ -85,11 +83,8 @@ pub(super) fn apply_bound(
     )?;
     let expected_state = state.ledger.contract.get(&address).unwrap().data.clone();
     let mut rng = rng;
-    let tx = prepared.into_transaction(
-        &mut rng,
-        "local-test",
-        Timestamp::from_secs(state.time.to_secs() + 3600),
-    );
+    let tx =
+        prepared.into_test_transaction(&mut rng, Timestamp::from_secs(state.time.to_secs() + 3600));
     let resolver = super::qualified_coin_funding::fee_resolver(root, name)?;
     let params = MidnightDataProvider::new(FetchMode::OnDemand, OutputMode::Log, vec![])?;
     let provider = LocalProvingProvider {

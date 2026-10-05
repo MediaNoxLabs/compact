@@ -12,7 +12,7 @@ python3 tools/compact-rust-backend/wallet-live/build-shielded-builder.py \
   --cargo-target-dir /absolute/existing-cargo-target
 ```
 
-Generate the contract using `--rust-runtime-root` pointing to the matching repository. Compile all three `bootstrap`, `accept`, `release` ZKIR files with pinned ZKIR 2.1.0. Preserve their prover/verifier/bzkir files under the same artifact root. The builder installs all three verifier operations at deployment, then derives bootstrap token color from the actual resulting address. No shielded coin is inserted offline for a live claim.
+Keep the generated contract unchanged: both the default portable bundled runtime and an explicit `--rust-runtime-root` path are supported. The script resolves the actual runtime path from the generated Cargo manifest, uses that same package identity for its direct dependency, and verifies runtime plus macro source inventories against the current reference repository before building. Compile all three `bootstrap`, `accept`, `release` ZKIR files with pinned ZKIR 2.1.0. Preserve their prover/verifier/bzkir files under the same artifact root. The builder installs all three verifier operations at deployment, then derives bootstrap token color from the actual resulting address. No shielded coin is inserted offline for a live claim.
 
 The binary is `TARGET/debug/compact-wallet-shielded-builder`:
 

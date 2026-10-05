@@ -1,0 +1,908 @@
+{
+  "provenance": {
+    "sourceSha256": "e95aef740573d9e5ba8980a74c0eabdf1c5fad4948750aeaa2a80502c3025b73",
+    "generatedIndexSha256": "cd9e3e2800463af56a1b374a2fba95fb82c606dfc0e4f08914f697564a7d124a",
+    "runtimeVersion": "0.16.101",
+    "runtime": {
+      "index.js": "c55a8ab3e7533b3fa6e27b66ab742c783d912d5a00d6ecc23d9f6142ddb0ecde",
+      "built-ins.js": "534001298a202e3b099355e0f9b3cf14a4b259358370ca88366231094989b481",
+      "compact-types.js": "5cdccdb9fde9fdb297459588f33ce093ad557584b35b480819e0d930ce1bd73b"
+    }
+  },
+  "exports": [
+    "arithOperand",
+    "assertArg",
+    "callArgCtor",
+    "callArgPure",
+    "cmpOperand",
+    "constAnnotatedBothLiteral",
+    "constUnannotatedSeqLifted",
+    "differingUintWidths",
+    "enumValued",
+    "fieldTypedArms",
+    "idf",
+    "largeLiteralArithOperand",
+    "literalAboveI32",
+    "literalAboveU64",
+    "nativeArg",
+    "nativeVectorElemTernary",
+    "pick",
+    "returnTailMixed",
+    "returnTailNested",
+    "structMember",
+    "structValuedArms",
+    "uintArmIntoField",
+    "vectorElement",
+    "walkerCallCtor",
+    "walkerReturnTail"
+  ],
+  "cases": [
+    {
+      "id": "idf/[\"0\"]",
+      "export": "idf",
+      "args": [
+        "0"
+      ],
+      "ok": true,
+      "result": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "idf/[\"1\"]",
+      "export": "idf",
+      "args": [
+        "1"
+      ],
+      "ok": true,
+      "result": "0100000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "idf/[\"1606938044258990275541962092341162602522202993782792835301376\"]",
+      "export": "idf",
+      "args": [
+        "1606938044258990275541962092341162602522202993782792835301376"
+      ],
+      "ok": true,
+      "result": "0000000000000000000000000000000000000000000000000001000000000000"
+    },
+    {
+      "id": "constAnnotatedBothLiteral/[false]",
+      "export": "constAnnotatedBothLiteral",
+      "args": [
+        false
+      ],
+      "ok": true,
+      "result": "0200000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "structMember/[false]",
+      "export": "structMember",
+      "args": [
+        false
+      ],
+      "ok": true,
+      "result": {
+        "f": "0200000000000000000000000000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "id": "vectorElement/[false]",
+      "export": "vectorElement",
+      "args": [
+        false
+      ],
+      "ok": true,
+      "result": [
+        "0200000000000000000000000000000000000000000000000000000000000000",
+        "0400000000000000000000000000000000000000000000000000000000000000"
+      ]
+    },
+    {
+      "id": "enumValued/[false]",
+      "export": "enumValued",
+      "args": [
+        false
+      ],
+      "ok": true,
+      "result": 1
+    },
+    {
+      "id": "literalAboveI32/[false]",
+      "export": "literalAboveI32",
+      "args": [
+        false
+      ],
+      "ok": true,
+      "result": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "literalAboveU64/[false]",
+      "export": "literalAboveU64",
+      "args": [
+        false
+      ],
+      "ok": true,
+      "result": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "walkerReturnTail/[false]",
+      "export": "walkerReturnTail",
+      "args": [
+        false
+      ],
+      "ok": true,
+      "result": "0200000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "walkerCallCtor/[false]",
+      "export": "walkerCallCtor",
+      "args": [
+        false
+      ],
+      "ok": true,
+      "result": {
+        "is_some": true,
+        "value": "0200000000000000000000000000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "id": "nativeVectorElemTernary/[false]",
+      "export": "nativeVectorElemTernary",
+      "args": [
+        false
+      ],
+      "ok": true,
+      "result": "1205f4789155711e2542dba1a64d226626fe3eb43baa854752d0b59077e010fc"
+    },
+    {
+      "id": "constUnannotatedSeqLifted/[false,\"0\"]",
+      "export": "constUnannotatedSeqLifted",
+      "args": [
+        false,
+        "0"
+      ],
+      "ok": true,
+      "result": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "constUnannotatedSeqLifted/[false,\"1\"]",
+      "export": "constUnannotatedSeqLifted",
+      "args": [
+        false,
+        "1"
+      ],
+      "ok": true,
+      "result": "0100000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "constUnannotatedSeqLifted/[false,\"5\"]",
+      "export": "constUnannotatedSeqLifted",
+      "args": [
+        false,
+        "5"
+      ],
+      "ok": true,
+      "result": "0500000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "constUnannotatedSeqLifted/[false,\"255\"]",
+      "export": "constUnannotatedSeqLifted",
+      "args": [
+        false,
+        "255"
+      ],
+      "ok": true,
+      "result": "ff00000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "returnTailMixed/[false,\"0\"]",
+      "export": "returnTailMixed",
+      "args": [
+        false,
+        "0"
+      ],
+      "ok": true,
+      "result": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "arithOperand/[false,\"0\"]",
+      "export": "arithOperand",
+      "args": [
+        false,
+        "0"
+      ],
+      "ok": true,
+      "result": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "returnTailMixed/[false,\"255\"]",
+      "export": "returnTailMixed",
+      "args": [
+        false,
+        "255"
+      ],
+      "ok": true,
+      "result": "ff00000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "arithOperand/[false,\"255\"]",
+      "export": "arithOperand",
+      "args": [
+        false,
+        "255"
+      ],
+      "ok": true,
+      "result": "ff00000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "assertArg/[false,\"0\"]",
+      "export": "assertArg",
+      "args": [
+        false,
+        "0"
+      ],
+      "ok": false,
+      "error": "failed assert: ternary assert",
+      "errorClass": "CompactError"
+    },
+    {
+      "id": "assertArg/[false,\"1\"]",
+      "export": "assertArg",
+      "args": [
+        false,
+        "1"
+      ],
+      "ok": false,
+      "error": "failed assert: ternary assert",
+      "errorClass": "CompactError"
+    },
+    {
+      "id": "assertArg/[false,\"2\"]",
+      "export": "assertArg",
+      "args": [
+        false,
+        "2"
+      ],
+      "ok": false,
+      "error": "failed assert: ternary assert",
+      "errorClass": "CompactError"
+    },
+    {
+      "id": "assertArg/[false,\"3\"]",
+      "export": "assertArg",
+      "args": [
+        false,
+        "3"
+      ],
+      "ok": true,
+      "result": []
+    },
+    {
+      "id": "assertArg/[false,\"255\"]",
+      "export": "assertArg",
+      "args": [
+        false,
+        "255"
+      ],
+      "ok": true,
+      "result": []
+    },
+    {
+      "id": "cmpOperand/[false,\"0\"]",
+      "export": "cmpOperand",
+      "args": [
+        false,
+        "0"
+      ],
+      "ok": true,
+      "result": true
+    },
+    {
+      "id": "cmpOperand/[false,\"1\"]",
+      "export": "cmpOperand",
+      "args": [
+        false,
+        "1"
+      ],
+      "ok": true,
+      "result": false
+    },
+    {
+      "id": "cmpOperand/[false,\"255\"]",
+      "export": "cmpOperand",
+      "args": [
+        false,
+        "255"
+      ],
+      "ok": true,
+      "result": false
+    },
+    {
+      "id": "returnTailNested/[false,false]",
+      "export": "returnTailNested",
+      "args": [
+        false,
+        false
+      ],
+      "ok": true,
+      "result": "0400000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "returnTailNested/[false,true]",
+      "export": "returnTailNested",
+      "args": [
+        false,
+        true
+      ],
+      "ok": true,
+      "result": "0300000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "callArgPure/[false,\"7\",\"1606938044258990275541962092341162602522202993782792835301376\"]",
+      "export": "callArgPure",
+      "args": [
+        false,
+        "7",
+        "1606938044258990275541962092341162602522202993782792835301376"
+      ],
+      "ok": true,
+      "result": "0000000000000000000000000000000000000000000000000001000000000000"
+    },
+    {
+      "id": "callArgCtor/[false,\"7\",\"1606938044258990275541962092341162602522202993782792835301376\"]",
+      "export": "callArgCtor",
+      "args": [
+        false,
+        "7",
+        "1606938044258990275541962092341162602522202993782792835301376"
+      ],
+      "ok": true,
+      "result": {
+        "is_some": true,
+        "value": "0000000000000000000000000000000000000000000000000001000000000000"
+      }
+    },
+    {
+      "id": "fieldTypedArms/[false,\"7\",\"1606938044258990275541962092341162602522202993782792835301376\"]",
+      "export": "fieldTypedArms",
+      "args": [
+        false,
+        "7",
+        "1606938044258990275541962092341162602522202993782792835301376"
+      ],
+      "ok": true,
+      "result": "0000000000000000000000000000000000000000000000000001000000000000"
+    },
+    {
+      "id": "nativeArg/[false,\"7\",\"1606938044258990275541962092341162602522202993782792835301376\"]",
+      "export": "nativeArg",
+      "args": [
+        false,
+        "7",
+        "1606938044258990275541962092341162602522202993782792835301376"
+      ],
+      "ok": true,
+      "result": {
+        "x": "ced0a0e6a38a948b1c7abab42177593f3afcaf7482bf6aefc2ba8f624f1e9f60",
+        "y": "41913a376bc61dbf426708c4b5a8a5ec6e43917c1f083d3230c24db250d9ef2c"
+      }
+    },
+    {
+      "id": "structValuedArms/[false,{\"f\":\"7\"},{\"f\":\"1606938044258990275541962092341162602522202993782792835301376\"}]",
+      "export": "structValuedArms",
+      "args": [
+        false,
+        {
+          "f": "7"
+        },
+        {
+          "f": "1606938044258990275541962092341162602522202993782792835301376"
+        }
+      ],
+      "ok": true,
+      "result": {
+        "f": "0000000000000000000000000000000000000000000000000001000000000000"
+      }
+    },
+    {
+      "id": "differingUintWidths/[false,\"0\",\"4294967295\"]",
+      "export": "differingUintWidths",
+      "args": [
+        false,
+        "0",
+        "4294967295"
+      ],
+      "ok": true,
+      "result": "ffffffff00000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "differingUintWidths/[false,\"255\",\"0\"]",
+      "export": "differingUintWidths",
+      "args": [
+        false,
+        "255",
+        "0"
+      ],
+      "ok": true,
+      "result": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "uintArmIntoField/[false,\"255\",\"1\"]",
+      "export": "uintArmIntoField",
+      "args": [
+        false,
+        "255",
+        "1"
+      ],
+      "ok": true,
+      "result": "0100000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "largeLiteralArithOperand/[false,\"0\"]",
+      "export": "largeLiteralArithOperand",
+      "args": [
+        false,
+        "0"
+      ],
+      "ok": true,
+      "result": "005ed0b200000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "largeLiteralArithOperand/[false,\"18446744073709551615\"]",
+      "export": "largeLiteralArithOperand",
+      "args": [
+        false,
+        "18446744073709551615"
+      ],
+      "ok": true,
+      "result": "ff5dd0b200000000010000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "constAnnotatedBothLiteral/[true]",
+      "export": "constAnnotatedBothLiteral",
+      "args": [
+        true
+      ],
+      "ok": true,
+      "result": "0100000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "structMember/[true]",
+      "export": "structMember",
+      "args": [
+        true
+      ],
+      "ok": true,
+      "result": {
+        "f": "0100000000000000000000000000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "id": "vectorElement/[true]",
+      "export": "vectorElement",
+      "args": [
+        true
+      ],
+      "ok": true,
+      "result": [
+        "0100000000000000000000000000000000000000000000000000000000000000",
+        "0300000000000000000000000000000000000000000000000000000000000000"
+      ]
+    },
+    {
+      "id": "enumValued/[true]",
+      "export": "enumValued",
+      "args": [
+        true
+      ],
+      "ok": true,
+      "result": 0
+    },
+    {
+      "id": "literalAboveI32/[true]",
+      "export": "literalAboveI32",
+      "args": [
+        true
+      ],
+      "ok": true,
+      "result": "005ed0b200000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "literalAboveU64/[true]",
+      "export": "literalAboveU64",
+      "args": [
+        true
+      ],
+      "ok": true,
+      "result": "ffffffffffffffffffffffffffffffff00000000000000000000000000000000"
+    },
+    {
+      "id": "walkerReturnTail/[true]",
+      "export": "walkerReturnTail",
+      "args": [
+        true
+      ],
+      "ok": true,
+      "result": "0100000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "walkerCallCtor/[true]",
+      "export": "walkerCallCtor",
+      "args": [
+        true
+      ],
+      "ok": true,
+      "result": {
+        "is_some": true,
+        "value": "0100000000000000000000000000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "id": "nativeVectorElemTernary/[true]",
+      "export": "nativeVectorElemTernary",
+      "args": [
+        true
+      ],
+      "ok": true,
+      "result": "ff55c97976a840b4ced964ed49e3794594ba3f675238b5fd25d282b60f70a194"
+    },
+    {
+      "id": "constUnannotatedSeqLifted/[true,\"0\"]",
+      "export": "constUnannotatedSeqLifted",
+      "args": [
+        true,
+        "0"
+      ],
+      "ok": false,
+      "error": "failed assert: result of subtraction would be negative",
+      "errorClass": "CompactError"
+    },
+    {
+      "id": "constUnannotatedSeqLifted/[true,\"1\"]",
+      "export": "constUnannotatedSeqLifted",
+      "args": [
+        true,
+        "1"
+      ],
+      "ok": true,
+      "result": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "constUnannotatedSeqLifted/[true,\"5\"]",
+      "export": "constUnannotatedSeqLifted",
+      "args": [
+        true,
+        "5"
+      ],
+      "ok": true,
+      "result": "0400000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "constUnannotatedSeqLifted/[true,\"255\"]",
+      "export": "constUnannotatedSeqLifted",
+      "args": [
+        true,
+        "255"
+      ],
+      "ok": true,
+      "result": "fe00000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "returnTailMixed/[true,\"0\"]",
+      "export": "returnTailMixed",
+      "args": [
+        true,
+        "0"
+      ],
+      "ok": true,
+      "result": "0500000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "arithOperand/[true,\"0\"]",
+      "export": "arithOperand",
+      "args": [
+        true,
+        "0"
+      ],
+      "ok": true,
+      "result": "0100000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "returnTailMixed/[true,\"255\"]",
+      "export": "returnTailMixed",
+      "args": [
+        true,
+        "255"
+      ],
+      "ok": true,
+      "result": "0500000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "arithOperand/[true,\"255\"]",
+      "export": "arithOperand",
+      "args": [
+        true,
+        "255"
+      ],
+      "ok": true,
+      "result": "0001000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "assertArg/[true,\"0\"]",
+      "export": "assertArg",
+      "args": [
+        true,
+        "0"
+      ],
+      "ok": false,
+      "error": "failed assert: ternary assert",
+      "errorClass": "CompactError"
+    },
+    {
+      "id": "assertArg/[true,\"1\"]",
+      "export": "assertArg",
+      "args": [
+        true,
+        "1"
+      ],
+      "ok": false,
+      "error": "failed assert: ternary assert",
+      "errorClass": "CompactError"
+    },
+    {
+      "id": "assertArg/[true,\"2\"]",
+      "export": "assertArg",
+      "args": [
+        true,
+        "2"
+      ],
+      "ok": true,
+      "result": []
+    },
+    {
+      "id": "assertArg/[true,\"3\"]",
+      "export": "assertArg",
+      "args": [
+        true,
+        "3"
+      ],
+      "ok": true,
+      "result": []
+    },
+    {
+      "id": "assertArg/[true,\"255\"]",
+      "export": "assertArg",
+      "args": [
+        true,
+        "255"
+      ],
+      "ok": true,
+      "result": []
+    },
+    {
+      "id": "cmpOperand/[true,\"0\"]",
+      "export": "cmpOperand",
+      "args": [
+        true,
+        "0"
+      ],
+      "ok": true,
+      "result": false
+    },
+    {
+      "id": "cmpOperand/[true,\"1\"]",
+      "export": "cmpOperand",
+      "args": [
+        true,
+        "1"
+      ],
+      "ok": true,
+      "result": true
+    },
+    {
+      "id": "cmpOperand/[true,\"255\"]",
+      "export": "cmpOperand",
+      "args": [
+        true,
+        "255"
+      ],
+      "ok": true,
+      "result": false
+    },
+    {
+      "id": "returnTailNested/[true,false]",
+      "export": "returnTailNested",
+      "args": [
+        true,
+        false
+      ],
+      "ok": true,
+      "result": "0200000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "returnTailNested/[true,true]",
+      "export": "returnTailNested",
+      "args": [
+        true,
+        true
+      ],
+      "ok": true,
+      "result": "0100000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "callArgPure/[true,\"7\",\"1606938044258990275541962092341162602522202993782792835301376\"]",
+      "export": "callArgPure",
+      "args": [
+        true,
+        "7",
+        "1606938044258990275541962092341162602522202993782792835301376"
+      ],
+      "ok": true,
+      "result": "0700000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "callArgCtor/[true,\"7\",\"1606938044258990275541962092341162602522202993782792835301376\"]",
+      "export": "callArgCtor",
+      "args": [
+        true,
+        "7",
+        "1606938044258990275541962092341162602522202993782792835301376"
+      ],
+      "ok": true,
+      "result": {
+        "is_some": true,
+        "value": "0700000000000000000000000000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "id": "fieldTypedArms/[true,\"7\",\"1606938044258990275541962092341162602522202993782792835301376\"]",
+      "export": "fieldTypedArms",
+      "args": [
+        true,
+        "7",
+        "1606938044258990275541962092341162602522202993782792835301376"
+      ],
+      "ok": true,
+      "result": "0700000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "nativeArg/[true,\"7\",\"1606938044258990275541962092341162602522202993782792835301376\"]",
+      "export": "nativeArg",
+      "args": [
+        true,
+        "7",
+        "1606938044258990275541962092341162602522202993782792835301376"
+      ],
+      "ok": true,
+      "result": {
+        "x": "60b2b7353daf50a975f04df9cbc4bd9574bfecdf54b074c9203aa202246fc971",
+        "y": "830ed06263a93ae3f06e7f160108159c77242435ac3c8ecb19674e8178b32940"
+      }
+    },
+    {
+      "id": "structValuedArms/[true,{\"f\":\"7\"},{\"f\":\"1606938044258990275541962092341162602522202993782792835301376\"}]",
+      "export": "structValuedArms",
+      "args": [
+        true,
+        {
+          "f": "7"
+        },
+        {
+          "f": "1606938044258990275541962092341162602522202993782792835301376"
+        }
+      ],
+      "ok": true,
+      "result": {
+        "f": "0700000000000000000000000000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "id": "differingUintWidths/[true,\"0\",\"4294967295\"]",
+      "export": "differingUintWidths",
+      "args": [
+        true,
+        "0",
+        "4294967295"
+      ],
+      "ok": true,
+      "result": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "differingUintWidths/[true,\"255\",\"0\"]",
+      "export": "differingUintWidths",
+      "args": [
+        true,
+        "255",
+        "0"
+      ],
+      "ok": true,
+      "result": "ff00000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "uintArmIntoField/[true,\"255\",\"1\"]",
+      "export": "uintArmIntoField",
+      "args": [
+        true,
+        "255",
+        "1"
+      ],
+      "ok": true,
+      "result": "ff00000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "largeLiteralArithOperand/[true,\"0\"]",
+      "export": "largeLiteralArithOperand",
+      "args": [
+        true,
+        "0"
+      ],
+      "ok": true,
+      "result": "005ed0b200000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "largeLiteralArithOperand/[true,\"18446744073709551615\"]",
+      "export": "largeLiteralArithOperand",
+      "args": [
+        true,
+        "18446744073709551615"
+      ],
+      "ok": true,
+      "result": "ff5dd0b200000000010000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "pick/[\"0\"]",
+      "export": "pick",
+      "args": [
+        "0"
+      ],
+      "ok": true,
+      "result": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "pick/[\"5\"]",
+      "export": "pick",
+      "args": [
+        "5"
+      ],
+      "ok": true,
+      "result": "0500000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "pick/[\"6\"]",
+      "export": "pick",
+      "args": [
+        "6"
+      ],
+      "ok": false,
+      "error": "failed assert: result of subtraction would be negative",
+      "errorClass": "CompactError"
+    },
+    {
+      "id": "pick/[\"9\"]",
+      "export": "pick",
+      "args": [
+        "9"
+      ],
+      "ok": false,
+      "error": "failed assert: result of subtraction would be negative",
+      "errorClass": "CompactError"
+    },
+    {
+      "id": "pick/[\"10\"]",
+      "export": "pick",
+      "args": [
+        "10"
+      ],
+      "ok": true,
+      "result": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "pick/[\"255\"]",
+      "export": "pick",
+      "args": [
+        "255"
+      ],
+      "ok": true,
+      "result": "f500000000000000000000000000000000000000000000000000000000000000"
+    }
+  ]
+}

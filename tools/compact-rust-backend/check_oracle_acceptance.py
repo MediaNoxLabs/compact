@@ -79,6 +79,34 @@ def reviewed_behavior_failures() -> list[str]:
     return failures
 
 
+def reviewed_ternary_failures() -> list[str]:
+    """Validate the manually reviewed pure case matrix and its pinned artifacts."""
+    review = json.loads(Path(__file__).with_name("oracle_ternary_behavior_review.json").read_text())
+    failures = []
+    for path, digest in review["artifact_sha256"].items():
+        if hashlib.sha256(relative_file(path).read_bytes()).hexdigest() != digest:
+            failures.append(f"reviewed ternary artifact changed; re-review required: {path}")
+    capture = json.loads(relative_file(review["capture"]).read_text())
+    rows, cases = review["rows"], capture["cases"]
+    names = [row["export"] for row in rows]
+    if len(names) != len(set(names)) or len(names) != review["reviewed_export_count"]:
+        failures.append("duplicate or incomplete reviewed ternary exports")
+    if set(names) != set(capture["exports"]):
+        failures.append("reviewed ternary exports differ from independent capture")
+    ids = [case["id"] for case in cases]
+    if len(ids) != len(set(ids)) or len(ids) != review["case_count"]:
+        failures.append("duplicate or incomplete reviewed ternary cases")
+    successes = sum(case["ok"] for case in cases)
+    if successes != review["success_count"] or len(cases) - successes != review["error_count"]:
+        failures.append("reviewed ternary outcome counts differ")
+    for row in rows:
+        relative_file(row["rust_test"])
+        expected = [case["id"] for case in cases if case["export"] == row["export"]]
+        if not expected or expected != row["case_ids"]:
+            failures.append(f"reviewed ternary case identity mismatch: {row['export']}")
+    return failures
+
+
 def main() -> int:
     manifest = json.loads(MANIFEST.read_text())
     fixtures = manifest["fixtures"]
@@ -113,6 +141,7 @@ def main() -> int:
 
     try:
         failures.extend(reviewed_behavior_failures())
+        failures.extend(reviewed_ternary_failures())
     except (KeyError, ValueError, OSError) as exc:
         failures.append(f"reviewed behavior matrix: {exc}")
 

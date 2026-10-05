@@ -1712,3 +1712,20 @@ code, ABI49, schema20, runtime or Compact source changed.
 The larger behavior audit remains separate and incomplete. Function-pointer
 dispatch (for example the six mixed-width comparisons) counts when actual
 assertions consume its output; invocation regexes alone do not establish coverage.
+
+### Direct pure ternary behavior (ADR218)
+
+`oracle_ternary_behavior_review.json` maps all 25 compiler-pure exports of the
+unchanged ternary oracle to 83 independent TypeScript cases and explicit typed
+Rust calls. The cases include both conditional arms, all four nested choices,
+distinct aggregate inputs, wide integer boundaries and actual curve/hash values.
+The eight failures assert source assertion errors or typed unsigned underflow;
+TypeScript's subtraction-assertion message and Rust's arithmetic error remain
+explicitly distinct. Lazy unselected subtraction paths must succeed.
+
+The matrix pins source, capture, script and Rust assertion hashes; its checker
+validates case identity and provenance, not semantic coverage inferred from text.
+This test-only tranche adds no proof or ledger claim and changes no compiler,
+runtime, generated crate, ABI49 or schema20. The broader 37-source review remains
+partial. Six call-argument pure exports and three AssetRegistry pure assertion
+exports still have transitive evidence awaiting separate direct-boundary review.

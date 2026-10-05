@@ -1,0 +1,741 @@
+{
+  "format": "reviewed-pure-oracle-behavior-v1",
+  "scope": "ADR218 ternary pure exports only; not a complete 37-source audit",
+  "abi": 49,
+  "schema": 20,
+  "artifact_sha256": {
+    "examples/rust_backend/ternary_cond_oracle.compact": "e95aef740573d9e5ba8980a74c0eabdf1c5fad4948750aeaa2a80502c3025b73",
+    "runtime-rs/tests/fixtures/ternary-pure-behavior.json": "6645036a67f731b85e2cca4500d445f920ce58568532e681fab90f461bd0fa03",
+    "runtime-rs/tests/fixtures/capture-ternary-pure-behavior.mjs": "99b6ea739f1bdf2e218c363134d4b638714d9a78b4bb0f71c6bda6403fefb182",
+    "tests-rust-backend/ternary-cond-oracle/tests/pure_behavior.rs": "376da04a0d66046f57a91dda03c4709641070763e44079b86a81a50c500dc26e"
+  },
+  "capture": "runtime-rs/tests/fixtures/ternary-pure-behavior.json",
+  "capture_provenance": {
+    "sourceSha256": "e95aef740573d9e5ba8980a74c0eabdf1c5fad4948750aeaa2a80502c3025b73",
+    "generatedIndexSha256": "cd9e3e2800463af56a1b374a2fba95fb82c606dfc0e4f08914f697564a7d124a",
+    "runtimeVersion": "0.16.101",
+    "runtime": {
+      "index.js": "c55a8ab3e7533b3fa6e27b66ab742c783d912d5a00d6ecc23d9f6142ddb0ecde",
+      "built-ins.js": "534001298a202e3b099355e0f9b3cf14a4b259358370ca88366231094989b481",
+      "compact-types.js": "5cdccdb9fde9fdb297459588f33ce093ad557584b35b480819e0d930ce1bd73b"
+    }
+  },
+  "reviewed_export_count": 25,
+  "case_count": 83,
+  "success_count": 75,
+  "error_count": 8,
+  "remaining_direct_boundary_audit": [
+    "six call_arg_declared_type pure exports",
+    "three AssetRegistry pure assertion exports"
+  ],
+  "rows": [
+    {
+      "source": "examples/rust_backend/ternary_cond_oracle.compact",
+      "export": "arithOperand",
+      "kind": "pure",
+      "review_status": "direct-result-and-error-assertions-reviewed",
+      "case_ids": [
+        "arithOperand/[false,\"0\"]",
+        "arithOperand/[false,\"255\"]",
+        "arithOperand/[true,\"0\"]",
+        "arithOperand/[true,\"255\"]"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/ternary-pure-behavior.json",
+        "json_path": "cases[export=arithOperand]"
+      },
+      "rust_test": "tests-rust-backend/ternary-cond-oracle/tests/pure_behavior.rs",
+      "assertion_test": "every_pure_ternary_export_matches_independent_typescript_paths_and_errors",
+      "dimensions": {
+        "result": "exact normalized aggregate/scalar/curve value against generated TS",
+        "error": "no negative case for this export",
+        "state": "not applicable (pure)",
+        "public_program": "not applicable (pure)",
+        "query_gas": "not applicable (pure)",
+        "private_witness": "not applicable (pure)",
+        "recorded_replay": "not applicable (pure)",
+        "cryptographic_proof": "not applicable (pure)",
+        "ledger_apply": "not applicable (pure)"
+      }
+    },
+    {
+      "source": "examples/rust_backend/ternary_cond_oracle.compact",
+      "export": "assertArg",
+      "kind": "pure",
+      "review_status": "direct-result-and-error-assertions-reviewed",
+      "case_ids": [
+        "assertArg/[false,\"0\"]",
+        "assertArg/[false,\"1\"]",
+        "assertArg/[false,\"2\"]",
+        "assertArg/[false,\"3\"]",
+        "assertArg/[false,\"255\"]",
+        "assertArg/[true,\"0\"]",
+        "assertArg/[true,\"1\"]",
+        "assertArg/[true,\"2\"]",
+        "assertArg/[true,\"3\"]",
+        "assertArg/[true,\"255\"]"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/ternary-pure-behavior.json",
+        "json_path": "cases[export=assertArg]"
+      },
+      "rust_test": "tests-rust-backend/ternary-cond-oracle/tests/pure_behavior.rs",
+      "assertion_test": "every_pure_ternary_export_matches_independent_typescript_paths_and_errors",
+      "dimensions": {
+        "result": "exact normalized aggregate/scalar/curve value against generated TS",
+        "error": "specific Rust variant and exact pinned TS exception; arithmetic wrapper strings intentionally differ",
+        "state": "not applicable (pure)",
+        "public_program": "not applicable (pure)",
+        "query_gas": "not applicable (pure)",
+        "private_witness": "not applicable (pure)",
+        "recorded_replay": "not applicable (pure)",
+        "cryptographic_proof": "not applicable (pure)",
+        "ledger_apply": "not applicable (pure)"
+      }
+    },
+    {
+      "source": "examples/rust_backend/ternary_cond_oracle.compact",
+      "export": "callArgCtor",
+      "kind": "pure",
+      "review_status": "direct-result-and-error-assertions-reviewed",
+      "case_ids": [
+        "callArgCtor/[false,\"7\",\"1606938044258990275541962092341162602522202993782792835301376\"]",
+        "callArgCtor/[true,\"7\",\"1606938044258990275541962092341162602522202993782792835301376\"]"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/ternary-pure-behavior.json",
+        "json_path": "cases[export=callArgCtor]"
+      },
+      "rust_test": "tests-rust-backend/ternary-cond-oracle/tests/pure_behavior.rs",
+      "assertion_test": "every_pure_ternary_export_matches_independent_typescript_paths_and_errors",
+      "dimensions": {
+        "result": "exact normalized aggregate/scalar/curve value against generated TS",
+        "error": "no negative case for this export",
+        "state": "not applicable (pure)",
+        "public_program": "not applicable (pure)",
+        "query_gas": "not applicable (pure)",
+        "private_witness": "not applicable (pure)",
+        "recorded_replay": "not applicable (pure)",
+        "cryptographic_proof": "not applicable (pure)",
+        "ledger_apply": "not applicable (pure)"
+      }
+    },
+    {
+      "source": "examples/rust_backend/ternary_cond_oracle.compact",
+      "export": "callArgPure",
+      "kind": "pure",
+      "review_status": "direct-result-and-error-assertions-reviewed",
+      "case_ids": [
+        "callArgPure/[false,\"7\",\"1606938044258990275541962092341162602522202993782792835301376\"]",
+        "callArgPure/[true,\"7\",\"1606938044258990275541962092341162602522202993782792835301376\"]"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/ternary-pure-behavior.json",
+        "json_path": "cases[export=callArgPure]"
+      },
+      "rust_test": "tests-rust-backend/ternary-cond-oracle/tests/pure_behavior.rs",
+      "assertion_test": "every_pure_ternary_export_matches_independent_typescript_paths_and_errors",
+      "dimensions": {
+        "result": "exact normalized aggregate/scalar/curve value against generated TS",
+        "error": "no negative case for this export",
+        "state": "not applicable (pure)",
+        "public_program": "not applicable (pure)",
+        "query_gas": "not applicable (pure)",
+        "private_witness": "not applicable (pure)",
+        "recorded_replay": "not applicable (pure)",
+        "cryptographic_proof": "not applicable (pure)",
+        "ledger_apply": "not applicable (pure)"
+      }
+    },
+    {
+      "source": "examples/rust_backend/ternary_cond_oracle.compact",
+      "export": "cmpOperand",
+      "kind": "pure",
+      "review_status": "direct-result-and-error-assertions-reviewed",
+      "case_ids": [
+        "cmpOperand/[false,\"0\"]",
+        "cmpOperand/[false,\"1\"]",
+        "cmpOperand/[false,\"255\"]",
+        "cmpOperand/[true,\"0\"]",
+        "cmpOperand/[true,\"1\"]",
+        "cmpOperand/[true,\"255\"]"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/ternary-pure-behavior.json",
+        "json_path": "cases[export=cmpOperand]"
+      },
+      "rust_test": "tests-rust-backend/ternary-cond-oracle/tests/pure_behavior.rs",
+      "assertion_test": "every_pure_ternary_export_matches_independent_typescript_paths_and_errors",
+      "dimensions": {
+        "result": "exact normalized aggregate/scalar/curve value against generated TS",
+        "error": "no negative case for this export",
+        "state": "not applicable (pure)",
+        "public_program": "not applicable (pure)",
+        "query_gas": "not applicable (pure)",
+        "private_witness": "not applicable (pure)",
+        "recorded_replay": "not applicable (pure)",
+        "cryptographic_proof": "not applicable (pure)",
+        "ledger_apply": "not applicable (pure)"
+      }
+    },
+    {
+      "source": "examples/rust_backend/ternary_cond_oracle.compact",
+      "export": "constAnnotatedBothLiteral",
+      "kind": "pure",
+      "review_status": "direct-result-and-error-assertions-reviewed",
+      "case_ids": [
+        "constAnnotatedBothLiteral/[false]",
+        "constAnnotatedBothLiteral/[true]"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/ternary-pure-behavior.json",
+        "json_path": "cases[export=constAnnotatedBothLiteral]"
+      },
+      "rust_test": "tests-rust-backend/ternary-cond-oracle/tests/pure_behavior.rs",
+      "assertion_test": "every_pure_ternary_export_matches_independent_typescript_paths_and_errors",
+      "dimensions": {
+        "result": "exact normalized aggregate/scalar/curve value against generated TS",
+        "error": "no negative case for this export",
+        "state": "not applicable (pure)",
+        "public_program": "not applicable (pure)",
+        "query_gas": "not applicable (pure)",
+        "private_witness": "not applicable (pure)",
+        "recorded_replay": "not applicable (pure)",
+        "cryptographic_proof": "not applicable (pure)",
+        "ledger_apply": "not applicable (pure)"
+      }
+    },
+    {
+      "source": "examples/rust_backend/ternary_cond_oracle.compact",
+      "export": "constUnannotatedSeqLifted",
+      "kind": "pure",
+      "review_status": "direct-result-and-error-assertions-reviewed",
+      "case_ids": [
+        "constUnannotatedSeqLifted/[false,\"0\"]",
+        "constUnannotatedSeqLifted/[false,\"1\"]",
+        "constUnannotatedSeqLifted/[false,\"5\"]",
+        "constUnannotatedSeqLifted/[false,\"255\"]",
+        "constUnannotatedSeqLifted/[true,\"0\"]",
+        "constUnannotatedSeqLifted/[true,\"1\"]",
+        "constUnannotatedSeqLifted/[true,\"5\"]",
+        "constUnannotatedSeqLifted/[true,\"255\"]"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/ternary-pure-behavior.json",
+        "json_path": "cases[export=constUnannotatedSeqLifted]"
+      },
+      "rust_test": "tests-rust-backend/ternary-cond-oracle/tests/pure_behavior.rs",
+      "assertion_test": "every_pure_ternary_export_matches_independent_typescript_paths_and_errors",
+      "dimensions": {
+        "result": "exact normalized aggregate/scalar/curve value against generated TS",
+        "error": "specific Rust variant and exact pinned TS exception; arithmetic wrapper strings intentionally differ",
+        "state": "not applicable (pure)",
+        "public_program": "not applicable (pure)",
+        "query_gas": "not applicable (pure)",
+        "private_witness": "not applicable (pure)",
+        "recorded_replay": "not applicable (pure)",
+        "cryptographic_proof": "not applicable (pure)",
+        "ledger_apply": "not applicable (pure)"
+      }
+    },
+    {
+      "source": "examples/rust_backend/ternary_cond_oracle.compact",
+      "export": "differingUintWidths",
+      "kind": "pure",
+      "review_status": "direct-result-and-error-assertions-reviewed",
+      "case_ids": [
+        "differingUintWidths/[false,\"0\",\"4294967295\"]",
+        "differingUintWidths/[false,\"255\",\"0\"]",
+        "differingUintWidths/[true,\"0\",\"4294967295\"]",
+        "differingUintWidths/[true,\"255\",\"0\"]"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/ternary-pure-behavior.json",
+        "json_path": "cases[export=differingUintWidths]"
+      },
+      "rust_test": "tests-rust-backend/ternary-cond-oracle/tests/pure_behavior.rs",
+      "assertion_test": "every_pure_ternary_export_matches_independent_typescript_paths_and_errors",
+      "dimensions": {
+        "result": "exact normalized aggregate/scalar/curve value against generated TS",
+        "error": "no negative case for this export",
+        "state": "not applicable (pure)",
+        "public_program": "not applicable (pure)",
+        "query_gas": "not applicable (pure)",
+        "private_witness": "not applicable (pure)",
+        "recorded_replay": "not applicable (pure)",
+        "cryptographic_proof": "not applicable (pure)",
+        "ledger_apply": "not applicable (pure)"
+      }
+    },
+    {
+      "source": "examples/rust_backend/ternary_cond_oracle.compact",
+      "export": "enumValued",
+      "kind": "pure",
+      "review_status": "direct-result-and-error-assertions-reviewed",
+      "case_ids": [
+        "enumValued/[false]",
+        "enumValued/[true]"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/ternary-pure-behavior.json",
+        "json_path": "cases[export=enumValued]"
+      },
+      "rust_test": "tests-rust-backend/ternary-cond-oracle/tests/pure_behavior.rs",
+      "assertion_test": "every_pure_ternary_export_matches_independent_typescript_paths_and_errors",
+      "dimensions": {
+        "result": "exact normalized aggregate/scalar/curve value against generated TS",
+        "error": "no negative case for this export",
+        "state": "not applicable (pure)",
+        "public_program": "not applicable (pure)",
+        "query_gas": "not applicable (pure)",
+        "private_witness": "not applicable (pure)",
+        "recorded_replay": "not applicable (pure)",
+        "cryptographic_proof": "not applicable (pure)",
+        "ledger_apply": "not applicable (pure)"
+      }
+    },
+    {
+      "source": "examples/rust_backend/ternary_cond_oracle.compact",
+      "export": "fieldTypedArms",
+      "kind": "pure",
+      "review_status": "direct-result-and-error-assertions-reviewed",
+      "case_ids": [
+        "fieldTypedArms/[false,\"7\",\"1606938044258990275541962092341162602522202993782792835301376\"]",
+        "fieldTypedArms/[true,\"7\",\"1606938044258990275541962092341162602522202993782792835301376\"]"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/ternary-pure-behavior.json",
+        "json_path": "cases[export=fieldTypedArms]"
+      },
+      "rust_test": "tests-rust-backend/ternary-cond-oracle/tests/pure_behavior.rs",
+      "assertion_test": "every_pure_ternary_export_matches_independent_typescript_paths_and_errors",
+      "dimensions": {
+        "result": "exact normalized aggregate/scalar/curve value against generated TS",
+        "error": "no negative case for this export",
+        "state": "not applicable (pure)",
+        "public_program": "not applicable (pure)",
+        "query_gas": "not applicable (pure)",
+        "private_witness": "not applicable (pure)",
+        "recorded_replay": "not applicable (pure)",
+        "cryptographic_proof": "not applicable (pure)",
+        "ledger_apply": "not applicable (pure)"
+      }
+    },
+    {
+      "source": "examples/rust_backend/ternary_cond_oracle.compact",
+      "export": "idf",
+      "kind": "pure",
+      "review_status": "direct-result-and-error-assertions-reviewed",
+      "case_ids": [
+        "idf/[\"0\"]",
+        "idf/[\"1\"]",
+        "idf/[\"1606938044258990275541962092341162602522202993782792835301376\"]"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/ternary-pure-behavior.json",
+        "json_path": "cases[export=idf]"
+      },
+      "rust_test": "tests-rust-backend/ternary-cond-oracle/tests/pure_behavior.rs",
+      "assertion_test": "every_pure_ternary_export_matches_independent_typescript_paths_and_errors",
+      "dimensions": {
+        "result": "exact normalized aggregate/scalar/curve value against generated TS",
+        "error": "no negative case for this export",
+        "state": "not applicable (pure)",
+        "public_program": "not applicable (pure)",
+        "query_gas": "not applicable (pure)",
+        "private_witness": "not applicable (pure)",
+        "recorded_replay": "not applicable (pure)",
+        "cryptographic_proof": "not applicable (pure)",
+        "ledger_apply": "not applicable (pure)"
+      }
+    },
+    {
+      "source": "examples/rust_backend/ternary_cond_oracle.compact",
+      "export": "largeLiteralArithOperand",
+      "kind": "pure",
+      "review_status": "direct-result-and-error-assertions-reviewed",
+      "case_ids": [
+        "largeLiteralArithOperand/[false,\"0\"]",
+        "largeLiteralArithOperand/[false,\"18446744073709551615\"]",
+        "largeLiteralArithOperand/[true,\"0\"]",
+        "largeLiteralArithOperand/[true,\"18446744073709551615\"]"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/ternary-pure-behavior.json",
+        "json_path": "cases[export=largeLiteralArithOperand]"
+      },
+      "rust_test": "tests-rust-backend/ternary-cond-oracle/tests/pure_behavior.rs",
+      "assertion_test": "every_pure_ternary_export_matches_independent_typescript_paths_and_errors",
+      "dimensions": {
+        "result": "exact normalized aggregate/scalar/curve value against generated TS",
+        "error": "no negative case for this export",
+        "state": "not applicable (pure)",
+        "public_program": "not applicable (pure)",
+        "query_gas": "not applicable (pure)",
+        "private_witness": "not applicable (pure)",
+        "recorded_replay": "not applicable (pure)",
+        "cryptographic_proof": "not applicable (pure)",
+        "ledger_apply": "not applicable (pure)"
+      }
+    },
+    {
+      "source": "examples/rust_backend/ternary_cond_oracle.compact",
+      "export": "literalAboveI32",
+      "kind": "pure",
+      "review_status": "direct-result-and-error-assertions-reviewed",
+      "case_ids": [
+        "literalAboveI32/[false]",
+        "literalAboveI32/[true]"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/ternary-pure-behavior.json",
+        "json_path": "cases[export=literalAboveI32]"
+      },
+      "rust_test": "tests-rust-backend/ternary-cond-oracle/tests/pure_behavior.rs",
+      "assertion_test": "every_pure_ternary_export_matches_independent_typescript_paths_and_errors",
+      "dimensions": {
+        "result": "exact normalized aggregate/scalar/curve value against generated TS",
+        "error": "no negative case for this export",
+        "state": "not applicable (pure)",
+        "public_program": "not applicable (pure)",
+        "query_gas": "not applicable (pure)",
+        "private_witness": "not applicable (pure)",
+        "recorded_replay": "not applicable (pure)",
+        "cryptographic_proof": "not applicable (pure)",
+        "ledger_apply": "not applicable (pure)"
+      }
+    },
+    {
+      "source": "examples/rust_backend/ternary_cond_oracle.compact",
+      "export": "literalAboveU64",
+      "kind": "pure",
+      "review_status": "direct-result-and-error-assertions-reviewed",
+      "case_ids": [
+        "literalAboveU64/[false]",
+        "literalAboveU64/[true]"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/ternary-pure-behavior.json",
+        "json_path": "cases[export=literalAboveU64]"
+      },
+      "rust_test": "tests-rust-backend/ternary-cond-oracle/tests/pure_behavior.rs",
+      "assertion_test": "every_pure_ternary_export_matches_independent_typescript_paths_and_errors",
+      "dimensions": {
+        "result": "exact normalized aggregate/scalar/curve value against generated TS",
+        "error": "no negative case for this export",
+        "state": "not applicable (pure)",
+        "public_program": "not applicable (pure)",
+        "query_gas": "not applicable (pure)",
+        "private_witness": "not applicable (pure)",
+        "recorded_replay": "not applicable (pure)",
+        "cryptographic_proof": "not applicable (pure)",
+        "ledger_apply": "not applicable (pure)"
+      }
+    },
+    {
+      "source": "examples/rust_backend/ternary_cond_oracle.compact",
+      "export": "nativeArg",
+      "kind": "pure",
+      "review_status": "direct-result-and-error-assertions-reviewed",
+      "case_ids": [
+        "nativeArg/[false,\"7\",\"1606938044258990275541962092341162602522202993782792835301376\"]",
+        "nativeArg/[true,\"7\",\"1606938044258990275541962092341162602522202993782792835301376\"]"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/ternary-pure-behavior.json",
+        "json_path": "cases[export=nativeArg]"
+      },
+      "rust_test": "tests-rust-backend/ternary-cond-oracle/tests/pure_behavior.rs",
+      "assertion_test": "every_pure_ternary_export_matches_independent_typescript_paths_and_errors",
+      "dimensions": {
+        "result": "exact normalized aggregate/scalar/curve value against generated TS",
+        "error": "no negative case for this export",
+        "state": "not applicable (pure)",
+        "public_program": "not applicable (pure)",
+        "query_gas": "not applicable (pure)",
+        "private_witness": "not applicable (pure)",
+        "recorded_replay": "not applicable (pure)",
+        "cryptographic_proof": "not applicable (pure)",
+        "ledger_apply": "not applicable (pure)"
+      }
+    },
+    {
+      "source": "examples/rust_backend/ternary_cond_oracle.compact",
+      "export": "nativeVectorElemTernary",
+      "kind": "pure",
+      "review_status": "direct-result-and-error-assertions-reviewed",
+      "case_ids": [
+        "nativeVectorElemTernary/[false]",
+        "nativeVectorElemTernary/[true]"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/ternary-pure-behavior.json",
+        "json_path": "cases[export=nativeVectorElemTernary]"
+      },
+      "rust_test": "tests-rust-backend/ternary-cond-oracle/tests/pure_behavior.rs",
+      "assertion_test": "every_pure_ternary_export_matches_independent_typescript_paths_and_errors",
+      "dimensions": {
+        "result": "exact normalized aggregate/scalar/curve value against generated TS",
+        "error": "no negative case for this export",
+        "state": "not applicable (pure)",
+        "public_program": "not applicable (pure)",
+        "query_gas": "not applicable (pure)",
+        "private_witness": "not applicable (pure)",
+        "recorded_replay": "not applicable (pure)",
+        "cryptographic_proof": "not applicable (pure)",
+        "ledger_apply": "not applicable (pure)"
+      }
+    },
+    {
+      "source": "examples/rust_backend/ternary_cond_oracle.compact",
+      "export": "pick",
+      "kind": "pure",
+      "review_status": "direct-result-and-error-assertions-reviewed",
+      "case_ids": [
+        "pick/[\"0\"]",
+        "pick/[\"5\"]",
+        "pick/[\"6\"]",
+        "pick/[\"9\"]",
+        "pick/[\"10\"]",
+        "pick/[\"255\"]"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/ternary-pure-behavior.json",
+        "json_path": "cases[export=pick]"
+      },
+      "rust_test": "tests-rust-backend/ternary-cond-oracle/tests/pure_behavior.rs",
+      "assertion_test": "every_pure_ternary_export_matches_independent_typescript_paths_and_errors",
+      "dimensions": {
+        "result": "exact normalized aggregate/scalar/curve value against generated TS",
+        "error": "specific Rust variant and exact pinned TS exception; arithmetic wrapper strings intentionally differ",
+        "state": "not applicable (pure)",
+        "public_program": "not applicable (pure)",
+        "query_gas": "not applicable (pure)",
+        "private_witness": "not applicable (pure)",
+        "recorded_replay": "not applicable (pure)",
+        "cryptographic_proof": "not applicable (pure)",
+        "ledger_apply": "not applicable (pure)"
+      }
+    },
+    {
+      "source": "examples/rust_backend/ternary_cond_oracle.compact",
+      "export": "returnTailMixed",
+      "kind": "pure",
+      "review_status": "direct-result-and-error-assertions-reviewed",
+      "case_ids": [
+        "returnTailMixed/[false,\"0\"]",
+        "returnTailMixed/[false,\"255\"]",
+        "returnTailMixed/[true,\"0\"]",
+        "returnTailMixed/[true,\"255\"]"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/ternary-pure-behavior.json",
+        "json_path": "cases[export=returnTailMixed]"
+      },
+      "rust_test": "tests-rust-backend/ternary-cond-oracle/tests/pure_behavior.rs",
+      "assertion_test": "every_pure_ternary_export_matches_independent_typescript_paths_and_errors",
+      "dimensions": {
+        "result": "exact normalized aggregate/scalar/curve value against generated TS",
+        "error": "no negative case for this export",
+        "state": "not applicable (pure)",
+        "public_program": "not applicable (pure)",
+        "query_gas": "not applicable (pure)",
+        "private_witness": "not applicable (pure)",
+        "recorded_replay": "not applicable (pure)",
+        "cryptographic_proof": "not applicable (pure)",
+        "ledger_apply": "not applicable (pure)"
+      }
+    },
+    {
+      "source": "examples/rust_backend/ternary_cond_oracle.compact",
+      "export": "returnTailNested",
+      "kind": "pure",
+      "review_status": "direct-result-and-error-assertions-reviewed",
+      "case_ids": [
+        "returnTailNested/[false,false]",
+        "returnTailNested/[false,true]",
+        "returnTailNested/[true,false]",
+        "returnTailNested/[true,true]"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/ternary-pure-behavior.json",
+        "json_path": "cases[export=returnTailNested]"
+      },
+      "rust_test": "tests-rust-backend/ternary-cond-oracle/tests/pure_behavior.rs",
+      "assertion_test": "every_pure_ternary_export_matches_independent_typescript_paths_and_errors",
+      "dimensions": {
+        "result": "exact normalized aggregate/scalar/curve value against generated TS",
+        "error": "no negative case for this export",
+        "state": "not applicable (pure)",
+        "public_program": "not applicable (pure)",
+        "query_gas": "not applicable (pure)",
+        "private_witness": "not applicable (pure)",
+        "recorded_replay": "not applicable (pure)",
+        "cryptographic_proof": "not applicable (pure)",
+        "ledger_apply": "not applicable (pure)"
+      }
+    },
+    {
+      "source": "examples/rust_backend/ternary_cond_oracle.compact",
+      "export": "structMember",
+      "kind": "pure",
+      "review_status": "direct-result-and-error-assertions-reviewed",
+      "case_ids": [
+        "structMember/[false]",
+        "structMember/[true]"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/ternary-pure-behavior.json",
+        "json_path": "cases[export=structMember]"
+      },
+      "rust_test": "tests-rust-backend/ternary-cond-oracle/tests/pure_behavior.rs",
+      "assertion_test": "every_pure_ternary_export_matches_independent_typescript_paths_and_errors",
+      "dimensions": {
+        "result": "exact normalized aggregate/scalar/curve value against generated TS",
+        "error": "no negative case for this export",
+        "state": "not applicable (pure)",
+        "public_program": "not applicable (pure)",
+        "query_gas": "not applicable (pure)",
+        "private_witness": "not applicable (pure)",
+        "recorded_replay": "not applicable (pure)",
+        "cryptographic_proof": "not applicable (pure)",
+        "ledger_apply": "not applicable (pure)"
+      }
+    },
+    {
+      "source": "examples/rust_backend/ternary_cond_oracle.compact",
+      "export": "structValuedArms",
+      "kind": "pure",
+      "review_status": "direct-result-and-error-assertions-reviewed",
+      "case_ids": [
+        "structValuedArms/[false,{\"f\":\"7\"},{\"f\":\"1606938044258990275541962092341162602522202993782792835301376\"}]",
+        "structValuedArms/[true,{\"f\":\"7\"},{\"f\":\"1606938044258990275541962092341162602522202993782792835301376\"}]"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/ternary-pure-behavior.json",
+        "json_path": "cases[export=structValuedArms]"
+      },
+      "rust_test": "tests-rust-backend/ternary-cond-oracle/tests/pure_behavior.rs",
+      "assertion_test": "every_pure_ternary_export_matches_independent_typescript_paths_and_errors",
+      "dimensions": {
+        "result": "exact normalized aggregate/scalar/curve value against generated TS",
+        "error": "no negative case for this export",
+        "state": "not applicable (pure)",
+        "public_program": "not applicable (pure)",
+        "query_gas": "not applicable (pure)",
+        "private_witness": "not applicable (pure)",
+        "recorded_replay": "not applicable (pure)",
+        "cryptographic_proof": "not applicable (pure)",
+        "ledger_apply": "not applicable (pure)"
+      }
+    },
+    {
+      "source": "examples/rust_backend/ternary_cond_oracle.compact",
+      "export": "uintArmIntoField",
+      "kind": "pure",
+      "review_status": "direct-result-and-error-assertions-reviewed",
+      "case_ids": [
+        "uintArmIntoField/[false,\"255\",\"1\"]",
+        "uintArmIntoField/[true,\"255\",\"1\"]"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/ternary-pure-behavior.json",
+        "json_path": "cases[export=uintArmIntoField]"
+      },
+      "rust_test": "tests-rust-backend/ternary-cond-oracle/tests/pure_behavior.rs",
+      "assertion_test": "every_pure_ternary_export_matches_independent_typescript_paths_and_errors",
+      "dimensions": {
+        "result": "exact normalized aggregate/scalar/curve value against generated TS",
+        "error": "no negative case for this export",
+        "state": "not applicable (pure)",
+        "public_program": "not applicable (pure)",
+        "query_gas": "not applicable (pure)",
+        "private_witness": "not applicable (pure)",
+        "recorded_replay": "not applicable (pure)",
+        "cryptographic_proof": "not applicable (pure)",
+        "ledger_apply": "not applicable (pure)"
+      }
+    },
+    {
+      "source": "examples/rust_backend/ternary_cond_oracle.compact",
+      "export": "vectorElement",
+      "kind": "pure",
+      "review_status": "direct-result-and-error-assertions-reviewed",
+      "case_ids": [
+        "vectorElement/[false]",
+        "vectorElement/[true]"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/ternary-pure-behavior.json",
+        "json_path": "cases[export=vectorElement]"
+      },
+      "rust_test": "tests-rust-backend/ternary-cond-oracle/tests/pure_behavior.rs",
+      "assertion_test": "every_pure_ternary_export_matches_independent_typescript_paths_and_errors",
+      "dimensions": {
+        "result": "exact normalized aggregate/scalar/curve value against generated TS",
+        "error": "no negative case for this export",
+        "state": "not applicable (pure)",
+        "public_program": "not applicable (pure)",
+        "query_gas": "not applicable (pure)",
+        "private_witness": "not applicable (pure)",
+        "recorded_replay": "not applicable (pure)",
+        "cryptographic_proof": "not applicable (pure)",
+        "ledger_apply": "not applicable (pure)"
+      }
+    },
+    {
+      "source": "examples/rust_backend/ternary_cond_oracle.compact",
+      "export": "walkerCallCtor",
+      "kind": "pure",
+      "review_status": "direct-result-and-error-assertions-reviewed",
+      "case_ids": [
+        "walkerCallCtor/[false]",
+        "walkerCallCtor/[true]"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/ternary-pure-behavior.json",
+        "json_path": "cases[export=walkerCallCtor]"
+      },
+      "rust_test": "tests-rust-backend/ternary-cond-oracle/tests/pure_behavior.rs",
+      "assertion_test": "every_pure_ternary_export_matches_independent_typescript_paths_and_errors",
+      "dimensions": {
+        "result": "exact normalized aggregate/scalar/curve value against generated TS",
+        "error": "no negative case for this export",
+        "state": "not applicable (pure)",
+        "public_program": "not applicable (pure)",
+        "query_gas": "not applicable (pure)",
+        "private_witness": "not applicable (pure)",
+        "recorded_replay": "not applicable (pure)",
+        "cryptographic_proof": "not applicable (pure)",
+        "ledger_apply": "not applicable (pure)"
+      }
+    },
+    {
+      "source": "examples/rust_backend/ternary_cond_oracle.compact",
+      "export": "walkerReturnTail",
+      "kind": "pure",
+      "review_status": "direct-result-and-error-assertions-reviewed",
+      "case_ids": [
+        "walkerReturnTail/[false]",
+        "walkerReturnTail/[true]"
+      ],
+      "capture": {
+        "path": "runtime-rs/tests/fixtures/ternary-pure-behavior.json",
+        "json_path": "cases[export=walkerReturnTail]"
+      },
+      "rust_test": "tests-rust-backend/ternary-cond-oracle/tests/pure_behavior.rs",
+      "assertion_test": "every_pure_ternary_export_matches_independent_typescript_paths_and_errors",
+      "dimensions": {
+        "result": "exact normalized aggregate/scalar/curve value against generated TS",
+        "error": "no negative case for this export",
+        "state": "not applicable (pure)",
+        "public_program": "not applicable (pure)",
+        "query_gas": "not applicable (pure)",
+        "private_witness": "not applicable (pure)",
+        "recorded_replay": "not applicable (pure)",
+        "cryptographic_proof": "not applicable (pure)",
+        "ledger_apply": "not applicable (pure)"
+      }
+    }
+  ]
+}

@@ -387,7 +387,8 @@
       "source_sha256": "e95aef740573d9e5ba8980a74c0eabdf1c5fad4948750aeaa2a80502c3025b73",
       "non_comment_sha256": "33465c22ee3b0942ca7fe96489b5f68e9427e6aeeb613dc43c595da8e833481c",
       "rust_tests": [
-        "tests-rust-backend/ternary-cond-oracle/tests/ternary_cond_oracle.rs"
+        "tests-rust-backend/ternary-cond-oracle/tests/ternary_cond_oracle.rs",
+        "tests-rust-backend/ternary-cond-oracle/tests/pure_behavior.rs"
       ],
       "typescript_fixtures": [
         "runtime-rs/tests/fixtures/ternary-cond-oracle.json",
@@ -395,7 +396,8 @@
         "runtime-rs/tests/fixtures/ternary-recorded-native-arg.json",
         "runtime-rs/tests/fixtures/ternary-recorded-annotated-uint8.json",
         "runtime-rs/tests/fixtures/ternary-recorded-vector-element.json",
-        "runtime-rs/tests/fixtures/oracle-direct-behavior.json"
+        "runtime-rs/tests/fixtures/oracle-direct-behavior.json",
+        "runtime-rs/tests/fixtures/ternary-pure-behavior.json"
       ]
     },
     {

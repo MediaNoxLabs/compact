@@ -34,8 +34,8 @@ mod asset_removal;
 mod asset_stored_record_fresh;
 mod asset_watch_write;
 mod asset_writable;
-mod boolean_pair_assert;
 mod bboard;
+mod boolean_pair_assert;
 mod closed_pure_field;
 mod election_commit;
 #[path = "../../../tests-rust-backend/election-oracle/support/commit.rs"]
@@ -2288,9 +2288,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         return zerocash_spend::run(Path::new(&root));
     }
     if first.as_deref() == Some(OsStr::new("--bboard")) {
-        let root = arguments
-            .next()
-            .ok_or("usage: --bboard <proof-output>")?;
+        let root = arguments.next().ok_or("usage: --bboard <proof-output>")?;
         if arguments.next().is_some() {
             return Err("usage: --bboard <proof-output>".into());
         }

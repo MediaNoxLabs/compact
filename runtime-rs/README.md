@@ -6,6 +6,11 @@ midnight-zk primitives for fields, encoding, cryptography, state, and VM
 queries. Generated code checks `RUST_RUNTIME_ABI` at compile time. A generated
 crate bundles matching runtime sources by default or points to one shared
 source root when compiled with `--rust-runtime-root`.
+
+The current runtime ABI is 43. It adds a typed circuit Zswap intent plan,
+kept separate from wallet state, and locks provisional allocation in observed
+contexts. ABI 42 adds native qualified-coin Cell writes; ABI 41 adds metered
+Counter less-than queries.
 ABI 40 adds recorded qualified-coin Set insertion and offer-backed observed calls.
 ABI 39 adds typed qualified-coin Set insertion through ledger-8 `CoinInfo` and
 `CoinRecipient`. It requires the commitment index allocated in the call context

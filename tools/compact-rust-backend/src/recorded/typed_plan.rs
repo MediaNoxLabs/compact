@@ -964,7 +964,11 @@ pub(super) fn lower<'a>(
             || matches!(circuit.parameters.as_slice(), [coin, recipient]
                 if coin.ty == crate::stateful::shielded_coin_type()
                     && recipient.ty == crate::stateful::shielded_recipient_type()));
-    (membership || cell_lifecycle || historic_spend || counter_comparison || qualified_set_lifecycle)
+    (membership
+        || cell_lifecycle
+        || historic_spend
+        || counter_comparison
+        || qualified_set_lifecycle)
         .then_some(TypedPlan { steps, result })
 }
 

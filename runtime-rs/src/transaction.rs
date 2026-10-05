@@ -164,8 +164,9 @@ impl<D: DB> Default for OfferBindingOptions<D> {
     }
 }
 impl<D: DB> OfferBindingOptions<D> {
-    /// Select one whole persistent offer's logical placement explicitly.
-    /// Fallible placement is canonical-only, without wallet funding or transients.
+    /// Select one whole offer's logical placement explicitly. Fallible placement
+    /// requires canonical allocation; any wallet funding/transients must be
+    /// explicitly selected and constructed for the same nonzero segment.
     pub fn with_offer_placement(mut self, placement: OfferPlacement) -> Self {
         self.placement = placement;
         self
@@ -445,6 +446,7 @@ impl<D: DB> OfferBackedObservedState<D> {
             };
         }
         let transient_inputs = if let Some(selected) = &self.transients {
+            selected.validate_placement(self.placement)?;
             selected.validate_offer(&self.offer, self.observed.address)?;
             selected.reconcile_events(plan, self.observed.address)?
         } else {

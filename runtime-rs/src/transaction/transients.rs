@@ -14,7 +14,9 @@
 // limitations under the License.
 
 //! Explicit upstream transient identities and cross-kind source provenance.
-use super::{ContractAddress, DB, DefaultDB, Offer, ProofPreimage, ZswapIntentError};
+use super::{
+    ContractAddress, DB, DefaultDB, Offer, OfferPlacement, ProofPreimage, ZswapIntentError,
+};
 use crate::ledger::{CoinInfo, CoinRecipient};
 use crate::zswap::{CircuitZswapPlan, IntentEvent};
 use midnight_coin_structure::transfer::SenderEvidence;
@@ -24,14 +26,25 @@ use std::collections::HashSet;
 
 /// Caller-selected complete upstream transient coins. This is an identity and
 /// intent policy, not proof validation. Both retained proofs are proved and
-/// checked by the final ledger transaction. Only guaranteed-segment contract
-/// transients are admitted; historical inputs keep their ordinary tree checks.
+/// checked by the final ledger transaction. The default constructor selects the
+/// guaranteed segment; nonzero placement must be explicit and match both proof
+/// halves. Historical inputs keep their ordinary tree checks.
 pub struct ContractTransientCoins<D: DB = DefaultDB> {
     coins: Vec<Transient<ProofPreimage, D>>,
+    placement: OfferPlacement,
 }
 impl<D: DB> ContractTransientCoins<D> {
     pub fn from_transients(
         coins: Vec<Transient<ProofPreimage, D>>,
+    ) -> Result<Self, ZswapIntentError> {
+        Self::from_transients_for_placement(coins, OfferPlacement::Guaranteed)
+    }
+
+    /// Select complete upstream transients already constructed for this exact
+    /// placement. No proof preimage, segment or value commitment is rewritten.
+    pub fn from_transients_for_placement(
+        coins: Vec<Transient<ProofPreimage, D>>,
+        placement: OfferPlacement,
     ) -> Result<Self, ZswapIntentError> {
         if coins.is_empty() {
             return Err(ZswapIntentError::TransientSelectionMismatch);
@@ -44,9 +57,10 @@ impl<D: DB> ContractTransientCoins<D> {
             }
             // Pinned ledger8 spend/output public return shapes. `segment()`
             // alone maps malformed conversions to None, so inspect both full
-            // return shapes and the guaranteed-segment tag explicitly.
-            if coin.proof_input.public_transcript_outputs != [Fr::from(1), Fr::from(0)]
-                || coin.proof_output.public_transcript_outputs != [Fr::from(0)]
+            // return shapes and the selected segment explicitly.
+            let segment = Fr::from(u64::from(placement.logical_segment()));
+            if coin.proof_input.public_transcript_outputs != [Fr::from(1), segment]
+                || coin.proof_output.public_transcript_outputs != [segment]
             {
                 return Err(ZswapIntentError::TransientSegmentMismatch);
             }
@@ -54,7 +68,17 @@ impl<D: DB> ContractTransientCoins<D> {
                 return Err(ZswapIntentError::TransientDuplicate);
             }
         }
-        Ok(Self { coins })
+        Ok(Self { coins, placement })
+    }
+
+    pub(super) fn validate_placement(
+        &self,
+        placement: OfferPlacement,
+    ) -> Result<(), ZswapIntentError> {
+        if self.placement != placement {
+            return Err(ZswapIntentError::TransientSegmentMismatch);
+        }
+        Ok(())
     }
 
     pub(super) fn validate_offer(

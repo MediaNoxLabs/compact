@@ -289,3 +289,322 @@ fn transient_options_require_explicit_canonical_mode_and_preserve_old_refusal() 
         Err(ZswapIntentError::TransientsUnsupported)
     );
 }
+
+fn fallible_funded(
+    historical: bool,
+) -> (
+    OfferBackedObservedState,
+    crate::ledger::QualifiedCoinInfo,
+    crate::ledger::CoinInfo,
+    crate::ledger::CoinInfo,
+) {
+    let old = super::zswap_tests::setup().0;
+    let mut ledger = LedgerState::new("local-test");
+    let address = old.observed.address;
+    ledger.contract = ledger
+        .contract
+        .insert(address, old.observed.contract.clone());
+    let mut rng = StdRng::seed_from_u64(211);
+    let keys = midnight_zswap::keys::SecretKeys::from_rng_seed(&mut rng);
+    let mut history = super::zswap_tests::coin(1);
+    history.value = 17;
+    let mut received = super::zswap_tests::coin(2);
+    received.value = 10;
+    let mut sent = super::zswap_tests::coin(3);
+    sent.value = if historical { 27 } else { 10 };
+    let h = Output::new_contract_owned(&mut rng, &history, None, address).unwrap();
+    let w = Output::new(
+        &mut rng,
+        &received,
+        None,
+        &keys.coin_public_key(),
+        Some(keys.enc_public_key()),
+    )
+    .unwrap();
+    let hc = h.coin_com;
+    let wc = w.coin_com;
+    let seed = Offer::new(vec![], vec![h, w], vec![]).unwrap();
+    let (state, indices) = ledger.zswap.try_apply(&seed, None).unwrap();
+    ledger.zswap = Sp::new(state.post_block_update(Timestamp::from_secs(0)));
+    assert_eq!(ledger.zswap.first_free, 2);
+    let history = history.qualify(*indices.get(&hc).unwrap());
+    let wallet = midnight_zswap::local::State::<DefaultDB>::new().apply(&keys, &seed);
+    let (_, wallet_input) = wallet
+        .spend(
+            &mut rng,
+            &keys,
+            &received.qualify(*indices.get(&wc).unwrap()),
+            Some(7),
+        )
+        .unwrap();
+    let input = midnight_zswap::Input::new_contract_owned(
+        &mut rng,
+        &history,
+        Some(7),
+        address,
+        &ledger.zswap.coin_coms,
+    )
+    .unwrap();
+    // Both owner classes have the same [1, segment] shape; ownership is
+    // established by full selections and the actual historical path.
+    assert!(wallet_input.contract_address.is_none());
+    assert!(input.contract_address.is_some());
+    assert_eq!(
+        wallet_input.proof.public_transcript_outputs,
+        input.proof.public_transcript_outputs
+    );
+    let received_output =
+        Output::new_contract_owned(&mut rng, &received, Some(7), address).unwrap();
+    let transient = Transient::new_from_contract_owned_output(
+        &mut rng,
+        &received.qualify(0),
+        Some(7),
+        received_output,
+    )
+    .unwrap();
+    let output = Output::new_contract_owned(&mut rng, &sent, Some(7), address).unwrap();
+    let offer = Offer::new(
+        if historical {
+            vec![input, wallet_input.clone()]
+        } else {
+            vec![wallet_input.clone()]
+        },
+        vec![output],
+        vec![transient.clone()],
+    )
+    .unwrap();
+    let placement = OfferPlacement::Fallible(std::num::NonZeroU16::new(7).unwrap());
+    let bound = OfferBackedObservedState::with_options(
+        old.observed,
+        &ledger,
+        offer,
+        OfferBindingOptions::default()
+            .with_output_allocation(PersistentOutputAllocation::CanonicalOfferIndices)
+            .with_offer_placement(placement)
+            .with_wallet_funding(WalletFundingInputs::from_inputs(vec![wallet_input]).unwrap())
+            .with_transient_coins(
+                ContractTransientCoins::from_transients_for_placement(vec![transient], placement)
+                    .unwrap(),
+            ),
+    )
+    .unwrap();
+    (bound, history, received, sent)
+}
+
+#[test]
+fn fallible_actual_wallet_history_transient_union_retains_causal_allocation() {
+    let (mut bound, history, received, sent) = fallible_funded(true);
+    let call = record(&bound, received, sent, Some(history), false, 0, false);
+    assert_eq!(bound.reconcile(&call), Ok(()));
+    let outputs = call.execution.context.circuit_zswap().outputs();
+    assert_eq!(outputs[0].provisional_index, 3);
+    assert_eq!(outputs[1].provisional_index, 2);
+    let selected = bound.wallet_funding.take();
+    assert_eq!(bound.reconcile(&call), Err(ZswapIntentError::InputMismatch));
+    bound.wallet_funding = selected;
+    let selected = bound.transients.take();
+    assert_eq!(
+        bound.reconcile(&call),
+        Err(ZswapIntentError::TransientsUnsupported)
+    );
+    bound.transients = selected;
+    assert_eq!(
+        bound.reconcile(&record(
+            &bound,
+            received,
+            sent,
+            Some(history),
+            true,
+            0,
+            false
+        )),
+        Err(ZswapIntentError::TransientInputMismatch)
+    );
+    assert_eq!(
+        bound.reconcile(&record(
+            &bound,
+            received,
+            sent,
+            Some(history),
+            false,
+            1,
+            false
+        )),
+        Err(ZswapIntentError::TransientInputMismatch)
+    );
+    let mut bad_history = history;
+    bad_history.mt_index = 2;
+    assert_eq!(
+        bound.reconcile(&record(
+            &bound,
+            received,
+            sent,
+            Some(bad_history),
+            false,
+            0,
+            false
+        )),
+        Err(ZswapIntentError::InputIndexMismatch)
+    );
+    bound.placement = OfferPlacement::Guaranteed;
+    assert_eq!(
+        bound.reconcile(&call),
+        Err(ZswapIntentError::TransientSegmentMismatch)
+    );
+}
+
+#[test]
+fn fallible_selected_proofs_keep_exact_both_half_tags_and_full_identity() {
+    let (bound, _, _, _) = fallible_funded(true);
+    let placement = bound.placement;
+    let transient = bound.offer.transient.get(0).unwrap().clone();
+    assert!(matches!(
+        ContractTransientCoins::from_transients(vec![transient.clone()]),
+        Err(ZswapIntentError::TransientSegmentMismatch)
+    ));
+    let choose = || {
+        ContractTransientCoins::from_transients_for_placement(vec![transient.clone()], placement)
+            .unwrap()
+    };
+    assert_eq!(
+        choose().validate_placement(OfferPlacement::Guaranteed),
+        Err(ZswapIntentError::TransientSegmentMismatch)
+    );
+    for input in [true, false] {
+        let bad_vectors = if input {
+            vec![
+                vec![],
+                vec![Fr::from(7)],
+                vec![Fr::from(0), Fr::from(7)],
+                vec![Fr::from(1), Fr::from(0)],
+                vec![Fr::from(1), Fr::from(65536)],
+                vec![Fr::from(9), Fr::from(1), Fr::from(7)],
+            ]
+        } else {
+            vec![
+                vec![],
+                vec![Fr::from(0)],
+                vec![Fr::from(65536)],
+                vec![Fr::from(0), Fr::from(7)],
+            ]
+        };
+        for values in bad_vectors {
+            let mut changed = transient.clone();
+            let proof = if input {
+                &mut changed.proof_input
+            } else {
+                &mut changed.proof_output
+            };
+            std::sync::Arc::make_mut(proof).public_transcript_outputs = values;
+            assert!(matches!(
+                ContractTransientCoins::from_transients_for_placement(vec![changed], placement),
+                Err(ZswapIntentError::TransientSegmentMismatch)
+            ));
+        }
+        let mut changed = transient.clone();
+        let proof = if input {
+            &mut changed.proof_input
+        } else {
+            &mut changed.proof_output
+        };
+        std::sync::Arc::make_mut(proof)
+            .private_transcript
+            .push(Fr::from(1));
+        let mut offer = bound.offer.clone();
+        offer.transient = vec![changed].into_iter().collect();
+        assert_eq!(
+            choose().validate_offer(&offer, bound.observed.address),
+            Err(ZswapIntentError::TransientSelectionMismatch)
+        );
+    }
+    let funding = bound.wallet_funding.as_ref().unwrap();
+    let original = funding.inputs[0].clone();
+    let mut changed = original.clone();
+    std::sync::Arc::make_mut(&mut changed.proof)
+        .private_transcript
+        .push(Fr::from(1));
+    let mut offer = bound.offer.clone();
+    offer.inputs = offer
+        .inputs
+        .iter_deref()
+        .map(|i| {
+            if i.nullifier == original.nullifier {
+                changed.clone()
+            } else {
+                i.clone()
+            }
+        })
+        .collect();
+    assert_eq!(
+        funding.validate_offer(&offer),
+        Err(ZswapIntentError::WalletFundingMismatch)
+    );
+}
+
+#[test]
+fn fallible_wallet_transient_without_historical_input_is_explicit() {
+    let (bound, _, received, sent) = fallible_funded(false);
+    let call = record(&bound, received, sent, None, false, 0, false);
+    assert_eq!(bound.reconcile(&call), Ok(()));
+    assert_eq!(bound.offer.inputs.len(), 1);
+    assert!(
+        bound
+            .offer
+            .inputs
+            .get(0)
+            .unwrap()
+            .contract_address
+            .is_none()
+    );
+    assert_eq!(bound.offer.transient.len(), 1);
+    assert_eq!(call.execution.context.circuit_zswap().inputs().len(), 1);
+}
+
+#[test]
+fn fallible_wallet_and_contract_input_vectors_are_both_exact() {
+    let (bound, _, _, _) = fallible_funded(true);
+    let transient = bound.offer.transient.get(0).unwrap().clone();
+    let options = OfferBindingOptions::default()
+        .with_offer_placement(bound.placement)
+        .with_output_allocation(PersistentOutputAllocation::CanonicalOfferIndices)
+        .with_wallet_funding(
+            WalletFundingInputs::from_inputs(bound.wallet_funding.as_ref().unwrap().inputs.clone())
+                .unwrap(),
+        )
+        .with_transient_coins(
+            ContractTransientCoins::from_transients_for_placement(vec![transient], bound.placement)
+                .unwrap(),
+        );
+    assert_eq!(
+        bound.placement.validate_offer(&bound.offer, &options),
+        Ok(())
+    );
+    for owner in [true, false] {
+        for values in [
+            vec![],
+            vec![Fr::from(7)],
+            vec![Fr::from(0), Fr::from(7)],
+            vec![Fr::from(1), Fr::from(0)],
+            vec![Fr::from(1), Fr::from(65536)],
+            vec![Fr::from(9), Fr::from(1), Fr::from(7)],
+        ] {
+            let mut offer = bound.offer.clone();
+            offer.inputs = offer
+                .inputs
+                .iter_deref()
+                .map(|input| {
+                    let mut input = input.clone();
+                    if input.contract_address.is_some() == owner {
+                        std::sync::Arc::make_mut(&mut input.proof).public_transcript_outputs =
+                            values.clone();
+                    }
+                    input
+                })
+                .collect();
+            assert_eq!(
+                bound.placement.validate_offer(&offer, &options),
+                Err(ZswapIntentError::OfferSegmentMismatch)
+            );
+        }
+    }
+}

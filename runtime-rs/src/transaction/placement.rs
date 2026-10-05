@@ -11,27 +11,42 @@ pub enum OfferPlacement {
     /// Existing guaranteed offer placement; the call intent is at segment 1.
     #[default]
     Guaranteed,
-    /// One wholly fallible call and its entire persistent offer at this segment.
+    /// One wholly fallible call and its entire selected offer at this segment.
     /// No guaranteed Zswap offer or additional intent is constructed.
     Fallible(NonZeroU16),
 }
 impl OfferPlacement {
+    pub(super) fn logical_segment(self) -> u16 {
+        match self {
+            Self::Guaranteed => 0,
+            Self::Fallible(segment) => segment.get(),
+        }
+    }
+
     pub(super) fn validate_offer<D: DB>(
         self,
         offer: &Offer<ProofPreimage, D>,
         options: &OfferBindingOptions<D>,
     ) -> Result<(), ZswapIntentError> {
+        if let Some(selected) = &options.transients {
+            selected.validate_placement(self)?;
+        }
         let Self::Fallible(segment) = self else {
             return Ok(());
         };
         if options.output_allocation != PersistentOutputAllocation::CanonicalOfferIndices
-            || options.wallet_funding.is_some()
-            || options.transients.is_some()
-            || !offer.transient.is_empty()
-            || (offer.inputs.is_empty() && offer.outputs.is_empty())
+            || options
+                .wallet_funding
+                .as_ref()
+                .is_some_and(|funding| funding.inputs.is_empty())
+            || (!offer.transient.is_empty() && options.transients.is_none())
+            || (offer.inputs.is_empty() && offer.outputs.is_empty() && offer.transient.is_empty())
         {
             return Err(ZswapIntentError::OfferPlacementUnsupported);
         }
+        // Wallet and contract Input returns both start with 1; that scalar is
+        // not an owner discriminator. Explicit selections and reconciliation
+        // establish ownership and full proof identity separately.
         // Exact pinned ledger8 return shapes; segment() alone accepts malformed
         // vectors with a valid last element and maps overflow to None.
         let segment = Fr::from(u64::from(segment.get()));
@@ -43,6 +58,10 @@ impl OfferPlacement {
                 .outputs
                 .iter_deref()
                 .any(|output| output.proof.public_transcript_outputs != [segment])
+            || offer.transient.iter_deref().any(|coin| {
+                coin.proof_input.public_transcript_outputs != [Fr::from(1), segment]
+                    || coin.proof_output.public_transcript_outputs != [segment]
+            })
         {
             return Err(ZswapIntentError::OfferSegmentMismatch);
         }
@@ -168,7 +187,7 @@ mod tests {
         );
         assert_eq!(
             selected.placement.validate_offer(&base.offer, &selected),
-            Err(ZswapIntentError::OfferPlacementUnsupported)
+            Err(ZswapIntentError::TransientSegmentMismatch)
         );
         let mut containing = base.offer.clone();
         containing.transient = vec![transient].into_iter().collect();

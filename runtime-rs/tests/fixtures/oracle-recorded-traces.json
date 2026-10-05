@@ -1,0 +1,1078 @@
+{
+  "provenance": {
+    "runtimeVersion": "0.16.101",
+    "sources": {
+      "map_oracle": {
+        "sourceSha256": "e38a91f47f3a491581477a3b6fe86dd9e88a2ffd1a10a59435af95c4896819bb",
+        "generatedIndexSha256": "95204869f6af8b9f860b087574da54c749d99c98eb0b24fd9a0dc569c817e86d"
+      },
+      "nested_map_oracle": {
+        "sourceSha256": "901cdfa4df0da88021f1364bff625191329d7dbc7f83a13f38ca89c8b0526eaa",
+        "generatedIndexSha256": "474f871eaabe592b4d7baea5c7eaed5eac106b191c252c459ab60d0128cc5ad7"
+      },
+      "witnesses_oracle": {
+        "sourceSha256": "61b24d39ae57d4ae1c05311d19af9a2e8f094d7f86062e54c89fe3a6eb6ba227",
+        "generatedIndexSha256": "af081935d3797f9821699c9464e473f05d9eed8076c41efa9244e62c0163f790"
+      },
+      "set_oracle": {
+        "sourceSha256": "8f5260dfc6731df4c3fef091cddc2d53129cdcef85c68246a4333aa5689ca516",
+        "generatedIndexSha256": "d4e55f521a1b7f13e7aa1997568fef657861030dc33a074647ee031a708275fa"
+      }
+    },
+    "runtime": {
+      "index.js": "c55a8ab3e7533b3fa6e27b66ab742c783d912d5a00d6ecc23d9f6142ddb0ecde",
+      "built-ins.js": "534001298a202e3b099355e0f9b3cf14a4b259358370ca88366231094989b481",
+      "compact-types.js": "5cdccdb9fde9fdb297459588f33ce093ad557584b35b480819e0d930ce1bd73b"
+    }
+  },
+  "cases": [
+    {
+      "id": "map_oracle/put/insert",
+      "source": "map_oracle",
+      "export": "put",
+      "args": [
+        "7",
+        "9"
+      ],
+      "result": [],
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a3000040004000402040408010404080403040c00041008010404145403042244010403040108010404010402040104000000100c707574081c0000042008010404249003044080f74c964e9ada714518755fa03a5928e0776ca5391e540bd5d8788834088e9dae1408001828001003000400",
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a4800080741000809410404040108000800040c080104041090030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d82041404020418080104041c0403042000042408010404283d010304942901010403040108010404010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d82040108010404010008010807410001040104010809410000100c707574000400083034000438080104043c9003044080f74c964e9ada714518755fa03a5928e0776ca5391e540bd5d8788834088e9dae141c342c40341003000400",
+      "privateBefore": null,
+      "privateAfter": null,
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1335167115",
+            "bytesWritten": "148",
+            "bytesDeleted": "34"
+          }
+        }
+      ],
+      "reportedGas": {
+        "readTime": "170000000",
+        "computeTime": "1335167115",
+        "bytesWritten": "148",
+        "bytesDeleted": "34"
+      },
+      "publicTranscript": [
+        {
+          "idx": {
+            "cached": false,
+            "pushPath": true,
+            "path": [
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    []
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    7
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "field"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    9
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "field"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        },
+        {
+          "ins": {
+            "cached": true,
+            "n": 1
+          }
+        }
+      ],
+      "privateTranscript": []
+    },
+    {
+      "id": "map_oracle/put/replace",
+      "source": "map_oracle",
+      "export": "put",
+      "args": [
+        "7",
+        "11"
+      ],
+      "result": [],
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a4800080741000809410404040108000800040c080104041090030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d82041404020418080104041c0403042000042408010404283d010304942901010403040108010404010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d82040108010404010008010807410001040104010809410000100c707574000400083034000438080104043c9003044080f74c964e9ada714518755fa03a5928e0776ca5391e540bd5d8788834088e9dae141c342c40341003000400",
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a480008074100080b410404040108000800040c080104041090030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d82041404020418080104041c0403042000042408010404283d010304942901010403040108010404010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010801040401000801080741000104010401080b410000100c707574000400083034000438080104043c9003044080f74c964e9ada714518755fa03a5928e0776ca5391e540bd5d8788834088e9dae141c342c40341003000400",
+      "privateBefore": null,
+      "privateAfter": null,
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1335167115",
+            "bytesWritten": "148",
+            "bytesDeleted": "148"
+          }
+        }
+      ],
+      "reportedGas": {
+        "readTime": "170000000",
+        "computeTime": "1335167115",
+        "bytesWritten": "148",
+        "bytesDeleted": "148"
+      },
+      "publicTranscript": [
+        {
+          "idx": {
+            "cached": false,
+            "pushPath": true,
+            "path": [
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    []
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    7
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "field"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    11
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "field"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        },
+        {
+          "ins": {
+            "cached": true,
+            "n": 1
+          }
+        }
+      ],
+      "privateTranscript": []
+    },
+    {
+      "id": "map_oracle/put/distinct",
+      "source": "map_oracle",
+      "export": "put",
+      "args": [
+        "8",
+        "13"
+      ],
+      "result": [],
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a480008074100080b410404040108000800040c080104041090030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d82041404020418080104041c0403042000042408010404283d010304942901010403040108010404010402040190030440802b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8204010801040401000801080741000104010401080b410000100c707574000400083034000438080104043c9003044080f74c964e9ada714518755fa03a5928e0776ca5391e540bd5d8788834088e9dae141c342c40341003000400",
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a680008074100080b410404040108000800040c08010404109003043f80b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d8200008084100080d41041c040108182000042408010404289003043f80dcfef874f9f82af6a40ee16ed016ac7d7765f111a24da056b90f56b72b9fd5000004004030301430303030303030303030302c30080208043404020438080104043c040304400004440801040448290103048915011040000019003043f80dcfef874f9f82af6a40ee16ed016ac7d7765f111a24da056b90f56b72b9fd50004010801040401000801080841000104010401080d4100010400000044c15020304ff01020104030401080104040104020401080208400104000001040000019003043f80b05916d11c3e6fac36409bee7fe44248cc220b15e773ba10ea0811a0a8c0d82004010801040401000801080741000104010401080b4100010400000104000001040000010400000104000001040000010400000104000001040000010400000000100c707574085430000458080104045c9003044080f74c964e9ada714518755fa03a5928e0776ca5391e540bd5d8788834088e9dae143c305060301003000400",
+      "privateBefore": null,
+      "privateAfter": null,
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1335167115",
+            "bytesWritten": "392",
+            "bytesDeleted": "148"
+          }
+        }
+      ],
+      "reportedGas": {
+        "readTime": "170000000",
+        "computeTime": "1335167115",
+        "bytesWritten": "392",
+        "bytesDeleted": "148"
+      },
+      "publicTranscript": [
+        {
+          "idx": {
+            "cached": false,
+            "pushPath": true,
+            "path": [
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    []
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    8
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "field"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    13
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "field"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        },
+        {
+          "ins": {
+            "cached": true,
+            "n": 1
+          }
+        }
+      ],
+      "privateTranscript": []
+    },
+    {
+      "id": "nested_map_oracle/ping/initial",
+      "source": "nested_map_oracle",
+      "export": "ping",
+      "args": [],
+      "result": [],
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a40000840010400040100040004080402040c080104041014030401041008041408040804180403041c0004200801040424ac03044e9c01040304010804080801040104010840010001140304010410040108010404010402040104000000141070696e67082c0800043008010404349003044080c1e72be29cfb7437e947896b963e606c68157b9d3084102ac63c273d98bbbc8b1418082838081003000400",
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a40000801010400040100040004080402040c080104041014030401041008041408040804180403041c0004200801040424ac03044e9c01040304010804080801040104010801010001140304010410040108010404010402040104000000141070696e67082c0800043008010404349003044080c1e72be29cfb7437e947896b963e606c68157b9d3084102ac63c273d98bbbc8b1418082838081003000400",
+      "privateBefore": null,
+      "privateAfter": null,
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1233942932",
+            "bytesWritten": "78",
+            "bytesDeleted": "78"
+          }
+        }
+      ],
+      "reportedGas": {
+        "readTime": "85000000",
+        "computeTime": "1233942932",
+        "bytesWritten": "78",
+        "bytesDeleted": "78"
+      },
+      "publicTranscript": [
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    1
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        }
+      ],
+      "privateTranscript": []
+    },
+    {
+      "id": "nested_map_oracle/ping/repeat",
+      "source": "nested_map_oracle",
+      "export": "ping",
+      "args": [],
+      "result": [],
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a40000801010400040100040004080402040c080104041014030401041008041408040804180403041c0004200801040424ac03044e9c01040304010804080801040104010801010001140304010410040108010404010402040104000000141070696e67082c0800043008010404349003044080c1e72be29cfb7437e947896b963e606c68157b9d3084102ac63c273d98bbbc8b1418082838081003000400",
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a40000801010400040100040004080402040c080104041014030401041008041408040804180403041c0004200801040424ac03044e9c01040304010804080801040104010801010001140304010410040108010404010402040104000000141070696e67082c0800043008010404349003044080c1e72be29cfb7437e947896b963e606c68157b9d3084102ac63c273d98bbbc8b1418082838081003000400",
+      "privateBefore": null,
+      "privateAfter": null,
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1168248299",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        }
+      ],
+      "reportedGas": {
+        "readTime": "85000000",
+        "computeTime": "1168248299",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "publicTranscript": [
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    1
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        }
+      ],
+      "privateTranscript": []
+    },
+    {
+      "id": "witnesses_oracle/pull/witness-42",
+      "source": "witnesses_oracle",
+      "export": "pull",
+      "args": [],
+      "result": [],
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a340008404104000401040408010404080403040c0004100801040414580304244801040304010801040401040104010840410000141070756c6c000400081c2000042408010404289003044080f9bf8830e29bf34afadc1db07f3478a976137bd2116ae540996825e53545144d140820182c201003000400",
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a34000c412a4104000401040408010404080403040c00041008010404145c0304264c01040304010801040401040104010c412a410000141070756c6c000400081c2000042408010404289003044080f9bf8830e29bf34afadc1db07f3478a976137bd2116ae540996825e53545144d140820182c201003000400",
+      "privateBefore": 7,
+      "privateAfter": 8,
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1233942932",
+            "bytesWritten": "38",
+            "bytesDeleted": "36"
+          }
+        }
+      ],
+      "reportedGas": {
+        "readTime": "85000000",
+        "computeTime": "1233942932",
+        "bytesWritten": "38",
+        "bytesDeleted": "36"
+      },
+      "publicTranscript": [
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    42
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "field"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        }
+      ],
+      "privateTranscript": [
+        {
+          "valueAtoms": [
+            [
+              42
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "witnesses_oracle/pull/witness-0",
+      "source": "witnesses_oracle",
+      "export": "pull",
+      "args": [],
+      "result": [],
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a340008404104000401040408010404080403040c0004100801040414580304244801040304010801040401040104010840410000141070756c6c000400081c2000042408010404289003044080f9bf8830e29bf34afadc1db07f3478a976137bd2116ae540996825e53545144d140820182c201003000400",
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a340008404104000401040408010404080403040c0004100801040414580304244801040304010801040401040104010840410000141070756c6c000400081c2000042408010404289003044080f9bf8830e29bf34afadc1db07f3478a976137bd2116ae540996825e53545144d140820182c201003000400",
+      "privateBefore": 7,
+      "privateAfter": 8,
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1249914853",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1168248299",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        }
+      ],
+      "reportedGas": {
+        "readTime": "85000000",
+        "computeTime": "1168248299",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "publicTranscript": [
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "field"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        }
+      ],
+      "privateTranscript": [
+        {
+          "valueAtoms": [
+            []
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "set_oracle/check/seven",
+      "source": "set_oracle",
+      "export": "check",
+      "args": [
+        "7"
+      ],
+      "result": [],
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a40000840010400040100040004080402040c080104041014030401041008041408040804180403041c0004200801040424ac03044e9c010403040108040808010401040108400100011403040104100401080104040104020401040000001814636865636b082c08000430080104043490030440801ccdb85271314b92b871017f1fde28e6a924356eb8f943db48840521c024c53f1418082838081003000400",
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a40000840010400040100040004080402040c080104041014030401041008041408040804180403041c0004200801040424ac03044e9c010403040108040808010401040108400100011403040104100401080104040104020401040000001814636865636b082c08000430080104043490030440801ccdb85271314b92b871017f1fde28e6a924356eb8f943db48840521c024c53f1418082838081003000400",
+      "privateBefore": null,
+      "privateAfter": null,
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1252339959",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1168248299",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        }
+      ],
+      "reportedGas": {
+        "readTime": "85000000",
+        "computeTime": "1168248299",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "publicTranscript": [
+        {
+          "dup": {
+            "n": 0
+          }
+        },
+        {
+          "idx": {
+            "cached": false,
+            "pushPath": false,
+            "path": [
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    [
+                      1
+                    ]
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    7
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "field"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "member",
+        {
+          "popeq": {
+            "cached": true,
+            "result": {
+              "value": [
+                []
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "bytes",
+                    "length": 1
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        }
+      ],
+      "privateTranscript": []
+    },
+    {
+      "id": "set_oracle/check/eight",
+      "source": "set_oracle",
+      "export": "check",
+      "args": [
+        "8"
+      ],
+      "result": [],
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a40000840010400040100040004080402040c080104041014030401041008041408040804180403041c0004200801040424ac03044e9c010403040108040808010401040108400100011403040104100401080104040104020401040000001814636865636b082c08000430080104043490030440801ccdb85271314b92b871017f1fde28e6a924356eb8f943db48840521c024c53f1418082838081003000400",
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a40000840010400040100040004080402040c080104041014030401041008041408040804180403041c0004200801040424ac03044e9c010403040108040808010401040108400100011403040104100401080104040104020401040000001814636865636b082c08000430080104043490030440801ccdb85271314b92b871017f1fde28e6a924356eb8f943db48840521c024c53f1418082838081003000400",
+      "privateBefore": null,
+      "privateAfter": null,
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "170000000",
+            "computeTime": "1252339959",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "gasCost": {
+            "readTime": "85000000",
+            "computeTime": "1168248299",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        }
+      ],
+      "reportedGas": {
+        "readTime": "85000000",
+        "computeTime": "1168248299",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "publicTranscript": [
+        {
+          "dup": {
+            "n": 0
+          }
+        },
+        {
+          "idx": {
+            "cached": false,
+            "pushPath": false,
+            "path": [
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    [
+                      1
+                    ]
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    8
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "field"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "member",
+        {
+          "popeq": {
+            "cached": true,
+            "result": {
+              "value": [
+                []
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "bytes",
+                    "length": 1
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        }
+      ],
+      "privateTranscript": []
+    }
+  ]
+}

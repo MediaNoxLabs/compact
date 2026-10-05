@@ -231,10 +231,12 @@
       "source_sha256": "e38a91f47f3a491581477a3b6fe86dd9e88a2ffd1a10a59435af95c4896819bb",
       "non_comment_sha256": "3b79913bf95490856cedc85db7864b7b2657300376d58de5cf77a1fd7564e1db",
       "rust_tests": [
-        "tests-rust-backend/map-oracle/tests/map_oracle.rs"
+        "tests-rust-backend/map-oracle/tests/map_oracle.rs",
+        "tests-rust-backend/support/oracle_recorded_trace.rs"
       ],
       "typescript_fixtures": [
-        "runtime-rs/tests/fixtures/map-oracle.json"
+        "runtime-rs/tests/fixtures/map-oracle.json",
+        "runtime-rs/tests/fixtures/oracle-recorded-traces.json"
       ]
     },
     {
@@ -303,10 +305,12 @@
       "source_sha256": "901cdfa4df0da88021f1364bff625191329d7dbc7f83a13f38ca89c8b0526eaa",
       "non_comment_sha256": "9a1cda84d2b68e584cf65a19aad9855206f6e541e791ae8a850aa7b420ff9d28",
       "rust_tests": [
-        "tests-rust-backend/nested-map-oracle/tests/nested_map_oracle.rs"
+        "tests-rust-backend/nested-map-oracle/tests/nested_map_oracle.rs",
+        "tests-rust-backend/support/oracle_recorded_trace.rs"
       ],
       "typescript_fixtures": [
-        "runtime-rs/tests/fixtures/nested-map-oracle.json"
+        "runtime-rs/tests/fixtures/nested-map-oracle.json",
+        "runtime-rs/tests/fixtures/oracle-recorded-traces.json"
       ]
     },
     {
@@ -351,10 +355,12 @@
       "source_sha256": "8f5260dfc6731df4c3fef091cddc2d53129cdcef85c68246a4333aa5689ca516",
       "non_comment_sha256": "0ef616cfe99c6e6415f6fa4b705027cf22045585608be44a2f2ca6897e177816",
       "rust_tests": [
-        "tests-rust-backend/set-oracle/tests/set_oracle.rs"
+        "tests-rust-backend/set-oracle/tests/set_oracle.rs",
+        "tests-rust-backend/support/oracle_recorded_trace.rs"
       ],
       "typescript_fixtures": [
-        "runtime-rs/tests/fixtures/set-oracle.json"
+        "runtime-rs/tests/fixtures/set-oracle.json",
+        "runtime-rs/tests/fixtures/oracle-recorded-traces.json"
       ]
     },
     {
@@ -454,10 +460,12 @@
       "source_sha256": "61b24d39ae57d4ae1c05311d19af9a2e8f094d7f86062e54c89fe3a6eb6ba227",
       "non_comment_sha256": "9608bb7186bdfa4a724fc12fb8456f89f9094b7c6ca3cd970604f9ca347bed4e",
       "rust_tests": [
-        "tests-rust-backend/witnesses-oracle/tests/witnesses_oracle.rs"
+        "tests-rust-backend/witnesses-oracle/tests/witnesses_oracle.rs",
+        "tests-rust-backend/support/oracle_recorded_trace.rs"
       ],
       "typescript_fixtures": [
-        "runtime-rs/tests/fixtures/witnesses-oracle.json"
+        "runtime-rs/tests/fixtures/witnesses-oracle.json",
+        "runtime-rs/tests/fixtures/oracle-recorded-traces.json"
       ]
     }
   ]

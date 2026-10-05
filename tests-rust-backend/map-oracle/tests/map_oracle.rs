@@ -96,3 +96,28 @@ fn exact_map_oracle_matches_typescript_insertion_and_replacement() {
         view.lookup(runtime::Field::from(7_u64)).unwrap(),
     );
 }
+
+#[path = "../../support/oracle_recorded_trace.rs"]
+mod direct_trace;
+
+#[test]
+fn exported_map_recording_matches_complete_typescript_insert_replace_and_distinct_traces() {
+    use compact_rust_map_oracle_fixture::ledger_contract::recorded;
+    let rows = direct_trace::cases("map_oracle", 3);
+    let mut native_context = initial_state(ConstructorContext::new(()))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let mut recorded_context = initial_state(ConstructorContext::new(()))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    for (row, label) in rows.iter().zip(["insert", "replace", "distinct"]) {
+        assert_eq!(row["id"], format!("map_oracle/put/{label}"));
+        let k = runtime::Field::from(row["args"][0].as_str().unwrap().parse::<u64>().unwrap());
+        let v = runtime::Field::from(row["args"][1].as_str().unwrap().parse::<u64>().unwrap());
+        let native = put(native_context, k, v).unwrap();
+        let recorded = recorded::put(recorded_context, k, v).unwrap();
+        direct_trace::assert_trace(&native, &recorded, row, state_hex);
+        native_context = native.context;
+        recorded_context = recorded.execution.context;
+    }
+}

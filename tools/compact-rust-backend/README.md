@@ -1758,3 +1758,13 @@ This test-only tranche adds no proof or ledger claim and changes no compiler,
 runtime, generated crate, ABI49 or schema20. The broader 37-source review remains
 partial. Six call-argument pure exports and three AssetRegistry pure assertion
 exports still have transitive evidence awaiting separate direct-boundary review.
+
+### ADR222 — direct exported recording trace coverage
+
+Nine independently captured TypeScript cases exercise Map insert/replace/distinct
+keys, repeated nested-map `ping`, witness `pull` returning42/0 and Set checks7/8.
+The four generated fixture packages compare exact public Verify programs, aligned
+private outputs, summed query gas, final state and upstream replay through their
+exported native and recorded APIs. These are sampled behavior checks, not new
+proof/ledger-application evidence. Original sources, generated code and runtime
+remain unchanged. The capture script pins source/generated/runtime hashes.

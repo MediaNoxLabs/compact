@@ -104,3 +104,27 @@ fn recorded_set_member_and_cell_write_match_oracle_and_replay() {
     );
     assert_eq!(replay.context.effects, call.execution.context.query.effects);
 }
+
+#[path = "../../support/oracle_recorded_trace.rs"]
+mod direct_trace;
+
+#[test]
+fn exported_set_check_recording_matches_both_typescript_traces() {
+    use compact_rust_set_oracle_fixture::ledger_contract::recorded;
+    let rows = direct_trace::cases("set_oracle", 2);
+    let mut native_context = initial_state(ConstructorContext::new(()))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let mut recorded_context = initial_state(ConstructorContext::new(()))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    for (row, label) in rows.iter().zip(["seven", "eight"]) {
+        assert_eq!(row["id"], format!("set_oracle/check/{label}"));
+        let x = runtime::Field::from(row["args"][0].as_str().unwrap().parse::<u64>().unwrap());
+        let native = check(native_context, x).unwrap();
+        let recorded = recorded::check(recorded_context, x).unwrap();
+        direct_trace::assert_trace(&native, &recorded, row, state_hex);
+        native_context = native.context;
+        recorded_context = recorded.execution.context;
+    }
+}

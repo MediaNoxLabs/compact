@@ -100,3 +100,38 @@ fn exact_witness_oracle_matches_state_private_state_and_transcript() {
         oracle["privateTranscriptOutputs"][0]["alignment"]
     );
 }
+
+#[path = "../../support/oracle_recorded_trace.rs"]
+mod direct_trace;
+
+struct TraceWitness(u64);
+impl Witnesses<u64> for TraceWitness {
+    fn fetch_field(
+        &self,
+        context: WitnessContext<'_, u64, LedgerView<'_>>,
+    ) -> (u64, runtime::Field) {
+        assert_eq!(*context.private_state, 7);
+        assert_eq!(context.ledger.v().unwrap(), runtime::Field::default());
+        (8, runtime::Field::from(self.0))
+    }
+}
+
+#[test]
+fn exported_pull_recording_matches_witness_privacy_and_complete_typescript_traces() {
+    use compact_rust_witnesses_oracle_fixture::ledger_contract::recorded;
+    let rows = direct_trace::cases("witnesses_oracle", 2);
+    for (row, value) in rows.iter().zip([42, 0]) {
+        assert_eq!(row["id"], format!("witnesses_oracle/pull/witness-{value}"));
+        assert_eq!(row["privateBefore"], 7);
+        let context = initial_state(ConstructorContext::new(7u64))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default());
+        let native_context = initial_state(ConstructorContext::new(7u64))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default());
+        let native = pull(native_context, &TraceWitness(value)).unwrap();
+        let recorded = recorded::pull(context, &TraceWitness(value)).unwrap();
+        assert_eq!(native.context.private_state, row["privateAfter"]);
+        direct_trace::assert_trace(&native, &recorded, row, state_hex);
+    }
+}

@@ -125,3 +125,27 @@ fn nested_map_slot_shape_reads_match_native_gas_and_replay() {
     );
     assert_eq!(replay.context.effects, native_member.context.query.effects);
 }
+
+#[path = "../../support/oracle_recorded_trace.rs"]
+mod direct_trace;
+
+#[test]
+fn exported_ping_recording_matches_complete_typescript_traces() {
+    use compact_rust_nested_map_oracle_fixture::ledger_contract::recorded;
+    let rows = direct_trace::cases("nested_map_oracle", 2);
+    let mut native_context = initial_state(ConstructorContext::new(()))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let mut recorded_context = initial_state(ConstructorContext::new(()))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    for (row, label) in rows.iter().zip(["initial", "repeat"]) {
+        assert_eq!(row["id"], format!("nested_map_oracle/ping/{label}"));
+        let native = ping(native_context).unwrap();
+        let recorded = recorded::ping(recorded_context).unwrap();
+        direct_trace::assert_trace(&native, &recorded, row, state_hex);
+        assert_empty_nested_map(native.context.query.state.get_ref());
+        native_context = native.context;
+        recorded_context = recorded.execution.context;
+    }
+}

@@ -8905,3 +8905,78 @@ fn persistent_hash_helper_recording_preserves_formals_and_rejects_effects() {
     *index = 0;
     assert!(render_with_capabilities(&wrong_index).is_err());
 }
+
+#[test]
+fn typed_opaque_struct_map_write_requires_scoped_value_and_ordered_mutation() {
+    let mut contract: Contract =
+        serde_json::from_str(include_str!("asset-custody-grant-write-schema12-ir.json")).unwrap();
+    contract.schema_version = SCHEMA_VERSION;
+    let recorded = |contract: &Contract| {
+        let rendered = render_with_capabilities(contract).unwrap();
+        let capability = rendered
+            .capabilities
+            .circuits
+            .iter()
+            .find(|capability| capability.name == "setCustodyGrant")
+            .unwrap();
+        (capability.recorded, rendered.source)
+    };
+    let (available, source) = recorded(&contract);
+    assert!(available);
+    assert!(source.contains("pub fn setCustodyGrant<Private"));
+    assert!(source.contains("crate::ledger_slots::custodyGrants\n                .record_insert("));
+
+    fn actions(contract: &mut Contract) -> &mut Vec<StateAction> {
+        let circuit = contract
+            .stateful_circuits
+            .iter_mut()
+            .find(|circuit| circuit.name == "setCustodyGrant")
+            .unwrap();
+        let [StateAction::Let { action, .. }] = circuit.actions.as_mut_slice() else {
+            unreachable!()
+        };
+        let StateAction::Let { action, .. } = action.as_mut() else {
+            unreachable!()
+        };
+        let StateAction::Let { action, .. } = action.as_mut() else {
+            unreachable!()
+        };
+        let StateAction::Sequence { actions } = action.as_mut() else {
+            unreachable!()
+        };
+        actions
+    }
+    let mut unscoped_value = contract.clone();
+    let StateAction::MapInsert { value, .. } = &mut actions(&mut unscoped_value)[3] else {
+        unreachable!()
+    };
+    *value = Expr::Parameter {
+        name: "grant".into(),
+    };
+    assert!(
+        !recorded(&unscoped_value).0,
+        "insert must use the bound struct value"
+    );
+
+    let mut wrong_key = contract.clone();
+    let StateAction::If { then, .. } = &mut actions(&mut wrong_key)[2] else {
+        unreachable!()
+    };
+    let StateAction::Sequence { actions: update } = then.as_mut() else {
+        unreachable!()
+    };
+    let StateAction::MapRemove { key, .. } = &mut update[1] else {
+        unreachable!()
+    };
+    *key = Expr::Parameter {
+        name: "grantId".into(),
+    };
+    assert!(!recorded(&wrong_key).0, "update must remove the bound key");
+
+    let mut reordered = contract;
+    actions(&mut reordered).swap(3, 4);
+    assert!(
+        !recorded(&reordered).0,
+        "Map insert must precede write continuation"
+    );
+}

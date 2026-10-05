@@ -26,6 +26,7 @@ mod adt_list_field;
 mod adt_list_vector_field_4;
 mod adt_set_enum;
 mod adt_set_vector;
+mod asset_custody_grant;
 mod asset_freshness;
 mod asset_grant_effective;
 mod asset_removal;
@@ -1636,6 +1637,17 @@ fn run() -> Result<(), Box<dyn Error>> {
             return Err("usage: compact-rust-proof-smoke --asset-writable <proof-output>".into());
         }
         return asset_writable::run(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--asset-custody-grant")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --asset-custody-grant <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err(
+                "usage: compact-rust-proof-smoke --asset-custody-grant <proof-output>".into(),
+            );
+        }
+        return asset_custody_grant::run(Path::new(&root));
     }
     if first.as_deref() == Some(OsStr::new("--asset-removal")) {
         let root = arguments

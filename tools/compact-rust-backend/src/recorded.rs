@@ -1354,6 +1354,58 @@ pub(crate) fn plan_recorded_helpers(
         return Ok((HashSet::new(), Vec::new()));
     }
 
+    // A closed root can require a shared Unit continuation before the root is
+    // itself recordable. Validate prospective helpers first so admission does
+    // not depend on an unrelated exported circuit using the same helper.
+    let mut prospective = HashSet::new();
+    for circuit in ordered_circuits
+        .iter()
+        .filter(|circuit| roots_with_calls.contains(circuit.name.as_str()))
+    {
+        for action in &circuit.actions {
+            collect_shared_callees(action, &mut prospective);
+        }
+    }
+    loop {
+        let previous = prospective.len();
+        let current = prospective.clone();
+        for circuit in ordered_circuits
+            .iter()
+            .filter(|circuit| current.contains(&circuit.name))
+        {
+            for action in &circuit.actions {
+                collect_shared_callees(action, &mut prospective);
+            }
+        }
+        if prospective.len() == previous {
+            break;
+        }
+    }
+    let mut provisional_names = HashSet::new();
+    for circuit in ordered_circuits {
+        let unit_body = circuit.result == Type::Unit && circuit.return_value == StateReturn::Unit;
+        let direct_field_body = circuit.result == Type::Field
+            && circuit.actions.is_empty()
+            && matches!(circuit.return_value, StateReturn::Expression { .. });
+        if !prospective.contains(&circuit.name) || !(unit_body || direct_field_body) {
+            continue;
+        }
+        if crate::located(circuit.source.as_ref(), || {
+            render_recorded_helper(
+                circuit,
+                ledger_fields,
+                witnesses,
+                pure_circuits,
+                circuits,
+                &HashSet::new(),
+            )
+        })?
+        .is_supported()
+        {
+            provisional_names.insert(circuit.name.clone());
+        }
+    }
+
     let mut candidates = HashSet::new();
     for circuit in ordered_circuits
         .iter()
@@ -1366,7 +1418,7 @@ pub(crate) fn plan_recorded_helpers(
                 witnesses,
                 pure_circuits,
                 circuits,
-                &HashSet::new(),
+                &provisional_names,
             )
         })?;
         if !recorded.is_supported() {
@@ -1847,6 +1899,374 @@ fn render_recorded_item(
             typed_arguments.push(arg);
         }
         steps.push(syn::parse_quote!(crate::pure_circuits::#method(#(#typed_arguments),*)?;));
+        Ok(Some(steps))
+    }
+
+    // Bind an opaque key and a concrete struct value once, then record the
+    // complete Insert/Update transition through the declared Map slot. The
+    // field and circuit names are data; the typed provenance, helper bodies,
+    // and ordered branch structure decide admission.
+    fn closed_typed_opaque_map_write_steps(
+        circuit: &StatefulCircuit,
+        parameters: &HashMap<&str, (&Type, syn::Ident)>,
+        ledger_fields: &HashMap<&str, &LedgerField>,
+        circuits: &HashMap<&str, &StatefulCircuit>,
+        shared_callees: &HashSet<String>,
+    ) -> Result<Option<Vec<syn::Stmt>>, RenderError> {
+        fn enum_is(expr: &Expr, bound: &str, ty: &Type, variant: &str) -> bool {
+            matches!(expr, Expr::Equal { left, right }
+                if matches!(left.as_ref(), Expr::Parameter { name } if name == bound)
+                    && matches!(right.as_ref(), Expr::EnumVariant { ty: variant_ty, variant: selected }
+                        if variant_ty == ty && selected == variant))
+        }
+        fn map_member<'a>(
+            expr: &'a Expr,
+            key_name: &str,
+            ledger_fields: &HashMap<&str, &LedgerField>,
+        ) -> Option<(&'a str, u8)> {
+            let Expr::MapMember { field, index, key } = expr else {
+                return None;
+            };
+            let slot = ledger_fields.get(field.as_str())?;
+            (slot.index == *index
+                && matches!(
+                    &slot.declaration,
+                    LedgerFieldKind::Map {
+                        key: Type::OpaqueString,
+                        ..
+                    }
+                )
+                && matches!(key.as_ref(), Expr::Parameter { name } if name == key_name))
+            .then_some((field.as_str(), *index))
+        }
+        let [key_parameter, value_parameter, mutation_parameter] = circuit.parameters.as_slice()
+        else {
+            return Ok(None);
+        };
+        let Type::Struct { .. } = &value_parameter.ty else {
+            return Ok(None);
+        };
+        let Type::Enum { variants, .. } = &mutation_parameter.ty else {
+            return Ok(None);
+        };
+        if key_parameter.ty != Type::OpaqueString
+            || variants.as_slice() != ["Unspecified", "Insert", "Update"]
+            || circuit.result != Type::Unit
+            || circuit.return_value != StateReturn::Unit
+        {
+            return Ok(None);
+        }
+        let [
+            StateAction::Let {
+                bindings: key_bindings,
+                action: value_action,
+            },
+        ] = circuit.actions.as_slice()
+        else {
+            return Ok(None);
+        };
+        let [key_binding] = key_bindings.as_slice() else {
+            return Ok(None);
+        };
+        let StateAction::Let {
+            bindings: value_bindings,
+            action: mutation_action,
+        } = value_action.as_ref()
+        else {
+            return Ok(None);
+        };
+        let [value_binding] = value_bindings.as_slice() else {
+            return Ok(None);
+        };
+        let StateAction::Let {
+            bindings: mutation_bindings,
+            action: body,
+        } = mutation_action.as_ref()
+        else {
+            return Ok(None);
+        };
+        let [mutation_binding] = mutation_bindings.as_slice() else {
+            return Ok(None);
+        };
+        if key_binding.ty != key_parameter.ty
+            || value_binding.ty != value_parameter.ty
+            || mutation_binding.ty != mutation_parameter.ty
+            || !matches!(&key_binding.value, Expr::Parameter { name } if name == &key_parameter.name)
+            || !matches!(&value_binding.value, Expr::Parameter { name } if name == &value_parameter.name)
+            || !matches!(&mutation_binding.value, Expr::Parameter { name } if name == &mutation_parameter.name)
+        {
+            return Ok(None);
+        }
+        let StateAction::Sequence { actions } = body.as_ref() else {
+            return Ok(None);
+        };
+        let [
+            StateAction::CircuitCall {
+                name: writable,
+                arguments: writable_args,
+            },
+            StateAction::Assert {
+                condition: mutation_guard,
+                message: mutation_message,
+            },
+            StateAction::If {
+                condition: update_condition,
+                then: update,
+                otherwise: insert_branch,
+            },
+            StateAction::MapInsert {
+                field,
+                index,
+                key: inserted_key,
+                value: inserted_value,
+            },
+            StateAction::CircuitCall {
+                name: write,
+                arguments: write_args,
+            },
+        ] = actions.as_slice()
+        else {
+            return Ok(None);
+        };
+        let key_is_bound =
+            |expr: &Expr| matches!(expr, Expr::Parameter { name } if name == &key_binding.name);
+        if !writable_args.is_empty()
+            || !write_args.is_empty()
+            || !shared_callees.contains(writable)
+            || !shared_callees.contains(write)
+            || !key_is_bound(inserted_key)
+            || !matches!(inserted_value, Expr::Parameter { name } if name == &value_binding.name)
+            || !enum_is(
+                update_condition,
+                &mutation_binding.name,
+                &mutation_binding.ty,
+                "Update",
+            )
+        {
+            return Ok(None);
+        }
+        let Expr::If {
+            condition: insert_condition,
+            then,
+            otherwise,
+        } = mutation_guard
+        else {
+            return Ok(None);
+        };
+        if !enum_is(
+            insert_condition,
+            &mutation_binding.name,
+            &mutation_binding.ty,
+            "Insert",
+        ) || !matches!(then.as_ref(), Expr::Boolean { value: true })
+            || !enum_is(
+                otherwise,
+                &mutation_binding.name,
+                &mutation_binding.ty,
+                "Update",
+            )
+        {
+            return Ok(None);
+        }
+        let Some(map_slot) = ledger_fields.get(field.as_str()) else {
+            return Ok(None);
+        };
+        if map_slot.index != *index
+            || map_slot.declaration
+                != (LedgerFieldKind::Map {
+                    key: Type::OpaqueString,
+                    value: value_binding.ty.clone(),
+                })
+        {
+            return Ok(None);
+        }
+        let StateAction::Sequence {
+            actions: update_actions,
+        } = update.as_ref()
+        else {
+            return Ok(None);
+        };
+        let [
+            StateAction::Assert {
+                condition: member,
+                message: missing_message,
+            },
+            StateAction::MapRemove {
+                field: removed_field,
+                index: removed_index,
+                key: removed_key,
+            },
+        ] = update_actions.as_slice()
+        else {
+            return Ok(None);
+        };
+        if map_member(member, &key_binding.name, ledger_fields) != Some((field.as_str(), *index))
+            || removed_field != field
+            || removed_index != index
+            || !key_is_bound(removed_key)
+        {
+            return Ok(None);
+        }
+        let StateAction::If {
+            condition: insert_condition,
+            then: uniqueness,
+            otherwise: no_op,
+        } = insert_branch.as_ref()
+        else {
+            return Ok(None);
+        };
+        if !enum_is(
+            insert_condition,
+            &mutation_binding.name,
+            &mutation_binding.ty,
+            "Insert",
+        ) || !matches!(no_op.as_ref(), StateAction::Sequence { actions } if actions.is_empty())
+        {
+            return Ok(None);
+        }
+        let StateAction::Assert {
+            condition: absent_guard,
+            message: duplicate_message,
+        } = uniqueness.as_ref()
+        else {
+            return Ok(None);
+        };
+        let Expr::If {
+            condition: exists_call,
+            then: if_exists,
+            otherwise: if_absent,
+        } = absent_guard
+        else {
+            return Ok(None);
+        };
+        let Expr::Call {
+            name: exists_name,
+            arguments: exists_args,
+        } = exists_call.as_ref()
+        else {
+            return Ok(None);
+        };
+        if !matches!(if_exists.as_ref(), Expr::Boolean { value: false })
+            || !matches!(if_absent.as_ref(), Expr::Boolean { value: true })
+            || !matches!(exists_args.as_slice(), [Expr::Coerce { value, ty }]
+                if ty == &Type::OpaqueString && key_is_bound(value))
+        {
+            return Ok(None);
+        }
+        let Some(exists) = circuits.get(exists_name.as_str()) else {
+            return Ok(None);
+        };
+        let [exists_parameter] = exists.parameters.as_slice() else {
+            return Ok(None);
+        };
+        let StateReturn::Expression {
+            value: exists_value,
+        } = &exists.return_value
+        else {
+            return Ok(None);
+        };
+        let Expr::If {
+            condition: first_member,
+            then: first_found,
+            otherwise: second_member,
+        } = exists_value
+        else {
+            return Ok(None);
+        };
+        if exists_parameter.ty != Type::OpaqueString
+            || exists.result != Type::Boolean
+            || !exists.actions.is_empty()
+            || !matches!(first_found.as_ref(), Expr::Boolean { value: true })
+            || map_member(second_member, &exists_parameter.name, ledger_fields)
+                != Some((field.as_str(), *index))
+        {
+            return Ok(None);
+        }
+        let Some((first_field, _)) =
+            map_member(first_member, &exists_parameter.name, ledger_fields)
+        else {
+            return Ok(None);
+        };
+        let Some(writable_callee) = circuits.get(writable.as_str()) else {
+            return Ok(None);
+        };
+        let Some(write_callee) = circuits.get(write.as_str()) else {
+            return Ok(None);
+        };
+        if writable_callee.result != Type::Unit
+            || write_callee.result != Type::Unit
+            || writable_callee.return_value != StateReturn::Unit
+            || write_callee.return_value != StateReturn::Unit
+            || !writable_callee.parameters.is_empty()
+            || !write_callee.parameters.is_empty()
+        {
+            return Ok(None);
+        }
+        let (_, key_source) = parameters
+            .get(key_parameter.name.as_str())
+            .expect("checked key");
+        let (_, value_source) = parameters
+            .get(value_parameter.name.as_str())
+            .expect("checked value");
+        let (_, mutation_source) = parameters
+            .get(mutation_parameter.name.as_str())
+            .expect("checked enum");
+        let map = ident(field)?;
+        let first_map = ident(first_field)?;
+        let value_ty = rust_type(&value_binding.ty)?;
+        let mutation_ty = rust_type(&mutation_binding.ty)?;
+        let writable_helper = helper_ident(writable, circuits)?;
+        let write_helper = helper_ident(write, circuits)?;
+        let mut steps = vec![
+            syn::parse_quote!(let __compact_recorded_write_key: runtime::OpaqueString = (#key_source).clone();),
+            syn::parse_quote!(let __compact_recorded_write_value: #value_ty = (#value_source).clone();),
+            syn::parse_quote!(let __compact_recorded_write_mutation: #mutation_ty = #mutation_source;),
+        ];
+        if circuit_uses_witness(writable_callee, circuits, &mut HashSet::new())? {
+            steps.push(syn::parse_quote!(let (frame, _) = #writable_helper(frame, witnesses)?;));
+        } else {
+            steps.push(syn::parse_quote!(let (frame, _) = #writable_helper(frame)?;));
+        }
+        steps.extend([
+            syn::parse_quote!(
+                if !(__compact_recorded_write_mutation == #mutation_ty::Insert
+                    || __compact_recorded_write_mutation == #mutation_ty::Update) {
+                    return Err(runtime::CompactError::AssertionFailed(#mutation_message.to_owned()));
+                }
+            ),
+            syn::parse_quote!(
+                let frame = if __compact_recorded_write_mutation == #mutation_ty::Update {
+                    let (frame, __compact_recorded_present): (_, bool) =
+                        crate::ledger_slots::#map.record_member(frame, __compact_recorded_write_key.clone())?;
+                    if !__compact_recorded_present {
+                        return Err(runtime::CompactError::AssertionFailed(#missing_message.to_owned()));
+                    }
+                    crate::ledger_slots::#map.record_remove(frame, __compact_recorded_write_key.clone())?
+                } else {
+                    let (frame, __compact_recorded_first_present): (_, bool) =
+                        crate::ledger_slots::#first_map.record_member(frame, __compact_recorded_write_key.clone())?;
+                    if __compact_recorded_first_present {
+                        return Err(runtime::CompactError::AssertionFailed(#duplicate_message.to_owned()));
+                    }
+                    let (frame, __compact_recorded_target_present): (_, bool) =
+                        crate::ledger_slots::#map.record_member(frame, __compact_recorded_write_key.clone())?;
+                    if __compact_recorded_target_present {
+                        return Err(runtime::CompactError::AssertionFailed(#duplicate_message.to_owned()));
+                    }
+                    frame
+                };
+            ),
+            syn::parse_quote!(
+                let frame = crate::ledger_slots::#map.record_insert(
+                    frame, __compact_recorded_write_key, __compact_recorded_write_value
+                )?;
+            ),
+        ]);
+        if circuit_uses_witness(write_callee, circuits, &mut HashSet::new())? {
+            steps.push(syn::parse_quote!(let (frame, _) = #write_helper(frame, witnesses)?;));
+        } else {
+            steps.push(syn::parse_quote!(let (frame, _) = #write_helper(frame)?;));
+        }
         Ok(Some(steps))
     }
 
@@ -6217,16 +6637,25 @@ fn render_recorded_item(
     let organizer_gate = organizer_steps.is_some();
     let opaque_map_operation = closed_opaque_map_operation(circuit, ledger_fields);
     let opaque_asset_removal = closed_opaque_asset_removal(circuit, ledger_fields);
-    let custody_steps =
+    let guarded_map_read_steps =
         closed_guarded_struct_map_read_steps(circuit, &parameters, ledger_fields, pure_circuits)?;
-    let custody_gate = custody_steps.is_some();
+    let guarded_map_read_gate = guarded_map_read_steps.is_some();
+    let typed_map_write_steps = closed_typed_opaque_map_write_steps(
+        circuit,
+        &parameters,
+        ledger_fields,
+        circuits,
+        shared_callees,
+    )?;
+    let typed_map_write_gate = typed_map_write_steps.is_some();
     let guarded_pure_steps =
         closed_guarded_struct_pure_steps(circuit, &parameters, pure_circuits, circuits)?.or(
             closed_guarded_unsigned_product_steps(circuit, &parameters, pure_circuits)?,
         );
     let guarded_pure_call = guarded_pure_steps.is_some();
     let mut steps = organizer_steps
-        .or(custody_steps)
+        .or(guarded_map_read_steps)
+        .or(typed_map_write_steps)
         .or(guarded_pure_steps)
         .unwrap_or_default();
     let mut next_temp = 0;
@@ -6234,44 +6663,47 @@ fn render_recorded_item(
     // A root Let encloses both its ordered actions and its final return.
     // Capture this exact Field Cell read once, before the nested actions,
     // so the returned value cannot accidentally observe the post-write state.
-    let root_field_return = if !organizer_gate && !custody_gate && !guarded_pure_call {
-        match (circuit.actions.as_slice(), &circuit.return_value) {
-            (
-                [StateAction::Let { bindings, action }],
-                StateReturn::Expression {
-                    value: Expr::Parameter { name },
-                },
-            ) if circuit.result == Type::Field => match bindings.as_slice() {
-                [binding]
-                    if binding.name == *name
-                        && binding.ty == Type::Field
-                        && matches!(&binding.value, Expr::CellRead { .. }) =>
-                {
-                    if let Expr::CellRead { field, index } = &binding.value {
-                        let declaration = ledger_fields
-                            .get(field.as_str())
-                            .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
-                        if declaration.declaration != (LedgerFieldKind::Cell { ty: Type::Field })
-                            || declaration.index != *index
-                        {
-                            return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
-                                &circuit.return_value,
-                            )));
+    let root_field_return =
+        if !organizer_gate && !guarded_map_read_gate && !typed_map_write_gate && !guarded_pure_call
+        {
+            match (circuit.actions.as_slice(), &circuit.return_value) {
+                (
+                    [StateAction::Let { bindings, action }],
+                    StateReturn::Expression {
+                        value: Expr::Parameter { name },
+                    },
+                ) if circuit.result == Type::Field => match bindings.as_slice() {
+                    [binding]
+                        if binding.name == *name
+                            && binding.ty == Type::Field
+                            && matches!(&binding.value, Expr::CellRead { .. }) =>
+                    {
+                        if let Expr::CellRead { field, index } = &binding.value {
+                            let declaration = ledger_fields
+                                .get(field.as_str())
+                                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                            if declaration.declaration
+                                != (LedgerFieldKind::Cell { ty: Type::Field })
+                                || declaration.index != *index
+                            {
+                                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
+                                    &circuit.return_value,
+                                )));
+                            }
+                            Some((binding.name.as_str(), field.as_str(), action.as_ref()))
+                        } else {
+                            None
                         }
-                        Some((binding.name.as_str(), field.as_str(), action.as_ref()))
-                    } else {
-                        None
                     }
-                }
+                    _ => None,
+                },
                 _ => None,
-            },
-            _ => None,
-        }
-    } else {
-        None
-    };
+            }
+        } else {
+            None
+        };
     let mut recorded_root_return: Option<(&str, syn::Expr)> = None;
-    if !organizer_gate && !custody_gate {
+    if !organizer_gate && !guarded_map_read_gate && !typed_map_write_gate {
         if let Some((name, field, action)) = root_field_return {
             let slot = ident(field)?;
             let saved = syn::Ident::new("__compact_recorded_root_return", Span::call_site());
@@ -7186,7 +7618,8 @@ fn render_recorded_item(
         && !closed_opaque_set_operation(circuit, ledger_fields)
         && opaque_map_operation.is_none()
         && !opaque_asset_removal
-        && !custody_gate
+        && !guarded_map_read_gate
+        && !typed_map_write_gate
         && !organizer_gate
     {
         return Ok(RecordingOutcome::Unsupported(

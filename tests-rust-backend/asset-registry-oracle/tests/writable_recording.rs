@@ -16,11 +16,13 @@
 use std::cell::RefCell;
 
 use compact_rust_asset_registry_oracle_fixture::ledger_contract::{
-    LedgerView, Witnesses, acceptIfFresh, initial_state, recorded, setCustodian, tag,
+    LedgerView, Witnesses, acceptIfFresh, initial_state, recorded, setCustodian, setCustodyGrant,
+    tag,
 };
 use compact_rust_asset_registry_oracle_fixture::ledger_slots;
 use compact_rust_asset_registry_oracle_fixture::types::{
-    AssetClass, AssetRecord, ContractAddress as Holder, FreshnessPolicy, Provenance,
+    AssetClass, AssetRecord, ContractAddress as Holder, CustodyGrant, FreshnessPolicy, Provenance,
+    RecordMutation,
 };
 use midnight_compact_runtime as runtime;
 use midnight_onchain_state::state::{
@@ -161,6 +163,8 @@ fn shape(serialized: Value) -> Value {
                     json!({ "kind": "dup", "n": dup["n"] })
                 } else if let Some(addi) = op.get("addi") {
                     json!({ "kind": "addi", "immediate": addi["immediate"] })
+                } else if let Some(rem) = op.get("rem") {
+                    json!({ "kind": "rem", "cached": rem["cached"] })
                 } else if let Some(popeq) = op.get("popeq") {
                     json!({ "kind": "popeq", "cached": popeq["cached"] })
                 } else {
@@ -190,8 +194,8 @@ fn check_fab(output: &[runtime::fab::AlignedValue], expected: &Value) {
 }
 
 fn check_success(
-    native: CircuitResult<u64, ()>,
-    recorded: RecordedCircuitResult<u64, ()>,
+    native: &CircuitResult<u64, ()>,
+    recorded: &RecordedCircuitResult<u64, ()>,
     expected: &Value,
     name: &str,
 ) {
@@ -254,6 +258,43 @@ fn check_success(
         expected["publicTranscriptShape"],
         "{name}: ordered VM"
     );
+    if let Some(expected_program) = expected.get("vmProgram") {
+        let mut actual = serde_json::to_value(recorded.public.verify_ops()).unwrap();
+        for operation in actual.as_array_mut().unwrap() {
+            if let Some(popeq) = operation.get_mut("popeq") {
+                popeq.as_object_mut().unwrap().remove("result");
+            }
+        }
+        let mut expected_program = expected_program.clone();
+        for operation in expected_program.as_array_mut().unwrap() {
+            if let Some(popeq) = operation.get_mut("popeq") {
+                popeq.as_object_mut().unwrap().remove("result");
+            }
+        }
+        let actual_ops = actual.as_array().unwrap();
+        let expected_ops = expected_program.as_array().unwrap();
+        if actual_ops.len() != expected_ops.len() {
+            let tags = |ops: &[Value]| {
+                ops.iter()
+                    .map(|op| {
+                        op.as_str().map(str::to_owned).unwrap_or_else(|| {
+                            op.as_object().unwrap().keys().next().unwrap().to_owned()
+                        })
+                    })
+                    .collect::<Vec<_>>()
+            };
+            panic!(
+                "{name}: VM length {} vs {}; Rust {:?}; TS {:?}",
+                actual_ops.len(),
+                expected_ops.len(),
+                tags(actual_ops),
+                tags(expected_ops)
+            );
+        }
+        for (index, (actual, expected)) in actual_ops.iter().zip(expected_ops).enumerate() {
+            assert_eq!(actual, expected, "{name}: VM operation {index}");
+        }
+    }
     let replay = recorded
         .public
         .initial()
@@ -272,6 +313,13 @@ fn check_success(
         replay.context.effects, native.context.query.effects,
         "{name}: replay effects"
     );
+    if let Some(expected_gas) = expected.get("replayGas") {
+        let actual = serde_json::to_value(replay.gas_cost).unwrap();
+        for dimension in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+            let target: u64 = expected_gas[dimension].as_str().unwrap().parse().unwrap();
+            assert_eq!(actual[dimension], target, "{name}: replay {dimension}");
+        }
+    }
 }
 
 fn check_failure_prefix(mode: &str, expected: &Value) {
@@ -368,7 +416,7 @@ fn asset_writable_guard_records_two_successes_and_rejects_closed_or_frozen() {
                         recorded::tag(recording, &recorded_witnesses, Field::from(7_u64)).unwrap(),
                     )
                 };
-                check_success(native, recorded, expected, &name);
+                check_success(&native, &recorded, expected, &name);
                 assert_eq!(native_witnesses.calls(), ["currentTimestamp"]);
                 assert_eq!(recorded_witnesses.calls(), ["currentTimestamp"]);
                 assert_eq!(expected["witnessCalls"], json!(["currentTimestamp"]));
@@ -494,7 +542,7 @@ fn asset_freshness_pure_guard_records_only_successful_calls() {
             assert_eq!(expected["result"], json!([]));
             assert_eq!(native.result, ());
             assert_eq!(recorded.execution.result, ());
-            check_success(native, recorded, expected, case);
+            check_success(&native, &recorded, expected, case);
             assert_eq!(native_witnesses.calls(), ["currentTimestamp"]);
             assert_eq!(recorded_witnesses.calls(), ["currentTimestamp"]);
             assert_eq!(expected["witnessCalls"], json!(["currentTimestamp"]));
@@ -514,4 +562,200 @@ fn asset_freshness_pure_guard_records_only_successful_calls() {
             assert!(recorded_witnesses.calls().is_empty());
         }
     }
+}
+
+fn grant_write_oracle() -> Value {
+    serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/asset-custody-grant-write.json"
+    ))
+    .unwrap()
+}
+
+fn custody_grant(revised: bool) -> CustodyGrant {
+    CustodyGrant {
+        code: FixedBytes::new([if revised { 3 } else { 0 }; 32]),
+        holder: Holder {
+            bytes: FixedBytes::new([if revised { 8 } else { 7 }; 32]),
+        },
+        grantedAt: BoundedUint::new(if revised { 110 } else { 100 }).unwrap(),
+    }
+}
+
+#[test]
+fn typed_custody_grant_insert_update_match_typescript_native_recorded_and_replay() {
+    let reference = grant_write_oracle();
+    let native_witnesses = TrackingWitness::default();
+    let recorded_witnesses = TrackingWitness::default();
+    let native_context = initial("success", &native_witnesses);
+    let recorded_context = initial("success", &recorded_witnesses);
+    let key = runtime::OpaqueString::from("grant-note-1");
+    assert_eq!(
+        state_hex(native_context.query.state.get_ref().clone()),
+        reference["insert"]["initialStateHex"]
+    );
+    let native_insert = setCustodyGrant(
+        native_context,
+        &native_witnesses,
+        key.clone(),
+        custody_grant(false),
+        RecordMutation::Insert,
+    )
+    .unwrap();
+    let recorded_insert = recorded::setCustodyGrant(
+        recorded_context,
+        &recorded_witnesses,
+        key.clone(),
+        custody_grant(false),
+        RecordMutation::Insert,
+    )
+    .unwrap();
+    check_success(
+        &native_insert,
+        &recorded_insert,
+        &reference["insert"],
+        "insert",
+    );
+    assert_eq!(native_witnesses.calls(), ["currentTimestamp"]);
+    assert_eq!(recorded_witnesses.calls(), ["currentTimestamp"]);
+    assert_eq!(
+        reference["insert"]["witnessCalls"],
+        json!(["currentTimestamp"])
+    );
+    native_witnesses.clear();
+    recorded_witnesses.clear();
+
+    assert_eq!(
+        state_hex(native_insert.context.query.state.get_ref().clone()),
+        reference["update"]["initialStateHex"]
+    );
+    let native_update = setCustodyGrant(
+        native_insert.context,
+        &native_witnesses,
+        key.clone(),
+        custody_grant(true),
+        RecordMutation::Update,
+    )
+    .unwrap();
+    let recorded_update = recorded::setCustodyGrant(
+        recorded_insert.execution.context,
+        &recorded_witnesses,
+        key,
+        custody_grant(true),
+        RecordMutation::Update,
+    )
+    .unwrap();
+    check_success(
+        &native_update,
+        &recorded_update,
+        &reference["update"],
+        "update",
+    );
+    assert_eq!(native_witnesses.calls(), ["currentTimestamp"]);
+    assert_eq!(recorded_witnesses.calls(), ["currentTimestamp"]);
+    assert_eq!(
+        reference["update"]["witnessCalls"],
+        json!(["currentTimestamp"])
+    );
+}
+
+#[test]
+fn typed_custody_grant_write_rejects_missing_duplicate_invalid_closed_and_frozen() {
+    let reference = grant_write_oracle();
+    let key = runtime::OpaqueString::from("grant-note-1");
+    for (case, mode, mutation) in [
+        ("missingUpdate", "success", RecordMutation::Update),
+        ("invalidMutation", "success", RecordMutation::Unspecified),
+        ("closed", "closed", RecordMutation::Insert),
+        ("frozen", "frozen", RecordMutation::Insert),
+    ] {
+        let native_witnesses = TrackingWitness::default();
+        let recorded_witnesses = TrackingWitness::default();
+        let native_context = initial(mode, &native_witnesses);
+        let recorded_context = initial(mode, &recorded_witnesses);
+        assert_eq!(
+            state_hex(native_context.query.state.get_ref().clone()),
+            reference[case]["initialStateHex"],
+            "{case}: seeded state"
+        );
+        let native_error = setCustodyGrant(
+            native_context,
+            &native_witnesses,
+            key.clone(),
+            custody_grant(false),
+            mutation,
+        )
+        .err()
+        .unwrap();
+        let recorded_error = recorded::setCustodyGrant(
+            recorded_context,
+            &recorded_witnesses,
+            key.clone(),
+            custody_grant(false),
+            mutation,
+        )
+        .err()
+        .unwrap();
+        assert_eq!(native_error, recorded_error, "{case}: Rust guard");
+        assert_eq!(
+            native_error.to_string(),
+            reference[case]["error"],
+            "{case}: TypeScript guard"
+        );
+        assert!(native_witnesses.calls().is_empty());
+        assert!(recorded_witnesses.calls().is_empty());
+        assert_eq!(reference[case]["witnessCalls"], json!([]));
+        assert_eq!(
+            reference[case]["stateHex"],
+            reference[case]["initialStateHex"]
+        );
+    }
+    let native_witnesses = TrackingWitness::default();
+    let recorded_witnesses = TrackingWitness::default();
+    let native_seed = setCustodyGrant(
+        initial("success", &native_witnesses),
+        &native_witnesses,
+        key.clone(),
+        custody_grant(false),
+        RecordMutation::Insert,
+    )
+    .unwrap();
+    let recorded_seed = setCustodyGrant(
+        initial("success", &recorded_witnesses),
+        &recorded_witnesses,
+        key.clone(),
+        custody_grant(false),
+        RecordMutation::Insert,
+    )
+    .unwrap();
+    assert_eq!(
+        state_hex(native_seed.context.query.state.get_ref().clone()),
+        reference["duplicateInsert"]["initialStateHex"]
+    );
+    native_witnesses.clear();
+    recorded_witnesses.clear();
+    let native_error = setCustodyGrant(
+        native_seed.context,
+        &native_witnesses,
+        key.clone(),
+        custody_grant(false),
+        RecordMutation::Insert,
+    )
+    .err()
+    .unwrap();
+    let recorded_error = recorded::setCustodyGrant(
+        recorded_seed.context,
+        &recorded_witnesses,
+        key,
+        custody_grant(false),
+        RecordMutation::Insert,
+    )
+    .err()
+    .unwrap();
+    assert_eq!(native_error, recorded_error);
+    assert_eq!(
+        native_error.to_string(),
+        reference["duplicateInsert"]["error"]
+    );
+    assert!(native_witnesses.calls().is_empty());
+    assert!(recorded_witnesses.calls().is_empty());
 }

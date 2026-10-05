@@ -1422,6 +1422,66 @@ pub mod ledger_contract {
             let (frame, _) = __compact_recorded_body_recordWrite(frame, witnesses)?;
             Ok(frame.finish(()))
         }
+        pub fn setCustodyGrant<Private, W: super::TryWitnesses<Private>>(
+            context: runtime::context::CircuitContext<Private>,
+            witnesses: &W,
+            __compact_param_0: runtime::OpaqueString,
+            __compact_param_1: crate::types::CustodyGrant,
+            __compact_param_2: crate::types::RecordMutation,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_write_key: runtime::OpaqueString = (__compact_param_0).clone();
+            let __compact_recorded_write_value: crate::types::CustodyGrant =
+                (__compact_param_1).clone();
+            let __compact_recorded_write_mutation: crate::types::RecordMutation = __compact_param_2;
+            let (frame, _) = __compact_recorded_body_assertWritable(frame)?;
+            if !(__compact_recorded_write_mutation == crate::types::RecordMutation::Insert
+                || __compact_recorded_write_mutation == crate::types::RecordMutation::Update)
+            {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "grant mutation must be Insert or Update".to_owned(),
+                ));
+            }
+            let frame = if __compact_recorded_write_mutation == crate::types::RecordMutation::Update
+            {
+                let (frame, __compact_recorded_present): (_, bool) =
+                    crate::ledger_slots::custodyGrants
+                        .record_member(frame, __compact_recorded_write_key.clone())?;
+                if !__compact_recorded_present {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "grant does not exist".to_owned(),
+                    ));
+                }
+                crate::ledger_slots::custodyGrants
+                    .record_remove(frame, __compact_recorded_write_key.clone())?
+            } else {
+                let (frame, __compact_recorded_first_present): (_, bool) =
+                    crate::ledger_slots::records
+                        .record_member(frame, __compact_recorded_write_key.clone())?;
+                if __compact_recorded_first_present {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "grant already exists".to_owned(),
+                    ));
+                }
+                let (frame, __compact_recorded_target_present): (_, bool) =
+                    crate::ledger_slots::custodyGrants
+                        .record_member(frame, __compact_recorded_write_key.clone())?;
+                if __compact_recorded_target_present {
+                    return Err(runtime::CompactError::AssertionFailed(
+                        "grant already exists".to_owned(),
+                    ));
+                }
+                frame
+            };
+            let frame = crate::ledger_slots::custodyGrants.record_insert(
+                frame,
+                __compact_recorded_write_key,
+                __compact_recorded_write_value,
+            )?;
+            let (frame, _) = __compact_recorded_body_recordWrite(frame, witnesses)?;
+            Ok(frame.finish(()))
+        }
         pub fn tag<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
             witnesses: &W,
@@ -1685,6 +1745,51 @@ pub mod ledger_contract {
                     observed,
                     recorded,
                     "removeRecord",
+                    input,
+                ))
+            }
+            pub fn setCustodyGrant<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                grantId: runtime::OpaqueString,
+                grant: crate::types::CustodyGrant,
+                mutation: crate::types::RecordMutation,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                setCustodyGrant(context, self.witnesses, grantId, grant, mutation)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn setCustodyGrant_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                grantId: runtime::OpaqueString,
+                grant: crate::types::CustodyGrant,
+                mutation: crate::types::RecordMutation,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            >
+            where
+                W: super::TryWitnesses<Private>,
+            {
+                let input = runtime::fab::AlignedValue::concat(&[
+                    runtime::fab::AlignedValue::from((grantId).clone()),
+                    runtime::fab::AlignedValue::from((grant).clone()),
+                    runtime::fab::AlignedValue::from(mutation),
+                ]);
+                let recorded = self.setCustodyGrant(
+                    observed.circuit_context(private_state),
+                    grantId,
+                    grant,
+                    mutation,
+                )?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "setCustodyGrant",
                     input,
                 ))
             }

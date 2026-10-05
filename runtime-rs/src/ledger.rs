@@ -251,7 +251,7 @@ pub use merkle::{
 };
 pub(crate) use merkle::{
     historic_merkle_insert_index_default_program, historic_merkle_insert_index_program,
-    historic_merkle_insert_program, merkle_insert_hash_program,
+    historic_merkle_insert_program, merkle_insert_hash_index_program, merkle_insert_hash_program,
     merkle_insert_index_default_program, merkle_insert_index_program,
 };
 

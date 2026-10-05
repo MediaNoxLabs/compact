@@ -122,7 +122,7 @@ const fullBeforeCapacity = full();
 context = capture('appendHash', () => contract.circuits.append_hash(context, new Uint8Array(32).fill(1))).context;
 const afterAppendHash = snapshot();
 const fullAtCapacity = full();
-context = contract.circuits.place_hash(context, new Uint8Array(32).fill(2), 1n).context;
+context = capture('placeHashAt1', () => contract.circuits.place_hash(context, new Uint8Array(32).fill(2), 1n)).context;
 const afterReplaceHashAt1 = snapshot();
 const fullAfterReplacement = full();
 const rootBeforeTreeReset = currentRoot();

@@ -1584,6 +1584,279 @@
           ]
         }
       ]
+    },
+    "placeHashAt1": {
+      "result": [],
+      "privateOutputs": 0,
+      "reportedGas": {
+        "readTime": "935000000",
+        "computeTime": "2277002266",
+        "bytesWritten": "1122",
+        "bytesDeleted": "1122"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "935000000",
+            "computeTime": "2277002266",
+            "bytesWritten": "1122",
+            "bytesDeleted": "1122"
+          },
+          "opTags": [
+            "idx",
+            "idx",
+            "push",
+            "push",
+            "ins",
+            "idx",
+            "push",
+            "addi",
+            "dup",
+            "dup",
+            "lt",
+            "branch",
+            "pop",
+            "jmp",
+            "swap",
+            "pop",
+            "ins",
+            "ins"
+          ],
+          "program": [
+            {
+              "idx": {
+                "cached": false,
+                "pushPath": true,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        []
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "idx": {
+                "cached": false,
+                "pushPath": true,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        []
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        1
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 8
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "push": {
+                "storage": true,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        2,
+                        2,
+                        2,
+                        2,
+                        2,
+                        2,
+                        2,
+                        2,
+                        2,
+                        2,
+                        2,
+                        2,
+                        2,
+                        2,
+                        2,
+                        2,
+                        2,
+                        2,
+                        2,
+                        2,
+                        2,
+                        2,
+                        2,
+                        2,
+                        2,
+                        2,
+                        2,
+                        2,
+                        2,
+                        2,
+                        2,
+                        2
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 32
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "ins": {
+                "cached": false,
+                "n": 2
+              }
+            },
+            {
+              "idx": {
+                "cached": false,
+                "pushPath": true,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        [
+                          1
+                        ]
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        1
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 8
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "addi": {
+                "immediate": 1
+              }
+            },
+            {
+              "dup": {
+                "n": 1
+              }
+            },
+            {
+              "dup": {
+                "n": 1
+              }
+            },
+            "lt",
+            {
+              "branch": {
+                "skip": 2
+              }
+            },
+            "pop",
+            {
+              "jmp": {
+                "skip": 2
+              }
+            },
+            {
+              "swap": {
+                "n": 0
+              }
+            },
+            "pop",
+            {
+              "ins": {
+                "cached": false,
+                "n": 1
+              }
+            },
+            {
+              "ins": {
+                "cached": true,
+                "n": 1
+              }
+            }
+          ]
+        }
+      ]
     }
   }
 }

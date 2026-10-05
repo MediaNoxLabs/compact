@@ -582,6 +582,20 @@ pub(crate) fn merkle_insert_index_program<T: CellValue, D: DB>(
     )
 }
 
+/// Build native `insertHashIndex`'s verifying program from an already hashed leaf.
+pub(crate) fn merkle_insert_hash_index_program<D: DB>(
+    path: impl Into<LedgerPath>,
+    hash: FixedBytes<32>,
+    position: u64,
+) -> Vec<Op<ResultModeVerify, D>> {
+    merkle_insert_index_hashed_program(
+        path.into(),
+        aligned_cell_value(hash),
+        position,
+        MerkleHistory::CurrentOnly,
+    )
+}
+
 /// Build ledger-8's default-leaf indexed insertion program for recording.
 pub(crate) fn merkle_insert_index_default_program<T: CellValue + Default, D: DB>(
     path: impl Into<LedgerPath>,

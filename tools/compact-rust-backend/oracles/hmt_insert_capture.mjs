@@ -75,8 +75,8 @@ function full() {
   context = out.context;
   return out.result;
 }
-function known(root) {
-  const out = contract.circuits.known(context, root);
+function captureKnown(label, root) {
+  const out = capture(label, () => contract.circuits.known(context, root));
   context = out.context;
   return out.result;
 }
@@ -103,9 +103,7 @@ const historyAtInit = history();
 const fullAtInitOutput = capture('fullAtInit', () => contract.circuits.full(context));
 context = fullAtInitOutput.context;
 const fullAtInit = fullAtInitOutput.result;
-const knownAtInitOutput = capture('knownAtInit', () => contract.circuits.known(context, rootAtInit));
-context = knownAtInitOutput.context;
-const knownAtInit = knownAtInitOutput.result;
+const knownAtInit = captureKnown('knownAtInit', rootAtInit);
 context = capture('append7', () => contract.circuits.append(context, 7n)).context;
 const afterAppend7 = snapshot();
 const historyAfterAppend7 = history();
@@ -113,7 +111,7 @@ const pathFor7At0 = pathData(currentTree().pathForLeaf(0n, 7n));
 const wrongPathFor8At0 = pathData(currentTree().pathForLeaf(0n, 8n));
 const foundPathFor7 = pathData(currentTree().findPathForLeaf(7n));
 const missingPathFor8 = pathData(currentTree().findPathForLeaf(8n));
-const knownInitialAfterAppend = known(rootAtInit);
+const knownInitialAfterAppend = captureKnown('knownInitialAfterAppend', rootAtInit);
 context = capture('place9At3', () => contract.circuits.place(context, 9n, 3n)).context;
 const afterPlace9At3 = snapshot();
 const pathFor9At3 = pathData(currentTree().pathForLeaf(3n, 9n));
@@ -125,8 +123,8 @@ const rootBeforeReset = currentRoot();
 context = capture('forgetHistory', () => contract.circuits.forget_history(context)).context;
 const afterForgetHistory = snapshot();
 const historyAfterForget = history();
-const knownInitialAfterReset = known(rootAtInit);
-const knownCurrentAfterReset = known(rootBeforeReset);
+const knownInitialAfterReset = captureKnown('knownInitialAfterReset', rootAtInit);
+const knownCurrentAfterReset = captureKnown('knownCurrentAfterReset', rootBeforeReset);
 const fullBeforeCapacity = full();
 context = capture('appendHash', () => contract.circuits.append_hash(context, new Uint8Array(32).fill(1))).context;
 const afterAppendHash = snapshot();
@@ -144,8 +142,8 @@ context = capture('resetTree', () => contract.circuits.reset_tree(context)).cont
 const afterResetTree = snapshot();
 const historyAfterResetTree = history();
 const fullAfterTreeReset = full();
-const knownOldAfterTreeReset = known(rootBeforeTreeReset);
-const knownBlankAfterTreeReset = known(rootAtInit);
+const knownOldAfterTreeReset = captureKnown('knownOldAfterTreeReset', rootBeforeTreeReset);
+const knownBlankAfterTreeReset = captureKnown('knownBlankAfterTreeReset', rootAtInit);
 function normalize(value) {
   if (typeof value === 'bigint') return value.toString();
   if (value instanceof Uint8Array) return { bytesHex: Buffer.from(value).toString('hex') };

@@ -316,6 +316,201 @@ fn recorded_historic_tree_reset_seeds_blank_history_and_replays() {
     );
 }
 
+fn assert_historic_known_case(
+    label: &str,
+    native: runtime::context::CircuitResult<(), bool, DefaultDB>,
+    recorded: runtime::recording::RecordedCircuitResult<(), bool, DefaultDB>,
+    oracle: &serde_json::Value,
+) -> (
+    runtime::context::CircuitContext<(), DefaultDB>,
+    runtime::context::CircuitContext<(), DefaultDB>,
+) {
+    assert_eq!(native.result, oracle[label], "{label}: native result");
+    assert_eq!(
+        recorded.execution.result, native.result,
+        "{label}: recorded result"
+    );
+    assert_eq!(recorded.execution.gas_cost, native.gas_cost);
+    assert_eq!(
+        recorded.execution.context.query.effects,
+        native.context.query.effects
+    );
+    assert!(recorded.execution.private_transcript_outputs.is_empty());
+    assert_eq!(oracle["nativeQueries"][label]["privateOutputs"], 0);
+    assert_native_query_gas(label, &recorded.execution.gas_cost, oracle);
+    let original_state = state_hex(recorded.public.initial().state.get_ref().clone());
+    let resulting_state = state_hex(recorded.execution.context.query.state.get_ref().clone());
+    assert_eq!(resulting_state, original_state, "{label}: state changed");
+    assert_eq!(
+        state_hex(native.context.query.state.get_ref().clone()),
+        original_state
+    );
+    let queries = oracle["nativeQueries"][label]["queries"]
+        .as_array()
+        .unwrap();
+    assert_eq!(queries.len(), 1);
+    let verify = serde_json::to_value(recorded.public.verify_ops()).unwrap();
+    let verify = verify.as_array().unwrap();
+    let gathered = queries[0]["program"].as_array().unwrap();
+    assert_eq!(verify.len(), gathered.len());
+    assert_eq!(&verify[..verify.len() - 1], &gathered[..gathered.len() - 1]);
+    assert_eq!(
+        gathered.last().unwrap()["popeq"]["result"],
+        serde_json::Value::Null
+    );
+    assert_ne!(
+        verify.last().unwrap()["popeq"]["result"],
+        serde_json::Value::Null
+    );
+    let replay = recorded
+        .public
+        .initial()
+        .query(
+            recorded.public.verify_ops(),
+            None,
+            &recorded.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(replay.gas_cost, recorded.execution.gas_cost);
+    assert_eq!(
+        replay.context.effects,
+        recorded.execution.context.query.effects
+    );
+    assert_eq!(
+        state_hex(replay.context.state.get_ref().clone()),
+        original_state
+    );
+    (native.context, recorded.execution.context)
+}
+
+#[test]
+fn recorded_historic_known_matches_history_membership_true_and_false() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/hmt-insert-oracle.json"
+    ))
+    .unwrap();
+    let initial = initial_state(ConstructorContext::new(())).unwrap();
+    let blank_root = current_root(initial.ledger_state.get_ref());
+    let native = initial.into_circuit_context(ContractAddress::default());
+    let recorded = initial_state(ConstructorContext::new(()))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let (native, recorded) = assert_historic_known_case(
+        "knownAtInit",
+        known(native, blank_root.clone()).unwrap(),
+        recorded::known(recorded, blank_root.clone()).unwrap(),
+        &oracle,
+    );
+    let native = append(native, bounded::<255>(7)).unwrap().context;
+    let recorded = append(recorded, bounded::<255>(7)).unwrap().context;
+    let (native, recorded) = assert_historic_known_case(
+        "knownInitialAfterAppend",
+        known(native, blank_root.clone()).unwrap(),
+        recorded::known(recorded, blank_root.clone()).unwrap(),
+        &oracle,
+    );
+    let native = place(
+        native,
+        bounded::<255>(9),
+        bounded::<{ u64::MAX as u128 }>(3),
+    )
+    .unwrap()
+    .context;
+    let recorded = place(
+        recorded,
+        bounded::<255>(9),
+        bounded::<{ u64::MAX as u128 }>(3),
+    )
+    .unwrap()
+    .context;
+    let native = append(native, bounded::<255>(11)).unwrap().context;
+    let recorded = append(recorded, bounded::<255>(11)).unwrap().context;
+    let native = place(
+        native,
+        bounded::<255>(13),
+        bounded::<{ u64::MAX as u128 }>(1),
+    )
+    .unwrap()
+    .context;
+    let recorded = place(
+        recorded,
+        bounded::<255>(13),
+        bounded::<{ u64::MAX as u128 }>(1),
+    )
+    .unwrap()
+    .context;
+    let current_after_place = current_root(native.query.state.get_ref());
+    let native = forget_history(native).unwrap().context;
+    let recorded = forget_history(recorded).unwrap().context;
+    let (native, recorded) = assert_historic_known_case(
+        "knownInitialAfterReset",
+        known(native, blank_root.clone()).unwrap(),
+        recorded::known(recorded, blank_root.clone()).unwrap(),
+        &oracle,
+    );
+    let (native, recorded) = assert_historic_known_case(
+        "knownCurrentAfterReset",
+        known(native, current_after_place.clone()).unwrap(),
+        recorded::known(recorded, current_after_place).unwrap(),
+        &oracle,
+    );
+    let native = full(native).unwrap().context;
+    let recorded = full(recorded).unwrap().context;
+    let native = append_hash(native, runtime::FixedBytes::new([1; 32]))
+        .unwrap()
+        .context;
+    let recorded = append_hash(recorded, runtime::FixedBytes::new([1; 32]))
+        .unwrap()
+        .context;
+    let native = place_hash(
+        native,
+        runtime::FixedBytes::new([2; 32]),
+        bounded::<{ u64::MAX as u128 }>(7),
+    )
+    .unwrap()
+    .context;
+    let recorded = place_hash(
+        recorded,
+        runtime::FixedBytes::new([2; 32]),
+        bounded::<{ u64::MAX as u128 }>(7),
+    )
+    .unwrap()
+    .context;
+    let native = full(native).unwrap().context;
+    let recorded = full(recorded).unwrap().context;
+    let native = place_hash(
+        native,
+        runtime::FixedBytes::new([3; 32]),
+        bounded::<{ u64::MAX as u128 }>(1),
+    )
+    .unwrap()
+    .context;
+    let recorded = place_hash(
+        recorded,
+        runtime::FixedBytes::new([3; 32]),
+        bounded::<{ u64::MAX as u128 }>(1),
+    )
+    .unwrap()
+    .context;
+    let native = full(native).unwrap().context;
+    let recorded = full(recorded).unwrap().context;
+    let populated_root = current_root(native.query.state.get_ref());
+    let native = reset_tree(native).unwrap().context;
+    let recorded = reset_tree(recorded).unwrap().context;
+    let (native, recorded) = assert_historic_known_case(
+        "knownOldAfterTreeReset",
+        known(native, populated_root.clone()).unwrap(),
+        recorded::known(recorded, populated_root).unwrap(),
+        &oracle,
+    );
+    let _ = assert_historic_known_case(
+        "knownBlankAfterTreeReset",
+        known(native, blank_root.clone()).unwrap(),
+        recorded::known(recorded, blank_root).unwrap(),
+        &oracle,
+    );
+}
+
 #[test]
 fn recorded_historic_hash_append_preserves_typescript_history_and_replays() {
     let oracle: serde_json::Value = serde_json::from_str(include_str!(

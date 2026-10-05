@@ -350,6 +350,15 @@ impl<T: CellValue, const DEPTH: u8> MerkleSlot<T, DEPTH, false> {
 }
 
 impl<T: CellValue, const DEPTH: u8> MerkleSlot<T, DEPTH, true> {
+    /// Record membership in the declared historic root map.
+    pub fn record_check_root<Private, D: DB, R: CellValue + Clone>(
+        self,
+        frame: RecordingFrame<Private, D>,
+        root: R,
+    ) -> Result<(RecordingFrame<Private, D>, bool), CompactError> {
+        frame.historic_merkle_check_root(self.path, root)
+    }
+
     /// Record the depth-specific historic reset and blank-root history seed.
     pub fn record_reset_to_default<Private, D: DB>(
         self,

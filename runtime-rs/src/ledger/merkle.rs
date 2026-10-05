@@ -1122,6 +1122,14 @@ pub(crate) fn merkle_check_root_verify_program<T: CellValue, D: DB>(
     check_root_program(path, root, MerkleHistory::CurrentOnly, observed)
 }
 
+pub(crate) fn historic_check_root_verify_program<T: CellValue, D: DB>(
+    path: LedgerPath,
+    root: T,
+    observed: AlignedValue,
+) -> Vec<Op<ResultModeVerify, D>> {
+    check_root_program(path, root, MerkleHistory::Historic, observed)
+}
+
 /// Query membership in a HistoricMerkleTree's root history.
 pub fn historic_check_root<T: CellValue, D: DB>(
     context: &QueryContext<D>,

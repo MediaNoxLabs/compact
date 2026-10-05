@@ -6900,6 +6900,7 @@ fn render_recorded_item(
             )
         }
         StateReturn::MerkleCheckRoot { field, index, root }
+        | StateReturn::HistoricMerkleCheckRoot { field, index, root }
             if circuit.result == Type::Boolean && circuit.actions.is_empty() =>
         {
             let declaration = ledger_fields
@@ -6915,8 +6916,22 @@ fn render_recorded_item(
                     &circuit.return_value,
                 )));
             };
+            let historic = matches!(
+                circuit.return_value,
+                StateReturn::HistoricMerkleCheckRoot { .. }
+            );
+            let declaration_historic = match declaration.declaration {
+                LedgerFieldKind::MerkleTree { .. } => false,
+                LedgerFieldKind::HistoricMerkleTree { .. } => true,
+                _ => {
+                    return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
+                        &circuit.return_value,
+                    )));
+                }
+            };
             if declaration.index != *index
-                || !matches!(declaration.declaration, LedgerFieldKind::MerkleTree { .. })
+                || (historic && declaration.physical_path().len() != 1)
+                || historic != declaration_historic
                 || !matches!(root_ty, Type::Struct { name, fields }
                     if name == "MerkleTreeDigest" && fields.len() == 1
                         && fields[0].name == "field" && fields[0].ty == Type::Field)

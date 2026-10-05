@@ -405,3 +405,85 @@ pub(super) fn run_historic_reset_tree(root: &Path) -> Result<(), Box<dyn Error>>
     println!("historic Merkle resetToDefault proved and applied through ledger-8");
     Ok(())
 }
+
+pub(super) fn run_historic_known(root: &Path) -> Result<(), Box<dyn Error>> {
+    use compact_rust_hmt_insert_oracle_fixture::types::MerkleTreeDigest;
+
+    for expected in [true, false] {
+        let initial = historic_merkle_contract::initial_state(ConstructorContext::new(()))?;
+        let blank = historic_merkle_tree_view_at_path(initial.ledger_state.get_ref(), &[0])?
+            .root()
+            .ok_or("missing initial historic root")?;
+        let seeded = historic_merkle_contract::append(
+            initial
+                .into_circuit_context(midnight_compact_runtime::ledger::ContractAddress::default()),
+            BoundedUint::<255>::new(7)?,
+        )?;
+        let context = if expected {
+            seeded.context
+        } else {
+            historic_merkle_contract::forget_history(seeded.context)?.context
+        };
+        let state = context.query.state.get_ref().clone();
+        let root_digest = MerkleTreeDigest { field: blank.0 };
+        let tree = historic_merkle_tree_view_at_path(&state, &[0])?;
+        if tree.contains_root(blank) != expected
+            || tree.root() == Some(blank)
+            || tree.first_free()?.value() != 1
+        {
+            return Err("historic known proof prestate has wrong root history".into());
+        }
+        let mut rng = StdRng::seed_from_u64(if expected { 0x0152_1001 } else { 0x0152_1000 });
+        let deploy = make_deploy(root, "known", state.clone(), &mut rng)?;
+        let observed = ObservedContractState::new(
+            deploy.address(),
+            deploy.initial_state.clone(),
+            Observation {
+                transaction_hash: [0; 32],
+                block_hash: [0; 32],
+                block_height: 0,
+            },
+        );
+        let native =
+            historic_merkle_contract::known(observed.circuit_context(()), root_digest.clone())?;
+        let recorded = historic_merkle_contract::recorded::known(
+            observed.circuit_context(()),
+            root_digest.clone(),
+        )?;
+        if native.result != expected
+            || recorded.execution.result != expected
+            || native.gas_cost != recorded.execution.gas_cost
+            || native.context.query.effects != recorded.execution.context.query.effects
+            || !recorded.execution.private_transcript_outputs.is_empty()
+            || native.context.query.state.get_ref() != &state
+            || recorded.execution.context.query.state.get_ref() != &state
+        {
+            return Err("historic root membership recording differs from native read".into());
+        }
+        let manual = check_generated_trace(root, "known", recorded, root_digest.clone())?;
+        let verifier: VerifierKey = tagged_deserialize(&mut BufReader::new(File::open(
+            root.join("keys/known.verifier"),
+        )?))?;
+        let typed = historic_merkle_contract::recorded::Contract
+            .known_call(&observed, (), root_digest)?
+            .prepare(verifier, Fr::from(0u64))?;
+        if format!("{manual:?}") != format!("{typed:?}") {
+            return Err("historic known observed call differs from recording".into());
+        }
+        check_transaction(root, "known", deploy, typed, &mut rng, |contract| {
+            if contract.data.get_ref() != &state {
+                return Err("historic root membership read changed ledger state".into());
+            }
+            let applied = historic_merkle_tree_view_at_path(contract.data.get_ref(), &[0])?;
+            let generated = historic_merkle_contract::PublicStateView::from(contract).t()?;
+            if applied.contains_root(blank) != expected
+                || generated.contains_root(blank) != expected
+            {
+                return Err("applied historic root membership differs from history".into());
+            }
+            Ok(())
+        })?;
+        println!("historic Merkle root membership proved and applied (result={expected})");
+    }
+    Ok(())
+}

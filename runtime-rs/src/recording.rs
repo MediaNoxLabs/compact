@@ -411,6 +411,32 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         Ok((self, known))
     }
 
+    /// Check the historic root map and retain its observed Boolean Verify operation.
+    pub fn historic_merkle_check_root<T: CellValue + Clone>(
+        mut self,
+        path: impl Into<LedgerPath>,
+        root: T,
+    ) -> Result<(Self, bool), CompactError> {
+        let path = path.into();
+        let (result, known) = ledger::historic_check_root(
+            &self.context.query,
+            path.as_slice(),
+            root.clone(),
+            self.context.gas_limit,
+            &self.context.cost_model,
+        )?;
+        let Some(GatherEvent::Read(observed)) = result.events.last() else {
+            return Err(CompactError::InvalidLedgerCell(
+                "missing historic Merkle root membership event".into(),
+            ));
+        };
+        let program = ledger::historic_check_root_verify_program(path, root, observed.clone());
+        self.context.query = result.context;
+        self.observed_gas += result.gas_cost;
+        self.verify_ops.extend(program);
+        Ok((self, known))
+    }
+
     pub fn remove_set<T: CellValue>(
         self,
         path: impl Into<LedgerPath>,

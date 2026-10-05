@@ -118,12 +118,61 @@ fn direct_plain_merkle_root_recording_requires_exact_digest_and_slot() {
             name: "root".into(),
         },
     };
+    let historic_rendered = render_with_capabilities(&historic).unwrap();
+    assert!(historic_rendered.capabilities.circuits[0].recorded);
+    assert!(historic_rendered.capabilities.circuits[0].observed_call);
+    assert!(historic_rendered.source.contains("record_check_root("));
+
+    let mut wrong_historic_slot = historic.clone();
+    wrong_historic_slot.ledger_fields[0].declaration = LedgerFieldKind::MerkleTree {
+        depth: 3,
+        ty: Type::Boolean,
+    };
+    assert!(render_with_capabilities(&wrong_historic_slot).is_err());
+    let mut wrong_historic_index = historic.clone();
+    if let StateReturn::HistoricMerkleCheckRoot { index, .. } =
+        &mut wrong_historic_index.stateful_circuits[0].return_value
+    {
+        *index = 1;
+    }
+    assert!(render_with_capabilities(&wrong_historic_index).is_err());
+    let mut nested_historic = historic.clone();
+    nested_historic.ledger_fields[0].path = vec![1];
     assert!(
-        !render_with_capabilities(&historic)
-            .unwrap()
-            .capabilities
-            .circuits[0]
-            .recorded
+        !render_with_capabilities(&nested_historic)
+            .map(|rendered| rendered.capabilities.circuits[0].recorded)
+            .unwrap_or(false)
+    );
+    let mut wrong_historic_digest = historic.clone();
+    wrong_historic_digest.stateful_circuits[0].parameters[0].ty = Type::Field;
+    assert!(
+        !render_with_capabilities(&wrong_historic_digest)
+            .map(|rendered| rendered.capabilities.circuits[0].recorded)
+            .unwrap_or(false)
+    );
+    let mut computed_historic = historic.clone();
+    if let StateReturn::HistoricMerkleCheckRoot { root, .. } =
+        &mut computed_historic.stateful_circuits[0].return_value
+    {
+        *root = Expr::Default { ty: digest.clone() };
+    }
+    assert!(
+        !render_with_capabilities(&computed_historic)
+            .map(|rendered| rendered.capabilities.circuits[0].recorded)
+            .unwrap_or(false)
+    );
+    let mut effectful_historic = historic.clone();
+    effectful_historic.stateful_circuits[0]
+        .actions
+        .push(StateAction::HistoricMerkleInsert {
+            field: "tree".into(),
+            index: 0,
+            value: Expr::Boolean { value: true },
+        });
+    assert!(
+        !render_with_capabilities(&effectful_historic)
+            .map(|rendered| rendered.capabilities.circuits[0].recorded)
+            .unwrap_or(false)
     );
 
     contract.stateful_circuits[0].parameters[0].ty = Type::Field;

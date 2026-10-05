@@ -23,9 +23,11 @@ the explicit broad workspace, consumer and proof gate. Neither mode uses GitHub.
 """
 
 import argparse
+from contextlib import nullcontext
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -102,6 +104,74 @@ def fixture_map() -> dict[Path, Path]:
     return mapping
 
 
+def generated_library_has_no_test_hooks(source: str) -> bool:
+    """Recognize only the current generator's closed attributes and macros.
+
+    Unknown syntax falls back to Cargo's all-target selection. This is not a
+    general Rust test detector: callers must first verify the generated file.
+    """
+    if re.search(r"\bmod\s+\w+\s*;", source):
+        return False
+    macros = re.sub(r"(?<!#)\bif\s*!\s*(?=[({\[])", "", source)
+    if set(re.findall(r"\b(\w+)\s*!\s*[({\[]", macros)) - {"assert", "vec"}:
+        return False
+    derives = {"Clone", "Copy", "Debug", "Default", "PartialEq", "Eq",
+               "CompactCellValue", "CompactEnum", "BinaryHashRepr", "FieldRepr",
+               "FromFieldRepr", "runtime::CompactMerkleTreeDigest",
+               "runtime::CompactMerklePath", "runtime::CompactMerklePathEntry"}
+    for attribute in re.findall(r"#!?\[([^\]]*)\]", source):
+        attribute = attribute.strip()
+        if re.fullmatch(r"allow\(.*\)", attribute, re.DOTALL):
+            continue
+        if attribute in {'cfg(feature = "ledger-transaction")',
+                         "runtime::compact_witness_bridge"}:
+            continue
+        match = re.fullmatch(r"derive\((.*)\)", attribute, re.DOTALL)
+        if match and {name.strip() for name in match[1].split(",") if name.strip()} <= derives:
+            continue
+        return False
+    return True
+
+
+def workspace_test_plan(metadata: dict, verified_fixtures: set[Path]) -> dict:
+    """Keep core/unknown targets exhaustive; omit only verified empty harnesses."""
+    verified = {path.resolve() for path in verified_fixtures}
+    full, integration, omitted = [], [], []
+    members = set(metadata["workspace_members"])
+    for package in sorted(metadata["packages"], key=lambda package: package["name"]):
+        if package["id"] not in members or package["name"] == "compact":
+            continue  # Compact CLI unit tests have their own existing gate.
+        targets = package["targets"]
+        libraries = [target for target in targets if target["kind"] == ["lib"]]
+        tests = [target for target in targets if target["kind"] == ["test"]]
+        eligible = (len(libraries) == 1 and bool(tests)
+                    and len(libraries) + len(tests) == len(targets))
+        path = Path(libraries[0]["src_path"]).resolve() if libraries else None
+        if (eligible and path in verified
+                and generated_library_has_no_test_hooks(path.read_text())):
+            integration.append(package["name"])
+            omitted.append({"package": package["name"], "library": libraries[0]["name"],
+                            "source_sha256": sha256(path),
+                            "integration_targets": sorted(target["name"] for target in tests)})
+        else:
+            full.append(package["name"])
+    return {"all_target_packages": full, "integration_packages": integration,
+            "omitted_empty_library_harnesses": omitted}
+
+
+def planned_test_commands(plan: dict) -> list[tuple[str, list[str]]]:
+    commands = []
+    for key, selector, label in [
+        ("all_target_packages", ["--all-targets"], "core-and-fallback-tests"),
+        ("integration_packages", ["--test", "*"], "generated-integration-tests"),
+    ]:
+        if plan[key]:
+            commands.append((label, ["cargo", "+1.99.0", "test",
+                *sum((["-p", name] for name in plan[key]), []),
+                *selector, "--all-features", "--locked"]))
+    return commands
+
+
 def select_sources(names: list[str], full: bool) -> list[tuple[Path, Path]]:
     mapping = fixture_map()
     if full:
@@ -146,13 +216,13 @@ def stable_copy(source: Path, destination: Path) -> dict:
 
 
 def run(command: list[str], label: str, directory: Path, receipt: dict,
-        *, env: dict[str, str] | None = None) -> None:
+        *, env: dict[str, str] | None = None, stdout_path: Path | None = None) -> None:
     log = directory / "logs" / f"{len(receipt['commands']):03d}-{label}.log"
     log.parent.mkdir(parents=True, exist_ok=True)
     started = time.monotonic()
-    with log.open("w") as output:
-        result = subprocess.run(command, cwd=ROOT, env=env, stdout=output,
-                                stderr=subprocess.STDOUT, check=False)
+    with log.open("w") as output, (stdout_path.open("w") if stdout_path else nullcontext(output)) as stdout:
+        result = subprocess.run(command, cwd=ROOT, env=env, stdout=stdout,
+                                stderr=output, check=False)
     receipt["commands"].append({"label": label, "argv": command,
                                 "exit_code": result.returncode,
                                 "seconds": round(time.monotonic() - started, 3),
@@ -349,9 +419,20 @@ def main() -> int:
             # compiler and the mutable GitHub release list. They are outside
             # this compiler/backend parity gate and cannot give a repeatable
             # local receipt.
-            run(["cargo", "+1.99.0", "test", "--workspace", "--exclude", "compact",
-                 "--all-targets", "--all-features", "--locked"],
-                "backend-workspace-tests", directory, receipt, env=environment)
+            run([sys.executable, "-m", "unittest", "discover", "-s",
+                 str(ROOT / "tools/compact-rust-backend"), "-p", "test_*.py"],
+                "parity-harness-tests", directory, receipt, env=environment)
+            metadata_path = directory / "workspace-test-metadata.json"
+            run(["cargo", "+1.99.0", "metadata", "--no-deps", "--format-version", "1",
+                 "--all-features", "--locked"], "workspace-test-metadata", directory,
+                receipt, env=environment, stdout_path=metadata_path)
+            metadata = json.loads(metadata_path.read_text())
+            receipt["workspace_test_metadata"] = {"path": str(metadata_path),
+                                                  "sha256": sha256(metadata_path)}
+            plan = workspace_test_plan(metadata, {fixture for _, fixture in selected})
+            receipt["workspace_test_plan"] = plan
+            for label, command in planned_test_commands(plan):
+                run(command, label, directory, receipt, env=environment)
             run(["cargo", "+1.99.0", "test", "-p", "compact", "--lib", "--bins",
                  "--all-features", "--locked"],
                 "compact-cli-unit-tests", directory, receipt, env=environment)

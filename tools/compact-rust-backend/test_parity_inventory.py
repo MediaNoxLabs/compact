@@ -294,7 +294,8 @@ metadata.mkdir()
                       (inventory.ROOT / entry["rust_test"]).read_text())
         self.assertEqual([(item["name"], item["proof"]) for item in entry["proof_circuits"]],
                          [("post", True), ("take_down", True), ("public_key", False)])
-        self.assertEqual(set(entry["expected_recording_gaps"]), {"post", "take_down"})
+        self.assertEqual(entry["expected_recording_gaps"], {})
+        self.assertEqual(set(entry["expected_recorded_circuits"]), {"post", "take_down"})
         self.assertEqual({item["name"] for item in
                           inventory.parse_source(inventory.ROOT / entry["source"],
                                                  inventory.ROOT)["declarations"]

@@ -710,3 +710,20 @@ The original unchanged `test-center/test-contracts/micro-dao.compact` now passes
 its standard-library nonce-domain casts. Its next diagnosed source gap is nested
 `Counter.read` at line 192 (`no.lessThan(yes)`); shielded coin operations and
 `pot.writeCoin` remain separate admission work. This is not full DAO parity.
+
+### Full-gate Cargo target selection
+
+The local parity gate reads Cargo workspace metadata after comparing every
+fixture with fresh compiler output. Core packages and unknown fixture shapes
+retain `--all-targets`. Verified generated libraries with only the generator's
+known attributes/macros and no test hooks run every integration target through
+`--test '*'`, avoiding empty library unit-test executables. A new inline test,
+unknown macro, external module, extra target kind, or unverified source restores
+all-target execution for that package. Packages without integration tests also
+keep their full selection. No manifest settings are changed.
+
+The receipt records `workspace_test_plan`, including package membership, all
+integration target names and omitted empty-library source hashes. Python harness
+tests, compact CLI unit tests, all-target Clippy and consumer/proof gates remain
+part of the broad run. ADR-0172/#276 records the Cargo selection probe; target
+coverage is verified, while wall-clock savings require a later measured run.

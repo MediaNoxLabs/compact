@@ -6792,6 +6792,64 @@ fn counter_read_returns_uint64() {
 }
 
 #[test]
+fn root_let_preserves_pre_write_value_for_return_but_nested_let_does_not_escape() {
+    let mut contract = Contract {
+        schema_version: SCHEMA_VERSION,
+        type_aliases: vec![],
+        constructor: None,
+        witnesses: vec![],
+        ledger_fields: vec![LedgerField {
+            source: None,
+            id: "stored".into(),
+            index: 0,
+            path: vec![],
+            declaration: LedgerFieldKind::Cell { ty: Type::Field },
+        }],
+        circuits: vec![],
+        stateful_circuits: vec![StatefulCircuit {
+            source: None,
+            internal: false,
+            name: "replace".into(),
+            parameters: vec![],
+            actions: vec![StateAction::Let {
+                bindings: vec![LocalBinding {
+                    name: "previous".into(),
+                    ty: Type::Field,
+                    value: Expr::CellRead {
+                        field: "stored".into(),
+                        index: 0,
+                    },
+                }],
+                action: Box::new(StateAction::CellWrite {
+                    field: "stored".into(),
+                    index: 0,
+                    value: Expr::FieldLiteral { value: "7".into() },
+                }),
+            }],
+            result: Type::Field,
+            return_value: StateReturn::Expression {
+                value: Expr::Parameter {
+                    name: "previous".into(),
+                },
+            },
+        }],
+    };
+    let source = render(&contract).unwrap();
+    assert!(source.contains("let result = __compact_action_local_0"));
+    assert!(source.contains("crate::ledger_slots::stored"));
+    assert!(source.contains(".write(context"));
+
+    let root_let = contract.stateful_circuits[0].actions.remove(0);
+    contract.stateful_circuits[0].actions = vec![StateAction::Sequence {
+        actions: vec![root_let],
+    }];
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::UnknownParameter("previous".into()))
+    );
+}
+
+#[test]
 fn set_actions_require_the_declared_element_type() {
     let mut contract = Contract {
         schema_version: 12,

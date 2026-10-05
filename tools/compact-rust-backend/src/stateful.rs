@@ -1919,6 +1919,7 @@ pub(crate) fn render_stateful_circuit(
     let mut scopes = Vec::new();
     let mut branches = Vec::<Option<BranchFrame>>::new();
     let mut local_parameters = parameters.clone();
+    let mut return_parameters = parameters.clone();
     while let Some(pending_action) = pending.pop() {
         let action = match pending_action {
             Pending::Action(action) => action,
@@ -2003,6 +2004,12 @@ pub(crate) fn render_stateful_circuit(
                     let ty = rust_type(&binding.ty)?;
                     statements.push(syn::parse_quote!(let #local_name: #ty = #value;));
                     local_parameters.insert(binding.name.as_str(), (&binding.ty, local_name));
+                }
+                // A root Let wraps both the ordered action body and its
+                // return expression. Nested Lets retain their action-only
+                // scope and cannot leak a local into the circuit return.
+                if circuit.actions.len() == 1 && std::ptr::eq(action, &circuit.actions[0]) {
+                    return_parameters = local_parameters.clone();
                 }
                 pending.push(Pending::RestoreScope);
                 pending.push(Pending::Action(inner));
@@ -2817,7 +2824,7 @@ pub(crate) fn render_stateful_circuit(
             let mut query_effect = false;
             let (rendered, actual, effect) = render_state_expression(
                 value,
-                &parameters,
+                &return_parameters,
                 witnesses,
                 &mut effect_statements,
                 &mut next_temp,

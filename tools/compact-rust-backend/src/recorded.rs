@@ -5829,15 +5829,59 @@ fn render_recorded_item(
     let mut steps = organizer_steps.or(guarded_pure_steps).unwrap_or_default();
     let mut next_temp = 0;
     let mut visiting = HashSet::from([circuit.name.clone()]);
+    // A root Let encloses both its ordered actions and its final return.
+    // Capture this exact Field Cell read once, before the nested actions,
+    // so the returned value cannot accidentally observe the post-write state.
+    let root_field_return = if !organizer_gate && !guarded_pure_call {
+        match (circuit.actions.as_slice(), &circuit.return_value) {
+            (
+                [StateAction::Let { bindings, action }],
+                StateReturn::Expression {
+                    value: Expr::Parameter { name },
+                },
+            ) if circuit.result == Type::Field => match bindings.as_slice() {
+                [binding]
+                    if binding.name == *name
+                        && binding.ty == Type::Field
+                        && matches!(&binding.value, Expr::CellRead { .. }) =>
+                {
+                    if let Expr::CellRead { field, index } = &binding.value {
+                        let declaration = ledger_fields
+                            .get(field.as_str())
+                            .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                        if declaration.declaration != (LedgerFieldKind::Cell { ty: Type::Field })
+                            || declaration.index != *index
+                        {
+                            return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
+                                &circuit.return_value,
+                            )));
+                        }
+                        Some((binding.name.as_str(), field.as_str(), action.as_ref()))
+                    } else {
+                        None
+                    }
+                }
+                _ => None,
+            },
+            _ => None,
+        }
+    } else {
+        None
+    };
+    let mut recorded_root_return: Option<(&str, syn::Expr)> = None;
     if !organizer_gate {
-        for (index, action) in circuit.actions.iter().enumerate() {
-            if guarded_pure_call && index == 0 {
-                continue;
-            }
+        if let Some((name, field, action)) = root_field_return {
+            let slot = ident(field)?;
+            let saved = syn::Ident::new("__compact_recorded_root_return", Span::call_site());
+            steps.push(syn::parse_quote! {
+                let (frame, #saved): (_, runtime::Field) =
+                    crate::ledger_slots::#slot.record_read(frame)?;
+            });
+            let locals = HashMap::from([(name.to_owned(), syn::parse_quote!(#saved))]);
             if let RecordingOutcome::Unsupported(gap) = append_steps(
                 action,
-                &format!("actions[{index}]"),
-                &HashMap::new(),
+                "actions[0].action",
+                &locals,
                 &parameters,
                 ledger_fields,
                 witnesses,
@@ -5850,10 +5894,44 @@ fn render_recorded_item(
             )? {
                 return Ok(RecordingOutcome::Unsupported(gap));
             }
+            recorded_root_return = Some((name, syn::parse_quote!(#saved)));
+        } else {
+            for (index, action) in circuit.actions.iter().enumerate() {
+                if guarded_pure_call && index == 0 {
+                    continue;
+                }
+                if let RecordingOutcome::Unsupported(gap) = append_steps(
+                    action,
+                    &format!("actions[{index}]"),
+                    &HashMap::new(),
+                    &parameters,
+                    ledger_fields,
+                    witnesses,
+                    pure_circuits,
+                    circuits,
+                    shared_callees,
+                    &mut steps,
+                    &mut next_temp,
+                    &mut visiting,
+                )? {
+                    return Ok(RecordingOutcome::Unsupported(gap));
+                }
+            }
         }
     }
     let result_ty = rust_type(&circuit.result)?;
     let (return_steps, result): (Vec<syn::Stmt>, syn::Expr) = match &circuit.return_value {
+        StateReturn::Expression {
+            value: Expr::Parameter { name },
+        } if recorded_root_return
+            .as_ref()
+            .is_some_and(|(bound_name, _)| *bound_name == name.as_str()) =>
+        {
+            (
+                Vec::new(),
+                recorded_root_return.expect("matching root local").1,
+            )
+        }
         StateReturn::Unit if circuit.result == Type::Unit => {
             if steps.is_empty() {
                 return Ok(RecordingOutcome::Unsupported(RecordingGap::no_effect()));

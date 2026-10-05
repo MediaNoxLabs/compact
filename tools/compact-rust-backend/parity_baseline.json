@@ -4506,6 +4506,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/let_return_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "replace",
+    "signature": "export circuit replace(next: Field): Field",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/merkle_path_verify.compact",
     "module_path": [],
     "kind": "circuit",

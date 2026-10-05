@@ -419,7 +419,7 @@
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
                          (cons "key" (typed-expression-ir (car expr*) (car adt-arg*) src)))]
-                [else (source-errorf src "Rust backend does not yet support this nested ledger query")])])]
+                [else (source-errorf src "Rust backend does not yet support this nested ledger query: ~a.~a" adt-name ledger-op)])])]
           [(call ,src ,function-name ,expr* ...)
            (let ([name (id-sym function-name)])
              (cond
@@ -1142,10 +1142,70 @@
                 [else (source-errorf src "Rust backend does not yet support this ledger operation")])])]
           [else (source-errorf owner-src "Rust backend does not yet support this state action")]))
 
+      (define (tail-return-variable value-expr)
+        (nanopass-case (Lnodisclose Expression) value-expr
+          [(return ,src ,expr) (tail-return-variable expr)]
+          [(seq ,src ,expr* ... ,expr) (tail-return-variable expr)]
+          [(var-ref ,src ,var-name) (id-sym var-name)]
+          [else #f]))
+
+      (define (let-return-uses-binding? local* body)
+        (let ([returned (tail-return-variable body)])
+          (and returned
+               (exists (lambda (local)
+                         (nanopass-case (Lnodisclose Argument) local
+                           [(,var-name ,type) (eq? (id-sym var-name) returned)]))
+                       local*))))
+
+      (define (stateful-body-has-actions? value-expr)
+        (nanopass-case (Lnodisclose Expression) value-expr
+          [(let* ,src ([,local* ,expr*] ...) ,expr)
+           (and (let-return-uses-binding? local* expr)
+                (stateful-body-has-actions? expr))]
+          [(seq ,src ,expr* ... ,expr)
+           (if (checked-unsigned-subtraction? expr* expr)
+               (stateful-body-has-actions? expr)
+               (or (pair? expr*) (stateful-body-has-actions? expr)))]
+          [else #f]))
+
       (define (stateful-body-ir expr src environment witness-ids)
         (nanopass-case (Lnodisclose Expression) expr
+          [(let* ,src1 ([,local* ,expr*] ...) ,expr)
+           (if (and (let-return-uses-binding? local* expr)
+                    (stateful-body-has-actions? expr))
+               (let ([environment^
+                       (fold-left
+                         (lambda (environment local value)
+                           (nanopass-case (Lnodisclose Argument) local
+                             [(,var-name ,type)
+                              (cons (cons (id-sym var-name)
+                                          (object (cons "kind" "parameter")
+                                                  (cons "name" (rust-var-name var-name))))
+                                    environment)]))
+                         environment local* expr*)])
+                 (vector
+                   (object (cons "kind" "let")
+                           (cons "bindings"
+                                 (list->vector
+                                   (map (lambda (local value)
+                                          (nanopass-case (Lnodisclose Argument) local
+                                            [(,var-name ,type)
+                                             (object (cons "name" (rust-var-name var-name))
+                                                     (cons "ty" (type-ir type src1))
+                                                     (cons "value" (stateful-typed-expression-ir value type src1 witness-ids)))]))
+                                        local* expr*)))
+                           (cons "action"
+                                 (object (cons "kind" "sequence")
+                                         (cons "actions"
+                                               (stateful-body-ir expr src1 environment^ witness-ids)))))))
+               (vector))]
           [(seq ,src1 ,expr* ... ,expr)
-           (list->vector (map (lambda (action) (state-action-ir action src environment witness-ids)) expr*))]
+           (if (checked-unsigned-subtraction? expr* expr)
+               (vector)
+               (list->vector
+                 (append
+                   (map (lambda (action) (state-action-ir action src environment witness-ids)) expr*)
+                   (vector->list (stateful-body-ir expr src1 environment witness-ids)))))]
           [else (vector)]))
 
       ;; Stateful expressions keep witness calls explicit so Rust can evaluate
@@ -1359,7 +1419,7 @@
                  (object (cons "kind" "map_is_empty")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*)))]
-                [else (source-errorf src "Rust backend does not yet support this nested ledger query")])])]
+                [else (source-errorf src "Rust backend does not yet support this nested ledger query: ~a.~a" adt-name ledger-op)])])]
           [(safe-cast ,src ,type ,type^ ,expr)
            (nanopass-case (Lnodisclose Type) type
              [(tboolean ,src^) (stateful-expression-ir expr src witness-ids)]
@@ -1469,6 +1529,12 @@
         (nanopass-case (Lnodisclose Expression) return-expr
           [(return ,src ,expr) (stateful-return-ir expr src witness-ids)]
           [(seq ,src ,expr* ... ,expr) (stateful-return-ir expr src witness-ids)]
+          [(let* ,src ([,local* ,expr*] ...) ,expr)
+           (if (and (let-return-uses-binding? local* expr)
+                    (stateful-body-has-actions? expr))
+               (stateful-return-ir expr src witness-ids)
+               (object (cons "kind" "expression")
+                       (cons "value" (stateful-expression-ir return-expr src witness-ids))))]
           [(var-ref ,src ,var-name)
            (object (cons "kind" "expression")
                    (cons "value" (expression-ir return-expr src)))]
@@ -1510,9 +1576,6 @@
            (object (cons "kind" "expression")
                    (cons "value" (stateful-expression-ir return-expr src witness-ids)))]
           [(!= ,src ,type ,expr1 ,expr2)
-           (object (cons "kind" "expression")
-                   (cons "value" (stateful-expression-ir return-expr src witness-ids)))]
-          [(let* ,src ([,local* ,expr*] ...) ,expr)
            (object (cons "kind" "expression")
                    (cons "value" (stateful-expression-ir return-expr src witness-ids)))]
           [(safe-cast ,src ,type ,type^ ,expr)

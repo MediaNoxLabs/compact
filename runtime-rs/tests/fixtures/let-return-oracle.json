@@ -1,0 +1,149 @@
+{
+  "initialStateHex": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a340008404104000401040408010404080403040c0004100801040414580304244801040304010801040401040104010840410000201c7265706c616365000400081c2000042408010404289003044080073f35227d27ba4d4c4671c834a5f38c88e22a84b5aa3fe0cf0423e842006480140820182c201003000400",
+  "first": {
+    "next": "9",
+    "result": "0",
+    "afterStateHex": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a340008094104000401040408010404080403040c0004100801040414580304244801040304010801040401040104010809410000201c7265706c616365000400081c2000042408010404289003044080073f35227d27ba4d4c4671c834a5f38c88e22a84b5aa3fe0cf0423e842006480140820182c201003000400",
+    "reportedGas": {
+      "readTime": "85000000",
+      "computeTime": "1233942932",
+      "bytesWritten": "36",
+      "bytesDeleted": "36"
+    },
+    "queries": [
+      {
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1249914853",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        },
+        "opTags": [
+          "dup",
+          "idx",
+          "popeq"
+        ]
+      },
+      {
+        "gasCost": {
+          "readTime": "85000000",
+          "computeTime": "1233942932",
+          "bytesWritten": "36",
+          "bytesDeleted": "36"
+        },
+        "opTags": [
+          "push",
+          "push",
+          "ins"
+        ]
+      }
+    ],
+    "publicTranscriptShape": [
+      {
+        "kind": "dup",
+        "n": 0
+      },
+      {
+        "kind": "idx",
+        "cached": false,
+        "pushPath": false,
+        "pathLength": 1
+      },
+      {
+        "kind": "popeq",
+        "cached": false,
+        "resultAtoms": [
+          []
+        ]
+      },
+      {
+        "kind": "push",
+        "storage": false
+      },
+      {
+        "kind": "push",
+        "storage": true
+      },
+      {
+        "kind": "ins",
+        "cached": false,
+        "n": 1
+      }
+    ],
+    "privateTranscriptCount": 0
+  },
+  "second": {
+    "next": "13",
+    "result": "9",
+    "afterStateHex": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a3400080d4104000401040408010404080403040c000410080104041458030424480104030401080104040104010401080d410000201c7265706c616365000400081c2000042408010404289003044080073f35227d27ba4d4c4671c834a5f38c88e22a84b5aa3fe0cf0423e842006480140820182c201003000400",
+    "reportedGas": {
+      "readTime": "85000000",
+      "computeTime": "1233942932",
+      "bytesWritten": "36",
+      "bytesDeleted": "36"
+    },
+    "queries": [
+      {
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1249914853",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        },
+        "opTags": [
+          "dup",
+          "idx",
+          "popeq"
+        ]
+      },
+      {
+        "gasCost": {
+          "readTime": "85000000",
+          "computeTime": "1233942932",
+          "bytesWritten": "36",
+          "bytesDeleted": "36"
+        },
+        "opTags": [
+          "push",
+          "push",
+          "ins"
+        ]
+      }
+    ],
+    "publicTranscriptShape": [
+      {
+        "kind": "dup",
+        "n": 0
+      },
+      {
+        "kind": "idx",
+        "cached": false,
+        "pushPath": false,
+        "pathLength": 1
+      },
+      {
+        "kind": "popeq",
+        "cached": false,
+        "resultAtoms": [
+          [
+            9
+          ]
+        ]
+      },
+      {
+        "kind": "push",
+        "storage": false
+      },
+      {
+        "kind": "push",
+        "storage": true
+      },
+      {
+        "kind": "ins",
+        "cached": false,
+        "n": 1
+      }
+    ],
+    "privateTranscriptCount": 0
+  }
+}

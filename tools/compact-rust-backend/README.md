@@ -130,6 +130,15 @@ match the checked TypeScript capture on a default Rust test thread. Its three
 proof-required exports remain recording-unavailable at their first assertions;
 constructor acceptance adds no proven call. `bboard` and `coracle` still reject
 nested ledger queries, and `micro-dao` rejects a standard-library expression.
+The separate `let_return_oracle.compact` source now covers a root circuit
+`let` whose bound Cell read must retain its pre-write value across ordered
+actions and the final return. Its generated Rust crate matches two sequential
+TypeScript calls in result, state, ordered VM transcript, private outputs,
+and four query-meter gas dimensions, and its recorded call proves and applies
+with the pinned ledger-8 tools. This assesses one new proof-required export.
+It does not assess the three `bboard` exports: the original source now advances
+past the nested Cell write but still rejects an independent Field-to-Bytes
+expression at line 44.
 The lexical scanner includes `pure circuit` and `export pure circuit`
 declarations, with compiler `contract-info.json` supplying proof applicability
 even when the Rust capability report has no recorded method for a pure circuit.

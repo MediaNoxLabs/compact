@@ -1444,6 +1444,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-let-return-oracle-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-base-crypto",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-list-field-fixture"
 version = "0.1.0"
 dependencies = [
@@ -1804,6 +1817,7 @@ dependencies = [
  "compact-rust-hmt-default-oracle-fixture",
  "compact-rust-hmt-insert-oracle-fixture",
  "compact-rust-internal-pure-call-fixture",
+ "compact-rust-let-return-oracle-fixture",
  "compact-rust-list-field-fixture",
  "compact-rust-map-boolean-field-fixture",
  "compact-rust-merkle-path-verify-fixture",

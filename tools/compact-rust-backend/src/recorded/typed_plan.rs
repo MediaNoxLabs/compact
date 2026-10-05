@@ -20,6 +20,7 @@ use super::*;
 use crate::coerce_expression;
 use crate::ir::{KernelClaimKind, ReturnPlan};
 mod field_observations;
+mod funded_mint;
 mod guarded_deposit;
 mod immediate_send;
 mod phase_reset;
@@ -50,6 +51,7 @@ enum CompositeDomain {
     ActionfulShieldedPayout,
     ShieldedMerge(shielded_merge::Inputs),
     GuardedShieldedDeposit,
+    FundedShieldedMint,
     FieldObservations,
     TerminalReturns,
 }
@@ -68,7 +70,10 @@ impl CompositeDomain {
         self.shielded_send() || self.shielded_merge()
     }
     fn shielded_merge(self) -> bool {
-        matches!(self, Self::ShieldedMerge(_) | Self::GuardedShieldedDeposit)
+        matches!(
+            self,
+            Self::ShieldedMerge(_) | Self::GuardedShieldedDeposit | Self::FundedShieldedMint
+        )
     }
 
     fn singleton_bridge(self) -> bool {
@@ -76,6 +81,7 @@ impl CompositeDomain {
             self,
             Self::ImmediateShieldedSend
                 | Self::GuardedShieldedDeposit
+                | Self::FundedShieldedMint
                 | Self::ShieldedMerge(shielded_merge::Inputs::ReceivedRight)
         )
     }
@@ -92,6 +98,7 @@ impl CompositeDomain {
                 | Self::ActionfulShieldedPayout
                 | Self::ShieldedMerge(_)
                 | Self::GuardedShieldedDeposit
+                | Self::FundedShieldedMint
         )
     }
     fn intents(self) -> bool {
@@ -105,6 +112,7 @@ impl CompositeDomain {
                 | Self::ActionfulShieldedPayout
                 | Self::ShieldedMerge(_)
                 | Self::GuardedShieldedDeposit
+                | Self::FundedShieldedMint
         )
     }
 }
@@ -216,6 +224,16 @@ impl Plan<'_> {
                     && max == &u64::MAX.to_string() =>
             {
                 true
+            }
+            Expr::FieldCast { value } | Expr::UpgradeFromTransient { value }
+                if self.composite_domain == CompositeDomain::FundedShieldedMint =>
+            {
+                self.pure_value(value, visiting)
+            }
+            Expr::PersistentCommit { value, opening }
+                if self.composite_domain == CompositeDomain::FundedShieldedMint =>
+            {
+                self.pure_value(value, visiting) && self.pure_value(opening, visiting)
             }
             Expr::Default {
                 ty: Type::OpaqueString,
@@ -393,6 +411,11 @@ impl Plan<'_> {
                     steps,
                 )
             }
+            Expr::KernelMintShielded { domain, amount }
+                if self.composite_domain == CompositeDomain::FundedShieldedMint =>
+            {
+                self.funded_mint(expression, domain, amount, scope, steps)
+            }
             Expr::CreateZswapInput { .. }
             | Expr::CreateZswapOutput { .. }
             | Expr::KernelClaim { .. }
@@ -456,14 +479,31 @@ impl Plan<'_> {
                         (shielded_merge::INPUT, shielded_merge::WIDENED)
                             | (shielded_merge::SUM, shielded_merge::INPUT)
                     )
-                    && !(self.composite_domain == CompositeDomain::GuardedShieldedDeposit
-                        && source_max == u64::MAX.to_string()
+                    && !(matches!(
+                        self.composite_domain,
+                        CompositeDomain::GuardedShieldedDeposit
+                            | CompositeDomain::FundedShieldedMint
+                    ) && source_max == u64::MAX.to_string()
                         && max == shielded_merge::INPUT)
+                    && !(self.composite_domain == CompositeDomain::FundedShieldedMint
+                        && ((source_max == u64::MAX.to_string() && max == funded_mint::PRODUCT)
+                            || (source_max == shielded_merge::INPUT
+                                && max == shielded_merge::INPUT)))
                 {
                     return None;
                 }
                 let converted = crate::unsigned_cast_syntax(value.value, &source_max, max).ok()?;
                 self.bind(converted, Type::Unsigned { max: max.clone() }, steps)
+            }
+            Expr::UnsignedMultiply { max, left, right }
+                if self.composite_domain == CompositeDomain::FundedShieldedMint =>
+            {
+                self.funded_multiply(expression, left, right, max, scope, steps)
+            }
+            Expr::NotEqual { left, right }
+                if self.composite_domain == CompositeDomain::FundedShieldedMint =>
+            {
+                self.funded_not_equal(left, right, scope, steps)
             }
             Expr::UnsignedAdd { max, left, right }
                 if self.phase_reset || self.composite_domain.shielded_merge() =>
@@ -650,7 +690,9 @@ impl Plan<'_> {
                 builtin: builtin @ crate::ir::NativeWitnessBuiltin::OwnPublicKey,
             } if matches!(
                 self.composite_domain,
-                CompositeDomain::ShieldedPayout | CompositeDomain::ActionfulShieldedPayout
+                CompositeDomain::ShieldedPayout
+                    | CompositeDomain::ActionfulShieldedPayout
+                    | CompositeDomain::FundedShieldedMint
             ) =>
             {
                 let ty = builtin.result_type();
@@ -864,14 +906,19 @@ impl Plan<'_> {
                 if self.read_only_assertions && *ty != Type::Boolean {
                     return None;
                 }
-                if self.composite_domain == CompositeDomain::GuardedShieldedDeposit
-                    && !guarded_deposit::read_type(ty)
+                if matches!(
+                    self.composite_domain,
+                    CompositeDomain::GuardedShieldedDeposit | CompositeDomain::FundedShieldedMint
+                ) && !guarded_deposit::read_type(ty)
                 {
                     return None;
                 }
                 if !cell_type(ty)
-                    && !(self.composite_domain == CompositeDomain::GuardedShieldedDeposit
-                        && guarded_deposit::read_type(ty))
+                    && !(matches!(
+                        self.composite_domain,
+                        CompositeDomain::GuardedShieldedDeposit
+                            | CompositeDomain::FundedShieldedMint
+                    ) && guarded_deposit::read_type(ty))
                     && !(self.composite_domain == CompositeDomain::ShieldedPayout
                         && shielded_payout::cell_type(ty))
                     && !(self.composite_domain == CompositeDomain::ActionfulShieldedPayout
@@ -1390,6 +1437,11 @@ impl Plan<'_> {
                     return None;
                 };
                 if self.effectful_field_cells && *ty != Type::Field {
+                    return None;
+                }
+                if self.composite_domain == CompositeDomain::FundedShieldedMint
+                    && *ty != Type::Boolean
+                {
                     return None;
                 }
                 if self.composite_domain == CompositeDomain::GuardedShieldedDeposit
@@ -2508,6 +2560,15 @@ fn shielded_value(
         shielded_value(part, pure, circuits, visiting, domain)
     };
     match value {
+        Expr::NativeWitnessCall {
+            builtin: crate::ir::NativeWitnessBuiltin::OwnPublicKey,
+        } if domain == CompositeDomain::FundedShieldedMint => true,
+        Expr::KernelMintShielded {
+            domain: token_domain,
+            amount,
+        } if domain == CompositeDomain::FundedShieldedMint => {
+            visit(token_domain, visiting) && visit(amount, visiting)
+        }
         Expr::CellRead { .. } | Expr::NativeWitnessCall { .. }
             if matches!(
                 domain,
@@ -4159,4 +4220,14 @@ pub(super) fn lower_guarded_deposit<'a>(
     circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
 ) -> Option<TypedPlan> {
     guarded_deposit::lower(circuit, ledger, witnesses, pure, circuits)
+}
+
+pub(super) fn lower_funded_mint<'a>(
+    circuit: &StatefulCircuit,
+    ledger: &'a HashMap<&'a str, &'a LedgerField>,
+    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,
+    pure: &'a HashMap<&'a str, &'a PureCircuit>,
+    circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
+) -> Option<TypedPlan> {
+    funded_mint::lower(circuit, ledger, witnesses, pure, circuits)
 }

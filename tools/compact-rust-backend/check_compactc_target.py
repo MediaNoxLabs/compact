@@ -1214,6 +1214,7 @@ def main() -> None:
     parser.add_argument("--transient-receive-send", action="store_true", help="check full immediate-send recording; optional strict transient proof")
     parser.add_argument("--canonical-output-order", action="store_true", help="check two-output recording; optional strict canonical-allocation proofs")
     parser.add_argument("--terminal-lexical-return", action="store_true", help="check terminal lexical recorded returns and optional four strict Dust proofs")
+    parser.add_argument("--micro-dao-buy-in", action="store_true", help="check original buy_in recording; optional strict empty/occupied mint proofs")
     parser.add_argument("--micro-dao-set-topic", action="store_true", help="check original set_topic recording; optional funded strict empty/occupied proofs")
     parser.add_argument("--micro-dao-advance", action="store_true", help="check original microDAO advance recording; optional strict Dust proof")
     parser.add_argument("--micro-dao-reveal", action="store_true", help="check original microDAO reveal recording; optional selective proof")
@@ -1278,9 +1279,9 @@ def main() -> None:
             assert sum(c["proof"] for c in info["circuits"]) == 7
             assert len(report["circuits"]) == 7
             assert all(c["proof_required"] for c in report["circuits"])
-            assert {c["name"] for c in report["circuits"] if c["recorded"]} == {"advance", "vote_reveal", "dao_voting_token", "set_topic"}
+            assert {c["name"] for c in report["circuits"] if c["recorded"]} == {"advance", "vote_reveal", "dao_voting_token", "set_topic", "buy_in"}
             run("cargo", "+1.99.0", "check", "--offline", "--manifest-path", str(original / "contract/Cargo.toml"))
-            print("nested stateful assertions admitted; original micro-dao native crate checks, 3 proof-required gaps remain; advance, vote_reveal, dao_voting_token and set_topic recorded")
+            print("nested stateful assertions admitted; original micro-dao native crate checks, 2 proof-required gaps remain; advance, vote_reveal, dao_voting_token, set_topic and buy_in recorded")
             return
         if args.wide_add:
             source = ROOT / "examples/rust_backend/wide_add_oracle.compact"
@@ -1352,9 +1353,9 @@ def main() -> None:
                 run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--", "--terminal-lexical-return", str(output))
             print("terminal lexical returns: five proof-required recorded APIs; four new strict Dust proof cases when requested")
             return
-        if args.micro_dao_token or args.micro_dao_reveal or args.micro_dao_advance or args.micro_dao_set_topic:
+        if args.micro_dao_token or args.micro_dao_reveal or args.micro_dao_advance or args.micro_dao_set_topic or args.micro_dao_buy_in:
             source = ROOT / "test-center/test-contracts/micro-dao.compact"
-            selected = "set_topic" if args.micro_dao_set_topic else "advance" if args.micro_dao_advance else "vote_reveal" if args.micro_dao_reveal else "dao_voting_token"
+            selected = "buy_in" if args.micro_dao_buy_in else "set_topic" if args.micro_dao_set_topic else "advance" if args.micro_dao_advance else "vote_reveal" if args.micro_dao_reveal else "dao_voting_token"
             output = base / "micro-dao-selected"
             run(compiler, "--target", "rust", "--skip-zk", str(source), str(output))
             info = json.loads((output / "compiler/contract-info.json").read_text())
@@ -1362,15 +1363,15 @@ def main() -> None:
             assert len(info["circuits"]) == 11 and sum(c["proof"] for c in info["circuits"]) == 7
             assert {c["name"] for c in report["circuits"]} == {c["name"] for c in info["circuits"] if c["proof"]}
             for c in report["circuits"]:
-                assert c["proof_required"] and c["recorded"] == (c["name"] in {"advance", "vote_reveal", "dao_voting_token", "set_topic"})
+                assert c["proof_required"] and c["recorded"] == (c["name"] in {"advance", "vote_reveal", "dao_voting_token", "set_topic", "buy_in"})
                 assert c["observed_call"] == c["recorded"]
             strict = subprocess.run([compiler, "--target", "rust", "--rust-require-recording", "--skip-zk", str(source), str(base / "strict-dao")], cwd=ROOT, capture_output=True, text=True)
             assert strict.returncode != 0 and "vote_commit" in strict.stderr
             if args.proof:
                 (output / "keys").mkdir(exist_ok=True)
                 run("zkir", "compile", str(output / f"zkir/{selected}.zkir"), str(output / f"keys/{selected}.prover"), str(output / f"keys/{selected}.verifier"))
-                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--", "--micro-dao-set-topic" if args.micro_dao_set_topic else "--micro-dao-advance" if args.micro_dao_advance else "--micro-dao-reveal" if args.micro_dao_reveal else "--micro-dao-token", str(output))
-            print("original microDAO: advance, vote_reveal, dao_voting_token and set_topic recorded, three proof-required gaps retained")
+                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--", "--micro-dao-buy-in" if args.micro_dao_buy_in else "--micro-dao-set-topic" if args.micro_dao_set_topic else "--micro-dao-advance" if args.micro_dao_advance else "--micro-dao-reveal" if args.micro_dao_reveal else "--micro-dao-token", str(output))
+            print("original microDAO: advance, vote_reveal, dao_voting_token, set_topic and buy_in recorded, two proof-required gaps retained")
             return
         if args.composite_zswap:
             outputs = []
@@ -1875,6 +1876,8 @@ def main() -> None:
         run(sys.executable, str(Path(__file__).resolve()), "--micro-dao-advance",
             *(["--proof"] if args.proof else []))
         run(sys.executable, str(Path(__file__).resolve()), "--micro-dao-set-topic",
+            *(["--proof"] if args.proof else []))
+        run(sys.executable, str(Path(__file__).resolve()), "--micro-dao-buy-in",
             *(["--proof"] if args.proof else []))
         run(sys.executable, str(Path(__file__).resolve()), "--coracle-guess",
             *(["--proof"] if args.proof else []))

@@ -96,7 +96,7 @@ fn normalized_effects(mut value: Value) -> Value {
     value
 }
 #[test]
-fn original_buy_in_native_matches_independent_typescript() {
+fn original_buy_in_native_and_recorded_match_independent_typescript() {
     let data: Value = serde_json::from_str(include_str!(
         "../../../runtime-rs/tests/fixtures/micro-dao-buy-in.json"
     ))
@@ -110,9 +110,15 @@ fn original_buy_in_native_matches_independent_typescript() {
             coin(row),
             BoundedUint::new(number(row, "amount", 2)).unwrap(),
         );
+        let recorded = c::recorded::buy_in(
+            context(row),
+            coin(row),
+            BoundedUint::new(number(row, "amount", 2)).unwrap(),
+        );
         assert!(row["witnessCalls"].as_array().unwrap().is_empty());
         if let Some(error) = row.get("error") {
             let actual = result.err().expect("independent TS rejection must reject");
+            assert_eq!(recorded.err().unwrap(), actual, "{name}");
             match name {
                 "mergeOverflow" => assert!(matches!(
                     actual,
@@ -135,6 +141,48 @@ fn original_buy_in_native_matches_independent_typescript() {
             continue;
         }
         let out = result.unwrap_or_else(|error| panic!("{name}: {error}"));
+        let recorded = recorded.unwrap_or_else(|error| panic!("{name}: {error}"));
+        assert_eq!(recorded.execution.result, out.result, "{name}");
+        assert_eq!(
+            recorded.execution.context.query.state, out.context.query.state,
+            "{name}"
+        );
+        assert_eq!(
+            recorded.execution.context.query.effects, out.context.query.effects,
+            "{name}"
+        );
+        assert_eq!(
+            recorded.execution.context.private_state, out.context.private_state,
+            "{name}"
+        );
+        assert_eq!(
+            recorded.execution.context.circuit_zswap(),
+            out.context.circuit_zswap(),
+            "{name}"
+        );
+        assert_eq!(
+            recorded.execution.private_transcript_outputs, out.private_transcript_outputs,
+            "{name}"
+        );
+        assert_eq!(recorded.execution.gas_cost, out.gas_cost, "{name}");
+        assert_eq!(
+            json!(recorded.public.verify_ops()),
+            row["publicTranscript"],
+            "{name}"
+        );
+        let mut initial = recorded.public.initial().clone();
+        initial.call_context.com_indices = recorded
+            .execution
+            .context
+            .query
+            .call_context
+            .com_indices
+            .clone();
+        let replay = initial
+            .query(recorded.public.verify_ops(), None, &out.context.cost_model)
+            .unwrap();
+        assert_eq!(replay.context.state, out.context.query.state, "{name}");
+        assert_eq!(replay.context.effects, out.context.query.effects, "{name}");
         assert_eq!(
             out.context.query.state.get_ref(),
             state(row, "after").data.get_ref(),
@@ -166,6 +214,14 @@ fn original_buy_in_native_matches_independent_typescript() {
                 json!(out.gas_cost)[dimension].as_u64().unwrap().to_string(),
                 row["queryCostSum"][dimension],
                 "{name}: {dimension}"
+            );
+            assert_eq!(
+                json!(replay.gas_cost)[dimension]
+                    .as_u64()
+                    .unwrap()
+                    .to_string(),
+                row["replayProbe"]["gas"][dimension],
+                "{name}: replay {dimension}"
             );
         }
         let plan = out.context.circuit_zswap();

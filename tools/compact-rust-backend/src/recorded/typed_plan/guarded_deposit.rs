@@ -61,6 +61,7 @@ struct Flow {
 
 struct Audit<'a> {
     seed: &'a str,
+    price_amount: Option<&'a str>,
     pure: &'a HashMap<&'a str, &'a PureCircuit>,
     circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
     active: HashSet<String>,
@@ -95,6 +96,20 @@ impl Audit<'_> {
             }
             Expr::UnsignedCast { value, max } if max == shielded_merge::INPUT => {
                 self.value(value, received, false)
+            }
+            Expr::UnsignedLiteral { .. } if self.price_amount.is_some() => true,
+            Expr::UnsignedCast { value, max }
+                if self.price_amount.is_some() && max == funded_mint::PRODUCT =>
+            {
+                self.value(value, received, false)
+            }
+            Expr::UnsignedMultiply { left, right, max }
+                if self.price_amount.is_some() && max == shielded_merge::INPUT =>
+            {
+                self.value(left, received, false) && self.value(right, received, false)
+            }
+            Expr::NotEqual { left, right } if self.price_amount.is_some() => {
+                self.value(left, received, false) && self.value(right, received, false)
             }
             Expr::Equal { left, right } => {
                 self.value(left, received, false) && self.value(right, received, false)
@@ -162,7 +177,9 @@ impl Audit<'_> {
                 for binding in bindings {
                     // Never confuse a shadowing local with the earlier intent.
                     let merges = self.merges;
-                    if binding.name == self.seed || !self.value(&binding.value, flow.received, true)
+                    if binding.name == self.seed
+                        || self.price_amount == Some(binding.name.as_str())
+                        || !self.value(&binding.value, flow.received, true)
                     {
                         return false;
                     }
@@ -239,6 +256,38 @@ impl Audit<'_> {
     }
 }
 
+// Shared admission of a received coin followed by exactly one qualified store
+// per execution path. Price arithmetic is opted into by the funded-mint profile;
+// the original guarded deposit retains its previous expression domain.
+pub(super) fn prefix(
+    circuit: &StatefulCircuit,
+    seed: &str,
+    price_amount: Option<&str>,
+    pure: &HashMap<&str, &PureCircuit>,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+) -> bool {
+    let mut audit = Audit {
+        seed,
+        price_amount,
+        pure,
+        circuits,
+        active: HashSet::from([circuit.name.clone()]),
+        receives: 0,
+        merges: 0,
+        writes: 0,
+        coin_slot: None,
+    };
+    let mut flow = Flow::default();
+    circuit
+        .actions
+        .iter()
+        .all(|action| audit.action(action, &mut flow))
+        && flow.received
+        && flow.stores == 1
+        && flow.merges <= 1
+        && (audit.receives, audit.merges, audit.writes) == (1, 1, 2)
+}
+
 pub(super) fn lower<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
@@ -264,26 +313,7 @@ pub(super) fn lower<'a>(
     {
         return None;
     }
-    let mut audit = Audit {
-        seed: &seed.name,
-        pure,
-        circuits,
-        active: HashSet::from([circuit.name.clone()]),
-        receives: 0,
-        merges: 0,
-        writes: 0,
-        coin_slot: None,
-    };
-    let mut flow = Flow::default();
-    if !circuit
-        .actions
-        .iter()
-        .all(|action| audit.action(action, &mut flow))
-        || !flow.received
-        || flow.stores != 1
-        || flow.merges > 1
-        || (audit.receives, audit.merges, audit.writes) != (1, 1, 2)
-    {
+    if !prefix(circuit, &seed.name, None, pure, circuits) {
         return None;
     }
     let mut plan = shielded_plan(

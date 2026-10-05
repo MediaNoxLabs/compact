@@ -8000,6 +8000,15 @@ fn render_recorded_item(
                     )
                 })
                 .or_else(|| {
+                    typed_plan::lower_funded_mint(
+                        circuit,
+                        ledger_fields,
+                        witnesses,
+                        pure_circuits,
+                        circuits,
+                    )
+                })
+                .or_else(|| {
                     typed_plan::lower_guarded_deposit(
                         circuit,
                         ledger_fields,

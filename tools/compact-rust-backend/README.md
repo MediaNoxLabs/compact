@@ -1616,3 +1616,33 @@ checks precise concurrent-state `ReadMismatch`: fallible coin and contract
 updates roll back while guaranteed Dust/replay effects persist. Coins and prior
 contract state are explicitly seeded offline, not a proved DAO lifecycle.
 `vote_commit`, `buy_in` and `cash_out` remain the three original microDAO gaps.
+
+
+### Original microDAO buy_in recording (ADR0215)
+
+The unchanged source now generates `ledger_contract::recorded::buy_in(context,
+coin, amount)` and `recorded::Contract.buy_in_call(observed, private, coin,
+amount)`. The returned coin remains typed `ShieldedCoinInfo`; no witness provider
+or new runtime primitive is needed. Schema20/ABI49 are unchanged.
+
+A separate funded-mint policy composes the existing received-coin provenance
+checks, optional historical/transient merge, canonical qualified store, sealed
+execution key and upstream shielded mint/output/claim operations. Price checks
+retain the declared widened unsigned operands and checked multiplication; the
+maximum product is `(2^64 - 1)^2`, not wrapping or Field arithmetic. Root coin
+and amount shadowing, missing per-path stores, malformed bounds/types/slots,
+hidden effects and invalid helper scope are refused. Small specialized emitter
+methods keep unrelated recursive Plan evaluation within its existing debug
+stack budget. The guarded-deposit policy retains its previous expression domain.
+
+Eighteen captured TypeScript cases compare native and recorded results, state,
+mint effects, private outputs, exact public programs, execution/replay gas and
+failure ordering. Both empty and occupied original paths are wholly guaranteed
+(54/81 VM operations). The strict proof selector `--micro-dao-buy-in` checks
+actual wallet funds, an optional historical pot at a nonzero Merkle index,
+complete received Transient, canonical pot and user mint outputs, original call
+proofs and changed-binding rejection, separate Dust, default-strict ledger
+application, wallet recovery of the minted instance token and nullifier replay
+refusal. Prior coins and contract state are seeded offline; this does not claim a
+funded full DAO lifecycle or live wallet submission. Zero-price and maximum
+arithmetic captures are execution controls, not corresponding monetary proofs.

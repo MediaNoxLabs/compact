@@ -172,3 +172,7 @@ proof, sealing, and submission through ledger and wallet APIs.
 Generated `contract.recording` methods are available only for circuits whose
 operations are fully captured by the backend. Other methods use the native
 execution path and return `CircuitResult`.
+
+ABI41 adds native/recorded Counter less-than queries through typed CounterSlot
+methods. The shared program reproduces Compact ledger8 `dup/idx/push/lt/popeq`,
+including the cached Boolean observation and exact ledger gas.

@@ -520,6 +520,23 @@ impl CounterSlot {
         meter.read_cell::<u64>(self.path)
     }
 
+    /// Execute the ledger Counter's lessThan program with its query gas.
+    pub fn less_than<Private, D: DB>(
+        self,
+        context: CircuitContext<Private, D>,
+        threshold: u64,
+    ) -> Result<CircuitResult<Private, bool, D>, CompactError> {
+        context.counter_less_than_at_path(self.path, threshold)
+    }
+
+    pub fn record_less_than<Private, D: DB>(
+        self,
+        frame: RecordingFrame<Private, D>,
+        threshold: u64,
+    ) -> Result<(RecordingFrame<Private, D>, bool), CompactError> {
+        frame.counter_less_than(self.path, threshold)
+    }
+
     pub fn read<Private, D: DB>(
         self,
         context: CircuitContext<Private, D>,

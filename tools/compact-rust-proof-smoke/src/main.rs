@@ -37,6 +37,7 @@ mod asset_writable;
 mod bboard;
 mod boolean_pair_assert;
 mod closed_pure_field;
+mod counter_less_than;
 mod election_commit;
 #[path = "../../../tests-rust-backend/election-oracle/support/commit.rs"]
 mod election_membership_support;
@@ -1909,6 +1910,25 @@ fn run() -> Result<(), Box<dyn Error>> {
             Ok(Ok(())) => Ok(()),
             Ok(Err(error)) => Err(error.into()),
             Err(_) => Err("literal Bytes-to-Field proof thread panicked".into()),
+        };
+    }
+    if first.as_deref() == Some(OsStr::new("--counter-less-than")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --counter-less-than <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err(
+                "usage: compact-rust-proof-smoke --counter-less-than <proof-output>".into(),
+            );
+        }
+        let proof = std::thread::Builder::new()
+            .name("counter-less-than-proof".into())
+            .stack_size(64 * 1024 * 1024)
+            .spawn(move || counter_less_than::run(Path::new(&root)).map_err(|e| e.to_string()))?;
+        return match proof.join() {
+            Ok(Ok(())) => Ok(()),
+            Ok(Err(error)) => Err(error.into()),
+            Err(_) => Err("Counter lessThan proof thread panicked".into()),
         };
     }
     if first.as_deref() == Some(OsStr::new("--pair-hash-cell")) {

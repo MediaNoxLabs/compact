@@ -7,7 +7,7 @@ pub use recorded::{RecordingGap, RecordingGapCode};
 mod stateful;
 mod witness;
 
-const RUNTIME_ABI_VERSION: u32 = 39;
+const RUNTIME_ABI_VERSION: u32 = 41;
 pub const RUST_CAPABILITY_SCHEMA_VERSION: u32 = 3;
 
 const GENERATED_HEADER: &str = r#"// This file is part of Compact.
@@ -744,7 +744,10 @@ fn collect_expression_types(
         Expr::Assert { condition, .. } => {
             collect_expression_types(condition, structs, enums)?;
         }
-        Expr::SetMember { value, .. } => collect_expression_types(value, structs, enums)?,
+        Expr::SetMember { value, .. }
+        | Expr::CounterLessThan {
+            threshold: value, ..
+        } => collect_expression_types(value, structs, enums)?,
         Expr::MapMember { key, .. } | Expr::MapLookup { key, .. } => {
             collect_expression_types(key, structs, enums)?
         }
@@ -2049,6 +2052,7 @@ fn expression_with_calls(
         | Expr::ListHead { .. }
         | Expr::CellRead { .. }
         | Expr::CounterRead { .. }
+        | Expr::CounterLessThan { .. }
         | Expr::KernelSelf { .. } => Err(RenderError::EffectfulExpression),
         Expr::FieldCast { value } => {
             let (value, actual) = expression_with_calls(value, parameters, circuits)?;

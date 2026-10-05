@@ -458,6 +458,15 @@
                  (object (cons "kind" "cell_read")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*)))]
+                [(and (eq? adt-name 'Counter) (eq? ledger-op 'read) (null? expr*))
+                 (object (cons "kind" "counter_read")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*)))]
+                [(and (eq? adt-name 'Counter) (eq? ledger-op 'lessThan) (= (length expr*) 1))
+                 (object (cons "kind" "counter_less_than")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*))
+                         (cons "threshold" (typed-expression-ir (car expr*) (car type*) src)))]
                 [(and (eq? adt-name 'Set) (eq? ledger-op 'member) (= (length expr*) 1))
                  (object (cons "kind" "set_member")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
@@ -1460,6 +1469,11 @@
                  (object (cons "kind" "counter_read")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*)))]
+                [(and (eq? adt-name 'Counter) (eq? ledger-op 'lessThan) (= (length expr*) 1))
+                 (object (cons "kind" "counter_less_than")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*))
+                         (cons "threshold" (stateful-typed-expression-ir (car expr*) (car type*) src witness-ids)))]
                 [(and (eq? adt-name 'Set) (eq? ledger-op 'member) (= (length expr*) 1))
                  (object (cons "kind" "set_member")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
@@ -1717,6 +1731,9 @@
                  (object (cons "kind" "cell_read")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*)))]
+                [(and (eq? adt-name 'Counter) (eq? ledger-op 'lessThan) (= (length expr*) 1))
+                 (object (cons "kind" "expression")
+                         (cons "value" (stateful-expression-ir return-expr src witness-ids)))]
                 [(and (eq? adt-name 'Counter)
                       (eq? ledger-op 'read)
                       (null? expr*))
@@ -2190,7 +2207,7 @@
            (source-errorf src "Rust backend found multiple constructors"))
          (print-json
            (get-target-port 'rust.ir.json)
-           (append (object (cons "schema_version" 14)
+           (append (object (cons "schema_version" 15)
                    (cons "type_aliases"
                          (list->vector (fold-right type-alias-ir '() pelt*)))
                    (cons "ledger_fields"

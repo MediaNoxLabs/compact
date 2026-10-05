@@ -2577,7 +2577,7 @@ fn generated_unit_enum_uses_checked_derive_without_handwritten_codecs() {
     let source = render(&contract).unwrap();
     assert!(source.contains("CompactCellValue, CompactEnum"));
     assert!(source.contains("pub enum Choice"));
-    assert!(source.contains("RUST_RUNTIME_ABI == 39"));
+    assert!(source.contains("RUST_RUNTIME_ABI == 41"));
     assert!(!source.contains("impl FieldRepr for Choice"));
     assert!(!source.contains("impl BinaryHashRepr for Choice"));
     assert!(!source.contains("impl FromFieldRepr for Choice"));
@@ -10181,4 +10181,73 @@ fn audited_schnorr_local_helper_requires_transitive_public_purity_and_typed_sour
             ],
         });
     assert!(render_with_capabilities(&recursive).is_err());
+}
+
+#[test]
+fn counter_less_than_requires_typed_counter_slots_and_thresholds() {
+    let mut contract: Contract =
+        serde_json::from_str(include_str!("counter-less-than-schema15-ir.json")).unwrap();
+    contract.schema_version = SCHEMA_VERSION;
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert_eq!(rendered.capabilities.circuits.len(), 4);
+    assert!(
+        rendered
+            .capabilities
+            .circuits
+            .iter()
+            .all(|circuit| circuit.recorded && circuit.observed_call)
+    );
+    assert!(rendered.source.contains(".record_less_than("));
+    let first = contract
+        .stateful_circuits
+        .iter()
+        .position(|circuit| circuit.name == "compare")
+        .unwrap();
+    let mutate = |value: Expr| {
+        let mut wrong = contract.clone();
+        wrong.stateful_circuits[first].return_value = StateReturn::Expression { value };
+        assert!(render_with_capabilities(&wrong).is_err());
+    };
+    mutate(Expr::CounterLessThan {
+        field: "low".into(),
+        index: 0,
+        threshold: Box::new(Expr::Boolean { value: false }),
+    });
+    mutate(Expr::CounterLessThan {
+        field: "low".into(),
+        index: 1,
+        threshold: Box::new(Expr::Parameter {
+            name: "threshold".into(),
+        }),
+    });
+    mutate(Expr::CounterLessThan {
+        field: "missing".into(),
+        index: 0,
+        threshold: Box::new(Expr::Parameter {
+            name: "threshold".into(),
+        }),
+    });
+    let mut wrong = contract.clone();
+    wrong.ledger_fields[0].declaration = LedgerFieldKind::Cell { ty: Type::Field };
+    assert!(render_with_capabilities(&wrong).is_err());
+    let mut old_schema = contract.clone();
+    old_schema.schema_version = 14;
+    assert!(render_with_capabilities(&old_schema).is_err());
+    let mut pure = contract.clone();
+    pure.circuits.push(PureCircuit {
+        name: "invalid_pure".into(),
+        source: None,
+        internal: false,
+        parameters: vec![],
+        result: Type::Boolean,
+        body: Expr::CounterLessThan {
+            field: "low".into(),
+            index: 0,
+            threshold: Box::new(Expr::UnsignedLiteral {
+                value: "4".into(),
+                max: u64::MAX.to_string(),
+            }),
+        },
+    });
+    assert!(render_with_capabilities(&pure).is_err());
 }

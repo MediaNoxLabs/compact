@@ -1167,6 +1167,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-counter-less-than-oracle-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-base-crypto",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-counter-parameter-fixture"
 version = "0.1.0"
 dependencies = [
@@ -1879,6 +1893,7 @@ dependencies = [
  "compact-rust-constructor-list-actions-fixture",
  "compact-rust-constructor-map-actions-fixture",
  "compact-rust-counter-fixture",
+ "compact-rust-counter-less-than-oracle-fixture",
  "compact-rust-counter-parameter-fixture",
  "compact-rust-election-oracle-fixture",
  "compact-rust-field-cast-uint128-fixture",

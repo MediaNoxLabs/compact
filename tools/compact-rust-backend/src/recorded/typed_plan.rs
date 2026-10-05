@@ -37,6 +37,7 @@ struct Plan<'a> {
     set_writes: usize,
     counter_writes: usize,
     counter_reads: usize,
+    counter_comparisons: usize,
     cell_writes: usize,
     optional_cells: usize,
     opaque_cells: usize,
@@ -269,6 +270,29 @@ impl Plan<'_> {
                     callee.result.clone(),
                     steps,
                 )
+            }
+            Expr::CounterLessThan {
+                field,
+                index,
+                threshold,
+            } => {
+                if self.field(field, *index)?.declaration != LedgerFieldKind::Counter {
+                    return None;
+                }
+                let threshold = self.expression(threshold, scope, steps)?;
+                if threshold.ty
+                    != (Type::Unsigned {
+                        max: u64::MAX.to_string(),
+                    })
+                {
+                    return None;
+                }
+                let threshold = threshold.value;
+                let slot = ident(field).ok()?;
+                let observed = self.fresh();
+                steps.push(syn::parse_quote!(let (frame, #observed) = crate::ledger_slots::#slot.record_less_than(frame, (#threshold).value() as u64)?;));
+                self.counter_comparisons += 1;
+                self.bind(syn::parse_quote!(#observed), Type::Boolean, steps)
             }
             Expr::CounterRead { field, index } => {
                 if self.field(field, *index)?.declaration != LedgerFieldKind::Counter {
@@ -656,8 +680,23 @@ pub(super) fn lower<'a>(
     let opaque_entry =
         matches!(circuit.parameters.as_slice(), [parameter] if parameter.ty == Type::OpaqueString);
     let spend_entry = matches!(circuit.parameters.as_slice(), [destination, coin] if matches!(destination.ty, Type::Struct { .. }) && matches!(coin.ty, Type::Struct { .. }));
-    if !(circuit.parameters.is_empty() || enum_entry || opaque_entry || spend_entry)
-        || !matches!(circuit.result, Type::Unit | Type::OpaqueString)
+    let counter_entry = witnesses.is_empty()
+        && circuit.parameters.iter().all(|parameter| {
+            parameter.ty == Type::Boolean
+                || parameter.ty
+                    == (Type::Unsigned {
+                        max: u64::MAX.to_string(),
+                    })
+        });
+    if !(circuit.parameters.is_empty()
+        || enum_entry
+        || opaque_entry
+        || spend_entry
+        || counter_entry)
+        || !matches!(
+            circuit.result,
+            Type::Unit | Type::OpaqueString | Type::Boolean
+        )
     {
         return None;
     }
@@ -671,6 +710,7 @@ pub(super) fn lower<'a>(
         set_writes: 0,
         counter_writes: 0,
         counter_reads: 0,
+        counter_comparisons: 0,
         cell_writes: 0,
         optional_cells: 0,
         opaque_cells: 0,
@@ -753,7 +793,18 @@ pub(super) fn lower<'a>(
         && plan.set_writes > 0
         && plan.opaque_cells > 0
         && plan.cell_writes == plan.opaque_cells;
-    (membership || cell_lifecycle || historic_spend).then_some(TypedPlan { steps, result })
+    let counter_comparison = counter_entry
+        && ordinary
+        && matches!(circuit.result, Type::Boolean | Type::Unit)
+        && plan.counter_comparisons > 0
+        && plan.counter_writes == 0
+        && plan.tree_writes == 0
+        && plan.root_observations == 0
+        && plan.set_writes == 0
+        && plan.cell_writes == 0
+        && plan.optional_cells == 0;
+    (membership || cell_lifecycle || historic_spend || counter_comparison)
+        .then_some(TypedPlan { steps, result })
 }
 
 #[cfg(test)]
@@ -775,6 +826,7 @@ mod tests {
             set_writes: 0,
             counter_writes: 0,
             counter_reads: 0,
+            counter_comparisons: 0,
             cell_writes: 0,
             optional_cells: 0,
             opaque_cells: 0,
@@ -843,6 +895,7 @@ mod tests {
             set_writes: 0,
             counter_writes: 0,
             counter_reads: 0,
+            counter_comparisons: 0,
             cell_writes: 0,
             optional_cells: 0,
             opaque_cells: 0,

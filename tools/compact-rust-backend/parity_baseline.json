@@ -1458,6 +1458,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/counter_less_than_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "checked",
+    "signature": "export circuit checked(threshold: Uint<64>): []",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/assert_pure.compact",
     "module_path": [],
     "kind": "circuit",
@@ -1744,6 +1752,14 @@
     "name": "commitment_nullifier",
     "signature": "circuit commitment_nullifier(sk: Bytes<32>): Bytes<32>",
     "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/counter_less_than_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "compare",
+    "signature": "export circuit compare(threshold: Uint<64>): Boolean",
+    "visibility": "export"
   },
   {
     "source": "examples/rust_backend/composite_struct.compact",
@@ -3423,6 +3439,14 @@
     "kind": "circuit",
     "name": "negate_point",
     "signature": "export circuit negate_point(value: Field): JubjubPoint",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/counter_less_than_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "nested",
+    "signature": "export circuit nested(): Boolean",
     "visibility": "export"
   },
   {
@@ -5194,6 +5218,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/counter_less_than_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "short_circuit",
+    "signature": "export circuit short_circuit(run: Boolean): Boolean",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/field_to_bytes32_oracle.compact",
     "module_path": [],
     "kind": "circuit",
@@ -6579,6 +6611,14 @@
   },
   {
     "source": "examples/rust_backend/constructor_vector_coercion.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/counter_less_than_oracle.compact",
     "module_path": [],
     "kind": "constructor",
     "name": "constructor",

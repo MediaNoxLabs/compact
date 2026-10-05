@@ -299,7 +299,7 @@ Compact spelling without warning in consumer builds.
 | Boundary | Current contract | Failure behavior |
 |---|---|---|
 | Compact compiler | Toolchain 0.31.133, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
-| Rust IR | Schema 14, private to this backend | The renderer rejects any other schema before writing `lib.rs`. Schema 14 adds typed qualified-coin Set insertion. Schema 13 adds an explicit typed Field-to-Bytes32 expression and nested Counter read; the cast uses midnight-zk's canonical 32-byte little-endian Field representation. Ledger, circuit, witness, constructor, and exported alias declarations carry optional Compact source locations for diagnostics. |
+| Rust IR | Schema 15, private to this backend | The renderer rejects any other schema before writing `lib.rs`. Schema 15 adds typed Counter less-than queries. Schema 14 adds typed qualified-coin Set insertion. Schema 13 adds an explicit typed Field-to-Bytes32 expression and nested Counter read; the cast uses midnight-zk's canonical 32-byte little-endian Field representation. Ledger, circuit, witness, constructor, and exported alias declarations carry optional Compact source locations for diagnostics. |
 | Generated code and Rust runtime | ABI 39 | Generated modules assert the ABI at Rust compile time. ABI 39 adds qualified-coin Set insertion using ledger coin and recipient types and the allocated commitment index. ABI 38 adds audited local-helper adoption for private witnesses, gas, and transcript while checking the public and Zswap context. ABI 37 adds a caller coin key for native `ownPublicKey()` and its private output; ABI 36 adds recorded plain Merkle root checks through typed slots; ABI 35 adds recorded Counter reset through typed slots; ABI 34 adds recorded direct plain/historic Merkle fullness reads; ABI 33 adds typed local plain/historic Merkle views with checked depth; ABI 32 adds List views; ABI 31 adds cell-valued Map views; ABI 30 adds Set views; ABI 29 adds Cell/Counter views; ABI 25–28 add physical List paths, chunked Map and Cell calls, and Cell-read scalar returns; ABI 21–24 add typed multi-argument observed calls and composite/chunked Set calls. The [runtime guide](../../runtime-rs/README.md) records earlier ABI changes. |
 | Rust runtime source | Bundled runtime crates or an explicit shared source root | Cargo resolves the matching runtime and its pinned Midnight crates. |
 
@@ -736,3 +736,21 @@ integration target names and omitted empty-library source hashes. Python harness
 tests, compact CLI unit tests, all-target Clippy and consumer/proof gates remain
 part of the broad run. ADR-0172/#276 records the Cargo selection probe; target
 coverage is verified, while wall-clock savings require a later measured run.
+
+### Typed Counter comparisons (ADR0171)
+
+`Counter.lessThan(threshold)` uses a typed `CounterLessThan` expression with an
+exact `Uint<64>` threshold and a validated Counter slot. It executes Compact's
+actual `dup / idx / push / lt / popeq` ledger program. Counter reads nested in
+lexical bindings reuse `CounterRead`. Runtime ABI41 adds `CounterSlot::less_than`
+and `record_less_than`; recording preserves the gathered Boolean's FAB alignment.
+The bounded shared typed planner supports read-only Boolean/Unit comparison
+circuits with Boolean/Uint64 arguments, scoped bindings and short-circuit frames.
+
+`check_compactc_target.py --counter-less-than [--proof]` compiles the fixture and
+checks all four recorded/observed exports; proof mode verifies and ledger-applies
+both comparison outcomes. TS captures all actual queries, their gas and program
+shape; native/recorded totals use the query-cost sum. Assertion rejection is
+checked separately because Rust error results do not expose partial query gas.
+Original micro-dao now reaches unsupported `pot.writeCoin` at line171; this is
+source progress, not complete native or recorded DAO admission.

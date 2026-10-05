@@ -77,6 +77,52 @@ pub(crate) fn counter_read_program<M: ResultMode<D>, D: DB>(
     ]
 }
 
+/// Preserve the Counter ADT's VM comparison, including its cached read result.
+pub(crate) fn query_counter_less_than<D: DB>(
+    context: &QueryContext<D>,
+    path: &[u8],
+    threshold: u64,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<(QueryResults<ResultModeGather, D>, bool), CompactError> {
+    if path.is_empty() {
+        return Err(CompactError::InvalidLedgerCell("empty ledger path".into()));
+    }
+    let result = context
+        .query(
+            &counter_less_than_program::<ResultModeGather, D>(path, threshold, ()),
+            gas_limit,
+            cost_model,
+        )
+        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+    let value = decode_last_read::<bool, D>(&result)?;
+    Ok((result, value))
+}
+
+pub(crate) fn counter_less_than_program<M: ResultMode<D>, D: DB>(
+    path: &[u8],
+    threshold: u64,
+    read_result: M::ReadResult,
+) -> Vec<Op<M, D>> {
+    vec![
+        Op::Dup { n: 0 },
+        Op::Idx {
+            cached: false,
+            push_path: false,
+            path: path_keys(path).into(),
+        },
+        Op::Push {
+            storage: false,
+            value: constructor_cell::<u64, D>(threshold),
+        },
+        Op::Lt,
+        Op::Popeq {
+            cached: true,
+            result: read_result,
+        },
+    ]
+}
+
 /// Run Compact Counter's increment program through ledger query execution.
 pub fn increment_counter<D: DB>(
     context: &QueryContext<D>,

@@ -1094,6 +1094,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--consumer", action="store_true", help="build and run a separate consumer")
     parser.add_argument("--proof", action="store_true", help="generate ZKIR and proving keys")
+    parser.add_argument("--counter-less-than", action="store_true",
+                        help="check typed Counter comparison and nested-read recording")
     parser.add_argument("--literal-bytes-field", action="store_true",
                         help="check canonical literal Bytes-to-Field normalization and refusals")
     parser.add_argument("--field-to-bytes32", action="store_true",
@@ -1113,6 +1115,31 @@ def main() -> None:
     compiler = os.environ.get("COMPACTC", "compactc")
     with tempfile.TemporaryDirectory(prefix="compactc-target-") as temporary:
         base = Path(temporary)
+        if args.counter_less_than:
+            output = base / "counter-less-than"
+            command = [compiler, "--target", "rust", "--rust-require-recording"]
+            if not args.proof:
+                command.append("--skip-zk")
+            run(*command, str(ROOT / "examples/rust_backend/counter_less_than_oracle.compact"), str(output))
+            ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
+            assert ir["schema_version"] == 15
+            report = json.loads((output / "contract/rust-capabilities.json").read_text())
+            assert {row["name"] for row in report["circuits"]} == {"compare", "nested", "short_circuit", "checked"}
+            assert all(row["recorded"] and row["observed_call"] for row in report["circuits"])
+            def kinds(value):
+                if isinstance(value, dict):
+                    yield value.get("kind")
+                    for child in value.values():
+                        yield from kinds(child)
+                elif isinstance(value, list):
+                    for child in value:
+                        yield from kinds(child)
+            assert {"counter_less_than", "counter_read"}.issubset(set(kinds(ir)))
+            if args.proof:
+                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                    "--counter-less-than", str(output))
+            print("typed Counter less-than target gate passed")
+            return
         if args.literal_bytes_field:
             run(sys.executable, str(ROOT / "tools/compact-rust-backend/check_literal_bytes_field.py"))
             if args.proof:
@@ -1127,7 +1154,7 @@ def main() -> None:
             run(compiler, "--target", "rust", "--skip-zk",
                 str(ROOT_LET_ACTION_RETURN_SOURCE), str(oracle))
             ir = json.loads((oracle / "contract/compact-rust-ir.json").read_text())
-            assert ir["schema_version"] == 14
+            assert ir["schema_version"] == 15
             circuit, = ir["stateful_circuits"]
             assert circuit["name"] == "step"
             assert circuit["return_value"] == {
@@ -1178,7 +1205,7 @@ def main() -> None:
             run(compiler, "--target", "rust", "--skip-zk",
                 str(ADT_SET_QUALIFIED_SOURCE), str(output))
             ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
-            assert ir["schema_version"] == 14
+            assert ir["schema_version"] == 15
             def has_coin_insert(value):
                 if isinstance(value, dict):
                     return value.get("kind") == "set_insert_coin" or any(
@@ -1224,7 +1251,7 @@ def main() -> None:
                 command.append("--skip-zk")
             run(*command, str(TEST_CENTER_BBOARD_SOURCE), str(output))
             ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
-            assert ir["schema_version"] == 14
+            assert ir["schema_version"] == 15
             assert [row["name"] for row in ir["circuits"]] == ["some", "none", "public_key"]
             assert [row["name"] for row in ir["stateful_circuits"]] == ["post", "take_down"]
             taken = ir["stateful_circuits"][1]
@@ -1258,7 +1285,7 @@ def main() -> None:
                 command.append("--skip-zk")
             run(*command, str(FIELD_TO_BYTES32_SOURCE), str(output))
             ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
-            assert ir["schema_version"] == 14
+            assert ir["schema_version"] == 15
             assert [(row["name"], row["body"]["kind"])
                     for row in ir["circuits"]] == [("encode", "field_to_bytes32")]
             assert [(row["name"], row["return_value"]["value"]["kind"])
@@ -1299,7 +1326,7 @@ def main() -> None:
         assert all(c["proof_required"] is True and c["recording_status"] == "available"
                    for c in capabilities["circuits"])
         rust_ir = json.loads((rust / "contract/compact-rust-ir.json").read_text())
-        assert rust_ir["schema_version"] == 14
+        assert rust_ir["schema_version"] == 15
         native_output = base / "native-own-public-key"
         run(compiler, "--target", "rust", "--skip-zk", str(PM_19252_SOURCE), str(native_output))
         native_contract = native_output / "contract"
@@ -1327,7 +1354,7 @@ def main() -> None:
             str(native_value_output))
         native_value_contract = native_value_output / "contract"
         native_value_ir = json.loads((native_value_contract / "compact-rust-ir.json").read_text())
-        assert native_value_ir["schema_version"] == 14
+        assert native_value_ir["schema_version"] == 15
         assert native_value_ir["witnesses"] == []
         assert [(c["name"], c["return_value"]["value"]["kind"])
                 for c in native_value_ir["stateful_circuits"]] == [
@@ -1362,7 +1389,7 @@ def main() -> None:
             output = base / f"source-{name}"
             run(compiler, "--target", "rust", "--skip-zk", str(source), str(output))
             emitted = json.loads((output / "contract/compact-rust-ir.json").read_text())
-            assert emitted["schema_version"] == 14
+            assert emitted["schema_version"] == 15
             owners = emitted[key]
             if isinstance(owners, dict):
                 owners = [owners]
@@ -1487,6 +1514,11 @@ def main() -> None:
                 assert (cell_proof / "keys" / f"set_flag.{extension}").is_file()
             for extension in ("zkir", "bzkir"):
                 assert (cell_proof / "zkir" / f"set_flag.{extension}").is_file()
+            counter_less_than_proof = base / "counter-less-than-proof"
+            run(compiler, "--target", "rust", "--rust-require-recording",
+                str(ROOT / "examples/rust_backend/counter_less_than_oracle.compact"), str(counter_less_than_proof))
+            run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--counter-less-than", str(counter_less_than_proof))
             literal_bytes_field_proof = base / "literal-bytes-field-proof"
             run(compiler, "--target", "rust", "--rust-require-recording",
                 str(ROOT / "examples/rust_backend/literal_bytes_field_oracle.compact"),

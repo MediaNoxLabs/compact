@@ -22,7 +22,7 @@
 
 use serde::{Deserialize, Serialize};
 
-pub const SCHEMA_VERSION: u32 = 14;
+pub const SCHEMA_VERSION: u32 = 15;
 
 /// A Compact source position, independent of the compiler checkout path.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
@@ -679,6 +679,11 @@ pub enum Expr {
     CellRead {
         field: String,
         index: u8,
+    },
+    CounterLessThan {
+        field: String,
+        index: u8,
+        threshold: Box<Expr>,
     },
     CounterRead {
         field: String,

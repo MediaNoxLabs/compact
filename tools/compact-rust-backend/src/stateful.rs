@@ -166,6 +166,46 @@ pub(crate) fn render_state_expression(
             *query_effect = true;
             Ok((syn::parse_quote!(#step.result), ty.clone(), false))
         }
+        Expr::CounterLessThan {
+            field,
+            index,
+            threshold,
+        } => {
+            let declaration = ledger_fields
+                .get(field.as_str())
+                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+            if declaration.declaration != LedgerFieldKind::Counter || declaration.index != *index {
+                return Err(RenderError::UnknownLedgerField(field.clone()));
+            }
+            let (threshold, actual, _) = render_state_expression(
+                threshold,
+                parameters,
+                witnesses,
+                statements,
+                next_temp,
+                circuits,
+                stateful_circuits,
+                ledger_fields,
+                query_effect,
+            )?;
+            let expected = Type::Unsigned {
+                max: u64::MAX.to_string(),
+            };
+            if actual != expected {
+                return Err(RenderError::TypeMismatch { expected, actual });
+            }
+            let step = syn::Ident::new(
+                &format!("__compact_query_{}", *next_temp),
+                Span::call_site(),
+            );
+            *next_temp += 1;
+            let slot = ident(&declaration.id)?;
+            statements.push(syn::parse_quote!(let #step = crate::ledger_slots::#slot.less_than(context, (#threshold).value() as u64)?;));
+            statements.push(syn::parse_quote!(context = #step.context;));
+            statements.push(syn::parse_quote!(total_cost += #step.gas_cost;));
+            *query_effect = true;
+            Ok((syn::parse_quote!(#step.result), Type::Boolean, false))
+        }
         Expr::CounterRead { field, index } => {
             let declaration = ledger_fields
                 .get(field.as_str())
@@ -1858,6 +1898,7 @@ fn expression_contains(expression: &Expr, predicate: &impl Fn(&Expr) -> bool) ->
         | Expr::UnsignedAdd { left, right, .. }
         | Expr::UnsignedSubtract { left, right, .. }
         | Expr::UnsignedMultiply { left, right, .. } => visit(left) || visit(right),
+        Expr::CounterLessThan { threshold, .. } => visit(threshold),
         Expr::Unit
         | Expr::NativeWitnessCall { .. }
         | Expr::Default { .. }

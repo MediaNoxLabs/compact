@@ -110,6 +110,7 @@ fn local_expr(value: &Expr, witnesses: &HashMap<&str, &WitnessDeclaration>) -> b
         | Expr::HistoricMerkleCheckRoot { .. }
         | Expr::CellRead { .. }
         | Expr::CounterRead { .. }
+        | Expr::CounterLessThan { .. }
         | Expr::KernelSelf { .. }
         | Expr::SetSize { .. }
         | Expr::SetIsEmpty { .. }

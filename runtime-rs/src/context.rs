@@ -1093,6 +1093,27 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         })
     }
 
+    pub(crate) fn counter_less_than_at_path(
+        mut self,
+        path: &[u8],
+        threshold: u64,
+    ) -> Result<CircuitResult<Private, bool, D>, CompactError> {
+        let (result, value) = ledger::query_counter_less_than(
+            &self.query,
+            path,
+            threshold,
+            self.gas_limit,
+            &self.cost_model,
+        )?;
+        self.query = result.context;
+        Ok(CircuitResult {
+            context: self,
+            result: value,
+            gas_cost: result.gas_cost,
+            private_transcript_outputs: Vec::new(),
+        })
+    }
+
     pub(crate) fn read_counter_at_path(
         mut self,
         path: &[u8],

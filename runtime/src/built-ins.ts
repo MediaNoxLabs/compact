@@ -15,6 +15,7 @@
 
 import * as ocrt from '@midnight-ntwrk/onchain-runtime-v3';
 import { keccak_256 } from '@noble/hashes/sha3.js';
+import { randomBytes } from '@noble/hashes/utils.js';
 import { MAX_FIELD, JUBJUB_SCALAR_MODULUS } from './constants.js';
 import { CompactType, CompactTypeJubjubPoint, JubjubPoint, JubjubSchnorrSignature } from './compact-types.js';
 import { CompactError } from './error.js';
@@ -227,10 +228,7 @@ export function ecAdd(a: JubjubPoint, b: JubjubPoint): JubjubPoint {
  * Edwards curve, the negation of (x, y) is (-x, y).
  */
 export function ecNeg(a: JubjubPoint): JubjubPoint {
-  return constructJubjubPoint(
-    a.x === 0n ? 0n : FIELD_MODULUS - a.x,
-    a.y
-  );
+  return constructJubjubPoint(a.x === 0n ? 0n : FIELD_MODULUS - a.x, a.y);
 }
 
 /**
@@ -272,7 +270,16 @@ export function alignedConcat(...values: ocrt.AlignedValue[]): ocrt.AlignedValue
  * The returned value is in the range [0, JUBJUB_SCALAR_MODULUS).
  */
 export function jubjubSampleScalar(): bigint {
-  return ocrt.valueToBigInt(ocrt.jubjubSampleScalar());
+  const bits = JUBJUB_SCALAR_MODULUS.toString(2).length;
+  const length = Math.ceil(bits / 8);
+  const highByteMask = 0xff >>> (length * 8 - bits);
+  for (;;) {
+    const bytes = randomBytes(length);
+    // Keep a uniform bit-width candidate; reducing modulo q would bias it.
+    bytes[length - 1] &= highByteMask;
+    const candidate = ocrt.valueToBigInt([bytes]);
+    if (candidate < JUBJUB_SCALAR_MODULUS) return candidate;
+  }
 }
 
 /**
@@ -340,7 +347,12 @@ export function jubjubSchnorrSign<A>(rtType: CompactType<A>, msg: A, signingKey:
  *
  * Returns `true` if the signature is valid (i.e. `s·G == R + c·pk`).
  */
-export function jubjubSchnorrVerify<A>(rtType: CompactType<A>, msg: A, verifyingKey: JubjubPoint, sig: JubjubSchnorrSignature): boolean {
+export function jubjubSchnorrVerify<A>(
+  rtType: CompactType<A>,
+  msg: A,
+  verifyingKey: JubjubPoint,
+  sig: JubjubSchnorrSignature,
+): boolean {
   const { announcement, response } = sig;
 
   const challengeAlignment: ocrt.Alignment = [

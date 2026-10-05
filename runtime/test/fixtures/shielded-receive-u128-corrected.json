@@ -1,0 +1,522 @@
+{
+  "scope": "Corrected TS runtime generated receive/output evidence; no funded ledger or proof acceptance claim",
+  "contractPath": "/tmp/compact-adr197-receive/contract/index.js",
+  "contractSha256": "5d1ac95399991a93547305328401012f398ab406bd562315aaf415b837820f28",
+  "runtimePath": "/private/tmp/compact-adr197-runtime/dist/index.js",
+  "runtimeIndexSha256": "c55a8ab3e7533b3fa6e27b66ab742c783d912d5a00d6ecc23d9f6142ddb0ecde",
+  "rows": [
+    {
+      "name": "accept",
+      "value": "0",
+      "status": "accepted",
+      "index": "14",
+      "outputs": [
+        {
+          "value": "0",
+          "isLeft": false
+        }
+      ],
+      "commitments": [
+        {
+          "recipient": "contract",
+          "commitment": "fe85a34810a7e9efb9cb35d636449974706ca01779dd64894cc3ed15938baa8c"
+        },
+        {
+          "recipient": "user",
+          "commitment": "ff7ba77aa91773fb9f61aa5a927bd3181cc6c5512f90557bbf1a63b3ef45efd8"
+        }
+      ],
+      "publicTranscriptOperationCount": 9,
+      "privateOutputs": [
+        {
+          "value": [],
+          "alignment": []
+        }
+      ],
+      "effects": {
+        "claimedNullifiers": [],
+        "claimedShieldedReceives": [
+          "fe85a34810a7e9efb9cb35d636449974706ca01779dd64894cc3ed15938baa8c"
+        ],
+        "claimedShieldedSpends": [],
+        "claimedContractCalls": [],
+        "shieldedMints": {},
+        "unshieldedMints": {},
+        "unshieldedInputs": {},
+        "unshieldedOutputs": {},
+        "claimedUnshieldedSpends": {}
+      },
+      "gas": {
+        "readTime": "0",
+        "computeTime": "1102262433",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      }
+    },
+    {
+      "name": "accept",
+      "value": "42",
+      "status": "accepted",
+      "index": "14",
+      "outputs": [
+        {
+          "value": "42",
+          "isLeft": false
+        }
+      ],
+      "commitments": [
+        {
+          "recipient": "contract",
+          "commitment": "713bf4dd29d7636da261aceb128c81664b8a200f4290739ded72e1ff60141df3"
+        },
+        {
+          "recipient": "user",
+          "commitment": "354f8edbfa6677a2e9fe30b3bdfe046f3b7635ae6f7d00556402d2483a2b187f"
+        }
+      ],
+      "publicTranscriptOperationCount": 9,
+      "privateOutputs": [
+        {
+          "value": [],
+          "alignment": []
+        }
+      ],
+      "effects": {
+        "claimedNullifiers": [],
+        "claimedShieldedReceives": [
+          "713bf4dd29d7636da261aceb128c81664b8a200f4290739ded72e1ff60141df3"
+        ],
+        "claimedShieldedSpends": [],
+        "claimedContractCalls": [],
+        "shieldedMints": {},
+        "unshieldedMints": {},
+        "unshieldedInputs": {},
+        "unshieldedOutputs": {},
+        "claimedUnshieldedSpends": {}
+      },
+      "gas": {
+        "readTime": "0",
+        "computeTime": "1102262433",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      }
+    },
+    {
+      "name": "accept",
+      "value": "18446744073709551615",
+      "status": "accepted",
+      "index": "14",
+      "outputs": [
+        {
+          "value": "18446744073709551615",
+          "isLeft": false
+        }
+      ],
+      "commitments": [
+        {
+          "recipient": "contract",
+          "commitment": "cfc17479dfe0edb2b000bd08f6b1e94cd89c36e54594b8cdffa164fd4a7f0a8d"
+        },
+        {
+          "recipient": "user",
+          "commitment": "0f82b3f69464938eb1df7a9ea6f2976eaa2673fe8b449056e822c5cfc6ec214a"
+        }
+      ],
+      "publicTranscriptOperationCount": 9,
+      "privateOutputs": [
+        {
+          "value": [],
+          "alignment": []
+        }
+      ],
+      "effects": {
+        "claimedNullifiers": [],
+        "claimedShieldedReceives": [
+          "cfc17479dfe0edb2b000bd08f6b1e94cd89c36e54594b8cdffa164fd4a7f0a8d"
+        ],
+        "claimedShieldedSpends": [],
+        "claimedContractCalls": [],
+        "shieldedMints": {},
+        "unshieldedMints": {},
+        "unshieldedInputs": {},
+        "unshieldedOutputs": {},
+        "claimedUnshieldedSpends": {}
+      },
+      "gas": {
+        "readTime": "0",
+        "computeTime": "1102262433",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      }
+    },
+    {
+      "name": "accept",
+      "value": "18446744073709551616",
+      "status": "accepted",
+      "index": "14",
+      "outputs": [
+        {
+          "value": "18446744073709551616",
+          "isLeft": false
+        }
+      ],
+      "commitments": [
+        {
+          "recipient": "contract",
+          "commitment": "5724ddfbab36cc91c23f5af191c9c6632dd256c3c3db1cd55db70624e44fdf4f"
+        },
+        {
+          "recipient": "user",
+          "commitment": "c3f6805fe06ddfea3d065b2682eb875cc046c027edcf0700e882a1c9bf1014ff"
+        }
+      ],
+      "publicTranscriptOperationCount": 9,
+      "privateOutputs": [
+        {
+          "value": [],
+          "alignment": []
+        }
+      ],
+      "effects": {
+        "claimedNullifiers": [],
+        "claimedShieldedReceives": [
+          "5724ddfbab36cc91c23f5af191c9c6632dd256c3c3db1cd55db70624e44fdf4f"
+        ],
+        "claimedShieldedSpends": [],
+        "claimedContractCalls": [],
+        "shieldedMints": {},
+        "unshieldedMints": {},
+        "unshieldedInputs": {},
+        "unshieldedOutputs": {},
+        "claimedUnshieldedSpends": {}
+      },
+      "gas": {
+        "readTime": "0",
+        "computeTime": "1102262433",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      }
+    },
+    {
+      "name": "accept",
+      "value": "340282366920938463463374607431768211455",
+      "status": "accepted",
+      "index": "14",
+      "outputs": [
+        {
+          "value": "340282366920938463463374607431768211455",
+          "isLeft": false
+        }
+      ],
+      "commitments": [
+        {
+          "recipient": "contract",
+          "commitment": "6ee151d0ed3d31e5589e8e20635cb75e9fb7452e09d1b3e878b94b9717572dfb"
+        },
+        {
+          "recipient": "user",
+          "commitment": "de1218476493005796771b0b628ea42a1bc319b44f821cf0fe386a7f24214173"
+        }
+      ],
+      "publicTranscriptOperationCount": 9,
+      "privateOutputs": [
+        {
+          "value": [],
+          "alignment": []
+        }
+      ],
+      "effects": {
+        "claimedNullifiers": [],
+        "claimedShieldedReceives": [
+          "6ee151d0ed3d31e5589e8e20635cb75e9fb7452e09d1b3e878b94b9717572dfb"
+        ],
+        "claimedShieldedSpends": [],
+        "claimedContractCalls": [],
+        "shieldedMints": {},
+        "unshieldedMints": {},
+        "unshieldedInputs": {},
+        "unshieldedOutputs": {},
+        "claimedUnshieldedSpends": {}
+      },
+      "gas": {
+        "readTime": "0",
+        "computeTime": "1102262433",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      }
+    },
+    {
+      "name": "accept",
+      "value": "-1",
+      "status": "rejected",
+      "outputs": 0,
+      "index": "13"
+    },
+    {
+      "name": "accept",
+      "value": "340282366920938463463374607431768211456",
+      "status": "rejected",
+      "outputs": 0,
+      "index": "13"
+    },
+    {
+      "name": "accept_renamed",
+      "value": "0",
+      "status": "accepted",
+      "index": "14",
+      "outputs": [
+        {
+          "value": "0",
+          "isLeft": false
+        }
+      ],
+      "commitments": [
+        {
+          "recipient": "contract",
+          "commitment": "fe85a34810a7e9efb9cb35d636449974706ca01779dd64894cc3ed15938baa8c"
+        },
+        {
+          "recipient": "user",
+          "commitment": "ff7ba77aa91773fb9f61aa5a927bd3181cc6c5512f90557bbf1a63b3ef45efd8"
+        }
+      ],
+      "publicTranscriptOperationCount": 9,
+      "privateOutputs": [
+        {
+          "value": [],
+          "alignment": []
+        }
+      ],
+      "effects": {
+        "claimedNullifiers": [],
+        "claimedShieldedReceives": [
+          "fe85a34810a7e9efb9cb35d636449974706ca01779dd64894cc3ed15938baa8c"
+        ],
+        "claimedShieldedSpends": [],
+        "claimedContractCalls": [],
+        "shieldedMints": {},
+        "unshieldedMints": {},
+        "unshieldedInputs": {},
+        "unshieldedOutputs": {},
+        "claimedUnshieldedSpends": {}
+      },
+      "gas": {
+        "readTime": "0",
+        "computeTime": "1102262433",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      }
+    },
+    {
+      "name": "accept_renamed",
+      "value": "42",
+      "status": "accepted",
+      "index": "14",
+      "outputs": [
+        {
+          "value": "42",
+          "isLeft": false
+        }
+      ],
+      "commitments": [
+        {
+          "recipient": "contract",
+          "commitment": "713bf4dd29d7636da261aceb128c81664b8a200f4290739ded72e1ff60141df3"
+        },
+        {
+          "recipient": "user",
+          "commitment": "354f8edbfa6677a2e9fe30b3bdfe046f3b7635ae6f7d00556402d2483a2b187f"
+        }
+      ],
+      "publicTranscriptOperationCount": 9,
+      "privateOutputs": [
+        {
+          "value": [],
+          "alignment": []
+        }
+      ],
+      "effects": {
+        "claimedNullifiers": [],
+        "claimedShieldedReceives": [
+          "713bf4dd29d7636da261aceb128c81664b8a200f4290739ded72e1ff60141df3"
+        ],
+        "claimedShieldedSpends": [],
+        "claimedContractCalls": [],
+        "shieldedMints": {},
+        "unshieldedMints": {},
+        "unshieldedInputs": {},
+        "unshieldedOutputs": {},
+        "claimedUnshieldedSpends": {}
+      },
+      "gas": {
+        "readTime": "0",
+        "computeTime": "1102262433",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      }
+    },
+    {
+      "name": "accept_renamed",
+      "value": "18446744073709551615",
+      "status": "accepted",
+      "index": "14",
+      "outputs": [
+        {
+          "value": "18446744073709551615",
+          "isLeft": false
+        }
+      ],
+      "commitments": [
+        {
+          "recipient": "contract",
+          "commitment": "cfc17479dfe0edb2b000bd08f6b1e94cd89c36e54594b8cdffa164fd4a7f0a8d"
+        },
+        {
+          "recipient": "user",
+          "commitment": "0f82b3f69464938eb1df7a9ea6f2976eaa2673fe8b449056e822c5cfc6ec214a"
+        }
+      ],
+      "publicTranscriptOperationCount": 9,
+      "privateOutputs": [
+        {
+          "value": [],
+          "alignment": []
+        }
+      ],
+      "effects": {
+        "claimedNullifiers": [],
+        "claimedShieldedReceives": [
+          "cfc17479dfe0edb2b000bd08f6b1e94cd89c36e54594b8cdffa164fd4a7f0a8d"
+        ],
+        "claimedShieldedSpends": [],
+        "claimedContractCalls": [],
+        "shieldedMints": {},
+        "unshieldedMints": {},
+        "unshieldedInputs": {},
+        "unshieldedOutputs": {},
+        "claimedUnshieldedSpends": {}
+      },
+      "gas": {
+        "readTime": "0",
+        "computeTime": "1102262433",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      }
+    },
+    {
+      "name": "accept_renamed",
+      "value": "18446744073709551616",
+      "status": "accepted",
+      "index": "14",
+      "outputs": [
+        {
+          "value": "18446744073709551616",
+          "isLeft": false
+        }
+      ],
+      "commitments": [
+        {
+          "recipient": "contract",
+          "commitment": "5724ddfbab36cc91c23f5af191c9c6632dd256c3c3db1cd55db70624e44fdf4f"
+        },
+        {
+          "recipient": "user",
+          "commitment": "c3f6805fe06ddfea3d065b2682eb875cc046c027edcf0700e882a1c9bf1014ff"
+        }
+      ],
+      "publicTranscriptOperationCount": 9,
+      "privateOutputs": [
+        {
+          "value": [],
+          "alignment": []
+        }
+      ],
+      "effects": {
+        "claimedNullifiers": [],
+        "claimedShieldedReceives": [
+          "5724ddfbab36cc91c23f5af191c9c6632dd256c3c3db1cd55db70624e44fdf4f"
+        ],
+        "claimedShieldedSpends": [],
+        "claimedContractCalls": [],
+        "shieldedMints": {},
+        "unshieldedMints": {},
+        "unshieldedInputs": {},
+        "unshieldedOutputs": {},
+        "claimedUnshieldedSpends": {}
+      },
+      "gas": {
+        "readTime": "0",
+        "computeTime": "1102262433",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      }
+    },
+    {
+      "name": "accept_renamed",
+      "value": "340282366920938463463374607431768211455",
+      "status": "accepted",
+      "index": "14",
+      "outputs": [
+        {
+          "value": "340282366920938463463374607431768211455",
+          "isLeft": false
+        }
+      ],
+      "commitments": [
+        {
+          "recipient": "contract",
+          "commitment": "6ee151d0ed3d31e5589e8e20635cb75e9fb7452e09d1b3e878b94b9717572dfb"
+        },
+        {
+          "recipient": "user",
+          "commitment": "de1218476493005796771b0b628ea42a1bc319b44f821cf0fe386a7f24214173"
+        }
+      ],
+      "publicTranscriptOperationCount": 9,
+      "privateOutputs": [
+        {
+          "value": [],
+          "alignment": []
+        }
+      ],
+      "effects": {
+        "claimedNullifiers": [],
+        "claimedShieldedReceives": [
+          "6ee151d0ed3d31e5589e8e20635cb75e9fb7452e09d1b3e878b94b9717572dfb"
+        ],
+        "claimedShieldedSpends": [],
+        "claimedContractCalls": [],
+        "shieldedMints": {},
+        "unshieldedMints": {},
+        "unshieldedInputs": {},
+        "unshieldedOutputs": {},
+        "claimedUnshieldedSpends": {}
+      },
+      "gas": {
+        "readTime": "0",
+        "computeTime": "1102262433",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      }
+    },
+    {
+      "name": "accept_renamed",
+      "value": "-1",
+      "status": "rejected",
+      "outputs": 0,
+      "index": "13"
+    },
+    {
+      "name": "accept_renamed",
+      "value": "340282366920938463463374607431768211456",
+      "status": "rejected",
+      "outputs": 0,
+      "index": "13"
+    }
+  ],
+  "originalRefusalCapture": "runtime-rs/tests/fixtures/shielded-receive-oracle.json (ADR0195; unchanged)",
+  "originalRefusalCaptureSha256": "9e444826a4cb76aaa4d351a5c8f47bba11949688d9b33aee228e6854a83756f6",
+  "sourceSha256": "719f4fa10a513c01f3e4742a23a0a239a6704bada02f1524cc81bd7e6ebca971",
+  "onchainRuntimeVersion": "3.0.0",
+  "compilerSha256": "2697401c5d0d0c366217170969f89a436e8084b76cddf70ec6e331b3cbd29209"
+}

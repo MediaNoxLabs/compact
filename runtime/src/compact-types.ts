@@ -455,20 +455,22 @@ export const Bytes32Descriptor = new CompactTypeBytes(32);
 
 export const MaxUint8Descriptor = new CompactTypeUnsignedInteger(18446744073709551615n, 8);
 
+export const MaxUint16Descriptor = new CompactTypeUnsignedInteger(340282366920938463463374607431768211455n, 16);
+
 export const ShieldedCoinInfoDescriptor = {
   alignment(): ocrt.Alignment {
-    return Bytes32Descriptor.alignment().concat(Bytes32Descriptor.alignment().concat(MaxUint8Descriptor.alignment()));
+    return Bytes32Descriptor.alignment().concat(Bytes32Descriptor.alignment().concat(MaxUint16Descriptor.alignment()));
   },
   fromValue(value: ocrt.Value): { nonce: Uint8Array; color: Uint8Array; value: bigint } {
     return {
       nonce: Bytes32Descriptor.fromValue(value),
       color: Bytes32Descriptor.fromValue(value),
-      value: MaxUint8Descriptor.fromValue(value),
+      value: MaxUint16Descriptor.fromValue(value),
     };
   },
   toValue(value: { nonce: Uint8Array; color: Uint8Array; value: bigint }): ocrt.Value {
     return Bytes32Descriptor.toValue(value.nonce).concat(
-      Bytes32Descriptor.toValue(value.color).concat(MaxUint8Descriptor.toValue(value.value)),
+      Bytes32Descriptor.toValue(value.color).concat(MaxUint16Descriptor.toValue(value.value)),
     );
   },
 };

@@ -77,7 +77,7 @@ export interface EncodedShieldedCoinInfo {
    */
   readonly color: Uint8Array;
   /**
-   * The coin's value, in atomic units dependent on the currency. Bounded to be a non-negative 64-bit integer.
+   * The coin's value, in atomic units dependent on the currency. Bounded to be a non-negative 128-bit integer.
    */
   readonly value: bigint;
 }

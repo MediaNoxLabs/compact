@@ -36,6 +36,7 @@ mod merkle_indexed;
 mod merkle_verify;
 mod opaque_string_map;
 mod opaque_string_set;
+mod pair_hash_cell;
 mod persistent_commit;
 mod pure_assert_call;
 mod pure_field_arguments;
@@ -1683,6 +1684,23 @@ fn main() -> Result<(), Box<dyn Error>> {
             Ok(Ok(())) => Ok(()),
             Ok(Err(error)) => Err(error.into()),
             Err(_) => Err("impure Field helper proof thread panicked".into()),
+        };
+    }
+    if first.as_deref() == Some(OsStr::new("--pair-hash-cell")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --pair-hash-cell <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err("usage: compact-rust-proof-smoke --pair-hash-cell <proof-output>".into());
+        }
+        let proof = std::thread::Builder::new()
+            .name("pair-hash-cell-proof".into())
+            .stack_size(64 * 1024 * 1024)
+            .spawn(move || pair_hash_cell::run(Path::new(&root)).map_err(|e| e.to_string()))?;
+        return match proof.join() {
+            Ok(Ok(())) => Ok(()),
+            Ok(Err(error)) => Err(error.into()),
+            Err(_) => Err("pair hash Cell proof thread panicked".into()),
         };
     }
     if first.as_deref() == Some(OsStr::new("--stateful-pair-hash")) {

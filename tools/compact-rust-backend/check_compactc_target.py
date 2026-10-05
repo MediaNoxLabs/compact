@@ -1416,6 +1416,7 @@ def main() -> None:
                          "bridgeTupleIntoVec", "bridgeVecIntoTuple",
                          "witnessBare",
                          "impureConst",
+                         "hashPersistentVec", "hashTransientVec",
                          "pureFromImpure", "impureBare", "impureInIfArm",
                          "inlinedAssert"):
                 capability = next(circuit for circuit in capabilities["circuits"]
@@ -1444,7 +1445,8 @@ def main() -> None:
             for extension in ("zkir", "bzkir"):
                 assert (persistent_commit_proof / "zkir" /
                         f"impureConst.{extension}").is_file()
-            for name in ("impureBare", "impureInIfArm", "inlinedAssert"):
+            for name in ("impureBare", "impureInIfArm", "inlinedAssert",
+                         "hashPersistentVec", "hashTransientVec"):
                 for extension in ("prover", "verifier"):
                     assert (persistent_commit_proof / "keys" /
                             f"{name}.{extension}").is_file()
@@ -1754,6 +1756,10 @@ def main() -> None:
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 "--impure-field-helper", str(persistent_commit_proof),
+            )
+            run(
+                "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--pair-hash-cell", str(persistent_commit_proof),
             )
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",

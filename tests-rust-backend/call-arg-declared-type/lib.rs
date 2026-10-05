@@ -990,6 +990,32 @@ pub mod ledger_contract {
             let frame = crate::ledger_slots::asserts.record_increment(frame, 1u16)?;
             Ok(frame.finish(()))
         }
+        pub fn hashPersistentVec<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_hash_arg_0: (runtime::Field, runtime::Field) =
+                (runtime::Field::from(0u128), runtime::Field::from(1u128));
+            let __compact_recorded_hash_1: runtime::FixedBytes<32> =
+                runtime::persistent_hash(__compact_recorded_hash_arg_0);
+            let frame =
+                crate::ledger_slots::hashCell.record_write(frame, __compact_recorded_hash_1)?;
+            Ok(frame.finish(()))
+        }
+        pub fn hashTransientVec<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_hash_arg_0: (runtime::Field, runtime::Field) =
+                (runtime::Field::from(0u128), runtime::Field::from(1u128));
+            let __compact_recorded_hash_1: runtime::Field =
+                runtime::transient_hash(__compact_recorded_hash_arg_0);
+            let frame =
+                crate::ledger_slots::fieldCell.record_write(frame, __compact_recorded_hash_1)?;
+            Ok(frame.finish(()))
+        }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
         impl Contract {
@@ -1290,6 +1316,56 @@ pub mod ledger_contract {
                     observed,
                     recorded,
                     "inlinedAssert",
+                    input,
+                ))
+            }
+            pub fn hashPersistentVec<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::hashPersistentVec(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn hashPersistentVec_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.hashPersistentVec(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "hashPersistentVec",
+                    input,
+                ))
+            }
+            pub fn hashTransientVec<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::hashTransientVec(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn hashTransientVec_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.hashTransientVec(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "hashTransientVec",
                     input,
                 ))
             }
@@ -1656,6 +1732,56 @@ pub mod ledger_contract {
                     observed,
                     recorded,
                     "inlinedAssert",
+                    input,
+                ))
+            }
+            pub fn hashPersistentVec<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                hashPersistentVec(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn hashPersistentVec_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.hashPersistentVec(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "hashPersistentVec",
+                    input,
+                ))
+            }
+            pub fn hashTransientVec<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                hashTransientVec(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn hashTransientVec_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.hashTransientVec(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "hashTransientVec",
                     input,
                 ))
             }

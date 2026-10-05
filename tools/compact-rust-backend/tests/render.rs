@@ -26,6 +26,129 @@ use compact_rust_backend::{
 };
 
 #[test]
+fn recorded_pair_hash_bindings_require_closed_typed_field_literals() {
+    let pair = || Expr::Tuple {
+        elements: vec![
+            Expr::FieldLiteral { value: "0".into() },
+            Expr::FieldLiteral { value: "1".into() },
+        ],
+    };
+    let binding = |name: &str, ty: Type, value: Expr, index: u8| StateAction::Let {
+        bindings: vec![LocalBinding {
+            name: name.into(),
+            ty,
+            value,
+        }],
+        action: Box::new(StateAction::CellWrite {
+            field: if index == 0 { "digest" } else { "field" }.into(),
+            index,
+            value: Expr::Parameter { name: name.into() },
+        }),
+    };
+    let mut contract = Contract {
+        schema_version: SCHEMA_VERSION,
+        type_aliases: vec![],
+        constructor: None,
+        witnesses: vec![],
+        ledger_fields: vec![
+            LedgerField {
+                id: "digest".into(),
+                index: 0,
+                path: vec![],
+                source: None,
+                declaration: LedgerFieldKind::Cell {
+                    ty: Type::Bytes { length: 32 },
+                },
+            },
+            LedgerField {
+                id: "field".into(),
+                index: 1,
+                path: vec![],
+                source: None,
+                declaration: LedgerFieldKind::Cell { ty: Type::Field },
+            },
+        ],
+        circuits: vec![],
+        stateful_circuits: vec![
+            StatefulCircuit {
+                source: None,
+                internal: false,
+                name: "persistent".into(),
+                parameters: vec![],
+                result: Type::Unit,
+                return_value: StateReturn::Unit,
+                actions: vec![binding(
+                    "hash",
+                    Type::Bytes { length: 32 },
+                    Expr::PersistentHash {
+                        value: Box::new(pair()),
+                    },
+                    0,
+                )],
+            },
+            StatefulCircuit {
+                source: None,
+                internal: false,
+                name: "transient".into(),
+                parameters: vec![],
+                result: Type::Unit,
+                return_value: StateReturn::Unit,
+                actions: vec![binding(
+                    "hash",
+                    Type::Field,
+                    Expr::TransientHash {
+                        value: Box::new(pair()),
+                    },
+                    1,
+                )],
+            },
+        ],
+    };
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.capabilities.circuits.iter().all(|c| c.recorded));
+    let recorded = rendered.source.split("pub mod recorded").nth(1).unwrap();
+    let persistent = recorded.split("pub fn persistent<Private>").nth(1).unwrap();
+    let transient = recorded.split("pub fn transient<Private>").nth(1).unwrap();
+    assert!(
+        persistent.find("runtime::persistent_hash(").unwrap()
+            < persistent.find(".record_write(").unwrap()
+    );
+    assert!(
+        transient.find("runtime::transient_hash(").unwrap()
+            < transient.find(".record_write(").unwrap()
+    );
+
+    let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    bindings[0].value = Expr::PersistentHash {
+        value: Box::new(Expr::Tuple {
+            elements: vec![
+                Expr::CellRead {
+                    field: "field".into(),
+                    index: 1,
+                },
+                Expr::FieldLiteral { value: "1".into() },
+            ],
+        }),
+    };
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(!rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.capabilities.circuits[1].recorded);
+
+    let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[1].actions[0] else {
+        unreachable!()
+    };
+    bindings[0].value = Expr::TransientHash {
+        value: Box::new(Expr::Tuple {
+            elements: vec![Expr::FieldLiteral { value: "0".into() }],
+        }),
+    };
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.capabilities.circuits.iter().all(|c| !c.recorded));
+}
+
+#[test]
 fn opaque_string_map_recording_requires_closed_field_lookup_sequence() {
     let mut contract: Contract =
         serde_json::from_str(include_str!("opaque-string-map-schema12-ir.json")).unwrap();

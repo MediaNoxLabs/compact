@@ -99,6 +99,15 @@ function operationShape(operation) {
   }
   throw new Error(`unexpected operation: ${Object.keys(operation)}`);
 }
+function normalize(value) {
+  if (typeof value === 'bigint') return value.toString();
+  if (value instanceof Uint8Array) return { bytesHex: Buffer.from(value).toString('hex') };
+  if (Array.isArray(value)) return value.map(normalize);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([key, inner]) => [key, normalize(inner)]));
+  }
+  return value;
+}
 const constructorCtx = {
   initialPrivateState: null,
   initialZswapLocalState: cr.emptyZswapLocalState(emptyCpk),
@@ -141,10 +150,13 @@ for (const name of CIRCUITS) {
     'commitSmall', 'commitU128', 'commitFieldOnly', 'pureBodyFieldOnly',
     'pureBodyVec', 'bridgeTupleIntoVec', 'bridgeVecIntoTuple',
     'pureFromImpure', 'impureBare', 'impureInIfArm', 'inlinedAssert',
-    'witnessBare', 'impureConst',
+    'witnessBare', 'impureConst', 'hashPersistentVec', 'hashTransientVec',
   ].includes(name)) {
     fixture.circuits[name].trace = {
       publicTranscriptShape: out.proofData.publicTranscript.map(operationShape),
+      ...(name === 'hashPersistentVec' || name === 'hashTransientVec'
+        ? { publicTranscript: normalize(out.proofData.publicTranscript) }
+        : {}),
       privateTranscriptCount: out.proofData.privateTranscriptOutputs.length,
       queries: queries.slice(queryStart),
       reportedGas: Object.fromEntries(

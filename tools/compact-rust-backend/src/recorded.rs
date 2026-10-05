@@ -1933,6 +1933,29 @@ fn render_recorded_item(
         }
     }
 
+    /// Hashing itself is pure, but its FAB encoding depends on the exact
+    /// operand type. Admit the compiler's closed two-Field tuple only; a
+    /// ledger read, witness, or call inside the operand needs ordered lowering.
+    fn literal_field_pair_hash_source(
+        value: &Expr,
+        locals: &HashMap<String, syn::Expr>,
+        parameters: &HashMap<&str, (&Type, syn::Ident)>,
+    ) -> Option<syn::Expr> {
+        let Expr::Tuple { elements } = value else {
+            return None;
+        };
+        let [left, right] = elements.as_slice() else {
+            return None;
+        };
+        if !matches!(left, Expr::FieldLiteral { .. }) || !matches!(right, Expr::FieldLiteral { .. })
+        {
+            return None;
+        }
+        let left = cell_source(left, &Type::Field, locals, parameters)?;
+        let right = cell_source(right, &Type::Field, locals, parameters)?;
+        Some(syn::parse_quote!((#left, #right)))
+    }
+
     fn static_bindings(
         bindings: &[LocalBinding],
         locals: &HashMap<String, syn::Expr>,
@@ -4018,6 +4041,49 @@ fn render_recorded_item(
                 }
                 let mut scoped = locals.clone();
                 for (binding_index, binding) in bindings.iter().enumerate() {
+                    let hash = match (&binding.ty, &binding.value) {
+                        (Type::Bytes { length: 32 }, Expr::PersistentHash { value }) => {
+                            Some((value.as_ref(), true))
+                        }
+                        (Type::Field, Expr::TransientHash { value }) => {
+                            Some((value.as_ref(), false))
+                        }
+                        _ => None,
+                    };
+                    if let Some((operand, persistent)) = hash {
+                        let Some(operand) =
+                            literal_field_pair_hash_source(operand, &scoped, parameters)
+                        else {
+                            return Ok(RecordingOutcome::Unsupported(RecordingGap::expression(
+                                &binding.value,
+                                format!("{path}.bindings[{binding_index}].value"),
+                            )));
+                        };
+                        let pair = syn::Ident::new(
+                            &format!("__compact_recorded_hash_arg_{}", *next_temp),
+                            Span::call_site(),
+                        );
+                        *next_temp += 1;
+                        let result = syn::Ident::new(
+                            &format!("__compact_recorded_hash_{}", *next_temp),
+                            Span::call_site(),
+                        );
+                        *next_temp += 1;
+                        steps.push(syn::parse_quote! {
+                            let #pair: (runtime::Field, runtime::Field) = #operand;
+                        });
+                        if persistent {
+                            steps.push(syn::parse_quote! {
+                                let #result: runtime::FixedBytes<32> = runtime::persistent_hash(#pair);
+                            });
+                        } else {
+                            steps.push(syn::parse_quote! {
+                                let #result: runtime::Field = runtime::transient_hash(#pair);
+                            });
+                        }
+                        scoped.insert(binding.name.clone(), syn::parse_quote!(#result));
+                        continue;
+                    }
                     if matches!(binding.ty, Type::Unsigned { .. })
                         && let Expr::Call { name, arguments } = &binding.value
                     {

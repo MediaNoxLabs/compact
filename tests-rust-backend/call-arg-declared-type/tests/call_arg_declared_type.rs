@@ -95,6 +95,39 @@ fn state_hex(state: StateValue<DefaultDB>) -> String {
     hex::encode(bytes)
 }
 
+fn normalized_vm_ops(mut value: serde_json::Value) -> serde_json::Value {
+    fn normalize(value: &mut serde_json::Value) {
+        match value {
+            serde_json::Value::Object(object) => {
+                if object.contains_key("alignment")
+                    && let Some(serde_json::Value::Array(chunks)) = object.get_mut("value")
+                {
+                    for chunk in chunks {
+                        if let serde_json::Value::Array(bytes) = chunk {
+                            let bytes = bytes
+                                .iter()
+                                .map(|byte| byte.as_u64().unwrap() as u8)
+                                .collect::<Vec<_>>();
+                            *chunk = serde_json::json!({ "bytesHex": hex::encode(bytes) });
+                        }
+                    }
+                }
+                for child in object.values_mut() {
+                    normalize(child);
+                }
+            }
+            serde_json::Value::Array(values) => {
+                for child in values {
+                    normalize(child);
+                }
+            }
+            _ => {}
+        }
+    }
+    normalize(&mut value);
+    value
+}
+
 #[test]
 fn declared_call_arguments_match_typescript_state_bytes() {
     let oracle: serde_json::Value = serde_json::from_str(include_str!(
@@ -185,6 +218,72 @@ fn recorded_persistent_commitments_match_typescript_trace_and_gas() {
             oracle["circuits"][name]["stateHex"],
             "{name}: TypeScript state"
         );
+    }
+}
+
+#[test]
+fn recorded_pair_hashes_match_typescript_value_state_gas_and_full_vm() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/call-arg-declared-type.json"
+    ))
+    .unwrap();
+    for name in ["hashPersistentVec", "hashTransientVec"] {
+        let native_context = initial_state(ConstructorContext::new(()))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default());
+        let recording_context = initial_state(ConstructorContext::new(()))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default());
+        let native = match name {
+            "hashPersistentVec" => hashPersistentVec(native_context).unwrap(),
+            "hashTransientVec" => hashTransientVec(native_context).unwrap(),
+            _ => unreachable!(),
+        };
+        let recorded = match name {
+            "hashPersistentVec" => compact_rust_call_arg_declared_type_fixture::ledger_contract::recorded::hashPersistentVec(recording_context).unwrap(),
+            "hashTransientVec" => compact_rust_call_arg_declared_type_fixture::ledger_contract::recorded::hashTransientVec(recording_context).unwrap(),
+            _ => unreachable!(),
+        };
+        assert_eq!(native.result, ());
+        assert_eq!(recorded.execution.result, ());
+        let reference = &oracle["circuits"][name];
+        boolean_observation_assertions::assert_ts_trace(
+            name,
+            &native,
+            &recorded,
+            &reference["trace"],
+        );
+        assert_eq!(
+            normalized_vm_ops(serde_json::to_value(recorded.public.verify_ops()).unwrap()),
+            reference["trace"]["publicTranscript"],
+            "{name}: complete ordered TypeScript VM program"
+        );
+        assert_eq!(
+            recorded.execution.context.query.state.get_ref(),
+            native.context.query.state.get_ref(),
+            "{name}: recorded state"
+        );
+        assert_eq!(
+            state_hex(recorded.execution.context.query.state.get_ref().clone()),
+            reference["stateHex"],
+            "{name}: TypeScript state"
+        );
+        let StateValue::Array(fields) = recorded.execution.context.query.state.get_ref() else {
+            panic!("{name}: expected ledger array")
+        };
+        let pair = (Field::from(0_u64), Field::from(1_u64));
+        match name {
+            "hashPersistentVec" => {
+                let stored: midnight_compact_runtime::FixedBytes<32> =
+                    read_cell(fields.get(2).unwrap()).unwrap();
+                assert_eq!(stored, midnight_compact_runtime::persistent_hash(pair));
+            }
+            "hashTransientVec" => {
+                let stored: Field = read_cell(fields.get(3).unwrap()).unwrap();
+                assert_eq!(stored, midnight_compact_runtime::transient_hash(pair));
+            }
+            _ => unreachable!(),
+        }
     }
 }
 

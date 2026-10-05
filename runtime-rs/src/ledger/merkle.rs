@@ -868,6 +868,18 @@ pub fn historic_reset_to_default<D: DB>(
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
+    context.query(
+        &historic_reset_to_default_program(path, depth),
+        gas_limit,
+        cost_model,
+    )
+}
+
+/// Canonical historic reset program shared by native and recorded execution.
+pub(crate) fn historic_reset_to_default_program<D: DB>(
+    path: impl Into<LedgerPath>,
+    depth: u8,
+) -> Vec<Op<ResultModeVerify, D>> {
     let path = path.into();
     let parts = path.as_slice();
     let (&field_index, parent) = parts
@@ -919,7 +931,7 @@ pub fn historic_reset_to_default<D: DB>(
             n: parent.len() as u8,
         });
     }
-    context.query(&program, gas_limit, cost_model)
+    program
 }
 
 /// Reset a plain MerkleTree through the canonical ledger VM sequence.

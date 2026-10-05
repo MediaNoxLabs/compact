@@ -245,6 +245,78 @@ fn recorded_historic_reset_history_matches_typescript_and_replays() {
 }
 
 #[test]
+fn recorded_historic_tree_reset_seeds_blank_history_and_replays() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/hmt-insert-oracle.json"
+    ))
+    .unwrap();
+    let before_reset = || {
+        let context = initial_state(ConstructorContext::new(()))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default());
+        let context = append(context, bounded::<255>(7)).unwrap().context;
+        let context = place(
+            context,
+            bounded::<255>(9),
+            bounded::<{ u64::MAX as u128 }>(3),
+        )
+        .unwrap()
+        .context;
+        let context = append(context, bounded::<255>(11)).unwrap().context;
+        let context = place(
+            context,
+            bounded::<255>(13),
+            bounded::<{ u64::MAX as u128 }>(1),
+        )
+        .unwrap()
+        .context;
+        let context = forget_history(context).unwrap().context;
+        let context = full(context).unwrap().context;
+        let context = append_hash(context, runtime::FixedBytes::new([1; 32]))
+            .unwrap()
+            .context;
+        let context = place_hash(
+            context,
+            runtime::FixedBytes::new([2; 32]),
+            bounded::<{ u64::MAX as u128 }>(7),
+        )
+        .unwrap()
+        .context;
+        let context = full(context).unwrap().context;
+        let context = place_hash(
+            context,
+            runtime::FixedBytes::new([3; 32]),
+            bounded::<{ u64::MAX as u128 }>(1),
+        )
+        .unwrap()
+        .context;
+        full(context).unwrap().context
+    };
+    let blank_state = initial_state(ConstructorContext::new(())).unwrap();
+    let blank_root = current_root(blank_state.ledger_state.get_ref());
+    let old_root = current_root(before_reset().query.state.get_ref());
+    let native = reset_tree(before_reset()).unwrap();
+    let recorded = recorded::reset_tree(before_reset()).unwrap();
+    let state = recorded.execution.context.query.state.get_ref();
+    assert_eq!(
+        state_hex(state.clone()),
+        state_hex(blank_state.ledger_state.get_ref().clone())
+    );
+    let tree = runtime::ledger::historic_merkle_tree_view_at_path(state, &[0]).unwrap();
+    assert!(!tree.contains_root(runtime::ledger::MerkleTreeDigest(old_root.field)));
+    assert!(tree.contains_root(runtime::ledger::MerkleTreeDigest(blank_root.field)));
+    assert_historic_hash_recording(
+        "resetTree",
+        "afterResetTree",
+        "historyAfterResetTree",
+        0,
+        native,
+        recorded,
+        &oracle,
+    );
+}
+
+#[test]
 fn recorded_historic_hash_append_preserves_typescript_history_and_replays() {
     let oracle: serde_json::Value = serde_json::from_str(include_str!(
         "../../../runtime-rs/tests/fixtures/hmt-insert-oracle.json"

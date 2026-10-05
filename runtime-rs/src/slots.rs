@@ -342,6 +342,14 @@ impl<T: CellValue, const DEPTH: u8> MerkleSlot<T, DEPTH, false> {
 }
 
 impl<T: CellValue, const DEPTH: u8> MerkleSlot<T, DEPTH, true> {
+    /// Record the depth-specific historic reset and blank-root history seed.
+    pub fn record_reset_to_default<Private, D: DB>(
+        self,
+        frame: RecordingFrame<Private, D>,
+    ) -> Result<RecordingFrame<Private, D>, CompactError> {
+        frame.reset_historic_merkle_to_default(self.path, DEPTH)
+    }
+
     /// Inspect an already held historic tree, rejecting a mismatched ledger height.
     pub fn inspect<'a, D: DB>(
         self,

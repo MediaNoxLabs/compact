@@ -140,8 +140,9 @@ const afterReplaceHashAt1 = snapshot();
 const historyAfterReplaceHashAt1 = history();
 const fullAfterReplacement = full();
 const rootBeforeTreeReset = currentRoot();
-context = contract.circuits.reset_tree(context).context;
+context = capture('resetTree', () => contract.circuits.reset_tree(context)).context;
 const afterResetTree = snapshot();
+const historyAfterResetTree = history();
 const fullAfterTreeReset = full();
 const knownOldAfterTreeReset = known(rootBeforeTreeReset);
 const knownBlankAfterTreeReset = known(rootAtInit);
@@ -154,4 +155,4 @@ function normalize(value) {
   }
   return value;
 }
-process.stdout.write(JSON.stringify(normalize({ afterInit, historyAtInit, afterAppend7, historyAfterAppend7, pathFor7At0, wrongPathFor8At0, foundPathFor7, missingPathFor8, afterPlace9At3, pathFor9At3, afterAppend11, afterPlace13At1, afterForgetHistory, historyAfterForget, fullAtInit, fullBeforeCapacity, afterAppendHash, historyAfterAppendHash, afterPlaceHashAt7, historyAfterPlaceHashAt7, fullAtCapacity, afterReplaceHashAt1, historyAfterReplaceHashAt1, fullAfterReplacement, afterResetTree, fullAfterTreeReset, knownOldAfterTreeReset, knownBlankAfterTreeReset, knownAtInit, knownInitialAfterAppend, knownInitialAfterReset, knownCurrentAfterReset, nativeQueries }), null, 2) + '\n');
+process.stdout.write(JSON.stringify(normalize({ afterInit, historyAtInit, afterAppend7, historyAfterAppend7, pathFor7At0, wrongPathFor8At0, foundPathFor7, missingPathFor8, afterPlace9At3, pathFor9At3, afterAppend11, afterPlace13At1, afterForgetHistory, historyAfterForget, fullAtInit, fullBeforeCapacity, afterAppendHash, historyAfterAppendHash, afterPlaceHashAt7, historyAfterPlaceHashAt7, fullAtCapacity, afterReplaceHashAt1, historyAfterReplaceHashAt1, fullAfterReplacement, afterResetTree, historyAfterResetTree, fullAfterTreeReset, knownOldAfterTreeReset, knownBlankAfterTreeReset, knownAtInit, knownInitialAfterAppend, knownInitialAfterReset, knownCurrentAfterReset, nativeQueries }), null, 2) + '\n');

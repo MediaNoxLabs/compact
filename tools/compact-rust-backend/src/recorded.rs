@@ -5803,6 +5803,24 @@ fn render_recorded_item(
                 ));
                 Ok(RecordingOutcome::Supported(()))
             }
+            StateAction::HistoricMerkleResetToDefault { field, index } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                if !matches!(
+                    declaration.declaration,
+                    LedgerFieldKind::HistoricMerkleTree { .. }
+                ) || declaration.index != *index
+                    || declaration.physical_path().len() != 1
+                {
+                    return Ok(unavailable_action(action, path));
+                }
+                let slot = ident(field)?;
+                steps.push(syn::parse_quote!(
+                    let frame = crate::ledger_slots::#slot.record_reset_to_default(frame)?;
+                ));
+                Ok(RecordingOutcome::Supported(()))
+            }
             StateAction::MerkleInsert {
                 field,
                 index,

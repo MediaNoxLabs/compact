@@ -849,6 +849,18 @@ def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
     run("cargo", "check", "--quiet", "--example", "recorded_history_reset", cwd=consumer,
         env=environment)
 
+    (consumer / "examples/recorded_historic_tree_reset.rs").write_text(
+        "use compact_contract_hmt_insert_oracle::ledger_contract::{initial_state, recorded};\n"
+        "use compact_contract_hmt_insert_oracle::runtime::{context::ConstructorContext, ledger::ContractAddress};\n"
+        "fn main() {\n"
+        "    let state = initial_state(ConstructorContext::new(())).unwrap();\n"
+        "    let context = state.into_circuit_context(ContractAddress::default());\n"
+        "    let _ = recorded::reset_tree(context).unwrap();\n"
+        "}\n"
+    )
+    run("cargo", "check", "--quiet", "--example", "recorded_historic_tree_reset", cwd=consumer,
+        env=environment)
+
     (consumer / "examples/wrong_recorded_merkle_leaf.rs").write_text(
         "use compact_contract_merkle_tree_oracle::ledger_contract::{initial_state, recorded};\n"
         "use compact_contract_merkle_tree_oracle::runtime::{context::ConstructorContext, ledger::ContractAddress};\n"
@@ -1587,14 +1599,13 @@ def main() -> None:
             check_manifest(historic_merkle_proof)
             capabilities = json.loads((historic_merkle_proof / "contract/rust-capabilities.json").read_text())
             by_name = {circuit["name"]: circuit for circuit in capabilities["circuits"]}
-            for circuit in ("append", "place", "append_hash", "place_hash", "forget_history", "full"):
+            for circuit in ("append", "place", "append_hash", "place_hash", "forget_history", "reset_tree", "full"):
                 assert by_name[circuit]["recorded"] and by_name[circuit]["observed_call"]
                 for extension in ("prover", "verifier"):
                     assert (historic_merkle_proof / "keys" / f"{circuit}.{extension}").is_file()
                 for extension in ("zkir", "bzkir"):
                     assert (historic_merkle_proof / "zkir" / f"{circuit}.{extension}").is_file()
             for circuit, node in (
-                ("reset_tree", "StateAction::HistoricMerkleResetToDefault"),
                 ("known", "StateReturn::HistoricMerkleCheckRoot"),
             ):
                 assert not by_name[circuit]["recorded"]
@@ -1765,6 +1776,10 @@ def main() -> None:
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 "--historic-merkle-reset-history", str(historic_merkle_proof),
+            )
+            run(
+                "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--historic-merkle-reset-tree", str(historic_merkle_proof),
             )
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",

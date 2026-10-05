@@ -232,6 +232,15 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         self.apply_verify_program(ledger::historic_reset_history_program(path.into()))
     }
 
+    /// Replace a historic tree and seed the blank root in its new history.
+    pub fn reset_historic_merkle_to_default(
+        self,
+        path: impl Into<LedgerPath>,
+        depth: u8,
+    ) -> Result<Self, CompactError> {
+        self.apply_verify_program(ledger::historic_reset_to_default_program(path, depth))
+    }
+
     /// Insert a typed leaf at a declared index, retaining the ledger-8 VM program.
     pub fn insert_merkle_index<T: CellValue>(
         self,

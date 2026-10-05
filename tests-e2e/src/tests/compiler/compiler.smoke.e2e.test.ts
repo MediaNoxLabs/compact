@@ -15,6 +15,8 @@
 
 import { execa, Result } from 'execa';
 import { describe, expect, test } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
 import {
     Arguments,
     AssertOptions,
@@ -230,17 +232,46 @@ describe('[Smoke] Compiler', () => {
         expect(outputFiles).not.toContain('keys/increment.prover');
     });
 
-    test.runIf(!isRelease())('should throw error when zkir is not available', async () => {
+    test.runIf(!isRelease())('should warn and emit source without keys when zkir is unavailable', async () => {
         const outputDir = createTempFolder();
+        // The shared cleanup helper chmods symlink targets; remove this private
+        // tool directory ourselves so it never touches a read-only package.
+        const toolsDir = createTempFolder(false);
+        try {
+            const compiler = getCompactcBinary();
+            const portableNative = path.join(path.dirname(fs.realpathSync(compiler)), 'compactc.bin');
+            const nativeCompiler = fs.existsSync(portableNative) ? portableNative : compiler;
+            const sha256sum = (process.env.PATH ?? '')
+                .split(path.delimiter)
+                .map((directory) => path.resolve(directory, 'sha256sum'))
+                .find((candidate) => {
+                    try {
+                        fs.accessSync(candidate, fs.constants.X_OK);
+                        return true;
+                    } catch {
+                        return false;
+                    }
+                });
+            if (sha256sum === undefined) {
+                throw new Error('sha256sum is required to test compilation without zkir');
+            }
+            fs.symlinkSync(sha256sum, path.join(toolsDir, 'sha256sum'));
 
-        const result = await execa(getCompactcBinary(), [CONTRACT_FILE_PATH, outputDir], {
-            env: { COMPACT_HOME: 'non_existing_path' },
-            reject: false,
-            extendEnv: false,
-        });
-        expectCompilerResult(result)
-            .toMatchStdOut(compilerDefaultOutput())
-            .toMatchStdError('Warning: ZKIR not found; skipping final circuit compilation.')
-            .toMatchExitCode(ExitCodes.Success);
+            const result = await execa(nativeCompiler, [CONTRACT_FILE_PATH, outputDir], {
+                env: { COMPACT_HOME: 'non_existing_path', PATH: toolsDir },
+                reject: false,
+                extendEnv: false,
+            });
+            expectCompilerResult(result)
+                .toMatchStdOut(compilerDefaultOutput())
+                .toMatchStdError('Warning: ZKIR not found; skipping final circuit compilation.')
+                .toMatchExitCode(ExitCodes.Success);
+            const files = getAllFilesRecursively(outputDir);
+            expect(files).toContain('contract/index.js');
+            expect(files.some((file) => file.endsWith('.zkir'))).toBe(true);
+            expect(fs.existsSync(path.join(outputDir, 'keys'))).toBe(false);
+        } finally {
+            fs.rmSync(toolsDir, { recursive: true, force: true });
+        }
     });
 });

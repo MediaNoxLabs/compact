@@ -92,8 +92,9 @@ compact-rust-pure-call-action-fixture = { path = "../../tests-rust-backend/pure-
 compact-rust-assert-parity-oracle-fixture = { path = "../../tests-rust-backend/assert-parity-oracle", features = ["ledger-transaction"] }
 compact-rust-nested-witness-call-oracle-fixture = { path = "../../tests-rust-backend/nested-witness-call-oracle" }
 midnight-compact-runtime = { path = "../../runtime-rs", features = ["ledger-transaction"] }
-midnight-ledger = "=8.0.3"
+midnight-ledger = { version = "=8.0.3", features = ["proving", "test-utilities"] }
 midnight-zswap = "=8.0.3"
+midnight-coin-structure = "=2.0.1"
 midnight-onchain-state = "=3.0.0"
 midnight-onchain-runtime = "=3.0.0"
 midnight-onchain-vm = "=3.0.0"
@@ -110,6 +111,7 @@ midnight-storage-core = "=1.1.0"
 rand = "=0.8.5"
 rand_chacha = "=0.3.1"
 futures-executor = "=0.3.32"
+tokio = { version = "=1.50.0", features = ["rt"] }
 hex = "0.4"
 serde_json = "1"
 

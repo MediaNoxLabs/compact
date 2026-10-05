@@ -198,7 +198,7 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
             },
         },
     )?;
-    let prepared = bound.prepare(call, verifier, Fr::from(0_u64))?;
+    let prepared = bound.prepare(call, verifier.clone(), Fr::from(0_u64))?;
     let tx = prepared.into_transaction(&mut rng, "local-test", Timestamp::from_secs(0));
     let params = MidnightDataProvider::new(
         FetchMode::Synchronous,
@@ -262,6 +262,158 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
     }
     println!(
         "qualified coin Set insertCoin output-backed proof verified and ledger-8 applied with balancing disabled"
+    );
+    let mut fee_state = super::qualified_coin_funding::fee_funded_state(&mut rng)?;
+    let mut funded_ledger = fee_state.ledger.clone();
+    funded_ledger.contract = ledger.contract.clone();
+    let funded_time = fee_state.time;
+    let funded = super::qualified_coin_funding::seed_and_fund(
+        &mut rng,
+        &mut funded_ledger,
+        info,
+        runtime::ledger::CoinPublicKey(runtime::ledger::HashOutput(user_key)),
+        funded_time,
+    )?;
+    let funded_offer = funded.offer.clone();
+    fee_state.ledger = funded_ledger.clone();
+    let funded_bound = OfferBackedObservedState::new(
+        ObservedContractState::new(
+            deploy.address(),
+            deploy.initial_state.clone(),
+            Observation {
+                transaction_hash: [0; 32],
+                block_hash: [0; 32],
+                block_height: 0,
+            },
+        ),
+        &funded_ledger,
+        funded.offer,
+    )?;
+    let funded_coin = types::ShieldedCoinInfo {
+        nonce: FixedBytes::new(nonce),
+        color: FixedBytes::new(color),
+        value: BoundedUint::new(42)?,
+    };
+    let funded_recipient = types::Either {
+        is_left: true,
+        left: types::ZswapCoinPublicKey {
+            bytes: FixedBytes::new(user_key),
+        },
+        right: types::ContractAddress {
+            bytes: FixedBytes::new([0; 32]),
+        },
+    };
+    let funded_native = contract::insert_coin(
+        funded_bound.observed().circuit_context(()),
+        funded_coin.clone(),
+        funded_recipient.clone(),
+    )?;
+    let funded_recorded = contract::recorded::insert_coin(
+        funded_bound.observed().circuit_context(()),
+        funded_coin.clone(),
+        funded_recipient.clone(),
+    )?;
+    if funded_native.context.query.state.get_ref()
+        != funded_recorded.execution.context.query.state.get_ref()
+        || funded_native.context.query.effects != funded_recorded.execution.context.query.effects
+        || funded_native.gas_cost != funded_recorded.execution.gas_cost
+        || !funded_recorded
+            .execution
+            .private_transcript_outputs
+            .is_empty()
+    {
+        return Err("funded insert_coin native and recorded differ".into());
+    }
+    let funded_expected_state = funded_native.context.query.state.get_ref().clone();
+    let funded_call = generated.recording().insert_coin_call(
+        funded_bound.observed(),
+        (),
+        funded_coin,
+        funded_recipient,
+    )?;
+    let funded_prepared = funded_bound.prepare(funded_call, verifier, Fr::from(0_u64))?;
+    let funded_tx = funded_prepared.into_transaction(
+        &mut rng,
+        "local-test",
+        Timestamp::from_secs(funded_time.to_secs() + 3_600),
+    );
+    let funded_provider = LocalProvingProvider {
+        rng: StdRng::seed_from_u64(0x0180_5052),
+        resolver: &resolver,
+        params: &params,
+    };
+    let funded_proven = futures_executor::block_on(funded_tx.prove(
+        funded_provider,
+        &INITIAL_PARAMETERS.cost_model.runtime_cost_model,
+    ))?;
+    let funded_sealed = funded_proven.seal(StdRng::seed_from_u64(0x0180_5345));
+    let fee_resolver = super::qualified_coin_funding::fee_resolver(root, name)?;
+    let funded_sealed = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()?
+        .block_on(fee_state.balance_tx(rng.clone(), funded_sealed, &fee_resolver))?;
+    let funded_verified =
+        funded_sealed.well_formed(&funded_ledger, WellFormedStrictness::default(), funded_time)?;
+    let funded_context = TransactionContext {
+        ref_state: funded_ledger.clone(),
+        block_context: BlockContext {
+            tblock: funded_time,
+            last_block_time: funded_time,
+            ..BlockContext::default()
+        },
+        whitelist: None,
+    };
+    let (funded_updated, funded_outcome) = funded_ledger.apply(&funded_verified, &funded_context);
+    if !matches!(funded_outcome, TransactionResult::Success(_)) {
+        return Err(format!("funded insertCoin application failed: {funded_outcome:?}").into());
+    }
+    if !funded_updated
+        .zswap
+        .nullifiers
+        .contains_key(&funded.spent_nullifier)
+    {
+        return Err("funded input nullifier was not applied".into());
+    }
+    if funded_updated.zswap.first_free != funded.output_index + 1 {
+        return Err("funded output was not allocated at the expected index".into());
+    }
+    if funded_updated
+        .zswap
+        .coin_coms
+        .index(funded.output_index)
+        .map(|(hash, _)| hash)
+        != Some(funded.output_commitment.0)
+    {
+        return Err("funded output commitment at allocated index differs".into());
+    }
+    let funded_applied = funded_updated
+        .contract
+        .get(&deploy.address())
+        .ok_or("funded contract disappeared")?;
+    if funded_applied.data.get_ref() != &funded_expected_state {
+        return Err("funded applied state differs from native and recorded execution".into());
+    }
+    let qualified = types::QualifiedShieldedCoinInfo {
+        nonce: FixedBytes::new(nonce),
+        color: FixedBytes::new(color),
+        value: BoundedUint::new(42)?,
+        mt_index: BoundedUint::new(funded.output_index as u128)?,
+    };
+    if !contract::PublicStateView::from(funded_applied)
+        .coins()?
+        .member(qualified)
+    {
+        return Err("funded Set lacks the qualified coin at allocated index".into());
+    }
+    if !matches!(
+        funded_updated.zswap.try_apply(&funded_offer, None),
+        Err(midnight_zswap::error::TransactionInvalid::NullifierAlreadyPresent(nullifier))
+            if nullifier == funded.spent_nullifier
+    ) {
+        return Err("replayed upstream offer did not reject the spent nullifier".into());
+    }
+    println!(
+        "funded qualified coin Set insertCoin passed default strict validation and ledger-8 application; native/recorded state, input nullifier, output index/commitment, and exact replay rejection verified"
     );
     Ok(())
 }

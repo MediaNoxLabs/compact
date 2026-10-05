@@ -64,6 +64,7 @@ mod persistent_commit;
 mod pure_assert_call;
 mod pure_field_arguments;
 mod qualified_coin_cell;
+mod qualified_coin_funding;
 mod qualified_coin_set;
 mod root_let_action_return;
 mod schnorr_attestation;

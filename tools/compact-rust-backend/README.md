@@ -772,15 +772,49 @@ four-bit dup operand reject. Caller-supplied allocation tables in native fixture
 are test context inputs; production allocation remains ledger-owned. Missing or
 wrong-recipient allocations reject before querying, matching TS preflight checks.
 
-`check_compactc_target.py --qualified-coin-cell` verifies native source admission,
-the chunked path probe, and required-recording refusal. The capability report
-explicitly identifies unsupported `StateAction::CellWriteCoin` recording. This
-slice has no recorded write or proof claim. Its recipient is a parameter, so it
-does not mask the separate Kernel.self query/gas fix from ADR0170.
+`check_compactc_target.py --qualified-coin-cell` verifies native and recorded
+source admission, the chunked path probe, and required-recording acceptance.
+With `--proof`, it runs the qualified Cell proof smoke described below. Its
+recipient is a parameter, so it does not mask the separate Kernel.self query/gas
+fix from ADR0170.
 
 The unchanged original micro-dao advances past `pot.writeCoin` to an unsupported
 standard-library native-witness expression. Its createZswapOutput/createZswapInput
 family and further shielded operations remain separate source-admission work.
+
+
+### Funded qualified-coin proof smokes (ADR0180)
+
+Both `compact-rust-proof-smoke --qualified-coin-set <proof-output>` and
+`--qualified-coin-cell <proof-output>` retain the output-only default-strict
+`BalanceCheckOverspend(-42)` negative and its explicitly balancing-disabled
+proof/application check. They also exercise a funded call under unchanged
+`WellFormedStrictness::default()` and require successful ledger application.
+
+The funded fixture encrypts a genesis coin to upstream Zswap keys, recovers it
+through the upstream local wallet, seals its ledger Merkle root, and spends it
+into a same-token/value output using `Offer::new`. It compares native and recorded
+state, effects and gas, then checks applied contract state, actual allocated
+index/commitment, the spent nullifier, and exact `NullifierAlreadyPresent` replay
+rejection. Stateful replay rejection is checked by `zswap.try_apply`.
+
+Strict fee validation also needs Night-backed Dust. Upstream
+`TestState::give_fee_token` registers Dust generation, rewards Night, and advances
+fixture time to the Dust cap; `balance_tx` proves the fee spend. The upstream
+reward resolver requires `MIDNIGHT_LEDGER_TEST_STATIC_DIR` to name the ledger
+checkout's `ledger/static` directory. Set it before either smoke (including the
+Python `--proof` wrappers):
+
+```sh
+export MIDNIGHT_LEDGER_TEST_STATIC_DIR=/path/to/midnight-ledger/ledger/static
+cargo run -p compact-rust-proof-smoke -- --qualified-coin-set /path/to/set-proof-output
+cargo run -p compact-rust-proof-smoke -- --qualified-coin-cell /path/to/cell-proof-output
+```
+
+Use pinned ZKIR 2.1.0 contract artifacts and the upstream Zswap/Dust proving
+material. Genesis insertion, reward registration and time advancement are
+privileged local fixture setup. This proves funded local transaction acceptance;
+it does not establish a wallet funding API, network submission or finality.
 
 
 ### Native circuit Zswap intents (ADR0175)

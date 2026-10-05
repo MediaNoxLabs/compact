@@ -2006,6 +2006,7 @@ dependencies = [
  "hex",
  "midnight-base-crypto",
  "midnight-circuits",
+ "midnight-coin-structure",
  "midnight-compact-runtime",
  "midnight-curves",
  "midnight-ledger",
@@ -2023,6 +2024,7 @@ dependencies = [
  "rand 0.8.5",
  "rand_chacha 0.3.1",
  "serde_json",
+ "tokio",
 ]
 
 [[package]]
@@ -4448,9 +4450,11 @@ dependencies = [
  "midnight-serialize",
  "midnight-storage",
  "midnight-transient-crypto",
+ "midnight-zkir",
  "midnight-zswap",
  "rand 0.8.5",
  "rayon",
+ "reqwest",
  "serde",
  "sha2",
  "tokio",

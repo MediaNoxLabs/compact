@@ -1647,7 +1647,7 @@ refusal. Prior coins and contract state are seeded offline; this does not claim 
 funded full DAO lifecycle or live wallet submission. Zero-price and maximum
 arithmetic captures are execution controls, not corresponding monetary proofs.
 
-`vote_commit` remains the original microDAO recording gap at this checkpoint.
+All seven original microDAO proof-required exports now have recorded APIs.
 
 ### Original microDAO cash-out and closed reset (ADR212)
 
@@ -1674,3 +1674,20 @@ application pass. Reapplying against a changed round at u64MAX produces exact
 the contract and Zswap state roll back, while guaranteed Dust/replay effects remain.
 The original prestate applies successfully and rejects the spent nullifier on replay.
 This validates a selected seeded final DAO state, not a proved deposit/vote lifecycle.
+
+
+### Original microDAO vote_commit recording (ADR214)
+
+A separate voting-commit policy records the ordered phase/token/value guards,
+Counter-derived membership key, received voting coin and full-value immediate
+send, private ballot witness, Merkle commitment insertion, participant Set write
+and private-state advance. The literal-one send is admitted only after the exact
+coin-value assertion. Shared singleton qualification and typed context/hash
+helpers preserve lexical scope; unrelated profiles retain their own guards.
+Eighteen corrected-TS/native/recorded/replay cases cover the actual original
+source. `--micro-dao-vote-commit --proof` proves yes at round0 and no at Uint64
+maximum, with actual wallet/transient/output proofs, separate Dust, default-strict
+apply, exact fallible ReadMismatch rollback, wrong-placement InvalidProof and
+spent-nullifier replay refusal. Voting coins and DAO state are explicitly seeded;
+the zero-key output follows source behavior without a separate unspendability
+claim. Schema20/ABI49 and runtime are unchanged.

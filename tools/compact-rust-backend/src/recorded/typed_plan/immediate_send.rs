@@ -44,6 +44,67 @@ pub(super) fn singleton_bridge(callee: &PureCircuit) -> bool {
         && matches!(index, Expr::UnsignedLiteral { value, max } if value == "0" && max == &u64::MAX.to_string())
 }
 
+// Shared exact singleton wrapper audit; caller policies own amount/provenance.
+pub(super) fn audit_bridge(
+    name: &str,
+    ledger: &HashMap<&str, &LedgerField>,
+    witnesses: &HashMap<&str, &WitnessDeclaration>,
+    pure: &HashMap<&str, &PureCircuit>,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+) -> Option<()> {
+    let bridge = circuits.get(name)?;
+    let [input, target, value] = bridge.parameters.as_slice() else {
+        return None;
+    };
+    if !bridge.actions.is_empty()
+        || !shielded_send_result(&bridge.result)
+        || input.ty != crate::stateful::shielded_coin_type()
+        || target.ty != crate::stateful::shielded_recipient_type()
+        || value.ty
+            != (Type::Unsigned {
+                max: u128::MAX.to_string(),
+            })
+    {
+        return None;
+    }
+    let StateReturn::Expression {
+        value: Expr::Call {
+            name: send_name,
+            arguments,
+        },
+    } = &bridge.return_value
+    else {
+        return None;
+    };
+    let [qualified, forward_target, forward_value] = arguments.as_slice() else {
+        return None;
+    };
+    if !parameter(forward_target, &target.name)
+        || !parameter(forward_value, &value.name)
+        || pure.contains_key(send_name.as_str())
+    {
+        return None;
+    }
+    let Expr::Call {
+        name: qualify_name,
+        arguments,
+    } = uncoerced(qualified)
+    else {
+        return None;
+    };
+    if !matches!(arguments.as_slice(), [value] if parameter(value,&input.name))
+        || circuits.contains_key(qualify_name.as_str())
+        || !singleton_bridge(pure.get(qualify_name.as_str())?)
+    {
+        return None;
+    }
+    let send = circuits.get(send_name.as_str())?;
+    // Reuse the already audited qualified-send domain; no merge/arbitrary
+    // actionful helper becomes admitted by this composition.
+    lower_shielded_send(send, ledger, witnesses, pure, circuits)?;
+    Some(())
+}
+
 pub(super) fn lower<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
@@ -96,56 +157,7 @@ pub(super) fn lower<'a>(
     {
         return None;
     }
-    let bridge = circuits.get(name.as_str())?;
-    let [input, target, value] = bridge.parameters.as_slice() else {
-        return None;
-    };
-    if !bridge.actions.is_empty()
-        || bridge.result != circuit.result
-        || input.ty != coin.ty
-        || target.ty != recipient.ty
-        || value.ty
-            != (Type::Unsigned {
-                max: u128::MAX.to_string(),
-            })
-    {
-        return None;
-    }
-    let StateReturn::Expression {
-        value: Expr::Call {
-            name: send_name,
-            arguments,
-        },
-    } = &bridge.return_value
-    else {
-        return None;
-    };
-    let [qualified, forward_target, forward_value] = arguments.as_slice() else {
-        return None;
-    };
-    if !parameter(forward_target, &target.name)
-        || !parameter(forward_value, &value.name)
-        || pure.contains_key(send_name.as_str())
-    {
-        return None;
-    }
-    let Expr::Call {
-        name: qualify_name,
-        arguments,
-    } = uncoerced(qualified)
-    else {
-        return None;
-    };
-    if !matches!(arguments.as_slice(), [value] if parameter(value,&input.name))
-        || circuits.contains_key(qualify_name.as_str())
-        || !singleton_bridge(pure.get(qualify_name.as_str())?)
-    {
-        return None;
-    }
-    let send = circuits.get(send_name.as_str())?;
-    // Reuse the already audited qualified-send domain; no merge/arbitrary
-    // actionful helper becomes admitted by this composition.
-    lower_shielded_send(send, ledger, witnesses, pure, circuits)?;
+    audit_bridge(name, ledger, witnesses, pure, circuits)?;
     if !shielded_send_value(
         tail,
         pure,

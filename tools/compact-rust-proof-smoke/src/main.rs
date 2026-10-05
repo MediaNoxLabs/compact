@@ -79,6 +79,7 @@ mod micro_dao_reveal;
 mod micro_dao_reveal_support;
 mod micro_dao_set_topic;
 mod micro_dao_token;
+mod micro_dao_vote_commit;
 mod mixed_width_recording;
 mod opaque_string_map;
 mod opaque_string_set;
@@ -2170,6 +2171,15 @@ fn run() -> Result<(), Box<dyn Error>> {
             return Err("unexpected argument".into());
         }
         return micro_dao_cash_out::run(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--micro-dao-vote-commit")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --micro-dao-vote-commit <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err("unexpected extra argument".into());
+        }
+        return micro_dao_vote_commit::run(Path::new(&root));
     }
     if first.as_deref() == Some(OsStr::new("--micro-dao-set-topic")) {
         let root = arguments

@@ -29,6 +29,7 @@ mod shielded_merge;
 mod shielded_payout;
 mod terminal_returns;
 mod unit_actions;
+mod voting_commit;
 
 #[derive(Clone)]
 struct TypedValue {
@@ -54,6 +55,7 @@ enum CompositeDomain {
     ShieldedMerge(shielded_merge::Inputs),
     GuardedShieldedDeposit,
     FundedShieldedMint,
+    VotingCommit,
     FieldObservations,
     TerminalReturns,
 }
@@ -62,6 +64,7 @@ impl CompositeDomain {
         matches!(
             self,
             Self::ShieldedSend
+                | Self::VotingCommit
                 | Self::ImmediateShieldedSend
                 | Self::ShieldedPayout
                 | Self::ActionfulShieldedPayout
@@ -83,6 +86,7 @@ impl CompositeDomain {
         matches!(
             self,
             Self::ImmediateShieldedSend
+                | Self::VotingCommit
                 | Self::GuardedShieldedDeposit
                 | Self::FundedShieldedMint
                 | Self::ShieldedMerge(shielded_merge::Inputs::ReceivedRight)
@@ -96,6 +100,7 @@ impl CompositeDomain {
                 | Self::Intents
                 | Self::FieldObservations
                 | Self::ShieldedSend
+                | Self::VotingCommit
                 | Self::ImmediateShieldedSend
                 | Self::ShieldedPayout
                 | Self::ActionfulShieldedPayout
@@ -111,6 +116,7 @@ impl CompositeDomain {
             Self::Intents
                 | Self::ShieldedReceive
                 | Self::ShieldedSend
+                | Self::VotingCommit
                 | Self::ImmediateShieldedSend
                 | Self::ShieldedPayout
                 | Self::ActionfulShieldedPayout
@@ -760,7 +766,7 @@ impl Plan<'_> {
                     != (Type::Tuple {
                         elements: vec![
                             Type::Bytes { length: 32 };
-                            if self.unit_actions { 2 } else { 3 }
+                            if self.scalar_body_depth > 0 { 3 } else { 2 }
                         ],
                     })
                 {
@@ -1113,6 +1119,32 @@ impl Plan<'_> {
                         steps,
                         false,
                     );
+                }
+                if self.composite_domain == CompositeDomain::VotingCommit
+                    && callee.actions.is_empty()
+                    && let StateReturn::Expression { value } = &callee.return_value
+                {
+                    let scalar = scalar_counter_hash(callee, self.ledger);
+                    let context = callee.parameters.is_empty()
+                        && callee.result == (Type::Bytes { length: 32 })
+                        && context_query_value(value, self.pure, &mut HashSet::new(), true);
+                    if scalar || context {
+                        let old = self.context_query;
+                        self.context_query = context;
+                        let result = self.inline_call(
+                            name,
+                            &callee.parameters,
+                            &callee.result,
+                            value,
+                            &[],
+                            arguments,
+                            scope,
+                            steps,
+                            scalar,
+                        );
+                        self.context_query = old;
+                        return result;
+                    }
                 }
                 if self.composite_domain.shielded_helpers() {
                     if self.composite_domain.singleton_bridge() && shielded_unit_signature(callee) {
@@ -1645,7 +1677,11 @@ impl Plan<'_> {
             StateAction::CircuitCall { name, arguments }
                 if (self.unit_actions && self.composite_domain.intents()) || self.phase_reset =>
             {
-                if self.call(name, arguments, scope, steps)?.ty != Type::Unit {
+                let result = self.call(name, arguments, scope, steps)?;
+                if result.ty != Type::Unit
+                    && !(self.composite_domain == CompositeDomain::VotingCommit
+                        && shielded_send_result(&result.ty))
+                {
                     return None;
                 }
             }
@@ -4317,4 +4353,14 @@ pub(super) fn lower_reset_payout<'a>(
     circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
 ) -> Option<TypedPlan> {
     reset_payout::lower(circuit, ledger, witnesses, pure, circuits)
+}
+
+pub(super) fn lower_voting_commit<'a>(
+    circuit: &StatefulCircuit,
+    ledger: &'a HashMap<&'a str, &'a LedgerField>,
+    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,
+    pure: &'a HashMap<&'a str, &'a PureCircuit>,
+    circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
+) -> Option<TypedPlan> {
+    voting_commit::lower(circuit, ledger, witnesses, pure, circuits)
 }

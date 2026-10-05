@@ -29,7 +29,7 @@ pub(super) fn write_type(ty: &Type) -> bool {
 // argument. Require its direct output forwarding without formal shadowing.
 // Owner/commitment/claim identity is still checked by exact offer reconciliation
 // and the ledger; this predicate does not attempt to prove crypto equations.
-fn forwards_received_coin(action: &StateAction, formal: &str) -> bool {
+pub(super) fn forwards_received_coin(action: &StateAction, formal: &str) -> bool {
     match action {
         StateAction::Sequence { actions } => {
             actions.iter().all(|a| forwards_received_coin(a, formal))

@@ -153,7 +153,7 @@ fn check(out: CircuitResult<Private, ()>, row: &Value) {
     );
 }
 #[test]
-fn original_vote_commit_native_matches_eighteen_independent_ts_cases() {
+fn original_vote_commit_native_recorded_matches_eighteen_independent_ts_cases() {
     let rows: Value = serde_json::from_str(include_str!(
         "../../../runtime-rs/tests/fixtures/micro-dao-vote-commit.json"
     ))
@@ -164,6 +164,17 @@ fn original_vote_commit_native_matches_eighteen_independent_ts_cases() {
         let w = Witness::new(row["options"]["mode"].as_str().unwrap_or("normal"));
         let (ctx, coin) = context_coin(row);
         let native = c::vote_commit(ctx, &w, row["options"]["ballot"] != false, coin);
+        let rw = Witness::new(row["options"]["mode"].as_str().unwrap_or("normal"));
+        let (rctx, rcoin) = context_coin(row);
+        let recorded =
+            c::recorded::vote_commit(rctx, &rw, row["options"]["ballot"] != false, rcoin);
+        assert_eq!(
+            json!(*rw.calls.borrow()),
+            row["witnessCalls"],
+            "{}",
+            row["name"]
+        );
+
         assert_eq!(
             json!(*w.calls.borrow()),
             row["witnessCalls"],
@@ -173,6 +184,14 @@ fn original_vote_commit_native_matches_eighteen_independent_ts_cases() {
         if let Some(expected) = row["error"].as_str() {
             let err = native.err().expect("expected source rejection");
             let text = err.to_string();
+            assert_eq!(
+                recorded
+                    .err()
+                    .expect("recorded source rejection")
+                    .to_string(),
+                text
+            );
+
             match row["name"].as_str().unwrap() {
                 "secretMalformed" => {
                     assert!(text.contains("Bytes<32>"));
@@ -189,7 +208,61 @@ fn original_vote_commit_native_matches_eighteen_independent_ts_cases() {
             }
         } else {
             successes += 1;
-            check(native.unwrap(), row);
+            let native = native.unwrap();
+            let recorded = recorded.unwrap();
+            assert_eq!(
+                recorded.execution.context.query.state,
+                native.context.query.state
+            );
+            assert_eq!(
+                recorded.execution.context.query.effects,
+                native.context.query.effects
+            );
+            assert_eq!(
+                recorded.execution.context.circuit_zswap(),
+                native.context.circuit_zswap()
+            );
+            assert_eq!(
+                recorded.execution.context.private_state,
+                native.context.private_state
+            );
+            assert_eq!(
+                recorded.execution.private_transcript_outputs,
+                native.private_transcript_outputs
+            );
+            assert_eq!(recorded.execution.gas_cost, native.gas_cost);
+            assert_eq!(json!(recorded.public.verify_ops()), row["publicTranscript"]);
+            assert_eq!(recorded.public.verify_ops().len(), 56);
+            // Independent raw TS replay uses the provisional map; authoritative
+            // strict transaction proofs exercise the retained offer separately.
+            let mut initial = recorded.public.initial().clone();
+            initial.call_context.com_indices = recorded
+                .execution
+                .context
+                .query
+                .call_context
+                .com_indices
+                .clone();
+            let replay = initial
+                .query(
+                    recorded.public.verify_ops(),
+                    None,
+                    &native.context.cost_model,
+                )
+                .unwrap();
+            assert_eq!(replay.context.state, native.context.query.state);
+            assert_eq!(replay.context.effects, native.context.query.effects);
+            for dimension in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+                assert_eq!(
+                    json!(replay.gas_cost)[dimension]
+                        .as_u64()
+                        .unwrap()
+                        .to_string(),
+                    row["replayProbe"]["gas"][dimension]
+                );
+            }
+            check(recorded.execution, row);
+            check(native, row);
         }
     }
     assert_eq!(successes, 4);

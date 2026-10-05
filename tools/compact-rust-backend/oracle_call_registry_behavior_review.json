@@ -22,11 +22,11 @@
   },
   "artifact_sha256": {
     "runtime-rs/tests/fixtures/direct-call-registry.json": "b24ff711894c23864b524e88271ed85973d4b43c2f7f90c6d14a27092311e73e",
-    "runtime-rs/tests/fixtures/capture-direct-call-registry.mjs": "3e2cd3c731902b0962e1767c63a38cf879e2867dfd35f9c21c322fc06c69daba",
+    "runtime-rs/tests/fixtures/capture-direct-call-registry.mjs": "37994aa4cc7537fb8d3c126b71f602e58c12bf47b094ddba3192558a13333c4a",
     "examples/rust_backend/call_arg_declared_type.compact": "4fcef200298b909bc50d9b59c9b5ab3d72402d55a2179e01adba9e57bbf9a850",
     "examples/rust_backend/asset_registry_oracle.compact": "2027ebbced964b5ae2271b11018734ef317776d93c23721ec622f30d79cbd1c2",
-    "tests-rust-backend/call-arg-declared-type/tests/direct_pure_behavior.rs": "a80c685efc17dd64560c951ade7483f29913b8d6391f27b77c312b53bf4076ef",
-    "tests-rust-backend/asset-registry-oracle/tests/direct_behavior.rs": "49fb87d913e93cbad694f671625b74cf97f9237751c7c69a052a377e879d336d"
+    "tests-rust-backend/call-arg-declared-type/tests/direct_pure_behavior.rs": "ae013a6b596794be0acd58e354129b9535e301ce0b3bff10af021f8ad7e0f675",
+    "tests-rust-backend/asset-registry-oracle/tests/direct_behavior.rs": "93e313c4ecbb2f007ab0d8f5f9eaf9c3e17650963b24952dc420d6419249a72b"
   },
   "reviewed_export_count": 11,
   "pure_case_count": 30,

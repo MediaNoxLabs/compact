@@ -1211,11 +1211,11 @@
   ],
   "reviewed_rust_test_sha256": {
     "tests-rust-backend/assert-parity-oracle/tests/assert_parity_oracle.rs": "26845d607fcf156a2d8ddbe2aa8180f3e29d19b1ef414048ff9dc4b818420f22",
-    "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs": "f4e8977efa115d8779e979187c85d7aee5a5b89fa653b23fc982117a3135608c",
+    "tests-rust-backend/literal-coercion-oracle/tests/direct_behavior.rs": "f4518b0732e78005cd50926d2dfb5fbc820f2c8ffb4a620acd3a094c07272e2f",
     "tests-rust-backend/ternary-cond-oracle/tests/ternary_cond_oracle.rs": "1fec7dee7318349f74baabe2c56aa544c9dbd1baa605acf652d1355cdbf5d365"
   },
   "capture_sha256": "3d55db7a0c7e57a2be50b6c60ff1017ae86f00be9887c404d06460ea81db062d",
   "capture_script": "runtime-rs/tests/fixtures/capture-oracle-direct-behavior.mjs",
-  "capture_script_sha256": "5b75704cd67d5a94a0cccae73c31cc04d5c1549773a158df4b0c2d59a04a611a",
+  "capture_script_sha256": "ca978effa79ae3f65a9879dc6df515c8c44ca6efc34900a1fe551154dcb9bcd1",
   "maintenance_review": "ADR221 adds a separate streaming-true test and full-program equality. The ADR216 assert_direct_trace/walkerVectorElement block and cases are byte-identically retained. Integrated file hash refreshed after manual diff and exact suffix comparison."
 }

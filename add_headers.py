@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import argparse
 import json
 import logging
 import os
@@ -206,10 +207,18 @@ class HeaderManager:
 def main():
     import sys
 
+    parser = argparse.ArgumentParser(
+        description="Add missing license headers, or validate without modifying files.",
+        allow_abbrev=False,
+    )
+    parser.add_argument(
+        "--validate", action="store_true",
+        help="check headers without changing files; exit 1 when headers are missing",
+    )
+    args = parser.parse_args()
     header_manager = HeaderManager("header_config.json", ".")
 
-    # Check if --validate flag is passed
-    if len(sys.argv) > 1 and sys.argv[1] == "--validate":
+    if args.validate:
         missing = header_manager.validate_headers()
         if missing:
             logging.error(f"❌ {len(missing)} file(s) missing headers")

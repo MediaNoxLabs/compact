@@ -6,8 +6,8 @@
   "artifact_sha256": {
     "examples/rust_backend/ternary_cond_oracle.compact": "e95aef740573d9e5ba8980a74c0eabdf1c5fad4948750aeaa2a80502c3025b73",
     "runtime-rs/tests/fixtures/ternary-pure-behavior.json": "6645036a67f731b85e2cca4500d445f920ce58568532e681fab90f461bd0fa03",
-    "runtime-rs/tests/fixtures/capture-ternary-pure-behavior.mjs": "99b6ea739f1bdf2e218c363134d4b638714d9a78b4bb0f71c6bda6403fefb182",
-    "tests-rust-backend/ternary-cond-oracle/tests/pure_behavior.rs": "376da04a0d66046f57a91dda03c4709641070763e44079b86a81a50c500dc26e"
+    "runtime-rs/tests/fixtures/capture-ternary-pure-behavior.mjs": "675b17a3e04de8599a31d4999fe4e7322ba472bc93018d8de5362976da4334cc",
+    "tests-rust-backend/ternary-cond-oracle/tests/pure_behavior.rs": "d931bee5938efb118d088e5648acd50086f1fe9d5e5b328fef8fa6ecb1c50d39"
   },
   "capture": "runtime-rs/tests/fixtures/ternary-pure-behavior.json",
   "capture_provenance": {

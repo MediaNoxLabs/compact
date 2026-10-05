@@ -188,6 +188,43 @@ fn set_size_operand(value: &Expr) -> Option<(&str, u8)> {
     }
 }
 
+fn list_length_operand(value: &Expr) -> Option<(&str, u8)> {
+    match value {
+        Expr::ListLength { field, index } => Some((field, *index)),
+        Expr::Coerce { value, ty }
+            if *ty
+                == (Type::Unsigned {
+                    max: u64::MAX.to_string(),
+                }) =>
+        {
+            list_length_operand(value)
+        }
+        _ => None,
+    }
+}
+
+fn list_head_field<'a>(
+    value: &'a Expr,
+    expected_field: &str,
+    expected_index: usize,
+) -> Option<(&'a str, u8, &'a Type)> {
+    let Expr::StructField {
+        value,
+        field,
+        index,
+    } = value
+    else {
+        return None;
+    };
+    if field != expected_field || *index != expected_index {
+        return None;
+    }
+    let Expr::ListHead { field, index, ty } = value.as_ref() else {
+        return None;
+    };
+    Some((field, *index, ty))
+}
+
 fn uint64_literal(value: &Expr) -> Option<u64> {
     match value {
         Expr::UnsignedLiteral { value, max } => {
@@ -1489,7 +1526,9 @@ fn render_recorded_item(
                 ));
                 Ok(Some(syn::parse_quote!(#observed)))
             }
-            Expr::SetIsEmpty { field, index } | Expr::MapIsEmpty { field, index } => {
+            Expr::SetIsEmpty { field, index }
+            | Expr::MapIsEmpty { field, index }
+            | Expr::ListIsEmpty { field, index } => {
                 let declaration = ledger_fields
                     .get(field.as_str())
                     .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
@@ -1497,6 +1536,7 @@ fn render_recorded_item(
                     (value, &declaration.declaration),
                     (Expr::SetIsEmpty { .. }, LedgerFieldKind::Set { .. })
                         | (Expr::MapIsEmpty { .. }, LedgerFieldKind::Map { .. })
+                        | (Expr::ListIsEmpty { .. }, LedgerFieldKind::List { .. })
                 );
                 if !matching_kind || declaration.index != *index {
                     return Ok(None);
@@ -1512,6 +1552,41 @@ fn render_recorded_item(
                         crate::ledger_slots::#slot.record_is_empty(frame)?;
                 ));
                 Ok(Some(syn::parse_quote!(#observed)))
+            }
+            Expr::StructField {
+                value,
+                field,
+                index: 0,
+            } if field == "is_some" => {
+                let Expr::ListHead {
+                    field: list_field,
+                    index,
+                    ty,
+                } = value.as_ref()
+                else {
+                    return Ok(None);
+                };
+                let declaration = ledger_fields
+                    .get(list_field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(list_field.clone()))?;
+                let LedgerFieldKind::List { ty: element } = &declaration.declaration else {
+                    return Ok(None);
+                };
+                if declaration.index != *index || *ty != list_head_result_type(element, ty) {
+                    return Ok(None);
+                }
+                let slot = ident(list_field)?;
+                let result_ty = rust_type(ty)?;
+                let observed = syn::Ident::new(
+                    &format!("__compact_recorded_head_{}", *next_temp),
+                    Span::call_site(),
+                );
+                *next_temp += 1;
+                steps.push(syn::parse_quote!(
+                    let (frame, #observed): (_, #result_ty) =
+                        crate::ledger_slots::#slot.record_head::<#result_ty, _, _>(frame)?;
+                ));
+                Ok(Some(syn::parse_quote!(#observed.is_some)))
             }
             Expr::Equal { left, right } | Expr::NotEqual { left, right } => {
                 let boolean_literal = match (&**left, &**right) {
@@ -1572,6 +1647,79 @@ fn render_recorded_item(
                         Ok(Some(syn::parse_quote!(#observed == #expected)))
                     } else {
                         Ok(Some(syn::parse_quote!(#observed != #expected)))
+                    };
+                }
+                let length_comparison = list_length_operand(left)
+                    .and_then(|(field, index)| {
+                        uint64_literal(right).map(|value| (field, index, value))
+                    })
+                    .or_else(|| {
+                        list_length_operand(right).and_then(|(field, index)| {
+                            uint64_literal(left).map(|value| (field, index, value))
+                        })
+                    });
+                if let Some((field, index, expected)) = length_comparison {
+                    let declaration = ledger_fields
+                        .get(field)
+                        .ok_or_else(|| RenderError::UnknownLedgerField(field.to_owned()))?;
+                    if !matches!(declaration.declaration, LedgerFieldKind::List { .. })
+                        || declaration.index != index
+                    {
+                        return Ok(None);
+                    }
+                    let slot = ident(&declaration.id)?;
+                    let observed = syn::Ident::new(
+                        &format!("__compact_recorded_length_{}", *next_temp),
+                        Span::call_site(),
+                    );
+                    *next_temp += 1;
+                    steps.push(syn::parse_quote!(
+                        let (frame, #observed): (_, u64) =
+                            crate::ledger_slots::#slot.record_length(frame)?;
+                    ));
+                    return if matches!(value, Expr::Equal { .. }) {
+                        Ok(Some(syn::parse_quote!(#observed == #expected)))
+                    } else {
+                        Ok(Some(syn::parse_quote!(#observed != #expected)))
+                    };
+                }
+                let head_comparison = list_head_field(left, "value", 1)
+                    .map(|head| (head, right.as_ref()))
+                    .or_else(|| {
+                        list_head_field(right, "value", 1).map(|head| (head, left.as_ref()))
+                    });
+                if let Some(((field, index, ty), expected)) = head_comparison {
+                    let declaration = ledger_fields
+                        .get(field)
+                        .ok_or_else(|| RenderError::UnknownLedgerField(field.to_owned()))?;
+                    let LedgerFieldKind::List { ty: element } = &declaration.declaration else {
+                        return Ok(None);
+                    };
+                    if declaration.index != index
+                        || *element != Type::Field
+                        || *ty != list_head_result_type(element, ty)
+                    {
+                        return Ok(None);
+                    }
+                    let Some(expected) = cell_source(expected, &Type::Field, locals, parameters)
+                    else {
+                        return Ok(None);
+                    };
+                    let slot = ident(field)?;
+                    let result_ty = rust_type(ty)?;
+                    let observed = syn::Ident::new(
+                        &format!("__compact_recorded_head_{}", *next_temp),
+                        Span::call_site(),
+                    );
+                    *next_temp += 1;
+                    steps.push(syn::parse_quote!(
+                        let (frame, #observed): (_, #result_ty) =
+                            crate::ledger_slots::#slot.record_head::<#result_ty, _, _>(frame)?;
+                    ));
+                    return if matches!(value, Expr::Equal { .. }) {
+                        Ok(Some(syn::parse_quote!(#observed.value == #expected)))
+                    } else {
+                        Ok(Some(syn::parse_quote!(#observed.value != #expected)))
                     };
                 }
                 let (field, index) = match (&**left, &**right) {

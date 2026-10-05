@@ -135,6 +135,19 @@ metadata.mkdir()
             package.write_text('include ./parts/reachable;\n')
             with self.assertRaisesRegex(ValueError, "not a quoted local path"):
                 inventory.make_inventory(root, [], compiler)
+    def test_adt_list_field_positive_source_is_checked(self):
+        manifest = json.loads(inventory.ADT_LIST_SOURCE_MANIFEST.read_text())
+        self.assertEqual(source_scope.cohort_membership_failures(manifest), [])
+        self.assertEqual(len(manifest["positive_sources"]), 1)
+        entry = manifest["positive_sources"][0]
+        self.assertEqual(entry["source"], "examples/adt/tests/list_field.compact")
+        self.assertEqual((entry["expected_ts"], entry["expected_rust"]),
+                         ("success", "success"))
+        self.assertEqual(entry["proof_circuits"],
+                         [{"name": "test", "pure": False, "proof": True}])
+        scanned = {path.relative_to(inventory.ROOT).as_posix()
+                   for path in inventory.source_paths(inventory.ROOT)}
+        self.assertIn(entry["source"], scanned)
 
     def test_adt_set_positive_cohort_is_checked_and_glob_locked(self):
         manifest = json.loads(inventory.ADT_SET_SOURCE_MANIFEST.read_text())

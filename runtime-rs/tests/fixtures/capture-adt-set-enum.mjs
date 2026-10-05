@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Compile examples/adt/tests/set_enum.compact with --target ts --skip-zk,
+// Compile a no-argument ADT test circuit with --target ts --skip-zk,
 // link contract/node_modules/@midnight-ntwrk/compact-runtime to runtime/,
 // then pass contract/index.js as the argument.
 import { pathToFileURL } from 'node:url';
@@ -59,6 +59,11 @@ function shape(operation) {
       resultAtoms: operation.popeq.result.value.map((atom) => Array.from(atom)),
     };
   }
+  if (operation.branch) return { kind: 'branch', skip: operation.branch.skip };
+  if (operation.swap) return { kind: 'swap', n: operation.swap.n };
+  if (operation.concat) return { kind: 'concat', cached: operation.concat.cached, n: operation.concat.n };
+  if (operation.jmp) return { kind: 'jmp', skip: operation.jmp.skip };
+  if (operation.addi) return { kind: 'addi', immediate: operation.addi.immediate };
   throw new Error(`unexpected operation: ${Object.keys(operation)}`);
 }
 

@@ -299,6 +299,89 @@ pub(crate) fn render_state_expression(
                 witness_effect,
             ))
         }
+        Expr::ListLength { field, index } => {
+            let declaration = ledger_fields
+                .get(field.as_str())
+                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+            if !matches!(declaration.declaration, LedgerFieldKind::List { .. })
+                || declaration.index != *index
+            {
+                return Err(RenderError::UnknownLedgerField(field.clone()));
+            }
+            let step = syn::Ident::new(
+                &format!("__compact_query_{}", *next_temp),
+                Span::call_site(),
+            );
+            *next_temp += 1;
+            let slot = ident(&declaration.id)?;
+            statements.push(syn::parse_quote!(
+                let #step = crate::ledger_slots::#slot.length(context)?;
+            ));
+            statements.push(syn::parse_quote!(context = #step.context;));
+            statements.push(syn::parse_quote!(total_cost += #step.gas_cost;));
+            *query_effect = true;
+            Ok((
+                syn::parse_quote!(
+                    runtime::BoundedUint::<18446744073709551615>::new(#step.result as u128)
+                        .expect("ledger List length fits Uint<64>")
+                ),
+                Type::Unsigned {
+                    max: u64::MAX.to_string(),
+                },
+                false,
+            ))
+        }
+        Expr::ListIsEmpty { field, index } => {
+            let declaration = ledger_fields
+                .get(field.as_str())
+                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+            if !matches!(declaration.declaration, LedgerFieldKind::List { .. })
+                || declaration.index != *index
+            {
+                return Err(RenderError::UnknownLedgerField(field.clone()));
+            }
+            let step = syn::Ident::new(
+                &format!("__compact_query_{}", *next_temp),
+                Span::call_site(),
+            );
+            *next_temp += 1;
+            let slot = ident(&declaration.id)?;
+            statements.push(syn::parse_quote!(
+                let #step = crate::ledger_slots::#slot.is_empty(context)?;
+            ));
+            statements.push(syn::parse_quote!(context = #step.context;));
+            statements.push(syn::parse_quote!(total_cost += #step.gas_cost;));
+            *query_effect = true;
+            Ok((syn::parse_quote!(#step.result), Type::Boolean, false))
+        }
+        Expr::ListHead { field, index, ty } => {
+            let declaration = ledger_fields
+                .get(field.as_str())
+                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+            let LedgerFieldKind::List { ty: element } = &declaration.declaration else {
+                return Err(RenderError::UnknownLedgerField(field.clone()));
+            };
+            if declaration.index != *index || *ty != list_head_result_type(element, ty) {
+                return Err(RenderError::TypeMismatch {
+                    expected: list_head_result_type(element, ty),
+                    actual: ty.clone(),
+                });
+            }
+            let step = syn::Ident::new(
+                &format!("__compact_query_{}", *next_temp),
+                Span::call_site(),
+            );
+            *next_temp += 1;
+            let slot = ident(&declaration.id)?;
+            let result_ty = rust_type(ty)?;
+            statements.push(syn::parse_quote!(
+                let #step = crate::ledger_slots::#slot.head::<#result_ty, _, _>(context)?;
+            ));
+            statements.push(syn::parse_quote!(context = #step.context;));
+            statements.push(syn::parse_quote!(total_cost += #step.gas_cost;));
+            *query_effect = true;
+            Ok((syn::parse_quote!(#step.result), ty.clone(), false))
+        }
         Expr::SetSize { field, index } => {
             let declaration = ledger_fields
                 .get(field.as_str())
@@ -1651,7 +1734,10 @@ fn expression_contains(expression: &Expr, predicate: &impl Fn(&Expr) -> bool) ->
         | Expr::KernelSelf { .. }
         | Expr::SetSize { .. }
         | Expr::SetIsEmpty { .. }
-        | Expr::MapIsEmpty { .. } => false,
+        | Expr::MapIsEmpty { .. }
+        | Expr::ListLength { .. }
+        | Expr::ListIsEmpty { .. }
+        | Expr::ListHead { .. } => false,
     }
 }
 

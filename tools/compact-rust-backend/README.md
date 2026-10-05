@@ -89,6 +89,12 @@ contract circuit. The proof-required `set_field.test`, `set_enum.test`, and
 application coverage through generated fixtures. The cohort is tracked in
 #188, #190, #196, and #201; source acceptance alone does not establish
 executing parity for the remaining circuits.
+The bounded ADT List manifest `parity_positive_adt_list_sources.json` admits
+`examples/adt/tests/list_field.compact::test` after the nested List query
+lowering in ADR-0101/#204. Its generated fixture checks the TypeScript,
+native, and recorded state, four gas dimensions, ordered VM trace, and replay;
+the proof smoke verifies and applies the observed call through ledger-8.
+The other eleven `list_*.compact` sources are not claimed by this receipt.
 The lexical scanner includes `pure circuit` and `export pure circuit`
 declarations, with compiler `contract-info.json` supplying proof applicability
 even when the Rust capability report has no recorded method for a pure circuit.

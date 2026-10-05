@@ -4378,6 +4378,150 @@ fn map_insert_and_lookup_require_key_and_value_types() {
 }
 
 #[test]
+fn nested_list_queries_record_in_order_and_reject_wrong_shape() {
+    let maybe_field = Type::Struct {
+        name: "Maybe".into(),
+        fields: vec![
+            StructField {
+                name: "is_some".into(),
+                ty: Type::Boolean,
+            },
+            StructField {
+                name: "value".into(),
+                ty: Type::Field,
+            },
+        ],
+    };
+    let head = Expr::ListHead {
+        field: "items".into(),
+        index: 0,
+        ty: maybe_field.clone(),
+    };
+    let mut contract = identity(Type::Unit, Expr::Unit);
+    contract.ledger_fields = vec![LedgerField {
+        source: None,
+        id: "items".into(),
+        index: 0,
+        path: vec![],
+        declaration: LedgerFieldKind::List { ty: Type::Field },
+    }];
+    contract.stateful_circuits = vec![StatefulCircuit {
+        source: None,
+        internal: false,
+        name: "test".into(),
+        parameters: vec![],
+        actions: vec![
+            StateAction::Assert {
+                condition: Expr::ListIsEmpty {
+                    field: "items".into(),
+                    index: 0,
+                },
+                message: "empty".into(),
+            },
+            StateAction::Assert {
+                condition: Expr::Equal {
+                    left: Box::new(Expr::ListLength {
+                        field: "items".into(),
+                        index: 0,
+                    }),
+                    right: Box::new(Expr::UnsignedLiteral {
+                        value: "0".into(),
+                        max: u64::MAX.to_string(),
+                    }),
+                },
+                message: "length".into(),
+            },
+            StateAction::Assert {
+                condition: Expr::NotEqual {
+                    left: Box::new(Expr::StructField {
+                        value: Box::new(head.clone()),
+                        field: "is_some".into(),
+                        index: 0,
+                    }),
+                    right: Box::new(Expr::Boolean { value: true }),
+                },
+                message: "head absent".into(),
+            },
+            StateAction::ListPushFront {
+                field: "items".into(),
+                index: 0,
+                value: Expr::FieldLiteral { value: "7".into() },
+            },
+            StateAction::Assert {
+                condition: Expr::Equal {
+                    left: Box::new(Expr::StructField {
+                        value: Box::new(head),
+                        field: "value".into(),
+                        index: 1,
+                    }),
+                    right: Box::new(Expr::FieldLiteral { value: "7".into() }),
+                },
+                message: "head value".into(),
+            },
+        ],
+        result: Type::Unit,
+        return_value: StateReturn::Unit,
+    }];
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.capabilities.circuits[0].observed_call);
+    let recorded = rendered.source.split("pub mod recorded").nth(1).unwrap();
+    let empty = recorded.find("record_is_empty(frame)").unwrap();
+    let length = recorded.find("record_length(frame)").unwrap();
+    let head = recorded.find("record_head::<crate::types::Maybe").unwrap();
+    let push = recorded.find("record_push_front(frame,").unwrap();
+    assert!(empty < length && length < head && head < push);
+
+    {
+        let StateAction::Assert { condition, .. } = &mut contract.stateful_circuits[0].actions[1]
+        else {
+            unreachable!()
+        };
+        let Expr::Equal { left, .. } = condition else {
+            unreachable!()
+        };
+        **left = Expr::ListLength {
+            field: "items".into(),
+            index: 1,
+        };
+    }
+    assert!(matches!(
+        render(&contract),
+        Err(RenderError::UnknownLedgerField(_))
+    ));
+
+    let StateAction::Assert { condition, .. } = &mut contract.stateful_circuits[0].actions[1]
+    else {
+        unreachable!()
+    };
+    let Expr::Equal { left, .. } = condition else {
+        unreachable!()
+    };
+    **left = Expr::ListLength {
+        field: "items".into(),
+        index: 0,
+    };
+    let StateAction::Assert { condition, .. } = &mut contract.stateful_circuits[0].actions[4]
+    else {
+        unreachable!()
+    };
+    let Expr::Equal { left, .. } = condition else {
+        unreachable!()
+    };
+    let Expr::StructField { value, .. } = left.as_mut() else {
+        unreachable!()
+    };
+    let Expr::ListHead { ty, .. } = value.as_mut() else {
+        unreachable!()
+    };
+    *ty = Type::Boolean;
+    assert!(matches!(
+        render(&contract),
+        Err(RenderError::TypeMismatch { .. })
+    ));
+}
+
+#[test]
 fn list_push_front_and_length_validate_declared_types() {
     let mut contract = Contract {
         schema_version: 11,

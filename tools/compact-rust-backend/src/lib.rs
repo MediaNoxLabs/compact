@@ -805,10 +805,14 @@ fn collect_expression_types(
         Expr::NativeWitnessCall { builtin } => {
             collect_named_types(&builtin.result_type(), structs, enums)?;
         }
-        Expr::KernelSelf { ty } => collect_named_types(ty, structs, enums)?,
+        Expr::KernelSelf { ty } | Expr::ListHead { ty, .. } => {
+            collect_named_types(ty, structs, enums)?
+        }
         Expr::SetSize { .. }
         | Expr::SetIsEmpty { .. }
         | Expr::MapIsEmpty { .. }
+        | Expr::ListLength { .. }
+        | Expr::ListIsEmpty { .. }
         | Expr::CellRead { .. } => {}
     }
     Ok(())
@@ -2025,6 +2029,9 @@ fn expression_with_calls(
         | Expr::SetIsEmpty { .. }
         | Expr::SetSize { .. }
         | Expr::MapIsEmpty { .. }
+        | Expr::ListLength { .. }
+        | Expr::ListIsEmpty { .. }
+        | Expr::ListHead { .. }
         | Expr::CellRead { .. }
         | Expr::KernelSelf { .. } => Err(RenderError::EffectfulExpression),
         Expr::FieldCast { value } => {

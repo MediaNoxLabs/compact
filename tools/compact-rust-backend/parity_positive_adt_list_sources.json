@@ -1,0 +1,23 @@
+{
+  "format_version": 1,
+  "suite": "tests-e2e/src/tests/compiler/compiler.adt.e2e.test.ts",
+  "purpose": "Bounded List<Field> source from the dynamic TypeScript ADT compiler suite with executing Rust parity and source proof",
+  "source_glob": "examples/adt/tests/list_field.compact",
+  "positive_sources": [
+    {
+      "source": "examples/adt/tests/list_field.compact",
+      "expected_ts": "success",
+      "expected_rust": "success",
+      "proof_circuits": [
+        {
+          "name": "test",
+          "pure": false,
+          "proof": true
+        }
+      ],
+      "pure_declarations": 0,
+      "exported_pure_declarations": 0
+    }
+  ],
+  "expected_rejections": []
+}

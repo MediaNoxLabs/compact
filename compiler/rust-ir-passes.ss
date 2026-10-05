@@ -1325,6 +1325,19 @@
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*))
                          (cons "key" (stateful-typed-expression-ir (car expr*) (car adt-arg*) src witness-ids)))]
+                [(and (eq? adt-name 'List) (eq? ledger-op 'length) (null? expr*))
+                 (object (cons "kind" "list_length")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*)))]
+                [(and (eq? adt-name 'List) (eq? ledger-op 'isEmpty) (null? expr*))
+                 (object (cons "kind" "list_is_empty")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*)))]
+                [(and (eq? adt-name 'List) (eq? ledger-op 'head) (null? expr*))
+                 (object (cons "kind" "list_head")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*))
+                         (cons "ty" (type-ir type src)))]
                 [(and (memq adt-name '(MerkleTree HistoricMerkleTree))
                       (eq? ledger-op 'checkRoot)
                       (= (length expr*) 1))

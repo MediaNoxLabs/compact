@@ -633,6 +633,19 @@ pub enum Expr {
         index: u8,
         key: Box<Expr>,
     },
+    ListLength {
+        field: String,
+        index: u8,
+    },
+    ListIsEmpty {
+        field: String,
+        index: u8,
+    },
+    ListHead {
+        field: String,
+        index: u8,
+        ty: Type,
+    },
     MerkleCheckRoot {
         field: String,
         index: u8,

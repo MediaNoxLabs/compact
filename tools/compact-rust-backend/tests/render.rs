@@ -4340,7 +4340,7 @@ fn boolean_pair_hash_cell_assertion_records_read_before_counter_write() {
         length: 2,
     };
     let mut contract = Contract {
-        schema_version: 11,
+        schema_version: 12,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],

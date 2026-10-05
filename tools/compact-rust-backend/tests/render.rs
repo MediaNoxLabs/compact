@@ -3592,6 +3592,144 @@ fn closed_field_pair_hash_call_records_typed_bridge_without_admitting_other_hash
 }
 
 #[test]
+fn typed_pair_hash_call_records_shared_unit_helper_and_conditional_caller() {
+    let vector = Type::Vector {
+        element: Box::new(Type::Field),
+        length: 2,
+    };
+    let argument = Expr::Vector {
+        element: Type::Field,
+        elements: vec![
+            Expr::FieldLiteral { value: "0".into() },
+            Expr::FieldLiteral { value: "1".into() },
+        ],
+    };
+    let call = StateAction::CircuitCall {
+        name: "storeVector".into(),
+        arguments: vec![argument],
+    };
+    let mut contract = Contract {
+        schema_version: 11,
+        type_aliases: vec![],
+        constructor: None,
+        witnesses: vec![],
+        ledger_fields: vec![
+            LedgerField {
+                source: None,
+                id: "value".into(),
+                index: 0,
+                path: vec![],
+                declaration: LedgerFieldKind::Cell { ty: Type::Field },
+            },
+            LedgerField {
+                source: None,
+                id: "flag".into(),
+                index: 1,
+                path: vec![],
+                declaration: LedgerFieldKind::Cell { ty: Type::Boolean },
+            },
+        ],
+        circuits: vec![PureCircuit {
+            source: None,
+            internal: false,
+            name: "hashVector".into(),
+            parameters: vec![Parameter {
+                name: "input".into(),
+                ty: vector.clone(),
+            }],
+            result: Type::Field,
+            body: Expr::TransientHash {
+                value: Box::new(Expr::Parameter {
+                    name: "input".into(),
+                }),
+            },
+        }],
+        stateful_circuits: vec![
+            StatefulCircuit {
+                source: None,
+                internal: true,
+                name: "storeVector".into(),
+                parameters: vec![Parameter {
+                    name: "v".into(),
+                    ty: vector,
+                }],
+                result: Type::Unit,
+                return_value: StateReturn::Unit,
+                actions: vec![StateAction::Let {
+                    bindings: vec![LocalBinding {
+                        name: "hash".into(),
+                        ty: Type::Field,
+                        value: Expr::Call {
+                            name: "hashVector".into(),
+                            arguments: vec![Expr::Parameter { name: "v".into() }],
+                        },
+                    }],
+                    action: Box::new(StateAction::CellWrite {
+                        field: "value".into(),
+                        index: 0,
+                        value: Expr::Parameter {
+                            name: "hash".into(),
+                        },
+                    }),
+                }],
+            },
+            StatefulCircuit {
+                source: None,
+                internal: false,
+                name: "bare".into(),
+                parameters: vec![],
+                result: Type::Unit,
+                return_value: StateReturn::Unit,
+                actions: vec![call.clone()],
+            },
+            StatefulCircuit {
+                source: None,
+                internal: false,
+                name: "conditional".into(),
+                parameters: vec![],
+                result: Type::Unit,
+                return_value: StateReturn::Unit,
+                actions: vec![StateAction::If {
+                    condition: Expr::CellRead {
+                        field: "flag".into(),
+                        index: 1,
+                    },
+                    then: Box::new(call),
+                    otherwise: Box::new(StateAction::Sequence { actions: vec![] }),
+                }],
+            },
+        ],
+    };
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert_eq!(rendered.capabilities.circuits.len(), 2);
+    assert!(
+        rendered
+            .capabilities
+            .circuits
+            .iter()
+            .all(|c| c.recorded && c.observed_call)
+    );
+    assert!(
+        rendered
+            .source
+            .contains("fn __compact_recorded_body_storeVector")
+    );
+    assert!(rendered.source.contains("pure_circuits::hashVector("));
+    assert!(rendered.source.contains("__compact_recorded_pair_arg_"));
+
+    contract.circuits[0].body = Expr::TransientHash {
+        value: Box::new(Expr::FieldLiteral { value: "7".into() }),
+    };
+    let rejected = render_with_capabilities(&contract).unwrap();
+    assert!(rejected.capabilities.circuits.iter().all(|c| !c.recorded));
+    assert!(rejected.capabilities.circuits.iter().all(|c| {
+        c.recording_unavailable
+            .as_ref()
+            .is_some_and(|gap| gap.ir_node == "Expr::Call")
+    }));
+}
+
+#[test]
 fn unsupported_pure_call_and_supported_field_arithmetic_have_exact_capabilities() {
     let mut contract = Contract {
         schema_version: 11,

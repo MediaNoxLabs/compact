@@ -30,6 +30,7 @@ mod field_pair_hash;
 mod merkle_verify;
 mod persistent_commit;
 mod pure_field_arguments;
+mod stateful_pair_hash;
 mod stateful_pure_return;
 mod test_center_counter;
 mod witness_assert;
@@ -1035,6 +1036,25 @@ fn main() -> Result<(), Box<dyn Error>> {
             Ok(Ok(())) => Ok(()),
             Ok(Err(error)) => Err(error.into()),
             Err(_) => Err("field pair hash proof thread panicked".into()),
+        };
+    }
+    if first.as_deref() == Some(OsStr::new("--stateful-pair-hash")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --stateful-pair-hash <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err(
+                "usage: compact-rust-proof-smoke --stateful-pair-hash <proof-output>".into(),
+            );
+        }
+        let proof = std::thread::Builder::new()
+            .name("stateful-pair-hash-proof".into())
+            .stack_size(64 * 1024 * 1024)
+            .spawn(move || stateful_pair_hash::run(Path::new(&root)).map_err(|e| e.to_string()))?;
+        return match proof.join() {
+            Ok(Ok(())) => Ok(()),
+            Ok(Err(error)) => Err(error.into()),
+            Err(_) => Err("stateful pair hash proof thread panicked".into()),
         };
     }
     if first.as_deref() == Some(OsStr::new("--pure-field-arguments")) {

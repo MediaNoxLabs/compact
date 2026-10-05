@@ -1399,7 +1399,8 @@ def main() -> None:
             )
             for name in ("commitSmall", "commitU128", "commitFieldOnly",
                          "pureBodyFieldOnly", "pureBodyVec",
-                         "bridgeTupleIntoVec", "bridgeVecIntoTuple"):
+                         "bridgeTupleIntoVec", "bridgeVecIntoTuple",
+                         "pureFromImpure", "impureBare", "impureInIfArm"):
                 capability = next(circuit for circuit in capabilities["circuits"]
                                   if circuit["name"] == name)
                 assert capability["proof_required"] and capability["recorded"] \
@@ -1414,6 +1415,13 @@ def main() -> None:
             for extension in ("zkir", "bzkir"):
                 assert (persistent_commit_proof / "zkir" /
                         f"bridgeTupleIntoVec.{extension}").is_file()
+            for name in ("impureBare", "impureInIfArm"):
+                for extension in ("prover", "verifier"):
+                    assert (persistent_commit_proof / "keys" /
+                            f"{name}.{extension}").is_file()
+                for extension in ("zkir", "bzkir"):
+                    assert (persistent_commit_proof / "zkir" /
+                            f"{name}.{extension}").is_file()
             internal_pure_call_proof = base / "internal-pure-call-proof"
             run(compiler, "--target", "rust", str(INTERNAL_PURE_CALL_SOURCE),
                 str(internal_pure_call_proof))
@@ -1623,6 +1631,10 @@ def main() -> None:
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 "--field-pair-hash", str(persistent_commit_proof),
+            )
+            run(
+                "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--stateful-pair-hash", str(persistent_commit_proof),
             )
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",

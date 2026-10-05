@@ -361,10 +361,11 @@ fn closed_pure_field_call(
     allowed
 }
 
-/// A zero-argument pure Field helper may be evaluated during recording when
-/// its entire transitive body only constructs and hashes a closed pair of
-/// Fields. In particular, tuple/vector coercions are checked at their declared
-/// types instead of assuming the two representations are interchangeable.
+/// A pure Field helper may be evaluated during recording when its entire
+/// transitive body only constructs and hashes a pair of Fields. Its declared
+/// input is either empty or one typed pair; the caller must separately lower
+/// that input through the typed Cell source. Tuple/vector coercions are checked
+/// at their declared types instead of assuming the representations match.
 fn closed_pure_field_pair_hash_call(
     name: &str,
     pure_circuits: &HashMap<&str, &PureCircuit>,
@@ -470,14 +471,22 @@ fn closed_pure_field_pair_hash_call(
     let Some(callee) = pure_circuits.get(name) else {
         return false;
     };
-    if !callee.parameters.is_empty() || callee.result != Type::Field {
+    if callee.result != Type::Field
+        || !(callee.parameters.is_empty()
+            || (callee.parameters.len() == 1 && field_pair(&callee.parameters[0].ty)))
+    {
         return false;
     }
+    let locals = callee
+        .parameters
+        .iter()
+        .map(|parameter| (parameter.name.clone(), parameter.ty.clone()))
+        .collect();
     let mut saw_hash = false;
     let mut visiting = HashSet::from([name.to_owned()]);
     body_type(
         &callee.body,
-        &HashMap::new(),
+        &locals,
         pure_circuits,
         &mut visiting,
         &mut saw_hash,
@@ -2466,9 +2475,43 @@ fn render_recorded_item(
                             continue;
                         }
                         if let Expr::Call { name, arguments } = &binding.value
-                            && arguments.is_empty()
                             && closed_pure_field_pair_hash_call(name, pure_circuits)
                         {
+                            let callee = pure_circuits
+                                .get(name.as_str())
+                                .ok_or_else(|| RenderError::UnknownCircuit(name.clone()))?;
+                            if arguments.len() != callee.parameters.len() {
+                                return Err(RenderError::ArgumentCount {
+                                    circuit: name.clone(),
+                                    expected: callee.parameters.len(),
+                                    actual: arguments.len(),
+                                });
+                            }
+                            let mut args = Vec::new();
+                            for (argument_index, (argument, parameter)) in
+                                arguments.iter().zip(&callee.parameters).enumerate()
+                            {
+                                let Some(argument_value) =
+                                    cell_source(argument, &parameter.ty, &scoped, parameters)
+                                else {
+                                    return Ok(RecordingOutcome::Unsupported(
+                                        RecordingGap::expression(
+                                            argument,
+                                            format!(
+                                                "{path}.bindings[{binding_index}].value.arguments[{argument_index}]"
+                                            ),
+                                        ),
+                                    ));
+                                };
+                                let arg = syn::Ident::new(
+                                    &format!("__compact_recorded_pair_arg_{}", *next_temp),
+                                    Span::call_site(),
+                                );
+                                *next_temp += 1;
+                                let ty = rust_type(&parameter.ty)?;
+                                steps.push(syn::parse_quote!(let #arg: #ty = #argument_value;));
+                                args.push(arg);
+                            }
                             let method = ident(name)?;
                             let value = syn::Ident::new(
                                 &format!("__compact_recorded_pure_pair_hash_{}", *next_temp),
@@ -2476,7 +2519,7 @@ fn render_recorded_item(
                             );
                             *next_temp += 1;
                             steps.push(syn::parse_quote! {
-                                let #value: runtime::Field = crate::pure_circuits::#method()?;
+                                let #value: runtime::Field = crate::pure_circuits::#method(#(#args),*)?;
                             });
                             scoped.insert(binding.name.clone(), syn::parse_quote!(#value));
                             continue;

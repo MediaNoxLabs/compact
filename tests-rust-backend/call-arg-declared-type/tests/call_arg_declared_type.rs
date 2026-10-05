@@ -229,7 +229,14 @@ fn recorded_field_pair_hash_calls_match_typescript_trace_and_gas() {
         "../../../runtime-rs/tests/fixtures/call-arg-declared-type.json"
     ))
     .unwrap();
-    for name in ["pureBodyVec", "bridgeTupleIntoVec", "bridgeVecIntoTuple"] {
+    for name in [
+        "pureBodyVec",
+        "bridgeTupleIntoVec",
+        "bridgeVecIntoTuple",
+        "pureFromImpure",
+        "impureBare",
+        "impureInIfArm",
+    ] {
         let native_context = initial_state(ConstructorContext::new(()))
             .unwrap()
             .into_circuit_context(ContractAddress::default());
@@ -240,12 +247,18 @@ fn recorded_field_pair_hash_calls_match_typescript_trace_and_gas() {
             "pureBodyVec" => pureBodyVec(native_context).unwrap(),
             "bridgeTupleIntoVec" => bridgeTupleIntoVec(native_context).unwrap(),
             "bridgeVecIntoTuple" => bridgeVecIntoTuple(native_context).unwrap(),
+            "pureFromImpure" => pureFromImpure(native_context).unwrap(),
+            "impureBare" => impureBare(native_context).unwrap(),
+            "impureInIfArm" => impureInIfArm(native_context).unwrap(),
             _ => unreachable!(),
         };
         let recorded = match name {
             "pureBodyVec" => compact_rust_call_arg_declared_type_fixture::ledger_contract::recorded::pureBodyVec(recording_context).unwrap(),
             "bridgeTupleIntoVec" => compact_rust_call_arg_declared_type_fixture::ledger_contract::recorded::bridgeTupleIntoVec(recording_context).unwrap(),
             "bridgeVecIntoTuple" => compact_rust_call_arg_declared_type_fixture::ledger_contract::recorded::bridgeVecIntoTuple(recording_context).unwrap(),
+            "pureFromImpure" => compact_rust_call_arg_declared_type_fixture::ledger_contract::recorded::pureFromImpure(recording_context).unwrap(),
+            "impureBare" => compact_rust_call_arg_declared_type_fixture::ledger_contract::recorded::impureBare(recording_context).unwrap(),
+            "impureInIfArm" => compact_rust_call_arg_declared_type_fixture::ledger_contract::recorded::impureInIfArm(recording_context).unwrap(),
             _ => unreachable!(),
         };
         boolean_observation_assertions::assert_ts_trace(

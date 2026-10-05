@@ -732,6 +732,19 @@ pub mod ledger_contract {
     /// Circuits with a replayable ordered ledger program.
     pub mod recorded {
         use midnight_compact_runtime as runtime;
+        fn __compact_recorded_body_storeVec<Private>(
+            frame: runtime::recording::RecordingFrame<Private>,
+            __compact_param_0: runtime::FixedVector<runtime::Field, 2>,
+        ) -> Result<(runtime::recording::RecordingFrame<Private>, ()), runtime::CompactError>
+        {
+            let __compact_recorded_pair_arg_0: runtime::FixedVector<runtime::Field, 2> =
+                (__compact_param_0).clone();
+            let __compact_recorded_pure_pair_hash_1: runtime::Field =
+                crate::pure_circuits::sumVec(__compact_recorded_pair_arg_0)?;
+            let frame = crate::ledger_slots::fieldCell
+                .record_write(frame, __compact_recorded_pure_pair_hash_1)?;
+            Ok((frame, ()))
+        }
         pub fn commitSmall<Private>(
             context: runtime::context::CircuitContext<Private>,
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
@@ -851,6 +864,61 @@ pub mod ledger_contract {
                 )
             })?;
             let frame = crate::ledger_slots::fieldCell.record_write(frame, __compact_witness_1)?;
+            Ok(frame.finish(()))
+        }
+        pub fn pureFromImpure<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_pair_arg_0: runtime::FixedVector<runtime::Field, 2> = {
+                let __compact_cast_source_0 =
+                    (runtime::Field::from(0u128), runtime::Field::from(1u128));
+                let (__compact_cast_item_0_0, __compact_cast_item_0_1) = __compact_cast_source_0;
+                runtime::FixedVector::new([__compact_cast_item_0_0, __compact_cast_item_0_1])
+            };
+            let __compact_recorded_pure_pair_hash_1: runtime::Field =
+                crate::pure_circuits::sumVec(__compact_recorded_pair_arg_0)?;
+            let frame = crate::ledger_slots::fieldCell
+                .record_write(frame, __compact_recorded_pure_pair_hash_1)?;
+            Ok(frame.finish(()))
+        }
+        pub fn impureBare<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_arg_0: runtime::FixedVector<runtime::Field, 2> = {
+                let __compact_cast_source_0 =
+                    (runtime::Field::from(0u128), runtime::Field::from(1u128));
+                let (__compact_cast_item_0_0, __compact_cast_item_0_1) = __compact_cast_source_0;
+                runtime::FixedVector::new([__compact_cast_item_0_0, __compact_cast_item_0_1])
+            };
+            let (frame, _) = __compact_recorded_body_storeVec(frame, __compact_recorded_arg_0)?;
+            Ok(frame.finish(()))
+        }
+        pub fn impureInIfArm<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_recorded_bool_0): (_, bool) =
+                crate::ledger_slots::flag.record_read(frame)?;
+            let __compact_recorded_branch_2: bool = __compact_recorded_bool_0;
+            #[allow(clippy::let_and_return)]
+            let frame = if __compact_recorded_branch_2 {
+                let __compact_recorded_arg_1: runtime::FixedVector<runtime::Field, 2> = {
+                    let __compact_cast_source_0 =
+                        (runtime::Field::from(0u128), runtime::Field::from(1u128));
+                    let (__compact_cast_item_0_0, __compact_cast_item_0_1) =
+                        __compact_cast_source_0;
+                    runtime::FixedVector::new([__compact_cast_item_0_0, __compact_cast_item_0_1])
+                };
+                let (frame, _) = __compact_recorded_body_storeVec(frame, __compact_recorded_arg_1)?;
+                frame
+            } else {
+                frame
+            };
             Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
@@ -1028,6 +1096,81 @@ pub mod ledger_contract {
                     observed,
                     recorded,
                     "bridgeVecIntoTuple",
+                    input,
+                ))
+            }
+            pub fn pureFromImpure<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::pureFromImpure(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn pureFromImpure_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.pureFromImpure(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "pureFromImpure",
+                    input,
+                ))
+            }
+            pub fn impureBare<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::impureBare(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn impureBare_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.impureBare(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "impureBare",
+                    input,
+                ))
+            }
+            pub fn impureInIfArm<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::impureInIfArm(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn impureInIfArm_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.impureInIfArm(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "impureInIfArm",
                     input,
                 ))
             }
@@ -1239,6 +1382,81 @@ pub mod ledger_contract {
                     observed,
                     recorded,
                     "witnessConst",
+                    input,
+                ))
+            }
+            pub fn pureFromImpure<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                pureFromImpure(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn pureFromImpure_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.pureFromImpure(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "pureFromImpure",
+                    input,
+                ))
+            }
+            pub fn impureBare<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                impureBare(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn impureBare_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.impureBare(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "impureBare",
+                    input,
+                ))
+            }
+            pub fn impureInIfArm<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                impureInIfArm(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn impureInIfArm_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.impureInIfArm(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "impureInIfArm",
                     input,
                 ))
             }

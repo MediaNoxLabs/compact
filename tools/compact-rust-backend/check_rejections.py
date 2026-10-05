@@ -217,12 +217,14 @@ def check_output_serialization(compactc: str, directory: Path) -> list[str]:
 def check_proof_capabilities(compactc: str, directory: Path) -> list[str]:
     failures = []
     source = directory / "pure-call.compact"
+    # The recorder admits only a typed two-Field pair hash. A three-Field
+    # vector remains a valid native call and a strict recording rejection.
     source.write_text(
         "import CompactStandardLibrary;\n"
         "export ledger value: Field;\n"
-        "pure circuit sumVec(v: Vector<2, Field>): Field { "
-        "return transientHash<Vector<2, Field>>(v); }\n"
-        "export circuit write(input: Vector<2, Field>): [] { value = disclose(sumVec(input)); }\n"
+        "pure circuit sumVec(v: Vector<3, Field>): Field { "
+        "return transientHash<Vector<3, Field>>(v); }\n"
+        "export circuit write(input: Vector<3, Field>): [] { value = disclose(sumVec(input)); }\n"
     )
     output = directory / "pure-call-output"
 

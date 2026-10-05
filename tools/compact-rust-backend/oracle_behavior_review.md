@@ -25,18 +25,37 @@ All evidence paths in the JSON are repository-relative.
   refusal. Existing native/recorded/replay tests already executed this API;
   the missing boundary was its independent TS capture.
 
-## Remaining sampled-path and trace limits
+## Reviewed ADR221 and ADR222 additions
 
-- Set/Map emptiness exports currently see only empty collections.
-- `call_arg.impureInIfArm` takes only true in reviewed captures.
-- `struct_collision.runWrapBeta` and `chunked_ledger.ping` see only true.
-- Ternary `streamCompareEq` and `streamStructMember` specialized captures see
-  only false. These are sampled-path limits, not missing exported invocation.
-- Reviewed fixture tests for `map.put`, `nested_map.ping`, `witnesses.pull` and
-  Set `check(8)` lack full independent recorded transcript/gas comparisons.
-  Recorded `check(7)` exists; separate nested MapSlot tests are not exported
-  `ping` recording evidence. Additional proof harnesses may contain evidence,
-  but none was inferred without review.
+ADR221 resolves the seven named sampled-path gaps: Set/Map nonempty checks,
+`call_arg.impureInIfArm(false)`, `struct_collision.runWrapBeta(false)`,
+`chunked_ledger.ping(false)` and the true paths of ternary `streamCompareEq`
+and `streamStructMember`. Two pure cases compare exact TS results. Five
+stateful cases compare TS seeded state/effects, complete ordered public VM,
+query cost sums, empty private outputs and replay. Signed correction `38702dd9`
+adds exact full-program equality without normalization; earlier shape checks
+remain as additional assertions.
+
+ADR222 resolves the four named recorded-trace gaps with nine direct cases:
+Map insert/replace/distinct keys, nested-map `ping` initial/repeat, witness
+`pull` returning 42/0, and Set `check` at 7/8. These tests compare complete public
+VM programs, private output atoms/alignment, TS state, query cost sums and
+upstream replay. The witness ledger-view read is deliberately counted as a
+query cost; it is not fabricated into a public VM observation. Constructor and
+serialization queries are excluded from the retained per-call cost arrays.
+
+The matrix records exact signed source IDs, capture/test paths, per-case
+identities, dimensions and hashes for these additions. ADR216's ternary test
+file hash is refreshed after verifying its assertions are unchanged by the
+separate ADR221 addition. No other old case claims are upgraded.
+
+## Remaining limits
+
+The named gaps above are resolved only for their listed cases. This review does
+not establish every input, branch, exception, transcript or proof path. Some
+other tests still compare VM shape or Rust parity rather than a full independent
+program. Cryptographic proof and ledger application remain separate evidence
+not audited here; neither ADR221 nor ADR222 adds such a claim.
 
 ## Review rules and current classifications
 

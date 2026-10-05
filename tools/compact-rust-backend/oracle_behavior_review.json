@@ -1,6 +1,6 @@
 {
   "format": "37-oracle-manual-behavior-review-v2",
-  "review_head": "ADR220 reviewed source contents pinned below; preceding signed source 31136879156d63f25e83fa8e5f224bfd05bbe98b",
+  "review_head": "Reviewed ADR220 plus signed ADR221 6a65902f and full-program correction 38702dd9, and signed ADR222 15074e81; exact evidence hashes below",
   "manual_source_inventory_review_complete": true,
   "behavioral_coverage_complete": false,
   "proof_ledger_audit_complete": false,
@@ -1090,20 +1090,36 @@
         "tests-rust-backend/call-arg-declared-type/tests/call_arg_declared_type.rs",
         "tests-rust-backend/call-arg-declared-type/tests/direct_pure_behavior.rs"
       ],
-      "source_review": "All16 stateful exports explicit match dispatch to exact TS state; separate commitment/hash/scalar/helper/witness recording tests. Witness private state/order captured. Seven pure exports have transitive evidence; sumVec additionally direct Rust reference without direct independent TS result. impureInIfArm reviewed true branch only.",
+      "source_review": "All16 stateful exports explicit match dispatch to exact TS state; separate commitment/hash/scalar/helper/witness recording tests. Witness private state/order captured. Seven pure exports have transitive evidence; sumVec additionally direct Rust reference without direct independent TS result. impureInIfArm reviewed true branch only. ADR221 directly checks impureInIfArm(false) against independent TS; the prior specific sampled-path limit is resolved, without claiming all inputs/paths.",
       "limits": [
         "Captured inputs only; not all paths or values.",
         "Cryptographic proof and ledger acceptance not reviewed in this behavior audit."
       ],
       "dimensions": {
-        "native_result_or_state_or_error": "direct_native_outcome_against_ts",
-        "recorded_public_program": "varies by export; exact reviewed scope and normalization in source_review; no uniform full-program claim",
-        "query_gas": "varies by export; see source_review; not uniformly asserted",
-        "private_witness": "varies by export; see source_review; no uniform privacy claim",
-        "recorded_replay": "varies by export; see source_review; slot tests not export evidence",
-        "cryptographic_proof": "not reviewed in this audit",
-        "ledger_apply": "not reviewed in this audit"
-      }
+        "native_result_or_state_or_error": "Unit plus exact independent TS seeded before/after state and effects",
+        "recorded_public_program": "complete public Verify program equality with independent TS, without normalization; shape assertion retained additionally",
+        "query_gas": "sum of selected-call TS query costs; constructor/seed and later view queries excluded",
+        "private_witness": "zero private output asserted; Unit private state",
+        "recorded_replay": "upstream VM final state/effects",
+        "cryptographic_proof": "not tested by ADR221",
+        "ledger_apply": "not tested by ADR221"
+      },
+      "additional_case_reviews": [
+        {
+          "adr": 221,
+          "signed_source": "6a65902fc6b99b75462df044c5a94d125d69ab53",
+          "signed_full_program_correction": "38702dd942d8da209c86d9a56a3478389a3071bb",
+          "capture": "runtime-rs/tests/fixtures/adr221-call-arg-false.json",
+          "case_ids": [
+            "call_arg_declared_type.impureInIfArm(false)"
+          ],
+          "case_id_origin": "review ID from signed receipt; JSON located by export or rows[name]",
+          "capture_locator": "rows[name=impureInIfArm]",
+          "rust_test": "tests-rust-backend/call-arg-declared-type/tests/call_arg_declared_type.rs",
+          "assertion_test": "impure_if_false_skips_the_store_with_exact_typescript_trace",
+          "scope": "one additional sampled path; full public program for stateful cases after signed correction"
+        }
+      ]
     },
     {
       "source": "examples/rust_backend/call_arg_declared_type.compact",
@@ -1185,20 +1201,36 @@
       "rust_assertion_files": [
         "tests-rust-backend/chunked-ledger-oracle/tests/chunked_ledger_oracle.rs"
       ],
-      "source_review": "17 chunked constructor slots and active exact TS; pure ping(true) compared to TS. Direct slot read/write tests are not export execution.",
+      "source_review": "17 chunked constructor slots and active exact TS; pure ping(true) compared to TS. Direct slot read/write tests are not export execution. ADR221 directly checks ping(false) against independent TS; the prior specific sampled-path limit is resolved, without claiming all inputs/paths.",
       "limits": [
         "Captured inputs only; not all paths or values.",
         "Cryptographic proof and ledger acceptance not reviewed in this behavior audit."
       ],
       "dimensions": {
-        "native_result_or_state_or_error": "direct_native_outcome_against_ts",
-        "recorded_public_program": "varies by export; exact reviewed scope and normalization in source_review; no uniform full-program claim",
-        "query_gas": "varies by export; see source_review; not uniformly asserted",
-        "private_witness": "varies by export; see source_review; no uniform privacy claim",
-        "recorded_replay": "varies by export; see source_review; slot tests not export evidence",
-        "cryptographic_proof": "not reviewed in this audit",
-        "ledger_apply": "not reviewed in this audit"
-      }
+        "native_result_or_state_or_error": "direct independent TS false result (existing true case retained)",
+        "recorded_public_program": "not applicable (pure)",
+        "query_gas": "not applicable (pure)",
+        "private_witness": "not applicable (pure)",
+        "recorded_replay": "not applicable (pure)",
+        "cryptographic_proof": "not applicable (pure)",
+        "ledger_apply": "not applicable (pure)"
+      },
+      "additional_case_reviews": [
+        {
+          "adr": 221,
+          "signed_source": "6a65902fc6b99b75462df044c5a94d125d69ab53",
+          "signed_full_program_correction": "38702dd942d8da209c86d9a56a3478389a3071bb",
+          "capture": "runtime-rs/tests/fixtures/adr221-chunked-false.json",
+          "case_ids": [
+            "chunked_ledger_oracle.ping(false)"
+          ],
+          "case_id_origin": "review ID from signed receipt; JSON located by export or rows[name]",
+          "capture_locator": "export=ping,argument=false",
+          "rust_test": "tests-rust-backend/chunked-ledger-oracle/tests/chunked_ledger_oracle.rs",
+          "assertion_test": "nested_state_matches_typescript_bytes_and_field_values",
+          "scope": "one additional sampled path; full public program for stateful cases after signed correction"
+        }
+      ]
     },
     {
       "source": "examples/rust_backend/cross_circuit_oracle.compact",
@@ -2717,20 +2749,36 @@
       "rust_assertion_files": [
         "tests-rust-backend/map-oracle/tests/map_oracle.rs"
       ],
-      "source_review": "put7\u21929, replacement7\u219211, distinct8\u219213 exact TS state and typed map lookup/size. No recorded-export assertion in reviewed fixture test.",
+      "source_review": "put7\u21929, replacement7\u219211, distinct8\u219213 exact TS state and typed map lookup/size. No recorded-export assertion in reviewed fixture test. ADR222 now directly compares the recorded export against complete independent TS traces; prior trace gap is resolved for the listed cases only.",
       "limits": [
         "Captured inputs only; not all paths or values.",
         "Cryptographic proof and ledger acceptance not reviewed in this behavior audit."
       ],
       "dimensions": {
-        "native_result_or_state_or_error": "direct_native_outcome_against_ts",
-        "recorded_public_program": "varies by export; exact reviewed scope and normalization in source_review; no uniform full-program claim",
-        "query_gas": "varies by export; see source_review; not uniformly asserted",
-        "private_witness": "varies by export; see source_review; no uniform privacy claim",
-        "recorded_replay": "varies by export; see source_review; slot tests not export evidence",
-        "cryptographic_proof": "not reviewed in this audit",
-        "ledger_apply": "not reviewed in this audit"
-      }
+        "native_result_or_state_or_error": "Unit result plus exact independent TS before/after state",
+        "recorded_public_program": "complete Verify program equality with independent TS, no shape-only projection",
+        "query_gas": "sum of selected call TS queries; witness ledger-view observation counted for pull; constructor/serialization queries excluded",
+        "private_witness": "exact TS atoms/alignment; pull validates private state7\u21928; other exports use Unit private state",
+        "recorded_replay": "upstream VM final state/effects; replay gas intentionally separate from source query-sum",
+        "cryptographic_proof": "not tested by ADR222",
+        "ledger_apply": "not tested by ADR222"
+      },
+      "additional_case_reviews": [
+        {
+          "adr": 222,
+          "signed_source": "15074e81a283dda1e05518ec0df8e804fe0a9387",
+          "capture": "runtime-rs/tests/fixtures/oracle-recorded-traces.json",
+          "case_ids": [
+            "map_oracle/put/insert",
+            "map_oracle/put/replace",
+            "map_oracle/put/distinct"
+          ],
+          "rust_test": "tests-rust-backend/map-oracle/tests/map_oracle.rs",
+          "assertion_test": "exported_map_recording_matches_complete_typescript_insert_replace_and_distinct_traces",
+          "assertion_helper": "tests-rust-backend/support/oracle_recorded_trace.rs",
+          "scope": "these sampled direct native/recorded traces only"
+        }
+      ]
     },
     {
       "source": "examples/rust_backend/map_fn_oracle.compact",
@@ -3085,20 +3133,35 @@
       "rust_assertion_files": [
         "tests-rust-backend/nested-map-oracle/tests/nested_map_oracle.rs"
       ],
-      "source_review": "ping constructor/result state/flag exact TS with empty nested map. Separate MapSlot recordings test empty/size/member; those are not recorded ping evidence.",
+      "source_review": "ping constructor/result state/flag exact TS with empty nested map. Separate MapSlot recordings test empty/size/member; those are not recorded ping evidence. ADR222 now directly compares the recorded export against complete independent TS traces; prior trace gap is resolved for the listed cases only.",
       "limits": [
         "Captured inputs only; not all paths or values.",
         "Cryptographic proof and ledger acceptance not reviewed in this behavior audit."
       ],
       "dimensions": {
-        "native_result_or_state_or_error": "direct_native_outcome_against_ts",
-        "recorded_public_program": "varies by export; exact reviewed scope and normalization in source_review; no uniform full-program claim",
-        "query_gas": "varies by export; see source_review; not uniformly asserted",
-        "private_witness": "varies by export; see source_review; no uniform privacy claim",
-        "recorded_replay": "varies by export; see source_review; slot tests not export evidence",
-        "cryptographic_proof": "not reviewed in this audit",
-        "ledger_apply": "not reviewed in this audit"
-      }
+        "native_result_or_state_or_error": "Unit result plus exact independent TS before/after state",
+        "recorded_public_program": "complete Verify program equality with independent TS, no shape-only projection",
+        "query_gas": "sum of selected call TS queries; witness ledger-view observation counted for pull; constructor/serialization queries excluded",
+        "private_witness": "exact TS atoms/alignment; pull validates private state7\u21928; other exports use Unit private state",
+        "recorded_replay": "upstream VM final state/effects; replay gas intentionally separate from source query-sum",
+        "cryptographic_proof": "not tested by ADR222",
+        "ledger_apply": "not tested by ADR222"
+      },
+      "additional_case_reviews": [
+        {
+          "adr": 222,
+          "signed_source": "15074e81a283dda1e05518ec0df8e804fe0a9387",
+          "capture": "runtime-rs/tests/fixtures/oracle-recorded-traces.json",
+          "case_ids": [
+            "nested_map_oracle/ping/initial",
+            "nested_map_oracle/ping/repeat"
+          ],
+          "rust_test": "tests-rust-backend/nested-map-oracle/tests/nested_map_oracle.rs",
+          "assertion_test": "exported_ping_recording_matches_complete_typescript_traces",
+          "assertion_helper": "tests-rust-backend/support/oracle_recorded_trace.rs",
+          "scope": "these sampled direct native/recorded traces only"
+        }
+      ]
     },
     {
       "source": "examples/rust_backend/pure_circuit_oracle.compact",
@@ -3269,20 +3332,35 @@
       "rust_assertion_files": [
         "tests-rust-backend/set-oracle/tests/set_oracle.rs"
       ],
-      "source_review": "check7 and8 exact native TS state/flag. Recorded check7 state and replay only, not full independent transcript/gas; membership-false/present cases limited to capture.",
+      "source_review": "check7 and8 exact native TS state/flag. Recorded check7 state and replay only, not full independent transcript/gas; membership-false/present cases limited to capture. ADR222 now directly compares the recorded export against complete independent TS traces; prior trace gap is resolved for the listed cases only.",
       "limits": [
         "Captured inputs only; not all paths or values.",
         "Cryptographic proof and ledger acceptance not reviewed in this behavior audit."
       ],
       "dimensions": {
-        "native_result_or_state_or_error": "direct_native_outcome_against_ts",
-        "recorded_public_program": "varies by export; exact reviewed scope and normalization in source_review; no uniform full-program claim",
-        "query_gas": "varies by export; see source_review; not uniformly asserted",
-        "private_witness": "varies by export; see source_review; no uniform privacy claim",
-        "recorded_replay": "varies by export; see source_review; slot tests not export evidence",
-        "cryptographic_proof": "not reviewed in this audit",
-        "ledger_apply": "not reviewed in this audit"
-      }
+        "native_result_or_state_or_error": "Unit result plus exact independent TS before/after state",
+        "recorded_public_program": "complete Verify program equality with independent TS, no shape-only projection",
+        "query_gas": "sum of selected call TS queries; witness ledger-view observation counted for pull; constructor/serialization queries excluded",
+        "private_witness": "exact TS atoms/alignment; pull validates private state7\u21928; other exports use Unit private state",
+        "recorded_replay": "upstream VM final state/effects; replay gas intentionally separate from source query-sum",
+        "cryptographic_proof": "not tested by ADR222",
+        "ledger_apply": "not tested by ADR222"
+      },
+      "additional_case_reviews": [
+        {
+          "adr": 222,
+          "signed_source": "15074e81a283dda1e05518ec0df8e804fe0a9387",
+          "capture": "runtime-rs/tests/fixtures/oracle-recorded-traces.json",
+          "case_ids": [
+            "set_oracle/check/seven",
+            "set_oracle/check/eight"
+          ],
+          "rust_test": "tests-rust-backend/set-oracle/tests/set_oracle.rs",
+          "assertion_test": "exported_set_check_recording_matches_both_typescript_traces",
+          "assertion_helper": "tests-rust-backend/support/oracle_recorded_trace.rs",
+          "scope": "these sampled direct native/recorded traces only"
+        }
+      ]
     },
     {
       "source": "examples/rust_backend/set_size_oracle.compact",
@@ -3292,20 +3370,36 @@
       "rust_assertion_files": [
         "tests-rust-backend/set-size-oracle/tests/set_size_oracle.rs"
       ],
-      "source_review": "check_set_empty/check_map_empty directly called on empty collections; exact TS state/flag, recorded VM shape/gas/private count/replay. Populated false branch not present in reviewed fixture.",
+      "source_review": "check_set_empty/check_map_empty directly called on empty collections; exact TS state/flag, recorded VM shape/gas/private count/replay. Populated false branch not present in reviewed fixture. ADR221 directly checks check_set_empty(nonempty Set) against independent TS; the prior specific sampled-path limit is resolved, without claiming all inputs/paths.",
       "limits": [
         "Captured inputs only; not all paths or values.",
         "Cryptographic proof and ledger acceptance not reviewed in this behavior audit."
       ],
       "dimensions": {
-        "native_result_or_state_or_error": "direct_native_outcome_against_ts",
-        "recorded_public_program": "varies by export; exact reviewed scope and normalization in source_review; no uniform full-program claim",
-        "query_gas": "varies by export; see source_review; not uniformly asserted",
-        "private_witness": "varies by export; see source_review; no uniform privacy claim",
-        "recorded_replay": "varies by export; see source_review; slot tests not export evidence",
-        "cryptographic_proof": "not reviewed in this audit",
-        "ledger_apply": "not reviewed in this audit"
-      }
+        "native_result_or_state_or_error": "Unit plus exact independent TS seeded before/after state and effects",
+        "recorded_public_program": "complete public Verify program equality with independent TS, without normalization; shape assertion retained additionally",
+        "query_gas": "sum of selected-call TS query costs; constructor/seed and later view queries excluded",
+        "private_witness": "zero private output asserted; Unit private state",
+        "recorded_replay": "upstream VM final state/effects",
+        "cryptographic_proof": "not tested by ADR221",
+        "ledger_apply": "not tested by ADR221"
+      },
+      "additional_case_reviews": [
+        {
+          "adr": 221,
+          "signed_source": "6a65902fc6b99b75462df044c5a94d125d69ab53",
+          "signed_full_program_correction": "38702dd942d8da209c86d9a56a3478389a3071bb",
+          "capture": "runtime-rs/tests/fixtures/adr221-set-size-nonempty.json",
+          "case_ids": [
+            "set_size_oracle.check_set_empty(nonempty Set)"
+          ],
+          "case_id_origin": "review ID from signed receipt; JSON located by export or rows[name]",
+          "capture_locator": "rows[name=check_set_empty]",
+          "rust_test": "tests-rust-backend/set-size-oracle/tests/set_size_oracle.rs",
+          "assertion_test": "nonempty_set_and_map_checks_write_false_with_exact_recorded_trace",
+          "scope": "one additional sampled path; full public program for stateful cases after signed correction"
+        }
+      ]
     },
     {
       "source": "examples/rust_backend/set_size_oracle.compact",
@@ -3315,20 +3409,36 @@
       "rust_assertion_files": [
         "tests-rust-backend/set-size-oracle/tests/set_size_oracle.rs"
       ],
-      "source_review": "check_set_empty/check_map_empty directly called on empty collections; exact TS state/flag, recorded VM shape/gas/private count/replay. Populated false branch not present in reviewed fixture.",
+      "source_review": "check_set_empty/check_map_empty directly called on empty collections; exact TS state/flag, recorded VM shape/gas/private count/replay. Populated false branch not present in reviewed fixture. ADR221 directly checks check_map_empty(nonempty Map) against independent TS; the prior specific sampled-path limit is resolved, without claiming all inputs/paths.",
       "limits": [
         "Captured inputs only; not all paths or values.",
         "Cryptographic proof and ledger acceptance not reviewed in this behavior audit."
       ],
       "dimensions": {
-        "native_result_or_state_or_error": "direct_native_outcome_against_ts",
-        "recorded_public_program": "varies by export; exact reviewed scope and normalization in source_review; no uniform full-program claim",
-        "query_gas": "varies by export; see source_review; not uniformly asserted",
-        "private_witness": "varies by export; see source_review; no uniform privacy claim",
-        "recorded_replay": "varies by export; see source_review; slot tests not export evidence",
-        "cryptographic_proof": "not reviewed in this audit",
-        "ledger_apply": "not reviewed in this audit"
-      }
+        "native_result_or_state_or_error": "Unit plus exact independent TS seeded before/after state and effects",
+        "recorded_public_program": "complete public Verify program equality with independent TS, without normalization; shape assertion retained additionally",
+        "query_gas": "sum of selected-call TS query costs; constructor/seed and later view queries excluded",
+        "private_witness": "zero private output asserted; Unit private state",
+        "recorded_replay": "upstream VM final state/effects",
+        "cryptographic_proof": "not tested by ADR221",
+        "ledger_apply": "not tested by ADR221"
+      },
+      "additional_case_reviews": [
+        {
+          "adr": 221,
+          "signed_source": "6a65902fc6b99b75462df044c5a94d125d69ab53",
+          "signed_full_program_correction": "38702dd942d8da209c86d9a56a3478389a3071bb",
+          "capture": "runtime-rs/tests/fixtures/adr221-set-size-nonempty.json",
+          "case_ids": [
+            "set_size_oracle.check_map_empty(nonempty Map)"
+          ],
+          "case_id_origin": "review ID from signed receipt; JSON located by export or rows[name]",
+          "capture_locator": "rows[name=check_map_empty]",
+          "rust_test": "tests-rust-backend/set-size-oracle/tests/set_size_oracle.rs",
+          "assertion_test": "nonempty_set_and_map_checks_write_false_with_exact_recorded_trace",
+          "scope": "one additional sampled path; full public program for stateful cases after signed correction"
+        }
+      ]
     },
     {
       "source": "examples/rust_backend/struct_collision_oracle.compact",
@@ -3407,20 +3517,36 @@
       "rust_assertion_files": [
         "tests-rust-backend/struct-collision-oracle/tests/struct_collision_oracle.rs"
       ],
-      "source_review": "runAlpha5/runBeta7 exact TS state, recorded shape/gas/private/replay. runWrapAlpha11/runWrapBeta(true) direct exact TS return; false Boolean wrap not covered in reviewed fixture.",
+      "source_review": "runAlpha5/runBeta7 exact TS state, recorded shape/gas/private/replay. runWrapAlpha11/runWrapBeta(true) direct exact TS return; false Boolean wrap not covered in reviewed fixture. ADR221 directly checks runWrapBeta(false) against independent TS; the prior specific sampled-path limit is resolved, without claiming all inputs/paths.",
       "limits": [
         "Captured inputs only; not all paths or values.",
         "Cryptographic proof and ledger acceptance not reviewed in this behavior audit."
       ],
       "dimensions": {
-        "native_result_or_state_or_error": "direct_native_outcome_against_ts",
-        "recorded_public_program": "varies by export; exact reviewed scope and normalization in source_review; no uniform full-program claim",
-        "query_gas": "varies by export; see source_review; not uniformly asserted",
-        "private_witness": "varies by export; see source_review; no uniform privacy claim",
-        "recorded_replay": "varies by export; see source_review; slot tests not export evidence",
-        "cryptographic_proof": "not reviewed in this audit",
-        "ledger_apply": "not reviewed in this audit"
-      }
+        "native_result_or_state_or_error": "direct independent TS false result (existing true case retained)",
+        "recorded_public_program": "not applicable (pure)",
+        "query_gas": "not applicable (pure)",
+        "private_witness": "not applicable (pure)",
+        "recorded_replay": "not applicable (pure)",
+        "cryptographic_proof": "not applicable (pure)",
+        "ledger_apply": "not applicable (pure)"
+      },
+      "additional_case_reviews": [
+        {
+          "adr": 221,
+          "signed_source": "6a65902fc6b99b75462df044c5a94d125d69ab53",
+          "signed_full_program_correction": "38702dd942d8da209c86d9a56a3478389a3071bb",
+          "capture": "runtime-rs/tests/fixtures/adr221-struct-false.json",
+          "case_ids": [
+            "struct_collision_oracle.runWrapBeta(false)"
+          ],
+          "case_id_origin": "review ID from signed receipt; JSON located by export or rows[name]",
+          "capture_locator": "export=runWrapBeta,argument=false",
+          "rust_test": "tests-rust-backend/struct-collision-oracle/tests/struct_collision_oracle.rs",
+          "assertion_test": "distinct_struct_layouts_and_nested_fields_match_typescript",
+          "scope": "one additional sampled path; full public program for stateful cases after signed correction"
+        }
+      ]
     },
     {
       "source": "examples/rust_backend/ternary_cond_oracle.compact",
@@ -4166,20 +4292,36 @@
         "tests-rust-backend/ternary-cond-oracle/tests/ternary_cond_oracle.rs",
         "tests-rust-backend/ternary-cond-oracle/tests/pure_behavior.rs"
       ],
-      "source_review": "All25 pure exports direct83 TS cases in ADR218. Twenty stateful exports directly native/recorded against captured state, relevant private order, VM/gas and selected replay. Conditional streams use seeded flags; comparison and struct-member streams only false in existing specialized captures. No full-domain/all-input claim.",
+      "source_review": "All25 pure exports direct83 TS cases in ADR218. Twenty stateful exports directly native/recorded against captured state, relevant private order, VM/gas and selected replay. Conditional streams use seeded flags; comparison and struct-member streams only false in existing specialized captures. No full-domain/all-input claim. ADR221 directly checks streamCompareEq(true) against independent TS; the prior specific sampled-path limit is resolved, without claiming all inputs/paths.",
       "limits": [
         "Captured inputs only; not all paths or values.",
         "Cryptographic proof and ledger acceptance not reviewed in this behavior audit."
       ],
       "dimensions": {
-        "native_result_or_state_or_error": "direct_native_outcome_against_ts",
-        "recorded_public_program": "varies by export; exact reviewed scope and normalization in source_review; no uniform full-program claim",
-        "query_gas": "varies by export; see source_review; not uniformly asserted",
-        "private_witness": "varies by export; see source_review; no uniform privacy claim",
-        "recorded_replay": "varies by export; see source_review; slot tests not export evidence",
-        "cryptographic_proof": "not reviewed in this audit",
-        "ledger_apply": "not reviewed in this audit"
-      }
+        "native_result_or_state_or_error": "Unit plus exact independent TS seeded before/after state and effects",
+        "recorded_public_program": "complete public Verify program equality with independent TS, without normalization; shape assertion retained additionally",
+        "query_gas": "sum of selected-call TS query costs; constructor/seed and later view queries excluded",
+        "private_witness": "zero private output asserted; Unit private state",
+        "recorded_replay": "upstream VM final state/effects",
+        "cryptographic_proof": "not tested by ADR221",
+        "ledger_apply": "not tested by ADR221"
+      },
+      "additional_case_reviews": [
+        {
+          "adr": 221,
+          "signed_source": "6a65902fc6b99b75462df044c5a94d125d69ab53",
+          "signed_full_program_correction": "38702dd942d8da209c86d9a56a3478389a3071bb",
+          "capture": "runtime-rs/tests/fixtures/adr221-ternary-true.json",
+          "case_ids": [
+            "ternary_cond_oracle.streamCompareEq(true)"
+          ],
+          "case_id_origin": "review ID from signed receipt; JSON located by export or rows[name]",
+          "capture_locator": "rows[name=streamCompareEq]",
+          "rust_test": "tests-rust-backend/ternary-cond-oracle/tests/ternary_cond_oracle.rs",
+          "assertion_test": "recorded_streaming_comparison_and_struct_true_paths_match_typescript",
+          "scope": "one additional sampled path; full public program for stateful cases after signed correction"
+        }
+      ]
     },
     {
       "source": "examples/rust_backend/ternary_cond_oracle.compact",
@@ -4438,20 +4580,36 @@
         "tests-rust-backend/ternary-cond-oracle/tests/ternary_cond_oracle.rs",
         "tests-rust-backend/ternary-cond-oracle/tests/pure_behavior.rs"
       ],
-      "source_review": "All25 pure exports direct83 TS cases in ADR218. Twenty stateful exports directly native/recorded against captured state, relevant private order, VM/gas and selected replay. Conditional streams use seeded flags; comparison and struct-member streams only false in existing specialized captures. No full-domain/all-input claim.",
+      "source_review": "All25 pure exports direct83 TS cases in ADR218. Twenty stateful exports directly native/recorded against captured state, relevant private order, VM/gas and selected replay. Conditional streams use seeded flags; comparison and struct-member streams only false in existing specialized captures. No full-domain/all-input claim. ADR221 directly checks streamStructMember(true) against independent TS; the prior specific sampled-path limit is resolved, without claiming all inputs/paths.",
       "limits": [
         "Captured inputs only; not all paths or values.",
         "Cryptographic proof and ledger acceptance not reviewed in this behavior audit."
       ],
       "dimensions": {
-        "native_result_or_state_or_error": "direct_native_outcome_against_ts",
-        "recorded_public_program": "varies by export; exact reviewed scope and normalization in source_review; no uniform full-program claim",
-        "query_gas": "varies by export; see source_review; not uniformly asserted",
-        "private_witness": "varies by export; see source_review; no uniform privacy claim",
-        "recorded_replay": "varies by export; see source_review; slot tests not export evidence",
-        "cryptographic_proof": "not reviewed in this audit",
-        "ledger_apply": "not reviewed in this audit"
-      }
+        "native_result_or_state_or_error": "Unit plus exact independent TS seeded before/after state and effects",
+        "recorded_public_program": "complete public Verify program equality with independent TS, without normalization; shape assertion retained additionally",
+        "query_gas": "sum of selected-call TS query costs; constructor/seed and later view queries excluded",
+        "private_witness": "zero private output asserted; Unit private state",
+        "recorded_replay": "upstream VM final state/effects",
+        "cryptographic_proof": "not tested by ADR221",
+        "ledger_apply": "not tested by ADR221"
+      },
+      "additional_case_reviews": [
+        {
+          "adr": 221,
+          "signed_source": "6a65902fc6b99b75462df044c5a94d125d69ab53",
+          "signed_full_program_correction": "38702dd942d8da209c86d9a56a3478389a3071bb",
+          "capture": "runtime-rs/tests/fixtures/adr221-ternary-true.json",
+          "case_ids": [
+            "ternary_cond_oracle.streamStructMember(true)"
+          ],
+          "case_id_origin": "review ID from signed receipt; JSON located by export or rows[name]",
+          "capture_locator": "rows[name=streamStructMember]",
+          "rust_test": "tests-rust-backend/ternary-cond-oracle/tests/ternary_cond_oracle.rs",
+          "assertion_test": "recorded_streaming_comparison_and_struct_true_paths_match_typescript",
+          "scope": "one additional sampled path; full public program for stateful cases after signed correction"
+        }
+      ]
     },
     {
       "source": "examples/rust_backend/ternary_cond_oracle.compact",
@@ -5025,20 +5183,35 @@
       "rust_assertion_files": [
         "tests-rust-backend/witnesses-oracle/tests/witnesses_oracle.rs"
       ],
-      "source_review": "pull exact TS state42, private state7\u21928 and private output atoms/alignment; witness context validates initial ledger and address. No recorded pull assertion in reviewed fixture.",
+      "source_review": "pull exact TS state42, private state7\u21928 and private output atoms/alignment; witness context validates initial ledger and address. No recorded pull assertion in reviewed fixture. ADR222 now directly compares the recorded export against complete independent TS traces; prior trace gap is resolved for the listed cases only.",
       "limits": [
         "Captured inputs only; not all paths or values.",
         "Cryptographic proof and ledger acceptance not reviewed in this behavior audit."
       ],
       "dimensions": {
-        "native_result_or_state_or_error": "direct_native_outcome_against_ts",
-        "recorded_public_program": "varies by export; exact reviewed scope and normalization in source_review; no uniform full-program claim",
-        "query_gas": "varies by export; see source_review; not uniformly asserted",
-        "private_witness": "varies by export; see source_review; no uniform privacy claim",
-        "recorded_replay": "varies by export; see source_review; slot tests not export evidence",
-        "cryptographic_proof": "not reviewed in this audit",
-        "ledger_apply": "not reviewed in this audit"
-      }
+        "native_result_or_state_or_error": "Unit result plus exact independent TS before/after state",
+        "recorded_public_program": "complete Verify program equality with independent TS, no shape-only projection",
+        "query_gas": "sum of selected call TS queries; witness ledger-view observation counted for pull; constructor/serialization queries excluded",
+        "private_witness": "exact TS atoms/alignment; pull validates private state7\u21928; other exports use Unit private state",
+        "recorded_replay": "upstream VM final state/effects; replay gas intentionally separate from source query-sum",
+        "cryptographic_proof": "not tested by ADR222",
+        "ledger_apply": "not tested by ADR222"
+      },
+      "additional_case_reviews": [
+        {
+          "adr": 222,
+          "signed_source": "15074e81a283dda1e05518ec0df8e804fe0a9387",
+          "capture": "runtime-rs/tests/fixtures/oracle-recorded-traces.json",
+          "case_ids": [
+            "witnesses_oracle/pull/witness-42",
+            "witnesses_oracle/pull/witness-0"
+          ],
+          "rust_test": "tests-rust-backend/witnesses-oracle/tests/witnesses_oracle.rs",
+          "assertion_test": "exported_pull_recording_matches_witness_privacy_and_complete_typescript_traces",
+          "assertion_helper": "tests-rust-backend/support/oracle_recorded_trace.rs",
+          "scope": "these sampled direct native/recorded traces only"
+        }
+      ]
     }
   ],
   "reviewed_file_sha256": {
@@ -5149,9 +5322,9 @@
     "tests-rust-backend/boolean_observation_assertions.rs": "1a43568a48d6cd61f9db2b37e9e73d9c380b9518d14772a24e73f3eb800f9853",
     "tests-rust-backend/bounded-uint-oracle/tests/bounded_uint_oracle.rs": "d0e779b2c02d742b62290fd6a45df610ea5028a287a4d105e29d044f77f787c3",
     "tests-rust-backend/bug11-oracle/tests/bug11_oracle.rs": "03bb76b5d9f89e0472d0b66243e0fb1544c9caa666ee4c18e1acf74851004802",
-    "tests-rust-backend/call-arg-declared-type/tests/call_arg_declared_type.rs": "d1058d2d79d092a6b1cd1c053fbd7feb22a634ca1a77efb1f0dedc1aedd30d53",
+    "tests-rust-backend/call-arg-declared-type/tests/call_arg_declared_type.rs": "657db51bed353d29838a360b52051920cfcbcc07ec5749228275cc93dd89c16c",
     "tests-rust-backend/call-arg-declared-type/tests/direct_pure_behavior.rs": "a80c685efc17dd64560c951ade7483f29913b8d6391f27b77c312b53bf4076ef",
-    "tests-rust-backend/chunked-ledger-oracle/tests/chunked_ledger_oracle.rs": "5d1192da1a2df8bfdcb8d3f790f21b0a595e7bb99e04eaa93add236c03d8428d",
+    "tests-rust-backend/chunked-ledger-oracle/tests/chunked_ledger_oracle.rs": "bf208688f0ccf64bbc91065bebb492cd897c096f5a58eceb5bd7a0003e042365",
     "tests-rust-backend/cross-circuit-oracle/tests/cross_circuit_oracle.rs": "eafe3ec0cc33561b909d3c10a9fa3ad13048f69086c1401614a55b39ddc9645c",
     "tests-rust-backend/fold-oracle/tests/fold_oracle.rs": "1ac7dfb930641575d6b2c5ce52a277e86c81c30d587fb67f89f4827ee8be0682",
     "tests-rust-backend/for-iter-oracle/tests/for_iter_oracle.rs": "fc90d29879ca68905f888387454760ced388caa747c269a525d583e47668d12d",
@@ -5166,24 +5339,34 @@
     "tests-rust-backend/literal-coercion-oracle/tests/literal_coercion_oracle.rs": "967e1f0adcdf497edeff252830d4321bd1341a19d907d38c158cab68bddcae3b",
     "tests-rust-backend/map-fn-oracle/tests/map_fn_oracle.rs": "12016bacc06bf537c0f51c6dd510e7c1c9bab9f0cb8d35b653d51bd24d1b0420",
     "tests-rust-backend/map-lambda-oracle/tests/map_lambda_oracle.rs": "0f85aa0514e93308bf45a0fee93c88431e15fcdbc74c4fe1474147f5b781a19b",
-    "tests-rust-backend/map-oracle/tests/map_oracle.rs": "43a2fd3b4269600eb851c3d4e696459eeb6e9a0db9385188b959b16be64031f8",
+    "tests-rust-backend/map-oracle/tests/map_oracle.rs": "10110780c75018c51ca7806e1db9f9138a6cfa6b7ed6fc5730f5875fb0a410a4",
     "tests-rust-backend/mixed-width-operand-oracle/tests/mixed_width_operand_oracle.rs": "2cd9591d2708bbf343e523562b71d372f592b72107965d4c96d2edfb438179df",
     "tests-rust-backend/module-boolean-constructor/tests/module_boolean_constructor.rs": "114f394e7d223d68b93fb56a3386d7351f35fd1a9cac96847042fdf4c390b2a5",
     "tests-rust-backend/multi-pl-call-oracle/tests/multi_pl_call_oracle.rs": "c6234bf2ef94e1f25314a6376fadd471071b482ba23fa7f9ff4eb11487280839",
-    "tests-rust-backend/nested-map-oracle/tests/nested_map_oracle.rs": "c762dfbd9a68aff88c65a73517079cf4a072ccab1140aa3bc3f3fb53c3e4ea61",
+    "tests-rust-backend/nested-map-oracle/tests/nested_map_oracle.rs": "b9fc9c09deb173d7d2894b6cd2a6d8797443ed51caadbda04f2192d450e93c3d",
     "tests-rust-backend/pure-circuit-oracle/tests/pure_circuit_oracle.rs": "6bd4c63f35588ed4b336431cfb77d91381d19f24b862e1fb076746d5b69e27af",
     "tests-rust-backend/schnorr-attest-oracle/tests/schnorr_attest_oracle.rs": "d93c201b9dff9740951e64c6f0b452d8e7ae8e6c1a13260438ef99522f091487",
     "tests-rust-backend/sealed-ledger-constructor/tests/sealed_ledger_constructor.rs": "4ff74b14d72fa94cf4d642119f6958c8bd4c056b08c6976787472bf77ad9e3a1",
-    "tests-rust-backend/set-oracle/tests/set_oracle.rs": "6bcea8f4688ea42a2ccc2c8230a37e72674566b2e99c2b120903cbd13b54986a",
-    "tests-rust-backend/set-size-oracle/tests/set_size_oracle.rs": "8da5023203ae74e211dce6d89191cc4cd8631586a6d7357d40faf2d33f7bc2d7",
-    "tests-rust-backend/struct-collision-oracle/tests/struct_collision_oracle.rs": "c61baea547b3bf3460dbdbddf21e6b0e4d8732c69a3e9dde658572a951b1e9f8",
+    "tests-rust-backend/set-oracle/tests/set_oracle.rs": "f7384ac12f17e5ad6747348c56d6e8ab23851281668c89f52506afda84643b84",
+    "tests-rust-backend/set-size-oracle/tests/set_size_oracle.rs": "876b581b75e600639e552b27a05edc13c125840f39b468a5b4a96298f10256d1",
+    "tests-rust-backend/struct-collision-oracle/tests/struct_collision_oracle.rs": "3f88920060c85e1ffb850f339fcf11370accda9762808736d30704677497a138",
     "tests-rust-backend/ternary-cond-oracle/tests/pure_behavior.rs": "376da04a0d66046f57a91dda03c4709641070763e44079b86a81a50c500dc26e",
-    "tests-rust-backend/ternary-cond-oracle/tests/ternary_cond_oracle.rs": "b426b3f45b3d18c0c0ef858d398adb1ea753f30443c4e9d13c15bb33775d5254",
+    "tests-rust-backend/ternary-cond-oracle/tests/ternary_cond_oracle.rs": "1fec7dee7318349f74baabe2c56aa544c9dbd1baa605acf652d1355cdbf5d365",
     "tests-rust-backend/tuple-oracle/tests/tuple_oracle.rs": "39f82a2077d089db8be58a2cee66b698db2c29057f984018a2f087506f76a49f",
     "tests-rust-backend/uints-oracle/tests/uints_oracle.rs": "9aff6dd4f344c45d844f0adc7dcc3e87d28fdfa93b3bc108977309d209c9d9cc",
     "tests-rust-backend/vector-oracle/tests/vector_oracle.rs": "49e9fc769ab148c39a44a2afafd59139ace17725fb59fd7ba170853cc480d10f",
     "tests-rust-backend/widening-arith-oracle/tests/widening_arith_oracle.rs": "730988b89ccbfa3008f8cbf7f5ee1c6f9a6177e2baa88d8aec6df8541bb2e275",
-    "tests-rust-backend/witnesses-oracle/tests/witnesses_oracle.rs": "b5beeea7df5035226e5cd9a146c15a7d2720b7b0e0535069d818fd54c13fdcba"
+    "tests-rust-backend/witnesses-oracle/tests/witnesses_oracle.rs": "b80a13ab8c89122290164a176d6dd537a08a6c69ceec1f1cf40d8844070b1226",
+    "runtime-rs/tests/fixtures/oracle-recorded-traces.json": "7e61b764c3e79654ae46b2ab806f053776f14eceb811b9412580e0417b6b39c4",
+    "runtime-rs/tests/fixtures/capture-oracle-recorded-traces.mjs": "8983f67472c966cc2e13032906110853c15525257e7555fe443a3a6eb41bb3cb",
+    "tests-rust-backend/support/oracle_recorded_trace.rs": "9f4effd35f192d5ad80c5996cfbc839de5c1af3f81058f062f1dbacf79670f29",
+    "runtime-rs/tests/fixtures/adr221-chunked-false.json": "280bde423e65dc1fc3755c327f226d70855f63dfbfe37b9a16cdc39d5df5e957",
+    "runtime-rs/tests/fixtures/adr221-struct-false.json": "f231f371a9d192eaedb209b00520b5e625faa8f0705d1a459de90376af652a90",
+    "runtime-rs/tests/fixtures/adr221-ternary-true.json": "a2724e256ecec21161570965d2d07764967a7cf07045a1c64deb9c1abc3112d3",
+    "runtime-rs/tests/fixtures/adr221-set-size-nonempty.json": "6449acd500faf70546e10374455d2d0b77bc657efc7851880e2725b56f049677",
+    "runtime-rs/tests/fixtures/adr221-call-arg-false.json": "9a258359cbb546bd0bc25d138e6721a3f0d77c580d784f020cf0ce9ef445815d",
+    "runtime-rs/tests/fixtures/capture-adr221-pure-branches.mjs": "18a30097d6aaa53cb3887d0c3ec5a95c713bc54ad2798525df7f0b2ba9e360fe",
+    "runtime-rs/tests/fixtures/capture-adr221-stateful-branches.mjs": "878c3e288accf4302ae369ed2e12772cc14a48e4f8cfd692be4faf725559cc24"
   },
   "case_level_matrices": [
     "tools/compact-rust-backend/oracle_direct_behavior_review.json",
@@ -5192,8 +5375,10 @@
   ],
   "remaining_reviewed_limits": [
     "all-input/all-branch coverage is not asserted",
-    "selected false paths listed in report remain uncaptured",
+    "ADR221 resolves the seven named sampled-path gaps only",
+    "ADR222 resolves the four named full-trace gaps for nine cases only",
     "per-export proof and ledger acceptance audit remains separate",
-    "recorded VM comparisons vary: shape, normalized full program or no independent trace as described"
-  ]
+    "other recorded VM comparisons still vary as described"
+  ],
+  "integration_review": "The combined ternary test is exactly signed ADR221 plus its full-program correction and the unchanged ADR216 assert_direct_trace/walkerVectorElement appended block; its integrated hash is pinned."
 }

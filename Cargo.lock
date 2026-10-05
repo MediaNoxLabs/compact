@@ -2227,6 +2227,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-shielded-merge-oracle-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-base-crypto",
+ "midnight-coin-structure",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-zswap",
+ "rand 0.8.5",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-shielded-receive-oracle-fixture"
 version = "0.1.0"
 dependencies = [

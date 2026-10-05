@@ -765,6 +765,65 @@ pub(crate) fn render_state_expression(
                 true,
             ))
         }
+        Expr::CreateZswapInput { coin } | Expr::CreateZswapOutput { coin, .. } => {
+            let is_input = matches!(value, Expr::CreateZswapInput { .. });
+            let (rendered, actual, mut witness_effect) = render_state_expression(
+                coin,
+                parameters,
+                witnesses,
+                statements,
+                next_temp,
+                circuits,
+                stateful_circuits,
+                ledger_fields,
+                query_effect,
+            )?;
+            let expected = if is_input {
+                qualified_coin_type()
+            } else {
+                shielded_coin_type()
+            };
+            if actual != expected {
+                return Err(RenderError::TypeMismatch { expected, actual });
+            }
+            let coin_name = syn::Ident::new(
+                &format!("__compact_zswap_coin_{}", *next_temp),
+                Span::call_site(),
+            );
+            *next_temp += 1;
+            statements.push(syn::parse_quote!(let #coin_name = #rendered;));
+            let info: syn::Expr = syn::parse_quote!(runtime::ledger::coin_info_from_compact(#coin_name.nonce,#coin_name.color,#coin_name.value.value()));
+            if let Expr::CreateZswapOutput { recipient, .. } = value {
+                let (rendered, actual, effect) = render_state_expression(
+                    recipient,
+                    parameters,
+                    witnesses,
+                    statements,
+                    next_temp,
+                    circuits,
+                    stateful_circuits,
+                    ledger_fields,
+                    query_effect,
+                )?;
+                let expected = shielded_recipient_type();
+                if actual != expected {
+                    return Err(RenderError::TypeMismatch { expected, actual });
+                }
+                witness_effect |= effect;
+                let recipient_name = syn::Ident::new(
+                    &format!("__compact_zswap_recipient_{}", *next_temp),
+                    Span::call_site(),
+                );
+                *next_temp += 1;
+                statements.push(syn::parse_quote!(let #recipient_name = #rendered;));
+                statements.push(syn::parse_quote!(context.create_zswap_output(#info, runtime::ledger::coin_recipient_from_compact(#recipient_name.is_left,#recipient_name.left.bytes,#recipient_name.right.bytes))?;));
+            } else {
+                statements.push(syn::parse_quote!(context.create_zswap_input((#info).qualify(#coin_name.mt_index.value() as u64));));
+            }
+            statements.push(syn::parse_quote!(private_transcript_outputs.push(runtime::fab::AlignedValue::from(()));));
+            *query_effect = true;
+            Ok((syn::parse_quote!(()), Type::Unit, witness_effect))
+        }
         Expr::NativeWitnessCall {
             builtin: NativeWitnessBuiltin::OwnPublicKey,
         } => {
@@ -1742,7 +1801,12 @@ fn action_emits_native_private_output(action: &StateAction) -> bool {
 
 fn expression_contains_native_witness(expression: &Expr) -> bool {
     expression_contains(expression, &|value| {
-        matches!(value, Expr::NativeWitnessCall { .. })
+        matches!(
+            value,
+            Expr::NativeWitnessCall { .. }
+                | Expr::CreateZswapInput { .. }
+                | Expr::CreateZswapOutput { .. }
+        )
     })
 }
 
@@ -1914,6 +1978,8 @@ fn expression_contains(expression: &Expr, predicate: &impl Fn(&Expr) -> bool) ->
         | Expr::UnsignedSubtract { left, right, .. }
         | Expr::UnsignedMultiply { left, right, .. } => visit(left) || visit(right),
         Expr::CounterLessThan { threshold, .. } => visit(threshold),
+        Expr::CreateZswapInput { coin } => visit(coin),
+        Expr::CreateZswapOutput { coin, recipient } => visit(coin) || visit(recipient),
         Expr::Unit
         | Expr::NativeWitnessCall { .. }
         | Expr::Default { .. }

@@ -161,6 +161,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
     {
         let prior_query = self.context.query.clone();
         let prior_zswap = self.context.zswap_state.clone();
+        let prior_circuit_zswap = self.context.circuit_zswap.clone();
         let prior_coin_key = self.context.own_coin_public_key().ok();
         let prior_cost_model = self.context.cost_model.clone();
         let prior_gas_limit = self.context.gas_limit;
@@ -179,6 +180,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
             || before_call.balance != after_call.balance
             || before_call.com_indices != after_call.com_indices
             || before_call.last_block_time != after_call.last_block_time
+            || prior_circuit_zswap != next.circuit_zswap
             || prior_zswap.coins != next.zswap_state.coins
             || prior_zswap.pending_spends != next.zswap_state.pending_spends
             || prior_zswap.pending_outputs != next.zswap_state.pending_outputs

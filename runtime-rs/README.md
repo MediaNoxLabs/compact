@@ -182,3 +182,12 @@ ABI42 adds native `CellSlot::write_coin` and `CircuitContext::write_qualified_co
 Qualified Cell writes and Set insertions share allocated commitment validation,
 then obtain the Merkle index through the canonical ledger VM. Recording Cell coin
 writes remains unsupported and is reported explicitly by the compiler.
+
+ABI43 adds `CircuitZswapPlan` for ordered native circuit inputs and outputs, separate
+from the upstream wallet local state. `CircuitContext::create_zswap_output` uses a
+bounded provisional cursor (default0, configurable before first output), while
+observed contexts lock allocation. These intents are not a validated offer.
+`create_zswap_input` appends a qualified coin intent. Context/constructor results
+retain the plan and lock, and audited local recording helpers reject plan changes.
+Constructor transitions reconstruct provisional indices from that plan; they do
+not preserve an arbitrary authoritative offer/call-context allocation map.

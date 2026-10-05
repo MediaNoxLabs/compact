@@ -1858,6 +1858,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/native_zswap_intents_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "consume",
+    "signature": "export circuit consume(coin: QualifiedShieldedCoinInfo): []",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/qualified_coin_set_oracle.compact",
     "module_path": [],
     "kind": "circuit",
@@ -2311,6 +2319,14 @@
     "kind": "circuit",
     "name": "first_packet",
     "signature": "export circuit first_packet(): Maybe<Packet>",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/native_zswap_intents_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "flow",
+    "signature": "export circuit flow(input: QualifiedShieldedCoinInfo, coin: ShieldedCoinInfo, recipient: Either<ZswapCoinPublicKey, ContractAddress>, selected: Boolean): []",
     "visibility": "export"
   },
   {
@@ -3570,6 +3586,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/native_zswap_intents_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "pair",
+    "signature": "circuit pair(coin: ShieldedCoinInfo, recipient: Either<ZswapCoinPublicKey, ContractAddress>): []",
+    "visibility": "internal"
+  },
+  {
     "source": "examples/rust_backend/struct_identity.compact",
     "module_path": [],
     "kind": "circuit",
@@ -3922,6 +3946,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/native_zswap_intents_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "produce",
+    "signature": "export circuit produce(coin: ShieldedCoinInfo, recipient: Either<ZswapCoinPublicKey, ContractAddress>): []",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/widening_arith_oracle.compact",
     "module_path": [],
     "kind": "circuit",
@@ -4239,6 +4271,14 @@
     "kind": "circuit",
     "name": "read_choices",
     "signature": "export circuit read_choices(): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/native_zswap_intents_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "read_coin",
+    "signature": "export circuit read_coin(): QualifiedShieldedCoinInfo",
     "visibility": "export"
   },
   {
@@ -6378,6 +6418,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/native_zswap_intents_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "witness_order",
+    "signature": "export circuit witness_order(selected: Boolean): []",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/boolean_logic.compact",
     "module_path": [],
     "kind": "circuit",
@@ -7414,6 +7462,22 @@
     "kind": "witness",
     "name": "nextWide",
     "signature": "witness nextWide(): Uint<248>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/native_zswap_intents_oracle.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "next_coin",
+    "signature": "witness next_coin(): ShieldedCoinInfo",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/native_zswap_intents_oracle.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "next_recipient",
+    "signature": "witness next_recipient(): Either<ZswapCoinPublicKey, ContractAddress>",
     "visibility": "internal"
   },
   {

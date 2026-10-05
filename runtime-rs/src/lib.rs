@@ -29,6 +29,8 @@ mod primitives;
 pub mod public_state;
 pub mod recording;
 pub mod slots;
+mod zswap;
+pub use zswap::{CircuitZswapOutput, CircuitZswapPlan};
 #[cfg(feature = "ledger-transaction")]
 pub mod transaction;
 
@@ -55,7 +57,7 @@ pub mod fab {
 }
 
 /// Increment when generated Rust and the runtime's public contract change.
-pub const RUST_RUNTIME_ABI: u32 = 42;
+pub const RUST_RUNTIME_ABI: u32 = 43;
 /// The ledger line selected by this Compact branch's `flake.nix`.
 pub const LEDGER_VERSION: &str = "ledger-8.0.3";
 
@@ -79,6 +81,9 @@ pub enum CompactError {
     InvalidJubjubScalar,
     InvalidJubjubPoint,
     MissingCoinPublicKey,
+    ZswapAllocationLocked,
+    ZswapCursorAlreadyUsed,
+    ZswapCursorOverflow,
     UnsignedOutOfRange { value: u128, max: u128 },
     UnsignedOverflow,
     UnsignedUnderflow,
@@ -93,6 +98,17 @@ impl std::fmt::Display for CompactError {
             Self::InvalidUnsignedValue => write!(f, "invalid Compact unsigned value"),
             Self::InvalidJubjubScalar => write!(f, "invalid Jubjub scalar"),
             Self::InvalidJubjubPoint => write!(f, "invalid Jubjub point"),
+            Self::ZswapAllocationLocked => write!(
+                f,
+                "provisional Zswap allocation is unavailable for an observed or offer-backed context"
+            ),
+            Self::ZswapCursorAlreadyUsed => write!(
+                f,
+                "cannot reset the provisional Zswap cursor after producing an output"
+            ),
+            Self::ZswapCursorOverflow => {
+                write!(f, "provisional Zswap cursor exceeds its u64 bound")
+            }
             Self::MissingCoinPublicKey => write!(
                 f,
                 "native ownPublicKey requires a coin public key in the circuit context"

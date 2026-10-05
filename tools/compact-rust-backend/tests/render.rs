@@ -2577,7 +2577,7 @@ fn generated_unit_enum_uses_checked_derive_without_handwritten_codecs() {
     let source = render(&contract).unwrap();
     assert!(source.contains("CompactCellValue, CompactEnum"));
     assert!(source.contains("pub enum Choice"));
-    assert!(source.contains("RUST_RUNTIME_ABI == 42"));
+    assert!(source.contains("RUST_RUNTIME_ABI == 43"));
     assert!(!source.contains("impl FieldRepr for Choice"));
     assert!(!source.contains("impl BinaryHashRepr for Choice"));
     assert!(!source.contains("impl FromFieldRepr for Choice"));
@@ -10296,5 +10296,76 @@ fn qualified_cell_coin_write_is_typed_native_and_reports_recording_gap() {
             render_with_capabilities(&wrong).is_err(),
             "invalid qualified Cell mode {mode}"
         );
+    }
+}
+
+#[test]
+fn native_zswap_intents_validate_types_and_remain_outside_recording() {
+    let mut contract: Contract =
+        serde_json::from_str(include_str!("native-zswap-intents-schema18-ir.json")).unwrap();
+    contract.schema_version = SCHEMA_VERSION;
+    let rendered = render_with_capabilities(&contract).unwrap();
+    for name in ["produce", "consume", "flow", "witness_order"] {
+        let circuit = rendered
+            .capabilities
+            .circuits
+            .iter()
+            .find(|c| c.name == name)
+            .unwrap();
+        assert!(!circuit.recorded && !circuit.observed_call);
+    }
+    assert!(rendered.source.contains(".create_zswap_output("));
+    assert!(rendered.source.contains(".create_zswap_input("));
+    assert!(!rendered.source.contains(".call_local("));
+    for mode in 0..3 {
+        let mut wrong = contract.clone();
+        let name = if mode == 0 { "consume" } else { "produce" };
+        let circuit = wrong
+            .stateful_circuits
+            .iter_mut()
+            .find(|c| c.name == name)
+            .unwrap();
+        let StateReturn::Expression { value } = &mut circuit.return_value else {
+            panic!("expected native return");
+        };
+        match value {
+            Expr::CreateZswapInput { coin } => **coin = Expr::Boolean { value: false },
+            Expr::CreateZswapOutput { coin, recipient } => {
+                if mode == 1 {
+                    **coin = Expr::Boolean { value: false }
+                } else {
+                    **recipient = Expr::Boolean { value: false }
+                }
+            }
+            _ => panic!("expected native expression"),
+        }
+        assert!(render_with_capabilities(&wrong).is_err());
+    }
+    let mut pure = contract.clone();
+    let StateReturn::Expression { value } = pure
+        .stateful_circuits
+        .iter()
+        .find(|c| c.name == "consume")
+        .unwrap()
+        .return_value
+        .clone()
+    else {
+        panic!()
+    };
+    pure.circuits.push(PureCircuit {
+        name: "invalid_pure".into(),
+        source: None,
+        internal: false,
+        parameters: vec![],
+        result: Type::Unit,
+        body: value,
+    });
+    assert!(render_with_capabilities(&pure).is_err());
+    for bad in [
+        r#"{"kind":"create_zswap_input"}"#,
+        r#"{"kind":"create_zswap_output","coin":{"kind":"unit"}}"#,
+        r#"{"kind":"create_zswap_input","coin":{"kind":"unit"},"arguments":[]}"#,
+    ] {
+        assert!(serde_json::from_str::<Expr>(bad).is_err());
     }
 }

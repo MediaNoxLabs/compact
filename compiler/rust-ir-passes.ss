@@ -816,7 +816,9 @@
             (nanopass-case (Lnodisclose Program-Element) pelt
               [(native ,src ,function-name ,native-entry (,arg* ...) ,type)
                (when (eq? (native-entry-class native-entry) 'witness)
-                 (eq-hashtable-set! native-witness-ids function-name (id-sym function-name)))]
+                 (eq-hashtable-set! native-witness-ids function-name (id-sym function-name))
+                 (eq-hashtable-set! call-argument-types function-name
+                   (map (lambda (arg) (nanopass-case (Lnodisclose Argument) arg [(,var-name ,type) type])) arg*)))]
               [else (void)]))
           pelt*))
 
@@ -996,10 +998,10 @@
               (object (cons "kind" "expression")
                       (cons "value" (stateful-expression-ir expr src witness-ids)))]
              [(eq-hashtable-ref native-witness-ids function-name #f)
-              (unless (and (eq? (id-sym function-name) 'ownPublicKey) (null? expr*))
-                (source-errorf src "Rust backend does not yet support this native witness action"))
-              (object (cons "kind" "native_witness_call")
-                      (cons "builtin" "own_public_key"))]
+              (if (and (eq? (id-sym function-name) 'ownPublicKey) (null? expr*))
+                  (object (cons "kind" "native_witness_call") (cons "builtin" "own_public_key"))
+                  (object (cons "kind" "expression")
+                          (cons "value" (stateful-expression-ir expr src witness-ids))))]
              [else
               (object (cons "kind" (if (id-pure? function-name) "pure_call" "circuit_call"))
                       (cons "name" (rust-function-name function-name))
@@ -1407,10 +1409,21 @@
                                                  (cons "ty" (type-ir formal-type src))))
                                        expr* formal-types)))))]
                [(eq-hashtable-ref native-witness-ids function-name #f)
-                (unless (and (eq? name 'ownPublicKey) (null? expr*))
-                  (source-errorf src "Rust backend does not yet support this native witness expression"))
-                (object (cons "kind" "native_witness_call")
-                        (cons "builtin" "own_public_key"))]
+                (case name
+                  [(ownPublicKey)
+                   (unless (null? expr*) (source-errorf src "Rust native ownPublicKey expects no arguments"))
+                   (object (cons "kind" "native_witness_call") (cons "builtin" "own_public_key"))]
+                  [(createZswapInput createZswapOutput)
+                   (let ([formal-types (eq-hashtable-ref call-argument-types function-name #f)])
+                     (unless (and formal-types (= (length expr*) (length formal-types))
+                                  (= (length expr*) (if (eq? name 'createZswapInput) 1 2)))
+                       (source-errorf src "Rust native ~a argument count differs from its declaration" name))
+                     (let ([arguments (map (lambda (arg ty) (stateful-typed-expression-ir arg ty src witness-ids)) expr* formal-types)])
+                       (if (eq? name 'createZswapInput)
+                           (object (cons "kind" "create_zswap_input") (cons "coin" (car arguments)))
+                           (object (cons "kind" "create_zswap_output") (cons "coin" (car arguments))
+                                   (cons "recipient" (cadr arguments))))))]
+                  [else (source-errorf src "Rust backend does not yet support native witness ~a" name)])]
                [(memq name '(transientHash persistentHash keccak256 degradeToTransient upgradeFromTransient
                               hashToCurve jubjubPointX jubjubPointY ecNeg jubjubScalarFromNative))
                 (unless (= (length expr*) 1)
@@ -2215,7 +2228,7 @@
            (source-errorf src "Rust backend found multiple constructors"))
          (print-json
            (get-target-port 'rust.ir.json)
-           (append (object (cons "schema_version" 16)
+           (append (object (cons "schema_version" 18)
                    (cons "type_aliases"
                          (list->vector (fold-right type-alias-ir '() pelt*)))
                    (cons "ledger_fields"

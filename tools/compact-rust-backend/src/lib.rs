@@ -7,7 +7,7 @@ pub use recorded::{RecordingGap, RecordingGapCode};
 mod stateful;
 mod witness;
 
-const RUNTIME_ABI_VERSION: u32 = 42;
+const RUNTIME_ABI_VERSION: u32 = 43;
 pub const RUST_CAPABILITY_SCHEMA_VERSION: u32 = 3;
 
 const GENERATED_HEADER: &str = r#"// This file is part of Compact.
@@ -813,6 +813,11 @@ fn collect_expression_types(
         | Expr::BytesLiteral { .. }
         | Expr::UnsignedLiteral { .. }
         | Expr::Parameter { .. } => {}
+        Expr::CreateZswapInput { coin } => collect_expression_types(coin, structs, enums)?,
+        Expr::CreateZswapOutput { coin, recipient } => {
+            collect_expression_types(coin, structs, enums)?;
+            collect_expression_types(recipient, structs, enums)?;
+        }
         Expr::NativeWitnessCall { builtin } => {
             collect_named_types(&builtin.result_type(), structs, enums)?;
         }
@@ -2041,6 +2046,8 @@ fn expression_with_calls(
             ))
         }
         Expr::WitnessCall { .. }
+        | Expr::CreateZswapInput { .. }
+        | Expr::CreateZswapOutput { .. }
         | Expr::NativeWitnessCall { .. }
         | Expr::SetMember { .. }
         | Expr::MapMember { .. }

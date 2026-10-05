@@ -299,8 +299,8 @@ Compact spelling without warning in consumer builds.
 | Boundary | Current contract | Failure behavior |
 |---|---|---|
 | Compact compiler | Toolchain 0.31.133, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
-| Rust IR | Schema 16, private to this backend | The renderer rejects any other schema before writing `lib.rs`. Schema 16 adds native qualified-coin Cell writes. Schema 15 adds typed Counter less-than queries. Schema 14 adds typed qualified-coin Set insertion. Schema 13 adds an explicit typed Field-to-Bytes32 expression and nested Counter read; the cast uses midnight-zk's canonical 32-byte little-endian Field representation. Ledger, circuit, witness, constructor, and exported alias declarations carry optional Compact source locations for diagnostics. |
-| Generated code and Rust runtime | ABI 42 | Generated modules assert the ABI at Rust compile time. ABI 42 adds native qualified-coin Cell writes; ABI 41 adds typed Counter less-than queries; ABI 40 adds recorded qualified-coin Set insertion, metered `kernel.self()`, and offer-backed observed calls. ABI 39 adds qualified-coin Set insertion using ledger coin and recipient types and the allocated commitment index. ABI 38 adds audited local-helper adoption for private witnesses, gas, and transcript while checking the public and Zswap context. ABI 37 adds a caller coin key for native `ownPublicKey()` and its private output; ABI 36 adds recorded plain Merkle root checks through typed slots; ABI 35 adds recorded Counter reset through typed slots; ABI 34 adds recorded direct plain/historic Merkle fullness reads; ABI 33 adds typed local plain/historic Merkle views with checked depth; ABI 32 adds List views; ABI 31 adds cell-valued Map views; ABI 30 adds Set views; ABI 29 adds Cell/Counter views; ABI 25–28 add physical List paths, chunked Map and Cell calls, and Cell-read scalar returns; ABI 21–24 add typed multi-argument observed calls and composite/chunked Set calls. The [runtime guide](../../runtime-rs/README.md) records earlier ABI changes. |
+| Rust IR | Schema 18, private to this backend | The renderer rejects any other schema before writing `lib.rs`. Schema 18 adds typed native circuit Zswap intents. Schema 16 adds native qualified-coin Cell writes. Schema 15 adds typed Counter less-than queries. Schema 14 adds typed qualified-coin Set insertion. Schema 13 adds an explicit typed Field-to-Bytes32 expression and nested Counter read; the cast uses midnight-zk's canonical 32-byte little-endian Field representation. Ledger, circuit, witness, constructor, and exported alias declarations carry optional Compact source locations for diagnostics. |
+| Generated code and Rust runtime | ABI 43 | Generated modules assert the ABI at Rust compile time. ABI 43 adds typed circuit Zswap intents and locked observed allocation. ABI 42 adds native qualified-coin Cell writes; ABI 41 adds typed Counter less-than queries; ABI 40 adds recorded qualified-coin Set insertion, metered `kernel.self()`, and offer-backed observed calls. ABI 39 adds qualified-coin Set insertion using ledger coin and recipient types and the allocated commitment index. ABI 38 adds audited local-helper adoption for private witnesses, gas, and transcript while checking the public and Zswap context. ABI 37 adds a caller coin key for native `ownPublicKey()` and its private output; ABI 36 adds recorded plain Merkle root checks through typed slots; ABI 35 adds recorded Counter reset through typed slots; ABI 34 adds recorded direct plain/historic Merkle fullness reads; ABI 33 adds typed local plain/historic Merkle views with checked depth; ABI 32 adds List views; ABI 31 adds cell-valued Map views; ABI 30 adds Set views; ABI 29 adds Cell/Counter views; ABI 25–28 add physical List paths, chunked Map and Cell calls, and Cell-read scalar returns; ABI 21–24 add typed multi-argument observed calls and composite/chunked Set calls. The [runtime guide](../../runtime-rs/README.md) records earlier ABI changes. |
 | Rust runtime source | Bundled runtime crates or an explicit shared source root | Cargo resolves the matching runtime and its pinned Midnight crates. |
 
 `--runtime-version` reports the TypeScript runtime version; the Rust runtime
@@ -780,3 +780,34 @@ does not mask the separate Kernel.self query/gas fix from ADR0170.
 The unchanged original micro-dao advances past `pot.writeCoin` to an unsupported
 standard-library native-witness expression. Its createZswapOutput/createZswapInput
 family and further shielded operations remain separate source-admission work.
+
+
+### Native circuit Zswap intents (ADR0175)
+
+Schema18 adds typed `CreateZswapInput` / `CreateZswapOutput` expressions. ABI43
+exposes an ordered `CircuitZswapPlan` built from ledger8 coin and recipient
+carriers. Generated code evaluates operands left to right and retains one empty
+aligned private output per native call, including Unit-return and nested calls.
+The plan is separate from `midnight_zswap::local::State`, which remains wallet
+state. Native output indices are provisional; they do not establish a valid
+ledger offer, funding, or authoritative Merkle allocation.
+
+Native contexts default to cursor0 and can set a start before their first output.
+The cursor is bounded by u64; overflow rejects before any map or intent change.
+This deliberately restricts the TypeScript bigint cursor domain. Observed and
+offer-backed contexts irreversibly lock provisional allocation and reject both
+cursor changes and native output creation. Authoritative allocation maps must
+remain untouched. Input intents and cursor/output changes are included in the
+`RecordingFrame::call_local` audit; this slice does not add native intent recording.
+Constructor/result transitions retain the intent log and lock; provisional output
+indices travel with the log and reconstruct its native map after a transition.
+ConstructorResult does not retain arbitrary call-context or offer allocation maps;
+this guarantee concerns only the provisional indices in the intent log.
+
+The independent TS fixture covers zero/nonzero cursors, duplicate commitments,
+left/right recipients, branch selection, witness order/private state, exact private
+outputs, gas/state/effects, and qualified Cell writes after native outputs. Native
+exports report their recording boundary; only the fixture's Cell read is recorded.
+The unchanged micro-dao source advances to an unsupported standard-library ledger
+query path and remains unassessed. Check `check_compactc_target.py
+--native-zswap-intents` for source admission and strict-recording refusal.

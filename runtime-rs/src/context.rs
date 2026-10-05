@@ -15,9 +15,9 @@
 
 //! Compact-level envelopes around ledger query and shielded state.
 //!
-//! The state, query, cost, and Zswap fields are upstream ledger types. This
-//! module only ties them to a contract's private state and records ownership
-//! transitions between constructor and circuit calls.
+//! Ledger state, query, cost, and wallet Zswap values reuse upstream types.
+//! This module also owns a separate ordered circuit intent plan, ties execution
+//! to private state, and carries ownership across constructor and circuit calls.
 
 pub use midnight_base_crypto::cost_model::RunningCost;
 use midnight_base_crypto::fab::AlignedValue;
@@ -36,13 +36,18 @@ use crate::{CompactError, ledger};
 pub struct ConstructorContext<Private, D: DB = DefaultDB> {
     pub private_state: Private,
     pub zswap_state: ZswapLocalState<D>,
+    pub(crate) circuit_zswap: crate::CircuitZswapPlan,
 }
 
 impl<Private, D: DB> ConstructorContext<Private, D> {
+    pub fn circuit_zswap(&self) -> &crate::CircuitZswapPlan {
+        &self.circuit_zswap
+    }
     pub fn new(private_state: Private) -> Self {
         Self {
             private_state,
             zswap_state: ZswapLocalState::default(),
+            circuit_zswap: crate::CircuitZswapPlan::default(),
         }
     }
 }
@@ -51,22 +56,35 @@ pub struct ConstructorResult<Private, D: DB = DefaultDB> {
     pub ledger_state: ChargedState<D>,
     pub private_state: Private,
     pub zswap_state: ZswapLocalState<D>,
+    pub(crate) circuit_zswap: crate::CircuitZswapPlan,
 }
 
 impl<Private, D: DB> ConstructorResult<Private, D> {
+    pub fn circuit_zswap(&self) -> &crate::CircuitZswapPlan {
+        &self.circuit_zswap
+    }
     pub fn new(context: ConstructorContext<Private, D>, ledger_state: ChargedState<D>) -> Self {
         Self {
             ledger_state,
             private_state: context.private_state,
             zswap_state: context.zswap_state,
+            circuit_zswap: context.circuit_zswap,
         }
     }
 
     pub fn into_circuit_context(self, address: ContractAddress) -> CircuitContext<Private, D> {
+        let mut query = QueryContext::new(self.ledger_state, address);
+        for output in self.circuit_zswap.outputs() {
+            query.call_context.com_indices = query.call_context.com_indices.insert(
+                output.coin.commitment(&output.recipient),
+                output.provisional_index,
+            );
+        }
         CircuitContext {
             private_state: self.private_state,
-            query: QueryContext::new(self.ledger_state, address),
+            query,
             zswap_state: self.zswap_state,
+            circuit_zswap: self.circuit_zswap,
             coin_public_key: None,
             cost_model: INITIAL_COST_MODEL.clone(),
             gas_limit: None,
@@ -78,6 +96,7 @@ pub struct CircuitContext<Private, D: DB = DefaultDB> {
     pub private_state: Private,
     pub query: QueryContext<D>,
     pub zswap_state: ZswapLocalState<D>,
+    pub(crate) circuit_zswap: crate::CircuitZswapPlan,
     coin_public_key: Option<CoinPublicKey>,
     pub cost_model: CostModel,
     /// Ledger-8 VM guard for each individual query, including witness reads.
@@ -388,6 +407,63 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         self.with_coin_public_key(CoinPublicKey(HashOutput(bytes)))
     }
 
+    /// The native circuit intent log, separate from the wallet's Zswap state.
+    pub fn circuit_zswap(&self) -> &crate::CircuitZswapPlan {
+        &self.circuit_zswap
+    }
+
+    /// Configure a provisional native output cursor before producing outputs.
+    pub fn set_zswap_output_start(&mut self, index: u64) -> Result<(), CompactError> {
+        if self.circuit_zswap.allocation_locked {
+            return Err(CompactError::ZswapAllocationLocked);
+        }
+        if !self.circuit_zswap.outputs.is_empty() {
+            return Err(CompactError::ZswapCursorAlreadyUsed);
+        }
+        self.circuit_zswap.next_index = index;
+        Ok(())
+    }
+
+    #[cfg(feature = "ledger-transaction")]
+    pub(crate) fn lock_zswap_allocation(mut self) -> Self {
+        self.circuit_zswap.allocation_locked = true;
+        self
+    }
+
+    /// Append an input intent; this does not spend a wallet coin or validate an offer.
+    pub fn create_zswap_input(&mut self, coin: ledger::QualifiedCoinInfo) {
+        self.circuit_zswap.inputs.push(coin);
+    }
+
+    /// Produce a provisional native intent and execution index, never a ledger allocation.
+    pub fn create_zswap_output(
+        &mut self,
+        coin: ledger::CoinInfo,
+        recipient: ledger::CoinRecipient,
+    ) -> Result<(), CompactError> {
+        if self.circuit_zswap.allocation_locked {
+            return Err(CompactError::ZswapAllocationLocked);
+        }
+        let next = self
+            .circuit_zswap
+            .next_index
+            .checked_add(1)
+            .ok_or(CompactError::ZswapCursorOverflow)?;
+        let commitment = coin.commitment(&recipient);
+        self.query.call_context.com_indices = self
+            .query
+            .call_context
+            .com_indices
+            .insert(commitment, self.circuit_zswap.next_index);
+        self.circuit_zswap.next_index = next;
+        self.circuit_zswap.outputs.push(crate::CircuitZswapOutput {
+            provisional_index: next - 1,
+            coin,
+            recipient,
+        });
+        Ok(())
+    }
+
     /// Native `ownPublicKey()` reads the execution identity, not Zswap state.
     pub fn own_coin_public_key(&self) -> Result<[u8; 32], CompactError> {
         self.coin_public_key
@@ -424,6 +500,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
             private_state,
             query: QueryContext::new(contract.data.clone(), address),
             zswap_state: ZswapLocalState::default(),
+            circuit_zswap: crate::CircuitZswapPlan::default(),
             coin_public_key: None,
             cost_model: INITIAL_COST_MODEL.clone(),
             gas_limit: None,
@@ -435,6 +512,7 @@ impl<Private, D: DB> CircuitContext<Private, D> {
             ledger_state: self.query.state,
             private_state: self.private_state,
             zswap_state: self.zswap_state,
+            circuit_zswap: self.circuit_zswap,
         }
     }
 

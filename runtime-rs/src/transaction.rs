@@ -95,7 +95,7 @@ impl<D: DB> ObservedContractState<D> {
         let mut context =
             CircuitContext::from_contract_state(private_state, self.address, &self.contract);
         context.query.call_context.com_indices = self.com_indices.clone();
-        context
+        context.lock_zswap_allocation()
     }
 }
 

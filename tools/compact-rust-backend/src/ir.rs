@@ -22,7 +22,7 @@
 
 use serde::{Deserialize, Serialize};
 
-pub const SCHEMA_VERSION: u32 = 16;
+pub const SCHEMA_VERSION: u32 = 18;
 
 /// A Compact source position, independent of the compiler checkout path.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
@@ -822,6 +822,13 @@ pub enum Expr {
     WitnessCall {
         name: String,
         arguments: Vec<Expr>,
+    },
+    CreateZswapInput {
+        coin: Box<Expr>,
+    },
+    CreateZswapOutput {
+        coin: Box<Expr>,
+        recipient: Box<Expr>,
     },
     NativeWitnessCall {
         builtin: NativeWitnessBuiltin,

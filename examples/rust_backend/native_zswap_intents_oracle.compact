@@ -1,0 +1,41 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//   http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import CompactStandardLibrary;
+export ledger pot: QualifiedShieldedCoinInfo;
+witness next_coin(): ShieldedCoinInfo;
+witness next_recipient(): Either<ZswapCoinPublicKey, ContractAddress>;
+
+export circuit produce(coin: ShieldedCoinInfo, recipient: Either<ZswapCoinPublicKey, ContractAddress>): [] {
+  return createZswapOutput(coin, recipient);
+}
+export circuit consume(coin: QualifiedShieldedCoinInfo): [] {
+  return createZswapInput(coin);
+}
+circuit pair(coin: ShieldedCoinInfo, recipient: Either<ZswapCoinPublicKey, ContractAddress>): [] {
+  createZswapOutput(coin, recipient);
+  createZswapOutput(coin, recipient);
+}
+export circuit flow(input: QualifiedShieldedCoinInfo, coin: ShieldedCoinInfo, recipient: Either<ZswapCoinPublicKey, ContractAddress>, selected: Boolean): [] {
+  createZswapInput(input);
+  if (disclose(selected)) {
+    pair(coin, recipient);
+    pot.writeCoin(disclose(coin), disclose(recipient));
+  }
+}
+export circuit witness_order(selected: Boolean): [] {
+  if (selected) { createZswapOutput(next_coin(), next_recipient()); }
+}
+export circuit read_coin(): QualifiedShieldedCoinInfo { return pot; }

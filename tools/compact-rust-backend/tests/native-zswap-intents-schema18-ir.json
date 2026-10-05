@@ -1,0 +1,819 @@
+{
+  "schema_version": 18,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "pot",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "struct",
+          "name": "QualifiedShieldedCoinInfo",
+          "fields": [
+            {
+              "name": "nonce",
+              "ty": {
+                "kind": "bytes",
+                "length": 32
+              }
+            },
+            {
+              "name": "color",
+              "ty": {
+                "kind": "bytes",
+                "length": 32
+              }
+            },
+            {
+              "name": "value",
+              "ty": {
+                "kind": "unsigned",
+                "max": "340282366920938463463374607431768211455"
+              }
+            },
+            {
+              "name": "mt_index",
+              "ty": {
+                "kind": "unsigned",
+                "max": "18446744073709551615"
+              }
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "native_zswap_intents_oracle.compact",
+        "line": 17,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "next_coin",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "ShieldedCoinInfo",
+        "fields": [
+          {
+            "name": "nonce",
+            "ty": {
+              "kind": "bytes",
+              "length": 32
+            }
+          },
+          {
+            "name": "color",
+            "ty": {
+              "kind": "bytes",
+              "length": 32
+            }
+          },
+          {
+            "name": "value",
+            "ty": {
+              "kind": "unsigned",
+              "max": "340282366920938463463374607431768211455"
+            }
+          }
+        ]
+      },
+      "source": {
+        "file": "native_zswap_intents_oracle.compact",
+        "line": 18,
+        "column": 1
+      }
+    },
+    {
+      "name": "next_recipient",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Either",
+        "fields": [
+          {
+            "name": "is_left",
+            "ty": {
+              "kind": "boolean"
+            }
+          },
+          {
+            "name": "left",
+            "ty": {
+              "kind": "struct",
+              "name": "ZswapCoinPublicKey",
+              "fields": [
+                {
+                  "name": "bytes",
+                  "ty": {
+                    "kind": "bytes",
+                    "length": 32
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "right",
+            "ty": {
+              "kind": "struct",
+              "name": "ContractAddress",
+              "fields": [
+                {
+                  "name": "bytes",
+                  "ty": {
+                    "kind": "bytes",
+                    "length": 32
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "source": {
+        "file": "native_zswap_intents_oracle.compact",
+        "line": 19,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "produce",
+      "parameters": [
+        {
+          "name": "coin",
+          "ty": {
+            "kind": "struct",
+            "name": "ShieldedCoinInfo",
+            "fields": [
+              {
+                "name": "nonce",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "color",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "340282366920938463463374607431768211455"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "recipient",
+          "ty": {
+            "kind": "struct",
+            "name": "Either",
+            "fields": [
+              {
+                "name": "is_left",
+                "ty": {
+                  "kind": "boolean"
+                }
+              },
+              {
+                "name": "left",
+                "ty": {
+                  "kind": "struct",
+                  "name": "ZswapCoinPublicKey",
+                  "fields": [
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "right",
+                "ty": {
+                  "kind": "struct",
+                  "name": "ContractAddress",
+                  "fields": [
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "create_zswap_output",
+          "coin": {
+            "kind": "parameter",
+            "name": "coin"
+          },
+          "recipient": {
+            "kind": "parameter",
+            "name": "recipient"
+          }
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "native_zswap_intents_oracle.compact",
+        "line": 21,
+        "column": 1
+      }
+    },
+    {
+      "name": "consume",
+      "parameters": [
+        {
+          "name": "coin",
+          "ty": {
+            "kind": "struct",
+            "name": "QualifiedShieldedCoinInfo",
+            "fields": [
+              {
+                "name": "nonce",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "color",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "340282366920938463463374607431768211455"
+                }
+              },
+              {
+                "name": "mt_index",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "18446744073709551615"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "create_zswap_input",
+          "coin": {
+            "kind": "parameter",
+            "name": "coin"
+          }
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "native_zswap_intents_oracle.compact",
+        "line": 24,
+        "column": 1
+      }
+    },
+    {
+      "name": "pair",
+      "parameters": [
+        {
+          "name": "coin",
+          "ty": {
+            "kind": "struct",
+            "name": "ShieldedCoinInfo",
+            "fields": [
+              {
+                "name": "nonce",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "color",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "340282366920938463463374607431768211455"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "recipient",
+          "ty": {
+            "kind": "struct",
+            "name": "Either",
+            "fields": [
+              {
+                "name": "is_left",
+                "ty": {
+                  "kind": "boolean"
+                }
+              },
+              {
+                "name": "left",
+                "ty": {
+                  "kind": "struct",
+                  "name": "ZswapCoinPublicKey",
+                  "fields": [
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "right",
+                "ty": {
+                  "kind": "struct",
+                  "name": "ContractAddress",
+                  "fields": [
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "expression",
+          "value": {
+            "kind": "create_zswap_output",
+            "coin": {
+              "kind": "parameter",
+              "name": "coin"
+            },
+            "recipient": {
+              "kind": "parameter",
+              "name": "recipient"
+            }
+          }
+        },
+        {
+          "kind": "expression",
+          "value": {
+            "kind": "create_zswap_output",
+            "coin": {
+              "kind": "parameter",
+              "name": "coin"
+            },
+            "recipient": {
+              "kind": "parameter",
+              "name": "recipient"
+            }
+          }
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "native_zswap_intents_oracle.compact",
+        "line": 27,
+        "column": 1
+      }
+    },
+    {
+      "name": "flow",
+      "parameters": [
+        {
+          "name": "input",
+          "ty": {
+            "kind": "struct",
+            "name": "QualifiedShieldedCoinInfo",
+            "fields": [
+              {
+                "name": "nonce",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "color",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "340282366920938463463374607431768211455"
+                }
+              },
+              {
+                "name": "mt_index",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "18446744073709551615"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "coin",
+          "ty": {
+            "kind": "struct",
+            "name": "ShieldedCoinInfo",
+            "fields": [
+              {
+                "name": "nonce",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "color",
+                "ty": {
+                  "kind": "bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "340282366920938463463374607431768211455"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "recipient",
+          "ty": {
+            "kind": "struct",
+            "name": "Either",
+            "fields": [
+              {
+                "name": "is_left",
+                "ty": {
+                  "kind": "boolean"
+                }
+              },
+              {
+                "name": "left",
+                "ty": {
+                  "kind": "struct",
+                  "name": "ZswapCoinPublicKey",
+                  "fields": [
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "right",
+                "ty": {
+                  "kind": "struct",
+                  "name": "ContractAddress",
+                  "fields": [
+                    {
+                      "name": "bytes",
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "selected",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "expression",
+          "value": {
+            "kind": "create_zswap_input",
+            "coin": {
+              "kind": "parameter",
+              "name": "input"
+            }
+          }
+        },
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "parameter",
+            "name": "selected"
+          },
+          "then": {
+            "kind": "sequence",
+            "actions": [
+              {
+                "kind": "circuit_call",
+                "name": "pair",
+                "arguments": [
+                  {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "coin"
+                    },
+                    "ty": {
+                      "kind": "struct",
+                      "name": "ShieldedCoinInfo",
+                      "fields": [
+                        {
+                          "name": "nonce",
+                          "ty": {
+                            "kind": "bytes",
+                            "length": 32
+                          }
+                        },
+                        {
+                          "name": "color",
+                          "ty": {
+                            "kind": "bytes",
+                            "length": 32
+                          }
+                        },
+                        {
+                          "name": "value",
+                          "ty": {
+                            "kind": "unsigned",
+                            "max": "340282366920938463463374607431768211455"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "recipient"
+                    },
+                    "ty": {
+                      "kind": "struct",
+                      "name": "Either",
+                      "fields": [
+                        {
+                          "name": "is_left",
+                          "ty": {
+                            "kind": "boolean"
+                          }
+                        },
+                        {
+                          "name": "left",
+                          "ty": {
+                            "kind": "struct",
+                            "name": "ZswapCoinPublicKey",
+                            "fields": [
+                              {
+                                "name": "bytes",
+                                "ty": {
+                                  "kind": "bytes",
+                                  "length": 32
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "name": "right",
+                          "ty": {
+                            "kind": "struct",
+                            "name": "ContractAddress",
+                            "fields": [
+                              {
+                                "name": "bytes",
+                                "ty": {
+                                  "kind": "bytes",
+                                  "length": 32
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              {
+                "kind": "cell_write_coin",
+                "field": "pot",
+                "index": 0,
+                "coin": {
+                  "kind": "parameter",
+                  "name": "coin"
+                },
+                "recipient": {
+                  "kind": "parameter",
+                  "name": "recipient"
+                }
+              }
+            ]
+          },
+          "otherwise": {
+            "kind": "sequence",
+            "actions": [
+            ]
+          }
+        }
+      ],
+      "source": {
+        "file": "native_zswap_intents_oracle.compact",
+        "line": 31,
+        "column": 1
+      }
+    },
+    {
+      "name": "witness_order",
+      "parameters": [
+        {
+          "name": "selected",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "parameter",
+            "name": "selected"
+          },
+          "then": {
+            "kind": "expression",
+            "value": {
+              "kind": "create_zswap_output",
+              "coin": {
+                "kind": "witness_call",
+                "name": "next_coin",
+                "arguments": [
+                ]
+              },
+              "recipient": {
+                "kind": "witness_call",
+                "name": "next_recipient",
+                "arguments": [
+                ]
+              }
+            }
+          },
+          "otherwise": {
+            "kind": "sequence",
+            "actions": [
+            ]
+          }
+        }
+      ],
+      "source": {
+        "file": "native_zswap_intents_oracle.compact",
+        "line": 38,
+        "column": 1
+      }
+    },
+    {
+      "name": "read_coin",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "QualifiedShieldedCoinInfo",
+        "fields": [
+          {
+            "name": "nonce",
+            "ty": {
+              "kind": "bytes",
+              "length": 32
+            }
+          },
+          {
+            "name": "color",
+            "ty": {
+              "kind": "bytes",
+              "length": 32
+            }
+          },
+          {
+            "name": "value",
+            "ty": {
+              "kind": "unsigned",
+              "max": "340282366920938463463374607431768211455"
+            }
+          },
+          {
+            "name": "mt_index",
+            "ty": {
+              "kind": "unsigned",
+              "max": "18446744073709551615"
+            }
+          }
+        ]
+      },
+      "return_value": {
+        "kind": "cell_read",
+        "field": "pot",
+        "index": 0
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "native_zswap_intents_oracle.compact",
+        "line": 41,
+        "column": 1
+      }
+    }
+  ]
+}

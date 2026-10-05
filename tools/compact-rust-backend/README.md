@@ -145,9 +145,8 @@ tail-`Let` binding across its ordered writes. Its empty-board rejection and
 Unicode post/take-down cycle match TypeScript in result, serialized state,
 ledger values, witness calls, and summed query gas. `post` and `take_down`
 are recorded and observed; pure `public_key` requires no
-proof. `coracle` still rejects a value-returning branch with ledger writes at
-its `start` circuit line 191, leaving its nine exports unassessed. `micro-dao`
-rejects a standard-library expression.
+proof. Complete original `coracle` and `micro-dao` now compile to native Rust.
+Their recording gaps remain explicit in their positive source manifests.
 The separate `let_return_oracle.compact` source now covers a root circuit
 `let` whose bound Cell read must retain its pre-write value across ordered
 actions and the final return. Its generated Rust crate matches two sequential
@@ -161,9 +160,17 @@ return is independent of those bindings. Scheme now extracts the ordered
 actions from this lexical frame using the existing schema-14 `Let` action.
 Two sequential TypeScript and native calls agree on result, serialized state,
 ledger effects, one read and one write per call, and the summed four-dimension
-query gas. Its export is native-only because recorded lowering does not yet
-support this return expression. Coracle advances past its first root-Let
-failure but remains rejected at a separate effectful branch return.
+query gas. Its export now supports recorded/observed calls. Combined root-Let,
+effectful-return and stateful-assertion lowering admits complete original Coracle.
+`parity_positive_test_center_coracle_sources.json` checks all nine exports:
+five pure and four proof-required (`start`, `guess`, `concede`, `withdraw`).
+The four recording gaps remain exact: `StateReturn::Effectful` for `start`,
+`StateReturn::Expression` for the others, all at `return_value`. Both
+`--effectful-return` and `--coracle-root-let` check native acceptance and strict
+recording refusal. The full local gate runs the Coracle source manifest,
+including one offline Rust 1.99 native Cargo check of the emitted crate.
+This establishes source and native crate acceptance; full original-contract
+behavior, recorded proofs and funded transactions remain separate work.
 The lexical scanner includes `pure circuit` and `export pure circuit`
 declarations, with compiler `contract-info.json` supplying proof applicability
 even when the Rust capability report has no recorded method for a pure circuit.

@@ -18,8 +18,9 @@
 """Compile the checked TS-positive source cohort and record exact proof metadata.
 
 This gate establishes compiler acceptance and capability metadata only. It does
-not execute TypeScript, Rust, proofs, or ledger transactions. When a cohort
-names a Rust fixture, compare the formatted generated crate source exactly.
+not execute TypeScript, Rust, proofs, or ledger transactions. A cohort may opt
+into a native Cargo check. When a cohort names a Rust fixture, compare the
+formatted generated crate source exactly.
 """
 
 import argparse
@@ -136,6 +137,11 @@ def check(compiler: Path, manifest_path: Path = MANIFEST) -> tuple[dict, list[st
                         if proof is None or capability.get("proof_required") is not proof[1]:
                             failures.append(f"{source.name}.{capability['name']}: Rust proof flag disagrees")
                     by_name = {item["name"]: item for item in report["circuits"]}
+                    expected_names = expected.get("expected_capability_circuits")
+                    if expected_names is not None and (
+                            len(by_name) != len(report["circuits"])
+                            or set(by_name) != set(expected_names)):
+                        failures.append(f"{source.name}: Rust capability circuit set changed")
                     for name in expected.get("expected_recorded_circuits", []):
                         capability = by_name.get(name)
                         if (capability is None
@@ -155,6 +161,19 @@ def check(compiler: Path, manifest_path: Path = MANIFEST) -> tuple[dict, list[st
                                 or any(actual_gap.get(key) != value
                                        for key, value in expected_gap.items())):
                             failures.append(f"{source.name}.{name}: recording gap changed")
+                if expected.get("cargo_check"):
+                    command = ["cargo", "+1.99.0", "check", "--offline", "--manifest-path",
+                               str(output / "rust/contract/Cargo.toml")]
+                    cargo = subprocess.run(command, cwd=ROOT, env=os.environ.copy(),
+                                           capture_output=True, text=True, check=False)
+                    row["cargo_check"] = {"command": command, "exit_code": cargo.returncode,
+                                          "stdout": cargo.stdout, "stderr": cargo.stderr}
+                    row["generated_rust_sha256"] = sha256(output / "rust/contract/lib.rs")
+                    row["generated_cargo_lock_sha256"] = (
+                        sha256(output / "rust/contract/Cargo.lock")
+                        if (output / "rust/contract/Cargo.lock").is_file() else None)
+                    if cargo.returncode:
+                        failures.append(f"{source.name}: generated native crate Cargo check failed")
                 if "rust_fixture" in expected:
                     generated = output / "rust/contract/lib.rs"
                     fixture = ROOT / expected["rust_fixture"]

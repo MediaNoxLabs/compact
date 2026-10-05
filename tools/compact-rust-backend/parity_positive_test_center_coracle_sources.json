@@ -1,0 +1,93 @@
+{
+  "format_version": 1,
+  "suite": "compiler/test.ss",
+  "purpose": "Original complete Coracle TS/Rust source acceptance, native Cargo check, and exact proof/recording boundaries; no behavioral or proof closure",
+  "source_glob": "test-center/test-contracts/coracle.compact",
+  "positive_sources": [
+    {
+      "source": "test-center/test-contracts/coracle.compact",
+      "expected_ts": "success",
+      "expected_rust": "success",
+      "cargo_check": true,
+      "proof_circuits": [
+        {
+          "name": "red_pk",
+          "pure": true,
+          "proof": false
+        },
+        {
+          "name": "is_red",
+          "pure": true,
+          "proof": false
+        },
+        {
+          "name": "blue_pk",
+          "pure": true,
+          "proof": false
+        },
+        {
+          "name": "is_blue",
+          "pure": true,
+          "proof": false
+        },
+        {
+          "name": "is_player_alive",
+          "pure": true,
+          "proof": false
+        },
+        {
+          "name": "start",
+          "pure": false,
+          "proof": true
+        },
+        {
+          "name": "guess",
+          "pure": false,
+          "proof": true
+        },
+        {
+          "name": "concede",
+          "pure": false,
+          "proof": true
+        },
+        {
+          "name": "withdraw",
+          "pure": false,
+          "proof": true
+        }
+      ],
+      "expected_capability_circuits": [
+        "start",
+        "guess",
+        "concede",
+        "withdraw"
+      ],
+      "expected_recorded_circuits": [],
+      "expected_recording_gaps": {
+        "start": {
+          "code": "unsupported_return",
+          "ir_node": "StateReturn::Effectful",
+          "path": "return_value"
+        },
+        "guess": {
+          "code": "unsupported_return",
+          "ir_node": "StateReturn::Expression",
+          "path": "return_value"
+        },
+        "concede": {
+          "code": "unsupported_return",
+          "ir_node": "StateReturn::Expression",
+          "path": "return_value"
+        },
+        "withdraw": {
+          "code": "unsupported_return",
+          "ir_node": "StateReturn::Expression",
+          "path": "return_value"
+        }
+      },
+      "pure_declarations": 0,
+      "exported_pure_declarations": 0
+    }
+  ],
+  "expected_rejections": []
+}

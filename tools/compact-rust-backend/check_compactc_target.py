@@ -1069,6 +1069,33 @@ def check_merkle_witness_consumer(compiler: str, base: Path) -> None:
     assert rejected.returncode != 0 and "expected `MerkleTreeDigest`" in rejected.stderr, rejected.stderr
 
 
+def check_coracle_source(compiler: str, base: Path) -> None:
+    manifest = json.loads((ROOT / "tools/compact-rust-backend/parity_positive_test_center_coracle_sources.json").read_text())
+    expected, = manifest["positive_sources"]
+    output = base / "coracle"
+    run(compiler, "--target", "rust", "--skip-zk", str(CORACLE_SOURCE), str(output))
+    assert (output / "contract/lib.rs").is_file()
+    info = json.loads((output / "compiler/contract-info.json").read_text())
+    assert [{key: row[key] for key in ("name", "pure", "proof")}
+            for row in info["circuits"]] == expected["proof_circuits"]
+    report = json.loads((output / "contract/rust-capabilities.json").read_text())
+    assert report["schema_version"] == 3
+    assert [row["name"] for row in report["circuits"]] == expected["expected_capability_circuits"]
+    for row in report["circuits"]:
+        gap = expected["expected_recording_gaps"][row["name"]]
+        assert row["proof_required"] and not row["recorded"] and not row["observed_call"]
+        assert row["recording_status"] == "unavailable"
+        assert {key: row["recording_unavailable"][key] for key in gap} == gap
+        assert row["observed_call_unavailable"]["code"] == "recording_unavailable"
+    strict = subprocess.run(
+        [compiler, "--target", "rust", "--rust-require-recording", "--skip-zk",
+         str(CORACLE_SOURCE), str(base / "coracle-strict")],
+        cwd=ROOT, capture_output=True, text=True)
+    assert strict.returncode != 0 and "start" in strict.stderr
+    assert "StateReturn::Effectful" in strict.stderr
+    assert not (base / "coracle-strict/contract/lib.rs").exists()
+
+
 def check_list_shapes_consumer(compiler: str, base: Path) -> None:
     output = base / "list-shapes-contract"
     run(compiler, "--target", "rust", "--skip-zk", str(LIST_SHAPES_SOURCE), str(output))
@@ -1113,9 +1140,9 @@ def main() -> None:
     parser.add_argument("--adt-set-qualified", action="store_true",
                         help="compile the original qualified Set source and check typed coin insertion capability")
     parser.add_argument("--coracle-root-let", action="store_true",
-                        help="check root Let action extraction and the next complete Coracle blocker")
+                        help="check root Let action extraction and complete Coracle native acceptance")
     parser.add_argument("--effectful-return", action="store_true",
-                        help="check ordered terminal return plans and the next complete Coracle blocker")
+                        help="check ordered terminal return plans and complete Coracle native acceptance")
     args = parser.parse_args()
     # Captured Rust errors are asserted below; runner color settings must not split their text.
     os.environ["CARGO_TERM_COLOR"] = "never"
@@ -1270,15 +1297,8 @@ def main() -> None:
                 existing_ir = json.loads((existing / "contract/compact-rust-ir.json").read_text())
                 assert all(row["return_value"]["kind"] != "effectful"
                            for row in existing_ir["stateful_circuits"])
-            complete = subprocess.run(
-                [compiler, "--target", "rust", "--skip-zk",
-                 str(CORACLE_SOURCE), str(base / "coracle")],
-                cwd=ROOT, capture_output=True, text=True)
-            assert complete.returncode != 0
-            assert "coracle.compact line 316" in complete.stderr
-            assert "stateful expression requires stateful evaluation" in complete.stderr
-            assert not (base / "coracle/contract/lib.rs").exists()
-            print("typed effectful returns admitted; complete Coracle remains unassessed at the line316 stateful expression")
+            check_coracle_source(compiler, base)
+            print("typed effectful returns admitted; complete Coracle compiles with 4 explicit recording gaps")
             return
         if args.qualified_coin_cell:
             output = base / "qualified-coin-cell"
@@ -1382,20 +1402,14 @@ def main() -> None:
                 ("add_organizer", True, True),
                 ("check_in", True, True),
             ]
-            complete = subprocess.run(
-                [compiler, "--target", "rust", "--skip-zk",
-                 str(CORACLE_SOURCE), str(base / "coracle")],
-                cwd=ROOT, capture_output=True, text=True)
-            assert complete.returncode != 0
-            assert "coracle.compact line 316" in complete.stderr
-            assert "stateful expression requires stateful evaluation" in complete.stderr
+            check_coracle_source(compiler, base)
             if args.proof:
                 proof = base / "root-let-action-return-proof"
                 run(compiler, "--target", "rust", "--rust-require-recording",
                     str(ROOT_LET_ACTION_RETURN_SOURCE), str(proof))
                 run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                     "--root-let-action-return", str(proof))
-            print("root Let actions retained; complete Coracle remains unassessed at the line316 stateful expression")
+            print("root Let actions retained; complete Coracle compiles with 4 explicit recording gaps")
             return
         if args.adt_set_qualified:
             output = base / "adt-set-qualified"

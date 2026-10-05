@@ -319,6 +319,10 @@ def main() -> int:
     try:
         if args.full and args.skip_cargo:
             raise GateError("--skip-cargo is only available in focused mode")
+        if args.full and not os.environ.get("MIDNIGHT_LEDGER_TEST_STATIC_DIR"):
+            raise GateError("set MIDNIGHT_LEDGER_TEST_STATIC_DIR to the ledger checkout's "
+                            "ledger/static directory before --full; funded qualified-coin "
+                            "proofs require the upstream fee funding fixture")
         selected = select_sources(args.source, args.full)
         head = git_head()
         if args.expect_head and not head.startswith(args.expect_head):
@@ -425,6 +429,10 @@ def main() -> int:
                  "--manifest", str(ROOT / "tools/compact-rust-backend/parity_positive_test_center_micro_dao_sources.json"),
                  "--compiler", str(snapshot), "--output", str(directory / "test-center-micro-dao-source-scope.json")],
                 "test-center-micro-dao-source-scope", directory, receipt, env=environment)
+            run([sys.executable, str(ROOT / "tools/compact-rust-backend/check_positive_source_scope.py"),
+                 "--manifest", str(ROOT / "tools/compact-rust-backend/parity_positive_test_center_coracle_sources.json"),
+                 "--compiler", str(snapshot), "--output", str(directory / "test-center-coracle-source-scope.json")],
+                "test-center-coracle-source-scope", directory, receipt, env=environment)
             # The compactup integration tests require the machine's installed
             # compiler and the mutable GitHub release list. They are outside
             # this compiler/backend parity gate and cannot give a repeatable

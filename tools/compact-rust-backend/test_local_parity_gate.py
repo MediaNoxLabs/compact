@@ -15,6 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -23,6 +26,20 @@ import local_parity_gate as gate
 
 
 class WorkspaceTestPlanTests(unittest.TestCase):
+    def test_full_gate_reports_missing_fee_fixture_before_compiler_or_build(self):
+        environment = os.environ.copy()
+        environment.pop("MIDNIGHT_LEDGER_TEST_STATIC_DIR", None)
+        with tempfile.TemporaryDirectory() as temporary:
+            run_dir = Path(temporary) / "gate"
+            result = subprocess.run(
+                [sys.executable, str(Path(gate.__file__)), "--full", "--compiler",
+                 str(Path(temporary) / "missing-compiler"), "--run-dir", str(run_dir)],
+                env=environment, capture_output=True, text=True, check=False)
+            self.assertEqual(result.returncode, 1)
+            self.assertIn("MIDNIGHT_LEDGER_TEST_STATIC_DIR", result.stderr)
+            self.assertIn("ledger/static", result.stderr)
+            self.assertFalse(run_dir.exists())
+
     def test_generated_library_guard_falls_back_for_test_or_unknown_expansion(self):
         safe = '#[derive(Clone)]\npub fn f() { if !(true) { assert!(false); } }'
         self.assertTrue(gate.generated_library_has_no_test_hooks(safe))

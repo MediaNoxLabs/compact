@@ -179,7 +179,7 @@ fn check(out: CircuitResult<Private, types::ShieldedCoinInfo>, row: &Value) {
     );
 }
 #[test]
-fn original_cash_out_native_matches_twenty_one_pinned_ts_cases() {
+fn original_cash_out_native_recorded_and_replay_match_twenty_one_pinned_ts_cases() {
     let rows: Value = serde_json::from_str(include_str!(
         "../../../runtime-rs/tests/fixtures/micro-dao-cash-out.json"
     ))
@@ -188,6 +188,12 @@ fn original_cash_out_native_matches_twenty_one_pinned_ts_cases() {
     let mut successes = 0;
     for row in rows.as_array().unwrap() {
         let native = c::cash_out(context(row));
+        let recorded = c::recorded::cash_out(context(row));
+        match (&native, &recorded) {
+            (Err(n), Err(r)) => assert_eq!(n, r),
+            (Ok(_), Ok(_)) => {}
+            _ => panic!("native/recorded mismatch: {}", row["name"]),
+        }
         if let Some(expected) = row["error"].as_str() {
             let err = native.err().expect("expected source rejection");
             let name = row["name"].as_str().unwrap();
@@ -223,6 +229,23 @@ fn original_cash_out_native_matches_twenty_one_pinned_ts_cases() {
         } else {
             successes += 1;
             check(native.unwrap(), row);
+            let recorded = recorded.unwrap();
+            assert_eq!(json!(recorded.public.verify_ops()), row["publicTranscript"]);
+            let replay = recorded
+                .public
+                .initial()
+                .query(
+                    recorded.public.verify_ops(),
+                    None,
+                    &recorded.execution.context.cost_model,
+                )
+                .unwrap();
+            assert_eq!(replay.context.state, recorded.execution.context.query.state);
+            assert_eq!(
+                replay.context.effects,
+                recorded.execution.context.query.effects
+            );
+            check(recorded.execution, row);
         }
     }
     assert_eq!(successes, 9);

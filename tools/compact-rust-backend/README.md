@@ -1272,8 +1272,8 @@ Run `check_compactc_target.py --micro-dao-advance` for the source capability gua
 and optionally `--proof` for selective key generation and proof smoke. The proof
 smoke also accepts `--micro-dao-advance <proof-output>` to reuse pinned keys.
 `MIDNIGHT_LEDGER_TEST_STATIC_DIR` must point to the upstream static fixtures for
-Dust fee funding. The source cross-tab retains four original proof gaps:
-`vote_commit`, `set_topic`, `buy_in`, and `cash_out`.
+Dust fee funding. At the ADR194 delivery, the source cross-tab retained four original proof gaps:
+`vote_commit`, `set_topic`, `buy_in`, and `cash_out`. Later sections describe subsequent admission.
 
 ### Read-only Field snapshots (ADR0201)
 
@@ -1615,7 +1615,7 @@ qualified pot index and reject spent-nullifier replay. The occupied proof also
 checks precise concurrent-state `ReadMismatch`: fallible coin and contract
 updates roll back while guaranteed Dust/replay effects persist. Coins and prior
 contract state are explicitly seeded offline, not a proved DAO lifecycle.
-`vote_commit`, `buy_in` and `cash_out` remain the three original microDAO gaps.
+
 
 
 ### Original microDAO buy_in recording (ADR0215)
@@ -1646,3 +1646,31 @@ application, wallet recovery of the minted instance token and nullifier replay
 refusal. Prior coins and contract state are seeded offline; this does not claim a
 funded full DAO lifecycle or live wallet submission. Zero-price and maximum
 arithmetic captures are execution controls, not corresponding monetary proofs.
+
+`vote_commit` remains the original microDAO recording gap at this checkpoint.
+
+### Original microDAO cash-out and closed reset (ADR212)
+
+The unchanged original `cash_out` now exposes `ledger_contract::recorded::cash_out(context)`
+and its observed-call facade. A distinct structural profile reuses the typed Plan,
+same-frame shielded payout, and the complete Boolean-to-Unit `reset_state` helper;
+only a literal-true call is admitted here. ADR194's literal-false advance profile
+and the readonly/actionful payout profiles remain separate. No runtime API, ABI49,
+or schema20 change is required.
+
+The 21 pinned cases compare TypeScript, native Rust and recorded Rust; successful
+transcripts replay through the upstream VM. They preserve short-circuit guards,
+private output order, optional beneficiary checks, saved sent result, and reset
+order. Empty participant sets and `pot_has_coin=false` still succeed when the
+actual source guards pass; no membership or flag guard is invented.
+
+`check_compactc_target.py --micro-dao-cash-out --proof` runs the focused proof
+harness (cash_out k=15, 18,864 rows). It spends an explicitly seeded historical
+contract pot of 99 at index1, creates the full-value user output at index2, uses
+canonical allocation and explicit persistent fallible offer segment1, and funds
+fees with separate Dust. The cryptographic proof and default-strict ledger
+application pass. Reapplying against a changed round at u64MAX produces exact
+`Transcript(Execution(ArithmeticOverflow))` after the earlier reset operations;
+the contract and Zswap state roll back, while guaranteed Dust/replay effects remain.
+The original prestate applies successfully and rejects the spent nullifier on replay.
+This validates a selected seeded final DAO state, not a proved deposit/vote lifecycle.

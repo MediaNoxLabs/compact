@@ -69,9 +69,11 @@ mod merkle_reset;
 mod merkle_root;
 mod merkle_verify;
 mod micro_dao_advance;
-#[path = "../../../tests-rust-backend/test-center-micro-dao/support/advance.rs"]
-mod micro_dao_advance_support;
+use micro_dao_cash_out_support::advance as micro_dao_advance_support;
 mod micro_dao_buy_in;
+mod micro_dao_cash_out;
+#[path = "../../../tests-rust-backend/test-center-micro-dao/support/cash_out.rs"]
+mod micro_dao_cash_out_support;
 mod micro_dao_reveal;
 #[path = "../../../tests-rust-backend/test-center-micro-dao/support/reveal.rs"]
 mod micro_dao_reveal_support;
@@ -2159,6 +2161,15 @@ fn run() -> Result<(), Box<dyn Error>> {
             return Err("unexpected argument".into());
         }
         return micro_dao_buy_in::run(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--micro-dao-cash-out")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --micro-dao-cash-out <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err("unexpected argument".into());
+        }
+        return micro_dao_cash_out::run(Path::new(&root));
     }
     if first.as_deref() == Some(OsStr::new("--micro-dao-set-topic")) {
         let root = arguments

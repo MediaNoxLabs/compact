@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //! Explicit final DAO state, not a funded proposal/voting lifecycle.
 #[path = "advance.rs"]
-mod advance;
+pub(crate) mod advance;
 pub use advance::Private;
 use compact_rust_test_center_micro_dao_fixture::{ledger_slots as slots, types::*};
 use midnight_compact_runtime as runtime;

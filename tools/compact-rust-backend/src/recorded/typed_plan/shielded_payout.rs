@@ -122,14 +122,15 @@ fn add_paths(left: (usize, usize), right: (usize, usize)) -> Option<(usize, usiz
     Some((left.0.checked_add(right.0)?, left.1.checked_add(right.1)?))
 }
 
-fn actionful_call_paths(
+pub(super) fn actionful_call_paths(
     value: &Expr,
     pure: &HashMap<&str, &PureCircuit>,
     circuits: &HashMap<&str, &StatefulCircuit>,
     active: &mut HashSet<String>,
+    allow_unit: bool,
 ) -> Option<(usize, usize)> {
     let visit = |part: &Expr, active: &mut HashSet<String>| {
-        actionful_call_paths(part, pure, circuits, active)
+        actionful_call_paths(part, pure, circuits, active, allow_unit)
     };
     let sum = |values: &[Expr], active: &mut HashSet<String>| {
         values
@@ -146,9 +147,13 @@ fn actionful_call_paths(
         | Expr::Unit
         | Expr::Default { .. }
         | Expr::CellRead { .. }
+        | Expr::CounterRead { .. }
         | Expr::KernelSelf { .. }
         | Expr::NativeWitnessCall { .. } => Some((0, 0)),
-        Expr::StructField { value, .. }
+        Expr::CounterLessThan {
+            threshold: value, ..
+        }
+        | Expr::StructField { value, .. }
         | Expr::Coerce { value, .. }
         | Expr::UnsignedCast { value, .. }
         | Expr::DegradeToTransient { value }
@@ -201,11 +206,11 @@ fn actionful_call_paths(
             match (pure.get(name.as_str()), circuits.get(name.as_str())) {
                 (Some(_), None) => Some(arguments),
                 (None, Some(callee)) if active.insert(name.clone()) => {
-                    let StateReturn::Expression { value } = &callee.return_value else {
-                        active.remove(name);
-                        return None;
+                    let body = match &callee.return_value {
+                        StateReturn::Expression { value } => visit(value, active),
+                        StateReturn::Unit if allow_unit => Some((0, 0)),
+                        _ => None,
                     };
-                    let body = visit(value, active);
                     active.remove(name);
                     let body = body?;
                     let write = usize::from(!callee.actions.is_empty());
@@ -232,6 +237,7 @@ pub(super) fn lower<'a>(
         pure,
         circuits,
         &mut HashSet::from([circuit.name.clone()]),
+        false,
     )?;
     let domain = match actionful_paths {
         (0, 0) => CompositeDomain::ShieldedPayout,

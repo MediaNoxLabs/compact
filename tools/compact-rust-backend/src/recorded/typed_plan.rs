@@ -24,6 +24,7 @@ mod funded_mint;
 mod guarded_deposit;
 mod immediate_send;
 mod phase_reset;
+mod reset_payout;
 mod shielded_merge;
 mod shielded_payout;
 mod terminal_returns;
@@ -49,6 +50,7 @@ enum CompositeDomain {
     ImmediateShieldedSend,
     ShieldedPayout,
     ActionfulShieldedPayout,
+    ResetShieldedPayout,
     ShieldedMerge(shielded_merge::Inputs),
     GuardedShieldedDeposit,
     FundedShieldedMint,
@@ -63,6 +65,7 @@ impl CompositeDomain {
                 | Self::ImmediateShieldedSend
                 | Self::ShieldedPayout
                 | Self::ActionfulShieldedPayout
+                | Self::ResetShieldedPayout
         )
     }
 
@@ -96,6 +99,7 @@ impl CompositeDomain {
                 | Self::ImmediateShieldedSend
                 | Self::ShieldedPayout
                 | Self::ActionfulShieldedPayout
+                | Self::ResetShieldedPayout
                 | Self::ShieldedMerge(_)
                 | Self::GuardedShieldedDeposit
                 | Self::FundedShieldedMint
@@ -110,6 +114,7 @@ impl CompositeDomain {
                 | Self::ImmediateShieldedSend
                 | Self::ShieldedPayout
                 | Self::ActionfulShieldedPayout
+                | Self::ResetShieldedPayout
                 | Self::ShieldedMerge(_)
                 | Self::GuardedShieldedDeposit
                 | Self::FundedShieldedMint
@@ -350,7 +355,9 @@ impl Plan<'_> {
                     || self.unit_actions
                     || matches!(
                         self.composite_domain,
-                        CompositeDomain::ShieldedPayout | CompositeDomain::ActionfulShieldedPayout
+                        CompositeDomain::ShieldedPayout
+                            | CompositeDomain::ActionfulShieldedPayout
+                            | CompositeDomain::ResetShieldedPayout
                     )
                     || self.composite_domain.shielded_merge() =>
             {
@@ -647,6 +654,9 @@ impl Plan<'_> {
             }
             Expr::WitnessCall { name, arguments } => {
                 let declaration = *self.witnesses.get(name.as_str())?;
+                if self.composite_domain == CompositeDomain::ResetShieldedPayout {
+                    return None;
+                }
                 if self.composite_domain == CompositeDomain::GuardedShieldedDeposit
                     && (declaration.result != (Type::Bytes { length: 32 })
                         || !declaration.parameters.is_empty())
@@ -693,6 +703,7 @@ impl Plan<'_> {
                 CompositeDomain::ShieldedPayout
                     | CompositeDomain::ActionfulShieldedPayout
                     | CompositeDomain::FundedShieldedMint
+                    | CompositeDomain::ResetShieldedPayout
             ) =>
             {
                 let ty = builtin.result_type();
@@ -913,12 +924,19 @@ impl Plan<'_> {
                 {
                     return None;
                 }
+                if self.composite_domain == CompositeDomain::ResetShieldedPayout
+                    && !reset_payout::read_type(ty)
+                {
+                    return None;
+                }
                 if !cell_type(ty)
                     && !(matches!(
                         self.composite_domain,
                         CompositeDomain::GuardedShieldedDeposit
                             | CompositeDomain::FundedShieldedMint
                     ) && guarded_deposit::read_type(ty))
+                    && !(self.composite_domain == CompositeDomain::ResetShieldedPayout
+                        && reset_payout::read_type(ty))
                     && !(self.composite_domain == CompositeDomain::ShieldedPayout
                         && shielded_payout::cell_type(ty))
                     && !(self.composite_domain == CompositeDomain::ActionfulShieldedPayout
@@ -1076,6 +1094,26 @@ impl Plan<'_> {
                 }
             }
             (None, Some(callee)) => {
+                if self.composite_domain == CompositeDomain::ResetShieldedPayout
+                    && phase_reset::helper_signature(callee)
+                {
+                    if !reset_payout::true_arguments(arguments)
+                        || !reset_payout::helper_shape(callee, self.pure)
+                    {
+                        return None;
+                    }
+                    return self.inline_call(
+                        name,
+                        &callee.parameters,
+                        &callee.result,
+                        &Expr::Unit,
+                        &callee.actions,
+                        arguments,
+                        scope,
+                        steps,
+                        false,
+                    );
+                }
                 if self.composite_domain.shielded_helpers() {
                     if self.composite_domain.singleton_bridge() && shielded_unit_signature(callee) {
                         return self.inline_call(
@@ -1449,7 +1487,14 @@ impl Plan<'_> {
                 {
                     return None;
                 }
+                if self.composite_domain == CompositeDomain::ResetShieldedPayout
+                    && !reset_payout::write_type(ty)
+                {
+                    return None;
+                }
                 if !cell_type(ty)
+                    && !(self.composite_domain == CompositeDomain::ResetShieldedPayout
+                        && reset_payout::write_type(ty))
                     && !(self.composite_domain == CompositeDomain::GuardedShieldedDeposit
                         && guarded_deposit::write_type(ty))
                     && !(self.unit_actions && unit_actions::value_type(ty))
@@ -1512,7 +1557,10 @@ impl Plan<'_> {
                 )?;));
                 self.qualified_cell_writes += 1;
             }
-            StateAction::CounterReset { field, index } if self.phase_reset => {
+            StateAction::CounterReset { field, index }
+                if self.phase_reset
+                    || self.composite_domain == CompositeDomain::ResetShieldedPayout =>
+            {
                 if self.field(field, *index)?.declaration != LedgerFieldKind::Counter {
                     return None;
                 }
@@ -1522,7 +1570,10 @@ impl Plan<'_> {
                 );
                 self.counter_writes += 1;
             }
-            StateAction::MerkleResetToDefault { field, index } if self.phase_reset => {
+            StateAction::MerkleResetToDefault { field, index }
+                if self.phase_reset
+                    || self.composite_domain == CompositeDomain::ResetShieldedPayout =>
+            {
                 if !matches!(
                     self.field(field, *index)?.declaration,
                     LedgerFieldKind::MerkleTree {
@@ -1677,8 +1728,15 @@ impl Plan<'_> {
                 let LedgerFieldKind::Set { ty } = &self.field(field, *index)?.declaration else {
                     return None;
                 };
+                if self.composite_domain == CompositeDomain::ResetShieldedPayout
+                    && *ty != (Type::Bytes { length: 32 })
+                {
+                    return None;
+                }
                 if *ty != crate::stateful::qualified_coin_type()
-                    && !(self.phase_reset && *ty == (Type::Bytes { length: 32 }))
+                    && !((self.phase_reset
+                        || self.composite_domain == CompositeDomain::ResetShieldedPayout)
+                        && *ty == (Type::Bytes { length: 32 }))
                 {
                     return None;
                 }
@@ -2569,10 +2627,18 @@ fn shielded_value(
         } if domain == CompositeDomain::FundedShieldedMint => {
             visit(token_domain, visiting) && visit(amount, visiting)
         }
+        Expr::CounterRead { .. } if domain == CompositeDomain::ResetShieldedPayout => true,
+        Expr::CounterLessThan { threshold, .. }
+            if domain == CompositeDomain::ResetShieldedPayout =>
+        {
+            visit(threshold, visiting)
+        }
         Expr::CellRead { .. } | Expr::NativeWitnessCall { .. }
             if matches!(
                 domain,
-                CompositeDomain::ShieldedPayout | CompositeDomain::ActionfulShieldedPayout
+                CompositeDomain::ShieldedPayout
+                    | CompositeDomain::ActionfulShieldedPayout
+                    | CompositeDomain::ResetShieldedPayout
             ) =>
         {
             true
@@ -2580,7 +2646,9 @@ fn shielded_value(
         Expr::WitnessCall { arguments, .. }
             if matches!(
                 domain,
-                CompositeDomain::ShieldedPayout | CompositeDomain::ActionfulShieldedPayout
+                CompositeDomain::ShieldedPayout
+                    | CompositeDomain::ActionfulShieldedPayout
+                    | CompositeDomain::ResetShieldedPayout
             ) =>
         {
             arguments.iter().all(|value| visit(value, visiting))
@@ -2588,7 +2656,9 @@ fn shielded_value(
         Expr::Assert { condition, .. }
             if matches!(
                 domain,
-                CompositeDomain::ShieldedPayout | CompositeDomain::ActionfulShieldedPayout
+                CompositeDomain::ShieldedPayout
+                    | CompositeDomain::ActionfulShieldedPayout
+                    | CompositeDomain::ResetShieldedPayout
             ) || domain.shielded_merge() =>
         {
             visit(condition, visiting)
@@ -2652,6 +2722,12 @@ fn shielded_value(
             let Some(callee) = circuits.get(name.as_str()) else {
                 return false;
             };
+            if domain == CompositeDomain::ResetShieldedPayout
+                && phase_reset::helper_signature(callee)
+            {
+                return reset_payout::true_arguments(arguments)
+                    && reset_payout::helper_shape(callee, pure);
+            }
             let StateReturn::Expression { value } = &callee.return_value else {
                 return false;
             };
@@ -4230,4 +4306,15 @@ pub(super) fn lower_funded_mint<'a>(
     circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
 ) -> Option<TypedPlan> {
     funded_mint::lower(circuit, ledger, witnesses, pure, circuits)
+}
+
+/// Historical payout followed by a closed literal-true reset helper.
+pub(super) fn lower_reset_payout<'a>(
+    circuit: &StatefulCircuit,
+    ledger: &'a HashMap<&'a str, &'a LedgerField>,
+    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,
+    pure: &'a HashMap<&'a str, &'a PureCircuit>,
+    circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
+) -> Option<TypedPlan> {
+    reset_payout::lower(circuit, ledger, witnesses, pure, circuits)
 }

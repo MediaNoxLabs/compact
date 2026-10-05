@@ -68,3 +68,36 @@ describe('JubJub sampler compatibility', () => {
     expect(runtime.jubjubSchnorrVerify(msgType, sampleMsg(), other, signature)).toBe(false);
   });
 });
+
+describe('signed JubJub scalar reduction', () => {
+  const q = runtime.JUBJUB_SCALAR_MODULUS;
+  const multiple = q * (1n << 512n);
+  const cases: [bigint, bigint][] = [
+    [-1n, q - 1n],
+    [-q, 0n],
+    [-q - 1n, q - 1n],
+    [-multiple, 0n],
+    [-multiple - 17n, q - 17n],
+    [-multiple + 17n, 17n],
+    [0n, 0n],
+    [q - 1n, q - 1n],
+    [q, 0n],
+    [q + 1n, 1n],
+    [multiple, 0n],
+    [multiple + 17n, 17n],
+  ];
+  test.each(cases)('normalizes %s to %s', (input, expected) => {
+    const reduced = runtime.reduceModJubjubOrder(input);
+    expect(reduced).toBe(expected);
+    expect(reduced).toBeGreaterThanOrEqual(0n);
+    expect(reduced).toBeLessThan(q);
+    expect((input - reduced) % q).toBe(0n);
+    if (input >= 0n) expect(reduced).toBe(input % q);
+  });
+  test('keeps verifying-key reduction explicit and signing-key inputs canonical', () => {
+    expect(runtime.jubjubSchnorrVerifyingKey(-1n)).toEqual(runtime.ecMulGenerator(q - 1n));
+    for (const key of [-1n, q, q + 1n]) {
+      expect(() => runtime.jubjubSchnorrSign(msgType, sampleMsg(), key)).toThrow();
+    }
+  });
+});

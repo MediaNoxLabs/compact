@@ -288,12 +288,14 @@ export function jubjubSampleScalar(): bigint {
 export const sampleJubjubSchnorrSk = jubjubSampleScalar;
 
 /**
- * Reduce modulo the JubJub scalar field order.
+ * Reduce any signed integer modulo the JubJub scalar field order.
  *
- * The returned value is in the range [0, JUBJUB_SCALAR_MODULUS).
+ * The returned Euclidean residue is in the range [0, JUBJUB_SCALAR_MODULUS),
+ * including when the input is negative.
  */
 export function reduceModJubjubOrder(value: bigint): bigint {
-  return value % JUBJUB_SCALAR_MODULUS;
+  const remainder = value % JUBJUB_SCALAR_MODULUS;
+  return remainder < 0n ? remainder + JUBJUB_SCALAR_MODULUS : remainder;
 }
 
 /**
@@ -309,7 +311,7 @@ export function jubjubSchnorrVerifyingKey(signingKey: bigint): JubjubPoint {
  * Produces a Schnorr signature over the JubJub curve.
  *
  * - `rtType` / `msg`: the message as a typed Compact value
- * - `sk`: signing key as a JubJub scalar (e.g. as returned by {@link jubjubSampleScalar})
+ * - `sk`: canonical signing key in [0, JUBJUB_SCALAR_MODULUS) (e.g. as returned by {@link jubjubSampleScalar})
  *
  * The signature scheme:
  * - Nonce `r` sampled uniformly at random

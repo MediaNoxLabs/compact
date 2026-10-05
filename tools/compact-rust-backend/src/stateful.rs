@@ -766,6 +766,80 @@ pub(crate) fn render_state_expression(
                 true,
             ))
         }
+        Expr::KernelClaim {
+            value: argument, ..
+        }
+        | Expr::KernelMintShielded {
+            domain: argument, ..
+        } => {
+            let (rendered, actual, mut witness_effect) = render_state_expression(
+                argument,
+                parameters,
+                witnesses,
+                statements,
+                next_temp,
+                circuits,
+                stateful_circuits,
+                ledger_fields,
+                query_effect,
+            )?;
+            let expected = Type::Bytes { length: 32 };
+            if actual != expected {
+                return Err(RenderError::TypeMismatch { expected, actual });
+            }
+            let name = syn::Ident::new(
+                &format!("__compact_kernel_arg_{}", *next_temp),
+                Span::call_site(),
+            );
+            *next_temp += 1;
+            statements.push(syn::parse_quote!(let #name = #rendered;));
+            let call: syn::Expr = match value {
+                Expr::KernelClaim { claim, .. } => {
+                    use crate::ir::KernelClaimKind;
+                    let (method, carrier) = match claim {
+                        KernelClaimKind::Nullifier => {
+                            ("kernel_claim_zswap_nullifier", "CoinNullifier")
+                        }
+                        KernelClaimKind::CoinSpend => {
+                            ("kernel_claim_zswap_coin_spend", "CoinCommitment")
+                        }
+                        KernelClaimKind::CoinReceive => {
+                            ("kernel_claim_zswap_coin_receive", "CoinCommitment")
+                        }
+                    };
+                    let method = ident(method)?;
+                    let carrier = ident(carrier)?;
+                    syn::parse_quote!(context.#method(runtime::ledger::#carrier(runtime::ledger::HashOutput(#name.into_array())))?)
+                }
+                Expr::KernelMintShielded { amount, .. } => {
+                    let (rendered, actual, effect) = render_state_expression(
+                        amount,
+                        parameters,
+                        witnesses,
+                        statements,
+                        next_temp,
+                        circuits,
+                        stateful_circuits,
+                        ledger_fields,
+                        query_effect,
+                    )?;
+                    let expected = Type::Unsigned {
+                        max: u64::MAX.to_string(),
+                    };
+                    if actual != expected {
+                        return Err(RenderError::TypeMismatch { expected, actual });
+                    }
+                    witness_effect |= effect;
+                    syn::parse_quote!(context.kernel_mint_shielded(runtime::ledger::HashOutput(#name.into_array()),(#rendered).value() as u64)?)
+                }
+                _ => unreachable!(),
+            };
+            statements.push(syn::parse_quote!(let step = #call;));
+            statements.push(syn::parse_quote!(context = step.context;));
+            statements.push(syn::parse_quote!(total_cost += step.gas_cost;));
+            *query_effect = true;
+            Ok((syn::parse_quote!(()), Type::Unit, witness_effect))
+        }
         Expr::CreateZswapInput { coin } | Expr::CreateZswapOutput { coin, .. } => {
             let is_input = matches!(value, Expr::CreateZswapInput { .. });
             let (rendered, actual, mut witness_effect) = render_state_expression(
@@ -2033,6 +2107,8 @@ fn expression_contains(expression: &Expr, predicate: &impl Fn(&Expr) -> bool) ->
         | Expr::UnsignedSubtract { left, right, .. }
         | Expr::UnsignedMultiply { left, right, .. } => visit(left) || visit(right),
         Expr::CounterLessThan { threshold, .. } => visit(threshold),
+        Expr::KernelClaim { value, .. } => visit(value),
+        Expr::KernelMintShielded { domain, amount } => visit(domain) || visit(amount),
         Expr::CreateZswapInput { coin } => visit(coin),
         Expr::CreateZswapOutput { coin, recipient } => visit(coin) || visit(recipient),
         Expr::Unit

@@ -1,0 +1,36 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//   http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import CompactStandardLibrary;
+export ledger marker: Field;
+witness next_domain(): Bytes<32>;
+witness next_amount(): Uint<64>;
+export circuit mint(domain: Bytes<32>, amount: Uint<64>): [] { return kernel.mintShielded(disclose(domain), disclose(amount)); }
+export circuit nullifier(value: Bytes<32>): [] { return kernel.claimZswapNullifier(disclose(value)); }
+export circuit spend(value: Bytes<32>): [] { return kernel.claimZswapCoinSpend(disclose(value)); }
+export circuit claim_receive(value: Bytes<32>): [] { return kernel.claimZswapCoinReceive(disclose(value)); }
+export circuit batch(first: Bytes<32>, second: Bytes<32>, a: Uint<64>, b: Uint<64>): [] {
+  kernel.mintShielded(disclose(first), disclose(a));
+  kernel.mintShielded(disclose(second), disclose(b));
+  kernel.claimZswapNullifier(disclose(first));
+  kernel.claimZswapNullifier(disclose(first));
+  kernel.claimZswapCoinSpend(disclose(first));
+  kernel.claimZswapCoinReceive(disclose(second));
+}
+export circuit selected(flag: Boolean, value: Bytes<32>): [] {
+  if (disclose(flag)) { kernel.claimZswapCoinSpend(disclose(value)); }
+}
+export circuit witness_order(): [] { kernel.mintShielded(disclose(next_domain()), disclose(next_amount())); }
+export circuit read_state(): Field { return marker; }

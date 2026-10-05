@@ -197,3 +197,9 @@ observed contexts lock allocation. These intents are not a validated offer.
 retain the plan and lock, and audited local recording helpers reject plan changes.
 Constructor transitions reconstruct provisional indices from that plan; they do
 not preserve an arbitrary authoritative offer/call-context allocation map.
+
+ABI45 adds typed Kernel shielded mint and claim methods. Commitment/nullifier and
+mint-domain carriers reuse ledger8 types. Canonical shared VM programs update the
+ledger effects frame through QueryContext::query; they neither invent contract
+slots nor allocate coins or modify balances directly. Native effects alone do not
+establish transaction funding or satisfaction of claimed inputs/outputs.

@@ -257,6 +257,26 @@
             (object (cons "kind" "field_literal")
                     (cons "value" (number->string value))))))
 
+      (define (kernel-operation-ir ledger-op expr* type* type src lower)
+        (define (arity! count)
+          (unless (and (= (length expr*) count) (= (length type*) count))
+            (source-errorf src "Rust Kernel operation ~a has an unexpected argument count" ledger-op)))
+        (case ledger-op
+          [(self)
+           (arity! 0)
+           (object (cons "kind" "kernel_self") (cons "ty" (type-ir type src)))]
+          [(claimZswapNullifier claimZswapCoinSpend claimZswapCoinReceive)
+           (arity! 1)
+           (object (cons "kind" "kernel_claim")
+                   (cons "claim" (case ledger-op [(claimZswapNullifier) "nullifier"] [(claimZswapCoinSpend) "coin_spend"] [else "coin_receive"]))
+                   (cons "value" (lower (car expr*) (car type*))))]
+          [(mintShielded)
+           (arity! 2)
+           (object (cons "kind" "kernel_mint_shielded")
+                   (cons "domain" (lower (car expr*) (car type*)))
+                   (cons "amount" (lower (cadr expr*) (cadr type*))))]
+          [else (source-errorf src "Rust backend does not yet support Kernel operation ~a" ledger-op)]))
+
       (define (expression-ir expr owner-src)
         (nanopass-case (Lnodisclose Expression) expr
           [(return ,src ,expr) (expression-ir expr owner-src)]
@@ -448,12 +468,16 @@
                    (cons "condition" (expression-ir expr src))
                    (cons "message" mesg))]
           [(public-ledger ,src ,ledger-field-name ,sugar? (,path-elt* ...) ,src^ ,adt-op ,expr* ...)
-           (unless (and (pair? path-elt*)
-                        (for-all (lambda (index) (and (integer? index) (<= 0 index 14))) path-elt*))
-             (source-errorf src "Rust backend requires an array-index ledger query path"))
            (nanopass-case (Lnodisclose ADT-Op) adt-op
              [(,ledger-op ,op-class (,adt-name (,adt-formal* ,adt-arg*) ...) ((,var-name* ,type*) ...) ,type ,vm-code)
+              (unless (or (and (eq? adt-name 'Kernel) (null? path-elt*))
+                          (and (not (eq? adt-name 'Kernel)) (pair? path-elt*)
+                               (for-all (lambda (index) (and (integer? index) (<= 0 index 14))) path-elt*)))
+                (source-errorf src "Rust backend has an unsupported path for ~a.~a" adt-name ledger-op))
               (cond
+                [(eq? adt-name 'Kernel)
+                 (kernel-operation-ir ledger-op expr* type* type src
+                   (lambda (arg ty) (typed-expression-ir arg ty src)))]
                 [(and (eq? adt-name '__compact_Cell) (eq? ledger-op 'read) (null? expr*))
                  (object (cons "kind" "cell_read")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
@@ -1038,12 +1062,16 @@
                                   local* expr*)))
                      (cons "action" (state-action-ir expr owner-src environment^ witness-ids))))]
           [(public-ledger ,src ,ledger-field-name ,sugar? (,path-elt* ...) ,src^ ,adt-op ,expr* ...)
-           (unless (and (pair? path-elt*)
-                        (for-all (lambda (index) (and (integer? index) (<= 0 index 14))) path-elt*))
-             (source-errorf src "Rust backend requires an array-index ledger path"))
            (nanopass-case (Lnodisclose ADT-Op) adt-op
              [(,ledger-op ,op-class (,adt-name (,adt-formal* ,adt-arg*) ...) ((,var-name* ,type*) ...) ,type ,vm-code)
+              (unless (or (eq? adt-name 'Kernel)
+                          (and (pair? path-elt*)
+                               (for-all (lambda (index) (and (integer? index) (<= 0 index 14))) path-elt*)))
+                (source-errorf src "Rust backend requires an array-index ledger path"))
               (cond
+                [(eq? adt-name 'Kernel)
+                 (object (cons "kind" "expression")
+                         (cons "value" (stateful-expression-ir expr src witness-ids)))]
                 [(and (eq? adt-name 'Counter)
                       (eq? ledger-op 'increment)
                       (= (length expr*) 1))
@@ -1544,14 +1572,16 @@
           [(public-ledger ,src ,ledger-field-name ,sugar? (,path-elt* ...) ,src^ ,adt-op ,expr* ...)
            (nanopass-case (Lnodisclose ADT-Op) adt-op
              [(,ledger-op ,op-class (,adt-name (,adt-formal* ,adt-arg*) ...) ((,var-name* ,type*) ...) ,type ,vm-code)
-              (unless (or (and (eq? adt-name 'Kernel) (eq? ledger-op 'self) (null? expr*))
+              (unless (or (eq? adt-name 'Kernel)
                           (and (pair? path-elt*)
                                (for-all (lambda (index) (and (integer? index) (<= 0 index 14))) path-elt*)))
                 (source-errorf src "Rust backend requires an array-index ledger query path"))
+              (when (and (eq? adt-name 'Kernel) (not (null? path-elt*)))
+                (source-errorf src "Rust Kernel operation ~a requires its special empty path" ledger-op))
               (cond
-                [(and (eq? adt-name 'Kernel) (eq? ledger-op 'self) (null? expr*))
-                 (object (cons "kind" "kernel_self")
-                         (cons "ty" (type-ir type src)))]
+                [(eq? adt-name 'Kernel)
+                 (kernel-operation-ir ledger-op expr* type* type src
+                   (lambda (arg ty) (stateful-typed-expression-ir arg ty src witness-ids)))]
                 [(and (eq? adt-name '__compact_Cell) (eq? ledger-op 'read) (null? expr*))
                  (object (cons "kind" "cell_read")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
@@ -1810,12 +1840,16 @@
            (object (cons "kind" "expression")
                    (cons "value" (stateful-expression-ir return-expr src witness-ids)))]
           [(public-ledger ,src ,ledger-field-name ,sugar? (,path-elt* ...) ,src^ ,adt-op ,expr* ...)
-           (unless (and (pair? path-elt*)
-                        (for-all (lambda (index) (and (integer? index) (<= 0 index 14))) path-elt*))
-             (source-errorf src "Rust backend requires an array-index ledger path"))
            (nanopass-case (Lnodisclose ADT-Op) adt-op
              [(,ledger-op ,op-class (,adt-name (,adt-formal* ,adt-arg*) ...) ((,var-name* ,type*) ...) ,type ,vm-code)
+              (unless (or (eq? adt-name 'Kernel)
+                          (and (pair? path-elt*)
+                               (for-all (lambda (index) (and (integer? index) (<= 0 index 14))) path-elt*)))
+                (source-errorf src "Rust backend requires an array-index ledger path"))
               (cond
+                [(eq? adt-name 'Kernel)
+                 (object (cons "kind" "expression")
+                         (cons "value" (stateful-expression-ir return-expr src witness-ids)))]
                 [(and (eq? adt-name '__compact_Cell)
                       (eq? ledger-op 'read)
                       (null? expr*))
@@ -2314,7 +2348,7 @@
            (source-errorf src "Rust backend found multiple constructors"))
          (print-json
            (get-target-port 'rust.ir.json)
-           (append (object (cons "schema_version" 19)
+           (append (object (cons "schema_version" 20)
                    (cons "type_aliases"
                          (list->vector (fold-right type-alias-ir '() pelt*)))
                    (cons "ledger_fields"

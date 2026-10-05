@@ -1194,6 +1194,14 @@
     "visibility": "internal"
   },
   {
+    "source": "examples/rust_backend/kernel_shielded_effects_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "batch",
+    "signature": "export circuit batch(first: Bytes<32>, second: Bytes<32>, a: Uint<64>, b: Uint<64>): []",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/digital-passport-credential/core-compact-staging/credentials/holder-bindings.compact",
     "module_path": [],
     "kind": "circuit",
@@ -1543,6 +1551,14 @@
     "kind": "circuit",
     "name": "choose_secret",
     "signature": "export circuit choose_secret(flag: Boolean, left: Field, right: Field): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/kernel_shielded_effects_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "claim_receive",
+    "signature": "export circuit claim_receive(value: Bytes<32>): []",
     "visibility": "export"
   },
   {
@@ -3362,6 +3378,14 @@
     "visibility": "internal"
   },
   {
+    "source": "examples/rust_backend/kernel_shielded_effects_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "mint",
+    "signature": "export circuit mint(domain: Bytes<32>, amount: Uint<64>): []",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/uint_compare.compact",
     "module_path": [],
     "kind": "circuit",
@@ -3535,6 +3559,14 @@
     "kind": "circuit",
     "name": "not_equal_field",
     "signature": "export circuit not_equal_field(left: Field, right: Field): Boolean",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/kernel_shielded_effects_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "nullifier",
+    "signature": "export circuit nullifier(value: Bytes<32>): []",
     "visibility": "export"
   },
   {
@@ -4418,6 +4450,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/kernel_shielded_effects_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "read_state",
+    "signature": "export circuit read_state(): Field",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/internal_pure_call.compact",
     "module_path": [],
     "kind": "circuit",
@@ -5034,6 +5074,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/kernel_shielded_effects_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "selected",
+    "signature": "export circuit selected(flag: Boolean, value: Bytes<32>): []",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/tiny_oracle.compact",
     "module_path": [],
     "kind": "circuit",
@@ -5319,6 +5367,14 @@
     "kind": "circuit",
     "name": "spend",
     "signature": "circuit spend(dest_public_key: public_key, input_coin: coin_info): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/kernel_shielded_effects_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "spend",
+    "signature": "export circuit spend(value: Bytes<32>): []",
     "visibility": "export"
   },
   {
@@ -6426,6 +6482,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/kernel_shielded_effects_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "witness_order",
+    "signature": "export circuit witness_order(): []",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/native_zswap_intents_oracle.compact",
     "module_path": [],
     "kind": "circuit",
@@ -7481,11 +7545,27 @@
     "visibility": "internal"
   },
   {
+    "source": "examples/rust_backend/kernel_shielded_effects_oracle.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "next_amount",
+    "signature": "witness next_amount(): Uint<64>",
+    "visibility": "internal"
+  },
+  {
     "source": "examples/rust_backend/native_zswap_intents_oracle.compact",
     "module_path": [],
     "kind": "witness",
     "name": "next_coin",
     "signature": "witness next_coin(): ShieldedCoinInfo",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/kernel_shielded_effects_oracle.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "next_domain",
+    "signature": "witness next_domain(): Bytes<32>",
     "visibility": "internal"
   },
   {

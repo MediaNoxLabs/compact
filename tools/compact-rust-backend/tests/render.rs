@@ -2741,7 +2741,7 @@ fn generated_unit_enum_uses_checked_derive_without_handwritten_codecs() {
     let source = render(&contract).unwrap();
     assert!(source.contains("CompactCellValue, CompactEnum"));
     assert!(source.contains("pub enum Choice"));
-    assert!(source.contains("RUST_RUNTIME_ABI == 44"));
+    assert!(source.contains("RUST_RUNTIME_ABI == 45"));
     assert!(!source.contains("impl FieldRepr for Choice"));
     assert!(!source.contains("impl BinaryHashRepr for Choice"));
     assert!(!source.contains("impl FromFieldRepr for Choice"));
@@ -10557,6 +10557,79 @@ fn native_zswap_intents_validate_types_and_remain_outside_recording() {
         r#"{"kind":"create_zswap_input"}"#,
         r#"{"kind":"create_zswap_output","coin":{"kind":"unit"}}"#,
         r#"{"kind":"create_zswap_input","coin":{"kind":"unit"},"arguments":[]}"#,
+    ] {
+        assert!(serde_json::from_str::<Expr>(bad).is_err());
+    }
+}
+
+#[test]
+fn kernel_effects_have_typed_arguments_and_no_fictional_ledger_slots() {
+    let mut contract: Contract =
+        serde_json::from_str(include_str!("kernel-shielded-effects-schema20-ir.json")).unwrap();
+    contract.schema_version = SCHEMA_VERSION;
+    assert_eq!(contract.ledger_fields.len(), 1);
+    assert_eq!(contract.ledger_fields[0].id, "marker");
+    let rendered = render_with_capabilities(&contract).unwrap();
+    for c in &rendered.capabilities.circuits {
+        assert_eq!(c.recorded, c.name == "read_state");
+        assert_eq!(c.observed_call, c.name == "read_state");
+    }
+    assert!(rendered.source.contains(".kernel_mint_shielded("));
+    assert!(rendered.source.contains(".kernel_claim_zswap_nullifier("));
+    assert!(!rendered.source.contains(".call_local("));
+    for mode in 0..4 {
+        let mut wrong = contract.clone();
+        let name = if mode == 0 { "spend" } else { "mint" };
+        let circuit = wrong
+            .stateful_circuits
+            .iter_mut()
+            .find(|c| c.name == name)
+            .unwrap();
+        let StateReturn::Expression { value } = &mut circuit.return_value else {
+            panic!("expected Kernel return");
+        };
+        match value {
+            Expr::KernelClaim { value, .. } => **value = Expr::Boolean { value: false },
+            Expr::KernelMintShielded { domain, amount } => match mode {
+                1 => **domain = Expr::Boolean { value: false },
+                2 => **amount = Expr::Boolean { value: false },
+                _ => {
+                    **amount = Expr::UnsignedLiteral {
+                        value: "1".into(),
+                        max: u128::MAX.to_string(),
+                    }
+                }
+            },
+            _ => panic!("expected typed Kernel expression"),
+        }
+        assert!(
+            render_with_capabilities(&wrong).is_err(),
+            "invalid Kernel mode {mode}"
+        );
+    }
+    let mut pure = contract.clone();
+    let circuit = pure
+        .stateful_circuits
+        .iter()
+        .find(|c| c.name == "mint")
+        .unwrap()
+        .clone();
+    let StateReturn::Expression { value } = circuit.return_value else {
+        panic!()
+    };
+    pure.circuits.push(PureCircuit {
+        name: "invalid_pure".into(),
+        source: None,
+        internal: false,
+        parameters: circuit.parameters,
+        result: Type::Unit,
+        body: value,
+    });
+    assert!(render_with_capabilities(&pure).is_err());
+    for bad in [
+        r#"{"kind":"kernel_claim","claim":"coin_spend","value":{"kind":"unit"},"path":[0]}"#,
+        r#"{"kind":"kernel_claim","claim":"invented","value":{"kind":"unit"}}"#,
+        r#"{"kind":"kernel_mint_shielded","domain":{"kind":"unit"}}"#,
     ] {
         assert!(serde_json::from_str::<Expr>(bad).is_err());
     }

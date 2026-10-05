@@ -1,0 +1,461 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "marker",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "field"
+        }
+      },
+      "source": {
+        "file": "kernel_shielded_effects_oracle.compact",
+        "line": 17,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "next_domain",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "bytes",
+        "length": 32
+      },
+      "source": {
+        "file": "kernel_shielded_effects_oracle.compact",
+        "line": 18,
+        "column": 1
+      }
+    },
+    {
+      "name": "next_amount",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unsigned",
+        "max": "18446744073709551615"
+      },
+      "source": {
+        "file": "kernel_shielded_effects_oracle.compact",
+        "line": 19,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "mint",
+      "parameters": [
+        {
+          "name": "domain",
+          "ty": {
+            "kind": "bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "amount",
+          "ty": {
+            "kind": "unsigned",
+            "max": "18446744073709551615"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "kernel_mint_shielded",
+          "domain": {
+            "kind": "parameter",
+            "name": "domain"
+          },
+          "amount": {
+            "kind": "parameter",
+            "name": "amount"
+          }
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "kernel_shielded_effects_oracle.compact",
+        "line": 20,
+        "column": 1
+      }
+    },
+    {
+      "name": "nullifier",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "kernel_claim",
+          "claim": "nullifier",
+          "value": {
+            "kind": "parameter",
+            "name": "value"
+          }
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "kernel_shielded_effects_oracle.compact",
+        "line": 21,
+        "column": 1
+      }
+    },
+    {
+      "name": "spend",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "kernel_claim",
+          "claim": "coin_spend",
+          "value": {
+            "kind": "parameter",
+            "name": "value"
+          }
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "kernel_shielded_effects_oracle.compact",
+        "line": 22,
+        "column": 1
+      }
+    },
+    {
+      "name": "claim_receive",
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "kernel_claim",
+          "claim": "coin_receive",
+          "value": {
+            "kind": "parameter",
+            "name": "value"
+          }
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "kernel_shielded_effects_oracle.compact",
+        "line": 23,
+        "column": 1
+      }
+    },
+    {
+      "name": "batch",
+      "parameters": [
+        {
+          "name": "first",
+          "ty": {
+            "kind": "bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "second",
+          "ty": {
+            "kind": "bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "a",
+          "ty": {
+            "kind": "unsigned",
+            "max": "18446744073709551615"
+          }
+        },
+        {
+          "name": "b",
+          "ty": {
+            "kind": "unsigned",
+            "max": "18446744073709551615"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "expression",
+          "value": {
+            "kind": "kernel_mint_shielded",
+            "domain": {
+              "kind": "parameter",
+              "name": "first"
+            },
+            "amount": {
+              "kind": "parameter",
+              "name": "a"
+            }
+          }
+        },
+        {
+          "kind": "expression",
+          "value": {
+            "kind": "kernel_mint_shielded",
+            "domain": {
+              "kind": "parameter",
+              "name": "second"
+            },
+            "amount": {
+              "kind": "parameter",
+              "name": "b"
+            }
+          }
+        },
+        {
+          "kind": "expression",
+          "value": {
+            "kind": "kernel_claim",
+            "claim": "nullifier",
+            "value": {
+              "kind": "parameter",
+              "name": "first"
+            }
+          }
+        },
+        {
+          "kind": "expression",
+          "value": {
+            "kind": "kernel_claim",
+            "claim": "nullifier",
+            "value": {
+              "kind": "parameter",
+              "name": "first"
+            }
+          }
+        },
+        {
+          "kind": "expression",
+          "value": {
+            "kind": "kernel_claim",
+            "claim": "coin_spend",
+            "value": {
+              "kind": "parameter",
+              "name": "first"
+            }
+          }
+        },
+        {
+          "kind": "expression",
+          "value": {
+            "kind": "kernel_claim",
+            "claim": "coin_receive",
+            "value": {
+              "kind": "parameter",
+              "name": "second"
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "kernel_shielded_effects_oracle.compact",
+        "line": 24,
+        "column": 1
+      }
+    },
+    {
+      "name": "selected",
+      "parameters": [
+        {
+          "name": "flag",
+          "ty": {
+            "kind": "boolean"
+          }
+        },
+        {
+          "name": "value",
+          "ty": {
+            "kind": "bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "parameter",
+            "name": "flag"
+          },
+          "then": {
+            "kind": "expression",
+            "value": {
+              "kind": "kernel_claim",
+              "claim": "coin_spend",
+              "value": {
+                "kind": "parameter",
+                "name": "value"
+              }
+            }
+          },
+          "otherwise": {
+            "kind": "sequence",
+            "actions": [
+            ]
+          }
+        }
+      ],
+      "source": {
+        "file": "kernel_shielded_effects_oracle.compact",
+        "line": 32,
+        "column": 1
+      }
+    },
+    {
+      "name": "witness_order",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "tmp_1",
+              "ty": {
+                "kind": "bytes",
+                "length": 32
+              },
+              "value": {
+                "kind": "witness_call",
+                "name": "next_domain",
+                "arguments": [
+                ]
+              }
+            }
+          ],
+          "action": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "tmp_2",
+                "ty": {
+                  "kind": "unsigned",
+                  "max": "18446744073709551615"
+                },
+                "value": {
+                  "kind": "witness_call",
+                  "name": "next_amount",
+                  "arguments": [
+                  ]
+                }
+              }
+            ],
+            "action": {
+              "kind": "expression",
+              "value": {
+                "kind": "kernel_mint_shielded",
+                "domain": {
+                  "kind": "parameter",
+                  "name": "tmp_1"
+                },
+                "amount": {
+                  "kind": "parameter",
+                  "name": "tmp_2"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "kernel_shielded_effects_oracle.compact",
+        "line": 35,
+        "column": 1
+      }
+    },
+    {
+      "name": "read_state",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "return_value": {
+        "kind": "cell_read",
+        "field": "marker",
+        "index": 0
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "kernel_shielded_effects_oracle.compact",
+        "line": 36,
+        "column": 1
+      }
+    }
+  ]
+}

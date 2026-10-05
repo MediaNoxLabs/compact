@@ -22,7 +22,7 @@
 
 use serde::{Deserialize, Serialize};
 
-pub const SCHEMA_VERSION: u32 = 19;
+pub const SCHEMA_VERSION: u32 = 20;
 
 /// A Compact source position, independent of the compiler checkout path.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
@@ -616,6 +616,14 @@ pub struct StructField {
     pub ty: Type,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum KernelClaimKind {
+    Nullifier,
+    CoinSpend,
+    CoinReceive,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Expr {
@@ -848,6 +856,14 @@ pub enum Expr {
     WitnessCall {
         name: String,
         arguments: Vec<Expr>,
+    },
+    KernelClaim {
+        claim: KernelClaimKind,
+        value: Box<Expr>,
+    },
+    KernelMintShielded {
+        domain: Box<Expr>,
+        amount: Box<Expr>,
     },
     CreateZswapInput {
         coin: Box<Expr>,

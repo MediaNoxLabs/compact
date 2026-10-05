@@ -299,8 +299,8 @@ Compact spelling without warning in consumer builds.
 | Boundary | Current contract | Failure behavior |
 |---|---|---|
 | Compact compiler | Toolchain 0.31.133, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
-| Rust IR | Schema 19, private to this backend | The renderer rejects any other schema before writing `lib.rs`. Schema 19 adds single-owner typed effectful return plans. Schema 18 adds typed native circuit Zswap intents. Schema 16 adds native qualified-coin Cell writes. Schema 15 adds typed Counter less-than queries. Schema 14 adds typed qualified-coin Set insertion. Schema 13 adds an explicit typed Field-to-Bytes32 expression and nested Counter read; the cast uses midnight-zk's canonical 32-byte little-endian Field representation. Ledger, circuit, witness, constructor, and exported alias declarations carry optional Compact source locations for diagnostics. |
-| Generated code and Rust runtime | ABI 44 | Generated modules assert the ABI at Rust compile time. ABI 44 adds recorded qualified-coin Cell writes through the shared native VM builder. ABI 43 adds typed circuit Zswap intents and locked observed allocation. ABI 42 adds native qualified-coin Cell writes; ABI 41 adds typed Counter less-than queries; ABI 40 adds recorded qualified-coin Set insertion, metered `kernel.self()`, and offer-backed observed calls. ABI 39 adds qualified-coin Set insertion using ledger coin and recipient types and the allocated commitment index. ABI 38 adds audited local-helper adoption for private witnesses, gas, and transcript while checking the public and Zswap context. ABI 37 adds a caller coin key for native `ownPublicKey()` and its private output; ABI 36 adds recorded plain Merkle root checks through typed slots; ABI 35 adds recorded Counter reset through typed slots; ABI 34 adds recorded direct plain/historic Merkle fullness reads; ABI 33 adds typed local plain/historic Merkle views with checked depth; ABI 32 adds List views; ABI 31 adds cell-valued Map views; ABI 30 adds Set views; ABI 29 adds Cell/Counter views; ABI 25–28 add physical List paths, chunked Map and Cell calls, and Cell-read scalar returns; ABI 21–24 add typed multi-argument observed calls and composite/chunked Set calls. The [runtime guide](../../runtime-rs/README.md) records earlier ABI changes. |
+| Rust IR | Schema 20, private to this backend | The renderer rejects any other schema before writing `lib.rs`. Schema 20 adds typed Kernel mint/claim effects. Schema 19 adds single-owner typed effectful return plans. Schema 18 adds typed native circuit Zswap intents. Schema 16 adds native qualified-coin Cell writes. Schema 15 adds typed Counter less-than queries. Schema 14 adds typed qualified-coin Set insertion. Schema 13 adds an explicit typed Field-to-Bytes32 expression and nested Counter read; the cast uses midnight-zk's canonical 32-byte little-endian Field representation. Ledger, circuit, witness, constructor, and exported alias declarations carry optional Compact source locations for diagnostics. |
+| Generated code and Rust runtime | ABI 45 | Generated modules assert the ABI at Rust compile time. ABI 45 adds native Kernel shielded effects through upstream VM queries. ABI 44 adds recorded qualified-coin Cell writes through the shared native VM builder. ABI 43 adds typed circuit Zswap intents and locked observed allocation. ABI 42 adds native qualified-coin Cell writes; ABI 41 adds typed Counter less-than queries; ABI 40 adds recorded qualified-coin Set insertion, metered `kernel.self()`, and offer-backed observed calls. ABI 39 adds qualified-coin Set insertion using ledger coin and recipient types and the allocated commitment index. ABI 38 adds audited local-helper adoption for private witnesses, gas, and transcript while checking the public and Zswap context. ABI 37 adds a caller coin key for native `ownPublicKey()` and its private output; ABI 36 adds recorded plain Merkle root checks through typed slots; ABI 35 adds recorded Counter reset through typed slots; ABI 34 adds recorded direct plain/historic Merkle fullness reads; ABI 33 adds typed local plain/historic Merkle views with checked depth; ABI 32 adds List views; ABI 31 adds cell-valued Map views; ABI 30 adds Set views; ABI 29 adds Cell/Counter views; ABI 25–28 add physical List paths, chunked Map and Cell calls, and Cell-read scalar returns; ABI 21–24 add typed multi-argument observed calls and composite/chunked Set calls. The [runtime guide](../../runtime-rs/README.md) records earlier ABI changes. |
 | Rust runtime source | Bundled runtime crates or an explicit shared source root | Cargo resolves the matching runtime and its pinned Midnight crates. |
 
 `--runtime-version` reports the TypeScript runtime version; the Rust runtime
@@ -812,3 +812,22 @@ exports report their recording boundary; only the fixture's Cell read is recorde
 The unchanged micro-dao source advances to an unsupported standard-library ledger
 query path and remains unassessed. Check `check_compactc_target.py
 --native-zswap-intents` for source admission and strict-recording refusal.
+
+
+### Native Kernel shielded effects (ADR0177)
+
+Schema20 separates Kernel claim/mint Unit expressions from ordinary ledger slot
+expressions. One Scheme operation handler validates the special empty Kernel path,
+its exact ADT signature, and a bounded operation allowlist. Actions, direct returns
+and nested expressions share it; pure Rust expression use still rejects effects.
+ABI45 public methods accept upstream Commitment, Nullifier and HashOutput carriers
+and u64 mint amounts. Shared canonical programs use the actual ledger8 effects
+frame (six ops per claim, sixteen per mint), with no invented public ledger field.
+
+Native queries preserve duplicate-claim set behavior, same-domain mint accumulation
+and upstream arithmetic-overflow rejection. The independent TypeScript oracle
+serializes its JavaScript Maps explicitly, retains reported aggregate gas separately,
+and compares Rust gas to the sum of observed queries. TS batch reported aggregate
+gas currently contains only the final query cost. Native Kernel operations emit no
+synthetic private witness outputs; actual witness outputs keep source order.
+Recording and transaction funding/claim satisfaction remain separate work.

@@ -407,6 +407,60 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         self.with_coin_public_key(CoinPublicKey(HashOutput(bytes)))
     }
 
+    pub fn kernel_claim_zswap_nullifier(
+        self,
+        value: ledger::CoinNullifier,
+    ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        self.kernel_claim(ledger::KernelClaim::Nullifier(value))
+    }
+    pub fn kernel_claim_zswap_coin_spend(
+        self,
+        value: ledger::CoinCommitment,
+    ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        self.kernel_claim(ledger::KernelClaim::CoinSpend(value))
+    }
+    pub fn kernel_claim_zswap_coin_receive(
+        self,
+        value: ledger::CoinCommitment,
+    ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        self.kernel_claim(ledger::KernelClaim::CoinReceive(value))
+    }
+    fn kernel_claim(
+        mut self,
+        claim: ledger::KernelClaim,
+    ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        let result =
+            ledger::query_kernel_claim(&self.query, claim, self.gas_limit, &self.cost_model)?;
+        self.query = result.context;
+        Ok(CircuitResult {
+            context: self,
+            result: (),
+            gas_cost: result.gas_cost,
+            private_transcript_outputs: vec![],
+        })
+    }
+    /// Record a shielded mint effect; transaction validation still governs supply/balancing.
+    pub fn kernel_mint_shielded(
+        mut self,
+        domain: ledger::HashOutput,
+        amount: u64,
+    ) -> Result<CircuitResult<Private, (), D>, CompactError> {
+        let result = ledger::query_kernel_mint_shielded(
+            &self.query,
+            domain,
+            amount,
+            self.gas_limit,
+            &self.cost_model,
+        )?;
+        self.query = result.context;
+        Ok(CircuitResult {
+            context: self,
+            result: (),
+            gas_cost: result.gas_cost,
+            private_transcript_outputs: vec![],
+        })
+    }
+
     /// The native circuit intent log, separate from the wallet's Zswap state.
     pub fn circuit_zswap(&self) -> &crate::CircuitZswapPlan {
         &self.circuit_zswap

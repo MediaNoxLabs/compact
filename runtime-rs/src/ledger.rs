@@ -20,8 +20,8 @@
 
 pub use midnight_base_crypto::hash::HashOutput;
 pub use midnight_coin_structure::coin::{
-    Info as CoinInfo, Nonce as CoinNonce, PublicKey as CoinPublicKey,
-    QualifiedInfo as QualifiedCoinInfo, ShieldedTokenType,
+    Commitment as CoinCommitment, Info as CoinInfo, Nonce as CoinNonce, Nullifier as CoinNullifier,
+    PublicKey as CoinPublicKey, QualifiedInfo as QualifiedCoinInfo, ShieldedTokenType,
 };
 pub use midnight_coin_structure::contract::ContractAddress;
 pub use midnight_coin_structure::transfer::Recipient as CoinRecipient;
@@ -396,3 +396,6 @@ fn chunk_ledger_fields<D: DB>(fields: Vec<StateValue<D>>) -> StateValue<D> {
 pub fn empty_query_context() -> QueryContext<DefaultDB> {
     QueryContext::new(empty_contract_state(), ContractAddress::default())
 }
+
+mod kernel;
+pub use kernel::{KernelClaim, query_kernel_claim, query_kernel_mint_shielded};

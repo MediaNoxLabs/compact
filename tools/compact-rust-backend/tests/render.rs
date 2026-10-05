@@ -239,6 +239,68 @@ fn identity(result: Type, body: Expr) -> Contract {
 }
 
 #[test]
+fn recorded_conditional_field_pair_rejects_unrecorded_predicates_and_arms() {
+    let mut contract: Contract = serde_json::from_str(include_str!(
+        "../fixtures/recorded-closed-conditional-field-pair.json"
+    ))
+    .unwrap();
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(
+        rendered
+            .source
+            .contains("__compact_recorded_conditional_pair_")
+    );
+
+    let closed = contract.clone();
+    let StateAction::Let { action, .. } = &mut contract.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    let StateAction::Let { bindings, .. } = action.as_mut() else {
+        unreachable!()
+    };
+    let Expr::Vector { elements, .. } = &mut bindings[0].value else {
+        unreachable!()
+    };
+    let Expr::If { condition, .. } = &mut elements[0] else {
+        unreachable!()
+    };
+    **condition = Expr::CellRead {
+        field: "flag".into(),
+        index: 0,
+    };
+    assert!(render_with_capabilities(&contract).is_err());
+
+    let mut contract = closed;
+    contract.witnesses.push(WitnessDeclaration {
+        source: None,
+        name: "dynamicField".into(),
+        parameters: vec![],
+        result: Type::Field,
+    });
+    let StateAction::Let { action, .. } = &mut contract.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    let StateAction::Let { bindings, .. } = action.as_mut() else {
+        unreachable!()
+    };
+    let Expr::Vector { elements, .. } = &mut bindings[0].value else {
+        unreachable!()
+    };
+    let Expr::If { then, .. } = &mut elements[0] else {
+        unreachable!()
+    };
+    **then = Expr::Coerce {
+        value: Box::new(Expr::WitnessCall {
+            name: "dynamicField".into(),
+            arguments: vec![],
+        }),
+        ty: Type::Field,
+    };
+    assert!(render_with_capabilities(&contract).is_err());
+}
+
+#[test]
 fn recorded_annotated_uint8_rejects_unrecorded_predicates_and_arms() {
     let mut contract: Contract = serde_json::from_str(include_str!(
         "../fixtures/recorded-annotated-uint8-conditional.json"

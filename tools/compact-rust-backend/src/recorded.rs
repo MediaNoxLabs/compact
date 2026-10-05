@@ -1526,6 +1526,85 @@ fn render_recorded_item(
         nested.then_some(selected)
     }
 
+    // The compiler emits each element of the closed two-Field vector as a
+    // ternary over a Boolean already retained by recording. Both arms must
+    // be small, checked literals; no element can perform a VM or witness
+    // operation while the vector is built.
+    fn closed_conditional_field_pair(
+        value: &Expr,
+        locals: &HashMap<String, syn::Expr>,
+        parameters: &HashMap<&str, (&Type, syn::Ident)>,
+    ) -> Option<(syn::Expr, syn::Expr)> {
+        fn field_arm(value: &Expr) -> Option<syn::Expr> {
+            let Expr::Coerce {
+                value,
+                ty: Type::Field,
+            } = value
+            else {
+                return None;
+            };
+            let number = match value.as_ref() {
+                Expr::UnsignedLiteral { value, max } => {
+                    let max = max.parse::<u64>().ok()?;
+                    let value = value.parse::<u64>().ok()?;
+                    (max <= 4 && value <= max).then_some(value)?
+                }
+                Expr::FieldLiteral { value } => {
+                    let value = value.parse::<u64>().ok()?;
+                    (value <= 4).then_some(value)?
+                }
+                _ => return None,
+            };
+            let number = syn::LitInt::new(&format!("{number}u64"), Span::call_site());
+            Some(syn::parse_quote!(runtime::Field::from(#number)))
+        }
+
+        fn element(
+            value: &Expr,
+            locals: &HashMap<String, syn::Expr>,
+            parameters: &HashMap<&str, (&Type, syn::Ident)>,
+        ) -> Option<(String, syn::Expr)> {
+            let Expr::If {
+                condition,
+                then,
+                otherwise,
+            } = value
+            else {
+                return None;
+            };
+            let Expr::Parameter { name } = condition.as_ref() else {
+                return None;
+            };
+            if !locals.contains_key(name) {
+                return None;
+            }
+            let predicate = cell_source(condition, &Type::Boolean, locals, parameters)?;
+            let then = field_arm(then)?;
+            let otherwise = field_arm(otherwise)?;
+            Some((
+                name.clone(),
+                syn::parse_quote!(if #predicate { #then } else { #otherwise }),
+            ))
+        }
+
+        let Expr::Vector {
+            element: ty,
+            elements,
+        } = value
+        else {
+            return None;
+        };
+        if *ty != Type::Field {
+            return None;
+        }
+        let [first, second] = elements.as_slice() else {
+            return None;
+        };
+        let (first_source, first) = element(first, locals, parameters)?;
+        let (second_source, second) = element(second, locals, parameters)?;
+        (first_source == second_source).then_some((first, second))
+    }
+
     // A Uint<8> annotation widens the compiler's closed Uint<2> literal
     // ternary. Keep the outer cast and both arm bounds explicit here: the
     // recorded local may not evaluate an unrecorded operation.
@@ -3379,6 +3458,46 @@ fn render_recorded_item(
                 bindings,
                 action: nested_action,
             } => {
+                if let [vector_binding] = bindings.as_slice()
+                    && vector_binding.ty
+                        == (Type::Vector {
+                            element: Box::new(Type::Field),
+                            length: 2,
+                        })
+                    && let Some((first, second)) =
+                        closed_conditional_field_pair(&vector_binding.value, locals, parameters)
+                    && matches!(
+                        nested_action.as_ref(),
+                        StateAction::CellWrite { value: Expr::Parameter { name }, .. }
+                            if name == &vector_binding.name
+                    )
+                {
+                    let vector = syn::Ident::new(
+                        &format!("__compact_recorded_conditional_pair_{}", *next_temp),
+                        Span::call_site(),
+                    );
+                    *next_temp += 1;
+                    steps.push(syn::parse_quote! {
+                        let #vector: runtime::FixedVector<runtime::Field, 2> =
+                            runtime::FixedVector::new([#first, #second]);
+                    });
+                    let mut scoped = locals.clone();
+                    scoped.insert(vector_binding.name.clone(), syn::parse_quote!(#vector));
+                    return append_steps(
+                        nested_action,
+                        &format!("{path}.action"),
+                        &scoped,
+                        parameters,
+                        ledger_fields,
+                        witnesses,
+                        pure_circuits,
+                        circuits,
+                        shared_callees,
+                        steps,
+                        next_temp,
+                        visiting,
+                    );
+                }
                 if let [unsigned_binding] = bindings.as_slice()
                     && unsigned_binding.ty == (Type::Unsigned { max: "255".into() })
                     && let Some(selected) =

@@ -1,0 +1,209 @@
+{
+  "schema_version": 12,
+  "type_aliases": [],
+  "ledger_fields": [
+    {
+      "id": "flag",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "boolean"
+        }
+      },
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 115,
+        "column": 1
+      }
+    },
+    {
+      "id": "fieldCell",
+      "index": 1,
+      "path": [
+        1
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "field"
+        }
+      },
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 116,
+        "column": 1
+      }
+    },
+    {
+      "id": "wideCell",
+      "index": 2,
+      "path": [
+        2
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "unsigned",
+          "max": "18446744073709551615"
+        }
+      },
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 117,
+        "column": 1
+      }
+    },
+    {
+      "id": "vecCell",
+      "index": 3,
+      "path": [
+        3
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "vector",
+          "length": 2,
+          "element": {
+            "kind": "field"
+          }
+        }
+      },
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 118,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [],
+  "circuits": [],
+  "stateful_circuits": [
+    {
+      "name": "streamVectorElement",
+      "parameters": [],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "f",
+              "ty": {
+                "kind": "boolean"
+              },
+              "value": {
+                "kind": "cell_read",
+                "field": "flag",
+                "index": 0
+              }
+            }
+          ],
+          "action": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "tmp_38",
+                "ty": {
+                  "kind": "vector",
+                  "length": 2,
+                  "element": {
+                    "kind": "field"
+                  }
+                },
+                "value": {
+                  "kind": "vector",
+                  "element": {
+                    "kind": "field"
+                  },
+                  "elements": [
+                    {
+                      "kind": "if",
+                      "condition": {
+                        "kind": "parameter",
+                        "name": "f"
+                      },
+                      "then": {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "unsigned_literal",
+                          "value": "1",
+                          "max": "2"
+                        },
+                        "ty": {
+                          "kind": "field"
+                        }
+                      },
+                      "otherwise": {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "field_literal",
+                          "value": "2"
+                        },
+                        "ty": {
+                          "kind": "field"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "if",
+                      "condition": {
+                        "kind": "parameter",
+                        "name": "f"
+                      },
+                      "then": {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "unsigned_literal",
+                          "value": "3",
+                          "max": "4"
+                        },
+                        "ty": {
+                          "kind": "field"
+                        }
+                      },
+                      "otherwise": {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "field_literal",
+                          "value": "4"
+                        },
+                        "ty": {
+                          "kind": "field"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ],
+            "action": {
+              "kind": "cell_write",
+              "field": "vecCell",
+              "index": 3,
+              "value": {
+                "kind": "parameter",
+                "name": "tmp_38"
+              }
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 288,
+        "column": 1
+      }
+    }
+  ],
+  "constructor": null
+}

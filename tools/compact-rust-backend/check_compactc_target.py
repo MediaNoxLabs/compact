@@ -1520,14 +1520,14 @@ def main() -> None:
             for name in ("walkerConstAnnotated", "walkerWrite", "walkerCallPure", "streamCallPure",
                          "witnessArg", "streamCallWitness", "streamAssertEq",
                          "walkerNestedIf", "streamNestedIf",
-                         "walkerNativeArg", "streamNativeArg"):
+                         "walkerNativeArg", "streamNativeArg", "streamVectorElement"):
                 circuit = next(circuit for circuit in capabilities["circuits"]
                                if circuit["name"] == name)
                 assert circuit["proof_required"] and circuit["recorded"] \
                     and circuit["observed_call"]
             for name in ("walkerConstAnnotated", "walkerWrite", "streamCallPure", "streamCallWitness", "streamAssertEq",
                          "walkerNestedIf", "streamNestedIf",
-                         "walkerNativeArg", "streamNativeArg"):
+                         "walkerNativeArg", "streamNativeArg", "streamVectorElement"):
                 for extension in ("prover", "verifier"):
                     assert (ternary_cond_proof / "keys" / f"{name}.{extension}").is_file()
                 for extension in ("zkir", "bzkir"):
@@ -1766,6 +1766,10 @@ def main() -> None:
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 "--annotated-uint8", str(ternary_cond_proof),
+            )
+            run(
+                "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--conditional-field-vector", str(ternary_cond_proof),
             )
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",

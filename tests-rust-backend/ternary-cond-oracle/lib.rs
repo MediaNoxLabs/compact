@@ -1656,6 +1656,30 @@ pub mod ledger_contract {
                 .record_write(frame, __compact_recorded_pure_field_2)?;
             Ok(frame.finish(()))
         }
+        pub fn streamVectorElement<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_recorded_bool_0): (_, bool) =
+                crate::ledger_slots::flag.record_read(frame)?;
+            let __compact_recorded_conditional_pair_1: runtime::FixedVector<runtime::Field, 2> =
+                runtime::FixedVector::new([
+                    if __compact_recorded_bool_0 {
+                        runtime::Field::from(1u64)
+                    } else {
+                        runtime::Field::from(2u64)
+                    },
+                    if __compact_recorded_bool_0 {
+                        runtime::Field::from(3u64)
+                    } else {
+                        runtime::Field::from(4u64)
+                    },
+                ]);
+            let frame = crate::ledger_slots::vecCell
+                .record_write(frame, (__compact_recorded_conditional_pair_1).clone())?;
+            Ok(frame.finish(()))
+        }
         pub fn streamNativeArg<Private>(
             context: runtime::context::CircuitContext<Private>,
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
@@ -2143,6 +2167,31 @@ pub mod ledger_contract {
                     observed,
                     recorded,
                     "streamCallPure",
+                    input,
+                ))
+            }
+            pub fn streamVectorElement<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::streamVectorElement(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn streamVectorElement_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.streamVectorElement(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "streamVectorElement",
                     input,
                 ))
             }
@@ -2666,6 +2715,31 @@ pub mod ledger_contract {
                     observed,
                     recorded,
                     "streamCallPure",
+                    input,
+                ))
+            }
+            pub fn streamVectorElement<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                streamVectorElement(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn streamVectorElement_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.streamVectorElement(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "streamVectorElement",
                     input,
                 ))
             }

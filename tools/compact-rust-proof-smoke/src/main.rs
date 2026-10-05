@@ -1057,6 +1057,75 @@ fn check_nested_uint4_proof(root: &Path) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+fn check_conditional_field_vector_proof(root: &Path) -> Result<(), Box<dyn Error>> {
+    let mut rng = StdRng::seed_from_u64(0x0131_5645_4354_4f52);
+    let circuit = "streamVectorElement";
+    for flag in [false, true] {
+        let initial = conditional_counter_contract::initial_state(
+            ConstructorContext::new(()),
+            true,
+            true,
+            Field::from(111_u64),
+        )?;
+        let seed = initial.into_circuit_context(Default::default());
+        let seed = if flag {
+            seed.write_cell(0_u8, true)?.context
+        } else {
+            seed
+        };
+        let deploy = make_deploy(root, circuit, seed.query.state.get_ref().clone(), &mut rng)?;
+        let observed = ObservedContractState::new(
+            deploy.address(),
+            deploy.initial_state.clone(),
+            Observation {
+                transaction_hash: [0; 32],
+                block_hash: [0; 32],
+                block_height: 0,
+            },
+        );
+        let verifier: VerifierKey = tagged_deserialize(&mut BufReader::new(File::open(
+            root.join(format!("keys/{circuit}.verifier")),
+        )?))?;
+        let recorded = conditional_counter_contract::recorded::streamVectorElement(
+            observed.circuit_context(()),
+        )?;
+        let expected_state = recorded.execution.context.query.state.get_ref().clone();
+        let manual = check_generated_trace(root, circuit, recorded, ())?;
+        let typed = conditional_counter_contract::Contract::default()
+            .recording
+            .streamVectorElement_call(&observed, ())?
+            .prepare(verifier, Fr::from(0_u64))?;
+        if format!("{manual:?}") != format!("{typed:?}") {
+            return Err(format!("{circuit} typed observed call differs from manual trace").into());
+        }
+        let expected_vector = FixedVector::new([
+            Field::from(if flag { 1_u64 } else { 2_u64 }),
+            Field::from(if flag { 3_u64 } else { 4_u64 }),
+        ]);
+        check_transaction(root, circuit, deploy, typed, &mut rng, |state| {
+            let data = state.data.get_ref();
+            if data != &expected_state {
+                return Err(format!("{circuit} proof changed unexpected ledger state").into());
+            }
+            if read_cell_at_path::<bool, _>(data, &[0])? != flag {
+                return Err(format!("{circuit} proof changed the flag").into());
+            }
+            if read_cell_at_path::<FixedVector<Field, 2>, _>(data, &[3])? != expected_vector {
+                return Err(format!("{circuit} proof stored the wrong Field vector").into());
+            }
+            let StateValue::Array(fields) = data else {
+                return Err("conditional vector state is not an array".into());
+            };
+            if read_counter(fields.get(4).ok_or("Counter missing")?)? != 0 {
+                return Err(format!("{circuit} proof changed the Counter").into());
+            }
+            Ok(())
+        })?;
+    }
+    println!("closed conditional Field vectors proved and applied through ledger-8");
+    Ok(())
+}
+
 fn check_annotated_uint8_proof(root: &Path) -> Result<(), Box<dyn Error>> {
     let mut rng = StdRng::seed_from_u64(0x0127_5549_4e54_3038);
     for condition in [true, false] {
@@ -1773,6 +1842,28 @@ fn main() -> Result<(), Box<dyn Error>> {
             Ok(Ok(())) => Ok(()),
             Ok(Err(error)) => Err(error.into()),
             Err(_) => Err("nested Uint<4> proof thread panicked".into()),
+        };
+    }
+    if first.as_deref() == Some(OsStr::new("--conditional-field-vector")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --conditional-field-vector <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err(
+                "usage: compact-rust-proof-smoke --conditional-field-vector <proof-output>".into(),
+            );
+        }
+        let root = PathBuf::from(root);
+        return match std::thread::Builder::new()
+            .stack_size(64 * 1024 * 1024)
+            .spawn(move || {
+                check_conditional_field_vector_proof(&root).map_err(|error| error.to_string())
+            })?
+            .join()
+        {
+            Ok(Ok(())) => Ok(()),
+            Ok(Err(error)) => Err(error.into()),
+            Err(_) => Err("conditional Field vector proof thread panicked".into()),
         };
     }
     if first.as_deref() == Some(OsStr::new("--annotated-uint8")) {

@@ -4039,6 +4039,89 @@ fn render_recorded_item(
                         visiting,
                     );
                 }
+                // Keep a pure one-field constructor's exact result type at
+                // the call site. Two expanded modules may give otherwise
+                // similar structs different Rust names and member names.
+                if let [struct_binding] = bindings.as_slice()
+                    && let Type::Struct {
+                        fields: struct_fields,
+                        ..
+                    } = &struct_binding.ty
+                    && let [struct_field] = struct_fields.as_slice()
+                    && struct_field.ty == Type::Field
+                    && let Expr::Call { name, arguments } = &struct_binding.value
+                    && let Some(callee) = pure_circuits.get(name.as_str())
+                    && callee.result == struct_binding.ty
+                    && let [callee_parameter] = callee.parameters.as_slice()
+                    && callee_parameter.ty == Type::Field
+                    && let Expr::StructLiteral {
+                        ty: literal_ty,
+                        fields: literal_fields,
+                    } = &callee.body
+                    && literal_ty == &callee.result
+                    && matches!(literal_fields.as_slice(), [Expr::Parameter { name }] if name == &callee_parameter.name)
+                    && let [argument] = arguments.as_slice()
+                    && let Some(argument) = cell_source(argument, &Type::Field, locals, parameters)
+                    && let StateAction::Let {
+                        bindings: projected_bindings,
+                        action: projected_action,
+                    } = nested_action.as_ref()
+                    && let [projected_binding] = projected_bindings.as_slice()
+                    && projected_binding.ty == Type::Field
+                    && let Expr::StructField {
+                        value: projected_source,
+                        field: projected_field,
+                        index: 0,
+                    } = &projected_binding.value
+                    && projected_field == &struct_field.name
+                    && matches!(projected_source.as_ref(), Expr::Parameter { name } if name == &struct_binding.name)
+                    && matches!(projected_action.as_ref(), StateAction::CellWrite { value: Expr::Parameter { name }, .. } if name == &projected_binding.name)
+                {
+                    let struct_ty = rust_type(&struct_binding.ty)?;
+                    let method = ident(name)?;
+                    let member = ident(&struct_field.name)?;
+                    let arg = syn::Ident::new(
+                        &format!("__compact_recorded_struct_arg_{}", *next_temp),
+                        Span::call_site(),
+                    );
+                    *next_temp += 1;
+                    let retained = syn::Ident::new(
+                        &format!("__compact_recorded_struct_call_{}", *next_temp),
+                        Span::call_site(),
+                    );
+                    *next_temp += 1;
+                    let projected = syn::Ident::new(
+                        &format!("__compact_recorded_struct_field_{}", *next_temp),
+                        Span::call_site(),
+                    );
+                    *next_temp += 1;
+                    steps.push(syn::parse_quote!(let #arg: runtime::Field = #argument;));
+                    steps.push(syn::parse_quote! {
+                        let #retained: #struct_ty = crate::pure_circuits::#method(#arg)?;
+                    });
+                    steps.push(syn::parse_quote! {
+                        let #projected: runtime::Field = #retained.#member;
+                    });
+                    let mut scoped = locals.clone();
+                    scoped.insert(
+                        projected_binding.name.clone(),
+                        syn::parse_quote!(#projected),
+                    );
+                    return append_steps(
+                        projected_action,
+                        &format!("{path}.action.action"),
+                        &scoped,
+                        parameters,
+                        ledger_fields,
+                        witnesses,
+                        pure_circuits,
+                        circuits,
+                        shared_callees,
+                        steps,
+                        next_temp,
+                        visiting,
+                    );
+                }
                 let mut scoped = locals.clone();
                 for (binding_index, binding) in bindings.iter().enumerate() {
                     let hash = match (&binding.ty, &binding.value) {

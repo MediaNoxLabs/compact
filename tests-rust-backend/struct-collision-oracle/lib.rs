@@ -256,19 +256,112 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
+    /// Circuits with a replayable ordered ledger program.
+    pub mod recorded {
+        use midnight_compact_runtime as runtime;
+        pub fn runAlpha<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::Field,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_struct_arg_0: runtime::Field = __compact_param_0;
+            let __compact_recorded_struct_call_1: crate::types::RecCompact1 =
+                crate::pure_circuits::makeAlpha(__compact_recorded_struct_arg_0)?;
+            let __compact_recorded_struct_field_2: runtime::Field =
+                __compact_recorded_struct_call_1.alpha;
+            let frame = crate::ledger_slots::lastAlpha
+                .record_write(frame, __compact_recorded_struct_field_2)?;
+            Ok(frame.finish(()))
+        }
+        pub fn runBeta<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::Field,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_struct_arg_0: runtime::Field = __compact_param_0;
+            let __compact_recorded_struct_call_1: crate::types::Rec =
+                crate::pure_circuits::makeBeta(__compact_recorded_struct_arg_0)?;
+            let __compact_recorded_struct_field_2: runtime::Field =
+                __compact_recorded_struct_call_1.beta;
+            let frame = crate::ledger_slots::lastBeta
+                .record_write(frame, __compact_recorded_struct_field_2)?;
+            Ok(frame.finish(()))
+        }
+        /// Typed handle for circuits with a complete recorded trace.
+        pub struct Contract;
+        impl Contract {
+            pub fn runAlpha<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                x: runtime::Field,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::runAlpha(context, x)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn runAlpha_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                x: runtime::Field,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(x);
+                let recorded = self.runAlpha(observed.circuit_context(private_state), x)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "runAlpha", input,
+                ))
+            }
+            pub fn runBeta<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                y: runtime::Field,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::runBeta(context, y)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn runBeta_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                y: runtime::Field,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(y);
+                let recorded = self.runBeta(observed.circuit_context(private_state), y)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "runBeta", input,
+                ))
+            }
+        }
+    }
     /// Groups the contract's exported circuits for Rust consumers.
     pub struct Contract<W> {
         #[allow(dead_code)]
         witnesses: W,
+        pub recording: recorded::Contract,
     }
     impl<W> From<W> for Contract<W> {
         fn from(witnesses: W) -> Self {
-            Self { witnesses }
+            Self {
+                witnesses,
+                recording: recorded::Contract,
+            }
         }
     }
     impl Default for Contract<()> {
         fn default() -> Self {
-            Self { witnesses: () }
+            Self {
+                witnesses: (),
+                recording: recorded::Contract,
+            }
         }
     }
     impl<W> Contract<W> {
@@ -285,6 +378,10 @@ pub mod ledger_contract {
             y: runtime::Field,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
             crate::ledger_contract::runBeta(context, y)
+        }
+        /// Access replayable circuit calls for this contract.
+        pub fn recording(&self) -> &recorded::Contract {
+            &self.recording
         }
     }
 }

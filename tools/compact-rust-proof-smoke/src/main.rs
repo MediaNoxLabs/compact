@@ -43,6 +43,7 @@ mod pure_assert_call;
 mod pure_field_arguments;
 mod stateful_pair_hash;
 mod stateful_pure_return;
+mod struct_constructor_cell;
 mod test_center_counter;
 mod test_center_welcome;
 mod unsigned_recording;
@@ -1646,6 +1647,17 @@ fn main() -> Result<(), Box<dyn Error>> {
             );
         }
         return closed_pure_field::run(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--struct-constructor-cell")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --struct-constructor-cell <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err(
+                "usage: compact-rust-proof-smoke --struct-constructor-cell <proof-output>".into(),
+            );
+        }
+        return struct_constructor_cell::run(Path::new(&root));
     }
     if first.as_deref() == Some(OsStr::new("--pure-assert-call")) {
         let pure_root = arguments.next().ok_or(

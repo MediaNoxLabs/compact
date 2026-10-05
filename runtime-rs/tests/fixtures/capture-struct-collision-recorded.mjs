@@ -1,0 +1,82 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//   http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Compile the original struct_collision_oracle.compact for TypeScript and pass contract/index.js.
+import { pathToFileURL } from 'node:url';
+import * as runtime from '../../../runtime/dist/index.js';
+
+const [contractPath] = process.argv.slice(2);
+if (!contractPath) throw new Error('expected contract/index.js');
+const { Contract } = await import(pathToFileURL(contractPath).href);
+const contract = new Contract({});
+const coinPublicKey = { bytes: new Uint8Array(32) };
+const initial = contract.initialState({
+  initialPrivateState: null,
+  initialZswapLocalState: runtime.emptyZswapLocalState(coinPublicKey),
+});
+const hex = (state) => Buffer.from(state.serialize()).toString('hex');
+const initialStateHex = hex(initial.currentContractState);
+let queries = [];
+const originalQuery = runtime.QueryContext.prototype.query;
+runtime.QueryContext.prototype.query = function (...args) {
+  const output = originalQuery.call(this, ...args);
+  queries.push({ gasCost: Object.fromEntries(
+    Object.entries(output.gasCost).map(([key, value]) => [key, value.toString()]),
+  ) });
+  return output;
+};
+function shape(operation) {
+  if (typeof operation === 'string') return { kind: operation };
+  if (operation.idx) {
+    const { cached, pushPath, path } = operation.idx;
+    return { kind: 'idx', cached, pushPath, pathLength: path.length };
+  }
+  if (operation.push) return { kind: 'push', storage: operation.push.storage };
+  if (operation.ins) return { kind: 'ins', cached: operation.ins.cached, n: operation.ins.n };
+  if (operation.addi) return { kind: 'addi', immediate: operation.addi.immediate };
+  throw new Error(`unexpected operation: ${Object.keys(operation)}`);
+}
+function afterState(output) {
+  const original = initial.currentContractState;
+  const state = new runtime.ContractState();
+  state.data = new runtime.ChargedState(output.context.currentQueryContext.state.state);
+  for (const entry of original.operations()) state.setOperation(entry, original.operation(entry));
+  state.maintenanceAuthority = original.maintenanceAuthority;
+  state.balance = original.balance;
+  return state;
+}
+function capture(name, value) {
+  queries = [];
+  const context = runtime.createCircuitContext(
+    runtime.dummyContractAddress(), coinPublicKey,
+    initial.currentContractState.data, initial.currentPrivateState,
+  );
+  const output = contract.circuits[name](context, value);
+  return {
+    initialStateHex,
+    afterStateHex: hex(afterState(output)),
+    result: String(output.result),
+    reportedGas: Object.fromEntries(
+      Object.entries(output.gasCost).map(([key, gas]) => [key, gas.toString()]),
+    ),
+    publicTranscriptShape: output.proofData.publicTranscript.map(shape),
+    privateTranscriptCount: output.proofData.privateTranscriptOutputs.length,
+    queries,
+  };
+}
+process.stdout.write(JSON.stringify({
+  alpha: capture('runAlpha', 5n),
+  beta: capture('runBeta', 7n),
+}, null, 2) + '\n');

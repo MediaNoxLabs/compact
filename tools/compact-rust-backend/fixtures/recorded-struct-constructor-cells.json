@@ -1,0 +1,383 @@
+{
+  "schema_version": 12,
+  "type_aliases": [],
+  "constructor": {
+    "parameters": [],
+    "steps": [
+      {
+        "kind": "let",
+        "bindings": [
+          {
+            "name": "tmp_0",
+            "ty": {
+              "kind": "field"
+            },
+            "value": {
+              "kind": "field_literal",
+              "value": "0"
+            }
+          }
+        ],
+        "step": {
+          "kind": "cell_write",
+          "field": "lastAlpha",
+          "index": 0,
+          "value": {
+            "kind": "parameter",
+            "name": "tmp_0"
+          }
+        }
+      },
+      {
+        "kind": "let",
+        "bindings": [
+          {
+            "name": "tmp_1",
+            "ty": {
+              "kind": "field"
+            },
+            "value": {
+              "kind": "field_literal",
+              "value": "0"
+            }
+          }
+        ],
+        "step": {
+          "kind": "cell_write",
+          "field": "lastBeta",
+          "index": 1,
+          "value": {
+            "kind": "parameter",
+            "name": "tmp_1"
+          }
+        }
+      }
+    ],
+    "source": {
+      "file": "struct_collision_oracle.compact",
+      "line": 82,
+      "column": 1
+    }
+  },
+  "witnesses": [],
+  "ledger_fields": [
+    {
+      "id": "lastAlpha",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "field"
+        }
+      },
+      "source": {
+        "file": "struct_collision_oracle.compact",
+        "line": 79,
+        "column": 1
+      }
+    },
+    {
+      "id": "lastBeta",
+      "index": 1,
+      "path": [
+        1
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "field"
+        }
+      },
+      "source": {
+        "file": "struct_collision_oracle.compact",
+        "line": 80,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+    {
+      "name": "makeAlpha",
+      "internal": true,
+      "parameters": [
+        {
+          "name": "x",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "RecCompact1",
+        "fields": [
+          {
+            "name": "alpha",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "body": {
+        "kind": "struct_literal",
+        "ty": {
+          "kind": "struct",
+          "name": "RecCompact1",
+          "fields": [
+            {
+              "name": "alpha",
+              "ty": {
+                "kind": "field"
+              }
+            }
+          ]
+        },
+        "fields": [
+          {
+            "kind": "parameter",
+            "name": "x"
+          }
+        ]
+      },
+      "source": {
+        "file": "struct_collision_oracle.compact",
+        "line": 56,
+        "column": 3
+      }
+    },
+    {
+      "name": "makeBeta",
+      "internal": true,
+      "parameters": [
+        {
+          "name": "y",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Rec",
+        "fields": [
+          {
+            "name": "beta",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "body": {
+        "kind": "struct_literal",
+        "ty": {
+          "kind": "struct",
+          "name": "Rec",
+          "fields": [
+            {
+              "name": "beta",
+              "ty": {
+                "kind": "field"
+              }
+            }
+          ]
+        },
+        "fields": [
+          {
+            "kind": "parameter",
+            "name": "y"
+          }
+        ]
+      },
+      "source": {
+        "file": "struct_collision_oracle.compact",
+        "line": 68,
+        "column": 3
+      }
+    }
+  ],
+  "stateful_circuits": [
+    {
+      "name": "runAlpha",
+      "parameters": [
+        {
+          "name": "x",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "r",
+              "ty": {
+                "kind": "struct",
+                "name": "RecCompact1",
+                "fields": [
+                  {
+                    "name": "alpha",
+                    "ty": {
+                      "kind": "field"
+                    }
+                  }
+                ]
+              },
+              "value": {
+                "kind": "call",
+                "name": "makeAlpha",
+                "arguments": [
+                  {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "x"
+                    },
+                    "ty": {
+                      "kind": "field"
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "action": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "tmp_3",
+                "ty": {
+                  "kind": "field"
+                },
+                "value": {
+                  "kind": "struct_field",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "r"
+                  },
+                  "field": "alpha",
+                  "index": 0
+                }
+              }
+            ],
+            "action": {
+              "kind": "cell_write",
+              "field": "lastAlpha",
+              "index": 0,
+              "value": {
+                "kind": "parameter",
+                "name": "tmp_3"
+              }
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "struct_collision_oracle.compact",
+        "line": 87,
+        "column": 1
+      }
+    },
+    {
+      "name": "runBeta",
+      "parameters": [
+        {
+          "name": "y",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "r",
+              "ty": {
+                "kind": "struct",
+                "name": "Rec",
+                "fields": [
+                  {
+                    "name": "beta",
+                    "ty": {
+                      "kind": "field"
+                    }
+                  }
+                ]
+              },
+              "value": {
+                "kind": "call",
+                "name": "makeBeta",
+                "arguments": [
+                  {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "parameter",
+                      "name": "y"
+                    },
+                    "ty": {
+                      "kind": "field"
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "action": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "tmp_2",
+                "ty": {
+                  "kind": "field"
+                },
+                "value": {
+                  "kind": "struct_field",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "r"
+                  },
+                  "field": "beta",
+                  "index": 0
+                }
+              }
+            ],
+            "action": {
+              "kind": "cell_write",
+              "field": "lastBeta",
+              "index": 1,
+              "value": {
+                "kind": "parameter",
+                "name": "tmp_2"
+              }
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "struct_collision_oracle.compact",
+        "line": 92,
+        "column": 1
+      }
+    }
+  ]
+}

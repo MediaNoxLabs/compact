@@ -362,6 +362,75 @@ fn identity(result: Type, body: Expr) -> Contract {
 }
 
 #[test]
+fn recorded_distinct_struct_constructor_calls_require_exact_projection_and_closed_body() {
+    let fixture = || -> Contract {
+        serde_json::from_str(include_str!(
+            "../fixtures/recorded-struct-constructor-cells.json"
+        ))
+        .unwrap()
+    };
+    let contract = fixture();
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.capabilities.circuits.iter().all(|c| c.recorded));
+    assert!(rendered.source.contains("crate::types::RecCompact1"));
+    assert!(rendered.source.contains("crate::types::Rec"));
+    assert!(rendered.source.contains("pure_circuits::makeAlpha"));
+    assert!(rendered.source.contains("pure_circuits::makeBeta"));
+
+    let mut wrong_identity = fixture();
+    let StateAction::Let { bindings, .. } = &mut wrong_identity.stateful_circuits[0].actions[0]
+    else {
+        unreachable!()
+    };
+    let Expr::Call { name, .. } = &mut bindings[0].value else {
+        unreachable!()
+    };
+    *name = "makeBeta".into();
+    // The typed renderer rejects a cross-module result identity before it
+    // can produce either native or recorded Rust.
+    assert!(matches!(
+        render_with_capabilities(&wrong_identity),
+        Err(RenderError::Located { .. })
+    ));
+
+    let mut wrong_write = fixture();
+    let StateAction::Let { action, .. } = &mut wrong_write.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    let StateAction::Let { action, .. } = action.as_mut() else {
+        unreachable!()
+    };
+    let StateAction::CellWrite { value, .. } = action.as_mut() else {
+        unreachable!()
+    };
+    *value = Expr::Parameter { name: "x".into() };
+    assert!(
+        !render_with_capabilities(&wrong_write)
+            .unwrap()
+            .capabilities
+            .circuits[0]
+            .recorded
+    );
+
+    let mut effectful_helper = fixture();
+    let previous = effectful_helper.circuits[0].body.clone();
+    effectful_helper.circuits[0].body = Expr::Sequence {
+        steps: vec![Expr::Assert {
+            condition: Box::new(Expr::Boolean { value: true }),
+            message: "side condition".into(),
+        }],
+        value: Box::new(previous),
+    };
+    assert!(
+        !render_with_capabilities(&effectful_helper)
+            .unwrap()
+            .capabilities
+            .circuits[0]
+            .recorded
+    );
+}
+
+#[test]
 fn recorded_nested_uint64_projection_rejects_other_widths_and_effects() {
     let mut contract: Contract = serde_json::from_str(include_str!(
         "../fixtures/recorded-nested-uint64-cell-counter.json"

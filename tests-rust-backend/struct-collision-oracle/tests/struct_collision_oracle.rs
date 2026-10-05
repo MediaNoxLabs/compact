@@ -14,7 +14,7 @@
 // limitations under the License.
 
 use compact_rust_struct_collision_oracle_fixture::ledger_contract::{
-    initial_state, runAlpha, runBeta,
+    initial_state, recorded, runAlpha, runBeta,
 };
 use compact_rust_struct_collision_oracle_fixture::pure_circuits::{runWrapAlpha, runWrapBeta};
 use compact_rust_struct_collision_oracle_fixture::types::{
@@ -42,6 +42,116 @@ fn state_hex(state: StateValue<DefaultDB>) -> String {
     let mut bytes = Vec::new();
     tagged_serialize(&contract_state, &mut bytes).unwrap();
     hex::encode(bytes)
+}
+
+fn ordered_vm_shape(operations: serde_json::Value) -> serde_json::Value {
+    serde_json::Value::Array(
+        operations
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|operation| {
+                if let Some(push) = operation.get("push") {
+                    serde_json::json!({"kind":"push", "storage":push["storage"]})
+                } else if let Some(ins) = operation.get("ins") {
+                    serde_json::json!({"kind":"ins", "cached":ins["cached"], "n":ins["n"]})
+                } else {
+                    panic!("unexpected VM operation: {operation}")
+                }
+            })
+            .collect(),
+    )
+}
+
+#[test]
+fn distinct_constructor_calls_match_typescript_recording_and_replay() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/struct-collision-recorded.json"
+    ))
+    .unwrap();
+    for (name, value) in [("alpha", 5_u64), ("beta", 7_u64)] {
+        let expected = &oracle[name];
+        let native_initial = initial_state(ConstructorContext::new(())).unwrap();
+        let recorded_initial = initial_state(ConstructorContext::new(())).unwrap();
+        assert_eq!(
+            state_hex(native_initial.ledger_state.get_ref().clone()),
+            expected["initialStateHex"],
+            "{name}: initial state",
+        );
+        let native_context = native_initial.into_circuit_context(ContractAddress::default());
+        let recorded_context = recorded_initial.into_circuit_context(ContractAddress::default());
+        let (native, recorded) = if name == "alpha" {
+            (
+                runAlpha(native_context, Field::from(value)).unwrap(),
+                recorded::runAlpha(recorded_context, Field::from(value)).unwrap(),
+            )
+        } else {
+            (
+                runBeta(native_context, Field::from(value)).unwrap(),
+                recorded::runBeta(recorded_context, Field::from(value)).unwrap(),
+            )
+        };
+        let _: () = native.result;
+        let _: () = recorded.execution.result;
+        assert_eq!(expected["result"], "", "{name}: TypeScript result");
+        assert_eq!(native.gas_cost, recorded.execution.gas_cost, "{name}: gas");
+        assert_eq!(
+            native.context.query.effects,
+            recorded.execution.context.query.effects
+        );
+        assert_eq!(
+            native.context.query.state.get_ref(),
+            recorded.execution.context.query.state.get_ref()
+        );
+        assert_eq!(
+            state_hex(recorded.execution.context.query.state.get_ref().clone()),
+            expected["afterStateHex"],
+            "{name}: TypeScript state",
+        );
+        assert!(native.private_transcript_outputs.is_empty());
+        assert!(recorded.execution.private_transcript_outputs.is_empty());
+        assert_eq!(expected["privateTranscriptCount"], 0);
+        assert_eq!(
+            ordered_vm_shape(serde_json::to_value(recorded.public.verify_ops()).unwrap()),
+            expected["publicTranscriptShape"],
+            "{name}: ordered VM",
+        );
+        let replay = recorded
+            .public
+            .initial()
+            .query(
+                recorded.public.verify_ops(),
+                None,
+                &recorded.execution.context.cost_model,
+            )
+            .unwrap();
+        assert_eq!(
+            replay.context.state.get_ref(),
+            native.context.query.state.get_ref()
+        );
+        assert_eq!(replay.context.effects, native.context.query.effects);
+        let actual = serde_json::to_value(native.gas_cost).unwrap();
+        for dimension in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+            let expected_gas: u64 = expected["queries"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|query| {
+                    query["gasCost"][dimension]
+                        .as_str()
+                        .unwrap()
+                        .parse::<u64>()
+                        .unwrap()
+                })
+                .sum();
+            assert_eq!(actual[dimension], expected_gas, "{name}: {dimension}");
+            assert_eq!(
+                expected["queries"].as_array().unwrap().last().unwrap()["gasCost"][dimension],
+                expected["reportedGas"][dimension],
+                "{name}: final TypeScript query {dimension}",
+            );
+        }
+    }
 }
 
 #[test]

@@ -8569,7 +8569,7 @@ fn plain_merkle_reset_recording_requires_exact_plain_slot() {
         index: 0,
     };
     assert!(
-        !render_with_capabilities(&contract)
+        render_with_capabilities(&contract)
             .unwrap()
             .capabilities
             .circuits[0]

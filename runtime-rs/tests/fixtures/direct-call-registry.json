@@ -1,0 +1,2695 @@
+{
+  "provenance": {
+    "runtimeVersion": "0.16.101",
+    "sources": {
+      "call_arg_declared_type": {
+        "sourceSha256": "4fcef200298b909bc50d9b59c9b5ab3d72402d55a2179e01adba9e57bbf9a850",
+        "generatedIndexSha256": "12e09d0da652bb0f7d191ca911d78e39cb4192e004db05a5d727e4d15fc8745a"
+      },
+      "asset_registry_oracle": {
+        "sourceSha256": "2027ebbced964b5ae2271b11018734ef317776d93c23721ec622f30d79cbd1c2",
+        "generatedIndexSha256": "e2deb6522d2b8f98c34d37db778f47678f3fa939b13e09196e0a5b00a00d9a07"
+      }
+    },
+    "runtime": {
+      "index.js": "c55a8ab3e7533b3fa6e27b66ab742c783d912d5a00d6ecc23d9f6142ddb0ecde",
+      "built-ins.js": "534001298a202e3b099355e0f9b3cf14a4b259358370ca88366231094989b481",
+      "compact-types.js": "5cdccdb9fde9fdb297459588f33ce093ad557584b35b480819e0d930ce1bd73b"
+    }
+  },
+  "cases": [
+    {
+      "id": "call/idf/0",
+      "group": "call",
+      "export": "idf",
+      "args": [
+        "0"
+      ],
+      "ok": true,
+      "result": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "call/idf/1",
+      "group": "call",
+      "export": "idf",
+      "args": [
+        "1"
+      ],
+      "ok": true,
+      "result": "0100000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "call/idf/1606938044258990275541962092341162602522202993782792835301376",
+      "group": "call",
+      "export": "idf",
+      "args": [
+        "1606938044258990275541962092341162602522202993782792835301376"
+      ],
+      "ok": true,
+      "result": "0000000000000000000000000000000000000000000000000001000000000000"
+    },
+    {
+      "id": "call/sumVec/0-1",
+      "group": "call",
+      "export": "sumVec",
+      "args": [
+        [
+          "0",
+          "1"
+        ]
+      ],
+      "ok": true,
+      "result": "d69ee4b3d57bf5e75d629c9ec74d344a984f306b8ecb8f9b590b1e463ae0dc0a"
+    },
+    {
+      "id": "call/sumVec/1-0",
+      "group": "call",
+      "export": "sumVec",
+      "args": [
+        [
+          "1",
+          "0"
+        ]
+      ],
+      "ok": true,
+      "result": "5be539ae3438f722ffcfd9bc6d9dabe752c2d3bd0999a4a3f4e9a9617f3aa56c"
+    },
+    {
+      "id": "call/sumVec/7-1606938044258990275541962092341162602522202993782792835301376",
+      "group": "call",
+      "export": "sumVec",
+      "args": [
+        [
+          "7",
+          "1606938044258990275541962092341162602522202993782792835301376"
+        ]
+      ],
+      "ok": true,
+      "result": "cb9cfbbbccb0d9171138a5835698000ec8bf95ef66863c56dfe8e4d312f59339"
+    },
+    {
+      "id": "call/sumTup/0-1",
+      "group": "call",
+      "export": "sumTup",
+      "args": [
+        [
+          "0",
+          "1"
+        ]
+      ],
+      "ok": true,
+      "result": "d69ee4b3d57bf5e75d629c9ec74d344a984f306b8ecb8f9b590b1e463ae0dc0a"
+    },
+    {
+      "id": "call/sumTup/1-0",
+      "group": "call",
+      "export": "sumTup",
+      "args": [
+        [
+          "1",
+          "0"
+        ]
+      ],
+      "ok": true,
+      "result": "5be539ae3438f722ffcfd9bc6d9dabe752c2d3bd0999a4a3f4e9a9617f3aa56c"
+    },
+    {
+      "id": "call/sumTup/7-1606938044258990275541962092341162602522202993782792835301376",
+      "group": "call",
+      "export": "sumTup",
+      "args": [
+        [
+          "7",
+          "1606938044258990275541962092341162602522202993782792835301376"
+        ]
+      ],
+      "ok": true,
+      "result": "cb9cfbbbccb0d9171138a5835698000ec8bf95ef66863c56dfe8e4d312f59339"
+    },
+    {
+      "id": "call/vecFromPureBody/constant",
+      "group": "call",
+      "export": "vecFromPureBody",
+      "args": [],
+      "ok": true,
+      "result": "d69ee4b3d57bf5e75d629c9ec74d344a984f306b8ecb8f9b590b1e463ae0dc0a"
+    },
+    {
+      "id": "call/fieldOnlyFromPureBody/constant",
+      "group": "call",
+      "export": "fieldOnlyFromPureBody",
+      "args": [],
+      "ok": true,
+      "result": "97e5dedacbe1125a100299791204cd146087262060e7cc20f575a64c9db6cf01"
+    },
+    {
+      "id": "call/tupleIntoVec/constant",
+      "group": "call",
+      "export": "tupleIntoVec",
+      "args": [],
+      "ok": true,
+      "result": "938d9d569c3dd2c05236d799bc4e7f906b4f383e5617d9b0f102aa492fb9584a"
+    },
+    {
+      "id": "call/vecIntoTuple/constant",
+      "group": "call",
+      "export": "vecIntoTuple",
+      "args": [],
+      "ok": true,
+      "result": "938d9d569c3dd2c05236d799bc4e7f906b4f383e5617d9b0f102aa492fb9584a"
+    },
+    {
+      "id": "asset/assertRecordFreshEnough/equal",
+      "group": "asset",
+      "export": "assertRecordFreshEnough",
+      "args": [
+        {
+          "enforceMaxAge": true,
+          "maxAge": "0"
+        },
+        {
+          "code": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "note": "direct α record",
+          "provenance": {
+            "facility": [
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4
+            ],
+            "registeredAt": "100"
+          },
+          "kind": 1,
+          "quantity": "5"
+        },
+        "100"
+      ],
+      "ok": true,
+      "result": []
+    },
+    {
+      "id": "asset/assertRecordFreshEnough/boundary",
+      "group": "asset",
+      "export": "assertRecordFreshEnough",
+      "args": [
+        {
+          "enforceMaxAge": true,
+          "maxAge": "20"
+        },
+        {
+          "code": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "note": "direct α record",
+          "provenance": {
+            "facility": [
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4
+            ],
+            "registeredAt": "100"
+          },
+          "kind": 1,
+          "quantity": "5"
+        },
+        "120"
+      ],
+      "ok": true,
+      "result": []
+    },
+    {
+      "id": "asset/assertRecordFreshEnough/expired",
+      "group": "asset",
+      "export": "assertRecordFreshEnough",
+      "args": [
+        {
+          "enforceMaxAge": true,
+          "maxAge": "19"
+        },
+        {
+          "code": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "note": "direct α record",
+          "provenance": {
+            "facility": [
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4
+            ],
+            "registeredAt": "100"
+          },
+          "kind": 1,
+          "quantity": "5"
+        },
+        "120"
+      ],
+      "ok": false,
+      "error": "failed assert: record exceeds the max-age policy",
+      "errorClass": "CompactError"
+    },
+    {
+      "id": "asset/assertRecordFreshEnough/unchecked-old",
+      "group": "asset",
+      "export": "assertRecordFreshEnough",
+      "args": [
+        {
+          "enforceMaxAge": false,
+          "maxAge": "0"
+        },
+        {
+          "code": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "note": "direct α record",
+          "provenance": {
+            "facility": [
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4
+            ],
+            "registeredAt": "0"
+          },
+          "kind": 1,
+          "quantity": "5"
+        },
+        "18446744073709551615"
+      ],
+      "ok": true,
+      "result": []
+    },
+    {
+      "id": "asset/assertRecordFreshEnough/unchecked-future",
+      "group": "asset",
+      "export": "assertRecordFreshEnough",
+      "args": [
+        {
+          "enforceMaxAge": false,
+          "maxAge": "0"
+        },
+        {
+          "code": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "note": "direct α record",
+          "provenance": {
+            "facility": [
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4
+            ],
+            "registeredAt": "101"
+          },
+          "kind": 1,
+          "quantity": "5"
+        },
+        "100"
+      ],
+      "ok": false,
+      "error": "failed assert: registration time cannot be in the future",
+      "errorClass": "CompactError"
+    },
+    {
+      "id": "asset/assertRecordFreshEnough/future",
+      "group": "asset",
+      "export": "assertRecordFreshEnough",
+      "args": [
+        {
+          "enforceMaxAge": true,
+          "maxAge": "18446744073709551615"
+        },
+        {
+          "code": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "note": "direct α record",
+          "provenance": {
+            "facility": [
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4
+            ],
+            "registeredAt": "101"
+          },
+          "kind": 1,
+          "quantity": "5"
+        },
+        "100"
+      ],
+      "ok": false,
+      "error": "failed assert: registration time cannot be in the future",
+      "errorClass": "CompactError"
+    },
+    {
+      "id": "asset/assertRecordFreshEnough/max-equal",
+      "group": "asset",
+      "export": "assertRecordFreshEnough",
+      "args": [
+        {
+          "enforceMaxAge": true,
+          "maxAge": "0"
+        },
+        {
+          "code": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "note": "direct α record",
+          "provenance": {
+            "facility": [
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4
+            ],
+            "registeredAt": "18446744073709551615"
+          },
+          "kind": 1,
+          "quantity": "5"
+        },
+        "18446744073709551615"
+      ],
+      "ok": true,
+      "result": []
+    },
+    {
+      "id": "asset/assertRecordFreshEnough/max-span",
+      "group": "asset",
+      "export": "assertRecordFreshEnough",
+      "args": [
+        {
+          "enforceMaxAge": true,
+          "maxAge": "18446744073709551615"
+        },
+        {
+          "code": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "note": "direct α record",
+          "provenance": {
+            "facility": [
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4
+            ],
+            "registeredAt": "0"
+          },
+          "kind": 1,
+          "quantity": "5"
+        },
+        "18446744073709551615"
+      ],
+      "ok": true,
+      "result": []
+    },
+    {
+      "id": "asset/assertRecordClassKnown/0",
+      "group": "asset",
+      "export": "assertRecordClassKnown",
+      "args": [
+        {
+          "code": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "note": "direct α record",
+          "provenance": {
+            "facility": [
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4
+            ],
+            "registeredAt": "17"
+          },
+          "kind": 0,
+          "quantity": "5"
+        }
+      ],
+      "ok": false,
+      "error": "failed assert: asset class must be specified",
+      "errorClass": "CompactError"
+    },
+    {
+      "id": "asset/assertRecordClassKnown/1",
+      "group": "asset",
+      "export": "assertRecordClassKnown",
+      "args": [
+        {
+          "code": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "note": "direct α record",
+          "provenance": {
+            "facility": [
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4
+            ],
+            "registeredAt": "17"
+          },
+          "kind": 1,
+          "quantity": "5"
+        }
+      ],
+      "ok": true,
+      "result": []
+    },
+    {
+      "id": "asset/assertRecordClassKnown/2",
+      "group": "asset",
+      "export": "assertRecordClassKnown",
+      "args": [
+        {
+          "code": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "note": "direct α record",
+          "provenance": {
+            "facility": [
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4
+            ],
+            "registeredAt": "17"
+          },
+          "kind": 2,
+          "quantity": "5"
+        }
+      ],
+      "ok": true,
+      "result": []
+    },
+    {
+      "id": "asset/assertRecordClassKnown/3",
+      "group": "asset",
+      "export": "assertRecordClassKnown",
+      "args": [
+        {
+          "code": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "note": "direct α record",
+          "provenance": {
+            "facility": [
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4,
+              4
+            ],
+            "registeredAt": "17"
+          },
+          "kind": 3,
+          "quantity": "5"
+        }
+      ],
+      "ok": true,
+      "result": []
+    },
+    {
+      "id": "asset/assertGrantNotFuture/earlier",
+      "group": "asset",
+      "export": "assertGrantNotFuture",
+      "args": [
+        {
+          "code": [
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "holder": {
+            "bytes": [
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7
+            ]
+          },
+          "grantedAt": "99"
+        },
+        "100"
+      ],
+      "ok": true,
+      "result": []
+    },
+    {
+      "id": "asset/assertGrantNotFuture/equal",
+      "group": "asset",
+      "export": "assertGrantNotFuture",
+      "args": [
+        {
+          "code": [
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "holder": {
+            "bytes": [
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7
+            ]
+          },
+          "grantedAt": "100"
+        },
+        "100"
+      ],
+      "ok": true,
+      "result": []
+    },
+    {
+      "id": "asset/assertGrantNotFuture/future",
+      "group": "asset",
+      "export": "assertGrantNotFuture",
+      "args": [
+        {
+          "code": [
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "holder": {
+            "bytes": [
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7
+            ]
+          },
+          "grantedAt": "101"
+        },
+        "100"
+      ],
+      "ok": false,
+      "error": "failed assert: grant is not yet effective",
+      "errorClass": "CompactError"
+    },
+    {
+      "id": "asset/assertGrantNotFuture/max-equal",
+      "group": "asset",
+      "export": "assertGrantNotFuture",
+      "args": [
+        {
+          "code": [
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "holder": {
+            "bytes": [
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7
+            ]
+          },
+          "grantedAt": "18446744073709551615"
+        },
+        "18446744073709551615"
+      ],
+      "ok": true,
+      "result": []
+    },
+    {
+      "id": "asset/assertGrantNotFuture/max-future",
+      "group": "asset",
+      "export": "assertGrantNotFuture",
+      "args": [
+        {
+          "code": [
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5
+          ],
+          "holder": {
+            "bytes": [
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7
+            ]
+          },
+          "grantedAt": "18446744073709551615"
+        },
+        "18446744073709551614"
+      ],
+      "ok": false,
+      "error": "failed assert: grant is not yet effective",
+      "errorClass": "CompactError"
+    }
+  ],
+  "close": {
+    "success": {
+      "id": "asset/close/success",
+      "result": [],
+      "before": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a75010008030404000401000c40200104080401040c0801040021018260019d34c9b9cc9b65010a692175688fbe7d0c83b2f9f0f06cfe786be4a760b9db12600111a9c750946c5c776cf9c8761b36efde1169edcc29d1c6d7b95582dc9672b04bc24141041404010418080104002101826001e223c59d8cefb9e52f762202ef75ee50ee02a32c49a609dc2cf7edc6af1627306001c6bd7b7db5697aab8a50b8a0e5591aef3250b5f73ca00abc52d80c8d79185032c24141042004010424080104000400402c10101c282c2c2c2c2c2c2c2c2c2c2c0802100804300804140434040300505161737365742d72656769737472793a76332001043c0401044008010400184400f153650804480401044c080104001443805101080454040104580801040008010104600401046408010400084001046c040104700801040008400804780401047c080104042c04020484080104402c4450505c806874808088888888882c080238080c8c08043c049004030494080104049814030401041008389c08040804a0040304a40004a808010404ac9c0304468c040104000001080104040104020401040000010801040401040204010400000104000004b015020304ff0102400f15365080001080104040104010401144380510108000108010404010401040108400800010801040401040104010801010001080104040104010401084001000108010404010401040108400800010801040401040104010840080001080104040104020401040000010801040401040204010400000108010404010402004b415020304ff01020001040000010400000104000001040000010400000104000001140304010410040108010404010403040108043c0801040104010c4020010001080238400104000001080104040104010401505161737365742d72656769737472793a763320010001080104040104010401184400f15365080001080104040104010401184004b815020304ff0102b36efde1169edcc29d1c6d7b95582dc9672b04bc2414100010801040401040104012101826001e223c59d8cefb9e52f762202ef75ee50ee02a32c49a609dc2cf7edc6af1627306001c6bd7b7db5697aab8a50b8a0e5591aef3250b5f73ca00abc52d80c8d79185032c241410001040000010400000104000001040000010400004bc15020304ff0102010403040108040808010403040108041408010401040108030400010802104001040000010801040401040104010c40200100010801040401040104010c402001000108010404010401040121018260019d34c9b9cc9b65010a692175688fbe7d0c83b2f9f0f06cfe786be4a760b9db12600111a9c750946c5c776cf9c87610003430736574437573746f6469616e08c42c0004c808010404cc9003043f80bcc9c0b262ddde0851100379df2d93a40812fa1b9c492bd652ab178aa16ee9600028247365745265636f726408d42c0004d808010404dc9003043f80a2c0f63e29a9003abdf0ba70b57d49b11190bd9bee20a36a4a9fd8761b3e0c8000100c74616708e42c0004e808010404ec8c03043e7c4ff4aa58de47ee2bfdd4f0ea994106981afa7ac45e3d33e43ce6ee73b9400e00403c736574437573746f64794772616e7408f42c0004f808010404fc8c03043e7cb1e09435b43827e24952a9c22f6882a244135f92dae823a3fa7b6dddf5c663402c2cf02c2c2c2c2c2c2c2c01012c2c2c2c080208001814636c6f73650809012c00040d010801040411019003043f801a9379a4ea5ff79c1127e267225479fdebf1dd8e89e93b7486befac40e3fe2200054506173736572744772616e744566666563746976650819012c00041d010801040421018c03043e7c616d554fac36afa73ebd2d2e9491a392ede2ca8ce68c7fababe093cc865bd900605c61737365727453746f7265645265636f726446726573680829012c00042d010801040431018c03043e7cfd7d49eca0febca608d017b7c62b1fe2d13f840f4750968ad8c3e3aaef3c82402c2c2c2c2c25012c2c2c2c2c2c2c2c2c350108020800383461636365707449664672657368083d012c000441010801040445019003043f8059997f78bbeaa07fe742376cd310d10f0ec98789e750423e5af027fc7afcded00024207365745761746368084d012c000451010801040455019003043f809a30bfc53bcbde6be3031d712f3dc3bc922261f598ce691fdd7f611fef52e5f000343072656d6f76655265636f7264085d012c000461010801040465019003043f808693ca6db85bfbd921c1c895034ff8c2132ff0375479b021f2fd9b6de916bfa040d0e02c2c05012c2c15012c2c3901490159012c2c690108022814a02cc06d012c1003000400",
+      "privateState": 11,
+      "queries": [
+        {
+          "program": [
+            {
+              "dup": {
+                "n": 0
+              }
+            },
+            {
+              "idx": {
+                "cached": false,
+                "pushPath": false,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        [
+                          1
+                        ]
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        [
+                          6
+                        ]
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "popeq": {
+                "cached": false
+              }
+            }
+          ],
+          "gasCost": {
+            "readTime": "340000000",
+            "computeTime": "1423414095",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        },
+        {
+          "program": [
+            {
+              "idx": {
+                "cached": false,
+                "pushPath": true,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        [
+                          1
+                        ]
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        6
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "push": {
+                "storage": true,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      []
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "ins": {
+                "cached": false,
+                "n": 1
+              }
+            },
+            {
+              "ins": {
+                "cached": true,
+                "n": 1
+              }
+            }
+          ],
+          "gasCost": {
+            "readTime": "255000000",
+            "computeTime": "1416426939",
+            "bytesWritten": "1090",
+            "bytesDeleted": "1090"
+          }
+        },
+        {
+          "program": [
+            {
+              "idx": {
+                "cached": false,
+                "pushPath": true,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        [
+                          1
+                        ]
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        7
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "push": {
+                "storage": true,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        1
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "ins": {
+                "cached": false,
+                "n": 1
+              }
+            },
+            {
+              "ins": {
+                "cached": true,
+                "n": 1
+              }
+            }
+          ],
+          "gasCost": {
+            "readTime": "255000000",
+            "computeTime": "1416426939",
+            "bytesWritten": "1090",
+            "bytesDeleted": "1090"
+          }
+        },
+        {
+          "program": [
+            {
+              "idx": {
+                "cached": false,
+                "pushPath": true,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        [
+                          1
+                        ]
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        [
+                          9
+                        ]
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "addi": {
+                "immediate": 1
+              }
+            },
+            {
+              "ins": {
+                "cached": true,
+                "n": 2
+              }
+            }
+          ],
+          "gasCost": {
+            "readTime": "340000000",
+            "computeTime": "1505965923",
+            "bytesWritten": "1090",
+            "bytesDeleted": "1090"
+          }
+        },
+        {
+          "program": [
+            {
+              "idx": {
+                "cached": false,
+                "pushPath": true,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        [
+                          1
+                        ]
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        [
+                          8
+                        ]
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "addi": {
+                "immediate": 1
+              }
+            },
+            {
+              "ins": {
+                "cached": true,
+                "n": 2
+              }
+            }
+          ],
+          "gasCost": {
+            "readTime": "340000000",
+            "computeTime": "1505965923",
+            "bytesWritten": "1090",
+            "bytesDeleted": "1090"
+          }
+        },
+        {
+          "program": [
+            {
+              "idx": {
+                "cached": false,
+                "pushPath": true,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        [
+                          1
+                        ]
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        3
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "push": {
+                "storage": true,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        0,
+                        241,
+                        83,
+                        101
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 8
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "ins": {
+                "cached": false,
+                "n": 1
+              }
+            },
+            {
+              "ins": {
+                "cached": true,
+                "n": 1
+              }
+            }
+          ],
+          "gasCost": {
+            "readTime": "255000000",
+            "computeTime": "1350732306",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        }
+      ],
+      "privateTranscript": [
+        {
+          "value": [
+            [
+              0,
+              241,
+              83,
+              101
+            ]
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "bytes",
+                "length": 8
+              }
+            }
+          ]
+        }
+      ],
+      "publicTranscript": [
+        {
+          "dup": {
+            "n": 0
+          }
+        },
+        {
+          "idx": {
+            "cached": false,
+            "pushPath": false,
+            "path": [
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    [
+                      1
+                    ]
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    [
+                      6
+                    ]
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "popeq": {
+            "cached": false,
+            "result": {
+              "value": [
+                [
+                  1
+                ]
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "bytes",
+                    "length": 1
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "idx": {
+            "cached": false,
+            "pushPath": true,
+            "path": [
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    [
+                      1
+                    ]
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    6
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  []
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        },
+        {
+          "ins": {
+            "cached": true,
+            "n": 1
+          }
+        },
+        {
+          "idx": {
+            "cached": false,
+            "pushPath": true,
+            "path": [
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    [
+                      1
+                    ]
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    7
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    1
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        },
+        {
+          "ins": {
+            "cached": true,
+            "n": 1
+          }
+        },
+        {
+          "idx": {
+            "cached": false,
+            "pushPath": true,
+            "path": [
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    [
+                      1
+                    ]
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    [
+                      9
+                    ]
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "addi": {
+            "immediate": 1
+          }
+        },
+        {
+          "ins": {
+            "cached": true,
+            "n": 2
+          }
+        },
+        {
+          "idx": {
+            "cached": false,
+            "pushPath": true,
+            "path": [
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    [
+                      1
+                    ]
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    [
+                      8
+                    ]
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "addi": {
+            "immediate": 1
+          }
+        },
+        {
+          "ins": {
+            "cached": true,
+            "n": 2
+          }
+        },
+        {
+          "idx": {
+            "cached": false,
+            "pushPath": true,
+            "path": [
+              {
+                "tag": "value",
+                "value": {
+                  "value": [
+                    [
+                      1
+                    ]
+                  ],
+                  "alignment": [
+                    {
+                      "tag": "atom",
+                      "value": {
+                        "tag": "bytes",
+                        "length": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "push": {
+            "storage": false,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    3
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 1
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "push": {
+            "storage": true,
+            "value": {
+              "tag": "cell",
+              "content": {
+                "value": [
+                  [
+                    0,
+                    241,
+                    83,
+                    101
+                  ]
+                ],
+                "alignment": [
+                  {
+                    "tag": "atom",
+                    "value": {
+                      "tag": "bytes",
+                      "length": 8
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ins": {
+            "cached": false,
+            "n": 1
+          }
+        },
+        {
+          "ins": {
+            "cached": true,
+            "n": 1
+          }
+        }
+      ],
+      "witnessCalls": [
+        "currentTimestamp"
+      ],
+      "after": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a81010008030404000401000c40200104080401040c0801040021018260019d34c9b9cc9b65010a692175688fbe7d0c83b2f9f0f06cfe786be4a760b9db12600111a9c750946c5c776cf9c8761b36efde1169edcc29d1c6d7b95582dc9672b04bc24141041404010418080104002101826001e223c59d8cefb9e52f762202ef75ee50ee02a32c49a609dc2cf7edc6af1627306001c6bd7b7db5697aab8a50b8a0e5591aef3250b5f73ca00abc52d80c8d79185032c24141042004010424080104000400402c10101c282c2c2c2c2c2c2c2c2c2c2c0802100804300804140434040300505161737365742d72656769737472793a76332001043c0401044008010400184400f153650804480401044c080104001443805101080454040104580801040008400804600401046408010400084001046c040104700801040008010104780401047c08010400080108048404010488080104042c04020490080104402c4450505c6874808c8c94949494942c080238080c9808043c049c040304a008010404a41403040104100838a808040804ac040304b00004b408010404b89c0304468c040104000001080104040104020401040000010801040401040204010400000104000004bc15020304ff0102400f15365080001080104040104010401144380510108000108010404010401040108400800010801040401040104010840010001080104040104010401080101000108010404010401040108010800010801040401040104010801080001080104040104020401040000010801040401040204010400000108010404010402004c015020304ff01020001040000010400000104000001040000010400000104000001140304010410040108010404010403040108043c0801040104010c4020010001080238400104000001080104040104010401505161737365742d72656769737472793a763320010001080104040104010401184400f15365080001080104040104010401184004c415020304ff0102b36efde1169edcc29d1c6d7b95582dc9672b04bc2414100010801040401040104012101826001e223c59d8cefb9e52f762202ef75ee50ee02a32c49a609dc2cf7edc6af1627306001c6bd7b7db5697aab8a50b8a0e5591aef3250b5f73ca00abc52d80c8d79185032c241410001040000010400000104000001040000010400004c815020304ff0102010403040108040808010403040108041408010401040108030400010802104001040000010801040401040104010c40200100010801040401040104010c402001000108010404010401040121018260019d34c9b9cc9b65010a692175688fbe7d0c83b2f9f0f06cfe786be4a760b9db12600111a9c750946c5c776cf9c87610003430736574437573746f6469616e08d02c0004d408010404d89003043f80bcc9c0b262ddde0851100379df2d93a40812fa1b9c492bd652ab178aa16ee9600028247365745265636f726408e02c0004e408010404e89003043f80a2c0f63e29a9003abdf0ba70b57d49b11190bd9bee20a36a4a9fd8761b3e0c8000100c74616708f02c0004f408010404f88c03043e7c4ff4aa58de47ee2bfdd4f0ea994106981afa7ac45e3d33e43ce6ee73b9400e00403c736574437573746f64794772616e740801012c000405010801040409018c03043e7cb1e09435b43827e24952a9c22f6882a244135f92dae823a3fa7b6dddf5c663402c2cfc2c2c2c2c2c2c2c2c0d012c2c2c2c080208001814636c6f73650815012c00041901080104041d019003043f801a9379a4ea5ff79c1127e267225479fdebf1dd8e89e93b7486befac40e3fe2200054506173736572744772616e744566666563746976650825012c00042901080104042d018c03043e7c616d554fac36afa73ebd2d2e9491a392ede2ca8ce68c7fababe093cc865bd900605c61737365727453746f7265645265636f726446726573680835012c00043901080104043d018c03043e7cfd7d49eca0febca608d017b7c62b1fe2d13f840f4750968ad8c3e3aaef3c82402c2c2c2c2c31012c2c2c2c2c2c2c2c2c4101080208003834616363657074496646726573680849012c00044d010801040451019003043f8059997f78bbeaa07fe742376cd310d10f0ec98789e750423e5af027fc7afcded000242073657457617463680859012c00045d010801040461019003043f809a30bfc53bcbde6be3031d712f3dc3bc922261f598ce691fdd7f611fef52e5f000343072656d6f76655265636f72640869012c00046d010801040471019003043f808693ca6db85bfbd921c1c895034ff8c2132ff0375479b021f2fd9b6de916bfa040dcec2c2c11012c2c21012c2c4501550165012c2c750108022814ac2ccc79012c1003000400"
+    },
+    "repeat": {
+      "id": "asset/close/repeat",
+      "error": "failed assert: registry is already closed",
+      "errorClass": "CompactError",
+      "queries": [
+        {
+          "program": [
+            {
+              "dup": {
+                "n": 0
+              }
+            },
+            {
+              "idx": {
+                "cached": false,
+                "pushPath": false,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        [
+                          1
+                        ]
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        [
+                          6
+                        ]
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "popeq": {
+                "cached": false
+              }
+            }
+          ],
+          "gasCost": {
+            "readTime": "340000000",
+            "computeTime": "1423414095",
+            "bytesWritten": "0",
+            "bytesDeleted": "0"
+          }
+        }
+      ],
+      "witnessCalls": [],
+      "privateState": 11
+    }
+  }
+}

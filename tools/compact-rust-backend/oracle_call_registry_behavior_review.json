@@ -1,0 +1,301 @@
+{
+  "format": "reviewed-call-registry-behavior-v1",
+  "scope": "ADR220 11 direct exports /32 cases; not all paths or proof/ledger acceptance",
+  "capture": "runtime-rs/tests/fixtures/direct-call-registry.json",
+  "capture_provenance": {
+    "runtimeVersion": "0.16.101",
+    "sources": {
+      "call_arg_declared_type": {
+        "sourceSha256": "4fcef200298b909bc50d9b59c9b5ab3d72402d55a2179e01adba9e57bbf9a850",
+        "generatedIndexSha256": "12e09d0da652bb0f7d191ca911d78e39cb4192e004db05a5d727e4d15fc8745a"
+      },
+      "asset_registry_oracle": {
+        "sourceSha256": "2027ebbced964b5ae2271b11018734ef317776d93c23721ec622f30d79cbd1c2",
+        "generatedIndexSha256": "e2deb6522d2b8f98c34d37db778f47678f3fa939b13e09196e0a5b00a00d9a07"
+      }
+    },
+    "runtime": {
+      "index.js": "c55a8ab3e7533b3fa6e27b66ab742c783d912d5a00d6ecc23d9f6142ddb0ecde",
+      "built-ins.js": "534001298a202e3b099355e0f9b3cf14a4b259358370ca88366231094989b481",
+      "compact-types.js": "5cdccdb9fde9fdb297459588f33ce093ad557584b35b480819e0d930ce1bd73b"
+    }
+  },
+  "artifact_sha256": {
+    "runtime-rs/tests/fixtures/direct-call-registry.json": "b24ff711894c23864b524e88271ed85973d4b43c2f7f90c6d14a27092311e73e",
+    "runtime-rs/tests/fixtures/capture-direct-call-registry.mjs": "3e2cd3c731902b0962e1767c63a38cf879e2867dfd35f9c21c322fc06c69daba",
+    "examples/rust_backend/call_arg_declared_type.compact": "4fcef200298b909bc50d9b59c9b5ab3d72402d55a2179e01adba9e57bbf9a850",
+    "examples/rust_backend/asset_registry_oracle.compact": "2027ebbced964b5ae2271b11018734ef317776d93c23721ec622f30d79cbd1c2",
+    "tests-rust-backend/call-arg-declared-type/tests/direct_pure_behavior.rs": "a80c685efc17dd64560c951ade7483f29913b8d6391f27b77c312b53bf4076ef",
+    "tests-rust-backend/asset-registry-oracle/tests/direct_behavior.rs": "49fb87d913e93cbad694f671625b74cf97f9237751c7c69a052a377e879d336d"
+  },
+  "reviewed_export_count": 11,
+  "pure_case_count": 30,
+  "pure_success_count": 24,
+  "pure_error_count": 6,
+  "stateful_case_count": 2,
+  "rows": [
+    {
+      "source": "examples/rust_backend/asset_registry_oracle.compact",
+      "export": "assertGrantNotFuture",
+      "group": "asset",
+      "kind": "pure",
+      "case_ids": [
+        "asset/assertGrantNotFuture/earlier",
+        "asset/assertGrantNotFuture/equal",
+        "asset/assertGrantNotFuture/future",
+        "asset/assertGrantNotFuture/max-equal",
+        "asset/assertGrantNotFuture/max-future"
+      ],
+      "rust_test": "tests-rust-backend/asset-registry-oracle/tests/direct_behavior.rs",
+      "assertion_test": "three_pure_registry_guards_match_direct_typescript_successes_and_errors",
+      "dimensions": {
+        "result": "exact independent TS normalized value or Unit",
+        "error": "specific Rust AssertionFailed and exact TS message for six negative cases across guards",
+        "state": "not applicable (pure)",
+        "public_program": "not applicable (pure)",
+        "query_gas": "not applicable (pure)",
+        "private_witness": "not applicable (pure)",
+        "recorded_replay": "not applicable (pure)",
+        "cryptographic_proof": "not applicable (pure)",
+        "ledger_apply": "not applicable (pure)"
+      }
+    },
+    {
+      "source": "examples/rust_backend/asset_registry_oracle.compact",
+      "export": "assertRecordClassKnown",
+      "group": "asset",
+      "kind": "pure",
+      "case_ids": [
+        "asset/assertRecordClassKnown/0",
+        "asset/assertRecordClassKnown/1",
+        "asset/assertRecordClassKnown/2",
+        "asset/assertRecordClassKnown/3"
+      ],
+      "rust_test": "tests-rust-backend/asset-registry-oracle/tests/direct_behavior.rs",
+      "assertion_test": "three_pure_registry_guards_match_direct_typescript_successes_and_errors",
+      "dimensions": {
+        "result": "exact independent TS normalized value or Unit",
+        "error": "specific Rust AssertionFailed and exact TS message for six negative cases across guards",
+        "state": "not applicable (pure)",
+        "public_program": "not applicable (pure)",
+        "query_gas": "not applicable (pure)",
+        "private_witness": "not applicable (pure)",
+        "recorded_replay": "not applicable (pure)",
+        "cryptographic_proof": "not applicable (pure)",
+        "ledger_apply": "not applicable (pure)"
+      }
+    },
+    {
+      "source": "examples/rust_backend/asset_registry_oracle.compact",
+      "export": "assertRecordFreshEnough",
+      "group": "asset",
+      "kind": "pure",
+      "case_ids": [
+        "asset/assertRecordFreshEnough/equal",
+        "asset/assertRecordFreshEnough/boundary",
+        "asset/assertRecordFreshEnough/expired",
+        "asset/assertRecordFreshEnough/unchecked-old",
+        "asset/assertRecordFreshEnough/unchecked-future",
+        "asset/assertRecordFreshEnough/future",
+        "asset/assertRecordFreshEnough/max-equal",
+        "asset/assertRecordFreshEnough/max-span"
+      ],
+      "rust_test": "tests-rust-backend/asset-registry-oracle/tests/direct_behavior.rs",
+      "assertion_test": "three_pure_registry_guards_match_direct_typescript_successes_and_errors",
+      "dimensions": {
+        "result": "exact independent TS normalized value or Unit",
+        "error": "specific Rust AssertionFailed and exact TS message for six negative cases across guards",
+        "state": "not applicable (pure)",
+        "public_program": "not applicable (pure)",
+        "query_gas": "not applicable (pure)",
+        "private_witness": "not applicable (pure)",
+        "recorded_replay": "not applicable (pure)",
+        "cryptographic_proof": "not applicable (pure)",
+        "ledger_apply": "not applicable (pure)"
+      }
+    },
+    {
+      "source": "examples/rust_backend/call_arg_declared_type.compact",
+      "export": "fieldOnlyFromPureBody",
+      "group": "call",
+      "kind": "pure",
+      "case_ids": [
+        "call/fieldOnlyFromPureBody/constant"
+      ],
+      "rust_test": "tests-rust-backend/call-arg-declared-type/tests/direct_pure_behavior.rs",
+      "assertion_test": "seven_pure_exports_have_direct_independent_typescript_results",
+      "dimensions": {
+        "result": "exact independent TS normalized value or Unit",
+        "error": "specific Rust AssertionFailed and exact TS message for six negative cases across guards",
+        "state": "not applicable (pure)",
+        "public_program": "not applicable (pure)",
+        "query_gas": "not applicable (pure)",
+        "private_witness": "not applicable (pure)",
+        "recorded_replay": "not applicable (pure)",
+        "cryptographic_proof": "not applicable (pure)",
+        "ledger_apply": "not applicable (pure)"
+      }
+    },
+    {
+      "source": "examples/rust_backend/call_arg_declared_type.compact",
+      "export": "idf",
+      "group": "call",
+      "kind": "pure",
+      "case_ids": [
+        "call/idf/0",
+        "call/idf/1",
+        "call/idf/1606938044258990275541962092341162602522202993782792835301376"
+      ],
+      "rust_test": "tests-rust-backend/call-arg-declared-type/tests/direct_pure_behavior.rs",
+      "assertion_test": "seven_pure_exports_have_direct_independent_typescript_results",
+      "dimensions": {
+        "result": "exact independent TS normalized value or Unit",
+        "error": "specific Rust AssertionFailed and exact TS message for six negative cases across guards",
+        "state": "not applicable (pure)",
+        "public_program": "not applicable (pure)",
+        "query_gas": "not applicable (pure)",
+        "private_witness": "not applicable (pure)",
+        "recorded_replay": "not applicable (pure)",
+        "cryptographic_proof": "not applicable (pure)",
+        "ledger_apply": "not applicable (pure)"
+      }
+    },
+    {
+      "source": "examples/rust_backend/call_arg_declared_type.compact",
+      "export": "sumTup",
+      "group": "call",
+      "kind": "pure",
+      "case_ids": [
+        "call/sumTup/0-1",
+        "call/sumTup/1-0",
+        "call/sumTup/7-1606938044258990275541962092341162602522202993782792835301376"
+      ],
+      "rust_test": "tests-rust-backend/call-arg-declared-type/tests/direct_pure_behavior.rs",
+      "assertion_test": "seven_pure_exports_have_direct_independent_typescript_results",
+      "dimensions": {
+        "result": "exact independent TS normalized value or Unit",
+        "error": "specific Rust AssertionFailed and exact TS message for six negative cases across guards",
+        "state": "not applicable (pure)",
+        "public_program": "not applicable (pure)",
+        "query_gas": "not applicable (pure)",
+        "private_witness": "not applicable (pure)",
+        "recorded_replay": "not applicable (pure)",
+        "cryptographic_proof": "not applicable (pure)",
+        "ledger_apply": "not applicable (pure)"
+      }
+    },
+    {
+      "source": "examples/rust_backend/call_arg_declared_type.compact",
+      "export": "sumVec",
+      "group": "call",
+      "kind": "pure",
+      "case_ids": [
+        "call/sumVec/0-1",
+        "call/sumVec/1-0",
+        "call/sumVec/7-1606938044258990275541962092341162602522202993782792835301376"
+      ],
+      "rust_test": "tests-rust-backend/call-arg-declared-type/tests/direct_pure_behavior.rs",
+      "assertion_test": "seven_pure_exports_have_direct_independent_typescript_results",
+      "dimensions": {
+        "result": "exact independent TS normalized value or Unit",
+        "error": "specific Rust AssertionFailed and exact TS message for six negative cases across guards",
+        "state": "not applicable (pure)",
+        "public_program": "not applicable (pure)",
+        "query_gas": "not applicable (pure)",
+        "private_witness": "not applicable (pure)",
+        "recorded_replay": "not applicable (pure)",
+        "cryptographic_proof": "not applicable (pure)",
+        "ledger_apply": "not applicable (pure)"
+      }
+    },
+    {
+      "source": "examples/rust_backend/call_arg_declared_type.compact",
+      "export": "tupleIntoVec",
+      "group": "call",
+      "kind": "pure",
+      "case_ids": [
+        "call/tupleIntoVec/constant"
+      ],
+      "rust_test": "tests-rust-backend/call-arg-declared-type/tests/direct_pure_behavior.rs",
+      "assertion_test": "seven_pure_exports_have_direct_independent_typescript_results",
+      "dimensions": {
+        "result": "exact independent TS normalized value or Unit",
+        "error": "specific Rust AssertionFailed and exact TS message for six negative cases across guards",
+        "state": "not applicable (pure)",
+        "public_program": "not applicable (pure)",
+        "query_gas": "not applicable (pure)",
+        "private_witness": "not applicable (pure)",
+        "recorded_replay": "not applicable (pure)",
+        "cryptographic_proof": "not applicable (pure)",
+        "ledger_apply": "not applicable (pure)"
+      }
+    },
+    {
+      "source": "examples/rust_backend/call_arg_declared_type.compact",
+      "export": "vecFromPureBody",
+      "group": "call",
+      "kind": "pure",
+      "case_ids": [
+        "call/vecFromPureBody/constant"
+      ],
+      "rust_test": "tests-rust-backend/call-arg-declared-type/tests/direct_pure_behavior.rs",
+      "assertion_test": "seven_pure_exports_have_direct_independent_typescript_results",
+      "dimensions": {
+        "result": "exact independent TS normalized value or Unit",
+        "error": "specific Rust AssertionFailed and exact TS message for six negative cases across guards",
+        "state": "not applicable (pure)",
+        "public_program": "not applicable (pure)",
+        "query_gas": "not applicable (pure)",
+        "private_witness": "not applicable (pure)",
+        "recorded_replay": "not applicable (pure)",
+        "cryptographic_proof": "not applicable (pure)",
+        "ledger_apply": "not applicable (pure)"
+      }
+    },
+    {
+      "source": "examples/rust_backend/call_arg_declared_type.compact",
+      "export": "vecIntoTuple",
+      "group": "call",
+      "kind": "pure",
+      "case_ids": [
+        "call/vecIntoTuple/constant"
+      ],
+      "rust_test": "tests-rust-backend/call-arg-declared-type/tests/direct_pure_behavior.rs",
+      "assertion_test": "seven_pure_exports_have_direct_independent_typescript_results",
+      "dimensions": {
+        "result": "exact independent TS normalized value or Unit",
+        "error": "specific Rust AssertionFailed and exact TS message for six negative cases across guards",
+        "state": "not applicable (pure)",
+        "public_program": "not applicable (pure)",
+        "query_gas": "not applicable (pure)",
+        "private_witness": "not applicable (pure)",
+        "recorded_replay": "not applicable (pure)",
+        "cryptographic_proof": "not applicable (pure)",
+        "ledger_apply": "not applicable (pure)"
+      }
+    },
+    {
+      "source": "examples/rust_backend/asset_registry_oracle.compact",
+      "export": "close",
+      "group": "asset",
+      "kind": "stateful",
+      "case_ids": [
+        "asset/close/success",
+        "asset/close/repeat"
+      ],
+      "rust_test": "tests-rust-backend/asset-registry-oracle/tests/direct_behavior.rs",
+      "assertion_test": "close_matches_independent_typescript_and_repeat_refusal",
+      "dimensions": {
+        "result": "Unit against TS",
+        "error": "repeat exact AssertionFailed before witness",
+        "state": "native/recorded complete TS state and upstream replay",
+        "public_program": "complete ordered normalized VM, removing popeq result annotation",
+        "query_gas": "sum of successful TS query costs",
+        "private_witness": "exact TS values/alignment/private state and calls; repeat has no witness",
+        "recorded_replay": "upstream VM state/effects",
+        "cryptographic_proof": "not tested",
+        "ledger_apply": "not tested"
+      }
+    }
+  ]
+}

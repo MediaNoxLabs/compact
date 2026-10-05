@@ -107,6 +107,55 @@ def reviewed_ternary_failures() -> list[str]:
     return failures
 
 
+def reviewed_call_registry_failures() -> list[str]:
+    review = json.loads(Path(__file__).with_name("oracle_call_registry_behavior_review.json").read_text())
+    failures = []
+    for path, digest in review["artifact_sha256"].items():
+        if hashlib.sha256(relative_file(path).read_bytes()).hexdigest() != digest:
+            failures.append(f"reviewed call/registry artifact changed: {path}")
+    capture = json.loads(relative_file(review["capture"]).read_text())
+    cases = capture["cases"]
+    ids = [case["id"] for case in cases]
+    if len(ids) != len(set(ids)) or len(ids) != review["pure_case_count"]:
+        failures.append("duplicate or incomplete call/registry cases")
+    if sum(c["ok"] for c in cases) != review["pure_success_count"] or sum(not c["ok"] for c in cases) != review["pure_error_count"]:
+        failures.append("call/registry outcomes differ")
+    identities = {(row["group"], row["export"]) for row in review["rows"]}
+    if len(identities) != len(review["rows"]) or len(identities) != review["reviewed_export_count"]:
+        failures.append("duplicate or incomplete call/registry export identities")
+    for row in review["rows"]:
+        relative_file(row["rust_test"])
+        expected = ([case["id"] for case in cases if (case["group"], case["export"]) == (row["group"], row["export"])]
+                    if row["kind"] == "pure" else [capture["close"][kind]["id"] for kind in ["success", "repeat"]])
+        if not expected or expected != row["case_ids"]:
+            failures.append(f"call/registry case identity mismatch: {row['export']}")
+    return failures
+
+
+def reviewed_inventory_failures(fixtures: list[dict]) -> list[str]:
+    """The full source review records limits, not a claim of full behavior coverage."""
+    review = json.loads(Path(__file__).with_name("oracle_behavior_review.json").read_text())
+    failures = []
+    rows = review["rows"]
+    if len(rows) != review["candidate_row_count"] or len({(r["source"], r["export"]) for r in rows}) != len(rows):
+        failures.append("reviewed inventory has duplicate/missing identities")
+    if {r["source"] for r in rows} != {f["source"] for f in fixtures}:
+        failures.append("reviewed source inventory differs from pinned manifest")
+    if review["behavioral_coverage_complete"] or review["proof_ledger_audit_complete"]:
+        failures.append("reviewed inventory exceeds its explicit acceptance scope")
+    for path, digest in review["reviewed_file_sha256"].items():
+        if hashlib.sha256(relative_file(path).read_bytes()).hexdigest() != digest:
+            failures.append(f"behavior review evidence changed; re-review required: {path}")
+    for row in rows:
+        if not row["limits"] or not row["dimensions"] or not row["source_review"]:
+            failures.append(f"missing reviewed limits/dimensions: {row['source']}::{row['export']}")
+        for path in row["rust_assertion_files"]:
+            relative_file(path)
+        if "case_matrix" in row:
+            relative_file(row["case_matrix"])
+    return failures
+
+
 def main() -> int:
     manifest = json.loads(MANIFEST.read_text())
     fixtures = manifest["fixtures"]
@@ -142,6 +191,8 @@ def main() -> int:
     try:
         failures.extend(reviewed_behavior_failures())
         failures.extend(reviewed_ternary_failures())
+        failures.extend(reviewed_call_registry_failures())
+        failures.extend(reviewed_inventory_failures(fixtures))
     except (KeyError, ValueError, OSError) as exc:
         failures.append(f"reviewed behavior matrix: {exc}")
 

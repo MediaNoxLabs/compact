@@ -34,12 +34,14 @@
       "rust_tests": [
         "tests-rust-backend/asset-registry-oracle/tests/asset_registry_oracle.rs",
         "tests-rust-backend/asset-registry-oracle/tests/registration_gap.rs",
-        "tests-rust-backend/asset-registry-oracle/tests/writable_recording.rs"
+        "tests-rust-backend/asset-registry-oracle/tests/writable_recording.rs",
+        "tests-rust-backend/asset-registry-oracle/tests/direct_behavior.rs"
       ],
       "typescript_fixtures": [
         "runtime-rs/tests/fixtures/asset-registry-oracle.json",
         "runtime-rs/tests/fixtures/asset-registry-pure.json",
-        "runtime-rs/tests/fixtures/asset-freshness-oracle.json"
+        "runtime-rs/tests/fixtures/asset-freshness-oracle.json",
+        "runtime-rs/tests/fixtures/direct-call-registry.json"
       ]
     },
     {
@@ -72,10 +74,12 @@
       "source_sha256": "4fcef200298b909bc50d9b59c9b5ab3d72402d55a2179e01adba9e57bbf9a850",
       "non_comment_sha256": "71e4458b718b20804154a07cb638b440b58dbe3fe794880c7ee16c87ace39416",
       "rust_tests": [
-        "tests-rust-backend/call-arg-declared-type/tests/call_arg_declared_type.rs"
+        "tests-rust-backend/call-arg-declared-type/tests/call_arg_declared_type.rs",
+        "tests-rust-backend/call-arg-declared-type/tests/direct_pure_behavior.rs"
       ],
       "typescript_fixtures": [
-        "runtime-rs/tests/fixtures/call-arg-declared-type.json"
+        "runtime-rs/tests/fixtures/call-arg-declared-type.json",
+        "runtime-rs/tests/fixtures/direct-call-registry.json"
       ]
     },
     {

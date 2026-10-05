@@ -1768,3 +1768,20 @@ private outputs, summed query gas, final state and upstream replay through their
 exported native and recorded APIs. These are sampled behavior checks, not new
 proof/ledger-application evidence. Original sources, generated code and runtime
 remain unchanged. The capture script pins source/generated/runtime hashes.
+
+### Reviewed oracle inventory and direct call boundaries (ADR220)
+
+`oracle_behavior_review.json` preserves the manual review of all 37 pinned
+sources and 203 inventory rows (two are constructor-only sources). It records
+direct, transitive and local-reference distinctions, per-dimension limits and
+reviewed source/test/capture hashes. It is not a claim of all-path, proof or
+ledger coverage; remaining sampled-path and trace gaps are listed in
+`oracle_behavior_review.md`. The integrity checker requires re-review when
+pinned evidence changes.
+
+`oracle_call_registry_behavior_review.json` adds 13 direct cases for all seven
+call-argument pure exports and 17 cases for three AssetRegistry pure guards.
+Six failures compare specific source assertion errors. Independent `close`
+capture checks native/recorded state, private values/order, normalized full VM,
+query gas, replay and exact repeat refusal without another witness call. No
+emitter, runtime, generated crate, ABI49 or schema20 change is involved.

@@ -21,25 +21,20 @@ pub use midnight_compact_runtime as runtime;
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
     const _: () = assert!(runtime::RUST_RUNTIME_ABI == 37);
-    pub fn encode(
-        value: runtime::Field,
-    ) -> Result<runtime::FixedBytes<32>, runtime::CompactError> {
-        Ok(
-            runtime::FixedBytes::<
-                32,
-            >::new(
-                (value).as_le_bytes().try_into().expect("canonical Field is 32 bytes"),
-            ),
-        )
+    pub fn encode(value: runtime::Field) -> Result<runtime::FixedBytes<32>, runtime::CompactError> {
+        Ok(runtime::FixedBytes::<32>::new(
+            (value)
+                .as_le_bytes()
+                .try_into()
+                .expect("canonical Field is 32 bytes"),
+        ))
     }
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
 pub mod ledger_slots {
     use midnight_compact_runtime as runtime;
-    pub const instance: runtime::slots::CounterSlot = runtime::slots::CounterSlot::new(
-        &[0u8],
-    );
+    pub const instance: runtime::slots::CounterSlot = runtime::slots::CounterSlot::new(&[0u8]);
 }
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
@@ -69,7 +64,8 @@ pub mod ledger_contract {
         }
     }
     impl<'a, S: runtime::public_state::PublicStateSource> From<&'a S>
-    for PublicStateView<'a, S::Database> {
+        for PublicStateView<'a, S::Database>
+    {
         fn from(source: &'a S) -> Self {
             Self {
                 state: source.public_state(),
@@ -82,20 +78,14 @@ pub mod ledger_contract {
     pub fn initial_state<Private>(
         __compact_context: runtime::context::ConstructorContext<Private>,
     ) -> Result<runtime::context::ConstructorResult<Private>, runtime::CompactError> {
-        let state = runtime::ledger::contract_state(
-            vec![runtime::ledger::constructor_counter()],
-        );
+        let state = runtime::ledger::contract_state(vec![runtime::ledger::constructor_counter()]);
         {
-            let mut context = runtime::context::ConstructorResult::new(
-                    __compact_context,
-                    state,
-                )
+            let mut context = runtime::context::ConstructorResult::new(__compact_context, state)
                 .into_circuit_context(runtime::ledger::ContractAddress::default());
             let mut total_cost = runtime::context::RunningCost::default();
-            let __compact_constructor_local_0: runtime::BoundedUint<65535> = runtime::BoundedUint::<
-                65535,
-            >::new(257u128)
-                .expect("Compact Uint literal fits its maximum");
+            let __compact_constructor_local_0: runtime::BoundedUint<65535> =
+                runtime::BoundedUint::<65535>::new(257u128)
+                    .expect("Compact Uint literal fits its maximum");
             let step = context.increment_counter(0, 257u16)?;
             context = step.context;
             let _ = total_cost;
@@ -114,19 +104,17 @@ pub mod ledger_contract {
         let __compact_query_0 = crate::ledger_slots::instance.read(context)?;
         context = __compact_query_0.context;
         total_cost += __compact_query_0.gas_cost;
-        let result = runtime::FixedBytes::<
-            32,
-        >::new(
+        let result = runtime::FixedBytes::<32>::new(
             (runtime::Field::from(
-                (runtime::BoundedUint::<
-                    18446744073709551615,
-                >::new(__compact_query_0.result as u128)
-                    .expect("ledger Counter fits Uint<64>"))
-                    .value(),
+                (runtime::BoundedUint::<18446744073709551615>::new(
+                    __compact_query_0.result as u128,
+                )
+                .expect("ledger Counter fits Uint<64>"))
+                .value(),
             ))
-                .as_le_bytes()
-                .try_into()
-                .expect("canonical Field is 32 bytes"),
+            .as_le_bytes()
+            .try_into()
+            .expect("canonical Field is 32 bytes"),
         );
         Ok(runtime::context::CircuitResult {
             context,
@@ -145,21 +133,13 @@ pub mod ledger_contract {
             runtime::CompactError,
         > {
             let frame = runtime::recording::RecordingFrame::new(context);
-            let (frame, observed): (_, u64) = crate::ledger_slots::instance
-                .record_read(frame)?;
-            Ok(
-                frame
-                    .finish(
-                        runtime::FixedBytes::<
-                            32,
-                        >::new(
-                            (runtime::Field::from(observed))
-                                .as_le_bytes()
-                                .try_into()
-                                .expect("canonical Field is 32 bytes"),
-                        ),
-                    ),
-            )
+            let (frame, observed): (_, u64) = crate::ledger_slots::instance.record_read(frame)?;
+            Ok(frame.finish(runtime::FixedBytes::<32>::new(
+                (runtime::Field::from(observed))
+                    .as_le_bytes()
+                    .try_into()
+                    .expect("canonical Field is 32 bytes"),
+            )))
         }
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
@@ -168,10 +148,7 @@ pub mod ledger_contract {
                 &self,
                 context: runtime::context::CircuitContext<Private>,
             ) -> Result<
-                runtime::recording::RecordedCircuitResult<
-                    Private,
-                    runtime::FixedBytes<32>,
-                >,
+                runtime::recording::RecordedCircuitResult<Private, runtime::FixedBytes<32>>,
                 runtime::CompactError,
             > {
                 crate::ledger_contract::recorded::snapshot(context)
@@ -182,23 +159,14 @@ pub mod ledger_contract {
                 observed: &'observed runtime::transaction::ObservedContractState,
                 private_state: Private,
             ) -> Result<
-                runtime::transaction::RecordedCall<
-                    'observed,
-                    Private,
-                    runtime::FixedBytes<32>,
-                >,
+                runtime::transaction::RecordedCall<'observed, Private, runtime::FixedBytes<32>>,
                 runtime::CompactError,
             > {
                 let input = runtime::fab::AlignedValue::from(());
                 let recorded = self.snapshot(observed.circuit_context(private_state))?;
-                Ok(
-                    runtime::transaction::RecordedCall::new(
-                        observed,
-                        recorded,
-                        "snapshot",
-                        input,
-                    ),
-                )
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "snapshot", input,
+                ))
             }
         }
     }

@@ -730,8 +730,9 @@ fn asset_removal_recording_requires_scoped_opaque_key_and_exact_order() {
 
 #[test]
 fn custody_grant_recording_requires_typed_lookup_and_closed_pure_assertion() {
-    let contract: Contract =
+    let mut contract: Contract =
         serde_json::from_str(include_str!("asset-grant-effective-schema12-ir.json")).unwrap();
+    contract.schema_version = SCHEMA_VERSION;
     let recorded = |contract: &Contract| {
         let rendered = render_with_capabilities(contract).unwrap();
         let capability = rendered
@@ -787,8 +788,9 @@ fn custody_grant_recording_requires_typed_lookup_and_closed_pure_assertion() {
 
 #[test]
 fn guarded_struct_map_read_requires_typed_lookup_and_closed_freshness_guard() {
-    let contract: Contract =
+    let mut contract: Contract =
         serde_json::from_str(include_str!("asset-stored-record-fresh-schema12-ir.json")).unwrap();
+    contract.schema_version = SCHEMA_VERSION;
     let recorded = |contract: &Contract| {
         let rendered = render_with_capabilities(contract).unwrap();
         let capability = rendered

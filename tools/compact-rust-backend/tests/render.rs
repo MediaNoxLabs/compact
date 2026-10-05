@@ -3476,6 +3476,122 @@ fn closed_pure_field_call_records_let_value_without_admitting_hashes() {
 }
 
 #[test]
+fn closed_field_pair_hash_call_records_typed_bridge_without_admitting_other_hashes() {
+    let vector = Type::Vector {
+        element: Box::new(Type::Field),
+        length: 2,
+    };
+    let tuple = Type::Tuple {
+        elements: vec![Type::Field, Type::Field],
+    };
+    let pair = Expr::Tuple {
+        elements: vec![
+            Expr::FieldLiteral { value: "3".into() },
+            Expr::FieldLiteral { value: "4".into() },
+        ],
+    };
+    let mut contract = Contract {
+        schema_version: 11,
+        type_aliases: vec![],
+        constructor: None,
+        witnesses: vec![],
+        ledger_fields: vec![LedgerField {
+            source: None,
+            id: "value".into(),
+            index: 0,
+            path: vec![],
+            declaration: LedgerFieldKind::Cell { ty: Type::Field },
+        }],
+        circuits: vec![
+            PureCircuit {
+                source: None,
+                internal: false,
+                name: "hashVector".into(),
+                parameters: vec![Parameter {
+                    name: "input".into(),
+                    ty: vector.clone(),
+                }],
+                result: Type::Field,
+                body: Expr::TransientHash {
+                    value: Box::new(Expr::Parameter {
+                        name: "input".into(),
+                    }),
+                },
+            },
+            PureCircuit {
+                source: None,
+                internal: false,
+                name: "bridge".into(),
+                parameters: vec![],
+                result: Type::Field,
+                body: Expr::Let {
+                    bindings: vec![LocalBinding {
+                        name: "tuple".into(),
+                        ty: tuple.clone(),
+                        value: pair,
+                    }],
+                    body: Box::new(Expr::Call {
+                        name: "hashVector".into(),
+                        arguments: vec![Expr::Coerce {
+                            value: Box::new(Expr::Parameter {
+                                name: "tuple".into(),
+                            }),
+                            ty: vector.clone(),
+                        }],
+                    }),
+                },
+            },
+        ],
+        stateful_circuits: vec![StatefulCircuit {
+            source: None,
+            internal: false,
+            name: "writeHash".into(),
+            parameters: vec![],
+            result: Type::Unit,
+            return_value: StateReturn::Unit,
+            actions: vec![StateAction::Let {
+                bindings: vec![LocalBinding {
+                    name: "computed".into(),
+                    ty: Type::Field,
+                    value: Expr::Call {
+                        name: "bridge".into(),
+                        arguments: vec![],
+                    },
+                }],
+                action: Box::new(StateAction::CellWrite {
+                    field: "value".into(),
+                    index: 0,
+                    value: Expr::Parameter {
+                        name: "computed".into(),
+                    },
+                }),
+            }],
+        }],
+    };
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.capabilities.circuits[0].observed_call);
+    let body = rendered.source.split("pub mod recorded").nth(1).unwrap();
+    assert!(
+        body.find("pure_circuits::bridge()?").unwrap() < body.find("record_write(frame").unwrap()
+    );
+
+    contract.circuits[0].body = Expr::TransientHash {
+        value: Box::new(Expr::FieldLiteral { value: "3".into() }),
+    };
+    let rejected = render_with_capabilities(&contract).unwrap();
+    assert!(!rejected.capabilities.circuits[0].recorded);
+    assert_eq!(
+        rejected.capabilities.circuits[0]
+            .recording_unavailable
+            .as_ref()
+            .unwrap()
+            .ir_node,
+        "Expr::Call"
+    );
+}
+
+#[test]
 fn unsupported_pure_call_and_supported_field_arithmetic_have_exact_capabilities() {
     let mut contract = Contract {
         schema_version: 11,

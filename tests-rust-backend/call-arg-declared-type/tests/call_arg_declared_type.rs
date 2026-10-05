@@ -224,6 +224,50 @@ fn recorded_closed_pure_field_call_matches_typescript_trace_and_gas() {
 }
 
 #[test]
+fn recorded_field_pair_hash_calls_match_typescript_trace_and_gas() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/call-arg-declared-type.json"
+    ))
+    .unwrap();
+    for name in ["pureBodyVec", "bridgeTupleIntoVec", "bridgeVecIntoTuple"] {
+        let native_context = initial_state(ConstructorContext::new(()))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default());
+        let recording_context = initial_state(ConstructorContext::new(()))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default());
+        let native = match name {
+            "pureBodyVec" => pureBodyVec(native_context).unwrap(),
+            "bridgeTupleIntoVec" => bridgeTupleIntoVec(native_context).unwrap(),
+            "bridgeVecIntoTuple" => bridgeVecIntoTuple(native_context).unwrap(),
+            _ => unreachable!(),
+        };
+        let recorded = match name {
+            "pureBodyVec" => compact_rust_call_arg_declared_type_fixture::ledger_contract::recorded::pureBodyVec(recording_context).unwrap(),
+            "bridgeTupleIntoVec" => compact_rust_call_arg_declared_type_fixture::ledger_contract::recorded::bridgeTupleIntoVec(recording_context).unwrap(),
+            "bridgeVecIntoTuple" => compact_rust_call_arg_declared_type_fixture::ledger_contract::recorded::bridgeVecIntoTuple(recording_context).unwrap(),
+            _ => unreachable!(),
+        };
+        boolean_observation_assertions::assert_ts_trace(
+            name,
+            &native,
+            &recorded,
+            &oracle["circuits"][name]["trace"],
+        );
+        assert_eq!(
+            recorded.execution.context.query.state.get_ref(),
+            native.context.query.state.get_ref(),
+            "{name}: recorded state"
+        );
+        assert_eq!(
+            state_hex(recorded.execution.context.query.state.get_ref().clone()),
+            oracle["circuits"][name]["stateHex"],
+            "{name}: TypeScript state"
+        );
+    }
+}
+
+#[test]
 fn recorded_vector_witness_let_matches_typescript_and_advances_private_state_once() {
     let oracle: serde_json::Value = serde_json::from_str(include_str!(
         "../../../runtime-rs/tests/fixtures/call-arg-declared-type.json"

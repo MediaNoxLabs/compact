@@ -361,6 +361,130 @@ fn closed_pure_field_call(
     allowed
 }
 
+/// A zero-argument pure Field helper may be evaluated during recording when
+/// its entire transitive body only constructs and hashes a closed pair of
+/// Fields. In particular, tuple/vector coercions are checked at their declared
+/// types instead of assuming the two representations are interchangeable.
+fn closed_pure_field_pair_hash_call(
+    name: &str,
+    pure_circuits: &HashMap<&str, &PureCircuit>,
+) -> bool {
+    fn field_pair(ty: &Type) -> bool {
+        matches!(ty, Type::Vector { element, length } if **element == Type::Field && *length == 2)
+            || matches!(ty, Type::Tuple { elements } if elements == &[Type::Field, Type::Field])
+    }
+
+    fn body_type(
+        value: &Expr,
+        locals: &HashMap<String, Type>,
+        pure_circuits: &HashMap<&str, &PureCircuit>,
+        visiting: &mut HashSet<String>,
+        saw_hash: &mut bool,
+    ) -> Option<Type> {
+        match value {
+            Expr::FieldLiteral { .. } => Some(Type::Field),
+            Expr::Parameter { name } => locals.get(name).cloned(),
+            Expr::Vector { element, elements }
+                if *element == Type::Field && elements.len() == 2 =>
+            {
+                elements
+                    .iter()
+                    .all(|element| {
+                        body_type(element, locals, pure_circuits, visiting, saw_hash)
+                            == Some(Type::Field)
+                    })
+                    .then(|| Type::Vector {
+                        element: Box::new(Type::Field),
+                        length: 2,
+                    })
+            }
+            Expr::Tuple { elements } if elements.len() == 2 => elements
+                .iter()
+                .all(|element| {
+                    body_type(element, locals, pure_circuits, visiting, saw_hash)
+                        == Some(Type::Field)
+                })
+                .then(|| Type::Tuple {
+                    elements: vec![Type::Field, Type::Field],
+                }),
+            Expr::Coerce { value, ty } => {
+                let source = body_type(value, locals, pure_circuits, visiting, saw_hash)?;
+                (source == *ty || (field_pair(&source) && field_pair(ty))).then(|| ty.clone())
+            }
+            Expr::Let { bindings, body } => {
+                let mut scoped = locals.clone();
+                for binding in bindings {
+                    let actual =
+                        body_type(&binding.value, &scoped, pure_circuits, visiting, saw_hash)?;
+                    if actual != binding.ty {
+                        return None;
+                    }
+                    scoped.insert(binding.name.clone(), actual);
+                }
+                body_type(body, &scoped, pure_circuits, visiting, saw_hash)
+            }
+            Expr::Call { name, arguments } => {
+                let callee = pure_circuits.get(name.as_str())?;
+                if arguments.len() != callee.parameters.len() || !visiting.insert(name.clone()) {
+                    return None;
+                }
+                let valid_arguments =
+                    arguments
+                        .iter()
+                        .zip(&callee.parameters)
+                        .all(|(arg, formal)| {
+                            body_type(arg, locals, pure_circuits, visiting, saw_hash)
+                                == Some(formal.ty.clone())
+                        });
+                let mut callee_locals = HashMap::new();
+                for parameter in &callee.parameters {
+                    callee_locals.insert(parameter.name.clone(), parameter.ty.clone());
+                }
+                let result = if valid_arguments {
+                    body_type(
+                        &callee.body,
+                        &callee_locals,
+                        pure_circuits,
+                        visiting,
+                        saw_hash,
+                    )
+                    .filter(|actual| *actual == callee.result)
+                } else {
+                    None
+                };
+                visiting.remove(name);
+                result
+            }
+            Expr::TransientHash { value } => {
+                let ty = body_type(value, locals, pure_circuits, visiting, saw_hash)?;
+                if !field_pair(&ty) {
+                    return None;
+                }
+                *saw_hash = true;
+                Some(Type::Field)
+            }
+            _ => None,
+        }
+    }
+
+    let Some(callee) = pure_circuits.get(name) else {
+        return false;
+    };
+    if !callee.parameters.is_empty() || callee.result != Type::Field {
+        return false;
+    }
+    let mut saw_hash = false;
+    let mut visiting = HashSet::from([name.to_owned()]);
+    body_type(
+        &callee.body,
+        &HashMap::new(),
+        pure_circuits,
+        &mut visiting,
+        &mut saw_hash,
+    ) == Some(Type::Field)
+        && saw_hash
+}
+
 /// A closed literal Vector helper has no ledger, witness, or VM effects. Keep
 /// this narrower than general pure calls until their recording parity is known.
 fn closed_literal_field_vector_call(
@@ -2315,6 +2439,22 @@ fn render_recorded_item(
                             *next_temp += 1;
                             steps.push(syn::parse_quote! {
                                 let #value: runtime::Field = crate::pure_circuits::#method(#(#args),*)?;
+                            });
+                            scoped.insert(binding.name.clone(), syn::parse_quote!(#value));
+                            continue;
+                        }
+                        if let Expr::Call { name, arguments } = &binding.value
+                            && arguments.is_empty()
+                            && closed_pure_field_pair_hash_call(name, pure_circuits)
+                        {
+                            let method = ident(name)?;
+                            let value = syn::Ident::new(
+                                &format!("__compact_recorded_pure_pair_hash_{}", *next_temp),
+                                Span::call_site(),
+                            );
+                            *next_temp += 1;
+                            steps.push(syn::parse_quote! {
+                                let #value: runtime::Field = crate::pure_circuits::#method()?;
                             });
                             scoped.insert(binding.name.clone(), syn::parse_quote!(#value));
                             continue;

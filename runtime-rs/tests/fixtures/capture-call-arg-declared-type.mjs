@@ -136,7 +136,10 @@ for (const name of CIRCUITS) {
   const out = contract.circuits[name](ctx);
   const state = new cr.ChargedState(out.context.currentQueryContext.state.state);
   fixture.circuits[name] = { stateHex: hexOf(rewrapEnvelope(afterInit, state)) };
-  if (['commitSmall', 'commitU128', 'commitFieldOnly', 'pureBodyFieldOnly'].includes(name)) {
+  if ([
+    'commitSmall', 'commitU128', 'commitFieldOnly', 'pureBodyFieldOnly',
+    'pureBodyVec', 'bridgeTupleIntoVec', 'bridgeVecIntoTuple',
+  ].includes(name)) {
     fixture.circuits[name].trace = {
       publicTranscriptShape: out.proofData.publicTranscript.map(operationShape),
       privateTranscriptCount: out.proofData.privateTranscriptOutputs.length,

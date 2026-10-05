@@ -785,6 +785,17 @@ pub mod ledger_contract {
                 .record_write(frame, __compact_recorded_commitment_1)?;
             Ok(frame.finish(()))
         }
+        pub fn pureBodyVec<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_pure_pair_hash_0: runtime::Field =
+                crate::pure_circuits::vecFromPureBody()?;
+            let frame = crate::ledger_slots::fieldCell
+                .record_write(frame, __compact_recorded_pure_pair_hash_0)?;
+            Ok(frame.finish(()))
+        }
         pub fn pureBodyFieldOnly<Private>(
             context: runtime::context::CircuitContext<Private>,
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
@@ -794,6 +805,28 @@ pub mod ledger_contract {
                 crate::pure_circuits::fieldOnlyFromPureBody()?;
             let frame = crate::ledger_slots::fieldCell
                 .record_write(frame, __compact_recorded_pure_field_0)?;
+            Ok(frame.finish(()))
+        }
+        pub fn bridgeTupleIntoVec<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_pure_pair_hash_0: runtime::Field =
+                crate::pure_circuits::tupleIntoVec()?;
+            let frame = crate::ledger_slots::fieldCell
+                .record_write(frame, __compact_recorded_pure_pair_hash_0)?;
+            Ok(frame.finish(()))
+        }
+        pub fn bridgeVecIntoTuple<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_pure_pair_hash_0: runtime::Field =
+                crate::pure_circuits::vecIntoTuple()?;
+            let frame = crate::ledger_slots::fieldCell
+                .record_write(frame, __compact_recorded_pure_pair_hash_0)?;
             Ok(frame.finish(()))
         }
         pub fn witnessConst<Private, W: super::TryWitnesses<Private>>(
@@ -898,6 +931,31 @@ pub mod ledger_contract {
                     input,
                 ))
             }
+            pub fn pureBodyVec<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::pureBodyVec(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn pureBodyVec_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.pureBodyVec(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "pureBodyVec",
+                    input,
+                ))
+            }
             pub fn pureBodyFieldOnly<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
@@ -920,6 +978,56 @@ pub mod ledger_contract {
                     observed,
                     recorded,
                     "pureBodyFieldOnly",
+                    input,
+                ))
+            }
+            pub fn bridgeTupleIntoVec<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::bridgeTupleIntoVec(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn bridgeTupleIntoVec_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.bridgeTupleIntoVec(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "bridgeTupleIntoVec",
+                    input,
+                ))
+            }
+            pub fn bridgeVecIntoTuple<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::bridgeVecIntoTuple(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn bridgeVecIntoTuple_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.bridgeVecIntoTuple(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "bridgeVecIntoTuple",
                     input,
                 ))
             }
@@ -1004,6 +1112,31 @@ pub mod ledger_contract {
                     input,
                 ))
             }
+            pub fn pureBodyVec<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                pureBodyVec(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn pureBodyVec_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.pureBodyVec(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "pureBodyVec",
+                    input,
+                ))
+            }
             pub fn pureBodyFieldOnly<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
@@ -1026,6 +1159,56 @@ pub mod ledger_contract {
                     observed,
                     recorded,
                     "pureBodyFieldOnly",
+                    input,
+                ))
+            }
+            pub fn bridgeTupleIntoVec<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                bridgeTupleIntoVec(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn bridgeTupleIntoVec_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.bridgeTupleIntoVec(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "bridgeTupleIntoVec",
+                    input,
+                ))
+            }
+            pub fn bridgeVecIntoTuple<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                bridgeVecIntoTuple(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn bridgeVecIntoTuple_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.bridgeVecIntoTuple(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "bridgeVecIntoTuple",
                     input,
                 ))
             }

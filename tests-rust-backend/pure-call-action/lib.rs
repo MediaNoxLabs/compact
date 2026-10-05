@@ -20,7 +20,7 @@ pub use midnight_compact_runtime as runtime;
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 47);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 48);
     pub fn require_positive(value: runtime::Field) -> Result<(), runtime::CompactError> {
         if !(value != runtime::Field::from(0u128)) {
             return Err(runtime::CompactError::AssertionFailed(
@@ -40,7 +40,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 47);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 48);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,

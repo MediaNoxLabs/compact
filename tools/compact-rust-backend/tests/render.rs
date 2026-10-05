@@ -10634,3 +10634,71 @@ fn kernel_effects_have_typed_arguments_and_no_fictional_ledger_slots() {
         assert!(serde_json::from_str::<Expr>(bad).is_err());
     }
 }
+
+#[test]
+fn stateful_structs_validate_member_types_and_keep_effectful_members_native_only() {
+    let mut contract: Contract =
+        serde_json::from_str(include_str!("stateful-struct-schema20-ir.json")).unwrap();
+    contract.schema_version = SCHEMA_VERSION;
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.source.contains("__compact_struct_member_"));
+    assert_eq!(rendered.capabilities.circuits.len(), 4);
+    assert!(
+        rendered
+            .capabilities
+            .circuits
+            .iter()
+            .all(|c| !c.recorded && !c.observed_call)
+    );
+    for mode in 0..4 {
+        let mut wrong = contract.clone();
+        let circuit = wrong
+            .stateful_circuits
+            .iter_mut()
+            .find(|c| c.name == "reverse")
+            .unwrap();
+        let StateReturn::Expression {
+            value: Expr::StructLiteral { ty, fields },
+        } = &mut circuit.return_value
+        else {
+            panic!("expected literal")
+        };
+        match mode {
+            0 => *ty = Type::Boolean,
+            1 => {
+                fields.pop();
+            }
+            2 => fields[0] = Expr::Boolean { value: false },
+            3 => {
+                let Expr::UnsignedCast { value, .. } = &fields[0] else {
+                    panic!("expected explicit widening")
+                };
+                fields[0] = *value.clone();
+            }
+            _ => unreachable!(),
+        }
+        assert!(
+            render_with_capabilities(&wrong).is_err(),
+            "malformed literal mode {mode}"
+        );
+    }
+    let mut pure = contract.clone();
+    let circuit = pure
+        .stateful_circuits
+        .iter()
+        .find(|c| c.name == "planned")
+        .unwrap()
+        .clone();
+    let StateReturn::Expression { value } = circuit.return_value else {
+        panic!()
+    };
+    pure.circuits.push(PureCircuit {
+        name: "invalid_pure_struct".into(),
+        source: None,
+        internal: false,
+        parameters: circuit.parameters,
+        result: circuit.result,
+        body: value,
+    });
+    assert!(render_with_capabilities(&pure).is_err());
+}

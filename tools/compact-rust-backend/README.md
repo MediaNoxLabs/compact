@@ -831,3 +831,21 @@ and compares Rust gas to the sum of observed queries. TS batch reported aggregat
 gas currently contains only the final query cost. Native Kernel operations emit no
 synthetic private witness outputs; actual witness outputs keep source order.
 Recording and transaction funding/claim satisfaction remain separate work.
+
+### Ordered stateful struct construction (ADR0179)
+
+Stateful `StructLiteral` members reuse typed expression lowering, including direct
+returns, nested structs, witness calls, metered Kernel.self and native Zswap
+intents. Each member binds exactly once before the next member. The order is the
+compiler's normalized declared-member order: independently generated TypeScript
+also evaluates reversed named-field spelling in that order. Actual member types
+must match the declaration; explicit widening nodes perform conversions.
+
+The six-case TypeScript oracle compares values, private state and aligned outputs,
+public state/effects, query gas and provisional intent allocation. Pure structs
+retain their existing path. Schema20/ABI45 remain unchanged. The four stateful
+probe exports remain native-only, without recording or proof claims. The unchanged
+micro-dao now reaches `standard-library.compact` line207 and rejects the exact
+Uint maximum `680564733841876926926749214863536422911` (2^129−1); support for that
+arithmetic intermediate is a separate primitive-domain change. Run
+`check_compactc_target.py --stateful-struct` for both boundaries.

@@ -1481,6 +1481,19 @@
       (define (stateful-expression-ir value-expr owner-src witness-ids)
         (nanopass-case (Lnodisclose Expression) value-expr
           [(return ,src ,expr) (stateful-expression-ir expr src witness-ids)]
+          [(new ,src ,type ,expr* ...)
+           (nanopass-case (Lnodisclose Type) type
+             [(tstruct ,src^ ,struct-name (,elt-name* ,type*) ...)
+              (unless (= (length expr*) (length type*))
+                (source-errorf src "Rust stateful struct literal field count does not match its type"))
+              (object (cons "kind" "struct_literal")
+                      (cons "ty" (type-ir type src))
+                      (cons "fields"
+                            (list->vector
+                              (map (lambda (value field-type)
+                                     (stateful-typed-expression-ir value field-type src witness-ids))
+                                   expr* type*))))]
+             [else (source-errorf src "Rust backend does not yet support this stateful struct literal")])]
           [(elt-ref ,src ,expr ,elt-name ,nat)
            (object (cons "kind" "struct_field")
                    (cons "value" (stateful-expression-ir expr src witness-ids))
@@ -1778,6 +1791,9 @@
           [(var-ref ,src ,var-name)
            (object (cons "kind" "expression")
                    (cons "value" (expression-ir return-expr src)))]
+          [(new ,src ,type ,expr* ...)
+           (object (cons "kind" "expression")
+                   (cons "value" (stateful-expression-ir return-expr src witness-ids)))]
           [(elt-ref ,src ,expr ,elt-name ,nat)
            (object (cons "kind" "expression")
                    (cons "value" (stateful-expression-ir return-expr src witness-ids)))]

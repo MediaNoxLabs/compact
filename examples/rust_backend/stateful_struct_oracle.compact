@@ -1,0 +1,38 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//   http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import CompactStandardLibrary;
+export ledger marker: Field;
+export struct Snapshot { first: Uint<128>; address: ContractAddress; second: Uint<128>; }
+export struct Bundle { head: Snapshot; tail: Uint<128>; }
+export struct Planned { first: Uint<128>; emitted: []; address: ContractAddress; after: Uint<128>; }
+witness next_value(tag: Uint<8>): Uint<64>;
+export circuit snapshot(selected: Boolean): Snapshot {
+  if (disclose(selected)) {
+    return Snapshot { first: disclose(next_value(1)) as Uint<128>, address: kernel.self(), second: disclose(next_value(2)) as Uint<128> };
+  } else { return default<Snapshot>; }
+}
+export circuit reverse(): Snapshot {
+  return Snapshot { second: disclose(next_value(2)) as Uint<128>, address: kernel.self(), first: disclose(next_value(1)) as Uint<128> };
+}
+export circuit nested(): Bundle {
+  return Bundle { head: snapshot(true), tail: disclose(next_value(3)) as Uint<128> };
+}
+export circuit planned(coin: ShieldedCoinInfo, recipient: Either<ZswapCoinPublicKey, ContractAddress>): Planned {
+  return Planned { first: disclose(next_value(3)) as Uint<128>, emitted: createZswapOutput(coin,recipient), address: kernel.self(), after: disclose(next_value(4)) as Uint<128> };
+}
+export circuit pure_snapshot(first: Uint<64>, second: Uint<64>): Snapshot {
+ return Snapshot { first: first as Uint<128>, address: default<ContractAddress>, second: second as Uint<128> };
+}

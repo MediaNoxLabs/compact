@@ -1095,6 +1095,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--consumer", action="store_true", help="build and run a separate consumer")
     parser.add_argument("--proof", action="store_true", help="generate ZKIR and proving keys")
+    parser.add_argument("--stateful-struct", action="store_true", help="check ordered typed native struct construction and its remaining original-source boundary")
     parser.add_argument("--kernel-shielded-effects", action="store_true", help="check typed native Kernel admission and recording boundary")
     parser.add_argument("--native-zswap-intents", action="store_true", help="check native Zswap intent admission and explicit recording refusal")
     parser.add_argument("--qualified-coin-cell", action="store_true",
@@ -1122,6 +1123,27 @@ def main() -> None:
     compiler = os.environ.get("COMPACTC", "compactc")
     with tempfile.TemporaryDirectory(prefix="compactc-target-") as temporary:
         base = Path(temporary)
+        if args.stateful_struct:
+            source = ROOT / "examples/rust_backend/stateful_struct_oracle.compact"
+            output = base / "stateful-struct"
+            run(compiler, "--target", "rust", "--skip-zk", str(source), str(output))
+            ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
+            assert ir["schema_version"] == 20
+            encoded = json.dumps(ir)
+            assert '"struct_literal"' in encoded and '"witness_call"' in encoded
+            assert '"create_zswap_output"' in encoded and '"kernel_self"' in encoded
+            report = json.loads((output / "contract/rust-capabilities.json").read_text())
+            assert len(report["circuits"]) == 4
+            for row in report["circuits"]:
+                assert not row["recorded"] and not row["observed_call"]
+                assert row["proof_required"]
+            original = subprocess.run([compiler, "--target", "rust", "--skip-zk", str(ROOT / "test-center/test-contracts/micro-dao.compact"), str(base / "original-dao")], cwd=ROOT, capture_output=True, text=True)
+            assert original.returncode != 0
+            assert 'unsupported Compact Uint maximum "680564733841876926926749214863536422911"' in original.stderr
+            assert "standard-library.compact line 207" in original.stderr
+            assert not (base / "original-dao/contract/lib.rs").exists()
+            print("ordered typed stateful structs admitted; original micro-dao next gap is exact Uint129 intermediate")
+            return
         if args.kernel_shielded_effects:
             source = ROOT / "examples/rust_backend/kernel_shielded_effects_oracle.compact"
             output = base / "kernel-shielded-effects"
@@ -1459,6 +1481,7 @@ def main() -> None:
             *(["--proof"] if args.proof else []))
         run(sys.executable, str(Path(__file__).resolve()), "--native-zswap-intents")
         run(sys.executable, str(Path(__file__).resolve()), "--kernel-shielded-effects")
+        run(sys.executable, str(Path(__file__).resolve()), "--stateful-struct")
         ts, rust, both, pure = (base / name for name in ("ts", "rust", "both", "pure"))
         run(compiler, "--skip-zk", str(SOURCE), str(ts))
         assert (ts / "contract/index.js").is_file()

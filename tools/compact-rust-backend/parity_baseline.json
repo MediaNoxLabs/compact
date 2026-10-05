@@ -3498,6 +3498,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/stateful_struct_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "nested",
+    "signature": "export circuit nested(): Bundle",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/literal_coercion_oracle.compact",
     "module_path": [],
     "kind": "circuit",
@@ -3842,6 +3850,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/stateful_struct_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "planned",
+    "signature": "export circuit planned(coin: ShieldedCoinInfo, recipient: Either<ZswapCoinPublicKey, ContractAddress>): Planned",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/chunked_cell.compact",
     "module_path": [],
     "kind": "circuit",
@@ -4127,6 +4143,14 @@
     "kind": "circuit",
     "name": "pureFromImpure",
     "signature": "export circuit pureFromImpure(): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/stateful_struct_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "pure_snapshot",
+    "signature": "export circuit pure_snapshot(first: Uint<64>, second: Uint<64>): Snapshot",
     "visibility": "export"
   },
   {
@@ -4874,6 +4898,14 @@
     "visibility": "internal"
   },
   {
+    "source": "examples/rust_backend/stateful_struct_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "reverse",
+    "signature": "export circuit reverse(): Snapshot",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/merkle_multi_path.compact",
     "module_path": [],
     "kind": "circuit",
@@ -5343,6 +5375,14 @@
     "kind": "circuit",
     "name": "snapshot",
     "signature": "export circuit snapshot(): Field",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/stateful_struct_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "snapshot",
+    "signature": "export circuit snapshot(selected: Boolean): Snapshot",
     "visibility": "export"
   },
   {
@@ -7574,6 +7614,14 @@
     "kind": "witness",
     "name": "next_recipient",
     "signature": "witness next_recipient(): Either<ZswapCoinPublicKey, ContractAddress>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/stateful_struct_oracle.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "next_value",
+    "signature": "witness next_value(tag: Uint<8>): Uint<64>",
     "visibility": "internal"
   },
   {

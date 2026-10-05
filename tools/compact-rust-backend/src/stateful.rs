@@ -245,6 +245,55 @@ pub(crate) fn render_state_expression(
                 false,
             ))
         }
+        Expr::StructLiteral { ty, fields } => {
+            let Type::Struct {
+                name,
+                fields: declarations,
+            } = ty
+            else {
+                return Err(RenderError::InvalidStructField("<literal>".into()));
+            };
+            if fields.len() != declarations.len() {
+                return Err(RenderError::InvalidStructField(name.clone()));
+            }
+            let mut members = Vec::<syn::FieldValue>::with_capacity(fields.len());
+            let mut witness_effect = false;
+            for (value, declaration) in fields.iter().zip(declarations) {
+                let (rendered, actual, effect) = render_state_expression(
+                    value,
+                    parameters,
+                    witnesses,
+                    statements,
+                    next_temp,
+                    circuits,
+                    stateful_circuits,
+                    ledger_fields,
+                    query_effect,
+                )?;
+                if actual != declaration.ty {
+                    return Err(RenderError::TypeMismatch {
+                        expected: declaration.ty.clone(),
+                        actual,
+                    });
+                }
+                let temporary = syn::Ident::new(
+                    &format!("__compact_struct_member_{}", *next_temp),
+                    Span::call_site(),
+                );
+                *next_temp += 1;
+                let member_ty = rust_type(&declaration.ty)?;
+                statements.push(syn::parse_quote!(let #temporary: #member_ty = #rendered;));
+                let member = ident(&declaration.name)?;
+                members.push(syn::parse_quote!(#member: #temporary));
+                witness_effect |= effect;
+            }
+            let name = ident(name)?;
+            Ok((
+                syn::parse_quote!(crate::types::#name {#(#members),*}),
+                ty.clone(),
+                witness_effect,
+            ))
+        }
         Expr::StructField {
             value,
             field,

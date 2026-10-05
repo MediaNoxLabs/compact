@@ -2406,7 +2406,7 @@ pub(crate) fn render_stateful_circuit(
     let mut next_local = 0;
     let result_ty = rust_type(&circuit.result)?;
     enum Pending<'a> {
-        Action(&'a StateAction),
+        Action(&'a StateAction, bool),
         Plan(&'a ReturnPlan),
         RestoreScope,
         EndThen(usize, &'a StateAction),
@@ -2422,15 +2422,21 @@ pub(crate) fn render_stateful_circuit(
     }
     let mut pending = match &circuit.return_value {
         StateReturn::Effectful { body } => vec![Pending::Plan(body)],
-        _ => circuit.actions.iter().rev().map(Pending::Action).collect(),
+        _ => circuit
+            .actions
+            .iter()
+            .rev()
+            .enumerate()
+            .map(|(index, action)| Pending::Action(action, index == 0))
+            .collect(),
     };
     let mut scopes = Vec::new();
     let mut branches = Vec::<Option<BranchFrame>>::new();
     let mut local_parameters = parameters.clone();
     let mut return_parameters = parameters.clone();
     while let Some(pending_action) = pending.pop() {
-        let action = match pending_action {
-            Pending::Action(action) => action,
+        let (action, returns_from_scope) = match pending_action {
+            Pending::Action(action, returns_from_scope) => (action, returns_from_scope),
             Pending::Plan(plan) => {
                 match plan {
                     ReturnPlan::Value { value } => {
@@ -2462,7 +2468,12 @@ pub(crate) fn render_stateful_circuit(
                     }
                     ReturnPlan::Sequence { actions, result } => {
                         pending.push(Pending::Plan(result));
-                        pending.extend(actions.iter().rev().map(Pending::Action));
+                        pending.extend(
+                            actions
+                                .iter()
+                                .rev()
+                                .map(|action| Pending::Action(action, false)),
+                        );
                     }
                     ReturnPlan::Let { bindings, result } => {
                         scopes.push(local_parameters.clone());
@@ -2554,7 +2565,7 @@ pub(crate) fn render_stateful_circuit(
                 frame.then_statements = std::mem::take(&mut statements);
                 local_parameters = frame.parameters.clone();
                 pending.push(Pending::EndElse(index));
-                pending.push(Pending::Action(otherwise));
+                pending.push(Pending::Action(otherwise, false));
                 continue;
             }
             Pending::EndElse(index) => {
@@ -2610,7 +2621,9 @@ pub(crate) fn render_stateful_circuit(
         };
         match action {
             StateAction::Sequence { actions } => {
-                pending.extend(actions.iter().rev().map(Pending::Action));
+                pending.extend(actions.iter().rev().enumerate().map(|(index, action)| {
+                    Pending::Action(action, returns_from_scope && index == 0)
+                }));
                 continue;
             }
             StateAction::Let {
@@ -2655,18 +2668,14 @@ pub(crate) fn render_stateful_circuit(
                     statements.push(syn::parse_quote!(let #local_name: #ty = #value;));
                     local_parameters.insert(binding.name.as_str(), (&binding.ty, local_name));
                 }
-                // A final top-level Let wraps the ordered suffix of actions
-                // and the circuit return, even when assertions precede it.
-                // Nested and earlier sibling Lets remain action-local.
-                if circuit
-                    .actions
-                    .last()
-                    .is_some_and(|tail| std::ptr::eq(action, tail))
-                {
+                // The extracted return remains inside the terminal lexical
+                // suffix: final top-level action -> final Sequence child ->
+                // Let body. Branches and earlier sibling scopes do not escape.
+                if returns_from_scope {
                     return_parameters = local_parameters.clone();
                 }
                 pending.push(Pending::RestoreScope);
-                pending.push(Pending::Action(inner));
+                pending.push(Pending::Action(inner, returns_from_scope));
                 continue;
             }
             StateAction::If {
@@ -2704,7 +2713,7 @@ pub(crate) fn render_stateful_circuit(
                     parameters: local_parameters.clone(),
                 }));
                 pending.push(Pending::EndThen(index, otherwise));
-                pending.push(Pending::Action(then));
+                pending.push(Pending::Action(then, false));
                 continue;
             }
             _ => {}

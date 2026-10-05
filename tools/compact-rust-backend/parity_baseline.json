@@ -2170,6 +2170,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/terminal_lexical_return_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "echo",
+    "signature": "export circuit echo(echo: Field): Field",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/boolean_logic.compact",
     "module_path": [],
     "kind": "circuit",
@@ -2954,6 +2962,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/terminal_lexical_return_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "inner",
+    "signature": "circuit inner(): Field",
+    "visibility": "internal"
+  },
+  {
     "source": "examples/rust_backend/nested_witness_call_oracle.compact",
     "module_path": [],
     "kind": "circuit",
@@ -3546,6 +3562,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/terminal_lexical_return_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "nested",
+    "signature": "export circuit nested(): Field",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/literal_coercion_oracle.compact",
     "module_path": [],
     "kind": "circuit",
@@ -3615,6 +3639,14 @@
     "kind": "circuit",
     "name": "nullifier",
     "signature": "export circuit nullifier(value: Bytes<32>): []",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/terminal_lexical_return_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "observed",
+    "signature": "export circuit observed(reject: Boolean): Field",
     "visibility": "export"
   },
   {
@@ -6146,6 +6178,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/terminal_lexical_return_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "three",
+    "signature": "export circuit three(): Field",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/composite_zswap_transfer_oracle.compact",
     "module_path": [],
     "kind": "circuit",
@@ -6255,6 +6295,14 @@
     "kind": "circuit",
     "name": "tuple_var_ref",
     "signature": "export pure circuit tuple_var_ref(x: Uint<8>): [Field, Field]",
+    "visibility": "export"
+  },
+  {
+    "source": "examples/rust_backend/terminal_lexical_return_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "two",
+    "signature": "export circuit two(): Field",
     "visibility": "export"
   },
   {
@@ -7710,6 +7758,14 @@
     "kind": "witness",
     "name": "next_recipient",
     "signature": "witness next_recipient(): Either<ZswapCoinPublicKey, ContractAddress>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/terminal_lexical_return_oracle.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "next_value",
+    "signature": "witness next_value(seed: Field): Field",
     "visibility": "internal"
   },
   {

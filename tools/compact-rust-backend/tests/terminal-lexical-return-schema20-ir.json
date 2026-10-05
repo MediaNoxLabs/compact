@@ -1,0 +1,560 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "stored",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "field"
+        }
+      },
+      "source": {
+        "file": "terminal_lexical_return_oracle.compact",
+        "line": 17,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "next_value",
+      "parameters": [
+        {
+          "name": "seed",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "source": {
+        "file": "terminal_lexical_return_oracle.compact",
+        "line": 18,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "two",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "parameter",
+          "name": "after"
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "before",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "cell_read",
+                "field": "stored",
+                "index": 0
+              }
+            }
+          ],
+          "action": {
+            "kind": "sequence",
+            "actions": [
+              {
+                "kind": "let",
+                "bindings": [
+                  {
+                    "name": "after",
+                    "ty": {
+                      "kind": "field"
+                    },
+                    "value": {
+                      "kind": "add",
+                      "left": {
+                        "kind": "parameter",
+                        "name": "before"
+                      },
+                      "right": {
+                        "kind": "field_literal",
+                        "value": "1"
+                      }
+                    }
+                  }
+                ],
+                "action": {
+                  "kind": "sequence",
+                  "actions": [
+                    {
+                      "kind": "cell_write",
+                      "field": "stored",
+                      "index": 0,
+                      "value": {
+                        "kind": "parameter",
+                        "name": "after"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "source": {
+        "file": "terminal_lexical_return_oracle.compact",
+        "line": 20,
+        "column": 1
+      }
+    },
+    {
+      "name": "three",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "parameter",
+          "name": "after"
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "before",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "cell_read",
+                "field": "stored",
+                "index": 0
+              }
+            }
+          ],
+          "action": {
+            "kind": "sequence",
+            "actions": [
+              {
+                "kind": "let",
+                "bindings": [
+                  {
+                    "name": "middle",
+                    "ty": {
+                      "kind": "field"
+                    },
+                    "value": {
+                      "kind": "add",
+                      "left": {
+                        "kind": "parameter",
+                        "name": "before"
+                      },
+                      "right": {
+                        "kind": "field_literal",
+                        "value": "1"
+                      }
+                    }
+                  }
+                ],
+                "action": {
+                  "kind": "sequence",
+                  "actions": [
+                    {
+                      "kind": "let",
+                      "bindings": [
+                        {
+                          "name": "after",
+                          "ty": {
+                            "kind": "field"
+                          },
+                          "value": {
+                            "kind": "add",
+                            "left": {
+                              "kind": "parameter",
+                              "name": "middle"
+                            },
+                            "right": {
+                              "kind": "field_literal",
+                              "value": "2"
+                            }
+                          }
+                        }
+                      ],
+                      "action": {
+                        "kind": "sequence",
+                        "actions": [
+                          {
+                            "kind": "cell_write",
+                            "field": "stored",
+                            "index": 0,
+                            "value": {
+                              "kind": "parameter",
+                              "name": "after"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "source": {
+        "file": "terminal_lexical_return_oracle.compact",
+        "line": 26,
+        "column": 1
+      }
+    },
+    {
+      "name": "echo",
+      "parameters": [
+        {
+          "name": "echo",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "parameter",
+          "name": "echo"
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "before",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "cell_read",
+                "field": "stored",
+                "index": 0
+              }
+            }
+          ],
+          "action": {
+            "kind": "sequence",
+            "actions": [
+              {
+                "kind": "let",
+                "bindings": [
+                  {
+                    "name": "after",
+                    "ty": {
+                      "kind": "field"
+                    },
+                    "value": {
+                      "kind": "add",
+                      "left": {
+                        "kind": "parameter",
+                        "name": "before"
+                      },
+                      "right": {
+                        "kind": "field_literal",
+                        "value": "1"
+                      }
+                    }
+                  }
+                ],
+                "action": {
+                  "kind": "sequence",
+                  "actions": [
+                    {
+                      "kind": "cell_write",
+                      "field": "stored",
+                      "index": 0,
+                      "value": {
+                        "kind": "parameter",
+                        "name": "after"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "source": {
+        "file": "terminal_lexical_return_oracle.compact",
+        "line": 33,
+        "column": 1
+      }
+    },
+    {
+      "name": "observed",
+      "parameters": [
+        {
+          "name": "reject",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "parameter",
+          "name": "after"
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "before",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "cell_read",
+                "field": "stored",
+                "index": 0
+              }
+            }
+          ],
+          "action": {
+            "kind": "sequence",
+            "actions": [
+              {
+                "kind": "let",
+                "bindings": [
+                  {
+                    "name": "delta",
+                    "ty": {
+                      "kind": "field"
+                    },
+                    "value": {
+                      "kind": "witness_call",
+                      "name": "next_value",
+                      "arguments": [
+                        {
+                          "kind": "coerce",
+                          "value": {
+                            "kind": "parameter",
+                            "name": "before"
+                          },
+                          "ty": {
+                            "kind": "field"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "action": {
+                  "kind": "sequence",
+                  "actions": [
+                    {
+                      "kind": "assert",
+                      "condition": {
+                        "kind": "if",
+                        "condition": {
+                          "kind": "parameter",
+                          "name": "reject"
+                        },
+                        "then": {
+                          "kind": "boolean",
+                          "value": false
+                        },
+                        "otherwise": {
+                          "kind": "boolean",
+                          "value": true
+                        }
+                      },
+                      "message": "rejected after witness"
+                    },
+                    {
+                      "kind": "let",
+                      "bindings": [
+                        {
+                          "name": "after",
+                          "ty": {
+                            "kind": "field"
+                          },
+                          "value": {
+                            "kind": "add",
+                            "left": {
+                              "kind": "parameter",
+                              "name": "before"
+                            },
+                            "right": {
+                              "kind": "parameter",
+                              "name": "delta"
+                            }
+                          }
+                        }
+                      ],
+                      "action": {
+                        "kind": "sequence",
+                        "actions": [
+                          {
+                            "kind": "cell_write",
+                            "field": "stored",
+                            "index": 0,
+                            "value": {
+                              "kind": "parameter",
+                              "name": "after"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "source": {
+        "file": "terminal_lexical_return_oracle.compact",
+        "line": 39,
+        "column": 1
+      }
+    },
+    {
+      "name": "inner",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "parameter",
+          "name": "after"
+        }
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "before",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "cell_read",
+                "field": "stored",
+                "index": 0
+              }
+            }
+          ],
+          "action": {
+            "kind": "sequence",
+            "actions": [
+              {
+                "kind": "let",
+                "bindings": [
+                  {
+                    "name": "after",
+                    "ty": {
+                      "kind": "field"
+                    },
+                    "value": {
+                      "kind": "add",
+                      "left": {
+                        "kind": "parameter",
+                        "name": "before"
+                      },
+                      "right": {
+                        "kind": "field_literal",
+                        "value": "1"
+                      }
+                    }
+                  }
+                ],
+                "action": {
+                  "kind": "sequence",
+                  "actions": [
+                    {
+                      "kind": "cell_write",
+                      "field": "stored",
+                      "index": 0,
+                      "value": {
+                        "kind": "parameter",
+                        "name": "after"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "terminal_lexical_return_oracle.compact",
+        "line": 47,
+        "column": 1
+      }
+    },
+    {
+      "name": "nested",
+      "parameters": [
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "call",
+          "name": "inner",
+          "arguments": [
+          ]
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "terminal_lexical_return_oracle.compact",
+        "line": 53,
+        "column": 1
+      }
+    }
+  ]
+}

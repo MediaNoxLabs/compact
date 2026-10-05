@@ -7713,7 +7713,7 @@ fn counter_read_returns_uint64() {
 }
 
 #[test]
-fn root_let_preserves_pre_write_value_for_return_but_nested_let_does_not_escape() {
+fn terminal_let_preserves_return_scope_but_siblings_and_branches_do_not_escape() {
     let mut contract = Contract {
         schema_version: SCHEMA_VERSION,
         type_aliases: vec![],
@@ -7802,7 +7802,16 @@ fn root_let_preserves_pre_write_value_for_return_but_nested_let_does_not_escape(
 
     let root_let = contract.stateful_circuits[0].actions.remove(1);
     contract.stateful_circuits[0].actions = vec![StateAction::Sequence {
-        actions: vec![root_let],
+        actions: vec![root_let.clone()],
+    }];
+    let source = render(&contract).unwrap();
+    assert!(source.contains("let result = __compact_action_local_0"));
+
+    // A branch is not a return continuation, even when it is the final action.
+    contract.stateful_circuits[0].actions = vec![StateAction::If {
+        condition: Expr::Boolean { value: true },
+        then: Box::new(root_let.clone()),
+        otherwise: Box::new(root_let),
     }];
     assert_eq!(
         render(&contract),
@@ -7847,6 +7856,53 @@ fn root_let_preserves_pre_write_value_for_return_but_nested_let_does_not_escape(
     let source = render(&contract).unwrap();
     assert!(source.contains("let __compact_action_local_1: bool = true"));
     assert!(source.contains("let result = __compact_action_local_0"));
+    // Terminal nested scopes, unlike the earlier sibling above, own the
+    // extracted return. Keep every binding and use the nearest shadow.
+    let value = |name: &str| Expr::Parameter { name: name.into() };
+    let binding = |name: &str, expression: Expr, action: StateAction| StateAction::Let {
+        bindings: vec![LocalBinding {
+            name: name.into(),
+            ty: Type::Field,
+            value: expression,
+        }],
+        action: Box::new(StateAction::Sequence {
+            actions: vec![action],
+        }),
+    };
+    let write = StateAction::CellWrite {
+        field: "stored".into(),
+        index: 0,
+        value: value("previous"),
+    };
+    contract.stateful_circuits[0].actions = vec![binding(
+        "previous",
+        Expr::CellRead {
+            field: "stored".into(),
+            index: 0,
+        },
+        binding(
+            "next",
+            Expr::Add {
+                left: Box::new(value("previous")),
+                right: Box::new(Expr::FieldLiteral { value: "1".into() }),
+            },
+            binding("previous", value("next"), write),
+        ),
+    )];
+    let source = render(&contract).unwrap();
+    assert!(source.contains("let result = __compact_action_local_2"));
+    contract.stateful_circuits[0].return_value = StateReturn::Expression {
+        value: value("next"),
+    };
+    let source = render(&contract).unwrap();
+    assert!(source.contains("let result = __compact_action_local_1"));
+    contract.stateful_circuits[0].return_value = StateReturn::Expression {
+        value: value("missing"),
+    };
+    assert_eq!(
+        render(&contract),
+        Err(RenderError::UnknownParameter("missing".into()))
+    );
 }
 
 #[test]
@@ -10200,8 +10256,9 @@ fn typed_cell_lifecycle_retains_only_final_root_scope_and_audits_helpers() {
         .push(StateAction::Sequence {
             actions: vec![action],
         });
-    let error = render(&nested).unwrap_err();
-    assert!(format!("{error:?}").contains("former_msg"), "{error:?}");
+    // A terminal Sequence preserves the native lexical continuation. The
+    // separately bounded recording profile is deliberately unchanged.
+    assert_eq!(available(&nested), [true, false]);
     let mut earlier = contract.clone();
     earlier.stateful_circuits[1]
         .actions
@@ -11249,4 +11306,49 @@ fn composite_intents_require_public_queries_and_exact_typed_effect_operands() {
     };
     let out = render_with_capabilities(&unsupported).unwrap();
     assert!(!out.capabilities.circuits[0].recorded);
+}
+
+#[test]
+fn terminal_lexical_source_retains_all_native_exports_and_honest_recording_gaps() {
+    let mut contract: Contract =
+        serde_json::from_str(include_str!("terminal-lexical-return-schema20-ir.json")).unwrap();
+    contract.schema_version = SCHEMA_VERSION;
+    let output = render_with_capabilities(&contract).unwrap();
+    assert_eq!(output.capabilities.circuits.len(), 5);
+    for capability in &output.capabilities.circuits {
+        assert_eq!(
+            capability.recorded,
+            capability.name == "echo",
+            "{}",
+            capability.name
+        );
+        assert_eq!(
+            capability.observed_call,
+            capability.name == "echo",
+            "{}",
+            capability.name
+        );
+    }
+    for name in ["two", "three", "echo", "observed", "nested"] {
+        assert!(output.source.contains(&format!("pub fn {name}<")));
+    }
+    // Action-owned bindings inside an independent ReturnPlan::Sequence
+    // cannot escape into its separate result continuation.
+    let circuit = contract
+        .stateful_circuits
+        .iter_mut()
+        .find(|c| c.name == "two")
+        .unwrap();
+    let actions = std::mem::take(&mut circuit.actions);
+    let StateReturn::Expression { value } = circuit.return_value.clone() else {
+        panic!()
+    };
+    circuit.return_value = StateReturn::Effectful {
+        body: ReturnPlan::Sequence {
+            actions,
+            result: Box::new(ReturnPlan::Value { value }),
+        },
+    };
+    let error = render(&contract).unwrap_err();
+    assert!(format!("{error:?}").contains("UnknownParameter(\"after\")"));
 }

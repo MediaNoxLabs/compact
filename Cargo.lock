@@ -2275,6 +2275,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact-rust-terminal-lexical-return-oracle-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-base-crypto",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde_json",
+]
+
+[[package]]
 name = "compact-rust-ternary-cond-oracle-fixture"
 version = "0.1.0"
 dependencies = [

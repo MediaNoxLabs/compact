@@ -42,8 +42,10 @@ pub use midnight_transient_crypto::proofs::VerifierKey;
 use midnight_transient_crypto::proofs::{KeyLocation, ProofPreimage};
 use midnight_zswap::{Input, Offer};
 
+mod placement;
 #[path = "transaction/transients.rs"]
 mod transients;
+pub use placement::OfferPlacement;
 use rand::{CryptoRng, Rng};
 pub use transients::ContractTransientCoins;
 
@@ -68,6 +70,7 @@ pub struct ObservedContractState<D: DB = DefaultDB> {
     observation: Observation,
     com_indices: Map<Commitment, u64>,
     allocation: crate::zswap::Allocation,
+    coin_public_key: Option<crate::context::CoinPublicKey>,
 }
 
 impl<D: DB> ObservedContractState<D> {
@@ -82,6 +85,7 @@ impl<D: DB> ObservedContractState<D> {
             observation,
             com_indices: Map::new(),
             allocation: crate::zswap::Allocation::Locked,
+            coin_public_key: None,
         }
     }
 
@@ -97,9 +101,19 @@ impl<D: DB> ObservedContractState<D> {
         self.observation
     }
 
+    /// Configure the caller-selected execution identity used by ownPublicKey.
+    /// This is not wallet ownership authentication or funding authorization.
+    pub fn with_coin_public_key(mut self, key: crate::context::CoinPublicKey) -> Self {
+        self.coin_public_key = Some(key);
+        self
+    }
+
     pub fn circuit_context<Private>(&self, private_state: Private) -> CircuitContext<Private, D> {
         let mut context =
             CircuitContext::from_contract_state(private_state, self.address, &self.contract);
+        if let Some(key) = self.coin_public_key {
+            context = context.with_coin_public_key(key);
+        }
         context.query.call_context.com_indices = self.com_indices.clone();
         context.circuit_zswap.allocation = self.allocation.clone();
         if let crate::zswap::Allocation::OfferBound { start, .. }
@@ -119,6 +133,7 @@ pub struct OfferBackedObservedState<D: DB = DefaultDB> {
     zswap: midnight_zswap::ledger::State<D>,
     wallet_funding: Option<WalletFundingInputs<D>>,
     transients: Option<ContractTransientCoins<D>>,
+    placement: OfferPlacement,
 }
 
 /// How persistent output intents bind to the retained upstream offer.
@@ -136,6 +151,7 @@ pub struct OfferBindingOptions<D: DB = DefaultDB> {
     output_allocation: PersistentOutputAllocation,
     wallet_funding: Option<WalletFundingInputs<D>>,
     transients: Option<ContractTransientCoins<D>>,
+    placement: OfferPlacement,
 }
 impl<D: DB> Default for OfferBindingOptions<D> {
     fn default() -> Self {
@@ -143,10 +159,17 @@ impl<D: DB> Default for OfferBindingOptions<D> {
             output_allocation: PersistentOutputAllocation::ExactIntentOrder,
             wallet_funding: None,
             transients: None,
+            placement: OfferPlacement::Guaranteed,
         }
     }
 }
 impl<D: DB> OfferBindingOptions<D> {
+    /// Select one whole persistent offer's logical placement explicitly.
+    /// Fallible placement is canonical-only, without wallet funding or transients.
+    pub fn with_offer_placement(mut self, placement: OfferPlacement) -> Self {
+        self.placement = placement;
+        self
+    }
     pub fn with_output_allocation(mut self, policy: PersistentOutputAllocation) -> Self {
         self.output_allocation = policy;
         self
@@ -239,6 +262,14 @@ impl<D: DB> OfferBackedObservedState<D> {
         offer: Offer<ProofPreimage, D>,
         options: OfferBindingOptions<D>,
     ) -> Result<Self, crate::CompactError> {
+        options
+            .placement
+            .validate_offer(&offer, &options)
+            .map_err(|error| {
+                crate::CompactError::InvalidLedgerCell(format!(
+                    "offer placement rejected: {error:?}"
+                ))
+            })?;
         let wallet_funding = options.wallet_funding;
         let transients = options.transients;
         if let Some(selected) = &transients {
@@ -334,6 +365,7 @@ impl<D: DB> OfferBackedObservedState<D> {
             zswap: (*ledger.zswap).clone(),
             wallet_funding,
             transients,
+            placement: options.placement,
         })
     }
 
@@ -368,14 +400,19 @@ impl<D: DB> OfferBackedObservedState<D> {
                 .map(|call| OfferBoundPreparedCall {
                     call,
                     offer: self.offer.clone(),
+                    placement: self.placement,
                 });
         }
         self.reconcile(&call.recorded)
             .map_err(ObservedCallError::ZswapIntent)?;
         let prepared = call.prepare_inner(verifier, communication_commitment_rand, true)?;
+        self.placement
+            .validate_prototype(&prepared)
+            .map_err(ObservedCallError::ZswapIntent)?;
         Ok(OfferBoundPreparedCall {
             call: prepared,
             offer: self.offer.clone(),
+            placement: self.placement,
         })
     }
     fn reconcile<Private, Output>(
@@ -538,6 +575,9 @@ impl<D: DB> OfferBackedObservedState<D> {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ZswapIntentError {
     AllocationMismatch,
+    OfferPlacementUnsupported,
+    OfferSegmentMismatch,
+    OfferTranscriptPlacementMismatch,
     CanonicalEmptyPlan,
     OutputMismatch,
     InputMismatch,
@@ -559,6 +599,7 @@ pub enum ZswapIntentError {
 pub struct OfferBoundPreparedCall<D: DB = DefaultDB> {
     call: ContractCallPrototype<D>,
     offer: Offer<ProofPreimage, D>,
+    placement: OfferPlacement,
 }
 
 impl<D: DB> OfferBoundPreparedCall<D> {
@@ -574,12 +615,20 @@ impl<D: DB> OfferBoundPreparedCall<D> {
     ) -> Transaction<Signature, ProofPreimageMarker, PedersenRandomness, D> {
         let intent: Intent<Signature, ProofPreimageMarker, PedersenRandomness, D> =
             Intent::empty(rng, ttl).add_call::<ProofPreimage>(self.call);
-        Transaction::new(
-            network_id,
-            HashMap::new().insert(1_u16, intent),
-            Some(self.offer),
-            HashMap::new(),
-        )
+        match self.placement {
+            OfferPlacement::Guaranteed => Transaction::new(
+                network_id,
+                HashMap::new().insert(1_u16, intent),
+                Some(self.offer),
+                HashMap::new(),
+            ),
+            OfferPlacement::Fallible(segment) => Transaction::new(
+                network_id,
+                HashMap::new().insert(segment.get(), intent),
+                None,
+                HashMap::new().insert(segment.get(), self.offer),
+            ),
+        }
     }
 }
 
@@ -649,6 +698,7 @@ impl<'a, Private, Output, D: DB> RecordedCall<'a, Private, Output, D> {
 pub enum ObservedCallError {
     AddressMismatch,
     StateMismatch,
+    CoinPublicKeyMismatch,
     OfferMismatch,
     ZswapIntent(ZswapIntentError),
     MissingOperation(String),
@@ -664,6 +714,9 @@ impl fmt::Display for ObservedCallError {
             }
             Self::StateMismatch => {
                 formatter.write_str("recorded call initial state differs from observation")
+            }
+            Self::CoinPublicKeyMismatch => {
+                formatter.write_str("recorded execution coin key differs from observation")
             }
             Self::ZswapIntent(reason) => {
                 write!(formatter, "Zswap intent/offer mismatch: {reason:?}")
@@ -708,6 +761,11 @@ impl<'a, Private, Output: Into<AlignedValue>, D: DB> RecordedCall<'a, Private, O
         }
         if initial.state.get_ref() != self.observed.contract.data.get_ref() {
             return Err(ObservedCallError::StateMismatch);
+        }
+        if self.recorded.public.initial_coin_public_key()
+            != self.observed.coin_public_key.map(|key| key.0.0)
+        {
+            return Err(ObservedCallError::CoinPublicKeyMismatch);
         }
         let operation = self
             .observed
@@ -774,6 +832,7 @@ pub enum PrepareCallError {
     ReplayStateMismatch,
     Partition(String),
     EmptyTranscript,
+    CoinPublicKeyMismatch,
     UnboundZswapIntents,
     ZswapPlanMismatch,
     PartitionEffectsMismatch,
@@ -798,6 +857,9 @@ impl fmt::Display for PrepareCallError {
             Self::UnboundZswapIntents => formatter
                 .write_str("Zswap intent-bearing calls require exact offer-backed preparation"),
             Self::EmptyTranscript => formatter.write_str("recorded call has no ledger transcript"),
+            Self::CoinPublicKeyMismatch => {
+                formatter.write_str("execution coin key differs from sealed recording identity")
+            }
             Self::PartitionEffectsMismatch => {
                 formatter.write_str("partitioned call effects differ from replay")
             }
@@ -827,6 +889,12 @@ fn prepare_call_inner<Private, Output: Into<AlignedValue>, D: DB>(
 ) -> Result<ContractCallPrototype<D>, PrepareCallError> {
     if recorded.public.verify_ops().is_empty() {
         return Err(PrepareCallError::EmptyTranscript);
+    }
+    if recorded.public.initial_coin_public_key() != recorded.public.final_coin_public_key()
+        || recorded.public.final_coin_public_key()
+            != recorded.execution.context.own_coin_public_key().ok()
+    {
+        return Err(PrepareCallError::CoinPublicKeyMismatch);
     }
     if recorded.public.final_intents() != recorded.execution.context.circuit_zswap()
         || !recorded.public.initial_intents().is_empty()

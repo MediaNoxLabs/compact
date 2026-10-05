@@ -22,6 +22,7 @@ use crate::ir::{KernelClaimKind, ReturnPlan};
 mod field_observations;
 mod immediate_send;
 mod phase_reset;
+mod shielded_payout;
 mod terminal_returns;
 mod unit_actions;
 
@@ -43,12 +44,16 @@ enum CompositeDomain {
     ShieldedReceive,
     ShieldedSend,
     ImmediateShieldedSend,
+    ShieldedPayout,
     FieldObservations,
     TerminalReturns,
 }
 impl CompositeDomain {
     fn shielded_send(self) -> bool {
-        matches!(self, Self::ShieldedSend | Self::ImmediateShieldedSend)
+        matches!(
+            self,
+            Self::ShieldedSend | Self::ImmediateShieldedSend | Self::ShieldedPayout
+        )
     }
 
     fn values(self) -> bool {
@@ -59,6 +64,7 @@ impl CompositeDomain {
                 | Self::FieldObservations
                 | Self::ShieldedSend
                 | Self::ImmediateShieldedSend
+                | Self::ShieldedPayout
         )
     }
     fn intents(self) -> bool {
@@ -68,6 +74,7 @@ impl CompositeDomain {
                 | Self::ShieldedReceive
                 | Self::ShieldedSend
                 | Self::ImmediateShieldedSend
+                | Self::ShieldedPayout
         )
     }
 }
@@ -288,7 +295,9 @@ impl Plan<'_> {
                 self.expression(value, scope, steps)
             }
             Expr::Assert { condition, message }
-                if self.read_only_assertions || self.unit_actions =>
+                if self.read_only_assertions
+                    || self.unit_actions
+                    || self.composite_domain == CompositeDomain::ShieldedPayout =>
             {
                 let condition = self.expression(condition, scope, steps)?;
                 if condition.ty != Type::Boolean {
@@ -545,6 +554,11 @@ impl Plan<'_> {
             }
             Expr::WitnessCall { name, arguments } => {
                 let declaration = *self.witnesses.get(name.as_str())?;
+                if self.composite_domain == CompositeDomain::ShieldedPayout
+                    && declaration.result != (Type::Bytes { length: 32 })
+                {
+                    return None;
+                }
                 if arguments.len() != declaration.parameters.len()
                     || !(matches!(declaration.result, Type::Unit | Type::OpaqueBytes)
                         || recordable_cell_type(&declaration.result))
@@ -567,6 +581,21 @@ impl Plan<'_> {
                     ty: declaration.result.clone(),
                     value: syn::parse_quote!(#observed),
                 })
+            }
+            Expr::NativeWitnessCall {
+                builtin: builtin @ crate::ir::NativeWitnessBuiltin::OwnPublicKey,
+            } if self.composite_domain == CompositeDomain::ShieldedPayout => {
+                let ty = builtin.result_type();
+                let rust_ty = rust_type(&ty).ok()?;
+                let observed = self.fresh();
+                steps.push(
+                    syn::parse_quote!(let (frame, #observed) = frame.own_coin_public_key()?;),
+                );
+                self.bind(
+                    syn::parse_quote!(#rust_ty { bytes: runtime::FixedBytes::new(#observed) }),
+                    ty,
+                    steps,
+                )
             }
             Expr::Tuple { elements }
                 if self.context_query
@@ -751,6 +780,11 @@ impl Plan<'_> {
                 let LedgerFieldKind::Cell { ty } = &declaration.declaration else {
                     return None;
                 };
+                if self.composite_domain == CompositeDomain::ShieldedPayout
+                    && !shielded_payout::cell_type(ty)
+                {
+                    return None;
+                }
                 if self.effectful_field_cells && *ty != Type::Field {
                     return None;
                 }
@@ -758,6 +792,8 @@ impl Plan<'_> {
                     return None;
                 }
                 if !cell_type(ty)
+                    && !(self.composite_domain == CompositeDomain::ShieldedPayout
+                        && shielded_payout::cell_type(ty))
                     && !(self.unit_actions && unit_actions::value_type(ty))
                     && !(self.phase_reset && phase_reset::cell_type(ty))
                     && !(self.read_only_assertions && *ty == Type::Boolean)
@@ -2359,10 +2395,37 @@ fn shielded_send_value(
     circuits: &HashMap<&str, &StatefulCircuit>,
     visiting: &mut HashSet<String>,
 ) -> bool {
+    shielded_value(
+        value,
+        pure,
+        circuits,
+        visiting,
+        CompositeDomain::ShieldedSend,
+    )
+}
+
+fn shielded_value(
+    value: &Expr,
+    pure: &HashMap<&str, &PureCircuit>,
+    circuits: &HashMap<&str, &StatefulCircuit>,
+    visiting: &mut HashSet<String>,
+    domain: CompositeDomain,
+) -> bool {
     let visit = |part: &Expr, visiting: &mut HashSet<String>| {
-        shielded_send_value(part, pure, circuits, visiting)
+        shielded_value(part, pure, circuits, visiting, domain)
     };
     match value {
+        Expr::CellRead { .. } | Expr::NativeWitnessCall { .. }
+            if domain == CompositeDomain::ShieldedPayout =>
+        {
+            true
+        }
+        Expr::WitnessCall { arguments, .. } if domain == CompositeDomain::ShieldedPayout => {
+            arguments.iter().all(|value| visit(value, visiting))
+        }
+        Expr::Assert { condition, .. } if domain == CompositeDomain::ShieldedPayout => {
+            visit(condition, visiting)
+        }
         Expr::Parameter { .. }
         | Expr::Boolean { .. }
         | Expr::BytesLiteral { .. }
@@ -2552,6 +2615,16 @@ pub(super) fn lower_shielded_send<'a>(
             steps,
             result: result.value,
         })
+}
+
+pub(super) fn lower_shielded_payout<'a>(
+    circuit: &StatefulCircuit,
+    ledger: &'a HashMap<&'a str, &'a LedgerField>,
+    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,
+    pure: &'a HashMap<&'a str, &'a PureCircuit>,
+    circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
+) -> Option<TypedPlan> {
+    shielded_payout::lower(circuit, ledger, witnesses, pure, circuits)
 }
 
 pub(super) fn lower_phase_reset<'a>(

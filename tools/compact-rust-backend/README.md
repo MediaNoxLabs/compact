@@ -394,7 +394,7 @@ Compact spelling without warning in consumer builds.
 |---|---|---|
 | Compact compiler | Toolchain 0.31.133, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
 | Rust IR | Schema 20, private to this backend | The renderer rejects any other schema before writing `lib.rs`. Schema 20 adds typed Kernel mint/claim effects. Schema 19 adds single-owner typed effectful return plans. Schema 18 adds typed native circuit Zswap intents. Schema 16 adds native qualified-coin Cell writes. Schema 15 adds typed Counter less-than queries. Schema 14 adds typed qualified-coin Set insertion. Schema 13 adds an explicit typed Field-to-Bytes32 expression and nested Counter read; the cast uses midnight-zk's canonical 32-byte little-endian Field representation. Ledger, circuit, witness, constructor, and exported alias declarations carry optional Compact source locations for diagnostics. |
-| Generated code and Rust runtime | ABI 48 | Generated modules assert the ABI at Rust compile time. ABI 48 adds exact offer-bound native intent recording and sealed intent reconciliation. ABI 47 adds bounded recorded Kernel effects using canonical upstream programs. ABI 46 adds checked native wide unsigned addition. ABI 45 adds native Kernel shielded effects through upstream VM queries. ABI 44 adds recorded qualified-coin Cell writes through the shared native VM builder. ABI 43 adds typed circuit Zswap intents and locked observed allocation. ABI 42 adds native qualified-coin Cell writes; ABI 41 adds typed Counter less-than queries; ABI 40 adds recorded qualified-coin Set insertion, metered `kernel.self()`, and offer-backed observed calls. ABI 39 adds qualified-coin Set insertion using ledger coin and recipient types and the allocated commitment index. ABI 38 adds audited local-helper adoption for private witnesses, gas, and transcript while checking the public and Zswap context. ABI 37 adds a caller coin key for native `ownPublicKey()` and its private output; ABI 36 adds recorded plain Merkle root checks through typed slots; ABI 35 adds recorded Counter reset through typed slots; ABI 34 adds recorded direct plain/historic Merkle fullness reads; ABI 33 adds typed local plain/historic Merkle views with checked depth; ABI 32 adds List views; ABI 31 adds cell-valued Map views; ABI 30 adds Set views; ABI 29 adds Cell/Counter views; ABI 25–28 add physical List paths, chunked Map and Cell calls, and Cell-read scalar returns; ABI 21–24 add typed multi-argument observed calls and composite/chunked Set calls. The [runtime guide](../../runtime-rs/README.md) records earlier ABI changes. |
+| Generated code and Rust runtime | ABI 49 | Generated modules assert the ABI at Rust compile time. ABI 49 adds recorded native own-key outputs and sealed execution identity. ABI 48 adds exact offer-bound native intent recording and sealed intent reconciliation. ABI 47 adds bounded recorded Kernel effects using canonical upstream programs. ABI 46 adds checked native wide unsigned addition. ABI 45 adds native Kernel shielded effects through upstream VM queries. ABI 44 adds recorded qualified-coin Cell writes through the shared native VM builder. ABI 43 adds typed circuit Zswap intents and locked observed allocation. ABI 42 adds native qualified-coin Cell writes; ABI 41 adds typed Counter less-than queries; ABI 40 adds recorded qualified-coin Set insertion, metered `kernel.self()`, and offer-backed observed calls. ABI 39 adds qualified-coin Set insertion using ledger coin and recipient types and the allocated commitment index. ABI 38 adds audited local-helper adoption for private witnesses, gas, and transcript while checking the public and Zswap context. ABI 37 adds a caller coin key for native `ownPublicKey()` and its private output; ABI 36 adds recorded plain Merkle root checks through typed slots; ABI 35 adds recorded Counter reset through typed slots; ABI 34 adds recorded direct plain/historic Merkle fullness reads; ABI 33 adds typed local plain/historic Merkle views with checked depth; ABI 32 adds List views; ABI 31 adds cell-valued Map views; ABI 30 adds Set views; ABI 29 adds Cell/Counter views; ABI 25–28 add physical List paths, chunked Map and Cell calls, and Cell-read scalar returns; ABI 21–24 add typed multi-argument observed calls and composite/chunked Set calls. The [runtime guide](../../runtime-rs/README.md) records earlier ABI changes. |
 | Rust runtime source | Bundled runtime crates or an explicit shared source root | Cargo resolves the matching runtime and its pinned Midnight crates. |
 
 `--runtime-version` reports the TypeScript runtime version; the Rust runtime
@@ -1495,3 +1495,56 @@ ABI48/schema20 remain unchanged: policy options are additive, ordered events are
 private, and generated methods use existing runtime entry points. This closes
 this full immediate-send wrapper, not merge support or all original application
 recording gaps.
+
+
+### Original Coracle withdraw (ADR206)
+
+The original `withdraw()` now emits recorded and observed APIs using the shared
+typed planner and the bounded `ShieldedPayout` domain. Before this change its
+native API was available but complete recording was refused. The generated
+recorded API calls `frame.own_coin_public_key()?`, preserves the original
+declared/native witness order, reads only the audited enum/Bytes32/qualified
+coin Cells, and reuses the existing full-value shielded send leaves. It does
+not admit writes, reset helpers, Counters, Sets, or Merkle mutations. ABI49 is
+required by the new frame call; schema20 is unchanged.
+
+```rust,ignore
+let options = OfferBindingOptions::default()
+    .with_output_allocation(PersistentOutputAllocation::CanonicalOfferIndices)
+    .with_offer_placement(OfferPlacement::Fallible(NonZeroU16::new(1).unwrap()));
+let bound = OfferBackedObservedState::with_options(
+    observed.with_coin_public_key(recipient), &ledger, segment_one_offer, options)?;
+let recorded = ledger_contract::recorded::withdraw(
+    bound.observed().circuit_context(private), &witnesses)?;
+let call = RecordedCall::new(bound.observed(), recorded, "withdraw", ());
+let prepared = bound.prepare(call, verifier, Fr::from(0))?;
+```
+
+All 27 original TypeScript/native scenarios cover selected red/blue payout,
+dual authorization, phase/authentication rejection, missing execution key and
+witness/gas failure. Successful recorded results compare the complete state,
+effects, query replay, gas, raw intent order and eight private outputs.
+Default small Rust test threads overflow for the complete debug recording; the
+behavior harness uses an explicit 8 MiB worker and the proof runner its existing
+64 MiB worker. This is a measured host-stack requirement, not a circuit limit.
+
+The upstream partitioner places original withdraw wholly in its fallible
+transcript. Guaranteed offer placement therefore rejects its nullifier claims
+with `NullifiersNEClaimedNullifiers`, even when the call proof verifies. The
+explicit whole-fallible policy retains source placement and upstream proof tags
+instead of moving claims or changing VM operations. Dust fee funding is separate.
+Proof fixtures seed prior game/coin state offline; they do not prove a complete
+funded game lifecycle. `start` and `concede` retain their explicit recording gaps.
+
+The independently constructed segment-0 offer fails effect matching; moving an
+already-proven segment-1 offer into the guaranteed slot instead fails earlier
+with `Zswap(InvalidProof)`. These are distinct retained negative cases. Physical
+intent keys are nonzero: fee balancing adds a separate Dust-only intent at its
+own key, while logical application phase0 denotes guaranteed execution.
+
+Both original red and blue withdrawals pass default strict proof verification
+and ledger application with two real inputs/outputs and opposite normalized
+output orders. All original Cells remain unchanged and the third deposit stays
+unspent. Reapplication rejects an already-present nullifier. A changed public
+phase fails with `Transcript(Execution(ReadMismatch))`: fallible Zswap/contract
+state rolls back while guaranteed Dust and replay bookkeeping persist.

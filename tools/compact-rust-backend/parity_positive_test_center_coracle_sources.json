@@ -63,7 +63,8 @@
         "withdraw"
       ],
       "expected_recorded_circuits": [
-        "guess"
+        "guess",
+        "withdraw"
       ],
       "expected_recording_gaps": {
         "start": {
@@ -72,11 +73,6 @@
           "path": "return_value"
         },
         "concede": {
-          "code": "unsupported_return",
-          "ir_node": "StateReturn::Expression",
-          "path": "return_value"
-        },
-        "withdraw": {
           "code": "unsupported_return",
           "ir_node": "StateReturn::Expression",
           "path": "return_value"

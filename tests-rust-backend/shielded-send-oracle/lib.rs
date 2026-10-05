@@ -149,7 +149,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 48);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 49);
     pub(crate) fn some(
         value: crate::types::ShieldedCoinInfo,
     ) -> Result<crate::types::Maybe, runtime::CompactError> {
@@ -227,7 +227,7 @@ pub mod pure_circuits {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 48);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 49);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,

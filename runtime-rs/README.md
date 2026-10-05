@@ -7,7 +7,11 @@ queries. Generated code checks `RUST_RUNTIME_ABI` at compile time. A generated
 crate bundles matching runtime sources by default or points to one shared
 source root when compiled with `--rust-runtime-root`.
 
-The current runtime ABI is 48. It adds recorded native Zswap intent methods,
+The current runtime ABI is 49. It adds `RecordingFrame::own_coin_public_key`,
+retaining the native Bytes32 private output without a public query. Observed
+execution identity is explicit and sealed through preparation; it selects a
+recipient and does not authenticate wallet ownership. ABI 48 adds recorded
+native Zswap intent methods,
 sealed intent traces and exact authoritative offer reconciliation. Ordinary
 observations stay allocation-locked. Explicit offer options can select exact
 wallet funding inputs, canonical output indices, and same-contract guaranteed
@@ -213,3 +217,24 @@ mint-domain carriers reuse ledger8 types. Canonical shared VM programs update th
 ledger effects frame through QueryContext::query; they neither invent contract
 slots nor allocate coins or modify balances directly. Native effects alone do not
 establish transaction funding or satisfaction of claimed inputs/outputs.
+
+
+### Explicit whole-fallible offer placement (ADR206)
+
+Default offer placement remains guaranteed. A consumer can explicitly select
+`OfferPlacement::Fallible(NonZeroU16)` together with
+`PersistentOutputAllocation::CanonicalOfferIndices`. This mode requires a
+nonempty persistent offer and recorded intent plan, exact upstream input proof
+return vectors `[1, segment]` and output vectors `[segment]`, and a wholly
+fallible prepared public transcript. Wallet funding, transients, mixed
+transcript partitions, and additional shielded offers are outside this mode.
+The caller constructs or retargets the upstream offer before binding; the
+runtime retains it unchanged and places the call and sole offer at the selected
+nonzero segment. Canonical output indices retain source query/intent order.
+
+`ObservedContractState::with_coin_public_key(key)` sets the typed execution
+identity. Raw, observed, and offer-backed preparation reject replacement of
+the recorded initial/final identity through the public context. A key-only
+recording succeeds but preparation still returns `EmptyTranscript`; a missing
+key returns the existing native error. The key is a private transcript value,
+not a VM query or wallet ownership proof.

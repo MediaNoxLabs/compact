@@ -33,6 +33,8 @@ use crate::ledger::{self, CellValue, DB, DefaultDB, LedgerPath, QueryContext};
 
 /// The starting ledger context and the ordered VM program for one circuit.
 pub struct PublicTrace<D: DB = DefaultDB> {
+    initial_coin_public_key: Option<[u8; 32]>,
+    final_coin_public_key: Option<[u8; 32]>,
     initial_intents: crate::CircuitZswapPlan,
     final_intents: crate::CircuitZswapPlan,
     initial: QueryContext<D>,
@@ -40,6 +42,16 @@ pub struct PublicTrace<D: DB = DefaultDB> {
 }
 
 impl<D: DB> PublicTrace<D> {
+    /// Caller-selected execution identity at recording entry, not wallet authorization.
+    pub fn initial_coin_public_key(&self) -> Option<[u8; 32]> {
+        self.initial_coin_public_key
+    }
+
+    /// Sealed execution identity at recording completion.
+    pub fn final_coin_public_key(&self) -> Option<[u8; 32]> {
+        self.final_coin_public_key
+    }
+
     pub fn initial_intents(&self) -> &crate::CircuitZswapPlan {
         &self.initial_intents
     }
@@ -69,6 +81,7 @@ pub struct RecordedCircuitResult<Private, Output, D: DB = DefaultDB> {
 /// Records the VM instructions while executing a small supported circuit.
 pub struct RecordingFrame<Private, D: DB = DefaultDB> {
     context: CircuitContext<Private, D>,
+    initial_coin_public_key: Option<[u8; 32]>,
     initial_intents: crate::CircuitZswapPlan,
     initial: QueryContext<D>,
     verify_ops: Vec<Op<ResultModeVerify, D>>,
@@ -80,8 +93,10 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
     pub fn new(context: CircuitContext<Private, D>) -> Self {
         let initial = context.query.clone();
         let initial_intents = context.circuit_zswap().clone();
+        let initial_coin_public_key = context.own_coin_public_key().ok();
         Self {
             context,
+            initial_coin_public_key,
             initial_intents,
             initial,
             verify_ops: Vec::new(),
@@ -92,6 +107,14 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
 
     pub fn context(&self) -> &CircuitContext<Private, D> {
         &self.context
+    }
+
+    /// Read the configured execution coin key and record the native witness output.
+    /// This contributes neither a public query nor gas or private-state changes.
+    pub fn own_coin_public_key(mut self) -> Result<(Self, [u8; 32]), CompactError> {
+        let key = self.context.own_coin_public_key()?;
+        self.private_outputs.push(AlignedValue::from(key));
+        Ok((self, key))
     }
 
     /// Observe kernel.self() and retain the exact VM address read.
@@ -863,6 +886,7 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
 
     pub fn finish<Output>(self, output: Output) -> RecordedCircuitResult<Private, Output, D> {
         let final_intents = self.context.circuit_zswap().clone();
+        let final_coin_public_key = self.context.own_coin_public_key().ok();
         RecordedCircuitResult {
             execution: CircuitResult {
                 context: self.context,
@@ -871,6 +895,8 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
                 private_transcript_outputs: self.private_outputs,
             },
             public: PublicTrace {
+                initial_coin_public_key: self.initial_coin_public_key,
+                final_coin_public_key,
                 initial_intents: self.initial_intents,
                 final_intents,
                 initial: self.initial,

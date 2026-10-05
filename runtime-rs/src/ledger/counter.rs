@@ -17,12 +17,13 @@
 
 use super::{
     CompactError, LedgerPath, QueryContext, QueryResults, StateValue, TranscriptRejected,
-    constructor_cell, path_keys, read_cell,
+    constructor_cell, decode_last_read, path_keys, read_cell,
 };
 use midnight_base_crypto::cost_model::RunningCost;
+use midnight_base_crypto::fab::AlignedValue;
 use midnight_onchain_vm::cost_model::CostModel;
-use midnight_onchain_vm::ops::Op;
-use midnight_onchain_vm::result_mode::ResultModeVerify;
+use midnight_onchain_vm::ops::{Key, Op};
+use midnight_onchain_vm::result_mode::{ResultMode, ResultModeGather, ResultModeVerify};
 use midnight_storage::db::DB;
 
 pub fn constructor_counter<D: DB>() -> StateValue<D> {
@@ -31,6 +32,49 @@ pub fn constructor_counter<D: DB>() -> StateValue<D> {
 
 pub fn read_counter<D: DB>(state: &StateValue<D>) -> Result<u64, CompactError> {
     read_cell::<u64, D>(state)
+}
+
+/// Counter reads use a cached equality pop in Compact's generated VM program.
+pub(crate) fn query_counter_at_path<D: DB>(
+    context: &QueryContext<D>,
+    path: &[u8],
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<(QueryResults<ResultModeGather, D>, u64), CompactError> {
+    if path.is_empty() {
+        return Err(CompactError::InvalidLedgerCell("empty ledger path".into()));
+    }
+    let result = context
+        .query(
+            &counter_read_program::<ResultModeGather, D>(path, ()),
+            gas_limit,
+            cost_model,
+        )
+        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+    let decoded = decode_last_read::<u64, D>(&result)?;
+    Ok((result, decoded))
+}
+
+pub(crate) fn counter_read_program<M: ResultMode<D>, D: DB>(
+    path: &[u8],
+    read_result: M::ReadResult,
+) -> Vec<Op<M, D>> {
+    vec![
+        Op::Dup { n: 0 },
+        Op::Idx {
+            cached: false,
+            push_path: false,
+            path: path
+                .iter()
+                .map(|index| Key::Value(AlignedValue::from(*index)))
+                .collect::<Vec<_>>()
+                .into(),
+        },
+        Op::Popeq {
+            cached: true,
+            result: read_result,
+        },
+    ]
 }
 
 /// Run Compact Counter's increment program through ledger query execution.

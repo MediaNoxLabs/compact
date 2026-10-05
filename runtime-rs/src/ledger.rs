@@ -234,9 +234,9 @@ pub(crate) use collections::{
     set_insert_program, set_is_empty_program, set_member_program, set_remove_program,
     set_reset_program, set_size_program,
 };
-pub(crate) use counter::counter_program;
 pub use counter::{constructor_counter, decrement_counter, increment_counter, read_counter};
 pub(crate) use merkle::historic_check_root_verify_program;
+pub(crate) use counter::{counter_program, counter_read_program, query_counter_at_path};
 pub(crate) use merkle::is_full_program;
 pub(crate) use merkle::merkle_check_root_verify_program;
 pub(crate) use merkle::merkle_insert_program;

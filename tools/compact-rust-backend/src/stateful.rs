@@ -24,8 +24,9 @@ use crate::ir::{
 };
 use crate::{
     RenderError, UnsignedMaximum, coerce_expression, condition_needs_statement, discard_expression,
-    expression_with_calls, ident, ledger_path_expr, list_head_result_type, map_slot_types,
-    public_parameter_idents, retained_value, rust_type, unsigned_cast_syntax, unsigned_maximum,
+    expression_with_calls, field_to_bytes_32_syntax, ident, ledger_path_expr,
+    list_head_result_type, map_slot_types, public_parameter_idents, retained_value, rust_type,
+    unsigned_cast_syntax, unsigned_maximum,
 };
 
 #[expect(
@@ -91,6 +92,35 @@ pub(crate) fn render_state_expression(
             statements.push(syn::parse_quote!(total_cost += #step.gas_cost;));
             *query_effect = true;
             Ok((syn::parse_quote!(#step.result), ty.clone(), false))
+        }
+        Expr::CounterRead { field, index } => {
+            let declaration = ledger_fields
+                .get(field.as_str())
+                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+            if declaration.declaration != LedgerFieldKind::Counter || declaration.index != *index {
+                return Err(RenderError::UnknownLedgerField(field.clone()));
+            }
+            let step = syn::Ident::new(
+                &format!("__compact_query_{}", *next_temp),
+                Span::call_site(),
+            );
+            *next_temp += 1;
+            let slot = ident(&declaration.id)?;
+            statements.push(syn::parse_quote!(
+                let #step = crate::ledger_slots::#slot.read(context)?;
+            ));
+            statements.push(syn::parse_quote!(context = #step.context;));
+            statements.push(syn::parse_quote!(total_cost += #step.gas_cost;));
+            *query_effect = true;
+            let max = syn::LitInt::new(&u64::MAX.to_string(), Span::call_site());
+            Ok((
+                syn::parse_quote!(runtime::BoundedUint::<#max>::new(#step.result as u128)
+                    .expect("ledger Counter fits Uint<64>")),
+                Type::Unsigned {
+                    max: u64::MAX.to_string(),
+                },
+                false,
+            ))
         }
         Expr::StructField {
             value,
@@ -1105,6 +1135,30 @@ pub(crate) fn render_state_expression(
             };
             Ok((rendered, Type::Field, effect))
         }
+        Expr::FieldToBytes32 { value } => {
+            let (rendered, actual, effect) = render_state_expression(
+                value,
+                parameters,
+                witnesses,
+                statements,
+                next_temp,
+                circuits,
+                stateful_circuits,
+                ledger_fields,
+                query_effect,
+            )?;
+            if actual != Type::Field {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Field,
+                    actual,
+                });
+            }
+            Ok((
+                field_to_bytes_32_syntax(rendered),
+                Type::Bytes { length: 32 },
+                effect,
+            ))
+        }
         Expr::UnsignedCast { max, value } => {
             unsigned_maximum(max)?;
             let (rendered, actual, effect) = render_state_expression(
@@ -1676,6 +1730,7 @@ fn expression_contains(expression: &Expr, predicate: &impl Fn(&Expr) -> bool) ->
         Expr::Sequence { steps, value } => steps.iter().any(visit) || visit(value),
         Expr::UnsignedCast { value, .. }
         | Expr::FieldCast { value }
+        | Expr::FieldToBytes32 { value }
         | Expr::Coerce { value, .. }
         | Expr::StructField { value, .. }
         | Expr::TupleIndex { value, .. }
@@ -1731,6 +1786,7 @@ fn expression_contains(expression: &Expr, predicate: &impl Fn(&Expr) -> bool) ->
         | Expr::EnumVariant { .. }
         | Expr::Parameter { .. }
         | Expr::CellRead { .. }
+        | Expr::CounterRead { .. }
         | Expr::KernelSelf { .. }
         | Expr::SetSize { .. }
         | Expr::SetIsEmpty { .. }

@@ -6383,6 +6383,38 @@ fn render_recorded_item(
             }
             (Vec::new(), syn::parse_quote!(()))
         }
+        StateReturn::Expression {
+            value: Expr::FieldToBytes32 { value },
+        } if circuit.actions.is_empty() && circuit.result == (Type::Bytes { length: 32 }) => {
+            let Expr::FieldCast { value } = value.as_ref() else {
+                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
+                    &circuit.return_value,
+                )));
+            };
+            let Expr::CounterRead { field, index } = value.as_ref() else {
+                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
+                    &circuit.return_value,
+                )));
+            };
+            let declaration = ledger_fields
+                .get(field.as_str())
+                .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+            if declaration.declaration != LedgerFieldKind::Counter || declaration.index != *index {
+                return Ok(RecordingOutcome::Unsupported(RecordingGap::returned(
+                    &circuit.return_value,
+                )));
+            }
+            let slot = ident(field)?;
+            let converted =
+                crate::field_to_bytes_32_syntax(syn::parse_quote!(runtime::Field::from(observed)));
+            (
+                vec![syn::parse_quote!(
+                    let (frame, observed): (_, u64) =
+                        crate::ledger_slots::#slot.record_read(frame)?;
+                )],
+                converted,
+            )
+        }
         StateReturn::CounterRead { field, index }
             if circuit.result
                 == (Type::Unsigned {

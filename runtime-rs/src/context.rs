@@ -1068,6 +1068,21 @@ impl<Private, D: DB> CircuitContext<Private, D> {
         })
     }
 
+    pub(crate) fn read_counter_at_path(
+        mut self,
+        path: &[u8],
+    ) -> Result<CircuitResult<Private, u64, D>, CompactError> {
+        let (result, value) =
+            ledger::query_counter_at_path(&self.query, path, self.gas_limit, &self.cost_model)?;
+        self.query = result.context;
+        Ok(CircuitResult {
+            context: self,
+            result: value,
+            gas_cost: result.gas_cost,
+            private_transcript_outputs: Vec::new(),
+        })
+    }
+
     pub fn write_cell<T: CellValue>(
         self,
         path: impl Into<ledger::LedgerPath>,

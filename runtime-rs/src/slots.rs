@@ -524,7 +524,7 @@ impl CounterSlot {
         self,
         context: CircuitContext<Private, D>,
     ) -> Result<CircuitResult<Private, u64, D>, CompactError> {
-        context.read_cell_at_path(self.path)
+        context.read_counter_at_path(self.path)
     }
 
     pub fn increment<Private, D: DB>(
@@ -554,7 +554,7 @@ impl CounterSlot {
         self,
         frame: RecordingFrame<Private, D>,
     ) -> Result<(RecordingFrame<Private, D>, u64), CompactError> {
-        frame.read_cell(self.path)
+        frame.read_counter(self.path)
     }
 
     pub fn record_increment<Private, D: DB>(

@@ -2122,6 +2122,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/field_to_bytes32_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "encode",
+    "signature": "export circuit encode(value: Field): Bytes<32>",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/opaque_string_map_query_oracle.compact",
     "module_path": [],
     "kind": "circuit",
@@ -5138,6 +5146,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/field_to_bytes32_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "snapshot",
+    "signature": "export circuit snapshot(): Bytes<32>",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/literal_coercion_oracle.compact",
     "module_path": [],
     "kind": "circuit",
@@ -6499,6 +6515,14 @@
   },
   {
     "source": "examples/rust_backend/default_vector.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor()",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/field_to_bytes32_oracle.compact",
     "module_path": [],
     "kind": "constructor",
     "name": "constructor",

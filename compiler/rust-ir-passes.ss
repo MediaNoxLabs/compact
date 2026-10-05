@@ -303,6 +303,11 @@
              [(ttuple ,src^ ,type* ...)
               (typed-expression-ir expr type src)]
              [else (source-errorf src "Rust backend does not yet support this cast")])]
+          [(field->bytes ,src ,len ,expr)
+           (unless (= len 32)
+             (source-errorf src "Rust backend supports Field-to-Bytes<32> casts only"))
+           (object (cons "kind" "field_to_bytes32")
+                   (cons "value" (expression-ir expr src)))]
           [(downcast-unsigned ,src ,nat? ,nat ,expr)
            (unless nat?
              (source-errorf src "Rust backend does not yet support Field-to-Uint downcasts"))
@@ -1259,6 +1264,14 @@
            (typed-expression-ir value-expr expected-type src)]
           [(safe-cast ,src ,type ,type^ ,expr)
            (nanopass-case (Lnodisclose Type) type
+             [(tfield ,src^)
+              (if (maybe-nonnegative-integer-literal expr src)
+                  (expression-ir value-expr owner-src)
+                  (nanopass-case (Lnodisclose Type) type^
+                    [(tunsigned ,src1 ,nat)
+                     (object (cons "kind" "field_cast")
+                             (cons "value" (stateful-typed-expression-ir expr type^ src witness-ids)))]
+                    [else (source-errorf src "Rust backend does not yet support this Field cast")]))]
              [(tboolean ,src^) (stateful-expression-ir expr src witness-ids)]
              [(tunsigned ,src^ ,nat)
               (let ([literal (maybe-nonnegative-integer-literal expr src)])
@@ -1370,6 +1383,10 @@
                  (object (cons "kind" "cell_read")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
                          (cons "index" (car path-elt*)))]
+                [(and (eq? adt-name 'Counter) (eq? ledger-op 'read) (null? expr*))
+                 (object (cons "kind" "counter_read")
+                         (cons "field" (symbol->string (id-sym ledger-field-name)))
+                         (cons "index" (car path-elt*)))]
                 [(and (eq? adt-name 'Set) (eq? ledger-op 'member) (= (length expr*) 1))
                  (object (cons "kind" "set_member")
                          (cons "field" (symbol->string (id-sym ledger-field-name)))
@@ -1422,6 +1439,14 @@
                 [else (source-errorf src "Rust backend does not yet support this nested ledger query: ~a.~a" adt-name ledger-op)])])]
           [(safe-cast ,src ,type ,type^ ,expr)
            (nanopass-case (Lnodisclose Type) type
+             [(tfield ,src^)
+              (if (maybe-nonnegative-integer-literal expr src)
+                  (expression-ir value-expr owner-src)
+                  (nanopass-case (Lnodisclose Type) type^
+                    [(tunsigned ,src1 ,nat)
+                     (object (cons "kind" "field_cast")
+                             (cons "value" (stateful-typed-expression-ir expr type^ src witness-ids)))]
+                    [else (source-errorf src "Rust backend does not yet support this Field cast")]))]
              [(tboolean ,src^) (stateful-expression-ir expr src witness-ids)]
              [(tunsigned ,src^ ,nat)
               (if (maybe-nonnegative-integer-literal expr src)
@@ -1430,6 +1455,11 @@
                           (cons "max" (number->string nat))
                           (cons "value" (stateful-expression-ir expr src witness-ids))))]
              [else (expression-ir value-expr owner-src)])]
+          [(field->bytes ,src ,len ,expr)
+           (unless (= len 32)
+             (source-errorf src "Rust backend supports Field-to-Bytes<32> casts only"))
+           (object (cons "kind" "field_to_bytes32")
+                   (cons "value" (stateful-expression-ir expr src witness-ids)))]
           [(downcast-unsigned ,src ,nat? ,nat ,expr)
            (unless nat?
              (source-errorf src "Rust backend does not yet support Field-to-Uint downcasts"))
@@ -1579,6 +1609,9 @@
            (object (cons "kind" "expression")
                    (cons "value" (stateful-expression-ir return-expr src witness-ids)))]
           [(safe-cast ,src ,type ,type^ ,expr)
+           (object (cons "kind" "expression")
+                   (cons "value" (stateful-expression-ir return-expr src witness-ids)))]
+          [(field->bytes ,src ,len ,expr)
            (object (cons "kind" "expression")
                    (cons "value" (stateful-expression-ir return-expr src witness-ids)))]
           [(downcast-unsigned ,src ,nat? ,nat ,expr)
@@ -2079,7 +2112,7 @@
            (source-errorf src "Rust backend found multiple constructors"))
          (print-json
            (get-target-port 'rust.ir.json)
-           (append (object (cons "schema_version" 12)
+           (append (object (cons "schema_version" 13)
                    (cons "type_aliases"
                          (list->vector (fold-right type-alias-ir '() pelt*)))
                    (cons "ledger_fields"

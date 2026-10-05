@@ -34,6 +34,7 @@ mod asset_writable;
 mod boolean_pair_assert;
 mod closed_pure_field;
 mod field_pair_hash;
+mod field_to_bytes32;
 mod guarded_recording;
 mod impure_field_helper;
 mod inline_type_scope;
@@ -1815,6 +1816,23 @@ fn run() -> Result<(), Box<dyn Error>> {
             Ok(Ok(())) => Ok(()),
             Ok(Err(error)) => Err(error.into()),
             Err(_) => Err("root-Let proof thread panicked".into()),
+        };
+    }
+    if first.as_deref() == Some(OsStr::new("--field-to-bytes32")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --field-to-bytes32 <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err("usage: compact-rust-proof-smoke --field-to-bytes32 <proof-output>".into());
+        }
+        let proof = std::thread::Builder::new()
+            .name("field-to-bytes32-proof".into())
+            .stack_size(64 * 1024 * 1024)
+            .spawn(move || field_to_bytes32::run(Path::new(&root)).map_err(|e| e.to_string()))?;
+        return match proof.join() {
+            Ok(Ok(())) => Ok(()),
+            Ok(Err(error)) => Err(error.into()),
+            Err(_) => Err("Field-to-Bytes32 proof thread panicked".into()),
         };
     }
     if first.as_deref() == Some(OsStr::new("--pair-hash-cell")) {

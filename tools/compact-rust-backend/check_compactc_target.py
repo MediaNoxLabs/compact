@@ -82,6 +82,7 @@ LIST_SHAPES_SOURCE = ROOT / "examples/rust_backend/witness_list_shapes.compact"
 NESTED_COUNTER_SOURCE = ROOT / "examples/rust_backend/stateful_circuit_call.compact"
 NESTED_WITNESS_SOURCE = ROOT / "examples/rust_backend/nested_witness_call_oracle.compact"
 ALIAS_SOURCE = ROOT / "examples/rust_backend/aliases_oracle.compact"
+FIELD_TO_BYTES32_SOURCE = ROOT / "examples/rust_backend/field_to_bytes32_oracle.compact"
 
 
 def run(*arguments: str, cwd: Path = ROOT, env: dict[str, str] | None = None) -> None:
@@ -1083,6 +1084,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--consumer", action="store_true", help="build and run a separate consumer")
     parser.add_argument("--proof", action="store_true", help="generate ZKIR and proving keys")
+    parser.add_argument("--field-to-bytes32", action="store_true",
+                        help="run the focused explicit Field-to-Bytes<32> source gate")
     args = parser.parse_args()
     # Captured Rust errors are asserted below; runner color settings must not split their text.
     os.environ["CARGO_TERM_COLOR"] = "never"
@@ -1092,6 +1095,39 @@ def main() -> None:
     compiler = os.environ.get("COMPACTC", "compactc")
     with tempfile.TemporaryDirectory(prefix="compactc-target-") as temporary:
         base = Path(temporary)
+        if args.field_to_bytes32:
+            output = base / "field-to-bytes32"
+            command = [compiler, "--target", "rust"]
+            command.append("--rust-require-recording")
+            if not args.proof:
+                command.append("--skip-zk")
+            run(*command, str(FIELD_TO_BYTES32_SOURCE), str(output))
+            ir = json.loads((output / "contract/compact-rust-ir.json").read_text())
+            assert ir["schema_version"] == 13
+            assert [(row["name"], row["body"]["kind"])
+                    for row in ir["circuits"]] == [("encode", "field_to_bytes32")]
+            assert [(row["name"], row["return_value"]["value"]["kind"])
+                    for row in ir["stateful_circuits"]] == [("snapshot", "field_to_bytes32")]
+            capabilities = json.loads((output / "contract/rust-capabilities.json").read_text())
+            assert [(row["name"], row["proof_required"], row["recorded"], row["observed_call"])
+                    for row in capabilities["circuits"]] == [
+                ("snapshot", True, True, True)]
+            if args.proof:
+                for extension in ("prover", "verifier"):
+                    assert (output / "keys" / f"snapshot.{extension}").is_file()
+                for extension in ("zkir", "bzkir"):
+                    assert (output / "zkir" / f"snapshot.{extension}").is_file()
+            rejected_source = base / "unsupported-byte-width.compact"
+            rejected_source.write_text("export circuit encode(value: Field): Bytes<31> { return value as Bytes<31>; }\n")
+            rejected = subprocess.run(
+                [compiler, "--target", "rust", "--skip-zk", str(rejected_source),
+                 str(base / "unsupported-byte-width")],
+                cwd=ROOT, capture_output=True, text=True,
+            )
+            assert rejected.returncode != 0
+            assert "Field-to-Bytes<32> casts only" in rejected.stderr
+            print("field-to-bytes32 target gate passed")
+            return
         ts, rust, both, pure = (base / name for name in ("ts", "rust", "both", "pure"))
         run(compiler, "--skip-zk", str(SOURCE), str(ts))
         assert (ts / "contract/index.js").is_file()
@@ -1108,7 +1144,7 @@ def main() -> None:
         assert all(c["proof_required"] is True and c["recording_status"] == "available"
                    for c in capabilities["circuits"])
         rust_ir = json.loads((rust / "contract/compact-rust-ir.json").read_text())
-        assert rust_ir["schema_version"] == 12
+        assert rust_ir["schema_version"] == 13
         native_output = base / "native-own-public-key"
         run(compiler, "--target", "rust", "--skip-zk", str(PM_19252_SOURCE), str(native_output))
         native_contract = native_output / "contract"
@@ -1136,7 +1172,7 @@ def main() -> None:
             str(native_value_output))
         native_value_contract = native_value_output / "contract"
         native_value_ir = json.loads((native_value_contract / "compact-rust-ir.json").read_text())
-        assert native_value_ir["schema_version"] == 12
+        assert native_value_ir["schema_version"] == 13
         assert native_value_ir["witnesses"] == []
         assert [(c["name"], c["return_value"]["value"]["kind"])
                 for c in native_value_ir["stateful_circuits"]] == [
@@ -1171,7 +1207,7 @@ def main() -> None:
             output = base / f"source-{name}"
             run(compiler, "--target", "rust", "--skip-zk", str(source), str(output))
             emitted = json.loads((output / "contract/compact-rust-ir.json").read_text())
-            assert emitted["schema_version"] == 12
+            assert emitted["schema_version"] == 13
             owners = emitted[key]
             if isinstance(owners, dict):
                 owners = [owners]

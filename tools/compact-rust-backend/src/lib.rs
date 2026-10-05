@@ -481,6 +481,14 @@ fn wide_uint_type(high: u128, low: u128) -> syn::Type {
     syn::parse_quote!(runtime::WideUint<#high, #low>)
 }
 
+pub(crate) fn field_to_bytes_32_syntax(value: syn::Expr) -> syn::Expr {
+    // Compact's Field-to-Bytes cast is zero-padded little endian. The pinned
+    // midnight-zk Field has a canonical 32-byte representation.
+    syn::parse_quote!(runtime::FixedBytes::<32>::new(
+        (#value).as_le_bytes().try_into().expect("canonical Field is 32 bytes")
+    ))
+}
+
 pub(crate) fn unsigned_cast_syntax(
     value: syn::Expr,
     source_max: &str,
@@ -773,9 +781,9 @@ fn collect_expression_types(
             collect_expression_types(value, structs, enums)?;
             collect_expression_types(opening, structs, enums)?;
         }
-        Expr::UnsignedCast { value, .. } | Expr::FieldCast { value } => {
-            collect_expression_types(value, structs, enums)?
-        }
+        Expr::UnsignedCast { value, .. }
+        | Expr::FieldCast { value }
+        | Expr::FieldToBytes32 { value } => collect_expression_types(value, structs, enums)?,
         Expr::Coerce { value, ty } => {
             collect_expression_types(value, structs, enums)?;
             collect_named_types(ty, structs, enums)?;
@@ -813,7 +821,8 @@ fn collect_expression_types(
         | Expr::MapIsEmpty { .. }
         | Expr::ListLength { .. }
         | Expr::ListIsEmpty { .. }
-        | Expr::CellRead { .. } => {}
+        | Expr::CellRead { .. }
+        | Expr::CounterRead { .. } => {}
     }
     Ok(())
 }
@@ -2033,6 +2042,7 @@ fn expression_with_calls(
         | Expr::ListIsEmpty { .. }
         | Expr::ListHead { .. }
         | Expr::CellRead { .. }
+        | Expr::CounterRead { .. }
         | Expr::KernelSelf { .. } => Err(RenderError::EffectfulExpression),
         Expr::FieldCast { value } => {
             let (value, actual) = expression_with_calls(value, parameters, circuits)?;
@@ -2046,6 +2056,16 @@ fn expression_with_calls(
                 UnsignedMaximum::Wide { .. } => syn::parse_quote!((#value).as_field()),
             };
             Ok((rendered, Type::Field))
+        }
+        Expr::FieldToBytes32 { value } => {
+            let (value, actual) = expression_with_calls(value, parameters, circuits)?;
+            if actual != Type::Field {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Field,
+                    actual,
+                });
+            }
+            Ok((field_to_bytes_32_syntax(value), Type::Bytes { length: 32 }))
         }
         Expr::Coerce { value, ty } => {
             let (value, actual) = expression_with_calls(value, parameters, circuits)?;

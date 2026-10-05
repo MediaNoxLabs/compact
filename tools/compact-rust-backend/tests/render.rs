@@ -627,7 +627,7 @@ fn recorded_pair_hash_bindings_require_closed_typed_field_literals() {
 #[test]
 fn opaque_string_map_recording_requires_closed_field_lookup_sequence() {
     let mut contract: Contract =
-        serde_json::from_str(include_str!("opaque-string-map-schema12-ir.json")).unwrap();
+        serde_json::from_str(include_str!("opaque-string-map-schema13-ir.json")).unwrap();
     contract.schema_version = SCHEMA_VERSION;
     let statuses = |contract: &Contract| {
         render_with_capabilities(contract)
@@ -676,7 +676,7 @@ fn opaque_string_map_recording_requires_closed_field_lookup_sequence() {
 #[test]
 fn asset_removal_recording_requires_scoped_opaque_key_and_exact_order() {
     let mut contract: Contract =
-        serde_json::from_str(include_str!("asset-removal-schema12-ir.json")).unwrap();
+        serde_json::from_str(include_str!("asset-removal-schema13-ir.json")).unwrap();
     contract.schema_version = SCHEMA_VERSION;
     let recorded = |contract: &Contract| {
         let rendered = render_with_capabilities(contract).unwrap();
@@ -845,7 +845,7 @@ fn guarded_struct_map_read_requires_typed_lookup_and_closed_freshness_guard() {
 #[test]
 fn opaque_string_set_recording_requires_closed_typed_operations() {
     let mut contract: Contract =
-        serde_json::from_str(include_str!("opaque-string-set-schema12-ir.json")).unwrap();
+        serde_json::from_str(include_str!("opaque-string-set-schema13-ir.json")).unwrap();
     contract.schema_version = SCHEMA_VERSION;
     let statuses = |contract: &Contract| {
         render_with_capabilities(contract)
@@ -885,7 +885,7 @@ fn opaque_string_set_recording_requires_closed_typed_operations() {
 #[test]
 fn welcome_organizer_recording_requires_the_closed_witness_hash_guard() {
     let mut contract: Contract =
-        serde_json::from_str(include_str!("welcome-organizer-schema12-ir.json")).unwrap();
+        serde_json::from_str(include_str!("welcome-organizer-schema13-ir.json")).unwrap();
     contract.schema_version = SCHEMA_VERSION;
     let statuses = |contract: &Contract| {
         let rendered = render_with_capabilities(contract).unwrap();
@@ -940,7 +940,7 @@ fn welcome_organizer_recording_requires_the_closed_witness_hash_guard() {
         .find(|circuit| circuit.name == "public_key")
         .unwrap();
     let original: Contract =
-        serde_json::from_str(include_str!("welcome-organizer-schema12-ir.json")).unwrap();
+        serde_json::from_str(include_str!("welcome-organizer-schema13-ir.json")).unwrap();
     hash.body = original
         .circuits
         .iter()
@@ -986,7 +986,7 @@ fn welcome_organizer_recording_requires_the_closed_witness_hash_guard() {
 
 fn identity(result: Type, body: Expr) -> Contract {
     Contract {
-        schema_version: 12,
+        schema_version: SCHEMA_VERSION,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -1519,7 +1519,7 @@ fn opaque_set_check_in_records_only_typed_parameter_and_unit_witness() {
         name: "participant".into(),
     };
     let mut contract = Contract {
-        schema_version: 12,
+        schema_version: SCHEMA_VERSION,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![WitnessDeclaration {
@@ -1916,7 +1916,7 @@ fn closed_ternary_struct_member_records_only_literal_field_values() {
 #[test]
 fn native_own_public_key_is_a_private_effect_without_a_user_witness() {
     let contract = Contract {
-        schema_version: 12,
+        schema_version: SCHEMA_VERSION,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -1969,7 +1969,7 @@ fn native_private_output_flows_through_a_stateful_caller() {
         }],
     };
     let contract = Contract {
-        schema_version: 12,
+        schema_version: SCHEMA_VERSION,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -1989,7 +1989,7 @@ fn native_public_key_expression_retains_value_and_private_effect() {
         builtin: NativeWitnessBuiltin::OwnPublicKey,
     };
     let contract = Contract {
-        schema_version: 12,
+        schema_version: SCHEMA_VERSION,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -4830,6 +4830,74 @@ fn field_cast_requires_an_unsigned_operand() {
 }
 
 #[test]
+fn explicit_field_to_bytes32_checks_operand_and_records_only_typed_counter_read() {
+    let mut pure = identity(
+        Type::Bytes { length: 32 },
+        Expr::FieldToBytes32 {
+            value: Box::new(Expr::Parameter {
+                name: "value".into(),
+            }),
+        },
+    );
+    let source = render(&pure).unwrap();
+    assert!(source.contains("as_le_bytes()"));
+    assert!(source.contains("runtime::FixedBytes"));
+    pure.circuits[0].body = Expr::FieldToBytes32 {
+        value: Box::new(Expr::Boolean { value: true }),
+    };
+    assert_eq!(
+        render(&pure),
+        Err(RenderError::TypeMismatch {
+            expected: Type::Field,
+            actual: Type::Boolean,
+        })
+    );
+
+    let mut stateful = Contract {
+        schema_version: SCHEMA_VERSION,
+        type_aliases: vec![],
+        constructor: None,
+        witnesses: vec![],
+        ledger_fields: vec![LedgerField {
+            source: None,
+            id: "instance".into(),
+            index: 0,
+            path: vec![],
+            declaration: LedgerFieldKind::Counter,
+        }],
+        circuits: vec![],
+        stateful_circuits: vec![StatefulCircuit {
+            source: None,
+            name: "snapshot".into(),
+            internal: false,
+            parameters: vec![],
+            actions: vec![],
+            result: Type::Bytes { length: 32 },
+            return_value: StateReturn::Expression {
+                value: Expr::FieldToBytes32 {
+                    value: Box::new(Expr::FieldCast {
+                        value: Box::new(Expr::CounterRead {
+                            field: "instance".into(),
+                            index: 0,
+                        }),
+                    }),
+                },
+            },
+        }],
+    };
+    let rendered = render_with_capabilities(&stateful).unwrap();
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.capabilities.circuits[0].observed_call);
+    assert!(rendered.source.contains("record_read(frame)?"));
+
+    stateful.ledger_fields[0].declaration = LedgerFieldKind::Cell { ty: Type::Field };
+    assert_eq!(
+        render(&stateful),
+        Err(RenderError::UnknownLedgerField("instance".into()))
+    );
+}
+
+#[test]
 fn emits_a_pure_field_circuit_as_parseable_rust() {
     let contract = identity(
         Type::Field,
@@ -4938,6 +5006,8 @@ fn rejects_bad_schema_and_unknown_references() {
     contract.schema_version = 11;
     assert_eq!(render(&contract), Err(RenderError::SchemaVersion(11)));
     contract.schema_version = 12;
+    assert_eq!(render(&contract), Err(RenderError::SchemaVersion(12)));
+    contract.schema_version = SCHEMA_VERSION;
     contract.circuits[0].body = Expr::Parameter {
         name: "missing".into(),
     };
@@ -5281,7 +5351,7 @@ fn rejects_noncanonical_or_unsupported_unsigned_maxima() {
         "452312848583266388373324160190187140051835877600158453279131187530910662656",
     ] {
         let contract = Contract {
-            schema_version: 12,
+            schema_version: SCHEMA_VERSION,
             type_aliases: vec![],
             constructor: None,
             witnesses: vec![],
@@ -5320,7 +5390,7 @@ fn unknown_json_fields_are_rejected() {
 #[test]
 fn witness_calls_require_a_declared_witness_and_matching_signature() {
     let mut contract = Contract {
-        schema_version: 12,
+        schema_version: SCHEMA_VERSION,
         type_aliases: vec![],
         constructor: None,
         ledger_fields: vec![],
@@ -5388,7 +5458,7 @@ fn witness_calls_require_a_declared_witness_and_matching_signature() {
 #[test]
 fn witness_cell_and_counter_getters_use_declared_composite_slots() {
     let contract = Contract {
-        schema_version: 12,
+        schema_version: SCHEMA_VERSION,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![WitnessDeclaration {
@@ -5791,7 +5861,7 @@ fn recorded_field_returning_helper_is_shared_across_callers() {
 #[test]
 fn state_action_must_reference_the_declared_ledger_field_and_index() {
     let mut contract = Contract {
-        schema_version: 12,
+        schema_version: SCHEMA_VERSION,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -5911,7 +5981,7 @@ fn state_action_must_reference_the_declared_ledger_field_and_index() {
 #[test]
 fn nested_call_exposes_a_trace_only_when_every_step_is_supported() {
     let mut contract = Contract {
-        schema_version: 12,
+        schema_version: SCHEMA_VERSION,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -5971,7 +6041,7 @@ fn nested_call_exposes_a_trace_only_when_every_step_is_supported() {
 #[test]
 fn closed_pure_field_call_records_let_value_without_admitting_hashes() {
     let mut contract = Contract {
-        schema_version: 12,
+        schema_version: SCHEMA_VERSION,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -6094,7 +6164,7 @@ fn closed_field_pair_hash_call_records_typed_bridge_without_admitting_other_hash
         ],
     };
     let mut contract = Contract {
-        schema_version: 12,
+        schema_version: SCHEMA_VERSION,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -6212,7 +6282,7 @@ fn typed_pair_hash_call_records_shared_unit_helper_and_conditional_caller() {
         arguments: vec![argument],
     };
     let mut contract = Contract {
-        schema_version: 12,
+        schema_version: SCHEMA_VERSION,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -6335,7 +6405,7 @@ fn typed_pair_hash_call_records_shared_unit_helper_and_conditional_caller() {
 #[test]
 fn unsupported_pure_call_and_supported_field_arithmetic_have_exact_capabilities() {
     let mut contract = Contract {
-        schema_version: 12,
+        schema_version: SCHEMA_VERSION,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -6470,7 +6540,7 @@ fn unsupported_pure_call_and_supported_field_arithmetic_have_exact_capabilities(
 #[test]
 fn standalone_unit_witness_is_recorded_only_with_its_exact_signature() {
     let mut contract = Contract {
-        schema_version: 12,
+        schema_version: SCHEMA_VERSION,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![WitnessDeclaration {
@@ -6547,7 +6617,7 @@ fn standalone_unit_witness_is_recorded_only_with_its_exact_signature() {
 #[test]
 fn standalone_field_witness_records_typed_argument_but_rejects_nested_effects() {
     let mut contract = Contract {
-        schema_version: 12,
+        schema_version: SCHEMA_VERSION,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![WitnessDeclaration {
@@ -6621,7 +6691,7 @@ fn boolean_pair_hash_cell_assertion_records_read_before_counter_write() {
         length: 2,
     };
     let mut contract = Contract {
-        schema_version: 12,
+        schema_version: SCHEMA_VERSION,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -6728,7 +6798,7 @@ fn boolean_pair_hash_cell_assertion_records_read_before_counter_write() {
 #[test]
 fn recording_gaps_follow_the_first_definite_ir_failure() {
     let mut contract = Contract {
-        schema_version: 12,
+        schema_version: SCHEMA_VERSION,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -6795,7 +6865,7 @@ fn recording_gaps_follow_the_first_definite_ir_failure() {
 #[test]
 fn conditional_recording_rejects_an_unsupported_unselected_branch() {
     let contract = Contract {
-        schema_version: 12,
+        schema_version: SCHEMA_VERSION,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -6840,7 +6910,7 @@ fn conditional_recording_rejects_an_unsupported_unselected_branch() {
 fn recording_gaps_include_unsupported_type_and_called_callee_path() {
     let unsupported_cell_type = Type::OpaqueString;
     let mut contract = Contract {
-        schema_version: 12,
+        schema_version: SCHEMA_VERSION,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -6907,7 +6977,7 @@ fn recording_gaps_include_unsupported_type_and_called_callee_path() {
 #[test]
 fn stateful_parameters_are_checked_before_cell_writes() {
     let mut contract = Contract {
-        schema_version: 12,
+        schema_version: SCHEMA_VERSION,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -6964,7 +7034,7 @@ fn stateful_parameters_are_checked_before_cell_writes() {
 #[test]
 fn counter_parameter_requires_uint16_and_a_known_name() {
     let mut contract = Contract {
-        schema_version: 12,
+        schema_version: SCHEMA_VERSION,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -7137,7 +7207,7 @@ fn counter_parameter_requires_uint16_and_a_known_name() {
 #[test]
 fn ledger_read_return_must_match_the_declared_cell() {
     let mut contract = Contract {
-        schema_version: 12,
+        schema_version: SCHEMA_VERSION,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -7188,7 +7258,7 @@ fn ledger_read_return_must_match_the_declared_cell() {
 #[test]
 fn counter_read_returns_uint64() {
     let mut contract = Contract {
-        schema_version: 12,
+        schema_version: SCHEMA_VERSION,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -7295,7 +7365,7 @@ fn root_let_preserves_pre_write_value_for_return_but_nested_let_does_not_escape(
 #[test]
 fn set_actions_require_the_declared_element_type() {
     let mut contract = Contract {
-        schema_version: 12,
+        schema_version: SCHEMA_VERSION,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -7398,7 +7468,7 @@ fn set_actions_require_the_declared_element_type() {
 #[test]
 fn map_insert_and_lookup_require_key_and_value_types() {
     let mut contract = Contract {
-        schema_version: 12,
+        schema_version: SCHEMA_VERSION,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -7946,7 +8016,7 @@ fn literal_bytes_list_head_records_only_with_exact_length_and_excludes_opaque() 
 #[test]
 fn list_push_front_and_length_validate_declared_types() {
     let mut contract = Contract {
-        schema_version: 12,
+        schema_version: SCHEMA_VERSION,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -8119,7 +8189,7 @@ fn struct_definitions_are_shared_by_name_and_must_match() {
         }],
     };
     let mut contract = Contract {
-        schema_version: 12,
+        schema_version: SCHEMA_VERSION,
         type_aliases: vec![],
         constructor: None,
         witnesses: vec![],
@@ -8158,7 +8228,7 @@ fn struct_definitions_are_shared_by_name_and_must_match() {
 #[test]
 fn stateful_call_checks_target_and_arguments() {
     let mut contract = Contract {
-        schema_version: 12,
+        schema_version: SCHEMA_VERSION,
         type_aliases: vec![],
         constructor: None,
         ledger_fields: vec![],

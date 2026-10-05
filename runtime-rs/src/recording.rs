@@ -690,6 +690,29 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         Ok((self, value))
     }
 
+    pub(crate) fn read_counter(
+        mut self,
+        path: impl Into<LedgerPath>,
+    ) -> Result<(Self, u64), CompactError> {
+        let path = path.into();
+        let (result, value) = ledger::query_counter_at_path(
+            &self.context.query,
+            path.as_slice(),
+            self.context.gas_limit,
+            &self.context.cost_model,
+        )?;
+        let Some(GatherEvent::Read(observed)) = result.events.last() else {
+            return Err(CompactError::InvalidLedgerCell(
+                "missing Counter read event".into(),
+            ));
+        };
+        let program = ledger::counter_read_program(path.as_slice(), observed.clone());
+        self.context.query = result.context;
+        self.observed_gas += result.gas_cost;
+        self.verify_ops.extend(program);
+        Ok((self, value))
+    }
+
     pub fn finish<Output>(self, output: Output) -> RecordedCircuitResult<Private, Output, D> {
         RecordedCircuitResult {
             execution: CircuitResult {

@@ -1474,6 +1474,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/stateful_assert_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "checked",
+    "signature": "export circuit checked(selected: Boolean): Uint<64>",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/counter_less_than_oracle.compact",
     "module_path": [],
     "kind": "circuit",
@@ -6258,6 +6266,14 @@
     "visibility": "export"
   },
   {
+    "source": "examples/rust_backend/stateful_assert_oracle.compact",
+    "module_path": [],
+    "kind": "circuit",
+    "name": "unit_result",
+    "signature": "export circuit unit_result(selected: Boolean): []",
+    "visibility": "export"
+  },
+  {
     "source": "examples/rust_backend/witness_hash.compact",
     "module_path": [],
     "kind": "circuit",
@@ -7026,6 +7042,14 @@
     "visibility": "internal"
   },
   {
+    "source": "examples/rust_backend/stateful_assert_oracle.compact",
+    "module_path": [],
+    "kind": "constructor",
+    "name": "constructor",
+    "signature": "constructor(enabled: Boolean, lo: Uint<16>, hi: Uint<16>)",
+    "visibility": "internal"
+  },
+  {
     "source": "test-center/test-contracts/welcome.compact",
     "module_path": [],
     "kind": "constructor",
@@ -7646,6 +7670,14 @@
     "kind": "witness",
     "name": "next_domain",
     "signature": "witness next_domain(): Bytes<32>",
+    "visibility": "internal"
+  },
+  {
+    "source": "examples/rust_backend/stateful_assert_oracle.compact",
+    "module_path": [],
+    "kind": "witness",
+    "name": "next_gate",
+    "signature": "witness next_gate(tag: Uint<8>): Boolean",
     "visibility": "internal"
   },
   {

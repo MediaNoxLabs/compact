@@ -1,0 +1,21 @@
+// This file is part of Compact.
+// Copyright (C) 2026 Midnight Foundation
+// SPDX-License-Identifier: Apache-2.0
+import CompactStandardLibrary;
+export ledger open: Boolean;
+export ledger low: Counter;
+export ledger high: Counter;
+witness next_gate(tag: Uint<8>): Boolean;
+constructor(enabled: Boolean, lo: Uint<16>, hi: Uint<16>) {
+ open = disclose(enabled); low.increment(disclose(lo)); high.increment(disclose(hi));
+}
+export circuit checked(selected: Boolean): Uint<64> {
+ const gate = disclose(next_gate(1));
+ assert(disclose(selected) && gate && open.read() && disclose(next_gate(2)) && low.lessThan(high) && disclose(next_gate(3)), "nested stateful guard");
+ return high.read();
+}
+export circuit unit_result(selected: Boolean): [] {
+ const gate = disclose(next_gate(1));
+ assert(disclose(selected) && gate && open.read(), "nested unit guard");
+ return [];
+}

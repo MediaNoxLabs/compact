@@ -1242,6 +1242,34 @@ pub(crate) fn render_state_expression(
                 effect,
             ))
         }
+        Expr::Assert { condition, message } => {
+            let (condition, actual, effect) = render_state_expression(
+                condition,
+                parameters,
+                witnesses,
+                statements,
+                next_temp,
+                circuits,
+                stateful_circuits,
+                ledger_fields,
+                query_effect,
+            )?;
+            if actual != Type::Boolean {
+                return Err(RenderError::TypeMismatch {
+                    expected: Type::Boolean,
+                    actual,
+                });
+            }
+            Ok((
+                syn::parse_quote!({
+                    if !(#condition) {
+                        return Err(runtime::CompactError::AssertionFailed(#message.to_owned()));
+                    }
+                }),
+                Type::Unit,
+                effect,
+            ))
+        }
         Expr::Sequence { steps, value } => {
             let mut witness_effect = false;
             for step in steps {

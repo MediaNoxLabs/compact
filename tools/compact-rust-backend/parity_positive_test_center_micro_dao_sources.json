@@ -1,0 +1,111 @@
+{
+  "format_version": 1,
+  "suite": "compiler/test.ss",
+  "purpose": "Original complete micro-dao source native compilation and exact proof/recording boundaries; not behavioral, funding or proof closure",
+  "source_glob": "test-center/test-contracts/micro-dao.compact",
+  "positive_sources": [
+    {
+      "source": "test-center/test-contracts/micro-dao.compact",
+      "expected_ts": "success",
+      "expected_rust": "success",
+      "proof_circuits": [
+        {
+          "name": "vote_commit",
+          "pure": false,
+          "proof": true
+        },
+        {
+          "name": "vote_reveal",
+          "pure": false,
+          "proof": true
+        },
+        {
+          "name": "advance",
+          "pure": false,
+          "proof": true
+        },
+        {
+          "name": "set_topic",
+          "pure": false,
+          "proof": true
+        },
+        {
+          "name": "buy_in",
+          "pure": false,
+          "proof": true
+        },
+        {
+          "name": "cash_out",
+          "pure": false,
+          "proof": true
+        },
+        {
+          "name": "public_key",
+          "pure": true,
+          "proof": false
+        },
+        {
+          "name": "path_root",
+          "pure": true,
+          "proof": false
+        },
+        {
+          "name": "dao_voting_token",
+          "pure": false,
+          "proof": true
+        },
+        {
+          "name": "dao_token_domain_separator",
+          "pure": true,
+          "proof": false
+        },
+        {
+          "name": "tdust",
+          "pure": true,
+          "proof": false
+        }
+      ],
+      "expected_recorded_circuits": [],
+      "expected_recording_gaps": {
+        "vote_commit": {
+          "code": "unsupported_action",
+          "ir_node": "StateAction::Assert",
+          "path": "actions[0].actions[0]"
+        },
+        "vote_reveal": {
+          "code": "unsupported_action",
+          "ir_node": "StateAction::Assert",
+          "path": "actions[0].actions[0]"
+        },
+        "advance": {
+          "code": "unsupported_action",
+          "ir_node": "StateAction::Assert",
+          "path": "actions[0].action.action.actions[2].then.actions[0]"
+        },
+        "set_topic": {
+          "code": "unsupported_action",
+          "ir_node": "StateAction::Assert",
+          "path": "actions[0].actions[0]"
+        },
+        "buy_in": {
+          "code": "unsupported_action",
+          "ir_node": "StateAction::Assert",
+          "path": "actions[0]"
+        },
+        "cash_out": {
+          "code": "unsupported_return",
+          "ir_node": "StateReturn::Expression",
+          "path": "return_value"
+        },
+        "dao_voting_token": {
+          "code": "unsupported_return",
+          "ir_node": "StateReturn::Expression",
+          "path": "return_value"
+        }
+      },
+      "pure_declarations": 0,
+      "exported_pure_declarations": 0
+    }
+  ],
+  "expected_rejections": []
+}

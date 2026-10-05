@@ -10803,3 +10803,70 @@ fn wide_addition_validates_every_bound_and_does_not_admit_other_wide_operators()
         );
     }
 }
+
+#[test]
+fn stateful_assertions_require_boolean_and_return_unit_without_broadening_recording() {
+    let mut contract: Contract =
+        serde_json::from_str(include_str!("stateful-assert-schema20-ir.json")).unwrap();
+    contract.schema_version = SCHEMA_VERSION;
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert_eq!(rendered.capabilities.circuits.len(), 2);
+    assert!(
+        rendered
+            .capabilities
+            .circuits
+            .iter()
+            .all(|c| !c.recorded && !c.observed_call)
+    );
+    let mut value: serde_json::Value =
+        serde_json::from_str(include_str!("stateful-assert-schema20-ir.json")).unwrap();
+    fn invalidate(value: &mut serde_json::Value) {
+        if let Some(object) = value.as_object_mut() {
+            if object.get("kind").and_then(|v| v.as_str()) == Some("assert") {
+                object.insert("condition".into(), serde_json::json!({"kind":"unit"}));
+            } else {
+                for value in object.values_mut() {
+                    invalidate(value);
+                }
+            }
+        } else if let Some(values) = value.as_array_mut() {
+            for value in values {
+                invalidate(value);
+            }
+        }
+    }
+    invalidate(&mut value["stateful_circuits"]);
+    let mut wrong: Contract = serde_json::from_value(value).unwrap();
+    wrong.schema_version = SCHEMA_VERSION;
+    assert!(render_with_capabilities(&wrong).is_err());
+    let mut wrong = contract.clone();
+    let c = wrong
+        .stateful_circuits
+        .iter_mut()
+        .find(|c| c.name == "checked")
+        .unwrap();
+    c.return_value = StateReturn::Expression {
+        value: Expr::Assert {
+            condition: Box::new(Expr::Boolean { value: true }),
+            message: "typed unit".into(),
+        },
+    };
+    assert!(render_with_capabilities(&wrong).is_err());
+    // The pure renderer must still reject ledger reads in assertions.
+    let mut wrong = contract;
+    wrong.circuits.push(PureCircuit {
+        name: "invalid_pure_assert".into(),
+        source: None,
+        internal: false,
+        parameters: vec![],
+        result: Type::Unit,
+        body: Expr::Assert {
+            condition: Box::new(Expr::CellRead {
+                field: "open".into(),
+                index: 0,
+            }),
+            message: "pure cannot query".into(),
+        },
+    });
+    assert!(render_with_capabilities(&wrong).is_err());
+}

@@ -1,0 +1,409 @@
+{
+  "schema_version": 20,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "open",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "boolean"
+        }
+      },
+      "source": {
+        "file": "stateful_assert_oracle.compact",
+        "line": 5,
+        "column": 1
+      }
+    },
+    {
+      "id": "low",
+      "index": 1,
+      "path": [
+        1
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "stateful_assert_oracle.compact",
+        "line": 6,
+        "column": 1
+      }
+    },
+    {
+      "id": "high",
+      "index": 2,
+      "path": [
+        2
+      ],
+      "declaration": {
+        "kind": "counter"
+      },
+      "source": {
+        "file": "stateful_assert_oracle.compact",
+        "line": 7,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "next_gate",
+      "parameters": [
+        {
+          "name": "tag",
+          "ty": {
+            "kind": "unsigned",
+            "max": "255"
+          }
+        }
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "source": {
+        "file": "stateful_assert_oracle.compact",
+        "line": 8,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "checked",
+      "parameters": [
+        {
+          "name": "selected",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unsigned",
+        "max": "18446744073709551615"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "gate",
+              "ty": {
+                "kind": "boolean"
+              },
+              "value": {
+                "kind": "witness_call",
+                "name": "next_gate",
+                "arguments": [
+                  {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "unsigned_literal",
+                      "value": "1",
+                      "max": "255"
+                    },
+                    "ty": {
+                      "kind": "unsigned",
+                      "max": "255"
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "body": {
+            "kind": "sequence",
+            "steps": [
+              {
+                "kind": "assert",
+                "condition": {
+                  "kind": "if",
+                  "condition": {
+                    "kind": "if",
+                    "condition": {
+                      "kind": "if",
+                      "condition": {
+                        "kind": "if",
+                        "condition": {
+                          "kind": "if",
+                          "condition": {
+                            "kind": "parameter",
+                            "name": "selected"
+                          },
+                          "then": {
+                            "kind": "parameter",
+                            "name": "gate"
+                          },
+                          "otherwise": {
+                            "kind": "boolean",
+                            "value": false
+                          }
+                        },
+                        "then": {
+                          "kind": "cell_read",
+                          "field": "open",
+                          "index": 0
+                        },
+                        "otherwise": {
+                          "kind": "boolean",
+                          "value": false
+                        }
+                      },
+                      "then": {
+                        "kind": "witness_call",
+                        "name": "next_gate",
+                        "arguments": [
+                          {
+                            "kind": "coerce",
+                            "value": {
+                              "kind": "unsigned_literal",
+                              "value": "2",
+                              "max": "255"
+                            },
+                            "ty": {
+                              "kind": "unsigned",
+                              "max": "255"
+                            }
+                          }
+                        ]
+                      },
+                      "otherwise": {
+                        "kind": "boolean",
+                        "value": false
+                      }
+                    },
+                    "then": {
+                      "kind": "let",
+                      "bindings": [
+                        {
+                          "name": "tmp_16",
+                          "ty": {
+                            "kind": "unsigned",
+                            "max": "18446744073709551615"
+                          },
+                          "value": {
+                            "kind": "counter_read",
+                            "field": "high",
+                            "index": 2
+                          }
+                        }
+                      ],
+                      "body": {
+                        "kind": "counter_less_than",
+                        "field": "low",
+                        "index": 1,
+                        "threshold": {
+                          "kind": "parameter",
+                          "name": "tmp_16"
+                        }
+                      }
+                    },
+                    "otherwise": {
+                      "kind": "boolean",
+                      "value": false
+                    }
+                  },
+                  "then": {
+                    "kind": "witness_call",
+                    "name": "next_gate",
+                    "arguments": [
+                      {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "unsigned_literal",
+                          "value": "3",
+                          "max": "255"
+                        },
+                        "ty": {
+                          "kind": "unsigned",
+                          "max": "255"
+                        }
+                      }
+                    ]
+                  },
+                  "otherwise": {
+                    "kind": "boolean",
+                    "value": false
+                  }
+                },
+                "message": "nested stateful guard"
+              }
+            ],
+            "value": {
+              "kind": "counter_read",
+              "field": "high",
+              "index": 2
+            }
+          }
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "stateful_assert_oracle.compact",
+        "line": 12,
+        "column": 1
+      }
+    },
+    {
+      "name": "unit_result",
+      "parameters": [
+        {
+          "name": "selected",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "gate",
+              "ty": {
+                "kind": "boolean"
+              },
+              "value": {
+                "kind": "witness_call",
+                "name": "next_gate",
+                "arguments": [
+                  {
+                    "kind": "coerce",
+                    "value": {
+                      "kind": "unsigned_literal",
+                      "value": "1",
+                      "max": "255"
+                    },
+                    "ty": {
+                      "kind": "unsigned",
+                      "max": "255"
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "body": {
+            "kind": "sequence",
+            "steps": [
+              {
+                "kind": "assert",
+                "condition": {
+                  "kind": "if",
+                  "condition": {
+                    "kind": "if",
+                    "condition": {
+                      "kind": "parameter",
+                      "name": "selected"
+                    },
+                    "then": {
+                      "kind": "parameter",
+                      "name": "gate"
+                    },
+                    "otherwise": {
+                      "kind": "boolean",
+                      "value": false
+                    }
+                  },
+                  "then": {
+                    "kind": "cell_read",
+                    "field": "open",
+                    "index": 0
+                  },
+                  "otherwise": {
+                    "kind": "boolean",
+                    "value": false
+                  }
+                },
+                "message": "nested unit guard"
+              }
+            ],
+            "value": {
+              "kind": "unit"
+            }
+          }
+        }
+      },
+      "actions": [
+      ],
+      "source": {
+        "file": "stateful_assert_oracle.compact",
+        "line": 17,
+        "column": 1
+      }
+    }
+  ],
+  "constructor": {
+    "parameters": [
+      {
+        "name": "enabled",
+        "ty": {
+          "kind": "boolean"
+        }
+      },
+      {
+        "name": "lo",
+        "ty": {
+          "kind": "unsigned",
+          "max": "65535"
+        }
+      },
+      {
+        "name": "hi",
+        "ty": {
+          "kind": "unsigned",
+          "max": "65535"
+        }
+      }
+    ],
+    "steps": [
+      {
+        "kind": "cell_write",
+        "field": "open",
+        "index": 0,
+        "value": {
+          "kind": "parameter",
+          "name": "enabled"
+        }
+      },
+      {
+        "kind": "counter_increment",
+        "field": "low",
+        "index": 1,
+        "amount": {
+          "kind": "parameter",
+          "name": "lo"
+        }
+      },
+      {
+        "kind": "counter_increment",
+        "field": "high",
+        "index": 2,
+        "amount": {
+          "kind": "parameter",
+          "name": "hi"
+        }
+      }
+    ],
+    "source": {
+      "file": "stateful_assert_oracle.compact",
+      "line": 9,
+      "column": 1
+    }
+  }
+}

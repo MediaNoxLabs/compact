@@ -1481,6 +1481,10 @@
       (define (stateful-expression-ir value-expr owner-src witness-ids)
         (nanopass-case (Lnodisclose Expression) value-expr
           [(return ,src ,expr) (stateful-expression-ir expr src witness-ids)]
+          [(assert ,src ,expr ,mesg)
+           (object (cons "kind" "assert")
+                   (cons "condition" (stateful-expression-ir expr src witness-ids))
+                   (cons "message" mesg))]
           [(new ,src ,type ,expr* ...)
            (nanopass-case (Lnodisclose Type) type
              [(tstruct ,src^ ,struct-name (,elt-name* ,type*) ...)

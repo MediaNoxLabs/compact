@@ -869,3 +869,27 @@ overflow. The unchanged original micro-dao advances from standard-library207 to
 its own line187 (`stateful expression requires stateful evaluation`); full native
 source and recording support remain separate work. Older generated libraries need
 the integration-owned ABI46 refresh before a workspace-wide Cargo gate.
+
+### Typed stateful assertions and original micro-dao admission (ADR0183)
+
+Nested assertion expressions lower their conditions with the stateful evaluator,
+require Boolean, and yield Unit. Scheme preserves witness classification inside
+the condition; Rust preserves short-circuit query/witness order and rejects false
+with the existing assertion error. Schema20/ABI46 remain unchanged, and recorded
+assertion admission is unchanged.
+
+Twelve independent TypeScript cases cover successful value/Unit returns, each
+short-circuit stop, failed Counter comparison, witness order/private state, and
+zero-budget distinction between an assertion before any query and the first read
+rejecting before the next witness. Successful Rust gas matches the captured query
+sum; TypeScript's reported aggregate retains only its final query cost. Both are
+retained in the fixture. Failed calls compare rejection and external witness traces;
+Rust's Result API does not return their partial context or gas.
+
+The complete unchanged `test-center/test-contracts/micro-dao.compact` now emits a
+Rust crate that passes Cargo checking. The authoritative contract-info join covers
+11 exports: four pure and seven proof-required. All seven have explicit recording
+gaps in `parity_positive_test_center_micro_dao_sources.json`. This is native source
+admission, not full contract behavioral, funded-transaction or proof coverage.
+`check_compactc_target.py --stateful-assert` checks the generated original crate;
+the full local gate also checks its exact source cohort and recording gaps.

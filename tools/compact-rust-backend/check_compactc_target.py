@@ -1095,6 +1095,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--consumer", action="store_true", help="build and run a separate consumer")
     parser.add_argument("--proof", action="store_true", help="generate ZKIR and proving keys")
+    parser.add_argument("--stateful-assert", action="store_true", help="check native stateful assertions and complete original micro-dao Cargo admission")
     parser.add_argument("--wide-add", action="store_true", help="check bounded native wide addition and original-source progress")
     parser.add_argument("--stateful-struct", action="store_true", help="check ordered typed native struct construction and its remaining original-source boundary")
     parser.add_argument("--kernel-shielded-effects", action="store_true", help="check typed native Kernel admission and recording boundary")
@@ -1124,6 +1125,25 @@ def main() -> None:
     compiler = os.environ.get("COMPACTC", "compactc")
     with tempfile.TemporaryDirectory(prefix="compactc-target-") as temporary:
         base = Path(temporary)
+        if args.stateful_assert:
+            source = ROOT / "examples/rust_backend/stateful_assert_oracle.compact"
+            output = base / "stateful-assert"
+            run(compiler, "--target", "rust", "--skip-zk", str(source), str(output))
+            report = json.loads((output / "contract/rust-capabilities.json").read_text())
+            assert {row["name"] for row in report["circuits"]} == {"checked", "unit_result"}
+            for row in report["circuits"]:
+                assert row["proof_required"] and not row["recorded"] and not row["observed_call"]
+            original = base / "original-dao"
+            run(compiler, "--target", "rust", "--skip-zk", str(ROOT / "test-center/test-contracts/micro-dao.compact"), str(original))
+            info = json.loads((original / "compiler/contract-info.json").read_text())
+            report = json.loads((original / "contract/rust-capabilities.json").read_text())
+            assert len(info["circuits"]) == 11
+            assert sum(c["proof"] for c in info["circuits"]) == 7
+            assert len(report["circuits"]) == 7
+            assert all(not c["recorded"] and c["proof_required"] for c in report["circuits"])
+            run("cargo", "+1.99.0", "check", "--offline", "--manifest-path", str(original / "contract/Cargo.toml"))
+            print("nested stateful assertions admitted; original micro-dao native crate checks, 7 proof-required gaps remain")
+            return
         if args.wide_add:
             source = ROOT / "examples/rust_backend/wide_add_oracle.compact"
             output = base / "wide-add"
@@ -1138,11 +1158,9 @@ def main() -> None:
             assert not row["recorded"] and not row["observed_call"]
             assert not row["proof_required"] and row["recording_status"] == "not_applicable"
             original = subprocess.run([compiler, "--target", "rust", "--skip-zk", str(ROOT / "test-center/test-contracts/micro-dao.compact"), str(base / "original-dao")], cwd=ROOT, capture_output=True, text=True)
-            assert original.returncode != 0
-            assert "micro-dao.compact line 187" in original.stderr
-            assert "stateful expression requires stateful evaluation" in original.stderr
-            assert not (base / "original-dao/contract/lib.rs").exists()
-            print("wide addition admitted; original micro-dao advances to stateful evaluation at line187")
+            assert original.returncode == 0, original.stderr
+            assert (base / "original-dao/contract/lib.rs").is_file()
+            print("wide addition admitted; original micro-dao emits native Rust")
             return
         if args.stateful_struct:
             source = ROOT / "examples/rust_backend/stateful_struct_oracle.compact"
@@ -1159,11 +1177,9 @@ def main() -> None:
                 assert not row["recorded"] and not row["observed_call"]
                 assert row["proof_required"]
             original = subprocess.run([compiler, "--target", "rust", "--skip-zk", str(ROOT / "test-center/test-contracts/micro-dao.compact"), str(base / "original-dao")], cwd=ROOT, capture_output=True, text=True)
-            assert original.returncode != 0
-            assert "stateful expression requires stateful evaluation" in original.stderr
-            assert "micro-dao.compact line 187" in original.stderr
-            assert not (base / "original-dao/contract/lib.rs").exists()
-            print("ordered typed stateful structs admitted; original micro-dao next gap is stateful evaluation at line187")
+            assert original.returncode == 0, original.stderr
+            assert (base / "original-dao/contract/lib.rs").is_file()
+            print("ordered typed stateful structs admitted; original micro-dao emits native Rust")
             return
         if args.kernel_shielded_effects:
             source = ROOT / "examples/rust_backend/kernel_shielded_effects_oracle.compact"
@@ -1506,6 +1522,7 @@ def main() -> None:
         run(sys.executable, str(Path(__file__).resolve()), "--kernel-shielded-effects")
         run(sys.executable, str(Path(__file__).resolve()), "--stateful-struct")
         run(sys.executable, str(Path(__file__).resolve()), "--wide-add")
+        run(sys.executable, str(Path(__file__).resolve()), "--stateful-assert")
         ts, rust, both, pure = (base / name for name in ("ts", "rust", "both", "pure"))
         run(compiler, "--skip-zk", str(SOURCE), str(ts))
         assert (ts / "contract/index.js").is_file()

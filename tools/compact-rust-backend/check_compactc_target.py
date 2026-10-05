@@ -797,27 +797,25 @@ def check_shared_runtime_consumer(compiler: str, base: Path) -> None:
     assert "error[E0308]: mismatched types" in rejected.stderr, rejected.stderr
     assert "expected `BoundedUint<255>`" in rejected.stderr, rejected.stderr
 
-    (consumer / "examples/unsupported_recorded_merkle_index.rs").write_text(
+    (consumer / "examples/recorded_merkle_index.rs").write_text(
         "use compact_contract_merkle_tree_oracle::ledger_contract::recorded;\n"
         "fn main() { let _ = recorded::place::<()>; }\n"
     )
-    rejected = subprocess.run(
-        ["cargo", "check", "--quiet", "--example", "unsupported_recorded_merkle_index"],
+    supported = subprocess.run(
+        ["cargo", "check", "--quiet", "--example", "recorded_merkle_index"],
         cwd=consumer, env=environment, capture_output=True, text=True,
     )
-    assert rejected.returncode != 0, "unsupported indexed Merkle trace unexpectedly compiled"
-    assert "cannot find value `place` in module `recorded`" in rejected.stderr, rejected.stderr
+    assert supported.returncode == 0, supported.stderr
 
-    (consumer / "examples/unsupported_recorded_historic_index.rs").write_text(
+    (consumer / "examples/recorded_historic_index.rs").write_text(
         "use compact_contract_hmt_insert_oracle::ledger_contract::recorded;\n"
         "fn main() { let _ = recorded::place::<()>; }\n"
     )
-    rejected = subprocess.run(
-        ["cargo", "check", "--quiet", "--example", "unsupported_recorded_historic_index"],
+    supported = subprocess.run(
+        ["cargo", "check", "--quiet", "--example", "recorded_historic_index"],
         cwd=consumer, env=environment, capture_output=True, text=True,
     )
-    assert rejected.returncode != 0, "unsupported historic indexed trace unexpectedly compiled"
-    assert "cannot find value `place` in module `recorded`" in rejected.stderr, rejected.stderr
+    assert supported.returncode == 0, supported.stderr
 
     (consumer / "examples/wrong_recorded_historic_leaf.rs").write_text(
         "use compact_contract_hmt_insert_oracle::ledger_contract::{initial_state, recorded};\n"

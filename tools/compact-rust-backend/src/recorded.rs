@@ -395,6 +395,76 @@ fn closed_pure_assert_call(callee: &PureCircuit) -> bool {
     }
 }
 
+/// Admit a pure unsigned helper only when its complete body consists of
+/// bounded unsigned arithmetic and casts. Other pure primitives may carry
+/// VM effects or different gas and need an explicit recording decision.
+fn closed_pure_unsigned_call(
+    name: &str,
+    pure_circuits: &HashMap<&str, &PureCircuit>,
+    visiting: &mut HashSet<String>,
+) -> bool {
+    fn unsigned_body(
+        value: &Expr,
+        parameters: &HashSet<&str>,
+        pure_circuits: &HashMap<&str, &PureCircuit>,
+        visiting: &mut HashSet<String>,
+    ) -> bool {
+        match value {
+            Expr::UnsignedLiteral { .. } => true,
+            Expr::Parameter { name } => parameters.contains(name.as_str()),
+            Expr::Coerce {
+                value,
+                ty: Type::Unsigned { .. },
+            } => unsigned_body(value, parameters, pure_circuits, visiting),
+            Expr::UnsignedCast { value, .. } => {
+                unsigned_body(value, parameters, pure_circuits, visiting)
+            }
+            Expr::UnsignedAdd { left, right, .. }
+            | Expr::UnsignedSubtract { left, right, .. }
+            | Expr::UnsignedMultiply { left, right, .. } => {
+                unsigned_body(left, parameters, pure_circuits, visiting)
+                    && unsigned_body(right, parameters, pure_circuits, visiting)
+            }
+            Expr::Call { name, arguments } => {
+                let Some(callee) = pure_circuits.get(name.as_str()) else {
+                    return false;
+                };
+                arguments.len() == callee.parameters.len()
+                    && arguments
+                        .iter()
+                        .zip(&callee.parameters)
+                        .all(|(argument, parameter)| {
+                            matches!(parameter.ty, Type::Unsigned { .. })
+                                && unsigned_body(argument, parameters, pure_circuits, visiting)
+                        })
+                    && closed_pure_unsigned_call(name, pure_circuits, visiting)
+            }
+            _ => false,
+        }
+    }
+
+    let Some(callee) = pure_circuits.get(name) else {
+        return false;
+    };
+    if !matches!(callee.result, Type::Unsigned { .. })
+        || callee
+            .parameters
+            .iter()
+            .any(|parameter| !matches!(parameter.ty, Type::Unsigned { .. }))
+        || !visiting.insert(name.to_owned())
+    {
+        return false;
+    }
+    let parameters = callee
+        .parameters
+        .iter()
+        .map(|parameter| parameter.name.as_str())
+        .collect();
+    let allowed = unsigned_body(&callee.body, &parameters, pure_circuits, visiting);
+    visiting.remove(name);
+    allowed
+}
+
 fn field_pair_type(ty: &Type) -> bool {
     matches!(ty, Type::Vector { element, length } if **element == Type::Field && *length == 2)
         || matches!(ty, Type::Tuple { elements } if elements == &[Type::Field, Type::Field])
@@ -1258,6 +1328,26 @@ fn render_recorded_item(
                 visiting,
             ),
             Expr::FieldCast { value } => {
+                // A bounded unsigned public parameter has no recording
+                // effects. Retain its full u128 value before converting to
+                // the ledger Field; this is the same typed cast as native
+                // stateful lowering, including values above u64::MAX.
+                if let Expr::Parameter { name } = value.as_ref()
+                    && !locals.contains_key(name)
+                    && let Some((ty @ Type::Unsigned { .. }, _)) = parameters.get(name.as_str())
+                    && let Some(unsigned) = cell_source(value, ty, locals, parameters)
+                {
+                    let cast = syn::Ident::new(
+                        &format!("__compact_recorded_field_cast_{}", *next_temp),
+                        Span::call_site(),
+                    );
+                    *next_temp += 1;
+                    steps.push(syn::parse_quote! {
+                        let #cast: runtime::Field = runtime::Field::from((#unsigned).value());
+                    });
+                    return Ok(Some(syn::parse_quote!(#cast)));
+                }
+
                 fn bounded_arm(value: &Expr) -> Option<syn::Expr> {
                     let Expr::Coerce {
                         value,
@@ -2727,7 +2817,61 @@ fn render_recorded_item(
                 }
                 let mut scoped = locals.clone();
                 for (binding_index, binding) in bindings.iter().enumerate() {
-                    if binding.ty
+                    if matches!(binding.ty, Type::Unsigned { .. })
+                        && let Expr::Call { name, arguments } = &binding.value
+                    {
+                        let Some(callee) = pure_circuits.get(name.as_str()) else {
+                            return Ok(unavailable_action(whole, path));
+                        };
+                        if callee.result != binding.ty
+                            || !closed_pure_unsigned_call(name, pure_circuits, &mut HashSet::new())
+                        {
+                            return Ok(unavailable_action(whole, path));
+                        }
+                        if arguments.len() != callee.parameters.len() {
+                            return Err(RenderError::ArgumentCount {
+                                circuit: name.clone(),
+                                expected: callee.parameters.len(),
+                                actual: arguments.len(),
+                            });
+                        }
+                        let mut args = Vec::new();
+                        for (argument_index, (argument, parameter)) in
+                            arguments.iter().zip(&callee.parameters).enumerate()
+                        {
+                            let Some(value) =
+                                cell_source(argument, &parameter.ty, &scoped, parameters)
+                            else {
+                                return Ok(RecordingOutcome::Unsupported(
+                                    RecordingGap::expression(
+                                        argument,
+                                        format!(
+                                            "{path}.bindings[{binding_index}].value.arguments[{argument_index}]"
+                                        ),
+                                    ),
+                                ));
+                            };
+                            let arg = syn::Ident::new(
+                                &format!("__compact_recorded_unsigned_arg_{}", *next_temp),
+                                Span::call_site(),
+                            );
+                            *next_temp += 1;
+                            let ty = rust_type(&parameter.ty)?;
+                            steps.push(syn::parse_quote!(let #arg: #ty = #value;));
+                            args.push(arg);
+                        }
+                        let method = ident(name)?;
+                        let local = syn::Ident::new(
+                            &format!("__compact_recorded_pure_unsigned_{}", *next_temp),
+                            Span::call_site(),
+                        );
+                        *next_temp += 1;
+                        let ty = rust_type(&binding.ty)?;
+                        steps.push(syn::parse_quote! {
+                            let #local: #ty = crate::pure_circuits::#method(#(#args),*)?;
+                        });
+                        scoped.insert(binding.name.clone(), syn::parse_quote!(#local));
+                    } else if binding.ty
                         == (Type::Unsigned {
                             max: "65535".into(),
                         })
@@ -4781,4 +4925,85 @@ pub(crate) fn render_observed_call_method(
         }
     };
     Ok(method)
+}
+
+#[cfg(test)]
+mod unsigned_call_tests {
+    use super::*;
+    use crate::ir::Parameter;
+
+    fn uint(max: &str) -> Type {
+        Type::Unsigned { max: max.into() }
+    }
+
+    #[test]
+    fn unsigned_pure_call_whitelist_is_transitive_and_rejects_other_primitives() {
+        let leaf = PureCircuit {
+            source: None,
+            name: "product".into(),
+            internal: false,
+            parameters: vec![Parameter {
+                name: "x".into(),
+                ty: uint("65535"),
+            }],
+            result: uint("4294967295"),
+            body: Expr::UnsignedCast {
+                max: "4294967295".into(),
+                value: Box::new(Expr::UnsignedMultiply {
+                    max: "4294836225".into(),
+                    left: Box::new(Expr::Parameter { name: "x".into() }),
+                    right: Box::new(Expr::Parameter { name: "x".into() }),
+                }),
+            },
+        };
+        let wrapper = PureCircuit {
+            source: None,
+            name: "wrapper".into(),
+            internal: false,
+            parameters: vec![Parameter {
+                name: "y".into(),
+                ty: uint("65535"),
+            }],
+            result: uint("4294967295"),
+            body: Expr::Call {
+                name: "product".into(),
+                arguments: vec![Expr::Parameter { name: "y".into() }],
+            },
+        };
+        let mut circuits = HashMap::new();
+        circuits.insert("product", &leaf);
+        circuits.insert("wrapper", &wrapper);
+        assert!(closed_pure_unsigned_call(
+            "wrapper",
+            &circuits,
+            &mut HashSet::new()
+        ));
+
+        let effectful = PureCircuit {
+            body: Expr::TransientHash {
+                value: Box::new(Expr::Parameter { name: "x".into() }),
+            },
+            ..leaf.clone()
+        };
+        circuits.insert("product", &effectful);
+        assert!(!closed_pure_unsigned_call(
+            "wrapper",
+            &circuits,
+            &mut HashSet::new()
+        ));
+
+        let recursive = PureCircuit {
+            body: Expr::Call {
+                name: "wrapper".into(),
+                arguments: vec![Expr::Parameter { name: "x".into() }],
+            },
+            ..leaf.clone()
+        };
+        circuits.insert("product", &recursive);
+        assert!(!closed_pure_unsigned_call(
+            "wrapper",
+            &circuits,
+            &mut HashSet::new()
+        ));
+    }
 }

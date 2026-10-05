@@ -23,6 +23,25 @@ const contractIndex = resolve(process.argv[2], 'index.js');
 const requireFromContract = createRequire(contractIndex);
 const runtime = await import(pathToFileURL(requireFromContract.resolve('@midnight-ntwrk/compact-runtime')));
 const { Contract, pureCircuits, ledger } = await import(pathToFileURL(contractIndex));
+const queries = [];
+const originalQuery = runtime.QueryContext.prototype.query;
+runtime.QueryContext.prototype.query = function (...args) {
+  const output = originalQuery.call(this, ...args);
+  queries.push({
+    gasCost: output.gasCost,
+    opTags: args[0].map((operation) => Object.keys(operation)[0]),
+  });
+  return output;
+};
+function normalize(value) {
+  if (typeof value === 'bigint') return value.toString();
+  if (value instanceof Uint8Array) return { bytesHex: Buffer.from(value).toString('hex') };
+  if (Array.isArray(value)) return value.map(normalize);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([key, inner]) => [key, normalize(inner)]));
+  }
+  return value;
+}
 const contract = new Contract({});
 const coinPublicKey = { bytes: new Uint8Array(32) };
 const initial = contract.initialState({
@@ -48,13 +67,25 @@ const sumBytes = pureCircuits.sumBytes(255n, 255n).toString();
 const ageThresholdDays = pureCircuits.ageThresholdDays(255n).toString();
 const productBytes = pureCircuits.productBytes(255n, 255n).toString();
 const areaOf = pureCircuits.areaOf(65535n, 65535n).toString();
-context = contract.circuits.recordArea(context, 65535n, 65535n).context;
+const maxQueryStart = queries.length;
+const max = contract.circuits.recordArea(context, 65535n, 65535n);
+context = max.context;
+const maxQueries = queries.slice(maxQueryStart);
 const afterRecordMax = snapshot();
 const countAfterRecordMax = ledger(context.currentQueryContext.state).lastArea.toString();
-context = contract.circuits.recordArea(context, 5n, 7n).context;
+const smallQueryStart = queries.length;
+const small = contract.circuits.recordArea(context, 5n, 7n);
+context = small.context;
+const smallQueries = queries.slice(smallQueryStart);
 const afterRecordSmall = snapshot();
 const countAfterRecordSmall = ledger(context.currentQueryContext.state).lastArea.toString();
-process.stdout.write(JSON.stringify({
+process.stdout.write(JSON.stringify(normalize({
   afterInit, sumBytes, ageThresholdDays, productBytes, areaOf,
   afterRecordMax, countAfterRecordMax, afterRecordSmall, countAfterRecordSmall,
-}, null, 2) + '\n');
+  maxQueries, maxReportedGas: max.gasCost,
+  maxPublicTranscript: max.proofData.publicTranscript,
+  maxPrivateOutputCount: max.proofData.privateTranscriptOutputs.length,
+  smallQueries, smallReportedGas: small.gasCost,
+  smallPublicTranscript: small.proofData.publicTranscript,
+  smallPrivateOutputCount: small.proofData.privateTranscriptOutputs.length,
+}), null, 2) + '\n');

@@ -13,7 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use compact_rust_widening_arith_oracle_fixture::ledger_contract::{initial_state, recordArea};
+use compact_rust_widening_arith_oracle_fixture::ledger_contract::{
+    initial_state, recordArea, recorded,
+};
 use compact_rust_widening_arith_oracle_fixture::pure_circuits::{
     ageThresholdDays, areaOf, productBytes, sumBytes,
 };
@@ -45,6 +47,39 @@ fn count(state: &StateValue<DefaultDB>) -> String {
     runtime::ledger::read_counter(fields.get(0).unwrap())
         .unwrap()
         .to_string()
+}
+
+fn normalized_ops(mut value: serde_json::Value) -> serde_json::Value {
+    fn normalize(value: &mut serde_json::Value) {
+        match value {
+            serde_json::Value::Object(object) => {
+                if object.contains_key("alignment")
+                    && let Some(serde_json::Value::Array(chunks)) = object.get_mut("value")
+                {
+                    for chunk in chunks {
+                        if let serde_json::Value::Array(bytes) = chunk {
+                            let bytes = bytes
+                                .iter()
+                                .map(|byte| byte.as_u64().unwrap() as u8)
+                                .collect::<Vec<_>>();
+                            *chunk = serde_json::json!({ "bytesHex": hex::encode(bytes) });
+                        }
+                    }
+                }
+                for child in object.values_mut() {
+                    normalize(child);
+                }
+            }
+            serde_json::Value::Array(values) => {
+                for child in values {
+                    normalize(child);
+                }
+            }
+            _ => {}
+        }
+    }
+    normalize(&mut value);
+    value
 }
 
 #[test]
@@ -105,4 +140,99 @@ fn exact_widening_arithmetic_oracle_matches_typescript_boundaries() {
         count(small.context.query.state.get_ref()),
         oracle["countAfterRecordSmall"]
     );
+}
+
+#[test]
+fn recorded_unsigned_pure_call_preserves_counter_trace_and_gas() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/widening-arith-oracle.json"
+    ))
+    .unwrap();
+    let mut native_context = initial_state(ConstructorContext::new(()))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    let mut recorded_context = initial_state(ConstructorContext::new(()))
+        .unwrap()
+        .into_circuit_context(ContractAddress::default());
+    for (width, height, state_key, queries_key, transcript_key, private_key) in [
+        (
+            65535,
+            65535,
+            "afterRecordMax",
+            "maxQueries",
+            "maxPublicTranscript",
+            "maxPrivateOutputCount",
+        ),
+        (
+            5,
+            7,
+            "afterRecordSmall",
+            "smallQueries",
+            "smallPublicTranscript",
+            "smallPrivateOutputCount",
+        ),
+    ] {
+        let width = runtime::BoundedUint::<65535>::new(width).unwrap();
+        let height = runtime::BoundedUint::<65535>::new(height).unwrap();
+        let native = recordArea(native_context, width, height).unwrap();
+        let call = recorded::recordArea(recorded_context, width, height).unwrap();
+        let replay = call
+            .public
+            .initial()
+            .query(
+                call.public.verify_ops(),
+                None,
+                &call.execution.context.cost_model,
+            )
+            .unwrap();
+        assert_eq!(native.gas_cost, call.execution.gas_cost);
+        assert_eq!(native.gas_cost, replay.gas_cost);
+        assert_eq!(
+            native.context.query.effects,
+            call.execution.context.query.effects
+        );
+        assert_eq!(native.context.query.effects, replay.context.effects);
+        assert_eq!(oracle[private_key], 0);
+        assert!(call.execution.private_transcript_outputs.is_empty());
+        let rust_cost = serde_json::to_value(native.gas_cost).unwrap();
+        let queries = oracle[queries_key].as_array().unwrap();
+        assert_eq!(queries.len(), 1);
+        for dimension in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+            assert_eq!(
+                rust_cost[dimension].to_string(),
+                queries[0]["gasCost"][dimension].as_str().unwrap()
+            );
+        }
+        let actual = serde_json::to_value(call.public.verify_ops()).unwrap();
+        let tags = actual
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|operation| {
+                operation
+                    .as_object()
+                    .unwrap()
+                    .keys()
+                    .next()
+                    .unwrap()
+                    .as_str()
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(serde_json::json!(tags), queries[0]["opTags"]);
+        assert_eq!(tags, ["idx", "addi", "ins"]);
+        assert_eq!(
+            actual.as_array().unwrap().len(),
+            oracle[transcript_key].as_array().unwrap().len()
+        );
+        assert_eq!(normalized_ops(actual), oracle[transcript_key]);
+        for state in [
+            native.context.query.state.get_ref(),
+            call.execution.context.query.state.get_ref(),
+            replay.context.state.get_ref(),
+        ] {
+            assert_eq!(state_hex(state.clone()), oracle[state_key]);
+        }
+        native_context = native.context;
+        recorded_context = call.execution.context;
+    }
 }

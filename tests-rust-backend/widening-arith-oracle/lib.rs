@@ -146,19 +146,80 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
+    /// Circuits with a replayable ordered ledger program.
+    pub mod recorded {
+        use midnight_compact_runtime as runtime;
+        pub fn recordArea<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::BoundedUint<65535>,
+            __compact_param_1: runtime::BoundedUint<65535>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_unsigned_arg_0: runtime::BoundedUint<65535> = __compact_param_0;
+            let __compact_recorded_unsigned_arg_1: runtime::BoundedUint<65535> = __compact_param_1;
+            let __compact_recorded_pure_unsigned_2: runtime::BoundedUint<4294967295> =
+                crate::pure_circuits::areaOf(
+                    __compact_recorded_unsigned_arg_0,
+                    __compact_recorded_unsigned_arg_1,
+                )?;
+            let frame = crate::ledger_slots::lastArea.record_increment(frame, 1u16)?;
+            Ok(frame.finish(()))
+        }
+        /// Typed handle for circuits with a complete recorded trace.
+        pub struct Contract;
+        impl Contract {
+            pub fn recordArea<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                w: runtime::BoundedUint<65535>,
+                h: runtime::BoundedUint<65535>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::recordArea(context, w, h)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn recordArea_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                w: runtime::BoundedUint<65535>,
+                h: runtime::BoundedUint<65535>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from((w, h));
+                let recorded = self.recordArea(observed.circuit_context(private_state), w, h)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "recordArea",
+                    input,
+                ))
+            }
+        }
+    }
     /// Groups the contract's exported circuits for Rust consumers.
     pub struct Contract<W> {
         #[allow(dead_code)]
         witnesses: W,
+        pub recording: recorded::Contract,
     }
     impl<W> From<W> for Contract<W> {
         fn from(witnesses: W) -> Self {
-            Self { witnesses }
+            Self {
+                witnesses,
+                recording: recorded::Contract,
+            }
         }
     }
     impl Default for Contract<()> {
         fn default() -> Self {
-            Self { witnesses: () }
+            Self {
+                witnesses: (),
+                recording: recorded::Contract,
+            }
         }
     }
     impl<W> Contract<W> {
@@ -169,6 +230,10 @@ pub mod ledger_contract {
             h: runtime::BoundedUint<65535>,
         ) -> Result<runtime::context::CircuitResult<Private, ()>, runtime::CompactError> {
             crate::ledger_contract::recordArea(context, w, h)
+        }
+        /// Access replayable circuit calls for this contract.
+        pub fn recording(&self) -> &recorded::Contract {
+            &self.recording
         }
     }
 }

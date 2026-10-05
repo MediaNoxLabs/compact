@@ -15,12 +15,33 @@
 
 // Compile field_cast_uint128.compact with --skip-zk, link generated contract
 // to this branch's runtime, then pass contract/index.js as argument.
+import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
-import * as runtime from '../../../runtime/dist/index.js';
 
 const [contractPath] = process.argv.slice(2);
 if (!contractPath) throw new Error('expected contract/index.js');
+const requireFromContract = createRequire(contractPath);
+const runtime = await import(pathToFileURL(requireFromContract.resolve('@midnight-ntwrk/compact-runtime')));
 const { Contract, pureCircuits } = await import(pathToFileURL(contractPath).href);
+const queries = [];
+const originalQuery = runtime.QueryContext.prototype.query;
+runtime.QueryContext.prototype.query = function (...args) {
+  const output = originalQuery.call(this, ...args);
+  queries.push({
+    gasCost: output.gasCost,
+    opTags: args[0].map((operation) => Object.keys(operation)[0]),
+  });
+  return output;
+};
+function normalize(value) {
+  if (typeof value === 'bigint') return value.toString();
+  if (value instanceof Uint8Array) return { bytesHex: Buffer.from(value).toString('hex') };
+  if (Array.isArray(value)) return value.map(normalize);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([key, inner]) => [key, normalize(inner)]));
+  }
+  return value;
+}
 const contract = new Contract({});
 const coinPublicKey = { bytes: new Uint8Array(32) };
 const initial = contract.initialState({
@@ -32,11 +53,16 @@ const context = runtime.createCircuitContext(
   runtime.dummyContractAddress(), coinPublicKey,
   initial.currentContractState.data, initial.currentPrivateState,
 );
+const queryStart = queries.length;
 const saved = contract.circuits.save(context, input);
 initial.currentContractState.data = new runtime.ChargedState(saved.context.currentQueryContext.state.state);
-process.stdout.write(JSON.stringify({
+process.stdout.write(JSON.stringify(normalize({
   input: input.toString(),
   pure: pureCircuits.as_field(input).toString(),
   returned: saved.result.toString(),
   afterHex: Buffer.from(initial.currentContractState.serialize()).toString('hex'),
-}, null, 2) + '\n');
+  reportedGas: saved.gasCost,
+  queries: queries.slice(queryStart),
+  publicTranscript: saved.proofData.publicTranscript,
+  privateOutputCount: saved.proofData.privateTranscriptOutputs.length,
+}), null, 2) + '\n');

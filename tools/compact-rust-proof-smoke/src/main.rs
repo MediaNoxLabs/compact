@@ -38,6 +38,7 @@ mod pure_field_arguments;
 mod stateful_pair_hash;
 mod stateful_pure_return;
 mod test_center_counter;
+mod unsigned_recording;
 mod witness_assert;
 mod witness_vector_let;
 
@@ -1101,6 +1102,28 @@ fn check_conditional_set_proof(root: &Path) -> Result<(), Box<dyn Error>> {
 fn main() -> Result<(), Box<dyn Error>> {
     let mut arguments = env::args_os().skip(1);
     let first = arguments.next();
+    if first.as_deref() == Some(OsStr::new("--wide-unsigned-field-cast")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --wide-unsigned-field-cast <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err(
+                "usage: compact-rust-proof-smoke --wide-unsigned-field-cast <proof-output>".into(),
+            );
+        }
+        return unsigned_recording::wide_cast(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--closed-pure-unsigned-call")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --closed-pure-unsigned-call <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err(
+                "usage: compact-rust-proof-smoke --closed-pure-unsigned-call <proof-output>".into(),
+            );
+        }
+        return unsigned_recording::widening_call(Path::new(&root));
+    }
     if first.as_deref() == Some(OsStr::new("--test-center-counter")) {
         let root = arguments
             .next()

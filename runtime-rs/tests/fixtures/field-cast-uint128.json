@@ -2,5 +2,147 @@
   "input": "1208925819614629174706183",
   "pure": "1208925819614629174706183",
   "returned": "1208925819614629174706183",
-  "afterHex": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a3400344b07000000000000000000014104000401040408010404080403040c00041008010404148403043a740104030401080104040104010401344b0700000000000000000001410000141073617665000400081c2000042408010404289003044080ba207f2ba1804e0b859c8ba1eb98863265ff13f765a0e8e7501e7327b93f34f5140820182c201003000400"
+  "afterHex": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a3400344b07000000000000000000014104000401040408010404080403040c00041008010404148403043a740104030401080104040104010401344b0700000000000000000001410000141073617665000400081c2000042408010404289003044080ba207f2ba1804e0b859c8ba1eb98863265ff13f765a0e8e7501e7327b93f34f5140820182c201003000400",
+  "reportedGas": {
+    "readTime": "170000000",
+    "computeTime": "1249915018",
+    "bytesWritten": "0",
+    "bytesDeleted": "0"
+  },
+  "queries": [
+    {
+      "gasCost": {
+        "readTime": "85000000",
+        "computeTime": "1233942932",
+        "bytesWritten": "58",
+        "bytesDeleted": "36"
+      },
+      "opTags": [
+        "push",
+        "push",
+        "ins"
+      ]
+    },
+    {
+      "gasCost": {
+        "readTime": "170000000",
+        "computeTime": "1249915018",
+        "bytesWritten": "0",
+        "bytesDeleted": "0"
+      },
+      "opTags": [
+        "dup",
+        "idx",
+        "popeq"
+      ]
+    }
+  ],
+  "publicTranscript": [
+    {
+      "push": {
+        "storage": false,
+        "value": {
+          "tag": "cell",
+          "content": {
+            "value": [
+              {
+                "bytesHex": ""
+              }
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "bytes",
+                  "length": 1
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "push": {
+        "storage": true,
+        "value": {
+          "tag": "cell",
+          "content": {
+            "value": [
+              {
+                "bytesHex": "0700000000000000000001"
+              }
+            ],
+            "alignment": [
+              {
+                "tag": "atom",
+                "value": {
+                  "tag": "field"
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "ins": {
+        "cached": false,
+        "n": 1
+      }
+    },
+    {
+      "dup": {
+        "n": 0
+      }
+    },
+    {
+      "idx": {
+        "cached": false,
+        "pushPath": false,
+        "path": [
+          {
+            "tag": "value",
+            "value": {
+              "value": [
+                {
+                  "bytesHex": ""
+                }
+              ],
+              "alignment": [
+                {
+                  "tag": "atom",
+                  "value": {
+                    "tag": "bytes",
+                    "length": 1
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "popeq": {
+        "cached": false,
+        "result": {
+          "value": [
+            {
+              "bytesHex": "0700000000000000000001"
+            }
+          ],
+          "alignment": [
+            {
+              "tag": "atom",
+              "value": {
+                "tag": "field"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "privateOutputCount": 0
 }

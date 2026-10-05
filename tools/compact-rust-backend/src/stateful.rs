@@ -3991,6 +3991,20 @@ pub(crate) fn render_stateful_circuit(
     } else {
         syn::parse_quote!(pub)
     };
+    let (result_statements, final_result): (Vec<syn::Stmt>, syn::FieldValue) = if circuit.result
+        == Type::Unit
+        && !matches!(&return_expr, syn::Expr::Tuple(tuple) if tuple.elems.is_empty())
+    {
+        (
+            discard_expression(return_expr, &Type::Unit),
+            syn::parse_quote!(result: ()),
+        )
+    } else {
+        (
+            vec![syn::parse_quote!(let result = #return_expr;)],
+            syn::parse_quote!(result),
+        )
+    };
     let item: syn::Item = if uses_witness {
         syn::parse_quote! {
             #visibility fn #name<Private, W: TryWitnesses<Private>>(
@@ -4001,10 +4015,10 @@ pub(crate) fn render_stateful_circuit(
                 #cost_init
                 #transcript_init
                 #(#statements)*
-                let result = #return_expr;
+                #(#result_statements)*
                 Ok(runtime::context::CircuitResult {
                     context,
-                    result,
+                    #final_result,
                     gas_cost: total_cost,
                     private_transcript_outputs,
                 })
@@ -4019,10 +4033,10 @@ pub(crate) fn render_stateful_circuit(
                 #cost_init
                 #transcript_init
                 #(#statements)*
-                let result = #return_expr;
+                #(#result_statements)*
                 Ok(runtime::context::CircuitResult {
                     context,
-                    result,
+                    #final_result,
                     gas_cost: total_cost,
                     private_transcript_outputs,
                 })

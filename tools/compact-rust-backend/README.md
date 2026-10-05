@@ -1138,8 +1138,8 @@ reveals, and gas failures. `check_compactc_target.py --micro-dao-reveal --proof`
 selectively generates the original circuit's keys. Both ballot outcomes prove,
 verify and apply to the ledger; an applied-state duplicate is rejected. The prior
 state is explicitly seeded with valid commitments, rather than obtained through a
-funded commit lifecycle. Proofs use the shared unbalanced smoke policy. Five
-microDAO proof-required recording gaps and four Coracle gaps remain.
+funded commit lifecycle. Proofs use the shared unbalanced smoke policy. That delivery retained five microDAO proof-required recording gaps and four
+Coracle gaps; ADR0193 below closes guess.
 
 Gas has three distinct measurements. The TypeScript wrapper at
 `runtime/src/circuit-context.ts:206` assigns the last query's cost. For the round-0
@@ -1198,3 +1198,32 @@ binding-tamper rejection. No synthetic public query, missing claim or funding
 input is inserted. Run `check_compactc_target.py --composite-zswap --proof` for
 these strict cases; its nonproof mode checks compiler admission. The actual local
 parity gate joins proof applicability to contract-info before testing fixtures.
+
+### Same-frame Unit Cell helpers (ADR0193)
+
+The complete original `test-center/test-contracts/coracle.compact` records
+`guess(Field): Unit`. Declaration-directed calls reuse the shared typed plan;
+a separate bounded admission module permits actionful Field→Unit helpers with
+Cell observations/writes, composite witnesses, assertions and audited pure
+commitment predicates. Arguments evaluate once in caller order, helpers have
+isolated scopes, calls are acyclic, and the selected branch retains its frame.
+Both transient-commit operands are audited for hidden effects. The profile
+excludes coins/intents, Kernel, Counter/Merkle operations and arbitrary helper
+returns. ABI48/schema20 and runtime primitives remain unchanged.
+
+Twenty-six fresh original TypeScript scenarios compare native/recorded witness
+prefixes, full public programs, private outputs, state/effects, gas and replay.
+Both root player-key queries execute; only the selected player helper's two
+witnesses and Cell writes execute. Empty `last_guess` follows the original
+source's direct `.value` access. The first-query-sized budget succeeds because
+limits apply per query; wrapper last-query, aggregate query and replay costs
+remain separate. Errors do not fabricate post-error contexts or costs.
+
+`check_compactc_target.py --coracle-guess --proof` selectively generates the
+original circuit's keys. Both colors are checked against explicit canonical
+prior-state fixtures, under the shared unbalanced proof-smoke policy; funded
+game setup/payout remains separate. Source applicability preserves all nine
+exports, records one of four proof-required APIs, and retains `start`, `concede`
+and `withdraw` recording gaps. Native final nontrivial Unit expressions use
+`discard_expression` and `result: ()`, preserving all effects while removing an
+unnecessary binding; existing literal Unit output remains unchanged.

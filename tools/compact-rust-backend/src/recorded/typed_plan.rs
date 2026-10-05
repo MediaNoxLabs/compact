@@ -19,6 +19,7 @@
 use super::*;
 use crate::coerce_expression;
 use crate::ir::ReturnPlan;
+mod unit_actions;
 
 #[derive(Clone)]
 struct TypedValue {
@@ -48,6 +49,7 @@ struct Plan<'a> {
     field_cell_slot: Option<(String, u8)>,
     effectful_field_cells: bool,
     read_only_assertions: bool,
+    unit_actions: bool,
     composite_values: bool,
     composite_intents: bool,
     intent_effects: usize,
@@ -186,14 +188,14 @@ impl Plan<'_> {
         steps: &mut Vec<syn::Stmt>,
     ) -> Option<TypedValue> {
         match expression {
-            Expr::Unit if self.read_only_assertions => Some(TypedValue {
+            Expr::Unit if self.read_only_assertions || self.unit_actions => Some(TypedValue {
                 ty: Type::Unit,
                 value: syn::parse_quote!(()),
             }),
             Expr::Sequence {
                 steps: expressions,
                 value,
-            } if self.read_only_assertions => {
+            } if self.read_only_assertions || self.unit_actions => {
                 for expression in expressions {
                     if self.expression(expression, scope, steps)?.ty != Type::Unit {
                         return None;
@@ -201,7 +203,9 @@ impl Plan<'_> {
                 }
                 self.expression(value, scope, steps)
             }
-            Expr::Assert { condition, message } if self.read_only_assertions => {
+            Expr::Assert { condition, message }
+                if self.read_only_assertions || self.unit_actions =>
+            {
                 let condition = self.expression(condition, scope, steps)?;
                 if condition.ty != Type::Boolean {
                     return None;
@@ -366,6 +370,7 @@ impl Plan<'_> {
                 let otherwise = self.expression(otherwise, scope, &mut else_steps)?;
                 if then.ty != otherwise.ty
                     || (!self.composite_values
+                        && !(self.unit_actions && then.ty == Type::Unit)
                         && then.ty != Type::Boolean
                         && !(self.scalar_arguments && then.ty == (Type::Bytes { length: 32 })))
                 {
@@ -414,7 +419,9 @@ impl Plan<'_> {
                     value: syn::parse_quote!(#observed),
                 })
             }
-            Expr::Tuple { elements } if self.context_query || self.scalar_body_depth > 0 => {
+            Expr::Tuple { elements }
+                if self.context_query || self.scalar_body_depth > 0 || self.unit_actions =>
+            {
                 let values = elements
                     .iter()
                     .map(|element| self.expression(element, scope, steps))
@@ -445,11 +452,14 @@ impl Plan<'_> {
                     steps,
                 )
             }
-            Expr::PersistentHash { value } if self.scalar_body_depth > 0 => {
+            Expr::PersistentHash { value } if self.scalar_body_depth > 0 || self.unit_actions => {
                 let value = self.expression(value, scope, steps)?;
                 if value.ty
                     != (Type::Tuple {
-                        elements: vec![Type::Bytes { length: 32 }; 3],
+                        elements: vec![
+                            Type::Bytes { length: 32 };
+                            if self.unit_actions { 2 } else { 3 }
+                        ],
                     })
                 {
                     return None;
@@ -458,6 +468,19 @@ impl Plan<'_> {
                 self.bind(
                     syn::parse_quote!(runtime::persistent_hash(#value)),
                     Type::Bytes { length: 32 },
+                    steps,
+                )
+            }
+            Expr::TransientCommit { value, opening } if self.unit_actions => {
+                let value = self.expression(value, scope, steps)?;
+                let opening = self.expression(opening, scope, steps)?;
+                if !unit_actions::field_structure(&value.ty) || opening.ty != Type::Field {
+                    return None;
+                }
+                let (value, opening) = (value.value, opening.value);
+                self.bind(
+                    syn::parse_quote!(runtime::transient_commit(#value, #opening)),
+                    Type::Field,
                     steps,
                 )
             }
@@ -543,6 +566,7 @@ impl Plan<'_> {
                     return None;
                 }
                 if !cell_type(ty)
+                    && !(self.unit_actions && unit_actions::value_type(ty))
                     && !(self.read_only_assertions && *ty == Type::Boolean)
                     && !(ty == &Type::Field
                         && (self.effectful_field_cells
@@ -667,12 +691,13 @@ impl Plan<'_> {
                 if self.composite_values {
                     return None;
                 } // preserve ADR0187 admission
-                if self.context_query {
+                if self.context_query || self.unit_actions {
                     self.inline_call(
                         name,
                         &callee.parameters,
                         &callee.result,
                         &callee.body,
+                        &[],
                         arguments,
                         scope,
                         steps,
@@ -692,6 +717,22 @@ impl Plan<'_> {
                 }
             }
             (None, Some(callee)) => {
+                if self.unit_actions {
+                    if !unit_actions::helper_signature(callee) {
+                        return None;
+                    }
+                    return self.inline_call(
+                        name,
+                        &callee.parameters,
+                        &callee.result,
+                        &Expr::Unit,
+                        &callee.actions,
+                        arguments,
+                        scope,
+                        steps,
+                        false,
+                    );
+                }
                 let StateReturn::Expression { value } = &callee.return_value else {
                     return None;
                 };
@@ -707,6 +748,7 @@ impl Plan<'_> {
                     &callee.parameters,
                     &callee.result,
                     value,
+                    &[],
                     arguments,
                     scope,
                     steps,
@@ -724,6 +766,7 @@ impl Plan<'_> {
         parameters: &[crate::ir::Parameter],
         result: &Type,
         body: &Expr,
+        actions: &[StateAction],
         arguments: &[Expr],
         scope: &Scope,
         steps: &mut Vec<syn::Stmt>,
@@ -764,7 +807,12 @@ impl Plan<'_> {
         if scalar {
             self.scalar_body_depth += 1;
         }
-        let value = self.expression(body, &isolated, steps);
+        let value = (|| {
+            for action in actions {
+                self.action(action, &isolated, steps)?;
+            }
+            self.expression(body, &isolated, steps)
+        })();
         if scalar {
             self.scalar_body_depth -= 1;
             self.scalar_helper_calls += 1;
@@ -943,6 +991,7 @@ impl Plan<'_> {
                     return None;
                 }
                 if !cell_type(ty)
+                    && !(self.unit_actions && unit_actions::value_type(ty))
                     && !(ty == &Type::Field
                         && (self.effectful_field_cells
                             || self.field_cell_slot.as_ref() == Some(&(field.clone(), *index))))
@@ -1382,6 +1431,7 @@ pub(super) fn lower_effectful<'a>(
         field_cell_slot: None,
         effectful_field_cells: true,
         read_only_assertions: false,
+        unit_actions: false,
         composite_values: false,
         composite_intents: false,
         intent_effects: 0,
@@ -1593,6 +1643,7 @@ pub(super) fn lower_context_query<'a>(
         field_cell_slot: None,
         effectful_field_cells: false,
         read_only_assertions: false,
+        unit_actions: false,
         composite_values: false,
         composite_intents: false,
         intent_effects: 0,
@@ -1739,6 +1790,16 @@ fn composite_circuit(
         })
         && matches!(&circuit.return_value, StateReturn::Expression { value } if composite_value(value,witnesses,circuits,visiting,intents))
 }
+pub(super) fn lower_unit_actions<'a>(
+    circuit: &StatefulCircuit,
+    ledger: &'a HashMap<&'a str, &'a LedgerField>,
+    witnesses: &'a HashMap<&'a str, &'a WitnessDeclaration>,
+    pure: &'a HashMap<&'a str, &'a PureCircuit>,
+    circuits: &'a HashMap<&'a str, &'a StatefulCircuit>,
+) -> Option<TypedPlan> {
+    unit_actions::lower(circuit, ledger, witnesses, pure, circuits)
+}
+
 pub(super) fn lower_composite<'a>(
     circuit: &StatefulCircuit,
     ledger: &'a HashMap<&'a str, &'a LedgerField>,
@@ -1779,6 +1840,7 @@ pub(super) fn lower_composite<'a>(
         field_cell_slot: None,
         effectful_field_cells: false,
         read_only_assertions: false,
+        unit_actions: false,
         composite_values: true,
         composite_intents: intents,
         intent_effects: 0,
@@ -1921,6 +1983,7 @@ pub(super) fn lower<'a>(
         field_cell_slot: field_cell_slot.clone(),
         effectful_field_cells: false,
         read_only_assertions: assertion_entry,
+        unit_actions: false,
         composite_values: false,
         composite_intents: false,
         intent_effects: 0,
@@ -2470,6 +2533,7 @@ mod tests {
             field_cell_slot: None,
             effectful_field_cells: false,
             read_only_assertions: false,
+            unit_actions: false,
             composite_values: false,
             composite_intents: false,
             intent_effects: 0,
@@ -2561,6 +2625,7 @@ mod tests {
             field_cell_slot: None,
             effectful_field_cells: false,
             read_only_assertions: false,
+            unit_actions: false,
             composite_values: false,
             composite_intents: false,
             intent_effects: 0,

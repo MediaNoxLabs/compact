@@ -341,7 +341,7 @@ metadata.mkdir()
 
     def test_original_coracle_and_micro_dao_have_exact_registered_cohorts(self):
         for manifest_path, exports, proof_count, recorded in [
-            (inventory.TEST_CENTER_CORACLE_SOURCE_MANIFEST, 9, 4, []),
+            (inventory.TEST_CENTER_CORACLE_SOURCE_MANIFEST, 9, 4, ["guess"]),
             (inventory.TEST_CENTER_MICRO_DAO_SOURCE_MANIFEST, 11, 7, ["vote_reveal", "dao_voting_token"]),
         ]:
             with self.subTest(manifest=manifest_path.name):

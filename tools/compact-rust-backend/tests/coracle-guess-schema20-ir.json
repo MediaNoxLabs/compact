@@ -1,0 +1,2415 @@
+{
+  "schema_version": 20,
+  "type_aliases": [],
+  "ledger_fields": [
+    {
+      "id": "red",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "bytes",
+          "length": 32
+        }
+      },
+      "source": {
+        "file": "coracle.compact",
+        "line": 87,
+        "column": 1
+      }
+    },
+    {
+      "id": "blue",
+      "index": 1,
+      "path": [
+        1
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "bytes",
+          "length": 32
+        }
+      },
+      "source": {
+        "file": "coracle.compact",
+        "line": 88,
+        "column": 1
+      }
+    },
+    {
+      "id": "red_board",
+      "index": 2,
+      "path": [
+        2
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "struct",
+          "name": "Commitment",
+          "fields": [
+            {
+              "name": "value",
+              "ty": {
+                "kind": "field"
+              }
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "coracle.compact",
+        "line": 90,
+        "column": 1
+      }
+    },
+    {
+      "id": "blue_board",
+      "index": 3,
+      "path": [
+        3
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "struct",
+          "name": "Commitment",
+          "fields": [
+            {
+              "name": "value",
+              "ty": {
+                "kind": "field"
+              }
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "coracle.compact",
+        "line": 91,
+        "column": 1
+      }
+    },
+    {
+      "id": "last_guess",
+      "index": 4,
+      "path": [
+        4
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "struct",
+          "name": "Maybe",
+          "fields": [
+            {
+              "name": "is_some",
+              "ty": {
+                "kind": "boolean"
+              }
+            },
+            {
+              "name": "value",
+              "ty": {
+                "kind": "field"
+              }
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "coracle.compact",
+        "line": 93,
+        "column": 1
+      }
+    },
+    {
+      "id": "state",
+      "index": 5,
+      "path": [
+        5
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "enum",
+          "name": "State",
+          "variants": [
+            "no_game",
+            "red_started",
+            "blue_started",
+            "red_turn",
+            "blue_turn",
+            "red_wins",
+            "blue_wins"
+          ]
+        }
+      },
+      "source": {
+        "file": "coracle.compact",
+        "line": 94,
+        "column": 1
+      }
+    },
+    {
+      "id": "pot",
+      "index": 6,
+      "path": [
+        6
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "struct",
+          "name": "QualifiedShieldedCoinInfo",
+          "fields": [
+            {
+              "name": "nonce",
+              "ty": {
+                "kind": "bytes",
+                "length": 32
+              }
+            },
+            {
+              "name": "color",
+              "ty": {
+                "kind": "bytes",
+                "length": 32
+              }
+            },
+            {
+              "name": "value",
+              "ty": {
+                "kind": "unsigned",
+                "max": "340282366920938463463374607431768211455"
+              }
+            },
+            {
+              "name": "mt_index",
+              "ty": {
+                "kind": "unsigned",
+                "max": "18446744073709551615"
+              }
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "coracle.compact",
+        "line": 95,
+        "column": 1
+      }
+    },
+    {
+      "id": "red_deposit",
+      "index": 7,
+      "path": [
+        7
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "struct",
+          "name": "QualifiedShieldedCoinInfo",
+          "fields": [
+            {
+              "name": "nonce",
+              "ty": {
+                "kind": "bytes",
+                "length": 32
+              }
+            },
+            {
+              "name": "color",
+              "ty": {
+                "kind": "bytes",
+                "length": 32
+              }
+            },
+            {
+              "name": "value",
+              "ty": {
+                "kind": "unsigned",
+                "max": "340282366920938463463374607431768211455"
+              }
+            },
+            {
+              "name": "mt_index",
+              "ty": {
+                "kind": "unsigned",
+                "max": "18446744073709551615"
+              }
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "coracle.compact",
+        "line": 98,
+        "column": 1
+      }
+    },
+    {
+      "id": "blue_deposit",
+      "index": 8,
+      "path": [
+        8
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "struct",
+          "name": "QualifiedShieldedCoinInfo",
+          "fields": [
+            {
+              "name": "nonce",
+              "ty": {
+                "kind": "bytes",
+                "length": 32
+              }
+            },
+            {
+              "name": "color",
+              "ty": {
+                "kind": "bytes",
+                "length": 32
+              }
+            },
+            {
+              "name": "value",
+              "ty": {
+                "kind": "unsigned",
+                "max": "340282366920938463463374607431768211455"
+              }
+            },
+            {
+              "name": "mt_index",
+              "ty": {
+                "kind": "unsigned",
+                "max": "18446744073709551615"
+              }
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "coracle.compact",
+        "line": 99,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "local_secret_key",
+      "parameters": [],
+      "result": {
+        "kind": "bytes",
+        "length": 32
+      },
+      "source": {
+        "file": "coracle.compact",
+        "line": 81,
+        "column": 1
+      }
+    },
+    {
+      "name": "local_board",
+      "parameters": [],
+      "result": {
+        "kind": "struct",
+        "name": "Committable",
+        "fields": [
+          {
+            "name": "nonce",
+            "ty": {
+              "kind": "field"
+            }
+          },
+          {
+            "name": "contents",
+            "ty": {
+              "kind": "struct",
+              "name": "Board",
+              "fields": [
+                {
+                  "name": "position",
+                  "ty": {
+                    "kind": "field"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "source": {
+        "file": "coracle.compact",
+        "line": 82,
+        "column": 1
+      }
+    },
+    {
+      "name": "local_set_board",
+      "parameters": [
+        {
+          "name": "board",
+          "ty": {
+            "kind": "struct",
+            "name": "Committable",
+            "fields": [
+              {
+                "name": "nonce",
+                "ty": {
+                  "kind": "field"
+                }
+              },
+              {
+                "name": "contents",
+                "ty": {
+                  "kind": "struct",
+                  "name": "Board",
+                  "fields": [
+                    {
+                      "name": "position",
+                      "ty": {
+                        "kind": "field"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "source": {
+        "file": "coracle.compact",
+        "line": 83,
+        "column": 1
+      }
+    },
+    {
+      "name": "fresh_nonce",
+      "parameters": [],
+      "result": {
+        "kind": "field"
+      },
+      "source": {
+        "file": "coracle.compact",
+        "line": 84,
+        "column": 1
+      }
+    }
+  ],
+  "circuits": [
+    {
+      "name": "__compact_function_some_474",
+      "internal": true,
+      "parameters": [
+        {
+          "name": "value",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Maybe",
+        "fields": [
+          {
+            "name": "is_some",
+            "ty": {
+              "kind": "boolean"
+            }
+          },
+          {
+            "name": "value",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "body": {
+        "kind": "struct_literal",
+        "ty": {
+          "kind": "struct",
+          "name": "Maybe",
+          "fields": [
+            {
+              "name": "is_some",
+              "ty": {
+                "kind": "boolean"
+              }
+            },
+            {
+              "name": "value",
+              "ty": {
+                "kind": "field"
+              }
+            }
+          ]
+        },
+        "fields": [
+          {
+            "kind": "boolean",
+            "value": true
+          },
+          {
+            "kind": "parameter",
+            "name": "value"
+          }
+        ]
+      },
+      "source": {
+        "file": "standard-library.compact",
+        "line": 24,
+        "column": 1
+      }
+    },
+    {
+      "name": "eq_commitment",
+      "internal": true,
+      "parameters": [
+        {
+          "name": "left",
+          "ty": {
+            "kind": "struct",
+            "name": "Commitment",
+            "fields": [
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "right",
+          "ty": {
+            "kind": "struct",
+            "name": "Commitment",
+            "fields": [
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "body": {
+        "kind": "equal",
+        "left": {
+          "kind": "struct_field",
+          "value": {
+            "kind": "parameter",
+            "name": "left"
+          },
+          "field": "value",
+          "index": 0
+        },
+        "right": {
+          "kind": "struct_field",
+          "value": {
+            "kind": "parameter",
+            "name": "right"
+          },
+          "field": "value",
+          "index": 0
+        }
+      },
+      "source": {
+        "file": "coracle.compact",
+        "line": 57,
+        "column": 1
+      }
+    },
+    {
+      "name": "commit",
+      "internal": true,
+      "parameters": [
+        {
+          "name": "c",
+          "ty": {
+            "kind": "struct",
+            "name": "Committable",
+            "fields": [
+              {
+                "name": "nonce",
+                "ty": {
+                  "kind": "field"
+                }
+              },
+              {
+                "name": "contents",
+                "ty": {
+                  "kind": "struct",
+                  "name": "Board",
+                  "fields": [
+                    {
+                      "name": "position",
+                      "ty": {
+                        "kind": "field"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "struct",
+        "name": "Commitment",
+        "fields": [
+          {
+            "name": "value",
+            "ty": {
+              "kind": "field"
+            }
+          }
+        ]
+      },
+      "body": {
+        "kind": "let",
+        "bindings": [
+          {
+            "name": "commitment",
+            "ty": {
+              "kind": "field"
+            },
+            "value": {
+              "kind": "transient_commit",
+              "value": {
+                "kind": "struct_field",
+                "value": {
+                  "kind": "parameter",
+                  "name": "c"
+                },
+                "field": "contents",
+                "index": 1
+              },
+              "opening": {
+                "kind": "struct_field",
+                "value": {
+                  "kind": "parameter",
+                  "name": "c"
+                },
+                "field": "nonce",
+                "index": 0
+              }
+            }
+          }
+        ],
+        "body": {
+          "kind": "struct_literal",
+          "ty": {
+            "kind": "struct",
+            "name": "Commitment",
+            "fields": [
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          },
+          "fields": [
+            {
+              "kind": "parameter",
+              "name": "commitment"
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "coracle.compact",
+        "line": 61,
+        "column": 1
+      }
+    },
+    {
+      "name": "is_match",
+      "internal": true,
+      "parameters": [
+        {
+          "name": "c",
+          "ty": {
+            "kind": "struct",
+            "name": "Committable",
+            "fields": [
+              {
+                "name": "nonce",
+                "ty": {
+                  "kind": "field"
+                }
+              },
+              {
+                "name": "contents",
+                "ty": {
+                  "kind": "struct",
+                  "name": "Board",
+                  "fields": [
+                    {
+                      "name": "position",
+                      "ty": {
+                        "kind": "field"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "b",
+          "ty": {
+            "kind": "struct",
+            "name": "Commitment",
+            "fields": [
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "body": {
+        "kind": "call",
+        "name": "eq_commitment",
+        "arguments": [
+          {
+            "kind": "call",
+            "name": "commit",
+            "arguments": [
+              {
+                "kind": "parameter",
+                "name": "c"
+              }
+            ]
+          },
+          {
+            "kind": "parameter",
+            "name": "b"
+          }
+        ]
+      },
+      "source": {
+        "file": "coracle.compact",
+        "line": 67,
+        "column": 1
+      }
+    },
+    {
+      "name": "is_red",
+      "parameters": [
+        {
+          "name": "sk",
+          "ty": {
+            "kind": "bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "pk",
+          "ty": {
+            "kind": "bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "body": {
+        "kind": "equal",
+        "left": {
+          "kind": "parameter",
+          "name": "pk"
+        },
+        "right": {
+          "kind": "persistent_hash",
+          "value": {
+            "kind": "tuple",
+            "elements": [
+              {
+                "kind": "parameter",
+                "name": "sk"
+              },
+              {
+                "kind": "bytes_literal",
+                "bytes": [
+                  99,
+                  111,
+                  114,
+                  97,
+                  99,
+                  108,
+                  101,
+                  58,
+                  114,
+                  101,
+                  100,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "source": {
+        "file": "coracle.compact",
+        "line": 110,
+        "column": 1
+      }
+    },
+    {
+      "name": "is_blue",
+      "parameters": [
+        {
+          "name": "sk",
+          "ty": {
+            "kind": "bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "pk",
+          "ty": {
+            "kind": "bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "body": {
+        "kind": "equal",
+        "left": {
+          "kind": "parameter",
+          "name": "pk"
+        },
+        "right": {
+          "kind": "persistent_hash",
+          "value": {
+            "kind": "tuple",
+            "elements": [
+              {
+                "kind": "parameter",
+                "name": "sk"
+              },
+              {
+                "kind": "bytes_literal",
+                "bytes": [
+                  99,
+                  111,
+                  114,
+                  97,
+                  99,
+                  108,
+                  101,
+                  58,
+                  98,
+                  108,
+                  117,
+                  101,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "source": {
+        "file": "coracle.compact",
+        "line": 118,
+        "column": 1
+      }
+    },
+    {
+      "name": "is_valid_pos",
+      "internal": true,
+      "parameters": [
+        {
+          "name": "pos",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "body": {
+        "kind": "if",
+        "condition": {
+          "kind": "if",
+          "condition": {
+            "kind": "if",
+            "condition": {
+              "kind": "if",
+              "condition": {
+                "kind": "if",
+                "condition": {
+                  "kind": "if",
+                  "condition": {
+                    "kind": "if",
+                    "condition": {
+                      "kind": "if",
+                      "condition": {
+                        "kind": "equal",
+                        "left": {
+                          "kind": "parameter",
+                          "name": "pos"
+                        },
+                        "right": {
+                          "kind": "field_literal",
+                          "value": "1"
+                        }
+                      },
+                      "then": {
+                        "kind": "boolean",
+                        "value": true
+                      },
+                      "otherwise": {
+                        "kind": "equal",
+                        "left": {
+                          "kind": "parameter",
+                          "name": "pos"
+                        },
+                        "right": {
+                          "kind": "field_literal",
+                          "value": "2"
+                        }
+                      }
+                    },
+                    "then": {
+                      "kind": "boolean",
+                      "value": true
+                    },
+                    "otherwise": {
+                      "kind": "equal",
+                      "left": {
+                        "kind": "parameter",
+                        "name": "pos"
+                      },
+                      "right": {
+                        "kind": "field_literal",
+                        "value": "3"
+                      }
+                    }
+                  },
+                  "then": {
+                    "kind": "boolean",
+                    "value": true
+                  },
+                  "otherwise": {
+                    "kind": "equal",
+                    "left": {
+                      "kind": "parameter",
+                      "name": "pos"
+                    },
+                    "right": {
+                      "kind": "field_literal",
+                      "value": "4"
+                    }
+                  }
+                },
+                "then": {
+                  "kind": "boolean",
+                  "value": true
+                },
+                "otherwise": {
+                  "kind": "equal",
+                  "left": {
+                    "kind": "parameter",
+                    "name": "pos"
+                  },
+                  "right": {
+                    "kind": "field_literal",
+                    "value": "5"
+                  }
+                }
+              },
+              "then": {
+                "kind": "boolean",
+                "value": true
+              },
+              "otherwise": {
+                "kind": "equal",
+                "left": {
+                  "kind": "parameter",
+                  "name": "pos"
+                },
+                "right": {
+                  "kind": "field_literal",
+                  "value": "6"
+                }
+              }
+            },
+            "then": {
+              "kind": "boolean",
+              "value": true
+            },
+            "otherwise": {
+              "kind": "equal",
+              "left": {
+                "kind": "parameter",
+                "name": "pos"
+              },
+              "right": {
+                "kind": "field_literal",
+                "value": "7"
+              }
+            }
+          },
+          "then": {
+            "kind": "boolean",
+            "value": true
+          },
+          "otherwise": {
+            "kind": "equal",
+            "left": {
+              "kind": "parameter",
+              "name": "pos"
+            },
+            "right": {
+              "kind": "field_literal",
+              "value": "8"
+            }
+          }
+        },
+        "then": {
+          "kind": "coerce",
+          "value": {
+            "kind": "boolean",
+            "value": true
+          },
+          "ty": {
+            "kind": "boolean"
+          }
+        },
+        "otherwise": {
+          "kind": "coerce",
+          "value": {
+            "kind": "equal",
+            "left": {
+              "kind": "parameter",
+              "name": "pos"
+            },
+            "right": {
+              "kind": "field_literal",
+              "value": "9"
+            }
+          },
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      },
+      "source": {
+        "file": "coracle.compact",
+        "line": 122,
+        "column": 1
+      }
+    },
+    {
+      "name": "is_valid_board",
+      "internal": true,
+      "parameters": [
+        {
+          "name": "board",
+          "ty": {
+            "kind": "struct",
+            "name": "Board",
+            "fields": [
+              {
+                "name": "position",
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "body": {
+        "kind": "let",
+        "bindings": [
+          {
+            "name": "pos",
+            "ty": {
+              "kind": "field"
+            },
+            "value": {
+              "kind": "struct_field",
+              "value": {
+                "kind": "parameter",
+                "name": "board"
+              },
+              "field": "position",
+              "index": 0
+            }
+          }
+        ],
+        "body": {
+          "kind": "call",
+          "name": "is_valid_pos",
+          "arguments": [
+            {
+              "kind": "parameter",
+              "name": "pos"
+            }
+          ]
+        }
+      },
+      "source": {
+        "file": "coracle.compact",
+        "line": 134,
+        "column": 1
+      }
+    },
+    {
+      "name": "is_player_honest",
+      "internal": true,
+      "parameters": [
+        {
+          "name": "local_board",
+          "ty": {
+            "kind": "struct",
+            "name": "Committable",
+            "fields": [
+              {
+                "name": "nonce",
+                "ty": {
+                  "kind": "field"
+                }
+              },
+              {
+                "name": "contents",
+                "ty": {
+                  "kind": "struct",
+                  "name": "Board",
+                  "fields": [
+                    {
+                      "name": "position",
+                      "ty": {
+                        "kind": "field"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "remote_board",
+          "ty": {
+            "kind": "struct",
+            "name": "Commitment",
+            "fields": [
+              {
+                "name": "value",
+                "ty": {
+                  "kind": "field"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "body": {
+        "kind": "if",
+        "condition": {
+          "kind": "call",
+          "name": "is_valid_board",
+          "arguments": [
+            {
+              "kind": "struct_field",
+              "value": {
+                "kind": "parameter",
+                "name": "local_board"
+              },
+              "field": "contents",
+              "index": 1
+            }
+          ]
+        },
+        "then": {
+          "kind": "coerce",
+          "value": {
+            "kind": "call",
+            "name": "is_match",
+            "arguments": [
+              {
+                "kind": "parameter",
+                "name": "local_board"
+              },
+              {
+                "kind": "parameter",
+                "name": "remote_board"
+              }
+            ]
+          },
+          "ty": {
+            "kind": "boolean"
+          }
+        },
+        "otherwise": {
+          "kind": "coerce",
+          "value": {
+            "kind": "boolean",
+            "value": false
+          },
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      },
+      "source": {
+        "file": "coracle.compact",
+        "line": 139,
+        "column": 1
+      }
+    },
+    {
+      "name": "is_blue_turn",
+      "internal": true,
+      "parameters": [
+        {
+          "name": "state",
+          "ty": {
+            "kind": "enum",
+            "name": "State",
+            "variants": [
+              "no_game",
+              "red_started",
+              "blue_started",
+              "red_turn",
+              "blue_turn",
+              "red_wins",
+              "blue_wins"
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "body": {
+        "kind": "if",
+        "condition": {
+          "kind": "equal",
+          "left": {
+            "kind": "parameter",
+            "name": "state"
+          },
+          "right": {
+            "kind": "enum_variant",
+            "ty": {
+              "kind": "enum",
+              "name": "State",
+              "variants": [
+                "no_game",
+                "red_started",
+                "blue_started",
+                "red_turn",
+                "blue_turn",
+                "red_wins",
+                "blue_wins"
+              ]
+            },
+            "variant": "blue_turn"
+          }
+        },
+        "then": {
+          "kind": "coerce",
+          "value": {
+            "kind": "boolean",
+            "value": true
+          },
+          "ty": {
+            "kind": "boolean"
+          }
+        },
+        "otherwise": {
+          "kind": "coerce",
+          "value": {
+            "kind": "equal",
+            "left": {
+              "kind": "parameter",
+              "name": "state"
+            },
+            "right": {
+              "kind": "enum_variant",
+              "ty": {
+                "kind": "enum",
+                "name": "State",
+                "variants": [
+                  "no_game",
+                  "red_started",
+                  "blue_started",
+                  "red_turn",
+                  "blue_turn",
+                  "red_wins",
+                  "blue_wins"
+                ]
+              },
+              "variant": "blue_started"
+            }
+          },
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      },
+      "source": {
+        "file": "coracle.compact",
+        "line": 144,
+        "column": 1
+      }
+    },
+    {
+      "name": "is_red_turn",
+      "internal": true,
+      "parameters": [
+        {
+          "name": "state",
+          "ty": {
+            "kind": "enum",
+            "name": "State",
+            "variants": [
+              "no_game",
+              "red_started",
+              "blue_started",
+              "red_turn",
+              "blue_turn",
+              "red_wins",
+              "blue_wins"
+            ]
+          }
+        }
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "body": {
+        "kind": "equal",
+        "left": {
+          "kind": "parameter",
+          "name": "state"
+        },
+        "right": {
+          "kind": "enum_variant",
+          "ty": {
+            "kind": "enum",
+            "name": "State",
+            "variants": [
+              "no_game",
+              "red_started",
+              "blue_started",
+              "red_turn",
+              "blue_turn",
+              "red_wins",
+              "blue_wins"
+            ]
+          },
+          "variant": "red_turn"
+        }
+      },
+      "source": {
+        "file": "coracle.compact",
+        "line": 148,
+        "column": 1
+      }
+    },
+    {
+      "name": "is_player_alive",
+      "parameters": [
+        {
+          "name": "local_board",
+          "ty": {
+            "kind": "struct",
+            "name": "Committable",
+            "fields": [
+              {
+                "name": "nonce",
+                "ty": {
+                  "kind": "field"
+                }
+              },
+              {
+                "name": "contents",
+                "ty": {
+                  "kind": "struct",
+                  "name": "Board",
+                  "fields": [
+                    {
+                      "name": "position",
+                      "ty": {
+                        "kind": "field"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "guess",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "boolean"
+      },
+      "body": {
+        "kind": "if",
+        "condition": {
+          "kind": "equal",
+          "left": {
+            "kind": "struct_field",
+            "value": {
+              "kind": "struct_field",
+              "value": {
+                "kind": "parameter",
+                "name": "local_board"
+              },
+              "field": "contents",
+              "index": 1
+            },
+            "field": "position",
+            "index": 0
+          },
+          "right": {
+            "kind": "parameter",
+            "name": "guess"
+          }
+        },
+        "then": {
+          "kind": "coerce",
+          "value": {
+            "kind": "boolean",
+            "value": false
+          },
+          "ty": {
+            "kind": "boolean"
+          }
+        },
+        "otherwise": {
+          "kind": "coerce",
+          "value": {
+            "kind": "boolean",
+            "value": true
+          },
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      },
+      "source": {
+        "file": "coracle.compact",
+        "line": 152,
+        "column": 1
+      }
+    }
+  ],
+  "stateful_circuits": [
+    {
+      "name": "guess",
+      "parameters": [
+        {
+          "name": "position",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "sk",
+              "ty": {
+                "kind": "bytes",
+                "length": 32
+              },
+              "value": {
+                "kind": "witness_call",
+                "name": "local_secret_key",
+                "arguments": []
+              }
+            }
+          ],
+          "body": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "player_is_red",
+                "ty": {
+                  "kind": "boolean"
+                },
+                "value": {
+                  "kind": "call",
+                  "name": "is_red",
+                  "arguments": [
+                    {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "parameter",
+                        "name": "sk"
+                      },
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    },
+                    {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "cell_read",
+                        "field": "red",
+                        "index": 0
+                      },
+                      "ty": {
+                        "kind": "bytes",
+                        "length": 32
+                      }
+                    }
+                  ]
+                }
+              }
+            ],
+            "body": {
+              "kind": "let",
+              "bindings": [
+                {
+                  "name": "player_is_blue",
+                  "ty": {
+                    "kind": "boolean"
+                  },
+                  "value": {
+                    "kind": "call",
+                    "name": "is_blue",
+                    "arguments": [
+                      {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "parameter",
+                          "name": "sk"
+                        },
+                        "ty": {
+                          "kind": "bytes",
+                          "length": 32
+                        }
+                      },
+                      {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "cell_read",
+                          "field": "blue",
+                          "index": 1
+                        },
+                        "ty": {
+                          "kind": "bytes",
+                          "length": 32
+                        }
+                      }
+                    ]
+                  }
+                }
+              ],
+              "body": {
+                "kind": "sequence",
+                "steps": [
+                  {
+                    "kind": "assert",
+                    "condition": {
+                      "kind": "if",
+                      "condition": {
+                        "kind": "parameter",
+                        "name": "player_is_red"
+                      },
+                      "then": {
+                        "kind": "boolean",
+                        "value": true
+                      },
+                      "otherwise": {
+                        "kind": "parameter",
+                        "name": "player_is_blue"
+                      }
+                    },
+                    "message": "Not a player"
+                  }
+                ],
+                "value": {
+                  "kind": "if",
+                  "condition": {
+                    "kind": "parameter",
+                    "name": "player_is_red"
+                  },
+                  "then": {
+                    "kind": "call",
+                    "name": "red_guess",
+                    "arguments": [
+                      {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "parameter",
+                          "name": "position"
+                        },
+                        "ty": {
+                          "kind": "field"
+                        }
+                      }
+                    ]
+                  },
+                  "otherwise": {
+                    "kind": "call",
+                    "name": "blue_guess",
+                    "arguments": [
+                      {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "parameter",
+                          "name": "position"
+                        },
+                        "ty": {
+                          "kind": "field"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "actions": [],
+      "source": {
+        "file": "coracle.compact",
+        "line": 205,
+        "column": 1
+      }
+    },
+    {
+      "name": "red_guess",
+      "parameters": [
+        {
+          "name": "my_guess",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "sk",
+              "ty": {
+                "kind": "bytes",
+                "length": 32
+              },
+              "value": {
+                "kind": "witness_call",
+                "name": "local_secret_key",
+                "arguments": []
+              }
+            }
+          ],
+          "action": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "lb",
+                "ty": {
+                  "kind": "struct",
+                  "name": "Committable",
+                  "fields": [
+                    {
+                      "name": "nonce",
+                      "ty": {
+                        "kind": "field"
+                      }
+                    },
+                    {
+                      "name": "contents",
+                      "ty": {
+                        "kind": "struct",
+                        "name": "Board",
+                        "fields": [
+                          {
+                            "name": "position",
+                            "ty": {
+                              "kind": "field"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                "value": {
+                  "kind": "witness_call",
+                  "name": "local_board",
+                  "arguments": []
+                }
+              }
+            ],
+            "action": {
+              "kind": "sequence",
+              "actions": [
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "call",
+                    "name": "is_red",
+                    "arguments": [
+                      {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "parameter",
+                          "name": "sk"
+                        },
+                        "ty": {
+                          "kind": "bytes",
+                          "length": 32
+                        }
+                      },
+                      {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "cell_read",
+                          "field": "red",
+                          "index": 0
+                        },
+                        "ty": {
+                          "kind": "bytes",
+                          "length": 32
+                        }
+                      }
+                    ]
+                  },
+                  "message": "Not player Red"
+                },
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "call",
+                    "name": "is_player_honest",
+                    "arguments": [
+                      {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "parameter",
+                          "name": "lb"
+                        },
+                        "ty": {
+                          "kind": "struct",
+                          "name": "Committable",
+                          "fields": [
+                            {
+                              "name": "nonce",
+                              "ty": {
+                                "kind": "field"
+                              }
+                            },
+                            {
+                              "name": "contents",
+                              "ty": {
+                                "kind": "struct",
+                                "name": "Board",
+                                "fields": [
+                                  {
+                                    "name": "position",
+                                    "ty": {
+                                      "kind": "field"
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "cell_read",
+                          "field": "red_board",
+                          "index": 2
+                        },
+                        "ty": {
+                          "kind": "struct",
+                          "name": "Commitment",
+                          "fields": [
+                            {
+                              "name": "value",
+                              "ty": {
+                                "kind": "field"
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  "message": "Red player is not honest"
+                },
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "call",
+                    "name": "is_red_turn",
+                    "arguments": [
+                      {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "cell_read",
+                          "field": "state",
+                          "index": 5
+                        },
+                        "ty": {
+                          "kind": "enum",
+                          "name": "State",
+                          "variants": [
+                            "no_game",
+                            "red_started",
+                            "blue_started",
+                            "red_turn",
+                            "blue_turn",
+                            "red_wins",
+                            "blue_wins"
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  "message": "Not Red's turn"
+                },
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "call",
+                    "name": "is_player_alive",
+                    "arguments": [
+                      {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "parameter",
+                          "name": "lb"
+                        },
+                        "ty": {
+                          "kind": "struct",
+                          "name": "Committable",
+                          "fields": [
+                            {
+                              "name": "nonce",
+                              "ty": {
+                                "kind": "field"
+                              }
+                            },
+                            {
+                              "name": "contents",
+                              "ty": {
+                                "kind": "struct",
+                                "name": "Board",
+                                "fields": [
+                                  {
+                                    "name": "position",
+                                    "ty": {
+                                      "kind": "field"
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "struct_field",
+                          "value": {
+                            "kind": "cell_read",
+                            "field": "last_guess",
+                            "index": 4
+                          },
+                          "field": "value",
+                          "index": 1
+                        },
+                        "ty": {
+                          "kind": "field"
+                        }
+                      }
+                    ]
+                  },
+                  "message": "Red player is not alive"
+                },
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "call",
+                    "name": "is_valid_pos",
+                    "arguments": [
+                      {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "parameter",
+                          "name": "my_guess"
+                        },
+                        "ty": {
+                          "kind": "field"
+                        }
+                      }
+                    ]
+                  },
+                  "message": "Red guess is not a valid position"
+                },
+                {
+                  "kind": "let",
+                  "bindings": [
+                    {
+                      "name": "tmp_480",
+                      "ty": {
+                        "kind": "struct",
+                        "name": "Maybe",
+                        "fields": [
+                          {
+                            "name": "is_some",
+                            "ty": {
+                              "kind": "boolean"
+                            }
+                          },
+                          {
+                            "name": "value",
+                            "ty": {
+                              "kind": "field"
+                            }
+                          }
+                        ]
+                      },
+                      "value": {
+                        "kind": "call",
+                        "name": "__compact_function_some_474",
+                        "arguments": [
+                          {
+                            "kind": "coerce",
+                            "value": {
+                              "kind": "parameter",
+                              "name": "my_guess"
+                            },
+                            "ty": {
+                              "kind": "field"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ],
+                  "action": {
+                    "kind": "cell_write",
+                    "field": "last_guess",
+                    "index": 4,
+                    "value": {
+                      "kind": "parameter",
+                      "name": "tmp_480"
+                    }
+                  }
+                },
+                {
+                  "kind": "cell_write",
+                  "field": "state",
+                  "index": 5,
+                  "value": {
+                    "kind": "enum_variant",
+                    "ty": {
+                      "kind": "enum",
+                      "name": "State",
+                      "variants": [
+                        "no_game",
+                        "red_started",
+                        "blue_started",
+                        "red_turn",
+                        "blue_turn",
+                        "red_wins",
+                        "blue_wins"
+                      ]
+                    },
+                    "variant": "blue_turn"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "coracle.compact",
+        "line": 214,
+        "column": 1
+      }
+    },
+    {
+      "name": "blue_guess",
+      "parameters": [
+        {
+          "name": "my_guess",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "sk",
+              "ty": {
+                "kind": "bytes",
+                "length": 32
+              },
+              "value": {
+                "kind": "witness_call",
+                "name": "local_secret_key",
+                "arguments": []
+              }
+            }
+          ],
+          "action": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "lb",
+                "ty": {
+                  "kind": "struct",
+                  "name": "Committable",
+                  "fields": [
+                    {
+                      "name": "nonce",
+                      "ty": {
+                        "kind": "field"
+                      }
+                    },
+                    {
+                      "name": "contents",
+                      "ty": {
+                        "kind": "struct",
+                        "name": "Board",
+                        "fields": [
+                          {
+                            "name": "position",
+                            "ty": {
+                              "kind": "field"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                "value": {
+                  "kind": "witness_call",
+                  "name": "local_board",
+                  "arguments": []
+                }
+              }
+            ],
+            "action": {
+              "kind": "sequence",
+              "actions": [
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "call",
+                    "name": "is_blue",
+                    "arguments": [
+                      {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "parameter",
+                          "name": "sk"
+                        },
+                        "ty": {
+                          "kind": "bytes",
+                          "length": 32
+                        }
+                      },
+                      {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "cell_read",
+                          "field": "blue",
+                          "index": 1
+                        },
+                        "ty": {
+                          "kind": "bytes",
+                          "length": 32
+                        }
+                      }
+                    ]
+                  },
+                  "message": "Not player Blue"
+                },
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "call",
+                    "name": "is_player_honest",
+                    "arguments": [
+                      {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "parameter",
+                          "name": "lb"
+                        },
+                        "ty": {
+                          "kind": "struct",
+                          "name": "Committable",
+                          "fields": [
+                            {
+                              "name": "nonce",
+                              "ty": {
+                                "kind": "field"
+                              }
+                            },
+                            {
+                              "name": "contents",
+                              "ty": {
+                                "kind": "struct",
+                                "name": "Board",
+                                "fields": [
+                                  {
+                                    "name": "position",
+                                    "ty": {
+                                      "kind": "field"
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "cell_read",
+                          "field": "blue_board",
+                          "index": 3
+                        },
+                        "ty": {
+                          "kind": "struct",
+                          "name": "Commitment",
+                          "fields": [
+                            {
+                              "name": "value",
+                              "ty": {
+                                "kind": "field"
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  "message": "Blue player is not honest"
+                },
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "call",
+                    "name": "is_blue_turn",
+                    "arguments": [
+                      {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "cell_read",
+                          "field": "state",
+                          "index": 5
+                        },
+                        "ty": {
+                          "kind": "enum",
+                          "name": "State",
+                          "variants": [
+                            "no_game",
+                            "red_started",
+                            "blue_started",
+                            "red_turn",
+                            "blue_turn",
+                            "red_wins",
+                            "blue_wins"
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  "message": "Not Blue's turn"
+                },
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "call",
+                    "name": "is_player_alive",
+                    "arguments": [
+                      {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "parameter",
+                          "name": "lb"
+                        },
+                        "ty": {
+                          "kind": "struct",
+                          "name": "Committable",
+                          "fields": [
+                            {
+                              "name": "nonce",
+                              "ty": {
+                                "kind": "field"
+                              }
+                            },
+                            {
+                              "name": "contents",
+                              "ty": {
+                                "kind": "struct",
+                                "name": "Board",
+                                "fields": [
+                                  {
+                                    "name": "position",
+                                    "ty": {
+                                      "kind": "field"
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "struct_field",
+                          "value": {
+                            "kind": "cell_read",
+                            "field": "last_guess",
+                            "index": 4
+                          },
+                          "field": "value",
+                          "index": 1
+                        },
+                        "ty": {
+                          "kind": "field"
+                        }
+                      }
+                    ]
+                  },
+                  "message": "Blue player is not alive"
+                },
+                {
+                  "kind": "assert",
+                  "condition": {
+                    "kind": "call",
+                    "name": "is_valid_pos",
+                    "arguments": [
+                      {
+                        "kind": "coerce",
+                        "value": {
+                          "kind": "parameter",
+                          "name": "my_guess"
+                        },
+                        "ty": {
+                          "kind": "field"
+                        }
+                      }
+                    ]
+                  },
+                  "message": "Blue guess is not a valid position"
+                },
+                {
+                  "kind": "let",
+                  "bindings": [
+                    {
+                      "name": "tmp_479",
+                      "ty": {
+                        "kind": "struct",
+                        "name": "Maybe",
+                        "fields": [
+                          {
+                            "name": "is_some",
+                            "ty": {
+                              "kind": "boolean"
+                            }
+                          },
+                          {
+                            "name": "value",
+                            "ty": {
+                              "kind": "field"
+                            }
+                          }
+                        ]
+                      },
+                      "value": {
+                        "kind": "call",
+                        "name": "__compact_function_some_474",
+                        "arguments": [
+                          {
+                            "kind": "coerce",
+                            "value": {
+                              "kind": "parameter",
+                              "name": "my_guess"
+                            },
+                            "ty": {
+                              "kind": "field"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ],
+                  "action": {
+                    "kind": "cell_write",
+                    "field": "last_guess",
+                    "index": 4,
+                    "value": {
+                      "kind": "parameter",
+                      "name": "tmp_479"
+                    }
+                  }
+                },
+                {
+                  "kind": "cell_write",
+                  "field": "state",
+                  "index": 5,
+                  "value": {
+                    "kind": "enum_variant",
+                    "ty": {
+                      "kind": "enum",
+                      "name": "State",
+                      "variants": [
+                        "no_game",
+                        "red_started",
+                        "blue_started",
+                        "red_turn",
+                        "blue_turn",
+                        "red_wins",
+                        "blue_wins"
+                      ]
+                    },
+                    "variant": "red_turn"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "internal": true,
+      "source": {
+        "file": "coracle.compact",
+        "line": 234,
+        "column": 1
+      }
+    }
+  ],
+  "constructor": null
+}

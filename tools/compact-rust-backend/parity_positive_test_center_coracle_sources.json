@@ -62,16 +62,13 @@
         "concede",
         "withdraw"
       ],
-      "expected_recorded_circuits": [],
+      "expected_recorded_circuits": [
+        "guess"
+      ],
       "expected_recording_gaps": {
         "start": {
           "code": "unsupported_return",
           "ir_node": "StateReturn::Effectful",
-          "path": "return_value"
-        },
-        "guess": {
-          "code": "unsupported_return",
-          "ir_node": "StateReturn::Expression",
           "path": "return_value"
         },
         "concede": {
@@ -86,7 +83,8 @@
         }
       },
       "pure_declarations": 0,
-      "exported_pure_declarations": 0
+      "exported_pure_declarations": 0,
+      "rust_fixture": "tests-rust-backend/test-center-coracle/lib.rs"
     }
   ],
   "expected_rejections": []

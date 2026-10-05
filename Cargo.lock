@@ -2013,6 +2013,7 @@ dependencies = [
  "compact-rust-struct-collision-oracle-fixture",
  "compact-rust-ternary-cond-oracle-fixture",
  "compact-rust-test-center-bboard-fixture",
+ "compact-rust-test-center-coracle-fixture",
  "compact-rust-test-center-counter-fixture",
  "compact-rust-test-center-micro-dao-fixture",
  "compact-rust-test-center-welcome-fixture",
@@ -2294,6 +2295,21 @@ dependencies = [
  "midnight-onchain-state",
  "midnight-serialize",
  "midnight-storage",
+ "serde_json",
+]
+
+[[package]]
+name = "compact-rust-test-center-coracle-fixture"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "midnight-base-crypto",
+ "midnight-coin-structure",
+ "midnight-compact-runtime",
+ "midnight-onchain-state",
+ "midnight-serialize",
+ "midnight-storage",
+ "serde",
  "serde_json",
 ]
 

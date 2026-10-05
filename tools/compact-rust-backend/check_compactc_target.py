@@ -1081,7 +1081,12 @@ def check_coracle_source(compiler: str, base: Path) -> None:
     report = json.loads((output / "contract/rust-capabilities.json").read_text())
     assert report["schema_version"] == 3
     assert [row["name"] for row in report["circuits"]] == expected["expected_capability_circuits"]
+    assert {row["name"] for row in report["circuits"] if row["recorded"]} == set(expected["expected_recorded_circuits"])
     for row in report["circuits"]:
+        if row["name"] in expected["expected_recorded_circuits"]:
+            assert row["proof_required"] and row["recorded"] and row["observed_call"]
+            assert row["recording_status"] == "available"
+            continue
         gap = expected["expected_recording_gaps"][row["name"]]
         assert row["proof_required"] and not row["recorded"] and not row["observed_call"]
         assert row["recording_status"] == "unavailable"
@@ -1222,6 +1227,7 @@ def main() -> None:
                         help="compile the complete bboard source and check recorded/observed parity")
     parser.add_argument("--adt-set-qualified", action="store_true",
                         help="compile the original qualified Set source and check typed coin insertion capability")
+    parser.add_argument("--coracle-guess", action="store_true", help="check original Coracle guess recording; optional selective proof")
     parser.add_argument("--coracle-root-let", action="store_true",
                         help="check root Let action extraction and complete Coracle native acceptance")
     parser.add_argument("--effectful-return", action="store_true",
@@ -1508,6 +1514,15 @@ def main() -> None:
                 run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                     "--literal-bytes-field", str(output))
             return
+        if args.coracle_guess:
+            check_coracle_source(compiler, base)
+            output = base / "coracle"
+            if args.proof:
+                (output / "keys").mkdir(exist_ok=True)
+                run("zkir", "compile", str(output / "zkir/guess.zkir"), str(output / "keys/guess.prover"), str(output / "keys/guess.verifier"))
+                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--", "--coracle-guess", str(output))
+            print("original Coracle guess recorded; 3 proof-required recording gaps retained")
+            return
         if args.coracle_root_let:
             oracle = base / "root-let-action-return"
             run(compiler, "--target", "rust", "--rust-require-recording", "--skip-zk",
@@ -1553,7 +1568,7 @@ def main() -> None:
                     str(ROOT_LET_ACTION_RETURN_SOURCE), str(proof))
                 run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                     "--root-let-action-return", str(proof))
-            print("root Let actions retained; complete Coracle compiles with 4 explicit recording gaps")
+            print("root Let actions retained; complete Coracle compiles with guess recorded and 3 explicit recording gaps")
             return
         if args.adt_set_qualified:
             output = base / "adt-set-qualified"
@@ -1686,6 +1701,8 @@ def main() -> None:
         run(sys.executable, str(Path(__file__).resolve()), "--micro-dao-token",
             *(["--proof"] if args.proof else []))
         run(sys.executable, str(Path(__file__).resolve()), "--micro-dao-reveal",
+            *(["--proof"] if args.proof else []))
+        run(sys.executable, str(Path(__file__).resolve()), "--coracle-guess",
             *(["--proof"] if args.proof else []))
         run(sys.executable, str(Path(__file__).resolve()), "--wide-add")
         run(sys.executable, str(Path(__file__).resolve()), "--stateful-assert")

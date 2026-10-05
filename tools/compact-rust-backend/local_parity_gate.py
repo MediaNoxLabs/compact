@@ -44,6 +44,7 @@ ROOT = Path(__file__).resolve().parents[2]
 SOURCES = ROOT / "examples/rust_backend"
 FIXTURES = ROOT / "tests-rust-backend"
 EXTRA = {
+    ROOT / "test-center/test-contracts/coracle.compact": FIXTURES / "test-center-coracle/lib.rs",
     ROOT / "test-center/test-contracts/micro-dao.compact": FIXTURES / "test-center-micro-dao/lib.rs",
     SOURCES / "digital-passport-credential/src/digital-passport-credential.compact":
         FIXTURES / "passport-dogfood/lib.rs",

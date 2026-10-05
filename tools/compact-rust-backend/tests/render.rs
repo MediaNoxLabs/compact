@@ -5042,7 +5042,8 @@ fn qualified_set_coin_insert_requires_exact_typed_slot_and_operands() {
     });
     let rendered = render_with_capabilities(&contract).unwrap();
     assert!(rendered.source.contains(".insert_coin("));
-    assert!(!rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.capabilities.circuits[0].observed_call);
 
     let mut wrong_coin = contract.clone();
     wrong_coin.stateful_circuits[0].parameters[0].ty = Type::Field;

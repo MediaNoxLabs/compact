@@ -395,6 +395,21 @@ impl<Private, D: DB> CircuitContext<Private, D> {
             .ok_or(CompactError::MissingCoinPublicKey)
     }
 
+    /// Observe kernel.self() with the compiler's metered address query.
+    pub fn kernel_self(
+        mut self,
+    ) -> Result<CircuitResult<Private, ContractAddress, D>, CompactError> {
+        let result = ledger::query_kernel_self(&self.query, self.gas_limit, &self.cost_model)?;
+        self.query = result.context;
+        let address = self.query.address;
+        Ok(CircuitResult {
+            context: self,
+            result: address,
+            gas_cost: result.gas_cost,
+            private_transcript_outputs: Vec::new(),
+        })
+    }
+
     /// Start a new circuit call from an upstream ledger contract snapshot.
     ///
     /// The caller must associate this state with `address` and establish its

@@ -39,7 +39,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 39);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 40);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -51,7 +51,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 39);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 40);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -92,11 +92,14 @@ pub mod ledger_contract {
             let mut context = runtime::context::ConstructorResult::new(__compact_context, state)
                 .into_circuit_context(runtime::ledger::ContractAddress::default());
             let mut total_cost = runtime::context::RunningCost::default();
-            let __compact_constructor_local_0: crate::types::ContractAddress =
+            let __compact_query_0 = context.kernel_self()?;
+            context = __compact_query_0.context;
+            total_cost += __compact_query_0.gas_cost;
+            let __compact_constructor_local_1: crate::types::ContractAddress =
                 crate::types::ContractAddress {
-                    bytes: runtime::ledger::contract_address_bytes(&context.query.address),
+                    bytes: runtime::ledger::contract_address_bytes(&__compact_query_0.result),
                 };
-            let step = context.write_cell(0, (__compact_constructor_local_0.clone()).clone())?;
+            let step = context.write_cell(0, (__compact_constructor_local_1.clone()).clone())?;
             context = step.context;
             let _ = total_cost;
             Ok(context.into_constructor_result())

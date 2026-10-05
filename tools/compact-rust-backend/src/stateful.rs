@@ -29,7 +29,7 @@ use crate::{
     unsigned_cast_syntax, unsigned_maximum,
 };
 
-fn qualified_coin_type() -> Type {
+pub(crate) fn qualified_coin_type() -> Type {
     let bytes = Type::Bytes { length: 32 };
     Type::Struct {
         name: "QualifiedShieldedCoinInfo".into(),
@@ -58,7 +58,7 @@ fn qualified_coin_type() -> Type {
     }
 }
 
-fn shielded_coin_type() -> Type {
+pub(crate) fn shielded_coin_type() -> Type {
     let Type::Struct { name, mut fields } = qualified_coin_type() else {
         unreachable!()
     };
@@ -69,7 +69,7 @@ fn shielded_coin_type() -> Type {
     }
 }
 
-fn shielded_recipient_type() -> Type {
+pub(crate) fn shielded_recipient_type() -> Type {
     let bytes = Type::Bytes { length: 32 };
     Type::Struct {
         name: "Either".into(),
@@ -133,9 +133,18 @@ pub(crate) fn render_state_expression(
                 });
             }
             let ty_syntax = rust_type(ty)?;
+            let step = syn::Ident::new(
+                &format!("__compact_query_{}", *next_temp),
+                Span::call_site(),
+            );
+            *next_temp += 1;
+            statements.push(syn::parse_quote!(let #step = context.kernel_self()?;));
+            statements.push(syn::parse_quote!(context = #step.context;));
+            statements.push(syn::parse_quote!(total_cost += #step.gas_cost;));
+            *query_effect = true;
             Ok((
                 syn::parse_quote!(#ty_syntax {
-                    bytes: runtime::ledger::contract_address_bytes(&context.query.address),
+                    bytes: runtime::ledger::contract_address_bytes(&#step.result),
                 }),
                 ty.clone(),
                 false,

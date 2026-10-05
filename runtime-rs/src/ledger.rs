@@ -36,8 +36,12 @@ pub use midnight_storage::storage::HashMap as LedgerHashMap;
 pub use midnight_transient_crypto::merkle_tree::{MerklePath, MerklePathEntry, MerkleTreeDigest};
 
 use crate::{BoundedUint, CompactError, Field, FixedBytes, FixedVector, JubjubPoint};
+use midnight_base_crypto::cost_model::RunningCost;
 use midnight_base_crypto::fab::{Aligned, AlignedValue, Value, ValueSlice};
+use midnight_onchain_vm::cost_model::CostModel;
 use midnight_onchain_vm::ops::Key;
+use midnight_onchain_vm::ops::Op;
+use midnight_onchain_vm::result_mode::{GatherEvent, ResultMode, ResultModeGather};
 
 /// A physical path through Compact's chunked ledger root. A single field
 /// index and a nested array path use the same query operations.
@@ -82,6 +86,46 @@ pub trait CellValue: Aligned + Into<Value> + Sized {
 /// Expose the ledger address bytes for Compact's stdlib ContractAddress struct.
 pub fn contract_address_bytes(address: &ContractAddress) -> FixedBytes<32> {
     FixedBytes(address.0.0)
+}
+
+/// Compact's kernel.self() observes the contract address through this VM
+/// query. The address is already in QueryContext; the read still contributes
+/// gas and a public transcript item in the TypeScript compiler.
+pub(crate) fn kernel_self_program<M: ResultMode<D>, D: DB>(
+    read_result: M::ReadResult,
+) -> Vec<Op<M, D>> {
+    vec![
+        Op::Dup { n: 2 },
+        Op::Idx {
+            cached: true,
+            push_path: false,
+            path: vec![Key::Value(AlignedValue::from(0u8))].into(),
+        },
+        Op::Popeq {
+            cached: true,
+            result: read_result,
+        },
+    ]
+}
+
+pub(crate) fn query_kernel_self<D: DB>(
+    context: &QueryContext<D>,
+    gas_limit: Option<RunningCost>,
+    cost_model: &CostModel,
+) -> Result<QueryResults<ResultModeGather, D>, CompactError> {
+    let result = context
+        .query(
+            &kernel_self_program::<ResultModeGather, D>(()),
+            gas_limit,
+            cost_model,
+        )
+        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))?;
+    if !matches!(result.events.last(), Some(GatherEvent::Read(_))) {
+        return Err(CompactError::InvalidLedgerCell(
+            "missing kernel.self read event".into(),
+        ));
+    }
+    Ok(result)
 }
 
 /// Convert the Compact stdlib coin fields to the ledger-8 coin primitive.
@@ -282,8 +326,8 @@ pub use collections::{
 pub(crate) use collections::{
     list_head_program, list_is_empty_program, list_length_program, list_pop_front_program,
     list_push_front_program, list_reset_program, map_insert_program, map_lookup_program,
-    set_insert_program, set_is_empty_program, set_member_program, set_remove_program,
-    set_reset_program, set_size_program,
+    qualified_coin_set_insert_program, set_insert_program, set_is_empty_program,
+    set_member_program, set_remove_program, set_reset_program, set_size_program,
 };
 pub use counter::{constructor_counter, decrement_counter, increment_counter, read_counter};
 pub(crate) use counter::{

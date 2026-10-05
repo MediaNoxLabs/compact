@@ -102,7 +102,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 39);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 40);
 }
 /// Typed descriptors for Compact ledger declarations.
 #[allow(non_upper_case_globals)]
@@ -114,7 +114,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 39);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 40);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -210,6 +210,28 @@ pub mod ledger_contract {
     /// Circuits with a replayable ordered ledger program.
     pub mod recorded {
         use midnight_compact_runtime as runtime;
+        pub fn insert_coin<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: crate::types::ShieldedCoinInfo,
+            __compact_param_1: crate::types::Either,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let frame = crate::ledger_slots::coins.record_insert_coin(
+                frame,
+                runtime::ledger::coin_info_from_compact(
+                    (__compact_param_0).clone().nonce,
+                    (__compact_param_0).clone().color,
+                    (__compact_param_0).clone().value.value(),
+                ),
+                runtime::ledger::coin_recipient_from_compact(
+                    (__compact_param_1).clone().is_left,
+                    (__compact_param_1).clone().left.bytes,
+                    (__compact_param_1).clone().right.bytes,
+                ),
+            )?;
+            Ok(frame.finish(()))
+        }
         pub fn contains<Private>(
             context: runtime::context::CircuitContext<Private>,
             __compact_param_0: crate::types::QualifiedShieldedCoinInfo,
@@ -224,6 +246,36 @@ pub mod ledger_contract {
         /// Typed handle for circuits with a complete recorded trace.
         pub struct Contract;
         impl Contract {
+            pub fn insert_coin<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                coin: crate::types::ShieldedCoinInfo,
+                recipient: crate::types::Either,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::insert_coin(context, coin, recipient)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn insert_coin_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                coin: crate::types::ShieldedCoinInfo,
+                recipient: crate::types::Either,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(((coin).clone(), (recipient).clone()));
+                let recorded =
+                    self.insert_coin(observed.circuit_context(private_state), coin, recipient)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "insert_coin",
+                    input,
+                ))
+            }
             pub fn contains<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,

@@ -135,7 +135,59 @@ fn qualified_coin_insert_matches_typescript_with_allocated_indices_and_rejects_m
             .call_context
             .com_indices
             .insert(info.commitment(&target), index);
+        let mut recorded_context = ledger_contract::initial_state(ConstructorContext::new(()))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default());
+        recorded_context.query.call_context.com_indices = recorded_context
+            .query
+            .call_context
+            .com_indices
+            .insert(info.commitment(&target), index);
+        let recorded = ledger_contract::recorded::insert_coin(
+            recorded_context,
+            coin.clone(),
+            recipient.clone(),
+        )
+        .unwrap();
         let inserted = ledger_contract::insert_coin(context, coin.clone(), recipient).unwrap();
+        assert_eq!(recorded.execution.gas_cost, inserted.gas_cost);
+        assert_eq!(
+            recorded.execution.context.query.effects,
+            inserted.context.query.effects
+        );
+        assert_eq!(
+            recorded.execution.context.query.state.get_ref(),
+            inserted.context.query.state.get_ref()
+        );
+        assert_eq!(recorded.execution.private_transcript_outputs.len(), 0);
+        let tags: Vec<_> = serde_json::to_value(recorded.public.verify_ops())
+            .unwrap()
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|op| {
+                op.as_str()
+                    .unwrap_or_else(|| op.as_object().unwrap().keys().next().unwrap())
+                    .to_owned()
+            })
+            .collect();
+        assert_eq!(
+            serde_json::json!(tags),
+            expected[case]["insertQueries"][0]["opTags"]
+        );
+        let replay = recorded
+            .public
+            .initial()
+            .query(
+                recorded.public.verify_ops(),
+                None,
+                &recorded.execution.context.cost_model,
+            )
+            .unwrap();
+        assert_eq!(
+            replay.context.state.get_ref(),
+            recorded.execution.context.query.state.get_ref()
+        );
         assert_eq!(
             serde_json::to_value(&inserted.context.query.effects).unwrap(),
             expected[case]["effects"]
@@ -183,6 +235,20 @@ fn qualified_coin_insert_matches_typescript_with_allocated_indices_and_rejects_m
         expected["missing"]["error"]
             .as_str()
             .unwrap()
+            .contains("Coin commitment not found")
+    );
+    let missing_recorded = ledger_contract::recorded::insert_coin(
+        ledger_contract::initial_state(ConstructorContext::new(()))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default()),
+        coin(),
+        recipient(false),
+    )
+    .err()
+    .unwrap();
+    assert!(
+        missing_recorded
+            .to_string()
             .contains("Coin commitment not found")
     );
     assert_eq!(expected["missing"]["queries"].as_array().unwrap().len(), 0);

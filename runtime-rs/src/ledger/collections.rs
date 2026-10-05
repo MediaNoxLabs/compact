@@ -774,13 +774,28 @@ pub fn insert_qualified_coin_set<T: CellValue, D: DB>(
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, CompactError> {
-    let commitment = super::qualified_coin_commitment::<T, D>(context, &coin, &recipient)?;
     let path = path.into();
-    let program = vec![
+    let program =
+        qualified_coin_set_insert_program::<T, D>(context, path.as_slice(), coin, recipient)?;
+    context
+        .query(&program, gas_limit, cost_model)
+        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))
+}
+
+/// Build the ledger-8 insertion program from the transaction's actual
+/// commitment index. Native execution and public recording share this check.
+pub(crate) fn qualified_coin_set_insert_program<T: CellValue, D: DB>(
+    context: &QueryContext<D>,
+    path: &[u8],
+    coin: CoinInfo,
+    recipient: Recipient,
+) -> Result<Vec<Op<ResultModeVerify, D>>, CompactError> {
+    let commitment = super::qualified_coin_commitment::<T, D>(context, &coin, &recipient)?;
+    Ok(vec![
         Op::Idx {
             cached: false,
             push_path: true,
-            path: path_keys(path.as_slice()).into(),
+            path: path_keys(path).into(),
         },
         Op::Dup { n: 4 },
         Op::Push {
@@ -811,12 +826,9 @@ pub fn insert_qualified_coin_set<T: CellValue, D: DB>(
         },
         Op::Ins {
             cached: true,
-            n: path.as_slice().len() as u8,
+            n: path.len() as u8,
         },
-    ];
-    context
-        .query(&program, gas_limit, cost_model)
-        .map_err(|error| CompactError::LedgerQueryRejected(format!("{error:?}")))
+    ])
 }
 
 /// Test membership through a gather query and decode the ledger's Boolean Cell.

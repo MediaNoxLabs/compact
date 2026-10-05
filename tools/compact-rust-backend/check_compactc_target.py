@@ -1246,26 +1246,35 @@ def main() -> None:
             capabilities = json.loads((output / "contract/rust-capabilities.json").read_text())
             assert [(row["name"], row["proof_required"], row["recorded"], row["observed_call"])
                     for row in capabilities["circuits"]] == [
-                ("test_QualifiedShieldedCoinInfo", True, False, False),
-                ("test_ShieldedCoinInfo", True, False, False),
+                ("test_QualifiedShieldedCoinInfo", True, True, True),
+                ("test_ShieldedCoinInfo", True, True, True),
             ]
-            assert all(row["recording_unavailable"] for row in capabilities["circuits"])
-            rejected = subprocess.run(
+            assert all(row.get("recording_unavailable") is None for row in capabilities["circuits"])
+            required = subprocess.run(
                 [compiler, "--target", "rust", "--rust-require-recording", "--skip-zk",
                  str(ADT_SET_QUALIFIED_SOURCE), str(base / "qualified-requires-recording")],
                 cwd=ROOT, capture_output=True, text=True,
             )
-            assert rejected.returncode != 0
-            assert "test_QualifiedShieldedCoinInfo" in rejected.stderr
-            assert "test_ShieldedCoinInfo" in rejected.stderr
+            assert required.returncode == 0, required.stderr
             oracle = base / "qualified-oracle"
             run(compiler, "--target", "rust", "--skip-zk",
                 str(QUALIFIED_COIN_ORACLE_SOURCE), str(oracle))
             oracle_capabilities = json.loads((oracle / "contract/rust-capabilities.json").read_text())
             assert [(row["name"], row["recorded"], row["observed_call"])
                     for row in oracle_capabilities["circuits"]] == [
-                ("insert_coin", False, False), ("contains", True, True)]
-            print("complete ADT qualified Set source accepted with native-only coin insertion")
+                ("insert_coin", True, True), ("contains", True, True)]
+            if args.proof:
+                adt_proof = base / "adt-qualified-proof"
+                run(compiler, "--target", "rust", "--rust-require-recording",
+                    str(ADT_SET_QUALIFIED_SOURCE), str(adt_proof))
+                oracle_proof = base / "qualified-oracle-proof"
+                run(compiler, "--target", "rust", "--rust-require-recording",
+                    str(QUALIFIED_COIN_ORACLE_SOURCE), str(oracle_proof))
+                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                    "--adt-set-qualified-coin-info", str(adt_proof))
+                run("cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                    "--qualified-coin-set", str(oracle_proof))
+            print("complete ADT qualified Set source and qualified coin oracle recorded")
             return
         if args.test_center_bboard:
             output = base / "test-center-bboard"

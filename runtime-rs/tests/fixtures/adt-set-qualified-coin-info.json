@@ -1,0 +1,696 @@
+[
+  {
+    "name": "test_QualifiedShieldedCoinInfo",
+    "allocate": false,
+    "initialStateHex": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a4400040004000402040408010404080403040c000410080104041454030422440104030401080104040104020401040000007c78746573745f5175616c6966696564536869656c646564436f696e496e666f081c0000042008010404249003043f80445acbf916f09df660b05739ab5faf146958a0acd9b41a582725171e5bef9820005854746573745f536869656c646564436f696e496e666f082c0000043008010404349003043f80c449d2aeff2bef8d587d619f55b6955cfade112ae87bdbc9e631171492737af04000280000000000000038000000000000080208140800183c001003000400",
+    "afterStateHex": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a4400040004000402040408010404080403040c000410080104041454030422440104030401080104040104020401040000007c78746573745f5175616c6966696564536869656c646564436f696e496e666f081c0000042008010404249003043f80445acbf916f09df660b05739ab5faf146958a0acd9b41a582725171e5bef9820005854746573745f536869656c646564436f696e496e666f082c0000043008010404349003043f80c449d2aeff2bef8d587d619f55b6955cfade112ae87bdbc9e631171492737af04000280000000000000038000000000000080208140800183c001003000400",
+    "gas": {
+      "readTime": "170000000",
+      "computeTime": "1252757404",
+      "bytesWritten": "0",
+      "bytesDeleted": "0"
+    },
+    "effects": {
+      "claimedNullifiers": [],
+      "claimedShieldedReceives": [],
+      "claimedShieldedSpends": [],
+      "claimedContractCalls": [],
+      "shieldedMints": {},
+      "unshieldedMints": {},
+      "unshieldedInputs": {},
+      "unshieldedOutputs": {},
+      "claimedUnshieldedSpends": {}
+    },
+    "queryLog": [
+      {
+        "opTags": [
+          "dup",
+          "idx",
+          "size",
+          "push",
+          "eq",
+          "popeq"
+        ],
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1252757404",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      },
+      {
+        "opTags": [
+          "dup",
+          "idx",
+          "size",
+          "popeq"
+        ],
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1251515246",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      },
+      {
+        "opTags": [
+          "idx",
+          "push",
+          "push",
+          "ins",
+          "ins"
+        ],
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1335103085",
+          "bytesWritten": "178",
+          "bytesDeleted": "34"
+        }
+      },
+      {
+        "opTags": [
+          "dup",
+          "idx",
+          "size",
+          "popeq"
+        ],
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1251515246",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      },
+      {
+        "opTags": [
+          "dup",
+          "idx",
+          "push",
+          "member",
+          "popeq"
+        ],
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1252363879",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      },
+      {
+        "opTags": [
+          "idx",
+          "push",
+          "push",
+          "ins",
+          "ins"
+        ],
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1335103085",
+          "bytesWritten": "452",
+          "bytesDeleted": "178"
+        }
+      },
+      {
+        "opTags": [
+          "dup",
+          "idx",
+          "size",
+          "popeq"
+        ],
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1251515246",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      },
+      {
+        "opTags": [
+          "dup",
+          "idx",
+          "push",
+          "member",
+          "popeq"
+        ],
+        "gasCost": {
+          "readTime": "255000000",
+          "computeTime": "1337365330",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      },
+      {
+        "opTags": [
+          "idx",
+          "push",
+          "rem",
+          "ins"
+        ],
+        "gasCost": {
+          "readTime": "255000000",
+          "computeTime": "1411514449",
+          "bytesWritten": "178",
+          "bytesDeleted": "452"
+        }
+      },
+      {
+        "opTags": [
+          "dup",
+          "idx",
+          "size",
+          "popeq"
+        ],
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1251515246",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      },
+      {
+        "opTags": [
+          "dup",
+          "idx",
+          "push",
+          "member",
+          "popeq"
+        ],
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1252363879",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      },
+      {
+        "opTags": [
+          "push",
+          "push",
+          "ins"
+        ],
+        "gasCost": {
+          "readTime": "85000000",
+          "computeTime": "1234712744",
+          "bytesWritten": "34",
+          "bytesDeleted": "178"
+        }
+      },
+      {
+        "opTags": [
+          "dup",
+          "idx",
+          "size",
+          "popeq"
+        ],
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1251515246",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      },
+      {
+        "opTags": [
+          "dup",
+          "idx",
+          "size",
+          "push",
+          "eq",
+          "popeq"
+        ],
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1252757404",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      }
+    ],
+    "privateTranscriptCount": 0,
+    "publicTags": [
+      "dup",
+      "idx",
+      "size",
+      "push",
+      "eq",
+      "popeq",
+      "dup",
+      "idx",
+      "size",
+      "popeq",
+      "idx",
+      "push",
+      "push",
+      "ins",
+      "ins",
+      "dup",
+      "idx",
+      "size",
+      "popeq",
+      "dup",
+      "idx",
+      "push",
+      "member",
+      "popeq",
+      "idx",
+      "push",
+      "push",
+      "ins",
+      "ins",
+      "dup",
+      "idx",
+      "size",
+      "popeq",
+      "dup",
+      "idx",
+      "push",
+      "member",
+      "popeq",
+      "idx",
+      "push",
+      "rem",
+      "ins",
+      "dup",
+      "idx",
+      "size",
+      "popeq",
+      "dup",
+      "idx",
+      "push",
+      "member",
+      "popeq",
+      "push",
+      "push",
+      "ins",
+      "dup",
+      "idx",
+      "size",
+      "popeq",
+      "dup",
+      "idx",
+      "size",
+      "push",
+      "eq",
+      "popeq"
+    ]
+  },
+  {
+    "name": "test_ShieldedCoinInfo",
+    "allocate": false,
+    "error": "CompactError: set_qualified_coin_info.compact line 54 char 3: Coin commitment not found. Check the coin has been received (or call 'createZswapOutput')",
+    "queryLog": [
+      {
+        "opTags": [
+          "dup",
+          "idx",
+          "size",
+          "push",
+          "eq",
+          "popeq"
+        ],
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1252757404",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      },
+      {
+        "opTags": [
+          "dup",
+          "idx",
+          "size",
+          "popeq"
+        ],
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1251515246",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      },
+      {
+        "opTags": [
+          "dup",
+          "idx",
+          "popeq"
+        ],
+        "gasCost": {
+          "readTime": "0",
+          "computeTime": "1080730348",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      }
+    ]
+  },
+  {
+    "name": "test_ShieldedCoinInfo",
+    "allocate": true,
+    "initialStateHex": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a4400040004000402040408010404080403040c000410080104041454030422440104030401080104040104020401040000007c78746573745f5175616c6966696564536869656c646564436f696e496e666f081c0000042008010404249003043f80445acbf916f09df660b05739ab5faf146958a0acd9b41a582725171e5bef9820005854746573745f536869656c646564436f696e496e666f082c0000043008010404349003043f80c449d2aeff2bef8d587d619f55b6955cfade112ae87bdbc9e631171492737af04000280000000000000038000000000000080208140800183c001003000400",
+    "afterStateHex": "6d69646e696768743a636f6e74726163742d73746174655b76365d3a4400040004000402040408010404080403040c000410080104041454030422440104030401080104040104020401040000007c78746573745f5175616c6966696564536869656c646564436f696e496e666f081c0000042008010404249003043f80445acbf916f09df660b05739ab5faf146958a0acd9b41a582725171e5bef9820005854746573745f536869656c646564436f696e496e666f082c0000043008010404349003043f80c449d2aeff2bef8d587d619f55b6955cfade112ae87bdbc9e631171492737af04000280000000000000038000000000000080208140800183c001003000400",
+    "gas": {
+      "readTime": "170000000",
+      "computeTime": "1252757404",
+      "bytesWritten": "0",
+      "bytesDeleted": "0"
+    },
+    "effects": {
+      "claimedNullifiers": [],
+      "claimedShieldedReceives": [],
+      "claimedShieldedSpends": [],
+      "claimedContractCalls": [],
+      "shieldedMints": {},
+      "unshieldedMints": {},
+      "unshieldedInputs": {},
+      "unshieldedOutputs": {},
+      "claimedUnshieldedSpends": {}
+    },
+    "queryLog": [
+      {
+        "opTags": [
+          "dup",
+          "idx",
+          "size",
+          "push",
+          "eq",
+          "popeq"
+        ],
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1252757404",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      },
+      {
+        "opTags": [
+          "dup",
+          "idx",
+          "size",
+          "popeq"
+        ],
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1251515246",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      },
+      {
+        "opTags": [
+          "dup",
+          "idx",
+          "popeq"
+        ],
+        "gasCost": {
+          "readTime": "0",
+          "computeTime": "1080730348",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      },
+      {
+        "opTags": [
+          "idx",
+          "dup",
+          "push",
+          "idx",
+          "push",
+          "swap",
+          "concat",
+          "push",
+          "ins",
+          "ins"
+        ],
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1348383088",
+          "bytesWritten": "178",
+          "bytesDeleted": "34"
+        }
+      },
+      {
+        "opTags": [
+          "dup",
+          "idx",
+          "size",
+          "popeq"
+        ],
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1251515246",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      },
+      {
+        "opTags": [
+          "dup",
+          "idx",
+          "push",
+          "member",
+          "popeq"
+        ],
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1252363879",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      },
+      {
+        "opTags": [
+          "dup",
+          "idx",
+          "popeq"
+        ],
+        "gasCost": {
+          "readTime": "0",
+          "computeTime": "1080730348",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      },
+      {
+        "opTags": [
+          "idx",
+          "dup",
+          "push",
+          "idx",
+          "push",
+          "swap",
+          "concat",
+          "push",
+          "ins",
+          "ins"
+        ],
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1348383088",
+          "bytesWritten": "452",
+          "bytesDeleted": "178"
+        }
+      },
+      {
+        "opTags": [
+          "dup",
+          "idx",
+          "size",
+          "popeq"
+        ],
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1251515246",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      },
+      {
+        "opTags": [
+          "dup",
+          "idx",
+          "push",
+          "member",
+          "popeq"
+        ],
+        "gasCost": {
+          "readTime": "255000000",
+          "computeTime": "1337365330",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      },
+      {
+        "opTags": [
+          "idx",
+          "push",
+          "rem",
+          "ins"
+        ],
+        "gasCost": {
+          "readTime": "255000000",
+          "computeTime": "1411514449",
+          "bytesWritten": "178",
+          "bytesDeleted": "452"
+        }
+      },
+      {
+        "opTags": [
+          "dup",
+          "idx",
+          "size",
+          "popeq"
+        ],
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1251515246",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      },
+      {
+        "opTags": [
+          "dup",
+          "idx",
+          "push",
+          "member",
+          "popeq"
+        ],
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1252363879",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      },
+      {
+        "opTags": [
+          "push",
+          "push",
+          "ins"
+        ],
+        "gasCost": {
+          "readTime": "85000000",
+          "computeTime": "1234712744",
+          "bytesWritten": "34",
+          "bytesDeleted": "178"
+        }
+      },
+      {
+        "opTags": [
+          "dup",
+          "idx",
+          "size",
+          "popeq"
+        ],
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1251515246",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      },
+      {
+        "opTags": [
+          "dup",
+          "idx",
+          "size",
+          "push",
+          "eq",
+          "popeq"
+        ],
+        "gasCost": {
+          "readTime": "170000000",
+          "computeTime": "1252757404",
+          "bytesWritten": "0",
+          "bytesDeleted": "0"
+        }
+      }
+    ],
+    "privateTranscriptCount": 0,
+    "publicTags": [
+      "dup",
+      "idx",
+      "size",
+      "push",
+      "eq",
+      "popeq",
+      "dup",
+      "idx",
+      "size",
+      "popeq",
+      "dup",
+      "idx",
+      "popeq",
+      "idx",
+      "dup",
+      "push",
+      "idx",
+      "push",
+      "swap",
+      "concat",
+      "push",
+      "ins",
+      "ins",
+      "dup",
+      "idx",
+      "size",
+      "popeq",
+      "dup",
+      "idx",
+      "push",
+      "member",
+      "popeq",
+      "dup",
+      "idx",
+      "popeq",
+      "idx",
+      "dup",
+      "push",
+      "idx",
+      "push",
+      "swap",
+      "concat",
+      "push",
+      "ins",
+      "ins",
+      "dup",
+      "idx",
+      "size",
+      "popeq",
+      "dup",
+      "idx",
+      "push",
+      "member",
+      "popeq",
+      "idx",
+      "push",
+      "rem",
+      "ins",
+      "dup",
+      "idx",
+      "size",
+      "popeq",
+      "dup",
+      "idx",
+      "push",
+      "member",
+      "popeq",
+      "push",
+      "push",
+      "ins",
+      "dup",
+      "idx",
+      "size",
+      "popeq",
+      "dup",
+      "idx",
+      "size",
+      "push",
+      "eq",
+      "popeq"
+    ]
+  }
+]

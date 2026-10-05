@@ -25,6 +25,7 @@ mod adt_list_enum;
 mod adt_list_field;
 mod adt_list_vector_field_4;
 mod adt_set_enum;
+mod adt_set_qualified_coin_info;
 mod adt_set_vector;
 mod asset_custody_grant;
 mod asset_freshness;
@@ -62,6 +63,7 @@ mod pair_hash_cell;
 mod persistent_commit;
 mod pure_assert_call;
 mod pure_field_arguments;
+mod qualified_coin_set;
 mod schnorr_attestation;
 mod stateful_pair_hash;
 mod stateful_pure_return;
@@ -1725,6 +1727,29 @@ fn run() -> Result<(), Box<dyn Error>> {
             );
         }
         return asset_stored_record_fresh::run(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--qualified-coin-set")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --qualified-coin-set <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err(
+                "usage: compact-rust-proof-smoke --qualified-coin-set <proof-output>".into(),
+            );
+        }
+        return qualified_coin_set::run(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--adt-set-qualified-coin-info")) {
+        let root = arguments.next().ok_or(
+            "usage: compact-rust-proof-smoke --adt-set-qualified-coin-info <proof-output>",
+        )?;
+        if arguments.next().is_some() {
+            return Err(
+                "usage: compact-rust-proof-smoke --adt-set-qualified-coin-info <proof-output>"
+                    .into(),
+            );
+        }
+        return adt_set_qualified_coin_info::run(Path::new(&root));
     }
     if first.as_deref() == Some(OsStr::new("--adt-set-vector")) {
         let root = arguments

@@ -50,18 +50,7 @@
       ],
       "pure_declarations": 0,
       "exported_pure_declarations": 0,
-      "expected_recording_gaps": {
-        "test_QualifiedShieldedCoinInfo": {
-          "code": "unsupported_action",
-          "ir_node": "StateAction::Let",
-          "path": "actions[0]"
-        },
-        "test_ShieldedCoinInfo": {
-          "code": "unsupported_action",
-          "ir_node": "StateAction::Let",
-          "path": "actions[0]"
-        }
-      }
+      "expected_recording_gaps": {}
     },
     {
       "source": "examples/adt/tests/set_struct.compact",

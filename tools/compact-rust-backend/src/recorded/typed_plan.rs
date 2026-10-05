@@ -43,6 +43,8 @@ struct Plan<'a> {
     opaque_cells: usize,
     historic_roots: usize,
     historic_writes: usize,
+    qualified_set_reads: usize,
+    qualified_set_writes: usize,
 }
 
 impl Plan<'_> {
@@ -83,6 +85,9 @@ impl Plan<'_> {
         match value {
             Expr::Default {
                 ty: Type::OpaqueString,
+            } => true,
+            Expr::Default {
+                ty: Type::Struct { .. },
             } => true,
             Expr::Parameter { .. }
             | Expr::BytesLiteral { .. }
@@ -165,6 +170,46 @@ impl Plan<'_> {
                 let (value, ty) =
                     expression_with_calls(expression, &HashMap::new(), &HashMap::new()).ok()?;
                 self.bind(value, ty, steps)
+            }
+            Expr::Default {
+                ty: Type::Struct { .. },
+            } => {
+                let (value, ty) =
+                    expression_with_calls(expression, &HashMap::new(), &HashMap::new()).ok()?;
+                self.bind(value, ty, steps)
+            }
+            Expr::StructLiteral {
+                ty: ty @ Type::Struct { fields, .. },
+                fields: values,
+            } if fields.len() == values.len() => {
+                let mut members: Vec<syn::FieldValue> = Vec::new();
+                for (field, value) in fields.iter().zip(values) {
+                    let value = self.expression(value, scope, steps)?;
+                    if value.ty != field.ty {
+                        return None;
+                    }
+                    let name = ident(&field.name).ok()?;
+                    let value = value.value;
+                    members.push(syn::parse_quote!(#name: #value));
+                }
+                let rust_ty = rust_type(ty).ok()?;
+                self.bind(
+                    syn::parse_quote!(#rust_ty { #(#members),* }),
+                    ty.clone(),
+                    steps,
+                )
+            }
+            Expr::KernelSelf { ty } if *ty == contract_address_type() => {
+                let rust_ty = rust_type(ty).ok()?;
+                let observed = self.fresh();
+                steps.push(syn::parse_quote!(let (frame, #observed) = frame.kernel_self()?;));
+                self.bind(
+                    syn::parse_quote!(#rust_ty {
+                        bytes: runtime::ledger::contract_address_bytes(&#observed)
+                    }),
+                    ty.clone(),
+                    steps,
+                )
             }
             Expr::Coerce { value, ty } => {
                 let value = self.expression(value, scope, steps)?;
@@ -353,10 +398,13 @@ impl Plan<'_> {
                 let LedgerFieldKind::Set { ty } = &self.field(field, *index)?.declaration else {
                     return None;
                 };
-                if !bytes32_key(ty) {
+                let ty = ty.clone();
+                if !bytes32_key(&ty) && ty != crate::stateful::qualified_coin_type() {
                     return None;
                 }
-                let ty = ty.clone();
+                if ty == crate::stateful::qualified_coin_type() {
+                    self.qualified_set_reads += 1;
+                }
                 let value = self.expression(value, scope, steps)?;
                 if value.ty != ty {
                     return None;
@@ -368,6 +416,23 @@ impl Plan<'_> {
                     Type::Boolean,
                     steps,
                 )
+            }
+            Expr::SetSize { field, index } | Expr::SetIsEmpty { field, index } => {
+                let LedgerFieldKind::Set { ty } = &self.field(field, *index)?.declaration else {
+                    return None;
+                };
+                if *ty != crate::stateful::qualified_coin_type() {
+                    return None;
+                }
+                self.qualified_set_reads += 1;
+                if matches!(expression, Expr::SetSize { .. }) {
+                    let slot = ident(field).ok()?;
+                    let name = self.fresh();
+                    steps.push(syn::parse_quote!(let (frame, #name) = crate::ledger_slots::#slot.record_size(frame)?;));
+                    self.bind(syn::parse_quote!(runtime::BoundedUint::<18446744073709551615>::new(#name as u128)?), Type::Unsigned { max: u64::MAX.to_string() }, steps)
+                } else {
+                    self.observe(field, "record_is_empty", vec![], Type::Boolean, steps)
+                }
             }
             Expr::HistoricMerkleCheckRoot { field, index, root } => {
                 if !matches!(&self.field(field, *index)?.declaration, LedgerFieldKind::HistoricMerkleTree { ty, .. } if wrapped_bytes32(ty))
@@ -622,6 +687,11 @@ impl Plan<'_> {
                     {
                         self.set_writes += 1
                     }
+                    (StateAction::SetInsert { .. }, LedgerFieldKind::Set { ty })
+                        if *ty == crate::stateful::qualified_coin_type() =>
+                    {
+                        self.qualified_set_writes += 1
+                    }
                     (
                         StateAction::HistoricMerkleInsert { .. },
                         LedgerFieldKind::HistoricMerkleTree { ty, .. },
@@ -642,6 +712,71 @@ impl Plan<'_> {
                 let value = value.value;
                 steps.push(syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_insert(frame, #value)?;));
             }
+            StateAction::SetRemove {
+                field,
+                index,
+                value,
+            } => {
+                let LedgerFieldKind::Set { ty } = &self.field(field, *index)?.declaration else {
+                    return None;
+                };
+                if *ty != crate::stateful::qualified_coin_type() {
+                    return None;
+                }
+                let ty = ty.clone();
+                let value = self.expression(value, scope, steps)?;
+                if value.ty != ty {
+                    return None;
+                }
+                let slot = ident(field).ok()?;
+                let value = value.value;
+                steps.push(syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_remove(frame, #value)?;));
+                self.qualified_set_writes += 1;
+            }
+            StateAction::SetReset { field, index } => {
+                let LedgerFieldKind::Set { ty } = &self.field(field, *index)?.declaration else {
+                    return None;
+                };
+                if *ty != crate::stateful::qualified_coin_type() {
+                    return None;
+                }
+                let slot = ident(field).ok()?;
+                steps.push(
+                    syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_reset(frame)?;),
+                );
+                self.qualified_set_writes += 1;
+            }
+            StateAction::SetInsertCoin {
+                field,
+                index,
+                coin,
+                recipient,
+            } => {
+                let LedgerFieldKind::Set { ty } = &self.field(field, *index)?.declaration else {
+                    return None;
+                };
+                if *ty != crate::stateful::qualified_coin_type() {
+                    return None;
+                }
+                let coin = self.expression(coin, scope, steps)?;
+                let recipient = self.expression(recipient, scope, steps)?;
+                if coin.ty != crate::stateful::shielded_coin_type()
+                    || recipient.ty != crate::stateful::shielded_recipient_type()
+                {
+                    return None;
+                }
+                let slot = ident(field).ok()?;
+                let coin = coin.value;
+                let recipient = recipient.value;
+                steps.push(syn::parse_quote!(let frame = crate::ledger_slots::#slot.record_insert_coin(
+                    frame,
+                    runtime::ledger::coin_info_from_compact(#coin.nonce, #coin.color, #coin.value.value()),
+                    runtime::ledger::coin_recipient_from_compact(
+                        #recipient.is_left, #recipient.left.bytes, #recipient.right.bytes,
+                    ),
+                )?;));
+                self.qualified_set_writes += 1;
+            }
             _ => return None,
         }
         Some(())
@@ -650,6 +785,16 @@ impl Plan<'_> {
 
 fn optional_string(ty: &Type) -> bool {
     matches!(ty, Type::Struct { fields, .. } if matches!(fields.as_slice(), [present, value] if present.ty == Type::Boolean && value.ty == Type::OpaqueString))
+}
+
+fn contract_address_type() -> Type {
+    Type::Struct {
+        name: "ContractAddress".into(),
+        fields: vec![crate::ir::StructField {
+            name: "bytes".into(),
+            ty: Type::Bytes { length: 32 },
+        }],
+    }
 }
 
 fn wrapped_bytes32(ty: &Type) -> bool {
@@ -716,6 +861,8 @@ pub(super) fn lower<'a>(
         opaque_cells: 0,
         historic_roots: 0,
         historic_writes: 0,
+        qualified_set_reads: 0,
+        qualified_set_writes: 0,
     };
     let scope: Scope = circuit
         .parameters
@@ -803,7 +950,21 @@ pub(super) fn lower<'a>(
         && plan.set_writes == 0
         && plan.cell_writes == 0
         && plan.optional_cells == 0;
-    (membership || cell_lifecycle || historic_spend || counter_comparison)
+    let qualified_set_lifecycle = circuit.result == Type::Unit
+        && plan.qualified_set_writes > 0
+        && plan.root_observations == 0
+        && plan.tree_writes == 0
+        && plan.set_writes == 0
+        && plan.counter_writes == 0
+        && plan.counter_reads == 0
+        && plan.cell_writes == 0
+        && plan.historic_roots == 0
+        && plan.historic_writes == 0
+        && ((circuit.parameters.is_empty() && plan.qualified_set_reads > 0)
+            || matches!(circuit.parameters.as_slice(), [coin, recipient]
+                if coin.ty == crate::stateful::shielded_coin_type()
+                    && recipient.ty == crate::stateful::shielded_recipient_type()));
+    (membership || cell_lifecycle || historic_spend || counter_comparison || qualified_set_lifecycle)
         .then_some(TypedPlan { steps, result })
 }
 
@@ -832,6 +993,8 @@ mod tests {
             opaque_cells: 0,
             historic_roots: 0,
             historic_writes: 0,
+            qualified_set_reads: 0,
+            qualified_set_writes: 0,
         };
         let actual = Type::Unsigned { max: "255".into() };
         let target = Type::Unsigned {
@@ -901,6 +1064,8 @@ mod tests {
             opaque_cells: 0,
             historic_roots: 0,
             historic_writes: 0,
+            qualified_set_reads: 0,
+            qualified_set_writes: 0,
         };
         let action = StateAction::CounterIncrement {
             field: "tally_yes".into(),

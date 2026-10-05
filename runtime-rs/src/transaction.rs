@@ -26,13 +26,22 @@ use std::fmt;
 use std::io::{self, Cursor};
 
 use midnight_base_crypto::fab::AlignedValue;
+use midnight_base_crypto::signatures::Signature;
+use midnight_base_crypto::time::Timestamp;
+use midnight_coin_structure::coin::Commitment;
 use midnight_ledger::construct::{ContractCallPrototype, PreTranscript, partition_transcripts};
-use midnight_ledger::structure::INITIAL_PARAMETERS;
+use midnight_ledger::structure::{
+    INITIAL_PARAMETERS, Intent, LedgerState, ProofPreimageMarker, Transaction,
+};
 use midnight_onchain_state::state::{ContractOperation, EntryPointBuf};
 use midnight_serialize::tagged_deserialize;
+use midnight_storage::storage::{HashMap, Map};
+use midnight_transient_crypto::commitment::PedersenRandomness;
 use midnight_transient_crypto::curve::Fr;
-use midnight_transient_crypto::proofs::KeyLocation;
 pub use midnight_transient_crypto::proofs::VerifierKey;
+use midnight_transient_crypto::proofs::{KeyLocation, ProofPreimage};
+use midnight_zswap::Offer;
+use rand::{CryptoRng, Rng};
 
 use crate::context::CircuitContext;
 use crate::ledger::{ContractAddress, ContractState, DB, DefaultDB};
@@ -53,6 +62,7 @@ pub struct ObservedContractState<D: DB = DefaultDB> {
     address: ContractAddress,
     contract: ContractState<D>,
     observation: Observation,
+    com_indices: Map<Commitment, u64>,
 }
 
 impl<D: DB> ObservedContractState<D> {
@@ -65,6 +75,7 @@ impl<D: DB> ObservedContractState<D> {
             address,
             contract,
             observation,
+            com_indices: Map::new(),
         }
     }
 
@@ -81,7 +92,88 @@ impl<D: DB> ObservedContractState<D> {
     }
 
     pub fn circuit_context<Private>(&self, private_state: Private) -> CircuitContext<Private, D> {
-        CircuitContext::from_contract_state(private_state, self.address, &self.contract)
+        let mut context =
+            CircuitContext::from_contract_state(private_state, self.address, &self.contract);
+        context.query.call_context.com_indices = self.com_indices.clone();
+        context
+    }
+}
+
+/// An observed contract paired with an upstream offer that derives the exact
+/// commitment indices used by its generated call and final transaction.
+pub struct OfferBackedObservedState<D: DB = DefaultDB> {
+    observed: ObservedContractState<D>,
+    offer: Offer<ProofPreimage, D>,
+}
+
+impl<D: DB> OfferBackedObservedState<D> {
+    pub fn new(
+        mut observed: ObservedContractState<D>,
+        ledger: &LedgerState<D>,
+        offer: Offer<ProofPreimage, D>,
+    ) -> Result<Self, crate::CompactError> {
+        let Some(ledger_contract) = ledger.contract.get(&observed.address) else {
+            return Err(crate::CompactError::InvalidLedgerCell(
+                "offer observation contract missing from ledger".into(),
+            ));
+        };
+        if ledger_contract != &observed.contract {
+            return Err(crate::CompactError::InvalidLedgerCell(
+                "offer observation differs from ledger contract".into(),
+            ));
+        }
+        let (_, indices) = ledger.zswap.try_apply(&offer, None).map_err(|error| {
+            crate::CompactError::InvalidLedgerCell(format!("offer rejected: {error:?}"))
+        })?;
+        observed.com_indices = indices;
+        Ok(Self { observed, offer })
+    }
+
+    pub fn observed(&self) -> &ObservedContractState<D> {
+        &self.observed
+    }
+
+    /// Prepare only a call recorded against this exact offer-backed observation.
+    pub fn prepare<Private, Output: Into<AlignedValue>>(
+        &self,
+        call: RecordedCall<'_, Private, Output, D>,
+        verifier: VerifierKey,
+        communication_commitment_rand: Fr,
+    ) -> Result<OfferBoundPreparedCall<D>, ObservedCallError> {
+        if !std::ptr::eq(call.observed, &self.observed)
+            || call.recorded.public.initial().call_context.com_indices != self.observed.com_indices
+        {
+            return Err(ObservedCallError::OfferMismatch);
+        }
+        let prepared = call.prepare(verifier, communication_commitment_rand)?;
+        Ok(OfferBoundPreparedCall {
+            call: prepared,
+            offer: self.offer.clone(),
+        })
+    }
+}
+
+/// A prepared call and the same validated offer from its observed context.
+pub struct OfferBoundPreparedCall<D: DB = DefaultDB> {
+    call: ContractCallPrototype<D>,
+    offer: Offer<ProofPreimage, D>,
+}
+
+impl<D: DB> OfferBoundPreparedCall<D> {
+    pub fn into_transaction<R: Rng + CryptoRng + ?Sized>(
+        self,
+        rng: &mut R,
+        network_id: impl Into<String>,
+        ttl: Timestamp,
+    ) -> Transaction<Signature, ProofPreimageMarker, PedersenRandomness, D> {
+        let intent: Intent<Signature, ProofPreimageMarker, PedersenRandomness, D> =
+            Intent::empty(rng, ttl).add_call::<ProofPreimage>(self.call);
+        Transaction::new(
+            network_id,
+            HashMap::new().insert(1_u16, intent),
+            Some(self.offer),
+            HashMap::new(),
+        )
     }
 }
 
@@ -151,6 +243,7 @@ impl<'a, Private, Output, D: DB> RecordedCall<'a, Private, Output, D> {
 pub enum ObservedCallError {
     AddressMismatch,
     StateMismatch,
+    OfferMismatch,
     MissingOperation(String),
     VerifierMismatch(String),
     Prepare(PrepareCallError),
@@ -164,6 +257,9 @@ impl fmt::Display for ObservedCallError {
             }
             Self::StateMismatch => {
                 formatter.write_str("recorded call initial state differs from observation")
+            }
+            Self::OfferMismatch => {
+                formatter.write_str("recorded call is not bound to this observed offer")
             }
             Self::MissingOperation(name) => {
                 write!(formatter, "observed contract has no {name} operation")

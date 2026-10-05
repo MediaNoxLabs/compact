@@ -707,6 +707,15 @@ impl<T: CellValue> SetSlot<T> {
         frame.insert_set(self.path, value)
     }
 
+    pub fn record_insert_coin<Private, D: DB>(
+        self,
+        frame: RecordingFrame<Private, D>,
+        coin: crate::ledger::CoinInfo,
+        recipient: crate::ledger::CoinRecipient,
+    ) -> Result<RecordingFrame<Private, D>, CompactError> {
+        frame.insert_qualified_coin_set::<T>(self.path, coin, recipient)
+    }
+
     pub fn record_remove<Private, D: DB>(
         self,
         frame: RecordingFrame<Private, D>,

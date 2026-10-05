@@ -126,7 +126,7 @@ pub mod types {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod pure_circuits {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 39);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 40);
     pub fn assertRecordFreshEnough(
         policy: crate::types::FreshnessPolicy,
         record: crate::types::AssetRecord,
@@ -263,7 +263,7 @@ pub mod ledger_slots {
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables)]
 pub mod ledger_contract {
     use midnight_compact_runtime as runtime;
-    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 39);
+    const _: () = assert!(runtime::RUST_RUNTIME_ABI == 40);
     pub struct LedgerView<'a> {
         #[allow(dead_code)]
         state: &'a runtime::ledger::StateValue<runtime::ledger::DefaultDB>,
@@ -606,12 +606,15 @@ pub mod ledger_contract {
                     .expect("Compact Uint literal fits its maximum");
             let step = context.write_cell_at_path(&[0, 0], __compact_constructor_local_0)?;
             context = step.context;
-            let __compact_constructor_local_1: crate::types::ContractAddress =
+            let __compact_query_1 = context.kernel_self()?;
+            context = __compact_query_1.context;
+            total_cost += __compact_query_1.gas_cost;
+            let __compact_constructor_local_2: crate::types::ContractAddress =
                 crate::types::ContractAddress {
-                    bytes: runtime::ledger::contract_address_bytes(&context.query.address),
+                    bytes: runtime::ledger::contract_address_bytes(&__compact_query_1.result),
                 };
             let step = context
-                .write_cell_at_path(&[0, 1], (__compact_constructor_local_1.clone()).clone())?;
+                .write_cell_at_path(&[0, 1], (__compact_constructor_local_2.clone()).clone())?;
             context = step.context;
             let step = context.write_cell_at_path(
                 &[1, 1],
@@ -622,61 +625,61 @@ pub mod ledger_contract {
                 ]),
             )?;
             context = step.context;
-            let __compact_constructor_local_2: runtime::BoundedUint<18446744073709551615> =
+            let __compact_constructor_local_3: runtime::BoundedUint<18446744073709551615> =
                 runtime::BoundedUint::<18446744073709551615>::new(86400u128)
                     .expect("Compact Uint literal fits its maximum");
-            let step = context.write_cell_at_path(&[1, 4], __compact_constructor_local_2)?;
+            let step = context.write_cell_at_path(&[1, 4], __compact_constructor_local_3)?;
             context = step.context;
             let step = context.write_cell_at_path(&[1, 6], true)?;
             context = step.context;
             let step = context.write_cell_at_path(&[1, 7], false)?;
             context = step.context;
-            let __compact_witness_meter_3 = runtime::context::WitnessReadMeter::new(&context);
-            let (__compact_next_private_3, __compact_witness_3) =
+            let __compact_witness_meter_4 = runtime::context::WitnessReadMeter::new(&context);
+            let (__compact_next_private_4, __compact_witness_4) =
                 witnesses.localOperatorKey(context.witness_context_with(LedgerView {
                     state: context.query.state.get_ref(),
-                    meter: &__compact_witness_meter_3,
+                    meter: &__compact_witness_meter_4,
                 }))?;
-            total_cost += __compact_witness_meter_3.gas_cost();
-            context.private_state = __compact_next_private_3;
-            private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_3));
-            let __compact_constructor_local_4: runtime::JubjubPoint = __compact_witness_3;
-            let step = context.write_cell_at_path(&[0, 3], __compact_constructor_local_4)?;
+            total_cost += __compact_witness_meter_4.gas_cost();
+            context.private_state = __compact_next_private_4;
+            private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_4));
+            let __compact_constructor_local_5: runtime::JubjubPoint = __compact_witness_4;
+            let step = context.write_cell_at_path(&[0, 3], __compact_constructor_local_5)?;
             context = step.context;
-            let __compact_witness_meter_5 = runtime::context::WitnessReadMeter::new(&context);
-            let (__compact_next_private_5, __compact_witness_5) =
+            let __compact_witness_meter_6 = runtime::context::WitnessReadMeter::new(&context);
+            let (__compact_next_private_6, __compact_witness_6) =
                 witnesses.localAuditorKey(context.witness_context_with(LedgerView {
                     state: context.query.state.get_ref(),
-                    meter: &__compact_witness_meter_5,
+                    meter: &__compact_witness_meter_6,
                 }))?;
-            total_cost += __compact_witness_meter_5.gas_cost();
-            context.private_state = __compact_next_private_5;
-            private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_5));
-            let __compact_constructor_local_6: runtime::JubjubPoint = __compact_witness_5;
-            let step = context.write_cell_at_path(&[0, 4], __compact_constructor_local_6)?;
+            total_cost += __compact_witness_meter_6.gas_cost();
+            context.private_state = __compact_next_private_6;
+            private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_6));
+            let __compact_constructor_local_7: runtime::JubjubPoint = __compact_witness_6;
+            let step = context.write_cell_at_path(&[0, 4], __compact_constructor_local_7)?;
             context = step.context;
-            let __compact_query_7 = crate::ledger_slots::operatorKey.read(context)?;
-            context = __compact_query_7.context;
-            total_cost += __compact_query_7.gas_cost;
-            let __compact_call_argument_8 = __compact_query_7.result;
-            let __compact_call_9 =
-                assertOperatorDistinctFromAuditor(context, __compact_call_argument_8)?;
-            context = __compact_call_9.context;
-            total_cost += __compact_call_9.gas_cost;
-            let __compact_witness_meter_10 = runtime::context::WitnessReadMeter::new(&context);
-            let (__compact_next_private_10, __compact_witness_10) =
+            let __compact_query_8 = crate::ledger_slots::operatorKey.read(context)?;
+            context = __compact_query_8.context;
+            total_cost += __compact_query_8.gas_cost;
+            let __compact_call_argument_9 = __compact_query_8.result;
+            let __compact_call_10 =
+                assertOperatorDistinctFromAuditor(context, __compact_call_argument_9)?;
+            context = __compact_call_10.context;
+            total_cost += __compact_call_10.gas_cost;
+            let __compact_witness_meter_11 = runtime::context::WitnessReadMeter::new(&context);
+            let (__compact_next_private_11, __compact_witness_11) =
                 witnesses.currentTimestamp(context.witness_context_with(LedgerView {
                     state: context.query.state.get_ref(),
-                    meter: &__compact_witness_meter_10,
+                    meter: &__compact_witness_meter_11,
                 }))?;
-            total_cost += __compact_witness_meter_10.gas_cost();
-            context.private_state = __compact_next_private_10;
-            private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_10));
-            let __compact_constructor_local_11: runtime::BoundedUint<18446744073709551615> =
-                __compact_witness_10;
-            let step = context.write_cell_at_path(&[1, 2], __compact_constructor_local_11)?;
+            total_cost += __compact_witness_meter_11.gas_cost();
+            context.private_state = __compact_next_private_11;
+            private_transcript_outputs.push(runtime::fab::AlignedValue::from(__compact_witness_11));
+            let __compact_constructor_local_12: runtime::BoundedUint<18446744073709551615> =
+                __compact_witness_11;
+            let step = context.write_cell_at_path(&[1, 2], __compact_constructor_local_12)?;
             context = step.context;
-            let step = context.write_cell_at_path(&[1, 3], __compact_constructor_local_11)?;
+            let step = context.write_cell_at_path(&[1, 3], __compact_constructor_local_12)?;
             context = step.context;
             let _ = total_cost;
             let _ = private_transcript_outputs;

@@ -80,6 +80,26 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         &self.context
     }
 
+    /// Observe kernel.self() and retain the exact VM address read.
+    pub fn kernel_self(mut self) -> Result<(Self, ledger::ContractAddress), CompactError> {
+        let result = ledger::query_kernel_self(
+            &self.context.query,
+            self.context.gas_limit,
+            &self.context.cost_model,
+        )?;
+        let Some(GatherEvent::Read(observed)) = result.events.last() else {
+            return Err(CompactError::InvalidLedgerCell(
+                "missing kernel.self read event".into(),
+            ));
+        };
+        let program = ledger::kernel_self_program::<ResultModeVerify, D>(observed.clone());
+        self.context.query = result.context;
+        self.observed_gas += result.gas_cost;
+        self.verify_ops.extend(program);
+        let address = self.context.query.address;
+        Ok((self, address))
+    }
+
     /// Invoke a witness against the current context and record its FAB result.
     /// The closure may project a generated ledger view from the context.
     pub fn witness<T, F>(mut self, call: F) -> (Self, T)
@@ -238,6 +258,23 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
     ) -> Result<Self, CompactError> {
         let path = path.into();
         self.apply_verify_program(ledger::set_insert_program(path.as_slice(), value))
+    }
+
+    /// Insert a qualified coin using its allocated transaction commitment index.
+    pub fn insert_qualified_coin_set<T: CellValue>(
+        self,
+        path: impl Into<LedgerPath>,
+        coin: ledger::CoinInfo,
+        recipient: ledger::CoinRecipient,
+    ) -> Result<Self, CompactError> {
+        let path = path.into();
+        let program = ledger::qualified_coin_set_insert_program::<T, D>(
+            &self.context.query,
+            path.as_slice(),
+            coin,
+            recipient,
+        )?;
+        self.apply_verify_program(program)
     }
 
     /// Append a typed leaf to a plain Merkle tree and retain its verifying VM program.

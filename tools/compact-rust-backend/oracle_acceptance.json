@@ -384,7 +384,8 @@
         "tests-rust-backend/ternary-cond-oracle/tests/ternary_cond_oracle.rs"
       ],
       "typescript_fixtures": [
-        "runtime-rs/tests/fixtures/ternary-cond-oracle.json"
+        "runtime-rs/tests/fixtures/ternary-cond-oracle.json",
+        "runtime-rs/tests/fixtures/ternary-recorded-nested-if.json"
       ]
     },
     {

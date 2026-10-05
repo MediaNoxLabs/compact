@@ -295,6 +295,92 @@ fn opaque_set_check_in_records_only_typed_parameter_and_unit_witness() {
 }
 
 #[test]
+fn recorded_nested_uint4_accepts_only_closed_typed_arms() {
+    let mut contract: Contract =
+        serde_json::from_str(include_str!("../fixtures/recorded-nested-uint4.json")).unwrap();
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.source.contains("BoundedUint::<4>::new"));
+    assert!(rendered.source.contains("__compact_recorded_nested_field_"));
+
+    let closed = contract.clone();
+
+    let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    let Expr::If { then, .. } = &mut bindings[0].value else {
+        unreachable!()
+    };
+    let Expr::Coerce { value, .. } = then.as_mut() else {
+        unreachable!()
+    };
+    let Expr::UnsignedCast { value, .. } = value.as_mut() else {
+        unreachable!()
+    };
+    let Expr::If { then, .. } = value.as_mut() else {
+        unreachable!()
+    };
+    **then = Expr::Coerce {
+        value: Box::new(Expr::UnsignedAdd {
+            max: "2".into(),
+            left: Box::new(Expr::UnsignedLiteral {
+                value: "1".into(),
+                max: "2".into(),
+            }),
+            right: Box::new(Expr::UnsignedLiteral {
+                value: "1".into(),
+                max: "2".into(),
+            }),
+        }),
+        ty: Type::Unsigned { max: "2".into() },
+    };
+    assert!(
+        !render_with_capabilities(&contract)
+            .unwrap()
+            .capabilities
+            .circuits[0]
+            .recorded
+    );
+
+    let mut contract = closed;
+    contract.witnesses.push(WitnessDeclaration {
+        source: None,
+        name: "dynamicArm".into(),
+        parameters: vec![],
+        result: Type::Unsigned { max: "2".into() },
+    });
+    let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    let Expr::If { then, .. } = &mut bindings[0].value else {
+        unreachable!()
+    };
+    let Expr::Coerce { value, .. } = then.as_mut() else {
+        unreachable!()
+    };
+    let Expr::UnsignedCast { value, .. } = value.as_mut() else {
+        unreachable!()
+    };
+    let Expr::If { then, .. } = value.as_mut() else {
+        unreachable!()
+    };
+    **then = Expr::Coerce {
+        value: Box::new(Expr::WitnessCall {
+            name: "dynamicArm".into(),
+            arguments: vec![],
+        }),
+        ty: Type::Unsigned { max: "2".into() },
+    };
+    assert!(
+        !render_with_capabilities(&contract)
+            .unwrap()
+            .capabilities
+            .circuits[0]
+            .recorded
+    );
+}
+
+#[test]
 fn closed_unsigned_ternary_comparison_records_only_matching_literal_arms() {
     let uint = Type::Unsigned { max: "255".into() };
     let narrow = Type::Unsigned { max: "1".into() };

@@ -1322,6 +1322,66 @@ fn render_recorded_item(
         Some(syn::parse_quote!(if #condition { #then } else { #otherwise }))
     }
 
+    // This is the compiler's closed two-level Uint<4> conditional used by
+    // walkerNestedIf and streamNestedIf. Each arm is a bounded literal and
+    // each predicate is a Boolean parameter or an already recorded local.
+    // In particular, no branch can perform a witness or ledger operation.
+    fn closed_nested_uint4_source(
+        value: &Expr,
+        locals: &HashMap<String, syn::Expr>,
+        parameters: &HashMap<&str, (&Type, syn::Ident)>,
+    ) -> Option<syn::Expr> {
+        fn lower(
+            value: &Expr,
+            ceiling: u64,
+            depth: usize,
+            locals: &HashMap<String, syn::Expr>,
+            parameters: &HashMap<&str, (&Type, syn::Ident)>,
+        ) -> Option<(syn::Expr, bool)> {
+            match value {
+                Expr::Coerce {
+                    value,
+                    ty: Type::Unsigned { max },
+                }
+                | Expr::UnsignedCast { value, max } => {
+                    let max = max.parse::<u64>().ok()?;
+                    (max <= ceiling && max <= 4)
+                        .then_some(())
+                        .and_then(|()| lower(value, max, depth, locals, parameters))
+                }
+                Expr::If {
+                    condition,
+                    then,
+                    otherwise,
+                } if depth < 2 => {
+                    let condition = cell_source(condition, &Type::Boolean, locals, parameters)?;
+                    let (then, nested_then) = lower(then, ceiling, depth + 1, locals, parameters)?;
+                    let (otherwise, nested_otherwise) =
+                        lower(otherwise, ceiling, depth + 1, locals, parameters)?;
+                    if depth == 0 && !(nested_then && nested_otherwise) {
+                        return None;
+                    }
+                    Some((
+                        syn::parse_quote!(if #condition { #then } else { #otherwise }),
+                        depth > 0 || nested_then || nested_otherwise,
+                    ))
+                }
+                Expr::UnsignedLiteral { value, max } => {
+                    let max = max.parse::<u64>().ok()?;
+                    let value = value.parse::<u64>().ok()?;
+                    (max <= ceiling && value <= max).then(|| {
+                        let literal = syn::LitInt::new(&format!("{value}u64"), Span::call_site());
+                        (syn::parse_quote!(#literal), false)
+                    })
+                }
+                _ => None,
+            }
+        }
+        let Expr::If { .. } = value else { return None };
+        let (selected, nested) = lower(value, 4, 0, locals, parameters)?;
+        nested.then_some(selected)
+    }
+
     fn cell_source(
         value: &Expr,
         ty: &Type,
@@ -3067,6 +3127,103 @@ fn render_recorded_item(
                 bindings,
                 action: nested_action,
             } => {
+                // Preserve the typed Uint<4> local and its immediate Field
+                // projection. A Sequence may put a Counter increment after
+                // that projection, but the projection itself remains first.
+                if let [unsigned_binding] = bindings.as_slice()
+                    && unsigned_binding.ty == (Type::Unsigned { max: "4".into() })
+                    && let Some(selected) =
+                        closed_nested_uint4_source(&unsigned_binding.value, locals, parameters)
+                    && let Some((projected_bindings, projected_action, continuation)) =
+                        (match nested_action.as_ref() {
+                            StateAction::Let { bindings, action } => {
+                                Some((bindings, action.as_ref(), None))
+                            }
+                            StateAction::Sequence { actions } => {
+                                if let [StateAction::Let { bindings, action }, continuation] =
+                                    actions.as_slice()
+                                {
+                                    Some((bindings, action.as_ref(), Some(continuation)))
+                                } else {
+                                    None
+                                }
+                            }
+                            _ => None,
+                        })
+                    && let [projected_binding] = projected_bindings.as_slice()
+                    && projected_binding.ty == Type::Field
+                    && matches!(
+                        &projected_binding.value,
+                        Expr::FieldCast { value }
+                            if matches!(value.as_ref(), Expr::Parameter { name } if name == &unsigned_binding.name)
+                    )
+                {
+                    let selected_name = syn::Ident::new(
+                        &format!("__compact_recorded_nested_uint4_{}", *next_temp),
+                        Span::call_site(),
+                    );
+                    *next_temp += 1;
+                    let field_name = syn::Ident::new(
+                        &format!("__compact_recorded_nested_field_{}", *next_temp),
+                        Span::call_site(),
+                    );
+                    *next_temp += 1;
+                    steps.push(syn::parse_quote! {
+                        let #selected_name = runtime::BoundedUint::<4>::new(#selected as u128)?;
+                    });
+                    steps.push(syn::parse_quote! {
+                        let #field_name: runtime::Field =
+                            runtime::Field::from(#selected_name.value() as u64);
+                    });
+                    let mut scoped = locals.clone();
+                    scoped.insert(
+                        unsigned_binding.name.clone(),
+                        syn::parse_quote!(#selected_name),
+                    );
+                    scoped.insert(
+                        projected_binding.name.clone(),
+                        syn::parse_quote!(#field_name),
+                    );
+                    let projected_path = if continuation.is_some() {
+                        format!("{path}.action.actions[0].action")
+                    } else {
+                        format!("{path}.action.action")
+                    };
+                    let first = append_steps(
+                        projected_action,
+                        &projected_path,
+                        &scoped,
+                        parameters,
+                        ledger_fields,
+                        witnesses,
+                        pure_circuits,
+                        circuits,
+                        shared_callees,
+                        steps,
+                        next_temp,
+                        visiting,
+                    )?;
+                    if let RecordingOutcome::Unsupported(_) = first {
+                        return Ok(first);
+                    }
+                    if let Some(continuation) = continuation {
+                        return append_steps(
+                            continuation,
+                            &format!("{path}.action.actions[1]"),
+                            &scoped,
+                            parameters,
+                            ledger_fields,
+                            witnesses,
+                            pure_circuits,
+                            circuits,
+                            shared_callees,
+                            steps,
+                            next_temp,
+                            visiting,
+                        );
+                    }
+                    return Ok(RecordingOutcome::Supported(()));
+                }
                 // A one-Field struct built from a closed literal ternary can
                 // be retained as a typed Rust value before projecting the
                 // same member in the immediately nested Let. Do not turn an

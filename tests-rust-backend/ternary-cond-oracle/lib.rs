@@ -1577,6 +1577,25 @@ pub mod ledger_contract {
                 .record_write(frame, (__compact_recorded_static_0).clone())?;
             Ok(frame.finish(()))
         }
+        pub fn walkerNestedIf<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: bool,
+            __compact_param_1: bool,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_nested_uint4_0 =
+                runtime::BoundedUint::<4>::new(if __compact_param_0 {
+                    if __compact_param_1 { 1u64 } else { 2u64 }
+                } else {
+                    if __compact_param_1 { 3u64 } else { 4u64 }
+                } as u128)?;
+            let __compact_recorded_nested_field_1: runtime::Field =
+                runtime::Field::from(__compact_recorded_nested_uint4_0.value() as u64);
+            let frame = crate::ledger_slots::fieldCell
+                .record_write(frame, __compact_recorded_nested_field_1)?;
+            Ok(frame.finish(()))
+        }
         pub fn walkerInlineWrite<Private>(
             context: runtime::context::CircuitContext<Private>,
             __compact_param_0: bool,
@@ -1684,6 +1703,34 @@ pub mod ledger_contract {
             }
             let frame =
                 crate::ledger_slots::fieldCell.record_write(frame, runtime::Field::from(1u128))?;
+            Ok(frame.finish(()))
+        }
+        pub fn streamNestedIf<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_recorded_bool_0): (_, bool) =
+                crate::ledger_slots::flag.record_read(frame)?;
+            let __compact_recorded_nested_uint4_1 =
+                runtime::BoundedUint::<4>::new(if __compact_recorded_bool_0 {
+                    if __compact_recorded_bool_0 {
+                        1u64
+                    } else {
+                        2u64
+                    }
+                } else {
+                    if __compact_recorded_bool_0 {
+                        3u64
+                    } else {
+                        4u64
+                    }
+                } as u128)?;
+            let __compact_recorded_nested_field_2: runtime::Field =
+                runtime::Field::from(__compact_recorded_nested_uint4_1.value() as u64);
+            let frame = crate::ledger_slots::fieldCell
+                .record_write(frame, __compact_recorded_nested_field_2)?;
+            let frame = crate::ledger_slots::ops.record_increment(frame, 1u16)?;
             Ok(frame.finish(()))
         }
         /// Typed handle for circuits with a complete recorded trace.
@@ -1910,6 +1957,36 @@ pub mod ledger_contract {
                     input,
                 ))
             }
+            pub fn walkerNestedIf<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                c: bool,
+                d: bool,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::walkerNestedIf(context, c, d)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn walkerNestedIf_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                c: bool,
+                d: bool,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from((c, d));
+                let recorded =
+                    self.walkerNestedIf(observed.circuit_context(private_state), c, d)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "walkerNestedIf",
+                    input,
+                ))
+            }
             pub fn walkerInlineWrite<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
@@ -2036,6 +2113,31 @@ pub mod ledger_contract {
                     observed,
                     recorded,
                     "streamAssertEq",
+                    input,
+                ))
+            }
+            pub fn streamNestedIf<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::streamNestedIf(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn streamNestedIf_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.streamNestedIf(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "streamNestedIf",
                     input,
                 ))
             }
@@ -2298,6 +2400,36 @@ pub mod ledger_contract {
                     input,
                 ))
             }
+            pub fn walkerNestedIf<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                c: bool,
+                d: bool,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                walkerNestedIf(context, c, d)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn walkerNestedIf_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                c: bool,
+                d: bool,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from((c, d));
+                let recorded =
+                    self.walkerNestedIf(observed.circuit_context(private_state), c, d)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "walkerNestedIf",
+                    input,
+                ))
+            }
             pub fn walkerInlineWrite<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
@@ -2454,6 +2586,31 @@ pub mod ledger_contract {
                     observed,
                     recorded,
                     "streamAssertEq",
+                    input,
+                ))
+            }
+            pub fn streamNestedIf<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                streamNestedIf(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn streamNestedIf_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.streamNestedIf(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "streamNestedIf",
                     input,
                 ))
             }

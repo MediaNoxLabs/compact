@@ -1429,6 +1429,60 @@ fn render_recorded_item(
         nested.then_some(selected)
     }
 
+    // Hash-to-curve is pure, but only admit the compiler's closed two-arm
+    // Uint<2> -> Field input. The predicate must already be available as a
+    // Boolean parameter or recorded local; neither arm may observe state.
+    fn closed_curve_field_argument(
+        value: &Expr,
+        locals: &HashMap<String, syn::Expr>,
+        parameters: &HashMap<&str, (&Type, syn::Ident)>,
+    ) -> Option<syn::Expr> {
+        fn arm(value: &Expr) -> Option<syn::Expr> {
+            let Expr::Coerce {
+                value,
+                ty: Type::Unsigned { max },
+            } = value
+            else {
+                return None;
+            };
+            let Expr::UnsignedLiteral {
+                value: literal,
+                max: literal_max,
+            } = value.as_ref()
+            else {
+                return None;
+            };
+            if max != "2" || literal_max != max {
+                return None;
+            }
+            let literal = literal.parse::<u64>().ok()?;
+            if literal > 2 {
+                return None;
+            }
+            let literal = syn::LitInt::new(&format!("{literal}u64"), Span::call_site());
+            Some(syn::parse_quote!(runtime::Field::from(#literal)))
+        }
+
+        let Expr::HashToCurve { value } = value else {
+            return None;
+        };
+        let Expr::FieldCast { value } = value.as_ref() else {
+            return None;
+        };
+        let Expr::If {
+            condition,
+            then,
+            otherwise,
+        } = value.as_ref()
+        else {
+            return None;
+        };
+        let condition = cell_source(condition, &Type::Boolean, locals, parameters)?;
+        let then = arm(then)?;
+        let otherwise = arm(otherwise)?;
+        Some(syn::parse_quote!(if #condition { #then } else { #otherwise }))
+    }
+
     fn cell_source(
         value: &Expr,
         ty: &Type,
@@ -3174,6 +3228,60 @@ fn render_recorded_item(
                 bindings,
                 action: nested_action,
             } => {
+                if let [point_binding] = bindings.as_slice()
+                    && point_binding.ty == Type::JubjubPoint
+                    && let Some(argument) =
+                        closed_curve_field_argument(&point_binding.value, locals, parameters)
+                    && let StateAction::Let {
+                        bindings: projected_bindings,
+                        action: projected_action,
+                    } = nested_action.as_ref()
+                    && let [projected_binding] = projected_bindings.as_slice()
+                    && projected_binding.ty == Type::Field
+                    && matches!(
+                        &projected_binding.value,
+                        Expr::JubjubPointX { value }
+                            if matches!(value.as_ref(), Expr::Parameter { name } if name == &point_binding.name)
+                    )
+                    && matches!(
+                        projected_action.as_ref(),
+                        StateAction::CellWrite { value: Expr::Parameter { name }, .. }
+                            if name == &projected_binding.name
+                    )
+                {
+                    let point = syn::Ident::new(
+                        &format!("__compact_recorded_curve_{}", *next_temp),
+                        Span::call_site(),
+                    );
+                    *next_temp += 1;
+                    let x = syn::Ident::new(
+                        &format!("__compact_recorded_curve_x_{}", *next_temp),
+                        Span::call_site(),
+                    );
+                    *next_temp += 1;
+                    steps.push(syn::parse_quote! {
+                        let #point: runtime::JubjubPoint = runtime::hash_to_curve(#argument);
+                    });
+                    steps.push(syn::parse_quote! {
+                        let #x: runtime::Field = runtime::jubjub_point_x(#point);
+                    });
+                    let mut scoped = locals.clone();
+                    scoped.insert(projected_binding.name.clone(), syn::parse_quote!(#x));
+                    return append_steps(
+                        projected_action,
+                        &format!("{path}.action.action"),
+                        &scoped,
+                        parameters,
+                        ledger_fields,
+                        witnesses,
+                        pure_circuits,
+                        circuits,
+                        shared_callees,
+                        steps,
+                        next_temp,
+                        visiting,
+                    );
+                }
                 // Preserve the typed Uint<4> local and its immediate Field
                 // projection. A Sequence may put a Counter increment after
                 // that projection, but the projection itself remains first.

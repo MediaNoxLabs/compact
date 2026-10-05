@@ -1,0 +1,146 @@
+{
+  "schema_version": 12,
+  "type_aliases": [],
+  "ledger_fields": [
+    {
+      "id": "flag",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "boolean"
+        }
+      },
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 115,
+        "column": 1
+      }
+    },
+    {
+      "id": "fieldCell",
+      "index": 1,
+      "path": [
+        1
+      ],
+      "declaration": {
+        "kind": "cell",
+        "ty": {
+          "kind": "field"
+        }
+      },
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 116,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [],
+  "circuits": [],
+  "stateful_circuits": [
+    {
+      "name": "walkerNativeArg",
+      "parameters": [
+        {
+          "name": "c",
+          "ty": {
+            "kind": "boolean"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "p",
+              "ty": {
+                "kind": "jubjub_point"
+              },
+              "value": {
+                "kind": "hash_to_curve",
+                "value": {
+                  "kind": "field_cast",
+                  "value": {
+                    "kind": "if",
+                    "condition": {
+                      "kind": "parameter",
+                      "name": "c"
+                    },
+                    "then": {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "unsigned_literal",
+                        "value": "1",
+                        "max": "2"
+                      },
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "2"
+                      }
+                    },
+                    "otherwise": {
+                      "kind": "coerce",
+                      "value": {
+                        "kind": "unsigned_literal",
+                        "value": "2",
+                        "max": "2"
+                      },
+                      "ty": {
+                        "kind": "unsigned",
+                        "max": "2"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ],
+          "action": {
+            "kind": "let",
+            "bindings": [
+              {
+                "name": "tmp_42",
+                "ty": {
+                  "kind": "field"
+                },
+                "value": {
+                  "kind": "jubjub_point_x",
+                  "value": {
+                    "kind": "parameter",
+                    "name": "p"
+                  }
+                }
+              }
+            ],
+            "action": {
+              "kind": "cell_write",
+              "field": "fieldCell",
+              "index": 1,
+              "value": {
+                "kind": "parameter",
+                "name": "tmp_42"
+              }
+            }
+          }
+        }
+      ],
+      "source": {
+        "file": "ternary_cond_oracle.compact",
+        "line": 269,
+        "column": 1
+      }
+    }
+  ],
+  "constructor": null
+}

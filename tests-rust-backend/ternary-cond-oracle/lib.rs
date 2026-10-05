@@ -1577,6 +1577,24 @@ pub mod ledger_contract {
                 .record_write(frame, (__compact_recorded_static_0).clone())?;
             Ok(frame.finish(()))
         }
+        pub fn walkerNativeArg<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: bool,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_curve_0: runtime::JubjubPoint =
+                runtime::hash_to_curve(if __compact_param_0 {
+                    runtime::Field::from(1u64)
+                } else {
+                    runtime::Field::from(2u64)
+                });
+            let __compact_recorded_curve_x_1: runtime::Field =
+                runtime::jubjub_point_x(__compact_recorded_curve_0);
+            let frame =
+                crate::ledger_slots::fieldCell.record_write(frame, __compact_recorded_curve_x_1)?;
+            Ok(frame.finish(()))
+        }
         pub fn walkerNestedIf<Private>(
             context: runtime::context::CircuitContext<Private>,
             __compact_param_0: bool,
@@ -1622,6 +1640,25 @@ pub mod ledger_contract {
                 crate::pure_circuits::idf(__compact_recorded_arg_1)?;
             let frame = crate::ledger_slots::fieldCell
                 .record_write(frame, __compact_recorded_pure_field_2)?;
+            Ok(frame.finish(()))
+        }
+        pub fn streamNativeArg<Private>(
+            context: runtime::context::CircuitContext<Private>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_recorded_bool_0): (_, bool) =
+                crate::ledger_slots::flag.record_read(frame)?;
+            let __compact_recorded_curve_1: runtime::JubjubPoint =
+                runtime::hash_to_curve(if __compact_recorded_bool_0 {
+                    runtime::Field::from(1u64)
+                } else {
+                    runtime::Field::from(2u64)
+                });
+            let __compact_recorded_curve_x_2: runtime::Field =
+                runtime::jubjub_point_x(__compact_recorded_curve_1);
+            let frame =
+                crate::ledger_slots::fieldCell.record_write(frame, __compact_recorded_curve_x_2)?;
             Ok(frame.finish(()))
         }
         pub fn streamStructMember<Private>(
@@ -1957,6 +1994,33 @@ pub mod ledger_contract {
                     input,
                 ))
             }
+            pub fn walkerNativeArg<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                c: bool,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::walkerNativeArg(context, c)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn walkerNativeArg_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                c: bool,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(c);
+                let recorded = self.walkerNativeArg(observed.circuit_context(private_state), c)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "walkerNativeArg",
+                    input,
+                ))
+            }
             pub fn walkerNestedIf<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
@@ -2037,6 +2101,31 @@ pub mod ledger_contract {
                     observed,
                     recorded,
                     "streamCallPure",
+                    input,
+                ))
+            }
+            pub fn streamNativeArg<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::streamNativeArg(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn streamNativeArg_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.streamNativeArg(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "streamNativeArg",
                     input,
                 ))
             }
@@ -2400,6 +2489,33 @@ pub mod ledger_contract {
                     input,
                 ))
             }
+            pub fn walkerNativeArg<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                c: bool,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                walkerNativeArg(context, c)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn walkerNativeArg_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                c: bool,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(c);
+                let recorded = self.walkerNativeArg(observed.circuit_context(private_state), c)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "walkerNativeArg",
+                    input,
+                ))
+            }
             pub fn walkerNestedIf<Private>(
                 &self,
                 context: runtime::context::CircuitContext<Private>,
@@ -2480,6 +2596,31 @@ pub mod ledger_contract {
                     observed,
                     recorded,
                     "streamCallPure",
+                    input,
+                ))
+            }
+            pub fn streamNativeArg<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                streamNativeArg(context)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn streamNativeArg_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(());
+                let recorded = self.streamNativeArg(observed.circuit_context(private_state))?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed,
+                    recorded,
+                    "streamNativeArg",
                     input,
                 ))
             }

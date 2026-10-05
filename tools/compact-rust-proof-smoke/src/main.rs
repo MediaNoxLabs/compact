@@ -1055,6 +1055,99 @@ fn check_nested_uint4_proof(root: &Path) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+fn check_closed_curve_argument_proof(root: &Path) -> Result<(), Box<dyn Error>> {
+    let mut rng = StdRng::seed_from_u64(0x0126_4355_5256_4541);
+    for (circuit, condition, flag) in [
+        ("walkerNativeArg", Some(true), false),
+        ("walkerNativeArg", Some(false), false),
+        ("streamNativeArg", None, false),
+        ("streamNativeArg", None, true),
+    ] {
+        let initial = conditional_counter_contract::initial_state(
+            ConstructorContext::new(()),
+            true,
+            true,
+            Field::from(111_u64),
+        )?;
+        let seed = initial.into_circuit_context(Default::default());
+        let seed = if flag {
+            seed.write_cell(0_u8, true)?.context
+        } else {
+            seed
+        };
+        let deploy = make_deploy(root, circuit, seed.query.state.get_ref().clone(), &mut rng)?;
+        let observed = ObservedContractState::new(
+            deploy.address(),
+            deploy.initial_state.clone(),
+            Observation {
+                transaction_hash: [0; 32],
+                block_hash: [0; 32],
+                block_height: 0,
+            },
+        );
+        let verifier: VerifierKey = tagged_deserialize(&mut BufReader::new(File::open(
+            root.join(format!("keys/{circuit}.verifier")),
+        )?))?;
+        let generated = conditional_counter_contract::Contract::default();
+        let (manual, typed, expected_state) = if let Some(condition) = condition {
+            let recorded = conditional_counter_contract::recorded::walkerNativeArg(
+                observed.circuit_context(()),
+                condition,
+            )?;
+            let expected_state = recorded.execution.context.query.state.get_ref().clone();
+            let manual = check_generated_trace(root, circuit, recorded, condition)?;
+            let typed = generated
+                .recording
+                .walkerNativeArg_call(&observed, (), condition)?
+                .prepare(verifier, Fr::from(0_u64))?;
+            (manual, typed, expected_state)
+        } else {
+            let recorded = conditional_counter_contract::recorded::streamNativeArg(
+                observed.circuit_context(()),
+            )?;
+            let expected_state = recorded.execution.context.query.state.get_ref().clone();
+            let manual = check_generated_trace(root, circuit, recorded, ())?;
+            let typed = generated
+                .recording
+                .streamNativeArg_call(&observed, ())?
+                .prepare(verifier, Fr::from(0_u64))?;
+            (manual, typed, expected_state)
+        };
+        if format!("{manual:?}") != format!("{typed:?}") {
+            return Err(format!("{circuit} typed observed call differs from manual trace").into());
+        }
+        let chosen = if condition.unwrap_or(flag) {
+            1_u64
+        } else {
+            2_u64
+        };
+        let expected_x = midnight_compact_runtime::jubjub_point_x(
+            midnight_compact_runtime::hash_to_curve(Field::from(chosen)),
+        );
+        check_transaction(root, circuit, deploy, typed, &mut rng, |state| {
+            let data = state.data.get_ref();
+            if data != &expected_state {
+                return Err(format!("{circuit} proof changed unexpected ledger state").into());
+            }
+            if read_cell_at_path::<bool, _>(data, &[0])? != flag {
+                return Err(format!("{circuit} proof changed the flag").into());
+            }
+            if read_cell_at_path::<Field, _>(data, &[1])? != expected_x {
+                return Err(format!("{circuit} proof stored the wrong curve X coordinate").into());
+            }
+            let StateValue::Array(fields) = data else {
+                return Err("closed curve argument state is not an array".into());
+            };
+            if read_counter(fields.get(4).ok_or("Counter missing")?)? != 0 {
+                return Err(format!("{circuit} proof changed the Counter").into());
+            }
+            Ok(())
+        })?;
+    }
+    println!("closed conditional curve arguments proved and applied through ledger-8");
+    Ok(())
+}
+
 fn check_closed_ternary_struct_member_proof(root: &Path) -> Result<(), Box<dyn Error>> {
     let mut rng = StdRng::seed_from_u64(0x0115_5354_5255_4354);
     for (circuit, condition, expected_field) in [
@@ -1586,6 +1679,26 @@ fn main() -> Result<(), Box<dyn Error>> {
             Ok(Ok(())) => Ok(()),
             Ok(Err(error)) => Err(error.into()),
             Err(_) => Err("nested Uint<4> proof thread panicked".into()),
+        };
+    }
+    if first.as_deref() == Some(OsStr::new("--native-curve-arg")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --native-curve-arg <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err("usage: compact-rust-proof-smoke --native-curve-arg <proof-output>".into());
+        }
+        let root = PathBuf::from(root);
+        return match std::thread::Builder::new()
+            .stack_size(64 * 1024 * 1024)
+            .spawn(move || {
+                check_closed_curve_argument_proof(&root).map_err(|error| error.to_string())
+            })?
+            .join()
+        {
+            Ok(Ok(())) => Ok(()),
+            Ok(Err(error)) => Err(error.into()),
+            Err(_) => Err("closed curve argument proof thread panicked".into()),
         };
     }
     if first.as_deref() == Some(OsStr::new("--conditional-struct-member")) {

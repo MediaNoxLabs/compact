@@ -190,6 +190,77 @@ fn identity(result: Type, body: Expr) -> Contract {
 }
 
 #[test]
+fn recorded_closed_curve_argument_rejects_effectful_predicates_and_arms() {
+    let mut contract: Contract = serde_json::from_str(include_str!(
+        "../fixtures/recorded-closed-curve-argument.json"
+    ))
+    .unwrap();
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.source.contains("runtime::hash_to_curve"));
+    assert!(rendered.source.contains("runtime::jubjub_point_x"));
+
+    let closed = contract.clone();
+    let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    let Expr::HashToCurve { value } = &mut bindings[0].value else {
+        unreachable!()
+    };
+    let Expr::FieldCast { value } = value.as_mut() else {
+        unreachable!()
+    };
+    let Expr::If { condition, .. } = value.as_mut() else {
+        unreachable!()
+    };
+    **condition = Expr::CellRead {
+        field: "flag".into(),
+        index: 0,
+    };
+    assert!(
+        !render_with_capabilities(&contract)
+            .unwrap()
+            .capabilities
+            .circuits[0]
+            .recorded
+    );
+
+    let mut contract = closed;
+    contract.witnesses.push(WitnessDeclaration {
+        source: None,
+        name: "dynamicArm".into(),
+        parameters: vec![],
+        result: Type::Unsigned { max: "2".into() },
+    });
+    let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    let Expr::HashToCurve { value } = &mut bindings[0].value else {
+        unreachable!()
+    };
+    let Expr::FieldCast { value } = value.as_mut() else {
+        unreachable!()
+    };
+    let Expr::If { then, .. } = value.as_mut() else {
+        unreachable!()
+    };
+    **then = Expr::Coerce {
+        value: Box::new(Expr::WitnessCall {
+            name: "dynamicArm".into(),
+            arguments: vec![],
+        }),
+        ty: Type::Unsigned { max: "2".into() },
+    };
+    assert!(
+        !render_with_capabilities(&contract)
+            .unwrap()
+            .capabilities
+            .circuits[0]
+            .recorded
+    );
+}
+
+#[test]
 fn opaque_set_check_in_records_only_typed_parameter_and_unit_witness() {
     let opaque = Type::OpaqueString;
     let parameter = Parameter {

@@ -249,6 +249,20 @@ pub mod ledger_contract {
             let frame = crate::ledger_slots::t.record_insert(frame, __compact_param_0)?;
             Ok(frame.finish(()))
         }
+        pub fn place<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::BoundedUint<255>,
+            __compact_param_1: runtime::BoundedUint<18446744073709551615>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let frame = crate::ledger_slots::t.record_insert_index(
+                frame,
+                __compact_param_0,
+                __compact_param_1,
+            )?;
+            Ok(frame.finish(()))
+        }
         pub fn full<Private>(
             context: runtime::context::CircuitContext<Private>,
         ) -> Result<runtime::recording::RecordedCircuitResult<Private, bool>, runtime::CompactError>
@@ -282,6 +296,32 @@ pub mod ledger_contract {
                 let recorded = self.append(observed.circuit_context(private_state), value)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed, recorded, "append", input,
+                ))
+            }
+            pub fn place<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                value: runtime::BoundedUint<255>,
+                index: runtime::BoundedUint<18446744073709551615>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::place(context, value, index)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn place_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                value: runtime::BoundedUint<255>,
+                index: runtime::BoundedUint<18446744073709551615>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from((value, index));
+                let recorded = self.place(observed.circuit_context(private_state), value, index)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "place", input,
                 ))
             }
             pub fn full<Private>(

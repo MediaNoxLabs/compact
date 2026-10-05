@@ -30,6 +30,7 @@ mod asset_writable;
 mod boolean_pair_assert;
 mod closed_pure_field;
 mod field_pair_hash;
+mod merkle_indexed;
 mod merkle_verify;
 mod persistent_commit;
 mod pure_field_arguments;
@@ -59,6 +60,7 @@ use compact_rust_constructor_list_actions_fixture::ledger_contract as constructo
 use compact_rust_constructor_map_actions_fixture::ledger_contract as constructor_map_contract;
 use compact_rust_counter_fixture::ledger_contract as counter_contract;
 use compact_rust_counter_parameter_fixture::ledger_contract as counter_parameter_contract;
+use compact_rust_hmt_default_oracle_fixture::ledger_contract as historic_merkle_default_contract;
 use compact_rust_hmt_insert_oracle_fixture::ledger_contract as historic_merkle_contract;
 use compact_rust_list_field_fixture::ledger_contract as list_contract;
 use compact_rust_map_boolean_field_fixture::ledger_contract as map_contract;
@@ -1412,6 +1414,46 @@ fn main() -> Result<(), Box<dyn Error>> {
             );
         }
         return merkle_verify::run(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--merkle-indexed")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --merkle-indexed <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err("usage: compact-rust-proof-smoke --merkle-indexed <proof-output>".into());
+        }
+        let proof = std::thread::Builder::new()
+            .name("merkle-indexed-proof".into())
+            .stack_size(64 * 1024 * 1024)
+            .spawn(move || merkle_indexed::run(Path::new(&root)).map_err(|e| e.to_string()))?;
+        return match proof.join() {
+            Ok(Ok(())) => Ok(()),
+            Ok(Err(error)) => Err(error.into()),
+            Err(_) => Err("indexed Merkle proof thread panicked".into()),
+        };
+    }
+    if first.as_deref() == Some(OsStr::new("--historic-merkle-indexed")) {
+        let insert_root = arguments.next().ok_or(
+            "usage: compact-rust-proof-smoke --historic-merkle-indexed <insert-output> <default-output>",
+        )?;
+        let default_root = arguments.next().ok_or(
+            "usage: compact-rust-proof-smoke --historic-merkle-indexed <insert-output> <default-output>",
+        )?;
+        if arguments.next().is_some() {
+            return Err("usage: compact-rust-proof-smoke --historic-merkle-indexed <insert-output> <default-output>".into());
+        }
+        let proof = std::thread::Builder::new()
+            .name("historic-merkle-indexed-proof".into())
+            .stack_size(64 * 1024 * 1024)
+            .spawn(move || {
+                merkle_indexed::run_historic(Path::new(&insert_root), Path::new(&default_root))
+                    .map_err(|e| e.to_string())
+            })?;
+        return match proof.join() {
+            Ok(Ok(())) => Ok(()),
+            Ok(Err(error)) => Err(error.into()),
+            Err(_) => Err("historic indexed Merkle proof thread panicked".into()),
+        };
     }
     let counter_root = first.ok_or(
         "usage: compact-rust-proof-smoke <counter-output> <cell-output> <cell-read-output>",

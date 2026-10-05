@@ -57,6 +57,7 @@ STATEFUL_PURE_CALL_SOURCE = ROOT / "examples/rust_backend/stateful_pure_call.com
 TERNARY_COND_SOURCE = ROOT / "examples/rust_backend/ternary_cond_oracle.compact"
 ASSET_REGISTRY_SOURCE = ROOT / "examples/rust_backend/asset_registry_oracle.compact"
 HISTORIC_MERKLE_SOURCE = ROOT / "examples/rust_backend/hmt_insert_oracle.compact"
+HISTORIC_MERKLE_DEFAULT_SOURCE = ROOT / "examples/rust_backend/hmt_default_oracle.compact"
 VECTOR_KEY_SOURCE = ROOT / "examples/rust_backend/vector_key_adt.compact"
 COMPOSITE_KEY_SOURCE = ROOT / "examples/rust_backend/observed_composite_keys.compact"
 CHUNKED_SET_SOURCE = ROOT / "examples/rust_backend/chunked_set_observed.compact"
@@ -1375,11 +1376,22 @@ def main() -> None:
             merkle_proof = base / "merkle-proof"
             run(compiler, "--target", "rust", str(MERKLE_SOURCE), str(merkle_proof))
             check_manifest(merkle_proof)
-            for circuit in ("append", "full"):
+            capabilities = json.loads((merkle_proof / "contract/rust-capabilities.json").read_text())
+            by_name = {circuit["name"]: circuit for circuit in capabilities["circuits"]}
+            for circuit in ("append", "place", "place_default", "full"):
+                assert by_name[circuit]["recorded"] and by_name[circuit]["observed_call"]
                 for extension in ("prover", "verifier"):
                     assert (merkle_proof / "keys" / f"{circuit}.{extension}").is_file()
                 for extension in ("zkir", "bzkir"):
                     assert (merkle_proof / "zkir" / f"{circuit}.{extension}").is_file()
+            for circuit, node in (
+                ("append_hash", "StateAction::MerkleInsertHash"),
+                ("place_hash", "StateAction::MerkleInsertHashIndex"),
+                ("reset_tree", "StateAction::MerkleResetToDefault"),
+                ("known", "StateReturn::MerkleCheckRoot"),
+            ):
+                assert not by_name[circuit]["recorded"]
+                assert by_name[circuit]["recording_unavailable"]["ir_node"] == node
             merkle_verify_proof = base / "merkle-verify-proof"
             run(compiler, "--target", "rust", str(MERKLE_VERIFY_SOURCE), str(merkle_verify_proof))
             check_manifest(merkle_verify_proof)
@@ -1487,11 +1499,33 @@ def main() -> None:
             historic_merkle_proof = base / "historic-merkle-proof"
             run(compiler, "--target", "rust", str(HISTORIC_MERKLE_SOURCE), str(historic_merkle_proof))
             check_manifest(historic_merkle_proof)
-            for circuit in ("append", "full"):
+            capabilities = json.loads((historic_merkle_proof / "contract/rust-capabilities.json").read_text())
+            by_name = {circuit["name"]: circuit for circuit in capabilities["circuits"]}
+            for circuit in ("append", "place", "full"):
+                assert by_name[circuit]["recorded"] and by_name[circuit]["observed_call"]
                 for extension in ("prover", "verifier"):
                     assert (historic_merkle_proof / "keys" / f"{circuit}.{extension}").is_file()
                 for extension in ("zkir", "bzkir"):
                     assert (historic_merkle_proof / "zkir" / f"{circuit}.{extension}").is_file()
+            for circuit, node in (
+                ("append_hash", "StateAction::HistoricMerkleInsertHash"),
+                ("place_hash", "StateAction::HistoricMerkleInsertHashIndex"),
+                ("forget_history", "StateAction::HistoricMerkleResetHistory"),
+                ("reset_tree", "StateAction::HistoricMerkleResetToDefault"),
+                ("known", "StateReturn::HistoricMerkleCheckRoot"),
+            ):
+                assert not by_name[circuit]["recorded"]
+                assert by_name[circuit]["recording_unavailable"]["ir_node"] == node
+            historic_merkle_default_proof = base / "historic-merkle-default-proof"
+            run(compiler, "--target", "rust", str(HISTORIC_MERKLE_DEFAULT_SOURCE), str(historic_merkle_default_proof))
+            check_manifest(historic_merkle_default_proof)
+            capabilities = json.loads((historic_merkle_default_proof / "contract/rust-capabilities.json").read_text())
+            assert capabilities["circuits"][0]["name"] == "add_default"
+            assert capabilities["circuits"][0]["recorded"] and capabilities["circuits"][0]["observed_call"]
+            for extension in ("prover", "verifier"):
+                assert (historic_merkle_default_proof / "keys" / f"add_default.{extension}").is_file()
+            for extension in ("zkir", "bzkir"):
+                assert (historic_merkle_default_proof / "zkir" / f"add_default.{extension}").is_file()
             vector_key_proof = base / "vector-key-proof"
             run(compiler, "--target", "rust", str(VECTOR_KEY_SOURCE), str(vector_key_proof))
             check_manifest(vector_key_proof)
@@ -1620,6 +1654,14 @@ def main() -> None:
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 "--merkle-verify", str(merkle_verify_proof),
+            )
+            run(
+                "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--merkle-indexed", str(merkle_proof),
+            )
+            run(
+                "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--historic-merkle-indexed", str(historic_merkle_proof), str(historic_merkle_default_proof),
             )
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",

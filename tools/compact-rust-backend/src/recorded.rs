@@ -3602,6 +3602,84 @@ fn render_recorded_item(
                 ));
                 Ok(RecordingOutcome::Supported(()))
             }
+            StateAction::MerkleInsertIndex {
+                field,
+                index,
+                value,
+                position,
+            }
+            | StateAction::HistoricMerkleInsertIndex {
+                field,
+                index,
+                value,
+                position,
+            } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                let (ty, historic) = match &declaration.declaration {
+                    LedgerFieldKind::MerkleTree { ty, .. } => (ty, false),
+                    LedgerFieldKind::HistoricMerkleTree { ty, .. } => (ty, true),
+                    _ => return Ok(unavailable_action(action, path)),
+                };
+                if declaration.index != *index
+                    || declaration.physical_path().len() != 1
+                    || historic != matches!(action, StateAction::HistoricMerkleInsertIndex { .. })
+                {
+                    return Ok(unavailable_action(action, path));
+                }
+                let position_ty = Type::Unsigned {
+                    max: u64::MAX.to_string(),
+                };
+                let (Some(value), Some(position)) = (
+                    cell_source(value, ty, locals, parameters),
+                    cell_source(position, &position_ty, locals, parameters),
+                ) else {
+                    return Ok(unavailable_action(action, path));
+                };
+                let slot = ident(field)?;
+                steps.push(syn::parse_quote!(
+                    let frame = crate::ledger_slots::#slot.record_insert_index(frame, #value, #position)?;
+                ));
+                Ok(RecordingOutcome::Supported(()))
+            }
+            StateAction::MerkleInsertIndexDefault {
+                field,
+                index,
+                position,
+            }
+            | StateAction::HistoricMerkleInsertIndexDefault {
+                field,
+                index,
+                position,
+            } => {
+                let declaration = ledger_fields
+                    .get(field.as_str())
+                    .ok_or_else(|| RenderError::UnknownLedgerField(field.clone()))?;
+                let historic = match &declaration.declaration {
+                    LedgerFieldKind::MerkleTree { .. } => false,
+                    LedgerFieldKind::HistoricMerkleTree { .. } => true,
+                    _ => return Ok(unavailable_action(action, path)),
+                };
+                if declaration.index != *index
+                    || declaration.physical_path().len() != 1
+                    || historic
+                        != matches!(action, StateAction::HistoricMerkleInsertIndexDefault { .. })
+                {
+                    return Ok(unavailable_action(action, path));
+                }
+                let position_ty = Type::Unsigned {
+                    max: u64::MAX.to_string(),
+                };
+                let Some(position) = cell_source(position, &position_ty, locals, parameters) else {
+                    return Ok(unavailable_action(action, path));
+                };
+                let slot = ident(field)?;
+                steps.push(syn::parse_quote!(
+                    let frame = crate::ledger_slots::#slot.record_insert_index_default(frame, #position)?;
+                ));
+                Ok(RecordingOutcome::Supported(()))
+            }
             StateAction::CellWrite {
                 field,
                 index,

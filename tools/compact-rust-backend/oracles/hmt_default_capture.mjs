@@ -18,12 +18,36 @@
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { normalizeQueryProgram } from './normalize_query_program.mjs';
 
 if (process.argv.length !== 3) throw new Error('usage: node hmt_default_capture.mjs <compiled-contract-dir>');
 const contractIndex = resolve(process.argv[2], 'index.js');
 const requireFromContract = createRequire(contractIndex);
 const runtime = await import(pathToFileURL(requireFromContract.resolve('@midnight-ntwrk/compact-runtime')));
 const { Contract } = await import(pathToFileURL(contractIndex));
+const queryCosts = [];
+const originalQuery = runtime.QueryContext.prototype.query;
+runtime.QueryContext.prototype.query = function (...args) {
+  const result = originalQuery.call(this, ...args);
+  queryCosts.push({
+    gasCost: result.gasCost,
+    opTags: args[0].map((op) => typeof op === 'string' ? op : Object.keys(op)[0]),
+    program: normalizeQueryProgram(args[0]),
+  });
+  return result;
+};
+const nativeQueries = {};
+function capture(name, invoke) {
+  const start = queryCosts.length;
+  const output = invoke();
+  nativeQueries[name] = {
+    result: output.result,
+    privateOutputs: output.proofData.privateTranscriptOutputs.length,
+    reportedGas: output.gasCost,
+    queries: queryCosts.slice(start),
+  };
+  return output;
+}
 const contract = new Contract({});
 const coinPublicKey = { bytes: new Uint8Array(32) };
 const initial = contract.initialState({
@@ -45,10 +69,19 @@ function snapshot() {
   return Buffer.from(state.serialize()).toString('hex');
 }
 const afterInit = Buffer.from(initial.currentContractState.serialize()).toString('hex');
-context = contract.circuits.add_default(context, 0n).context;
+context = capture('addDefault0', () => contract.circuits.add_default(context, 0n)).context;
 const afterAddDefault0 = snapshot();
-context = contract.circuits.add_default(context, 2n).context;
+context = capture('addDefault2', () => contract.circuits.add_default(context, 2n)).context;
 const afterAddDefault2 = snapshot();
-context = contract.circuits.add_default(context, 0n).context;
+context = capture('repeat0', () => contract.circuits.add_default(context, 0n)).context;
 const afterRepeat0 = snapshot();
-process.stdout.write(JSON.stringify({ afterInit, afterAddDefault0, afterAddDefault2, afterRepeat0 }, null, 2) + '\n');
+function normalize(value) {
+  if (typeof value === 'bigint') return value.toString();
+  if (value instanceof Uint8Array) return { bytesHex: Buffer.from(value).toString('hex') };
+  if (Array.isArray(value)) return value.map(normalize);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([key, inner]) => [key, normalize(inner)]));
+  }
+  return value;
+}
+process.stdout.write(JSON.stringify(normalize({ afterInit, afterAddDefault0, afterAddDefault2, afterRepeat0, nativeQueries }), null, 2) + '\n');

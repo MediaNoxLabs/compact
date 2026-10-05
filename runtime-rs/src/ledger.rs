@@ -236,7 +236,6 @@ pub(crate) use collections::{
 };
 pub(crate) use counter::counter_program;
 pub use counter::{constructor_counter, decrement_counter, increment_counter, read_counter};
-pub(crate) use merkle::historic_merkle_insert_program;
 pub(crate) use merkle::is_full_program;
 pub(crate) use merkle::merkle_check_root_verify_program;
 pub(crate) use merkle::merkle_insert_program;
@@ -249,6 +248,11 @@ pub use merkle::{
     merkle_insert_hash, merkle_insert_hash_index, merkle_insert_index, merkle_insert_index_default,
     merkle_is_full, merkle_reset_to_default, merkle_tree_view_at_path,
     metered_historic_merkle_tree_view_at_path, metered_merkle_tree_view_at_path,
+};
+pub(crate) use merkle::{
+    historic_merkle_insert_index_default_program, historic_merkle_insert_index_program,
+    historic_merkle_insert_program, merkle_insert_index_default_program,
+    merkle_insert_index_program,
 };
 
 /// The root ledger state for a contract with no public ledger fields.

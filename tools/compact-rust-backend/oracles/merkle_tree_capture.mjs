@@ -40,7 +40,12 @@ const nativeQueries = {};
 function capture(name, invoke) {
   const start = queryCosts.length;
   const output = invoke();
-  nativeQueries[name] = { reportedGas: output.gasCost, queries: queryCosts.slice(start) };
+  nativeQueries[name] = {
+    result: output.result,
+    privateOutputs: output.proofData.privateTranscriptOutputs.length,
+    reportedGas: output.gasCost,
+    queries: queryCosts.slice(start),
+  };
   return output;
 }
 const contract = new Contract({});
@@ -104,14 +109,14 @@ const wrongPathFor8At0 = pathData(currentTree().pathForLeaf(0n, 8n));
 const foundPathFor7 = pathData(currentTree().findPathForLeaf(7n));
 const missingPathFor8 = pathData(currentTree().findPathForLeaf(8n));
 const knownInitialAfterAppend = known(rootAtInit);
-context = contract.circuits.place(context, 9n, 3n).context;
+context = capture('place9At3', () => contract.circuits.place(context, 9n, 3n)).context;
 const afterPlace9At3 = snapshot();
 const pathFor9At3 = pathData(currentTree().pathForLeaf(3n, 9n));
 context = contract.circuits.append(context, 11n).context;
 const afterAppend11 = snapshot();
-context = contract.circuits.place(context, 13n, 1n).context;
+context = capture('place13At1', () => contract.circuits.place(context, 13n, 1n)).context;
 const afterPlace13At1 = snapshot();
-context = contract.circuits.place_default(context, 6n).context;
+context = capture('placeDefaultAt6', () => contract.circuits.place_default(context, 6n)).context;
 const afterDefaultAt6 = snapshot();
 const fullBeforeCapacity = full();
 context = contract.circuits.append_hash(context, new Uint8Array(32).fill(1)).context;

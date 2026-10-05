@@ -160,6 +160,20 @@ impl<T: CellValue, const DEPTH: u8, const HISTORIC: bool> MerkleSlot<T, DEPTH, H
         }
     }
 
+    /// Record a typed indexed insertion using the declared tree kind and leaf type.
+    pub fn record_insert_index<Private, D: DB>(
+        self,
+        frame: RecordingFrame<Private, D>,
+        value: T,
+        position: crate::BoundedUint<{ u64::MAX as u128 }>,
+    ) -> Result<RecordingFrame<Private, D>, CompactError> {
+        if HISTORIC {
+            frame.insert_historic_merkle_index(self.path, value, position)
+        } else {
+            frame.insert_merkle_index(self.path, value, position)
+        }
+    }
+
     pub fn insert_hash<Private, D: DB>(
         self,
         context: CircuitContext<Private, D>,
@@ -197,6 +211,22 @@ impl<T: CellValue, const DEPTH: u8, const HISTORIC: bool> MerkleSlot<T, DEPTH, H
             context.historic_insert_index_default::<T>(self.path, position)
         } else {
             context.merkle_insert_index_default::<T>(self.path, position)
+        }
+    }
+
+    /// Record insertion of the declared default leaf at a typed index.
+    pub fn record_insert_index_default<Private, D: DB>(
+        self,
+        frame: RecordingFrame<Private, D>,
+        position: crate::BoundedUint<{ u64::MAX as u128 }>,
+    ) -> Result<RecordingFrame<Private, D>, CompactError>
+    where
+        T: Default,
+    {
+        if HISTORIC {
+            frame.insert_historic_merkle_index_default::<T>(self.path, position)
+        } else {
+            frame.insert_merkle_index_default::<T>(self.path, position)
         }
     }
 

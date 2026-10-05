@@ -156,6 +156,120 @@ fn recorded_plain_append_matches_ledger8_program_and_replays() {
 }
 
 #[test]
+fn recorded_indexed_insertions_match_typescript_and_replay() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/merkle-tree-oracle.json"
+    ))
+    .unwrap();
+    let place_start = || {
+        let context = initial_state(ConstructorContext::new(()))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default());
+        append(context, bounded::<255>(7)).unwrap().context
+    };
+    let native = place(
+        place_start(),
+        bounded::<255>(9),
+        bounded::<{ u64::MAX as u128 }>(3),
+    )
+    .unwrap();
+    let recorded = recorded::place(
+        place_start(),
+        bounded::<255>(9),
+        bounded::<{ u64::MAX as u128 }>(3),
+    )
+    .unwrap();
+    assert_indexed_recording("place9At3", "afterPlace9At3", 4, native, recorded, &oracle);
+
+    let default_start = || {
+        let context = place(
+            place_start(),
+            bounded::<255>(9),
+            bounded::<{ u64::MAX as u128 }>(3),
+        )
+        .unwrap()
+        .context;
+        let context = append(context, bounded::<255>(11)).unwrap().context;
+        place(
+            context,
+            bounded::<255>(13),
+            bounded::<{ u64::MAX as u128 }>(1),
+        )
+        .unwrap()
+        .context
+    };
+    let native = place_default(default_start(), bounded::<{ u64::MAX as u128 }>(6)).unwrap();
+    let recorded =
+        recorded::place_default(default_start(), bounded::<{ u64::MAX as u128 }>(6)).unwrap();
+    assert_indexed_recording(
+        "placeDefaultAt6",
+        "afterDefaultAt6",
+        7,
+        native,
+        recorded,
+        &oracle,
+    );
+}
+
+fn assert_indexed_recording(
+    query: &str,
+    state: &str,
+    first_free: u128,
+    native: runtime::context::CircuitResult<(), (), DefaultDB>,
+    recorded: runtime::recording::RecordedCircuitResult<(), (), DefaultDB>,
+    oracle: &serde_json::Value,
+) {
+    assert_eq!(native.gas_cost, recorded.execution.gas_cost);
+    assert_eq!(
+        native.context.query.effects,
+        recorded.execution.context.query.effects
+    );
+    assert!(recorded.execution.private_transcript_outputs.is_empty());
+    assert_state(
+        recorded.execution.context.query.state.get_ref(),
+        oracle,
+        state,
+        first_free,
+    );
+    assert_eq!(
+        state_hex(native.context.query.state.get_ref().clone()),
+        state_hex(recorded.execution.context.query.state.get_ref().clone())
+    );
+    assert_native_query_gas(query, &recorded.execution.gas_cost, oracle);
+    assert_eq!(
+        oracle["nativeQueries"][query]["result"],
+        serde_json::json!([])
+    );
+    assert_eq!(oracle["nativeQueries"][query]["privateOutputs"], 0);
+    let queries = oracle["nativeQueries"][query]["queries"]
+        .as_array()
+        .unwrap();
+    assert_eq!(queries.len(), 1);
+    assert_eq!(
+        serde_json::to_value(recorded.public.verify_ops()).unwrap(),
+        queries[0]["program"]
+    );
+    let replay = recorded
+        .public
+        .initial()
+        .query(
+            recorded.public.verify_ops(),
+            None,
+            &recorded.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(replay.gas_cost, recorded.execution.gas_cost);
+    assert_eq!(
+        replay.context.effects,
+        recorded.execution.context.query.effects
+    );
+    assert_eq!(
+        state_hex(replay.context.state.get_ref().clone()),
+        state_hex(recorded.execution.context.query.state.get_ref().clone())
+    );
+}
+
+#[test]
 fn recorded_plain_fullness_matches_native_vm_and_replays_without_a_write() {
     let oracle: serde_json::Value = serde_json::from_str(include_str!(
         "../../../runtime-rs/tests/fixtures/merkle-tree-oracle.json"

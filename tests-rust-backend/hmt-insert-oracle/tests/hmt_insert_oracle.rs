@@ -191,6 +191,72 @@ fn recorded_historic_append_preserves_root_history_and_replays() {
 }
 
 #[test]
+fn recorded_historic_indexed_insertion_matches_typescript_and_replays() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/hmt-insert-oracle.json"
+    ))
+    .unwrap();
+    let start = || {
+        let context = initial_state(ConstructorContext::new(()))
+            .unwrap()
+            .into_circuit_context(ContractAddress::default());
+        append(context, bounded::<255>(7)).unwrap().context
+    };
+    let value = bounded::<255>(9);
+    let index = bounded::<{ u64::MAX as u128 }>(3);
+    let native = place(start(), value, index).unwrap();
+    let recorded = recorded::place(start(), value, index).unwrap();
+    assert_eq!(native.gas_cost, recorded.execution.gas_cost);
+    assert_eq!(
+        native.context.query.effects,
+        recorded.execution.context.query.effects
+    );
+    assert!(recorded.execution.private_transcript_outputs.is_empty());
+    assert_state(
+        recorded.execution.context.query.state.get_ref(),
+        &oracle,
+        "afterPlace9At3",
+        4,
+    );
+    assert_eq!(
+        state_hex(native.context.query.state.get_ref().clone()),
+        state_hex(recorded.execution.context.query.state.get_ref().clone())
+    );
+    assert_native_query_gas("place9At3", &recorded.execution.gas_cost, &oracle);
+    assert_eq!(
+        oracle["nativeQueries"]["place9At3"]["result"],
+        serde_json::json!([])
+    );
+    assert_eq!(oracle["nativeQueries"]["place9At3"]["privateOutputs"], 0);
+    let queries = oracle["nativeQueries"]["place9At3"]["queries"]
+        .as_array()
+        .unwrap();
+    assert_eq!(queries.len(), 1);
+    assert_eq!(
+        serde_json::to_value(recorded.public.verify_ops()).unwrap(),
+        queries[0]["program"]
+    );
+    let replay = recorded
+        .public
+        .initial()
+        .query(
+            recorded.public.verify_ops(),
+            None,
+            &recorded.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(replay.gas_cost, recorded.execution.gas_cost);
+    assert_eq!(
+        replay.context.effects,
+        recorded.execution.context.query.effects
+    );
+    assert_eq!(
+        state_hex(replay.context.state.get_ref().clone()),
+        state_hex(recorded.execution.context.query.state.get_ref().clone())
+    );
+}
+
+#[test]
 fn recorded_historic_fullness_matches_native_vm_and_preserves_history() {
     let oracle: serde_json::Value = serde_json::from_str(include_str!(
         "../../../runtime-rs/tests/fixtures/hmt-insert-oracle.json"

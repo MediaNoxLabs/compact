@@ -474,7 +474,16 @@ fn merkle_insert_index_hashed<D: DB>(
     gas_limit: Option<RunningCost>,
     cost_model: &CostModel,
 ) -> Result<QueryResults<ResultModeVerify, D>, TranscriptRejected<D>> {
-    let path = path.into();
+    let program = merkle_insert_index_hashed_program::<D>(path.into(), hash, position, history);
+    context.query(&program, gas_limit, cost_model)
+}
+
+fn merkle_insert_index_hashed_program<D: DB>(
+    path: LedgerPath,
+    hash: AlignedValue,
+    position: u64,
+    history: MerkleHistory,
+) -> Vec<Op<ResultModeVerify, D>> {
     let keys = path_keys(path.as_slice());
     let index_key = |index| vec![Key::Value(AlignedValue::from(index))].into();
     let mut program = vec![
@@ -556,7 +565,49 @@ fn merkle_insert_index_hashed<D: DB>(
             n: path.as_slice().len() as u8,
         });
     }
-    context.query(&program, gas_limit, cost_model)
+    program
+}
+
+/// Build ledger-8's typed indexed insertion program for a recorded plain tree.
+pub(crate) fn merkle_insert_index_program<T: CellValue, D: DB>(
+    path: impl Into<LedgerPath>,
+    item: T,
+    position: u64,
+) -> Vec<Op<ResultModeVerify, D>> {
+    merkle_insert_index_hashed_program(
+        path.into(),
+        AlignedValue::from(leaf_hash_for(item)),
+        position,
+        MerkleHistory::CurrentOnly,
+    )
+}
+
+/// Build ledger-8's default-leaf indexed insertion program for recording.
+pub(crate) fn merkle_insert_index_default_program<T: CellValue + Default, D: DB>(
+    path: impl Into<LedgerPath>,
+    position: u64,
+) -> Vec<Op<ResultModeVerify, D>> {
+    merkle_insert_index_program(path, T::default(), position)
+}
+
+pub(crate) fn historic_merkle_insert_index_program<T: CellValue, D: DB>(
+    path: impl Into<LedgerPath>,
+    item: T,
+    position: u64,
+) -> Vec<Op<ResultModeVerify, D>> {
+    merkle_insert_index_hashed_program(
+        path.into(),
+        AlignedValue::from(leaf_hash_for(item)),
+        position,
+        MerkleHistory::Historic,
+    )
+}
+
+pub(crate) fn historic_merkle_insert_index_default_program<T: CellValue + Default, D: DB>(
+    path: impl Into<LedgerPath>,
+    position: u64,
+) -> Vec<Op<ResultModeVerify, D>> {
+    historic_merkle_insert_index_program(path, T::default(), position)
 }
 
 /// Insert a typed leaf at the first free index and record the resulting root.

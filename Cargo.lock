@@ -1798,6 +1798,7 @@ dependencies = [
  "compact-rust-constructor-map-actions-fixture",
  "compact-rust-counter-fixture",
  "compact-rust-counter-parameter-fixture",
+ "compact-rust-hmt-default-oracle-fixture",
  "compact-rust-hmt-insert-oracle-fixture",
  "compact-rust-internal-pure-call-fixture",
  "compact-rust-list-field-fixture",

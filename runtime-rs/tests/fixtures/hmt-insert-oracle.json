@@ -101,6 +101,8 @@
   "knownCurrentAfterReset": true,
   "nativeQueries": {
     "fullAtInit": {
+      "result": false,
+      "privateOutputs": 0,
       "reportedGas": {
         "readTime": "340000000",
         "computeTime": "1425491435",
@@ -219,6 +221,8 @@
       ]
     },
     "knownAtInit": {
+      "result": true,
+      "privateOutputs": 0,
       "reportedGas": {
         "readTime": "340000000",
         "computeTime": "1425839201",
@@ -332,6 +336,8 @@
       ]
     },
     "append7": {
+      "result": [],
+      "privateOutputs": 0,
       "reportedGas": {
         "readTime": "1275000000",
         "computeTime": "2647946280",
@@ -635,7 +641,711 @@
         }
       ]
     },
+    "place9At3": {
+      "result": [],
+      "privateOutputs": 0,
+      "reportedGas": {
+        "readTime": "1360000000",
+        "computeTime": "2735649718",
+        "bytesWritten": "1298",
+        "bytesDeleted": "972"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "1360000000",
+            "computeTime": "2735649718",
+            "bytesWritten": "1298",
+            "bytesDeleted": "972"
+          },
+          "opTags": [
+            "idx",
+            "idx",
+            "push",
+            "push",
+            "ins",
+            "idx",
+            "push",
+            "addi",
+            "dup",
+            "dup",
+            "lt",
+            "branch",
+            "pop",
+            "jmp",
+            "swap",
+            "pop",
+            "ins",
+            "idx",
+            "dup",
+            "idx",
+            "root",
+            "push",
+            "ins",
+            "ins"
+          ],
+          "program": [
+            {
+              "idx": {
+                "cached": false,
+                "pushPath": true,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        []
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "idx": {
+                "cached": false,
+                "pushPath": true,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        []
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        3
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 8
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "push": {
+                "storage": true,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        132,
+                        166,
+                        234,
+                        64,
+                        159,
+                        69,
+                        114,
+                        157,
+                        249,
+                        172,
+                        42,
+                        75,
+                        126,
+                        214,
+                        27,
+                        238,
+                        235,
+                        120,
+                        183,
+                        25,
+                        19,
+                        130,
+                        153,
+                        209,
+                        47,
+                        69,
+                        194,
+                        118,
+                        158,
+                        16,
+                        70,
+                        244
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 32
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "ins": {
+                "cached": false,
+                "n": 2
+              }
+            },
+            {
+              "idx": {
+                "cached": false,
+                "pushPath": true,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        [
+                          1
+                        ]
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        3
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 8
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "addi": {
+                "immediate": 1
+              }
+            },
+            {
+              "dup": {
+                "n": 1
+              }
+            },
+            {
+              "dup": {
+                "n": 1
+              }
+            },
+            "lt",
+            {
+              "branch": {
+                "skip": 2
+              }
+            },
+            "pop",
+            {
+              "jmp": {
+                "skip": 2
+              }
+            },
+            {
+              "swap": {
+                "n": 0
+              }
+            },
+            "pop",
+            {
+              "ins": {
+                "cached": false,
+                "n": 1
+              }
+            },
+            {
+              "idx": {
+                "cached": false,
+                "pushPath": true,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        [
+                          2
+                        ]
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "dup": {
+                "n": 2
+              }
+            },
+            {
+              "idx": {
+                "cached": false,
+                "pushPath": false,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        []
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            "root",
+            {
+              "push": {
+                "storage": true,
+                "value": {
+                  "tag": "null"
+                }
+              }
+            },
+            {
+              "ins": {
+                "cached": false,
+                "n": 1
+              }
+            },
+            {
+              "ins": {
+                "cached": true,
+                "n": 2
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "place13At1": {
+      "result": [],
+      "privateOutputs": 0,
+      "reportedGas": {
+        "readTime": "1360000000",
+        "computeTime": "2735819057",
+        "bytesWritten": "1950",
+        "bytesDeleted": "1718"
+      },
+      "queries": [
+        {
+          "gasCost": {
+            "readTime": "1360000000",
+            "computeTime": "2735819057",
+            "bytesWritten": "1950",
+            "bytesDeleted": "1718"
+          },
+          "opTags": [
+            "idx",
+            "idx",
+            "push",
+            "push",
+            "ins",
+            "idx",
+            "push",
+            "addi",
+            "dup",
+            "dup",
+            "lt",
+            "branch",
+            "pop",
+            "jmp",
+            "swap",
+            "pop",
+            "ins",
+            "idx",
+            "dup",
+            "idx",
+            "root",
+            "push",
+            "ins",
+            "ins"
+          ],
+          "program": [
+            {
+              "idx": {
+                "cached": false,
+                "pushPath": true,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        []
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "idx": {
+                "cached": false,
+                "pushPath": true,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        []
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        1
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 8
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "push": {
+                "storage": true,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        228,
+                        61,
+                        91,
+                        188,
+                        253,
+                        163,
+                        175,
+                        32,
+                        234,
+                        31,
+                        30,
+                        9,
+                        88,
+                        59,
+                        49,
+                        122,
+                        101,
+                        91,
+                        2,
+                        79,
+                        30,
+                        149,
+                        154,
+                        93,
+                        89,
+                        194,
+                        160,
+                        70,
+                        208,
+                        66,
+                        123,
+                        122
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 32
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "ins": {
+                "cached": false,
+                "n": 2
+              }
+            },
+            {
+              "idx": {
+                "cached": false,
+                "pushPath": true,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        [
+                          1
+                        ]
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "push": {
+                "storage": false,
+                "value": {
+                  "tag": "cell",
+                  "content": {
+                    "value": [
+                      [
+                        1
+                      ]
+                    ],
+                    "alignment": [
+                      {
+                        "tag": "atom",
+                        "value": {
+                          "tag": "bytes",
+                          "length": 8
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "addi": {
+                "immediate": 1
+              }
+            },
+            {
+              "dup": {
+                "n": 1
+              }
+            },
+            {
+              "dup": {
+                "n": 1
+              }
+            },
+            "lt",
+            {
+              "branch": {
+                "skip": 2
+              }
+            },
+            "pop",
+            {
+              "jmp": {
+                "skip": 2
+              }
+            },
+            {
+              "swap": {
+                "n": 0
+              }
+            },
+            "pop",
+            {
+              "ins": {
+                "cached": false,
+                "n": 1
+              }
+            },
+            {
+              "idx": {
+                "cached": false,
+                "pushPath": true,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        [
+                          2
+                        ]
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "dup": {
+                "n": 2
+              }
+            },
+            {
+              "idx": {
+                "cached": false,
+                "pushPath": false,
+                "path": [
+                  {
+                    "tag": "value",
+                    "value": {
+                      "value": [
+                        []
+                      ],
+                      "alignment": [
+                        {
+                          "tag": "atom",
+                          "value": {
+                            "tag": "bytes",
+                            "length": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            "root",
+            {
+              "push": {
+                "storage": true,
+                "value": {
+                  "tag": "null"
+                }
+              }
+            },
+            {
+              "ins": {
+                "cached": false,
+                "n": 1
+              }
+            },
+            {
+              "ins": {
+                "cached": true,
+                "n": 2
+              }
+            }
+          ]
+        }
+      ]
+    },
     "forgetHistory": {
+      "result": [],
+      "privateOutputs": 0,
       "reportedGas": {
         "readTime": "340000000",
         "computeTime": "1521372783",

@@ -206,6 +206,57 @@ impl<Private, D: DB> RecordingFrame<Private, D> {
         self.apply_verify_program(ledger::historic_merkle_insert_program(path, value))
     }
 
+    /// Insert a typed leaf at a declared index, retaining the ledger-8 VM program.
+    pub fn insert_merkle_index<T: CellValue>(
+        self,
+        path: impl Into<LedgerPath>,
+        value: T,
+        position: crate::BoundedUint<{ u64::MAX as u128 }>,
+    ) -> Result<Self, CompactError> {
+        self.apply_verify_program(ledger::merkle_insert_index_program(
+            path,
+            value,
+            position.value() as u64,
+        ))
+    }
+
+    pub fn insert_merkle_index_default<T: CellValue + Default>(
+        self,
+        path: impl Into<LedgerPath>,
+        position: crate::BoundedUint<{ u64::MAX as u128 }>,
+    ) -> Result<Self, CompactError> {
+        self.apply_verify_program(ledger::merkle_insert_index_default_program::<T, D>(
+            path,
+            position.value() as u64,
+        ))
+    }
+
+    pub fn insert_historic_merkle_index<T: CellValue>(
+        self,
+        path: impl Into<LedgerPath>,
+        value: T,
+        position: crate::BoundedUint<{ u64::MAX as u128 }>,
+    ) -> Result<Self, CompactError> {
+        self.apply_verify_program(ledger::historic_merkle_insert_index_program(
+            path,
+            value,
+            position.value() as u64,
+        ))
+    }
+
+    pub fn insert_historic_merkle_index_default<T: CellValue + Default>(
+        self,
+        path: impl Into<LedgerPath>,
+        position: crate::BoundedUint<{ u64::MAX as u128 }>,
+    ) -> Result<Self, CompactError> {
+        self.apply_verify_program(
+            ledger::historic_merkle_insert_index_default_program::<T, D>(
+                path,
+                position.value() as u64,
+            ),
+        )
+    }
+
     /// Read plain-tree fullness through the ledger VM and retain the observed
     /// read value in the verifying program.
     pub fn merkle_is_full(

@@ -216,3 +216,64 @@ fn recorded_merkle_root_check_matches_native_typescript_and_replay() {
         "an invalid ledger path must reject rather than record a synthetic false result"
     );
 }
+
+#[test]
+fn recorded_literal_index_replacement_matches_typescript_and_replay() {
+    let oracle: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../runtime-rs/tests/fixtures/merkle-literal-index.json"
+    ))
+    .unwrap();
+    let value = runtime::BoundedUint::<255>::new(8).unwrap();
+    let native = replace(context_after_append(), value).unwrap();
+    let recorded = recorded::replace(context_after_append(), value).unwrap();
+    let expected = &oracle["replace"];
+    assert_eq!(recorded.execution.result, native.result);
+    assert_eq!(recorded.execution.gas_cost, native.gas_cost);
+    assert_eq!(
+        recorded.execution.context.query.effects,
+        native.context.query.effects
+    );
+    assert!(recorded.execution.private_transcript_outputs.is_empty());
+    assert_eq!(
+        state_hex(recorded.execution.context.query.state.get_ref().clone()),
+        expected["stateHex"]
+    );
+    assert_eq!(
+        state_hex(native.context.query.state.get_ref().clone()),
+        expected["stateHex"]
+    );
+    let program = serde_json::to_value(recorded.public.verify_ops()).unwrap();
+    assert_eq!(program.as_array().unwrap().len(), 18);
+    assert_eq!(program, expected["queries"][0]["program"]);
+    let actual_gas = serde_json::to_value(recorded.execution.gas_cost).unwrap();
+    for key in ["readTime", "computeTime", "bytesWritten", "bytesDeleted"] {
+        let expected_gas: u64 = expected["queries"][0]["gasCost"][key]
+            .as_str()
+            .unwrap()
+            .parse()
+            .unwrap();
+        assert_eq!(actual_gas[key].as_u64().unwrap(), expected_gas, "{key}");
+        assert_eq!(
+            expected["reportedGas"][key],
+            expected["queries"][0]["gasCost"][key]
+        );
+    }
+    let replay = recorded
+        .public
+        .initial()
+        .query(
+            recorded.public.verify_ops(),
+            None,
+            &recorded.execution.context.cost_model,
+        )
+        .unwrap();
+    assert_eq!(replay.gas_cost, recorded.execution.gas_cost);
+    assert_eq!(
+        replay.context.effects,
+        recorded.execution.context.query.effects
+    );
+    assert_eq!(
+        state_hex(replay.context.state.get_ref().clone()),
+        expected["stateHex"]
+    );
+}

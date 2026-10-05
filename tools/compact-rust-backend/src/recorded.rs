@@ -4151,6 +4151,21 @@ fn render_recorded_item(
                         == (Type::Unsigned {
                             max: "18446744073709551615".into(),
                         })
+                        && matches!(binding.value, Expr::UnsignedLiteral { .. })
+                    {
+                        // A compiler-introduced literal index is a pure typed
+                        // local. Keep it scoped, then validate the nested
+                        // ledger action through the ordinary recorder.
+                        let Some(value) =
+                            cell_source(&binding.value, &binding.ty, &scoped, parameters)
+                        else {
+                            return Ok(unavailable_action(whole, path));
+                        };
+                        scoped.insert(binding.name.clone(), value);
+                    } else if binding.ty
+                        == (Type::Unsigned {
+                            max: "18446744073709551615".into(),
+                        })
                         && !matches!(binding.value, Expr::WitnessCall { .. })
                     {
                         let Some(value) =

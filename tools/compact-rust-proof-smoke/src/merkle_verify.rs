@@ -90,5 +90,41 @@ pub(super) fn run(root: &Path) -> Result<(), Box<dyn Error>> {
         })?;
         println!("witnessed Merkle checkRoot proved and applied (result={valid})");
     }
+    let mut rng = StdRng::seed_from_u64(0x0083_1002);
+    let pre_state = source_state(true)?;
+    let expected_state = source_state(false)?;
+    let deploy = make_deploy(root, "replace", pre_state, &mut rng)?;
+    let observed_state = ObservedContractState::new(
+        deploy.address(),
+        deploy.initial_state.clone(),
+        Observation {
+            transaction_hash: [0; 32],
+            block_hash: [0; 32],
+            block_height: 0,
+        },
+    );
+    let value = BoundedUint::<255>::new(8)?;
+    let recorded =
+        merkle_verify_contract::recorded::replace(observed_state.circuit_context(()), value)?;
+    if !recorded.execution.private_transcript_outputs.is_empty() {
+        return Err("Merkle replacement emitted private outputs".into());
+    }
+    let manual = check_generated_trace(root, "replace", recorded, value)?;
+    let verifier: VerifierKey = tagged_deserialize(&mut BufReader::new(File::open(
+        root.join("keys/replace.verifier"),
+    )?))?;
+    let observed = merkle_verify_contract::recorded::Contract
+        .replace_call(&observed_state, (), value)?
+        .prepare(verifier, Fr::from(0u64))?;
+    if format!("{manual:?}") != format!("{observed:?}") {
+        return Err("Merkle replace observed call differs from recorded prototype".into());
+    }
+    check_transaction(root, "replace", deploy, observed, &mut rng, |contract| {
+        if contract.data.get_ref() != &expected_state {
+            return Err("proven Merkle replacement differs from native state".into());
+        }
+        Ok(())
+    })?;
+    println!("literal-index Merkle replacement proved and applied through ledger-8");
     Ok(())
 }

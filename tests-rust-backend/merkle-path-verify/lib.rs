@@ -292,6 +292,20 @@ pub mod ledger_contract {
             let frame = crate::ledger_slots::t.record_insert(frame, __compact_param_0)?;
             Ok(frame.finish(()))
         }
+        pub fn replace<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::BoundedUint<255>,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let frame = crate::ledger_slots::t.record_insert_index(
+                frame,
+                __compact_param_0,
+                runtime::BoundedUint::<18446744073709551615>::new(0u128)
+                    .expect("Compact Uint literal fits its maximum"),
+            )?;
+            Ok(frame.finish(()))
+        }
         pub fn verify<Private, W: super::TryWitnesses<Private>>(
             context: runtime::context::CircuitContext<Private>,
             witnesses: &W,
@@ -337,6 +351,30 @@ pub mod ledger_contract {
                     observed, recorded, "append", input,
                 ))
             }
+            pub fn replace<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                value: runtime::BoundedUint<255>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::replace(context, value)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn replace_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                value: runtime::BoundedUint<255>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(value);
+                let recorded = self.replace(observed.circuit_context(private_state), value)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "replace", input,
+                ))
+            }
         }
         /// A recording handle with access to the contract's witnesses.
         pub struct BorrowedContract<'a, W> {
@@ -365,6 +403,30 @@ pub mod ledger_contract {
                 let recorded = self.append(observed.circuit_context(private_state), value)?;
                 Ok(runtime::transaction::RecordedCall::new(
                     observed, recorded, "append", input,
+                ))
+            }
+            pub fn replace<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                value: runtime::BoundedUint<255>,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                replace(context, value)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn replace_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                value: runtime::BoundedUint<255>,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(value);
+                let recorded = self.replace(observed.circuit_context(private_state), value)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "replace", input,
                 ))
             }
             pub fn verify<Private>(

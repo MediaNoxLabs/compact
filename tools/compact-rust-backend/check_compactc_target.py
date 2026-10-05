@@ -1398,12 +1398,13 @@ def main() -> None:
             run(compiler, "--target", "rust", str(MERKLE_VERIFY_SOURCE), str(merkle_verify_proof))
             check_manifest(merkle_verify_proof)
             capabilities = json.loads((merkle_verify_proof / "contract/rust-capabilities.json").read_text())
-            verify_capability = next(circuit for circuit in capabilities["circuits"] if circuit["name"] == "verify")
-            assert verify_capability["recorded"] and verify_capability["observed_call"]
-            for extension in ("prover", "verifier"):
-                assert (merkle_verify_proof / "keys" / f"verify.{extension}").is_file()
-            for extension in ("zkir", "bzkir"):
-                assert (merkle_verify_proof / "zkir" / f"verify.{extension}").is_file()
+            by_name = {circuit["name"]: circuit for circuit in capabilities["circuits"]}
+            for circuit in ("verify", "replace"):
+                assert by_name[circuit]["recorded"] and by_name[circuit]["observed_call"]
+                for extension in ("prover", "verifier"):
+                    assert (merkle_verify_proof / "keys" / f"{circuit}.{extension}").is_file()
+                for extension in ("zkir", "bzkir"):
+                    assert (merkle_verify_proof / "zkir" / f"{circuit}.{extension}").is_file()
             persistent_commit_proof = base / "persistent-commit-proof"
             run(compiler, "--target", "rust", str(PERSISTENT_COMMIT_SOURCE),
                 str(persistent_commit_proof))

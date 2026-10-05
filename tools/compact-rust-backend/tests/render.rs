@@ -2131,6 +2131,77 @@ fn indexed_merkle_recording_requires_typed_leaf_and_position_sources() {
 }
 
 #[test]
+fn indexed_merkle_recording_accepts_only_typed_literal_position_binding() {
+    let position = Type::Unsigned {
+        max: u64::MAX.to_string(),
+    };
+    let mut contract = identity(Type::Unit, Expr::Unit);
+    contract.ledger_fields = vec![LedgerField {
+        source: None,
+        id: "tree".into(),
+        index: 0,
+        path: vec![],
+        declaration: LedgerFieldKind::MerkleTree {
+            depth: 3,
+            ty: Type::Unsigned { max: "255".into() },
+        },
+    }];
+    contract.stateful_circuits = vec![StatefulCircuit {
+        source: None,
+        name: "replace".into(),
+        internal: false,
+        parameters: vec![Parameter {
+            name: "value".into(),
+            ty: Type::Unsigned { max: "255".into() },
+        }],
+        actions: vec![StateAction::Let {
+            bindings: vec![LocalBinding {
+                name: "position".into(),
+                ty: position.clone(),
+                value: Expr::UnsignedLiteral {
+                    value: "0".into(),
+                    max: u64::MAX.to_string(),
+                },
+            }],
+            action: Box::new(StateAction::MerkleInsertIndex {
+                field: "tree".into(),
+                index: 0,
+                value: Expr::Parameter {
+                    name: "value".into(),
+                },
+                position: Expr::Parameter {
+                    name: "position".into(),
+                },
+            }),
+        }],
+        result: Type::Unit,
+        return_value: StateReturn::Unit,
+    }];
+    let rendered = render_with_capabilities(&contract).unwrap();
+    assert!(rendered.capabilities.circuits[0].recorded);
+    assert!(rendered.capabilities.circuits[0].observed_call);
+    assert!(rendered.source.contains(".record_insert_index("));
+
+    let StateAction::Let { bindings, .. } = &mut contract.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    bindings[0].value = Expr::If {
+        condition: Box::new(Expr::Boolean { value: true }),
+        then: Box::new(Expr::UnsignedLiteral {
+            value: "0".into(),
+            max: u64::MAX.to_string(),
+        }),
+        otherwise: Box::new(Expr::UnsignedLiteral {
+            value: "1".into(),
+            max: u64::MAX.to_string(),
+        }),
+    };
+    let rejected = render_with_capabilities(&contract).unwrap();
+    assert!(!rejected.capabilities.circuits[0].recorded);
+    assert!(!rejected.capabilities.circuits[0].observed_call);
+}
+
+#[test]
 fn direct_merkle_fullness_reads_record_only_matching_declared_slots() {
     let mut contract = identity(Type::Unit, Expr::Unit);
     contract.ledger_fields = vec![

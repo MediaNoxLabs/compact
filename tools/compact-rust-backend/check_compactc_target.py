@@ -1381,15 +1381,13 @@ def main() -> None:
             check_manifest(merkle_proof)
             capabilities = json.loads((merkle_proof / "contract/rust-capabilities.json").read_text())
             by_name = {circuit["name"]: circuit for circuit in capabilities["circuits"]}
-            for circuit in ("append", "place", "place_default", "full"):
+            for circuit in ("append", "place", "place_default", "full", "append_hash", "place_hash"):
                 assert by_name[circuit]["recorded"] and by_name[circuit]["observed_call"]
                 for extension in ("prover", "verifier"):
                     assert (merkle_proof / "keys" / f"{circuit}.{extension}").is_file()
                 for extension in ("zkir", "bzkir"):
                     assert (merkle_proof / "zkir" / f"{circuit}.{extension}").is_file()
             for circuit, node in (
-                ("append_hash", "StateAction::MerkleInsertHash"),
-                ("place_hash", "StateAction::MerkleInsertHashIndex"),
                 ("reset_tree", "StateAction::MerkleResetToDefault"),
                 ("known", "StateReturn::MerkleCheckRoot"),
             ):
@@ -1731,6 +1729,10 @@ def main() -> None:
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
                 "--merkle-indexed", str(merkle_proof),
+            )
+            run(
+                "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",
+                "--merkle-hash", str(merkle_proof),
             )
             run(
                 "cargo", "run", "--quiet", "-p", "compact-rust-proof-smoke", "--",

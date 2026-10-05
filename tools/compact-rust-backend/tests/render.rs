@@ -26,6 +26,55 @@ use compact_rust_backend::{
 };
 
 #[test]
+fn opaque_string_map_recording_requires_closed_field_lookup_sequence() {
+    let mut contract: Contract =
+        serde_json::from_str(include_str!("opaque-string-map-schema12-ir.json")).unwrap();
+    contract.schema_version = SCHEMA_VERSION;
+    let statuses = |contract: &Contract| {
+        render_with_capabilities(contract)
+            .unwrap()
+            .capabilities
+            .circuits
+            .into_iter()
+            .map(|capability| (capability.name, capability.recorded))
+            .collect::<Vec<_>>()
+    };
+    assert_eq!(
+        statuses(&contract),
+        vec![("put".into(), true), ("ensure".into(), true)]
+    );
+
+    let original = contract.stateful_circuits[0].actions[0].clone();
+    contract.stateful_circuits[0].actions.push(original.clone());
+    assert_eq!(
+        statuses(&contract),
+        vec![("put".into(), false), ("ensure".into(), true)]
+    );
+    contract.stateful_circuits[0].actions.truncate(1);
+    let StateAction::MapInsert { value, .. } = &mut contract.stateful_circuits[0].actions[0] else {
+        unreachable!()
+    };
+    *value = Expr::FieldLiteral { value: "7".into() };
+    assert_eq!(
+        statuses(&contract),
+        vec![("put".into(), false), ("ensure".into(), true)]
+    );
+    contract.stateful_circuits[0].actions[0] = original;
+
+    let StateReturn::Expression {
+        value: Expr::Let { body, .. },
+    } = &mut contract.stateful_circuits[1].return_value
+    else {
+        unreachable!()
+    };
+    **body = Expr::FieldLiteral { value: "7".into() };
+    assert_eq!(
+        statuses(&contract),
+        vec![("put".into(), true), ("ensure".into(), false)]
+    );
+}
+
+#[test]
 fn opaque_string_set_recording_requires_closed_typed_operations() {
     let mut contract: Contract =
         serde_json::from_str(include_str!("opaque-string-set-schema12-ir.json")).unwrap();

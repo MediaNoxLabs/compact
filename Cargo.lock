@@ -1810,6 +1810,7 @@ dependencies = [
  "compact-rust-nested-map-shape-fixture",
  "compact-rust-nested-witness-call-oracle-fixture",
  "compact-rust-observed-composite-keys-fixture",
+ "compact-rust-opaque-string-map-query-oracle-fixture",
  "compact-rust-opaque-string-set-oracle-fixture",
  "compact-rust-pure-call-action-fixture",
  "compact-rust-recorded-enum-cell-fixture",

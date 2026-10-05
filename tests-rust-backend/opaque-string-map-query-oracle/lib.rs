@@ -129,19 +129,120 @@ pub mod ledger_contract {
             private_transcript_outputs,
         })
     }
+    /// Circuits with a replayable ordered ledger program.
+    pub mod recorded {
+        use midnight_compact_runtime as runtime;
+        pub fn put<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::OpaqueString,
+            __compact_param_1: runtime::Field,
+        ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+        {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let __compact_recorded_key_0 = (__compact_param_0).clone();
+            let frame = crate::ledger_slots::entries.record_insert(
+                frame,
+                __compact_recorded_key_0,
+                __compact_param_1,
+            )?;
+            Ok(frame.finish(()))
+        }
+        pub fn ensure<Private>(
+            context: runtime::context::CircuitContext<Private>,
+            __compact_param_0: runtime::OpaqueString,
+        ) -> Result<
+            runtime::recording::RecordedCircuitResult<Private, runtime::Field>,
+            runtime::CompactError,
+        > {
+            let frame = runtime::recording::RecordingFrame::new(context);
+            let (frame, __compact_recorded_member_0): (_, bool) =
+                crate::ledger_slots::entries.record_member(frame, (__compact_param_0).clone())?;
+            if !(__compact_recorded_member_0) {
+                return Err(runtime::CompactError::AssertionFailed(
+                    "missing key".to_owned(),
+                ));
+            }
+            let (frame, observed): (_, runtime::Field) =
+                crate::ledger_slots::entries.record_lookup(frame, (__compact_param_0).clone())?;
+            Ok(frame.finish(observed))
+        }
+        /// Typed handle for circuits with a complete recorded trace.
+        pub struct Contract;
+        impl Contract {
+            pub fn put<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                key: runtime::OpaqueString,
+                value: runtime::Field,
+            ) -> Result<runtime::recording::RecordedCircuitResult<Private, ()>, runtime::CompactError>
+            {
+                crate::ledger_contract::recorded::put(context, key, value)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn put_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                key: runtime::OpaqueString,
+                value: runtime::Field,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, ()>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from(((key).clone(), value));
+                let recorded = self.put(observed.circuit_context(private_state), key, value)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "put", input,
+                ))
+            }
+            pub fn ensure<Private>(
+                &self,
+                context: runtime::context::CircuitContext<Private>,
+                key: runtime::OpaqueString,
+            ) -> Result<
+                runtime::recording::RecordedCircuitResult<Private, runtime::Field>,
+                runtime::CompactError,
+            > {
+                crate::ledger_contract::recorded::ensure(context, key)
+            }
+            #[cfg(feature = "ledger-transaction")]
+            pub fn ensure_call<'observed, Private>(
+                &self,
+                observed: &'observed runtime::transaction::ObservedContractState,
+                private_state: Private,
+                key: runtime::OpaqueString,
+            ) -> Result<
+                runtime::transaction::RecordedCall<'observed, Private, runtime::Field>,
+                runtime::CompactError,
+            > {
+                let input = runtime::fab::AlignedValue::from((key).clone());
+                let recorded = self.ensure(observed.circuit_context(private_state), key)?;
+                Ok(runtime::transaction::RecordedCall::new(
+                    observed, recorded, "ensure", input,
+                ))
+            }
+        }
+    }
     /// Groups the contract's exported circuits for Rust consumers.
     pub struct Contract<W> {
         #[allow(dead_code)]
         witnesses: W,
+        pub recording: recorded::Contract,
     }
     impl<W> From<W> for Contract<W> {
         fn from(witnesses: W) -> Self {
-            Self { witnesses }
+            Self {
+                witnesses,
+                recording: recorded::Contract,
+            }
         }
     }
     impl Default for Contract<()> {
         fn default() -> Self {
-            Self { witnesses: () }
+            Self {
+                witnesses: (),
+                recording: recorded::Contract,
+            }
         }
     }
     impl<W> Contract<W> {
@@ -160,6 +261,10 @@ pub mod ledger_contract {
         ) -> Result<runtime::context::CircuitResult<Private, runtime::Field>, runtime::CompactError>
         {
             crate::ledger_contract::ensure(context, key)
+        }
+        /// Access replayable circuit calls for this contract.
+        pub fn recording(&self) -> &recorded::Contract {
+            &self.recording
         }
     }
 }

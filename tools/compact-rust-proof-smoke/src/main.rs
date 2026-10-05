@@ -33,6 +33,7 @@ mod field_pair_hash;
 mod impure_field_helper;
 mod merkle_indexed;
 mod merkle_verify;
+mod opaque_string_map;
 mod opaque_string_set;
 mod persistent_commit;
 mod pure_assert_call;
@@ -1342,6 +1343,17 @@ fn main() -> Result<(), Box<dyn Error>> {
             );
         }
         return opaque_string_set::run(Path::new(&root));
+    }
+    if first.as_deref() == Some(OsStr::new("--opaque-string-map")) {
+        let root = arguments
+            .next()
+            .ok_or("usage: compact-rust-proof-smoke --opaque-string-map <proof-output>")?;
+        if arguments.next().is_some() {
+            return Err(
+                "usage: compact-rust-proof-smoke --opaque-string-map <proof-output>".into(),
+            );
+        }
+        return opaque_string_map::run(Path::new(&root));
     }
     if first.as_deref() == Some(OsStr::new("--conditional-set")) {
         let root = arguments

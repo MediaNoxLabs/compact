@@ -27,6 +27,7 @@ compact-rust-counter-fixture = { path = "../../tests-rust-backend/counter", feat
 compact-rust-test-center-counter-fixture = { path = "../../tests-rust-backend/test-center-counter", features = ["ledger-transaction"] }
 compact-rust-test-center-welcome-fixture = { path = "../../tests-rust-backend/test-center-welcome", features = ["ledger-transaction"] }
 compact-rust-opaque-string-set-oracle-fixture = { path = "../../tests-rust-backend/opaque-string-set-oracle", features = ["ledger-transaction"] }
+compact-rust-opaque-string-map-query-oracle-fixture = { path = "../../tests-rust-backend/opaque-string-map-query-oracle", features = ["ledger-transaction"] }
 compact-rust-call-arg-declared-type-fixture = { path = "../../tests-rust-backend/call-arg-declared-type", features = ["ledger-transaction"] }
 compact-rust-witness-vector-action-fixture = { path = "../../tests-rust-backend/witness-vector-action", features = ["ledger-transaction"] }
 compact-rust-internal-pure-call-fixture = { path = "../../tests-rust-backend/internal-pure-call", features = ["ledger-transaction"] }

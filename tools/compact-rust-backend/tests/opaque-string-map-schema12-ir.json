@@ -1,0 +1,138 @@
+{
+  "schema_version": 12,
+  "type_aliases": [
+  ],
+  "ledger_fields": [
+    {
+      "id": "entries",
+      "index": 0,
+      "path": [
+        0
+      ],
+      "declaration": {
+        "kind": "map",
+        "key": {
+          "kind": "opaque_string"
+        },
+        "value": {
+          "kind": "field"
+        }
+      },
+      "source": {
+        "file": "opaque_string_map_query_oracle.compact",
+        "line": 18,
+        "column": 1
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "circuits": [
+  ],
+  "stateful_circuits": [
+    {
+      "name": "put",
+      "parameters": [
+        {
+          "name": "key",
+          "ty": {
+            "kind": "opaque_string"
+          }
+        },
+        {
+          "name": "value",
+          "ty": {
+            "kind": "field"
+          }
+        }
+      ],
+      "result": {
+        "kind": "unit"
+      },
+      "return_value": {
+        "kind": "unit"
+      },
+      "actions": [
+        {
+          "kind": "map_insert",
+          "field": "entries",
+          "index": 0,
+          "key": {
+            "kind": "parameter",
+            "name": "key"
+          },
+          "value": {
+            "kind": "parameter",
+            "name": "value"
+          }
+        }
+      ],
+      "source": {
+        "file": "opaque_string_map_query_oracle.compact",
+        "line": 20,
+        "column": 1
+      }
+    },
+    {
+      "name": "ensure",
+      "parameters": [
+        {
+          "name": "key",
+          "ty": {
+            "kind": "opaque_string"
+          }
+        }
+      ],
+      "result": {
+        "kind": "field"
+      },
+      "return_value": {
+        "kind": "expression",
+        "value": {
+          "kind": "let",
+          "bindings": [
+            {
+              "name": "value",
+              "ty": {
+                "kind": "field"
+              },
+              "value": {
+                "kind": "map_lookup",
+                "field": "entries",
+                "index": 0,
+                "key": {
+                  "kind": "parameter",
+                  "name": "key"
+                }
+              }
+            }
+          ],
+          "body": {
+            "kind": "parameter",
+            "name": "value"
+          }
+        }
+      },
+      "actions": [
+        {
+          "kind": "assert",
+          "condition": {
+            "kind": "map_member",
+            "field": "entries",
+            "index": 0,
+            "key": {
+              "kind": "parameter",
+              "name": "key"
+            }
+          },
+          "message": "missing key"
+        }
+      ],
+      "source": {
+        "file": "opaque_string_map_query_oracle.compact",
+        "line": 24,
+        "column": 1
+      }
+    }
+  ]
+}

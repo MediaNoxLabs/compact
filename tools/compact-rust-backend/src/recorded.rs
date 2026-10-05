@@ -384,6 +384,103 @@ fn closed_opaque_set_operation(
         && matches!(value, Expr::Parameter { name } if name == &parameter.name)
 }
 
+/// The original opaque-key Map oracle has two closed shapes. The Map key is
+/// only encoded as an input; the lookup result is the fixed-width Field value.
+enum ClosedOpaqueMapOperation {
+    Put,
+    Ensure { field: String, key: String },
+}
+
+fn closed_opaque_map_operation(
+    circuit: &StatefulCircuit,
+    ledger_fields: &HashMap<&str, &LedgerField>,
+) -> Option<ClosedOpaqueMapOperation> {
+    let map_matches = |field: &str, index| {
+        let declaration = ledger_fields.get(field)?;
+        (declaration.index == index
+            && matches!(
+                &declaration.declaration,
+                LedgerFieldKind::Map {
+                    key: Type::OpaqueString,
+                    value: Type::Field,
+                }
+            ))
+        .then_some(())
+    };
+    match (
+        circuit.parameters.as_slice(),
+        &circuit.result,
+        &circuit.return_value,
+        circuit.actions.as_slice(),
+    ) {
+        (
+            [key, value],
+            Type::Unit,
+            StateReturn::Unit,
+            [
+                StateAction::MapInsert {
+                    field,
+                    index,
+                    key: Expr::Parameter { name: key_name },
+                    value: Expr::Parameter { name: value_name },
+                },
+            ],
+        ) if key.ty == Type::OpaqueString
+            && value.ty == Type::Field
+            && key_name == &key.name
+            && value_name == &value.name =>
+        {
+            map_matches(field, *index)?;
+            Some(ClosedOpaqueMapOperation::Put)
+        }
+        (
+            [key],
+            Type::Field,
+            StateReturn::Expression {
+                value: Expr::Let { bindings, body },
+            },
+            [
+                StateAction::Assert {
+                    condition:
+                        Expr::MapMember {
+                            field: member_field,
+                            index: member_index,
+                            key: member_key,
+                        },
+                    ..
+                },
+            ],
+        ) if key.ty == Type::OpaqueString => {
+            let [binding] = bindings.as_slice() else {
+                return None;
+            };
+            let Expr::MapLookup {
+                field,
+                index,
+                key: lookup_key,
+            } = &binding.value
+            else {
+                return None;
+            };
+            if binding.ty != Type::Field
+                || field != member_field
+                || index != member_index
+                || !matches!(member_key.as_ref(), Expr::Parameter { name } if name == &key.name)
+                || !matches!(lookup_key.as_ref(), Expr::Parameter { name } if name == &key.name)
+                || !matches!(body.as_ref(), Expr::Parameter { name } if name == &binding.name)
+            {
+                return None;
+            }
+            map_matches(field, *index)?;
+            Some(ClosedOpaqueMapOperation::Ensure {
+                field: field.clone(),
+                key: key.name.clone(),
+            })
+        }
+        _ => None,
+    }
+}
+
 /// A closed typed witness → Bytes32 hash → Set authorization followed by a
 /// single Set insertion. The matched callees are inspected transitively so
 /// recording never silently skips an assertion or private output.
@@ -4733,6 +4830,7 @@ fn render_recorded_item(
     let organizer_steps =
         closed_organizer_gate_steps(circuit, ledger_fields, witnesses, pure_circuits, circuits)?;
     let organizer_gate = organizer_steps.is_some();
+    let opaque_map_operation = closed_opaque_map_operation(circuit, ledger_fields);
     let mut steps = organizer_steps.unwrap_or_default();
     let mut next_temp = 0;
     let mut visiting = HashSet::from([circuit.name.clone()]);
@@ -4905,6 +5003,29 @@ fn render_recorded_item(
                 )));
             };
             (return_steps, result)
+        }
+        StateReturn::Expression { .. }
+            if matches!(
+                opaque_map_operation,
+                Some(ClosedOpaqueMapOperation::Ensure { .. })
+            ) =>
+        {
+            let Some(ClosedOpaqueMapOperation::Ensure { field, key }) =
+                opaque_map_operation.as_ref()
+            else {
+                unreachable!()
+            };
+            let slot = ident(field)?;
+            let (_, key_ident) = parameters
+                .get(key.as_str())
+                .expect("closed Map key is a declared parameter");
+            (
+                vec![syn::parse_quote!(
+                    let (frame, observed): (_, runtime::Field) =
+                        crate::ledger_slots::#slot.record_lookup(frame, (#key_ident).clone())?;
+                )],
+                syn::parse_quote!(observed),
+            )
         }
         StateReturn::Expression { value }
             if contains_cell_read(value)
@@ -5455,6 +5576,7 @@ fn render_recorded_item(
         .any(|parameter| parameter.ty == Type::OpaqueString)
         && !proved_opaque_set_sequence(circuit)
         && !closed_opaque_set_operation(circuit, ledger_fields)
+        && opaque_map_operation.is_none()
         && !organizer_gate
     {
         return Ok(RecordingOutcome::Unsupported(

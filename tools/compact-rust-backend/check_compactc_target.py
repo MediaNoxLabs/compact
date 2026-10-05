@@ -1394,6 +1394,10 @@ def main() -> None:
             if args.proof:
                 run("cargo", "+1.99.0", "run", "--offline", "--quiet", "-p",
                     "compact-rust-proof-smoke", "--", "--shielded-receive", str(output))
+                # Reuse the same source and keys for explicit wallet funding;
+                # keep this default-strict acceptance in the full proof gate.
+                run("cargo", "+1.99.0", "run", "--offline", "--quiet", "-p",
+                    "compact-rust-proof-smoke", "--", "--wallet-funded-receive", str(output))
             print("unchanged receiveShielded wrappers admitted with ordered output and audited claim")
             return
         if args.native_zswap_intents:

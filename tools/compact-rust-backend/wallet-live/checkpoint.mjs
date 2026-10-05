@@ -49,13 +49,17 @@ const indexedHex = (value, label) => {
 };
 const sameBytes = (left, right) => Buffer.from(left).equals(Buffer.from(right));
 
-export function createIndexerClient(url, fetchImpl = fetch) {
+export function createIndexerClient(url, fetchImpl = fetch, { requestTimeoutMs = 30_000 } = {}) {
   if (typeof url !== 'string' || !/^https?:\/\//.test(url)) throw new Error('indexer URL is required');
+  if (!Number.isSafeInteger(requestTimeoutMs) || requestTimeoutMs <= 0) {
+    throw new Error('indexer request timeout must be a positive integer');
+  }
   return {
     async getBlock(blockHash) {
       const response = await fetchImpl(url, {
         method: 'POST', headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ query: BLOCK_QUERY, variables: { offset: { hash: normalizeHash(blockHash) } } }),
+        signal: AbortSignal.timeout(requestTimeoutMs),
       });
       if (!response.ok) throw new Error(`indexer HTTP ${response.status}`);
       const body = await response.json();

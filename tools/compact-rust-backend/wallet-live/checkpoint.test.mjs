@@ -112,6 +112,15 @@ test('pinned indexer query requests all transactions and event IDs for exact blo
   }
 });
 
+test('a stalled indexer response is bounded by the request timeout', async () => {
+  const stalled = createIndexerClient('http://example.invalid/api/v3/graphql',
+    async (_url, { signal }) => new Promise((_resolve, reject) => {
+      signal.addEventListener('abort', () => reject(signal.reason), { once: true });
+    }), { requestTimeoutMs: 10 });
+  await assert.rejects(stalled.getBlock(blockHash), /timeout|aborted/i);
+  assert.throws(() => createIndexerClient('http://example.invalid', fetch, { requestTimeoutMs: 0 }), /positive integer/);
+});
+
 test('checkpoint binds full block frontier, actual last event and exact wallet bytes', async () => {
   const h = harness();
   const acquired = await acquire({}, h);

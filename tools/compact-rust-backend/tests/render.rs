@@ -9270,7 +9270,8 @@ fn typed_asset_map_write_requires_class_guard_and_insert_only_count() {
     let original: serde_json::Value =
         serde_json::from_str(include_str!("asset-record-write-schema13-ir.json")).unwrap();
     let recorded = |value: &serde_json::Value| {
-        let contract: Contract = serde_json::from_value(value.clone()).unwrap();
+        let mut contract: Contract = serde_json::from_value(value.clone()).unwrap();
+        contract.schema_version = SCHEMA_VERSION;
         let Ok(rendered) = render_with_capabilities(&contract) else {
             return (false, String::new());
         };
@@ -9664,7 +9665,8 @@ fn guarded_opaque_set_mutation_requires_two_maps_and_opposite_typed_branches() {
     let original: serde_json::Value =
         serde_json::from_str(include_str!("asset-watch-write-schema13-ir.json")).unwrap();
     let recorded = |value: &serde_json::Value| {
-        let contract: Contract = serde_json::from_value(value.clone()).unwrap();
+        let mut contract: Contract = serde_json::from_value(value.clone()).unwrap();
+        contract.schema_version = SCHEMA_VERSION;
         let Ok(rendered) = render_with_capabilities(&contract) else {
             return (false, String::new());
         };

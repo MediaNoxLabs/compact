@@ -6,6 +6,10 @@ midnight-zk primitives for fields, encoding, cryptography, state, and VM
 queries. Generated code checks `RUST_RUNTIME_ABI` at compile time. A generated
 crate bundles matching runtime sources by default or points to one shared
 source root when compiled with `--rust-runtime-root`.
+ABI 39 adds typed qualified-coin Set insertion through ledger-8 `CoinInfo` and
+`CoinRecipient`. It requires the commitment index allocated in the call context
+and checks the Set element alignment before executing the ledger program.
+
 ABI 38 adds `RecordingFrame::call_local` for statically audited generated
 helpers that perform only local computation and private witness work. The
 frame adopts their private state, transcript, and gas, and rejects any change

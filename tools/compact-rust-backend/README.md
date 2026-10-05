@@ -98,8 +98,8 @@ capture, including Set state, effects, gas, missing commitment rejection and
 wrong Set element alignment. Run `check_compactc_target.py --adt-set-qualified`
 for the unchanged original source's schema-14 and native-only capability gate.
 Use `check_fixture_outputs.py --only qualified_coin_set_oracle.compact` for a
-focused generated fixture check. Existing checked fixtures require a combined
-ABI-39 refresh when this slice is integrated with the preceding ABI-38 change.
+focused generated fixture check. All checked fixtures use the combined ABI-39
+runtime, including audited local helpers and qualified coin insertion.
 The bounded ADT List manifest `parity_positive_adt_list_sources.json` admits
 `examples/adt/tests/list_field.compact::test` after the nested List query
 lowering in ADR-0101/#204. Its generated fixture checks the TypeScript,
@@ -290,8 +290,8 @@ Compact spelling without warning in consumer builds.
 | Boundary | Current contract | Failure behavior |
 |---|---|---|
 | Compact compiler | Toolchain 0.31.133, language 0.23.105 | Versions are recorded in `compiler/contract-manifest.json`. |
-| Rust IR | Schema 13, private to this backend | The renderer rejects any other schema before writing `lib.rs`. Schema 13 adds an explicit typed Field-to-Bytes32 expression and nested Counter read; the cast uses midnight-zk's canonical 32-byte little-endian Field representation. Ledger, circuit, witness, constructor, and exported alias declarations carry optional Compact source locations for diagnostics. |
-| Generated code and Rust runtime | ABI 38 | Generated modules assert the ABI at Rust compile time. ABI 38 adds audited local-helper adoption for private witnesses, gas, and transcript while checking the public and Zswap context. ABI 37 adds a caller coin key for native `ownPublicKey()` and its private output; ABI 36 adds recorded plain Merkle root checks through typed slots; ABI 35 adds recorded Counter reset through typed slots; ABI 34 adds recorded direct plain/historic Merkle fullness reads; ABI 33 adds typed local plain/historic Merkle views with checked depth; ABI 32 adds List views; ABI 31 adds cell-valued Map views; ABI 30 adds Set views; ABI 29 adds Cell/Counter views; ABI 25–28 add physical List paths, chunked Map and Cell calls, and Cell-read scalar returns; ABI 21–24 add typed multi-argument observed calls and composite/chunked Set calls. The [runtime guide](../../runtime-rs/README.md) records earlier ABI changes. |
+| Rust IR | Schema 14, private to this backend | The renderer rejects any other schema before writing `lib.rs`. Schema 14 adds typed qualified-coin Set insertion. Schema 13 adds an explicit typed Field-to-Bytes32 expression and nested Counter read; the cast uses midnight-zk's canonical 32-byte little-endian Field representation. Ledger, circuit, witness, constructor, and exported alias declarations carry optional Compact source locations for diagnostics. |
+| Generated code and Rust runtime | ABI 39 | Generated modules assert the ABI at Rust compile time. ABI 39 adds qualified-coin Set insertion using ledger coin and recipient types and the allocated commitment index. ABI 38 adds audited local-helper adoption for private witnesses, gas, and transcript while checking the public and Zswap context. ABI 37 adds a caller coin key for native `ownPublicKey()` and its private output; ABI 36 adds recorded plain Merkle root checks through typed slots; ABI 35 adds recorded Counter reset through typed slots; ABI 34 adds recorded direct plain/historic Merkle fullness reads; ABI 33 adds typed local plain/historic Merkle views with checked depth; ABI 32 adds List views; ABI 31 adds cell-valued Map views; ABI 30 adds Set views; ABI 29 adds Cell/Counter views; ABI 25–28 add physical List paths, chunked Map and Cell calls, and Cell-read scalar returns; ABI 21–24 add typed multi-argument observed calls and composite/chunked Set calls. The [runtime guide](../../runtime-rs/README.md) records earlier ABI changes. |
 | Rust runtime source | Bundled runtime crates or an explicit shared source root | Cargo resolves the matching runtime and its pinned Midnight crates. |
 
 `--runtime-version` reports the TypeScript runtime version; the Rust runtime

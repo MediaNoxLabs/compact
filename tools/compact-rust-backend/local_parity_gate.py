@@ -265,8 +265,10 @@ def main() -> int:
                             "COMPACT_RUST_RUNTIME_DIR": str(ROOT),
                             "CARGO_TARGET_DIR": str(args.cargo_target_dir.resolve()),
                             "PYTHONDONTWRITEBYTECODE": "1",
-                            "CARGO_TERM_COLOR": "never"})
+                            "CARGO_TERM_COLOR": "never",
+                            "RUSTUP_TOOLCHAIN": "1.99.0"})
         receipt["cargo_target_dir"] = environment["CARGO_TARGET_DIR"]
+        receipt["rust_toolchain"] = environment["RUSTUP_TOOLCHAIN"]
         selected_paths = {inventory.relative_source(source, ROOT) for source, _ in selected}
         paths = inventory.source_paths(ROOT, []) if args.full else [source for source, _ in selected]
         contracts = [inventory.parse_source(path, ROOT) for path in paths]

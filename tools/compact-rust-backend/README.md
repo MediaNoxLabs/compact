@@ -663,3 +663,11 @@ operations produce a Compact source diagnostic; examples include unknown
 `Opaque` tags and Field-to-Uint narrowing. The rejection gate checks that a
 failed compile does not leave a generated Rust library. The Rust API and IR
 schema are local to this branch and may change as support expands.
+
+### Local parity toolchain
+
+`local_parity_gate.py` pins all child processes to Rust 1.99.0, including the
+packaged consumer and proof checks that invoke plain `cargo`. The receipt
+records `rust_toolchain`. This avoids rebuilding the shared target with the
+machine default after workspace checks use 1.99.0; machine settings are not
+changed. Run separate explicit toolchain checks for MSRV coverage.
